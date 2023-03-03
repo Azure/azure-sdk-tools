@@ -26,4 +26,4 @@ extends:
   template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
   parameters:
     TargetDirectory: eng/common-tests/get-codeowners
-    TargetTags: 'UnitTest'
+    TargetTags: UnitTest

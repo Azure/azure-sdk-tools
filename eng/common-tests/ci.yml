@@ -19,8 +19,8 @@ pr:
       - hotfix/*
   paths:
     include:
-      - eng/common/scripts/*
-      - eng/common-tests/*
+      - eng/common/scripts
+      - eng/common-tests
 
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml

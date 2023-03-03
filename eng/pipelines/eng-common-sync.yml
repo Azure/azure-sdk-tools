@@ -92,6 +92,7 @@ stages:
           environment: githubmerges
 
           pool:
+            name: azsdk-pool-mms-win-2022-general
             vmImage: windows-2022
 
           strategy:
@@ -161,6 +162,7 @@ stages:
           environment: githubmerges
 
           pool:
+            name: azsdk-pool-mms-win-2022-general
             vmImage: windows-2022
 
           strategy:

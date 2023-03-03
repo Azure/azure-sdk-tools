@@ -286,7 +286,7 @@ stages:
         - template: /eng/pipelines/templates/steps/vcpkg-clone.yml@azure-sdk-for-cpp
           parameters:
             RepoOwner: Microsoft
-        - ${{ if and( parameters.IncludeCpp, parameters.Profile ) }}:
+        - ${{ if parameters.Profile }}:
           - task: Bash@3
             inputs:
               targetType: 'inline'

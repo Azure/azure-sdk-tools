@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             foreach (var packageVersion in packageVersions)
             {
-                Version? version = null;
+                Version version = null;
                 if (!Version.TryParse(packageVersion.Value, out version)) { continue; };
 
                 var vcpkgDirectory = buildFolder;

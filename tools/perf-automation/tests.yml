@@ -298,8 +298,6 @@ stages:
         Iterations: ${{ parameters.Iterations }}
         Profile: ${{ parameters.Profile }}
         AdditionalArguments: ${{ parameters.AdditionalArguments }}
-        
-
 
 - stage: Print_Results
   displayName: Print Results

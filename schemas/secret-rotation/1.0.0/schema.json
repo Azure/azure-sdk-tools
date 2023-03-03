@@ -60,6 +60,10 @@
                 }
             },
             "minItems": 1
+        },
+        "$schema": {
+            "description": "JSON Schema URI (used by some editors)",
+            "type": "string"
         }
     },
     "required": [ "rotationThreshold", "rotationPeriod", "stores" ],

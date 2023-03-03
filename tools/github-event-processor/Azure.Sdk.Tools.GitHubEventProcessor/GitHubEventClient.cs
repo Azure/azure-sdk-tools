@@ -279,6 +279,26 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         }
 
         /// <summary>
+        /// Write the current rate limit and remaining number of transactions.
+        /// </summary>
+        /// <param name="prependMessage">Optional message to prepend to the rate limit message.</param>
+        /// <returns></returns>
+        public async Task WriteSearchRateLimits(string prependMessage = null)
+        {
+            var miscRateLimit = await GetRateLimits();
+            // Get the Seconds till reset. Unlike the core rate limit which resets every hour, the search rate limit
+            // should reset every minute.
+            TimeSpan span = miscRateLimit.Resources.Search.Reset.UtcDateTime.Subtract(DateTime.UtcNow);
+            // In the message, cast TotalSeconds to an int to get a whole number of minutes.
+            string rateLimitMessage = $"Search Limit={miscRateLimit.Resources.Search.Limit}, Remaining={miscRateLimit.Resources.Search.Remaining}, Limit Reset in {(int)span.TotalSeconds} seconds.";
+            if (prependMessage != null)
+            {
+                rateLimitMessage = $"{prependMessage} {rateLimitMessage}";
+            }
+            Console.WriteLine(rateLimitMessage);
+        }
+
+        /// <summary>
         /// Using the authenticated GitHubClient, call the RateLimit API to get the rate limits.
         /// </summary>
         /// <returns>Octokit.MiscellaneousRateLimit which contains the rate limit information.</returns>
@@ -638,7 +658,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 try
                 {
                     Console.WriteLine($"Calling SearchIssues, try number {tryNumber}. Page number={searchIssuesRequest.Page}, results per page={searchIssuesRequest.PerPage}");
+                    await WriteSearchRateLimits("Search RateLimit before call to SearchIssues:");
                     var searchIssueResult = await _gitHubClient.Search.SearchIssues(searchIssuesRequest);
+                    await WriteSearchRateLimits("Search RateLimit after call to SearchIssues:");
                     Console.WriteLine($"Call returned {searchIssueResult.Items.Count} results out of {searchIssueResult.TotalCount} total results.");
                     return searchIssueResult;
                 }

@@ -13,7 +13,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
     public class PullRequestCommentProcessing
     {
         /// <summary>
-        /// PullRequest rules can be found on the gist, https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#pull-request-rules
         /// Every rule will have it's own function that will be called here, the rule configuration will determine
         /// which rules will execute.
         /// It's worth noting here that Issue and PullRequest comments are the same event payload, IssueCommentPayload.
@@ -32,7 +31,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Reset Pull Request Activity https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-pull-request-activity
+        /// Reset Pull Request Activity
         /// Normally there's supposed to be a common function but the PullRequest object on the IssueCommentPayload isn't complete.
         /// All of the things like labels and whatnot need to come from the Issue.
         /// Trigger: issue_comment created on a pull request
@@ -90,7 +89,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Reopen Pull Request https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reopen-pull-request
+        /// Reopen Pull Request
         /// Trigger: pull comment created
         /// Conditions:
         ///     Pull request is closed

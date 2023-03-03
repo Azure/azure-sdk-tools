@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         /// <param name="AIServiceReturnsLabels">Whether or not the AI Service should return labels</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, true)]
         [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, false)]
         [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.Off, false)]
@@ -96,7 +96,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        /// <param name="labelAddedIsNeedsTriage">Whether or not the payload's labeled event is adding needs-triage</param>
+        [Category("static")]
         [TestCase(RulesConstants.ManualIssueTriage, "Tests.JsonEventPayloads/ManualIssueTriage_issue_labeled_needs-triage.json", RuleState.On, true)]
         [TestCase(RulesConstants.ManualIssueTriage, "Tests.JsonEventPayloads/ManualIssueTriage_issue_labeled_not_needs-triage.json", RuleState.On, false)]
         [TestCase(RulesConstants.ManualIssueTriage, "Tests.JsonEventPayloads/ManualIssueTriage_issue_labeled_not_needs-triage.json", RuleState.Off, false)]
@@ -138,12 +139,19 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         }
 
         /// <summary>
-        /// 
+        /// Service Attention requires two different CODEOWNERS files to test, one that has parties to mention
+        /// for ServiceAttention and one that doesn't. When there are no parties to mention, there should be
+        /// no updates.
+        /// Trigger: issue labeled
+        /// Conditions: Issue is open
+        ///             Label being added is "Service Attention"
+        /// Resulting Action: Add issue comment "Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc ${mentionees}."
         /// </summary>
-        /// <param name="rule"></param>
-        /// <param name="payloadFile"></param>
-        /// <param name="ruleState"></param>
-        /// <returns></returns>
+        /// <param name="rule">String, RulesConstants for the rule being tested</param>
+        /// <param name="payloadFile">JSon payload file for the event being tested</param>
+        /// <param name="ruleState">Whether or not the rule is on/off</param>
+        /// <param name="hasPartiesToMentionForServiceAttention">Determines whether to load the codeowners with parties to mention or the one without</param>
+        [Category("static")]
         [NonParallelizable]
         [TestCase(RulesConstants.ServiceAttention, "Tests.JsonEventPayloads/ServiceAttention_issue_labeled.json", RuleState.Off, true)]
         [TestCase(RulesConstants.ServiceAttention, "Tests.JsonEventPayloads/ServiceAttention_issue_labeled.json", RuleState.On, true)]
@@ -212,7 +220,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         /// <param name="hasServiceAttentionLabel">Where or not the payload has the Service Attention label</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.CXPAttention, "Tests.JsonEventPayloads/CXPAttention_issue_labeled.json", RuleState.Off, false)]
         [TestCase(RulesConstants.CXPAttention, "Tests.JsonEventPayloads/CXPAttention_issue_labeled.json", RuleState.On, false)]
         [TestCase(RulesConstants.CXPAttention, "Tests.JsonEventPayloads/CXPAttention_issue_labeled_has_service-attention.json", RuleState.Off, true)]
@@ -267,7 +275,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         /// <param name="alreadyHasNeedsTeamTriage">Whether or not the payload already has the needs-team-triage label</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_CXP_attention.json", RuleState.Off, false)]
         [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_CXP_attention.json", RuleState.On, false)]
         [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_service_attention.json", RuleState.Off, false)]
@@ -320,7 +328,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.ResetIssueActivity, "Tests.JsonEventPayloads/ResetIssueActivity_issue_edited.json", RuleState.Off)]
         [TestCase(RulesConstants.ResetIssueActivity, "Tests.JsonEventPayloads/ResetIssueActivity_issue_edited.json", RuleState.On)]
         [TestCase(RulesConstants.ResetIssueActivity, "Tests.JsonEventPayloads/ResetIssueActivity_issue_reopened.json", RuleState.Off)]
@@ -371,7 +379,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.RequireAttentionForNonMilestone, "Tests.JsonEventPayloads/RequireAttentionForNonMilestone_issue_labeled.json", RuleState.Off)]
         [TestCase(RulesConstants.RequireAttentionForNonMilestone, "Tests.JsonEventPayloads/RequireAttentionForNonMilestone_issue_labeled.json", RuleState.On)]
         [TestCase(RulesConstants.RequireAttentionForNonMilestone, "Tests.JsonEventPayloads/RequireAttentionForNonMilestone_issue_unlabeled.json", RuleState.Off)]
@@ -420,7 +428,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         /// <param name="hasLabelsToRemove">Whether or not the payload Issue contains the labels that are being removed</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.AuthorFeedbackNeeded, "Tests.JsonEventPayloads/AuthorFeedbackNeeded_issue_labeled_with_labels_to_remove.json", RuleState.Off, true)]
         [TestCase(RulesConstants.AuthorFeedbackNeeded, "Tests.JsonEventPayloads/AuthorFeedbackNeeded_issue_labeled_with_labels_to_remove.json", RuleState.On, true)]
         [TestCase(RulesConstants.AuthorFeedbackNeeded, "Tests.JsonEventPayloads/AuthorFeedbackNeeded_issue_labeled_nothing_to_remove.json", RuleState.Off, false)]
@@ -481,7 +489,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         /// <param name="hasLabelsToRemove">Whether or not the payload Issue contains the labels that are being removed</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.IssueAddressed, "Tests.JsonEventPayloads/IssueAddressed_issue_labeled_with_labels_to_remove.json", RuleState.Off, true)]
         [TestCase(RulesConstants.IssueAddressed, "Tests.JsonEventPayloads/IssueAddressed_issue_labeled_with_labels_to_remove.json", RuleState.On, true)]
         [TestCase(RulesConstants.IssueAddressed, "Tests.JsonEventPayloads/IssueAddressed_issue_labeled_nothing_to_remove.json", RuleState.On, false)]
@@ -552,7 +560,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.IssueAddressedReset, "Tests.JsonEventPayloads/IssueAddressedReset_issue_labeled_CXP_attention.json", RuleState.Off)]
         [TestCase(RulesConstants.IssueAddressedReset, "Tests.JsonEventPayloads/IssueAddressedReset_issue_labeled_CXP_attention.json", RuleState.On)]
         [TestCase(RulesConstants.IssueAddressedReset, "Tests.JsonEventPayloads/IssueAddressedReset_issue_labeled_needs-author-feedack.json", RuleState.On)]

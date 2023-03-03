@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.CloseAddressedIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.On)]
         [TestCase(RulesConstants.CloseAddressedIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.Off)]
         public async Task TestCloseAddressedIssues(string rule, string payloadFile, RuleState ruleState)
@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.CloseStaleIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.On)]
         [TestCase(RulesConstants.CloseStaleIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.Off)]
         public async Task TestCloseStaleIssues(string rule, string payloadFile, RuleState ruleState)
@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.CloseStalePullRequests, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.On)]
         [TestCase(RulesConstants.CloseStalePullRequests, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.Off)]
         public async Task TestCloseStalePullRequests(string rule, string payloadFile, RuleState ruleState)
@@ -158,7 +158,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.IdentifyStalePullRequests, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.On)]
         [TestCase(RulesConstants.IdentifyStalePullRequests, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.Off)]
         public async Task TestIdentifyStalePullRequests(string rule, string payloadFile, RuleState ruleState)
@@ -203,7 +203,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.IdentifyStaleIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.On)]
         [TestCase(RulesConstants.IdentifyStaleIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.Off)]
         public async Task TestIdentifyStaleIssues(string rule, string payloadFile, RuleState ruleState)
@@ -247,7 +247,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        [Category("static")]
         [TestCase(RulesConstants.LockClosedIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.On)]
         [TestCase(RulesConstants.LockClosedIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.Off)]
         public async Task TestLockClosedIssues(string rule, string payloadFile, RuleState ruleState)

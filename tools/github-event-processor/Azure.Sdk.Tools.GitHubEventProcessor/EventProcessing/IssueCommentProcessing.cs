@@ -9,6 +9,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
     public class IssueCommentProcessing
     {
 
+        /// <summary>
         /// Every rule will have it's own function that will be called here, the rule configuration will determine
         /// which rules will execute.
         /// </summary>

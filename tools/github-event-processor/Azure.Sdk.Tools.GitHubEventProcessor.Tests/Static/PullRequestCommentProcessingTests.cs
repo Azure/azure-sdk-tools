@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        /// <param name="commenterHasPermissionOrIsAuthor">Whether or not the commenter has write/admin permissions or is the PR author</param>
         [Category("static")]
         [TestCase(RulesConstants.ResetPullRequestActivity, "Tests.JsonEventPayloads/ResetPullRequestActivity_pr_comment_created_creator_is_author.json", RuleState.On, true)]
         [TestCase(RulesConstants.ResetPullRequestActivity, "Tests.JsonEventPayloads/ResetPullRequestActivity_pr_comment_created_creator_is_author.json", RuleState.Off, true)]
@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
+        /// <param name="commenterHasPermissionOrIsAuthor">Whether or not the commenter has write/admin permissions or is the PR author</param>
         [Category("static")]
         [TestCase(RulesConstants.ReopenPullRequest, "Tests.JsonEventPayloads/ReopenPullRequest_pr_comment_created_creator_is_author.json", RuleState.On, true)]
         [TestCase(RulesConstants.ReopenPullRequest, "Tests.JsonEventPayloads/ReopenPullRequest_pr_comment_created_creator_is_author.json", RuleState.Off, true)]

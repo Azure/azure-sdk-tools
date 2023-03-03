@@ -11,7 +11,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
     public class PullRequestReviewProcessing
     {
         /// <summary>
-        /// PullRequest rules can be found on the gist, https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#pull-request-rules
         /// Every rule will have it's own function that will be called here, the rule configuration will determine
         /// which rules will execute.
         /// </summary>
@@ -26,7 +25,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Reset Pull Request Activity https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-pull-request-activity
+        /// Reset Pull Request Activity
         /// See Common_ResetPullRequestActivity function for details
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>

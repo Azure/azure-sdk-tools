@@ -11,7 +11,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
     public class PullRequestProcessing
     {
         /// <summary>
-        /// PullRequest rules can be found on the gist, https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#pull-request-rules
         /// Every rule will have it's own function that will be called here, the rule configuration will determine
         /// which rules will execute.
         /// </summary>
@@ -29,7 +28,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
 
         /// <summary>
-        /// Pull Request Triage https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#pull-request-triage
+        /// Pull Request Triage
         /// Trigger: pull request opened
         /// Conditions: Pull request has no labels
         /// Resulting Action: 
@@ -78,7 +77,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Reset Pull Request Activity https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-pull-request-activity
+        /// Reset Pull Request Activity
         /// See Common_ResetPullRequestActivity function for details
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
@@ -94,7 +93,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Reset Pull Request Activity https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-pull-request-activity
+        /// Reset Pull Request Activity
         /// This action has triggers from 3 different events: pull_request and pull_request_review and issue_comment
         /// Note: issue_comment, had to be a different function. While the issue_comment does have a PullRequest on
         /// the issue, it's not a complete PullRequest like what comes in with a pull_request or pull_request_review event.
@@ -165,7 +164,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Reset auto-merge approvals on untrusted changes https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-auto-merge-approvals-on-untrusted-changes
+        /// Reset auto-merge approvals on untrusted changes
         /// Trigger: pull request synchronized
         /// Conditions:
         ///     Pull request is open

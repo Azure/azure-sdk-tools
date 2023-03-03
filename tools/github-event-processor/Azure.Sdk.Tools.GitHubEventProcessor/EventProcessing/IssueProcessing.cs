@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         // 3. If using an IssueUpdate, it'll be a ref parameter (if non-async), otherwise the funtion will
         //    return an updated IssueUpdate
         /// <summary>
-        /// Initial Issue Triage https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#initial-issue-triage
+        /// Initial Issue Triage
         /// Trigger: issue opened
         /// Conditions: Issue has no labels
         ///             Issue has no assignee
@@ -151,7 +151,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Manual Issue Triage https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#manual-issue-triage
+        /// Manual Issue Triage
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Issue has "needs-triage" label
@@ -180,7 +180,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Service Attention https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#service-attention
+        /// Service Attention
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Label being added is "Service Attention"
@@ -224,7 +224,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// CXP Attention https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#cxp-attention
+        /// CXP Attention
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Label being added is "CXP Attention"
@@ -255,7 +255,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Manual Triage After External Assignment https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#manual-triage-after-external-assignment
+        /// Manual Triage After External Assignment
         /// Trigger: issue unlabeled
         /// Conditions: Issue is open
         ///             Has "customer-reported" label
@@ -284,7 +284,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Reset Issue Activity https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#reset-issue-activity
+        /// Reset Issue Activity
         /// For issue, the trigger is Edited or Reopened
         /// See Common_ResetIssueActivity comments
         /// </summary>
@@ -327,7 +327,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Require Attention For Non Milestone https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#require-attention-for-non-milestone
+        /// Require Attention For Non Milestone
         /// Trigger: issue labeled/unlabeled
         /// Conditions: Issue is open
         ///             Issue has label "customer-reported"
@@ -364,7 +364,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Author Feedback Needed https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#author-feedback-needed
+        /// Author Feedback Needed
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Label added is "needs-author-feedback"
@@ -399,7 +399,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Issue Addressed https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#issue-addressed
+        /// Issue Addressed
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Label added is "issue-addressed"
@@ -446,7 +446,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Issue Addressed Reset https://gist.github.com/jsquire/cfff24f50da0d5906829c5b3de661a84#issue-addressed-reset
+        /// Issue Addressed Reset
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Issue has label "issue-addressed"

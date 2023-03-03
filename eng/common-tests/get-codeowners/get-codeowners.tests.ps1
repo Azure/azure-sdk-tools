@@ -40,7 +40,11 @@ Describe "Get Codeowners" -Tag "UnitTest" {
         expectedOwners = @("2star")
       }      
     ) {
-      $azSdkToolsCodeowners = (Resolve-Path $codeownersPath)
-      TestGetCodeowners -targetPath $targetPath -codeownersFileLocation $azSdkToolsCodeowners -includeNonUserAliases $true -expectedOwners $expectedOwners
+      $resolvedCodeownersPath = (Resolve-Path $codeownersPath)
+      TestGetCodeowners `
+        -targetPath $targetPath `
+        -codeownersFileLocation $resolvedCodeownersPath `
+        -includeNonUserAliases $true `
+        -expectedOwners $expectedOwners
     }
 }

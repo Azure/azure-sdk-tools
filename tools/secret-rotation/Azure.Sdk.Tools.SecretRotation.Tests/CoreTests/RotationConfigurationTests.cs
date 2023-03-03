@@ -7,39 +7,144 @@ namespace Azure.Sdk.Tools.SecretRotation.Tests.CoreTests;
 public class RotationConfigurationTests
 {
     [Test]
-    public void LoadFrom_MissingFile_ThrowsException()
+    public void From_MissingFile_ThrowsException()
     {
-        string missingPath = TestFiles.ResolvePath("TestConfigurations/missing.json");
-        var storeFactories = new Dictionary<string, Func<StoreConfiguration, SecretStore>>();
+        string configRoot = TestFiles.ResolvePath("TestConfigurations/Valid");
+        Dictionary<string, Func<StoreConfiguration, SecretStore>> storeFactories = new ();
+        string[] names = { "does-not-match-anything" };
+        string[] tags = { };
 
-        Assert.Throws<RotationConfigurationException>(() => RotationConfiguration.From(missingPath, storeFactories));
+        Assert.Throws<RotationConfigurationException>(() => RotationConfiguration
+            .From(names, tags, configRoot, storeFactories));
     }
 
     [Test]
-    public void LoadFrom_InvalidPath_ThrowsException()
+    public void From_MissingTags_ThrowsException()
     {
-        string invalidPath = @"&invalid:path?";
-        var storeFactories = new Dictionary<string, Func<StoreConfiguration, SecretStore>>();
+        string configRoot = TestFiles.ResolvePath("TestConfigurations/Valid");
+        Dictionary<string, Func<StoreConfiguration, SecretStore>> storeFactories = new();
+        string[] names = { };
+        string[] tags = { "does-not-match-anything" };
 
-        Assert.Throws<RotationConfigurationException>(() => RotationConfiguration.From(invalidPath, storeFactories));
+        Assert.Throws<RotationConfigurationException>(() => RotationConfiguration
+            .From(names, tags, configRoot, storeFactories));
     }
 
     [Test]
-    public void LoadFrom_ValidPath_ReturnConfiguration()
+    public void From_InvalidConfigPath_ThrowsException()
     {
-        string validPath = TestFiles.ResolvePath("TestConfigurations/Valid/random-string.json");
-        var storeFactories = new Dictionary<string, Func<StoreConfiguration, SecretStore>>();
+        string configRoot = "&invalid:path?";
+        Dictionary<string, Func<StoreConfiguration, SecretStore>> storeFactories = new();
+        string[] names = { };
+        string[] tags = { };
+
+        Assert.Throws<RotationConfigurationException>(() => RotationConfiguration
+            .From(names, tags, configRoot, storeFactories));
+    }
+
+    [Test]
+    public void From_ValidPath_ReturnConfiguration()
+    {
+        string configRoot = TestFiles.ResolvePath("TestConfigurations/Valid");
+        Dictionary<string, Func<StoreConfiguration, SecretStore>> storeFactories = new();
+        string[] names = { "random-string" };
+        string[] tags = { };
 
         // Act
-        RotationConfiguration configuration = RotationConfiguration.From(validPath, storeFactories);
+        RotationConfiguration configuration = RotationConfiguration.From(names, tags, configRoot, storeFactories);
 
         Assert.NotNull(configuration);
     }
 
     [Test]
-    public void GetPlan_ValidConfiguration_ReturnsPlan()
+    public void From_NoNamesOrTags_LoadsAllConfigs()
     {
-        string configurationPath = TestFiles.ResolvePath("TestConfigurations/Valid/random-string.json");
+        string configRoot = TestFiles.ResolvePath("TestConfigurations/TagMatching");
+        Dictionary<string, Func<StoreConfiguration, SecretStore>> storeFactories = new();
+        string[] names = { };
+        string[] tags = { };
+
+        // Act
+        RotationConfiguration configuration = RotationConfiguration.From(names, tags, configRoot, storeFactories);
+
+        // Assert
+        string[] planNames = configuration.PlanConfigurations.Select(plan => plan.Name).ToArray();
+
+        Assert.That(planNames, Is.EquivalentTo(new[] { "one", "two", "three" , "four", "five", "six" }));
+    }
+
+    [Test]
+    public void From_Name_LoadsMatchingConfigs()
+    {
+        string configRoot = TestFiles.ResolvePath("TestConfigurations/TagMatching");
+        Dictionary<string, Func<StoreConfiguration, SecretStore>> storeFactories = new();
+        string[] names = { "five" };
+        string[] tags = { };
+
+        // Act
+        RotationConfiguration configuration = RotationConfiguration.From(names, tags, configRoot, storeFactories);
+
+        // Assert
+        string[] planNames = configuration.PlanConfigurations.Select(plan => plan.Name).ToArray();
+
+        Assert.That(planNames, Is.EquivalentTo(new[] { "five" }));
+    }
+
+    [Test]
+    public void From_Names_LoadsMatchingConfigs()
+    {
+        string configRoot = TestFiles.ResolvePath("TestConfigurations/TagMatching");
+        Dictionary<string, Func<StoreConfiguration, SecretStore>> storeFactories = new();
+        string[] names = { "five", "six" };
+        string[] tags = { };
+
+        // Act
+        RotationConfiguration configuration = RotationConfiguration.From(names, tags, configRoot, storeFactories);
+
+        // Assert
+        string[] planNames = configuration.PlanConfigurations.Select(plan => plan.Name).ToArray();
+
+        Assert.That(planNames, Is.EquivalentTo(new[] { "five", "six" }));
+    }
+
+    [Test]
+    public void From_Tags_LoadsMatchingConfigs()
+    {
+        string configRoot = TestFiles.ResolvePath("TestConfigurations/TagMatching");
+        Dictionary<string, Func<StoreConfiguration, SecretStore>> storeFactories = new();
+        string[] names = { };
+        string[] tags = { "even" };
+
+        // Act
+        RotationConfiguration configuration = RotationConfiguration.From(names, tags, configRoot, storeFactories);
+
+        // Assert
+        string[] planNames = configuration.PlanConfigurations.Select(plan => plan.Name).ToArray();
+
+        Assert.That(planNames, Is.EquivalentTo(new[] { "two", "four", "six" }));
+    }
+
+    [Test]
+    public void From_NameAndTags_LoadsMatchingConfigs()
+    {
+        string configRoot = TestFiles.ResolvePath("TestConfigurations/TagMatching");
+        Dictionary<string, Func<StoreConfiguration, SecretStore>> storeFactories = new();
+        string[] names = { "four" };
+        string[] tags = { "even" };
+
+        // Act
+        RotationConfiguration configuration = RotationConfiguration.From(names, tags, configRoot, storeFactories);
+
+        // Assert
+        string[] planNames = configuration.PlanConfigurations.Select(plan => plan.Name).ToArray();
+
+        Assert.That(planNames, Is.EquivalentTo(new[] { "four" }));
+    }
+
+    [Test]
+    public void GetAllRotationPlans_ValidConfiguration_ReturnsPlan()
+    {
+        string configRoot = TestFiles.ResolvePath("TestConfigurations/Valid");
 
         var storeFactories = new Dictionary<string, Func<StoreConfiguration, SecretStore>>
         {
@@ -47,11 +152,14 @@ public class RotationConfigurationTests
             ["Key Vault Secret"] = _ => Mock.Of<SecretStore>(x => x.CanWrite && x.CanRead)
         };
 
-        RotationConfiguration configuration = RotationConfiguration.From(configurationPath, storeFactories);
+        string[] names = { "random-string" };
+        string[] tags = { };
+
+        RotationConfiguration configuration = RotationConfiguration.From(names, tags, configRoot, storeFactories);
 
         // Act
-        RotationPlan? plan = configuration.GetRotationPlan("random-string", Mock.Of<ILogger>(), new TimeProvider());
+        IEnumerable<RotationPlan> plans = configuration.GetAllRotationPlans(Mock.Of<ILogger>(), new TimeProvider());
 
-        Assert.NotNull(plan);
+        Assert.AreEqual(1, plans.Count());
     }
 }

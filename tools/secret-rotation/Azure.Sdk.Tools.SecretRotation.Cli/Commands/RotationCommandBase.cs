@@ -15,16 +15,34 @@ namespace Azure.Sdk.Tools.SecretRotation.Cli.Commands;
 
 public abstract class RotationCommandBase : Command
 {
-    private readonly Option<string> configOption = new(new[] { "--config", "-c" }, "Configuration path")
+    private readonly Option<string[]> nameOption = new(new[] { "--name", "-n" })
     {
-        IsRequired = true, 
-        Arity = ArgumentArity.ExactlyOne
+        Arity = ArgumentArity.ZeroOrMore,
+        Description = "Name of the plan to rotate.",
     };
 
-    private readonly Option<bool> verboseOption = new(new[] { "--verbose", "-v" }, "Verbose output");
+    private readonly Option<string[]> tagsOption = new(new[] { "--tags", "-t" })
+    {
+        IsRequired = false,
+        Description = "Tags to filter the plans to rotate.",
+    };
 
+    private readonly Option<string> configOption = new(new[] { "--config", "-c" })
+    {
+        IsRequired = false,
+        Description = "Configuration root path. Defaults to current working directory.",
+    };
+
+    private readonly Option<bool> verboseOption = new(new[] { "--verbose", "-v" })
+    {
+        IsRequired = false,
+        Description = "Verbose output",
+    };
+    
     protected RotationCommandBase(string name, string description) : base(name, description)
     {
+        AddOption(this.nameOption);
+        AddOption(this.tagsOption);
         AddOption(this.configOption);
         AddOption(this.verboseOption);
         this.SetHandler(ParseAndHandleCommandAsync);
@@ -35,8 +53,16 @@ public abstract class RotationCommandBase : Command
 
     private async Task ParseAndHandleCommandAsync(InvocationContext invocationContext)
     {
-        string configPath = invocationContext.ParseResult.GetValueForOption(this.configOption)!;
+        string[] names = invocationContext.ParseResult.GetValueForOption(this.nameOption)
+            ?? Array.Empty<string>();
+
+        string[] tags = invocationContext.ParseResult.GetValueForOption(this.tagsOption)
+            ?? Array.Empty<string>();
+        
         bool verbose = invocationContext.ParseResult.GetValueForOption(this.verboseOption);
+
+        string configPath = invocationContext.ParseResult.GetValueForOption(this.configOption)
+            ?? Environment.CurrentDirectory;
 
         LogLevel logLevel = verbose ? LogLevel.Trace : LogLevel.Information;
 
@@ -56,7 +82,7 @@ public abstract class RotationCommandBase : Command
             GetDefaultSecretStoreFactories(tokenCredential, logger);
 
         // TODO: Pass a logger to RotationConfiguration so it can verbose log when reading from files.
-        RotationConfiguration rotationConfiguration = RotationConfiguration.From(configPath, secretStoreFactories);
+        RotationConfiguration rotationConfiguration = RotationConfiguration.From(names, tags, configPath, secretStoreFactories);
 
         await HandleCommandAsync(logger, rotationConfiguration, invocationContext);
     }

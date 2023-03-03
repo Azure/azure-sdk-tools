@@ -5,22 +5,16 @@ namespace Azure.Sdk.Tools.SecretRotation.Configuration;
 
 public class StoreConfiguration
 {
-    [JsonPropertyName("type")] 
     public string? Type { get; set; }
 
-    [JsonPropertyName("parameters")] 
     public JsonObject? Parameters { get; set; }
 
-    [JsonPropertyName("isOrigin")] 
     public bool IsOrigin { get; set; }
 
-    [JsonPropertyName("isPrimary")] 
     public bool IsPrimary { get; set; }
 
-    [JsonPropertyName("name")] 
     public string? Name { get; set; }
 
-    [JsonPropertyName("updateAfterPrimary")]
     public bool UpdateAfterPrimary { get; set; }
 
     public string ResolveStoreName(string configurationKey)

@@ -1,6 +1,9 @@
 # Release History
 
-## Version 0.3.5 (Unreleased)
+## Version 0.4.0 (03-06-2023)
+Update for rename of Cadl to TypeSpec.
+
+## Version 0.3.5 (02-10-2023)
 Support latest release of Cadl compiler.
 **BREAKING CHANGE**: Removed the `--namespace` emitter option.
 Added the `--service` emitter option to support filtering output for multi-service specs.

@@ -1,4 +1,4 @@
-import { createCadlLibrary, JSONSchemaType, paramMessage } from "@cadl-lang/compiler";
+import { createCadlLibrary, JSONSchemaType, paramMessage } from "@typespec/compiler";
 
 export interface ApiViewEmitterOptions {
   "output-file"?: string;
@@ -21,7 +21,7 @@ const ApiViewEmitterOptionsSchema: JSONSchemaType<ApiViewEmitterOptions> = {
 
 
 export const $lib = createCadlLibrary({
-  name: "@azure-tools/cadl-apiview",
+  name: "@azure-tools/typespec-apiview",
   diagnostics: {
     "no-services-found": {
       severity: "error",

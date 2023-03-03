@@ -1,5 +1,3 @@
-// See: https://cadlwebsite.z1.web.core.windows.net/docs/extending-cadl/emitters-basics
-
 import {
   EmitContext,
   emitFile,
@@ -12,8 +10,8 @@ import {
   projectProgram,
   resolvePath,
   Service,
-} from "@cadl-lang/compiler";
-import { buildVersionProjections, getVersion } from "@cadl-lang/versioning";
+} from "@typespec/compiler";
+import { buildVersionProjections, getVersion } from "@typespec/versioning";
 import path from "path";
 import { ApiView } from "./apiview.js";
 import { ApiViewEmitterOptions, reportDiagnostic } from "./lib.js";

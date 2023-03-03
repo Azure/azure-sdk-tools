@@ -26,7 +26,7 @@ import {
   Node,
   visitChildren,
   ScalarStatementNode,
-} from "@cadl-lang/compiler";
+} from "@typespec/compiler";
 
 export class NamespaceModel {
   kind = SyntaxKind.NamespaceStatement;
@@ -144,7 +144,7 @@ function inNamespace(node: Node, program: Program, namespace: Namespace): boolea
     switch (n.kind) {
       case SyntaxKind.NamespaceStatement:
         return program.checker.getTypeForNode(n) === namespace;
-      case SyntaxKind.CadlScript:
+      case SyntaxKind.TypeSpecScript:
         if (n.inScopeNamespaces.length > 0 && inNamespace(n.inScopeNamespaces[0], program, namespace)) {
           return true;
         }

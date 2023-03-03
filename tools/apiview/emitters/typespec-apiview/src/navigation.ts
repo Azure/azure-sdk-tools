@@ -11,7 +11,7 @@ import {
   SyntaxKind,
   UnionExpressionNode,
   UnionStatementNode,
-} from "@cadl-lang/compiler";
+} from "@typespec/compiler";
 import { ApiView, NamespaceStack } from "./apiview.js";
 import { NamespaceModel } from "./namespace-model.js";
 

@@ -35,7 +35,7 @@ describe("apiview: tests", () => {
 
   it("describes model", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Animal {
         species: string;
@@ -89,7 +89,7 @@ describe("apiview: tests", () => {
 
   it("describes scalar", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       scalar Password extends string;
 
@@ -116,7 +116,7 @@ describe("apiview: tests", () => {
 
   it("describes alias", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Animal {
         species: string;
@@ -142,7 +142,7 @@ describe("apiview: tests", () => {
 
   it("describes augment decorator", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Animal {
         species: string;
@@ -169,7 +169,7 @@ describe("apiview: tests", () => {
 
   it("describes templated model", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Thing<T> {
         property: T;
@@ -241,7 +241,7 @@ describe("apiview: tests", () => {
 
   it("describes enum", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
 
       enum SomeEnum {
@@ -284,7 +284,7 @@ describe("apiview: tests", () => {
 
   it("describes union", async () =>{
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       union MyUnion {
         cat: Cat,
@@ -335,7 +335,7 @@ describe("apiview: tests", () => {
 
   it("describes template operation", async () =>{
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model FooParams {
         a: string;
@@ -397,7 +397,7 @@ describe("apiview: tests", () => {
 
   it("describes operation with anonymous models", async () =>{
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       op SomeOp(
         param1: {
@@ -429,7 +429,7 @@ describe("apiview: tests", () => {
 
   it("describes interface", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       interface Foo {
         @get 
@@ -466,7 +466,7 @@ describe("apiview: tests", () => {
 
   it("describes string literals", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       @doc("Short string")
       model Foo {};

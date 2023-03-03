@@ -20,10 +20,10 @@ pr:
   paths:
     include:
       - tools/code-owners-parser
-      - eng/common/scripts/get-codeowners.ps1
+      - eng/common/scripts/get-codeowners
 
 extends:
   template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
   parameters:
-    TargetDirectory: eng/common-tests/
+    TargetDirectory: eng/common-tests/get-codeowners
     TargetTags: 'UnitTest'

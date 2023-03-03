@@ -1,7 +1,7 @@
 Import-Module Pester
 
 BeforeAll {
-    . $PSScriptRoot/../common/scripts/get-codeowners-functions.ps1
+  . $PSScriptRoot/../../common/scripts/get-codeowners/get-codeowners-functions.ps1
 
     $ToolVersion = "1.0.0-dev.20230214.3"
     $ToolPath = (Join-Path ([System.IO.Path]::GetTempPath()) "codeowners-tool")
@@ -33,15 +33,15 @@ BeforeAll {
     }
 }
 
-Describe "Retrieve Codeowners" -Tag "UnitTest" {
-    It "Should retrieve Codeowners" -TestCases @(
+Describe "Get Codeowners" -Tag "UnitTest" {
+    It "Should get Codeowners" -TestCases @(
       @{
-        codeownersPath = "$PSScriptRoot/../../.github/CODEOWNERS"; 
-        targetPath = "eng/common/scripts/get-codeowners.ps1"; 
+        codeownersPath = "$PSScriptRoot/../../../.github/CODEOWNERS"; 
+        targetPath = "eng/common/scripts/get-codeowners/get-codeowners.ps1"; 
         expectedOwners = @("konrad-jamrozik", "weshaggard", "benbp")
       },
       @{
-        codeownersPath = "$PSScriptRoot/../../tools/code-owners-parser/Azure.Sdk.Tools.RetrieveCodeOwners.Tests/TestData/glob_path_CODEOWNERS"; 
+        codeownersPath = "$PSScriptRoot/../../../tools/code-owners-parser/Azure.Sdk.Tools.RetrieveCodeOwners.Tests/TestData/test_CODEOWNERS"; 
         targetPath = "tools/code-owners-parser/Azure.Sdk.Tools.RetrieveCodeOwners.Tests/TestData/InputDir/a.txt"; 
         expectedOwners = @("2star")
       }      

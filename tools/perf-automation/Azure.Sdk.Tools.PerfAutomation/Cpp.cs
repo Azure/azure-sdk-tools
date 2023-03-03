@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -22,7 +23,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         private const string _buildDirectory = "build";
         private const string _vcpkgFile = "vcpkg.json";
-
         protected override Language Language => Language.Cpp;
 
         public override async Task<(string output, string error, object context)> SetupAsync(
@@ -49,15 +49,77 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 "cmake", $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",
                 buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
+            if (PrepFolders(buildDirectory, packageVersions))
+            {
+                Util.DeleteIfExists(buildDirectory);
+                Directory.CreateDirectory(buildDirectory);
+                // we messed with fodlers , need to reconfigure
+                await Util.RunAsync(
+                    "cmake", $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",
+                    buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+            }
+
             var result = await Util.RunAsync(
-                "cmake", $"--build . --parallel {Environment.ProcessorCount} {additionalBuildArguments} --target {project}",
-                buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+            "cmake", $"--build . --parallel {Environment.ProcessorCount} {additionalBuildArguments} --target {project}",
+            buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             // Find path to perf test executable
             var exeFileName = Util.IsWindows ? $"{project}.exe" : project;
             var exe = Directory.GetFiles(buildDirectory, exeFileName, SearchOption.AllDirectories).Single();
 
             return (result.StandardOutput, result.StandardError, exe);
+        }
+
+        private bool PrepFolders(string buildFolder,
+            IDictionary<string, string> packageVersions)
+        {
+            bool returnValue = false;
+
+            foreach (var packageVersion in packageVersions)
+            {
+                Version? version = null;
+                if (!Version.TryParse(packageVersion.Value, out version)) { continue; };
+
+                var vcpkgDirectory = buildFolder;
+
+                DirectoryInfo di = new DirectoryInfo(vcpkgDirectory);
+                var searchResults = di.GetDirectories("buildtrees", SearchOption.AllDirectories);
+
+                if (searchResults.Length == 0)
+                {
+                    Console.WriteLine("cannot find package for {0} {1}", packageVersion.Key, packageVersion.Value);
+                    continue;
+                }
+                try
+                {
+                    // get the buildtrees folder where vcpkg unpacks the packages it builds
+                    var directory = searchResults.First();
+                    // get the folder where the build for the package will take place
+                    var packagedirectory = directory.GetDirectories(packageVersion.Key).First();
+                    // we now need a string with the package name with the -cpp stripped 
+                    var packageSourceFolderName = packageVersion.Key.TrimEnd(new char[] { '-', 'c', 'p' });
+                    // get the final source folder for the package
+                    var sdkReplacementFolder = packagedirectory.GetDirectories(packageSourceFolderName, SearchOption.AllDirectories).First();
+                    // now that we have the code we will replace it in the target destination 
+
+                    // get teh root of everything
+                    var rootFolder = new DirectoryInfo(buildFolder).Parent;
+                    // get the sdk folder in the original source code
+                    var sdkRootFolder = rootFolder.GetDirectories("sdk").First();
+                    // get the fodler where the package resides in the original source code 
+                    var sdkOriginalFolder = sdkRootFolder.GetDirectories(packageSourceFolderName, SearchOption.AllDirectories).First();
+                    // delete the source 
+                    Directory.Delete(sdkOriginalFolder.FullName, true);
+                    // move the code from the target package to the source location
+                    Directory.Move(sdkReplacementFolder.FullName, sdkOriginalFolder.FullName);
+                    returnValue = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Cannot restore package {0} {1} due to exception : {2}", packageVersion.Key, packageVersion.Value, ex.ToString());
+                }
+            }
+            return returnValue;
         }
 
         public override async Task<IterationResult> RunAsync(
@@ -110,11 +172,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override async Task CleanupAsync(string project)
         {
-            var fullVcpkgPath = Path.Combine(WorkingDirectory, _vcpkgFile);
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
+
             Util.DeleteIfExists(buildDirectory);
-            //cleanup the vcpkg file
-            await Util.RunAsync("git", $"checkout -- {fullVcpkgPath}", WorkingDirectory);
+            //cleanup any touched file
+            await Util.RunAsync("git", $"checkout -- *", WorkingDirectory);
             return;
         }
 

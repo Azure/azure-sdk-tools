@@ -10,7 +10,6 @@
 /config/                         @azure/azure-sdk-eng
 /scripts/                        @azure/azure-sdk-eng
 /src/                            @azure/azure-sdk-eng
-/web/                            @azure/azure-sdk-eng
 
 ################
 # Automation

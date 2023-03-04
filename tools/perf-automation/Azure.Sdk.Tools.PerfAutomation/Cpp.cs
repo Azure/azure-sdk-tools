@@ -48,15 +48,20 @@ namespace Azure.Sdk.Tools.PerfAutomation
             await Util.RunAsync(
                 "cmake", $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",
                 buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
-
-            if (PrepFolders(buildDirectory, packageVersions))
+            try
             {
-                Util.DeleteIfExists(buildDirectory);
-                Directory.CreateDirectory(buildDirectory);
-                // we messed with fodlers , need to reconfigure
-                await Util.RunAsync(
-                    "cmake", $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",
-                    buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+                if (PrepFolders(buildDirectory, packageVersions))
+                {
+                    Util.DeleteIfExists(buildDirectory);
+                    Directory.CreateDirectory(buildDirectory);
+                    // we messed with fodlers , need to reconfigure
+                    await Util.RunAsync(
+                        "cmake", $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",
+                        buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+                }
+            }catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
             }
 
             var result = await Util.RunAsync(
@@ -96,10 +101,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     var directory = searchResults.First();
                     // get the folder where the build for the package will take place
                     var packagedirectory = directory.GetDirectories(packageVersion.Key).First();
+                    var srcFolder = packagedirectory.GetDirectories("src").First();
                     // we now need a string with the package name with the -cpp stripped 
                     var packageSourceFolderName = packageVersion.Key.TrimEnd(new char[] { '-', 'c', 'p' });
                     // get the final source folder for the package
-                    var sdkReplacementFolder = packagedirectory.GetDirectories(packageSourceFolderName, SearchOption.AllDirectories).First();
+                    var sdkReplacementFolder = srcFolder.GetDirectories(packageSourceFolderName, SearchOption.AllDirectories).First();
                     // now that we have the code we will replace it in the target destination 
 
                     // get teh root of everything

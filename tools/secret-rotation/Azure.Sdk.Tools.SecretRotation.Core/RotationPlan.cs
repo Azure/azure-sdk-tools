@@ -82,42 +82,57 @@ public class RotationPlan
 
     public async Task<RotationPlanStatus> GetStatusAsync()
     {
-        DateTimeOffset invocationTime = this.timeProvider.GetCurrentDateTimeOffset();
-
-        SecretState primaryStoreState = await PrimaryStore.GetCurrentStateAsync();
-
-        IEnumerable<SecretState> rotationArtifacts = await PrimaryStore.GetRotationArtifactsAsync();
-
-        var secondaryStoreStates = new List<SecretState>();
-
-        foreach (SecretStore secondaryStore in SecondaryStores)
+        try
         {
-            if (secondaryStore.CanRead)
+            DateTimeOffset invocationTime = this.timeProvider.GetCurrentDateTimeOffset();
+
+            SecretState primaryStoreState = await PrimaryStore.GetCurrentStateAsync();
+
+            IEnumerable<SecretState> rotationArtifacts = await PrimaryStore.GetRotationArtifactsAsync();
+
+            var secondaryStoreStates = new List<SecretState>();
+
+            foreach (SecretStore secondaryStore in SecondaryStores)
             {
-                secondaryStoreStates.Add(await secondaryStore.GetCurrentStateAsync());
+                if (secondaryStore.CanRead)
+                {
+                    secondaryStoreStates.Add(await secondaryStore.GetCurrentStateAsync());
+                }
             }
+
+            SecretState[] allStates = secondaryStoreStates.Prepend(primaryStoreState).ToArray();
+
+            DateTimeOffset thresholdDate = this.timeProvider.GetCurrentDateTimeOffset().Add(RotationThreshold);
+
+            DateTimeOffset? minExpirationDate = allStates.Where(x => x.ExpirationDate.HasValue).Min(x => x.ExpirationDate);
+
+            bool anyExpired = minExpirationDate == null || minExpirationDate <= invocationTime;
+
+            bool anyThresholdExpired = minExpirationDate <= thresholdDate;
+
+            bool anyRequireRevocation = rotationArtifacts.Any(state => state.RevokeAfterDate <= invocationTime);
+
+            var status = new RotationPlanStatus
+            {
+                ExpirationDate = minExpirationDate,
+                Expired = anyExpired,
+                ThresholdExpired = anyThresholdExpired,
+                RequiresRevocation = anyRequireRevocation,
+                PrimaryStoreState = primaryStoreState,
+                SecondaryStoreStates = secondaryStoreStates.ToArray()
+            };
+
+            return status;
         }
-
-        SecretState[] allStates = secondaryStoreStates.Prepend(primaryStoreState).ToArray();
-
-        bool anyExpired = allStates.Any(state => state.ExpirationDate <= invocationTime);
-
-        DateTimeOffset thresholdDate = this.timeProvider.GetCurrentDateTimeOffset().Add(RotationThreshold);
-
-        bool anyThresholdExpired = allStates.Any(state => state.ExpirationDate <= thresholdDate);
-
-        bool anyRequireRevocation = rotationArtifacts.Any(state => state.RevokeAfterDate <= invocationTime);
-
-        var status = new RotationPlanStatus
+        catch (RotationException ex)
         {
-            Expired = anyExpired,
-            ThresholdExpired = anyThresholdExpired,
-            RequiresRevocation = anyRequireRevocation,
-            PrimaryStoreState = primaryStoreState,
-            SecondaryStoreStates = secondaryStoreStates.ToArray()
-        };
+            var status = new RotationPlanStatus
+            {
+                Exception = ex
+            };
 
-        return status;
+            return status;
+        }
     }
 
     private async Task RotateAsync(string operationId, SecretState currentState, bool whatIf)

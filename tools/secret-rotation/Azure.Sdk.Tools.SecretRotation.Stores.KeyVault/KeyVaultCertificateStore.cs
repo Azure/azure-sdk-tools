@@ -41,8 +41,6 @@ public class KeyVaultCertificateStore : SecretStore
 
     public override bool CanAnnotate => true;
 
-    public override bool CanRevoke => true;
-
     public static Func<StoreConfiguration, SecretStore> GetSecretStoreFactory(TokenCredential credential,
         ILogger logger)
     {
@@ -72,7 +70,7 @@ public class KeyVaultCertificateStore : SecretStore
     {
         try
         {
-            this.logger.LogDebug("Getting certificate '{SecretName}' from vault '{VaultUri}'", this.certificateName,
+            this.logger.LogDebug("Getting certificate '{CertificateName}' from vault '{VaultUri}'", this.certificateName,
                 this.vaultUri);
             Response<KeyVaultCertificateWithPolicy>? response =
                 await this.certificateClient.GetCertificateAsync(this.certificateName);
@@ -84,7 +82,7 @@ public class KeyVaultCertificateStore : SecretStore
         }
         catch (RequestFailedException ex)
         {
-            return new SecretState { ExpirationDate = null, StatusCode = ex.Status, ErrorMessage = ex.Message };
+            throw new RequestFailedException(GetExceptionMessage(ex), ex);
         }
     }
 
@@ -157,31 +155,53 @@ public class KeyVaultCertificateStore : SecretStore
 
     public override async Task<IEnumerable<SecretState>> GetRotationArtifactsAsync()
     {
-        var results = new List<SecretState>();
-
-        await foreach (CertificateProperties? version in
-                       this.certificateClient.GetPropertiesOfCertificateVersionsAsync(this.certificateName))
+        try
         {
-            if (!version.Tags.TryGetValue("revokeAfter", out string? revokeAfterString))
+            var results = new List<SecretState>();
+
+            await foreach (CertificateProperties? version in
+                           this.certificateClient.GetPropertiesOfCertificateVersionsAsync(this.certificateName))
             {
-                continue;
+                if (!version.Tags.TryGetValue("revokeAfter", out string? revokeAfterString))
+                {
+                    continue;
+                }
+
+                if (!DateTimeOffset.TryParse(revokeAfterString, out DateTimeOffset revokeAfterDate))
+                {
+                    // TODO: Warning
+                    continue;
+                }
+
+                results.Add(new SecretState { Tags = version.Tags, RevokeAfterDate = revokeAfterDate });
             }
 
-            if (!DateTimeOffset.TryParse(revokeAfterString, out DateTimeOffset revokeAfterDate))
-            {
-                // TODO: Warning
-                continue;
-            }
-
-            results.Add(new SecretState { Tags = version.Tags, RevokeAfterDate = revokeAfterDate });
+            return results;
         }
-
-        return results;
+        catch (RequestFailedException ex)
+        {
+            throw new RotationException(GetExceptionMessage(ex), ex);
+        }
     }
 
-    public override Func<Task>? GetRevocationActionAsync(SecretState secretState, bool whatIf)
+    private string GetExceptionMessage(RequestFailedException exception)
     {
-        throw new NotImplementedException();
+        if (exception.Status == 403)
+        {
+            return $"Key vault request not authorized for vault '{this.vaultUri}'";
+        }
+
+        if (exception.Status == 404)
+        {
+            if (exception.Message.StartsWith($"A certificate with (name/id) "))
+            {
+                return $"Certificate '{this.certificateName}' not found in vault '{this.vaultUri}'";
+            }
+
+            return $"Vault {this.vaultUri} not found.";
+        }
+
+        return $"Key vault request failed with code {exception.Status}: {exception.Message}";
     }
 
     private class Parameters

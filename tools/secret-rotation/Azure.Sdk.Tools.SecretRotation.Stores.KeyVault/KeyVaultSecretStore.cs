@@ -29,7 +29,6 @@ public class KeyVaultSecretStore : SecretStore
         RegexOptions.IgnoreCase | RegexOptions.Compiled,
         TimeSpan.FromSeconds(5));
 
-    private readonly bool isPrimaryStore;
     private readonly ILogger logger;
     private readonly RevocationAction revocationAction;
 
@@ -41,13 +40,11 @@ public class KeyVaultSecretStore : SecretStore
         TokenCredential credential,
         Uri vaultUri,
         string secretName,
-        RevocationAction revocationAction,
-        bool isPrimaryStore)
+        RevocationAction revocationAction)
     {
         this.vaultUri = vaultUri;
         this.secretName = secretName;
         this.revocationAction = revocationAction;
-        this.isPrimaryStore = isPrimaryStore;
         this.logger = logger;
         this.secretClient = new SecretClient(vaultUri, credential);
     }
@@ -55,6 +52,7 @@ public class KeyVaultSecretStore : SecretStore
     public override bool CanRead => true;
     public override bool CanWrite => true;
     public override bool CanRevoke => true;
+    public override bool CanAnnotate => true;
 
     public static Func<StoreConfiguration, SecretStore> GetSecretStoreFactory(TokenCredential credential,
         ILogger logger)
@@ -83,8 +81,7 @@ public class KeyVaultSecretStore : SecretStore
                 credential,
                 vaultUri,
                 secretName,
-                revocationAction,
-                storeConfiguration.IsPrimary);
+                revocationAction);
         };
     }
 
@@ -184,9 +181,14 @@ public class KeyVaultSecretStore : SecretStore
 
         secret = await this.secretClient.SetSecretAsync(secret);
 
-        if (revokeAfterDate.HasValue && this.isPrimaryStore)
+        if (this.IsPrimary)
         {
-            await SetRevokeAfterForOldVersionsAsync(secret.Properties.Version, revokeAfterDate.Value);
+            secretValue.PrimaryState = secret;
+
+            if (revokeAfterDate.HasValue)
+            {
+                await SetRevokeAfterForOldVersionsAsync(secret.Properties.Version, revokeAfterDate.Value);
+            }
         }
     }
 
@@ -236,6 +238,30 @@ public class KeyVaultSecretStore : SecretStore
                 await this.secretClient.UpdateSecretPropertiesAsync(version);
             }
         };
+    }
+
+    public override async Task MarkRotationCompleteAsync(SecretValue secretValue, DateTimeOffset? revokeAfterDate, bool whatIf)
+    {
+        if (whatIf)
+        {
+            this.logger.LogInformation(
+                "WHAT IF: Add tag 'rotation-complete' to secret '{CertificateName}' in vault '{Vault}'",
+                this.secretName, this.vaultUri);
+            return;
+        }
+
+        if (secretValue.PrimaryState is not KeyVaultSecret secret)
+        {
+            throw new RotationException(
+                "The PrimaryState value passed to KeyVaultSecretStore was not of type KeyVaultSecret");
+        }
+
+        this.logger.LogInformation("Adding tag 'rotation-complete' to certificate '{CertificateName}' in vault '{Vault}'",
+            this.secretName, this.vaultUri);
+
+        secret.Properties.Tags.Add("rotation-complete", "true");
+
+        await this.secretClient.UpdateSecretPropertiesAsync(secret.Properties);
     }
 
     private static bool TryGetRevokeAfterDate(IDictionary<string, string> tags, out DateTimeOffset value)

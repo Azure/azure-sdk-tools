@@ -24,12 +24,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
+            string profilerOptions,
             object context);
 
         public abstract Task<(string output, string error, object context)> SetupAsync(
             string project,
             string languageVersion,
             string primaryPackage,
-            IDictionary<string, string> packageVersions);
+            IDictionary<string, string> packageVersions,
+            bool debug);
     }
 }

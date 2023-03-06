@@ -1,6 +1,8 @@
 {
+  "$schema": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/schemas/secretrotation/1.0.0/schema.json",
   "rotationThreshold": "9.00:00:00",
   "rotationPeriod": "12.00:00:00",
+  "tags": [ "random" ],
   "stores": [
     {
       "type": "Random String",

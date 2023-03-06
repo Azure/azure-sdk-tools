@@ -21,6 +21,14 @@
             "description": "Time span indicating when the old secret values should be revoked after rotation",
             "type": "string"
         },
+        "tags": {
+            "description": "Plan tags",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "uniqueItems": true
+        },
         "stores": {
             "description": "The stores participating in the rotation plan",
             "type": "array",

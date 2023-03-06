@@ -80,6 +80,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
             [Option("profile", HelpText = "Enables capture of profiling data")]
             public bool Profile { get; set; }
 
+            [Option("profilerOpt", HelpText = "Provides additional profiler parameters")]
+            public string ProfilerOptions { get; set; }
+
             [Option("repo-root", Required = true, HelpText = "Path to root of repository in which to run tests")]
             public string RepoRoot { get; set; }
 
@@ -131,7 +134,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         private static async Task Run(Options options)
         {
-            if (options.Language == Language.JS) {
+            if (options.Language == Language.JS)
+            {
                 // JS is async-only
                 options.NoSync = true;
             }
@@ -266,7 +270,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 try
                 {
                     (setupOutput, setupError, context) = await _languages[language].SetupAsync(
-                        project, languageVersion, primaryPackage, packageVersions);
+                        project, languageVersion, primaryPackage, packageVersions, options.Debug);
                 }
                 catch (Exception e)
                 {
@@ -343,7 +347,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 try
                                 {
                                     Console.WriteLine($"RunAsync({project}, {languageVersion}, " +
-                                        $"{test.Class}, {allArguments}, {context}, {options.Profile})");
+                                        $"{test.Class}, {allArguments}, {context}, {options.Profile}, {options.ProfilerOptions})");
                                     Console.WriteLine();
 
                                     iterationResult = await _languages[language].RunAsync(
@@ -354,6 +358,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         test.Class,
                                         allArguments,
                                         options.Profile,
+                                        options.ProfilerOptions,
                                         context);
                                 }
                                 catch (Exception e)

@@ -12,12 +12,15 @@ namespace Azure.Sdk.Tools.SecretRotation.Stores.KeyVault;
 public class KeyVaultCertificateStore : SecretStore
 {
     public const string MappingKey = "Key Vault Certificate";
+    private const string RevokeAfterTag = "RevokeAfter";
+    private const string OperationIdTag = "OperationId";
+    private const string RevokedTag = "Revoked";
 
     private static readonly Regex uriRegex = new(
         @"^(?<VaultUri>https://.+?)/certificates/(?<CertificateName>[^/]+)$",
         RegexOptions.IgnoreCase | RegexOptions.Compiled,
         TimeSpan.FromSeconds(5));
-
+        
     private readonly CertificateClient certificateClient;
     private readonly string certificateName;
     private readonly ILogger logger;
@@ -79,6 +82,10 @@ public class KeyVaultCertificateStore : SecretStore
             {
                 ExpirationDate = response.Value.Properties.ExpiresOn, StatusCode = response.GetRawResponse().Status
             };
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return new SecretState { ErrorMessage = GetExceptionMessage(ex) };
         }
         catch (RequestFailedException ex)
         {
@@ -155,11 +162,11 @@ public class KeyVaultCertificateStore : SecretStore
 
     public override async Task<IEnumerable<SecretState>> GetRotationArtifactsAsync()
     {
+        var results = new List<SecretState>();
+
         try
         {
-            var results = new List<SecretState>();
-
-            await foreach (CertificateProperties? version in
+            await foreach (CertificateProperties version in
                            this.certificateClient.GetPropertiesOfCertificateVersionsAsync(this.certificateName))
             {
                 if (!version.Tags.TryGetValue("revokeAfter", out string? revokeAfterString))
@@ -173,9 +180,21 @@ public class KeyVaultCertificateStore : SecretStore
                     continue;
                 }
 
-                results.Add(new SecretState { Tags = version.Tags, RevokeAfterDate = revokeAfterDate });
+                version.Tags.TryGetValue(OperationIdTag, out string? operationId);
+                
+                results.Add(new SecretState
+                {
+                    Id = version.Id.ToString(),
+                    OperationId = operationId,
+                    Tags = version.Tags, 
+                    RevokeAfterDate = revokeAfterDate,
+                });
             }
 
+            return results;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
             return results;
         }
         catch (RequestFailedException ex)

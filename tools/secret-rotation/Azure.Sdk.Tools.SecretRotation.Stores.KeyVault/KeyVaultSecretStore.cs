@@ -107,6 +107,10 @@ public class KeyVaultSecretStore : SecretStore
 
             return result;
         }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return new SecretState { ErrorMessage = GetExceptionMessage(ex) };
+        }
         catch (RequestFailedException ex)
         {
             throw new RotationException(GetExceptionMessage(ex), ex);
@@ -115,9 +119,10 @@ public class KeyVaultSecretStore : SecretStore
 
     public override async Task<IEnumerable<SecretState>> GetRotationArtifactsAsync()
     {
+        var results = new List<SecretState>();
+        
         try
         {
-            var results = new List<SecretState>();
 
             this.logger.LogDebug("Getting all version metadata for secret '{SecretName}' from vault '{VaultUri}'", this.secretName,
                 this.vaultUri);
@@ -149,6 +154,10 @@ public class KeyVaultSecretStore : SecretStore
                 });
             }
 
+            return results;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
             return results;
         }
         catch (RequestFailedException ex)

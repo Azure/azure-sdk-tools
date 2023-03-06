@@ -1,5 +1,6 @@
 import { createTestHost, createTestWrapper } from "@typespec/compiler/testing";
 import { RestTestLibrary } from "@typespec/rest/testing";
+import { HttpTestLibrary } from "@typespec/http/testing";
 import { VersioningTestLibrary } from "@typespec/versioning/testing";
 import { AzureCoreTestLibrary } from "@azure-tools/typespec-azure-core/testing";
 import { ApiViewTestLibrary } from "../src/testing/index.js";
@@ -11,7 +12,7 @@ import { strictEqual } from "assert";
 
 export async function createApiViewTestHost() {
   return createTestHost({
-    libraries: [ApiViewTestLibrary, RestTestLibrary, VersioningTestLibrary, AzureCoreTestLibrary],
+    libraries: [ApiViewTestLibrary, RestTestLibrary, HttpTestLibrary, VersioningTestLibrary, AzureCoreTestLibrary],
   });
 }
 
@@ -67,7 +68,7 @@ export function apiViewText(apiview: ApiViewDocument): string[] {
         vals.push("\n");
         break;
       default:
-        if (token.Value != undefined) {
+        if (token.Value !== undefined) {
           vals.push(token.Value);
         }
         break;
@@ -90,7 +91,7 @@ function trimLines(lines: string[]): string[] {
   const trimmed: string[] = [];
   const indent = getIndex(lines);
   for (const line of lines) {
-    if (line.trim() == '') {
+    if (line.trim() === '') {
       // skip blank lines
       continue;
     } else {

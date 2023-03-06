@@ -1,7 +1,5 @@
-import { Diagnostic, logDiagnostics, resolvePath } from "@typespec/compiler";
-import { expectDiagnosticEmpty, expectDiagnostics } from "@typespec/compiler/testing";
-import { strictEqual } from "assert";
-import { apiViewFor, apiViewText, compare, createApiViewTestRunner, diagnosticsFor } from "./test-host.js";
+import { expectDiagnostics } from "@typespec/compiler/testing";
+import { apiViewFor, apiViewText, compare, diagnosticsFor } from "./test-host.js";
 
 describe("apiview-options: tests", () => {
 

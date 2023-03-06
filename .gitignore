@@ -500,6 +500,8 @@ tools/oav-traffic-converter/build/
 src/swift/*.xcworkspace/xcuserdata/
 src/swift/**/*.xcodeproj/xcuserdata/
 
-# Cadl APIView
-cadl-output/
+# TypeSpec APIView
+tools/apiview/emitters/cadl-apiview/cadl-output/
 tools/apiview/emitters/cadl-apiview/temp/
+tools/apiview/emitters/typespec-apiview/tsp-output/
+tools/apiview/emitters/typespec-apiview/temp/

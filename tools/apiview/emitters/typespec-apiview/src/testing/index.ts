@@ -1,8 +1,8 @@
 import { resolvePath } from "@typespec/compiler";
-import { CadlTestLibrary } from "@typespec/compiler/testing";
+import { TypeSpecTestLibrary } from "@typespec/compiler/testing";
 import { fileURLToPath } from "url";
 
-export const ApiViewTestLibrary: CadlTestLibrary = {
+export const ApiViewTestLibrary: TypeSpecTestLibrary = {
   name: "@azure-tools/typespec-apiview",
   packageRoot: resolvePath(fileURLToPath(import.meta.url), "../../../../"),
   files: [

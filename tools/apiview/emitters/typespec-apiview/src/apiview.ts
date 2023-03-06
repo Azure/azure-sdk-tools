@@ -414,7 +414,7 @@ export class ApiView {
       case SyntaxKind.BlockComment:
         throw new Error(`Case "BlockComment" not implemented`);
       case SyntaxKind.TypeSpecScript:
-        throw new Error(`Case "CadlScript" not implemented`);
+        throw new Error(`Case "TypeSpecScript" not implemented`);
       case SyntaxKind.DecoratorExpression:
         obj = node as DecoratorExpressionNode;
         this.punctuation("@", false, false);
@@ -997,7 +997,7 @@ export class ApiView {
     }
   }
 
-  private renderPunctuation(punc: string) {
+  private renderPunctuation(punctuation: string) {
     const last = this.tokens.pop()!;
     if (last?.Kind === ApiViewTokenKind.Whitespace) {
       // hacky workaround to ensure comma is after trailing bracket for expanded anonymous models
@@ -1005,7 +1005,7 @@ export class ApiView {
     } else {
       this.tokens.push(last);
     }
-    this.punctuation(punc, false, true);
+    this.punctuation(punctuation, false, true);
   }
 
   resolveMissingTypeReferences() {

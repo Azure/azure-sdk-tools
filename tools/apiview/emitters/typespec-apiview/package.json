@@ -33,7 +33,7 @@
       ]
     }
   },
-  "typespecMain": "dist/src/index.js",
+  "tspMain": "dist/src/index.js",
   "engines": {
     "node": ">=16.0.0"
   },
@@ -57,6 +57,7 @@
     "@azure-tools/typespec-azure-core": "0.27.0",
     "@azure-tools/typespec-autorest": "0.27.0",
     "@typespec/compiler": "0.41.0",
+    "@typespec/http": "0.41.0",
     "@typespec/rest": "0.41.0",
     "@typespec/versioning": "0.41.0"
   },

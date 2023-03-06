@@ -58,6 +58,7 @@ words:
   - vswhere
   - westus
   - xplat
+  - deindent
 ignorePaths:
   - "**/node_modules/**"
   - "**/dist/**"

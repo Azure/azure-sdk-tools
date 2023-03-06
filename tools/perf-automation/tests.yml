@@ -286,6 +286,12 @@ stages:
         - template: /eng/pipelines/templates/steps/vcpkg-clone.yml@azure-sdk-for-cpp
           parameters:
             RepoOwner: Microsoft
+        - ${{ if parameters.Profile }}:
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: sudo apt install valgrind -y
+              displayName: Install valgrind
         ServiceDirectory: ${{ parameters.CppServiceDirectory }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}

@@ -1,9 +1,11 @@
 ﻿using Azure.Sdk.Tools.PerfAutomation.Models;
+using Microsoft.Crank.Agent;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -20,44 +22,108 @@ namespace Azure.Sdk.Tools.PerfAutomation
     // 5. ./vcpkg install curl LibXml2 openssl
     public class Cpp : LanguageBase
     {
+        public class UtilEventArgs : EventArgs
+        {
+            public UtilEventArgs(string methodName, string[] methodParams, bool isWindows)
+            {
+                this.MethodName = methodName;
+                this.Params = methodParams;
+                this.IsWindows = isWindows;
+            }
+
+            public string MethodName { get; set; }
+            public string[] Params { get; set; } = null;
+            public bool IsWindows { get; set; }
+        }
+
         private const string _buildDirectory = "build";
         private const string _vcpkgFile = "vcpkg.json";
-
+        public bool IsTest { get; set; } = false;
+        public bool IsWindows { get; set; } = Util.IsWindows;
+        public int ProcessorCount { get; set; } = Environment.ProcessorCount;
         protected override Language Language => Language.Cpp;
+        public event EventHandler<UtilEventArgs> UtilMethodCall;
 
         public override async Task<(string output, string error, object context)> SetupAsync(
             string project,
             string languageVersion,
             string primaryPackage,
-            IDictionary<string, string> packageVersions)
+            IDictionary<string, string> packageVersions,
+            bool debug)
         {
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
 
-            Util.DeleteIfExists(buildDirectory);
-            Directory.CreateDirectory(buildDirectory);
+            if (IsTest)
+            {
+                UtilMethodCall(this, new UtilEventArgs("DeleteIfExists", new string[] { buildDirectory }, false));
+                UtilMethodCall(this, new UtilEventArgs("CreateDirectory", new string[] { buildDirectory }, false));
+            }
+            else
+            {
+                Util.DeleteIfExists(buildDirectory);
+                Directory.CreateDirectory(buildDirectory);
+            }
 
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
-
-            await UpdatePackageVersions(packageVersions);
+            if (IsTest)
+            {
+                UtilMethodCall(this, new UtilEventArgs("UpdatePackageVersions", new string[] { "packageVersions" }, false));
+            }
+            else
+            {
+                await UpdatePackageVersions(packageVersions);
+            }
 
             // Windows and Linux require different arguments to build Release config
-            var additionalGenerateArguments = Util.IsWindows ? "-DDISABLE_AZURE_CORE_OPENTELEMETRY=ON" : "-DCMAKE_BUILD_TYPE=Release";
-            var additionalBuildArguments = Util.IsWindows ? "--config MinSizeRel" : String.Empty;
+            var additionalGenerateArguments = IsWindows ? "-DDISABLE_AZURE_CORE_OPENTELEMETRY=ON" : (debug ? "-DCMAKE_BUILD_TYPE=Debug" : "-DCMAKE_BUILD_TYPE=Release");
+            var additionalBuildArguments = IsWindows ? (debug ? "--config Debug" : "--config MinSizeRel") : String.Empty;
 
-            await Util.RunAsync(
-                "cmake", $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",
-                buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+            if (IsTest)
+            {
+                outputBuilder.Append("output");
+                errorBuilder.Append("error");
+                UtilMethodCall(this, new UtilEventArgs(
+                    "RunAsync1",
+                    new string[]
+                    {
+                        "cmake",
+                        $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",
+                        buildDirectory,
+                        outputBuilder.ToString(),
+                        errorBuilder.ToString()
+                    },
+                    IsWindows));
 
-            var result = await Util.RunAsync(
-                "cmake", $"--build . --parallel {Environment.ProcessorCount} {additionalBuildArguments} --target {project}",
-                buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+                UtilMethodCall(this, new UtilEventArgs(
+                    "RunAsync2",
+                    new string[]
+                    {
+                        "cmake",
+                        $"--build . --parallel {this.ProcessorCount} {additionalBuildArguments} --target {project}",
+                        buildDirectory,
+                        outputBuilder.ToString(),
+                        errorBuilder.ToString()
+                    },
+                    IsWindows));
+                return (outputBuilder.ToString(), errorBuilder.ToString(), "exe");
+            }
+            else
+            {
+                await Util.RunAsync(
+                    "cmake", $"-DBUILD_TESTING=ON -DBUILD_PERFORMANCE_TESTS=ON {additionalGenerateArguments} ..",
+                    buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
-            // Find path to perf test executable
-            var exeFileName = Util.IsWindows ? $"{project}.exe" : project;
-            var exe = Directory.GetFiles(buildDirectory, exeFileName, SearchOption.AllDirectories).Single();
+                var result = await Util.RunAsync(
+                    "cmake", $"--build . --parallel {Environment.ProcessorCount} {additionalBuildArguments} --target {project}",
+                    buildDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
-            return (result.StandardOutput, result.StandardError, exe);
+                // Find path to perf test executable
+                var exeFileName = Util.IsWindows ? $"{project}.exe" : project;
+                var exe = Directory.GetFiles(buildDirectory, exeFileName, SearchOption.AllDirectories).Single();
+
+                return (result.StandardOutput, result.StandardError, exe);
+            }
         }
 
         public override async Task<IterationResult> RunAsync(
@@ -68,12 +134,45 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
+            string profilerOptions,
             object context)
         {
-            var perfExe = (string)context;
+            string perfExe = (string)context;
+            var profiledExe = perfExe;
 
-            var result = await Util.RunAsync(perfExe, $"{testName} {arguments}", WorkingDirectory);
+            if (profile)
+            {
+                if (IsWindows)
+                {
+                    throw new InvalidOperationException("Profiling available on linux alone at the moment");
+                }
 
+                profiledExe = perfExe;
+                perfExe = "valgrind";
+
+            }
+
+            string finalParams = $"{testName} {arguments}";
+            if (profile)
+            {
+                finalParams = $"{profilerOptions} {profiledExe} {finalParams}";
+            }
+            ProcessResult result = new ProcessResult(0, String.Empty, String.Empty);
+            if (IsTest)
+            {
+                UtilMethodCall(this, new UtilEventArgs(
+                    "RunAsync",
+                    new string[] {
+                        perfExe,
+                        finalParams,
+                        WorkingDirectory},
+                    IsWindows));
+                result = new ProcessResult(0, "output (2.0 ops/s, 1.0 s/op)", "error");
+            }
+            else
+            {
+                result = await Util.RunAsync(perfExe, finalParams, WorkingDirectory);
+            }
             IDictionary<string, string> reportedVersions = new Dictionary<string, string>();
 
             // Completed 54 operations in a weighted-average of 1s (52.766473 ops/s, 0.0189514 s/op)
@@ -113,7 +212,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var fullVcpkgPath = Path.Combine(WorkingDirectory, _vcpkgFile);
             var buildDirectory = Path.Combine(WorkingDirectory, _buildDirectory);
             Util.DeleteIfExists(buildDirectory);
-            //cleanup the vcpkg file
+            //cleanup the vcpkg file by restoring from git
             await Util.RunAsync("git", $"checkout -- {fullVcpkgPath}", WorkingDirectory);
             return;
         }

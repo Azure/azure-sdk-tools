@@ -6,10 +6,8 @@
 /doc/                            @azure/azure-sdk-eng
 # Note: directories below are scheduled to be reorganized.
 # For details, see: https://github.com/Azure/azure-sdk-tools/issues/5056
-/config/                         @azure/azure-sdk-eng
 /scripts/                        @azure/azure-sdk-eng
 /src/                            @azure/azure-sdk-eng
-/web/                            @azure/azure-sdk-eng
 
 ################
 # Automation

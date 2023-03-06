@@ -8,11 +8,11 @@ This python script inserts a pixel image whos _name corresponds to the location 
 ### Before Running, Some Details
 This script was built and tested on Python 3.6/
 
-[This project](../../../web/pixel-server/README.md) is the code involved for counting the number of impressions per rendered readme view. Update it however you want to store the data. Currently it leverages `Application Insights` as the data store.
+[This project](../../../tools/pixel-server/README.md) is the code involved for counting the number of impressions per rendered readme view. Update it however you want to store the data. Currently it leverages `Application Insights` as the data store.
 
 So there are prep steps before running this tool:
 
-1. Go [host the code](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/?view=aspnetcore-2.2) from the [folder above](../../../web/pixel-server/README.md) in a publically accessible location.
+1. Go [host the code](https://docs.microsoft.com/en-us/aspnet/core/host-and-deploy/?view=aspnetcore-2.2) from the [folder above](../../../tools/pixel-server/README.md) in a publicly accessible location.
 2. Update the `HOSTNAME` variable to point at wherever your site is hosted.
 3. Run the script against your repository
 

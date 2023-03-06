@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text.Json;
 using Azure.Sdk.Tools.CodeOwnersParser;
@@ -93,6 +94,24 @@ public class RetrieveCodeOwnersProgramTests
             Assert.That(returnCode, Is.EqualTo(0));
             Assert.That(actualErr, Is.EqualTo(string.Empty));
         });
+    }
+
+    [Test]
+    public void Test()
+    {
+        // var owners = new List<string>() { "owner1", "owner2" };
+        // var pathExpression = "pe";
+        // var codeownersEntry = new CodeownersEntry(pathExpression: pathExpression, owners);
+        // var codeownersEntry2 = new CodeownersEntry(pathExpression: pathExpression, owners);
+        // Console.Out.WriteLine("eq: " + (codeownersEntry == codeownersEntry2));
+        // Assert.That(codeownersEntry, Is.EqualTo(codeownersEntry2));
+
+        var owners = new List<string>() { "owner1", "owner2" };
+        var pathExpression = "pe";
+        var codeownersEntry = new CodeownersEntry2(pathExpression: pathExpression, new List<string>() { "owner1", "owner2" });
+        var codeownersEntry2 = new CodeownersEntry2(pathExpression: pathExpression, new List<string>() { "owner1", "owner2" });
+        Console.Out.WriteLine("eq: " + (codeownersEntry == codeownersEntry2));
+        Assert.That(codeownersEntry, Is.EqualTo(codeownersEntry2));
     }
 
     /// <summary>

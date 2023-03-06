@@ -4,6 +4,38 @@ using System.Linq;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
+    public record CodeownersEntry2
+    {
+        const char LabelSeparator = '%';
+        const char OwnerSeparator = '@';
+        public const string PRLabelMoniker = "PRLabel";
+        public const string ServiceLabelMoniker = "ServiceLabel";
+        public const string MissingFolder = "#/<NotInRepo>/";
+
+        public string PathExpression { get; set; } = "";
+
+        public bool ContainsWildcard => PathExpression.Contains('*');
+
+        public List<string> Owners { get; set; } = new List<string>();
+
+        // public List<string> PRLabels { get; set; } = new List<string>();
+
+        // public List<string> ServiceLabels { get; set; } = new List<string>();
+        //
+
+        // public bool IsValid => !string.IsNullOrWhiteSpace(PathExpression);
+        
+        public CodeownersEntry2()
+        {
+        }
+
+        public CodeownersEntry2(string pathExpression, List<string> owners)
+        {
+            PathExpression = pathExpression;
+            Owners = owners;
+        }
+    }
+
     /// <summary>
     /// The entry for CODEOWNERS has the following structure:
     ///
@@ -13,7 +45,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     ///   path @owner @owner
     /// </code>
     /// </summary>
-    public class CodeownersEntry
+    public record CodeownersEntry
     {
         const char LabelSeparator = '%';
         const char OwnerSeparator = '@';
@@ -167,24 +199,5 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             }
             return true;
         }
-
-        protected bool Equals(CodeownersEntry other)
-            => PathExpression == other.PathExpression
-               && Owners.SequenceEqual(other.Owners)
-               && PRLabels.SequenceEqual(other.PRLabels)
-               && ServiceLabels.SequenceEqual(other.ServiceLabels);
-
-        public override bool Equals(object? obj)
-        {
-            // @formatter:off
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
-            return Equals((CodeownersEntry)obj);
-            // @formatter:on
-        }
-
-        public override int GetHashCode()
-            => HashCode.Combine(PathExpression, Owners, PRLabels, ServiceLabels);
     }
 }

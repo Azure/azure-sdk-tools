@@ -9,6 +9,7 @@ import {
   EnumSpreadMemberNode,
   EnumStatementNode,
   getNamespaceFullName,
+  getSourceLocation,
   IdentifierNode,
   InterfaceStatementNode,
   IntersectionExpressionNode,
@@ -945,7 +946,7 @@ export class ApiView {
             this.typeReference(node.sv, defId);
             break;
           case "member":
-            this.member(node.sv);
+            this.member(this.getRawText(node));
             break;
           case "keyword":
             this.keyword(node.sv)
@@ -953,6 +954,11 @@ export class ApiView {
         }
     }
   }
+
+  private getRawText(node: IdentifierNode): string {
+    return getSourceLocation(node).file.text.slice(node.pos, node.end);
+  }
+
 
   private tokenizeTemplateParameters(nodes: readonly TemplateParameterDeclarationNode[]) {
     if (nodes.length) {

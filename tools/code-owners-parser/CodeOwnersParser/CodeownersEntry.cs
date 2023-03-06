@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -184,7 +185,43 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // @formatter:on
         }
 
+        /// <summary>
+        /// Implementation of GetHashCode that properly hashes collections.
+        /// Implementation based on
+        /// https://stackoverflow.com/a/10567544/986533
+        ///
+        /// This implementation is candidate to be moved to:
+        /// https://github.com/Azure/azure-sdk-tools/issues/5281
+        /// </summary>
         public override int GetHashCode()
-            => HashCode.Combine(PathExpression, Owners, PRLabels, ServiceLabels);
+        {
+            int hashCode = 0;
+            // ReSharper disable NonReadonlyMemberInGetHashCode
+            hashCode = AddHashCodeForObject(hashCode, PathExpression);
+            hashCode = AddHashCodeForEnumerable(hashCode, Owners);
+            hashCode = AddHashCodeForEnumerable(hashCode, PRLabels);
+            hashCode = AddHashCodeForEnumerable(hashCode, ServiceLabels);
+            // ReSharper restore NonReadonlyMemberInGetHashCode
+            return hashCode;
+
+            // ReSharper disable once VariableHidesOuterVariable
+            int AddHashCodeForEnumerable(int hashCode, IEnumerable enumerable)
+            {
+                foreach (var item in enumerable)
+                {
+                    hashCode = AddHashCodeForObject(hashCode, item);
+                }
+                return hashCode;
+            }
+
+            int AddHashCodeForObject(int hc, object item)
+            {
+                // Based on https://stackoverflow.com/a/10567544/986533
+                hc ^= item.GetHashCode();
+                hc = (hc << 7) |
+                     (hc >> (32 - 7)); // rotate hashCode to the left to swipe over all bits
+                return hc;
+            }
+        }
     }
 }

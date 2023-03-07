@@ -6,7 +6,7 @@ parameters:
     type: object
     default:
       - Name: $(Build.Repository.Name)
-        Commitish: $(Build.SourceVersion)
+        Commitish: $(Build.SourceBranch)
         WorkingDirectory: $(System.DefaultWorkingDirectory)
   - name: SkipCheckoutNone
     type: boolean

@@ -10,6 +10,10 @@ public class CachingTokenCredential : TokenCredential
     private readonly TokenCredential innerCredential;
     private readonly ConcurrentDictionary<string, AccessToken> cachedTokens = new();
 
+    // By default, the lifetime of Azure AD access tokens is a random time period between 60 and 90 minutes.
+    // We consider a cached token stale if it has less than 5 minutes of life left.
+    private static readonly TimeSpan minimumTokenLife = TimeSpan.FromMinutes(5);
+
 
     public CachingTokenCredential(ILogger logger, TokenCredential innerCredential)
     {
@@ -63,7 +67,7 @@ public class CachingTokenCredential : TokenCredential
 
     private bool TryGetCachedToken(string cacheKey, out AccessToken accessToken)
     {
-        if (this.cachedTokens.TryGetValue(cacheKey, out AccessToken cachedToken) && cachedToken.ExpiresOn > DateTimeOffset.UtcNow)
+        if (this.cachedTokens.TryGetValue(cacheKey, out AccessToken cachedToken) && cachedToken.ExpiresOn > DateTimeOffset.UtcNow.Add(minimumTokenLife))
         {
             accessToken = cachedToken;
             return true;

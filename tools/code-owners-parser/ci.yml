@@ -23,7 +23,11 @@ pr:
       - eng/common/scripts/get-codeowners
 
 extends:
-  template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    TargetDirectory: eng/common-tests/get-codeowners
-    TargetTags: UnitTest
+    ToolDirectory: tools/code-owners-parser
+    TestPostSteps:
+      - template: /eng/common/pipelines/templates/steps/run-pester-tests.yml
+        parameters:
+          TargetDirectory: eng/common-tests/get-codeowners
+          TargetTags: UnitTest

@@ -1,6 +1,8 @@
 FROM mcr.microsoft.com/cbl-mariner/base/core:2.0
 # Included packages: https://github.com/microsoft/CBL-Mariner/blob/1.0/SPECS/core-packages/core-packages.spec
 
+# Install wget
+
 ADD ./poll.sh /poll.sh
 RUN chmod +x /poll.sh
 

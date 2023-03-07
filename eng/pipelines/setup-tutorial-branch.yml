@@ -51,7 +51,7 @@ jobs:
       displayName: 'Setup Tutorial Branch'
       inputs:
         targetType: filePath
-        filePath: "scripts/powershell/Setup-TutorialBranch.ps1"
+        filePath: "eng/scripts/Setup-TutorialBranch.ps1"
         arguments: >
           -GitHubRepositoryOwner Azure
           -GitHubRepositoryName ${{parameters.Repository}}

@@ -3,6 +3,7 @@
 ## Version 0.3.7 (Unreleased)
 Fix incorrect type annotation.
 Update to follow best practices for accessing '__annotations__'.
+Fixed issue where class decorators were not displayed.
 
 ## Version 0.3.6 (2022-10-27)
 Suppressed unwanted base class methods in DPG libraries.

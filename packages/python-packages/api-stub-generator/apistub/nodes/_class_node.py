@@ -135,6 +135,14 @@ class ClassNode(NodeEntityBase):
                 )
             )
 
+    def _parse_decorators_from_class(self, class_obj):
+        try:
+            class_node = astroid.parse(inspect.getsource(class_obj)).body[0]
+            class_decorators = class_node.decorators.nodes
+            self.decorators = [f"@{x.as_string(preserve_quotes=True)}" for x in class_decorators]
+        except:
+            self.decorators = []
+
     def _parse_functions_from_class(self, class_obj) -> List[astroid.FunctionDef]:
         try:
             class_node = astroid.parse(inspect.getsource(class_obj)).body[0]
@@ -178,6 +186,8 @@ class ClassNode(NodeEntityBase):
         self._parse_ivars()
 
         is_typeddict = hasattr(self.obj, "__required_keys__") or hasattr(self.obj, "__optional_keys__")
+
+        self._parse_decorators_from_class(self.obj)
 
         # find members in node
         # enums with duplicate values are screened out by "getmembers" so
@@ -297,6 +307,11 @@ class ClassNode(NodeEntityBase):
         """
         logging.info(f"Processing class {self.namespace_id}")
         # Generate class name line
+        for decorator in self.decorators:
+            apiview.add_whitespace()
+            apiview.add_keyword(decorator)
+            apiview.add_newline()
+
         apiview.add_whitespace()
         apiview.add_line_marker(self.namespace_id)
         apiview.add_keyword("class", False, True)

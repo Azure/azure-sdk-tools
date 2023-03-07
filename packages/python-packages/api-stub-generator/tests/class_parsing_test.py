@@ -9,6 +9,7 @@ from apistub.nodes import ClassNode
 from apistubgentest.models import (
     AliasNewType,
     AliasUnion,
+    ClassWithDecorators,
     FakeTypedDict,
     FakeObject,
     GenericStack,
@@ -39,6 +40,23 @@ class TestClassParsing:
 
     pkg_namespace = "apistubgentest.models"
     
+    def test_class_with_decorators(self):
+        obj = ClassWithDecorators
+        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        actuals = _render_lines(_tokenize(class_node))
+        expected = [
+            "@add_id",
+            "class ClassWithDecorators:",
+            "",
+            "def __init__(",
+            "self, ",
+            "id, ",
+            "*args, ",
+            "**kwargs",                        
+            ")",
+        ]
+        _check_all(actuals, expected, obj)
+
     def test_typed_dict_class(self):
         obj = FakeTypedDict
         class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)

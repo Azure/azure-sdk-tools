@@ -14,6 +14,7 @@ class DataClassNode(ClassNode):
 
     def __init__(self, *, name, namespace, parent_node, obj, pkg_root_namespace):
         super().__init__(name=name, namespace=namespace, parent_node=parent_node, obj=obj, pkg_root_namespace=pkg_root_namespace)
+        self.decorators = [x for x in self.decorators if not x.startswith("@dataclass")]
         # explicitly set synthesized __init__ return type to None to fix test flakiness
         for child in self.child_nodes:
             if child.display_name == "__init__":

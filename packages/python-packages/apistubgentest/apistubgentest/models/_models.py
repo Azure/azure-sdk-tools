@@ -31,6 +31,23 @@ def another_decorator(value):
         return wrapper
     return decorator
 
+def get_id(self):
+    return self.__id
+
+def add_id(cls):
+    cls_init = cls.__init__
+
+    def __init__(self, id, *args, **kwargs):
+        self.__id = id
+        self.get_id = get_id
+        cls_init(self, *args, **kwargs)
+
+    cls.__init__ = __init__
+    return cls
+
+@add_id
+class ClassWithDecorators:
+    pass
 
 class PublicCaseInsensitiveEnumMeta(EnumMeta):
     def __getitem__(self, name: str):

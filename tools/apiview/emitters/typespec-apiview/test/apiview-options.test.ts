@@ -1,13 +1,11 @@
-import { Diagnostic, logDiagnostics, resolvePath } from "@cadl-lang/compiler";
-import { expectDiagnosticEmpty, expectDiagnostics } from "@cadl-lang/compiler/testing";
-import { strictEqual } from "assert";
-import { apiViewFor, apiViewText, compare, createApiViewTestRunner, diagnosticsFor } from "./test-host.js";
+import { expectDiagnostics } from "@typespec/compiler/testing";
+import { apiViewFor, apiViewText, compare, diagnosticsFor } from "./test-host.js";
 
 describe("apiview-options: tests", () => {
 
   it("omits namespaces that aren't proper subnamespaces", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Foo {};
     }
@@ -38,7 +36,7 @@ describe("apiview-options: tests", () => {
     const input = `
     model SomeGlobal {};
 
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Foo {};
     }
@@ -48,7 +46,7 @@ describe("apiview-options: tests", () => {
       model SomeGlobal {}
     }
 
-    @Cadl.service(
+    @TypeSpec.service(
       {
         title: "Test";
         version: "1";
@@ -67,12 +65,12 @@ describe("apiview-options: tests", () => {
 
   it("emits error if multi-service package tries to specify version", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Foo {};
     }
 
-    @Cadl.service( { title: "OtherTest", version: "1" } )
+    @TypeSpec.service( { title: "OtherTest", version: "1" } )
     namespace Azure.OtherTest {
       model Foo {};
     }
@@ -80,11 +78,11 @@ describe("apiview-options: tests", () => {
     const diagnostics = await diagnosticsFor(input, {"version": "1"});
     expectDiagnostics(diagnostics, [
       {
-        code: "@azure-tools/cadl-apiview/invalid-option",
+        code: "@azure-tools/typespec-apiview/invalid-option",
         message: `Option "--output-file" cannot be used with multi-service specs unless "--service" is also supplied.`
       },
       {
-        code: "@azure-tools/cadl-apiview/invalid-option",
+        code: "@azure-tools/typespec-apiview/invalid-option",
         message: `Option "--version" cannot be used with multi-service specs unless "--service" is also supplied.`
       }
     ]);
@@ -92,12 +90,12 @@ describe("apiview-options: tests", () => {
 
   it("allows options if multi-service package specifies --service", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Foo {};
     }
 
-    @Cadl.service( { title: "OtherTest", version: "1" } )
+    @TypeSpec.service( { title: "OtherTest", version: "1" } )
     namespace Azure.OtherTest {
       model Foo {};
     }

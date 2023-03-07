@@ -26,7 +26,7 @@ import {
   Node,
   visitChildren,
   ScalarStatementNode,
-} from "@cadl-lang/compiler";
+} from "@typespec/compiler";
 
 export class NamespaceModel {
   kind = SyntaxKind.NamespaceStatement;
@@ -73,10 +73,10 @@ export class NamespaceModel {
 
     // Gather models and resources
     for (const [modelName, model] of ns.models) {
-      if (model.node != undefined) {
+      if (model.node !== undefined) {
         let isResource = false;
         for (const dec of model.decorators) {
-          if (dec.decorator.name == "$resource") {
+          if (dec.decorator.name === "$resource") {
             isResource = true;
             break;
           }
@@ -144,7 +144,7 @@ function inNamespace(node: Node, program: Program, namespace: Namespace): boolea
     switch (n.kind) {
       case SyntaxKind.NamespaceStatement:
         return program.checker.getTypeForNode(n) === namespace;
-      case SyntaxKind.CadlScript:
+      case SyntaxKind.TypeSpecScript:
         if (n.inScopeNamespaces.length > 0 && inNamespace(n.inScopeNamespaces[0], program, namespace)) {
           return true;
         }
@@ -156,7 +156,7 @@ function inNamespace(node: Node, program: Program, namespace: Namespace): boolea
 
 export function generateId(obj: BaseNode | NamespaceModel | undefined): string | undefined {
   let node;
-  if (obj == undefined) {
+  if (obj === undefined) {
     return undefined;
   }
   if (obj instanceof NamespaceModel) {
@@ -181,14 +181,7 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
       break;
     case SyntaxKind.EnumMember:
       node = obj as EnumMemberNode;
-      switch (node.id.kind) {
-        case SyntaxKind.Identifier:
-          name = node.id.sv;
-          break;
-        case SyntaxKind.StringLiteral:
-          name = node.id.value;
-          break;
-      }
+      name = node.id.sv;
       parentId = generateId(node.parent);
       break;
     case SyntaxKind.EnumSpreadMember:
@@ -214,14 +207,7 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
       break;
     case SyntaxKind.ModelProperty:
       node = obj as ModelPropertyNode;
-      switch (node.id.kind) {
-        case SyntaxKind.Identifier:
-          name = node.id.sv;
-          break;
-        case SyntaxKind.StringLiteral:
-          name = node.id.value;
-          break;
-      }
+      name = node.id.sv;
       parentId = generateId(node.parent);
       break;
     case SyntaxKind.ModelSpreadProperty:
@@ -253,20 +239,13 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
       break;
     case SyntaxKind.UnionVariant:
       node = obj as UnionVariantNode;
-      switch (node.id.kind) {
-        case SyntaxKind.Identifier:
-          name = node.id.sv;
-          break;
-        case SyntaxKind.StringLiteral:
-          name = node.id.value;
-          break;
-      }
+      name = node.id.sv;
       parentId = generateId(node.parent);
       break;
     default:
       return undefined;
   }
-  if (parentId != undefined) {
+  if (parentId !== undefined) {
     return `${parentId}.${name}`;
   } else {
     return name;

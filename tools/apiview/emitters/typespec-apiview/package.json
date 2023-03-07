@@ -1,8 +1,8 @@
 {
-  "name": "@azure-tools/cadl-apiview",
-  "version": "0.3.5",
+  "name": "@azure-tools/typespec-apiview",
+  "version": "0.4.0",
   "author": "Microsoft Corporation",
-  "description": "Cadl library for emitting APIView token files from Cadl specifications",
+  "description": "Library for emitting APIView token files from TypeSpec",
   "homepage": "https://github.com/Azure/azure-sdk-tools",
   "readme": "https://github.com/Azure/azure-sdk-tools/blob/master/README.md",
   "license": "MIT",
@@ -14,7 +14,7 @@
     "url": "https://github.com/Azure/azure-sdk-tools/issues"
   },
   "keywords": [
-    "cadl",
+    "typespec",
     "apiview"
   ],
   "type": "module",
@@ -33,39 +33,39 @@
       ]
     }
   },
-  "cadlMain": "dist/src/index.js",
+  "tspMain": "dist/src/index.js",
   "engines": {
     "node": ">=16.0.0"
   },
   "scripts": {
     "clean": "rimraf ./dist ./temp",
     "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
-    "build": "npm run prebuild && tsc -p . && npm run lint-cadl-library",
+    "build": "npm run prebuild && tsc -p . && npm run lint-typespec-library",
     "watch": "tsc -p . --watch",
-    "lint-cadl-library": "cadl compile . --warn-as-error --import @cadl-lang/library-linter --no-emit",
+    "lint-typespec-library": "tsp compile . --warn-as-error --import @typespec/library-linter --no-emit",
     "test": "mocha",
     "test-official": "c8 mocha --forbid-only --reporter mocha-multi-reporters",
     "lint": "eslint . --ext .ts --max-warnings=0",
     "lint:fix": "eslint . --fix --ext .ts"
   },
   "files": [
-    "lib/*.cadl",
+    "lib/*.tsp",
     "dist/**",
     "!dist/test/**"
   ],
   "dependencies": {
-    "@azure-tools/cadl-azure-core": "0.26.0",
-    "@azure-tools/cadl-autorest": "0.26.0",
-    "@azure-tools/cadl-dpg": "latest",
-    "@cadl-lang/compiler": "0.40.0",
-    "@cadl-lang/rest": "latest",
-    "@cadl-lang/versioning": "latest"
+    "@azure-tools/typespec-azure-core": "0.27.0",
+    "@azure-tools/typespec-autorest": "0.27.0",
+    "@typespec/compiler": "0.41.0",
+    "@typespec/http": "0.41.0",
+    "@typespec/rest": "0.41.0",
+    "@typespec/versioning": "0.41.0"
   },
   "devDependencies": {
-    "@cadl-lang/eslint-plugin": "~0.40.0",
-    "@cadl-lang/library-linter": "~0.40.0",
-    "@cadl-lang/prettier-plugin-cadl": "^0.40.0",
-    "@cadl-lang/eslint-config-cadl": "~0.4.1",
+    "@typespec/eslint-plugin": "~0.41.0",
+    "@typespec/library-linter": "~0.41.0",
+    "@typespec/prettier-plugin-typespec": "^0.41.0",
+    "@typespec/eslint-config-typespec": "~0.6.0",
     "@types/mocha": "~9.1.0",
     "@types/node": "~16.0.3",
     "@changesets/cli": "^2.24.4",

@@ -9,6 +9,7 @@ import {
   EnumSpreadMemberNode,
   EnumStatementNode,
   getNamespaceFullName,
+  getSourceLocation,
   IdentifierNode,
   InterfaceStatementNode,
   IntersectionExpressionNode,
@@ -33,7 +34,7 @@ import {
   UnionExpressionNode,
   UnionStatementNode,
   UnionVariantNode,
-} from "@cadl-lang/compiler";
+} from "@typespec/compiler";
 import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
 import { ApiViewNavigation } from "./navigation.js";
 import { generateId, NamespaceModel } from "./namespace-model.js";
@@ -130,7 +131,7 @@ export class ApiView {
   trim() {
     let last = this.tokens[this.tokens.length - 1]
     while (last) {
-      if (last.Kind == ApiViewTokenKind.Whitespace) {
+      if (last.Kind === ApiViewTokenKind.Whitespace) {
         this.tokens.pop();
         last = this.tokens[this.tokens.length - 1];
       } else {
@@ -159,7 +160,7 @@ export class ApiView {
   }
 
   space() {
-    if (this.tokens[this.tokens.length - 1]?.Kind != ApiViewTokenKind.Whitespace) {
+    if (this.tokens[this.tokens.length - 1]?.Kind !== ApiViewTokenKind.Whitespace) {
       this.tokens.push({
         Kind: ApiViewTokenKind.Whitespace,
         Value: WHITESPACE,
@@ -182,9 +183,9 @@ export class ApiView {
     let newlineCount: number = 0;
     for (let i = this.tokens.length; i > 0; i--) {
       const token = this.tokens[i - 1];
-      if (token.Kind == ApiViewTokenKind.Newline) {
+      if (token.Kind === ApiViewTokenKind.Newline) {
         newlineCount++;
-      } else if (token.Kind == ApiViewTokenKind.Whitespace) {
+      } else if (token.Kind === ApiViewTokenKind.Whitespace) {
         continue;
       } else {
         break;
@@ -201,7 +202,7 @@ export class ApiView {
       let toRemove = newlineCount - (count + 1);
       while (toRemove) {
         const popped = this.tokens.pop();
-        if (popped?.Kind == ApiViewTokenKind.Newline) {
+        if (popped?.Kind === ApiViewTokenKind.Newline) {
           toRemove--;
         }
       }
@@ -281,7 +282,7 @@ export class ApiView {
 
   stringLiteral(value: string) {
     const lines = value.split("\n");
-    if (lines.length == 1) {
+    if (lines.length === 1) {
       this.tokens.push({
         Kind: ApiViewTokenKind.StringLiteral,
         Value: `\u0022${value}\u0022`,
@@ -343,7 +344,7 @@ export class ApiView {
         continue;
       }
       // use a fake name to make the global namespace clear
-      const namespaceName = name == "" ? "::GLOBAL::" : name;
+      const namespaceName = name === "" ? "::GLOBAL::" : name;
       const nsModel = new NamespaceModel(namespaceName, ns, program);
       if (nsModel.shouldEmit()) {
         this.tokenizeNamespaceModel(nsModel);
@@ -354,7 +355,7 @@ export class ApiView {
 
   private emitHeader() {
     const toolVersion = LIB_VERSION;
-    const headerText = `// Package parsed using @azure-tools/cadl-apiview (version:${toolVersion})`;
+    const headerText = `// Package parsed using @azure-tools/typespec-apiview (version:${toolVersion})`;
     this.token(ApiViewTokenKind.SkipDiffRangeStart);
     this.literal(headerText);
     this.namespaceStack.push("GLOBAL");
@@ -399,7 +400,7 @@ export class ApiView {
           for (let x = 0; x < obj.arguments.length; x++) {
             const arg = obj.arguments[x];
             this.tokenize(arg);
-            if (x != last) {
+            if (x !== last) {
               this.punctuation(",", false, true);
             }
           }
@@ -413,8 +414,8 @@ export class ApiView {
         break;
       case SyntaxKind.BlockComment:
         throw new Error(`Case "BlockComment" not implemented`);
-      case SyntaxKind.CadlScript:
-        throw new Error(`Case "CadlScript" not implemented`);
+      case SyntaxKind.TypeSpecScript:
+        throw new Error(`Case "TypeSpecScript" not implemented`);
       case SyntaxKind.DecoratorExpression:
         obj = node as DecoratorExpressionNode;
         this.punctuation("@", false, false);
@@ -426,7 +427,7 @@ export class ApiView {
           for (let x = 0; x < obj.arguments.length; x++) {
             const arg = obj.arguments[x];
             this.tokenize(arg);
-            if (x != last) {
+            if (x !== last) {
               this.punctuation(",", false, true);
             }
           }
@@ -442,7 +443,7 @@ export class ApiView {
         this.tokenizeDecorators(obj.decorators, false);
         this.tokenizeIdentifier(obj.id, "member");
         this.lineMarker();
-        if (obj.value != undefined) {
+        if (obj.value) {
           this.punctuation(":", false, true);
           this.tokenize(obj.value);
         }
@@ -470,7 +471,7 @@ export class ApiView {
         for (let x = 0; x < obj.options.length; x++) {
           const opt = obj.options[x];
           this.tokenize(opt);
-          if (x != obj.options.length - 1) {
+          if (x !== obj.options.length - 1) {
             this.punctuation("&", true, true);
           }
         }
@@ -539,11 +540,11 @@ export class ApiView {
       case SyntaxKind.TemplateParameterDeclaration:
         obj = node as TemplateParameterDeclarationNode;
         this.tokenize(obj.id);
-        if (obj.constraint != undefined) {
+        if (obj.constraint) {
           this.keyword("extends", true, true);
           this.tokenize(obj.constraint);
         }
-        if (obj.default != undefined) {
+        if (obj.default) {
           this.punctuation("=", true, true);
           this.tokenize(obj.default);
         }
@@ -554,7 +555,7 @@ export class ApiView {
         for (let x = 0; x < obj.values.length; x++) {
           const val = obj.values[x];
           this.tokenize(val);
-          if (x != obj.values.length - 1) {
+          if (x !== obj.values.length - 1) {
             this.renderPunctuation(",");
           }
         }
@@ -568,7 +569,7 @@ export class ApiView {
           for (let x = 0; x < obj.arguments.length; x++) {
             const arg = obj.arguments[x];
             this.tokenize(arg);
-            if (x != obj.arguments.length - 1) {
+            if (x !== obj.arguments.length - 1) {
               this.renderPunctuation(",");
             }
           }
@@ -580,7 +581,7 @@ export class ApiView {
         for (let x = 0; x < obj.options.length; x++) {
           const opt = obj.options[x];
           this.tokenize(opt);
-          if (x != obj.options.length -1) {
+          if (x !== obj.options.length -1) {
             this.punctuation("|", true, true);
           }
         }
@@ -610,11 +611,11 @@ export class ApiView {
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("model", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
-    if (node.extends != undefined) {
+    if (node.extends) {
       this.keyword("extends", true, true);
       this.tokenize(node.extends);
     }
-    if (node.is != undefined) {
+    if (node.is) {
       this.keyword("is", true, true);
       this.tokenize(node.is);
     }
@@ -641,7 +642,7 @@ export class ApiView {
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("scalar", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
-    if (node.extends != undefined) {
+    if (node.extends) {
       this.keyword("extends", true, true);
       this.tokenize(node.extends);
     }
@@ -660,7 +661,7 @@ export class ApiView {
     for (let x = 0; x < node.operations.length; x++) {
       const op = node.operations[x];
       this.tokenizeOperationStatement(op, true);
-      this.blankLines((x != node.operations.length -1) ? 1 : 0);
+      this.blankLines((x !== node.operations.length -1) ? 1 : 0);
     }
     this.endGroup();
     this.namespaceStack.pop();
@@ -696,7 +697,7 @@ export class ApiView {
       this.namespaceStack.push(variantName);
       this.tokenize(variant);
       this.namespaceStack.pop();
-      if (x != node.options.length - 1) {
+      if (x !== node.options.length - 1) {
         this.punctuation(",");
       }
       this.blankLines(0);
@@ -719,7 +720,7 @@ export class ApiView {
     this.lineMarker();
     this.punctuation(node.optional ? "?:" : ":", false, true);
     this.tokenize(node.value);
-    if (node.default != undefined) {
+    if (node.default) {
       this.punctuation("=", true, true);
       this.tokenize(node.default);
     }
@@ -741,7 +742,7 @@ export class ApiView {
             break;
         }
         if (isOperationSignature) {
-          if (x != node.properties.length - 1) {
+          if (x !== node.properties.length - 1) {
             this.punctuation(",", false, true);
           }  
         } else {
@@ -777,7 +778,7 @@ export class ApiView {
         }
         this.namespaceStack.pop();
         if (isOperationSignature) {
-          if (x != node.properties.length - 1) {
+          if (x !== node.properties.length - 1) {
             this.renderPunctuation(",");
           }  
         } else {
@@ -861,7 +862,7 @@ export class ApiView {
     if (!inline && nodes.length) {
       while (this.tokens.length) {
         const item = this.tokens.pop()!;
-        if (item.Kind == ApiViewTokenKind.LineIdMarker && item.DefinitionId == "GLOBAL") {
+        if (item.Kind === ApiViewTokenKind.LineIdMarker && item.DefinitionId === "GLOBAL") {
           this.tokens.push(item);
           this.blankLines(2);
           break;
@@ -930,7 +931,7 @@ export class ApiView {
         }
         break;
       case SyntaxKind.StringLiteral:
-        if (style != "member") {
+        if (style !== "member") {
           throw new Error(`StringLiteral type can only be a member name. Unexpectedly "${style}"`);
         }
         this.stringLiteral(node.value);
@@ -945,7 +946,7 @@ export class ApiView {
             this.typeReference(node.sv, defId);
             break;
           case "member":
-            this.member(node.sv);
+            this.member(this.getRawText(node));
             break;
           case "keyword":
             this.keyword(node.sv)
@@ -954,13 +955,18 @@ export class ApiView {
     }
   }
 
+  private getRawText(node: IdentifierNode): string {
+    return getSourceLocation(node).file.text.slice(node.pos, node.end);
+  }
+
+
   private tokenizeTemplateParameters(nodes: readonly TemplateParameterDeclarationNode[]) {
     if (nodes.length) {
       this.punctuation("<", false, false);  
       for (let x = 0; x < nodes.length; x++) {
         const param = nodes[x];
         this.tokenize(param);
-        if (x != nodes.length - 1) {
+        if (x !== nodes.length - 1) {
           this.renderPunctuation(",");
           this.space();
         }
@@ -990,27 +996,27 @@ export class ApiView {
 
   private getNameForNode(node: BaseNode | NamespaceModel): string {
     const id = generateId(node);
-    if (id != undefined) {
+    if (id) {
       return id.split(".").splice(-1)[0];
     } else {
       throw new Error("Unable to get name for node.");
     }
   }
 
-  private renderPunctuation(punc: string) {
+  private renderPunctuation(punctuation: string) {
     const last = this.tokens.pop()!;
-    if (last?.Kind == ApiViewTokenKind.Whitespace) {
+    if (last?.Kind === ApiViewTokenKind.Whitespace) {
       // hacky workaround to ensure comma is after trailing bracket for expanded anonymous models
       this.tokens.pop();
     } else {
       this.tokens.push(last);
     }
-    this.punctuation(punc, false, true);
+    this.punctuation(punctuation, false, true);
   }
 
   resolveMissingTypeReferences() {
     for (const token of this.tokens) {
-      if (token.Kind == ApiViewTokenKind.TypeName && token.NavigateToId == "__MISSING__") {
+      if (token.Kind === ApiViewTokenKind.TypeName && token.NavigateToId === "__MISSING__") {
         token.NavigateToId = this.definitionIdFor(token.Value!, this.packageName);
       }
     }
@@ -1024,7 +1030,7 @@ export class ApiView {
       Navigation: this.navigationItems,
       Diagnostics: this.diagnostics,
       VersionString: this.versionString,
-      Language: "Cadl"
+      Language: "TypeSpec"
     };
   }
 
@@ -1034,7 +1040,7 @@ export class ApiView {
       return this.typeDeclarations.has(fullName) ? fullName : undefined;
     }
     for (const item of this.typeDeclarations) {
-      if (item.split(".").splice(-1)[0] == value) {
+      if (item.split(".").splice(-1)[0] === value) {
         return item;
       }
     }

@@ -1,4 +1,4 @@
-import assert, { fail, strictEqual } from "assert";
+import assert, { fail } from "assert";
 import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
 import { apiViewFor, apiViewText, compare } from "./test-host.js";
 
@@ -11,17 +11,17 @@ describe("apiview: tests", () => {
     defIdsPerLine[index] = new Array<string>();
     for (const token of apiview.Tokens) {
       // ensure that there are no repeated definition IDs.
-      if (token.DefinitionId != undefined) {
+      if (token.DefinitionId !== undefined) {
         if (definitionIds.has(token.DefinitionId)) {
           fail(`Duplicate defintion ID ${token.DefinitionId}.`);
         }
         definitionIds.add(token.DefinitionId);
       }
       // Collect the definition IDs that exist on each line
-      if (token.DefinitionId != undefined) {
+      if (token.DefinitionId !== undefined) {
         defIdsPerLine[index].push(token.DefinitionId);
       }
-      if (token.Kind == ApiViewTokenKind.Newline) {
+      if (token.Kind === ApiViewTokenKind.Newline) {
         index++;
         defIdsPerLine[index] = new Array<string>();
       }
@@ -29,13 +29,13 @@ describe("apiview: tests", () => {
     // ensure that each line has either 0 or 1 definition ID.
     for (let x = 0; x < defIdsPerLine.length; x++) {
       const row = defIdsPerLine[x];
-      assert(row.length == 0 || row.length == 1, `Too many definition IDs (${row.length}) on line ${x}`);
+      assert(row.length === 0 || row.length === 1, `Too many definition IDs (${row.length}) on line ${x}`);
     }
   }
 
   it("describes model", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Animal {
         species: string;
@@ -89,7 +89,7 @@ describe("apiview: tests", () => {
 
   it("describes scalar", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       scalar Password extends string;
 
@@ -116,7 +116,7 @@ describe("apiview: tests", () => {
 
   it("describes alias", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Animal {
         species: string;
@@ -142,7 +142,7 @@ describe("apiview: tests", () => {
 
   it("describes augment decorator", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Animal {
         species: string;
@@ -169,7 +169,7 @@ describe("apiview: tests", () => {
 
   it("describes templated model", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Thing<T> {
         property: T;
@@ -241,7 +241,7 @@ describe("apiview: tests", () => {
 
   it("describes enum", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
 
       enum SomeEnum {
@@ -284,7 +284,7 @@ describe("apiview: tests", () => {
 
   it("describes union", async () =>{
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       union MyUnion {
         cat: Cat,
@@ -335,7 +335,7 @@ describe("apiview: tests", () => {
 
   it("describes template operation", async () =>{
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model FooParams {
         a: string;
@@ -397,7 +397,7 @@ describe("apiview: tests", () => {
 
   it("describes operation with anonymous models", async () =>{
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       op SomeOp(
         param1: {
@@ -429,7 +429,7 @@ describe("apiview: tests", () => {
 
   it("describes interface", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       interface Foo {
         @get 
@@ -466,7 +466,7 @@ describe("apiview: tests", () => {
 
   it("describes string literals", async () => {
     const input = `
-    @Cadl.service( { title: "Test", version: "1" } )
+    @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       @doc("Short string")
       model Foo {};

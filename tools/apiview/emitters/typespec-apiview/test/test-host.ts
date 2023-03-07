@@ -1,17 +1,18 @@
-import { createTestHost, createTestWrapper } from "@cadl-lang/compiler/testing";
-import { RestTestLibrary } from "@cadl-lang/rest/testing";
-import { VersioningTestLibrary } from "@cadl-lang/versioning/testing";
-import { AzureCoreTestLibrary } from "@azure-tools/cadl-azure-core/testing";
+import { createTestHost, createTestWrapper } from "@typespec/compiler/testing";
+import { RestTestLibrary } from "@typespec/rest/testing";
+import { HttpTestLibrary } from "@typespec/http/testing";
+import { VersioningTestLibrary } from "@typespec/versioning/testing";
+import { AzureCoreTestLibrary } from "@azure-tools/typespec-azure-core/testing";
 import { ApiViewTestLibrary } from "../src/testing/index.js";
-import "@azure-tools/cadl-apiview";
+import "@azure-tools/typespec-apiview";
 import { ApiViewEmitterOptions } from "../src/lib.js";
 import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
-import { Diagnostic, resolvePath } from "@cadl-lang/compiler";
+import { Diagnostic, resolvePath } from "@typespec/compiler";
 import { strictEqual } from "assert";
 
 export async function createApiViewTestHost() {
   return createTestHost({
-    libraries: [ApiViewTestLibrary, RestTestLibrary, VersioningTestLibrary, AzureCoreTestLibrary],
+    libraries: [ApiViewTestLibrary, RestTestLibrary, HttpTestLibrary, VersioningTestLibrary, AzureCoreTestLibrary],
   });
 }
 
@@ -20,16 +21,16 @@ export async function createApiViewTestRunner({
 }: { withVersioning?: boolean } = {}) {
   const host = await createApiViewTestHost();
   const autoUsings = [
-    "Cadl.Rest",
-    "Cadl.Http",
+    "TypeSpec.Rest",
+    "TypeSpec.Http",
   ]
   if (withVersioning) {
-    autoUsings.push("Cadl.Versioning");
+    autoUsings.push("TypeSpec.Versioning");
   }
   return createTestWrapper(host, {
     autoUsings: autoUsings,
     compilerOptions: {
-      emit: ["@azure-tools/cadl-apiview"],
+      emit: ["@azure-tools/typespec-apiview"],
     }
   });
 }
@@ -39,7 +40,7 @@ export async function diagnosticsFor(code: string, options: ApiViewEmitterOption
   const outPath = resolvePath("/apiview.json");
   const diagnostics = await runner.diagnose(code, {
     noEmit: false,
-    emitters: { "@azure-tools/cadl-apiview": { ...options, "output-file": outPath } },
+    emitters: { "@azure-tools/typespec-apiview": { ...options, "output-file": outPath } },
     miscOptions: { "disable-linter": true },
   });
   return diagnostics;
@@ -50,7 +51,7 @@ export async function apiViewFor(code: string, options: ApiViewEmitterOptions): 
   const outPath = resolvePath("/apiview.json");
   await runner.compile(code, {
     noEmit: false,
-    emitters: { "@azure-tools/cadl-apiview": { ...options, "output-file": outPath } },
+    emitters: { "@azure-tools/typespec-apiview": { ...options, "output-file": outPath } },
     miscOptions: { "disable-linter": true },
   });
 
@@ -67,7 +68,7 @@ export function apiViewText(apiview: ApiViewDocument): string[] {
         vals.push("\n");
         break;
       default:
-        if (token.Value != undefined) {
+        if (token.Value !== undefined) {
           vals.push(token.Value);
         }
         break;
@@ -90,7 +91,7 @@ function trimLines(lines: string[]): string[] {
   const trimmed: string[] = [];
   const indent = getIndex(lines);
   for (const line of lines) {
-    if (line.trim() == '') {
+    if (line.trim() === '') {
       // skip blank lines
       continue;
     } else {

@@ -10,7 +10,7 @@ words:
   - azurecr
   - blockful
   - blockless
-  - cadl
+  - typespec
   - Contoso
   - CRUDL
   - devdriven
@@ -58,10 +58,11 @@ words:
   - vswhere
   - westus
   - xplat
+  - deindent
 ignorePaths:
   - "**/node_modules/**"
   - "**/dist/**"
   - "**/dist-dev/**"
-  - "**/cadl-output/**"
+  - "**/tsp-output/**"
 enableFiletypes:
-  - cadl
+  - tsp

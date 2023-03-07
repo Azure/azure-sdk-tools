@@ -110,8 +110,7 @@ class ClassNode(NodeEntityBase):
             return function_module and function_module.startswith(self.pkg_root_namespace) and not function_module.endswith("_model_base")
         return False
 
-    def _handle_class_variable(self, child_obj, name, *, type_string=None, value=None):
-        # Add any public class level variables
+    def _handle_variable(self, child_obj, name, *, type_string=None, value=None):
         allowed_types = (str, int, dict, list, float, bool)
         if not isinstance(child_obj, allowed_types):
             return
@@ -124,6 +123,9 @@ class ClassNode(NodeEntityBase):
             if type_string:
                 var_match[0].type = type_string
         else:
+            is_ivar = True
+            if type_string:
+                is_ivar = not type_string.startswith("ClassVar")
             self.child_nodes.append(
                 VariableNode(
                     namespace=self.namespace,
@@ -131,7 +133,7 @@ class ClassNode(NodeEntityBase):
                     name=name,
                     type_name=type_string,
                     value=value,
-                    is_ivar=False
+                    is_ivar=is_ivar
                 )
             )
 
@@ -222,7 +224,7 @@ class ClassNode(NodeEntityBase):
                         )
                     else:
                         type_string = get_qualified_name(item_type, self.namespace)
-                        self._handle_class_variable(child_obj, item_name, type_string=type_string)
+                        self._handle_variable(child_obj, item_name, type_string=type_string)
 
             # now that we've looked at the specific dunder properties we are
             # willing to include, anything with a leading underscore should be ignored.
@@ -253,7 +255,7 @@ class ClassNode(NodeEntityBase):
                     # Add instance properties
                     self.child_nodes.append(PropertyNode(self.namespace, self, name, child_obj))
             else:
-                self._handle_class_variable(child_obj, name, value=str(child_obj))
+                self._handle_variable(child_obj, name, value=str(child_obj))
 
     def _parse_ivars(self):
         # This method will add instance variables by parsing docstring

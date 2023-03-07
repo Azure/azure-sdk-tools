@@ -156,6 +156,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 var vcpkgDirectory = buildFolder;
 
                 DirectoryInfo di = new DirectoryInfo(vcpkgDirectory);
+
                 var searchResults = di.GetDirectories("buildtrees", SearchOption.AllDirectories);
 
                 if (searchResults.Length == 0)
@@ -176,11 +177,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     var sdkReplacementFolder = srcFolder.GetDirectories(packageSourceFolderName, SearchOption.AllDirectories).First();
                     // now that we have the code we will replace it in the target destination 
 
-                    // get teh root of everything
+                    // get the root of everything
                     var rootFolder = new DirectoryInfo(buildFolder).Parent;
                     // get the sdk folder in the original source code
                     var sdkRootFolder = rootFolder.GetDirectories("sdk").First();
-                    // get the fodler where the package resides in the original source code 
+                    // get the folder where the package resides in the original source code 
                     var sdkOriginalFolder = sdkRootFolder.GetDirectories(packageSourceFolderName, SearchOption.AllDirectories).First();
                     // delete the source 
                     Directory.Delete(sdkOriginalFolder.FullName, true);

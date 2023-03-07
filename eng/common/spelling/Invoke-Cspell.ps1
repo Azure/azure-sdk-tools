@@ -167,6 +167,8 @@ $originalLocation = Get-Location
 
 try {
   Set-Location $PackageInstallCache
+  npm install npx | Out-Null
+  npm install cspell | Out-Null
   npm ci | Write-Host
 
   # Use the mutated configuration file when calling cspell

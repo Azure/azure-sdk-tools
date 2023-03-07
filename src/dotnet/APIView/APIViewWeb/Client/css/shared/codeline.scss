@@ -90,11 +90,6 @@
     text-decoration: line-through;
 }
 
-.hidden-api {
-    color: var(--text-muted-color) !important;
-    font-style: italic;
-}
-
 .hidden-row {
     display: none;
 }
@@ -309,6 +304,11 @@ code {
     left: 0px;
     padding-left: 10px;
     max-width: 2000px;
+}
+
+.hidden-api {
+    color: var(--text-muted-color) !important;
+    font-style: italic;
 }
 
 /*---------------------------------------------------------------------*/

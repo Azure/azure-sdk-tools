@@ -11,7 +11,7 @@ Add `@azure-tools/typespec-apiview` to your `package.json` and run `npm install`
 1. Via the command line
 
 ```bash
-tsc compile {path to typespec project} --emit=@azure-tools/typespec-apiview
+tsp compile {path to typespec project} --emit=@azure-tools/typespec-apiview
 ```
 
 2. Via the config

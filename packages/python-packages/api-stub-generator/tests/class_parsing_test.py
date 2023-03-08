@@ -9,6 +9,8 @@ from apistub.nodes import ClassNode
 from apistubgentest.models import (
     AliasNewType,
     AliasUnion,
+    ClassWithDecorators,
+    ClassWithIvarsAndCvars,
     FakeTypedDict,
     FakeObject,
     GenericStack,
@@ -39,6 +41,35 @@ class TestClassParsing:
 
     pkg_namespace = "apistubgentest.models"
     
+    def test_class_with_ivars_and_cvars(self):
+        obj = ClassWithIvarsAndCvars
+        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        actuals = _render_lines(_tokenize(class_node))
+        expected = [
+            "class ClassWithIvarsAndCvars:",
+            'ivar captain: str = "Picard"',
+            "ivar damage: int",
+            "cvar stats: ClassVar[Dict[str, int]] = {}"
+        ]
+        _check_all(actuals, expected, obj)
+
+    def test_class_with_decorators(self):
+        obj = ClassWithDecorators
+        class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
+        actuals = _render_lines(_tokenize(class_node))
+        expected = [
+            "@add_id",
+            "class ClassWithDecorators:",
+            "",
+            "def __init__(",
+            "self, ",
+            "id, ",
+            "*args, ",
+            "**kwargs",                        
+            ")",
+        ]
+        _check_all(actuals, expected, obj)
+
     def test_typed_dict_class(self):
         obj = FakeTypedDict
         class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)
@@ -57,7 +88,7 @@ class TestClassParsing:
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class FakeObject:",
-            'cvar PUBLIC_CONST: str = "SOMETHING"',
+            'ivar PUBLIC_CONST: str = "SOMETHING"',
             'ivar age: int',
             'ivar name: str',
             'ivar union: Union[bool, PetEnumPy3MetaclassAlt]'
@@ -72,8 +103,8 @@ class TestClassParsing:
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class PublicPrivateClass:",
-            "cvar public_dict: dict = {'a': 'b'}",
-            'cvar public_var: str = "SOMEVAL"',
+            "ivar public_dict: dict = {'a': 'b'}",
+            'ivar public_var: str = "SOMEVAL"',
         ]
         _check_all(actuals, expected, obj)
         assert actuals[4].lstrip() == "def __init__(self)"

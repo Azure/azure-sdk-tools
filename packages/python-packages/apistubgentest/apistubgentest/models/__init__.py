@@ -10,6 +10,8 @@
 from ._models import (
     AliasNewType,
     AliasUnion,
+    ClassWithDecorators,
+    ClassWithIvarsAndCvars,
     DocstringClass,
     FakeError,
     FakeObject,
@@ -39,6 +41,8 @@ from ._dataclasses import (
 __all__ = (
     "AliasNewType",
     "AliasUnion",
+    "ClassWithDecorators",
+    "ClassWithIvarsAndCvars",
     "DataClassSimple",
     "DataClassWithFields",
     "DataClassDynamic",

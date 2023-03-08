@@ -11,7 +11,7 @@ from azure.core import CaseInsensitiveEnumMeta
 from collections.abc import Sequence
 from enum import Enum, EnumMeta
 import functools
-from typing import Any, overload, Dict, TypedDict, Union, Optional, Generic, TypeVar, NewType, TypeAlias
+from typing import Any, overload, Dict, TypedDict, Union, Optional, Generic, TypeVar, NewType, ClassVar
 
 from ._mixin import MixinWithOverloads
 
@@ -30,6 +30,31 @@ def another_decorator(value):
             return value
         return wrapper
     return decorator
+
+def get_id(self):
+    return self.__id
+
+def add_id(cls):
+    cls_init = cls.__init__
+
+    def __init__(self, id, *args, **kwargs):
+        self.__id = id
+        self.get_id = get_id
+        cls_init(self, *args, **kwargs)
+
+    cls.__init__ = __init__
+    return cls
+
+
+@add_id
+class ClassWithDecorators:
+    pass
+
+
+class ClassWithIvarsAndCvars:
+    captain: str = "Picard"                 # instance var w/ default
+    damage: int                             # instance var w/out default
+    stats: ClassVar[Dict[str, int]] = {}    # class var
 
 
 class PublicCaseInsensitiveEnumMeta(EnumMeta):

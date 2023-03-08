@@ -285,7 +285,18 @@ function FindOrCreateDeleteAfterTag {
     $deleteAfter = [datetime]::UtcNow.AddHours($DeleteAfterHours)
     if ($Force -or $PSCmdlet.ShouldProcess("$($ResourceGroup.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Adding DeleteAfter Tag to Group")) {
       Write-Host "Adding DeleteAfter tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
-      $ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter }
+      $result = ($ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter }) 2>&1
+      if ("Exception" -in $result.PSObject.Properties.Name) {
+          # Handle race conditions where the group starts deleting after we get its info, in order to avoid pipeline warning/failure emails
+          # "The resource group '<group name>' is in deprovisioning state and cannot perform this operation"
+          if ($result.Exception.Message -notlike '*is in deprovisioning state*') {
+              Write-Error $result.Exception.Message
+          } else {
+              Write-Host "Skipping '$($ResourceGroup.ResourceGroupName)' as it is in a deprovisioning state"
+          }
+      } else {
+          $result
+      }
     }
   }
 }

@@ -9,6 +9,7 @@
 import abc
 from azure.core import CaseInsensitiveEnumMeta
 from collections.abc import Sequence
+import datetime
 from enum import Enum, EnumMeta
 import functools
 from typing import Any, overload, Dict, TypedDict, Union, Optional, Generic, TypeVar, NewType, ClassVar
@@ -139,6 +140,8 @@ FakeTypedDict = TypedDict(
 class PublicPrivateClass:
 
     public_var: str = "SOMEVAL"
+
+    public_datetime: datetime.datetime
 
     _private_var: str
 

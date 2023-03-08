@@ -103,13 +103,13 @@ class TestClassParsing:
         actuals = _render_lines(_tokenize(class_node))
         expected = [
             "class PublicPrivateClass:",
+            'ivar public_datetime: datetime',
             "ivar public_dict: dict = {'a': 'b'}",
-            'ivar public_var: str = "SOMEVAL"',
+            'ivar public_var: str = "SOMEVAL"'
         ]
         _check_all(actuals, expected, obj)
-        assert actuals[4].lstrip() == "def __init__(self)"
-        assert actuals[6].lstrip() == "def public_func(self, **kwargs) -> str"
-
+        assert actuals[5].lstrip() == "def __init__(self)"
+        assert actuals[7].lstrip() == "def public_func(self, **kwargs) -> str"
     def test_required_kwargs(self):
         obj = RequiredKwargObject
         class_node = ClassNode(name=obj.__name__, namespace=obj.__name__, parent_node=None, obj=obj, pkg_root_namespace=self.pkg_namespace)

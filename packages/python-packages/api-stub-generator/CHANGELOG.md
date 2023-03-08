@@ -5,6 +5,7 @@ Fix incorrect type annotation.
 Update to follow best practices for accessing '__annotations__'.
 Fixed issue where class decorators were not displayed.
 Fixed issue where ivars appeared as cvars.
+Fixed issue where type hints did not appear for datetime.datetime types.
 
 ## Version 0.3.6 (2022-10-27)
 Suppressed unwanted base class methods in DPG libraries.

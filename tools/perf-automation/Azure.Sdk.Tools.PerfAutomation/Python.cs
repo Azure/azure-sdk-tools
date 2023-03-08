@@ -16,6 +16,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         protected override Language Language => Language.Python;
 
+        private static int profileCount = 0;
+
         public override async Task<(string output, string error, object context)> SetupAsync(
             string project,
             string languageVersion,
@@ -92,6 +94,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var pipListResult = await Util.RunAsync(pip, "list", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
             var runtimePackageVersions = GetRuntimePackageVersions(pipListResult.StandardOutput);
 
+            if (profile)
+            {
+                var formattedArgs = arguments.Replace(" --", "_").Replace("--", "_").Replace(" ", "-");
+                var profileFilename = $"{packageVersions[primaryPackage]}_{testName}_{formattedArgs}_{profileCount++}.pstats";
+                var profileOutputPath = Path.GetFullPath(Path.Combine(Util.GetProfileDirectory(WorkingDirectory), profileFilename));
+
+                arguments += $" --profile --profile-path {profileOutputPath}";
+            }
             var processResult = await Util.RunAsync(
                 perfstress,
                 $"{testName} {arguments}",

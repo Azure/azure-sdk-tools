@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.3.7 (Unreleased)
+## Version 0.3.7 (2023-03-09)
 Fix incorrect type annotation.
 Update to follow best practices for accessing '__annotations__'.
 Fixed issue where class decorators were not displayed.

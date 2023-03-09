@@ -4,7 +4,6 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -222,7 +221,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
 
                 profiledExe = perfExe;
-                perfExe = "valgrind"; 
+                perfExe = "valgrind";
 
             }
 

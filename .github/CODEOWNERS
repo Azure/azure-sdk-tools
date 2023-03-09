@@ -30,12 +30,12 @@
 /tools/check-enforcer/           @praveenkuttappan @weshaggard
 /tools/github-issues/            @praveenkuttappan @weshaggard
 /tools/js-sdk-release-tools/     @qiaozha @MaryGao
-/tools/mock-service-host/        @changlong-liu @tadelesh
+/tools/mock-service-host/        @raych1 @tadelesh
 /tools/perf-automation/          @mikeharder @benbp
 /tools/pipeline-generator/       @weshaggard @benbp
 /tools/pipeline-witness/         @praveenkuttappan @weshaggard
 /tools/sdk-generation-pipeline/  @weshaggard @praveenkuttappan @maririos
-/tools/sdk-testgen/              @changlong-liu @tadelesh
+/tools/sdk-testgen/              @raych1 @tadelesh
 /tools/stress-cluster/           @benbp @ckairen
 /tools/test-proxy/               @scbedd @mikeharder
 /tools/webhook-router/           @praveenkuttappan @weshaggard

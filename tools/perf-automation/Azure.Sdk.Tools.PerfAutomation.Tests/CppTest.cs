@@ -377,3 +377,4 @@ namespace Azure.Sdk.Tools.PerfAutomation.Tests
         }
     }
 }
+

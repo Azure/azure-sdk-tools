@@ -189,6 +189,9 @@ namespace Azure.Sdk.Tools.TestProxy
                     .ConfigureKestrel(kestrelServerOptions =>
                     {
                         kestrelServerOptions.ConfigureEndpointDefaults(lo => lo.Protocols = HttpProtocols.Http1);
+                        // the default data rate is 240 bPS and a grace period of 5 seconds.
+                        kestrelServerOptions.Limits.MinRequestBodyDataRate =
+                            new MinDataRate(bytesPerSecond: 100, gracePeriod: TimeSpan.FromSeconds(15));
                     })
                 );
 

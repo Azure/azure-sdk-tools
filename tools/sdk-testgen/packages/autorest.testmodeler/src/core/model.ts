@@ -307,7 +307,7 @@ export class TestCodeModeler {
     }
 
     private isBodyParameter(parameter: Parameter): boolean {
-        return parameter.protocol?.http?.in === 'body' || 'originalParameter' in parameter && this.isBodyParameter(parameter.originalParameter as Parameter)
+        return parameter.protocol?.http?.in === 'body' || Object.prototype.hasOwnProperty.call(parameter, 'originalParameter') && this.isBodyParameter(parameter['originalParameter'] as Parameter)
     }
 
     private createExampleModel(

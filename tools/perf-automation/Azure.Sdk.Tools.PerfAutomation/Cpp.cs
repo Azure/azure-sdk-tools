@@ -222,7 +222,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 }
 
                 profiledExe = perfExe;
-                perfExe = "valgrind";
+                perfExe = "valgrind"; 
 
             }
 

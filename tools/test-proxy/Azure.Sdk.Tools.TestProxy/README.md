@@ -137,9 +137,9 @@ docker pull azsdkengsys.azurecr.io/engsys/test-proxy:latest
 
 Standalone executable versions of the test-proxy are published to [github releases on this repository.](https://github.com/Azure/azure-sdk-tools/releases?q=Azure.Sdk.Tools.TestProxy&expanded=true)
 
-The azure-sdk team produces executables for multiple platforms, and are available attached as `assets`:
+These executables are produced for multiple platforms and are available attached as `assets`:
 
-
+![image](https://user-images.githubusercontent.com/45376673/224413965-30a1e34f-5517-447c-9709-cfa81b117d5c.png)
 
 #### Which should I install?
 
@@ -220,9 +220,9 @@ The test-proxy is integrated with the following environment variables.
 | Variable | Usage |
 |---|---|
 | `TEST_PROXY_FOLDER` | if command-line argument `storage-location` is not provided when invoking the proxy, this environment variable is also checked for a valid directory to use as test-proxy context. |
-| `Logging__LogLevel__Microsoft` | Defaults to `Information`. Possible valid values are `Information`, `Warning`, `Error`, `Critical`.  |
+| `Logging__LogLevel__Default` | Defaults to `Information`. Possible valid values are `Information`, `Warning`, `Error`, `Critical`.  |
 
-Both of the above variables can be set in the `docker` runtime by providing additional arguments EG: `docker run -e Logging__LogLevel__Microsoft=Warning azsdkengsys.azurecr.io/engsys/test-proxy:latest`. For multiple environment variables, just use multiple `-e` provisions.
+Both of the above variables can be set in the `docker` runtime by providing additional arguments EG: `docker run -e Logging__LogLevel__Default=Warning azsdkengsys.azurecr.io/engsys/test-proxy:latest`. For multiple environment variables, just use multiple `-e` provisions.
 
 ## How do I use the test-proxy to get a recording?
 

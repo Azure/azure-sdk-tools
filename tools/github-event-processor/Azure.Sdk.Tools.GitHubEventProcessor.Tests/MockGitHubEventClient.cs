@@ -108,7 +108,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         /// <param name="user"></param>
         /// <param name="permissionList"></param>
         /// <returns></returns>
-        public override Task<bool> DoesUserHavePermissions(long repositoryId, string user, List<PermissionLevel> permissionList)
+        public override Task<bool> DoesUserHavePermissions(long repositoryId, string user, List<string> permissionList)
         {
             return Task.FromResult(UserHasPermissionsReturn);
         }
@@ -163,6 +163,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
                     "",
                     false,
                     repository,
+                    null,
                     null,
                     null
                     );

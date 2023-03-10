@@ -81,7 +81,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///     Issue was last updated more than 7 days ago
         /// Resulting Action:
         ///     Close the issue
-        ///     Create a comment "Hi @${issueAuthor}, since you haven’t asked that we `/unresolve` the issue, we’ll close this out. If you believe further discussion is needed, please add a comment `/unresolve` to reopen the issue."
+        ///     Create a comment "Hi @${issueAuthor}, since you havenâ€™t asked that we `/unresolve` the issue, weâ€™ll close this out. If you believe further discussion is needed, please add a comment `/unresolve` to reopen the issue."
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
@@ -121,10 +121,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         Issue issue = result.Items[iCounter++];
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
                         issueUpdate.State = ItemState.Closed;
+                        // JRS - Waiting for the new release of Octokit which allows setting
+                        // the reason for closure. Issues closed here will be closed as Completed
+                        // issueUpdate.StateReason = ItemStateReason.Completed
                         gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
                                                                issue.Number,
                                                                issueUpdate);
-                        string comment = $"Hi @{issue.User.Login}, since you haven’t asked that we `/unresolve` the issue, we’ll close this out. If you believe further discussion is needed, please add a comment `/unresolve` to reopen the issue.";
+                        string comment = $"Hi @{issue.User.Login}, since you havenâ€™t asked that we `/unresolve` the issue, weâ€™ll close this out. If you believe further discussion is needed, please add a comment `/unresolve` to reopen the issue.";
                         gitHubEventClient.CreateComment(scheduledEventPayload.Repository.Id,
                                                         issue.Number,
                                                         comment);
@@ -199,6 +202,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         Issue issue = result.Items[iCounter++];
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
                         issueUpdate.State = ItemState.Closed;
+                        issueUpdate.StateReason = ItemStateReason.NotPlanned;
                         gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id, 
                                                                issue.Number, 
                                                                issueUpdate);
@@ -271,6 +275,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         Issue issue = result.Items[iCounter++];
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
                         issueUpdate.State = ItemState.Closed;
+                        // JRS - Waiting for the new release of Octokit which allows setting
+                        // the reason for closure. Issues closed here will be closed as Completed
+                        // issueUpdate.StateReason = ItemStateReason.NotPlanned
                         gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
                                                                issue.Number,
                                                                issueUpdate);

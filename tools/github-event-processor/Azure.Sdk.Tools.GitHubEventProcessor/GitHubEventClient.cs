@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Octokit;
@@ -11,7 +12,7 @@ using Octokit;
 namespace Azure.Sdk.Tools.GitHubEventProcessor
 {
     /// <summary>
-    /// GitHubEventClient is a singleton. It holds the GitHubClient, Rules and Codeowner instances as well
+    /// GitHubEventClient is a singleton. It holds the GitHubClient and Rules instances as well
     /// as any updates queued during event processing. After all the relevant rules have been processed, 
     /// a call to ProcessPendingUpdates will process all of the pending updates. This ensures that the 
     /// individual rules don't need to deal with calls to GitHub and the respective error processing, 
@@ -515,9 +516,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="user">The User.Login for the event object from the action payload</param>
         /// <param name="permission">OctoKit.PermissionLevel to check</param>
         /// <returns>bool, true if the user has the permission level, false otherwise</returns>
-        public async Task<bool> DoesUserHavePermission(long repositoryId, string user, PermissionLevel permission)
+        public async Task<bool> DoesUserHavePermission(long repositoryId, string user, string permission)
         {
-            List<PermissionLevel> permissionList = new List<PermissionLevel>
+            List<string> permissionList = new List<string>
             {
                 permission
             };
@@ -534,7 +535,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <returns>bool, true if the use has Write or Admin permissions, false otherwise</returns>
         public async Task<bool> DoesUserHaveAdminOrWritePermission(long repositoryId, string user)
         {
-            List<PermissionLevel> permissionList = new List<PermissionLevel>
+            List<string> permissionList = new List<string>
             {
                 PermissionLevel.Admin,
                 PermissionLevel.Write
@@ -551,11 +552,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="user">The User.Login for the event object from the action payload</param>
         /// <param name="permissionList">List of Octokit.PermissionLevels</param>
         /// <returns>bool, true if the user has any permissions in the permissionList, false otherwise</returns>
-        public virtual async Task<bool> DoesUserHavePermissions(long repositoryId, string user, List<PermissionLevel> permissionList)
+        public virtual async Task<bool> DoesUserHavePermissions(long repositoryId, string user, List<string> permissionList)
         {
             try
             {
-                CollaboratorPermission collaboratorPermission = await _gitHubClient.Repository.Collaborator.ReviewPermission(repositoryId, user);
+                CollaboratorPermissionResponse collaboratorPermission = await _gitHubClient.Repository.Collaborator.ReviewPermission(repositoryId, user);
                 // If the user has one of the permissions on the list return true
                 foreach (var permission in permissionList)
                 {
@@ -667,9 +668,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 catch (SecondaryRateLimitExceededException secondaryRateLimitEx)
                 {
                     Console.WriteLine($"In QueryIssues, a SecondaryRateLimitExceededException was caught from a SearchIssues call.");
-                    if (null != secondaryRateLimitEx.InnerException)
+                    if (null != secondaryRateLimitEx.HttpResponse)
                     {
-                        Console.WriteLine($"InnerException was non-null, InnerException={secondaryRateLimitEx.InnerException}");
+                        Console.WriteLine($"HttpStatusCode={secondaryRateLimitEx.HttpResponse.StatusCode}");
+                        Console.WriteLine("HttpResponse info:");
+                        foreach (KeyValuePair<string, string> kvp in secondaryRateLimitEx.HttpResponse.Headers)
+                        {
+                            Console.WriteLine($"[{kvp.Key}, {kvp.Value}]");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("secondaryRateLimitEx.HttpResponse was null");
                     }
                     if (tryNumber == maxTries)
                     {

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.GitHubEvent
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CodeOwnersParser", "..\code-owners-parser\CodeOwnersParser\Azure.Sdk.Tools.CodeOwnersParser.csproj", "{D4B02A7A-425E-4BC7-8820-924AC6BB181F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.GitHubEventProcessor.Tests", "Azure.Sdk.Tools.GitHubEventProcessor.Tests\Azure.Sdk.Tools.GitHubEventProcessor.Tests.csproj", "{7BB40AA1-FEC1-44E4-AB17-962859BB69C9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.GitHubEventProcessor.Tests", "Azure.Sdk.Tools.GitHubEventProcessor.Tests\Azure.Sdk.Tools.GitHubEventProcessor.Tests.csproj", "{7BB40AA1-FEC1-44E4-AB17-962859BB69C9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

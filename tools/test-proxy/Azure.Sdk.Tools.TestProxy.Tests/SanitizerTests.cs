@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Http;
@@ -150,6 +150,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var regex = (Regex)typeof(RegexEntrySanitizer).GetField("rx", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(sanitizer);
         }
 
+        [Fact]
+        public void UriRegexSanitizerSanitizersWithRegex()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/response_with_operation_code.json");
+            var originalValue = session.Session.Entries[0].RequestUri;
+
+            var uriSanitizer = new HeaderRegexSanitizer(key: "Operation-Location", value: "REDACTED", regex: "(?<=http://|https://)([^/?]+)");
+            session.Session.Sanitize(uriSanitizer);
+
+            var testValue = session.Session.Entries[0].Request.Headers;
+
+            Assert.Equal("https://REDACTED/fr/models//905a58f9-131e-42b8-8410-493ab1517d62", testValue["Operation-Location"][0]);
+        }
 
         [Fact]
         public void UriRegexSanitizerReplacesTableName()

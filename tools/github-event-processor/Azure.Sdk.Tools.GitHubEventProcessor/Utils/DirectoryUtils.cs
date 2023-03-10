@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
                 {
                     return files[0];
                 } 
-                else
+                else if (files.Count > 1)
                 {
                     string message = $"File {fileName} exists in several locations and which one to load cannot be determined.";
                     if (null != subdir)
@@ -98,6 +98,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
                         Console.WriteLine(file);
                     }
                     return null;
+                } 
+                else
+                {
+                    string message = $"{fileName} does not exist within the repository.";
+                    if (null != subdir)
+                    {
+                        message = message + $" Subdirectory hint was {subdir}.";
+                    }
+                    Console.WriteLine(message);
                 }
             }
             else

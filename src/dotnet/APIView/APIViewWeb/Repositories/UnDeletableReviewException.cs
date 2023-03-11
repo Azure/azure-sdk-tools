@@ -5,7 +5,7 @@ using System;
 
 namespace APIViewWeb.Repositories
 {
-    internal class UnDeletableReviewException : Exception
+    public class UnDeletableReviewException : Exception
     {
     }
 }

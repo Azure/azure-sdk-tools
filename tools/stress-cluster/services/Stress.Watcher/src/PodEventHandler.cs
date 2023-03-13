@@ -173,6 +173,7 @@ namespace Stress.Watcher
                             {
                                 Logger.Information($"Started chaos for pod.");
                             }
+                            Logger.Information($"Started Podzzzz");
                         });
 
             await Task.WhenAll(tasks);
@@ -180,7 +181,10 @@ namespace Stress.Watcher
 
         public bool ShouldStartChaos(GenericChaosResource chaos, V1Pod pod)
         {
-            if (chaos.Spec.GetTestInstance() != pod.TestInstance())
+            var s = chaos.Spec.GetTestInstance();
+            var p = pod.TestInstance();
+            // compare chaos label selector with pod selector, N*N*M
+            if (s != p)
             {
                 return false;
             }

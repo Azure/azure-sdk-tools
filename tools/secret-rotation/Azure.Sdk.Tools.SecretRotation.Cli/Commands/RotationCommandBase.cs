@@ -77,7 +77,7 @@ public abstract class RotationCommandBase : Command
         logger.LogDebug("Parsing configuration");
 
         // TODO: Pass a logger to the token so it can verbose log getting tokens.
-        TokenCredential tokenCredential = new CachingTokenCredential(logger, new AzureCliCredential());
+        TokenCredential tokenCredential = new AzureCliCredential();
 
         IDictionary<string, Func<StoreConfiguration, SecretStore>> secretStoreFactories =
             GetDefaultSecretStoreFactories(tokenCredential, logger);

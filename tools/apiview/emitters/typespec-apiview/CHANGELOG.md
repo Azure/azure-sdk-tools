@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.4.1 (03-13-2023)
+Fixed issue where enums with spread members would cause the generator to crash.
+
 ## Version 0.4.0 (03-06-2023)
 Update for rename of Cadl to TypeSpec.
 

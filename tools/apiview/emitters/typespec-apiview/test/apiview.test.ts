@@ -353,7 +353,7 @@ describe("apiview: tests", () => {
   
         enum SomeEnum {A}
   
-        enum SomeSpreadEnum {...A}
+        enum SomeSpreadEnum {...SomeEnum}
       }`;
       const expect = `
       namespace Azure.Test {
@@ -362,8 +362,8 @@ describe("apiview: tests", () => {
         }
   
         enum SomeSpreadEnum {
-          ...A,
-        }  
+          ...SomeEnum,
+        }
       }`;
       const apiview = await apiViewFor(input, {});
       const actual = apiViewText(apiview);

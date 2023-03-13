@@ -651,9 +651,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <returns>OctoKit.SearchIssuesResult</returns>
         public virtual async Task<SearchIssuesResult> QueryIssues(SearchIssuesRequest searchIssuesRequest)
         {
-            int maxTries = 3;
-            // 90 seconds
-            int sleepDuration = 90000;
+            int maxTries = 5;
+            // 61 seconds
+            int sleepDuration = 61000;
             for (int tryNumber = 1; tryNumber <= maxTries; tryNumber++)
             {
                 try
@@ -688,8 +688,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                     }
                     else
                     {
-                        Console.WriteLine($"QueryIssues, sleeping for {sleepDuration/1000} seconds before retrying.");
-                        System.Threading.Thread.Sleep(sleepDuration);
+                        Console.WriteLine($"QueryIssues, sleeping for {sleepDuration/61} seconds before retrying.");
+                        // Task.Delay over Sleep will push the wait into the IO completion state and unblocks the thread
+                        // from the threadpool whereas sleep blocks the thread in the threadpool.
+                        await Task.Delay(tryNumber * sleepDuration);
                     }
                 }
             }

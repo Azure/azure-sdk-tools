@@ -1,6 +1,5 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using Azure.Core;
 using Azure.Identity;
 using Azure.Sdk.Tools.SecretRotation.Azure;
 using Azure.Sdk.Tools.SecretRotation.Configuration;
@@ -77,7 +76,7 @@ public abstract class RotationCommandBase : Command
         logger.LogDebug("Parsing configuration");
 
         // TODO: Pass a logger to the token so it can verbose log getting tokens.
-        TokenCredential tokenCredential = new AzureCliCredential();
+        var tokenCredential = new AzureCliCredential();
 
         IDictionary<string, Func<StoreConfiguration, SecretStore>> secretStoreFactories =
             GetDefaultSecretStoreFactories(tokenCredential, logger);
@@ -89,7 +88,7 @@ public abstract class RotationCommandBase : Command
     }
 
     private static IDictionary<string, Func<StoreConfiguration, SecretStore>> GetDefaultSecretStoreFactories(
-        TokenCredential tokenCredential, ILogger logger)
+        AzureCliCredential tokenCredential, ILogger logger)
     {
         return new Dictionary<string, Func<StoreConfiguration, SecretStore>>
         {

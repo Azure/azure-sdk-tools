@@ -27,6 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       # To run github-event-processor built from source, for testing purposes, uncomment everything
       # in between the Start/End-Build From Source comments and comment everything in between the
       # Start/End-Install comments
@@ -35,10 +36,32 @@ jobs:
         run: >
           dotnet tool install
           Azure.Sdk.Tools.GitHubEventProcessor
-          --version 1.0.0-dev.20230303.6
+          --version 1.0.0-dev.20230313.4
           --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
           --global
         shell: bash
+      # End-Install
+
+      # Testing checkout of sources from the Azure/azure-sdk-tools repository
+      # The ref: is the SHA from the pull request in that repository or the
+      # refs/pull/<PRNumber>/merge for the latest on any given PR. If the repository
+      # is a fork eg. <User>/azure-sdk-tools then the repository down below will
+      # need to point to that fork
+      # Start-Build
+      # - name: Checkout tools repo for GitHub Event Processor sources
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: Azure/azure-sdk-tools
+      #     path: azure-sdk-tools
+      #     ref: <refs/pull/<PRNumber>/merge> or <sha>
+
+      # - name: Build and install GitHubEventProcessor from sources
+      #   run: |
+      #     dotnet pack
+      #     dotnet tool install --global --prerelease --add-source ../../../artifacts/packages/Debug Azure.Sdk.Tools.GitHubEventProcessor
+      #   shell: bash
+      #   working-directory: azure-sdk-tools/tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
+      # End-Build
 
       - name: Close Stale Issues Scheduled Event
         if: github.event.schedule == '0 1 * * *'
@@ -46,7 +69,6 @@ jobs:
           echo $GITHUB_PAYLOAD > payload.json
           github-event-processor ${{ github.event_name }} payload.json CloseStaleIssues
         shell: bash
-        working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
         env:
           GITHUB_PAYLOAD: ${{ toJson(github.event) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,7 +79,6 @@ jobs:
           echo $GITHUB_PAYLOAD > payload.json
           github-event-processor ${{ github.event_name }} payload.json IdentifyStalePullRequests
         shell: bash
-        working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
         env:
           GITHUB_PAYLOAD: ${{ toJson(github.event) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -68,7 +89,6 @@ jobs:
           echo $GITHUB_PAYLOAD > payload.json
           github-event-processor ${{ github.event_name }} payload.json CloseStalePullRequests
         shell: bash
-        working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
         env:
           GITHUB_PAYLOAD: ${{ toJson(github.event) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -79,7 +99,6 @@ jobs:
           echo $GITHUB_PAYLOAD > payload.json
           github-event-processor ${{ github.event_name }} payload.json IdentifyStaleIssues
         shell: bash
-        working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
         env:
           GITHUB_PAYLOAD: ${{ toJson(github.event) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -90,7 +109,6 @@ jobs:
           echo $GITHUB_PAYLOAD > payload.json
           github-event-processor ${{ github.event_name }} payload.json CloseAddressedIssues
         shell: bash
-        working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
         env:
           GITHUB_PAYLOAD: ${{ toJson(github.event) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -101,79 +119,6 @@ jobs:
           echo $GITHUB_PAYLOAD > payload.json
           github-event-processor ${{ github.event_name }} payload.json LockClosedIssues
         shell: bash
-        working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
         env:
           GITHUB_PAYLOAD: ${{ toJson(github.event) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # End-Install
-
-      # To run github-event-processor built from source, for testing purposes, uncomment everything
-      # in between the Start/End-Build From Source comments and comment everything in between the
-      # Start/End-Install comments
-      # Start-Build From Source
-      # - name: Close Stale Issues Scheduled Event - Built from source
-      #   if: github.event.schedule == '0 1 * * *'
-      #   run: |
-      #     echo $GITHUB_PAYLOAD > payload.json
-      #     dotnet run -- ${{ github.event_name }} payload.json CloseStaleIssues
-      #   shell: bash
-      #   working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
-      #   env:
-      #     GITHUB_PAYLOAD: ${{ toJson(github.event) }}
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # - name: Identify Stale PullRequests Scheduled Event  - Built from source
-      #   if: github.event.schedule == '0 5 * * FRI'
-      #   run: |
-      #     echo $GITHUB_PAYLOAD > payload.json
-      #     dotnet run -- ${{ github.event_name }} payload.json IdentifyStalePullRequests
-      #   shell: bash
-      #   working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
-      #   env:
-      #     GITHUB_PAYLOAD: ${{ toJson(github.event) }}
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # - name: Close Stale PullRequests Scheduled Event - Built from source
-      #   if: github.event.schedule == '30 2,8,14,20 * * *'
-      #   run: |
-      #     echo $GITHUB_PAYLOAD > payload.json
-      #     dotnet run -- ${{ github.event_name }} payload.json CloseStalePullRequests
-      #   shell: bash
-      #   working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
-      #   env:
-      #     GITHUB_PAYLOAD: ${{ toJson(github.event) }}
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # - name: Identify Stale Issues Scheduled Event - Built from source
-      #   if: github.event.schedule == '30 3,9,15,21 * * *'
-      #   run: |
-      #     echo $GITHUB_PAYLOAD > payload.json
-      #     dotnet run -- ${{ github.event_name }} payload.json IdentifyStaleIssues
-      #   shell: bash
-      #   working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
-      #   env:
-      #     GITHUB_PAYLOAD: ${{ toJson(github.event) }}
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # - name: Close Addressed Issues Scheduled Event - Built from source
-      #   if: github.event.schedule == '30 4,10,16,22 * * *'
-      #   run: |
-      #     echo $GITHUB_PAYLOAD > payload.json
-      #     dotnet run -- ${{ github.event_name }} payload.json CloseAddressedIssues
-      #   shell: bash
-      #   working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
-      #   env:
-      #     GITHUB_PAYLOAD: ${{ toJson(github.event) }}
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # - name: Lock Closed Issues Scheduled Event - Built from source
-      #   if: github.event.schedule == '30 5,11,17,23 * * *'
-      #   run: |
-      #     echo $GITHUB_PAYLOAD > payload.json
-      #     dotnet run -- ${{ github.event_name }} payload.json LockClosedIssues
-      #   shell: bash
-      #   working-directory: tools/github-event-processor/Azure.Sdk.Tools.GitHubEventProcessor
-      #   env:
-      #     GITHUB_PAYLOAD: ${{ toJson(github.event) }}
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # End-Build From Source

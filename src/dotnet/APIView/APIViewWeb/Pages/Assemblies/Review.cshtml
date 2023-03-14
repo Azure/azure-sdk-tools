@@ -113,7 +113,7 @@
                     <span class="small text-muted">Current Revision Approval Pending</span>                }
             </li>
             @if (Model.Review.Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName != null && 
-                 Model.Review.Language != "Swagger" && Model.Review.Language != "Cadl")
+                 Model.Review.Language != "Swagger" && Model.Review.Language != "TypeSpec")
             {
                 var approver = Model.Review.ApprovedForFirstReleaseBy ?? Model.Review.Revisions.LastOrDefault(r => r.IsApproved)?.Approvers?.FirstOrDefault();
                 @if (!Model.Review.IsApprovedForFirstRelease)

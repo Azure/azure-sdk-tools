@@ -16,40 +16,33 @@
 
 ## Data integrations
 
-- **Service partners**: Each partner team that owns packages in our repository will need to have an association tracking a service label to one or more GitHub handles.  The contacts for service teams will follow the same pattern as the "Service Attention" process does today; it must be possible to assign a set of service owners that differs from the individuals assigned as pull request reviewers.
+- **Service partners**: Each partner team that owns packages in our repository will need to have an association tracking a service label to one or more GitHub handles.  The contacts for service teams will follow the same pattern as the "Service Attention" process does today; it must be possible to assign a set of service owners that differs from the individuals assigned as pull request reviewers. If it exists, this information is in the repository's CODEOWNERS file.
 
   Example:
 
-  ```json
-  {
-    "label" : "Storage",
-    "contacts" : ["@person1", "@person2"]
-  }
-  ```
+```text
+# ServiceLabel: %Event Grid %Service Attention
+/sdk/eventgrid/                                                    @user1 @user2 @user3 @user4
+```
 
-- **Azure SDK team owners**: Each package in our repository that is owned by our team will need to have an association tracking a service label to one or more GitHub handles.  This is an unofficial mapping that does not necessarily correlate to authoritative "Azure SDK Team" membership, such as that represented by our security groups or the "[azure-sdk-team](https://repos.opensource.microsoft.com/orgs/Azure/teams/azure-sdk-team)" GitHub team.  That said, using one of these groups to validate membership on top of the label association would be just fine.
-
-  The set of owners responsible for triage for a given service may not be the same as those who should be tagged as pull request reviewers.  It should not be assumed that triage owners can be correctly inferred from the existing path/label definitions in CODEOWNERS.
+- **Azure SDK team owners**: Each package in our repository that is owned by our team will need to have an association tracking a service label to one or more GitHub handles.  This is an unofficial mapping that does not necessarily correlate to authoritative "Azure SDK Team" membership, such as that represented by our security groups or the "[azure-sdk-team](https://repos.opensource.microsoft.com/orgs/Azure/teams/azure-sdk-team)" GitHub team.  That said, using one of these groups to validate membership on top of the label association would be just fine. *Right now, this does not exist, this would require changes to CODEOWNERS which are still pending.* If it exists, the Service Label to user mapping is in the repository's CODEOWNERS file.
 
   Example:
 
-  ```json
-  {
-    "label" : "Event Hubs",
-    "contacts" : ["@person1"]
-  }
-  ```
+```text
+# ServiceLabel: %Event Hubs
+/sdk/eventhub/                                                     @user1 @user2 @user3
+```
 
-- **File paths**: A service label may have one or more file paths relative to the repository structure associated with it.
+- **File paths**: A service label may have one or more file paths relative to the repository structure associated with it. If it exists, this information is in the repository's CODEOWNERS file today.
 
   Example:
 
-  ```json
-  {
-    "label" : "Tables",
-    "paths" : ["/sdk/tables/Azure.Data.Tables", "/sdk/samples/some-table-sample"]
-  }
-  ```
+```text
+# # PRLabel: %Attestation
+/sdk/attestation/                                                  @user1 @user2
+/sdk/attestation/azure-security-attestation                        @user3 @Azure/fake-team-name
+```
 
 ## External integrations
 
@@ -93,9 +86,7 @@ _**No predictions**_
 
 ### Important context
 
-Today, this functionality exists as part of an Azure Function that hooks into our Event Hubs feed for GitHub events and operates independent of FabricBot and other automation.  It will need to be revised to expose an API that can be called on demand from the actions-based rules, or we will need to determine a way to more directly integrate it into the new platform.
-
-For the purposes of the rule definitions herein, it is assumed that this is a stand-alone service providing a REST API.
+This is a stand-alone service providing a REST API which requires a service key to access. The service key is pulled pulled from KeyVault and stored as a secret in the action's environment.
 
 # Issue Rules
 
@@ -126,6 +117,17 @@ For the purposes of the rule definitions herein, it is assumed that this is a st
     ```
 
 - Query AI label service for suggestions:
+  - _This is what we have today_
+
+    ```text
+    IF labels were predicted
+        - Assign returned labels to the issue
+        - Add "needs-team-triage" label to the issue
+    ELSE
+        - Add "needs-triage" label to the issue
+    ```
+
+  - _This is what we'd like to get to. It requires changes to the CODEOWNERS file structure which have not been done yet_
 
     ```text
     IF labels were predicted:

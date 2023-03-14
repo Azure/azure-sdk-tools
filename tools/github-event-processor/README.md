@@ -2,13 +2,13 @@
 
 ## Overview
 
-GitHub Event Processor is an Azure-SDK replacement for FabricBot. It's written in C# using [Octokit.Net](https://github.com/octokit/octokit.net). Where FabricBot is a separate service, GitHub Event Processor will utilize Action and Scheduled events, triggered through [GitHub Action Workflows](https://docs.github.com/en/actions/using-workflows/about-workflows). These are defined YML files and placed into the .github/workflows directory of the repository utilizing them. For our purposes there will be two YML files, one for Actions and one for Scheduled events.
+GitHub Event Processor is  written in C# using [Octokit.Net](https://github.com/octokit/octokit.net). GitHub Event Processor will utilize GitHub Actions and Scheduled events, triggered through [GitHub Action Workflows](https://docs.github.com/en/actions/using-workflows/about-workflows). These are defined in YML files and placed into the .github/workflows directory of the repository utilizing them. For our purposes there will be two YML files, one for Actions and one for Scheduled events.
 
 [Rules and Cron task definitions](./RULES.md)
 
 ## Events, Actions and YML
 
-GitHubEventProcesses is invoked by the event-processor.yml file that lives in .github/workflow directory. The directory is special, GitHub will automatically process any yml file in this directory as a GitHub actions file. This yml file defines which events, and which actions on those events, we wish to process. *The full list events and their corresponding actions can be found [here](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows)*
+GitHubEventProcessor is invoked by the event-processor.yml file that lives in .github/workflow directory. The directory is special, GitHub will automatically process any yml file in this directory as a GitHub actions file. This yml file defines which events, and which actions on those events, we wish to process. *The full list events and their corresponding actions can be found [here](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows)*
 
 For example:
 

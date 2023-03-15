@@ -6,17 +6,17 @@ repo and use the remote typespec definition in the spec repo.
 ## One time language repo setup
 
 There are 3 things that these two scripts expect are set up in your language repo before they will run correctly.
-1. Make sure your .gitignore is ignoring the TempTypespecFiles
+1. Make sure your .gitignore is ignoring the TempTypeSpecFiles
 2. Create a common emitter-package.json for your language
 3. Write the language specific hooks in Language-Settings.ps1
 
-### TempTypespecFiles
+### TempTypeSpecFiles
 
 You should add a new entry in your .gitignore for your repo so that none of these files are accidentally checked in if [cleanup](#cleanup-anchor) is turned off.
 
 ```
 # .gitignore file
-TempTypespecFiles/
+TempTypeSpecFiles/
 ```
 
 ### emitter-package.json
@@ -82,7 +82,7 @@ function Get-dotnet-EmitterAdditionalOptions([string]$projectDirectory) {
 
 Each project will need to have a configuration file that will tell the scripts where to find the typespec spec.
 
-### typespec-location.yaml
+### tsp-location.yaml
 
 This file should live under the project directory for each service and has the following properties
 
@@ -92,7 +92,7 @@ This file should live under the project directory for each service and has the f
 | <a id="additionalDirectories-anchor"></a> additionalDirectories | Sometimes a typespec file will use a relative import that might not be under the main directory.  In this case a single `directory` will not be enough to pull down all necessary files.  To support this you can specify additional directories as a list to sync so that all needed files are synced. | false: default = null |
 | <a id="commit-anchor"></a> commit | The commit sha for the version of the typespec files you want to generate off of.  This allows us to have idempotence on generation until we opt into pointing at a later version. | true |
 | <a id="repo-anchor"></a> repo | The repo this spec lives in.  This should be either `Azure/azure-rest-api-specs` or `Azure/azure-rest-api-specs-pr`.  Note that pr will work locally but not in CI until we add another change to handle token based auth. | true |
-| <a id="cleanup-anchor"></a> cleanup | This will remove the TempTypespecFiles directory after generation is complete if true otherwise this directory will be left to support local changes to the files to see how different changes would affect the generation. | false: default = true |
+| <a id="cleanup-anchor"></a> cleanup | This will remove the TempTypeSpecFiles directory after generation is complete if true otherwise this directory will be left to support local changes to the files to see how different changes would affect the generation. | false: default = true |
 
 Example
 
@@ -105,41 +105,41 @@ repo: Azure/azure-rest-api-specs
 cleanup: false
 ```
 
-## Typespec-Project-Sync.ps1
+## TypeSpec-Project-Sync.ps1
 
-This is the first script that should be called and can be found at `./eng/common/scripts/Typespec-Project-Sync.ps1`.  It takes in one parameter which is the root directory of the project which is typically one layer lower than the service directory.  As an example for dotnet this is `./sdk/openai/Azure.AI.OpenAI` where `openai` is the service directory and `Azure.AI.OpenAI` is the project directory.
+This is the first script that should be called and can be found at `./eng/common/scripts/TypeSpec-Project-Sync.ps1`.  It takes in one parameter which is the root directory of the project which is typically one layer lower than the service directory.  As an example for dotnet this is `./sdk/openai/Azure.AI.OpenAI` where `openai` is the service directory and `Azure.AI.OpenAI` is the project directory.
 
 ```powershell
-./eng/common/scripts/Typespec-Project-Sync.ps1 ./sdk/openai/Azure.AI.OpenAI
+./eng/common/scripts/TypeSpec-Project-Sync.ps1 ./sdk/openai/Azure.AI.OpenAI
 ```
 
-This script will create a `sparse-spec` folder as a sibling to the root of your current git clone.  Each project that is generated will get a sub directory inside of this folder named after the project you are generating.  It will then automatically filter to only the files in the [directory](#directory-anchor) defined in typespec-location.yaml, and sync to the [commit sha](#commit-anchor) defined in typespec-location.yaml.
+This script will create a `sparse-spec` folder as a sibling to the root of your current git clone.  Each project that is generated will get a sub directory inside of this folder named after the project you are generating.  It will then automatically filter to only the files in the [directory](#directory-anchor) defined in tsp-location.yaml, and sync to the [commit sha](#commit-anchor) defined in tsp-location.yaml.
 
 As an example if you have your language repo at `D:\git\azure-sdk-for-net` there will be a new directory `D:\git\sparse-spec\Azure.AI.OpenAI` where the sparse spec will live.
 
-This is then copied over to your project directory so that you can make temporary changes if needed.  The location will be `./{projectDir}/TempTypespecFiles`.  This temporary directory will be [cleaned up](#cleanup-anchor) at the end of the generate script if set in the typespec-location.yaml.
+This is then copied over to your project directory so that you can make temporary changes if needed.  The location will be `./{projectDir}/TempTypeSpecFiles`.  This temporary directory will be [cleaned up](#cleanup-anchor) at the end of the generate script if set in the tsp-location.yaml.
 
-## Typespec-Project-Generate.ps1
+## TypeSpec-Project-Generate.ps1
 
-This is the second script that should be called and can be found at `./eng/common/scripts/Typespec-Project-Generate.ps1`.  It takes the exact same parameter as the sync script.
+This is the second script that should be called and can be found at `./eng/common/scripts/TypeSpec-Project-Generate.ps1`.  It takes the exact same parameter as the sync script.
 
 ```powershell
-./eng/common/scripts/Typespec-Project-Generate.ps1 ./sdk/openai/Azure.AI.OpenAI
+./eng/common/scripts/TypeSpec-Project-Generate.ps1 ./sdk/openai/Azure.AI.OpenAI
 ```
 
-The first thing this does is clean up the npm install that might exist in `./{projectDir}/TempTypespecFiles`, followed by replacing the package.json with the language static one.
+The first thing this does is clean up the npm install that might exist in `./{projectDir}/TempTypeSpecFiles`, followed by replacing the package.json with the language static one.
 
 Once this is done it will run `npm install` followed by `tsp compile` which is the standard way to generate a typespec project.
 
 The exact command that gets run is output stdout to enable debugging if needed.
 
-We currently don't do anything to the typespec-project.yaml that gets pulled in from the spec repo to limit to just your language emitter instead we use the filter option on the command line `--emit $emitterName`.  This allows you to isolate the generation to only things owned by your language so you can safely add generation dependencies in CI without needing to worry about noisy neighbors.
+We currently don't do anything to the tspconfig.yaml that gets pulled in from the spec repo to limit to just your language emitter instead we use the filter option on the command line `--emit $emitterName`.  This allows you to isolate the generation to only things owned by your language so you can safely add generation dependencies in CI without needing to worry about noisy neighbors.
 
 ## Build tool integration
 
 One use case that some languages have is to have their CI regenerate the project and then do a `git diff` to validate that there are no differences.  This helps detect if people modify the generated files manually.  To support this its valuable to have the exact same command to generate a project regardless of whether the individual library is autorest or typespec.
 
-To achieve this each language will have their own idiomatic tool set but whatever that toolset is can check to see if a typespec-location.yaml file exists, and if it does they can call the Typespec-Project-Sync.ps1 and Typespec-Project-Generate.ps1 scripts, otherwise they can call the autorest command they call today for all other libraries.
+To achieve this each language will have their own idiomatic tool set but whatever that toolset is can check to see if a tsp-location.yaml file exists, and if it does they can call the TypeSpec-Project-Sync.ps1 and TypeSpec-Project-Generate.ps1 scripts, otherwise they can call the autorest command they call today for all other libraries.
 
 In dotnet this is achieved by running `dotnet build /t:GenerateCode` regardless of which type of project it is the correct commands get called and it remains consistent and idiomatic to the language.  In other languages this could be `npm generate` or `python generate.py` to do the same.
 

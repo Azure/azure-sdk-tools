@@ -1,0 +1,29 @@
+parameters:
+  - name: Repos
+    type: object
+  - name: ScriptDirectory
+    type: string
+    default: eng/common/scripts
+  - name: WorkingDirectory
+    type: string
+    default: $(System.DefaultWorkingDirectory)
+
+steps:
+
+- ${{ each repo in parameters.Repos }}:
+
+  - ${{ each target in repo.value.TargetRepos }}:
+
+    - task: PowerShell@2
+      displayName: Sync Repo from ${{ repo.key }} to ${{ target.key }}
+      inputs:
+        pwsh: true
+        workingDirectory: ${{ parameters.WorkingDirectory }}
+        filePath: ${{ parameters.ScriptDirectory }}/Git-Repo-Sync.ps1
+        arguments: >
+          -SourceRepo '${{ repo.key }}'
+          -SourceBranch '${{ repo.value.Branch }}'
+          -TargetRepo '${{ target.key }}'
+          -TargetBranch '${{ coalesce(target.value.Branch, repo.value.Branch) }}'
+          -Rebase '${{ target.value.Rebase }}'
+          -AuthToken '$(azuresdk-github-pat)'

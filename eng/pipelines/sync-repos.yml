@@ -15,7 +15,5 @@ jobs:
       parameters:
         Repos:
           Jacktn/TestRepo-one:
-            Branch: main
             TargetRepos:
               Jacktn/TestRepo-two:
-                Rebase: true

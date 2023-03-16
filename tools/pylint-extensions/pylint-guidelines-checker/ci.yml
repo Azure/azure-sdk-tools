@@ -31,8 +31,8 @@ extends:
     PackageName: 'Azure SDK Pylint Plugin'
     TestSteps:
     - script: |
-        pip install -r dev_requirements.txt
-        pip install -e .
+        python -m pip install -r dev_requirements.txt
+        python -m pip install -e .
       displayName: 'Install Test Requirements'
       workingDirectory: $(Build.SourcesDirectory)/tools/pylint-extensions/pylint-guidelines-checker
 

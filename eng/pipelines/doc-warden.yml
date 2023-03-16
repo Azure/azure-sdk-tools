@@ -37,8 +37,8 @@ jobs:
       versionSpec: 3.6
 
   - script: |
-     pip install setuptools 
-     pip install wheel twine readme-renderer[md]
+     python -m pip install setuptools 
+     python -m pip install wheel twine readme-renderer[md]
     displayName: 'Prep Environment'
 
   - script: |
@@ -87,8 +87,8 @@ jobs:
       versionSpec: 3.6
 
   - script: |
-      pip install setuptools 
-      pip install wheel twine readme-renderer[md]
+      python -m pip install setuptools 
+      python -m pip install wheel twine readme-renderer[md]
 
       cd $(Build.SourcesDirectory)
       mkdir sdk-for-js
@@ -103,7 +103,7 @@ jobs:
     displayName: 'Setup Environment'
 
   - script: |
-      pip install -e $(Build.SourcesDirectory)/packages/python-packages/doc-warden/
+      python -m pip install -e $(Build.SourcesDirectory)/packages/python-packages/doc-warden/
     displayName: 'Install doc-warden'
 
   - script: |

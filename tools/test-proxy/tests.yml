@@ -205,8 +205,8 @@ stages:
             rootFolder: $(CLONE_LOCATION)
 
         - pwsh: |
-            pip install -r dev_requirements.txt
-            pip install .
+            python -m pip install -r dev_requirements.txt
+            python -m pip install .
           displayName: 'Install requirements and package'
           workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
 

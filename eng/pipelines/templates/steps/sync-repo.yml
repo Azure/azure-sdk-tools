@@ -1,9 +1,22 @@
 parameters:
+  # Provde a list of repos
+  # Example:
+  #   Azure/azure-rest-api-specs:
+  #     Branch: main
+  #     TargetRepos:
+  #       Azure/azure-rest-api-specs-pr:
+  #       azure-sdk/azure-rest-api-specs:
+  #         Branch: dev
+  #         Rebase: true
+  #   Azure/azure-sdk-for-go:
+  #     Branch: main
+  #     TargetRepos:
+  #       Azure/azure-sdk-for-go-pr:
   - name: Repos
     type: object
   - name: ScriptDirectory
     type: string
-    default: eng/common/scripts
+    default: eng/scripts
   - name: WorkingDirectory
     type: string
     default: $(System.DefaultWorkingDirectory)
@@ -26,4 +39,5 @@ steps:
           -TargetRepo '${{ target.key }}'
           -TargetBranch '${{ coalesce(target.value.Branch, repo.value.Branch) }}'
           -Rebase '${{ target.value.Rebase }}'
+          -PushArgs "${{ target.value.PushArgs }}"
           -AuthToken '$(azuresdk-github-pat)'

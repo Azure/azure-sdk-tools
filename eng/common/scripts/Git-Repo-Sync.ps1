@@ -21,32 +21,39 @@ A personal access token
 
 .PARAMETER Rebase
 Keep the commit record when syning.
+
+.PARAMETER PushArgs
+Optional arguments to the push command
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
   [Parameter(Mandatory = $true)]
-  [string]$SourceRepo,
+  [string] $SourceRepo,
 
   [Parameter(Mandatory = $false)]
-  [string]$SourceBranch,
+  [string] $SourceBranch,
 
   [Parameter(Mandatory = $true)]
-  [string]$TargetRepo,
+  [string] $TargetRepo,
 
   [Parameter(Mandatory = $false)]
-  [string]$TargetBranch,
+  [string] $TargetBranch,
 
   [Parameter(Mandatory = $true)]
-  [string]$AuthToken,
+  [string] $AuthToken,
 
   [Parameter(Mandatory = $false)]
-  [string]$Rebase,
-  
-  $user="azure-sdk",
-  $email="azuresdk@microsoft.com"
+  [string] $Rebase,
+
+  [Parameter(Mandatory = $false)]
+  [string] $PushArgs = ''
+
 )
 
-. (Join-Path $PSScriptRoot common.ps1)
+. (Join-Path $PSScriptRoot ../common/scripts/common.ps1)
+
+$User="azure-sdk"
+$Email="azuresdk@microsoft.com"
 
 Set-PsDebug -Trace 1
 if (-not (Test-Path $SourceRepo)) {
@@ -94,7 +101,7 @@ try {
 
   if (-not $($Rebase)) {
     git checkout -B target_branch $($SourceBranch)
-    git push --force Target "target_branch:refs/heads/$($TargetBranch)"
+    git push $PushArgs Target "target_branch:refs/heads/$($TargetBranch)"
     FailOnError "Failed to push to $($TargetRepo):$($TargetBranch)"
 
   } else {
@@ -102,14 +109,14 @@ try {
     FailOnError "Failed to fetch TargetBranch $($TargetBranch)."
 
     git checkout -B target_branch "refs/remotes/Target/$($TargetBranch)"
-    git -c user.name="azure-sdk" -c user.email="azuresdk@microsoft.com" rebase --strategy-option=theirs $($SourceBranch)
+    git -c user.name=$user -c user.email=$Email rebase --strategy-option=theirs $($SourceBranch)
     FailOnError "Failed to rebase for $($TargetRepo):$($TargetBranch)" {
       git status
       git diff
       git rebase --abort
     }
 
-    git push --force Target "target_branch:refs/heads/$($TargetBranch)"
+    git push $PushArgs Target "target_branch:refs/heads/$($TargetBranch)"
     FailOnError "Failed to push to $($TargetRepo):$($TargetBranch)"
   }
 } finally {

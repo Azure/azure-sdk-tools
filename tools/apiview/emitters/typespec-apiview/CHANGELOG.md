@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.4.2 (03-16-2023)
+Support latest release of TypeSpec.
+
 ## Version 0.4.1 (03-13-2023)
 Fixed issue where enums with spread members would cause the generator to crash.
 

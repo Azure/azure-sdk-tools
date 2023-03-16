@@ -37,7 +37,7 @@ stages:
 
           - script: |
               python --version
-              pip install virtualenv aiohttp chardet trio setuptools wheel packaging
+              python -m pip install virtualenv aiohttp chardet trio setuptools wheel packaging
             displayName: 'Setup Python Environment'
 
           - pwsh: |
@@ -85,7 +85,7 @@ stages:
 
         - script: |
             set -e
-            pip install twine
+            python -m pip install twine
           displayName: Install Twine
 
         - task: TwineAuthenticate@0

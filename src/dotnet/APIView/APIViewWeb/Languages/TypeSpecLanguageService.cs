@@ -16,7 +16,7 @@ namespace APIViewWeb
     {
         public override string Name { get; } = "TypeSpec";
 
-        public override string Extension { get; } = ".tsp";
+        public override string [] Extensions { get; } = { ".tsp", ".cadl" };
 
         public override string VersionString { get; } = "0";
 

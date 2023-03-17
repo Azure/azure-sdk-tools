@@ -8,6 +8,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Microsoft.Extensions.Internal;
+using NuGet.Protocol.Core.Types;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -26,6 +28,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
     /// </summary>
     public class GitProcessHandler
     {
+        public const int RETRY_INTERMITTENT_FAILURE_COUNT = 3;
         /// <summary>
         /// Internal class to hold the minimum supported version of git. If that
         /// version changes we only need to change it here.
@@ -127,54 +130,67 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 try
                 {
-                    DebugLogger.LogInformation($"git {arguments}");
-
-                    var output = new List<string>();
-                    var error = new List<string>();
-
-                    using (var process = new Process())
+                    int attempts = 1;
+                    bool continueToAttempt = true;
+                    while (attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
                     {
-                        process.StartInfo = processStartInfo;
+                        DebugLogger.LogInformation($"git {arguments}");
 
-                        process.OutputDataReceived += (s, e) =>
+                        var output = new List<string>();
+                        var error = new List<string>();
+
+                        using (var process = new Process())
                         {
-                            lock (output)
+                            process.StartInfo = processStartInfo;
+
+                            process.OutputDataReceived += (s, e) =>
                             {
-                                output.Add(e.Data);
-                            }
-                        };
+                                lock (output)
+                                {
+                                    output.Add(e.Data);
+                                }
+                            };
 
-                        process.ErrorDataReceived += (s, e) =>
-                        {
-                            lock (error)
+                            process.ErrorDataReceived += (s, e) =>
                             {
-                                error.Add(e.Data);
+                                lock (error)
+                                {
+                                    error.Add(e.Data);
+                                }
+                            };
+
+                            process.Start();
+                            process.BeginErrorReadLine();
+                            process.BeginOutputReadLine();
+                            process.WaitForExit();
+
+                            int returnCode = process.ExitCode;
+                            var stdOut = string.Join(Environment.NewLine, output);
+                            var stdError = string.Join(Environment.NewLine, error);
+
+                            DebugLogger.LogDebug($"StdOut: {stdOut}");
+                            DebugLogger.LogDebug($"StdErr: {stdError}");
+                            DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
+
+                            result.ExitCode = process.ExitCode;
+                            result.StdErr = string.Join(Environment.NewLine, stdError);
+                            result.StdOut = string.Join(Environment.NewLine, stdOut);
+
+                            if (result.ExitCode != 0)
+                            {
+                                continueToAttempt = IsRetriableGitError(result);
+
+                                if(!continueToAttempt)
+                                {
+                                    throw new GitProcessException(result);
+                                }
                             }
-                        };
-
-                        process.Start();
-                        process.BeginErrorReadLine();
-                        process.BeginOutputReadLine();
-                        process.WaitForExit();
-
-                        int returnCode = process.ExitCode;
-                        var stdOut = string.Join(Environment.NewLine, output);
-                        var stdError = string.Join(Environment.NewLine, error);
-
-                        DebugLogger.LogDebug($"StdOut: {stdOut}");
-                        DebugLogger.LogDebug($"StdErr: {stdError}");
-                        DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
-
-                        result.ExitCode = process.ExitCode;
-                        result.StdErr = string.Join(Environment.NewLine, stdError);
-                        result.StdOut = string.Join(Environment.NewLine, stdOut);
-
-                        if (result.ExitCode != 0)
-                        {
-                            throw new GitProcessException(result);
+                            attempts++;
                         }
                     }
                 }
+                // exceptions caught here will be to do with inability to start the git process
+                // otherwise all "error" states should be handled by the output to stdErr and non-zero exitcode.
                 catch (Exception e)
                 {
                     DebugLogger.LogDebug(e.Message);
@@ -187,6 +203,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             });
 
             return result;
+        }
+
+        public bool IsRetriableGitError(CommandResult result)
+        {
+            if (result.ExitCode != 0) {
+
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -214,52 +239,65 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 try
                 {
-                    DebugLogger.LogInformation($"git {arguments}");
-                    var output = new List<string>();
-                    var error = new List<string>();
-
-                    using (var process = new Process())
+                    int attempts = 1;
+                    bool continueToAttempt = true;
+                    while (attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
                     {
-                        process.StartInfo = processStartInfo;
+                        DebugLogger.LogInformation($"git {arguments}");
+                        var output = new List<string>();
+                        var error = new List<string>();
 
-                        process.OutputDataReceived += (s, e) =>
+                        using (var process = new Process())
                         {
-                            lock (output)
+                            process.StartInfo = processStartInfo;
+
+                            process.OutputDataReceived += (s, e) =>
                             {
-                                output.Add(e.Data);
-                            }
-                        };
+                                lock (output)
+                                {
+                                    output.Add(e.Data);
+                                }
+                            };
 
-                        process.ErrorDataReceived += (s, e) =>
-                        {
-                            lock (error)
+                            process.ErrorDataReceived += (s, e) =>
                             {
-                                error.Add(e.Data);
+                                lock (error)
+                                {
+                                    error.Add(e.Data);
+                                }
+                            };
+
+                            process.Start();
+                            process.BeginErrorReadLine();
+                            process.BeginOutputReadLine();
+                            process.WaitForExit();
+
+                            int returnCode = process.ExitCode;
+                            var stdOut = string.Join(Environment.NewLine, output);
+                            var stdError = string.Join(Environment.NewLine, error);
+
+                            DebugLogger.LogDebug($"StdOut: {stdOut}");
+                            DebugLogger.LogDebug($"StdErr: {stdError}");
+                            DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
+
+                            commandResult = new CommandResult()
+                            {
+                                ExitCode = process.ExitCode,
+                                StdErr = stdError,
+                                StdOut = stdOut,
+                                Arguments = arguments
+                            };
+
+                            if (commandResult.ExitCode != 0)
+                            {
+                                continueToAttempt = IsRetriableGitError(commandResult);
                             }
-                        };
-
-                        process.Start();
-                        process.BeginErrorReadLine();
-                        process.BeginOutputReadLine();
-                        process.WaitForExit();
-
-                        int returnCode = process.ExitCode;
-                        var stdOut = string.Join(Environment.NewLine, output);
-                        var stdError = string.Join(Environment.NewLine, error);
-
-                        DebugLogger.LogDebug($"StdOut: {stdOut}");
-                        DebugLogger.LogDebug($"StdErr: {stdError}");
-                        DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
-
-                        commandResult = new CommandResult()
-                        {
-                            ExitCode = process.ExitCode,
-                            StdErr = stdError,
-                            StdOut = stdOut,
-                            Arguments = arguments
-                        };
+                            attempts++;
+                        }
                     }
                 }
+                // exceptions caught here will be to do with inability to start the git process
+                // otherwise all "error" states should be handled by the output to stdErr and non-zero exitcode.
                 catch (Exception e)
                 {
                     DebugLogger.LogDebug(e.Message);

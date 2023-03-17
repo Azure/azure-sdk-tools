@@ -10,9 +10,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
     public class OrgConstants
     {
         // The Azure is used to check whether or not the use is a member of Azure org.
-        public static readonly string Azure = "Azure";
+        public const string Azure = "Azure";
         // The ProductHeaderName is used to register the GitHubClient, specificially, for this
         // application
-        public static readonly string ProductHeaderName = "azure-sdk-github-event-processor";
+        public const string ProductHeaderName = "azure-sdk-github-event-processor";
     }
 }

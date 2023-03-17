@@ -27,6 +27,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
     /// </summary>
     public class RulesConfiguration
     {
+        private static readonly string RulesConfigFileName = "event-processor.config";
+        private static readonly string RulesConfigSubDirectory = ".github";
         public Dictionary<string, RuleState> Rules { get; set; }
         public string RulesConfigFile { get; set; } = null;
         public RulesConfiguration() 
@@ -47,7 +49,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
             {
                 // Load the config from the well known location, somewhere under the .github directory
                 // which is in the root of the repository
-                configLoc = DirectoryUtils.FindFileInRepository("event-processor.config", ".github");
+                configLoc = DirectoryUtils.FindFileInRepository(RulesConfigFileName, RulesConfigSubDirectory);
             }
             RulesConfigFile = configLoc;
             LoadRulesFromConfig();

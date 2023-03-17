@@ -11,11 +11,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
     public class CommentUtils
     {
         /// <summary>
-        /// 
+        /// Common code to ensure comment text is searched the exact same way while preventing duplicate code
+        /// in multiple places.
         /// </summary>
-        /// <param name="comment"></param>
-        /// <param name="textToLookFor"></param>
-        /// <returns></returns>
+        /// <param name="comment">The full comment test from IssueCommentPayload.Comment.Body</param>
+        /// <param name="textToLookFor">The string to search for in the comments</param>
         internal static bool CommentContainsText(string comment, string textToLookFor)
         {
             // Why is this using IndexOf instead of string.Contains?
@@ -25,11 +25,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
             // Also, the strings being looked for will always be in English, matching what's in the
             // CommentConstants class which is why OrdinalIgnoreCase instead of the cultural string
             // comparisons.
-            if (comment.IndexOf(textToLookFor, StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                return true;
-            }
-            return false;
+            return comment.IndexOf(textToLookFor, StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }

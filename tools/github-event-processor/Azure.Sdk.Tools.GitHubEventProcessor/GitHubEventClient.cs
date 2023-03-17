@@ -264,7 +264,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// Write the current rate limit and remaining number of transactions.
         /// </summary>
         /// <param name="prependMessage">Optional message to prepend to the rate limit message.</param>
-        /// <returns></returns>
         public async Task WriteRateLimits(string prependMessage = null)
         {
             var miscRateLimit = await GetRateLimits();
@@ -283,7 +282,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// Write the current rate limit and remaining number of transactions.
         /// </summary>
         /// <param name="prependMessage">Optional message to prepend to the rate limit message.</param>
-        /// <returns></returns>
         public async Task WriteSearchRateLimits(string prependMessage = null)
         {
             var miscRateLimit = await GetRateLimits();
@@ -415,7 +413,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="repositoryId">The Id of the repository</param>
         /// <param name="issueOrPullRequestNumber">The Issue or PullRequest number</param>
         /// <param name="comment">The comment being created.</param>
-        /// <returns></returns>
         public void CreateComment(long repositoryId, int issueOrPullRequestNumber, string comment)
         {
             GitHubComment gitHubComment = new GitHubComment(repositoryId, issueOrPullRequestNumber, comment);
@@ -707,7 +704,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// This method creates a GitHubClient using the GITHUB_TOKEN from the environment for authentication
         /// </summary>
         /// <param name="productHeaderName">This is used to generate the User Agent string sent with each request. The name used should represent the product, the GitHub Organization, or the GitHub username that's using Octokit.net (in that order of preference).</param>
-        /// <returns></returns>
         /// <exception cref="ArgumentException">If the product header name is null or empty</exception>
         /// <exception cref="ApplicationException">If there is no GITHUB_TOKEN in the environment</exception>
         /// <returns>Authenticated GitHubClient</returns>

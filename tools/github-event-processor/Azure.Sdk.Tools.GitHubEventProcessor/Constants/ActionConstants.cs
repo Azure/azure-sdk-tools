@@ -12,26 +12,26 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
     /// </summary>
     public class ActionConstants
     {
-        public static readonly string Assigned = "assigned";
-        public static readonly string Created = "created";
-        public static readonly string Closed = "closed";
-        public static readonly string Deleted = "deleted";
-        public static readonly string Demilestoned = "demilestoned";
-        public static readonly string Dismissed = "dismissed";
-        public static readonly string Edited = "edited";
-        public static readonly string Labeled = "labeled";
-        public static readonly string Locked = "locked";
-        public static readonly string Milestoned = "milestoned";
-        public static readonly string Opened = "opened";
-        public static readonly string Pinned = "pinned";
-        public static readonly string Reopened = "reopened";
-        public static readonly string ReviewRequested = "review_requested";
-        public static readonly string Submitted = "submitted";
-        public static readonly string Synchronize = "synchronize";
-        public static readonly string Transferred = "transferred";
-        public static readonly string Unassigned = "unassigned";
-        public static readonly string Unlabeled = "unlabeled";
-        public static readonly string Unlocked = "unlocked";
-        public static readonly string Unpinned = "unpinned";
+        public const string Assigned = "assigned";
+        public const string Created = "created";
+        public const string Closed = "closed";
+        public const string Deleted = "deleted";
+        public const string Demilestoned = "demilestoned";
+        public const string Dismissed = "dismissed";
+        public const string Edited = "edited";
+        public const string Labeled = "labeled";
+        public const string Locked = "locked";
+        public const string Milestoned = "milestoned";
+        public const string Opened = "opened";
+        public const string Pinned = "pinned";
+        public const string Reopened = "reopened";
+        public const string ReviewRequested = "review_requested";
+        public const string Submitted = "submitted";
+        public const string Synchronize = "synchronize";
+        public const string Transferred = "transferred";
+        public const string Unassigned = "unassigned";
+        public const string Unlabeled = "unlabeled";
+        public const string Unlocked = "unlocked";
+        public const string Unpinned = "unpinned";
     }
 }

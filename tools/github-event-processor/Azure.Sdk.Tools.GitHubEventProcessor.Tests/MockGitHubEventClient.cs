@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         /// </summary>
         /// <param name="repositoryId"></param>
         /// <param name="issueOrPullRequestNumber"></param>
-        /// <returns></returns>
+        /// <returns>integer,the number of pending updates that would be processed</returns>
         public override Task<int> ProcessPendingUpdates(long repositoryId, int issueOrPullRequestNumber = 0)
         {
             int numUpdates = 0;
@@ -81,9 +81,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         /// <summary>
         /// IsUserCollaborator override. Returns IsCollaboratorReturn value
         /// </summary>
-        /// <param name="repositoryId"></param>
-        /// <param name="user"></param>
-        /// <returns></returns>
+        /// <param name="repositoryId">The Id of the repository</param>
+        /// <param name="user">The User.Login for the event object from the action payload</param>
+        /// <returns>bool, returns the IsCollaboratorReturn set for testing</returns>
         public override Task<bool> IsUserCollaborator(long repositoryId, string user)
         {
             return Task.FromResult(IsCollaboratorReturn);
@@ -92,22 +92,22 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         /// <summary>
         /// IsUserMemberOfOrg override. Returns IsUserMemberOfOrgReturn value
         /// </summary>
-        /// <param name="orgName"></param>
-        /// <param name="user"></param>
-        /// <returns></returns>
+        /// <param name="orgName">The organization name.</param>
+        /// <param name="user">The User.Login for the event object from the action payload</param>
+        /// <returns>bool, returns IsUserMemberOfOrgReturn set for testing</returns>
         public override Task<bool> IsUserMemberOfOrg(string orgName, string user)
         {
-            return Task.FromResult(IsCollaboratorReturn);
+            return Task.FromResult(IsUserMemberOfOrgReturn);
         }
 
 
         /// <summary>
         /// DoesUserHavePermissions override. Returns UserHasPermissionsReturn value
         /// </summary>
-        /// <param name="repositoryId"></param>
-        /// <param name="user"></param>
-        /// <param name="permissionList"></param>
-        /// <returns></returns>
+        /// <param name="repositoryId">The Id of the repository</param>
+        /// <param name="user">The User.Login for the event object from the action payload</param>
+        /// <param name="permissionList">The list of permissions to check for.</param>
+        /// <returns>bool, returns UserHasPermissionsReturn for testing</returns>
         public override Task<bool> DoesUserHavePermissions(long repositoryId, string user, List<string> permissionList)
         {
             return Task.FromResult(UserHasPermissionsReturn);
@@ -224,7 +224,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         /// and private setters. This means everything needs to be passed into the constructor.
         /// </summary>
         /// <param name="fakeLogin">This will become string that'll be the User.Login</param>
-        /// <returns></returns>
+        /// <returns>Octokit.User</returns>
         internal User CreateFakeUser(string fakeLogin)
         {
             DateTimeOffset dateTimeOffset= DateTimeOffset.Now;
@@ -299,7 +299,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         /// <param name="fakeUser">fake Octokit.User, created using CreateFakeUser</param>
         /// <param name="prReviewState">Octokit.PullRequestReviewState, the state of the review</param>
         /// <param name="prReviewId">Fake prReviewId, it'll match the number of the fakeUser{number}</param>
-        /// <returns></returns>
+        /// <returns>Octkit.PullRequestReview</returns>
         internal PullRequestReview CreateFakeReview(User fakeUser, PullRequestReviewState prReviewState, long prReviewId)
         {
             PullRequestReview prReview = new PullRequestReview(
@@ -381,7 +381,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         /// all rules defaulting to RuleState.On, otherwise load the rulesConfiguration from the location.
         /// </summary>
         /// <param name="rulesConfigLocation">Rules configuration location</param>
-        /// <returns></returns>
+        /// <returns>RulesConfiguration</returns>
         public override RulesConfiguration LoadRulesConfiguration(string? rulesConfigLocation = null)
         {
             RulesConfiguration? rulesConfiguration = null;

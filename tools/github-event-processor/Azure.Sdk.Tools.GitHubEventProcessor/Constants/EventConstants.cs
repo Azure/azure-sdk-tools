@@ -11,10 +11,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
     /// </summary>
     public class EventConstants
     {
-        public const string issues = "issues";
-        public const string issue_comment = "issue_comment";
-        public const string pull_request_review = "pull_request_review";
-        public const string pull_request_target = "pull_request_target";
-        public const string schedule = "schedule";
+        public const string Issues = "issues";
+        public const string IssueComment = "issue_comment";
+        public const string PullRequestReview = "pull_request_review";
+        public const string PullRequestTarget = "pull_request_target";
+        public const string Schedule = "schedule";
     }
 }

@@ -23,7 +23,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
         [Category("static")]
         [TestCase(RulesConstants.AuthorFeedback, "Tests.JsonEventPayloads/AuthorFeedBack_issue_comment_created.json", RuleState.On)]
         [TestCase(RulesConstants.AuthorFeedback, "Tests.JsonEventPayloads/AuthorFeedBack_issue_comment_created.json", RuleState.Off)]
@@ -68,7 +67,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
         [Category("static")]
         [TestCase(RulesConstants.ResetIssueActivity, "Tests.JsonEventPayloads/ResetIssueActivity_issue_comment_created.json", RuleState.On)]
         [TestCase(RulesConstants.ResetIssueActivity, "Tests.JsonEventPayloads/ResetIssueActivity_issue_comment_created.json", RuleState.Off)]
@@ -109,7 +107,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
         [Category("static")]
         [TestCase(RulesConstants.ReopenIssue, "Tests.JsonEventPayloads/ReopenIssue_issue_comment_created.json", RuleState.On)]
         [TestCase(RulesConstants.ReopenIssue, "Tests.JsonEventPayloads/ReopenIssue_issue_comment_created.json", RuleState.Off)]
@@ -157,7 +154,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <returns></returns>
         [Category("static")]
         [TestCase(RulesConstants.DeclineToReopenIssue, "Tests.JsonEventPayloads/DeclineToReopenIssue_issue_comment_created.json", RuleState.On)]
         [TestCase(RulesConstants.DeclineToReopenIssue, "Tests.JsonEventPayloads/DeclineToReopenIssue_issue_comment_created.json", RuleState.Off)]
@@ -204,7 +200,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         /// <param name="userHasAdminOrWritePermission">Whether or not the user has Admin or Write permission.</param>
-        /// <returns></returns>
         [Category("static")]
         [TestCase(RulesConstants.IssueAddressedCommands, "Tests.JsonEventPayloads/IssueAddressedCommands_issue_comment_created_same_user.json", RuleState.On, true)]
         [TestCase(RulesConstants.IssueAddressedCommands, "Tests.JsonEventPayloads/IssueAddressedCommands_issue_comment_created_same_user.json", RuleState.On, false)]
@@ -257,7 +252,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="userHasAdminOrWritePermission">Whether or not the user has Admin or Write permission.</param>
-        /// <returns></returns>
         [Category("static")]
         [TestCase(RulesConstants.IssueAddressedCommands, "Tests.JsonEventPayloads/IssueAddressedCommands_issue_comment_created_different_user.json", true)]
         [TestCase(RulesConstants.IssueAddressedCommands, "Tests.JsonEventPayloads/IssueAddressedCommands_issue_comment_created_different_user.json", false)]

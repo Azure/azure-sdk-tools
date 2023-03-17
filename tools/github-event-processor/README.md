@@ -2,7 +2,7 @@
 
 ## Overview
 
-GitHub Event Processor is  written in C# using [Octokit.Net](https://github.com/octokit/octokit.net). GitHub Event Processor will utilize GitHub Actions and Scheduled events, triggered through [GitHub Action Workflows](https://docs.github.com/en/actions/using-workflows/about-workflows). These are defined in YML files and placed into the .github/workflows directory of the repository utilizing them. For our purposes there will be two YML files, one for Actions and one for Scheduled events.
+GitHub Event Processor is written in C# using [Octokit.Net](https://github.com/octokit/octokit.net). GitHub Event Processor will utilize GitHub Actions and Scheduled events, triggered through [GitHub Action Workflows](https://docs.github.com/en/actions/using-workflows/about-workflows). These are defined in YML files and placed into the .github/workflows directory of the repository utilizing them. For our purposes there will be two YML files, one for Actions and one for Scheduled events.
 
 [Rules and Cron task definitions](./RULES.md)
 

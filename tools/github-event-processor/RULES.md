@@ -48,7 +48,8 @@
 
 ### AI label service
 
-This is a REST API that evaluates the content of an issue and attempts to predict a set of labels that should be applied to it.  If a prediction is made with a reasonable level of confidence, the service will return exactly one service label and one category label.  If confidence thresholds were not met for both label types, no labels are returned.
+This is a REST API that evaluates the content of an issue and attempts to predict a set of labels that should be applied to it.  If a prediction is made with a reasonable level of confidence, the service will return exactly one service label and one category label.  If confidence thresholds were not met for both label types, no labels are returned. The AI label service can only a response with labels for [officially supported repositories]
+(<https://github.com/Azure/azure-sdk-tools/blob/main/tools/github-labels/repositories.txt>). For libraries that are not supported it an empty response will be returned.
 
 #### Example payload
 

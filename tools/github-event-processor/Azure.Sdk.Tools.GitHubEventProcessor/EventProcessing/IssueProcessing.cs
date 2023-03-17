@@ -271,10 +271,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 if (issueEventPayload.Action == ActionConstants.Unlabeled)
                 {
                     if (issueEventPayload.Issue.State == ItemState.Open &&
-                    LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.CustomerReported) &&
-                    (issueEventPayload.Label.Name.Equals(LabelConstants.CXPAttention) ||
-                     issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention)) &&
-                     !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage))
+                        LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.CustomerReported) &&
+                        (issueEventPayload.Label.Name.Equals(LabelConstants.CXPAttention) ||
+                         issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention)) &&
+                        !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage))
                     {
                         var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
                         issueUpdate.AddLabel(LabelConstants.NeedsTeamTriage);

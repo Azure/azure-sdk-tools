@@ -81,7 +81,7 @@ The GitHubEventClient is a singleton used by workflow processing and any/all ext
 
 ## Live Testing
 
-[azure-sdk/github-event-processor-test](https://github.com/azure-sdk/github-event-processor-test) is a repository which was specifically setup for testing purposes and can be used to generate static payloads. The .github\workflow contains  the [config and workflow yml files](../YmlAndConfigFiles/) which, aside from different confi files, the final version of the workflow files. Every Action rule can be setup through creation and modification of issues and pull requests within the repository and every action has been tested this way. Scheduled events are a little different to test live because constraints dealing with time. Every scheduled event has "last modified X days ago" as part of its criteria ranging from 7 to 90 days which isn't something that can be created on the fly.
+[azure-sdk/github-event-processor-test](https://github.com/azure-sdk/github-event-processor-test) is a repository which was specifically setup for testing purposes and can be used to generate static payloads. The .github\workflow contains  the [config and workflow yml files](../YmlAndConfigFiles/) which, aside from different config files, the final version of the workflow files. Every Action rule can be setup through creation and modification of issues and pull requests within the repository and every action has been tested this way. Scheduled events are a little different to test live because constraints dealing with time. Every scheduled event has "last modified X days ago" as part of its criteria ranging from 7 to 90 days which isn't something that can be created on the fly.
 
 ### Other requirements of the test repository
 

@@ -16,19 +16,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         /// <returns>true if the label exists, false otherwise</returns>
         public static bool HasLabel(IReadOnlyList<Label> labels, string labelToCheck)
         {
-            bool hasLabel = false;
             if (labels != null)
             {
                 foreach (Label label in labels)
                 {
                     if (label.Name.Equals(labelToCheck, StringComparison.OrdinalIgnoreCase))
                     {
-                        hasLabel = true;
-                        break;
+                        return true;
                     }
                 }
             }
-            return hasLabel;
+            return false;
         }
     }
 }

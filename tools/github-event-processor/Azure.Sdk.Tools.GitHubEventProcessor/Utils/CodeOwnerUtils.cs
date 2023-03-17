@@ -13,6 +13,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
     /// </summary>
     public class CodeOwnerUtils
     {
+        private static readonly string CodeownersFileName = "event-processor.config";
+        private static readonly string CodeownersSubDirectory = ".github";
+
         static List<CodeownersEntry> _codeOwnerEntries = null;
         public static string codeOwnersFilePathOverride = null;
 
@@ -31,7 +34,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
             }
             else
             {
-                return DirectoryUtils.FindFileInRepository("CODEOWNERS", ".github");
+                return DirectoryUtils.FindFileInRepository(CodeownersFileName, CodeownersSubDirectory);
             }
         }
 

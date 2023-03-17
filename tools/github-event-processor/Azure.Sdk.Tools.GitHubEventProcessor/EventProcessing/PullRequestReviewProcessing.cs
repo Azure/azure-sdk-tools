@@ -30,7 +30,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="prReviewEventPayload">PullRequestReviewEventPayload deserialized from the json event payload</param>
-        /// <returns></returns>
         public static void ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
                                                     PullRequestReviewEventPayload prReviewEventPayload)
         {

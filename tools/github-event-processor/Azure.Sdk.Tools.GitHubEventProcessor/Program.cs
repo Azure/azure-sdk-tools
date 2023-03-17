@@ -38,13 +38,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             await gitHubEventClient.WriteRateLimits("RateLimit at start of execution:");
             switch (eventName)
             {
-                case EventConstants.issues:
+                case EventConstants.Issues:
                     {
                         IssueEventGitHubPayload issueEventPayload = serializer.Deserialize<IssueEventGitHubPayload>(rawJson);
                         await IssueProcessing.ProcessIssueEvent(gitHubEventClient, issueEventPayload);
                         break;
                     }
-                case EventConstants.issue_comment:
+                case EventConstants.IssueComment:
                     {
                         IssueCommentPayload issueCommentPayload = serializer.Deserialize<IssueCommentPayload>(rawJson);
                         // IssueComment events are for both issues and pull requests. If the comment is on a pull request,
@@ -60,7 +60,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
 
                         break;
                     }
-                case EventConstants.pull_request_target:
+                case EventConstants.PullRequestTarget:
                     {
                         // The pull_request, because of the auto_merge processing, requires more than just deserialization of the
                         // the rawJson.
@@ -68,18 +68,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         await PullRequestProcessing.ProcessPullRequestEvent(gitHubEventClient, prEventPayload);
                         break;
                     }
-                case EventConstants.pull_request_review:
+                case EventConstants.PullRequestReview:
                     {
                         PullRequestReviewEventPayload prReviewEventPayload = serializer.Deserialize<PullRequestReviewEventPayload>(rawJson);
                         await PullRequestReviewProcessing.ProcessPullRequestReviewEvent(gitHubEventClient, prReviewEventPayload);
                         break;
                     }
-                case EventConstants.schedule:
+                case EventConstants.Schedule:
                     {
                         if (args.Length < 3)
                         {
                             Console.WriteLine("Error: For scheduled tasks there are three required arguments:");
-                            Console.WriteLine($" 1. The github.event_name (which will be {EventConstants.schedule} for cron tasks.");
+                            Console.WriteLine($" 1. The github.event_name (which will be {EventConstants.Schedule} for cron tasks.");
                             Console.WriteLine(" 2. The GITHUB_PAYLOAD json file.");
                             Console.WriteLine(" 3. The cron task to run.");
                             Environment.Exit(1);

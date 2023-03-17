@@ -38,12 +38,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             await gitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
         }
 
-        // Processing functions should always do the following, in order
-        // 1. If the rule is based upon an Action (event), verify the rule action matches the action
-        // 2. If #1 is true, verify all of the conditions
-        // 3. If using an IssueUpdate, it'll be a ref parameter (if non-async), otherwise the funtion will
-        //    return an updated IssueUpdate
         /// <summary>
+        /// Note: This function does not yet process the way the rule was written because that requires information
+        /// we do not yet have. The proposal is to update CODEOWNERS which is still TBD. When that's updated, this
+        /// rule will need to be updated accordingly. The issue tracking this is
+        /// https://github.com/Azure/azure-sdk-tools/issues/5743
         /// Initial Issue Triage
         /// Trigger: issue opened
         /// Conditions: Issue has no labels
@@ -84,31 +83,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     // If there are no labels and no assignees
                     if ((issueEventPayload.Issue.Labels.Count == 0) && (issueEventPayload.Issue.Assignee == null))
                     {
-                        // JRS - IF creator is NOT an Azure SDK team owner
-                        // There is no way to check this today without changes to codeowners.
-                        //bool isAzureSDKTeamOwner = false;
-                        //if (!isAzureSDKTeamOwner)
-                        //{
-                        //    bool isMember = await gitHubEventClient.IsUserMemberOfOrg(OrgConstants.Azure, issueEventPayload.Sender.Login);
-                        //    // If the user is not a member of Azure
-                        //    if (!isMember)
-                        //    {
-                        //        // If the user does not have write or admin permissions 
-                        //        bool hasWriteOrAdminPermissions = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(issueEventPayload.Repository.Id, issueEventPayload.Sender.Login);
-                        //        if (!hasWriteOrAdminPermissions)
-                        //        {
-                        //            var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
-                        //            issueUpdate.AddLabel(LabelConstants.CustomerReported);
-                        //            issueUpdate.AddLabel(LabelConstants.Question);
-                        //        }
-                        //    }
-                        //}
-
-                        // 
-
                         // This is a stop-gap. To do what is above, we need CODEOWNERS changes which don't exist yet.
                         // For the moment, if there are no label suggestions add needs-triage and if there
-                        // are, add them and then add needs-team-triage
+                        // are, add them and then add needs-team-triage. The issue created to track these future updates
+                        // is https://github.com/Azure/azure-sdk-tools/issues/5743
                         List<string> labelSuggestions = await gitHubEventClient.QueryAILabelService(issueEventPayload);
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
                         if (labelSuggestions.Count > 0 )
@@ -123,28 +101,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         {
                             issueUpdate.AddLabel(LabelConstants.NeedsTriage);
                         }
-                        /* Query AI label service for suggestions:
-                        IF labels were predicted:
-                            - Assign returned labels to the issue
-                            - Add "needs-team-triage"
-                            // JRS - the above additions are what happens today
-                            // JRS - do not add needs-team-attention unless we can get the information for what's below.
-                                - Add "needs-team-attention" label to the issue
-                            // JRS - There is no way to do this today.
-                            IF service label is associated with an Azure SDK team member:
-                                IF a single team member:
-                                    - Assign team member to the issue
-                                ELSE
-                                    - Assign a random team member from the set to the issue
-                                    - Add a comment mentioning the other team members from the set
-                                - Add comment indicating issue was routed for assistance  
-                                    (text: "Thank you for your feedback.  Tagging and routing to the team member best able to assist.")
-                            ELSE
-                                - Add "CXP Attention" label to the issue
-                                - Create a comment mentioning (content from .NET rule #30)
-                        ELSE
-                            - Add "needs-triage" label to the issue
-                        */
                     }
                 }
             }

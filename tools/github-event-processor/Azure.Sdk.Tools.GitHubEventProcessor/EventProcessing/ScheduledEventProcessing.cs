@@ -121,9 +121,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         Issue issue = result.Items[iCounter++];
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
                         issueUpdate.State = ItemState.Closed;
-                        // JRS - Waiting for the new release of Octokit which allows setting
-                        // the reason for closure. Issues closed here will be closed as Completed
-                        // issueUpdate.StateReason = ItemStateReason.Completed
+                        issueUpdate.StateReason = ItemStateReason.Completed;
                         gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
                                                                issue.Number,
                                                                issueUpdate);
@@ -275,9 +273,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         Issue issue = result.Items[iCounter++];
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
                         issueUpdate.State = ItemState.Closed;
-                        // JRS - Waiting for the new release of Octokit which allows setting
-                        // the reason for closure. Issues closed here will be closed as Completed
-                        // issueUpdate.StateReason = ItemStateReason.NotPlanned
+                        issueUpdate.StateReason = ItemStateReason.NotPlanned;
                         gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
                                                                issue.Number,
                                                                issueUpdate);

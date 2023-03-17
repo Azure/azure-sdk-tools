@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             await ResetApprovalsForUntrustedChanges(gitHubEventClient, prEventPayload);
 
             // After all of the rules have been processed, call to process pending updates
-            int numUpdates = await gitHubEventClient.ProcessPendingUpdates(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
+            await gitHubEventClient.ProcessPendingUpdates(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
         }
 
 

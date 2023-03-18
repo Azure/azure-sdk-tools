@@ -23,6 +23,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public Exception CommandException;
     }
 
+
     /// <summary>
     /// This class offers an easy wrapper abstraction for shelling out to git.
     /// </summary>
@@ -176,7 +177,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                             result.StdErr = string.Join(Environment.NewLine, stdError);
                             result.StdOut = string.Join(Environment.NewLine, stdOut);
 
-                            if (result.ExitCode != 0)
+                            if (result.ExitCode == 0)
+                            {
+                                break;
+                            }
+                            else if (result.ExitCode != 0)
                             {
                                 continueToAttempt = IsRetriableGitError(result);
 
@@ -205,10 +210,48 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return result;
         }
 
+        /// <summary>
+        /// This function evaluates a git command invocation result. The result of "yes you should retry this" only occurs
+        /// when the necessary data is available. Otherwise we default to NOT retry.
+        ///
+        /// Check Azure/azure-sdk-tools#5660 for additional detail on occurrence.
+        /// </summary>
+        /// <param name="result"></param>
+        /// <param name="repoId">The id of the git repo being retrieved from. Used within format string to assist pattern matching errors.</param>
+        /// <returns></returns>
         public bool IsRetriableGitError(CommandResult result)
         {
             if (result.ExitCode != 0) {
+                // we cannot evaluate an empty stderr to see if it is retriable
+                if (string.IsNullOrEmpty(result.StdErr))
+                {
+                    return false;
+                }
 
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': The requested URL returned error: 429
+                if (result.StdErr.Contains("The requested URL returned error: 429"))
+                {
+                    return true;
+                }
+
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443: Connection timed out
+                if (result.StdErr.Contains("Failed to connect to github.com port 443: Connection timed out"))
+                {
+                    return true;
+                }
+
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443: Operation timed out
+                if (result.StdErr.Contains("Failed to connect to github.com port 443: Operation timed out"))
+                {
+                    return true;
+                }
+
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443 after 21019 ms: Couldn't connect to server
+                var regex = new Regex(@"Failed to connect to github.com port 443 after [\d]+ ms: Couldn't connect to server");
+                if (regex.IsMatch(result.StdErr))
+                {
+                    return true;
+                }
             }
 
             return false;
@@ -288,7 +331,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                                 Arguments = arguments
                             };
 
-                            if (commandResult.ExitCode != 0)
+                            if (commandResult.ExitCode == 0)
+                            {
+                                break;
+                            }
+                            else if (commandResult.ExitCode != 0)
                             {
                                 continueToAttempt = IsRetriableGitError(commandResult);
                             }

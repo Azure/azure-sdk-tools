@@ -129,7 +129,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     int attempts = 1;
                     bool continueToAttempt = true;
-                    while (attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
+                    while (continueToAttempt && attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
                     {
                         DebugLogger.LogInformation($"git {arguments}");
 
@@ -279,7 +279,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     int attempts = 1;
                     bool continueToAttempt = true;
-                    while (attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
+                    while (continueToAttempt && attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
                     {
                         DebugLogger.LogInformation($"git {arguments}");
                         var output = new List<string>();

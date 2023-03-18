@@ -213,7 +213,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Check Azure/azure-sdk-tools#5660 for additional detail on occurrence.
         /// </summary>
         /// <param name="result"></param>
-        /// <param name="repoId">The id of the git repo being retrieved from. Used within format string to assist pattern matching errors.</param>
         /// <returns></returns>
         public bool IsRetriableGitError(CommandResult result)
         {

@@ -160,6 +160,13 @@ stages:
         - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
           parameters:
             EnableNuGetCache: false
+        - ${{ if parameters.Profile }}:
+          - task: PowerShell@2
+            displayName: 'Install dotnet-trace'
+            inputs:
+              targetType: 'inline'
+              script: 'dotnet tool install -g dotnet-trace'
+              workingDirectory: '$(Build.SourcesDirectory)/sdk'
         ServiceDirectory: ${{ parameters.NetServiceDirectory }}
         PackageVersions: ${{ parameters.PackageVersions }}
         Tests: ${{ parameters.Tests }}

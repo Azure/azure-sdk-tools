@@ -97,7 +97,7 @@ stages:
 
           - script: |
               python --version
-              pip install virtualenv aiohttp chardet trio
+              python -m pip install virtualenv aiohttp chardet trio
             displayName: 'Setup Python Environment'
 
           - pwsh: |

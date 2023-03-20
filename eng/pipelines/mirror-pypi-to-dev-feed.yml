@@ -34,7 +34,7 @@ jobs:
 
       - script: |
           set -e
-          pip install -r $(Build.SourcesDirectory)/eng/scripts/download_targeted_packages_requirements.txt
+          python -m pip install -r $(Build.SourcesDirectory)/eng/scripts/download_targeted_packages_requirements.txt
         displayName: Install Requirements
 
       - pwsh: |

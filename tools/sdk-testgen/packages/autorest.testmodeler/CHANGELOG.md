@@ -1,6 +1,13 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Thu, 02 Feb 2023 09:40:48 GMT and should not be manually modified.
+This log was last generated on Mon, 13 Mar 2023 02:20:40 GMT and should not be manually modified.
+
+## 2.5.1
+Mon, 13 Mar 2023 02:20:40 GMT
+
+### Patches
+
+- fix a bug of parsing body parameter and add eslint
 
 ## 2.5.0
 Thu, 02 Feb 2023 09:40:48 GMT

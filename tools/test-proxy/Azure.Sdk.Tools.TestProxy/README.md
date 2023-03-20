@@ -5,6 +5,8 @@
     - [Via Local Compile or .NET](#via-local-compile-or-net)
     - [Via Docker Image](#via-docker-image)
       - [A note about docker caching](#a-note-about-docker-caching)
+    - [Via Standalone Executable](#via-standalone-executable)
+      - [Which should I install?](#which-should-i-install)
   - [Command line arguments](#command-line-arguments)
     - [Storage Location](#storage-location)
     - [Port Assignation](#port-assignation)
@@ -78,6 +80,7 @@ dotnet tool update azure.sdk.tools.testproxy --global --add-source https://pkgs.
 ```
 
 To uninstall an existing test-proxy
+
 ```powershell
 dotnet tool uninstall --global azure.sdk.tools.testproxy
 ```
@@ -129,6 +132,20 @@ To ensure that your local copy is up to date, run:
 ```powershell
 docker pull azsdkengsys.azurecr.io/engsys/test-proxy:latest
 ```
+
+### Via Standalone Executable
+
+Standalone executable versions of the test-proxy are published to [github releases on this repository.](https://github.com/Azure/azure-sdk-tools/releases?q=Azure.Sdk.Tools.TestProxy&expanded=true)
+
+These executables are produced for multiple platforms and are available attached as `assets`:
+
+![image](https://user-images.githubusercontent.com/45376673/224413965-30a1e34f-5517-447c-9709-cfa81b117d5c.png)
+
+#### Which should I install?
+
+The version suffix for each release is based on the date. In most cases, the latest version should be totally stable.
+
+For safety, the "official target" version that the azure-sdk team uses is present within [`eng/common/testproxy/target_version.txt`](../../../eng/common/testproxy/target_version.txt). New "official" versions are tested by all consumers prior to updating the target version within this file.
 
 ## Command line arguments
 
@@ -203,9 +220,9 @@ The test-proxy is integrated with the following environment variables.
 | Variable | Usage |
 |---|---|
 | `TEST_PROXY_FOLDER` | if command-line argument `storage-location` is not provided when invoking the proxy, this environment variable is also checked for a valid directory to use as test-proxy context. |
-| `Logging__LogLevel__Microsoft` | Defaults to `Information`. Possible valid values are `Information`, `Warning`, `Error`, `Critical`.  |
+| `Logging__LogLevel__Default` | Defaults to `Information`. Possible valid values are `Information`, `Warning`, `Error`, `Critical`.  |
 
-Both of the above variables can be set in the `docker` runtime by providing additional arguments EG: `docker run -e Logging__LogLevel__Microsoft=Warning azsdkengsys.azurecr.io/engsys/test-proxy:latest`. For multiple environment variables, just use multiple `-e` provisions.
+Both of the above variables can be set in the `docker` runtime by providing additional arguments EG: `docker run -e Logging__LogLevel__Default=Warning azsdkengsys.azurecr.io/engsys/test-proxy:latest`. For multiple environment variables, just use multiple `-e` provisions.
 
 ## How do I use the test-proxy to get a recording?
 

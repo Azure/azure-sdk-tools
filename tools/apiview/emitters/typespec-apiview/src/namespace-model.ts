@@ -26,6 +26,7 @@ import {
   Node,
   visitChildren,
   ScalarStatementNode,
+  TypeReferenceNode,
 } from "@typespec/compiler";
 
 export class NamespaceModel {
@@ -212,14 +213,7 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
       break;
     case SyntaxKind.ModelSpreadProperty:
       node = obj as ModelSpreadPropertyNode;
-      switch (node.target.target.kind) {
-        case SyntaxKind.Identifier:
-          name = (node.target.target as IdentifierNode).sv;
-          break;
-        case SyntaxKind.MemberExpression:
-          name = (node.target.target as MemberExpressionNode).id.sv;
-          break;
-      }
+      name = generateId(node.target)!;
       parentId = generateId(node.parent);
       break;
     case SyntaxKind.ModelStatement:
@@ -242,6 +236,11 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
       name = node.id.sv;
       parentId = generateId(node.parent);
       break;
+    case SyntaxKind.TypeReference:
+        node = obj as TypeReferenceNode;
+        name = generateId(node.target)!;
+        parentId = undefined;
+        break;
     default:
       return undefined;
   }

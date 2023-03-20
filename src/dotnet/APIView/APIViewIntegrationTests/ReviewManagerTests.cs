@@ -2,6 +2,8 @@ using System.Threading.Tasks;
 using Xunit;
 using System.IO;
 using System;
+using APIViewWeb;
+using APIViewWeb.Repositories;
 
 namespace APIViewIntegrationTests
 {
@@ -70,6 +72,23 @@ namespace APIViewIntegrationTests
             var headingWithDiffInSections = review.Revisions[0].HeadingsOfSectionsWithDiff[review.Revisions[1].RevisionId];
             Assert.All(headingWithDiffInSections,
                 item => Assert.Contains(item, new int[] { 20, 275 }));
+        }
+
+        [Fact]
+        public async Task Delete_PullRequest_Review_Throws_Exception()
+        {
+            var reviewManager = testsBaseFixture.ReviewManager;
+            var user = testsBaseFixture.User;
+            var review = await reviewManager.CreateReviewAsync(user, fileNameC, "Azure.Analytics.Purview.Account", fileStreamC, false, "Swagger", false);
+            Assert.Equal(ReviewType.Manual, review.FilterType);
+
+            review.FilterType = ReviewType.PullRequest;
+
+            // Change review type to PullRequest
+            await testsBaseFixture.ReviewRepository.UpsertReviewAsync(review);
+            Assert.Equal(ReviewType.PullRequest, review.FilterType);
+
+            await Assert.ThrowsAsync<UnDeletableReviewException>(async () => await reviewManager.DeleteRevisionAsync(user, review.ReviewId, review.Revisions[0].RevisionId));
         }
     }
 }

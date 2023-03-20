@@ -48,7 +48,7 @@
                                 <span>@review.FilterType.ToString()</span>
                             </td>
                             <td>
-                                @if (review.Author == User.GetGitHubLogin())
+                                @if (review.Author == User.GetGitHubLogin() && review.FilterType == ReviewType.Manual)
                                 {
                                     <a asp-page="./Delete" asp-route-id="@review.ReviewId">
                                         <button type="button" class="btn pt-0 pb-0 ps-1 pe-1 btn-outline-danger"><i class="fas fa-times-circle"></i> Delete</button>

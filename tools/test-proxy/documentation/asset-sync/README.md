@@ -246,6 +246,22 @@ So to make a push work for the above scenario, all one must do is only include t
 docker run --rm -v "C:/repo/sdk-for-python:/srv/testproxy"  -e "GIT_TOKEN=myveryrealtoken" -e "GIT_COMMIT_OWNER=scbedd" -e  "GIT_COMMIT_EMAIL=scbedd@microsoft.com" azsdkengsys.azurecr.io/engsys/test-proxy:latest test-proxy push -a sdk/tables/assets.json
 ```
 
+#### An additional note about using `test-proxy push` in codespaces
+
+The `test-proxy` can (and is) used to run tests in github codespaces. However, there is a wrinkle when **pushing** from a default codespaces configuration to the assets repository.
+
+A dev (@timovv) on the azure-sdk-for-js team succinctly states the problem:
+
+> GitHub grants minimal permissions to a Codespace when it is created through creating a personal access token (PAT). By default, this PAT only grants write access to the repo that the Codespace was created from. This causes permissions issues when pushing assets to the Azure/azure-sdk-assets repo since the PAT does not grant write permission to that repo. Fortunately, we can request additional permissions through the devcontainer.json, which will give the Codespace write access to the Azure/azure-sdk-assets repo.
+
+[CodeSpaces reference about this topic](https://docs.github.com/codespaces/managing-your-codespaces/managing-repository-access-for-your-codespaces).
+
+The `azure-sdk` team has chosen to address this difficulty by [applying the following customization](https://github.com/Azure/azure-sdk-for-js/pull/24963/files) to `devcontainer.json` for each language repo. This means that codespaces created off of the upstream repo will automagically have the correct permissions to push to `azure-sdk-assets`.
+
+> **Note** Codespaces created on **forks** do not magically gain write permissions to `azure-sdk-assets`.
+
+To push from a codespace on a fork, devs will need to set `GIT_TOKEN` themselves to a PAT that has write access to `azure-sdk-assets`. Effectively the same route as if they wanted to use docker.
+
 ### I am getting weird errors out of my test-proxy operations
 
 If you think that the `test-proxy` has somehow gotten itself into a weird "in-between" state that it can't automatically dig itself out of, you have a couple options.

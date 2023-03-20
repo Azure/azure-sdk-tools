@@ -27,6 +27,7 @@ namespace APIViewIntegrationTests
 
         public PackageNameManager PackageNameManager { get; private set; }
         public ReviewManager ReviewManager { get; private set; }
+        public CosmosReviewRepository ReviewRepository { get; private set; }
         public ClaimsPrincipal User { get; private set; }
 
         public TestsBaseFixture()
@@ -63,7 +64,7 @@ namespace APIViewIntegrationTests
             _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id");
             _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId");
             _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Profiles", "/id");
-            var cosmosReviewRepository = new CosmosReviewRepository(config);
+            ReviewRepository = new CosmosReviewRepository(config);
             var cosmosCommentsRepository = new CosmosCommentsRepository(config);
             var cosmosUserProfileRepository = new CosmosUserProfileRepository(config);
 
@@ -79,7 +80,7 @@ namespace APIViewIntegrationTests
             authorizationServiceMoq.Setup(_ => _.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<Object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
                 .ReturnsAsync(AuthorizationResult.Success);
 
-            var notificationManager = new NotificationManager(config, cosmosReviewRepository, cosmosUserProfileRepository);
+            var notificationManager = new NotificationManager(config, ReviewRepository, cosmosUserProfileRepository);
 
             var devopsArtifactRepositoryMoq = new Mock<IDevopsArtifactRepository>();
             devopsArtifactRepositoryMoq.Setup(_ => _.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -89,7 +90,7 @@ namespace APIViewIntegrationTests
                 .Returns(Task.CompletedTask);
 
             ReviewManager = new ReviewManager(
-                authorizationServiceMoq.Object, cosmosReviewRepository, blobCodeFileRepository, blobOriginalsRepository, cosmosCommentsRepository,
+                authorizationServiceMoq.Object, ReviewRepository, blobCodeFileRepository, blobOriginalsRepository, cosmosCommentsRepository,
                 languageService, notificationManager, devopsArtifactRepositoryMoq.Object, PackageNameManager);
         }
 

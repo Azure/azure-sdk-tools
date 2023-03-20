@@ -306,6 +306,13 @@ export class TestCodeModeler {
         return TestCodeModeler.instance;
     }
 
+    private isBodyParameter(parameter: Parameter): boolean {
+        return (
+            parameter.protocol?.http?.in === 'body' ||
+            (Object.prototype.hasOwnProperty.call(parameter, 'originalParameter') && this.isBodyParameter(parameter['originalParameter'] as Parameter))
+        );
+    }
+
     private createExampleModel(
         session: Session<TestCodeModel>,
         exampleExtension: ExampleExtension,
@@ -322,7 +329,7 @@ export class TestCodeModeler {
                 continue;
             }
             const t = Helper.getFlattenedNames(parameter);
-            const paramRawData = parameter.protocol?.http?.in === 'body' ? Helper.queryBodyParameter(parametersInExample, t) : Helper.queryByPath(parametersInExample, t);
+            const paramRawData = this.isBodyParameter(parameter) ? Helper.queryBodyParameter(parametersInExample, t) : Helper.queryByPath(parametersInExample, t);
             if (paramRawData.length === 1) {
                 const exampleParameter = new ExampleParameter(session, parameter, paramRawData[0]);
                 if (parameter.implementation === ImplementationLocation.Method) {

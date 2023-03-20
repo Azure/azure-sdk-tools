@@ -25,7 +25,7 @@ steps:
   - task: Powershell@2
     inputs:
       targetType: 'filePath'
-      filePath: ${{ parameters.ToolsRepoPath }}/scripts/powershell/ref-updater.ps1
+      filePath: ${{ parameters.ToolsRepoPath }}/eng/scripts/ref-updater.ps1
       arguments: >
         -RepoRoot $(System.DefaultWorkingDirectory)/${{ repo.key }}
         -Tag ${{ parameters.Tag }}

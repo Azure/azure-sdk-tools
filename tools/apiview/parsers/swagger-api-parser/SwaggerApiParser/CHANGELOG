@@ -1,18 +1,22 @@
 # Release History
 
-# 1.0.7 (2-9-2023)
+## 1.0.8 (3-1-2023)
+
++ Skip any invalid swagger file path when generating API review
+
+## 1.0.7 (2-9-2023)
 
 + Support header parameter in operation parameters
 + Support header response in operation responses
 + For schemaCache, use absolute path as key
 
-# 1.0.6 (2-2-2023)
+## 1.0.6 (2-2-2023)
 
 + Remove APIView and APIViewWeb dependency 
 + Fix don't resolve response issue
 + Add null check for array item
 
-# 1.0.5 (1-18-2023)
+## 1.0.5 (1-18-2023)
 
 + Fix root schema circular reference issue by adding root schema ref in refChain.
 

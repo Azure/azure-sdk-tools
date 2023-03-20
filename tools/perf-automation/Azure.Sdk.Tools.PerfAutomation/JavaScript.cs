@@ -21,7 +21,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string project,
             string languageVersion,
             string primaryPackage,
-            IDictionary<string, string> packageVersions)
+            IDictionary<string, string> packageVersions,
+            bool debug)
         {
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
@@ -132,6 +133,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string testName,
             string arguments,
             bool profile,
+            string profilerOptions,
             object context)
         {
             var runtimePackageVersions = (Dictionary<string, string>)context;

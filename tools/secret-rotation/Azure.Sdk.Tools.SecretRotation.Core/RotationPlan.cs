@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using Azure.Sdk.Tools.SecretRotation.Core;
 using Microsoft.Extensions.Logging;
 
@@ -134,51 +134,67 @@ public class RotationPlan
         DateTimeOffset invocationTime = this.timeProvider.GetCurrentDateTimeOffset();
 
         SecretValue newValue = await OriginateNewValueAsync(operationId, invocationTime, currentState, whatIf);
+        // TODO: some providers will issue secrets for longer than we requested. Should we propagate the real expiration date, or the desired expiration date?
 
-        await WriteValueToSecondaryStoresAsync(newValue, currentState, whatIf);
+        await WriteValueToPrePrimaryStoresAsync(newValue, currentState, whatIf);
 
-        await WriteValueToPrimaryAndOriginAsync(newValue, invocationTime, currentState, whatIf);
+        if (OriginStore != PrimaryStore)
+        {
+            await WriteValueToPrimaryAsync(newValue, currentState, invocationTime, whatIf);
+        }
+
+        await WriteValueToPostPrimaryStoresAsync(newValue, currentState, whatIf);
+
+        await MarkRotationCompleteAsync(newValue, currentState, invocationTime, whatIf);
     }
 
-    private async Task WriteValueToPrimaryAndOriginAsync(SecretValue newValue,
-        DateTimeOffset invocationTime,
-        SecretState currentState,
+    private async Task WriteValueToPrimaryAsync(SecretValue newValue, SecretState currentState, DateTimeOffset invocationTime,
         bool whatIf)
     {
         DateTimeOffset? revokeAfterDate = RevokeAfterPeriod.HasValue
             ? invocationTime.Add(RevokeAfterPeriod.Value)
             : null;
 
-        // Complete rotation by either annotating the origin or writing to primary
-        if (OriginStore != PrimaryStore)
+        if (!PrimaryStore.CanWrite)
         {
-            if (!PrimaryStore.CanWrite)
-            {
-                // Primary only has to support write when it's not also origin.
-                throw new RotationException(
-                    $"Rotation plan '{Name}' uses separate Primary and Origin stores, but its primary store type '{OriginStore.GetType()}' does not support CanWrite");
-            }
-
-            // New value along with the datetime when old values should be revoked
-            await PrimaryStore.WriteSecretAsync(newValue, currentState, revokeAfterDate, whatIf);
+            // Primary only has to support write when it's not also origin.
+            throw new RotationException(
+                $"Rotation plan '{Name}' uses separate Primary and Origin stores, but its primary store type '{OriginStore.GetType()}' does not support CanWrite");
         }
-        else
-        {
-            if (!OriginStore.CanAnnotate)
-            {
-                throw new RotationException(
-                    $"Rotation plan '{Name}' uses a combined Origin and Primary store, but the store type '{OriginStore.GetType()}' does not support CanAnnotate");
-            }
 
-            await OriginStore.MarkRotationCompleteAsync(newValue, revokeAfterDate, whatIf);
+        // New value along with the datetime when old values should be revoked
+        await PrimaryStore.WriteSecretAsync(newValue, currentState, revokeAfterDate, whatIf);
+    }
+
+    private async Task MarkRotationCompleteAsync(SecretValue newValue, SecretState currentState, DateTimeOffset invocationTime,
+        bool whatIf)
+    {
+        DateTimeOffset? revokeAfterDate = RevokeAfterPeriod.HasValue
+            ? invocationTime.Add(RevokeAfterPeriod.Value)
+            : null;
+
+        if (!PrimaryStore.CanAnnotate)
+        {
+            throw new RotationException(
+                $"Rotation plan '{Name}' uses the store type '{PrimaryStore.GetType()}' which does not support CanAnnotate");
+        }
+
+        await PrimaryStore.MarkRotationCompleteAsync(newValue, revokeAfterDate, whatIf);
+    }
+
+
+    private async Task WriteValueToPrePrimaryStoresAsync(SecretValue newValue, SecretState currentState, bool whatIf)
+    {
+        foreach (SecretStore secondaryStore in SecondaryStores.Where(store => !store.UpdateAfterPrimary))
+        {
+            // secondaries don't store revocation dates.
+            await secondaryStore.WriteSecretAsync(newValue, currentState, null, whatIf);
         }
     }
 
-    private async Task WriteValueToSecondaryStoresAsync(SecretValue newValue, SecretState currentState, bool whatIf)
+    private async Task WriteValueToPostPrimaryStoresAsync(SecretValue newValue, SecretState currentState, bool whatIf)
     {
-        // TODO: some providers will issue secrets for longer than we requested. Should we propagate the real expiration date, or the desired expiration date?
-
-        foreach (SecretStore secondaryStore in SecondaryStores)
+        foreach (SecretStore secondaryStore in SecondaryStores.Where(store => store.UpdateAfterPrimary))
         {
             // secondaries don't store revocation dates.
             await secondaryStore.WriteSecretAsync(newValue, currentState, null, whatIf);

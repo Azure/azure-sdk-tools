@@ -119,6 +119,7 @@ namespace APIViewWeb.Managers
         {
             var reviewModel = await _reviewsRepository.GetReviewAsync(id);
             await AssertReviewOwnerAsync(user, reviewModel);
+            AssertReviewDeletion(reviewModel);
 
             await _reviewsRepository.DeleteReviewAsync(reviewModel);
 
@@ -261,6 +262,7 @@ namespace APIViewWeb.Managers
         public async Task DeleteRevisionAsync(ClaimsPrincipal user, string id, string revisionId)
         {
             var review = await GetReviewAsync(user, id);
+            AssertReviewDeletion(review);
             var revision = review.Revisions.Single(r => r.RevisionId == revisionId);
             await AssertRevisionOwner(user, revision);
 
@@ -817,6 +819,16 @@ namespace APIViewWeb.Managers
         private LanguageService GetLanguageService(string language)
         {
             return _languageServices.FirstOrDefault(service => service.Name == language);
+        }
+
+        private void  AssertReviewDeletion(ReviewModel reviewModel)
+        {
+            // We allow deletion of manual API review only.
+            // Server side assertion to ensure we are not processing any requests to delete automatic and PR API review
+            if (reviewModel.FilterType != ReviewType.Manual)
+            {
+                throw new UnDeletableReviewException();
+            }
         }
 
         private async Task AssertReviewOwnerAsync(ClaimsPrincipal user, ReviewModel reviewModel)

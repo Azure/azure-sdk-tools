@@ -35,8 +35,8 @@ jobs:
       versionSpec: '$(PythonVersion)'
 
   - script: |
-      pip install virtualenv aiohttp chardet trio
-      pip install api-stub-generator==$(ApiStubVersion) --index-url $(PythonIndexUrl)
+      python -m pip install virtualenv aiohttp chardet trio
+      python -m pip install api-stub-generator==$(ApiStubVersion) --index-url $(PythonIndexUrl)
     displayName: 'Install api-stub-generator'
 
   - template: /eng/pipelines/templates/steps/apiview-review-gen.yml

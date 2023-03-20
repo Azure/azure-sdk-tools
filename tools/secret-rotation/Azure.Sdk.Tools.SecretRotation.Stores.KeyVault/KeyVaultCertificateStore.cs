@@ -112,14 +112,22 @@ public class KeyVaultCertificateStore : SecretStore
             await this.certificateClient.StartCreateCertificateAsync(this.certificateName, policy);
 
         this.logger.LogInformation("Waiting for certificate operation '{OperationId}' to complete", operation.Id);
-        Response<KeyVaultCertificateWithPolicy>? response = await operation.WaitForCompletionAsync();
+        KeyVaultCertificateWithPolicy certificate = await operation.WaitForCompletionAsync();
 
-        string base64 = Convert.ToBase64String(response.Value.Cer);
+        string base64 = Convert.ToBase64String(certificate.Cer);
 
-        return new SecretValue
+        var secretValue = new SecretValue
         {
-            ExpirationDate = response.Value.Properties.ExpiresOn, OriginState = response.Value, Value = base64
+            ExpirationDate = certificate.Properties.ExpiresOn,
+            Value = base64
         };
+
+        if (this.IsPrimary)
+        {
+            secretValue.PrimaryState = certificate;
+        }
+
+        return secretValue;
     }
 
     public override async Task MarkRotationCompleteAsync(SecretValue secretValue, DateTimeOffset? revokeAfterDate,
@@ -133,10 +141,10 @@ public class KeyVaultCertificateStore : SecretStore
             return;
         }
 
-        if (secretValue.OriginState is not KeyVaultCertificateWithPolicy certificate)
+        if (secretValue.PrimaryState is not KeyVaultCertificateWithPolicy certificate)
         {
             throw new RotationException(
-                "The OriginState value passed to KeyVaultCertificateStore was not of type KeyVaultCertificateWithPolicy");
+                "The PrimaryState value passed to KeyVaultCertificateStore was not of type KeyVaultCertificateWithPolicy");
         }
 
         this.logger.LogInformation("Adding tag 'rotation-complete' to certificate '{CertificateName}' in vault '{Vault}'",

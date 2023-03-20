@@ -23,6 +23,10 @@ jobs:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 
+          Azure/azure-sdk-for-cpp:
+            TargetRepos:
+              Azure/azure-sdk-for-cpp-pr:
+
           Azure/azure-sdk-for-go:
             TargetRepos:
               Azure/azure-sdk-for-go-pr:

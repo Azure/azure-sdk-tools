@@ -2,12 +2,11 @@
 param (
     [Parameter(Position=0)]
     [ValidateNotNullOrEmpty()]
-    [string] $ProjectDirectory,
-    [ValidateNotNullOrEmpty()]
-    [String] $TagName
+    [string] $ProjectDirectory
 )
 
 . $PSScriptRoot/Helpers/Sparse-Clone-Helpers.ps1
+. $PSScriptRoot/common.ps1
 
 function GetCommit([string]$sdkGitRemoteAPI) {
     try {
@@ -43,9 +42,13 @@ function GetProjectRelativePath() {
     return [System.IO.Path]::GetRelativePath($rootPath, (Join-Path $ProjectDirectory "src")).Replace("\","/")
 }
 
+if (!(Test-Path "Function:$GetLatestTagFn")) {
+    return ""
+}
 
 $sdkRepoName = GetGitRemoteValue
-$sdkGitRemoteAPI = "https://api.github.com/repos/Azure/$sdkRepoName/git/refs/tags/$TagName"
+$tagName = &$GetLatestTagFn $ProjectDirectory
+$sdkGitRemoteAPI = "https://api.github.com/repos/Azure/$sdkRepoName/git/refs/tags/$tagName"
 $sdkGitRemote = "https://github.com/Azure/$sdkRepoName.git"
 $latestCommit = GetCommit $sdkGitRemoteAPI
 
@@ -58,14 +61,18 @@ if ($latestCommit) {
     Write-Host "Setting up sparse clone for $projectName at $sdkCloneDir"
 
     Push-Location $sdkCloneDir.Path
-    try {
+    try {        
+        $projectRelativePath = GetProjectRelativePath
         if (!(Test-Path ".git")) {
             InitializeSparseGitClone $sdkGitRemote
-            AddSparseCheckoutPath (GetProjectRelativePath)
+            AddSparseCheckoutPath $projectRelativePath
         }
         git checkout $latestCommit
+        return "Latest contract found: $(Join-Path $sdkCloneDir.Path $projectRelativePath)"
     }
     finally {
         Pop-Location
     }
 }
+
+return ""

@@ -9,14 +9,8 @@ param (
 
 $ErrorActionPreference = "Stop"
 . $PSScriptRoot/Helpers/PSModule-Helpers.ps1
+. $PSScriptRoot/Helpers/Sparse-Clone-Helpers.ps1
 Install-ModuleIfNotInstalled "powershell-yaml" "0.4.1" | Import-Module
-$sparseCheckoutFile = ".git/info/sparse-checkout"
-
-function AddSparseCheckoutPath([string]$subDirectory) {
-    if (!(Test-Path $sparseCheckoutFile) -or !((Get-Content $sparseCheckoutFile).Contains($subDirectory))) {
-        Write-Output $subDirectory >> .git/info/sparse-checkout
-    }
-}
 
 function CopySpecToProjectIfNeeded([string]$specCloneRoot, [string]$mainSpecDir, [string]$dest, [string[]]$specAdditionalSubDirectories) {
     $source = "$specCloneRoot/$mainSpecDir"
@@ -63,27 +57,8 @@ function GetGitRemoteValue([string]$repo) {
     return $result
 }
 
-function InitializeSparseGitClone([string]$repo) {
-    git clone --no-checkout --filter=tree:0 $repo .
-    if ($LASTEXITCODE) { exit $LASTEXITCODE }
-    git sparse-checkout init
-    if ($LASTEXITCODE) { exit $LASTEXITCODE }
-    Remove-Item $sparseCheckoutFile -Force
-}
-
 function GetSpecCloneDir([string]$projectName) {
-    Push-Location $ProjectDirectory
-    try {
-        $root = git rev-parse --show-toplevel
-    }
-    finally {
-        Pop-Location
-    }
-
-    $sparseSpecCloneDir = "$root/../sparse-spec/$projectName"
-    New-Item $sparseSpecCloneDir -Type Directory -Force | Out-Null
-    $createResult = Resolve-Path $sparseSpecCloneDir
-    return $createResult
+    return GetSparseCloneDir $ProjectDirectory $projectName "spec"
 }
 
 $typespecConfigurationFile = Resolve-Path "$ProjectDirectory/tsp-location.yaml"

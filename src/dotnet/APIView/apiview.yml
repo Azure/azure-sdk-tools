@@ -174,9 +174,9 @@ stages:
             displayName: 'List .Net run times'
 
           - task: GoTool@0
-              inputs:
-                version: '$(GoVersion)'
-              displayName: "Use Go $(GoVersion)"
+            inputs:
+              version: '$(GoVersion)'
+            displayName: "Use Go $(GoVersion)"
               
           - script: |
               go test ./... -v

@@ -10,6 +10,7 @@ trigger:
       - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/go
       - src/swift
       - tools/apiview/parsers/js-api-parser
 
@@ -25,6 +26,7 @@ pr:
       - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/go
       - src/swift
       - tools/apiview/parsers/js-api-parser
 
@@ -152,7 +154,7 @@ stages:
           - script: |
               npm install -g azurite
             displayName: 'Install Azurite'
-
+              
           - task: Powershell@2
             inputs:
               workingDirectory: $(Agent.TempDirectory)
@@ -171,6 +173,11 @@ stages:
               dotnet --version
             displayName: 'List .Net run times'
 
+          - script: |
+              go test -v
+            workingDirectory: $(GoParserPackagePath)
+            displayName: 'Test Go parser'
+            
           - script: >-
               dotnet test src/dotnet/APIView/APIViewUnitTests/APIViewUnitTests.csproj
               --logger trx --collect:"XPlat Code Coverage"

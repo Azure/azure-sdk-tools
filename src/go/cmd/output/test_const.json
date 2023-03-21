@@ -1,5 +1,6 @@
 {
- "Name": "testconst",
+ "Language": "Go",
+ "Name": "test_const",
  "Tokens": [
   {
    "DefinitionId": null,
@@ -14,9 +15,9 @@
    "Kind": 2
   },
   {
-   "DefinitionId": "testconst",
+   "DefinitionId": "test_const",
    "NavigateToId": null,
-   "Value": "testconst",
+   "Value": "test_const",
    "Kind": 4
   },
   {
@@ -28,20 +29,14 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
    "Value": "",
    "Kind": 1
   },
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "",
-   "Kind": 1
+   "Value": "type",
+   "Kind": 6
   },
   {
    "DefinitionId": null,
@@ -50,13 +45,37 @@
    "Kind": 2
   },
   {
+   "DefinitionId": "test_const.SomeChoice",
+   "NavigateToId": null,
+   "Value": "SomeChoice",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "int64",
+   "Kind": 4
+  },
+  {
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "",
    "Kind": 1
   },
   {
-   "DefinitionId": "SomeChoice",
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
    "NavigateToId": null,
    "Value": "const",
    "Kind": 6
@@ -86,7 +105,7 @@
    "Kind": 2
   },
   {
-   "DefinitionId": "Choice1",
+   "DefinitionId": "test_const.Choice1",
    "NavigateToId": null,
    "Value": "Choice1",
    "Kind": 4
@@ -99,9 +118,9 @@
   },
   {
    "DefinitionId": null,
-   "NavigateToId": null,
+   "NavigateToId": "test_const.SomeChoice",
    "Value": "SomeChoice",
-   "Kind": 7
+   "Kind": 4
   },
   {
    "DefinitionId": null,
@@ -140,7 +159,7 @@
    "Kind": 2
   },
   {
-   "DefinitionId": "Choice2",
+   "DefinitionId": "test_const.Choice2",
    "NavigateToId": null,
    "Value": "Choice2",
    "Kind": 4
@@ -153,9 +172,9 @@
   },
   {
    "DefinitionId": null,
-   "NavigateToId": null,
+   "NavigateToId": "test_const.SomeChoice",
    "Value": "SomeChoice",
-   "Kind": 7
+   "Kind": 4
   },
   {
    "DefinitionId": null,
@@ -208,18 +227,6 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "",
-   "Kind": 1
-  },
-  {
-   "DefinitionId": "Untyped const",
-   "NavigateToId": null,
    "Value": "const",
    "Kind": 6
   },
@@ -248,7 +255,7 @@
    "Kind": 2
   },
   {
-   "DefinitionId": "Agent",
+   "DefinitionId": "test_const.Agent",
    "NavigateToId": null,
    "Value": "Agent",
    "Kind": 4
@@ -296,7 +303,7 @@
    "Kind": 2
   },
   {
-   "DefinitionId": "Version",
+   "DefinitionId": "test_const.Version",
    "NavigateToId": null,
    "Value": "Version",
    "Kind": 4
@@ -358,18 +365,6 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "",
-   "Kind": 1
-  },
-  {
-   "DefinitionId": "string",
-   "NavigateToId": null,
    "Value": "const",
    "Kind": 6
   },
@@ -398,7 +393,7 @@
    "Kind": 2
   },
   {
-   "DefinitionId": "SomeConst",
+   "DefinitionId": "test_const.SomeConst",
    "NavigateToId": null,
    "Value": "SomeConst",
    "Kind": 4
@@ -413,7 +408,7 @@
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "string",
-   "Kind": 7
+   "Kind": 4
   },
   {
    "DefinitionId": null,
@@ -456,39 +451,56 @@
    "NavigateToId": null,
    "Value": "",
    "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
   }
  ],
  "Navigation": [
   {
-   "Text": "testconst",
-   "NavigationId": null,
+   "Text": "test_const",
+   "NavigationId": "test_const",
    "ChildItems": [
     {
+     "Text": "Agent",
+     "NavigationId": "test_const.Agent",
+     "ChildItems": [],
+     "Tags": {
+      "TypeKind": "enum"
+     }
+    },
+    {
      "Text": "SomeChoice",
-     "NavigationId": "SomeChoice",
+     "NavigationId": "test_const.SomeChoice",
+     "ChildItems": [],
+     "Tags": {
+      "TypeKind": "struct"
+     }
+    },
+    {
+     "Text": "SomeConst",
+     "NavigationId": "test_const.SomeConst",
      "ChildItems": [],
      "Tags": {
       "TypeKind": "enum"
      }
     },
     {
-     "Text": "string",
-     "NavigationId": "string",
-     "ChildItems": [],
-     "Tags": {
-      "TypeKind": "enum"
-     }
-    },
-    {
-     "Text": "Untyped const",
-     "NavigationId": "Untyped const",
+     "Text": "Version",
+     "NavigationId": "test_const.Version",
      "ChildItems": [],
      "Tags": {
       "TypeKind": "enum"
      }
     }
    ],
-   "Tags": null
+   "Tags": {
+    "TypeKind": "namespace"
+   }
   }
- ]
+ ],
+ "PackageName": "test_const"
 }

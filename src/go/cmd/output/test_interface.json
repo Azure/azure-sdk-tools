@@ -1,5 +1,6 @@
 {
- "Name": "testfuncdecl",
+ "Language": "Go",
+ "Name": "test_interface",
  "Tokens": [
   {
    "DefinitionId": null,
@@ -14,9 +15,9 @@
    "Kind": 2
   },
   {
-   "DefinitionId": "testfuncdecl",
+   "DefinitionId": "test_interface",
    "NavigateToId": null,
-   "Value": "testfuncdecl",
+   "Value": "test_interface",
    "Kind": 4
   },
   {
@@ -28,37 +29,13 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
    "Value": "",
    "Kind": 1
   },
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "",
-   "Kind": 1
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "",
-   "Kind": 1
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "func",
+   "Value": "type",
    "Kind": 6
   },
   {
@@ -68,9 +45,51 @@
    "Kind": 2
   },
   {
-   "DefinitionId": "DoSomething",
+   "DefinitionId": "test_interface.EmbeddedInt",
    "NavigateToId": null,
-   "Value": "DoSomething",
+   "Value": "EmbeddedInt",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "interface",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "{",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "\t",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "test_interface-EmbeddedInt-Bar",
+   "NavigateToId": null,
+   "Value": "Bar",
    "Kind": 4
   },
   {
@@ -78,114 +97,24 @@
    "NavigateToId": null,
    "Value": "(",
    "Kind": 3
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "s",
-   "Kind": 4
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "string",
-   "Kind": 7
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": ",",
-   "Kind": 3
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "i",
-   "Kind": 4
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "int",
-   "Kind": 7
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": ",",
-   "Kind": 3
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
   },
   {
    "DefinitionId": null,
    "NavigateToId": null,
    "Value": "b",
-   "Kind": 4
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "bool",
    "Kind": 7
   },
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": ",",
-   "Kind": 3
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
    "Value": " ",
    "Kind": 2
   },
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "f1",
+   "Value": "string",
    "Kind": 4
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": " ",
-   "Kind": 2
-  },
-  {
-   "DefinitionId": null,
-   "NavigateToId": null,
-   "Value": "float32",
-   "Kind": 7
   },
   {
    "DefinitionId": null,
@@ -196,8 +125,86 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "}",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "type",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
    "Value": " ",
    "Kind": 2
+  },
+  {
+   "DefinitionId": "test_interface.SomeInterface",
+   "NavigateToId": null,
+   "Value": "SomeInterface",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "interface",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "{",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "\t",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "test_interface-SomeInterface-Foo",
+   "NavigateToId": null,
+   "Value": "Foo",
+   "Kind": 4
   },
   {
    "DefinitionId": null,
@@ -208,13 +215,25 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "string",
+   "Value": "bar",
    "Kind": 7
   },
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": ",",
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "int64",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ")",
    "Kind": 3
   },
   {
@@ -226,13 +245,25 @@
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": "error",
-   "Kind": 7
+   "Value": "*",
+   "Kind": 3
   },
   {
    "DefinitionId": null,
    "NavigateToId": null,
-   "Value": ")",
+   "Value": "bool",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "}",
    "Kind": 3
   },
   {
@@ -250,19 +281,30 @@
  ],
  "Navigation": [
   {
-   "Text": "testfuncdecl",
-   "NavigationId": null,
+   "Text": "test_interface",
+   "NavigationId": "test_interface",
    "ChildItems": [
     {
-     "Text": "DoSomething",
-     "NavigationId": "DoSomething",
+     "Text": "EmbeddedInt",
+     "NavigationId": "test_interface.EmbeddedInt",
      "ChildItems": [],
      "Tags": {
-      "TypeKind": "unknown"
+      "TypeKind": "interface"
+     }
+    },
+    {
+     "Text": "SomeInterface",
+     "NavigationId": "test_interface.SomeInterface",
+     "ChildItems": [],
+     "Tags": {
+      "TypeKind": "interface"
      }
     }
    ],
-   "Tags": null
+   "Tags": {
+    "TypeKind": "namespace"
+   }
   }
- ]
+ ],
+ "PackageName": "test_interface"
 }

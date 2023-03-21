@@ -40,9 +40,6 @@
     <None Update="SampleTestFiles\TokenFileWithSectionsRevision2.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="SampleTestFiles\APIView.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>

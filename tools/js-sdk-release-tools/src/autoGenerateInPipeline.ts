@@ -14,7 +14,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, {encoding: 'utf-8'}));
     const specFolder: string = inputJson['specFolder'];
     const readmeFiles: string[] | string | undefined = inputJson['relatedReadmeMdFiles']? inputJson['relatedReadmeMdFiles']: inputJson['relatedReadmeMdFile'];
-    const cadlProjectFolder: string[] | string | undefined = inputJson['relatedCadlProjectFolder'];
+    const cadlProjectFolder: string[] | string | undefined = inputJson['relatedTypespecProjectFolder'];
     const gitCommitId: string = inputJson['headSha'];
     const repoHttpsUrl: string = inputJson['repoHttpsUrl'];
     const autorestConfig: string | undefined = inputJson['autorestConfig'];
@@ -65,7 +65,7 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
             cadlProject: cadlProject,
             autorestConfig,
             use: use,
-            cadlEmitter: !!cadlEmitter? cadlEmitter : `@azure-tools/cadl-typescript`,
+            cadlEmitter: !!cadlEmitter? cadlEmitter : `@azure-tools/typespec-ts`,
             outputJson: outputJson,
             skipGeneration: skipGeneration,
             runningEnvironment: runningEnvironment

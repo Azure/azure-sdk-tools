@@ -62,6 +62,7 @@ jobs:
           --version 1.0.0-dev.20230313.4
           --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
           --global
+        working-directory: .github/workflows
         shell: bash
       # End-Install
 

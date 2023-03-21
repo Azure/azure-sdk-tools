@@ -22,8 +22,6 @@ A personal access token
 .PARAMETER Rebase
 Keep the commit record when syning.
 
-.PARAMETER PushArgs
-Optional arguments to the push command
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
@@ -43,10 +41,7 @@ param(
   [string] $AuthToken,
 
   [Parameter(Mandatory = $false)]
-  [string] $Rebase,
-
-  [Parameter(Mandatory = $false)]
-  [string] $PushArgs = ''
+  [string] $Rebase
 
 )
 
@@ -101,7 +96,7 @@ try {
 
   if (-not $($Rebase)) {
     git checkout -B target_branch $($SourceBranch)
-    git push $PushArgs Target "target_branch:refs/heads/$($TargetBranch)"
+    git push Target "target_branch:refs/heads/$($TargetBranch)"
     FailOnError "Failed to push to $($TargetRepo):$($TargetBranch)"
 
   } else {
@@ -116,7 +111,7 @@ try {
       git rebase --abort
     }
 
-    git push $PushArgs Target "target_branch:refs/heads/$($TargetBranch)"
+    git push Target "target_branch:refs/heads/$($TargetBranch)"
     FailOnError "Failed to push to $($TargetRepo):$($TargetBranch)"
   }
 } finally {

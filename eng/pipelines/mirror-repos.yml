@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - checkout: none
-    - template: ./templates/steps/sync-repo.yml
+    - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         Repos:
 
@@ -87,7 +87,7 @@ jobs:
             TargetRepos:
               Azure/azure-dev-pr:
 
-    - template: ./templates/steps/sync-repo.yml
+    - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         Repos:
 

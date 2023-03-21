@@ -42,7 +42,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        @if (Model.Review.Language != "TypeSpec")
+                        @if (!(LanguageServiceHelpers.MapLanguageAliases(new List<string> { "TypeSpec" })).Contains(Model.Review.Language))
                         {
                             <div class="input-group mb-3 custom-file-label">
                                 <label class="input-group-text small" for="uploadRevisionFile">Select file to add</label>

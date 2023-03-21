@@ -135,7 +135,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         }
                         else
                         {
-                            _consoleWrapper.WriteLine("Not attempting to push new tag, as we have found it already within the assets repo");
+                            _consoleWrapper.WriteLine($"Not attempting to push tag '{generatedTagName}', as it already exists within the assets repo");
                         }
                     }
                 }

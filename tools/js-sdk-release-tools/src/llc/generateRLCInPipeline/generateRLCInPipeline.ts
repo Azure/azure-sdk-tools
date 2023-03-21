@@ -44,7 +44,7 @@ export async function generateRLCInPipeline(options: {
                 stdio: 'inherit',
                 cwd: path.join(options.swaggerRepo, options.cadlProject)
             });
-            updateCadlProjectYamlFile(path.join(options.swaggerRepo, options.cadlProject, 'cadl-project.yaml'), options.sdkRepo, options.cadlEmitter);
+            updateCadlProjectYamlFile(path.join(options.swaggerRepo, options.cadlProject, 'tspconfig.yaml'), options.sdkRepo, options.cadlEmitter);
             let cadlSource = '.';
             if (fs.existsSync(path.join(options.swaggerRepo, options.cadlProject, 'client.cadl'))) {
                 cadlSource = 'client.cadl';

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Microsoft.Extensions.Configuration;
@@ -8,7 +8,7 @@ namespace APIViewWeb
     public class ProtocolLanguageService : LanguageProcessor
     {
         public override string Name { get; } = "Protocol";
-        public override string Extension { get; } = ".yaml";
+        public override string[] Extensions { get; } = { ".yaml" };
         public override string VersionString { get; } = "0.1.0";
 
         private readonly string _protocolProcessor;

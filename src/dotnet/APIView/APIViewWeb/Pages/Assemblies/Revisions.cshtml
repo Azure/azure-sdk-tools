@@ -42,7 +42,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        @if (Model.Review.Language != "Cadl")
+                        @if (!(LanguageServiceHelpers.MapLanguageAliases(new List<string> { "TypeSpec" })).Contains(Model.Review.Language))
                         {
                             <div class="input-group mb-3 custom-file-label">
                                 <label class="input-group-text small" for="uploadRevisionFile">Select file to add</label>
@@ -54,7 +54,7 @@
                             <div class="form-group mb-3">
                                 <p class="small mb-0">Select Language</p>
                                 <select asp-for="Language" id="revision-language-select">
-                                    <option selected value="Cadl">Cadl</option>
+                                    <option selected value="TypeSpec">TypeSpec</option>
                                     <option value="Json" data-content="Json">Json</option>
                                 </select>
                             </div>
@@ -63,7 +63,7 @@
                                 <input name="upload" for="upload" type="file" class="form-control" id="uploadRevisionFile">
                             </div>
                             <div class="form-group package-file-selector mb-3">
-                                <input asp-for="FilePath" class="form-control" type="text" placeholder="Enter URL to package root source. For e.g. URL to CADL file">
+                                <input asp-for="FilePath" class="form-control" type="text" placeholder="Enter URL to package root source. For e.g. URL to TypeSpec file">
                             </div>
                         }
                         <div>

@@ -13,6 +13,7 @@ using APIViewWeb.Managers;
 using Octokit;
 using Microsoft.TeamFoundation.Common;
 using APIViewWeb.Helpers;
+using Microsoft.VisualStudio.Services.Common;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -170,6 +171,8 @@ namespace APIViewWeb.Pages.Assemblies
                 isApproved = null;
             }
             var offset = (pageNo - 1) * pageSize;
+
+            languages = LanguageServiceHelpers.MapLanguageAliases(languages);
 
             PagedResults = await _manager.GetPagedReviewsAsync(search, languages, isClosed, filterTypesAsInt, isApproved, offset, pageSize, sortField);
         }

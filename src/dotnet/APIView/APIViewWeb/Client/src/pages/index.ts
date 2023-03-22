@@ -128,7 +128,7 @@ $(() => {
     $("#uploadModel").find(".card-body > div").addClass("d-none");
     var helpName = "#" + val.toLowerCase() + "-help";
     $(helpName).removeClass("d-none");
-    if (val == 'Cadl' || prevLanguageValue == 'Cadl') {
+    if (val == 'TypeSpec' || prevLanguageValue == 'TypeSpec') {
       const fileSelectors = $(".package-selector");
       for (var i = 0; i < fileSelectors.length; i++) {
         $(fileSelectors[i]).toggleClass("d-none");

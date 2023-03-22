@@ -12,22 +12,22 @@ using Newtonsoft.Json;
 
 namespace APIViewWeb
 {
-    public class CadlLanguageService : LanguageProcessor
+    public class TypeSpecLanguageService : LanguageProcessor
     {
-        public override string Name { get; } = "Cadl";
+        public override string Name { get; } = "TypeSpec";
 
-        public override string Extension { get; } = ".cadl";
+        public override string [] Extensions { get; } = { ".tsp", ".cadl" };
 
         public override string VersionString { get; } = "0";
 
         public override string ProcessName => throw new NotImplementedException();
 
-        private string _cadlSpecificPathPrefix;
+        private string _typeSpecSpecificPathPrefix;
 
-        public CadlLanguageService(IConfiguration configuration)
+        public TypeSpecLanguageService(IConfiguration configuration)
         {
             IsReviewGenByPipeline = true;
-            _cadlSpecificPathPrefix = configuration["CADL-Specification-path-prefix"] ?? "/specification";
+            _typeSpecSpecificPathPrefix = "/specification";
         }
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
@@ -46,20 +46,20 @@ namespace APIViewWeb
         public override bool GeneratePipelineRunParams(ReviewGenPipelineParamModel param)
         {
             var filePath = param.FileName;
-            // Verify cadl source file path is a GitHub URL to cadl package root 
+            // Verify TypeSpec source file path is a GitHub URL to TypeSpec package root 
             if (filePath == null || !filePath.StartsWith("https://github.com/"))
                 return false;
           
-            if (!filePath.Contains("/tree/") || !filePath.Contains(_cadlSpecificPathPrefix))
+            if (!filePath.Contains("/tree/") || !filePath.Contains(_typeSpecSpecificPathPrefix))
                 return false;
 
             filePath = filePath.Replace("https://github.com/", "");
             var sourceUrlparts = filePath.Split("/tree/", 2);
             param.SourceRepoName = sourceUrlparts[0];
-            sourceUrlparts = sourceUrlparts[1].Split(_cadlSpecificPathPrefix, 2);
+            sourceUrlparts = sourceUrlparts[1].Split(_typeSpecSpecificPathPrefix, 2);
             param.SourceBranchName = sourceUrlparts[0];
-            param.FileName = $"{_cadlSpecificPathPrefix}{sourceUrlparts[1]}";
-            _telemetryClient.TrackTrace($"Pipeline parameters to run CADL API rview gen pipeline: '{JsonConvert.SerializeObject(param)}'");
+            param.FileName = $"{_typeSpecSpecificPathPrefix}{sourceUrlparts[1]}";
+            _telemetryClient.TrackTrace($"Pipeline parameters to run TypeSpec API rview gen pipeline: '{JsonConvert.SerializeObject(param)}'");
 
             return true;
         }

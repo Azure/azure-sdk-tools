@@ -128,8 +128,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 try
                 {
                     int attempts = 1;
-                    bool continueToAttempt = true;
-                    while (continueToAttempt && attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
+                    while (attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
                     {
                         DebugLogger.LogInformation($"git {arguments}");
 
@@ -177,14 +176,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                             {
                                 break;
                             }
-                            else if (result.ExitCode != 0)
+                            if (!IsRetriableGitError(result))
                             {
-                                continueToAttempt = IsRetriableGitError(result);
-
-                                if(!continueToAttempt)
-                                {
-                                    throw new GitProcessException(result);
-                                }
+                                throw new GitProcessException(result);
                             }
                             attempts++;
                         }
@@ -330,10 +324,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                             {
                                 break;
                             }
-                            else if (commandResult.ExitCode != 0)
-                            {
-                                continueToAttempt = IsRetriableGitError(commandResult);
-                            }
+                            continueToAttempt = IsRetriableGitError(commandResult);
                             attempts++;
                         }
                     }

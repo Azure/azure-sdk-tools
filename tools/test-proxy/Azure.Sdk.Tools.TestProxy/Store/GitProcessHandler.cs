@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
@@ -185,11 +184,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                                 throw new GitProcessException(result);
                             }
 
-                            if (continueToAttempt)
+                            attempts++;
+
+                            if (continueToAttempt && attempts < RETRY_INTERMITTENT_FAILURE_COUNT)
                             {
                                 Task.Delay(attempts * 2 * 1000).Wait();
                             }
-                            attempts++;
                         }
                     }
                 }
@@ -335,11 +335,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                             }
                             continueToAttempt = IsRetriableGitError(commandResult);
 
-                            if (continueToAttempt)
+                            attempts++;
+                            if (continueToAttempt && attempts < RETRY_INTERMITTENT_FAILURE_COUNT)
                             {
                                 Task.Delay(attempts * 2 * 1000).Wait();
                             }
-                            attempts++;
                         }
                     }
                 }

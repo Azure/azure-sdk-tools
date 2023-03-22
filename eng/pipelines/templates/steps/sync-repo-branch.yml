@@ -17,6 +17,8 @@ parameters:
   - name: ScriptDirectory
     type: string
     default: eng/scripts
+  - name: GH_TOKEN
+    type: string
   - name: WorkingDirectory
     type: string
     default: $(System.DefaultWorkingDirectory)
@@ -39,4 +41,4 @@ steps:
           -TargetRepo '${{ target.key }}'
           -TargetBranch '${{ coalesce(target.value.Branch, repo.value.Branch) }}'
           -Rebase '${{ target.value.Rebase }}'
-          -AuthToken '$(azuresdk-github-pat)'
+          -AuthToken '${{ parameters.GH_TOKEN }}'

@@ -15,6 +15,7 @@ jobs:
     - checkout: none
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
         Repos:
 
           Azure/azure-rest-api-specs:
@@ -89,6 +90,7 @@ jobs:
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
         Repos:
 
           Azure/azure-sdk-for-python:

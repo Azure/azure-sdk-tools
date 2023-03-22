@@ -38,7 +38,7 @@ export async function generateRLCInPipeline(options: {
         if (!options.skipGeneration) {
             logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.cadlProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
             logger.logGreen(`copy package.json file if not exist`);
-            const installCommand = prepareCommandToInstallDependenciesForCadlProject(path.join(options.sdkRepo, 'eng', 'typescript-emitter-package.json'), path.join(options.swaggerRepo, options.cadlProject, 'package.json'));
+            const installCommand = prepareCommandToInstallDependenciesForCadlProject(path.join(options.sdkRepo, 'eng', 'emitter-package.json'), path.join(options.swaggerRepo, options.cadlProject, 'package.json'));
             logger.logGreen(installCommand);
             execSync(installCommand, {
                 stdio: 'inherit',

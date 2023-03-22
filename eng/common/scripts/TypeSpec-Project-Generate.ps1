@@ -108,7 +108,10 @@ function NpmInstallForProject([string]$workingDirectory) {
             Remove-Item -Path "package-lock.json" -Force
         }
 
+        $lockFile = Join-Path (git rev-parse --show-toplevel) "temp.lock"
+        FileLockEnter($lockFile)
         NpmInstallAtRoot
+        FileLockExit($lockFile)
     }
     finally {
         Pop-Location

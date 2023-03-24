@@ -455,5 +455,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         {
             return _gitHubIssuesToLock;
         }
+
+        /// <summary>
+        /// Override for the GitHubEventClient funcion which computes this based upon the repository's core rate limit.
+        /// Since this isn't necessary for the tests, just return the 100 which is the size of one page.
+        /// </summary>
+        /// <returns>int</returns>
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public override async Task<int> ComputeScheduledTaskUpdateLimit()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        {
+            return 100;
+        }
     }
 }

@@ -125,6 +125,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         // for action processing which uses a shared event.
         protected List<GitHubIssueToUpdate> _gitHubIssuesToUpdate = new List<GitHubIssueToUpdate>();
 
+        public int CoreRateLimit { get; set; } = 0;
+
         public RulesConfiguration RulesConfiguration
         {
             get { return _rulesConfiguration; }
@@ -267,6 +269,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         public async Task WriteRateLimits(string prependMessage = null)
         {
             var miscRateLimit = await GetRateLimits();
+            CoreRateLimit = miscRateLimit.Resources.Core.Limit;
             // Get the Minutes till reset.
             TimeSpan span = miscRateLimit.Resources.Core.Reset.UtcDateTime.Subtract(DateTime.UtcNow);
             // In the message, cast TotalMinutes to an int to get a whole number of minutes.
@@ -276,6 +279,32 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 rateLimitMessage = $"{prependMessage} {rateLimitMessage}";
             }
             Console.WriteLine(rateLimitMessage);
+        }
+
+        /// <summary>
+        /// Return the number of updates a scheduled task can make. The Core Rate Limit that GitHub Actions can make is 15000/hour
+        /// for enterprise and 1000/hour for non-enterprise. The max number of results that can be retried from SearchIssues is 1000.
+        /// The CoreRateLimit is set when WriteRateLimits is called and this is done at the start of processing in Main. If the core
+        /// rate limit is 15000, return 1000, otherwise return 100 which is 1/10th of the hourly limit for non-enterprise repository.
+        /// </summary>
+        /// <returns>The number updates a scheduled task can make.</returns>
+        public virtual async Task<int> ComputeScheduledTaskUpdateLimit()
+        {
+            int updateLimit = 0;
+
+            // CoreRateLimit will be set in WriteRateLimits but if that hasn't been called yet, call it now.
+            if (CoreRateLimit == 0)
+            {
+                var miscRateLimit = await GetRateLimits();
+                CoreRateLimit = miscRateLimit.Resources.Core.Limit;
+            }
+            updateLimit = CoreRateLimit / 10;
+            if (updateLimit > RateLimitConstants.SearchIssuesRateLimit)
+            {
+                updateLimit = RateLimitConstants.SearchIssuesRateLimit;
+            }
+            Console.WriteLine($"Setting the scheduled task update limit to: {updateLimit}");
+            return updateLimit;
         }
 
         /// <summary>

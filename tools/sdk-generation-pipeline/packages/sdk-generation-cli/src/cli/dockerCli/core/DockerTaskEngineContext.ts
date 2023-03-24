@@ -27,7 +27,7 @@ export class DockerTaskEngineContext {
     generateAndBuildTaskLog: string;
     mockTestTaskLog: string;
     readmeMdPath: string;
-    cadlProjectFolderPath: string;
+    typeSpecProjectFolderPath: string;
     specRepo: {
         repoPath: string;
         headSha: string;
@@ -64,7 +64,7 @@ export class DockerTaskEngineContext {
         this.generateAndBuildTaskLog = path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.generateAndBuildTaskLog);
         this.mockTestTaskLog = path.join(dockerContext.resultOutputFolder, dockerTaskEngineConfigProperties.mockTestTaskLog);
         this.readmeMdPath = dockerContext.readmeMdPath;
-        this.cadlProjectFolderPath = dockerContext.cadlProjectFolderPath;
+        this.typeSpecProjectFolderPath = dockerContext.typeSpecProjectFolderPath;
         this.specRepo = {
             repoPath: dockerContext.specRepo,
             headSha: dockerTaskEngineConfigProperties.headSha ?? dockerContext.isPublicRepo?
@@ -74,7 +74,7 @@ export class DockerTaskEngineContext {
                 `https://github.com/Azure/azure-rest-api-specs`
         };
         this.serviceType = (dockerContext.readmeMdPath.includes('data-plane') && dockerTaskEngineConfigProperties.serviceType) ||
-        !!dockerContext.cadlProjectFolderPath ? 'data-plane': 'resource-manager';
+        !!dockerContext.typeSpecProjectFolderPath ? 'data-plane': 'resource-manager';
         this.tag = dockerContext.tag;
         this.sdkRepo = dockerContext.sdkRepo;
         this.resultOutputFolder = dockerContext.resultOutputFolder ?? '/tmp/output';

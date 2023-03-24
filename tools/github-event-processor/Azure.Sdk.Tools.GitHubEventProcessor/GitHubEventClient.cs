@@ -290,29 +290,28 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <returns>The number updates a scheduled task can make.</returns>
         public virtual async Task<int> ComputeScheduledTaskUpdateLimit()
         {
+            int updateLimit = 0;
+
             // CoreRateLimit will be set in WriteRateLimits but if that hasn't been called yet, call it now.
             if (CoreRateLimit == 0)
             {
                 var miscRateLimit = await GetRateLimits();
                 CoreRateLimit = miscRateLimit.Resources.Core.Limit;
             }
-            // If the repository is an enterprise repository allow the max number search results, 1000, to be processed.
-            if (CoreRateLimit == RateLimitConstants.ActionRateLimitEnterprise)
+            updateLimit = CoreRateLimit / 10;
+            if (updateLimit > RateLimitConstants.SearchIssuesRateLimit)
             {
-                return RateLimitConstants.SearchIssuesRateLimit;
+                updateLimit = RateLimitConstants.SearchIssuesRateLimit;
             }
-            else
-            {
-                // For non-enterprise return 1/10th of the non-enterprise rate limit
-                return RateLimitConstants.ActionRateLimitNonEnterprise/10;
-            }
+            Console.WriteLine($"Setting the scheduled task update limit to: {updateLimit}");
+            return updateLimit;
         }
 
-    /// <summary>
-    /// Write the current rate limit and remaining number of transactions.
-    /// </summary>
-    /// <param name="prependMessage">Optional message to prepend to the rate limit message.</param>
-    public async Task WriteSearchRateLimits(string prependMessage = null)
+        /// <summary>
+        /// Write the current rate limit and remaining number of transactions.
+        /// </summary>
+        /// <param name="prependMessage">Optional message to prepend to the rate limit message.</param>
+        public async Task WriteSearchRateLimits(string prependMessage = null)
         {
             var miscRateLimit = await GetRateLimits();
             // Get the Seconds till reset. Unlike the core rate limit which resets every hour, the search rate limit

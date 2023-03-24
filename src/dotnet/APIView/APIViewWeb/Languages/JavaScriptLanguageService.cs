@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -9,7 +9,7 @@ namespace APIViewWeb
     public class JavaScriptLanguageService : LanguageProcessor
     {
         public override string Name { get; } = "JavaScript";
-        public override string Extension { get; } = ".api.json";
+        public override string[] Extensions { get; } = { ".api.json" };
         public override string ProcessName { get; } = "node";
         public override string VersionString { get; } = "1";
 

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -11,7 +11,7 @@ namespace APIViewWeb
     public class JsonLanguageService : LanguageService
     {
         public override string Name { get; } = "Json";
-        public override string Extension { get; } = ".json";
+        public override string[] Extensions { get; } = { ".json" };
 
         public override bool CanUpdate(string versionString) => false;
 

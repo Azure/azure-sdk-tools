@@ -107,44 +107,63 @@ public class KeyVaultSecretStore : SecretStore
 
             return result;
         }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return new SecretState { ErrorMessage = GetExceptionMessage(ex) };
+        }
         catch (RequestFailedException ex)
         {
-            return new SecretState { ExpirationDate = null, StatusCode = ex.Status, ErrorMessage = ex.Message };
+            throw new RotationException(GetExceptionMessage(ex), ex);
         }
     }
 
     public override async Task<IEnumerable<SecretState>> GetRotationArtifactsAsync()
     {
         var results = new List<SecretState>();
-
-        await foreach (SecretProperties? versionProperties in this.secretClient.GetPropertiesOfSecretVersionsAsync(
-                           this.secretName))
+        
+        try
         {
-            if (versionProperties.Enabled == false
-                || versionProperties.Tags.ContainsKey(RevokedTag)
-                || versionProperties.Tags.TryGetValue(RevokeAfterTag, out string? revokeAfterString) == false)
+
+            this.logger.LogDebug("Getting all version metadata for secret '{SecretName}' from vault '{VaultUri}'", this.secretName,
+                this.vaultUri);
+
+            await foreach (SecretProperties? versionProperties in this.secretClient.GetPropertiesOfSecretVersionsAsync(
+                               this.secretName))
             {
-                continue;
+                if (versionProperties.Enabled == false
+                    || versionProperties.Tags.ContainsKey(RevokedTag)
+                    || versionProperties.Tags.TryGetValue(RevokeAfterTag, out string? revokeAfterString) == false)
+                {
+                    continue;
+                }
+
+                if (!DateTimeOffset.TryParse(revokeAfterString, out DateTimeOffset revokeAfterDate))
+                {
+                    // TODO: Warn about improperly formatted revokeAfter value
+                    continue;
+                }
+
+                versionProperties.Tags.TryGetValue(OperationIdTag, out string? operationId);
+
+                results.Add(new SecretState
+                {
+                    Id = versionProperties.Id.ToString(),
+                    OperationId = operationId,
+                    Tags = versionProperties.Tags,
+                    RevokeAfterDate = revokeAfterDate
+                });
             }
 
-            if (!DateTimeOffset.TryParse(revokeAfterString, out DateTimeOffset revokeAfterDate))
-            {
-                // TODO: Warn about improperly formatted revokeAfter value
-                continue;
-            }
-
-            versionProperties.Tags.TryGetValue(OperationIdTag, out string? operationId);
-
-            results.Add(new SecretState
-            {
-                Id = versionProperties.Id.ToString(),
-                OperationId = operationId,
-                Tags = versionProperties.Tags,
-                RevokeAfterDate = revokeAfterDate
-            });
+            return results;
         }
-
-        return results;
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return results;
+        }
+        catch (RequestFailedException ex)
+        {
+            throw new RotationException(GetExceptionMessage(ex), ex);
+        }
     }
 
     public override async Task WriteSecretAsync(SecretValue secretValue,
@@ -301,6 +320,26 @@ public class KeyVaultSecretStore : SecretStore
             version.Tags[RevokeAfterTag] = revokeAfterDate.ToString("O");
             await this.secretClient.UpdateSecretPropertiesAsync(version);
         }
+    }
+
+    private string GetExceptionMessage(RequestFailedException exception)
+    {
+        if (exception.Status == 403)
+        {
+            return $"Key vault request not authorized for vault '{this.vaultUri}'";
+        }
+
+        if (exception.Status == 404)
+        {
+            if (exception.Message.StartsWith($"A secret with (name/id) "))
+            {
+                return $"Secret '{this.secretName}' not found in vault '{this.vaultUri}'";
+            }
+
+            return $"Vault {this.vaultUri} not found.";
+        }
+
+        return $"Key vault request failed with code {exception.Status}: {exception.Message}";
     }
 
     private class Parameters

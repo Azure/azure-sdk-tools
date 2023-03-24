@@ -19,7 +19,7 @@
         "dark-theme",
         "dark-solarized-theme"
     };
-    string[] Languages = { "C", "C#", "C++", "CADL", "Go", "Java", "JavaScript", "Python", "Swagger", "Swift" };
+    string[] Languages = LanguageServiceHelpers.SupportedLanguages;
     var userPreference = (TempData["UserPreference"] as UserPreferenceModel) ?? new UserPreferenceModel();
     var theme = userPreference.Theme ?? "light-theme";
 }

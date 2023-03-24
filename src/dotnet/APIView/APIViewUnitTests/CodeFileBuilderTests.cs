@@ -1,12 +1,11 @@
-﻿using System;
-using ApiView;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using ApiView;
+using Microsoft.CodeAnalysis;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -51,14 +50,9 @@ namespace APIViewUnitTests
 
         private async Task AssertFormattingAsync(string code, string formatted)
         {
-            var project = DiagnosticProject.Create(typeof(CodeFileBuilderTests).Assembly, LanguageVersion.Latest, new[] { code });
-            project = project.WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            using var memoryStream = new MemoryStream();
 
-            var compilation = await project.GetCompilationAsync();
-            Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity > DiagnosticSeverity.Warning));
-
-            var memoryStream = new MemoryStream();
-            compilation.Emit(memoryStream);
+            await Common.BuildDllAsync(memoryStream, code);
             memoryStream.Position = 0;
 
             var compilationFromDll = CompilationFactory.GetCompilation(memoryStream, null);

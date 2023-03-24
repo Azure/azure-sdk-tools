@@ -153,7 +153,7 @@ First, ensure that your language-specific "shim" supports the automatic addition
 - [PR Enabling in JS](https://github.com/Azure/azure-sdk-for-js/pull/23405)
 - [PR Enabling in Go](https://github.com/Azure/azure-sdk-for-go/pull/19322)
 
-Use [the transition script](../../scripts/transition-scripts/generate-assets-json.ps1) and follow the [readme](../../scripts/transition-scripts/README.md)!
+Use [the transition script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/transition-scripts/generate-assets-json.ps1) and follow the [readme](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/transition-scripts/README.md)!
 
 In summary, once an assets.json is present, the shim _must_ be updated to **actually send** a reference to that assets.json inside the `record/start` or `playback/start` requests!
 

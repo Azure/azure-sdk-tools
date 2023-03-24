@@ -18,7 +18,7 @@ public class PlanConfiguration
         ReadCommentHandling = JsonCommentHandling.Skip,
     };
 
-    private static readonly Regex schemaPattern = new (@"https\://raw\.githubusercontent\.com/azure/azure-sdk-tools/(?<branch>.+?)/schemas/secretrotation/(?<version>.+?)/schema\.json", RegexOptions.IgnoreCase);
+    private static readonly Regex schemaPattern = new (@"/(?<version>.+?)/plan\.json", RegexOptions.IgnoreCase);
 
     public string Name { get; set; } = string.Empty;
 

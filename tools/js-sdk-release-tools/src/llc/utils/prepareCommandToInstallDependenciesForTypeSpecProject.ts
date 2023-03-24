@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 
-export function prepareCommandToInstallDependenciesForCadlProject(source: string, target: string): string {
+export function prepareCommandToInstallDependenciesForTypeSpecProject(source: string, target: string): string {
     let command = `npm install`;
     if (!fs.existsSync(target) && fs.existsSync(source)) {
         fs.copyFileSync(source, target);

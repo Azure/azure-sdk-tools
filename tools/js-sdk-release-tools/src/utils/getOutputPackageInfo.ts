@@ -1,6 +1,6 @@
 import {RunningEnvironment} from "./runningEnvironment";
 
-export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | undefined, readmeMd: string | undefined, cadlProject: string | undefined) {
+export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | undefined, readmeMd: string | undefined, typeSpecProject: string | undefined) {
     let outputPackageInfo: any;
     if (runningEnvironment === RunningEnvironment.SwaggerSdkAutomation) {
         outputPackageInfo = {
@@ -16,8 +16,8 @@ export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | un
             "artifacts": [],
             "result": "succeeded"
         };
-        if (cadlProject) {
-            outputPackageInfo['typeSpecProject'] = [cadlProject];
+        if (typeSpecProject) {
+            outputPackageInfo['typeSpecProject'] = [typeSpecProject];
         } else {
             outputPackageInfo['readmeMd'] = [readmeMd];
         }

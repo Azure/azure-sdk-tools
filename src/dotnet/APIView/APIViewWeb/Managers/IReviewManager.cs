@@ -17,7 +17,7 @@ namespace APIViewWeb.Managers
         public Task<IEnumerable<string>> GetReviewPropertiesAsync(string propertyName);
         public Task<IEnumerable<ReviewModel>> GetRequestedReviews(string userName);
         public Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(
-            IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy);
+            IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, bool? isFirstReleaseApproved, int offset, int limit, string orderBy);
         public Task DeleteReviewAsync(ClaimsPrincipal user, string id);
         public Task<ReviewModel> GetReviewAsync(ClaimsPrincipal user, string id);
         public Task AddRevisionAsync(ClaimsPrincipal user, string reviewId, string name, string label, Stream fileStream, string language = "", bool awaitComputeDiff = false);

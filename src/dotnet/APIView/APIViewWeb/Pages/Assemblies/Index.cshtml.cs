@@ -45,7 +45,7 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task OnGetAsync(
             IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
-            IEnumerable<string> status, IEnumerable<string> type, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
+            IEnumerable<string> status, IEnumerable<string> type, IEnumerable<string> firstReleaseApproval, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any())
             {
@@ -54,19 +54,19 @@ namespace APIViewWeb.Pages.Assemblies
                 state = userPreference.State;
                 status = userPreference.Status;
                 type = userPreference.FilterType.Select(x => x.ToString());
-                await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField, false);
+                await RunGetRequest(search, languages, state, status, type, firstReleaseApproval, pageNo, pageSize, sortField, false);
             }
             else 
             {
-                await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
+                await RunGetRequest(search, languages, state, status, type, firstReleaseApproval, pageNo, pageSize, sortField);
             }
         }
 
         public async Task<PartialViewResult> OnGetReviewsPartialAsync(
             IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
-            IEnumerable<string> status, IEnumerable<string> type, int pageNo = 1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
+            IEnumerable<string> status, IEnumerable<string> type, IEnumerable<string> firstReleaseApproval, int pageNo = 1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
+            await RunGetRequest(search, languages, state, status, type, firstReleaseApproval, pageNo, pageSize, sortField);
             return Partial("_ReviewsPartial", PagedResults);
         }
 
@@ -97,13 +97,14 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         private async Task RunGetRequest(IEnumerable<string> search, IEnumerable<string> languages,
-            IEnumerable<string> state, IEnumerable<string> status, IEnumerable<string> type, int pageNo, int pageSize, string sortField, bool fromUrl = true)
+            IEnumerable<string> state, IEnumerable<string> status, IEnumerable<string> type, IEnumerable<string> firstReleaseApproval, int pageNo, int pageSize, string sortField, bool fromUrl = true)
         {
             search = search.Select(x => HttpUtility.UrlDecode(x));
             languages = (fromUrl)? languages.Select(x => HttpUtility.UrlDecode(x)) : languages;
             state = state.Select(x => HttpUtility.UrlDecode(x));
             status = status.Select(x => HttpUtility.UrlDecode(x));
             type = type.Select(x => HttpUtility.UrlDecode(x));
+            firstReleaseApproval = firstReleaseApproval.Select(x => HttpUtility.UrlDecode(x));
 
             // Update selected properties
             if (languages.Any())
@@ -129,7 +130,12 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 ReviewsProperties.Type.Selected = type;
             }
-            
+
+            if (firstReleaseApproval.Any())
+            {
+                ReviewsProperties.FirstReleaseApproval.Selected = firstReleaseApproval;
+            }
+
             bool? isClosed = null;
             // Resolve isClosed value
             if (state.Contains("Open") && !state.Contains("Closed"))
@@ -153,28 +159,32 @@ namespace APIViewWeb.Pages.Assemblies
                 FilterType = filterTypes,
                 Language = languages,
                 State = state,
-                Status = status
+                Status = status,
+                FirstReleaseApproval = firstReleaseApproval,
             }, User);
 
             bool? isApproved = null;
             // Resolve Approval State
             if (status.Contains("Approved") && !status.Contains("Pending"))
-            {
                 isApproved = true;
-            }
             else if (!status.Contains("Approved") && status.Contains("Pending"))
-            {
                 isApproved = false;
-            }
             else
-            {
                 isApproved = null;
-            }
+
+            bool? isFirstReleaseApproved = null;
+            if (firstReleaseApproval.Contains("Approved") && !firstReleaseApproval.Contains("Pending"))
+                isFirstReleaseApproved = true;
+            else if (!firstReleaseApproval.Contains("Approved") && firstReleaseApproval.Contains("Pending"))
+                isFirstReleaseApproved = false;
+            else
+                isFirstReleaseApproved = null;
+
             var offset = (pageNo - 1) * pageSize;
 
             languages = LanguageServiceHelpers.MapLanguageAliases(languages);
 
-            PagedResults = await _manager.GetPagedReviewsAsync(search, languages, isClosed, filterTypesAsInt, isApproved, offset, pageSize, sortField);
+            PagedResults = await _manager.GetPagedReviewsAsync(search, languages, isClosed, filterTypesAsInt, isApproved, isFirstReleaseApproved, offset, pageSize, sortField);
         }
     }
 
@@ -184,5 +194,6 @@ namespace APIViewWeb.Pages.Assemblies
         public (IEnumerable<string> All, IEnumerable<string> Selected) State = (All: new List<string> { "Closed", "Open" }, Selected: new List<string> { "Open" });
         public (IEnumerable<string> All, IEnumerable<string> Selected) Status = (All: new List<string> { "Approved", "Pending" }, Selected: new List<string>());
         public (IEnumerable<string> All, IEnumerable<string> Selected) Type = (All: new List<string> { "Automatic", "Manual", "PullRequest" }, Selected: new List<string>());
+        public (IEnumerable<string> All, IEnumerable<string> Selected) FirstReleaseApproval = (All: new List<string> { "Approved", "Pending" }, Selected: new List<string>());
     }
 }

@@ -14,6 +14,7 @@ namespace APIViewWeb.Helpers
                 .ForMember(dest => dest.FilterType, opt => opt.MapFrom((src, dest) => src._filterType != null ? src._filterType : dest._filterType))
                 .ForMember(dest => dest.State, opt => opt.MapFrom((src, dest) => src._state != null ? src._state : dest._state))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom((src, dest) => src._status != null ? src._status : dest._status))
+                .ForMember(dest => dest.FirstReleaseApproval, opt => opt.MapFrom((src, dest) => src._firstReleaseApproval != null ? src._firstReleaseApproval : dest._firstReleaseApproval))
                 .ForMember(dest => dest.HideLineNumbers, opt => opt.MapFrom((src, dest) => src._hideLineNumbers != null ? src._hideLineNumbers : dest._hideLineNumbers))
                 .ForMember(dest => dest.HideLeftNavigation, opt => opt.MapFrom((src, dest) => src._hideLeftNavigation != null ? src._hideLeftNavigation : dest._hideLeftNavigation))
                 .ForMember(dest => dest.Theme, opt => opt.MapFrom((src, dest) => src._theme != null ? src._theme : dest._theme))

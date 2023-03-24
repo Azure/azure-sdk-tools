@@ -64,8 +64,13 @@
                 <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
             </select>
         </div>
+        <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text">1st Release Status</span>
+            <select multiple id="first-release-approval-filter-select" aria-label="First Release Approval Filter">
+                <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.FirstReleaseApproval" />
+            </select>
+        </div>
 
- 
         <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="reset-filter-button"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset Filters</button>
         <hr class="border">
     </div>

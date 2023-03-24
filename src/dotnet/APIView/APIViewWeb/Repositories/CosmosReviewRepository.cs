@@ -149,7 +149,7 @@ namespace APIViewWeb
         }
 
         public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount)> GetReviewsAsync(
-            IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy)
+            IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, bool? isFirstReleaseApproved, int offset, int limit, string orderBy)
         {
             (IEnumerable<ReviewModel> Reviews, int TotalCount) result = (Reviews: new List<ReviewModel>(), TotalCount: 0);
 
@@ -245,11 +245,17 @@ namespace APIViewWeb
                 queryStringBuilder.Append(" AND ARRAY_SLICE(r.Revisions, -1)[0].IsApproved = @isApproved");
             }
 
+            if (isFirstReleaseApproved != null)
+            {
+                queryStringBuilder.Append($" AND r.IsApprovedForFirstRelease = @isFirstReleaseApproved");
+            }
+
             // First get the total count to help with paging
             var countQuery = $"SELECT VALUE COUNT(1) FROM({queryStringBuilder.ToString()})";
             QueryDefinition countQueryDefinition = new QueryDefinition(countQuery)
                 .WithParameter("@isClosed", isClosed)
-                .WithParameter("@isApproved", isApproved);
+                .WithParameter("@isApproved", isApproved)
+                .WithParameter("@isFirstReleaseApproved", isFirstReleaseApproved);
 
             using FeedIterator<int> countFeedIterator = _reviewsContainer.GetItemQueryIterator<int>(countQueryDefinition);
             while (countFeedIterator.HasMoreResults)
@@ -264,6 +270,7 @@ namespace APIViewWeb
             QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@isClosed", isClosed)
                 .WithParameter("@isApproved", isApproved)
+                .WithParameter("@isFirstReleaseApproved", isFirstReleaseApproved)
                 .WithParameter("@offset", offset)
                 .WithParameter("@limit", limit);
 

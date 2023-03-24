@@ -17,7 +17,7 @@ export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | un
             "result": "succeeded"
         };
         if (cadlProject) {
-            outputPackageInfo['cadlProject'] = [cadlProject];
+            outputPackageInfo['typeSpecProject'] = [cadlProject];
         } else {
             outputPackageInfo['readmeMd'] = [readmeMd];
         }

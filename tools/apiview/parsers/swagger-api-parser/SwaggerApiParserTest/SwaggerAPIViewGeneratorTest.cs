@@ -1,3 +1,6 @@
+using System;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using SwaggerApiParser;
 using Xunit;
@@ -54,5 +57,27 @@ public class SwaggerApiViewGeneratorTest
         this.output.WriteLine($"Write result to: {outputFilePath}");
         await using FileStream writer = File.Open(outputFilePath, FileMode.Create);
         await codeFile.SerializeAsync(writer);*/
+    }
+
+    [Fact]
+    public async Task TestGenerateSwaggerApiViewGroupedModelProperties()
+    {
+        var runCommandsFilePath = Path.GetFullPath("./fixtures/communicationserviceschat.json");
+        var swaggerSpec = await SwaggerDeserializer.Deserialize(runCommandsFilePath);
+        var apiView = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, runCommandsFilePath, new SchemaCache());
+
+        var codeFile = apiView.GenerateCodeFile();
+        //var outputFilePath = Path.GetFullPath("./communicationserviceschat_output.json");
+
+        //this.output.WriteLine($"Write result to: {outputFilePath}");
+        //await using var writer = File.Open(outputFilePath, FileMode.Create);
+        //await codeFile.SerializeAsync(writer);
+
+        var elems = codeFile.Tokens
+            .Select((item, index) => (item, index))
+            .SkipWhile(elem => elem.item.Value != "200")
+            .Where(elem => elem.item.Value == "nextLink" || elem.item.Value == "retentionPolicy")
+            .Take(2);
+        Assert.Collection(elems, elem => Assert.Equal("nextLink", elem.item.Value), elem => Assert.Equal("retentionPolicy", elem.item.Value));
     }
 }

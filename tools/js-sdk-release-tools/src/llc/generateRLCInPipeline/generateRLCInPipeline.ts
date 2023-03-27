@@ -23,10 +23,10 @@ export async function generateRLCInPipeline(options: {
     sdkRepo: string;
     swaggerRepo: string;
     readmeMd: string | undefined;
-    typeSpecProject: string | undefined;
+    typespecProject: string | undefined;
     autorestConfig: string | undefined
     use?: string;
-    typeSpecEmitter: string;
+    typespecEmitter: string;
     outputJson?: any;
     additionalArgs?: string;
     skipGeneration?: boolean,
@@ -34,25 +34,25 @@ export async function generateRLCInPipeline(options: {
 }) {
     let packagePath: string | undefined = undefined;
     let relativePackagePath: string | undefined = undefined;
-    if (options.typeSpecProject) {
+    if (options.typespecProject) {
         if (!options.skipGeneration) {
-            logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.typeSpecProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
+            logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.typespecProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
             logger.logGreen(`copy package.json file if not exist`);
-            const installCommand = prepareCommandToInstallDependenciesForTypeSpecProject(path.join(options.sdkRepo, 'eng', 'emitter-package.json'), path.join(options.swaggerRepo, options.typeSpecProject, 'package.json'));
+            const installCommand = prepareCommandToInstallDependenciesForTypeSpecProject(path.join(options.sdkRepo, 'eng', 'emitter-package.json'), path.join(options.swaggerRepo, options.typespecProject, 'package.json'));
             logger.logGreen(installCommand);
             execSync(installCommand, {
                 stdio: 'inherit',
-                cwd: path.join(options.swaggerRepo, options.typeSpecProject)
+                cwd: path.join(options.swaggerRepo, options.typespecProject)
             });
-            updateTypeSpecProjectYamlFile(path.join(options.swaggerRepo, options.typeSpecProject, 'tspconfig.yaml'), options.sdkRepo, options.typeSpecEmitter);
-            let typeSpecSource = '.';
-            if (fs.existsSync(path.join(options.swaggerRepo, options.typeSpecProject, 'client.tsp'))) {
-                typeSpecSource = 'client.tsp';
+            updateTypeSpecProjectYamlFile(path.join(options.swaggerRepo, options.typespecProject, 'tspconfig.yaml'), options.sdkRepo, options.typespecEmitter);
+            let typespecSource = '.';
+            if (fs.existsSync(path.join(options.swaggerRepo, options.typespecProject, 'client.tsp'))) {
+                typespecSource = 'client.tsp';
             }
-            logger.logGreen(`npx tsp compile ${typeSpecSource} --emit ${options.typeSpecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`);
-            execSync(`npx tsp compile ${typeSpecSource} --emit ${options.typeSpecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`, {
+            logger.logGreen(`npx tsp compile ${typespecSource} --emit ${options.typespecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`);
+            execSync(`npx tsp compile ${typespecSource} --emit ${options.typespecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`, {
                 stdio: 'inherit',
-                cwd: path.join(options.swaggerRepo, options.typeSpecProject)
+                cwd: path.join(options.swaggerRepo, options.typespecProject)
             });
         }
     } else {
@@ -169,7 +169,7 @@ export async function generateRLCInPipeline(options: {
         }
     }
 
-    const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typeSpecProject);
+    const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
 
     try {
         if (!packagePath || !relativePackagePath) {
@@ -230,8 +230,8 @@ export async function generateRLCInPipeline(options: {
         }
     } catch (e) {
         logger.logError('Error:');
-        if (options.typeSpecProject) {
-            logger.logError(`An error occurred while run build for typespec project: "${options.typeSpecProject}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+        if (options.typespecProject) {
+            logger.logError(`An error occurred while run build for typespec project: "${options.typespecProject}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
         } else {
             logger.logError(`An error occurred while run build for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
         }

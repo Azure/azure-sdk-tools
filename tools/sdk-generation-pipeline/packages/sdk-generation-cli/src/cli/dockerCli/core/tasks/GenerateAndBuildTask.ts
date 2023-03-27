@@ -34,12 +34,12 @@ export class GenerateAndBuildTask implements SDKGenerationTaskBase {
         const generateAndBuildOptions = generateAndBuildTask as GenerateAndBuildOptions;
         const runOptions = generateAndBuildOptions.generateAndBuildScript;
         const readmeMdAbsolutePath = !!this.context.readmeMdPath? path.join(this.context.specRepo.repoPath, this.context.readmeMdPath) : '';
-        const typeSpecProjectFolderAbsolutPath = !!this.context.typeSpecProjectFolderPath?
-            path.join(this.context.specRepo.repoPath, this.context.typeSpecProjectFolderPath) : '';
+        const typespecProjectFolderAbsolutPath = !!this.context.typespecProjectFolderPath?
+            path.join(this.context.specRepo.repoPath, this.context.typespecProjectFolderPath) : '';
         const specRepoPath = this.context.specRepo.repoPath.includes('specification')?
             this.context.specRepo.repoPath : path.join(this.context.specRepo.repoPath, 'specification');
         const relatedReadmeMdFileRelativePath = !!readmeMdAbsolutePath? path.relative(specRepoPath, readmeMdAbsolutePath) : '';
-        const relatedTypeSpecProjectFolderRelativePath = !!typeSpecProjectFolderAbsolutPath? path.relative(specRepoPath, typeSpecProjectFolderAbsolutPath) : '';
+        const relatedTypeSpecProjectFolderRelativePath = !!typespecProjectFolderAbsolutPath? path.relative(specRepoPath, typespecProjectFolderAbsolutPath) : '';
         const inputContent: GenerateAndBuildInput = {
             specFolder: specRepoPath,
             headSha: this.context.specRepo.headSha,

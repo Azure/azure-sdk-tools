@@ -10,7 +10,7 @@ import { DockerRunningModel } from './DockerRunningModel';
 export class DockerContext {
     mode: DockerRunningModel;
     readmeMdPath?: string;
-    typeSpecProjectFolderPath?: string;
+    typespecProjectFolderPath?: string;
     tag?: string;
     sdkList: string[];
     specRepo?: string;
@@ -32,7 +32,7 @@ export class DockerContext {
     * */
     public initialize(inputParams: DockerCliInput) {
         this.readmeMdPath = inputParams.readmeMdPath;
-        this.typeSpecProjectFolderPath = inputParams.typeSpecProjectFolderPath;
+        this.typespecProjectFolderPath = inputParams.typespecProjectFolderPath;
         this.tag = inputParams.tag;
         this.sdkList = inputParams.sdkList?.split(',').map((e) => e.trim()).filter((e) => e.length > 0);
         this.specRepo = inputParams.specRepo;
@@ -88,14 +88,14 @@ export class DockerContext {
     }
 
     private validateReadmeMdPathOrTypeSpecProjectFolderPath() {
-        if (!this.readmeMdPath && !this.typeSpecProjectFolderPath) {
-            throw new Error(`Get empty readme.md path and typespec project folder path, please input it with --readme or --typeSpec-project`);
+        if (!this.readmeMdPath && !this.typespecProjectFolderPath) {
+            throw new Error(`Get empty readme.md path and typespec project folder path, please input it with --readme or --typespec-project`);
         }
         if (!!this.readmeMdPath && !fs.existsSync(path.join(this.specRepo, this.readmeMdPath))) {
             throw new Error(`Cannot find file ${this.readmeMdPath}, please input a valid one`);
         }
-        if (!!this.typeSpecProjectFolderPath && !fs.existsSync(path.join(this.specRepo, this.typeSpecProjectFolderPath))) {
-            throw new Error(`Cannot find file ${this.typeSpecProjectFolderPath}, please input a valid one`);
+        if (!!this.typespecProjectFolderPath && !fs.existsSync(path.join(this.specRepo, this.typespecProjectFolderPath))) {
+            throw new Error(`Cannot find file ${this.typespecProjectFolderPath}, please input a valid one`);
         }
     }
 

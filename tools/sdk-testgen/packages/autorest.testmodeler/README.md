@@ -7,7 +7,7 @@ https://github.com/Azure/azure-rest-api-specs
 ## How to Generate Test Model
 
 ```
-autorest --version=3.7.3 --use=<test model extension> --output-folder=<RP package path> --testmodeler.export-codemodel --clear-output-folder=false --debug <RP config md file path> --testmodeler.debugger
+autorest --version=3.7.3 --use=<test model extension> --output-folder=<RP package path> --testmodeler.export-codemodel --clear-output-folder=false --debug <RP config md file path>
 ```
 
 ## Contribution

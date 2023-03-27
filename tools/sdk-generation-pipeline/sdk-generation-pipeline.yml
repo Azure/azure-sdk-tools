@@ -104,7 +104,7 @@ stages:
           - template: ./pipelines/steps/generate-sdk.yml
             parameters:
               readmeFile: ${{ parameters.relativeReadmeFilePath }}
-              typeSpecProject: ${{ parameters.relativeTypeSpecProjectPath }}
+              typespecProject: ${{ parameters.relativeTypeSpecProjectPath }}
               trigger: ${{ parameters.clientAgent }}
               triggerType: ${{ parameters.triggerType }}
               serviceType: ${{ parameters.serviceType }}

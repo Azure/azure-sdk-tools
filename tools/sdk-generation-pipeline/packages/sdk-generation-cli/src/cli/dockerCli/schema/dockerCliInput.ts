@@ -5,7 +5,7 @@ dotenv.config();
 
 export class DockerCliInput {
     readmeMdPath: string;
-    typeSpecProjectFolderPath: string;
+    typespecProjectFolderPath: string;
     tag: string;
     sdkList: string;
     specRepo: string;
@@ -28,7 +28,7 @@ export const dockerCliInput = convict<DockerCliInput>({
         format: String,
         doc: 'The relative path to readme.md, which is from the root of spec repo'
     },
-    typeSpecProjectFolderPath: {
+    typespecProjectFolderPath: {
         default: '',
         env: 'TYPESPEC_PROJECT',
         arg: 'typespec-project',

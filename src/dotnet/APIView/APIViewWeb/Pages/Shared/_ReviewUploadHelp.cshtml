@@ -125,7 +125,15 @@
         <div class="d-none" id="typespec-help">
             <p class="card-text">
                 <ol>
-                    Provide URL to typespec project root path.
+                    <li>
+                        Install <code>@@azure-tools/typespec-apiview</code>
+                    </li>
+                    <li>
+                        Compile and emit the apiview file: <code>typespec compile .\main.tsp --emit "@@azure-tools/typespec-apiview"</code>
+                    </li>
+                    <li>
+                        Upload the JSON file that is emitted.
+                    </li>
                 </ol>
             </p>
         </div>

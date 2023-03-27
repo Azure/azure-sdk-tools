@@ -37,8 +37,9 @@ export async function generateRLCInPipeline(options: {
     if (options.typespecProject) {
         if (!options.skipGeneration) {
             logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.typespecProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
-            logger.logGreen(`copy package.json file if not exist`);
-            const installCommand = prepareCommandToInstallDependenciesForTypeSpecProject(path.join(options.sdkRepo, 'eng', 'emitter-package.json'), path.join(options.swaggerRepo, options.typespecProject, 'package.json'));
+            const copyPackageJsonName = 'emitter-package.json';
+            logger.logGreen(`copy package.json file if not exist from SDK repo ${copyPackageJsonName}`);
+            const installCommand = prepareCommandToInstallDependenciesForTypeSpecProject(path.join(options.sdkRepo, 'eng', copyPackageJsonName), path.join(options.swaggerRepo, options.typespecProject, 'package.json'));
             logger.logGreen(installCommand);
             execSync(installCommand, {
                 stdio: 'inherit',

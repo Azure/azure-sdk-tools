@@ -30,13 +30,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         /// <param name="AIServiceReturnsLabels">Whether or not the AI Service should return labels</param>
         [Category("static")]
-        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, true)]
-        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, false)]
-        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.Off, false)]
-        public async Task TestInitialIssueTriage(string rule, string payloadFile, RuleState ruleState, bool AIServiceReturnsLabels)
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, true, true, true)]
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, false, true, true)]
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.Off, false, false, false)]
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, false, false, true)]
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, false, true, false)]
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, false, false, false)]
+        public async Task TestInitialIssueTriage(string rule, string payloadFile, RuleState ruleState, bool AIServiceReturnsLabels, bool isMemberOfOrg, bool hasWriteOrAdmin)
         {
             var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
             mockGitHubEventClient.RulesConfiguration.Rules[rule] = ruleState;
+            mockGitHubEventClient.UserHasPermissionsReturn = hasWriteOrAdmin;
+            mockGitHubEventClient.IsUserMemberOfOrgReturn = isMemberOfOrg;
             var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
             var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
             List<string> expectedLabels = new List<string>
@@ -74,6 +79,19 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 {
                     // If the AI Label service doesn't predict labels, the label added is NeedsTriage
                     Assert.True(issueUpdate.Labels.Contains(LabelConstants.NeedsTriage), $"IssueUpdate does not contain {LabelConstants.NeedsTriage} which should have been added when no labels were predicted.");
+                }
+
+                // If the user is not part of the Azure org AND they don't have write or admin collaborator permissions
+                // then customer-reported and question labels should be added to the issue
+                if (!isMemberOfOrg && !hasWriteOrAdmin)
+                {
+                    Assert.True(issueUpdate.Labels.Contains(LabelConstants.CustomerReported), $"IssueUpdate does not contain {LabelConstants.CustomerReported} which it should when the user is not part of the org and doesn't have write/admin collaborator permissions.");
+                    Assert.True(issueUpdate.Labels.Contains(LabelConstants.Question), $"IssueUpdate does not contain {LabelConstants.Question} which it should when the user is not part of the org and doesn't have write/admin collaborator permissions.");
+                }
+                else
+                {
+                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.CustomerReported), $"IssueUpdate contains {LabelConstants.CustomerReported} and shouldn't when the user is part of the org or has write/admin collaborator permissions.");
+                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.Question), $"IssueUpdate contains {LabelConstants.Question} and shouldn't when the user is part of the org or has write/admin collaborator permissions.");
                 }
             }
             else

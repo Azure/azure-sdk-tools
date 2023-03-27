@@ -50,11 +50,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Resulting Actions:
         ///     Evaluate the user that created the issue:
         ///         IF creator is NOT an Azure SDK team owner
-        ///         AND is NOT a member of the Azure organization
-        ///         AND does NOT have write permission
-        ///         AND does NOT have admin permission:
-        ///             Add "customer-reported" label
-        ///             Add "question" label
+        ///           IF the user is NOT a member of the Azure Org
+        ///             IF the user does not have Admin or Write Collaborator permission
+        ///               Add "customer-reported" label
+        ///               Add "question" label
         ///     Query AI label service for label suggestions:
         ///     IF labels were predicted:
         ///         Assign returned labels to the issue
@@ -100,6 +99,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         else
                         {
                             issueUpdate.AddLabel(LabelConstants.NeedsTriage);
+                        }
+
+                        // If the user is not a member of the Azure Org AND the user does not have write or admin collaborator permission
+                        bool isMemberOfOrg = await gitHubEventClient.IsUserMemberOfOrg(OrgConstants.Azure, issueEventPayload.Issue.User.Login);
+                        if (!isMemberOfOrg)
+                        {
+                            bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(issueEventPayload.Repository.Id, issueEventPayload.Issue.User.Login);
+                            if (!hasAdminOrWritePermission)
+                            {
+                                issueUpdate.AddLabel(LabelConstants.CustomerReported);
+                                issueUpdate.AddLabel(LabelConstants.Question);
+                            }
                         }
                     }
                 }

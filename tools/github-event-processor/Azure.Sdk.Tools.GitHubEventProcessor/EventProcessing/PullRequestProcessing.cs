@@ -60,16 +60,19 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             }
                         }
 
-                        // The sender will only have Write or Admin permssion if they are a collaborator
-                        bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
-                        // If the user doesn't have Write or Admin permissions
-                        if (!hasAdminOrWritePermission)
+                        // If the user is not a member of the Azure Org AND the user does not have write or admin collaborator permission
+                        bool isMemberOfOrg = await gitHubEventClient.IsUserMemberOfOrg(OrgConstants.Azure, prEventPayload.PullRequest.User.Login);
+                        if (!isMemberOfOrg)
                         {
-                            var issueUpdate = gitHubEventClient.GetIssueUpdate(prEventPayload.PullRequest);
-                            issueUpdate.AddLabel(LabelConstants.CustomerReported);
-                            issueUpdate.AddLabel(LabelConstants.CommunityContribution);
-                            string prComment = $"Thank you for your contribution @{prEventPayload.PullRequest.User.Login}! We will review the pull request and get back to you soon.";
-                            gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
+                            bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
+                            if (!hasAdminOrWritePermission)
+                            {
+                                var issueUpdate = gitHubEventClient.GetIssueUpdate(prEventPayload.PullRequest);
+                                issueUpdate.AddLabel(LabelConstants.CustomerReported);
+                                issueUpdate.AddLabel(LabelConstants.CommunityContribution);
+                                string prComment = $"Thank you for your contribution @{prEventPayload.PullRequest.User.Login}! We will review the pull request and get back to you soon.";
+                                gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
+                            }
                         }
                     }
                 }

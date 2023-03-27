@@ -108,13 +108,10 @@ This is a stand-alone service providing a REST API which requires a service key 
 
     ```text
     IF creator is NOT an Azure SDK team owner
-      AND is NOT a member of the Azure organization
-      AND is does NOT have a collaborator association
-      AND does NOT have write permission
-      AND does NOT have admin permission:
-
-          - Add "customer-reported" label
-          - Add "question" label
+      IF the user is NOT a member of the Azure Org
+        IF the user does not have Admin or Write Collaborator permission
+          - Add "customer-reported" label to the issue
+          - Add "question" label to the issue
     ```
 
 - Query AI label service for suggestions:
@@ -126,6 +123,11 @@ This is a stand-alone service providing a REST API which requires a service key 
         - Add "needs-team-triage" label to the issue
     ELSE
         - Add "needs-triage" label to the issue
+
+    IF the user is NOT a member of the Azure Org
+      IF the user does not have Admin or Write Collaborator permission
+        - Add "customer-reported" label to the issue
+        - Add "question" label to the issue
     ```
 
   - _This is what we'd like to get to. It requires changes to the CODEOWNERS file structure which have not been done yet_
@@ -446,9 +448,8 @@ OR
 - Determine if this is a community contribution:
 
     ```text
-    IF the PR author does not have write permission
-      AND the PR author does not have write permission
-      AND the PR author does not have a collaborator association:
+    IF the user is NOT a member of the Azure Org
+      IF the user does not have Admin or Write Collaborator permission
         - Add "customer-reported" label
         - Add "Community Contribution" label
         - Create the following comment

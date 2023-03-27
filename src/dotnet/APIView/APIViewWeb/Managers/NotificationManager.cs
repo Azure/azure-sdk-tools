@@ -188,6 +188,11 @@ namespace APIViewWeb.Managers
                 foreach (var username in notifiedUsers)
                 {
                     var email = await GetEmailAddress(username);
+                    if (string.IsNullOrEmpty(email))
+                    {
+                        _telemetryClient.TrackTrace($"Email address is not available for user {username}, review {review.ReviewId}. Not sending email.");
+                        continue;
+                    }
                     notifiedEmails.Add(email);
                 }
             }           
@@ -199,14 +204,10 @@ namespace APIViewWeb.Managers
                 return;
             }
 
-            var emailToList = string.Join(",", subscribers);
-            if (string.IsNullOrEmpty(emailToList))
+            foreach(var userEmail in subscribers)
             {
-                _telemetryClient.TrackTrace($"Email address is not available for subscribers, review {review.ReviewId}. Not sending email.");
-                return;
+                await SendEmail(userEmail, $"Update on APIView - {review.DisplayName} from {GetUserName(user)}", htmlContent);
             }
-
-            await SendEmail(emailToList, $"Update on APIView - {review.DisplayName} from {GetUserName(user)}", htmlContent);
         }
 
         private async Task SendEmail(string emailToList, string subject, string content)

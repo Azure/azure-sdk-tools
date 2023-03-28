@@ -1,5 +1,11 @@
 # How to trust the `dotnet-devcert.pfx` for your language
 
+## What is a dev certificate?
+
+HTTPS ([or SSL in general](https://stackoverflow.com/a/6093496) requires a certificate to properly secure the connection. A given certificate can only be associated with a single hostname, so a certificate issued for `www.example.com` cannot be used to secure connections to `www.example.org`.
+
+A `dev certificate` is a SSL Cert that can be used to secure connections with `localhost`. This is essential to enable secure communication (still within your development machine) to the test-proxy.
+
 ## Generally
 
 All necessary components for dev-certificate usage are present within the `eng/common/testproxy/` directory.
@@ -7,6 +13,8 @@ All necessary components for dev-certificate usage are present within the `eng/c
 **Note that this certificate was generated with password "password"**
 
 Within this folder are components of a **dev certificate** that has no usage outside of keeping your local usage of SSL happy. When running the container, you will need to trust `dotnet-devcert.pfx` if you want to connect to `https://localhost:5001` without cert validation failures. This certificate has no usage outside of your local box and is strictly associated with `CN=localhost`.
+
+### On windows
 
 ```powershell
 # ensure root access
@@ -21,7 +29,18 @@ dotnet dev-certs https --clean --import eng/common/testproxy/dotnet-devcert.pfx 
 dotnet dev-certs https --trust
 ```
 
-On a ubuntu-flavored distro of linux, feel free to re-use the import mechanism in the local file `eng/common/testproxy/apply-dev-cert.sh`. Prior to using locally, ensure $CERT_FOLDER environment variable is set to the local directory containing the script. Otherwise it won't be able to access necessary files!
+### On linux
+
+On unix systems (read `linux` and `mac`), the easiest way to ensure the `test-proxy` uses the test-proxy cert is to set the following environment variables before invoking the test proxy:
+
+```bash
+export ASPNETCORE_Kestrel__Certificates__Default__Path=/path/to/dotnet-devcert.pfx
+export ASPNETCORE_Kestrel__Certificates__Default__Password=password
+```
+
+As an alternative, on a ubuntu-flavored distro of linux, feel free to re-use the import mechanism in the local file `eng/common/testproxy/apply-dev-cert.sh`. Prior to using locally, ensure $CERT_FOLDER environment variable is set to the local directory containing the script. Otherwise it won't be able to access necessary files!
+
+### For Macs
 
 On a Mac(OS X), it may not work properly due to permission problems. You can see the message after execution as follows.
 

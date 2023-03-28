@@ -165,8 +165,6 @@ stages:
               sdkRepo: 'azure-sdk-for-java'
             PYTHON:
               sdkRepo: 'azure-sdk-for-python'
-            GO:
-              sdkRepo: 'azure-sdk-for-go'
             Net:
               sdkRepo: 'azure-sdk-for-net'
         steps:

@@ -181,6 +181,7 @@ namespace APIViewWeb.Pages.Assemblies
             var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
             var fileDiagnostics = renderedCodeFile.CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
             CodeLine[] currentHtmlLines;
+            var userPrefernce = await _preferenceCache.GetUserPreferences(User) ?? new UserPreferenceModel();
 
             if (DiffRevision != null)
             {
@@ -226,7 +227,7 @@ namespace APIViewWeb.Pages.Assemblies
                 Lines = CreateLines(fileDiagnostics, currentHtmlLines, Comments, true);
             }
             TempData["CodeLineSection"] = Lines;
-            TempData["UserPreference"] = PageModelHelpers.GetUserPreference(_preferenceCache, User) ?? new UserPreferenceModel();
+            TempData["UserPreference"] = userPrefernce;
             return Partial("_CodeLinePartial", sectionKey);
         }
 
@@ -256,16 +257,6 @@ namespace APIViewWeb.Pages.Assemblies
             return RedirectToPage(new { id = id });
         }
 
-        public IActionResult OnGetUpdatePageSettings(bool hideLineNumbers = false, bool hideLeftNavigation = false)
-        {
-            _preferenceCache.UpdateUserPreference(new UserPreferenceModel()
-            {
-                HideLeftNavigation = hideLeftNavigation,
-                HideLineNumbers = hideLineNumbers
-            }, User);
-            return new EmptyResult();
-        }
-
         public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDiffOnly = null, bool? showDocumentation = null, string revisionId = null)
         {
             var routingData = new Dictionary<string, string>();
@@ -274,11 +265,6 @@ namespace APIViewWeb.Pages.Assemblies
             routingData["doc"] = (showDocumentation ?? false).ToString();
             routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
             return routingData;
-        }
-
-        public UserPreferenceModel GetUserPreference()
-        {
-            return _preferenceCache.GetUserPreferences(User).Result;
         }
 
         public async Task<IEnumerable<PullRequestModel>> GetAssociatedPullRequest()

@@ -15,7 +15,12 @@ class FunctionAnnotationParser:
         self.posargs = {}
         self.varargs = None
         self.return_type = None
-        annotations = getattr(obj, "__annotations__", None)
+        # TODO: Replace with "get_annotations" once min Python is 3.10+
+        # See: https://docs.python.org/3.10/howto/annotations.html#accessing-the-annotations-dict-of-an-object-in-python-3-9-and-older
+        if isinstance(obj, type):
+            annotations = obj.__dict__.get("__annotations__", None)
+        else:
+            annotations = getattr(obj, "__annotations__", None)   
         if annotations:
             self.return_type = annotations.pop('return', inspect.Parameter.empty)
             self.args = {

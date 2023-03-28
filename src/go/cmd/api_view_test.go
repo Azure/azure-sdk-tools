@@ -18,11 +18,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestFuncDecl(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_funcDecl"), "output")
+	err := CreateAPIView(filepath.Clean("testdata/test_func_decl"), "output")
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := os.ReadFile("./output/testfuncdecl.json")
+	file, err := os.ReadFile("./output/test_func_decl.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,10 +31,10 @@ func TestFuncDecl(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Tokens) != 41 {
+	if len(p.Tokens) != 42 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
-	if p.Name != "testfuncdecl" {
+	if p.Name != "test_func_decl" {
 		t.Fatal("unexpected package name")
 	}
 	if len(p.Navigation) != 1 {
@@ -50,7 +50,7 @@ func TestInterface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := os.ReadFile("./output/testinterface.json")
+	file, err := os.ReadFile("./output/test_interface.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,10 +59,10 @@ func TestInterface(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Tokens) != 55 {
+	if len(p.Tokens) != 46 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
-	if p.Name != "testinterface" {
+	if p.Name != "test_interface" {
 		t.Fatal("unexpected package name")
 	}
 	if len(p.Navigation) != 1 {
@@ -78,7 +78,7 @@ func TestStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := os.ReadFile("./output/teststruct.json")
+	file, err := os.ReadFile("./output/test_struct.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,16 +87,16 @@ func TestStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(p.Tokens) != 69 {
+	if len(p.Tokens) != 68 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
-	if p.Name != "teststruct" {
+	if p.Name != "test_struct" {
 		t.Fatal("unexpected package name")
 	}
 	if len(p.Navigation) != 1 {
 		t.Fatal("nagivation slice length should only be one for one package")
 	}
-	if len(p.Navigation[0].ChildItems) != 2 {
+	if len(p.Navigation[0].ChildItems) != 1 {
 		t.Fatal("nagivation slice length should include link for ctor and struct")
 	}
 }
@@ -106,7 +106,7 @@ func TestConst(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	file, err := os.ReadFile("./output/testconst.json")
+	file, err := os.ReadFile("./output/test_const.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,13 +118,13 @@ func TestConst(t *testing.T) {
 	if len(p.Tokens) != 76 {
 		t.Fatal("unexpected token length, signals a change in the output")
 	}
-	if p.Name != "testconst" {
+	if p.Name != "test_const" {
 		t.Fatal("unexpected package name")
 	}
 	if len(p.Navigation) != 1 {
 		t.Fatal("nagivation slice length should only be one for one package")
 	}
-	if len(p.Navigation[0].ChildItems) != 3 {
+	if len(p.Navigation[0].ChildItems) != 4 {
 		t.Fatal("unexpected child navigation items length")
 	}
 }

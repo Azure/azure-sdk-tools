@@ -13,11 +13,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// To use this class, construct it, passing as input relevant paths.
     /// Then, to obtain the value of the matched entry, reference "Value" member.
     ///
-    /// This class uses a regex-based wildcard-supporting (* and **) matcher, compared to the old one, located in:
-    ///
-    ///   CodeownersFile.GetMatchingCodeownersEntryLegacyImpl()
-    /// 
-    /// The old matcher is prefix-based, strips suffix "/", and doesn't support wildcards.
+    /// This class uses a regex-based wildcard-supporting (* and **) matcher.
     ///
     /// This matcher reflects the matching behavior of the built-in GitHub CODEOWNERS interpreter,
     /// but with additional assumptions imposed about the paths present in CODEOWNERS, as guaranteed
@@ -29,7 +25,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     ///
     /// The validation spec is given in this comment:
     /// https://github.com/Azure/azure-sdk-tools/issues/4859#issuecomment-1370360622
-    /// See also ProgramGlobPathTests and CodeownersFileTests tests.
+    /// See also RetrieveCodeOwnersProgramTests and CodeownersFileTests tests.
     ///
     /// Reference:
     /// https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax

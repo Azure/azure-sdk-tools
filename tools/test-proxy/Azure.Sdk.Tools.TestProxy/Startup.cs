@@ -132,6 +132,10 @@ namespace Azure.Sdk.Tools.TestProxy
             new GitProcessHandler().VerifyGitMinVersion();
             DefaultOptions defaultOptions = (DefaultOptions)commandObj;
 
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            System.Console.WriteLine($"Running proxy version is Azure.Sdk.Tools.TestProxy {semanticVersion}");
+
             TargetLocation = resolveRepoLocation(defaultOptions.StorageLocation);
             Resolver = new StoreResolver();
             DefaultStore = Resolver.ResolveStore(defaultOptions.StoragePlugin ?? "GitStore");

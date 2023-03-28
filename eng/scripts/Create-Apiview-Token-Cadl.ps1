@@ -11,6 +11,7 @@ param (
 
 Set-StrictMode -Version 3
 $sparseCheckoutFile = ".git/info/sparse-checkout"
+$globalPackageJson = "package.json"
 
 
 function Sparse-Checkout($branchName, $packagePath)
@@ -19,8 +20,8 @@ function Sparse-Checkout($branchName, $packagePath)
     {
         Remove-Item $sparseCheckoutFile -Force
     }    
-    git sparse-checkout init --cone
-    git sparse-checkout set $packagePath
+    git sparse-checkout init --no-cone
+    git sparse-checkout set $packagePath $globalPackageJson
     git checkout $branchName
 }
 
@@ -28,15 +29,10 @@ function Generate-Apiview-File($packagePath)
 {
     Write-Host "Generating API review token file from path '$($packagePath)'"
     Push-Location $packagePath
-    try
-    {
-        npm install
-        cadl compile . --emit=@azure-tools/cadl-apiview
-    }
-    finally
-    {
-        Pop-Location
-    }
+    npm install
+    npm list
+    cadl compile . --emit=@azure-tools/cadl-apiview
+    Pop-Location
 }
 
 function Stage-Apiview-File($packagePath, $reviewId, $revisionId)
@@ -46,7 +42,9 @@ function Stage-Apiview-File($packagePath, $reviewId, $revisionId)
     $stagingPath = Join-Path $stagingReviewPath $revisionId
     Write-Host "Copying APIView file from '$($tokenFilePath)' to '$($stagingPath)'"
     New-Item $stagingPath -ItemType Directory -Force
-    Copy-Item -Destination $stagingPath -Path "$tokenFilePath/*"
+    Get-ChildItem -Path $tokenFilePath -Filter *.json -recurse | Copy-Item -Destination $stagingPath
+    Write-Host "Files in Staging path $($stagingPath)"
+    ls $stagingPath
 }
 
 

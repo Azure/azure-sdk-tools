@@ -72,4 +72,12 @@ public class ReadmeParserTest
         Assert.Equal("", result);
         
     }
+
+    [Fact]
+    public void TestOrderedInputFiles()
+    {
+        const string readmeFilePath = "./fixtures/unordered.md";
+        var inputFiles = ReadmeParser.GetSwaggerFilesFromReadme(readmeFilePath, "package-2023-02");
+        Assert.Collection(inputFiles, x => Assert.Equal("a.json", x), x => Assert.Equal("z.json", x));
+    }
 }

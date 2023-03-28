@@ -6,11 +6,7 @@
 /doc/                            @azure/azure-sdk-eng
 # Note: directories below are scheduled to be reorganized.
 # For details, see: https://github.com/Azure/azure-sdk-tools/issues/5056
-/.azure-pipelines/               @azure/azure-sdk-eng
-/config/                         @azure/azure-sdk-eng
-/scripts/                        @azure/azure-sdk-eng
 /src/                            @azure/azure-sdk-eng
-/web/                            @azure/azure-sdk-eng
 
 ################
 # Automation
@@ -33,13 +29,13 @@
 /tools/                          @azure/azure-sdk-eng
 /tools/check-enforcer/           @praveenkuttappan @weshaggard
 /tools/github-issues/            @praveenkuttappan @weshaggard
-/tools/js-sdk-release-tools/     @dw511214992 @qiaozha @MaryGao
-/tools/mock-service-host/        @changlong-liu @tadelesh
+/tools/js-sdk-release-tools/     @qiaozha @MaryGao
+/tools/mock-service-host/        @raych1 @tadelesh
 /tools/perf-automation/          @mikeharder @benbp
 /tools/pipeline-generator/       @weshaggard @benbp
 /tools/pipeline-witness/         @praveenkuttappan @weshaggard
-/tools/sdk-generation-pipeline/  @dw511214992 @chunyu3 @zzvswxy @weshaggard
-/tools/sdk-testgen/              @changlong-liu @tadelesh
+/tools/sdk-generation-pipeline/  @weshaggard @praveenkuttappan @maririos
+/tools/sdk-testgen/              @raych1 @tadelesh
 /tools/stress-cluster/           @benbp @ckairen
 /tools/test-proxy/               @scbedd @mikeharder
 /tools/webhook-router/           @praveenkuttappan @weshaggard

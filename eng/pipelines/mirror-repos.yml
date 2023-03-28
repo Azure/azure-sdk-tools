@@ -23,6 +23,10 @@ jobs:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 
+          Azure/azure-sdk-for-cpp:
+            TargetRepos:
+              Azure/azure-sdk-for-cpp-pr:
+
           Azure/azure-sdk-for-go:
             TargetRepos:
               Azure/azure-sdk-for-go-pr:
@@ -68,12 +72,6 @@ jobs:
               Azure/azure-sdk-for-c-pr:
               azure-sdk/azure-sdk-for-c:
 
-          Azure/azure-cli-extensions:
-            TargetRepos:
-              Azure/azure-cli-extensions-pr:
-              azure-sdk/azure-cli-extensions:
-              azure-sdk/azure-cli-extensions-pr:
-
           Azure/azure-libraries-for-java:
             TargetRepos:
               Azure/azure-libraries-for-java-pr:
@@ -85,10 +83,6 @@ jobs:
           Azure/azure-docs-sdk-java:
             TargetRepos:
               azure-sdk/azure-docs-sdk-java:
-
-          Azure/azure-powershell:
-            TargetRepo:
-              azure-sdk/azure-powershell:
 
           Azure/azure-resource-manager-schemas:
             TargetRepos:

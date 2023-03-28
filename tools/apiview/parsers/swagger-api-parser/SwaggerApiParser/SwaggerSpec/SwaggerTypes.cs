@@ -85,6 +85,7 @@ public class BaseSchema : ITokenSerializable
     [JsonPropertyName("$ref")] public string Ref { get; set; }
 
     private List<SchemaTableItem> tableItems;
+    private Queue<(BaseSchema, SerializeContext)> propertyQueue = new();
 
 
     public bool IsRefObj()
@@ -158,6 +159,7 @@ public class BaseSchema : ITokenSerializable
 
         if (schema.properties?.Count != 0)
         {
+            // BUGBUG: Herein lies the problem. We're recursing down into child objects when we should be queuing them instead.
             TokenSerializeProperties(context, schema, schema.properties, ret, ref flattenedTableItems, serializeRef);
         }
 
@@ -203,6 +205,13 @@ public class BaseSchema : ITokenSerializable
             }
         }
 
+        // Now recurse into nested model definitions so all properties are grouped with their models.
+        while (this.propertyQueue.TryDequeue(out var property))
+        {
+            var (item, childContext) = property;
+            ret.AddRange(item.TokenSerializeInternal(childContext, item, ref flattenedTableItems, serializeRef));
+        }
+
         return ret.ToArray();
     }
 
@@ -222,7 +231,7 @@ public class BaseSchema : ITokenSerializable
         return keywords.ToList();
     }
 
-    private static void TokenSerializeProperties(SerializeContext context, BaseSchema schema, Dictionary<string, BaseSchema> properties, List<CodeFileToken> ret, ref List<SchemaTableItem> flattenedTableItems,
+    private void TokenSerializeProperties(SerializeContext context, BaseSchema schema, Dictionary<string, BaseSchema> properties, List<CodeFileToken> ret, ref List<SchemaTableItem> flattenedTableItems,
         Boolean serializeRef = true)
     {
         if (properties == null)
@@ -248,7 +257,7 @@ public class BaseSchema : ITokenSerializable
                 ret.Add(TokenSerializer.NewLine());
                 if (serializeRef)
                 {
-                    ret.AddRange(schema.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), kv.Value, ref flattenedTableItems, serializeRef));
+                    this.propertyQueue.Enqueue((kv.Value, new SerializeContext(context.intent + 1, context.IteratorPath)));
                 }
             }
             // Circular reference case: the ref won't be expanded. 
@@ -291,7 +300,7 @@ public class BaseSchema : ITokenSerializable
         }
     }
 
-    private static void TokenSerializeArray(SerializeContext context, List<CodeFileToken> ret, BaseSchema arraySchema, ref List<SchemaTableItem> flattenedTableItems, Boolean serializeRef)
+    private void TokenSerializeArray(SerializeContext context, List<CodeFileToken> ret, BaseSchema arraySchema, ref List<SchemaTableItem> flattenedTableItems, Boolean serializeRef)
     {
         ret.Add(new CodeFileToken("array", CodeFileTokenKind.Keyword));
         if (arraySchema.items == null)
@@ -322,7 +331,7 @@ public class BaseSchema : ITokenSerializable
 
             if (serializeRef)
             {
-                ret.AddRange(arraySchema.items.TokenSerializeInternal(new SerializeContext(context.intent + 1, context.IteratorPath), arraySchema.items, ref flattenedTableItems, serializeRef));
+                this.propertyQueue.Enqueue((arraySchema.items, new SerializeContext(context.intent + 1, context.IteratorPath)));
             }
         }
     }

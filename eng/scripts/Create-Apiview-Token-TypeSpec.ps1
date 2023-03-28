@@ -31,7 +31,7 @@ function Generate-Apiview-File($packagePath)
     Push-Location $packagePath
     npm install
     npm list
-    npx tsp compile . --emit=@azure-tools/typespec-apiview --option @azure-tools/typespec-apiview.emitter-output-dir={project-root}/output/apiview.json
+    npx tsp compile . --emit=@azure-tools/typespec-apiview --option "@azure-tools/typespec-apiview.emitter-output-dir={project-root}/output/apiview.json"
     Pop-Location
 }
 

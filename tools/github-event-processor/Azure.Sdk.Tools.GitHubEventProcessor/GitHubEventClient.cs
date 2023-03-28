@@ -270,7 +270,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             }
             if (_labelsToRemove.Count > 0)
             {
-                Console.WriteLine($"There are {_labelsToRemove.Count} labels being added ({_labelsToRemove.Count} calls)");
+                Console.WriteLine($"There are {_labelsToRemove.Count} labels being removed ({_labelsToRemove.Count} calls)");
                 numUpdates += _labelsToRemove.Count;
             }
             if (_gitHubComments.Count > 0)

@@ -47,13 +47,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             {
                 if (commenterHasPermissionOrIsAuthor)
                 {
-                    // There should be one update, an IssueUpdate with the no-recent-activity removed
+                    // There should be one update, the no-recent-activity label removed
                     Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
-                    // Retrieve the IssueUpdate and verify the expected changes
-                    var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                    Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate with {LabelConstants.NoRecentActivity} removed.");
                     // Verify that NeedsAuthorFeedback was removed
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.NoRecentActivity), $"IssueUpdate contains {LabelConstants.NoRecentActivity} label which should have been removed.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove should contain {LabelConstants.NoRecentActivity} and does not.");
                 }
                 else
                 {
@@ -63,7 +60,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             else
             {
                 Assert.AreEqual(0, totalUpdates, $"The number of updates should have been 0 but was instead, {totalUpdates}");
-                Assert.IsNull(mockGitHubEventClient.GetIssueUpdate(), $"{rule} is {ruleState} and should not have produced an IssueUpdate.");
             }
         }
 
@@ -97,24 +93,24 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(prCommentPayload.Repository.Id, prCommentPayload.Issue.Number);
             if (RuleState.On == ruleState)
             {
-                // There should be one update, an IssueUpdate with the no-recent-activity removed
-                Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
-
                 if (commenterHasPermissionOrIsAuthor)
                 {
+                    // There should be two updates, an IssueUpdate with the State set to ItemState.Open and the no-recent-activity label removed
+                    Assert.AreEqual(2, totalUpdates, $"If the commenter has permissions or is the author, the number of updates should have been 2 but was instead, {totalUpdates}");
+
                     var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
                     // Verify the IssueUpdate is not null
                     Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate.");
                     // Verify the IssueUpdate contains the following changes:
                     // State = ItemState.Open
-                    Assert.AreEqual(issueUpdate.State, ItemState.Open, $"IssueUpdate's state should be ItemState.Open and was not.");
+                    Assert.AreEqual(issueUpdate.State, ItemState.Open, $"IssueUpdate's state should be {ItemState.Open} and was not.");
                     // Verify that NoRecentActivity was removed
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.NoRecentActivity), $"IssueUpdate contains {LabelConstants.NoRecentActivity} label which should have been removed.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove should contain {LabelConstants.NoRecentActivity} and does not.");
                 }
                 else
                 {
-                    // Verify the IssueUpdate is null
-                    Assert.IsNull(mockGitHubEventClient.GetIssueUpdate(), $"{rule} is {ruleState} and should have produced an IssueUpdate when the commenter isn't the issue author and doesn't have collaborator permissions.");
+                    // If the commenter isn't the author and doesn't have permissions then there should be 1 comment created
+                    Assert.AreEqual(1, totalUpdates, $"If the commenter has permissions or is the author, there should be have been 1 update, a comment, but was instead {totalUpdates}");
                     // There should be a single comment created
                     int numComments = mockGitHubEventClient.GetComments().Count;
                     Assert.AreEqual(1, numComments, $"There should have been a single comment created but instead {numComments} were created.");
@@ -123,7 +119,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             else
             {
                 Assert.AreEqual(0, totalUpdates, $"{rule} is {ruleState} and should not have produced any updates.");
-                Assert.IsNull(mockGitHubEventClient.GetIssueUpdate(), $"{rule} is {ruleState} and should not have produced an IssueUpdate.");
             }
         }
     }

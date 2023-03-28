@@ -220,6 +220,7 @@ This is a stand-alone service providing a REST API which requires a service key 
 - Issue is open
 - Issue has "customer-reported" label
 - Label removed is "Service Attention" OR "CXP Attention"
+- Issue does not have "Service Attention" OR "CXP Attention"
 
 ### Actions
 
@@ -241,8 +242,6 @@ This is a stand-alone service providing a REST API which requires a service key 
 
 - Remove "needs-author-feedback" label
 - Add "needs-team-attention" label
-- Create the following comment
-  - "Hi @{issueAuthor}. Thank you for opening this issue and giving us the opportunity to assist. To help our team better understand your issue and the details of your scenario please provide a response to the question asked above or the information requested above. This will help us more accurately address your issue."
 
 ## Reset issue activity
 
@@ -348,6 +347,8 @@ OR
 - Remove "needs-triage" label
 - Remove "needs-team-triage" label
 - Remove "needs-team-attention" label
+- Create the following comment
+  - "Hi @{issueAuthor}. Thank you for opening this issue and giving us the opportunity to assist. To help our team better understand your issue and the details of your scenario please provide a response to the question asked above or the information requested above. This will help us more accurately address your issue."
 
 ## Issue Addressed
 

@@ -41,19 +41,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(prReviewEventPayload.Repository.Id, prReviewEventPayload.PullRequest.Number);
             if (RuleState.On == ruleState)
             {
-                // There should be one update, an IssueUpdate with the NoRecentActivity label removed
+                // There should be one update, the NoRecentActivity label removed
                 Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
 
-                // Retrieve the IssueUpdate and verify the expected changes
-                var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate with {LabelConstants.NoRecentActivity} removed.");
                 // Verify that NeedsAuthorFeedback was removed
-                Assert.False(issueUpdate.Labels.Contains(LabelConstants.NoRecentActivity), $"IssueUpdate contains {LabelConstants.NoRecentActivity} label which should have been removed.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove should contain {LabelConstants.NoRecentActivity} and does not.");
             }
             else
             {
                 Assert.AreEqual(0, totalUpdates, $"{rule} is {ruleState} and should not have produced any updates.");
-                Assert.IsNull(mockGitHubEventClient.GetIssueUpdate(), $"{rule} is {ruleState} and should not have produced an IssueUpdate.");
             }
         }
     }

@@ -85,35 +85,31 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     // Along with the label updates, there should also be a comment added.
                     Assert.AreEqual(expectedUpdates, totalUpdates, $"The number of updates for a user without Write or Admin permission or being a member of Azure org should have been {expectedUpdates} but was instead, {totalUpdates}");
                 }
-                // Retrieve the IssueUpdate and verify the expected changes
-                var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate with added labels.");
 
                 // Regardless of permissions, all of the labels based on PR file paths should be added
                 foreach (string label in prFilesAndLabels.Values.ToList())
                 {
-                    Assert.True(issueUpdate.Labels.Contains(label), $"label {label} should have been added because of the file paths in the PR but was not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(label), $"Labels to add should contain {label} which should have been added because of the file paths in the PR but was not.");
                 }
 
                 // If the user is not part of the Azure org AND they don't have write or admin collaborator permissions
                 // then customer-reported and community-contribution labels should have been added along with a comment
                 if (!isMemberOfOrg && !hasWriteOrAdmin)
                 {
-                    Assert.True(issueUpdate.Labels.Contains(LabelConstants.CustomerReported), $"User does not have write or admin permission, IssueUpdate should contain {LabelConstants.CustomerReported}.");
-                    Assert.True(issueUpdate.Labels.Contains(LabelConstants.CommunityContribution), $"User does not have write or admin permission, IssueUpdate should contain {LabelConstants.CommunityContribution}.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CustomerReported), $"User does not have write or admin permission, IssueUpdate should contain {LabelConstants.CustomerReported}.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CommunityContribution), $"User does not have write or admin permission, IssueUpdate should contain {LabelConstants.CommunityContribution}.");
                     Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, "Without admin or write permission there should have been a comment added.");
                 }
                 else
                 {
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.CustomerReported), $"User has write or admin permission or is a member of Azure, IssueUpdate should not contain {LabelConstants.CustomerReported}.");
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.CommunityContribution), $"User has write or admin permission or is a member of Azure, IssueUpdate should not contain {LabelConstants.CommunityContribution}.");
+                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CustomerReported), $"User has write or admin permission or is a member of Azure, IssueUpdate should not contain {LabelConstants.CustomerReported}.");
+                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CommunityContribution), $"User has write or admin permission or is a member of Azure, IssueUpdate should not contain {LabelConstants.CommunityContribution}.");
                     Assert.AreEqual(0, mockGitHubEventClient.GetComments().Count, "User has write or admin permission or is a member of Azure, there should not have been a comment added.");
                 }
             }
             else
             {
                 Assert.AreEqual(0, totalUpdates, $"{rule} is {ruleState} and should not have produced any updates.");
-                Assert.IsNull(mockGitHubEventClient.GetIssueUpdate(), $"{rule} is {ruleState} and should not have produced an IssueUpdate.");
             }
         }
 
@@ -150,19 +146,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
             if (RuleState.On == ruleState)
             {
-                // There should be one update, an IssueUpdate with the NoRecentActivity label removed
+                // There should be one update, the NoRecentActivity label removed
                 Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
 
-                // Retrieve the IssueUpdate and verify the expected changes
-                var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate with {LabelConstants.NoRecentActivity} removed.");
                 // Verify that NeedsAuthorFeedback was removed
-                Assert.False(issueUpdate.Labels.Contains(LabelConstants.NoRecentActivity), $"IssueUpdate contains {LabelConstants.NoRecentActivity} label which should have been removed.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove should contain {LabelConstants.NoRecentActivity} and does not.");
             }
             else
             {
                 Assert.AreEqual(0, totalUpdates, $"{rule} is {ruleState} and should not have produced any updates.");
-                Assert.IsNull(mockGitHubEventClient.GetIssueUpdate(), $"{rule} is {ruleState} and should not have produced an IssueUpdate.");
             }
         }
 

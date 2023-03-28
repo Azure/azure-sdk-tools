@@ -53,10 +53,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         var prLabels = CodeOwnerUtils.GetPRAutoLabelsForFilePaths(prEventPayload.PullRequest.Labels, prFileList);
                         if (prLabels.Count > 0)
                         {
-                            var issueUpdate = gitHubEventClient.GetIssueUpdate(prEventPayload.PullRequest);
                             foreach (var prLabel in prLabels)
                             {
-                                issueUpdate.AddLabel(prLabel);
+                                gitHubEventClient.AddLabel(prLabel);
                             }
                         }
 
@@ -67,9 +66,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
                             if (!hasAdminOrWritePermission)
                             {
-                                var issueUpdate = gitHubEventClient.GetIssueUpdate(prEventPayload.PullRequest);
-                                issueUpdate.AddLabel(LabelConstants.CustomerReported);
-                                issueUpdate.AddLabel(LabelConstants.CommunityContribution);
+                                gitHubEventClient.AddLabel(LabelConstants.CustomerReported);
+                                gitHubEventClient.AddLabel(LabelConstants.CommunityContribution);
                                 string prComment = $"Thank you for your contribution @{prEventPayload.PullRequest.User.Login}! We will review the pull request and get back to you soon.";
                                 gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
                             }
@@ -159,8 +157,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     }
                     if (removeLabel)
                     {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(pullRequest);
-                        issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
+                        gitHubEventClient.RemoveLabel(LabelConstants.NoRecentActivity);
                     }
                 }
             }

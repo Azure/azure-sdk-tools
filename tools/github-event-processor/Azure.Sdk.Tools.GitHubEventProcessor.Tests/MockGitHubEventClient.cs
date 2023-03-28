@@ -63,6 +63,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
             {
                 Console.WriteLine("MockGitHubEventClient::ProcessPendingUpdates, Issue Update is null");
             }
+
+            if (_labelsToAdd.Count > 0)
+            {
+                Console.WriteLine($"MockGitHubEventClient::ProcessPendingUpdates, number of labels to add = {_labelsToAdd.Count} (only 1 call)");
+                // Adding labels is a single call to add them all
+                numUpdates++;
+            }
+
+            Console.WriteLine($"MockGitHubEventClient::ProcessPendingUpdates, number of labels to remove = {_labelsToRemove.Count}");
+            // Removing labels is a call for each one being removed
+            numUpdates += _labelsToRemove.Count;
+
             Console.WriteLine($"MockGitHubEventClient::ProcessPendingUpdates, number of pending comments = {_gitHubComments.Count}");
             numUpdates += _gitHubComments.Count;
 
@@ -432,6 +444,24 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         public IssueUpdate GetIssueUpdate()
         {
             return _issueUpdate;
+        }
+
+        /// <summary>
+        /// Convenience function for testing, get labels to add stored on the GitHubEventClient
+        /// </summary>
+        /// <returns>List of strings</returns>
+        public List<string> GetLabelsToAdd()
+        {
+            return _labelsToAdd;
+        }
+
+        /// <summary>
+        /// Convenience function for testing, get labels to remove stored on the GitHubEventClient
+        /// </summary>
+        /// <returns>List of strings</returns>
+        public List<string> GetLabelsToRemove()
+        {
+            return _labelsToRemove;
         }
 
         /// <summary>

@@ -36,7 +36,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Resulting Action: 
         ///     Remove "needs-author-feedback" label
         ///     Add "needs-team-attention" label
-        ///     Create issue comment
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
@@ -50,11 +49,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NeedsAuthorFeedback) &&
                         issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login)
                     {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(issueCommentPayload.Issue);
-                        issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
-                        issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
-                        string issueComment = $"Hi @{issueCommentPayload.Sender.Login}. Thank you for opening this issue and giving us the opportunity to assist. To help our team better understand your issue and the details of your scenario please provide a response to the question asked above or the information requested above. This will help us more accurately address your issue.";
-                        gitHubEventClient.CreateComment(issueCommentPayload.Repository.Id, issueCommentPayload.Issue.Number, issueComment);
+                        gitHubEventClient.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
+                        gitHubEventClient.AddLabel(LabelConstants.NeedsTeamAttention);
                     }
                 }
             }
@@ -88,6 +84,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///     Remove "no-recent-activity" label
         ///     Remove "needs-author-feedback" label
         ///     Add "needs-team-attention" label
+        ///     Reopen the issue
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueCommentPayload">issue_comment event payload</param>
@@ -106,11 +103,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         // but being that the issue is closed is part of the criteria, this will be set
                         DateTime.UtcNow <= issueCommentPayload.Issue.ClosedAt.Value.UtcDateTime.AddDays(7))
                     {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(issueCommentPayload.Issue);
-                        issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
-                        issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
-                        issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
-                        issueUpdate.State = ItemState.Open;
+                        gitHubEventClient.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
+                        gitHubEventClient.RemoveLabel(LabelConstants.NoRecentActivity);
+                        gitHubEventClient.AddLabel(LabelConstants.NeedsTeamAttention);
+                        gitHubEventClient.SetIssueState(issueCommentPayload.Issue, ItemState.Open);
                     }
                 }
             }
@@ -185,10 +181,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         if (issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login ||
                             hasAdminOrWritePermission)
                         {
-                            var issueUpdate = gitHubEventClient.GetIssueUpdate(issueCommentPayload.Issue);
-                            issueUpdate.State = ItemState.Open;
-                            issueUpdate.RemoveLabel(LabelConstants.IssueAddressed);
-                            issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
+                            gitHubEventClient.SetIssueState(issueCommentPayload.Issue, ItemState.Open);
+                            gitHubEventClient.RemoveLabel(LabelConstants.IssueAddressed);
+                            gitHubEventClient.AddLabel(LabelConstants.NeedsTeamAttention);
                         }
                         // else the user is not the original author AND they don't have admin or write permission
                         else

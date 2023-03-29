@@ -61,6 +61,7 @@ namespace ApiView
                         if (skipNewLine)
                         {
                             skipNewLine = false;
+                            lineNumber++;
                         }
                         else 
                         {
@@ -144,26 +145,26 @@ namespace ApiView
                         if (tableColumnCount.Curr == 0)
                         {
                             stringBuilder.Append($"<ul class=\"list-group list-group-horizontal\">");
-                            stringBuilder.Append($"<li class=\"list-group-item\">");
+                            stringBuilder.Append($"<li class=\"list-group-item border-top\"><strong>");
                             RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
-                            stringBuilder.Append("</li>");
+                            stringBuilder.Append("</strong></li>");
                             tableColumnCount.Curr++;
                         }
                         else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
                         {
                             currentId = $"{currentTableId}-th";
-                            stringBuilder.Append($"<li class=\"list-group-item\">");
+                            stringBuilder.Append($"<li class=\"list-group-item border-top\"><strong>");
                             RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
-                            stringBuilder.Append("</li>");
+                            stringBuilder.Append("</strong></li>");
                             stringBuilder.Append("</ul>");
                             tableColumnCount.Curr = 0;
                             CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, isDocumentationRange, isHiddenApiToken);
                         }
                         else
                         {
-                            stringBuilder.Append($"<li class=\"list-group-item\">");
+                            stringBuilder.Append($"<li class=\"list-group-item border-top\"><strong>");
                             RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
-                            stringBuilder.Append("</li>");
+                            stringBuilder.Append("</strong></li>");
                             tableColumnCount.Curr++;
                         }
                         break;

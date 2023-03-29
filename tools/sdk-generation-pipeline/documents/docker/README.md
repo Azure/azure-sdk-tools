@@ -23,9 +23,9 @@ Command
     ```shell
     docker run -it --privileged -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir -v {local_autorest_config}:/autorest.md sdkgeneration.azurecr.io/sdk-generation:latest --readme={relative_readme} --sdk={sdk_to_generate}
     ```
-2. Generate codes with CADL:
+2. Generate codes with TypeSpec:
     ```shell
-    docker run -it --privileged -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir -v sdkgeneration.azurecr.io/sdk-generation:latest --cadl-project={relative_cadl_project} --sdk={sdk_to_generate}
+    docker run -it --privileged -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir -v sdkgeneration.azurecr.io/sdk-generation:latest --typespec-project={relative_typespec_project} --sdk={sdk_to_generate}
     ```
 Parameter description:
 
@@ -35,7 +35,7 @@ Parameter description:
 | { local_work_folder}        | Required. It's used to point to the work folder, which will store all sdk repositories. If there is no sdk repository in the folder, the docker image will clone it                                                                                                                                                                                                                                                                                                           | /home/test/sdk-repos                                                      |
 | { local_autorest_config }   | Optional. When you generate data-plane sdk, and there is no autorest configuration in sdk repository or you want to change the autorest configuration, you can set new autorest config in a file and mount it to the docker container. About the content of file, please refer to [document](https://github.com/Azure/azure-rest-api-specs/blob/dpg-doc/documentation/onboard-dpg-in-sdkautomation/add-autorest-configuration-in-spec-comment.md)                             | /home/test/autorest.md ([Example file](./autorest-config-file-sample.md)) |
 | { relative_readme }         | Required. It's used to specify the readme.md file and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo}                                                                                                                                                                                                                                                                                                                            | specification/agrifood/resource-manager/readme.md                         |
-| { relative_cadl_project }   | Required. It's used to specify the cadl project folder and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo}                                                                                                                                                                                                                                                                                                                       | specification/agrifood/resource-manager/readme.md                         |
+| { relative_typespec_project }   | Required. It's used to specify the typespec project folder and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo}                                                                                                                                                                                                                                                                                                                       | specification/agrifood/resource-manager/readme.md                         |
 | { sdk_to_generate }         | Required. It's used to specify which language of sdk you want to generate. Supported value for management sdk: js, java, python, .net, and go. Supported value for dataplane sdk: js, java, python, and .net. If you want to generate multi-packages, use comma to separate them. (__Not recommend to generate multi packages in one docker container because the docker will failed when encoutering error in generating one sdk, and the remaining sdk will be generated__) | js,java                                                                   |
 
 Example Command:
@@ -43,9 +43,9 @@ Example Command:
     ```shell
     docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest --readme="specification/agrifood/resource-manager/readme.md" --sdk=js,java
     ```
-2. Generate codes with CADL:
+2. Generate codes with TypeSpec:
     ```shell
-    docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest --cadl-project="specification/agrifood/Agrifood" --sdk=js,java
+    docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest --typespec-project="specification/agrifood/Agrifood" --sdk=js,java
     ```
 
 After running command, docker container generates SDKs. When SDKs are generated, the docker container doesn't exit, and you can [open your local vscode and connect to docker container](./vscode-connect-docker-container.md) for further grow up development.
@@ -54,9 +54,9 @@ If you want to re-run task engine after grow up development or changing swagger,
     ```shell
     rerun-tasks --readme={relative_readme} --sdk={sdk_to_generate}
     ```
-2. Rerun task engine when codes are generated by CADL:
+2. Rerun task engine when codes are generated by TypeSpec:
     ```shell
-    rerun-tasks --cadl-project={relative_cadl_project} --sdk={sdk_to_generate}
+    rerun-tasks --typespec-project={relative_typespec_project} --sdk={sdk_to_generate}
     ```
 rerun-tasks is a script, which invokes task engine to re-run tasks.
 
@@ -70,7 +70,7 @@ Run docker commands to do grow up development:
     ```shell
     docker run -it --privileged -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir -v {local_autorest_config}:/autorest.md sdkgeneration.azurecr.io/sdk-generation:latest --readme={relative_readme} --spec-link={spec-link} --sdk-work-branch={sdk-work-branch-link}
     ```
-2. Codes are generated by CADL:
+2. Codes are generated by TypeSpec:
     ```shell
     docker run -it --privileged -v {local_spec_repo_path}:/spec-repo -v {local_work_folder}:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest --spec-link={spec-link} --sdk-work-branch={sdk-work-branch-link}
     ```
@@ -91,7 +91,7 @@ Scenario 1:
     ```shell
     docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest --readme="specification/agrifood/resource-manager/readme.md"
     ```
-2. Codes are generated by CADL:
+2. Codes are generated by TypeSpec:
     ```shell
     docker run -it --privileged  -v /home/test/azure-rest-api-specs:/spec-repo -v /home/test/work-dir:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest
     ```
@@ -101,7 +101,7 @@ Scenario 2:
     ```shell
     docker run -it --privileged -v /home/test/work-dir:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest --readme="specification/agrifood/resource-manager/readme.md" --spec-link="https://github.com/Azure/azure-rest-api-specs/pull/19850" --sdk-work-branch="https://github.com/Azure/azure-sdk-for-js/tree/agrifood/dev/branch"
     ```
-2. Codes are generated by CADL:
+2. Codes are generated by TypeSpec:
     ```shell
     docker run -it --privileged -v /home/test/work-dir:/work-dir sdkgeneration.azurecr.io/sdk-generation:latest --spec-link="https://github.com/Azure/azure-rest-api-specs/pull/19850" --sdk-work-branch="https://github.com/Azure/azure-sdk-for-js/tree/agrifood/dev/branch"
     ```
@@ -112,9 +112,9 @@ If you want to re-run task engine after grow up development or changing swagger,
     ```shell
     rerun-tasks --readme={relative_readme} --sdk={sdk_to_generate}
     ```
-2. Rerun task engine when codes are generated by CADL:
+2. Rerun task engine when codes are generated by TypeSpec:
     ```shell
-    rerun-tasks --cadl-project={relative_cadl_project} --sdk={sdk_to_generate}
+    rerun-tasks --typespec-project={relative_typespec_project} --sdk={sdk_to_generate}
     ```
 rerun-tasks is a script, which invokes task engine to re-run tasks.
 
@@ -128,9 +128,9 @@ Command:
     ```shell
     docker run --privileged  -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {local_autorest_config}:/autorest.md -v {output_folder_path}:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --readme={relative_readme}
     ```
-2.Generate codes with CADL:
+2.Generate codes with TypeSpec:
     ```shell
-    docker run --privileged  -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {output_folder_path}:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --cadl-project={relative_cadl_project}
+    docker run --privileged  -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {output_folder_path}:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --typespec-project={relative_typespec_project}
     ```
 
 Parameter description:
@@ -141,16 +141,16 @@ Parameter description:
 | { sdk_repo_path }           | Required. It's used to point to the sdk repository.                                                                                                                                                                                                                                                                                                                                                                                               | /home/test/sdk-repos                                                      |
 | { local_autorest_config }   | Optional. When you generate data-plane sdk, and there is no autorest configuration in sdk repository or you want to change the autorest configuration, you can set new autorest config in a file and mount it to the docker container. About the content of file, please refer to [document](https://github.com/Azure/azure-rest-api-specs/blob/dpg-doc/documentation/onboard-dpg-in-sdkautomation/add-autorest-configuration-in-spec-comment.md) | /home/test/autorest.md ([Example file](./autorest-config-file-sample.md)) |
 | { relative_readme }         | Required. It's used to specify the readme.md file and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo}                                                                                                                                                                                                                                                                                                | specification/agrifood/resource-manager/readme.md                         |
-| { relative_cadl_project }   | Required. It's used to specify the cadl project folder and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo}                                                                                                                                                                                                                                                                                           | specification/agrifood/resource-manager/readme.md                         |
+| { relative_typespec_project }   | Required. It's used to specify the typespec project folder and docker image uses it to generate SDKs. it's the relative path from {path_to_local_spec_repo}                                                                                                                                                                                                                                                                                           | specification/agrifood/resource-manager/readme.md                         |
 
 Example Command:
 1. Generate codes with Autorest:
     ```shell
     docker run --privileged -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --readme=specification/agrifood/resource-manager/readme.md
     ```
-2. Generate codes with CADL:
+2. Generate codes with TypeSpec:
     ```shell
-    docker run --privileged -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --cadl-project="specification/agrifood/Agrifood"
+    docker run --privileged -v /home/vsts/work/azure-rest-api-specs:/spec-repo -v /home/vsts/work/azure-sdk-for-js:/sdk-repo -v /home/vsts/work/output:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --typespec-project="specification/agrifood/Agrifood"
     ```
 
 After running the command in pipeline, docker will execute tasks automatically. Also, there will be output files generated, which will be used by pipeline's other job, such as upload codes, parsing logs.

@@ -29,7 +29,7 @@ parameters:
     type: string
     default: "''"
 
-  - name: relativeCadlProjectPath
+  - name: relativeTypeSpecProjectPath
     type: string
     default: "''"
 
@@ -104,7 +104,7 @@ stages:
           - template: ./pipelines/steps/generate-sdk.yml
             parameters:
               readmeFile: ${{ parameters.relativeReadmeFilePath }}
-              cadlProject: ${{ parameters.relativeCadlProjectPath }}
+              typespecProject: ${{ parameters.relativeTypeSpecProjectPath }}
               trigger: ${{ parameters.clientAgent }}
               triggerType: ${{ parameters.triggerType }}
               serviceType: ${{ parameters.serviceType }}

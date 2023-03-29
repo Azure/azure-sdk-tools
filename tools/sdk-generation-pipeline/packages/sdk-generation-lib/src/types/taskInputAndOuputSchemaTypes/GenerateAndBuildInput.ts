@@ -9,7 +9,7 @@ export type GenerateAndBuildInput = {
     headRef: string;
     repoHttpsUrl: string;
     relatedReadmeMdFile?: string;
-    relatedCadlProjectFolder?: string;
+    relatedTypeSpecProjectFolder?: string;
     serviceType: string;
     autorestConfig: string;
     skipGeneration: boolean;

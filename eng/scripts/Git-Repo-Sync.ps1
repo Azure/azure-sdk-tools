@@ -51,6 +51,16 @@ $User="azure-sdk"
 $Email="azuresdk@microsoft.com"
 
 Set-PsDebug -Trace 1
+
+Function FailOnError([string]$ErrorMessage, $CleanUpScripts = 0) {
+    if ($LASTEXITCODE -ne 0) {
+      $failedCode = $LASTEXITCODE
+      Write-Host "#`#vso[task.logissue type=error]$ErrorMessage"
+      if ($CleanUpScripts -ne 0) { Invoke-Command $CleanUpScripts }
+      exit $failedCode
+    }
+  }
+
 if (-not (Test-Path $SourceRepo)) {
   New-Item -Path $SourceRepo -ItemType Directory -Force
   Set-Location $SourceRepo
@@ -71,15 +81,6 @@ git fetch --no-tags Source $SourceBranch
 FailOnError "Failed to fetch $($SourceRepo):$($SourceBranch)"
 
 git checkout ${SourceBranch}
-
-Function FailOnError([string]$ErrorMessage, $CleanUpScripts = 0) {
-  if ($LASTEXITCODE -ne 0) {
-    $failedCode = $LASTEXITCODE
-    Write-Host "#`#vso[task.logissue type=error]$ErrorMessage"
-    if ($CleanUpScripts -ne 0) { Invoke-Command $CleanUpScripts }
-    exit $failedCode
-  }
-}
 
 try {
   git remote add Target "https://$($AuthToken)@github.com/$($TargetRepo).git"

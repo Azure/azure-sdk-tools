@@ -68,10 +68,7 @@ if (!$SourceBranch) {
 }
 
 git fetch --no-tags Source $SourceBranch
-if ($LASTEXITCODE -ne 0) {
-  Write-Host "#`#vso[task.logissue type=error]Failed to fetch $($SourceRepo):$($SourceBranch)"
-  exit 1
-}
+FailOnError "Failed to fetch $($SourceRepo):$($SourceBranch)"
 
 git checkout ${SourceBranch}
 

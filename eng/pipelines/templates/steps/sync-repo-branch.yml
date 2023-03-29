@@ -14,11 +14,11 @@ parameters:
   #       Azure/azure-sdk-for-go-pr:
   - name: Repos
     type: object
+  - name: GH_TOKEN
+    type: string
   - name: ScriptDirectory
     type: string
     default: eng/scripts
-  - name: GH_TOKEN
-    type: string
   - name: WorkingDirectory
     type: string
     default: $(System.DefaultWorkingDirectory)

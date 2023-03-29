@@ -77,9 +77,10 @@ git checkout ${SourceBranch}
 
 Function FailOnError([string]$ErrorMessage, $CleanUpScripts = 0) {
   if ($LASTEXITCODE -ne 0) {
+    $failedCode = $LASTEXITCODE
     Write-Host "#`#vso[task.logissue type=error]$ErrorMessage"
     if ($CleanUpScripts -ne 0) { Invoke-Command $CleanUpScripts }
-    exit 1
+    exit $failedCode
   }
 }
 

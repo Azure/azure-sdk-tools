@@ -12,7 +12,6 @@ jobs:
     displayName: Sync public repos
 
     steps:
-    - checkout: none
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)

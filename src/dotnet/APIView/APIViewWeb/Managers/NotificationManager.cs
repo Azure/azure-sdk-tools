@@ -15,8 +15,8 @@ using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
 using System.Net.Http;
-using System.Net.Http.Json;
-using Newtonsoft.Json;
+using System.Text.Json;
+
 
 namespace APIViewWeb.Managers
 {
@@ -223,7 +223,7 @@ namespace APIViewWeb.Managers
             var httpClient = new HttpClient();
             try
             {
-                var requestBodyJson = JsonConvert.SerializeObject(requestBody);
+                var requestBodyJson = JsonSerializer.Serialize(requestBody);
                 _telemetryClient.TrackTrace($"Sending email address request to logic apps. request: {requestBodyJson}");
                 var response = await httpClient.PostAsync(_emailSenderServiceUrl, new StringContent(requestBodyJson, Encoding.UTF8, "application/json"));
                 if (response.StatusCode !=  HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Accepted)

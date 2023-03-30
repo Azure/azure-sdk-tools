@@ -18,8 +18,8 @@ variables:
   NodeVersion: '18.x'
 
 jobs:
-- job: CreateCadlReviewCodeFile
-  displayName: 'Create CADL API review token file'
+- job: CreateTypeSpecReviewCodeFile
+  displayName: 'Create TypeSpec API review token file'
 
   variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -47,7 +47,7 @@ jobs:
     displayName: 'Generate APIView Token files'
     inputs:
       pwsh: true
-      filePath: $(Build.SourcesDirectory)/eng/scripts/Create-Apiview-Token-Cadl.ps1
+      filePath: $(Build.SourcesDirectory)/eng/scripts/Create-Apiview-Token-TypeSpec.ps1
       arguments: >
         -Reviews "$(Reviews)"
         -OutputDir "$(Build.ArtifactStagingDirectory)"

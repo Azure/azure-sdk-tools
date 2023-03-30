@@ -10,15 +10,10 @@ param (
 )
 
 Set-StrictMode -Version 3
-$sparseCheckoutFile = ".git/info/sparse-checkout"
 
 
 function Sparse-Checkout($branchName, $packagePath)
 {
-    if (Test-Path $sparseCheckoutFile)
-    {
-        Remove-Item $sparseCheckoutFile -Force
-    }    
     git sparse-checkout init
     git sparse-checkout set $packagePath
     git checkout $branchName

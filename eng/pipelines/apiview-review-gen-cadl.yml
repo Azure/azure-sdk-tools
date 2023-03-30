@@ -18,8 +18,8 @@ variables:
   NodeVersion: '18.x'
 
 jobs:
-- job: CreateSwaggerReviewCodeFile
-  displayName: 'Create Swagger API review token file'
+- job: CreateCadlReviewCodeFile
+  displayName: 'Create CADL API review token file'
 
   variables:
   - template: /eng/pipelines/templates/variables/globals.yml

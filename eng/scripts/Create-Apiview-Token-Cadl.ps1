@@ -11,7 +11,6 @@ param (
 
 Set-StrictMode -Version 3
 $sparseCheckoutFile = ".git/info/sparse-checkout"
-$globalPackageJson = "package.json"
 
 
 function Sparse-Checkout($branchName, $packagePath)
@@ -20,8 +19,8 @@ function Sparse-Checkout($branchName, $packagePath)
     {
         Remove-Item $sparseCheckoutFile -Force
     }    
-    git sparse-checkout init --no-cone
-    git sparse-checkout set $packagePath $globalPackageJson
+    git sparse-checkout init
+    git sparse-checkout set $packagePath
     git checkout $branchName
 }
 

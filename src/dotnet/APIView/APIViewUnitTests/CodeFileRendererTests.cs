@@ -51,8 +51,8 @@ namespace APIViewUnitTests
 
         [Theory]
         [InlineData(0, 3, 14)]
-        [InlineData(1, 17, 57)]
-        [InlineData(2, 59, 83)]
+        [InlineData(1, 17, 58)]
+        [InlineData(2, 60, 85)]
         public void RenderedResult_Sections_Has_Correct_Lines_In_Sections(int sectionPosition, int firstLineNumber, int lastLineNumber)
         {
             var sectionKey = renderedCodeFile.RenderResult.Sections[sectionPosition].Data.SectionKey;

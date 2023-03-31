@@ -38,7 +38,7 @@ stages:
             versionSpec: 3.6
 
         - script: |
-            cd $(Build.SourcesDirectory)/eng/python/apiview-syncdb/
+            cd $(Build.SourcesDirectory)/eng/scripts/python/apiview-syncdb/
             python -m pip install -r requirements.txt
             python ./sync_cosmosdb.py --dest-url $(apiview-staging-cosmos-url) --dest-key $(apiview-staging-cosmos-key) --db-name $(apiview-cosmosdb-name) --backup-connection-string $(apiview-cosmos-backup-connection)
           displayName: Sync CosmosDB

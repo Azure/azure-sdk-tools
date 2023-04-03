@@ -119,7 +119,6 @@ $(() => {
     updateListedReviews();
   });
 
-  var prevLanguageValue = languageSelect.val();
   languageSelect.on('sumo:closed', function (e) {
     var val = $(this).val() as string;
     if (val == "C++" || val == "C#") {
@@ -128,13 +127,14 @@ $(() => {
     $("#uploadModel").find(".card-body > div").addClass("d-none");
     var helpName = "#" + val.toLowerCase() + "-help";
     $(helpName).removeClass("d-none");
-    if (val == 'TypeSpec' || prevLanguageValue == 'TypeSpec') {
-      const fileSelectors = $(".package-selector");
-      for (var i = 0; i < fileSelectors.length; i++) {
-        $(fileSelectors[i]).toggleClass("d-none");
-      }
+    if (val == 'TypeSpec') {
+      $("#create-review-via-upload").addClass("d-none");
+      $("#create-review-via-path").removeClass("d-none");
     }
-    prevLanguageValue = val;
+    else {
+      $("#create-review-via-upload").removeClass("d-none");
+      $("#create-review-via-path").addClass("d-none");
+    }
   });
 
   // Open / Close right Offcanvas Menu

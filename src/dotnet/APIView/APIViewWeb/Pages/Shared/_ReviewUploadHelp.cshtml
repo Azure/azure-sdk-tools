@@ -124,15 +124,27 @@
         </div>
         <div class="d-none" id="typespec-help">
             <p class="card-text">
+                TypeSpec review can be generated manually using one of the following options.
                 <ol>
                     <li>
-                        Install <code>@@azure-tools/typespec-apiview</code>
+                        <strong>Option 1:</strong> Create API review using a link to TypeSpec project. Provide the URL to project and click Upload.
                     </li>
                     <li>
-                        Compile and emit the apiview file: <code>typespec compile .\main.tsp --emit "@@azure-tools/typespec-apiview"</code>
-                    </li>
-                    <li>
-                        Upload the JSON file that is emitted.
+                        <strong>Option 2:</strong> Create API review file locally using following steps.
+                        <ul>
+                            <li>
+                                Install  <code>@@azure-tools/typespec-apiview</code>
+                            </li>
+                            <li>
+                                Compile and emit the apiview file: <code>typespec compile .\main.tsp --emit "@@azure-tools/typespec-apiview"</code>
+                            </li>
+                            <li>
+                                Select Json as the language option in Create review page.
+                            </li>
+                            <li>
+                                Upload the JSON file that is emitted.
+                            </li>
+                        </ul>
                     </li>
                 </ol>
             </p>

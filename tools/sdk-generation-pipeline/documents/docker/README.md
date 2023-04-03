@@ -128,7 +128,7 @@ Command:
     ```shell
     docker run --privileged  -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {local_autorest_config}:/autorest.md -v {output_folder_path}:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --readme={relative_readme}
     ```
-2.Generate codes with TypeSpec:
+2. Generate codes with TypeSpec:
     ```shell
     docker run --privileged  -v {spec_repo_path}:/spec-repo -v {sdk_repo_path}:/sdk-repo -v {output_folder_path}:/tmp/output sdkgeneration.azurecr.io/sdk-generation:latest --typespec-project={relative_typespec_project}
     ```

@@ -42,6 +42,7 @@ variables:
   NugetSecurityAnalysisWarningLevel: 'none'
   AzuriteConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1"
   CosmosEmulatorConnectionString: "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+  TestingDataContainer: "https://apiviewuitest.blob.core.windows.net/testingdata"
   ${{ if ne(variables['System.TeamProject'], 'internal') }}:
     CollectCoverage: false
   ${{ if eq(variables['System.TeamProject'], 'internal') }}:
@@ -208,6 +209,18 @@ stages:
             inputs:
               codeCoverageTool: Cobertura
               summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml
+
+          - task: Powershell@2
+            inputs:
+              filePath: $(Build.SourcesDirectory)/eng/common/scripts/copy-from-blobstorage.ps1
+              arguments: >
+                -SourceBlobPath $(TestingDataContainer)
+                -ApplicationId $(apiviewstorageaccess-application-id)
+                -DestinationDirectory $(Build.BinariesDirectory)
+              pwsh: true
+            displayName: 'Copy from Test Files From Blob'
+            env:
+              AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
 
           - script: >-
               dotnet test src/dotnet/APIView/APIViewIntegrationTests/APIViewIntegrationTests.csproj

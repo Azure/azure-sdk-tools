@@ -44,7 +44,6 @@ namespace ApiView
             (int Count, int Curr) tableRowCount = (0, 0);
             TreeNode<CodeLine> section = null;
             int leafSectionPlaceHolderNumber = 0;
-            bool skipNewLine = false;
 
             foreach (var token in node)
             {
@@ -58,15 +57,7 @@ namespace ApiView
                 switch (token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        if (skipNewLine)
-                        {
-                            skipNewLine = false;
-                            lineNumber++;
-                        }
-                        else 
-                        {
-                            CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, isDocumentationRange, isHiddenApiToken);
-                        }
+                        CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, isDocumentationRange, isHiddenApiToken);
                         break;
 
                     case CodeFileTokenKind.DocumentRangeStart:
@@ -200,7 +191,6 @@ namespace ApiView
                         break;
 
                     case CodeFileTokenKind.TableEnd:
-                        skipNewLine = true;
                         break;
 
                     case CodeFileTokenKind.LeafSectionPlaceholder:

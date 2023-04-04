@@ -10,5 +10,8 @@
     },
     { "name": "gtest" },
     { "name": "tclap" }
-  ]
-}
+  ],
+  "vcpkg-configuration": {
+    "overlay-ports": [ "./ports/llvm" ]
+  }
+  }

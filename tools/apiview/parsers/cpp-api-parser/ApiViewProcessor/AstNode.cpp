@@ -2759,6 +2759,8 @@ std::unique_ptr<AstNode> AstNode::Create(
       //    azureClassesDatabase));
     case Decl::Kind::Using:
       return nullptr;
+    case Decl::Kind::UsingDirective:
+      return nullptr;
       //   return std::make_unique<AstUsing>(cast<UsingDecl>(decl));
     default: {
       llvm::errs() << raw_ostream::Colors::RED << "Unknown DECL node "

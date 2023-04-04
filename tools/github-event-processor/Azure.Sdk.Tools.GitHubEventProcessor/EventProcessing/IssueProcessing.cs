@@ -50,11 +50,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Resulting Actions:
         ///     Evaluate the user that created the issue:
         ///         IF creator is NOT an Azure SDK team owner
-        ///         AND is NOT a member of the Azure organization
-        ///         AND does NOT have write permission
-        ///         AND does NOT have admin permission:
-        ///             Add "customer-reported" label
-        ///             Add "question" label
+        ///           IF the user is NOT a member of the Azure Org
+        ///             IF the user does not have Admin or Write Collaborator permission
+        ///               Add "customer-reported" label
+        ///               Add "question" label
         ///     Query AI label service for label suggestions:
         ///     IF labels were predicted:
         ///         Assign returned labels to the issue
@@ -88,18 +87,29 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         // are, add them and then add needs-team-triage. The issue created to track these future updates
                         // is https://github.com/Azure/azure-sdk-tools/issues/5743
                         List<string> labelSuggestions = await gitHubEventClient.QueryAILabelService(issueEventPayload);
-                        IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
                         if (labelSuggestions.Count > 0 )
                         {
                             foreach (string label in labelSuggestions)
                             {
-                                issueUpdate.AddLabel(label);
+                                gitHubEventClient.AddLabel(label);
                             }
-                            issueUpdate.AddLabel(LabelConstants.NeedsTeamTriage);
+                            gitHubEventClient.AddLabel(LabelConstants.NeedsTeamTriage);
                         }
                         else
                         {
-                            issueUpdate.AddLabel(LabelConstants.NeedsTriage);
+                            gitHubEventClient.AddLabel(LabelConstants.NeedsTriage);
+                        }
+
+                        // If the user is not a member of the Azure Org AND the user does not have write or admin collaborator permission
+                        bool isMemberOfOrg = await gitHubEventClient.IsUserMemberOfOrg(OrgConstants.Azure, issueEventPayload.Issue.User.Login);
+                        if (!isMemberOfOrg)
+                        {
+                            bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(issueEventPayload.Repository.Id, issueEventPayload.Issue.User.Login);
+                            if (!hasAdminOrWritePermission)
+                            {
+                                gitHubEventClient.AddLabel(LabelConstants.CustomerReported);
+                                gitHubEventClient.AddLabel(LabelConstants.Question);
+                            }
                         }
                     }
                 }
@@ -128,8 +138,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTriage) &&
                         !issueEventPayload.Label.Name.Equals(LabelConstants.NeedsTriage))
                     {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
-                        issueUpdate.RemoveLabel(LabelConstants.NeedsTriage);
+                        gitHubEventClient.RemoveLabel(LabelConstants.NeedsTriage);
                     }
                 }
             }
@@ -216,6 +225,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Conditions: Issue is open
         ///             Has "customer-reported" label
         ///             Label removed is "Service Attention" OR "CXP Attention"
+        ///             Issue does not have "Service Attention" OR "CXP Attention"
+        ///             (in other words if both labels are on the issue and one is removed, this
+        ///             shouldn't process)
         /// Resulting Action: Add "needs-team-triage" label
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
@@ -230,10 +242,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.CustomerReported) &&
                         (issueEventPayload.Label.Name.Equals(LabelConstants.CXPAttention) ||
                          issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention)) &&
-                        !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage))
+                        !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage) &&
+                        !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.CXPAttention) &&
+                        !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.ServiceAttention))
                     {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
-                        issueUpdate.AddLabel(LabelConstants.NeedsTeamTriage);
+                        gitHubEventClient.AddLabel(LabelConstants.NeedsTeamTriage);
                     }
                 }
             }
@@ -276,8 +289,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     // If a user is a known GitHub bot, the user's AccountType will be Bot
                     sender.Type != AccountType.Bot)
                 {
-                    var issueUpdate = gitHubEventClient.GetIssueUpdate(issue);
-                    issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
+                    gitHubEventClient.RemoveLabel(LabelConstants.NoRecentActivity);
                 }
             }
         }
@@ -312,8 +324,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.IssueAddressed) &&
                         null == issueEventPayload.Issue.Milestone)
                     {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
-                        issueUpdate.AddLabel(LabelConstants.NeedsTeamAttention);
+                        gitHubEventClient.AddLabel(LabelConstants.NeedsTeamAttention);
                     }
                 }
             }
@@ -328,6 +339,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///             Remove "needs-triage" label
         ///             Remove "needs-team-triage" label
         ///             Remove "needs-team-attention" label
+        ///             Create the following comment
+        ///             "Hi @{issueAuthor}. Thank you for opening this issue and giving us the opportunity to assist. To help our 
+        ///             team better understand your issue and the details of your scenario please provide a response to the question 
+        ///             asked above or the information requested above. This will help us more accurately address your issue."
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
@@ -338,17 +353,24 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 if (issueEventPayload.Action == ActionConstants.Labeled)
                 {
                     if (issueEventPayload.Issue.State == ItemState.Open &&
-                        issueEventPayload.Label.Name == LabelConstants.NeedsAuthorFeedback &&
-                        // Any of these labels will be removed if they exist on the Issue. If none exist then
-                        // there's nothing to do.
-                        (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTriage) ||
-                         LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage) ||
-                         LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamAttention)))
+                        issueEventPayload.Label.Name == LabelConstants.NeedsAuthorFeedback)
                     {
-                        var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
-                        issueUpdate.RemoveLabel(LabelConstants.NeedsTriage);
-                        issueUpdate.RemoveLabel(LabelConstants.NeedsTeamTriage);
-                        issueUpdate.RemoveLabel(LabelConstants.NeedsTeamAttention);
+                        // Any of these labels will be removed if they exist on the Issue. If none exist then
+                        // then the comment will be the only update
+                        if (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTriage))
+                        {
+                            gitHubEventClient.RemoveLabel(LabelConstants.NeedsTriage);
+                        }
+                        if (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage))
+                        {
+                            gitHubEventClient.RemoveLabel(LabelConstants.NeedsTeamTriage);
+                        }
+                        if (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamAttention))
+                        {
+                            gitHubEventClient.RemoveLabel(LabelConstants.NeedsTeamAttention);
+                        }
+                        string issueComment = $"Hi @{issueEventPayload.Issue.User.Login}. Thank you for opening this issue and giving us the opportunity to assist. To help our team better understand your issue and the details of your scenario please provide a response to the question asked above or the information requested above. This will help us more accurately address your issue.";
+                        gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
                     }
                 }
             }
@@ -360,11 +382,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Conditions: Issue is open
         ///             Label added is "issue-addressed"
         /// Resulting Action: 
-        ///     Remove "needs-triage" label
-        ///     Remove "needs-team-triage" label
-        ///     Remove "needs-team-attention" label
-        ///     Remove "needs-author-feedback" label
-        ///     Remove "no-recent-activity" label
+        ///     Remove "needs-triage" label if it exists on the issue
+        ///     Remove "needs-team-triage" label if it exists on the issue
+        ///     Remove "needs-team-attention" label if it exists on the issue
+        ///     Remove "needs-author-feedback" label if it exists on the issue
+        ///     Remove "no-recent-activity" label if it exists on the issue
         ///     Add issue comment
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
@@ -378,20 +400,25 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     if (issueEventPayload.Issue.State == ItemState.Open &&
                         issueEventPayload.Label.Name == LabelConstants.IssueAddressed)
                     {
-                        // Don't bother creating the issue update unless at least one of the labels
-                        // to be removed exists on the issue
-                        if (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTriage) ||
-                            LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage) ||
-                            LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamAttention) ||
-                            LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsAuthorFeedback) ||
-                            LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NoRecentActivity))
+                        if (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTriage))
                         {
-                            var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
-                            issueUpdate.RemoveLabel(LabelConstants.NeedsTriage);
-                            issueUpdate.RemoveLabel(LabelConstants.NeedsTeamTriage);
-                            issueUpdate.RemoveLabel(LabelConstants.NeedsTeamAttention);
-                            issueUpdate.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
-                            issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
+                            gitHubEventClient.RemoveLabel(LabelConstants.NeedsTriage);
+                        }
+                        if (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage))
+                        {
+                            gitHubEventClient.RemoveLabel(LabelConstants.NeedsTeamTriage);
+                        }
+                        if (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamAttention))
+                        {
+                            gitHubEventClient.RemoveLabel(LabelConstants.NeedsTeamAttention);
+                        }
+                        if (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsAuthorFeedback))
+                        {
+                            gitHubEventClient.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
+                        }
+                        if (LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NoRecentActivity))
+                        {
+                            gitHubEventClient.RemoveLabel(LabelConstants.NoRecentActivity);
                         }
                         // The comment is always created
                         string issueComment = $"Hi @{issueEventPayload.Issue.User.Login}.  Thank you for opening this issue and giving us the opportunity to assist.  We believe that this has been addressed.  If you feel that further discussion is needed, please add a comment with the text \"/unresolve\" to remove the \"issue-addressed\" label and continue the conversation.";
@@ -434,8 +461,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             issueEventPayload.Label.Name == LabelConstants.NeedsTriage ||
                             issueEventPayload.Label.Name == LabelConstants.NeedsTeamTriage)
                         {
-                            var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
-                            issueUpdate.RemoveLabel(LabelConstants.IssueAddressed);
+                            gitHubEventClient.RemoveLabel(LabelConstants.IssueAddressed);
                         }
                     }
                 }

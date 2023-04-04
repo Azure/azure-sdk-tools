@@ -117,6 +117,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         private RulesConfiguration _rulesConfiguration = null;
         // Protected instead of private so the mock class can access them
         protected IssueUpdate _issueUpdate = null;
+        protected List<string> _labelsToAdd = new List<string>();
+        protected List<string> _labelsToRemove = new List<string>();
         protected List<GitHubComment> _gitHubComments = new List<GitHubComment>();
         protected List<GitHubReviewDismissal> _gitHubReviewDismissals = new List<GitHubReviewDismissal>();
         // Locking issues is only done through scheduled event processing
@@ -157,19 +159,43 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 // Process the issue update
                 if (_issueUpdate != null)
                 {
+                    numUpdates++;
                     await _gitHubClient.Issue.Update(repositoryId, 
                                                      issueOrPullRequestNumber, 
                                                      _issueUpdate);
+                }
+
+                // Process the labels to add. They're all added as a single call and are additive, not replacement 
+                if (_labelsToAdd.Count > 0)
+                {
                     numUpdates++;
+                    await _gitHubClient.Issue.Labels.AddToIssue(repositoryId, issueOrPullRequestNumber, _labelsToAdd.ToArray());
+                }
+
+                // Process the labels to remove
+                foreach (string labelToRemove in _labelsToRemove)
+                {
+                    try
+                    {
+                        numUpdates++;
+                        await _gitHubClient.Issue.Labels.RemoveFromIssue(repositoryId, issueOrPullRequestNumber, labelToRemove);
+                    }
+                    // Octokit's NotFoundException is what happens when someone tries to remove a label that's not
+                    // on an issue. This could happen if it was removed while the action event was processing.
+                    // In this case it can just be ignored
+                    // https://docs.github.com/en/rest/issues/labels?apiVersion=2022-11-28#remove-a-label-from-an-issue
+                    catch (NotFoundException)
+                    {
+                    }
                 }
 
                 // Process any comments
                 foreach (var comment in _gitHubComments)
                 {
+                    numUpdates++;
                     await _gitHubClient.Issue.Comment.Create(comment.RepositoryId,
                                                              comment.IssueOrPullRequestNumber,
                                                              comment.Comment);
-                    numUpdates++;
                 }
 
                 // Process any PullRequest review dismissals
@@ -177,29 +203,29 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 {
                     var prReview = new PullRequestReviewDismiss();
                     prReview.Message = dismissal.DismissalMessage;
+                    numUpdates++;
                     await _gitHubClient.PullRequest.Review.Dismiss(dismissal.RepositoryId,
                                                                    dismissal.PullRequestNumber,
                                                                    dismissal.ReviewId,
                                                                    prReview);
-                    numUpdates++;
                 }
 
                 // Process any issue locks
                 foreach (var issueToLock in _gitHubIssuesToLock)
                 {
+                    numUpdates++;
                     await _gitHubClient.Issue.LockUnlock.Lock(issueToLock.RepositoryId,
                                                               issueToLock.IssueNumber,
                                                               issueToLock.LockReason);
-                    numUpdates++;
                 }
 
                 // Process any Scheduled task IssueUpdates
                 foreach (var issueToUpdate in _gitHubIssuesToUpdate)
                 {
+                    numUpdates++;
                     await _gitHubClient.Issue.Update(issueToUpdate.RepositoryId, 
                                                      issueToUpdate.IssueOrPRNumber, 
                                                      issueToUpdate.IssueUpdate);
-                    numUpdates++;
                 }
                 Console.WriteLine("Finished processing pending updates.");
             }
@@ -238,6 +264,16 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             {
                 Console.WriteLine("Common IssueUpdate from rules processing will be updated.");
                 numUpdates++;
+            }
+            if (_labelsToAdd.Count > 0)
+            {
+                Console.WriteLine($"There are {_labelsToAdd.Count} labels being added (1 call)");
+                numUpdates++;
+            }
+            if (_labelsToRemove.Count > 0)
+            {
+                Console.WriteLine($"There are {_labelsToRemove.Count} labels being removed ({_labelsToRemove.Count} calls)");
+                numUpdates += _labelsToRemove.Count;
             }
             if (_gitHubComments.Count > 0)
             {
@@ -335,6 +371,58 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return await _gitHubClient.RateLimit.GetRateLimits();
         }
 
+        // JRS - Remove
+        public void SetIssueUpdate(IssueUpdate issueUpdate)
+        {
+            _issueUpdate = issueUpdate;
+        }
+
+        /// <summary>
+        /// Store the label to add on the list of labels to add to an issue. This is only used by Actions
+        /// and not Scheduled events
+        /// </summary>
+        /// <param name="labelToAdd">string, the label to add to the issue</param>
+        public void AddLabel(string labelToAdd)
+        {
+            if (_labelsToRemove.Contains(labelToAdd))
+            {
+                Console.WriteLine($"Label to add {labelToAdd} is currently on the remove list and will not be added.");
+            }
+            else
+            {
+                _labelsToAdd.Add(labelToAdd);
+            }
+        }
+
+        /// <summary>
+        /// Store the label to remove on the list of labels to be removed from an issue. This is only used by Actions
+        /// and not Scheduled events
+        /// </summary>
+        /// <param name="labelToRemove">string, the label to remove from the issue</param>
+        public void RemoveLabel(string labelToRemove)
+        {
+            if (_labelsToAdd.Contains(labelToRemove))
+            {
+                Console.WriteLine($"Label to remove {labelToRemove} is currently on the add list and will not be added");
+            }
+            else
+            {
+                _labelsToRemove.Add(labelToRemove);
+            }
+        }
+
+        public void SetIssueState(Issue issue, ItemState itemState)
+        {
+            var issueUpdate = GetIssueUpdate(issue);
+            issueUpdate.State = itemState;
+        }
+
+        public void SetPullRequestState(PullRequest pullRequest, ItemState itemState)
+        {
+            var issueUpdate = GetIssueUpdate(pullRequest);
+            issueUpdate.State = itemState;
+        }
+
         /// <summary>
         /// Overloaded convenience function that'll return the IssueUpdate. Actions all make changes to
         /// the same, shared, IssueUpdate because they're processing on the same event. For scheduled 
@@ -349,7 +437,19 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             {
                 if (null == _issueUpdate)
                 {
-                    _issueUpdate = issue.ToUpdate();
+                    // For Actions, the IssueUpdate should only be used to set the state.
+                    // Everything else should be null so it doesn't touch those other fields
+                    // except for the Milestone which, if null, would clear it out if one was
+                    // set. That's the only field to pull from the payload.
+                    _issueUpdate = new IssueUpdate
+                    {
+                        Milestone = issue.Milestone == null
+                                    ? new int?()
+                                    : issue.Milestone.Number,
+                        State = null,
+                        Body = null,
+                        Title = null
+                    };
                 }
                 return _issueUpdate;
             }
@@ -373,7 +473,20 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             {
                 if (null == _issueUpdate)
                 {
-                    _issueUpdate = CreateIssueUpdateForPR(pullRequest);
+                    // For Actions, the IssueUpdate should only be used to set the state.
+                    // Everything else should be null so it doesn't touch those other fields
+                    // except for the Milestone which, if null, would clear it out if one was
+                    // set. That's the only field to pull from the payload.
+                    _issueUpdate = new IssueUpdate
+                    {
+                        Milestone = pullRequest.Milestone == null
+                                    ? new int?()
+                                    : pullRequest.Milestone.Number,
+                        State = null,
+                        Body = null,
+                        Title = null
+                    };
+
                 }
                 return _issueUpdate;
             }

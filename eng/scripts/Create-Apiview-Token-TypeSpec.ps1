@@ -11,6 +11,7 @@ param (
 
 Set-StrictMode -Version 3
 
+
 function Sparse-Checkout($branchName, $packagePath)
 {
     git sparse-checkout init
@@ -24,13 +25,13 @@ function Generate-Apiview-File($packagePath)
     Push-Location $packagePath
     npm install
     npm list
-    cadl compile . --emit=@azure-tools/cadl-apiview
+    npx tsp compile . --emit=@azure-tools/typespec-apiview --option "@azure-tools/typespec-apiview.emitter-output-dir={project-root}/output/apiview.json"
     Pop-Location
 }
 
 function Stage-Apiview-File($packagePath, $reviewId, $revisionId)
 {
-    $tokenFilePath = Join-Path $packagePath "cadl-output"
+    $tokenFilePath = Join-Path $packagePath "output"
     $stagingReviewPath = Join-Path $OutputDir $reviewId
     $stagingPath = Join-Path $stagingReviewPath $revisionId
     Write-Host "Copying APIView file from '$($tokenFilePath)' to '$($stagingPath)'"

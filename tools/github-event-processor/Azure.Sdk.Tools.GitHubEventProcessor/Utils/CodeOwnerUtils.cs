@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
     /// </summary>
     public class CodeOwnerUtils
     {
-        private static readonly string CodeownersFileName = "event-processor.config";
+        private static readonly string CodeownersFileName = "CODEOWNERS";
         private static readonly string CodeownersSubDirectory = ".github";
 
         static List<CodeownersEntry> _codeOwnerEntries = null;

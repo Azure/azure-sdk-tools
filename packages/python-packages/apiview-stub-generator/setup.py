@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os, re
 
-PACKAGE_NAME = "api-stub-generator"
+PACKAGE_NAME = "apiview-stub-generator"
 
 DESCRIPTION = (
     "A stub generator for published APIs, variables and properties in a package"

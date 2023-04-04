@@ -5,7 +5,7 @@ with open('README.md', encoding='utf-8') as f:
     readme = f.read()
 
 setup(
-    name="pylint-guidelines-checker",
+    name="azure-pylint-guidelines-checker",
     version="0.0.8",
     url='http://github.com/Azure/azure-sdk-for-python',
     license='MIT License',

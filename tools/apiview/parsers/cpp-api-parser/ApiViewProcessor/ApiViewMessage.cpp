@@ -55,8 +55,8 @@ void AzureClassesDatabase::CreateApiViewMessage(
     }
     case ApiViewMessages::InternalTypesInNonCorePackage: {
       newMessage.DiagnosticId = "CPA0007";
-      newMessage.DiagnosticText
-          = "'internal' types declared in a non-common package. Consider putting the type in the '_detail' namespace.";
+      newMessage.DiagnosticText = "'internal' types declared in a non-common package. Consider "
+                                  "putting the type in the '_detail' namespace.";
       newMessage.Level = ApiViewMessage::MessageLevel::Warning;
       break;
     }
@@ -65,6 +65,14 @@ void AzureClassesDatabase::CreateApiViewMessage(
       newMessage.DiagnosticText
           = "Implicit Constructor is found. Constructors should be marked 'explicit'";
       newMessage.Level = ApiViewMessage::MessageLevel::Info;
+      break;
+    }
+    case ApiViewMessages::UsingDirectiveFound: {
+      newMessage.DiagnosticId = "CPA0009";
+      newMessage.DiagnosticText = "Using Namespace directive found in header file. ";
+      newMessage.HelpLinkUri
+          = "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rs-using-directive";
+      newMessage.Level = ApiViewMessage::MessageLevel::Error;
       break;
     }
   }

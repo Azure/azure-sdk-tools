@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - packages/python-packages/api-stub-generator
+      - packages/python-packages/apiview-stub-generator
 
 pr:
   branches:
@@ -19,13 +19,13 @@ pr:
       - hotfix/*
   paths:
     include:
-      - packages/python-packages/api-stub-generator
+      - packages/python-packages/apiview-stub-generator
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
   parameters:
     PythonVersion: '3.10'
-    PackagePath: 'packages/python-packages/api-stub-generator'
+    PackagePath: 'packages/python-packages/apiview-stub-generator'
     FeedName: 'public/azure-sdk-for-python'
     ArtifactName: 'apiviewparserpython'
     PackageName: 'Python API View Parser'
@@ -35,7 +35,7 @@ extends:
       displayName: 'Verify Python APIView version consistency'
 
     - script: |
-        cd $(Build.SourcesDirectory)/packages/python-packages/api-stub-generator
+        cd $(Build.SourcesDirectory)/packages/python-packages/apiview-stub-generator
         python -m pip install tox
         tox -e pytest,stubgen
       displayName: Run APIView tests

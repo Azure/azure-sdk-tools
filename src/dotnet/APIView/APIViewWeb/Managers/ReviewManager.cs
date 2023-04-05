@@ -391,7 +391,10 @@ namespace APIViewWeb.Managers
 
         public async Task UpdateSwaggerReviewsMetaData()
         {
-            var reviews = await _reviewsRepository.GetReviewsAsync(isClosed: false, language: "Swagger", fetchAllPages: true);
+            IList<ReviewModel> reviews = (await _reviewsRepository.GetReviewsAsync(isClosed: false, language: "Swagger", fetchAllPages: true)).ToList();
+            reviews.AddRange(await _reviewsRepository.GetReviewsAsync(isClosed: true, language: "Swagger", fetchAllPages: true));
+
+            int reviewsProcessed = 0;
 
             foreach (var review in reviews)
             {
@@ -455,10 +458,15 @@ namespace APIViewWeb.Managers
                                 }
                             }
                             if (rowCount > 0)
+                            {
                                 break;
+                            }
                         }
                     }
                 }
+                reviewsProcessed++;
+                _telemetryClient.TrackTrace("Swagger Reviews Updated: " + reviewsProcessed);
+
             }                                                                                                                                                                                                                       
         }
 

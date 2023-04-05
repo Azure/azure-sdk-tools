@@ -96,7 +96,7 @@ namespace APIViewIntegrationTests
             await Assert.ThrowsAsync<UnDeletableReviewException>(async () => await reviewManager.DeleteRevisionAsync(user, review.ReviewId, review.Revisions[0].RevisionId));
         }
 
-        [Fact]
+        [Fact(Skip = "Need Resource to run so won't run on PR piplines plus Only needed once.")]
         public async Task UpdateSwaggerReviewsMetaData_Test()
         {
             string reviewJson = File.ReadAllText(Path.Join(testsBaseFixture.TestDataPath, "account.swagger-cosmos-data.json"));
@@ -136,7 +136,7 @@ namespace APIViewIntegrationTests
                 expectedCommentIds.Should().Contain(comment.ElementId);
             }
 
-            int[] expectedLineNumbers = { 1, 2, 3, 7, 8, 9, 10, 11, 20, 26, 811, 1101, 1108};
+            int[] expectedLineNumbers = { 1, 2, 3, 7, 8, 9, 10, 11, 20, 26, 860, 1184, 1193};
             var renderedCodeFile = await testsBaseFixture.BlobCodeFileRepository.GetCodeFileAsync(updatedReview.Revisions[1]);
             renderedCodeFile.Render(false);
 

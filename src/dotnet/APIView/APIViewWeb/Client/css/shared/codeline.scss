@@ -274,6 +274,10 @@ code {
     background-color: rgba(248,81,73,0.3);
 }
 
+.code-added .list-group-item, .code-removed .list-group-item {
+    background-color: transparent;
+}
+
 .code-delta {
     background-color: rgba(248,201,67,0.3);
 }

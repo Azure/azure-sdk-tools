@@ -2782,8 +2782,8 @@ std::unique_ptr<AstNode> AstNode::Create(
       return std::make_unique<AstFriend>(cast<FriendDecl>(decl), azureClassesDatabase, parentNode);
 
     case Decl::Kind::UsingDirective:
-      // A "UsingDirective" is a "using namespace" directive. We consider this to be an error
-      // condition, so we add an AstNode so the error will appear in the ApiView.
+      // A "UsingDirective" is a "using namespace" directive. We consider this an error
+      // condition, add an AstNode so the error appears in the ApiView.
       return std::make_unique<AstUsingDirective>(
           cast<UsingDirectiveDecl>(decl), azureClassesDatabase, parentNode);
 

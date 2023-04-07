@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Helpers
 {
@@ -11,7 +12,7 @@ namespace APIViewWeb.Helpers
         {
             HashSet<string> result = new HashSet<string>();
 
-            foreach (var language in languages) 
+            foreach (var language in languages)
             {
                 if (language.Equals("TypeSpec") || language.Equals("Cadl"))
                 {

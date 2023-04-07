@@ -42,10 +42,10 @@ public class ExpandableStringEnumDiagnosticRule implements DiagnosticRule {
             AtomicBoolean hasValuesMethod = new AtomicBoolean(false);
             getPublicOrProtectedMethods(cu).forEach(method -> {
                 final String methodName = method.getNameAsString();
-                if (methodName.equals("fromString") && method.isPublic()) {
+                if (methodName.equals("fromString") && method.isPublic() && method.isStatic()) {
                     hasFromStringMethod.set(true);
                 }
-                if (methodName.equals(("values")) && method.isPublic()) {
+                if (methodName.equals(("values")) && method.isPublic() && method.isStatic()) {
                     hasValuesMethod.set(true);
                 }
             });

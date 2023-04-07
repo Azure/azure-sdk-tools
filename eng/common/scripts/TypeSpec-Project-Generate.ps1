@@ -46,13 +46,14 @@ function NpmInstallAtRoot() {
             $replacementPackageJson = &$GetEmitterPackageJsonPathFn
         }
 
+        $replacementVersion = GetEmitterDependencyVersion $replacementPackageJson
+        Write-Host "Replacement emitter version: $replacementVersion"
+
         $installedPath = Join-Path $root "node_modules" $emitterName "package.json"
+        Write-Host "Checking installed emitter at $installedPath"
         if (Test-Path $installedPath) {
             $installedVersion = GetNpmPackageVersion $installedPath
             Write-Host "Installed emitter version: $installedVersion"
-
-            $replacementVersion = GetEmitterDependencyVersion $replacementPackageJson
-            Write-Host "Replacement emitter version: $replacementVersion"
 
             if ($installedVersion -eq $replacementVersion) {
                 Write-Host "Emitter already installed. Skip installing."
@@ -60,13 +61,25 @@ function NpmInstallAtRoot() {
             }
         }
 
-        Write-Host "Installing package at $root"
+        Write-Host "Installing package at"(Get-Location)
 
         if (Test-Path "node_modules") {
+            Write-Host "Remove existing node_modules at"(Get-Location)
             Remove-Item -Path "node_modules" -Force -Recurse
         }
 
-        npm install "$emitterName@$replacementVersion" --no-lock-file
+        $hasPackageFile = Test-Path "package.json"
+
+        $npmInstallCommand = "npm install --prefix $root $emitterName@$replacementVersion --no-package-lock --omit=dev"
+        Write-Host($npmInstallCommand)
+        Invoke-Expression $npmInstallCommand
+
+        if ($hasPackageFile) {
+            git restore package.json
+        }
+        else {
+            rm package.json
+        }
 
         if ($LASTEXITCODE) { exit $LASTEXITCODE }
     }

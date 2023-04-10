@@ -73,6 +73,7 @@ function NpmInstallAtRoot() {
         $npmInstallCommand = "npm install --prefix $root $emitterName@$replacementVersion --no-package-lock --omit=dev"
         Write-Host($npmInstallCommand)
         Invoke-Expression $npmInstallCommand
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
         if ($hasPackageFile) {
             git restore package.json

@@ -13,6 +13,7 @@ namespace APIViewWeb.Models
         internal IEnumerable<ReviewType> _filterType;
         internal IEnumerable<string> _state;
         internal IEnumerable<string> _status;
+        internal bool? _notApprovedForFirstRelease;
         internal bool? _hideLineNumbers;
         internal bool? _hideLeftNavigation;
         internal bool? _showHiddenApis;
@@ -53,6 +54,13 @@ namespace APIViewWeb.Models
         public IEnumerable<string> Status {
             get => _status ?? new List<string>();
             set => _status = value;
+        }
+
+        [Name("NotApprovedForFirstRelease")]
+        public bool? NotApprovedForFirstRelease
+        {
+            get => _notApprovedForFirstRelease ?? false;
+            set => _notApprovedForFirstRelease = value;
         }
 
         [Name("HideLineNumbers")]

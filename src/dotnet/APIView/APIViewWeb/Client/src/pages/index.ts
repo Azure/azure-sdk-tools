@@ -8,10 +8,11 @@ $(() => {
   const stateFilter = $( '#state-filter-select' );
   const statusFilter = $( '#status-filter-select' );
   const typeFilter = $( '#type-filter-select' );
+  const notApprovedForFirstRelease = $( '#not-approved-for-first-release' );
   const searchBox = $( '#reviews-table-search-box' );
   const searchButton = $( '#reviews-search-button' );
-  const resetButton = $('#reset-filter-button');
-  const languageSelect = $('#review-language-select');
+  const resetButton = $( '#reset-filter-button' );
+  const languageSelect = $( '#review-language-select' );
 
   // Import underscorejs
   var _ = require('underscore');
@@ -47,6 +48,10 @@ $(() => {
     typeFilter.children(":selected").each(function() {
       uri = uri + '&type=' + encodeURIComponent(`${$(this).val()}`);
     });
+
+    if (notApprovedForFirstRelease.prop("checked")) {
+      uri = uri + '&notApprovedForFirstRelease=true';
+    }
 
     uri = uri + '&pageNo=' + encodeURIComponent(pageNo);
     uri = uri + '&pageSize=' + encodeURIComponent(pageSize);
@@ -99,6 +104,10 @@ $(() => {
     });
   });
 
+  notApprovedForFirstRelease.on("click", e => {
+    updateListedReviews();
+  });
+
   // Update list of reviews based on search input
   searchBox.on('input', _.debounce(function(e) {
     updateListedReviews();
@@ -115,6 +124,7 @@ $(() => {
     (<any>$('#state-filter-select')[0]).sumo.selectItem('Open');
     (<any>$('#status-filter-select')[0]).sumo.unSelectAll();
     (<any>$('#type-filter-select')[0]).sumo.unSelectAll();
+    notApprovedForFirstRelease.removeAttr("checked");
     searchBox.val('');
     updateListedReviews();
   });

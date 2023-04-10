@@ -98,16 +98,52 @@ namespace APIViewWeb.Managers
         }
 
         public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewsAsync(
-            IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy)
+            IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, bool notApprovedForFirstRelease, int offset, int limit, string orderBy)
         {
-            var result = await _reviewsRepository.GetReviewsAsync(search, languages, isClosed, filterTypes, isApproved, offset, limit, orderBy);
+            var result = await _reviewsRepository.GetReviewsAsync(
+                search: search, languages: languages, isClosed: isClosed,
+                filterTypes: filterTypes, isApproved: isApproved, 
+                notApprovedForFirstRelease: notApprovedForFirstRelease,
+                offset: offset, limit: limit, orderBy: orderBy);
+
+            List<ReviewModel> filteredResults = null;
+
+            // Fiter reviews based on if no other review with the same PackageName and Language in approved or approvedForFirstReleases
+            if (notApprovedForFirstRelease)
+            {
+                filteredResults = new List<ReviewModel>();
+                do
+                {
+                    foreach (var reviewGroup in result.Reviews.GroupBy(r => $"{r.PackageName}-{r.Language}", r => r))
+                    {
+                        var firstInGroup = reviewGroup.FirstOrDefault();
+                        if (firstInGroup != null)
+                        {
+                            var reviewsApprovedForFirstRelease = await _reviewsRepository.GetApprovedForFirstReleaseReviews(firstInGroup.Language, firstInGroup.PackageName);
+                            if (!reviewsApprovedForFirstRelease.Any())
+                            {
+                                filteredResults.AddRange(reviewGroup);
+                            }
+                        }
+                    }
+                    if (filteredResults.Count < limit)
+                    {
+                        result = await _reviewsRepository.GetReviewsAsync(
+                            search: search, languages: languages, isClosed: isClosed,
+                            filterTypes: filterTypes, isApproved: isApproved,
+                            notApprovedForFirstRelease: notApprovedForFirstRelease,
+                            offset: offset, limit: limit, orderBy: orderBy);
+                    }
+                }
+                while (filteredResults.Count < limit && result.Reviews.Count() > 0);
+            }
 
             // Calculate and add Previous and Next and Current page to the returned result
             var totalPages = (int)Math.Ceiling(result.TotalCount / (double)limit);
             var currentPage = offset == 0 ? 1 : offset / limit + 1;
 
             (IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage) resultToReturn = (
-                result.Reviews, result.TotalCount, TotalPages: totalPages,
+                filteredResults ?? result.Reviews, result.TotalCount, TotalPages: totalPages,
                 CurrentPage: currentPage,
                 PreviousPage: currentPage == 1 ? null : currentPage - 1,
                 NextPage: currentPage >= totalPages ? null : currentPage + 1

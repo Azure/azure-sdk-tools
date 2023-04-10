@@ -149,7 +149,7 @@ namespace APIViewWeb
         }
 
         public async Task<(IEnumerable<ReviewModel> Reviews, int TotalCount)> GetReviewsAsync(
-            IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy)
+            IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, bool notApprovedForFirstRelease, int offset, int limit, string orderBy)
         {
             (IEnumerable<ReviewModel> Reviews, int TotalCount) result = (Reviews: new List<ReviewModel>(), TotalCount: 0);
 
@@ -240,6 +240,13 @@ namespace APIViewWeb
                 queryStringBuilder.Append($" AND r.FilterType IN {filterTypeAsQueryStr}");
             }
 
+            if (notApprovedForFirstRelease)
+            {
+                isApproved = false;
+                isClosed = false;
+                queryStringBuilder.Append(" AND r.IsApprovedForFirstRelease = false");
+            }
+
             if (isApproved != null)
             {
                 queryStringBuilder.Append(" AND ARRAY_SLICE(r.Revisions, -1)[0].IsApproved = @isApproved");
@@ -257,7 +264,15 @@ namespace APIViewWeb
                 result.TotalCount = (await countFeedIterator.ReadNextAsync()).SingleOrDefault();
             }
 
-            queryStringBuilder.Append($" ORDER BY r.{orderBy} DESC");
+            if (notApprovedForFirstRelease)
+            {
+                queryStringBuilder.Append($" ORDER BY r.Name, r.{orderBy} DESC");
+            }
+            else 
+            {
+                queryStringBuilder.Append($" ORDER BY r.{orderBy} DESC");
+            }
+            
             queryStringBuilder.Append(" OFFSET @offset LIMIT @limit");
 
             var reviews = new List<ReviewModel>();

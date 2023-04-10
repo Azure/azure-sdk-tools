@@ -45,28 +45,36 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task OnGetAsync(
             IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
-            IEnumerable<string> status, IEnumerable<string> type, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
+            IEnumerable<string> status, IEnumerable<string> type, bool? notApprovedForFirstRelease = null, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any())
+            if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any() && (notApprovedForFirstRelease == null))
             {
                 UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User);
                 languages = userPreference.Language;
                 state = userPreference.State;
                 status = userPreference.Status;
                 type = userPreference.FilterType.Select(x => x.ToString());
-                await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField, false);
+                notApprovedForFirstRelease = userPreference.NotApprovedForFirstRelease;
+                await RunGetRequest(
+                    search: search, languages: languages, state: state,
+                    status: status, type: type, notApprovedForFirstRelease: notApprovedForFirstRelease, 
+                    pageNo: pageNo, pageSize: pageSize, sortField: sortField, fromUrl: false);
             }
             else 
             {
-                await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
+                await RunGetRequest(search: search, languages: languages, state: state,
+                    status: status, type: type, notApprovedForFirstRelease: notApprovedForFirstRelease,
+                    pageNo: pageNo, pageSize: pageSize, sortField: sortField);
             }
         }
 
         public async Task<PartialViewResult> OnGetReviewsPartialAsync(
             IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
-            IEnumerable<string> status, IEnumerable<string> type, int pageNo = 1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
+            IEnumerable<string> status, IEnumerable<string> type, bool? notApprovedForFirstRelease = null, int pageNo = 1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
+            await RunGetRequest(search: search, languages: languages, state: state,
+                    status: status, type: type, notApprovedForFirstRelease: notApprovedForFirstRelease,
+                    pageNo: pageNo, pageSize: pageSize, sortField: sortField);
             return Partial("_ReviewsPartial", PagedResults);
         }
 
@@ -97,7 +105,7 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         private async Task RunGetRequest(IEnumerable<string> search, IEnumerable<string> languages,
-            IEnumerable<string> state, IEnumerable<string> status, IEnumerable<string> type, int pageNo, int pageSize, string sortField, bool fromUrl = true)
+            IEnumerable<string> state, IEnumerable<string> status, IEnumerable<string> type, bool? notApprovedForFirstRelease, int pageNo, int pageSize, string sortField, bool fromUrl = true)
         {
             search = search.Select(x => HttpUtility.UrlDecode(x));
             languages = (fromUrl)? languages.Select(x => HttpUtility.UrlDecode(x)) : languages;
@@ -153,7 +161,8 @@ namespace APIViewWeb.Pages.Assemblies
                 FilterType = filterTypes,
                 Language = languages,
                 State = state,
-                Status = status
+                Status = status,
+                NotApprovedForFirstRelease = notApprovedForFirstRelease
             }, User);
 
             bool? isApproved = null;
@@ -170,11 +179,16 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 isApproved = null;
             }
+
             var offset = (pageNo - 1) * pageSize;
 
             languages = LanguageServiceHelpers.MapLanguageAliases(languages);
 
-            PagedResults = await _manager.GetPagedReviewsAsync(search, languages, isClosed, filterTypesAsInt, isApproved, offset, pageSize, sortField);
+            PagedResults = await _manager.GetPagedReviewsAsync(
+                search: search, languages: languages, isClosed: isClosed,
+                filterTypes: filterTypesAsInt, isApproved: isApproved,
+                notApprovedForFirstRelease: (notApprovedForFirstRelease ?? false),
+                offset: offset, limit: pageSize, orderBy: sortField);
         }
     }
 

@@ -105,6 +105,8 @@ catch {
   exit 1
 }
 
+Write-Host "Response: $resp"
+
 LogDebug "Pipeline [ $($resp.definition.name) ] queued at [ $($resp._links.web.href) ]"
 
 if ($VsoQueuedPipelines) {

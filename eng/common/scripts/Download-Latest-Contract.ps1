@@ -1,3 +1,7 @@
+# This script downloads the project's latest GA contract if there is a GA tag provided. The contract is downloaded at {root}/../sparse-spec/sdk/{ProjectDirectory}/
+# You need to implement these functions in in Language-Settings.ps1:
+# Get-${Language}-LatestTag: Returns the tag tied with the latest GA version
+# Get-${Language}-SourceCodeSubDirectory: Returns the sub folder of source code relative to the project folder
 [CmdletBinding()]
 param (
     [Parameter(Position=0)]
@@ -39,15 +43,20 @@ function GetGitRemoteValue() {
 
 function GetProjectRelativePath() {
     $rootPath = GetProjectRootPath $ProjectDirectory
-    return [System.IO.Path]::GetRelativePath($rootPath, (Join-Path $ProjectDirectory "src")).Replace("\","/")
+    $subDirectory = &$GetSourceCodeSubDirectory
+    return [System.IO.Path]::GetRelativePath($rootPath, (Join-Path $ProjectDirectory $subDirectory)).Replace("\","/")
 }
 
 if (!(Test-Path "Function:$GetLatestTagFn")) {
-    return ""
+    return
+}
+
+$tagName = &$GetLatestTagFn $ProjectDirectory
+if (!$tagName) {
+    return
 }
 
 $sdkRepoName = GetGitRemoteValue
-$tagName = &$GetLatestTagFn $ProjectDirectory
 $sdkGitRemoteAPI = "https://api.github.com/repos/Azure/$sdkRepoName/git/refs/tags/$tagName"
 $sdkGitRemote = "https://github.com/Azure/$sdkRepoName.git"
 $latestCommit = GetCommit $sdkGitRemoteAPI
@@ -68,11 +77,8 @@ if ($latestCommit) {
             AddSparseCheckoutPath $projectRelativePath
         }
         git checkout $latestCommit
-        return "Latest contract found: $(Join-Path $sdkCloneDir.Path $projectRelativePath)"
     }
     finally {
         Pop-Location
     }
 }
-
-return ""

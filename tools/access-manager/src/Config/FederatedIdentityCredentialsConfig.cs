@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.Graph.Models;
 
-public class FederatedIdentityCredentialsConfig : IEquatable<FederatedIdentityCredential>
+public class FederatedIdentityCredentialsConfig : BaseConfig, IEquatable<FederatedIdentityCredential>
 {
     [JsonRequired, JsonPropertyName("audiences")]
     public List<string>? Audiences { get; set; }

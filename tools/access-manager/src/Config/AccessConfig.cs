@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 /*
  * EXAMPLE entry
@@ -42,19 +43,42 @@ using System.Text.Json;
 
 public class AccessConfig
 {
-    public string ConfigPath { get; set; } = default!;
+    public string ConfigPath { get; set; } = "not-set";
+    public List<ApplicationAccessConfig> ApplicationAccessConfigs { get; set; } = new List<ApplicationAccessConfig>();
+    public List<ApplicationAccessConfig> RawApplicationAccessConfigs { get; set; } = new List<ApplicationAccessConfig>();
 
-    public List<ApplicationAccessConfig>? ApplicationAccessConfigs { get; set; }
-
-    public static AccessConfig Create(string configPath)
+    public AccessConfig(string configPath)
     {
-        var accessConfig = new AccessConfig
+        ConfigPath = configPath;
+        var contents = File.ReadAllText(ConfigPath);
+
+        ApplicationAccessConfigs =
+            JsonSerializer.Deserialize<List<ApplicationAccessConfig>>(contents) ?? new List<ApplicationAccessConfig>();
+        // Keep an unrendered version of config values so we can retain templating
+        // when we need to serialize back to the config file
+        RawApplicationAccessConfigs =
+            JsonSerializer.Deserialize<List<ApplicationAccessConfig>>(contents) ?? new List<ApplicationAccessConfig>();
+
+        foreach (var appAccessConfig in ApplicationAccessConfigs)
         {
-            ConfigPath = configPath
-        };
-        var contents = File.ReadAllText(accessConfig.ConfigPath);
-        accessConfig.ApplicationAccessConfigs = JsonSerializer.Deserialize<List<ApplicationAccessConfig>>(contents);
-        return accessConfig;
+            appAccessConfig.Render();
+        }
+    }
+
+    public void SyncProperties()
+    {
+        for (var i = 0; i < RawApplicationAccessConfigs?.Count; i++)
+        {
+            RawApplicationAccessConfigs[i].Properties =
+                new Dictionary<string, string>(ApplicationAccessConfigs[i].Properties);
+        }
+    }
+
+    public async Task Save()
+    {
+        var contents = JsonSerializer.Serialize(
+            RawApplicationAccessConfigs, new JsonSerializerOptions { WriteIndented = true });
+        await File.WriteAllTextAsync(ConfigPath, contents);
     }
 
     public override string ToString()
@@ -78,6 +102,14 @@ public class AccessConfig
                 foreach (var rbac in app.RoleBasedAccessControls)
                 {
                     sb.AppendLine(rbac.ToIndentedString(1));
+                }
+            }
+            if (app.GithubRepositorySecrets != null)
+            {
+                sb.AppendLine("GithubRepositorySecrets ->");
+                foreach (var secret in app.GithubRepositorySecrets)
+                {
+                    sb.AppendLine(secret.ToIndentedString(1));
                 }
             }
         }

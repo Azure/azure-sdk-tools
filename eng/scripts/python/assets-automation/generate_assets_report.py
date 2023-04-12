@@ -1,7 +1,6 @@
 import os, argparse, glob, json, datetime, re
 
 from subprocess import run
-from xml.etree import ElementTree as ET
 from typing import List, Dict, Any
 
 import yaml  # pyyaml

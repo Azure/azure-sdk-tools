@@ -355,7 +355,7 @@ def evaluate_java_package(package_path: str) -> int:
             with open(testfile, "r", encoding="utf-8") as f:
                 content = f.read()
 
-                if "extends TestProxyBase" in content:
+                if "extends TestProxyTestBase" in content:
                     return 1
         except:
             pass
@@ -376,16 +376,16 @@ def generate_java_report() -> ScanResult:
     # we don't care about packages that start with 'microsoft-' as they are track 1 and will never migrate
     packages = [package for package in packages if not "microsoft-" in os.path.dirname(package)]
    
-    result.packages = sorted([os.path.dirname(pkg) for pkg in packages])
+    result.packages = sorted([os.path.basename(os.path.dirname(pkg)) for pkg in packages])
 
     for pkg in packages:
         evaluation = evaluate_java_package(pkg)
 
         if evaluation == 1:
-            result.packages_using_proxy.append(os.path.dirname(pkg))
+            result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
         elif evaluation == 2:
-            result.packages_using_proxy.append(os.path.dirname(pkg))
-            result.packages_using_external.append(os.path.dirname(pkg))
+            result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
+            result.packages_using_external.append(os.path.basename(os.path.dirname(pkg)))
 
 
     print("done.")
@@ -584,31 +584,31 @@ if __name__ == "__main__":
     )
     parser.parse_args()
 
-    # python = generate_python_report()
-    # write_output(python)
+    python = generate_python_report()
+    write_output(python)
 
-    # js = generate_js_report()
-    # write_output(js)
+    js = generate_js_report()
+    write_output(js)
 
-    # go = generate_go_report()
-    # write_output(go)
+    go = generate_go_report()
+    write_output(go)
 
-    # net = generate_net_report()
-    # write_output(net)
+    net = generate_net_report()
+    write_output(net)
 
-    # cpp = generate_cpp_report()
-    # write_output(cpp)
+    cpp = generate_cpp_report()
+    write_output(cpp)
 
     java = generate_java_report()
     write_output(java)
 
     write_summary(
         [
-            # python,
-            # js,
-            # go,
-            # net,
-            # cpp,
+            python,
+            js,
+            go,
+            net,
+            cpp,
             java
         ]
     )

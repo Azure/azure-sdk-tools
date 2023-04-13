@@ -212,7 +212,7 @@ Function Describe-TestFolder {
     chmod 777 $testPath
   }
 
-  return $testPath
+  return $testPath.Replace("`\", "/")
 }
 
 # Cleanup the test folder used for testing. The DISABLE_INTEGRATION_BRANCH_CLEANUP
@@ -243,7 +243,7 @@ Function Invoke-ProxyCommand {
   )
 
   if ($TestProxyExe.Trim().ToLower() -eq "test-proxy") {
-    $CommandArgs += " --storage-location=`"$MountDirectory`""
+    $CommandArgs += " --storage-location=$MountDirectory"
     Write-Host "$TestProxyExe $CommandArgs"
     # Need to cast the output into an array otherwise it'll be one long string with no newlines
     if ($WriteOutput) {

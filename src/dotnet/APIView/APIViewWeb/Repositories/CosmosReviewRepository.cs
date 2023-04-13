@@ -217,7 +217,7 @@ namespace APIViewWeb
                         queryStringBuilder.Append($" OR CONTAINS(r.Name, {query}, true)");
                         queryStringBuilder.Append($" OR CONTAINS(r.ServiceName, {query}, true)");
                         queryStringBuilder.Append($" OR CONTAINS(r.PackageDisplayName, {query}, true)");
-                        queryStringBuilder.Append($" OR ENDSWITH(ARRAY_SLICE(r.Revisions, -1)[0].Label, {query}, true)");
+                        queryStringBuilder.Append($" OR CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Label, {query}, true)");
                     }
                     queryStringBuilder.Append($")");
                 }

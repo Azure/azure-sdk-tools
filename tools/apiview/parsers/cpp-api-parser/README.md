@@ -166,3 +166,9 @@ displayed in the ApiView tool.
 This tokenized representation is modeled in the following example JSON document found [here](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/apiview_token_gist.json)
 When this JSON file is parsed by the API View tool, it will create the following text in the ApiView:
 ![API View snippet defining `ClassLibrary1.dll`](https://i.imgur.com/ikfRmLM.png)
+
+#### VCPKG notes
+
+The `ParseAzureSdkCpp` tool uses a custom port for clang-15 because vcpkg does not currently have a port for clang-15 in the public repository.
+
+The clang-15 port files were taken from the [vcpkg repository](https://github.com/microsoft/vcpkg/pull/26902).

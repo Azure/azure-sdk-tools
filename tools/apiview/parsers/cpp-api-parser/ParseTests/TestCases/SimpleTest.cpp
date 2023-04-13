@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 #include <chrono>
+#include <cstddef>
 #include <map>
 #include <string>
 #include <vector>

@@ -10,6 +10,7 @@ trigger:
       - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/go
       - src/swift
       - tools/apiview/parsers/js-api-parser
 
@@ -25,6 +26,7 @@ pr:
       - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/go
       - src/swift
       - tools/apiview/parsers/js-api-parser
 
@@ -171,6 +173,16 @@ stages:
               dotnet --version
             displayName: 'List .Net run times'
 
+          - task: GoTool@0
+            inputs:
+              version: '$(GoVersion)'
+            displayName: "Use Go $(GoVersion)"
+              
+          - script: |
+              go test ./... -v
+            workingDirectory: $(GoParserPackagePath)
+            displayName: 'Test Go parser'
+            
           - script: >-
               dotnet test src/dotnet/APIView/APIViewUnitTests/APIViewUnitTests.csproj
               --logger trx --collect:"XPlat Code Coverage"

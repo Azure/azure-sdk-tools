@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -12,7 +12,7 @@ namespace APIViewWeb
     {
         public override string Name { get; } = "Swagger";
 
-        public override string Extension { get; } = ".swagger";
+        public override string[] Extensions { get; } = { ".swagger" };
 
         public override string VersionString { get; } = "0";
 

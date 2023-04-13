@@ -65,20 +65,10 @@
             <p class="card-text">
                 <ol>
                     <li>
-                        Install clang 10 or later. Your environment may require additional include directories.
+                        Generate a token file using the <a href="https://github.com/Azure/azure-sdk-tools/tree/main/tools/apiview/parsers/cpp-api-parser#readme">C++ parser</a>
                     </li>
                     <li>
-                        Run
-                        <code>clang++ [input like .\sdk\storage\azure-storage-files-datalake\inc\azure\storage\files\datalake\datalake.hpp] -I .\sdk\storage\azure-storage-files-datalake\inc -I .\sdk\core\azure-core\inc -Xclang  -ast-dump -I .\sdk\storage\azure-storage-common\inc  -I .\sdk\storage\azure-storage-blobs\inc > Azure_Storage_Files_Datalake.ast</code>
-                    </li>
-                    <li>
-                        Archive the file <code>Compress-Archive Azure_Storage_Files_Datalake.ast -DestinationPath Azure_Storage_Files_Datalake.zip</code>
-                    </li>
-                    <li>
-                        Rename the file <code>Rename-Item Azure_Storage_Files_Datalake.zip -NewName  Azure_Storage_Files_Datalake.cppast</code>
-                    </li>
-                    <li>
-                        Upload the resulting archive.
+                        Upload the token file generated.
                     </li>
                 </ol>
             </p>
@@ -132,10 +122,30 @@
                 </ol>
             </p>
         </div>
-        <div class="d-none" id="cadl-help">
+        <div class="d-none" id="typespec-help">
             <p class="card-text">
+                TypeSpec review can be generated manually using one of the following options.
                 <ol>
-                    Provide URL to cadl project root path.
+                    <li>
+                        <strong>Option 1:</strong> Create API review using a link to TypeSpec project. Provide the URL to project and click Upload.
+                    </li>
+                    <li>
+                        <strong>Option 2:</strong> Create API review file locally using following steps.
+                        <ul>
+                            <li>
+                                Install  <code>@@azure-tools/typespec-apiview</code>
+                            </li>
+                            <li>
+                                Compile and emit the apiview file: <code>typespec compile .\main.tsp --emit "@@azure-tools/typespec-apiview"</code>
+                            </li>
+                            <li>
+                                Select Json as the language option in Create review page.
+                            </li>
+                            <li>
+                                Upload the JSON file that is emitted.
+                            </li>
+                        </ul>
+                    </li>
                 </ol>
             </p>
         </div>

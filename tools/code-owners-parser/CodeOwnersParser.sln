@@ -12,10 +12,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EF585CCA-55F8-44EB-921A-30996CBAFC49}"
 	ProjectSection(SolutionItems) = preProject
 		ci.yml = ci.yml
+		..\..\eng\common\scripts\get-codeowners.lib.ps1 = ..\..\eng\common\scripts\get-codeowners.lib.ps1
 		..\..\eng\common\scripts\get-codeowners.ps1 = ..\..\eng\common\scripts\get-codeowners.ps1
+		..\..\eng\common-tests\get-codeowners\get-codeowners.tests.ps1 = ..\..\eng\common-tests\get-codeowners\get-codeowners.tests.ps1
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.CodeOwnersParser.Tests", "Azure.Sdk.Tools.CodeOwnersParser.Tests\Azure.Sdk.Tools.CodeOwnersParser.Tests.csproj", "{66C9FF6A-32DD-4C3C-ABE1-F1F58C1C8129}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.CodeOwnersParser.Tests", "Azure.Sdk.Tools.CodeOwnersParser.Tests\Azure.Sdk.Tools.CodeOwnersParser.Tests.csproj", "{66C9FF6A-32DD-4C3C-ABE1-F1F58C1C8129}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

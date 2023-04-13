@@ -41,7 +41,7 @@ stages:
             displayName: 'Setup Python Environment'
 
           - pwsh: |
-              Write-Host "Bundling stable version of python api-stub-generator"
+              Write-Host "Bundling stable version of python apiview-stub-generator"
               python setup.py bdist_wheel --universal --dist-dir $(Build.ArtifactStagingDirectory)
             displayName: 'Build ${{ parameters.PackageName }}'
             workingDirectory: $(Build.SourcesDirectory)/${{ parameters.PackagePath }}

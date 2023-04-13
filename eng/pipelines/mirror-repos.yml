@@ -12,7 +12,6 @@ jobs:
     displayName: Sync public repos
 
     steps:
-    - checkout: none
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
@@ -22,6 +21,10 @@ jobs:
             TargetRepos:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
+
+          Azure/azure-sdk-for-cpp:
+            TargetRepos:
+              Azure/azure-sdk-for-cpp-pr:
 
           Azure/azure-sdk-for-go:
             TargetRepos:

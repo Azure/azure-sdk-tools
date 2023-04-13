@@ -15,7 +15,8 @@ using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
 using System.Net.Http;
-using System.Net.Http.Json;
+using System.Text.Json;
+
 
 namespace APIViewWeb.Managers
 {
@@ -188,6 +189,11 @@ namespace APIViewWeb.Managers
                 foreach (var username in notifiedUsers)
                 {
                     var email = await GetEmailAddress(username);
+                    if (string.IsNullOrEmpty(email))
+                    {
+                        _telemetryClient.TrackTrace($"Email address is not available for user {username}, review {review.ReviewId}. Not sending email.");
+                        continue;
+                    }
                     notifiedEmails.Add(email);
                 }
             }           
@@ -199,14 +205,10 @@ namespace APIViewWeb.Managers
                 return;
             }
 
-            var emailToList = string.Join(",", subscribers);
-            if (string.IsNullOrEmpty(emailToList))
+            foreach(var userEmail in subscribers)
             {
-                _telemetryClient.TrackTrace($"Email address is not available for subscribers, review {review.ReviewId}. Not sending email.");
-                return;
+                await SendEmail(userEmail, $"Update on APIView - {review.DisplayName} from {GetUserName(user)}", htmlContent);
             }
-
-            await SendEmail(emailToList, $"Update on APIView - {review.DisplayName} from {GetUserName(user)}", htmlContent);
         }
 
         private async Task SendEmail(string emailToList, string subject, string content)
@@ -216,12 +218,14 @@ namespace APIViewWeb.Managers
                 _telemetryClient.TrackTrace($"Email sender service URL is not configured. Email will not be sent to {emailToList} with subject: {subject}");
                 return;
             }
-
-            var requestBody = new EmailModel(_testEmailToAddress ?? emailToList, subject, content);
+            var emailToAddress = !string.IsNullOrEmpty(_testEmailToAddress) ? _testEmailToAddress : emailToList;
+            var requestBody = new EmailModel(emailToAddress, subject, content);
             var httpClient = new HttpClient();
             try
             {
-                var response = await httpClient.PostAsync(_emailSenderServiceUrl, JsonContent.Create<EmailModel>(requestBody));
+                var requestBodyJson = JsonSerializer.Serialize(requestBody);
+                _telemetryClient.TrackTrace($"Sending email address request to logic apps. request: {requestBodyJson}");
+                var response = await httpClient.PostAsync(_emailSenderServiceUrl, new StringContent(requestBodyJson, Encoding.UTF8, "application/json"));
                 if (response.StatusCode !=  HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Accepted)
                 {
                     _telemetryClient.TrackTrace($"Failed to send email to user {emailToList} with subject: {subject}, status code: {response.StatusCode}, Details: {response.ToString}");

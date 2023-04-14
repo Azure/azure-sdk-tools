@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 public abstract class BaseConfig
 {
-    public void Render(Dictionary<string, string> properties)
+    public void Render(IDictionary<string, string> properties)
     {
         foreach (PropertyInfo property in this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
@@ -31,6 +31,20 @@ public abstract class BaseConfig
                         if (Regex.IsMatch(list[i], query))
                         {
                             list[i] = Regex.Replace(list[i], query, prop.Value.ToString());
+                        }
+                    }
+                }
+
+                var sortedDict = val as SortedDictionary<string, string>;
+                if (sortedDict is not null && sortedDict.Count > 0)
+                {
+                    var sortedDictCopy = new SortedDictionary<string, string>(sortedDict);
+
+                    foreach (var key in sortedDictCopy.Keys)
+                    {
+                        if (Regex.IsMatch(sortedDict[key], query))
+                        {
+                            sortedDict[key] = Regex.Replace(sortedDict[key], query, prop.Value.ToString());
                         }
                     }
                 }

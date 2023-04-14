@@ -70,7 +70,7 @@ public class AccessConfig
         for (var i = 0; i < RawApplicationAccessConfigs?.Count; i++)
         {
             RawApplicationAccessConfigs[i].Properties =
-                new Dictionary<string, string>(ApplicationAccessConfigs[i].Properties);
+                new SortedDictionary<string, string>(ApplicationAccessConfigs[i].Properties);
         }
     }
 

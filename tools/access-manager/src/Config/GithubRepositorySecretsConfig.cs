@@ -7,7 +7,7 @@ public class GithubRepositorySecretsConfig : BaseConfig
     public List<string> Repositories { get; set; } = new List<string>();
 
     [JsonRequired, JsonPropertyName("secrets")]
-    public Dictionary<string, string> Secrets { get; set; } = new Dictionary<string, string>();
+    public SortedDictionary<string, string> Secrets { get; set; } = new SortedDictionary<string, string>();
 
     public string ToIndentedString(int indentLevel = 0)
     {
@@ -20,7 +20,7 @@ public class GithubRepositorySecretsConfig : BaseConfig
         var sb = new StringBuilder();
         sb.AppendLine(indent + $"Repositories: {string.Join(", ", Repositories)}");
         sb.AppendLine(indent + "Secrets:");
-        foreach (var secret in Secrets ?? new Dictionary<string, string>())
+        foreach (var secret in Secrets ?? new SortedDictionary<string, string>())
         {
             sb.AppendLine(indent + indent + $"'{secret.Key}': '{secret.Value}'");
         }

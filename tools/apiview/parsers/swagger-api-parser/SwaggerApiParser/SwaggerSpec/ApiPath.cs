@@ -36,6 +36,11 @@ public class ApiPath
                 {
                     if (this.parameters != null)
                     {
+                        if (operation.parameters == null)
+                        {
+                            operation.parameters = new List<Parameter>();
+                        }
+
                         operation.parameters.AddRange(this.parameters);
                     }   
                     ret.Add(method, operation);

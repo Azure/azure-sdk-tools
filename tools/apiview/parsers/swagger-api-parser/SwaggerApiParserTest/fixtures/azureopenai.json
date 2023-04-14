@@ -7,6 +7,11 @@
   },
   "paths": {
     "/deployments": {
+      "parameters": [
+        {
+          "$ref": "#/parameters/apiVersionQueryParameter"
+        }
+      ],
       "get": {
         "tags": [
           "Deployments:"
@@ -15,11 +20,6 @@
         "operationId": "Deployments_List",
         "produces": [
           "application/json"
-        ],
-        "parameters": [
-          {
-            "$ref": "#/parameters/apiVersionQueryParameter"
-          }
         ],
         "responses": {
           "200": {
@@ -54,9 +54,6 @@
           "application/json"
         ],
         "parameters": [
-          {
-            "$ref": "#/parameters/apiVersionQueryParameter"
-          },
           {
             "in": "body",
             "name": "body",

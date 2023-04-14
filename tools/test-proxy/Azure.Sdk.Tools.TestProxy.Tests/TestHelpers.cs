@@ -181,7 +181,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 InitIntegrationTag(assets, adjustedAssetsRepoTag);
 
                 // set the TagPrefix to the adjusted test branch
-                assets.TagPrefix = adjustedAssetsRepoTag;
+                assets.Tag = adjustedAssetsRepoTag;
                 localAssetsJsonContent = JsonSerializer.Serialize(assets);
             }
 
@@ -473,7 +473,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Directory.CreateDirectory(tmpPath);
                 GitProcessHandler GitHandler = new GitProcessHandler();
                 string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
-                GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
+                GitHandler.Run($"clone --filter=blob:none {gitCloneUrl} .", tmpPath);
                 GitHandler.Run($"push origin --delete {assets.Tag}", tmpPath);
             }
             finally

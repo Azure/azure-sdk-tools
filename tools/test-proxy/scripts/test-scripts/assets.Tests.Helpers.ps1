@@ -124,7 +124,7 @@ Function Remove-Integration-Tag {
   try {
     Push-Location $tempPath
     $gitCloneUrl = Get-CloneUrl $Assets.AssetsRepo
-    Write-Host "git clone $($gitCloneUrl) ."
+    Write-Host "git clone  --filter=blob:none $($gitCloneUrl) ."
     git clone $($gitCloneUrl) .
     Write-Host "git push origin --delete $($Assets.Tag)"
     git push origin --delete $($Assets.Tag)

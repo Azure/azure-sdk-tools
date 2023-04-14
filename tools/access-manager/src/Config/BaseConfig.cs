@@ -3,64 +3,64 @@ using System.Text.RegularExpressions;
 
 public abstract class BaseConfig
 {
-    public void Render(IDictionary<string, string> properties)
+    private (string, HashSet<string>) RenderValue(string template, IDictionary<string, string> properties)
     {
+        var rendered = template;
+        var unrendered = new HashSet<string>();
+        var matches = Regex.Matches(template, @"{{\s*([a-zA-Z0-9_-]+)\s*}}");
+        foreach (Match match in matches)
+        {
+            var key = match.Groups[1].Value;
+            if (properties.ContainsKey(key))
+            {
+                var query = @"{{\s*" + key + @"\s*}}";
+                rendered = Regex.Replace(rendered, query, properties[key]);
+            }
+            else
+            {
+                unrendered.Add(key);
+            }
+        }
+
+        return (rendered, unrendered);
+    }
+
+    public HashSet<string> Render(IDictionary<string, string> properties)
+    {
+        var allUnrendered = new HashSet<string>();
+        var unrendered = new HashSet<string>();
         foreach (PropertyInfo property in this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
-            foreach (var prop in properties)
+            var obj = property.GetValue(this);
+
+            if (obj is null)
             {
-                var val = property.GetValue(this);
-                var query = @"{{\s*" + prop.Key + @"\s*}}";
-
-                if (val is null)
+                return new HashSet<string>();
+            }
+            else if (obj is string str)
+            {
+                (var rendered, unrendered) = RenderValue(str, properties);
+                property.SetValue(this, rendered);
+                allUnrendered.UnionWith(unrendered);
+            }
+            else if (obj is List<string> list)
+            {
+                for (var i = 0; i < list.Count; i++)
                 {
-                    continue;
+                    (list[i], unrendered) = RenderValue(list[i], properties);
+                    allUnrendered.UnionWith(unrendered);
                 }
-
-                var str = val as string;
-                if (str is not null && Regex.IsMatch(str, query))
+            }
+            else if (obj is IDictionary<string, string> dict)
+            {
+                foreach (var key in dict.Keys.ToList())
                 {
-                    property.SetValue(this, Regex.Replace(str, query, prop.Value.ToString()));
-                }
-
-                var list = val as List<string>;
-                if (list?.Count > 0)
-                {
-                    for (var i = 0; i < list.Count; i++)
-                    {
-                        if (Regex.IsMatch(list[i], query))
-                        {
-                            list[i] = Regex.Replace(list[i], query, prop.Value.ToString());
-                        }
-                    }
-                }
-
-                var sortedDict = val as SortedDictionary<string, string>;
-                if (sortedDict is not null && sortedDict.Count > 0)
-                {
-                    var sortedDictCopy = new SortedDictionary<string, string>(sortedDict);
-
-                    foreach (var key in sortedDictCopy.Keys)
-                    {
-                        if (Regex.IsMatch(sortedDict[key], query))
-                        {
-                            sortedDict[key] = Regex.Replace(sortedDict[key], query, prop.Value.ToString());
-                        }
-                    }
-                }
-
-                var dict = val as Dictionary<string, string>;
-                if (dict is not null && dict.Count > 0)
-                {
-                    foreach (var key in dict.Keys)
-                    {
-                        if (Regex.IsMatch(dict[key], query))
-                        {
-                            dict[key] = Regex.Replace(dict[key], query, prop.Value.ToString());
-                        }
-                    }
+                    (dict[key], unrendered) = RenderValue(dict[key], properties);
+                    allUnrendered.UnionWith(unrendered);
                 }
             }
         }
+
+        return allUnrendered;
     }
 }

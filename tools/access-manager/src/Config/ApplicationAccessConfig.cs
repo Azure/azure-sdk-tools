@@ -17,19 +17,32 @@ public class ApplicationAccessConfig
     [JsonPropertyName("federatedIdentityCredentials"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull), JsonPropertyOrder(4)]
     public List<FederatedIdentityCredentialsConfig> FederatedIdentityCredentials { get; set; } = new List<FederatedIdentityCredentialsConfig>();
 
-    public void Render()
+    public void Render(bool failWhenMissingProperties = false)
     {
+        var allUnrendered = new HashSet<string>();
+
         foreach (var rbac in RoleBasedAccessControls)
         {
-            rbac.Render(Properties);
+            var unrendered = rbac.Render(Properties);
+            allUnrendered.UnionWith(unrendered);
         }
+
         foreach (var fic in FederatedIdentityCredentials)
         {
-            fic.Render(Properties);
+            var unrendered = fic.Render(Properties);
+            allUnrendered.UnionWith(unrendered);
         }
+
         foreach (var gh in GithubRepositorySecrets)
         {
-            gh.Render(Properties);
+            var unrendered = gh.Render(Properties);
+            allUnrendered.UnionWith(unrendered);
+        }
+
+        if (failWhenMissingProperties && allUnrendered.Any())
+        {
+            var missing = string.Join(", ", allUnrendered.OrderBy(s => s));
+            throw new Exception($"Missing properties for template values: {missing}");
         }
     }
 }

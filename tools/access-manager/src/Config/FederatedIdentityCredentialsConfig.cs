@@ -4,19 +4,19 @@ using Microsoft.Graph.Models;
 
 public class FederatedIdentityCredentialsConfig : BaseConfig, IEquatable<FederatedIdentityCredential>
 {
-    [JsonRequired, JsonPropertyName("audiences")]
+    [JsonRequired, JsonPropertyName("audiences"), JsonPropertyOrder(0)]
     public List<string>? Audiences { get; set; }
 
-    [JsonRequired, JsonPropertyName("description")]
+    [JsonRequired, JsonPropertyName("description"), JsonPropertyOrder(1)]
     public string? Description { get; set; }
 
-    [JsonRequired, JsonPropertyName("issuer")]
+    [JsonRequired, JsonPropertyName("issuer"), JsonPropertyOrder(2)]
     public string? Issuer { get; set; }
 
-    [JsonRequired, JsonPropertyName("name")]
+    [JsonRequired, JsonPropertyName("name"), JsonPropertyOrder(3)]
     public string? Name { get; set; }
 
-    [JsonRequired, JsonPropertyName("subject")]
+    [JsonRequired, JsonPropertyName("subject"), JsonPropertyOrder(4)]
     public string? Subject { get; set; }
 
     public static implicit operator FederatedIdentityCredential(FederatedIdentityCredentialsConfig config)

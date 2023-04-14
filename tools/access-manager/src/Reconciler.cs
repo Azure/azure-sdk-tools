@@ -18,35 +18,71 @@ public class Reconciler
     {
         try
         {
+            var exceptions = new List<Exception>();
+            var failedConfigApps = new List<string>();
+            var succeededConfigApps = new List<string>();
+
             foreach (var cfg in accessConfig.ApplicationAccessConfigs ?? Enumerable.Empty<ApplicationAccessConfig>())
             {
-                var (app, servicePrincipal) = await ReconcileApplication(cfg);
+                try
+                {
+                    var (app, servicePrincipal) = await ReconcileApplication(cfg);
 
-                // Inject application ID if we found or created a new app so
-                // downstream configs can reference it (e.g. GithubRepositorySecrets)
-                cfg.Properties["applicationId"] = app.AppId ?? string.Empty;
-                cfg.Render();
+                    // Inject application ID if we found or created a new app so
+                    // downstream configs can reference it (e.g. GithubRepositorySecrets)
+                    cfg.Properties["applicationId"] = app.AppId ?? string.Empty;
+                    cfg.Render(failWhenMissingProperties: true);
 
-                await ReconcileRoleBasedAccessControls(servicePrincipal, cfg);
-                await ReconcileFederatedIdentityCredentials(app, cfg);
-                await ReconcileGithubRepositorySecrets(app, cfg);
+                    await ReconcileRoleBasedAccessControls(servicePrincipal, cfg);
+                    await ReconcileFederatedIdentityCredentials(app, cfg);
+                    await ReconcileGithubRepositorySecrets(app, cfg);
+
+                    succeededConfigApps.Add(cfg.AppDisplayName);
+                }
+                catch (ODataError ex)
+                {
+                    Console.WriteLine("Received error from Graph API:");
+                    Console.WriteLine("    Code:" + ex.Error?.Code);
+                    Console.WriteLine("    Message:" + ex.Error?.Message);
+                    failedConfigApps.Add(cfg.AppDisplayName);
+                    exceptions.Add(new Exception($"Received error from Graph API: {ex.Error?.Code} - {ex.Error?.Message}"));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ERROR: failed to reconcile application access config for '{cfg.AppDisplayName}'");
+                    Console.WriteLine(ex.Message);
+                    failedConfigApps.Add(cfg.AppDisplayName);
+                    exceptions.Add(ex);
+                }
             }
 
             Console.WriteLine($"Updating config with new properties...");
             accessConfig.SyncProperties();
             await accessConfig.Save();
+
+            Console.WriteLine("---");
+            if (succeededConfigApps.Any())
+            {
+                Console.WriteLine($"Successfully reconciled {succeededConfigApps.Count} " +
+                                  $"application access configs for apps: {string.Join(", ", succeededConfigApps)}");
+            }
+
+            if (exceptions.Any())
+            {
+                Console.WriteLine($"ERROR: failed to reconcile {exceptions.Count} " +
+                                  $"application access configs for apps: {string.Join(", ", failedConfigApps)}");
+                throw new AggregateException(exceptions);
+            }
         }
-        catch (ODataError ex)
+        catch (AggregateException ex)
         {
-            Console.WriteLine("Received error from Graph API:");
-            Console.WriteLine("    Code:" + ex.Error?.Code);
-            Console.WriteLine("    Message:" + ex.Error?.Message);
-            Environment.Exit(2);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-            Environment.Exit(1);
+            foreach (var inner in ex.InnerExceptions)
+            {
+                Console.WriteLine("---");
+                Console.WriteLine(inner);
+            }
+
+            throw;
         }
     }
 

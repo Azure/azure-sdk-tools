@@ -5,10 +5,10 @@ using System.Text.Json.Serialization;
 
 public class RoleBasedAccessControlsConfig : BaseConfig
 {
-    [JsonRequired, JsonPropertyName("role")]
+    [JsonRequired, JsonPropertyName("role"), JsonPropertyOrder(0)]
     public string? Role { get; set; }
 
-    [JsonRequired, JsonPropertyName("scope")]
+    [JsonRequired, JsonPropertyName("scope"), JsonPropertyOrder(1)]
     public string? Scope { get; set; }
 
     public string ToIndentedString(int indentLevel = 0)

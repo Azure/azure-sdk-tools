@@ -3,10 +3,10 @@ using System.Text.Json.Serialization;
 
 public class GithubRepositorySecretsConfig : BaseConfig
 {
-    [JsonRequired, JsonPropertyName("repositories")]
+    [JsonRequired, JsonPropertyName("repositories"), JsonPropertyOrder(0)]
     public List<string> Repositories { get; set; } = new List<string>();
 
-    [JsonRequired, JsonPropertyName("secrets")]
+    [JsonRequired, JsonPropertyName("secrets"), JsonPropertyOrder(1)]
     public SortedDictionary<string, string> Secrets { get; set; } = new SortedDictionary<string, string>();
 
     public string ToIndentedString(int indentLevel = 0)

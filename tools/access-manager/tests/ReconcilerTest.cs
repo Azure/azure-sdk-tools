@@ -17,6 +17,7 @@ public class ReconcilerTest
     AccessConfig NoGitHubAccessConfig { get; set; }
     AccessConfig FederatedCredentialsOnlyConfig { get; set; }
     AccessConfig TemplateAccessConfig { get; set; }
+    AccessConfig TemplateMissingPropertyAccessConfig { get; set; }
     AccessConfig GithubAccessConfig { get; set; }
     AccessConfig RbacOnlyConfig { get; set; }
     AccessConfig FullAccessConfig { get; set; }
@@ -27,6 +28,7 @@ public class ReconcilerTest
         NoGitHubAccessConfig = new AccessConfig("./test-configs/no-github-access-config.json");
         FederatedCredentialsOnlyConfig = new AccessConfig("./test-configs/federated-credentials-only-config.json");
         TemplateAccessConfig = new AccessConfig("./test-configs/access-config-template.json");
+        TemplateMissingPropertyAccessConfig = new AccessConfig("./test-configs/access-config-template-missing.json");
         GithubAccessConfig = new AccessConfig("./test-configs/github-only-config.json");
         RbacOnlyConfig = new AccessConfig("./test-configs/rbac-only-config.json");
         FullAccessConfig = new AccessConfig("./test-configs/full-access-config.json");
@@ -63,6 +65,18 @@ public class ReconcilerTest
 
         TemplateAccessConfig.ApplicationAccessConfigs.First().FederatedIdentityCredentials.First().Subject
             .Should().Be("repo:testfoobaraccessmanager/azure-sdk-tools:ref:refs/heads/main");
+    }
+
+    [Test]
+    public async Task TestReconcileWithTemplateMissingProperties()
+    {
+        var reconciler = new Reconciler(GraphClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
+        GraphClientMock.Setup(c => c.GetApplicationByDisplayName(It.IsAny<string>()).Result).Returns(TestApplication);
+        GraphClientMock.Setup(c => c.GetApplicationServicePrincipal(It.IsAny<Application>()).Result).Returns(TestServicePrincipal);
+        GraphClientMock.Setup(c => c.ListFederatedIdentityCredentials(It.IsAny<Application>()).Result).Returns(new List<FederatedIdentityCredential>());
+
+        Func<Task> func = async () => await reconciler.Reconcile(TemplateMissingPropertyAccessConfig);
+        await func.Should().ThrowAsync<AggregateException>();
     }
 
     [Test]

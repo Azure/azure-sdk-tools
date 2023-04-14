@@ -22,12 +22,6 @@ static async Task Run(FileInfo config)
     Console.WriteLine(accessConfig.ToString());
 
     var credential = new DefaultAzureCredential();
-    var githubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
-    if (string.IsNullOrEmpty(githubToken))
-    {
-        Console.WriteLine("WARNING: GITHUB_TOKEN environment variable is not set. " +
-                          "Operations will fail if githubRepositorySecrets is configured.");
-    }
-    var reconciler = new Reconciler(new GraphClient(credential), new RbacClient(credential), new GitHubClient(githubToken));
+    var reconciler = new Reconciler(new GraphClient(credential), new RbacClient(credential), new GitHubClient());
     await reconciler.Reconcile(accessConfig);
 }

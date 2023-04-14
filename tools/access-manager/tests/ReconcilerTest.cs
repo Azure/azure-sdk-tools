@@ -71,8 +71,8 @@ public class ReconcilerTest
         var reconciler = new Reconciler(GraphClientMock.Object, RbacClientMock.Object, GitHubClientMock.Object);
 
         GitHubClientMock.Setup(c => c.SetRepositorySecret(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()).Result)
-            .Returns("test-secret");
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(Task.CompletedTask);
 
         await reconciler.ReconcileGithubRepositorySecrets(TestApplication, GithubAccessConfig.ApplicationAccessConfigs.First());
 
@@ -243,8 +243,8 @@ public class ReconcilerTest
         GraphClientMock.Setup(c => c.CreateApplicationServicePrincipal(It.IsAny<Application>()).Result).Returns(TestServicePrincipal);
         // GitHub mocks
         GitHubClientMock.Setup(c => c.SetRepositorySecret(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()).Result)
-            .Returns("test-secret");
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(Task.CompletedTask);
         // Federated Identity Credential mocks
         GraphClientMock.Setup(c => c.ListFederatedIdentityCredentials(
             It.IsAny<Application>()).Result).Returns(new List<FederatedIdentityCredential>());

@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""language/tables"",
-              ""Tag"": ""language/tables_fc54d0""
+              ""Tag"": ""python/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario1(string inputJson)
@@ -59,8 +59,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest:true);
             try
             {
-                // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.TagPrefix);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -142,8 +142,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             try
             {
-                // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.Tag);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -209,7 +209,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""language/tables"",
-              ""Tag"": ""language/tables_9e81fb""
+              ""Tag"": ""python/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario3(string inputJson)
@@ -225,8 +225,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             try
             {
-                // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.Tag);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -319,8 +319,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             try
             {
-                // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.Tag);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -409,7 +409,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             var testFolder2 = TestHelpers.DescribeTestFolder(assets, folderStructure);
             try
             {
-                // Ensure that the TagPrefix was updated
+                // Ensure that the Tag was updated
                 Assert.NotEqual(originalTag, assets.Tag);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
@@ -540,8 +540,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
             try
             {
-                // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.Tag);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 

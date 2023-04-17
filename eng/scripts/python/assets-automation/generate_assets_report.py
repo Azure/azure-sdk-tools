@@ -7,7 +7,7 @@ import yaml  # pyyaml
 from packaging import version  # from packaging
 from ci_tools.functions import (
     discover_targeted_packages,
-)  # azure-sdk-tools from azure-sdk-for-python
+)  # azure-sdk-tools from Azure/azure-sdk-for-python
 
 from ci_tools.parsing import ParsedSetup
 
@@ -325,6 +325,72 @@ def generate_cpp_report() -> ScanResult:
     return result
 
 
+def resolve_java_test_directory(package_path: str) -> str:
+    singular = os.path.join(os.path.dirname(package_path), "src", "test")
+    plural = os.path.join(os.path.dirname(package_path), "src", "tests")
+
+    if os.path.exists(singular):
+        return singular
+    elif os.path.exists(plural):
+        return plural
+    else:
+        return ""
+
+
+def evaluate_java_package(package_path: str) -> int:
+    possible_test_directory = resolve_java_test_directory(package_path)
+    possible_assets_location = os.path.join(os.path.dirname(package_path),'assets.json')
+
+    if not possible_test_directory:
+        return 0
+
+    test_files = glob.glob(os.path.join(possible_test_directory, "**", "*.java"), recursive=True)
+
+    if os.path.exists(possible_assets_location):
+        return 2
+    
+    for testfile in test_files:
+        try:
+            with open(testfile, "r", encoding="utf-8") as f:
+                content = f.read()
+
+                if "extends TestProxyTestBase" in content:
+                    return 1
+        except:
+            pass
+
+    return 0
+
+
+def generate_java_report() -> ScanResult:
+    language = "Java"
+    result = ScanResult(language)
+    repo_root = get_repo(language)
+
+    print(f"Evaluating repo for {language} @ {repo_root}", end="...")
+
+    # enforce looking under individual package dir, and not service dir
+    packages = glob.glob(os.path.join(repo_root, "sdk", "*", "*", "pom.xml"), recursive=True)
+
+    # we don't care about packages that start with 'microsoft-' as they are track 1 and will never migrate
+    packages = [package for package in packages if not "microsoft-" in os.path.dirname(package)]
+   
+    result.packages = sorted([os.path.basename(os.path.dirname(pkg)) for pkg in packages])
+
+    for pkg in packages:
+        evaluation = evaluate_java_package(pkg)
+
+        if evaluation == 1:
+            result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
+        elif evaluation == 2:
+            result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
+            result.packages_using_external.append(os.path.basename(os.path.dirname(pkg)))
+
+
+    print("done.")
+    return result
+
+
 def evaluate_js_package(package_path: str) -> int:
     with open(package_path, "r", encoding="utf-8") as f:
         package_json = json.load(f)
@@ -532,6 +598,9 @@ if __name__ == "__main__":
     cpp = generate_cpp_report()
     write_output(cpp)
 
+    java = generate_java_report()
+    write_output(java)
+
     write_summary(
         [
             python,
@@ -539,5 +608,6 @@ if __name__ == "__main__":
             go,
             net,
             cpp,
+            java
         ]
     )

@@ -124,7 +124,17 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     }
 
                     GitHandler.Run($"tag {generatedTagName}", config);
-                    GitHandler.Run($"push origin {generatedTagName}", config);
+
+                    var remoteResult = GitHandler.Run($"ls-remote origin --tags {generatedTagName}", config);
+
+                    if (string.IsNullOrWhiteSpace(remoteResult.StdOut))
+                    {
+                        GitHandler.Run($"push origin {generatedTagName}", config);
+                    }
+                    else
+                    {
+                        _consoleWrapper.WriteLine($"Not attempting to push tag '{generatedTagName}', as it already exists within the assets repo");
+                    }
                 }
                 catch(GitProcessException e)
                 {

@@ -564,10 +564,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (!Path.IsPathFullyQualified(pathToAssetsJson))
             {
-                path = Path.Join(contextDirectory, pathToAssetsJson.Replace("\\", "/"));
+                path = Path.Join(contextDirectory, pathToAssetsJson);
             }
 
-            return path;
+            return path.Replace("\\", "/");
         }
 
         public async Task Restore(string pathToAssetsJson)

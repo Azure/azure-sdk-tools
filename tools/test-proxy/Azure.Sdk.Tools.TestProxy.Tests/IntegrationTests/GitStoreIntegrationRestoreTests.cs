@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
         private GitStore _defaultStore = new GitStore();
 
         // Scenario1
-        // Tag language/tables_fc54d0
+        // Tag python/tables_fc54d0
         // This was the initial push of the test files:
         // Added file1.txt
         // Added file2.txt
@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""language/tables_fc54d0""
+              ""Tag"": ""python/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario1(string inputJson)
@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
 
         // Scenario2
-        // Tag language/tables_9e81fb
+        // Tag python/tables_9e81fb
         // This was the second push of the test files.
         // Unchanged file1.txt
         // Updated file2.txt
@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
-              ""Tag"": ""language/tables_9e81fb""
+              ""Tag"": ""python/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario2(string inputJson)

@@ -64,7 +64,7 @@
     "@typespec/eslint-plugin": ">=0.40 <1.0",
     "@typespec/library-linter": ">=0.40 <1.0",
     "@typespec/prettier-plugin-typespec": ">=0.40 <1.0",
-    "@typespec/eslint-config-typespec": "0.x",
+    "@typespec/eslint-config-typespec": ">=0.6.0 <1.0",
     "@types/mocha": "~9.1.0",
     "@types/node": "~16.0.3",
     "@changesets/cli": "^2.24.4",

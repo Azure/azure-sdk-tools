@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace SwaggerApiParser;
 
@@ -19,9 +20,9 @@ public class SwaggerApiViewRoot : ITokenSerializable
         this.schemaCache = new SchemaCache();
     }
 
-    public void AddSwaggerSpec(SwaggerSpec swaggerSpec, string swaggerFilePath, string resourceProvider = "", string swaggerLink="")
+    public async Task AddSwaggerSpec(SwaggerSpec swaggerSpec, string swaggerFilePath, string resourceProvider = "", string swaggerLink="")
     {
-        var swaggerApiViewSpec = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, swaggerFilePath, this.schemaCache, resourceProvider, swaggerLink);
+        var swaggerApiViewSpec = await SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, swaggerFilePath, this.schemaCache, resourceProvider, swaggerLink);
 
         if (swaggerApiViewSpec != null)
         {

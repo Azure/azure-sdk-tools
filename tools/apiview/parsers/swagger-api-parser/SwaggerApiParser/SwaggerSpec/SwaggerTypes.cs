@@ -130,7 +130,7 @@ public class BaseSchema : ITokenSerializable
         var typeFormat = this.format != null ? $"/{this.format}" : "";
 
 
-        if (this.type is "array")
+        if (this.type is "array" && this.items is not null)
         {
             var reference = this.items.originalRef ?? this.items.Ref;
             var arrayType = Utils.GetDefinitionType(reference) ?? this.items.type;
@@ -180,11 +180,10 @@ public class BaseSchema : ITokenSerializable
             TokenSerializeProperties(new SerializeContext(context.intent + 2, context.IteratorPath), schema, schema.allOfProperities, ret, ref flattenedTableItems, serializeRef);
         }
 
-        if (schema.type == "array")
+        if (schema.type == "array" && schema.items is not null)
         {
             SchemaTableItem arrayItem = new SchemaTableItem {Description = schema.description};
-            var arrayType = schema.items.type != null ? $"array<{schema.items.type}>" : $"array<{Utils.GetDefinitionType(schema.items.originalRef)}>";
-            arrayItem.TypeFormat = arrayType;
+            arrayItem.TypeFormat = schema.items.type != null ? $"array<{schema.items.type}>" : $"array<{Utils.GetDefinitionType(schema.items.originalRef)}>";
             flattenedTableItems.Add(arrayItem);
             TokenSerializeArray(context, ret, schema, ref flattenedTableItems, serializeRef);
         }

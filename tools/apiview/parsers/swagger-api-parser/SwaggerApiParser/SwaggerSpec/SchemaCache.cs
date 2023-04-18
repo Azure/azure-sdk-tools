@@ -42,28 +42,6 @@ public class SchemaCache
         parameterCache.TryAdd(key, parameter);
     }
 
-    private static string GetReferencedSwaggerFile(string Ref, string currentSwaggerFilePath)
-    {
-        if (string.IsNullOrEmpty(Ref))
-        {
-            return currentSwaggerFilePath;
-        }
-
-        var idx = Ref.IndexOf("#", StringComparison.Ordinal);
-        var relativePath = Ref[..idx];
-        if (relativePath == "")
-        {
-            relativePath = ".";
-        }
-        else
-        {
-            currentSwaggerFilePath = Path.GetDirectoryName(currentSwaggerFilePath);
-        }
-
-        var referenceSwaggerFilePath = Path.GetFullPath(relativePath, currentSwaggerFilePath!);
-        return referenceSwaggerFilePath;
-    }
-
     public static string GetRefKey(string Ref)
     {
         var key = Ref.Split("/").Last();
@@ -79,7 +57,7 @@ public class SchemaCache
 
     public static string GetResolvedCacheRefKey(string Ref, string currentSwaggerFilePath)
     {
-        return RemoveCrossFileReferenceFromRef(Ref) + GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
+        return RemoveCrossFileReferenceFromRef(Ref) + Utils.GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
     }
 
     private BaseSchema GetSchemaFromResolvedCache(string Ref, string currentSwaggerFilePath)
@@ -94,7 +72,7 @@ public class SchemaCache
         // try get from resolved cache.
 
 
-        var referenceSwaggerFilePath = GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
+        var referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
 
 
         this.Cache.TryGetValue(referenceSwaggerFilePath, out var swaggerSchema);
@@ -119,7 +97,7 @@ public class SchemaCache
         // try get from resolved cache.
 
 
-        var referenceSwaggerFilePath = GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
+        var referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
 
 
         this.ParametersCache.TryGetValue(referenceSwaggerFilePath, out var parameterCache);
@@ -184,7 +162,7 @@ public class SchemaCache
             // get from original schema cache.
             refChain.AddLast(GetResolvedCacheRefKey(root.Ref, currentSwaggerFilePath));
             var schema = this.GetSchemaFromCache(root.Ref, currentSwaggerFilePath);
-            var ret = this.GetResolvedSchema(schema, GetReferencedSwaggerFile(root.Ref, currentSwaggerFilePath), refChain);
+            var ret = this.GetResolvedSchema(schema, Utils.GetReferencedSwaggerFile(root.Ref, currentSwaggerFilePath), refChain);
             // write back resolved cache
             this.ResolvedCache.TryAdd(GetResolvedCacheRefKey(root.Ref, currentSwaggerFilePath), schema);
             refChain.RemoveLast();

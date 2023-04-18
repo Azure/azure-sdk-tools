@@ -64,7 +64,7 @@ public class SwaggerApiViewGeneratorTest
     {
         var runCommandsFilePath = Path.GetFullPath("./fixtures/communicationserviceschat.json");
         var swaggerSpec = await SwaggerDeserializer.Deserialize(runCommandsFilePath);
-        var apiView = SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, runCommandsFilePath, new SchemaCache());
+        var apiView = await SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, runCommandsFilePath, new SchemaCache());
 
         var codeFile = apiView.GenerateCodeFile();
         //var outputFilePath = Path.GetFullPath("./communicationserviceschat_output.json");

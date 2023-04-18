@@ -181,7 +181,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 InitIntegrationTag(assets, adjustedAssetsRepoTag);
 
                 // set the TagPrefix to the adjusted test branch
-                assets.TagPrefix = adjustedAssetsRepoTag;
+                assets.Tag = adjustedAssetsRepoTag;
                 localAssetsJsonContent = JsonSerializer.Serialize(assets);
             }
 
@@ -402,8 +402,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         /// This function is only used by the Push scenarios. It'll clone the assets repository
         /// </summary>
         /// <param name="assets"></param>
-        /// <param name="adjustedAssetsRepoBranch"></param>
-        public static void InitIntegrationTag(Assets assets, string adjustedAssetsRepoBranch)
+        /// <param name="adjustedAssetsRepoTag"></param>
+        public static void InitIntegrationTag(Assets assets, string adjustedAssetsRepoTag)
         {
             // generate a test folder root
             string tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -419,10 +419,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 var gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, tmpPath);
 
                 // Clone the original assets repo
-                GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
+                GitHandler.Run($"clone --filter=blob:none {gitCloneUrl} .", tmpPath);
 
-                // Check to see if there's already a branch
-                CommandResult commandResult = GitHandler.Run($"ls-remote --tags {gitCloneUrl} {assets.TagPrefix}", tmpPath);
+                // Check to see if the tag already exists
+                CommandResult commandResult = GitHandler.Run($"ls-remote --tags {gitCloneUrl} {assets.Tag}", tmpPath);
 
                 // If the commandResult response is empty, there's nothing to do and we can return
                 if (!String.IsNullOrWhiteSpace(commandResult.StdOut))
@@ -430,15 +430,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     // If the commandResult response is not empty, the command result will have something
                     // similar to the following:
                     // e4a4949a2b6cc2ff75afd0fe0d97cbcabf7b67b7	refs/heads/scenario_clean_push
-                    GitHandler.Run($"checkout {assets.TagPrefix}", tmpPath);
-
+                    GitHandler.Run($"checkout {assets.Tag}", tmpPath);
                 }
 
-                // Create the adjustedAssetsRepoBranch from the original branch. The reason being is that pushing
+                // Create the adjustedAssetsRepoTag from the original branch. The reason being is that pushing
                 // to a branch of a branch is automatic
-                GitHandler.Run($"tag {adjustedAssetsRepoBranch}", tmpPath);
-                // Push the contents of the TagPrefix into the adjustedAssetsRepoBranch
-                GitHandler.Run($"push origin {adjustedAssetsRepoBranch}", tmpPath);
+                GitHandler.Run($"tag {adjustedAssetsRepoTag}", tmpPath);
+                // Push the contents of the TagPrefix into the adjustedAssetsRepoTag
+                GitHandler.Run($"push origin {adjustedAssetsRepoTag}", tmpPath);
             }
             finally
             {
@@ -473,7 +472,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Directory.CreateDirectory(tmpPath);
                 GitProcessHandler GitHandler = new GitProcessHandler();
                 string gitCloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
-                GitHandler.Run($"clone {gitCloneUrl} .", tmpPath);
+                GitHandler.Run($"clone --filter=blob:none {gitCloneUrl} .", tmpPath);
                 GitHandler.Run($"push origin --delete {assets.Tag}", tmpPath);
             }
             finally

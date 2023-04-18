@@ -514,7 +514,7 @@ OR
       - "Sorry, @{commenter}, only the original author can reopen this pull request."
   ```
 
-## Reset auto-merge approvals on untrusted changes
+## Reset approvals for untrusted changes
 
 ### Trigger
 
@@ -524,7 +524,7 @@ OR
 ### Criteria
 
 - Pull request is open
-- Pull request has "auto-merge" label
+- auto-merge has been enabled through the GitHub UI on the pull request
 - User who pushed the changes does NOT have a collaborator association
 - User who pushed changes does NOT have write permission
 - User who pushed changes does NOT have admin permission

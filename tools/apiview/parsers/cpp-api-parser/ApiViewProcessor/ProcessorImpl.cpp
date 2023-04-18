@@ -279,7 +279,6 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
       shouldCollect = true;
     }
   }
-
   // We don't even want to consider any types which are a member of a class.
   if (shouldCollect)
   {
@@ -399,7 +398,7 @@ int ApiViewProcessorImpl::ProcessApiView()
   // compilation database. Use the CurrentDirectorySetter to preserve and restore the current
   // directory across calls into the clang tooling.
   CurrentDirectorySetter currentDirectory{std::filesystem::current_path()};
-  
+
   // clang really likes all input paths to be absolute paths, so use the fiilesystem to
   // canonicalize the input filename and source location.
   std::filesystem::path tempFile = std::filesystem::temp_directory_path();

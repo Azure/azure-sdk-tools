@@ -51,6 +51,7 @@ public class Diagnostics {
         ));
         diagnostics.add(new BuilderTraitsDiagnosticRule());
         diagnostics.add(new MavenPackageAndDescriptionDiagnosticRule());
+        diagnostics.add(new ExpandableStringEnumDiagnosticRule());
 
         // common APIs for all builders (below we will do rules for http or amqp builders)
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule(null)

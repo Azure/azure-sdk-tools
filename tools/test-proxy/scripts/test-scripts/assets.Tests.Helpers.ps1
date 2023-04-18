@@ -124,7 +124,7 @@ Function Remove-Integration-Tag {
   try {
     Push-Location $tempPath
     $gitCloneUrl = Get-CloneUrl $Assets.AssetsRepo
-    Write-Host "git clone $($gitCloneUrl) ."
+    Write-Host "git clone  --filter=blob:none $($gitCloneUrl) ."
     git clone $($gitCloneUrl) .
     Write-Host "git push origin --delete $($Assets.Tag)"
     git push origin --delete $($Assets.Tag)
@@ -212,7 +212,7 @@ Function Describe-TestFolder {
     chmod 777 $testPath
   }
 
-  return $testPath
+  return $testPath.Replace("`\", "/")
 }
 
 # Cleanup the test folder used for testing. The DISABLE_INTEGRATION_BRANCH_CLEANUP
@@ -243,7 +243,7 @@ Function Invoke-ProxyCommand {
   )
 
   if ($TestProxyExe.Trim().ToLower() -eq "test-proxy") {
-    $CommandArgs += " --storage-location=`"$MountDirectory`""
+    $CommandArgs += " --storage-location=$MountDirectory"
     Write-Host "$TestProxyExe $CommandArgs"
     # Need to cast the output into an array otherwise it'll be one long string with no newlines
     if ($WriteOutput) {

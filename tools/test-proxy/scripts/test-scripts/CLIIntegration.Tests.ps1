@@ -30,7 +30,7 @@ Describe "AssetsModuleTests" {
                 AssetsRepoPrefixPath = "pull/scenarios"
                 AssetsRepoId         = ""
                 TagPrefix            = "main"
-                Tag                  = "language/tables_fc54d0"
+                Tag                  = "python/tables_fc54d0"
             }
             $files = @(
                 "assets.json"
@@ -55,7 +55,7 @@ Describe "AssetsModuleTests" {
                 AssetsRepoPrefixPath = "pull/scenarios"
                 AssetsRepoId         = ""
                 TagPrefix            = "main"
-                Tag                  = "language/tables_9e81fb"
+                Tag                  = "python/tables_9e81fb"
             }
 
             $files = @(
@@ -112,7 +112,7 @@ Describe "AssetsModuleTests" {
                 AssetsRepoPrefixPath = "pull/scenarios"
                 AssetsRepoId         = ""
                 TagPrefix            = "main"
-                Tag                  = "language/tables_fc54d0"
+                Tag                  = "python/tables_fc54d0"
             }
             $files = @(
                 "assets.json"
@@ -148,7 +148,7 @@ Describe "AssetsModuleTests" {
                     AssetsRepoPrefixPath = "pull/scenarios"
                     AssetsRepoId         = ""
                     TagPrefix            = "main"
-                    Tag                  = "language/tables_fc54d0"
+                    Tag                  = "python/tables_fc54d0"
                 }
                 $files = @(
                     "assets.json"
@@ -195,7 +195,7 @@ Describe "AssetsModuleTests" {
                     AssetsRepoPrefixPath = "pull/scenarios"
                     AssetsRepoId         = ""
                     TagPrefix            = "main"
-                    Tag                  = "language/tables_fc54d0"
+                    Tag                  = "python/tables_fc54d0"
                 }
                 $files = @(
                     "assets.json"
@@ -253,7 +253,7 @@ Describe "AssetsModuleTests" {
                     AssetsRepoPrefixPath = "pull/scenarios"
                     AssetsRepoId         = ""
                     TagPrefix            = "language/tables"
-                    Tag                  = "language/tables_fc54d0"
+                    Tag                  = "python/tables_fc54d0"
                 }
                 $files = @(
                     "assets.json"
@@ -372,7 +372,7 @@ Describe "AssetsModuleTests" {
                     AssetsRepoPrefixPath = "pull/scenarios"
                     AssetsRepoId         = ""
                     TagPrefix            = "language/tables"
-                    Tag                  = "language/tables_9e81fb"
+                    Tag                  = "python/tables_9e81fb"
                 }
 
                 $files = @(
@@ -424,6 +424,86 @@ Describe "AssetsModuleTests" {
 
                 $exists = Test-TagExists -AssetsJsonContent $updatedAssets -WorkingDirectory $localAssetsFilePath
                 $exists | Should -Be $true
+            }
+        }
+        It "Should handle pushing an identical SHA twice, and properly update to the necessary tag without error state." {
+            if ($env:CLI_TEST_WITH_DOCKER) {
+                Set-ItResult -Skipped
+            }
+            else {
+                $newTestFolder = ""
+                try {
+                    $testGuid = [Guid]::NewGuid()
+                    $created_tag_prefix = "test_$testGuid"
+                    $creationPath = Join-Path "sdk" "keyvault" "azure-keyvault-keys" "tests" "recordings"
+                    $file1 = Join-Path $creationPath "file1.txt"
+                    $file2 = Join-Path $creationPath "file2.txt"
+                    $file3 = Join-Path $creationPath "file3.txt"
+                    $recordingJson = [PSCustomObject]@{
+                        AssetsRepo           = "Azure/azure-sdk-assets-integration"
+                        AssetsRepoPrefixPath = ""
+                        AssetsRepoId         = ""
+                        TagPrefix            = $created_tag_prefix
+                        Tag                  = ""
+                    }
+    
+                    $assetsJsonRelativePath = Join-Path "sdk" "keyvault" "azure-keyvault-keys" "assets.json"
+    
+                    $files = @(
+                        $assetsJsonRelativePath
+                    )
+                    $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $false
+    
+                    $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+                    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                    $LASTEXITCODE | Should -Be 0
+    
+                    $localAssetsFilePath = Join-Path $testFolder ".assets"
+                    $assetsFolder = $(Get-ChildItem $localAssetsFilePath -Directory)[0].FullName
+                    mkdir -p $(Join-Path $assetsFolder $creationPath)
+    
+                    # Create new files. These are in a predictable location with predicatable content so we can generate the same SHA twice in a row.
+                    Edit-FileVersion -FilePath $assetsFolder -FileName $file1 -Version 1
+                    Edit-FileVersion -FilePath $assetsFolder -FileName $file2 -Version 1
+                    Edit-FileVersion -FilePath $assetsFolder -FileName $file3 -Version 1
+                    
+                    # Push the changes
+                    $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
+                    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                    $LASTEXITCODE | Should -Be 0
+
+                    # now, let's describe an _entirely different_ assets folder, attempt the same push.
+                    # this should result in the SAME tag twice in the assets repo, and we should properly NOT do the full push action
+                    $newTestFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $false
+                    $newAssetsFile = Join-Path $newTestFolder $assetsJsonRelativePath
+
+                    $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+                    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $newTestFolder
+                    $LASTEXITCODE | Should -Be 0
+
+                    $newlocalAssetsFilePath = Join-Path $newTestFolder ".assets"
+                    $newAssetsFolder = $(Get-ChildItem $newlocalAssetsFilePath -Directory)[0].FullName
+                    mkdir -p $(Join-Path $newAssetsFolder $creationPath)
+
+                    # same file updates. we should have an identical sha!
+                    Edit-FileVersion -FilePath $newAssetsFolder -FileName $file1 -Version 1
+                    Edit-FileVersion -FilePath $newAssetsFolder -FileName $file2 -Version 1
+                    Edit-FileVersion -FilePath $newAssetsFolder -FileName $file3 -Version 1
+                    
+                    $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
+                    Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $newTestFolder
+                    $LASTEXITCODE | Should -Be 0
+                    
+                    $updatedAssets = Update-AssetsFromFile -AssetsJsonContent $newAssetsFile
+    
+                    $exists = Test-TagExists -AssetsJsonContent $updatedAssets -WorkingDirectory $localAssetsFilePath
+                    $exists | Should -Be $true
+                }
+                finally {
+                    if ($newTestFolder) {
+                        Remove-Test-Folder $newTestFolder
+                    }
+                }
             }
         }
         AfterEach {

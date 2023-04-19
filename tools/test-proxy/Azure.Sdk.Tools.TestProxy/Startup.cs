@@ -53,50 +53,8 @@ namespace Azure.Sdk.Tools.TestProxy
         public static async Task Main(string[] args = null)
         {
             storedArgs = args;
-            // VerifyVerb(args);
             var rootCommand = OptionsGenerator.GenerateCommandLineOptions(Run);
             await rootCommand.InvokeAsync(args);
-        }
-
-        /// <summary>
-        /// This is only necessary because if there's a default verb defined, ours is start,
-        /// CommandLineParser doesn't verify the verb. If the issue is fixed this function
-        /// can be removed.
-        /// https://github.com/commandlineparser/commandline/issues/849
-        /// </summary>
-        /// <param name="args"></param>
-        static void VerifyVerb(string[] args)
-        {
-            // no arguments means the server is starting with all the default options
-            if (args.Length == 0)
-            {
-                return;
-            }
-
-            // if the first argument starts with a dash then they're options and the
-            // default verb is being used.
-            if (args[0].StartsWith("-"))
-            {
-                return;
-            }
-
-            // last but not least, the first argument is a verb, verify it's our verb
-            // version and help are default verbs and need to be in here
-            string[] array = { "start", "reset", "restore", "push", "version", "help" };
-            if (!array.Contains(args[0]))
-            {
-                // The odd looking formatting is to make this look like the same error
-                // CommandLineParser would output if the verb wasn't recognized.
-                string error = @$"ERROR(S):
-  Verb '{args[0]}' is not recognized.
-
-  --help       Display this help screen.
-
-  --version    Display version information.
-";
-                System.Console.WriteLine(error);
-                Environment.Exit(1);
-            }
         }
 
         private static async Task Run(object commandObj)

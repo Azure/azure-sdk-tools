@@ -49,6 +49,12 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
                 description: "Flag; Output configuration values when starting the Test-Proxy.",
                 getDefaultValue: () => false);
             dumpOption.AddAlias("-d");
+
+            var collectedArgs = new Argument<string[]>("args")
+            {
+                Arity = ArgumentArity.ZeroOrMore,
+                Description = "Remaining arguments after \"--\". Used for asp.net arguments."
+            };
             #endregion
 
             var root = new RootCommand();
@@ -65,11 +71,12 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             var startCommand = new Command("start", "Start the TestProxy.");
             startCommand.AddOption(insecureOption);
             startCommand.AddOption(dumpOption);
+            startCommand.AddArgument(collectedArgs);
             startCommand.SetHandler(async (startOpts) =>
                 {
                     await callback(startOpts);
                 },
-                new StartOptionsBinder(storageLocationOption, storagePluginOption, insecureOption, dumpOption)
+                new StartOptionsBinder(storageLocationOption, storagePluginOption, insecureOption, dumpOption, collectedArgs)
             );
             root.Add(startCommand);
 

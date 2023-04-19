@@ -66,16 +66,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
-        public async Task<string> GetPath(string pathToAssetsJson)
+        public async Task<NormalizedString> GetPath(string pathToAssetsJson)
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
 
-            if (!string.IsNullOrWhiteSpace(config.AssetsRepoPrefixPath.ToString()))
+            if (!string.IsNullOrWhiteSpace(config.AssetsRepoPrefixPath))
             {
-                return Path.Combine(config.AssetsRepoLocation.ToString(), config.AssetsRepoPrefixPath.ToString());
+                return new NormalizedString(Path.Combine(config.AssetsRepoLocation, config.AssetsRepoPrefixPath));
             }
 
-            return config.AssetsRepoLocation.ToString();
+            return new NormalizedString(config.AssetsRepoLocation);
         }
 
         /// <summary>

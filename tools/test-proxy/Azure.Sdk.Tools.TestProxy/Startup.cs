@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using CommandLine;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -18,14 +17,10 @@ using Microsoft.Extensions.Logging;
 using System.Reflection;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Azure.Sdk.Tools.TestProxy.Store;
-using Azure.Sdk.Tools.TestProxy.Console;
 using System.Diagnostics.CodeAnalysis;
-using System.Security.Cryptography.X509Certificates;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.Identity;
-using System.Collections.Generic;
 using System.Linq;
-using Azure.Sdk.Tools.TestProxy.CommandParserOptions;
+using System.CommandLine;
+using Azure.Sdk.Tools.TestProxy.CommandOptions;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -43,6 +38,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public static string TargetLocation;
         public static StoreResolver Resolver;
         public static IAssetsStore DefaultStore;
+        public static string[] storedArgs;
 
         private static string resolveRepoLocation(string storageLocation = null)
         {
@@ -56,34 +52,10 @@ namespace Azure.Sdk.Tools.TestProxy
         /// <param name="args">CommandLineParser arguments. In server mode use double dash '--' and everything after that becomes additional arguments to Host.CreateDefaultBuilder. Ex. -- arg1 value1 arg2 value2 </param>
         public static async Task Main(string[] args = null)
         {
-            VerifyVerb(args);
-            var parser = new Parser(settings =>
-            {
-                settings.CaseSensitive = false;
-                settings.HelpWriter = System.Console.Out;
-                settings.EnableDashDash = true;
-            });
-
-            await parser.ParseArguments<StartOptions, PushOptions, ResetOptions, RestoreOptions>(args)
-                .WithNotParsed(ExitWithError)
-                .WithParsedAsync(Run);
-        }
-
-        static void ExitWithError(IEnumerable<Error> errors)
-        {
-
-            // ParseArguments lumps help/--help and version/--version into WithNotParsed
-            // but their type is VersionRequestedError and HelpRequestedError/HelpVerbRequestedError.
-            // If the user is requesting help or version, don't exit 1, just exit 0
-            if (errors.Count() == 1)
-            {
-                Error err = errors.First();
-                if ((err.Tag == ErrorType.HelpVerbRequestedError || err.Tag == ErrorType.HelpRequestedError || err.Tag == ErrorType.VersionRequestedError))
-                {
-                    Environment.Exit(0);
-                }
-            }
-            Environment.Exit(1);
+            storedArgs = args;
+            // VerifyVerb(args);
+            var rootCommand = OptionsGenerator.GenerateCommandLineOptions(Run);
+            await rootCommand.InvokeAsync(args);
         }
 
         /// <summary>
@@ -129,12 +101,12 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private static async Task Run(object commandObj)
         {
-            new GitProcessHandler().VerifyGitMinVersion();
-            DefaultOptions defaultOptions = (DefaultOptions)commandObj;
-
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
             var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             System.Console.WriteLine($"Running proxy version is Azure.Sdk.Tools.TestProxy {semanticVersion}");
+
+            new GitProcessHandler().VerifyGitMinVersion();
+            DefaultOptions defaultOptions = (DefaultOptions)commandObj;
 
             TargetLocation = resolveRepoLocation(defaultOptions.StorageLocation);
             Resolver = new StoreResolver();
@@ -157,9 +129,24 @@ namespace Azure.Sdk.Tools.TestProxy
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(restoreOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Restore(assetsJson);
                     break;
+                case DefaultOptions defaultOpts:
+                    StartServer(defaultOpts);
+                    break;
                 default:
-                    throw new ArgumentException("Invalid verb. The only supported verbs are start, push, reset and restore.");
+                    throw new ArgumentException($"Unable to parse the argument set: {string.Join(" ", storedArgs)}");
             }
+        }
+
+        private static void StartServer(DefaultOptions startOptions)
+        {
+            StartServer(new StartOptions()
+            {
+                AdditionalArgs = new string[] { },
+                StorageLocation = startOptions.StorageLocation,
+                StoragePlugin = startOptions.StoragePlugin,
+                Insecure = false,
+                Dump = false
+            });
         }
 
         private static void StartServer(StartOptions startOptions)
@@ -173,7 +160,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 () => $"[{DateTime.UtcNow.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
                 newLine: true, statusThreadCts.Token);
 
-            var host = Host.CreateDefaultBuilder(startOptions.AdditionalArgs.ToArray());
+            var host = Host.CreateDefaultBuilder((startOptions.AdditionalArgs??new string[] { }).ToArray());
 
             host.ConfigureWebHostDefaults(
                 builder =>

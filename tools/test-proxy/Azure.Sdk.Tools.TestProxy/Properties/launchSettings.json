@@ -2,6 +2,7 @@
   "profiles": {
     "Azure.Sdk.Tools.TestProxy": {
       "commandName": "Project",
+      "commandLineArgs": "start --storage-location=\"C:/repo/sdk-for-python\" --insecure",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "Logging__LogLevel__Microsoft": "Information"

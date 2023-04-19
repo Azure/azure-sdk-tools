@@ -108,8 +108,8 @@ internal class ConsoleValueProvider : IUserValueProvider
         }
         else if (OperatingSystem.IsWindows())
         {
-            process.StartInfo.FileName = "cmd";
-            process.StartInfo.Arguments = $"/c \"echo {value} | clip.exe\"";
+            process.StartInfo.FileName = "pwsh";
+            process.StartInfo.Arguments = $"-c \"echo '{value}' | clip.exe\"";
         }
         else
         {

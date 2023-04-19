@@ -44,10 +44,10 @@ env:GITHUB_TOKEN="<pat>"
 
 ### Tool execution
 
-To run the tool directly from source, create a configuration file (see [test-configs](./tests/test-configs)) and run the following commands:
+To run the tool directly from source, create a configuration file (see [test-configs](./tests/test-configs)) and run the following commands in `<repo root>/tools/secret-management>`;
 
 ```
-dotnet run --project ./src -- <path to configuration file json>
+dotnet run --project ./Azure.Sdk.Tools.SecretManagement.Cli -- sync-access -f <path to configuration file json>
 ```
 
 ## Development

@@ -490,7 +490,7 @@ Describe "Platform Matrix Replace" -Tag "UnitTest", "replace" {
 {
   "matrix": {
     "Agent": {
-      "ubuntu-2004": { "OSVmImage": "MMSUbuntu20.04", "Pool": "azsdk-pool-mms-ubuntu-2004-general" }
+      "ubuntu-2004": { "OSVmImage": "ubuntu-20.04", "Pool": "azsdk-pool-mms-ubuntu-2004-general" }
     },
     "JavaTestVersion": [ "1.8", "1.11" ]
   }
@@ -504,7 +504,7 @@ Describe "Platform Matrix Replace" -Tag "UnitTest", "replace" {
         $matrix[0].name | Should -Be "ubuntu2004_20"
         $matrix[0].parameters.JavaTestVersion | Should -Be "2.0"
         $matrix[0].parameters.Pool | Should -Be "custom-ubuntu-pool"
-        $matrix[0].parameters.OSVmImage | Should -Be "MMSUbuntu20.04"
+        $matrix[0].parameters.OSVmImage | Should -Be "ubuntu-20.04"
 
         # Make sure non-literal keys still replace under the hood
         $matrix = GenerateMatrix $importConfig "all" -replace ".*=.*ubuntu.*/custom-ubuntu-pool"

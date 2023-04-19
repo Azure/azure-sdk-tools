@@ -33,7 +33,7 @@ jobs:
     displayName: "Delete ${{parameters.TagName}} tag from ${{parameters.Repository}} repository"
     environment: github-operation-approvals
     pool:
-      name: azsdk-pool-mms-ubuntu-1804-general
+      name: azsdk-pool-mms-ubuntu-2004-general
     strategy:
       runOnce:
         deploy:

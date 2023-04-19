@@ -623,7 +623,7 @@ $ ./Create-JobMatrix.ps1 -ConfigPath <test> -Selection all
     "JavaTestVersion": "1.8"
   },
   "ubuntu2204_111": {
-    "OSVmImage": "MMSUbuntu18.04",
+    "OSVmImage": "MMSUbuntu22.04",
     "Pool": "azsdk-pool-mms-ubuntu-2204-general",
     "JavaTestVersion": "1.11"
   }
@@ -644,7 +644,7 @@ $ ../Create-JobMatrix.ps1 -ConfigPath ./test.Json -Selection all -Replace $repla
     "Pool": "azsdk-pool-mms-ubuntu-2204-custom",
     "JavaTestVersion": "1.8"
   },
-  "ubuntu1804_20": {
+  "ubuntu2204_20": {
     "OSVmImage": "MMSUbuntu22.04",
     "Pool": "azsdk-pool-mms-ubuntu-2204-custom",
     "JavaTestVersion": "2.0"

@@ -67,7 +67,7 @@ Each of these CLI Commands takes an `assets.json` argument that provides the _co
 
 ### A note about using on Windows + WSL
 
-When using a Windows machine, it is technically possible to invoke tests from WSL against a windows clone. That path would appear under `/mnt/c/path/to/your/repo`. This is _not_ a supported scenario, as the `test-proxy` shells out to git for the push/restore actions. Running a `git restore` from _linux_ against a repo that was cloned down using a _windows_ git client can have unexpected results. Better to avoid the situation entirely and use an entirely separate clone for work on WSL.
+When using a Windows machine, it is technically possible to invoke tests from WSL against a windows clone. That path would appear under `/mnt/c/path/to/your/repo`. This is _not_ a supported scenario, as the `test-proxy` shells out to git for the push/restore actions. Running a `git push/pull` from _linux_ against a repo that was cloned down using a _windows_ git client can have unexpected results. Better to avoid the situation entirely and use an entirely separate clone for work on WSL.
 
 ## test-proxy CLI commands
 

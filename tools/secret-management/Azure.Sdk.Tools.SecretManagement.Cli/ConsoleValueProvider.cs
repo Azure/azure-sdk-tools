@@ -1,5 +1,6 @@
-﻿using System.Text;
-using System.Windows.Forms;
+﻿using System;
+using System.Diagnostics;
+using System.Text;
 using Azure.Sdk.Tools.SecretRotation.Stores.Generic;
 
 namespace Azure.Sdk.Tools.SecretManagement.Cli;
@@ -80,9 +81,41 @@ internal class ConsoleValueProvider : IUserValueProvider
 
     private static void SetClipboard(string value)
     {
-        Thread thread = new(() => Clipboard.SetText(value));
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        thread.Join();
+        var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                UseShellExecute = false,
+                RedirectStandardInput = true,
+                CreateNoWindow = true
+            }
+        };
+
+        if (OperatingSystem.IsLinux() && Environment.GetEnvironmentVariable("WSL_DISTRO_NAME") != null)
+        {
+            process.StartInfo.FileName = "bash";
+            process.StartInfo.Arguments = $"-c \"echo '{value}' | clip.exe\"";
+        }
+        else if (OperatingSystem.IsLinux())
+        {
+            process.StartInfo.FileName = "bash";
+            process.StartInfo.Arguments = $"-c \"echo '{value}' | xsel -i --clipboard\"";
+        }
+        else if (OperatingSystem.IsMacOS())
+        {
+            process.StartInfo.FileName = "bash";
+            process.StartInfo.Arguments = $"-c \"echo '{value}' | pbcopy\"";
+        }
+        else if (OperatingSystem.IsWindows())
+        {
+            process.StartInfo.FileName = "cmd";
+            process.StartInfo.Arguments = $"/c \"echo {value} | clip.exe\"";
+        }
+        else
+        {
+            Console.WriteLine($"Failed to copy to clipboard. Unsupported OS {Environment.OSVersion.Platform}");
+        }
+
+        process.Start();
     }
 }

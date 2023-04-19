@@ -17,6 +17,7 @@ public class Program
         rootCommand.AddCommand(new ListCommand());
         rootCommand.AddCommand(new StatusCommand());
         rootCommand.AddCommand(new RotateCommand());
+        rootCommand.AddCommand(new SyncAccessCommand());
 
         CommandLineBuilder cliBuilder = new CommandLineBuilder(rootCommand)
             .UseDefaults()

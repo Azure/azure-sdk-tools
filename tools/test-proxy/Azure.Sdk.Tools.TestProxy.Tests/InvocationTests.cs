@@ -11,18 +11,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class InvocationTests
     {
-        /*
-should print help
-
---help
-start --help
-coolion
-         * */
-        public Task WorkCallback(object obj)
-        {
-            return Task.CompletedTask;
-        }
-
         [Theory]
         [InlineData("start", "-i", "-d")]
         [InlineData("start")]

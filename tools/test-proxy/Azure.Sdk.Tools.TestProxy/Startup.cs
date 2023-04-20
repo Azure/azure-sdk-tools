@@ -69,18 +69,21 @@ namespace Azure.Sdk.Tools.TestProxy
             TargetLocation = resolveRepoLocation(defaultOptions.StorageLocation);
             Resolver = new StoreResolver();
             DefaultStore = Resolver.ResolveStore(defaultOptions.StoragePlugin ?? "GitStore");
+            var assetsJson = string.Empty;
+
 
             switch (commandObj)
             {
                 case ConfigLocateOptions configOptions:
-                    System.Console.WriteLine("config locate");
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
+                    System.Console.WriteLine(await DefaultStore.GetPath(assetsJson));
                     break;
                 case ConfigShowOptions configOptions:
-                    System.Console.WriteLine("config show");
-                    break;
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
+                    throw new NotImplementedException("Showing assets.json directly from test-proxy is not yet completed.");
                 case ConfigCreateOptions configOptions:
-                    System.Console.WriteLine("config create");
-                    break;
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
+                    throw new NotImplementedException("Interactive creation of assets.json feature is not yet completed.");
                 case ConfigOptions configOptions:
                     System.Console.WriteLine("Config verb requires a subcommand after the \"config\" verb.\n\nCorrect Usage: \"Azure.Sdk.Tools.TestProxy config locate|show|create -a path/to/assets.json\"");
                     break;
@@ -88,7 +91,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     StartServer(startOptions);
                     break;
                 case PushOptions pushOptions:
-                    var assetsJson = RecordingHandler.GetAssetsJsonLocation(pushOptions.AssetsJsonPath, TargetLocation);
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(pushOptions.AssetsJsonPath, TargetLocation);
                     await DefaultStore.Push(assetsJson);
                     break;
                 case ResetOptions resetOptions:

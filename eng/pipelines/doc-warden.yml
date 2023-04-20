@@ -28,7 +28,7 @@ jobs:
 
   pool:
     name: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: MMSUbuntu22.04
+    vmImage: ubuntu-22.04
 
   steps:
   - task: UsePythonVersion@0
@@ -77,7 +77,7 @@ jobs:
 
   pool:
     name: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: MMSUbuntu22.04
+    vmImage: ubuntu-22.04
 
   steps:
 

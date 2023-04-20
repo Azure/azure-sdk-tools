@@ -22,6 +22,8 @@ using System.Linq;
 using System.CommandLine;
 using Azure.Sdk.Tools.TestProxy.CommandOptions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.VisualBasic.Syntax;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -74,7 +76,6 @@ namespace Azure.Sdk.Tools.TestProxy
             DefaultStore = Resolver.ResolveStore(defaultOptions.StoragePlugin ?? "GitStore");
             var assetsJson = string.Empty;
 
-
             switch (commandObj)
             {
                 case ConfigLocateOptions configOptions:
@@ -83,10 +84,15 @@ namespace Azure.Sdk.Tools.TestProxy
                     break;
                 case ConfigShowOptions configOptions:
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
-                    throw new NotImplementedException("Showing assets.json directly from test-proxy is not yet completed.");
+                    using(var f = File.OpenRead(assetsJson))
+                    {
+                        using var jDoc = JsonDocument.Parse(f);
+                        System.Console.WriteLine(JsonSerializer.Serialize(jDoc, new JsonSerializerOptions { WriteIndented = true }));
+                    }
+                    break;
                 case ConfigCreateOptions configOptions:
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
-                    throw new NotImplementedException("Interactive creation of assets.json feature is not yet completed.");
+                    throw new NotImplementedException("Interactive creation of assets.json feature is not yet implemented.");
                 case ConfigOptions configOptions:
                     System.Console.WriteLine("Config verb requires a subcommand after the \"config\" verb.\n\nCorrect Usage: \"Azure.Sdk.Tools.TestProxy config locate|show|create -a path/to/assets.json\"");
                     break;

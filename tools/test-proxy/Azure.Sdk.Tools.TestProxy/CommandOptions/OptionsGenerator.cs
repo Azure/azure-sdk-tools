@@ -101,14 +101,17 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
                 new ConfigOptionsBinder(storageLocationOption, storagePluginOption, assetsJsonPathOption)
             );
             var configCreateCommand = new Command("create", "Enter a prompt and create an assets.json.");
+            configCreateCommand.AddOption(assetsJsonPathOption);
             configCreateCommand.SetHandler(async (configOpts) => await callback(configOpts),
                 new ConfigCreateOptionsBinder(storageLocationOption, storagePluginOption, assetsJsonPathOption)
             );
             var configShowCommand = new Command("show", "Show the content of a given assets.json.");
+            configShowCommand.AddOption(assetsJsonPathOption);
             configShowCommand.SetHandler(async (configOpts) => await callback(configOpts),
                 new ConfigShowOptionsBinder(storageLocationOption, storagePluginOption, assetsJsonPathOption)
             );
             var configLocateCommand = new Command("locate", "Get the assets repo root for a given assets.json path.");
+            configLocateCommand.AddOption(assetsJsonPathOption);
             configLocateCommand.SetHandler(async (configOpts) => await callback(configOpts),
                 new ConfigLocateOptionsBinder(storageLocationOption, storagePluginOption, assetsJsonPathOption)
             );

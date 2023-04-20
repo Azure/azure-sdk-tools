@@ -9,11 +9,10 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
         public bool Insecure { get; set; }
         public bool Dump { get; set; }
 
-        //// On the command line, use -- and everything after that becomes arguments to Host.CreateDefaultBuilder
-        //// For example Test-Proxy -i -d -- --urls https://localhost:8002 would set AdditionaArgs to a list containing
-        //// --urls and https://localhost:8002 as individual entries. This is converted to a string[] before being
-        //// passed to Host.CreateDefaultBuilder
-        //[CommandLine.Value(0)]
+        // On the command line, use -- and everything after that becomes arguments to Host.CreateDefaultBuilder
+        // For example Test-Proxy start -i -d -- --urls https://localhost:8002 would set AdditionaArgs to a list containing
+        // --urls and https://localhost:8002 as individual entries. This is converted to a string[] before being
+        // passed to Host.CreateDefaultBuilder
         public IEnumerable<string> AdditionalArgs { get; set; }
     }
     public class StartOptionsBinder : BinderBase<StartOptions>

@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.CommandLine;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.CommandOptions;
 using Xunit;
@@ -11,6 +10,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class InvocationTests
     {
+
+
         [Theory]
         [InlineData("start", "-i", "-d")]
         [InlineData("start")]
@@ -26,9 +27,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 return Task.CompletedTask;
             });
-            await rootCommand.InvokeAsync(input);
+            var exitCode = await rootCommand.InvokeAsync(input);
 
             Assert.True(obj is StartOptions);
+            Assert.Equal(0, exitCode);
 
             if (input.Contains("-i")|| input.Contains("--insecure"))
             {
@@ -61,10 +63,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 return Task.CompletedTask;
             });
-            await rootCommand.InvokeAsync(input);
+            var exitCode = await rootCommand.InvokeAsync(input);
 
             Assert.True(obj is StartOptions);
             Assert.Equal(new string[] { "--urls", "https://localhost:8002" }, ((StartOptions)obj).AdditionalArgs);
+            Assert.Equal(0, exitCode);
         }
 
         [Fact]
@@ -79,9 +82,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 return Task.CompletedTask;
             });
-            await rootCommand.InvokeAsync(input);
+            var exitCode = await rootCommand.InvokeAsync(input);
 
             Assert.True(obj is ConfigOptions);
+            Assert.Equal(0, exitCode);
         }
 
         [Fact]
@@ -96,10 +100,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 return Task.CompletedTask;
             });
-            await rootCommand.InvokeAsync(input);
+            var exitCode = await rootCommand.InvokeAsync(input);
 
             Assert.True(obj is ConfigShowOptions);
             Assert.Equal("path/to/assets.json", ((ConfigShowOptions)obj).AssetsJsonPath);
+            Assert.Equal(0, exitCode);
         }
 
         [Fact]
@@ -114,10 +119,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 return Task.CompletedTask;
             });
-            await rootCommand.InvokeAsync(input);
+            var exitCode = await rootCommand.InvokeAsync(input);
 
             Assert.True(obj is ConfigCreateOptions);
             Assert.Equal("path/to/assets.json", ((ConfigCreateOptions)obj).AssetsJsonPath);
+            Assert.Equal(0, exitCode);
         }
 
         [Fact]
@@ -132,10 +138,32 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 return Task.CompletedTask;
             });
-            await rootCommand.InvokeAsync(input);
+            var exitCode = await rootCommand.InvokeAsync(input);
 
             Assert.True(obj is ConfigLocateOptions);
             Assert.Equal("path/to/assets.json", ((ConfigLocateOptions)obj).AssetsJsonPath);
+            Assert.Equal(0, exitCode);
+        }
+
+        [Theory]
+        [InlineData("config", "invalid-verb")]
+        [InlineData("totally-invalid-verb")]
+
+        public async Task TestInvalidVerbCombinations(params string[] input)
+        {
+            var output = new StringWriter();
+            System.Console.SetOut(output);
+            var obj = string.Empty;
+            var rootCommand = OptionsGenerator.GenerateCommandLineOptions((DefaultOptions) =>
+            {
+                obj = "Invoked";
+
+                return Task.CompletedTask;
+            });
+            var exitCode = await rootCommand.InvokeAsync(input);
+
+            Assert.NotEqual("Invoked", obj);
+            Assert.Equal(1, exitCode);
         }
     }
 }

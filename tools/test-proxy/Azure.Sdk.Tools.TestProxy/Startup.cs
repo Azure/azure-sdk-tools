@@ -21,6 +21,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.CommandLine;
 using Azure.Sdk.Tools.TestProxy.CommandOptions;
+using Microsoft.AspNetCore.Identity;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -54,7 +55,9 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             storedArgs = args;
             var rootCommand = OptionsGenerator.GenerateCommandLineOptions(Run);
-            await rootCommand.InvokeAsync(args);
+            var resultCode = await rootCommand.InvokeAsync(args);
+
+            Environment.Exit(resultCode);
         }
 
         private static async Task Run(object commandObj)
@@ -103,23 +106,18 @@ namespace Azure.Sdk.Tools.TestProxy
                     await DefaultStore.Restore(assetsJson);
                     break;
                 case DefaultOptions defaultOpts:
-                    StartServer(defaultOpts);
+                    StartServer(new StartOptions()
+                    {
+                        AdditionalArgs = new string[] { },
+                        StorageLocation = defaultOpts.StorageLocation,
+                        StoragePlugin = defaultOpts.StoragePlugin,
+                        Insecure = false,
+                        Dump = false
+                    });
                     break;
                 default:
                     throw new ArgumentException($"Unable to parse the argument set: {string.Join(" ", storedArgs)}");
             }
-        }
-
-        private static void StartServer(DefaultOptions startOptions)
-        {
-            StartServer(new StartOptions()
-            {
-                AdditionalArgs = new string[] { },
-                StorageLocation = startOptions.StorageLocation,
-                StoragePlugin = startOptions.StoragePlugin,
-                Insecure = false,
-                Dump = false
-            });
         }
 
         private static void StartServer(StartOptions startOptions)

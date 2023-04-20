@@ -1,0 +1,6 @@
+# generated based on the values in your scenarios-matrix.yaml
+generatedValues.yaml
+
+# the temp output when we compile your .bicep template with resources
+stress-test-resources.json
+

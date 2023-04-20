@@ -1,3 +1,4 @@
 matrix:
   scenarios:
-    - stress
+    filesharedemo:
+      dataToBeWritten: "hello world"

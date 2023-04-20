@@ -72,6 +72,18 @@ namespace Azure.Sdk.Tools.TestProxy
 
             switch (commandObj)
             {
+                case ConfigLocateOptions configOptions:
+                    System.Console.WriteLine("config locate");
+                    break;
+                case ConfigShowOptions configOptions:
+                    System.Console.WriteLine("config show");
+                    break;
+                case ConfigCreateOptions configOptions:
+                    System.Console.WriteLine("config create");
+                    break;
+                case ConfigOptions configOptions:
+                    System.Console.WriteLine("Config verb requires a subcommand after the \"config\" verb.\n\nCorrect Usage: \"Azure.Sdk.Tools.TestProxy config locate|show|create -a path/to/assets.json\"");
+                    break;
                 case StartOptions startOptions:
                     StartServer(startOptions);
                     break;

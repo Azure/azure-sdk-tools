@@ -2,7 +2,7 @@
   "profiles": {
     "Azure.Sdk.Tools.TestProxy": {
       "commandName": "Project",
-      "commandLineArgs": "start -i -d -- --urls https://localhost:8002",
+      "commandLineArgs": "config show",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "Logging__LogLevel__Microsoft": "Information"

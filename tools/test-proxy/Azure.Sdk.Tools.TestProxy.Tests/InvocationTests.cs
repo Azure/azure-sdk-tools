@@ -237,5 +237,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal("path/to/assets.json", ((ResetOptions)obj).AssetsJsonPath);
             Assert.Equal(0, exitCode);
         }
+
+
+        [Fact]
+        public async Task TestPushOptionsErrorsWithNoPath()
+        {
+            string[] input = new string[] { "push" };
+
+            var output = new StringWriter();
+            System.Console.SetOut(output);
+            var obj = new object();
+            var rootCommand = OptionsGenerator.GenerateCommandLineOptions((DefaultOptions) =>
+            {
+                obj = DefaultOptions;
+
+                return Task.CompletedTask;
+            });
+            var exitCode = await rootCommand.InvokeAsync(input);
+            Assert.Equal(1, exitCode);
+        }
     }
 }

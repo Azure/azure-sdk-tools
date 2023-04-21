@@ -25,8 +25,7 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
 
             var assetsJsonPathOption = new Option<string>(
                 name: "--assets-json-path",
-                description: "Required for any operation that requires an assets.json path. Currently Push/Reset/Restore. This should be a path to a valid assets.json within a language repository.",
-                getDefaultValue: () => null)
+                description: "Required for any operation that requires an assets.json path. Currently Push/Reset/Restore. This should be a path to a valid assets.json within a language repository.")
             {
                 IsRequired = true
             };

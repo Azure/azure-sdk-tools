@@ -32,10 +32,10 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             };
             assetsJsonPathOption.AddAlias("-a");
 
-            var confirmResetOption = new Option<string>(
+            var confirmResetOption = new Option<bool>(
                 name: "--yes",
                 description: "Do not prompt for confirmation when resetting pending changes.",
-                getDefaultValue: () => null);
+                getDefaultValue: () => false);
             confirmResetOption.AddAlias("-y");
 
             var insecureOption = new Option<bool>(
@@ -89,8 +89,8 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             root.Add(restoreCommand);
 
             var resetCommand = new Command("reset", "Reset the assets, referenced by assets.json, from git to their original files referenced by the tag. Will prompt if there are pending changes unless indicated by -y/--yes.");
-            restoreCommand.AddOption(assetsJsonPathOption);
-            restoreCommand.AddOption(confirmResetOption);
+            resetCommand.AddOption(assetsJsonPathOption);
+            resetCommand.AddOption(confirmResetOption);
             resetCommand.SetHandler(async (resetOpts) => await callback(resetOpts),
                 new ResetOptionsBinder(storageLocationOption, storagePluginOption, assetsJsonPathOption, confirmResetOption)
             );

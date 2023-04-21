@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
     /// </summary>
     public class ResetOptions : CLICommandOptions
     {
-        public string ConfirmReset { get; set; }
+        public bool ConfirmReset { get; set; }
     }
 
     public class ResetOptionsBinder : BinderBase<ResetOptions>
@@ -16,9 +16,9 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
         private readonly Option<string> _storageLocationOption;
         private readonly Option<string> _storagePluginOption;
         private readonly Option<string> _assetsJsonPathOption;
-        private readonly Option<string> _confirmResetOption;
+        private readonly Option<bool> _confirmResetOption;
 
-        public ResetOptionsBinder(Option<string> storageLocationOption, Option<string> storagePluginOption, Option<string> assetsJsonPathOption, Option<string> confirmResetOption)
+        public ResetOptionsBinder(Option<string> storageLocationOption, Option<string> storagePluginOption, Option<string> assetsJsonPathOption, Option<bool> confirmResetOption)
         {
             _storageLocationOption = storageLocationOption;
             _storagePluginOption = storagePluginOption;

@@ -165,5 +165,77 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.NotEqual("Invoked", obj);
             Assert.Equal(1, exitCode);
         }
+
+        [Theory]
+        [InlineData("push", "-a", "path/to/assets.json")]
+
+        public async Task TestPushOptions(params string[] input)
+        {
+            var output = new StringWriter();
+            System.Console.SetOut(output);
+            var obj = new object();
+            var rootCommand = OptionsGenerator.GenerateCommandLineOptions((DefaultOptions) =>
+            {
+                obj = DefaultOptions;
+
+                return Task.CompletedTask;
+            });
+            var exitCode = await rootCommand.InvokeAsync(input);
+
+            Assert.True(obj is PushOptions);
+            Assert.Equal("path/to/assets.json", ((PushOptions)obj).AssetsJsonPath);
+            Assert.Equal(0, exitCode);
+        }
+
+        [Theory]
+        [InlineData("restore", "-a", "path/to/assets.json")]
+
+        public async Task TestRestoreOptions(params string[] input)
+        {
+            var output = new StringWriter();
+            System.Console.SetOut(output);
+            var obj = new object();
+            var rootCommand = OptionsGenerator.GenerateCommandLineOptions((DefaultOptions) =>
+            {
+                obj = DefaultOptions;
+
+                return Task.CompletedTask;
+            });
+            var exitCode = await rootCommand.InvokeAsync(input);
+
+            Assert.True(obj is RestoreOptions);
+            Assert.Equal("path/to/assets.json", ((RestoreOptions)obj).AssetsJsonPath);
+            Assert.Equal(0, exitCode);
+        }
+
+        [Theory]
+        [InlineData("reset", "-a", "path/to/assets.json")]
+        [InlineData("reset", "-y", "-a", "path/to/assets.json")]
+        public async Task TestResetOptions(params string[] input)
+        {
+            var output = new StringWriter();
+            System.Console.SetOut(output);
+            var obj = new object();
+            var rootCommand = OptionsGenerator.GenerateCommandLineOptions((DefaultOptions) =>
+            {
+                obj = DefaultOptions;
+
+                return Task.CompletedTask;
+            });
+            var exitCode = await rootCommand.InvokeAsync(input);
+
+            if (input.Contains("--yes") || input.Contains("-y"))
+            {
+                Assert.True(((ResetOptions)obj).ConfirmReset);
+            }
+            else
+            {
+                Assert.False(((ResetOptions)obj).ConfirmReset);
+            }
+
+            Assert.True(obj is ResetOptions);
+            Assert.Equal("path/to/assets.json", ((ResetOptions)obj).AssetsJsonPath);
+            Assert.Equal(0, exitCode);
+        }
     }
 }

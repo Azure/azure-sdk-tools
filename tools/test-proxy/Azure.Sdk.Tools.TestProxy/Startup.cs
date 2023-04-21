@@ -86,8 +86,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
                     using(var f = File.OpenRead(assetsJson))
                     {
-                        using var jDoc = JsonDocument.Parse(f);
-                        System.Console.WriteLine(JsonSerializer.Serialize(jDoc, new JsonSerializerOptions { WriteIndented = true }));
+                        using var json = JsonDocument.Parse(f);
+                        System.Console.WriteLine(JsonSerializer.Serialize(json, new JsonSerializerOptions { WriteIndented = true }));
                     }
                     break;
                 case ConfigCreateOptions configOptions:

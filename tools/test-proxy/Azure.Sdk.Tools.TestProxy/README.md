@@ -481,6 +481,8 @@ Add a more expansive Header sanitizer that uses a target group instead of filter
 }
 ```
 
+> Note: Regex strings are being passed as a member of a JSON object. As visible in the above example, escape characters must be _double escaped_. `\n` -> `\\n`. `\\` -> `\\\\`. Read the "string" description on [json.org](https://json.org) for more detail.
+
 #### A note about where sanitizers apply
 
 Each sanitizer is optionally prefaced with the **specific part** of the request/response pair that it applies to. These prefixes are

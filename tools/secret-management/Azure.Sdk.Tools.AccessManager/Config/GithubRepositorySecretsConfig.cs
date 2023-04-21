@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace Azure.Sdk.Tools.AccessManager;
+namespace Azure.Sdk.Tools.AccessManagement;
 
 public class GithubRepositorySecretsConfig : BaseConfig
 {

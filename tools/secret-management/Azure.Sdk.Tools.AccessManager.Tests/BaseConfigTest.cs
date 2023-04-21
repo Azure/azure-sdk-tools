@@ -3,7 +3,7 @@ using FluentAssertions;
 using Moq;
 using Microsoft.Graph.Models;
 
-namespace Azure.Sdk.Tools.AccessManager.Tests;
+namespace Azure.Sdk.Tools.AccessManagement.Tests;
 
 public class BaseConfigTest
 {

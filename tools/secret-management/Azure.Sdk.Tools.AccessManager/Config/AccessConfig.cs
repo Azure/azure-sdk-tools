@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace Azure.Sdk.Tools.AccessManager;
+namespace Azure.Sdk.Tools.AccessManagement;
 
 /*
  * EXAMPLE entry

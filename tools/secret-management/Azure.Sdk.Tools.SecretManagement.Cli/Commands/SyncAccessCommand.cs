@@ -1,7 +1,6 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using Azure.Sdk.Tools.AccessManager;
-using Azure.Identity;
+using Azure.Sdk.Tools.AccessManagement;
 
 namespace Azure.Sdk.Tools.SecretManagement.Cli.Commands;
 
@@ -23,27 +22,6 @@ public class SyncAccessCommand : Command
     public async Task Run(InvocationContext invocationContext)
     {
         var fileOptions = invocationContext.ParseResult.GetValueForOption(this.fileOption);
-        foreach (var file in fileOptions?.ToList() ?? new List<string>())
-        {
-            var config = new FileInfo(file);
-            Console.WriteLine("Using config -> " + config.FullName + Environment.NewLine);
-
-            var accessConfig = new AccessConfig(config.FullName);
-            Console.WriteLine(accessConfig.ToString());
-            Console.WriteLine("---");
-            Console.WriteLine("Reconciling...");
-
-            var credential = new DefaultAzureCredential();
-            var reconciler = new Reconciler(new GraphClient(credential), new RbacClient(credential), new GitHubClient());
-
-            try
-            {
-                await reconciler.Reconcile(accessConfig);
-            }
-            catch
-            {
-                Environment.Exit(1);
-            }
-        }
+        await AccessManager.Run(fileOptions?.ToList() ?? new List<string>());
     }
 }

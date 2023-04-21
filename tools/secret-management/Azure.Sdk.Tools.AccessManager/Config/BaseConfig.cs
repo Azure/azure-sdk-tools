@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace Azure.Sdk.Tools.AccessManager;
+namespace Azure.Sdk.Tools.AccessManagement;
 
 public abstract class BaseConfig
 {

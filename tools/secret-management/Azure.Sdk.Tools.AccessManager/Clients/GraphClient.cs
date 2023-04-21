@@ -2,7 +2,7 @@ using Azure.Identity;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 
-namespace Azure.Sdk.Tools.AccessManager;
+namespace Azure.Sdk.Tools.AccessManagement;
 
 /*
  * Wrapper for Microsoft.Graph GraphServiceClient

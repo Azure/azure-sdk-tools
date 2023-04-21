@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Octokit;
 
-namespace Azure.Sdk.Tools.AccessManager;
+namespace Azure.Sdk.Tools.AccessManagement;
 
 public class GitHubClient : IGitHubClient
 {

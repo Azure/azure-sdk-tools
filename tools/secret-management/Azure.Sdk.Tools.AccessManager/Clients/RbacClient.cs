@@ -6,7 +6,7 @@ using Azure.ResourceManager.Authorization;
 using Azure.ResourceManager.Authorization.Models;
 using Microsoft.Graph.Models;
 
-namespace Azure.Sdk.Tools.AccessManager;
+namespace Azure.Sdk.Tools.AccessManagement;
 
 /*
  * Wrapper for Azure.ResourceManager ArmClient

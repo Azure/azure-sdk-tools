@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.Graph.Models;
 
-namespace Azure.Sdk.Tools.AccessManager;
+namespace Azure.Sdk.Tools.AccessManagement;
 
 public class FederatedIdentityCredentialsConfig : BaseConfig, IEquatable<FederatedIdentityCredential>
 {

@@ -946,7 +946,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return returnList;
         }
 
-         public string CreateURLForConfigEntry(Repository repository, string subdirectory, string fileName)
+        /// <summary>
+        /// Create a raw github URL (https://raw.githubusercontent.com) for a file in a given repository
+        /// </summary>
+        /// <param name="repository">Octkit.Repository from the event payload</param>
+        /// <param name="subdirectory">Subdirectory where the file lives</param>
+        /// <param name="fileName">name of the file</param>
+        /// <returns></returns>
+        public string CreateRawGitHubURLForFile(Repository repository, string subdirectory, string fileName)
         {
             // https://raw.githubusercontent.com/Azure/azure-sdk-for-net/main/.github/
             // The Full URL is BaseUrl + repositoryFullName + defaultBranch + remoteFilePath + fileName
@@ -954,10 +961,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return fileUrl;
         }
 
+        /// <summary>
+        /// Set the config file overrides for codeowners and rulesconfig which will cause them to get pulled
+        /// from the URL instead of requiring a sparse checkout of the configuration directory in order to run.
+        /// </summary>
+        /// <param name="repository">Octkit.Repository from the event payload</param>
         public void SetConfigEntryOverrides(Repository repository)
         {
-            CodeOwnerUtils.codeOwnersFilePathOverride = CreateURLForConfigEntry(repository, CodeOwnerUtils.CodeownersSubDirectory, CodeOwnerUtils.CodeownersFileName);
-            RulesConfiguration.rulesConfigFilePathOverride = CreateURLForConfigEntry(repository, RulesConfiguration.RulesConfigSubDirectory, RulesConfiguration.RulesConfigFileName);
+            CodeOwnerUtils.codeOwnersFilePathOverride = CreateRawGitHubURLForFile(repository, CodeOwnerUtils.CodeownersSubDirectory, CodeOwnerUtils.CodeownersFileName);
+            RulesConfiguration.rulesConfigFilePathOverride = CreateRawGitHubURLForFile(repository, RulesConfiguration.RulesConfigSubDirectory, RulesConfiguration.RulesConfigFileName);
         }
 
     }

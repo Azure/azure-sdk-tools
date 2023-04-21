@@ -6,6 +6,7 @@
         <IsPackable>false</IsPackable>
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <WarningsNotAsErrors>8002</WarningsNotAsErrors>
     </PropertyGroup>
 
     <Import Project="../../Directory.Build.props" />

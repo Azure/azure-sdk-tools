@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-rotation/schema/1.0.0/plan.json",
+  "$schema": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-management/schema/1.0.0/plan.json",
   "rotationPeriod": "1.00:00:00",
   "rotationThreshold": "23:59:00",
   "revokeAfterPeriod": "00:05:00",

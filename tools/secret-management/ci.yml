@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/secret-rotation
+      - tools/secret-management
 
 pr:
   branches:
@@ -19,9 +19,9 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/secret-rotation
+      - tools/secret-management
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ToolDirectory: tools/secret-rotation
+    ToolDirectory: tools/secret-management

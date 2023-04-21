@@ -131,13 +131,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
 
         public RulesConfiguration RulesConfiguration
         {
-            get { return _rulesConfiguration; }
+            get {
+                if (null == _rulesConfiguration) 
+                {
+                    _rulesConfiguration = LoadRulesConfiguration();
+                }
+                return _rulesConfiguration; 
+            }
         }
 
-        public GitHubEventClient(string productHeaderName, string rulesConfigLocation = null)
+        public GitHubEventClient(string productHeaderName)
         {
             _gitHubClient = CreateClientWithGitHubEnvToken(productHeaderName);
-            _rulesConfiguration = LoadRulesConfiguration(rulesConfigLocation);
         }
 
         /// <summary>
@@ -940,5 +945,20 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             }
             return returnList;
         }
+
+         public string CreateURLForConfigEntry(Repository repository, string subdirectory, string fileName)
+        {
+            // https://raw.githubusercontent.com/Azure/azure-sdk-for-net/main/.github/
+            // The Full URL is BaseUrl + repositoryFullName + defaultBranch + remoteFilePath + fileName
+            string fileUrl = $"{ConfigConstants.RawGitHubUserContentUrl}/{repository.FullName}/{ConfigConstants.DefaultBranch}/{subdirectory}/{fileName}";
+            return fileUrl;
+        }
+
+        public void SetConfigEntryOverrides(Repository repository)
+        {
+            CodeOwnerUtils.codeOwnersFilePathOverride = CreateURLForConfigEntry(repository, CodeOwnerUtils.CodeownersSubDirectory, CodeOwnerUtils.CodeownersFileName);
+            RulesConfiguration.rulesConfigFilePathOverride = CreateURLForConfigEntry(repository, RulesConfiguration.RulesConfigSubDirectory, RulesConfiguration.RulesConfigFileName);
+        }
+
     }
 }

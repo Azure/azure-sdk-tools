@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Azure.Sdk.Tools.AccessManager/Azure.Sdk.Tools.AccessManager.csproj" />
+    <ProjectReference Include="../Azure.Sdk.Tools.AccessManagement/Azure.Sdk.Tools.AccessManagement.csproj" />
   </ItemGroup>
 
   <ItemGroup>

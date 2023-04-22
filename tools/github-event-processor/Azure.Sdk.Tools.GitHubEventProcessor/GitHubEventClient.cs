@@ -131,13 +131,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
 
         public RulesConfiguration RulesConfiguration
         {
-            get { return _rulesConfiguration; }
+            get {
+                if (null == _rulesConfiguration) 
+                {
+                    _rulesConfiguration = LoadRulesConfiguration();
+                }
+                return _rulesConfiguration; 
+            }
         }
 
-        public GitHubEventClient(string productHeaderName, string rulesConfigLocation = null)
+        public GitHubEventClient(string productHeaderName)
         {
             _gitHubClient = CreateClientWithGitHubEnvToken(productHeaderName);
-            _rulesConfiguration = LoadRulesConfiguration(rulesConfigLocation);
         }
 
         /// <summary>
@@ -940,5 +945,32 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             }
             return returnList;
         }
+
+        /// <summary>
+        /// Create a raw github URL (https://raw.githubusercontent.com) for a file in a given repository
+        /// </summary>
+        /// <param name="repository">Octkit.Repository from the event payload</param>
+        /// <param name="subdirectory">Subdirectory where the file lives</param>
+        /// <param name="fileName">name of the file</param>
+        /// <returns></returns>
+        public string CreateRawGitHubURLForFile(Repository repository, string subdirectory, string fileName)
+        {
+            // https://raw.githubusercontent.com/Azure/azure-sdk-for-net/main/.github/
+            // The Full URL is BaseUrl + repositoryFullName + defaultBranch + remoteFilePath + fileName
+            string fileUrl = $"{ConfigConstants.RawGitHubUserContentUrl}/{repository.FullName}/{ConfigConstants.DefaultBranch}/{subdirectory}/{fileName}";
+            return fileUrl;
+        }
+
+        /// <summary>
+        /// Set the config file overrides for codeowners and rulesconfig which will cause them to get pulled
+        /// from the URL instead of requiring a sparse checkout of the configuration directory in order to run.
+        /// </summary>
+        /// <param name="repository">Octkit.Repository from the event payload</param>
+        public void SetConfigEntryOverrides(Repository repository)
+        {
+            CodeOwnerUtils.codeOwnersFilePathOverride = CreateRawGitHubURLForFile(repository, CodeOwnerUtils.CodeownersSubDirectory, CodeOwnerUtils.CodeownersFileName);
+            RulesConfiguration.rulesConfigFilePathOverride = CreateRawGitHubURLForFile(repository, RulesConfiguration.RulesConfigSubDirectory, RulesConfiguration.RulesConfigFileName);
+        }
+
     }
 }

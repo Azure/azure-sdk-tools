@@ -41,12 +41,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 case EventConstants.Issues:
                     {
                         IssueEventGitHubPayload issueEventPayload = serializer.Deserialize<IssueEventGitHubPayload>(rawJson);
+                        gitHubEventClient.SetConfigEntryOverrides(issueEventPayload.Repository);
                         await IssueProcessing.ProcessIssueEvent(gitHubEventClient, issueEventPayload);
                         break;
                     }
                 case EventConstants.IssueComment:
                     {
                         IssueCommentPayload issueCommentPayload = serializer.Deserialize<IssueCommentPayload>(rawJson);
+                        gitHubEventClient.SetConfigEntryOverrides(issueCommentPayload.Repository);
                         // IssueComment events are for both issues and pull requests. If the comment is on a pull request,
                         // then Issue's PullRequest object in the payload will be non-null
                         if (issueCommentPayload.Issue.PullRequest != null)
@@ -65,12 +67,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         // The pull_request, because of the auto_merge processing, requires more than just deserialization of the
                         // the rawJson.
                         PullRequestEventGitHubPayload prEventPayload = PullRequestProcessing.DeserializePullRequest(rawJson, serializer);
+                        gitHubEventClient.SetConfigEntryOverrides(prEventPayload.Repository);
                         await PullRequestProcessing.ProcessPullRequestEvent(gitHubEventClient, prEventPayload);
                         break;
                     }
                 case EventConstants.PullRequestReview:
                     {
                         PullRequestReviewEventPayload prReviewEventPayload = serializer.Deserialize<PullRequestReviewEventPayload>(rawJson);
+                        gitHubEventClient.SetConfigEntryOverrides(prReviewEventPayload.Repository);
                         await PullRequestReviewProcessing.ProcessPullRequestReviewEvent(gitHubEventClient, prReviewEventPayload);
                         break;
                     }
@@ -87,6 +91,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         }
 
                         ScheduledEventGitHubPayload scheduledEventPayload = serializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
+                        gitHubEventClient.SetConfigEntryOverrides(scheduledEventPayload.Repository);
                         string cronTaskToRun = args[2];
                         await ScheduledEventProcessing.ProcessScheduledEvent(gitHubEventClient, scheduledEventPayload, cronTaskToRun);
                         break;

@@ -79,6 +79,13 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
                         listing.addDiagnostic(new Diagnostic(DiagnosticKind.ERROR,
                                 makeId(JavaASTAnalyser.MODULE_INFO_KEY), "Public package not exported: " + missingExport));
                     });
+
+            exportsPackages.stream()
+                    .filter(exportedPackage -> exportedPackage.contains(".implementation"))
+                    .forEach(implementationPackage -> {
+                        listing.addDiagnostic(new Diagnostic(DiagnosticKind.ERROR,
+                                makeId(JavaASTAnalyser.MODULE_INFO_KEY + "-exports-" + implementationPackage), "Implementation package should not be exported - " + implementationPackage));
+                    });
         }
     }
 }

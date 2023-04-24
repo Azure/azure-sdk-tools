@@ -15,16 +15,16 @@ parameters:
   type: object
   default: []
 
-pool:
-  name: azsdk-pool-mms-ubuntu-2204-general
-  vmImage: ubuntu-22.04
-
 stages:
   - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
     - stage: CreateSync
       jobs:
         - job: SyncEngCommon
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
+
+          pool:
+            name: azsdk-pool-mms-ubuntu-2204-general
+            vmImage: ubuntu-22.04
 
           steps:
             - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
@@ -198,6 +198,10 @@ stages:
       jobs:
         - job: SyncEngCommon
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
+
+          pool:
+            name: azsdk-pool-mms-ubuntu-2204-general
+            vmImage: ubuntu-22.04
 
           steps:
             - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml

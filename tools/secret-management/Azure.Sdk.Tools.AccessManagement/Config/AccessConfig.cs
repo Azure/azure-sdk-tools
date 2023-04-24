@@ -1,115 +1,86 @@
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.AccessManagement;
 
-/*
- * EXAMPLE entry
- [
-    {
-        "appDisplayName": "azure-sdk-github-actions-test1",
-        "roleBasedAccessControls": [
-            {
-              "role": "Contributor",
-              "scope": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-testfoobaraccessmanager"
-            },
-            {
-              "role": "Key Vault Secrets User",
-              "scope": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-testfoobaraccessmanager/providers/Microsoft.KeyVault/vaults/testfoobaraccessmanager"
-            }
-        ],
-        "federatedIdentityCredentials": [
-            {
-              "audiences": [
-                "api://azureadtokenexchange"
-              ],
-              "description": "event processor oidc main tools",
-              "issuer": "https://token.actions.githubusercontent.com",
-              "name": "githubactionscredential-tools-main",
-              "subject": "repo:azure/azure-sdk-tools:ref:refs/heads/main"
-            },
-            {
-              "audiences": [
-                "api://azureadtokenexchange"
-              ],
-              "description": "event processor oidc main net",
-              "issuer": "https://token.actions.githubusercontent.com",
-              "name": "githubactionscredential-net-main",
-              "subject": "repo:azure/azure-sdk-for-net:ref:refs/heads/main"
-            }
-        ]
-    }
-]
-*/
-
 public class AccessConfig
 {
-    public string ConfigPath { get; set; } = "not-set";
-    public List<ApplicationAccessConfig> ApplicationAccessConfigs { get; set; } = new List<ApplicationAccessConfig>();
-    public List<ApplicationAccessConfig> RawApplicationAccessConfigs { get; set; } = new List<ApplicationAccessConfig>();
+    public struct ConfigData {
+        public FileInfo File { get; set; }
+        public ApplicationAccessConfig ApplicationAccessConfig { get; set; }
+        public ApplicationAccessConfig RawApplicationAccessConfig { get; set; }
+    }
 
-    public AccessConfig(string configPath)
+    public List<ConfigData> Configs { get; set; } = new List<ConfigData>();
+
+    public AccessConfig(List<string> configPaths)
     {
-        ConfigPath = configPath;
-        var contents = File.ReadAllText(ConfigPath);
-
-        ApplicationAccessConfigs =
-            JsonSerializer.Deserialize<List<ApplicationAccessConfig>>(contents) ?? new List<ApplicationAccessConfig>();
-        // Keep an unrendered version of config values so we can retain templating
-        // when we need to serialize back to the config file
-        RawApplicationAccessConfigs =
-            JsonSerializer.Deserialize<List<ApplicationAccessConfig>>(contents) ?? new List<ApplicationAccessConfig>();
-
-        foreach (var appAccessConfig in ApplicationAccessConfigs)
+        foreach (var configPath in configPaths)
         {
-            appAccessConfig.Render();
+            var config = new FileInfo(configPath);
+            Console.WriteLine($"Using config -> {config.FullName}{Environment.NewLine}");
+            var contents = File.ReadAllText(config.FullName);
+            var configData = new ConfigData { File = config };
+
+            configData.ApplicationAccessConfig =
+                JsonSerializer.Deserialize<ApplicationAccessConfig>(contents) ?? new ApplicationAccessConfig();
+            configData.ApplicationAccessConfig.Render();
+
+            // Keep an unrendered version of config values so we can retain templating
+            // when we need to serialize back to the config file
+            configData.RawApplicationAccessConfig =
+                JsonSerializer.Deserialize<ApplicationAccessConfig>(contents) ?? new ApplicationAccessConfig();
+
+            Configs.Add(configData);
         }
     }
 
     public void SyncProperties()
     {
-        for (var i = 0; i < RawApplicationAccessConfigs?.Count; i++)
+        foreach (var config in Configs)
         {
-            RawApplicationAccessConfigs[i].Properties =
-                new SortedDictionary<string, string>(ApplicationAccessConfigs[i].Properties);
+            config.RawApplicationAccessConfig.Properties =
+                new SortedDictionary<string, string>(config.ApplicationAccessConfig.Properties);
         }
     }
 
     public async Task Save()
     {
-        var contents = JsonSerializer.Serialize(
-            RawApplicationAccessConfigs, new JsonSerializerOptions { WriteIndented = true });
-        await File.WriteAllTextAsync(ConfigPath, contents);
+        foreach (var config in Configs)
+        {
+            var contents = JsonSerializer.Serialize(
+                config.RawApplicationAccessConfig, new JsonSerializerOptions { WriteIndented = true });
+            await File.WriteAllTextAsync(config.File.FullName, contents);
+        }
     }
 
     public override string ToString()
     {
         var sb = new StringBuilder();
-        foreach (var app in ApplicationAccessConfigs!)
+        foreach (var config in Configs)
         {
             sb.AppendLine("---");
-            sb.AppendLine($"AppDisplayName -> {app.AppDisplayName}");
-            if (app.FederatedIdentityCredentials != null)
+            sb.AppendLine($"AppDisplayName -> {config.ApplicationAccessConfig.AppDisplayName}");
+            if (config.ApplicationAccessConfig.FederatedIdentityCredentials != null)
             {
                 sb.AppendLine("FederatedIdentityCredentials ->");
-                foreach (var cred in app.FederatedIdentityCredentials)
+                foreach (var cred in config.ApplicationAccessConfig.FederatedIdentityCredentials)
                 {
                     sb.AppendLine(cred.ToIndentedString(1));
                 }
             }
-            if (app.RoleBasedAccessControls != null)
+            if (config.ApplicationAccessConfig.RoleBasedAccessControls != null)
             {
                 sb.AppendLine("RoleBasedAccessControls ->");
-                foreach (var rbac in app.RoleBasedAccessControls)
+                foreach (var rbac in config.ApplicationAccessConfig.RoleBasedAccessControls)
                 {
                     sb.AppendLine(rbac.ToIndentedString(1));
                 }
             }
-            if (app.GithubRepositorySecrets != null)
+            if (config.ApplicationAccessConfig.GithubRepositorySecrets != null)
             {
                 sb.AppendLine("GithubRepositorySecrets ->");
-                foreach (var secret in app.GithubRepositorySecrets)
+                foreach (var secret in config.ApplicationAccessConfig.GithubRepositorySecrets)
                 {
                     sb.AppendLine(secret.ToIndentedString(1));
                 }

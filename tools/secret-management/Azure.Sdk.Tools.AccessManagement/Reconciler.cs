@@ -24,7 +24,7 @@ public class Reconciler
             var failedConfigApps = new List<string>();
             var succeededConfigApps = new List<string>();
 
-            foreach (var cfg in accessConfig.ApplicationAccessConfigs ?? Enumerable.Empty<ApplicationAccessConfig>())
+            foreach (var cfg in accessConfig.Configs.Select(c => c.ApplicationAccessConfig))
             {
                 try
                 {

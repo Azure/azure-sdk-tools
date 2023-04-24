@@ -53,7 +53,7 @@ stages:
                 artifactName: patchfiles
                 path: "$(PatchFilesLocation)"
 
-            - template: ./templates/steps/sync-directory.yml
+            - template: /eng/pipelines/templates/steps/sync-directory.yml
               parameters:
                 CommitMessage: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository for Tools PR $(System.PullRequest.PullRequestNumber)"
                 DirectoryToSync: ${{ parameters.DirectoryToSync }}
@@ -209,7 +209,7 @@ stages:
                 Paths:
                   - ${{ parameters.DirectoryToSync }}
 
-            - template: ./templates/steps/sync-directory.yml
+            - template: /eng/pipelines/templates/steps/sync-directory.yml
               parameters:
                 CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
                 DirectoryToSync: ${{ parameters.DirectoryToSync }}

@@ -22,13 +22,6 @@ public class SyncAccessCommand : Command
     public async Task Run(InvocationContext invocationContext)
     {
         var fileOptions = invocationContext.ParseResult.GetValueForOption(this.fileOption);
-        try
-        {
-            await AccessManager.Run(fileOptions?.ToList() ?? new List<string>());
-        }
-        catch
-        {
-            Environment.Exit(1);
-        }
+        await AccessManager.Run(fileOptions?.ToList() ?? new List<string>());
     }
 }

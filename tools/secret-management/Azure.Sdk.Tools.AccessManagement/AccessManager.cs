@@ -6,10 +6,22 @@ public class AccessManager
 {
     public static async Task Run(List<string> configFiles)
     {
-        var accessConfig = new AccessConfig(configFiles);
+        AccessConfig accessConfig;
+        DefaultAzureCredential credential;
+        Reconciler reconciler;
 
-        var credential = new DefaultAzureCredential();
-        var reconciler = new Reconciler(new GraphClient(credential), new RbacClient(credential), new GitHubClient());
+        try
+        {
+            accessConfig = new AccessConfig(configFiles);
+            credential = new DefaultAzureCredential();
+            reconciler = new Reconciler(new GraphClient(credential), new RbacClient(credential), new GitHubClient());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            throw;
+        }
+
 
         Console.WriteLine(accessConfig.ToString());
         Console.WriteLine("---");

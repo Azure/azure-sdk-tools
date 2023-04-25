@@ -4,7 +4,6 @@ import {
     ApiItemKind,
     ApiDeclaredItem,
     ExcerptTokenKind,
-    ApiPropertyItem,
     ReleaseTag
   } from '@microsoft/api-extractor-model';
 

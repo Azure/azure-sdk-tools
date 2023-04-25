@@ -30,7 +30,7 @@
     "simple-git": "^3.5.0",
     "ts-morph": "^12.0.0",
     "tslib": "^1.9.3",
-    "yaml": "^1.10.2"
+    "yaml": "^2.2.2"
   },
   "devDependencies": {
     "rimraf": "^3.0.2",

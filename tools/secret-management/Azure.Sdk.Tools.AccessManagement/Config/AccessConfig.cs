@@ -13,12 +13,12 @@ public class AccessConfig
 
     public List<ConfigData> Configs { get; set; } = new List<ConfigData>();
 
-    public AccessConfig(List<string> configPaths)
+    public AccessConfig(ILogger logger, List<string> configPaths)
     {
         foreach (var configPath in configPaths)
         {
             var config = new FileInfo(configPath);
-            Console.WriteLine($"Using config -> {config.FullName}{Environment.NewLine}");
+            logger.LogInformation($"Using config -> {config.FullName}{Environment.NewLine}");
             var contents = File.ReadAllText(config.FullName);
             var configData = new ConfigData { File = config };
 

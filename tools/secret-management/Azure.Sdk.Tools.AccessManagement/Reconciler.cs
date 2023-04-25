@@ -9,11 +9,14 @@ public class Reconciler
     public IRbacClient RbacClient { get; set; }
     public IGitHubClient GitHubClient { get; set; }
 
-    public Reconciler(IGraphClient graphClient, IRbacClient rbacClient, IGitHubClient gitHubClient)
+    private ILogger Log { get; }
+
+    public Reconciler(ILogger logger, IGraphClient graphClient, IRbacClient rbacClient, IGitHubClient gitHubClient)
     {
         GraphClient = graphClient;
         RbacClient = rbacClient;
         GitHubClient = gitHubClient;
+        Log = logger;
     }
 
     public async Task Reconcile(AccessConfig accessConfig)
@@ -43,35 +46,35 @@ public class Reconciler
                 }
                 catch (ODataError ex)
                 {
-                    Console.WriteLine("Received error from Graph API:");
-                    Console.WriteLine("    Code:" + ex.Error?.Code);
-                    Console.WriteLine("    Message:" + ex.Error?.Message);
+                    Log.LogInformation("Received error from Graph API:");
+                    Log.LogInformation("    Code:" + ex.Error?.Code);
+                    Log.LogInformation("    Message:" + ex.Error?.Message);
                     failedConfigApps.Add(cfg.AppDisplayName);
                     exceptions.Add(new Exception($"Received error from Graph API: {ex.Error?.Code} - {ex.Error?.Message}"));
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ERROR: failed to reconcile application access config for '{cfg.AppDisplayName}'");
-                    Console.WriteLine(ex.Message);
+                    Log.LogInformation($"ERROR: failed to reconcile application access config for '{cfg.AppDisplayName}'");
+                    Log.LogInformation(ex.Message);
                     failedConfigApps.Add(cfg.AppDisplayName);
                     exceptions.Add(ex);
                 }
             }
 
-            Console.WriteLine($"Updating config with new properties...");
+            Log.LogInformation($"Updating config with new properties...");
             accessConfig.SyncProperties();
             await accessConfig.Save();
 
-            Console.WriteLine("---");
+            Log.LogInformation("---");
             if (succeededConfigApps.Any())
             {
-                Console.WriteLine($"Successfully reconciled {succeededConfigApps.Count} " +
+                Log.LogInformation($"Successfully reconciled {succeededConfigApps.Count} " +
                                   $"application access configs for apps: {string.Join(", ", succeededConfigApps)}");
             }
 
             if (exceptions.Any())
             {
-                Console.WriteLine($"ERROR: failed to reconcile {exceptions.Count} " +
+                Log.LogError($"ERROR: failed to reconcile {exceptions.Count} " +
                                   $"application access configs for apps: {string.Join(", ", failedConfigApps)}");
                 throw new AggregateException(exceptions);
             }
@@ -80,8 +83,8 @@ public class Reconciler
         {
             foreach (var inner in ex.InnerExceptions)
             {
-                Console.WriteLine("---");
-                Console.WriteLine(inner);
+                Log.LogInformation("---");
+                Log.LogError(inner, inner.Message);
             }
 
             throw;
@@ -96,7 +99,7 @@ public class Reconciler
             {
                 foreach (var secret in config.Secrets!)
                 {
-                    Console.WriteLine($"Setting GitHub repository secret '{secret.Key}:{secret.Value}' for repository '{repository}'...");
+                    Log.LogInformation($"Setting GitHub repository secret '{secret.Key}:{secret.Value}' for repository '{repository}'...");
                     var split = repository.Split('/');
                     if (split.Length != 2)
                     {
@@ -104,45 +107,45 @@ public class Reconciler
                     }
                     var (owner, repoName) = (split[0], split[1]);
                     await GitHubClient.SetRepositorySecret(owner, repoName, secret.Key, secret.Value);
-                    Console.WriteLine($"GitHub repository secret '{secret.Key}:{secret.Value}' for repository '{repository}' created");
+                    Log.LogInformation($"GitHub repository secret '{secret.Key}:{secret.Value}' for repository '{repository}' created");
                 }
-                Console.WriteLine($"Updated secrets for repository {repository} - {config.Secrets?.Count() ?? 0} created or updated");
+                Log.LogInformation($"Updated secrets for repository {repository} - {config.Secrets?.Count() ?? 0} created or updated");
             }
         }
     }
 
     public async Task<(Application, ServicePrincipal)> ReconcileApplication(ApplicationAccessConfig appAccessConfig)
     {
-        Console.WriteLine($"Looking for app with display name {appAccessConfig.AppDisplayName}...");
+        Log.LogInformation($"Looking for app with display name {appAccessConfig.AppDisplayName}...");
 
         var app = await GraphClient.GetApplicationByDisplayName(appAccessConfig.AppDisplayName);
 
         if (app is not null)
         {
-            Console.WriteLine($"Found {app.DisplayName} with AppId {app.AppId} and ObjectId {app.Id}");
+            Log.LogInformation($"Found {app.DisplayName} with AppId {app.AppId} and ObjectId {app.Id}");
         }
         else
         {
-            Console.WriteLine($"App with display name {appAccessConfig.AppDisplayName} not found. Creating new app...");
+            Log.LogInformation($"App with display name {appAccessConfig.AppDisplayName} not found. Creating new app...");
             var requestBody = new Application
             {
                 DisplayName = appAccessConfig.AppDisplayName
             };
 
             app = await GraphClient.CreateApplication(requestBody);
-            Console.WriteLine($"Created app {appAccessConfig.AppDisplayName} with AppId {app.AppId} and ObjectId {app.Id}");
+            Log.LogInformation($"Created app {appAccessConfig.AppDisplayName} with AppId {app.AppId} and ObjectId {app.Id}");
         }
 
         var servicePrincipal = await GraphClient.GetApplicationServicePrincipal(app);
         if (servicePrincipal is not null)
         {
-            Console.WriteLine($"Found existing service principal with object id '{servicePrincipal.Id}' for app '{app.AppId}'");
+            Log.LogInformation($"Found existing service principal with object id '{servicePrincipal.Id}' for app '{app.AppId}'");
         }
         else
         {
-            Console.WriteLine($"No service principal found for app '{app.AppId}'. Creating new service principal...");
+            Log.LogInformation($"No service principal found for app '{app.AppId}'. Creating new service principal...");
             servicePrincipal = await GraphClient.CreateApplicationServicePrincipal(app);
-            Console.WriteLine($"Created service principal with object id '{servicePrincipal.Id}' for app '{app.AppId}'");
+            Log.LogInformation($"Created service principal with object id '{servicePrincipal.Id}' for app '{app.AppId}'");
         }
 
         return (app, servicePrincipal);
@@ -158,7 +161,7 @@ public class Reconciler
             await RbacClient.CreateRoleAssignment(servicePrincipal, rbac);
         }
 
-        Console.WriteLine($"Updated role assignments for service principal {servicePrincipal.DisplayName} " +
+        Log.LogInformation($"Updated role assignments for service principal {servicePrincipal.DisplayName} " +
                           $"- {appAccessConfig.RoleBasedAccessControls?.Count() ?? 0} created or unchanged");
     }
 
@@ -166,7 +169,7 @@ public class Reconciler
         Application app,
         ApplicationAccessConfig appAccessConfig
     ) {
-        Console.WriteLine("Syncing federated identity credentials for " + app.DisplayName);
+        Log.LogInformation("Syncing federated identity credentials for " + app.DisplayName);
 
         var credentials = await GraphClient.ListFederatedIdentityCredentials(app);
 
@@ -198,7 +201,7 @@ public class Reconciler
             }
         }
 
-        Console.WriteLine($"Updated federated identity credentials for app {app.DisplayName} " +
+        Log.LogInformation($"Updated federated identity credentials for app {app.DisplayName} " +
                           $"- {unchanged} unchanged, {removed} removed, {created} created");
     }
 }

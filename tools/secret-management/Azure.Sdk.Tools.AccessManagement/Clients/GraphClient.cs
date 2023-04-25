@@ -10,9 +10,11 @@ namespace Azure.Sdk.Tools.AccessManagement;
 public class GraphClient : IGraphClient
 {
     public GraphServiceClient GraphServiceClient { get; }
+    private ILogger Log { get; }
 
-    public GraphClient(DefaultAzureCredential credential)
+    public GraphClient(ILogger logger, DefaultAzureCredential credential)
     {
+        Log = logger;
         GraphServiceClient = new GraphServiceClient(credential);
     }
 
@@ -70,34 +72,34 @@ public class GraphClient : IGraphClient
 
     public async Task<List<FederatedIdentityCredential>> ListFederatedIdentityCredentials(Application app)
     {
-        Console.WriteLine($"Listing federated identity credentials for app {app.AppId}...");
+        Log.LogInformation($"Listing federated identity credentials for app {app.AppId}...");
         var result = await GraphServiceClient.Applications[app.Id].FederatedIdentityCredentials.GetAsync();
 
         var credentials = result?.Value;
 
-        Console.WriteLine($"Found {credentials?.Count() ?? 0} federated identity credentials ->");
-        credentials?.ForEach(c => Console.WriteLine(((FederatedIdentityCredentialsConfig)c).ToIndentedString(1)));
+        Log.LogInformation($"Found {credentials?.Count() ?? 0} federated identity credentials ->");
+        credentials?.ForEach(c => Log.LogInformation(((FederatedIdentityCredentialsConfig)c).ToIndentedString(1)));
 
         return credentials ?? new List<FederatedIdentityCredential>();
     }
 
     public async Task<FederatedIdentityCredential> CreateFederatedIdentityCredential(Application app, FederatedIdentityCredential credential)
     {
-        Console.WriteLine($"Creating federated identity credential {credential.Name} for app {app.AppId}...");
+        Log.LogInformation($"Creating federated identity credential {credential.Name} for app {app.AppId}...");
         var created = await GraphServiceClient.Applications[app.Id].FederatedIdentityCredentials.PostAsync(credential);
         if (created is null)
         {
             throw new Exception($"Failed to create federated identity credential {credential.Name} for app {app.AppId}, Graph API returned empty response.");
         }
-        Console.WriteLine($"Created federated identity credential {created.Name} for app {app.AppId}");
+        Log.LogInformation($"Created federated identity credential {created.Name} for app {app.AppId}");
         return created;
     }
 
     public async Task DeleteFederatedIdentityCredential(Application app, FederatedIdentityCredential credential)
     {
-        Console.WriteLine($"Deleting federated identity credential {credential.Name} for app {app.AppId}...");
+        Log.LogInformation($"Deleting federated identity credential {credential.Name} for app {app.AppId}...");
         await GraphServiceClient.Applications[app.Id].FederatedIdentityCredentials[credential.Id].DeleteAsync();
-        Console.WriteLine($"Deleted federated identity credential {credential.Name} for app {app.AppId}...");
+        Log.LogInformation($"Deleted federated identity credential {credential.Name} for app {app.AppId}...");
     }
 }
 

@@ -8,9 +8,11 @@ public class GitHubClient : IGitHubClient
 {
     public Octokit.GitHubClient Client { get; }
     private Dictionary<(string, string), SecretsPublicKey> PublicKeyCache { get; }
+    private ILogger Log { get; }
 
-    public GitHubClient()
+    public GitHubClient(ILogger logger)
     {
+        Log = logger;
         PublicKeyCache = new Dictionary<(string, string), SecretsPublicKey>();
         Client = new Octokit.GitHubClient(new ProductHeaderValue("azsdk-access-manager"));
         var token = GetCredential();
@@ -45,8 +47,8 @@ public class GitHubClient : IGitHubClient
         }
         catch (Exception ex)
         {
-            Console.WriteLine("WARNING: Exception while running `gh auth status --show-token` below. The command may not exist. Proceeding without github login.");
-            Console.WriteLine("    " + ex.Message);
+            Log.LogWarning("WARNING: Exception while running `gh auth status --show-token` below. The command may not exist. Proceeding without github login.");
+            Log.LogWarning(ex.Message);
             return string.Empty;
         }
 
@@ -54,14 +56,14 @@ public class GitHubClient : IGitHubClient
         {
             var match = Regex.Match(output, @"Token:\s(?<token>[_a-zA-Z0-9]+)");
             var details = Regex.Replace(output, @"Token:\s[_a-zA-Z0-9]+", "Token: <REDACTED>");
-            Console.WriteLine($"{details}");
+            Log.LogInformation($"{details}");
             token = match.Groups["token"]?.Value.Trim();
         }
 
         if (output is null || process.ExitCode != 0 || string.IsNullOrEmpty(token))
         {
-            Console.WriteLine("WARNING: Set GITHUB_TOKEN environment variable from a PAT or run `gh auth login`. " +
-                              "Operations will fail if githubRepositorySecrets is configured.");
+            Log.LogWarning("WARNING: Set GITHUB_TOKEN environment variable from a PAT or run `gh auth login`. " +
+                           "Operations will fail if githubRepositorySecrets is configured.");
             return string.Empty;
         }
 

@@ -14,9 +14,11 @@ namespace Azure.Sdk.Tools.AccessManagement;
 public class RbacClient : IRbacClient
 {
     public ArmClient ArmClient { get; set; }
+    private ILogger Log { get; }
 
-    public RbacClient(DefaultAzureCredential credential)
+    public RbacClient(ILogger logger, DefaultAzureCredential credential)
     {
+        Log = logger;
         ArmClient = new ArmClient(credential);
     }
 
@@ -24,7 +26,7 @@ public class RbacClient : IRbacClient
     {
         var resource = ArmClient.GetGenericResource(new ResourceIdentifier(rbac.Scope!));
         var role = await resource.GetAuthorizationRoleDefinitions().GetAllAsync($"roleName eq '{rbac.Role}'").FirstAsync();
-        Console.WriteLine($"Found role '{role.Data.RoleName}' with id '{role.Data.Name}'");
+        Log.LogInformation($"Found role '{role.Data.RoleName}' with id '{role.Data.Name}'");
 
         var principalId = Guid.Parse(servicePrincipal?.Id ?? string.Empty);
         var content = new RoleAssignmentCreateOrUpdateContent(role.Data.Id, principalId)
@@ -35,19 +37,19 @@ public class RbacClient : IRbacClient
 
         try
         {
-            Console.WriteLine($"Creating role assignment '{roleName}' for principal '{principalId}' with role '{role.Data.RoleName}' in scope '{rbac.Scope}'...");
+            Log.LogInformation($"Creating role assignment '{roleName}' for principal '{principalId}' with role '{role.Data.RoleName}' in scope '{rbac.Scope}'...");
             await resource.GetRoleAssignments().CreateOrUpdateAsync(WaitUntil.Completed, roleName, content);
         }
         catch (RequestFailedException ex)
         {
             if (ex.Status == 409)
             {
-                Console.WriteLine($"The role assignment was already created by a different source. Skipping.");
+                Log.LogInformation($"The role assignment was already created by a different source. Skipping.");
                 return;
             }
             throw ex;
         }
-        Console.WriteLine($"Created role assignment '{roleName}' for principal '{principalId}' with role '{role.Data.RoleName}' in scope '{rbac.Scope}'");
+        Log.LogInformation($"Created role assignment '{roleName}' for principal '{principalId}' with role '{role.Data.RoleName}' in scope '{rbac.Scope}'");
     }
 }
 

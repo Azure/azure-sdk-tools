@@ -4,7 +4,7 @@ namespace Azure.Sdk.Tools.AccessManagement;
 
 public class AccessManager
 {
-    public static async Task Run(List<string> configFiles)
+    public static async Task Run(ILogger logger, List<string> configFiles)
     {
         AccessConfig accessConfig;
         DefaultAzureCredential credential;
@@ -12,20 +12,19 @@ public class AccessManager
 
         try
         {
-            accessConfig = new AccessConfig(configFiles);
+            accessConfig = new AccessConfig(logger, configFiles);
             credential = new DefaultAzureCredential();
-            reconciler = new Reconciler(new GraphClient(credential), new RbacClient(credential), new GitHubClient());
+            reconciler = new Reconciler(logger, new GraphClient(logger, credential), new RbacClient(logger, credential), new GitHubClient(logger));
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            logger.LogError(ex, ex.Message);
             throw;
         }
 
-
-        Console.WriteLine(accessConfig.ToString());
-        Console.WriteLine("---");
-        Console.WriteLine("Reconciling...");
+        logger.LogInformation(accessConfig.ToString());
+        logger.LogInformation("---");
+        logger.LogInformation("Reconciling...");
         await reconciler.Reconcile(accessConfig);
     }
 }

@@ -1,5 +1,6 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using Microsoft.Extensions.Logging.Console;
 using Azure.Sdk.Tools.AccessManagement;
 
 namespace Azure.Sdk.Tools.SecretManagement.Cli.Commands;
@@ -21,7 +22,14 @@ public class SyncAccessCommand : Command
 
     public async Task Run(InvocationContext invocationContext)
     {
+        var loggerFactory = LoggerFactory.Create(builder => builder
+            .AddConsoleFormatter<SimplerConsoleFormatter, ConsoleFormatterOptions>()
+            .AddConsole(options => options.FormatterName = SimplerConsoleFormatter.FormatterName)
+            .SetMinimumLevel(LogLevel.Information));
+
+        var logger = loggerFactory.CreateLogger(string.Empty);
+
         var fileOptions = invocationContext.ParseResult.GetValueForOption(this.fileOption);
-        await AccessManager.Run(fileOptions?.ToList() ?? new List<string>());
+        await AccessManager.Run(logger, fileOptions?.ToList() ?? new List<string>());
     }
 }

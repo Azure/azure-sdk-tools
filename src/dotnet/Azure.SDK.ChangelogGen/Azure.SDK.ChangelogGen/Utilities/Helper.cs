@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using LibGit2Sharp;
+using Markdig.Helpers;
 using Markdig.Parsers;
 using Markdig.Syntax;
 using YamlDotNet.Serialization;
@@ -192,7 +193,7 @@ namespace Azure.SDK.ChangelogGen.Utilities
             return $"{ci.Name}({string.Join(", ", paramList.Select(p => $"{p.ParameterType.ToFriendlyString()} {p.Name}"))})";
         }
 
-        public static Dictionary<string, object> LoadYaml(this MarkdownDocument md)
+        public static Dictionary<string, object> LoadYaml(this MarkdownDocument md, bool expandTag)
         {
             var lines = md.Where(b =>
             {
@@ -208,56 +209,59 @@ namespace Azure.SDK.ChangelogGen.Utilities
                 .Build();
             var dict = deserializer.Deserialize<Dictionary<string, object>>(defaultYaml);
 
-            var conditionalLines = md.Where(b =>
-            {
-                FencedCodeBlock? fcb = b as FencedCodeBlock;
-                if (fcb == null)
-                    return false;
-                if (fcb.Info != "yaml" || string.IsNullOrEmpty(fcb.Arguments))
-                    return false;
-                string condition = Regex.Replace(fcb.Arguments, @"\$\((?<var>[\w\-]+?)\)", new MatchEvaluator((m) =>
+            List<StringLine> conditionalLines = expandTag ?
+                md.Where(b =>
                 {
-                    var v = m.Groups["var"].Value;
-                    if (dict.ContainsKey(v))
+                    FencedCodeBlock? fcb = b as FencedCodeBlock;
+                    if (fcb == null)
+                        return false;
+                    if (fcb.Info != "yaml" || string.IsNullOrEmpty(fcb.Arguments))
+                        return false;
+                    string condition = Regex.Replace(fcb.Arguments, @"\$\((?<var>[\w\-]+?)\)", new MatchEvaluator((m) =>
                     {
-                        switch (dict[v])
+                        var v = m.Groups["var"].Value;
+                        if (dict.ContainsKey(v))
                         {
-                            case string strValue:
-                                return strValue.ToLower() switch
-                                {
-                                    "true" => "true",
-                                    "false" => "false",
-                                    _ => $"'{strValue}'"
-                                };
-                            case bool boolValue:
-                                return boolValue ? "true" : "false";
-                            default:
-                                Logger.Warning("FencedCodeBlock arguments is not string or bool: " + fcb.Arguments);
-                                return "''";
+                            switch (dict[v])
+                            {
+                                case string strValue:
+                                    return strValue.ToLower() switch
+                                    {
+                                        "true" => "true",
+                                        "false" => "false",
+                                        _ => $"'{strValue}'"
+                                    };
+                                case bool boolValue:
+                                    return boolValue ? "true" : "false";
+                                default:
+                                    Logger.Warning("FencedCodeBlock arguments is not string or bool: " + fcb.Arguments);
+                                    return "''";
 
+                            }
                         }
-                    }
-                    else
+                        else
+                        {
+                            return "false";
+                        }
+                    }), RegexOptions.IgnoreCase);
+
+                    if (condition == "''")
+                        return false;
+
+                    try
                     {
-                        return "false";
+                        Jint.Engine eng = new Jint.Engine();
+                        var result = eng.Execute(condition).GetCompletionValue().AsBoolean();
+                        return result;
                     }
-                }), RegexOptions.IgnoreCase);
+                    catch
+                    {
+                        Logger.Warning($"Can't evaluate FencedCodeBlock condition in md. Default to 'false': Argument = {fcb.Arguments}, condition = {condition}");
+                        return false;
+                    }
+                }).SelectMany(b => ((FencedCodeBlock)b).Lines.Lines).ToList() :
+                new List<StringLine>();
 
-                if (condition == "''")
-                    return false;
-
-                try
-                {
-                    Jint.Engine eng = new Jint.Engine();
-                    var result = eng.Execute(condition).GetCompletionValue().AsBoolean();
-                    return result;
-                }
-                catch
-                {
-                    Logger.Warning($"Can't evaluate FencedCodeBlock condition in md. Default to 'false': Argument = {fcb.Arguments}, condition = {condition}");
-                    return false;
-                }
-            }).SelectMany(b => ((FencedCodeBlock)b).Lines.Lines).ToList();
 
             var allYaml = string.Join("\n", lines.Concat(conditionalLines));
             return deserializer.Deserialize<Dictionary<string, object>>(allYaml);

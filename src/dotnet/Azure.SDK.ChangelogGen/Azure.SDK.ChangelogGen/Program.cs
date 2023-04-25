@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Azure.SDK.ChangelogGen.Compare;
@@ -8,7 +9,6 @@ using Azure.SDK.ChangelogGen.Report;
 using Azure.SDK.ChangelogGen.Utilities;
 using LibGit2Sharp;
 using Markdig.Parsers;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Azure.SDK.ChangelogGen
 {
@@ -60,6 +60,13 @@ namespace Azure.SDK.ChangelogGen
                     string curApiFileContent = File.ReadAllText(context.ApiFile);
                     string baseApiFileContent = baselineTree.GetFileContent(context.ApiFileGithubKey);
                     result.ApiChange = CompareApi(curApiFileContent, baseApiFileContent);
+
+                    Logger.Log("Start checking Api Tag");
+                    Logger.Log("  Check Autorest.md at: " + context.AutorestMdFile);
+                    Logger.Log("  Baseline: same file with Github tag " + context.BaselineGithubTag);
+                    string curAutorestMd = File.ReadAllText(context.AutorestMdFile);
+                    string baseAutorestMd = baselineTree.GetFileContent(context.AutorestMdGithubKey);
+                    result.SpecVersionChange = CompareSpecVersionTag(curAutorestMd, baseAutorestMd, SpecHelper.GenerateGitHubPathToAutorestMd(context.AutorestMdGithubKey));
 
                     Logger.Log("Start checking Azure Core");
                     Logger.Log("  Check AzureCore changelog at: " + context.AzureCoreChangeLogMdFile);
@@ -136,78 +143,25 @@ namespace Azure.SDK.ChangelogGen
             }
         }
 
-        public static string GetSpecVersion(string autorestMdContent)
+        private static StringValueChange? CompareSpecVersionTag(string curAutorestMd, string baseAutorestMd, string source)
         {
-            var autorestMd = MarkdownParser.Parse(autorestMdContent);
-            var codeGenConfig = autorestMd.LoadYaml();
-            string specReadme = "";
-            if (codeGenConfig.TryGetValue("require", out object? value))
-            {
-                string require = ((string)value!).Replace("\\", "/");
-                const string SPEC_PREFIX_BLOB = @"https://github.com/Azure/azure-rest-api-specs/blob/";
-                const string SPEC_PREFIX_TREE = @"https://github.com/Azure/azure-rest-api-specs/tree/";
-                const string SPEC_RAW_PREFIX = @"https://raw.githubusercontent.com/Azure/azure-rest-api-specs/";
-                string webPath = "";
-                if (require.StartsWith(SPEC_RAW_PREFIX))
-                    webPath = require;
-                else if(require.StartsWith(SPEC_PREFIX_BLOB))
-                    webPath = SPEC_RAW_PREFIX + require.Substring(SPEC_PREFIX_BLOB.Length);
-                else if(require.StartsWith(SPEC_PREFIX_TREE))
-                    webPath = SPEC_RAW_PREFIX + require.Substring(SPEC_PREFIX_TREE.Length);
+            string curVersionTag = String.Join(";", SpecHelper.GetSpecVersionTags(curAutorestMd, out string specPath));
+            string baselineVersionTag = String.Join(";", SpecHelper.GetSpecVersionTags(baseAutorestMd, out _));
 
-                if(!string.IsNullOrEmpty(webPath))
-                {
-                    using (HttpClient hc = new HttpClient())
-                    {
-                        specReadme = hc.GetStringAsync(webPath).Result;
-                    }
-                }
-                else
-                {
-                    if (File.Exists(require))
-                    {
-                        specReadme = File.ReadAllText(require);
-                    }
-                }
-            }
-
-            Dictionary<string, object> specConfig = codeGenConfig;
-            if (!string.IsNullOrEmpty(specReadme))
+            if (!string.IsNullOrEmpty(specPath))
+                source = specPath;
+            if (string.Equals(curVersionTag, baselineVersionTag, StringComparison.OrdinalIgnoreCase))
             {
-                var specMd = MarkdownParser.Parse(specReadme);
-                specConfig = specMd.LoadYaml();
-            }
-            else
-            {
-                Logger.Log("No readme info found in Require in autorest.md. Try to parse input-file info from autorest.md directly");
-            }
-            if (!specConfig.TryGetValue("input-file", out object? arr) || arr == null || arr is not IEnumerable<object>)
-            {
-                throw new InvalidOperationException("Failed to get input-file from spec readme.md");
-            }
-
-            //version in format 2020-10-01 or 2020-10-01-preview
-            Regex regVersion = new Regex(@"/(?<ver>\d{4}\-\d{2}-\d{2}(-preview)?)/");
-            IEnumerable<object> specFiles = (IEnumerable<object>)arr;
-            var biggestMatch = specFiles.SelectMany(sf => regVersion.Matches(sf.ToString() ?? "")).OrderBy(s => s.Value).First();
-            var foundVersion = biggestMatch.Groups["ver"].Value;
-            return foundVersion;
-        }
-
-        private static StringValueChange? CompareSpecVersion(string curAutorestMd, string baseAutorestMd)
-        {
-            string curVersion = GetSpecVersion(curAutorestMd);
-            string baselineVersion = GetSpecVersion(baseAutorestMd);
-
-            if (string.Equals(curVersion, baselineVersion, StringComparison.OrdinalIgnoreCase))
-            {
-                Logger.Log($"No change found in Spec Version: {baselineVersion} -> {curVersion}");
+                Logger.Log($"No change found in Spec Tag: {baselineVersionTag} -> {curVersionTag}\n" +
+                    $"Tag parsed from {source}");
                 return null;
             }
             else
             {
-                Logger.Log($"Spec Version change detected: {baselineVersion} -> {curVersion}");
-                return new StringValueChange(curVersion, baselineVersion, $"Upgraded API version from {baselineVersion} to {curVersion}");
+                Logger.Log($"Spec Tag change detected: {baselineVersionTag} -> {curVersionTag}");
+                return new StringValueChange(curVersionTag, baselineVersionTag, 
+                    $"Upgraded api-version tag from '{baselineVersionTag}' to '{curVersionTag}'\n" +
+                    $"See tag detail at {source}");
             }
         }
 

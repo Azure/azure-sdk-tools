@@ -35,7 +35,7 @@ namespace Azure.SDK.ChangelogGen
             report.Groups.Add(nonbreakingGroup);
 
             // API versoin
-            ReleaseNoteGroup apiVersionGroup = new ReleaseNoteGroup("Api Version Change");
+            ReleaseNoteGroup apiVersionGroup = new ReleaseNoteGroup("Api-version Tag Change");
             if (SpecVersionChange != null)
             {
                 apiVersionGroup.Notes.Add(new ReleaseNote(SpecVersionChange.Description));

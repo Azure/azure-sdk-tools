@@ -73,7 +73,6 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
         item.kind === ApiItemKind.Class ||
         item.kind === ApiItemKind.Namespace)
     {
-        
         if (item.members.length > 0)
         {
             builder

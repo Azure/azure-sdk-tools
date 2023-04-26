@@ -33,6 +33,7 @@ namespace ApiView
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
+            string currentTableId = null;
             bool isDocumentationRange = false;
             bool isHiddenApiToken = false;
             bool isDeprecatedToken = false;
@@ -56,43 +57,7 @@ namespace ApiView
                 switch (token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        int ? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count: null;
-                        CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange, isHiddenApi: isHiddenApiToken);
-                        if (leafSectionPlaceHolderNumber != 0)
-                        {
-                            lineNumber += leafSectionPlaceHolderNumber - 1;
-                            leafSectionPlaceHolderNumber = 0;
-                        }
-                        if (nodesInProcess.Count > 0)
-                        {
-                            if (nodesInProcess.Peek().Equals(SectionType.Heading))
-                            {
-                                if (section == null)
-                                {
-                                    section = new TreeNode<CodeLine>(codeLine);
-                                    list.Add(codeLine);
-                                }
-                                else
-                                {
-                                    section = section.AddChild(codeLine);
-                                }
-                            }
-                            else
-                            {
-                                section.AddChild(codeLine);
-                            }
-                        }
-                        else
-                        {
-                            if (section != null)
-                            {
-                                sections.Add(sections.Count, section);
-                                section = null;
-                            }
-                            list.Add(codeLine);
-                        }
-                        currentId = null;
-                        stringBuilder.Clear();
+                        CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, isDocumentationRange, isHiddenApiToken);
                         break;
 
                     case CodeFileTokenKind.DocumentRangeStart:
@@ -154,8 +119,7 @@ namespace ApiView
                         break;
 
                     case CodeFileTokenKind.TableBegin:
-                        stringBuilder.Append("<table class=\"table table-sm\">");
-                        currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+                        currentTableId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
                         break;
 
                     case CodeFileTokenKind.TableColumnCount:
@@ -171,25 +135,27 @@ namespace ApiView
                     case CodeFileTokenKind.TableColumnName:
                         if (tableColumnCount.Curr == 0)
                         {
-                            stringBuilder.Append($"<thead><tr>");
-                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
+                            stringBuilder.Append($"<ul class=\"list-group list-group-horizontal\">");
+                            stringBuilder.Append($"<li class=\"list-group-item border-top\"><strong>");
                             RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
-                            stringBuilder.Append("</th>");
+                            stringBuilder.Append("</strong></li>");
                             tableColumnCount.Curr++;
                         }
                         else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
                         {
-                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
+                            currentId = $"{currentTableId}-th";
+                            stringBuilder.Append($"<li class=\"list-group-item border-top\"><strong>");
                             RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
-                            stringBuilder.Append("</th>");
-                            stringBuilder.Append("</tr></thead><tbody>");
+                            stringBuilder.Append("</strong></li>");
+                            stringBuilder.Append("</ul>");
                             tableColumnCount.Curr = 0;
+                            CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, isDocumentationRange, isHiddenApiToken);
                         }
                         else
                         {
-                            stringBuilder.Append($"<th height=\"30\" scope=\"col\">");
+                            stringBuilder.Append($"<li class=\"list-group-item border-top\"><strong>");
                             RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
-                            stringBuilder.Append("</th>");
+                            stringBuilder.Append("</strong></li>");
                             tableColumnCount.Curr++;
                         }
                         break;
@@ -197,35 +163,34 @@ namespace ApiView
                     case CodeFileTokenKind.TableCellBegin:
                         if (tableColumnCount.Curr == 0)
                         {
-                            var rowId = $"{currentId}-tr-{tableRowCount.Curr + 1}";
-                            stringBuilder.Append($"<tr data-inline-id=\"{rowId}\"><td height=\"30\"><a class=\"line-comment-button\">+</a>");
+                            stringBuilder.Append($"<ul class=\"list-group list-group-horizontal\">");
+                            stringBuilder.Append($"<li class=\"list-group-item\">");
                             tableColumnCount.Curr++;
                         }
                         else if (tableColumnCount.Curr == tableColumnCount.Count - 1)
                         {
-                            stringBuilder.Append($"<td height=\"30\">");
+                            currentId = $"{currentTableId}-tr-{tableRowCount.Curr + 1}";
+                            stringBuilder.Append($"<li class=\"list-group-item\">");
                             tableColumnCount.Curr = 0;
                             tableRowCount.Curr++;
                         }
                         else
                         {
-                            stringBuilder.Append($"<td height=\"30\">");
+                            stringBuilder.Append($"<li class=\"list-group-item\">");
                             tableColumnCount.Curr++;
                         }
                         break;
 
                     case CodeFileTokenKind.TableCellEnd:
-                        stringBuilder.Append($"</td height=\"30\">");
+                        stringBuilder.Append("</li>");
                         if (tableColumnCount.Curr == 0)
                         {
-                            stringBuilder.Append($"</tr>");
+                            stringBuilder.Append("</ul>");
+                            CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, isDocumentationRange, isHiddenApiToken);
                         }
                         break;
 
                     case CodeFileTokenKind.TableEnd:
-                        stringBuilder.Append($"</tbody>");
-                        stringBuilder.Append("</table>");
-
                         break;
 
                     case CodeFileTokenKind.LeafSectionPlaceholder:
@@ -262,11 +227,51 @@ namespace ApiView
         protected virtual void StartDocumentationRange(StringBuilder stringBuilder) { }
         protected virtual void CloseDocumentationRange(StringBuilder stringBuilder) { }
 
-        private void UpdateDefinitionId(CodeFileToken token, string currentId)
+        private void CaptureCodeLine(List<CodeLine> list, Dictionary<int, TreeNode<CodeLine>> sections, Stack<SectionType> nodesInProcess,
+             ref TreeNode<CodeLine> section, StringBuilder stringBuilder, ref int lineNumber, ref int leafSectionPlaceHolderNumber, ref string currentId,
+             bool isDocumentationRange = false, bool isHiddenApiToken = false)
         {
-            currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+            int? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count : null;
+            CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange, isHiddenApi: isHiddenApiToken);
+            if (leafSectionPlaceHolderNumber != 0)
+            {
+                lineNumber += leafSectionPlaceHolderNumber - 1;
+                leafSectionPlaceHolderNumber = 0;
+            }
+            if (nodesInProcess.Count > 0)
+            {
+                if (nodesInProcess.Peek().Equals(SectionType.Heading))
+                {
+                    if (section == null)
+                    {
+                        section = new TreeNode<CodeLine>(codeLine);
+                        list.Add(codeLine);
+                    }
+                    else
+                    {
+                        section = section.AddChild(codeLine);
+                    }
+                }
+                else
+                {
+                    section.AddChild(codeLine);
+                }
+            }
+            else
+            {
+                if (section != null)
+                {
+                    sections.Add(sections.Count, section);
+                    section = null;
+                }
+                list.Add(codeLine);
+            }
+            currentId = null;
+            stringBuilder.Clear();
         }
     }
+
+ 
 
     public struct RenderResult
     {

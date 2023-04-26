@@ -2,6 +2,7 @@
 import {ApiViewTokenKind, IApiViewToken} from './models';
 
 const jsTokens = require("js-tokens");
+const ANNOTATION_TOKEN = "@";
 
 export class TokensBuilder
 {
@@ -71,6 +72,16 @@ export class TokensBuilder
         "of",
         "keyof",
         "readonly"];
+
+    annotate(value: string): TokensBuilder {
+        this.tokens.push({
+            Kind: ApiViewTokenKind.StringLiteral,
+            Value: `${ANNOTATION_TOKEN}${value}`,
+        });
+
+        this.newline().indent()
+        return this;
+    }
 
     indent(): TokensBuilder
     {

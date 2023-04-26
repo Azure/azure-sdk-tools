@@ -33,7 +33,7 @@ Obsoleted method 'String MethodToBeObsoleted()' in type Azure.ResourceManager.Ap
 Obsoleted property 'String PropertyToBeObsoleted' in type Azure.ResourceManager.AppService.TestProperty
 Obsoleted type 'Azure.ResourceManager.AppService.TypeToBeObsoleted'
 
-### Api Version Change
+### Api-version Tag Change
 
 spec upgraded
 

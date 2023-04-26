@@ -5,7 +5,7 @@ using Markdig.Parsers;
 
 namespace Azure.SDK.ChangelogGen.Utilities
 {
-    internal static class SpecHelper
+    public static class SpecHelper
     {
         private static IEnumerable<string> GetTagsInBatch(Dictionary<string, object> config)
         {

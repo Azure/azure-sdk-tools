@@ -90,6 +90,15 @@ def get_repo(language: str) -> str:
             target_folder,
         ]
         run(command, cwd=generated_folder)
+    else:
+        command = [
+            "git",
+            "pull",
+            "origin",
+            "main"
+        ]
+        run(command, cwd= os.path.join(generated_folder, target_folder))
+
     print(YES)
 
     return target_folder
@@ -348,7 +357,14 @@ def evaluate_java_package(package_path: str) -> int:
 
     if os.path.exists(possible_assets_location):
         return 2
-    
+
+    # we only will search the test_files if there are actual session-records present
+    session_glob = os.path.join(possible_test_directory, "**", "session-records")
+    session_records = glob.glob(session_glob, recursive=True)
+
+    if not session_records:
+        return -1
+
     for testfile in test_files:
         try:
             with open(testfile, "r", encoding="utf-8") as f:
@@ -380,12 +396,13 @@ def generate_java_report() -> ScanResult:
     for pkg in packages:
         evaluation = evaluate_java_package(pkg)
 
-        if evaluation == 1:
+        if evaluation == -1:
+            result.packages.remove(os.path.basename(os.path.dirname(pkg)))
+        elif evaluation == 1:
             result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
         elif evaluation == 2:
             result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
             result.packages_using_external.append(os.path.basename(os.path.dirname(pkg)))
-
 
     print("done.")
     return result

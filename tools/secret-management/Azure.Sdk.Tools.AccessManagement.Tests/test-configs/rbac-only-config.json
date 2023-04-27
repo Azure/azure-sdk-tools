@@ -1,0 +1,18 @@
+{
+    "$schema": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-management/schema/1.0.0/access.json",
+    "appDisplayName": "access-manager-rbac-only-test",
+    "roleBasedAccessControls": [
+        {
+          "role": "Reader",
+          "scope": "/subscriptions/00000000-0000-0000-0000-000000000000"
+        },
+        {
+          "role": "Contributor",
+          "scope": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-testfoobaraccessmanager"
+        },
+        {
+          "role": "Key Vault Secrets User",
+          "scope": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-testfoobaraccessmanager/providers/Microsoft.KeyVault/vaults/testfoobaraccessmanager"
+        }
+    ]
+}

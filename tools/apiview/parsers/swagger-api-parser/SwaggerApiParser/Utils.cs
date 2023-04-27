@@ -189,4 +189,26 @@ public static class Utils
 
         return "";
     }
+
+    public static string GetReferencedSwaggerFile(string Ref, string currentSwaggerFilePath)
+    {
+        if (string.IsNullOrEmpty(Ref))
+        {
+            return currentSwaggerFilePath;
+        }
+
+        var idx = Ref.IndexOf("#", StringComparison.Ordinal);
+        var relativePath = Ref[..idx];
+        if (relativePath == "")
+        {
+            relativePath = ".";
+        }
+        else
+        {
+            currentSwaggerFilePath = Path.GetDirectoryName(currentSwaggerFilePath);
+        }
+
+        var referenceSwaggerFilePath = Path.GetFullPath(relativePath, currentSwaggerFilePath!);
+        return referenceSwaggerFilePath;
+    }
 }

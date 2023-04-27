@@ -39,8 +39,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
 
         public SearchIssuesResult SearchIssuesResultReturn { get; set; } = new SearchIssuesResult();
 
-        public MockGitHubEventClient(string productHeaderName, string? rulesConfigLocation = null) : 
-            base(productHeaderName, rulesConfigLocation)
+        public MockGitHubEventClient(string productHeaderName) : 
+            base(productHeaderName)
         {
 
         }

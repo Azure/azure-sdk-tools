@@ -122,6 +122,12 @@ namespace ApiView
                         {
                             numberOfLinesinLeafSection++;
                         }
+
+                        if (isLeaf && token.Kind == CodeFileTokenKind.TableRowCount)
+                        {
+                            numberOfLinesinLeafSection += (Convert.ToInt16(token.Value)) + 1;
+                        }
+
                         section.Add(token);
                     }
                     index++;

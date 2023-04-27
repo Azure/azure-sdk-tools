@@ -220,6 +220,7 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, UsageSampleOwnerRequirementHandler>();
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
+            services.AddHostedService<SwaggerReviewsBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
         }
 

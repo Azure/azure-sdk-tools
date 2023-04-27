@@ -65,6 +65,10 @@ Interactions with the external assets repository are accessible when the proxy i
 
 Each of these CLI Commands takes an `assets.json` argument that provides the _context_ that should be pushed to the external repository.
 
+### A note about using on Windows + WSL
+
+When using a Windows machine, it is technically possible to invoke tests from WSL against a windows clone. That path would appear under `/mnt/c/path/to/your/repo`. This is _not_ a supported scenario, as the `test-proxy` shells out to git for the push/restore actions. Running a `git push/pull` from _linux_ against a repo that was cloned down using a _windows_ git client can have unexpected results. Better to avoid the situation entirely and use an entirely separate clone for work on WSL.
+
 ## test-proxy CLI commands
 
 The test-proxy also offers interactions with the external assets repository as a CLI. Invoking `test-proxy --help` will show the available list of commands. `test-proxy <command> --help` will show the help and options for an individual command. The options for a given command are all `--<option>`, for example, `--assets-json-path`, but each option has an abbreviation shown in the help, those are a single dash. For example the abbreviation for `--assets-json-path` is `-a`.
@@ -156,7 +160,6 @@ First, ensure that your language-specific "shim" supports the automatic addition
 Use [the transition script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/transition-scripts/generate-assets-json.ps1) and follow the [readme](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/transition-scripts/README.md)!
 
 In summary, once an assets.json is present, the shim _must_ be updated to **actually send** a reference to that assets.json inside the `record/start` or `playback/start` requests!
-
 
 ![assets diagram](../_images/before_after.png)
 

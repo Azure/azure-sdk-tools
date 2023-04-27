@@ -481,6 +481,8 @@ Add a more expansive Header sanitizer that uses a target group instead of filter
 }
 ```
 
+> Note: Regex strings are being passed as a member of a JSON object. As visible in the above example, escape characters must be _double escaped_. `\n` -> `\\n`. `\\` -> `\\\\`. Read the "string" description on [json.org](https://json.org) for more detail.
+
 #### A note about where sanitizers apply
 
 Each sanitizer is optionally prefaced with the **specific part** of the request/response pair that it applies to. These prefixes are
@@ -581,11 +583,9 @@ The test-proxy offers further customization beyond that offered by sanitizers, m
 
 ### Redirection Settings
 
-The test-proxy does NOT transparent follow redirects by default. That means that if the initial request sent by the test-proxy results in some `3XX` redirect status, it **will not** follow. It will return that redirect response to the client to allow THEM to handle the redirect.
+The test-proxy follows redirects by default. That means that if the initial request sent by the test-proxy results in some `3XX` redirect status, it **will follow the redirect**.
 
-In certain cases, this is not a possibility for the client. Javascript Browser tests are a great example of this. Since both "modes" are supported, the test-proxy exposes this as a setting `HandleRedirects`.
-
-To set this setting, POST to the `/Admin/SetRecordingOptions` route.
+In certain cases, a user will want to utilize both behaviors in their tests. For instance, the javascript `browser` tests run with redirect enabled, however for their `node` versions, the redirect functionality is explicitly disabled. The test-proxy exposes this as a setting `HandleRedirects` within the settings object POST-ed to `/Admin/SetRecordingOptions`.
 
 Example:
 

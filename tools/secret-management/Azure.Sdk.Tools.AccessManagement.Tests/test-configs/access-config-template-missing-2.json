@@ -1,0 +1,30 @@
+{
+    "$schema": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-management/schema/1.0.0/access.json",
+    "appDisplayName": "access-manager-test-2",
+    "properties": {
+        "subscriptionId": "00000000-0000-0000-0000-000000000000",
+        "resourceGroup": "rg-testfoobaraccessmanager",
+        "commonScope": "ref:refs/heads/main"
+    },
+    "roleBasedAccessControls": [
+        {
+          "role": "{{ missingRoleProperty }}",
+          "scope": "/subscriptions/{{ subscriptionId }}/resourceGroups/{{ resourceGroup }}"
+        },
+        {
+          "role": "{{ missingRoleProperty }}",
+          "scope": "/subscriptions/{{ subscriptionId }}/resourceGroups/{{ resourceGroup }}/providers/Microsoft.KeyVault/vaults/foobaraccessmanager"
+        }
+    ],
+    "federatedIdentityCredentials": [
+        {
+          "audiences": [
+            "api://azureadtokenexchange"
+          ],
+          "description": "event processor {{ missingDescriptionProperty }}",
+          "issuer": "https://token.actions.githubusercontent.com",
+          "name": "githubactionscredential-tools-main-test1",
+          "subject": "repo:{{ missingOwnerProperty }}/azure-sdk-tools:{{ commonScope }}"
+        }
+    ]
+}

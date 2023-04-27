@@ -4,7 +4,7 @@ The code presented in this repository is a lift-and-shift of code [originally wr
 
 ## Running guidelines checks in Azure/azure-sdk-for-python repository
 
-In order to lint for the guidelines, you must make sure you are enabling the `pylint-guidelines-checker` in your pylint invocation. Using the rcfile at the [root of the repo](https://github.com/Azure/azure-sdk-for-python/blob/main/pylintrc) will ensure that the plugin is properly activated
+In order to lint for the guidelines, you must make sure you are enabling the `azure-pylint-guidelines-checker` in your pylint invocation. Using the rcfile at the [root of the repo](https://github.com/Azure/azure-sdk-for-python/blob/main/pylintrc) will ensure that the plugin is properly activated
 
 It is recommended you run pylint at the library package level to be consistent with how the CI runs pylint.
 
@@ -13,7 +13,7 @@ Check that you are running pylint version >=2.14.5 and astroid version >=2.12.0.
 
 0. Install the pylint checker from the azure-sdk development feed.
     ```bash
-    pip install --index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/" pylint-guidelines-checker
+    pip install --index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/" azure-pylint-guidelines-checker
     ```
 
 1. Run pylint at the root of the repo and it will automatically find the pylintrc:

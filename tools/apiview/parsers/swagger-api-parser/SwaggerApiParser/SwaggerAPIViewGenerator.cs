@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace SwaggerApiParser;
 
 public class SwaggerApiViewGenerator
 {
-    public static SwaggerApiViewSpec GenerateSwaggerApiView(SwaggerSpec swaggerSpec, string swaggerFilePath, SchemaCache schemaCache, string packageName = "", string swaggerLink = "")
+    public static async Task<SwaggerApiViewSpec> GenerateSwaggerApiView(SwaggerSpec swaggerSpec, string swaggerFilePath, SchemaCache schemaCache, string packageName = "", string swaggerLink = "")
     {
         SwaggerApiViewSpec ret = new SwaggerApiViewSpec
         {
@@ -70,6 +71,7 @@ public class SwaggerApiViewGenerator
                 };
 
                 if (value.parameters != null)
+                {
                     foreach (var parameter in value.parameters)
                     {
                         var param = parameter;
@@ -82,7 +84,18 @@ public class SwaggerApiViewGenerator
 
                         if (param == null)
                         {
-                            continue;
+                            if (!Path.IsPathFullyQualified(parameter.Ref))
+                            {
+                                var referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(parameter.Ref, currentSwaggerFilePath);
+                                var referenceSwaggerSpec = await SwaggerDeserializer.Deserialize(referenceSwaggerFilePath);
+                                referenceSwaggerSpec.swaggerFilePath = Path.GetFullPath(referenceSwaggerFilePath);
+                                AddDefinitionsToCache(referenceSwaggerSpec, referenceSwaggerFilePath, schemaCache);
+                                param = schemaCache.GetParameterFromCache(parameter.Ref, referenceSwaggerFilePath);
+                            }
+                            else
+                            {
+                                continue;
+                            }
                         }
 
                         var swaggerApiViewOperationParameter = new SwaggerApiViewParameter
@@ -114,8 +127,6 @@ public class SwaggerApiViewGenerator
                                 break;
                         }
                     }
-
-                {
                 }
 
 

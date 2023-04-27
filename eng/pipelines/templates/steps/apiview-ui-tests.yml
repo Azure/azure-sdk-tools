@@ -53,6 +53,7 @@ steps:
     AZURE_TENANT_ID: "$(apiview-appconfig-tenant-id)"
     AZURE_CLIENT_SECRET: "$(apiview-appconfig-client-secret)"
     APIVIEW_APPROVERS: "azure-sdk"
+    APIVIEW_SWAGGERMETADATABACKGROUNDTASKDISABLED: "true"
 
 - task: Powershell@2
   inputs:
@@ -65,19 +66,7 @@ steps:
   displayName: 'Copy from Test Files From Blob'
   env:
     AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
-
-- task: Powershell@2
-  inputs:
-    filePath: $(Build.SourcesDirectory)/eng/common/scripts/copy-from-blobstorage.ps1
-    arguments: >
-      -SourceBlobPath '${{ parameters.TestingDataContainer }}'
-      -ApplicationId $(apiviewstorageaccess-application-id)
-      -DestinationDirectory $(Build.BinariesDirectory)
-    pwsh: true
-  displayName: 'Copy from Test Files From Blob'
-  env:
-    AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
-
+    
 - task: DotNetCoreCLI@2
   displayName: 'Build & Test (UI)'
   env:

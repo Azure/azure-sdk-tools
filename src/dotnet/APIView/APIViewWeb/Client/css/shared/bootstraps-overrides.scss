@@ -190,6 +190,19 @@ select {
     color: var(--base-text-color);
 }
 
+.toast {
+    background-color: var(--base-bg-color);
+    background-clip: padding-box;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-color);
+}
+
+.toast-header {
+    background-color: var(--base-fg-color);
+    color: var(--base-text-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
 .nav-link {
     padding: 0.2rem 1rem;
 }

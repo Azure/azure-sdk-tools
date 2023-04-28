@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace APIViewWeb.Pages.Assemblies
 {
-    [UploadModelValidation(nameof(Language), nameof(Files))]
+    [UploadModelValidation()]
     public class UploadModel
     {
         [BindProperty]

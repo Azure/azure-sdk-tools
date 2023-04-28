@@ -1,9 +1,11 @@
 using System;
 using System.Threading.Tasks;
+using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb.Controllers
 {
@@ -12,10 +14,12 @@ namespace APIViewWeb.Controllers
     {
         private readonly ICommentsManager _commentsManager;
         private readonly IReviewManager _reviewManager;
+        private readonly IHubContext<NotificationHub> _notificationHubContext;
         private readonly INotificationManager _notificationManager;
 
-        public CommentsController(ICommentsManager commentsManager, IReviewManager reviewManager, INotificationManager notificationManager)
+        public CommentsController(ICommentsManager commentsManager, IReviewManager reviewManager, INotificationManager notificationManager, IHubContext<NotificationHub> notificationHub)
         {
+            _notificationHubContext = notificationHub;
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
@@ -24,6 +28,13 @@ namespace APIViewWeb.Controllers
         [HttpPost]
         public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false)
         {
+            if (string.IsNullOrEmpty(commentText))
+            {
+                var notifcation = new NotificationModel() { Message = "Comment Text cannot be empty. Please type your comment entry and try again.", Level = NotificatonLevel.Error };
+                await _notificationHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveNotification", notifcation);
+                return new BadRequestResult();
+            }
+
             var comment = new CommentModel();
             comment.TimeStamp = DateTime.UtcNow;
             comment.ReviewId = reviewId;

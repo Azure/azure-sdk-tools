@@ -10,8 +10,6 @@ $(() => {
   const SEL_COMMENT_CELL = ".comment-cell";
   const SHOW_COMMENTS_CHECK = "#show-comments-checkbox";
   const SHOW_SYS_COMMENTS_CHECK = "#show-system-comments-checkbox";
-  const COMMENT_CONTENT_BOX = ".new-comment-content";	
-  const COMMENT_TEXTBOX = ".new-thread-comment-text";
 
   let CurrentUserSuggestionElements: HTMLElement[] = [];	
   let CurrentUserSuggestionIndex = -1;	

@@ -4,7 +4,7 @@ $(() => {
   var signalR = require('@microsoft/signalr');
 
   const connection = new signalR.HubConnectionBuilder()
-    .withUrl("hubs/notification")
+    .withUrl(`${location.origin}/hubs/notification`)
     .configureLogging(signalR.LogLevel.Information)
     .withAutomaticReconnect()
     .build();
@@ -27,16 +27,16 @@ $(() => {
   connection.on("RecieveNotification", (notification) => {
     var newtoast = notificationToast.clone().removeAttr("id");
     switch (notification.level) {
-      case 1:
+      case 0:
         newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-circle-info text-info me-1" ></i>`);
         newtoast.find(".toast-header strong").html("Information");
         break;
-      case 2:
+      case 1:
         newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-triangle-exclamation text-warning me-1"></i>`);
         newtoast.find(".toast-header strong").html("Warning");
         break;
-      case 3:
-        newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-circle-exclamation text-error me-1"></i>`);
+      case 2:
+        newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-circle-exclamation text-danger me-1"></i>`);
         newtoast.find(".toast-header strong").html("Error");
         break;
     }

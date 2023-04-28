@@ -27,7 +27,7 @@ namespace APIViewWeb.Helpers
                 var languageServices = validationContext.GetServices(typeof(LanguageService)) as IEnumerable<LanguageService>;
                 var languageService = languageServices.FirstOrDefault(s => (s as LanguageService).Name.Equals(model.Language));
                 if (!languageService.IsSupportedFile(model.Files.SingleOrDefault().FileName))
-                    return new ValidationResult($"File is invlaid for the language selected. For language {model.Language} select a file with extension {string.Join(", ", languageService.Extensions)}");
+                    return new ValidationResult($"File is invalid for the language selected. Select a file with extension {string.Join(", ", languageService.Extensions)} for language {model.Language}");
             }
             return ValidationResult.Success;
         }

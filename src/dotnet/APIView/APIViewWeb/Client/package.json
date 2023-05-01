@@ -10,6 +10,7 @@
     "watch": "webpack --watch"
   },
   "dependencies": {
+    "@microsoft/signalr": "^7.0.5",
     "acorn": "^8.0.0",
     "core-js": "^3.3.2",
     "jquery": "3.6.0",

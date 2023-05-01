@@ -79,7 +79,7 @@
     <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
-                <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
+                <form asp-page-handler="Upload" method="post" enctype="multipart/form-data" id="review-upload-form">
                     <div class="modal-header">
                         <h5 class="modal-title">Create Review</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -123,14 +123,16 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
+                        <button id="review-upload-submit-btn" class="btn btn-primary" >
+                            <i class="fas fa-cloud-upload-alt"></i> Upload
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <button type="button" class="btn btn-primary" id="create-review-button" data-bs-toggle="modal" data-bs-target="#uploadModel"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
+    <button type="button" class="btn btn-primary" id="create-review-button" data-bs-toggle="modal" data-bs-target="#uploadModel" data-bs-backdrop="false"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
 
     <div class="mx-5 row">
         <div class="col-md-12" id="reviews-filter-partial">

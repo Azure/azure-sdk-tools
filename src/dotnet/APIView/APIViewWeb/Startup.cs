@@ -25,6 +25,7 @@ using APIViewWeb.Filters;
 using APIViewWeb.Account;
 using APIView.Identity;
 using APIViewWeb.Managers;
+using APIViewWeb.Hubs;
 
 namespace APIViewWeb
 {
@@ -222,6 +223,9 @@ namespace APIViewWeb
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddHostedService<SwaggerReviewsBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
+            services.AddSignalR(options => {
+                options.EnableDetailedErrors = true;
+            });
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)
@@ -281,6 +285,7 @@ namespace APIViewWeb
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();
                 endpoints.MapDefaultControllerRoute();
+                endpoints.MapHub<NotificationHub>("hubs/notification");
             });
         }
     }

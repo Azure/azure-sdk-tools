@@ -10,7 +10,7 @@ param updateNodes bool = false
 // monitoring parameters
 param workspaceId string
 
-var kubernetesVersion = '1.25.4'
+var kubernetesVersion = '1.25.6'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 
 var systemAgentPool = {
@@ -31,11 +31,11 @@ var systemAgentPool = {
 
 var defaultAgentPool = {
   name: 'default'
-  count: 3
-  minCount: 5
-  maxCount: 24
+  count: 6
+  minCount: 6
+  maxCount: 20
   mode: 'User'
-  vmSize: 'Standard_D4ds_v4'
+  vmSize: 'Standard_D8a_v4'
   type: 'VirtualMachineScaleSets'
   osType: 'Linux'
   osDiskType: 'Ephemeral'

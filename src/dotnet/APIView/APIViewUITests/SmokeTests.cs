@@ -129,6 +129,9 @@ namespace APIViewUITests
                
                 var createReviewBtn = driver.FindElement(By.XPath("//button[@data-bs-target='#uploadModel']"));
                 createReviewBtn.Click();
+                var languageSelect = driver.FindElement(By.Id("review-language-select"));
+                var languageSelectElement = new SelectElement(languageSelect);
+                languageSelectElement.SelectByText("C#");
                 var fileSelector = driver.FindElement(By.Id("uploadReviewFile"));
                 fileSelector.SendKeys(fileAPath);
                 var uploadBtn = driver.FindElement(By.XPath("//div[@class='modal-footer']/button[@type='submit']"));

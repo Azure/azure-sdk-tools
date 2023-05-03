@@ -258,6 +258,8 @@ stages:
           displayName: Clone Repo
 
         - pwsh: |
+            Write-Host "mvn install -f eng/code-quality-reports/pom.xml -DskipTests=true -DskipCheckStyle=true"
+            mvn install -f eng/code-quality-reports/pom.xml -DskipTests=true -DskipCheckStyle=true
             Write-Host "mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true -DskipCheckStyle=true"
             mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true -DskipCheckStyle=true
             Write-Host "mvn install -f sdk/core/azure-core/pom.xml -DskipTests=true -DskipCheckStyle=true"

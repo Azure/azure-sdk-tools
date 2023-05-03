@@ -258,20 +258,21 @@ stages:
           displayName: Clone Repo
 
         - pwsh: |
-            Write-Host "mvn install -f eng/code-quality-reports/pom.xml -DskipTests=true -DskipCheckStyle=true"
-            mvn install -f eng/code-quality-reports/pom.xml -DskipTests=true -DskipCheckStyle=true
-            Write-Host "mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true -DskipCheckStyle=true"
-            mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true -DskipCheckStyle=true
-            Write-Host "mvn install -f sdk/core/azure-core/pom.xml -DskipTests=true -DskipCheckStyle=true"
-            mvn install -f sdk/core/azure-core/pom.xml -DskipTests=true -DskipCheckStyle=true
-            Write-Host "mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true -DskipCheckStyle=true"
-            mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true -DskipCheckStyle=true
+            Write-Host "mvn install -f eng/code-quality-reports/pom.xml -DskipTests=true -DskipDocs=true -DskipCheckStyle=true"
+            mvn install -f eng/code-quality-reports/pom.xml -DskipTests=true -DskipDocs=true -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true -DskipDocs=true -DskipCheckStyle=true"
+            mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true -DskipDocs=true -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-core/pom.xml -DskipTests=true -DskipDocs=true -DskipCheckStyle=true"
+            mvn install -f sdk/core/azure-core/pom.xml -DskipTests=true -DskipDocs=true -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true -DskipDocs=true -DskipCheckStyle=true"
+            mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true -DskipDocs=true -DskipCheckStyle=true
           displayName: 'Install azure-core-test'
           workingDirectory: $(CLONE_LOCATION)
 
         - pwsh: |
+            # To run java in 'local' mode, we need to ensure that the natively set CI variable $env:TF_BUILD
+            # is not populated. Given it's auto-populated at step init by devops, we do it inline here.
             $env:TF_BUILD=""
-            Write-Host "Here is the value of TF_Build $($env:TF_BUILD)"
             mvn surefire:test -f sdk/core/azure-core-test/pom.xml
           displayName: 'Invoke Tests'
           workingDirectory: $(CLONE_LOCATION)

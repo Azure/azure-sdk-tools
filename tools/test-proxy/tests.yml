@@ -270,6 +270,7 @@ stages:
           workingDirectory: $(CLONE_LOCATION)
 
         - pwsh: |
+            Write-Host "Here is the value of TF_Build $($env:TF_BUILD)"
             mvn surefire:test -f sdk/core/azure-core-test/pom.xml
           displayName: 'Invoke Tests'
           workingDirectory: $(CLONE_LOCATION)

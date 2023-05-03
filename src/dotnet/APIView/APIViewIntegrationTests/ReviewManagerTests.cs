@@ -4,11 +4,6 @@ using System.IO;
 using System;
 using APIViewWeb;
 using APIViewWeb.Repositories;
-using Newtonsoft.Json;
-using APIViewWeb.Models;
-using System.Collections.Generic;
-using ApiView;
-using FluentAssertions;
 
 namespace APIViewIntegrationTests
 {
@@ -94,56 +89,6 @@ namespace APIViewIntegrationTests
             Assert.Equal(ReviewType.PullRequest, review.FilterType);
 
             await Assert.ThrowsAsync<UnDeletableReviewException>(async () => await reviewManager.DeleteRevisionAsync(user, review.ReviewId, review.Revisions[0].RevisionId));
-        }
-
-        [Fact(Skip = "Need Resource to run so won't run on PR piplines plus Only needed once.")]
-        public async Task UpdateSwaggerReviewsMetaData_Test()
-        {
-            string reviewJson = File.ReadAllText(Path.Join(testsBaseFixture.TestDataPath, "account.swagger-cosmos-data.json"));
-            ReviewModel testReview = JsonConvert.DeserializeObject<ReviewModel>(reviewJson);
-            await testsBaseFixture.ReviewRepository.UpsertReviewAsync(testReview);
-
-            DirectoryInfo directoryInfo = new DirectoryInfo(Path.Join(testsBaseFixture.TestDataPath, "testComments"));
-
-            foreach(var file in directoryInfo.GetFiles())
-            {
-                string commentJson = File.ReadAllText(file.FullName);
-                CommentModel comment = JsonConvert.DeserializeObject<CommentModel>(commentJson);
-                await testsBaseFixture.CommentRepository.UpsertCommentAsync(comment);
-            }
-
-            foreach (var revision in testReview.Revisions)
-            {
-                string codeFileJson = File.ReadAllText(Path.Join(testsBaseFixture.TestDataPath, "codeFiles", revision.Files[0].ReviewFileId));
-                CodeFile testCodeFile = JsonConvert.DeserializeObject<CodeFile>(codeFileJson);
-                await testsBaseFixture.BlobCodeFileRepository.UpsertCodeFileAsync(revision.RevisionId, revision.Files[0].ReviewFileId, testCodeFile);
-            } 
-
-            await testsBaseFixture.ReviewManager.UpdateSwaggerReviewsMetaData();
-
-            ReviewModel updatedReview = await testsBaseFixture.ReviewRepository.GetReviewAsync(testReview.ReviewId);
-            IEnumerable<CommentModel> updatedComments = await testsBaseFixture.CommentRepository.GetCommentsAsync(testReview.ReviewId);
-
-            List<string> expectedCommentIds = new List<string>() {
-                "-account.swagger-General-consumes",
-                "-account.swagger-Paths-/",
-                "-account.swagger-Paths-/collections-0-operationId-Collections_ListCollections-QueryParameters-table-tr-2",
-                "-account.swagger-Paths-/collections-0-operationId-Collections_ListCollections-Responses-200-table-tr-3"
-            };
-
-            foreach (var comment in updatedComments)
-            {
-                expectedCommentIds.Should().Contain(comment.ElementId);
-            }
-
-            int[] expectedLineNumbers = { 1, 2, 3, 7, 8, 9, 10, 11, 20, 26, 860, 1184, 1193};
-            var renderedCodeFile = await testsBaseFixture.BlobCodeFileRepository.GetCodeFileAsync(updatedReview.Revisions[1]);
-            renderedCodeFile.Render(false);
-
-            for (int i = 0; i < renderedCodeFile.RenderResult.CodeLines.Length; i++)
-            {
-                Assert.Equal(renderedCodeFile.RenderResult.CodeLines[i].LineNumber, expectedLineNumbers[i]);
-            }
         }
     }
 }

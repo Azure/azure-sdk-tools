@@ -115,7 +115,7 @@ stages:
     jobs:
     # - job: Test_JS_Utils
 
-    #   displayName: Invoke JS Utils CI
+    #   displayName: Invoke JS Utils CI Tests
 
     #   strategy:
     #     matrix:
@@ -169,9 +169,9 @@ stages:
     #       env:
     #         PROXY_MANUAL_START: "true"
 
-    # - job: Test_Java_Core
+    # - job: Test_Python_Tables
 
-    #   displayName: Run Java Core Local
+    #   displayName: Run Python Tables CI Tests
 
     #   strategy:
     #     matrix:
@@ -222,9 +222,9 @@ stages:
     #         PROXY_URL: "http://localhost:5000"
     #         PROXY_MANUAL_START: true
 
-    - job: Test_Python_Tables
+    - job: Test_Java_Core
 
-      displayName: Run Python Tables CI
+      displayName: Run Java Core Local Tests
 
       strategy:
         matrix:
@@ -246,6 +246,7 @@ stages:
         CLONE_LOCATION: "$(Agent.BuildDirectory)/java_repo"
 
       steps:
+
         - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
         - template: /eng/pipelines/templates/steps/use-python-version.yml
@@ -257,8 +258,11 @@ stages:
           displayName: Clone Repo
 
         - pwsh: |
+            Write-Host "mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true -DskipCheckStyle=true"
             mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-core/pom.xml -DskipTests=true -DskipCheckStyle=true"
             mvn install -f sdk/core/azure-core/pom.xml -DskipTests=true -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true -DskipCheckStyle=true"
             mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true -DskipCheckStyle=true
           displayName: 'Install azure-core-test'
           workingDirectory: $(CLONE_LOCATION)

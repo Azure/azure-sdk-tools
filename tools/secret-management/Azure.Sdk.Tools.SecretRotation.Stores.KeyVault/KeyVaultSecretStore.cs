@@ -264,7 +264,7 @@ public class KeyVaultSecretStore : SecretStore
         if (whatIf)
         {
             this.logger.LogInformation(
-                "WHAT IF: Add tag 'rotation-complete' to secret '{CertificateName}' in vault '{Vault}'",
+                "WHAT IF: Add tag 'rotation-complete' to secret '{SecretName}' in vault '{Vault}'",
                 this.secretName, this.vaultUri);
             return;
         }
@@ -275,7 +275,7 @@ public class KeyVaultSecretStore : SecretStore
                 "The PrimaryState value passed to KeyVaultSecretStore was not of type KeyVaultSecret");
         }
 
-        this.logger.LogInformation("Adding tag 'rotation-complete' to certificate '{CertificateName}' in vault '{Vault}'",
+        this.logger.LogInformation("Adding tag 'rotation-complete' to secret '{SecretName}' in vault '{Vault}'",
             this.secretName, this.vaultUri);
 
         secret.Properties.Tags.Add("rotation-complete", "true");

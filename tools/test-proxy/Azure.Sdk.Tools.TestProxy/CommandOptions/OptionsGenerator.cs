@@ -15,13 +15,13 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
                 name: "--storage-location",
                 description: "The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.",
                 getDefaultValue: () => null);
-            storageLocationOption.AddAlias("-f");
+            storageLocationOption.AddAlias("-l");
 
             var storagePluginOption = new Option<string>(
                 name: "--storage-plugin",
                 description: "The plugin for the selected storage, default is Git storage is GitStore. (Currently the only option)",
                 getDefaultValue: () => "GitStore");
-            storagePluginOption.AddAlias("-l");
+            storagePluginOption.AddAlias("-p");
 
             var assetsJsonPathOption = new Option<string>(
                 name: "--assets-json-path",

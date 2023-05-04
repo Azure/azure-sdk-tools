@@ -258,14 +258,14 @@ stages:
           displayName: Clone Repo
 
         - pwsh: |
-            Write-Host "mvn install -f eng/code-quality-reports/pom.xml -DskipTests=true -Dmaven.javadoc.skip=true -DskipCheckStyle=true"
-            mvn install -f eng/code-quality-reports/pom.xml -DskipTests=true -Dmaven.javadoc.skip=true -DskipCheckStyle=true
-            Write-Host "mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true -Dmaven.javadoc.skip=true -DskipCheckStyle=true"
-            mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true -Dmaven.javadoc.skip=true -DskipCheckStyle=true
-            Write-Host "mvn install -f sdk/core/azure-core/pom.xml -DskipTests=true -Dmaven.javadoc.skip=true -DskipCheckStyle=true"
-            mvn install -f sdk/core/azure-core/pom.xml -DskipTests=true -Dmaven.javadoc.skip=true -DskipCheckStyle=true
-            Write-Host "mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true -Dmaven.javadoc.skip=true -DskipCheckStyle=true"
-            mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true -Dmaven.javadoc.skip=true -DskipCheckStyle=true
+            Write-Host 'mvn install -f eng/code-quality-reports/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true'
+            mvn install -f eng/code-quality-reports/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true
+            Write-Host 'mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true'
+            mvn install -f sdk/core/azure-json/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true
+            Write-Host 'mvn install -f sdk/core/azure-core/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true'
+            mvn install -f sdk/core/azure-core/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true
+            Write-Host 'mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true'
+            mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true
           displayName: 'Install azure-core-test'
           workingDirectory: $(CLONE_LOCATION)
 

@@ -259,14 +259,13 @@ stages:
 
 
         - pwsh: |
-            $skipOptions = '"-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true'
-            Write-Host 'mvn install -f eng/code-quality-reports/pom.xml $skipOptions'
-            mvn install -f eng/code-quality-reports/pom.xml $skipOptions
-            Write-Host 'mvn install -f sdk/core/azure-json/pom.xml $skipOptions'
-            mvn install -f sdk/core/azure-json/pom.xml $skipOptions
-            Write-Host 'mvn install -f sdk/core/azure-core/pom.xml $skipOptions'
-            mvn install -f sdk/core/azure-core/pom.xml $skipOptions
-            Write-Host 'mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true'
+            Write-Host "mvn install -f eng/code-quality-reports/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
+            mvn install -f eng/code-quality-reports/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-json/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
+            mvn install -f sdk/core/azure-json/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-core/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
+            mvn install -f sdk/core/azure-core/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true"
             mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true
           displayName: 'Install azure-core-test'
           workingDirectory: $(CLONE_LOCATION)

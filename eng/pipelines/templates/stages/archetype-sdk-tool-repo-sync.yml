@@ -165,20 +165,6 @@ stages:
                         -AuthToken "$(azuresdk-github-pat)"
                       pwsh: true
 
-                  - task: PowerShell@2
-                    displayName: 'Add Auto merge Label'
-                    condition: succeeded()
-                    inputs:
-                      targetType: filePath
-                      filePath: $(Build.SourcesDirectory)/eng/common/scripts/Add-IssueLabels.ps1
-                      arguments: >
-                        -RepoOwner "Azure"
-                        -RepoName "azure-sdk-tools"
-                        -IssueNumber $(System.PullRequest.PullRequestNumber)
-                        -Labels "auto-merge"
-                        -AuthToken "$(azuresdk-github-pat)"
-                      pwsh: true
-
                   - ${{ each repo in parameters.Repos }}:
                     - task: PowerShell@2
                       displayName: Clean Up Sync Common Branches

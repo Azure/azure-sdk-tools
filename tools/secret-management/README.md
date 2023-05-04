@@ -26,6 +26,7 @@ secrets --help
 | -------------------------------- | ---------------------------------------------------------------- |
 | AAD Application Secret           | [documentation](docs/stores/aad-application-secret.md)           |
 | ADO Service Connection Parameter | [documentation](docs/stores/ado-service-connection-parameter.md) |
+| Azure Website                    | [documentation](docs/stores/azure-website.md)                    |
 | Key Vault Certificate            | [documentation](docs/stores/keyvault-certificate.md)             |
 | Key Vault Secret                 | [documentation](docs/stores/keyvault-secret.md)                  |
 | Manual Action                    | [documentation](docs/stores/manual-action.md)                    |

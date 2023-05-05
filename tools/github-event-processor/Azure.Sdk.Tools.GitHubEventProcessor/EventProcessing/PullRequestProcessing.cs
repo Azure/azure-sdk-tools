@@ -79,29 +79,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
         /// <summary>
         /// Reset Pull Request Activity
-        /// See Common_ResetPullRequestActivity function for details
-        /// </summary>
-        /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
-        /// <param name="prEventPayload">PullRequestEventGitHubPayload deserialized from the json event payload</param>
-        public static void ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
-                                                    PullRequestEventGitHubPayload prEventPayload)
-        {
-            Common_ResetPullRequestActivity(gitHubEventClient, 
-                                            prEventPayload.Action, 
-                                            prEventPayload.PullRequest, 
-                                            prEventPayload.Repository, 
-                                            prEventPayload.Sender);
-        }
-
-        /// <summary>
-        /// Reset Pull Request Activity
-        /// This action has triggers from 3 different events: pull_request and pull_request_review and issue_comment
+        /// This action has triggers from 2 different events: pull_request and issue_comment
         /// Note: issue_comment, had to be a different function. While the issue_comment does have a PullRequest on
-        /// the issue, it's not a complete PullRequest like what comes in with a pull_request or pull_request_review event.
-        /// This function only covers pull_request and pull_request_review
+        /// the issue, it's not a complete PullRequest like what comes in with a pull_request event.
+        /// This function only covers pull_request
         /// Trigger: 
         ///     pull_request reopened, synchronize (changes pushed), review_requested, merged
-        ///     pull_request_review submitted
         /// Conditions for all triggers
         ///     Pull request has "no-recent-activity" label
         ///     User modifying the pull request is not a bot
@@ -115,15 +98,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///     Remove "no-recent-activity" label
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
-        /// <param name="action">The action being performed, from the payload object</param>
-        /// <param name="pullRequest">Octokit.PullRequest object from the respective payload</param>
-        /// <param name="repository">Octokit.Repository object from the respective payload</param>
-        /// <param name="sender">Octokit.User from the payload's Sender.</param>
-        public static void Common_ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
-                                                           string action,
-                                                           PullRequest pullRequest,
-                                                           Repository repository,
-                                                           User sender)
+        /// <param name="prEventPayload">PullRequestEventGitHubPayload deserialized from the json event payload</param>
+        public static void ResetPullRequestActivity(GitHubEventClient gitHubEventClient,
+                                                    PullRequestEventGitHubPayload prEventPayload)
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ResetPullRequestActivity))
             {
@@ -132,26 +109,21 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 // else.
                 // 1. The sender is not a bot.
                 // 2. The Pull request has "no-recent-activity" label
-                if (sender.Type != AccountType.Bot &&
-                    LabelUtils.HasLabel(pullRequest.Labels, LabelConstants.NoRecentActivity))
+                if (prEventPayload.Sender.Type != AccountType.Bot &&
+                    LabelUtils.HasLabel(prEventPayload.PullRequest.Labels, LabelConstants.NoRecentActivity))
                 {
                     bool removeLabel = false;
                     // Pull request conditions AND the pull request needs to be in an opened state
-                    if ((action == ActionConstants.Reopened || 
-                         action == ActionConstants.Synchronize ||
-                         action == ActionConstants.ReviewRequested) &&
-                         pullRequest.State == ItemState.Open)
+                    if ((prEventPayload.Action == ActionConstants.Reopened ||
+                         prEventPayload.Action == ActionConstants.Synchronize ||
+                         prEventPayload.Action == ActionConstants.ReviewRequested) &&
+                         prEventPayload.PullRequest.State == ItemState.Open)
                     {
                         removeLabel = true;
                     }
                     // Pull request merged conditions, the merged flag would be true and the PR would be closed
-                    else if (action == ActionConstants.Closed &&
-                             pullRequest.Merged)
-                    {
-                        removeLabel = true;
-                    }
-                    // Pull request reviewed conditions. Submitted is only a pull_request_review event.
-                    else if (action == ActionConstants.Submitted)
+                    else if (prEventPayload.Action == ActionConstants.Closed &&
+                             prEventPayload.PullRequest.Merged)
                     {
                         removeLabel = true;
                     }
@@ -164,7 +136,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Reset auto-merge approvals on untrusted changes
+        /// Reset approvals on untrusted changes if auto-merge is enabled
         /// Trigger: pull request synchronized
         /// Conditions:
         ///     Pull request is open

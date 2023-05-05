@@ -1296,7 +1296,7 @@ class CheckDocstringParameters(BaseChecker):
         3. Missing a return doc in the docstring when a function returns something.
         4. Missing an rtype in the docstring when a function returns something.
         5. Extra params in docstring that aren't function parameters. Change to keywords.
-        6. Misformated param type in docstring.
+        6. Misformatted param type in docstring.
 
         :param node: ast.ClassDef or ast.FunctionDef
         :return: None

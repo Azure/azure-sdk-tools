@@ -1964,6 +1964,38 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
             self.checker.visit_return(function_node_a.body[0])
             self.checker.visit_return(function_node_b.body[0])
 
+    def test_finds_return_ItemPaged_not_list(self):
+        class_node, function_node_a = astroid.extract_node("""
+        from azure.core.paging import ItemPaged
+        
+        class SomeClient(): #@
+            def some_thing(self): #@
+                return ItemPaged()
+        """)
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="client-list-methods-use-paging", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=18
+            ),
+        ):
+            self.checker.visit_return(function_node_a.body[0])
+
+    def test_finds_return_AsyncItemPaged_not_list(self):
+        class_node, function_node_a = astroid.extract_node("""
+        from azure.core.async_paging import AsyncItemPaged
+        
+        class SomeClient(): #@
+            async def some_thing(self): #@
+                return AsyncItemPaged()
+        """)
+
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="client-list-methods-use-paging", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=18
+            ),
+        ):
+            self.checker.visit_return(function_node_a.body[0])
+
     def test_core_paging_file_custom_class_acceptable_and_violation(self):
         file = open(os.path.join(TEST_FOLDER, "test_files", "core_paging_acceptable_and_violation.py"))
         node = astroid.parse(file.read())
@@ -1982,7 +2014,6 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
             self.checker.visit_return(function_node_a.body[0])
             self.checker.visit_return(function_node_b.body[0])
      
-
     def test_core_paging_file_custom_class_violation(self):
         file = open(os.path.join(TEST_FOLDER, "test_files", "core_paging_violation.py"))
         node = astroid.parse(file.read())

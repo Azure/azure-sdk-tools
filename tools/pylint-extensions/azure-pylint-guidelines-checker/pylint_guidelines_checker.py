@@ -82,7 +82,6 @@ class ClientConstructorTakesCorrectParameters(BaseChecker):
             logger.debug("Pylint custom checker failed to check if constructor has correct parameters.")
             pass
 
-
 class ClientHasKwargsInPoliciesForCreateConfigurationMethod(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -135,7 +134,6 @@ class ClientHasKwargsInPoliciesForCreateConfigurationMethod(BaseChecker):
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if kwargs parameter in policies.")
             pass
-
 
 class ClientHasApprovedMethodNamePrefix(BaseChecker):
     __implements__ = IAstroidChecker
@@ -196,7 +194,6 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
             logger.debug("Pylint custom checker failed to check if client has approved method name prefix.")
             pass
 
-
 class ClientMethodsUseKwargsWithMultipleParameters(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -249,7 +246,6 @@ class ClientMethodsUseKwargsWithMultipleParameters(BaseChecker):
             pass
 
     visit_asyncfunctiondef = visit_functiondef
-
 
 class ClientMethodsHaveTypeAnnotations(BaseChecker):
     __implements__ = IAstroidChecker
@@ -315,7 +311,6 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
             pass
 
     visit_asyncfunctiondef = visit_functiondef
-
 
 class ClientMethodsHaveTracingDecorators(BaseChecker):
     __implements__ = IAstroidChecker
@@ -418,7 +413,6 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
         except:
             pass
 
-
 class ClientsDoNotUseStaticMethods(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -469,7 +463,6 @@ class ClientsDoNotUseStaticMethods(BaseChecker):
 
     visit_asyncfunctiondef = visit_functiondef
 
-
 class FileHasCopyrightHeader(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -515,7 +508,6 @@ class FileHasCopyrightHeader(BaseChecker):
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if file is missing a copyright header.")
             pass
-
 
 class ClientUsesCorrectNamingConventions(BaseChecker):
     __implements__ = IAstroidChecker
@@ -586,7 +578,6 @@ class ClientUsesCorrectNamingConventions(BaseChecker):
                 logger.debug("Pylint custom checker failed to check if client uses correct naming conventions.")
                 pass
 
-
 class ClientMethodsHaveKwargsParameter(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -642,7 +633,6 @@ class ClientMethodsHaveKwargsParameter(BaseChecker):
 
     visit_asyncfunctiondef = visit_functiondef
 
-
 class ClientMethodNamesDoNotUseDoubleUnderscorePrefix(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -691,7 +681,6 @@ class ClientMethodNamesDoNotUseDoubleUnderscorePrefix(BaseChecker):
             pass
 
     visit_asyncfunctiondef = visit_functiondef
-
 
 class ClientDocstringUsesLiteralIncludeForCodeExample(BaseChecker):
     __implements__ = IAstroidChecker
@@ -761,7 +750,6 @@ class ClientDocstringUsesLiteralIncludeForCodeExample(BaseChecker):
 
     visit_asyncfunctiondef = visit_functiondef
 
-
 class AsyncClientCorrectNaming(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -809,7 +797,6 @@ class AsyncClientCorrectNaming(BaseChecker):
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if async client uses correct naming.")
             pass
-
 
 class SpecifyParameterNamesInCall(BaseChecker):
     __implements__ = IAstroidChecker
@@ -860,7 +847,6 @@ class SpecifyParameterNamesInCall(BaseChecker):
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client methods specify parameters name in call.")
             pass
-
 
 class ClientListMethodsUseCorePaging(BaseChecker):
     __implements__ = IAstroidChecker
@@ -977,7 +963,6 @@ class ClientLROMethodsUseCorePolling(BaseChecker):
             logger.debug("Pylint custom checker failed to check if client begin method uses core polling.")
             pass
 
-
 class ClientLROMethodsUseCorrectNaming(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -1035,7 +1020,6 @@ class ClientLROMethodsUseCorrectNaming(BaseChecker):
                 logger.debug("Pylint custom checker failed to check if client method with polling uses correct naming.")
                 pass
 
-
 class ClientConstructorDoesNotHaveConnectionStringParam(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -1086,7 +1070,6 @@ class ClientConstructorDoesNotHaveConnectionStringParam(BaseChecker):
             logger.debug("Pylint custom checker failed to check if client uses connection string param in constructor.")
             pass
 
-
 class PackageNameDoesNotUseUnderscoreOrPeriod(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -1135,7 +1118,6 @@ class PackageNameDoesNotUseUnderscoreOrPeriod(BaseChecker):
         except Exception:
             logger.debug("Pylint custom checker failed to check if package name is correct.")
             pass
-
 
 class ServiceClientUsesNameWithClientSuffix(BaseChecker):
     __implements__ = IAstroidChecker
@@ -1190,7 +1172,6 @@ class ServiceClientUsesNameWithClientSuffix(BaseChecker):
         except Exception:
             logger.debug("Pylint custom checker failed to check if service client has a client suffix.")
             pass
-
 
 class CheckDocstringParameters(BaseChecker):
     __implements__ = IAstroidChecker
@@ -1470,7 +1451,6 @@ class CheckDocstringParameters(BaseChecker):
     # this line makes it work for async functions
     visit_asyncfunctiondef = visit_functiondef
 
-
 class CheckForPolicyUse(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -1679,7 +1659,6 @@ class CheckForPolicyUse(BaseChecker):
                         msgid="missing-distributed-tracing-policy", node=self.node_to_use, confidence=None
                     )
 
-
 class CheckDocstringAdmonitionNewline(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -1763,7 +1742,6 @@ class CheckDocstringAdmonitionNewline(BaseChecker):
 
     # this line makes it work for async functions
     visit_asyncfunctiondef = visit_functiondef
-
 
 class CheckEnum(BaseChecker):
     __implements__ = IAstroidChecker
@@ -1849,7 +1827,6 @@ class CheckEnum(BaseChecker):
                         "enum-must-be-uppercase", node=nod.targets[0], confidence=None
                     )
 
-
 class CheckAPIVersion(BaseChecker):
     __implements__ = IAstroidChecker
 
@@ -1911,7 +1888,6 @@ class CheckAPIVersion(BaseChecker):
         except AttributeError:
             logger.debug("Pylint custom checker failed to check if client takes in an optional keyword-only api_version argument.")
             pass                                                                                    
-
 
 class CheckNamingMismatchGeneratedCode(BaseChecker):
     __implements__ = IAstroidChecker

@@ -212,7 +212,6 @@ class TestClientMethodsHaveTracingDecorators(pylint.testutils.CheckerTestCase):
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
 
-
 class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientsDoNotUseStaticMethods
 
@@ -407,7 +406,6 @@ class TestClientsDoNotUseStaticMethods(pylint.testutils.CheckerTestCase):
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
-
 
 class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientHasApprovedMethodNamePrefix
@@ -610,7 +608,6 @@ class TestClientHasApprovedMethodNamePrefix(pylint.testutils.CheckerTestCase):
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
 
-
 class TestClientConstructorTakesCorrectParameters(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientConstructorTakesCorrectParameters
 
@@ -696,7 +693,6 @@ class TestClientConstructorTakesCorrectParameters(pylint.testutils.CheckerTestCa
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
-
 
 class TestClientMethodsUseKwargsWithMultipleParameters(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsUseKwargsWithMultipleParameters
@@ -931,7 +927,6 @@ class TestClientMethodsUseKwargsWithMultipleParameters(pylint.testutils.CheckerT
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
-
 
 class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsHaveTypeAnnotations
@@ -1209,7 +1204,6 @@ class TestClientMethodsHaveTypeAnnotations(pylint.testutils.CheckerTestCase):
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
 
-
 class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientHasKwargsInPoliciesForCreateConfigurationMethod
 
@@ -1311,7 +1305,6 @@ class TestClientHasKwargsInPoliciesForCreateConfigurationMethod(pylint.testutils
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
-
 
 class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientUsesCorrectNamingConventions
@@ -1537,7 +1530,6 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
 
-
 class TestClientMethodsHaveKwargsParameter(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodsHaveKwargsParameter
 
@@ -1666,7 +1658,6 @@ class TestClientMethodsHaveKwargsParameter(pylint.testutils.CheckerTestCase):
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
 
-
 class TestAsyncClientCorrectNaming(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.AsyncClientCorrectNaming
 
@@ -1732,7 +1723,6 @@ class TestAsyncClientCorrectNaming(pylint.testutils.CheckerTestCase):
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
 
-
 class TestFileHasCopyrightHeader(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.FileHasCopyrightHeader
 
@@ -1763,7 +1753,6 @@ class TestFileHasCopyrightHeader(pylint.testutils.CheckerTestCase):
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
-
 
 class TestSpecifyParameterNamesInCall(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.SpecifyParameterNamesInCall
@@ -1858,7 +1847,6 @@ class TestSpecifyParameterNamesInCall(pylint.testutils.CheckerTestCase):
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
-
 
 class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientListMethodsUseCorePaging
@@ -2049,7 +2037,6 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
 
-
 class TestClientLROMethodsUseCorePolling(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientLROMethodsUseCorePolling
 
@@ -2117,7 +2104,6 @@ class TestClientLROMethodsUseCorePolling(pylint.testutils.CheckerTestCase):
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
-
 
 class TestClientLROMethodsUseCorrectNaming(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientLROMethodsUseCorrectNaming
@@ -2196,7 +2182,6 @@ class TestClientLROMethodsUseCorrectNaming(pylint.testutils.CheckerTestCase):
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
-
 
 class TestClientConstructorDoesNotHaveConnectionStringParam(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientConstructorDoesNotHaveConnectionStringParam
@@ -2339,7 +2324,6 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
         request = client.get(url)
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
-
 
 class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.ClientMethodNamesDoNotUseDoubleUnderscorePrefix
@@ -2751,7 +2735,6 @@ class TestCheckDocstringAdmonitionNewline(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_classdef(class_node)        
     
-    
 class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.CheckNamingMismatchGeneratedCode
 
@@ -2971,9 +2954,7 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
     def _create_url_pipeline(self,url):
         resp = requests.get(url)
         assert resp.status_code == 200
-        
-        
-            
+             
 class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
     CHECKER_CLASS = checker.CheckAPIVersion
 
@@ -3049,7 +3030,6 @@ class TestCheckAPIVersion(pylint.testutils.CheckerTestCase):
         response = client._pipeline.run(request)
         assert response.http_response.status_code == 200
 
-
 class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed imports and allowing allowed imports."""
     CHECKER_CLASS = checker.NonCoreNetworkImport
@@ -3104,7 +3084,6 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
         importfrom_node.root().name = "azure.core.pipeline.transport._private_module"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
-
 
 class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed imports and allowing allowed imports."""

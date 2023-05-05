@@ -1228,6 +1228,12 @@ class CheckDocstringParameters(BaseChecker):
             "docstring-should-be-keyword",
             "Docstring should use keywords.",
         ),
+        "C4755": (
+            'Param types misformated in docstring: "%s". See details: '
+            'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
+            "docstring-misformated-type",
+            "Docstring misformated for param type.",
+        ),
     }
     options = (
         (
@@ -1290,6 +1296,7 @@ class CheckDocstringParameters(BaseChecker):
         3. Missing a return doc in the docstring when a function returns something.
         4. Missing an rtype in the docstring when a function returns something.
         5. Extra params in docstring that aren't function parameters. Change to keywords.
+        6. Misformated param type in docstring.
 
         :param node: ast.ClassDef or ast.FunctionDef
         :return: None
@@ -1353,16 +1360,29 @@ class CheckDocstringParameters(BaseChecker):
 
         # check if we have a type for each param and check if documented params that should be keywords
         missing_types = []
+        misformated_types = []
         should_be_keywords = []
         for param in docparams:
+            # Check each param type and make sure it is formatted correctly for sphinx
             if docparams[param] is None:
                 missing_types.append(param)
+
+            # Check format of param type
+            if docparams[param].contains("Union") or docparams[param].contains("Optional") \
+                or docparams[param].contains("List") or docparams[param].contains("Tuple") or docparams[param].contains("Dict"):
+                    misformated_types.append(param)
+
             if param not in arg_names:
                 should_be_keywords.append(param)
 
         if missing_types:
             self.add_message(
                 msgid="docstring-missing-type", args=(", ".join(missing_types)), node=node, confidence=None
+            )
+
+        if misformated_types:
+            self.add_message(
+                msgid="docstring-misformated-type", args=(", ".join(misformated_types)), node=node, confidence=None
             )
 
         if should_be_keywords:

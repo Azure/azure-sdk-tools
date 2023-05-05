@@ -71,13 +71,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         await PullRequestProcessing.ProcessPullRequestEvent(gitHubEventClient, prEventPayload);
                         break;
                     }
-                case EventConstants.PullRequestReview:
-                    {
-                        PullRequestReviewEventPayload prReviewEventPayload = serializer.Deserialize<PullRequestReviewEventPayload>(rawJson);
-                        gitHubEventClient.SetConfigEntryOverrides(prReviewEventPayload.Repository);
-                        await PullRequestReviewProcessing.ProcessPullRequestReviewEvent(gitHubEventClient, prReviewEventPayload);
-                        break;
-                    }
                 case EventConstants.Schedule:
                     {
                         if (args.Length < 3)

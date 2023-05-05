@@ -869,10 +869,10 @@ class ClientListMethodsUseCorePaging(BaseChecker):
     priority = -1
     msgs = {
         "C4733": (
-            "Operations that return collections should return a value that implements the Paging protocol. See details:"
+            "Operations that return collections should return a value that implements the Paging protocol and be prefixed with list_. See details:"
             " https://azure.github.io/azure-sdk/python_design.html#response-formats",
             "client-list-methods-use-paging",
-            "Client methods that return collections should use the Paging protocol.",
+            "Client methods that return collections should use the Paging protocol and be prefixed with list_.",
         ),
     }
     options = (

@@ -1229,10 +1229,10 @@ class CheckDocstringParameters(BaseChecker):
             "Docstring should use keywords.",
         ),
         "C4755": (
-            'Param types misformated in docstring: "%s". See details: '
+            'Param types misformatted in docstring: "%s". See details: '
             'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
-            "docstring-misformated-type",
-            "Docstring misformated for param type.",
+            "docstring-misformatted-type",
+            "Docstring misformatted for param type.",
         ),
     }
     options = (
@@ -1363,14 +1363,14 @@ class CheckDocstringParameters(BaseChecker):
         misformated_types = []
         should_be_keywords = []
         for param in docparams:
-            # Check each param type and make sure it is formatted correctly for sphinx
             if docparams[param] is None:
                 missing_types.append(param)
 
             # Check format of param type
-            if docparams[param].contains("Union") or docparams[param].contains("Optional") \
-                or docparams[param].contains("List") or docparams[param].contains("Tuple") or docparams[param].contains("Dict"):
-                    misformated_types.append(param)
+            if docparams[param] is not None:
+                if "Union" in docparams[param] or "Optional" in docparams[param] \
+                    or "List" in docparams[param] or "Tuple" in docparams[param] or "Dict" in docparams[param]:
+                        misformated_types.append(param)
 
             if param not in arg_names:
                 should_be_keywords.append(param)
@@ -1382,7 +1382,7 @@ class CheckDocstringParameters(BaseChecker):
 
         if misformated_types:
             self.add_message(
-                msgid="docstring-misformated-type", args=(", ".join(misformated_types)), node=node, confidence=None
+                msgid="docstring-misformatted-type", args=(", ".join(misformated_types)), node=node, confidence=None
             )
 
         if should_be_keywords:

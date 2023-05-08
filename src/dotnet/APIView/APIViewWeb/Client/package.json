@@ -17,6 +17,7 @@
     "underscore": "^1.13.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.33.0",
     "@types/jquery": "3.3.31",
     "@types/split.js": "^1.4.0",
     "@types/webpack-env": "^1.14.1",

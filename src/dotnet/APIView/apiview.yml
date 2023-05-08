@@ -221,6 +221,26 @@ stages:
               APIVIEW_ENDPOINT: "http://localhost:5000"
               APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
               APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
+          
+          - script: |
+              npm install
+            workingDirectory: $(WebClientProjectDirectory)
+            displayName: "Install Client Dependencies"
+
+          - script: |
+              npx playwright install --with-deps
+            workingDirectory: $(WebClientProjectDirectory)
+            displayName: "Install Playwright Browsers"
+
+          - script: |
+              npx playwright test
+            workingDirectory: $(WebClientProjectDirectory)
+            displayName: "Install Playwright Browsers"
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathtoPublish: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
+              artifactName: 'Client Test Reports'
   
           - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
             - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml

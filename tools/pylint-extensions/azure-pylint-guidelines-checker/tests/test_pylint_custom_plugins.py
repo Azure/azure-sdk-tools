@@ -1932,10 +1932,10 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=18
+                msg_id="client-paging-methods-use-list", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=18
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=7, node=function_node_b, col_offset=4, end_line=7, end_col_offset=19
+                msg_id="client-paging-methods-use-list", line=7, node=function_node_b, col_offset=4, end_line=7, end_col_offset=19
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
@@ -1955,10 +1955,10 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=6, node=function_node_a, col_offset=4, end_line=6, end_col_offset=24
+                msg_id="client-paging-methods-use-list", line=6, node=function_node_a, col_offset=4, end_line=6, end_col_offset=24
             ),
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=8, node=function_node_b,  col_offset=4, end_line=8, end_col_offset=25
+                msg_id="client-paging-methods-use-list", line=8, node=function_node_b,  col_offset=4, end_line=8, end_col_offset=25
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
@@ -1975,7 +1975,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=18
+                msg_id="client-paging-methods-use-list", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=18
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
@@ -1991,7 +1991,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=18
+                msg_id="client-paging-methods-use-list", line=5, node=function_node_a, col_offset=4, end_line=5, end_col_offset=18
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
@@ -2007,7 +2007,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
        
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=32, node=function_node_b, col_offset=4, end_line=32, end_col_offset=32
+                msg_id="client-paging-methods-use-list", line=32, node=function_node_b, col_offset=4, end_line=32, end_col_offset=32
             )
         ):
             self.checker.visit_return(function_node.body[2])
@@ -2024,7 +2024,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
    
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-list-methods-use-paging", line=8, node=function_node, col_offset=4, end_line=8, end_col_offset=18
+                msg_id="client-paging-methods-use-list", line=8, node=function_node, col_offset=4, end_line=8, end_col_offset=18
             )
         ):
             self.checker.visit_return(function_node.body[0])

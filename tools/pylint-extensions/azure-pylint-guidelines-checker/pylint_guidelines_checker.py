@@ -865,19 +865,19 @@ class SpecifyParameterNamesInCall(BaseChecker):
 class ClientListMethodsUseCorePaging(BaseChecker):
     __implements__ = IAstroidChecker
 
-    name = "client-list-methods-use-paging"
+    name = "client-paging-methods-use-list"
     priority = -1
     msgs = {
         "C4733": (
             "Operations that return collections should return a value that implements the Paging protocol and be prefixed with list_. See details:"
             " https://azure.github.io/azure-sdk/python_design.html#response-formats",
-            "client-list-methods-use-paging",
+            "client-paging-methods-use-list",
             "Client methods that return collections should use the Paging protocol and be prefixed with list_.",
         ),
     }
     options = (
         (
-            "ignore-client-list-methods-use-paging",
+            "ignore-client-paging-methods-use-list",
             {
                 "default": False,
                 "type": "yn",
@@ -902,7 +902,8 @@ class ClientListMethodsUseCorePaging(BaseChecker):
         """
         try:
             iterable_return = False
-            paging_class = False
+            paging_method = False
+            private_method = False
             if node.parent.parent.name.endswith("Client") and node.parent.parent.name not in self.ignore_clients and node.parent.is_method():
                 try:
                     if any(v for v in node.value.infer() if "def by_page" in v.as_string()):
@@ -912,11 +913,14 @@ class ClientListMethodsUseCorePaging(BaseChecker):
                     return 
 
                 if node.parent.name.startswith("list"):
-                    paging_class = True
+                    paging_method = True
 
-                if (not paging_class and iterable_return) or (paging_class and not iterable_return):
+                if node.parent.name.startswith("_"):
+                    private_method = True
+
+                if (not paging_method and not private_method and iterable_return) or (paging_method and not iterable_return):
                     self.add_message(
-                        msgid="client-list-methods-use-paging", node=node.parent, confidence=None
+                        msgid="client-paging-methods-use-list", node=node.parent, confidence=None
                     )
                 
         except (AttributeError, TypeError):

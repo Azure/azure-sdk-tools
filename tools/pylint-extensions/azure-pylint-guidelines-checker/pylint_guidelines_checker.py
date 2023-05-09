@@ -8,6 +8,7 @@ Pylint custom checkers for SDK guidelines: C4717 - C4749
 """
 
 import logging
+import re
 import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
@@ -1210,7 +1211,7 @@ class CheckDocstringParameters(BaseChecker):
             "Docstring should use keywords.",
         ),
         "C4755": (
-            'Param types misformatted in docstring: "%s". See details: '
+            'Param types misformatted in docstring: "%s". Docstring types are not MyPy types. See details: '
             'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
             "docstring-misformatted-type",
             "Docstring misformatted for param type.",
@@ -1263,6 +1264,7 @@ class CheckDocstringParameters(BaseChecker):
             },
         ),
     )
+
 
     def __init__(self, linter=None):
         super(CheckDocstringParameters, self).__init__(linter)
@@ -1349,8 +1351,9 @@ class CheckDocstringParameters(BaseChecker):
 
             # Check format of param type
             if docparams[param] is not None:
-                if "Union" in docparams[param] or "Optional" in docparams[param] \
-                    or "List" in docparams[param] or "Tuple" in docparams[param] or "Dict" in docparams[param]:
+                # Checks if the param type is a MyPy type, such as "Optional[str]"
+                typing_regex = r".*(\w+\[.*\]|\w+\[\w+(,\s*\w+)*\]).*"
+                if re.match(typing_regex, docparams[param]):
                         misformated_types.append(param)
 
             if param not in arg_names:

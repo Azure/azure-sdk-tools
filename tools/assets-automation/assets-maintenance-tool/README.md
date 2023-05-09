@@ -8,3 +8,8 @@ The solution contained in this directory is made up of two tools surfaced throug
   - Used to delete tags that are not referenced from a `main` commit after a certain period.
 - `azure.sdk.tools.assets.maintainencetool`
   - Commandline interop with `backuptool` as well as `cleanuptool`.
+
+
+## How does this tool scan our repos?
+
+![example processing layout](processing_layout.png)

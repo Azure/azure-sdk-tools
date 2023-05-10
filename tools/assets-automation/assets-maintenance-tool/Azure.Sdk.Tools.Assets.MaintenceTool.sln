@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Assets.Main
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.TestProxy", "..\..\test-proxy\Azure.Sdk.Tools.TestProxy\Azure.Sdk.Tools.TestProxy.csproj", "{531B1A4C-B213-4486-B965-330585816BAA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Assets.MaintenanceTool.Tests", "Azure.Sdk.Tools.Assets.MaintenanceTool.Tests\Azure.Sdk.Tools.Assets.MaintenanceTool.Tests.csproj", "{968EC25C-861D-4C10-967D-A3E0137D35C2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{531B1A4C-B213-4486-B965-330585816BAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{531B1A4C-B213-4486-B965-330585816BAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{531B1A4C-B213-4486-B965-330585816BAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{968EC25C-861D-4C10-967D-A3E0137D35C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{968EC25C-861D-4C10-967D-A3E0137D35C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{968EC25C-861D-4C10-967D-A3E0137D35C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{968EC25C-861D-4C10-967D-A3E0137D35C2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

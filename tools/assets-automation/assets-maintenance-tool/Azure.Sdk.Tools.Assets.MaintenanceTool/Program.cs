@@ -4,16 +4,30 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool
     {
         public static void Main(string[] args)
         {
+            // all should honor
+                // --ScanData <-- results from previous scans
+            
             // SCAN
-                // take input
-                // walk across said input
+                // --configuration: -> path to file
 
-            // Backup
-                // save to storage
-                // save to an additional store
+            // BACKUP
+                // --configuration provided?
+                    // SCAN
+                    // BACKUP
+                    // as each tag is backed up, it is saved with suffix _backup
 
-            // Cleanup
-                // delete tag from repo
+            // RESTORE
+                // --input-tag <tag that has been stored away>
+
+            // CLEANUP
+                // --configuration provided?
+                    // SCAN
+                    // BACKUP
+                    // CLEANUP
+                        // each tag as found by configuration
+
+                // --input-tag <tag on repo>?
+                    // SCAN, BACKUP, and CLEANUP individual tag
 
             Console.WriteLine("Hello, World!");
         }

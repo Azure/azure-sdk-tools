@@ -2,17 +2,19 @@ This is a tool to update changelog.md with generated release notes for Azure SDK
 
 In detail, following release notes will be generated automatically:
 
-- The change in the API interface for the release (i.e. Added/Remove/Obsoleted Model/Method/Property)
+- Obsoleted API in the release (i.e. Method/Property/Model/...)
 - The change in the api-version tag used when generating the SDK (i.e. tag: package-preview-2023-03)
 - The change in the version of dependencies (i.e. Azure.Core, Azure.ResourceManager)
 
 Usage:
 
 ```
-> ChangelogGen.exe apiFile
+> ChangelogGen.exe apiFile version releaseDate(xxxx-xx-xx)
 ```
 
->Example: ChangelogGen.exe ...\azure-sdk-for-net\sdk\compute\Azure.ResourceManager.Compute\api\Azure.ResourceManager.Compute.netstandard2.0.cs
+>Example: ChangelogGen.exe ...\azure-sdk-for-net\sdk\compute\Azure.ResourceManager.Compute\api\Azure.ResourceManager.Compute.netstandard2.0.cs 1.2.3 2099-02-03
 
 Remark:
-The generated release notes will be merged into the last release (1.1.0-beta.1 (Unreleased) in most case) in changelog.md. In detail, the generated groups in the release will be overwritten while the other part will be kept untouched.
+- For preview release, the previous release will be used as baseline to detect changes.
+- For GA release, the previous GA release will be used as baseline to detect changes.
+- The generated release notes will be merged into the last release (1.1.0-beta.1 (Unreleased)) in changelog.md.

@@ -7,40 +7,24 @@
 - Fixed issue #34745. Introduced new property `RelayArmId` in `HybridConnectionData` class to replace the property `RelayArmUri` with a wrong type `Uri`.
 - Fixed issue #35146. BadRequest when calling CreateOrUpdateFunctionSecretAsync
 
-### Breaking Changes in API
+### Breaking Changes
 
-Removed method 'String MethodToBeDeleted()' in type Azure.ResourceManager.AppService.TestMethod
-Removed method 'String MethodToChangeReturnType()' in type Azure.ResourceManager.AppService.TestMethod
-Removed method 'String MethodToChangeParameter()' in type Azure.ResourceManager.AppService.TestMethod
-Removed property 'String PropertyToBeDeleted' in type Azure.ResourceManager.AppService.TestProperty
-Removed property method 'Get' for 'String PropertyToChangeToSet' in type Azure.ResourceManager.AppService.TestProperty
-Removed property method 'Set' for 'String PropertyToChangeToGet' in type Azure.ResourceManager.AppService.TestProperty
-Removed type 'Azure.ResourceManager.AppService.TypeToBeDeleted'
+- Removed method 'String MethodToBeDeleted()' in type Azure.ResourceManager.AppService.TestMethod
+- Removed method 'String MethodToChangeReturnType()' in type Azure.ResourceManager.AppService.TestMethod
+- Removed method 'String MethodToChangeParameter()' in type Azure.ResourceManager.AppService.TestMethod
+- Removed property 'String PropertyToBeDeleted' in type Azure.ResourceManager.AppService.TestProperty
+- Removed property method 'Get' for 'String PropertyToChangeToSet' in type Azure.ResourceManager.AppService.TestProperty
+- Removed property method 'Set' for 'String PropertyToChangeToGet' in type Azure.ResourceManager.AppService.TestProperty
+- Removed type 'Azure.ResourceManager.AppService.TypeToBeDeleted'
 
-### Other Changes in API
+### Other Changes
 
-Added method 'String MethodAdded()' in type Azure.ResourceManager.AppService.TestMethod
-Added method 'Int32 MethodToChangeReturnType()' in type Azure.ResourceManager.AppService.TestMethod
-Added method 'String MethodToChangeParameter(Int32 someParam)' in type Azure.ResourceManager.AppService.TestMethod
-Added method 'String MethodToChangeParameter<T>()' in type Azure.ResourceManager.AppService.TestMethod
-Added method 'Response<Boolean> MethodToChangeParameter()' in type Azure.ResourceManager.AppService.TestMethod
-Added property 'String PropertyAdded' in type Azure.ResourceManager.AppService.TestProperty
-Added property method 'Set' for 'String PropertyToChangeToSet' in type Azure.ResourceManager.AppService.TestProperty
-Added property method 'Get' for 'String PropertyToChangeToGet' in type Azure.ResourceManager.AppService.TestProperty
-Added type 'Azure.ResourceManager.AppService.TypeAdded'
-Added type 'Azure.ResourceManager.AppService.TypeAdded2<T>'
-Obsoleted method 'String MethodToBeObsoleted()' in type Azure.ResourceManager.AppService.TestMethod
-Obsoleted property 'String PropertyToBeObsoleted' in type Azure.ResourceManager.AppService.TestProperty
-Obsoleted type 'Azure.ResourceManager.AppService.TypeToBeObsoleted'
-
-### Api-version Tag Change
-
-spec upgraded
-
-### Azure SDK Dependency Changes
-
-Azure Core upgraded
-Azure RM upgraded
+- spec upgraded
+- Azure Core upgraded
+- Azure RM upgraded
+- Obsoleted method 'String MethodToBeObsoleted()' in type Azure.ResourceManager.AppService.TestMethod
+- Obsoleted property 'String PropertyToBeObsoleted' in type Azure.ResourceManager.AppService.TestProperty
+- Obsoleted type 'Azure.ResourceManager.AppService.TypeToBeObsoleted'
 
 ## 1.0.1 (2023-02-20)
 

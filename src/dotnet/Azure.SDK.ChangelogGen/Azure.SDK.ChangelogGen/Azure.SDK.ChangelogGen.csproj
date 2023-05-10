@@ -21,7 +21,7 @@
     <None Update="appSettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="C:\git\rodgefu\azure-sdk-tools\eng/images/pkgicon.png">
+    <None Update="pkgicon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

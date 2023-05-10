@@ -20,7 +20,7 @@ namespace Azure.SDK.ChangelogGen.Tests
             r.AzureResourceManagerVersionChange = new StringValueChange("1.2.0", "1.0.2", "Azure RM upgraded");
             r.SpecVersionChange = new StringValueChange("2020-01-01", "2030-01-01", "spec upgraded");
 
-            Release newRelease = r.GenerateReleaseNote();
+            Release newRelease = r.GenerateReleaseNote("1.2.3", "2099-09-10", new List<ChangeCatogory>() { ChangeCatogory.Obsoleted });
 
             var releases = Release.FromChangelog(File.ReadAllText("changelog1.md"));
 

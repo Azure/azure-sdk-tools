@@ -23,20 +23,20 @@ namespace Azure.SDK.ChangelogGen
         {
             try
             {
-                if (args.Length == 1 && new string[] { "-h", "/h", "-help", "/help", "-?", "/?" }.Contains(args[0].ToLower()))
+                const string USAGE = "ChangeLogGen.exe apiFilePath releaseVersion releaseDate(xxxx-xx-xx)";
+                if (args.Length == 0 || (args.Length == 1 && new string[] { "-h", "/h", "-help", "/help", "-?", "/?" }.Contains(args[0].ToLower())))
                 {
-                    Logger.Log("Usage: ChangeLogGen.exe apiFilePath");
+                    Logger.Log($"Usage: {USAGE}");
+                    return;
+                }
+                if (args.Length != 3)
+                {
+                    Logger.Error($"Invalid arguments. Expected Usage: {USAGE}");
                     return;
                 }
 
                 Context context = new Context();
-                try
-                {
-                    context.Init(args);
-                }
-                catch (NoReleaseFoundException)
-                {
-                    Logger.Log("Exit without doing anything because this is the initial release(No release information found in the changelog.md)");
+                if (!context.Init(args)) {
                     return;
                 }
 
@@ -61,7 +61,7 @@ namespace Azure.SDK.ChangelogGen
                     string baseApiFileContent = baselineTree.GetFileContent(context.ApiFileGithubKey);
                     result.ApiChange = CompareApi(curApiFileContent, baseApiFileContent);
 
-                    Logger.Log("Start checking Api Tag");
+                    Logger.Log("Start checking Swagger Tag");
                     Logger.Log("  Check Autorest.md at: " + context.AutorestMdFile);
                     Logger.Log("  Baseline: same file with Github tag " + context.BaselineGithubTag);
                     string curAutorestMd = File.ReadAllText(context.AutorestMdFile);
@@ -71,28 +71,30 @@ namespace Azure.SDK.ChangelogGen
                     Logger.Log("Start checking Azure Core");
                     Logger.Log("  Check AzureCore changelog at: " + context.AzureCoreChangeLogMdFile);
                     Logger.Log("  Baseline: same file with Github tag " + context.BaselineGithubTag);
-                    string curAzureCoreVersion = Helper.GetLastReleaseVersionFromFile(context.AzureCoreChangeLogMdFile, out string releaseDate);
-                    string baseAzureCoreVersion = baselineTree.GetLastReleaseVersionFromGitTree(context.AzureCoreChangeLogGithubKey, out releaseDate);
+                    string curAzureCoreVersion = Helper.GetLastReleaseVersionFromFile(context.AzureCoreChangeLogMdFile, context.IsPreview, out string releaseDate);
+                    string baseAzureCoreVersion = baselineTree.GetLastReleaseVersionFromGitTree(context.AzureCoreChangeLogGithubKey, context.IsPreview, out releaseDate);
                     result.AzureCoreVersionChange = CompareVersion(curAzureCoreVersion, baseAzureCoreVersion, "Azure.Core");
 
                     Logger.Log("Start checking Azure ResourceManager");
                     Logger.Log("  Check Azure.ResourceManager changelog at: " + context.AzureResourceManagerChangeLogMdFile);
                     Logger.Log("  Baseline: same file with Github tag " + context.BaselineGithubTag);
-                    string curAzureRMVersion = Helper.GetLastReleaseVersionFromFile(context.AzureResourceManagerChangeLogMdFile, out releaseDate);
-                    string baseAzureRMVersion = baselineTree.GetLastReleaseVersionFromGitTree(context.AzureResourceManagerChangeLogGithubKey, out releaseDate);
+                    string curAzureRMVersion = Helper.GetLastReleaseVersionFromFile(context.AzureResourceManagerChangeLogMdFile, context.IsPreview, out releaseDate);
+                    string baseAzureRMVersion = baselineTree.GetLastReleaseVersionFromGitTree(context.AzureResourceManagerChangeLogGithubKey, context.IsPreview, out releaseDate);
                     result.AzureResourceManagerVersionChange = CompareVersion(curAzureRMVersion, baseAzureRMVersion, "Azure.ResourceManager");
                 }
-                Release nextRelease = result.GenerateReleaseNote();
+                Release nextRelease = result.GenerateReleaseNote(context.ReleaseVersion, context.ReleaseDate, context.ApiChangeFilter);
 
-                Logger.Log($"Load current changelog from {context.ChangeLogMdFile}");
-                List<Release> releases = LoadReleasesFromChangelogMdFile(context);
+                if (context.UpdateReleaseVersionDate)
+                {
+                    context.CurRelease.Version = context.ReleaseVersion;
+                    context.CurRelease.ReleaseDate = context.ReleaseDate;
+                }
+                nextRelease.MergeTo(context.CurRelease, context.MergeMode);
 
-                nextRelease.MergeTo(releases[0], context.MergeMode);
-
-                Logger.Warning($"Release Note generated as below: \r\n" + releases[0].ToString());
+                Logger.Warning($"Release Note generated as below: \r\n" + context.CurRelease.ToString());
                 if (context.OverwriteChangeLogMdFile)
                 {
-                    string newChangelog = Release.ToChangeLog(releases);
+                    string newChangelog = Release.ToChangeLog(context.ReleasesInChangelog);
                     File.WriteAllText(context.ChangeLogMdFile, newChangelog);
                     Logger.Log($"Changelog.md file updated at {context.ChangeLogMdFile}");
                 }
@@ -106,26 +108,6 @@ namespace Azure.SDK.ChangelogGen
                 Logger.Error("Error occurs when generating changelog: \n" + e.Message);
                 Logger.Error("Detail exception: \n" + e.ToString());
             }
-        }
-
-        private static List<Release> LoadReleasesFromChangelogMdFile(Context context)
-        {
-            string curChangelog = File.ReadAllText(context.ChangeLogMdFile);
-            List<Release> releases = Release.FromChangelog(curChangelog);
-            if (releases.Count == 0)
-                throw new InvalidOperationException("At least one Release (Unreleased) expected in changelog");
-
-            int lastReleaseIndex = releases.FindIndex(r => r.Version == context.BaselineVersion);
-            if (lastReleaseIndex == -1)
-                throw new InvalidOperationException("Can't find baseline release in the changelog: " + context.BaselineVersion);
-            if (lastReleaseIndex == 0)
-                throw new InvalidOperationException("Can't merge changelog to baseline release which is the last release info in the changelog");
-            if (lastReleaseIndex > 1)
-            {
-                Logger.Warning($"{context.BaselineVersion} is not the last release in the changelog. Following release found after it: \r\n{releases.Take(lastReleaseIndex).Select(r => r.Version)}");
-            }
-            Logger.Log($"Generated changelog will be merged to {releases[0].Version}");
-            return releases;
         }
 
         public static StringValueChange? CompareVersion(string curVersion, string baseVersion, string name)
@@ -160,8 +142,7 @@ namespace Azure.SDK.ChangelogGen
             {
                 Logger.Log($"Spec Tag change detected: {baselineVersionTag} -> {curVersionTag}");
                 return new StringValueChange(curVersionTag, baselineVersionTag, 
-                    $"Upgraded api-version tag from '{baselineVersionTag}' to '{curVersionTag}'\n" +
-                    $"See tag detail at {source}");
+                    $"Upgraded api-version tag from '{baselineVersionTag}' to '{curVersionTag}'. Tag detail available at {source}");
             }
         }
 
@@ -188,7 +169,5 @@ namespace Azure.SDK.ChangelogGen
             Logger.Log($"{r.Changes.Count} changes found in API");
             return r;
         }
-
-
     }
 }

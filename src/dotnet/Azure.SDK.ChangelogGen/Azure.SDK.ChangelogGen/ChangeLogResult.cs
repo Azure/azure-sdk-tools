@@ -3,6 +3,7 @@
 
 using Azure.SDK.ChangelogGen.Compare;
 using Azure.SDK.ChangelogGen.Report;
+using Azure.SDK.ChangelogGen.Utilities;
 
 namespace Azure.SDK.ChangelogGen
 {
@@ -13,45 +14,41 @@ namespace Azure.SDK.ChangelogGen
         public StringValueChange? AzureCoreVersionChange { get; set; } = null;
         public StringValueChange? AzureResourceManagerVersionChange { get; set; } = null;
 
-        public Release GenerateReleaseNote()
+        public Release GenerateReleaseNote(string version, string date, List<ChangeCatogory> filter)
         {
-            Release report = new Release("release_version", "release_date");
+            string PREFIX = "- ";
+            Release report = new Release(version, date);
 
-            ReleaseNoteGroup breakingGroup = new ReleaseNoteGroup("Breaking Changes in API");
-            var breaking = ApiChange?.GetBreakingChanges();
-            if (breaking != null && breaking.Count > 0)
+            if (ApiChange?.GetBreakingChanges().Count() > 0)
             {
-                breakingGroup.Notes.AddRange(breaking.OrderBy(b => $"{b.ChangeCatogory}/{b.Target}").Select(b => new ReleaseNote(b.Description)));
+                ReleaseNoteGroup breakingGroup = new ReleaseNoteGroup("Breaking Changes");
+                var breaking = ApiChange?.GetBreakingChanges();
+                if (breaking != null && breaking.Count > 0)
+                {
+                    breakingGroup.Notes.AddRange(breaking.OrderBy(b => $"{b.ChangeCatogory}/{b.Target}").Select(b => new ReleaseNote(b.Description, PREFIX)));
+                }
+                report.Groups.Add(breakingGroup);
+                Logger.Error("Breaking change detected which is not expected\n" + breakingGroup.ToString());
             }
-            report.Groups.Add(breakingGroup);
 
-
-            ReleaseNoteGroup nonbreakingGroup = new ReleaseNoteGroup("Other Changes in API");
-            var nonbreaking = ApiChange?.GetNonBreakingChanges();
-            if (nonbreaking != null && nonbreaking.Count > 0)
-            {
-                nonbreakingGroup.Notes.AddRange(nonbreaking.OrderBy(b => $"{b.ChangeCatogory}/{b.Target}").Select(b => new ReleaseNote(b.Description)));
-            }
-            report.Groups.Add(nonbreakingGroup);
-
-            // API versoin
-            ReleaseNoteGroup apiVersionGroup = new ReleaseNoteGroup("Api-version Tag Change");
+            ReleaseNoteGroup othersGroup = new ReleaseNoteGroup("Other Changes");
             if (SpecVersionChange != null)
             {
-                apiVersionGroup.Notes.Add(new ReleaseNote(SpecVersionChange.Description));
+                othersGroup.Notes.Add(new ReleaseNote(SpecVersionChange.Description, PREFIX));
             }
-            report.Groups.Add(apiVersionGroup);
-
-            // Azure Core
-            ReleaseNoteGroup depGroup = new ReleaseNoteGroup("Azure SDK Dependency Changes");
             if (AzureCoreVersionChange != null || AzureResourceManagerVersionChange != null)
             {
                 if (AzureCoreVersionChange != null)
-                    depGroup.Notes.Add(new ReleaseNote(AzureCoreVersionChange.Description));
+                    othersGroup.Notes.Add(new ReleaseNote(AzureCoreVersionChange.Description, PREFIX));
                 if (AzureResourceManagerVersionChange != null)
-                    depGroup.Notes.Add(new ReleaseNote(AzureResourceManagerVersionChange.Description));
+                    othersGroup.Notes.Add(new ReleaseNote(AzureResourceManagerVersionChange.Description, PREFIX));
             }
-            report.Groups.Add(depGroup);
+            var nonbreaking = ApiChange?.GetNonBreakingChanges().Where(b => filter.Count == 0 || filter.Contains(b.ChangeCatogory)).ToList();
+            if (nonbreaking != null && nonbreaking.Count > 0)
+            {
+                othersGroup.Notes.AddRange(nonbreaking.OrderBy(b => $"{b.ChangeCatogory}/{b.Target}").Select(b => new ReleaseNote(b.Description, PREFIX)));
+            }
+            report.Groups.Add(othersGroup);
 
             return report;
         }

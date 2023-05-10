@@ -16,34 +16,40 @@ namespace Azure.SDK.ChangelogGen.Utilities
 {
     internal static class Helper
     {
-        public static string GetLastReleaseversionFromGitBranch(this Branch branch, string fileKey, out string releaseDate)
+        public static string GetLastReleaseversionFromGitBranch(this Branch branch, string fileKey, bool includePreview, out string releaseDate)
         {
             string content = branch.GetFileContent(fileKey);
-            return GetLastReleaseVersion(content, out releaseDate);
+            return GetLastReleaseVersion(content, includePreview, out releaseDate);
         }
 
-        public static string GetLastReleaseVersionFromGitTree(this Tree tree, string fileKey, out string releaseDate)
+        public static string GetLastReleaseVersionFromGitTree(this Tree tree, string fileKey, bool includePreview, out string releaseDate)
         {
             string content = tree.GetFileContent(fileKey);
-            return GetLastReleaseVersion(content, out releaseDate);
+            return GetLastReleaseVersion(content, includePreview, out releaseDate);
         }
 
-        public static string GetLastReleaseVersionFromFile(string path, out string releaseDate)
+        public static string GetLastReleaseVersionFromFile(string path, bool includePreview, out string releaseDate)
         {
             string content = File.ReadAllText(path);
-            return GetLastReleaseVersion(content, out releaseDate);
+            return GetLastReleaseVersion(content, includePreview, out releaseDate);
         }
 
-        private static string GetLastReleaseVersion(string changelogContent, out string releaseDate)
+        private static string GetLastReleaseVersion(string changelogContent, bool includePreview, out string releaseDate)
         {
             Regex ver = new Regex(@"^##\s+(?<ver>[\w\.\-]+?)\s+\((?<date>\d{4}-\d{2}-\d{2})\)\s*$", RegexOptions.Multiline | RegexOptions.IgnoreCase);
-            var firstMatch = ver.Match(changelogContent);
-            if (!firstMatch.Success)
+
+            var matches = ver.Matches(changelogContent).Where(m => includePreview || !IsPreviewRelease(m.Groups["ver"].Value)).ToList();
+            if (matches.Count == 0)
             {
-                throw new NoReleaseFoundException("Failed to find latest release version in the given changelog file");
+                releaseDate = "";
+                return "";
             }
-            releaseDate = firstMatch.Groups["date"].Value;
-            return firstMatch.Groups["ver"].Value;
+            else
+            {
+                var firstMatch = matches[0];
+                releaseDate = firstMatch.Groups["date"].Value;
+                return firstMatch.Groups["ver"].Value;
+            }
         }
 
         public static string GetFileContent(this TreeEntry te)
@@ -285,6 +291,11 @@ namespace Azure.SDK.ChangelogGen.Utilities
         public static string GetKey(this ConstructorInfo pi)
         {
             return pi.ToString()!;
+        }
+
+        public static bool IsPreviewRelease(string version)
+        {
+            return Regex.IsMatch(version, @"beta|alpha|preview", RegexOptions.IgnoreCase);
         }
     }
 }

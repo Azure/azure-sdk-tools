@@ -1,3 +1,6 @@
+using System.ComponentModel.Design;
+using Azure.Sdk.Tools.Assets.MaintenanceTool.Model;
+
 namespace Azure.Sdk.Tools.Assets.MaintenanceTool
 {
     internal class Program

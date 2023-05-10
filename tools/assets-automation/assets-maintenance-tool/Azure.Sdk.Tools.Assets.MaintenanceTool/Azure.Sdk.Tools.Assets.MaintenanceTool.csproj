@@ -7,10 +7,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Backup\" />
-    <Folder Include="Cleanup\" />
-    <Folder Include="Store\" />
-  </ItemGroup>
-
 </Project>

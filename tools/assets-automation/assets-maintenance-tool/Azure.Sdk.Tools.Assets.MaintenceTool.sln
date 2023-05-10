@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33530.505
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.Assets.CleanupTool", "Azure.Sdk.Tools.Assets.CleanupTool\Azure.Sdk.Tools.Assets.CleanupTool.csproj", "{ED82B962-C2F1-4086-AD92-0417BF15B3DA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Assets.MaintenanceTool", "Azure.Sdk.Tools.Assets.MaintenanceTool\Azure.Sdk.Tools.Assets.MaintenanceTool.csproj", "{8ECBAB4E-1209-454D-B0AA-F93A61C7C1B9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.Assets.BackupTool", "Azure.Sdk.Tools.Assets.BackupTool\Azure.Sdk.Tools.Assets.BackupTool.csproj", "{568E01C5-7BEA-4BAF-8012-1403241FFB49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.TestProxy", "..\..\test-proxy\Azure.Sdk.Tools.TestProxy\Azure.Sdk.Tools.TestProxy.csproj", "{531B1A4C-B213-4486-B965-330585816BAA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,14 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{ED82B962-C2F1-4086-AD92-0417BF15B3DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ED82B962-C2F1-4086-AD92-0417BF15B3DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ED82B962-C2F1-4086-AD92-0417BF15B3DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ED82B962-C2F1-4086-AD92-0417BF15B3DA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{568E01C5-7BEA-4BAF-8012-1403241FFB49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{568E01C5-7BEA-4BAF-8012-1403241FFB49}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{568E01C5-7BEA-4BAF-8012-1403241FFB49}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{568E01C5-7BEA-4BAF-8012-1403241FFB49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8ECBAB4E-1209-454D-B0AA-F93A61C7C1B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8ECBAB4E-1209-454D-B0AA-F93A61C7C1B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8ECBAB4E-1209-454D-B0AA-F93A61C7C1B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8ECBAB4E-1209-454D-B0AA-F93A61C7C1B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{531B1A4C-B213-4486-B965-330585816BAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{531B1A4C-B213-4486-B965-330585816BAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{531B1A4C-B213-4486-B965-330585816BAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{531B1A4C-B213-4486-B965-330585816BAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

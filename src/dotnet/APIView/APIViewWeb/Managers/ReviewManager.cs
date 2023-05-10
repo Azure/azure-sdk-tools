@@ -582,8 +582,11 @@ namespace APIViewWeb.Managers
                         file.PackageName = codeFile.PackageName;
                         await _reviewsRepository.UpsertReviewAsync(review);
 
-                        // Trigger diff calculation using updated code file from sandboxing pipeline
-                        await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
+                        if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+                        {
+                            // Trigger diff calculation using updated code file from sandboxing pipeline
+                            await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
+                        }
                     }
                 }
             }
@@ -770,7 +773,7 @@ namespace APIViewWeb.Managers
                 review.ServiceName = p?.ServiceName ?? review.ServiceName;
             }
 
-            var languageService = language != null ? _languageServices.FirstOrDefault( l=> l.Name == language) : _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
+            var languageService = language != null ? _languageServices.FirstOrDefault(l => l.Name == language) : _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
             // Run pipeline to generate the review if sandbox is enabled
             if (languageService != null && languageService.IsReviewGenByPipeline)
             {
@@ -782,13 +785,17 @@ namespace APIViewWeb.Managers
             await _notificationManager.SubscribeAsync(review, user);
             await _reviewsRepository.UpsertReviewAsync(review);
             await _notificationManager.NotifySubscribersOnNewRevisionAsync(revision, user);
-            if (awaitComputeDiff)
+
+            if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
             {
-                await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
-            }
-            else
-            {
-                _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision));
+                if (awaitComputeDiff)
+                {
+                    await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
+                }
+                else
+                {
+                    _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision));
+                }
             }
         }
 

@@ -57,3 +57,9 @@ export function getRowSectionClasses(classList: DOMTokenList) {
 export function toggleCommentIcon(id, show: boolean) {
   getCodeRow(id).find(".icon-comments").toggleClass("invisible", !show);
 }
+
+// Retireved a specific cookie from user browser
+export function getCookie(cookieName: string)
+{
+  return document.cookie;
+}

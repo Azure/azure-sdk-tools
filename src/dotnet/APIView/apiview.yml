@@ -235,7 +235,7 @@ stages:
           - script: |
               npx playwright test
             workingDirectory: $(WebClientProjectDirectory)
-            displayName: "Install Playwright Browsers"
+            displayName: "Run Playwright Tests"
 
           - task: PublishBuildArtifacts@1
             inputs:

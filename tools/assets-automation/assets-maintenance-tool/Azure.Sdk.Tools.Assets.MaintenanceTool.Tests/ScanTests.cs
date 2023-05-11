@@ -18,7 +18,10 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
                     },
                     new RepoConfiguration("azure/azure-sdk-assets-integration")
                     {
-                        Branches = new List<string>(){ "integration/assets-branch-1", "integration/assets-branch-2" }
+                        Branches = new List<string>(){
+                            "integration/assets-branch-1",
+                            "integration/assets-branch-2"
+                        }
                     }
                 }
             };
@@ -65,6 +68,13 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
 
             Assert.IsNotNull(results);
             Assert.GreaterOrEqual(1, results.Results.Count());
+        }
+
+
+        [Test]
+        public void TestBasicScanHonorsPreviousScanResults()
+        {
+            throw new NotImplementedException("Need to implement");
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
 
         public string Repo { get; set; }
 
-        public DateTime ScanStartDate { get; set; }
+        public DateTime ScanStartDate { get; set; } = DateTime.Parse("2022-12-01");
 
         public List<string> Branches { get; set; } = new List<string> { "main" };
     }

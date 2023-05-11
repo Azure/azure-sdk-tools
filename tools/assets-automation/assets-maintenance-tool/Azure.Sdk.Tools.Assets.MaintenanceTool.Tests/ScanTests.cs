@@ -36,10 +36,12 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             var config = GetRunConfiguration();
             config.Repos.RemoveAt(1);
 
-            var results = scanner.Scan(config);
+            var results = scanner.Scan(config, null);
 
             Assert.IsNotNull(results);
             Assert.GreaterOrEqual(1, results.Results.Count());
+
+            Assert.Equals(5, results.ByTargetTag.Keys.Count());
         }
 
         [Test]
@@ -48,7 +50,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             var scanner = new AssetsScanner();
             var config = GetRunConfiguration();
             config.Repos.RemoveAt(0);
-            var results = scanner.Scan(config);
+            var results = scanner.Scan(config, null);
 
             Assert.IsNotNull(results);
             Assert.GreaterOrEqual(1, results.Results.Count());
@@ -59,7 +61,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         {
             var scanner = new AssetsScanner();
             var config = GetRunConfiguration();
-            var results = scanner.Scan(config);
+            var results = scanner.Scan(config, null);
 
             Assert.IsNotNull(results);
             Assert.GreaterOrEqual(1, results.Results.Count());

@@ -1,4 +1,3 @@
-using System.ComponentModel.Design;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Model;
 
 namespace Azure.Sdk.Tools.Assets.MaintenanceTool
@@ -7,6 +6,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool
     {
         public static void Main(string[] args)
         {
+            var existing = GetExistingResultSet();
             // all should honor
                 // --ScanData <-- results from previous scans
             
@@ -33,6 +33,11 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool
                     // SCAN, BACKUP, and CLEANUP individual tag
 
             Console.WriteLine("Hello, World!");
+        }
+
+        public static AssetsResultSet GetExistingResultSet()
+        {
+            throw new NotImplementedException("Haven't implemented retrieval of the previous result set yet.");
         }
     }
 }

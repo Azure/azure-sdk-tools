@@ -6,9 +6,8 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Cleanup
     {
         public AssetsCleanupClient() { }
 
-        public CleanupResultSet Cleanup(RunConfiguration config, BackupResultSet backupResult) {
-            var result = new CleanupResultSet();
-            return result;
+        public AssetsResultSet Cleanup(RunConfiguration config, AssetsResultSet backupResult) {
+            return new AssetsResultSet(new List<AssetsResult>()); ;
         }
     }
 }

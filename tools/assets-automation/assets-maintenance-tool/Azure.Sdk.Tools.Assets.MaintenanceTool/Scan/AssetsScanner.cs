@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Model;
 
 namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
@@ -14,9 +9,25 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
     {
         public AssetsScanner() {}
 
-        public ScanResultSet Scan(RunConfiguration config)
+        public AssetsResultSet Scan(RunConfiguration config, AssetsResultSet? previousOutput)
         {
-            return new ScanResultSet(new List<ScanResult>());
+            var resultSet = new AssetsResultSet(new List<AssetsResult>());
+
+            Parallel.ForEach(config.Repos, repoConfig =>
+            {
+                var results = ScanRepo(repoConfig, previousOutput);
+                resultSet.Results.AddRange(results);
+            });
+
+            return resultSet;
+        }
+
+        public List<AssetsResult> ScanRepo(RepoConfiguration config, AssetsResultSet? previousOutput)
+        {
+            var targetRepoUri = $"https://github.com/{config.Repo}.git";
+            var workingDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+            return new List<AssetsResult>();
         }
     }
 }

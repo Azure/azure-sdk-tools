@@ -9,14 +9,15 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
     /// <summary>
     /// This class represents a single reference to the assets repo FROM a language repo.
     /// </summary>
-    public class ScanResult
+    public class AssetsResult
     {
-        public ScanResult(string repo, string repoCommit, string assetsLocation, string tag, string tagRepo) {
+        public AssetsResult(string repo, string repoCommit, string assetsLocation, string tag, string tagRepo, string? backupUri = null) {
             Repo = repo;
             Commit = repoCommit;
             AssetsLocation = assetsLocation;
             Tag = tag;
             TagRepo = tagRepo;
+            BackupUri = backupUri;
         }
 
         /// <summary>
@@ -43,5 +44,10 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
         /// Which git repo is being used to store the assets?
         /// </summary>
         public string TagRepo { get; set; }
+
+        /// <summary>
+        /// The URI of where we backed this item up
+        /// </summary>
+        public string? BackupUri { get; set; }
     }
 }

@@ -63,7 +63,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "Referrer",
             "Referer",
             "Origin",
-            "Content-Length"
+            "Content-Length",
+            "Accept-Language"
         };
 
         /// <summary>

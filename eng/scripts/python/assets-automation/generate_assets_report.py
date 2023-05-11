@@ -169,6 +169,10 @@ def evaluate_go_package(package_path: str) -> int:
     possible_recordings_dir = os.path.join(package_path, "testdata", "recordings")
     possible_assets = os.path.join(package_path, "assets.json")
 
+    # only examine packages that currently have recordings (and ensure that ones transitioned to external aren't ignored)
+    if not os.path.exists(possible_recordings_dir) and not os.path.exists(possible_assets):
+        return 0
+
     if os.path.exists(possible_recordings_dir):
         evaluation = 1
 

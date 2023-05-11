@@ -189,7 +189,7 @@ def generate_go_report() -> ScanResult:
     result = ScanResult(language)
     sdk_path = os.path.join(repo_root, "sdk")
 
-    exclusions = [os.path.join("testdata", "perf", "go.mod"), "template", "samples"]
+    exclusions = [os.path.join("testdata", "perf", "go.mod"), "template", "samples", "internal", "azcore"]
 
     packages = glob.glob(os.path.join(repo_root, "sdk", "**", "go.mod"), recursive=True)
     packages = [os.path.dirname(pkg) for pkg in packages if not any([x in pkg for x in exclusions])]

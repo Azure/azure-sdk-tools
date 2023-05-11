@@ -1,7 +1,9 @@
 using System;
+using System.Text.Json;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Model;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
+using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
 {
@@ -37,7 +39,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
                 foreach(var branch in config.Branches)
                 {
                     var commits = CloneBranch(targetRepoUri, branch, config.ScanStartDate, workingDirectory);
-                    results.AddRange(FindAssetsResults(commits, workingDirectory));
+                    results.AddRange(FindAssetsResults(config.Repo, commits, workingDirectory));
                 }
             }
             finally
@@ -99,24 +101,57 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             }
         }
 
-        public List<AssetsResult> ScanDirectory(string workingDirectory)
+        private class Assets
         {
+            public Assets()
+            {
+                AssetsRepo = string.Empty;
+                Tag = string.Empty;
+            }
 
-            return new List<AssetsResult>();
+            public string AssetsRepo { get; set; }
+
+            public string Tag { get; set; }
         }
 
-        public List<AssetsResult> FindAssetsResults(List<string> commits, string workingDirectory)
+        private Assets? ExtractAssetsData(string assetsJson)
+        {
+            return JsonSerializer.Deserialize<Assets>(File.ReadAllText(assetsJson));
+        }
+
+        public List<AssetsResult> ScanDirectory(string repo, string commit, string workingDirectory)
+        {
+            Matcher matcher = new();
+            List<AssetsResult> locatedAssets = new List<AssetsResult>();
+            matcher.AddIncludePatterns(new[] { "**/assets.json" });
+            IEnumerable<string> assetsJsons = matcher.GetResultsInFullPath(workingDirectory);
+
+            foreach(var assetsJson in assetsJsons)
+            {
+                var path = Path.GetRelativePath(workingDirectory, assetsJson).Replace("\\", "/");
+                var assetsData = ExtractAssetsData(assetsJson);
+
+                if (assetsData != null)
+                {
+                    var newResult = new AssetsResult(string.Empty, commit, path, assetsData.Tag, assetsData.AssetsRepo, null);
+                    locatedAssets.Add(newResult);
+                }
+            }
+
+            return locatedAssets;
+        }
+
+        public List<AssetsResult> FindAssetsResults(string repo, List<string> commits, string workingDirectory)
         {
             var allResults = new List<AssetsResult>();
             foreach(var commit in commits)
             {
-                handler.Run($"checkout commit", workingDirectory);
+                handler.Run($"checkout {commit}", workingDirectory);
                 Cleanup(workingDirectory);
-                allResults.AddRange(ScanDirectory(workingDirectory));
+                allResults.AddRange(ScanDirectory(repo, commit, workingDirectory));
             }
 
             return allResults;
         }
-
     }
 }

@@ -16,7 +16,10 @@ namespace APIViewWeb.Hubs
         public override Task OnConnectedAsync()
         {
             string name = Context.User.Identity.Name;
-            Groups.AddToGroupAsync(Context.ConnectionId, name);
+            if (!string.IsNullOrEmpty(name))
+            {
+                Groups.AddToGroupAsync(Context.ConnectionId, name);
+            }
             return base.OnConnectedAsync();
         }
 

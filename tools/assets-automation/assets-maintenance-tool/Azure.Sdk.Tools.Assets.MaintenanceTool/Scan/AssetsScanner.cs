@@ -49,10 +49,44 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             }
             finally
             {
-                Directory.Delete(workingDirectory, true);
+                CleanupWorkingDirectory(workingDirectory);
             }
 
             return results;
+        }
+
+        private void SetPermissionsAndDelete(string gitfolder)
+        {
+            File.SetAttributes(gitfolder, FileAttributes.Normal);
+
+            string[] files = Directory.GetFiles(gitfolder);
+            string[] dirs = Directory.GetDirectories(gitfolder);
+
+            foreach (string file in files)
+            {
+                File.SetAttributes(file, FileAttributes.Normal);
+                File.Delete(file);
+            }
+
+            foreach (string dir in dirs)
+            {
+                SetPermissionsAndDelete(dir);
+            }
+
+            Directory.Delete(gitfolder, false);
+        }
+
+
+        private void CleanupWorkingDirectory(string workingDirectory)
+        {
+            var possibleGitDir = Path.Combine(workingDirectory, ".git");
+
+            if (Directory.Exists(possibleGitDir))
+            {
+                SetPermissionsAndDelete(possibleGitDir);
+            }
+
+            Directory.Delete(workingDirectory, true);
         }
 
         /// <summary>
@@ -67,10 +101,19 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             var commitSHAs = new List<string>();
             try
             {
-                handler.Run($"clone {uri} --branch {branch} --single-branch .", workingDirectory);
+                // if git is already initialized, we just need to checkout a specific branch
+                if (!Directory.Exists(Path.Combine(workingDirectory, ".git"))) {
+                    handler.Run($"clone {uri} --branch {branch} --single-branch .", workingDirectory);
+                }
+                else
+                {
+                    handler.Run($"checkout -b {branch}", workingDirectory);
+                    handler.Run($"pull origin {branch}", workingDirectory);
+                    Cleanup(workingDirectory);
+                }
 
                 var tagResult = handler.Run($"log --since={since.ToString("yyyy-MM-dd")} --simplify-by-decoration --format=format:%H", workingDirectory);
-                commitSHAs.AddRange(tagResult.StdOut.Split(Environment.NewLine).Select(x => x.Trim()));
+                commitSHAs.AddRange(tagResult.StdOut.Split(Environment.NewLine).Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)));
             }
             catch(GitProcessException gitException)
             {

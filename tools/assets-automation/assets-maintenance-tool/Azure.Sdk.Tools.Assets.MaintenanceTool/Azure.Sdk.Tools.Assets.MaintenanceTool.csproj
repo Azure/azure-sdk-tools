@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\test-proxy\Azure.Sdk.Tools.TestProxy\Azure.Sdk.Tools.TestProxy.csproj" />
+  </ItemGroup>
+
 </Project>

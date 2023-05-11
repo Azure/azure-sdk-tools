@@ -36,6 +36,11 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
 
             try
             {
+                if(!Directory.Exists(workingDirectory))
+                {
+                    Directory.CreateDirectory(workingDirectory);
+                }
+
                 foreach(var branch in config.Branches)
                 {
                     var commits = CloneBranch(targetRepoUri, branch, config.ScanStartDate, workingDirectory);
@@ -64,7 +69,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             {
                 handler.Run($"clone {uri} --branch {branch} --single-branch .", workingDirectory);
 
-                var tagResult = handler.Run($"git log --since={since.ToString("yyyy-MM-dd")} --simplify-by-decoration --format=format:%H", workingDirectory);
+                var tagResult = handler.Run($"log --since={since.ToString("yyyy-MM-dd")} --simplify-by-decoration --format=format:%H", workingDirectory);
                 commitSHAs.AddRange(tagResult.StdOut.Split(Environment.NewLine).Select(x => x.Trim()));
             }
             catch(GitProcessException gitException)
@@ -133,7 +138,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
 
                 if (assetsData != null)
                 {
-                    var newResult = new AssetsResult(string.Empty, commit, path, assetsData.Tag, assetsData.AssetsRepo, null);
+                    var newResult = new AssetsResult(repo, commit, path, assetsData.Tag, assetsData.AssetsRepo, null);
                     locatedAssets.Add(newResult);
                 }
             }

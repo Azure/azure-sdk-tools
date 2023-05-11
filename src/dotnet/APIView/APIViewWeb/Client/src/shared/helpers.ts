@@ -58,8 +58,26 @@ export function toggleCommentIcon(id, show: boolean) {
   getCodeRow(id).find(".icon-comments").toggleClass("invisible", !show);
 }
 
-// Retireved a specific cookie from user browser
-export function getCookie(cookieName: string)
+
+/**
+* Retireved a Specific Cookie from Users Browser
+* @param { String } cookies (pass document.cookies)
+* @param { String } cookieName
+* @return { String } cookieValue
+*/
+export function getCookieValue (cookies: string, cookieName: string)
 {
-  return document.cookie;
+  const nameEQ = `${cookieName}=`;
+  const charArr = cookies.split(';');
+  for (let i = 0; i < charArr.length; i++)
+  {
+    let ch = charArr[i];
+    while(ch.charAt(0) === ' ')
+    {
+      ch = ch.substring(1, ch.length);
+    }
+    if (ch.indexOf(nameEQ) === 0)
+      return ch.substring(nameEQ.length, ch.length);    
+  }
+  return null;
 }

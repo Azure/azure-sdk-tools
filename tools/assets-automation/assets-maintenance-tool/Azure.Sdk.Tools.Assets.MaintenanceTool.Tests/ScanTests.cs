@@ -98,7 +98,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         }
 
         [Test]
-        public void TestBasicScanMultipleBranchesMutipleRepos()
+        public void TestBasicScanMultipleBranchesMultipleRepos()
         {
             var scanner = new AssetsScanner();
             var config = GetRunConfiguration();
@@ -110,9 +110,15 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
 
 
         [Test]
-        public void TestBasicScanHonorsPreviousScanResults()
+        public void TestScanHonorsPreviousResults()
         {
             throw new NotImplementedException("Need to implement");
+        }
+
+        [Test]
+        public void VerifyScanOutputResults()
+        {
+
         }
     }
 }

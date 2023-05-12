@@ -203,7 +203,9 @@ def generate_go_report() -> ScanResult:
     for pkg in packages:
         evaluation = evaluate_go_package(pkg)
 
-        if evaluation == 1:
+        if evaluation == 0:
+            result.packages.remove(pkg.replace(sdk_path + os.sep, ""))            
+        elif evaluation == 1:
             result.packages_using_proxy.append(pkg.replace(sdk_path + os.sep, ""))
         elif evaluation == 2:
             result.packages_using_proxy.append(pkg.replace(sdk_path + os.sep, ""))

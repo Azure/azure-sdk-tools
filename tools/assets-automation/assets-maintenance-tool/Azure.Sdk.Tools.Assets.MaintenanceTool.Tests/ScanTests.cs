@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             {
                 Repos = new List<RepoConfiguration>
                 {
-                    new RepoConfiguration("azure/azure-sdk-for-python")
+                    new RepoConfiguration("azure/azure-sdk-tools")
                     {
                         Branches = new List<string>(){ "integration/assets-test-branch" }
                     },
@@ -94,7 +94,6 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
 
             Assert.IsNotNull(results);
             Assert.That(results.Results.Count(), Is.EqualTo(6));
-
         }
 
         [Test]
@@ -105,7 +104,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             var results = scanner.Scan(config, null);
 
             Assert.IsNotNull(results);
-            Assert.GreaterOrEqual(1, results.Results.Count());
+            Assert.That(results.Results.Count(), Is.EqualTo(8));
         }
 
 
@@ -118,7 +117,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         [Test]
         public void VerifyScanOutputResults()
         {
-
+            throw new NotImplementedException("Need to implement");
         }
     }
 }

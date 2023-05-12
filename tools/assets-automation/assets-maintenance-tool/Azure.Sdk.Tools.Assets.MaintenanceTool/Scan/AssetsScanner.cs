@@ -12,8 +12,17 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
     /// </summary>
     public class AssetsScanner
     {
-        public AssetsScanner() {}
-        GitProcessHandler handler = new GitProcessHandler();
+        public string WorkingDirectory { get; set; }
+        public GitProcessHandler handler { get; set; } = new GitProcessHandler();
+
+        public AssetsScanner(string workingDirectory) {
+            WorkingDirectory = workingDirectory;
+        }
+
+        public AssetsScanner()
+        {
+            WorkingDirectory = Environment.CurrentDirectory;
+        }
 
         public AssetsResultSet Scan(RunConfiguration config, AssetsResultSet? previousOutput)
         {
@@ -28,7 +37,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             return new AssetsResultSet(resultSet);
         }
 
-        public List<AssetsResult> ScanRepo(RepoConfiguration config, AssetsResultSet? previousOutput)
+        private List<AssetsResult> ScanRepo(RepoConfiguration config, AssetsResultSet? previousOutput)
         {
             var targetRepoUri = $"https://github.com/{config.Repo}.git";
             var workingDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -55,6 +64,14 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             return results;
         }
 
+        /// <summary>
+        /// Intended to be aimed at a specific .git folder. Walks every file and ensures that
+        /// any wonky permissions that could prevent deletion are removed.
+        /// 
+        /// This is necessary because certain `.pack` files created by git cannot be deleted without
+        /// adjusting these permissions.
+        /// </summary>
+        /// <param name="gitfolder"></param>
         private void SetPermissionsAndDelete(string gitfolder)
         {
             File.SetAttributes(gitfolder, FileAttributes.Normal);
@@ -76,7 +93,6 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             Directory.Delete(gitfolder, false);
         }
 
-
         private void CleanupWorkingDirectory(string workingDirectory)
         {
             var possibleGitDir = Path.Combine(workingDirectory, ".git");
@@ -96,7 +112,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
         /// <param name="branch"></param>
         /// <param name="workingDirectory"></param>
         /// <returns></returns>
-        public List<string> CloneBranch(string uri, string branch, DateTime since, string workingDirectory)
+        private List<string> CloneBranch(string uri, string branch, DateTime since, string workingDirectory)
         {
             var commitSHAs = new List<string>();
             try
@@ -131,7 +147,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             return commitSHAs;
         }
 
-        public void Cleanup(string workingDirectory)
+        private void Cleanup(string workingDirectory)
         {
             try
             {
@@ -168,7 +184,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             return JsonSerializer.Deserialize<Assets>(File.ReadAllText(assetsJson));
         }
 
-        public List<AssetsResult> ScanDirectory(string repo, string commit, string workingDirectory)
+        private List<AssetsResult> ScanDirectory(string repo, string commit, string workingDirectory)
         {
             Matcher matcher = new();
             List<AssetsResult> locatedAssets = new List<AssetsResult>();
@@ -190,7 +206,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             return locatedAssets;
         }
 
-        public List<AssetsResult> FindAssetsResults(string repo, List<string> commits, string workingDirectory)
+        private List<AssetsResult> FindAssetsResults(string repo, List<string> commits, string workingDirectory)
         {
             var allResults = new List<AssetsResult>();
             foreach(var commit in commits)
@@ -201,6 +217,13 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             }
 
             return allResults;
+        }
+
+        private AssetsResultSet? ParseExistingResults()
+        {
+            var existingResults = new AssetsResultSet(new List<AssetsResult>());
+
+            return existingResults;
         }
     }
 }

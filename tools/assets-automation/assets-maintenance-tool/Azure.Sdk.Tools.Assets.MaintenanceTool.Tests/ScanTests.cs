@@ -39,7 +39,6 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             var config = GetRunConfiguration();
             config.Repos.RemoveAt(0);
             config.Repos.First().Branches.RemoveAt(1);
-
             var results = scanner.Scan(config, null);
 
             Assert.IsNotNull(results);
@@ -155,6 +154,23 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
 
         [Test]
         public void VerifyScanOutputResults()
+        {
+            var targetDirectory = Directory.GetCurrentDirectory();
+
+            var scanner = new AssetsScanner(targetDirectory);
+            var config = GetRunConfiguration();
+            config.Repos.RemoveAt(0);
+            config.Repos.First().Branches.RemoveAt(1);
+            var results = scanner.Scan(config, null);
+
+            // now we need to confirm that the output file exists
+            var fileThatShouldExist = Path.Combine(targetDirectory, "output.json");
+
+            Assert.That(File.Exists(fileThatShouldExist), Is.EqualTo(true));
+        }
+
+        [Test]
+        public void VerifyScannerCanRetrieveExistingResults()
         {
             throw new NotImplementedException("Need to implement");
         }

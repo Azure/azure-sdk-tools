@@ -246,6 +246,61 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0002NotProducedForMethodsWithRequestContentAndCancellationToken()
+        {
+            const string code = @"
+using Azure;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task Get1Async(string s, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Get1(string s, CancellationToken cancellationToken = default)
+        {
+        }
+
+        public virtual Task Get1Async(string s, RequestContext context)
+        {
+            return null;
+        }
+
+        public virtual void Get1(string s, RequestContext context)
+        {
+        }
+
+        public virtual Task Get2Async(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual void Get2(CancellationToken cancellationToken = default)
+        {
+        }
+
+        public virtual Task Get2Async(RequestContext context)
+        {
+            return null;
+        }
+
+        public virtual void Get2(RequestContext context)
+        {
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .WithDisabledDiagnostics("AD0001")
+                .RunAsync();
+        }
+
+        [Fact]
         public async Task AZC0002NotProducedForMethodsWithRequestContext()
         {
             const string code = @"

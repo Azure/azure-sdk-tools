@@ -68,6 +68,18 @@ namespace Azure.ClientSdk.Analyzers
                     return;
                 }
 
+                overloadWithCancellationToken = FindMethod(
+                    member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
+                    member.TypeParameters,
+                    member.Parameters.RemoveAt(member.Parameters.Length - 1),
+                    p => SupportsCancellationsParameter(p));
+
+                if (overloadWithCancellationToken != null)
+                {
+                    // Skip methods that have non-optional request context if overload exists with cancellation tokens
+                    return;
+                }
+
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
             }
         }

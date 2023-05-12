@@ -5,6 +5,7 @@ using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using System.Text.Json;
 using Octokit.Internal;
+using System.Collections.Generic;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
@@ -47,6 +48,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 if (prEventPayload.Action == ActionConstants.Opened)
                 {
+                    // JRS - requires the team_slug
+                    IReadOnlyList<string> teamReviewers = new List<string> { "azure-sdk-test-team" };
+                    var pullRequestReviewRequest = PullRequestReviewRequest.ForTeamReviewers(teamReviewers);
+                    await gitHubEventClient._gitHubClient.PullRequest.ReviewRequest.Create(prEventPayload.Repository.Id,
+                                                                                     prEventPayload.Number,
+                                                                                     pullRequestReviewRequest);
+                    // JRS - 
+
                     if (prEventPayload.PullRequest.Labels.Count == 0)
                     {
                         var prFileList = await gitHubEventClient.GetFilesForPullRequest(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);

@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         }
 
 
-        private GitHubClient _gitHubClient = null;
+        public GitHubClient _gitHubClient = null;
         private RulesConfiguration _rulesConfiguration = null;
         // Protected instead of private so the mock class can access them
         protected IssueUpdate _issueUpdate = null;

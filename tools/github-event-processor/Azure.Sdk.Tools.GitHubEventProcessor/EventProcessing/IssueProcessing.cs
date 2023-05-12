@@ -79,6 +79,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 if (issueEventPayload.Action == ActionConstants.Opened)
                 {
+                    // JRS-REMOVE
+                    var issueUpdate = gitHubEventClient.GetIssueUpdate(issueEventPayload.Issue);
+                    // not sure if this will add the team to the issue as an assignee, the docs aren't good
+                    issueUpdate.AddAssignee("azure-sdk-test-team");
+                    // JRS-REMOVE
                     // If there are no labels and no assignees
                     if ((issueEventPayload.Issue.Labels.Count == 0) && (issueEventPayload.Issue.Assignee == null))
                     {

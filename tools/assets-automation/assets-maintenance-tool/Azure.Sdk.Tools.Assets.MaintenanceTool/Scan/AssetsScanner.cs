@@ -17,15 +17,15 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
 
         public AssetsResultSet Scan(RunConfiguration config, AssetsResultSet? previousOutput)
         {
-            var resultSet = new AssetsResultSet(new List<AssetsResult>());
+            var resultSet = new List<AssetsResult>();
 
             Parallel.ForEach(config.Repos, repoConfig =>
             {
                 var results = ScanRepo(repoConfig, previousOutput);
-                resultSet.Results.AddRange(results);
+                resultSet.AddRange(results);
             });
 
-            return resultSet;
+            return new AssetsResultSet(resultSet);
         }
 
         public List<AssetsResult> ScanRepo(RepoConfiguration config, AssetsResultSet? previousOutput)
@@ -107,12 +107,13 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
                 }
                 else
                 {
-                    handler.Run($"checkout -b {branch}", workingDirectory);
-                    handler.Run($"pull origin {branch}", workingDirectory);
+                    handler.Run($"fetch origin {branch}", workingDirectory);
+                    handler.Run($"branch {branch} FETCH_HEAD", workingDirectory);
+                    handler.Run($"checkout {branch}", workingDirectory);
                     Cleanup(workingDirectory);
                 }
 
-                var tagResult = handler.Run($"log --since={since.ToString("yyyy-MM-dd")} --simplify-by-decoration --format=format:%H", workingDirectory);
+                var tagResult = handler.Run($"log --since={since.ToString("yyyy-MM-dd")} --format=format:%H", workingDirectory);
                 commitSHAs.AddRange(tagResult.StdOut.Split(Environment.NewLine).Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)));
             }
             catch(GitProcessException gitException)

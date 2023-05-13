@@ -4,6 +4,8 @@ param groupSuffix string
 param dnsPrefix string = 's1'
 param clusterName string
 param location string = resourceGroup().location
+param defaultAgentPoolMinNodes int = 6
+param defaultAgentPoolMaxNodes int = 20
 // AKS does not allow agentPool updates via existing managed cluster resources
 param updateNodes bool = false
 
@@ -31,9 +33,9 @@ var systemAgentPool = {
 
 var defaultAgentPool = {
   name: 'default'
-  count: 6
-  minCount: 6
-  maxCount: 20
+  count: defaultAgentPoolMinNodes
+  minCount: defaultAgentPoolMinNodes
+  maxCount: defaultAgentPoolMaxNodes
   mode: 'User'
   vmSize: 'Standard_D8a_v4'
   type: 'VirtualMachineScaleSets'

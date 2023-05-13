@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import * as rvM from "../../src/pages/review.module";
+import * as rvM from "../../../src/pages/review.module";
 
 test.describe('CodeLine Section State Management', () => {
     test('updateCodeLineSectionState should update cookie value', async ({ page }) => {
@@ -15,9 +15,5 @@ test.describe('CodeLine Section State Management', () => {
         expect(rvM.updateCodeLineSectionState("24,5,12", "24", rvM.CodeLineSectionState.hidden)).toBe("5,12");
         expect(rvM.updateCodeLineSectionState("5,12", "12", rvM.CodeLineSectionState.hidden)).toBe("5");
         expect(rvM.updateCodeLineSectionState("5", "5", rvM.CodeLineSectionState.hidden)).toBe("");
-    });
-
-    test('getSectionHeadingRow should retrieve section heading row', async ({ page }) => {
-        
     });
 });

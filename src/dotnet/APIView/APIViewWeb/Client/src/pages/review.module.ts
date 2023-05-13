@@ -7,9 +7,6 @@ export function getSectionHeadingRow(event: JQuery.ClickEvent<HTMLElement>)
     return $(event.currentTarget).parents(".code-line").first();
 }
 
-
-
-
 //---------------------------------------------------------------------------------
 // Managing CodeLine Section / SubSection states (expand vs collapse) using cookies
 //---------------------------------------------------------------------------------

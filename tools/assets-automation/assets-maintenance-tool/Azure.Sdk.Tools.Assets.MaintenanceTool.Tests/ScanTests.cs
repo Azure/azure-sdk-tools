@@ -1,6 +1,7 @@
 global using NUnit.Framework;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Model;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Scan;
+using Newtonsoft.Json;
 
 namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
 {
@@ -27,9 +28,31 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             };
         }
 
+        public string TestDirectory { get; protected set; } 
+
         [SetUp]
         public void Setup()
         {
+            var workingDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+            if (!Directory.Exists(workingDirectory))
+            {
+                Directory.CreateDirectory(workingDirectory);
+            }
+
+            // copy our static test files there
+            var source = Path.Combine(Directory.GetCurrentDirectory(), "TestResources");
+            var target = Path.Combine(workingDirectory, "TestResources");
+
+            Microsoft.VisualBasic.FileIO.FileSystem.CopyDirectory(source, target);
+
+            TestDirectory = workingDirectory;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Directory.Delete(TestDirectory, true);
         }
 
         [Test]
@@ -39,7 +62,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             var config = GetRunConfiguration();
             config.Repos.RemoveAt(0);
             config.Repos.First().Branches.RemoveAt(1);
-            var results = scanner.Scan(config, null);
+            var results = scanner.Scan(config);
 
             Assert.IsNotNull(results);
             Assert.That(results.Results.Count(), Is.EqualTo(3));
@@ -73,7 +96,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             var scanner = new AssetsScanner();
             var config = GetRunConfiguration();
             config.Repos.RemoveAt(0);
-            var results = scanner.Scan(config, null);
+            var results = scanner.Scan(config);
 
             Assert.IsNotNull(results);
             Assert.That(results.Results.Count(), Is.EqualTo(6));
@@ -120,7 +143,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         {
             var scanner = new AssetsScanner();
             var config = GetRunConfiguration();
-            var results = scanner.Scan(config, null);
+            var results = scanner.Scan(config);
 
             Assert.IsNotNull(results);
             Assert.That(results.Results.Count(), Is.EqualTo(8));
@@ -149,30 +172,35 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         [Test]
         public void TestScanHonorsPreviousResults()
         {
-            throw new NotImplementedException("Need to implement");
+            // ensure that a previous set of results is combined with the new set
         }
 
         [Test]
-        public void VerifyScanOutputResults()
+        public void TestParsePreviouslyOutputResults()
         {
-            var targetDirectory = Directory.GetCurrentDirectory();
+            var scanner = new AssetsScanner(TestDirectory);
 
-            var scanner = new AssetsScanner(targetDirectory);
+            // ensure that we can parse a default set of existing results
+        }
+
+        [Test]
+        public void TestScanOutputsResults()
+        {
+            var scanner = new AssetsScanner(TestDirectory);
             var config = GetRunConfiguration();
             config.Repos.RemoveAt(0);
             config.Repos.First().Branches.RemoveAt(1);
-            var results = scanner.Scan(config, null);
+            var results = scanner.Scan(config);
 
             // now we need to confirm that the output file exists
-            var fileThatShouldExist = Path.Combine(targetDirectory, "output.json");
+            var fileThatShouldExist = Path.Combine(TestDirectory, "output.json");
 
             Assert.That(File.Exists(fileThatShouldExist), Is.EqualTo(true));
-        }
 
-        [Test]
-        public void VerifyScannerCanRetrieveExistingResults()
-        {
-            throw new NotImplementedException("Need to implement");
+            var parsedNewResults = scanner.ParseExistingResults();
+
+            // assert that parsed results = current output results
+
         }
     }
 }

@@ -11,13 +11,14 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
     /// </summary>
     public class AssetsResult
     {
-        public AssetsResult(string repo, string repoCommit, string assetsLocation, string tag, string tagRepo, string? backupUri = null) {
+        public AssetsResult(string repo, string repoCommit, string assetsLocation, string tag, string tagRepo, string? backupUri = null, DateTime? scanDate = null) {
             Repo = repo;
             Commit = repoCommit;
             AssetsLocation = assetsLocation;
             Tag = tag;
             TagRepo = tagRepo;
             BackupUri = backupUri;
+            ScanDate = scanDate??DateTime.Now;
         }
 
         /// <summary>
@@ -46,8 +47,13 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
         public string TagRepo { get; set; }
 
         /// <summary>
-        /// The URI of where we backed this item up
+        /// The URI of where we backed this item up. Null when we haven't yet backed up this instance.
         /// </summary>
         public string? BackupUri { get; set; }
+
+        /// <summary>
+        /// Used as a datapoint for debugging and testing of the scanner. Creation datetime of this result.
+        /// </summary>
+        public DateTime ScanDate { get; set; }
     }
 }

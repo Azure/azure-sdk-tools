@@ -25,8 +25,17 @@ namespace Azure.ClientSdk.Analyzers
         {
             static bool SupportsCancellationsParameter(IParameterSymbol parameterSymbol)
             {
-                return (parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken") ||
-                       (parameterSymbol.Name == "context" && parameterSymbol.Type.Name == "RequestContext");
+                return IsCancellationToken(parameterSymbol) || IsRequestContext(parameterSymbol);
+            }
+
+            static bool IsRequestContext(IParameterSymbol parameterSymbol)
+            {
+                return parameterSymbol.Name == "context" && parameterSymbol.Type.Name == "RequestContext";
+            }
+
+            static bool IsCancellationToken(IParameterSymbol parameterSymbol)
+            {
+                return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken";
             }
 
             CheckClientMethodReturnType(context, member);
@@ -68,16 +77,19 @@ namespace Azure.ClientSdk.Analyzers
                     return;
                 }
 
-                overloadWithCancellationToken = FindMethod(
+                if (IsRequestContext(lastArgument))
+                {
+                    overloadWithCancellationToken = FindMethod(
                     member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
                     member.TypeParameters,
                     member.Parameters.RemoveAt(member.Parameters.Length - 1),
-                    p => SupportsCancellationsParameter(p));
+                    p => IsCancellationToken(p));
 
-                if (overloadWithCancellationToken != null)
-                {
-                    // Skip methods that have non-optional request context if overload exists with cancellation tokens
-                    return;
+                    if (!SymbolEqualityComparer.Default.Equals(overloadWithCancellationToken, member))
+                    {
+                        // Skip methods that have non-optional request context if overload exists with cancellation tokens
+                        return;
+                    }
                 }
 
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);

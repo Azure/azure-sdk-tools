@@ -16,7 +16,7 @@ The combination of the the `assets.json` context and the original test-path will
 
 An `assets.json` contains _targeting_ information for use by the test-proxy when restoring (or updating) recordings "below" a specific path.
 
-> For the `azure-sdk` team specifically, engineers are encouraged to place their `assets.json` files under a path of form `sdk/<service>/assets.json`
+> For the `azure-sdk` team specifically, engineers are encouraged to place their `assets.json` files under a path of form `sdk/<service>/<package>/assets.json`
 
 An `assets.json` takes the form:
 

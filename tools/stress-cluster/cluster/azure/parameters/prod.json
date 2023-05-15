@@ -23,6 +23,12 @@
     "staticTestKeyvaultGroup": {
       "value": "rg-stress-secrets-prod"
     },
+    "defaultAgentPoolMinNodes": {
+      "value": 2
+    },
+    "defaultAgentPoolMaxNodes": {
+      "value": 10
+    },
     "tags": {
       "value": {
         "environment": "Prod",

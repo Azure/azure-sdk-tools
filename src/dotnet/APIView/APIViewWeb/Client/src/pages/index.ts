@@ -10,8 +10,11 @@ $(() => {
   const typeFilter = $( '#type-filter-select' );
   const searchBox = $( '#reviews-table-search-box' );
   const searchButton = $( '#reviews-search-button' );
-  const resetButton = $('#reset-filter-button');
-  const languageSelect = $('#review-language-select');
+  const resetButton = $( '#reset-filter-button' );
+  const languageSelect = $( '#review-language-select' );
+  const reviewUploadForm = $( '#review-upload-form' );
+  const reviewUploadSubmitBtn = $( '#review-upload-submit-btn' );
+
 
   // Import underscorejs
   var _ = require('underscore');
@@ -90,6 +93,14 @@ $(() => {
     (<any>languageSelect).SumoSelect({
       placeholder: 'Language'
     });
+  });
+
+  $("#review-upload-submit-btn").on("click", function (event) {
+    event.preventDefault();
+    reviewUploadForm.submit();
+
+    reviewUploadSubmitBtn.prop("disabled", true);
+    setTimeout(() => { reviewUploadSubmitBtn.prop("disabled", false); }, 5000);
   });
 
   // Update list of reviews when any dropdown is changed

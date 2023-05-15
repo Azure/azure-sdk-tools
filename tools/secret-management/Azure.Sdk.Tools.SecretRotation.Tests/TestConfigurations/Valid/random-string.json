@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-management/schema/1.0.0/plan.json",
+  "rotationThreshold": "9.00:00:00",
+  "rotationPeriod": "12.00:00:00",
+  "tags": [ "random" ],
+  "stores": [
+    {
+      "type": "Random String",
+      "isOrigin": true,
+      "parameters": {
+        "length": 20,
+        "useLowercase": true,
+        "useUppercase": true,
+        "useNumbers": true,
+        "useSpecialCharacters": true
+      }
+    },
+    {
+      "type": "Key Vault Secret",
+      "isPrimary": true,
+      "parameters": {
+        "secretUri": "https://azsdk-rotation-test.vault.azure.net/secrets/random-string",
+        "revocationAction": "disableVersion"
+      }
+    }
+  ]
+}

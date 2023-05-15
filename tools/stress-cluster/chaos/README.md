@@ -52,17 +52,12 @@ package dependencies, and building and pushing docker images. The script must be
 
 If using bash or another linux terminal, a [powershell core](https://docs.microsoft.com/powershell/scripting/install/installing-powershell-core-on-linux?view=powershell-7.1) shell can be invoked via `pwsh`.
 
-The first invocation of the script must be run with the `-Login` flag to set up cluster and container registry access.
-
 ```
 cd <stress test search directory>
-
-<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 `
-    -Login `
-    -PushImages
+<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
 ```
 
-To re-deploy more quickly, the script can be run without `-Login` and/or without `-PushImages` (if no code changes were
+To re-deploy more quickly, the script can be run with `-SkipLogin` and/or with `-SkipPushImages` (if no code changes were
 made).
 
 ```
@@ -622,7 +617,7 @@ Follow the below commands to execute a sample test.
 
 ```
 cd ./examples/network_stress_example
-pwsh ../../../../../eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login -PushImages
+pwsh ../../../../../eng/common/scripts/stress-testing/deploy-stress-tests.ps1
 ```
 
 Verify the pods in the job have booted and are running ok (with chaos network failures):

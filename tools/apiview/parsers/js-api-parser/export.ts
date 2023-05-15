@@ -3,7 +3,8 @@ import {
     ApiItem,
     ApiItemKind,
     ApiDeclaredItem,
-    ExcerptTokenKind
+    ExcerptTokenKind,
+    ReleaseTag
   } from '@microsoft/api-extractor-model';
 
 import { writeFile } from 'fs';
@@ -15,6 +16,15 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
 {
     builder.lineId(item.canonicalReference.toString());
     builder.indent();
+    const releaseTag = getReleaseTag(item);
+    const parentReleaseTag = getReleaseTag(item.parent);
+    if(releaseTag && releaseTag !== parentReleaseTag) {
+        if(item.parent.kind === ApiItemKind.EntryPoint) {
+            builder.newline();
+        }
+        builder.annotate(releaseTag);
+    }
+    
     if (item instanceof ApiDeclaredItem) {
         if ( item.kind === ApiItemKind.Namespace) {
             builder.splitAppend(`declare namespace ${item.displayName} `, item.canonicalReference.toString(), item.displayName);
@@ -95,6 +105,17 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
     }
 }
 
+function getReleaseTag(item: ApiItem & {releaseTag?: ReleaseTag}): "alpha" | "beta" | undefined {
+    switch(item.releaseTag) {
+        case ReleaseTag.Beta:
+            return "beta";
+        case ReleaseTag.Alpha:
+            return "alpha";
+        default:
+            return undefined;
+    }
+}
+
 const apiModel = new ApiModel();
 const fileName = process.argv[2];
 var versionString = "";
@@ -125,7 +146,7 @@ var apiViewFile: IApiViewFile = {
     Navigation: navigation,
     Tokens: builder.tokens,
     PackageName: apiModel.packages[0].name,
-    VersionString: "1.0.3",
+    VersionString: "1.0.4",
     Language: "JavaScript"
 }
 

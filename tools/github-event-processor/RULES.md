@@ -466,7 +466,6 @@ OR
   - Changes Pushed
   - Merged
   - Review Requested
-  - Review Submitted
 
 OR
 

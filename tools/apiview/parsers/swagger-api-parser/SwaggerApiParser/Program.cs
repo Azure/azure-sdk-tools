@@ -108,7 +108,7 @@ internal class Program
 
         foreach (var swaggerSpec in swaggerSpecs)
         {
-            root.AddSwaggerSpec(swaggerSpec, swaggerSpec.swaggerFilePath, packageName, swaggerSpec.swaggerLink);
+            await root.AddSwaggerSpec(swaggerSpec, swaggerSpec.swaggerFilePath, packageName, swaggerSpec.swaggerLink);
         }
 
         var codeFile = root.GenerateCodeFile();

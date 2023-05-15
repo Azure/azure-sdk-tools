@@ -115,6 +115,8 @@ stages:
     jobs:
     - job: Test_JS_Utils
 
+      displayName: Invoke JS Utils CI Tests
+
       strategy:
         matrix:
           Windows:
@@ -169,6 +171,8 @@ stages:
 
     - job: Test_Python_Tables
 
+      displayName: Run Python Tables CI Tests
+
       strategy:
         matrix:
           Windows:
@@ -217,3 +221,59 @@ stages:
           env:
             PROXY_URL: "http://localhost:5000"
             PROXY_MANUAL_START: true
+
+    - job: Test_Java_Core
+
+      displayName: Run Java Core Local Tests
+
+      strategy:
+        matrix:
+          Windows:
+            Pool: 'azsdk-pool-mms-win-2022-general'
+            OS: 'Windows'
+          Linux:
+            Pool: azsdk-pool-mms-ubuntu-2204-general
+            OS: 'Linux'
+          Mac:
+            Pool: 'Azure Pipelines'
+            OS: 'Mac'
+
+      pool:
+        name: $(Pool)
+
+      variables:
+        REPO: "Azure/azure-sdk-for-java"
+        CLONE_LOCATION: "$(Agent.BuildDirectory)/java_repo"
+
+      steps:
+
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+        - template: /eng/pipelines/templates/steps/use-python-version.yml
+          parameters:
+            versionSpec: '3.9'
+
+        - pwsh: |
+            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
+          displayName: Clone Repo
+
+
+        - pwsh: |
+            Write-Host "mvn install -f eng/code-quality-reports/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
+            mvn install -f eng/code-quality-reports/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-json/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
+            mvn install -f sdk/core/azure-json/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-core/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
+            mvn install -f sdk/core/azure-core/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true"
+            mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true
+          displayName: 'Install azure-core-test'
+          workingDirectory: $(CLONE_LOCATION)
+
+        - pwsh: |
+            # To run java in 'local' mode, we need to ensure that the natively set CI variable $env:TF_BUILD
+            # is not populated. Given it's auto-populated at step init by devops, we do it inline here.
+            $env:TF_BUILD=""
+            mvn surefire:test -f sdk/core/azure-core-test/pom.xml
+          displayName: 'Invoke Tests'
+          workingDirectory: $(CLONE_LOCATION)

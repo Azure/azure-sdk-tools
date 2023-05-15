@@ -39,7 +39,7 @@ namespace APIViewUnitTests
             Assert.Equal(2, codeLines[1].LineNumber);
             Assert.Equal(15, codeLines[2].LineNumber);
             Assert.Equal(16, codeLines[3].LineNumber);
-            Assert.Equal(58, codeLines[4].LineNumber);
+            Assert.Equal(60, codeLines[4].LineNumber);
         }
 
         [Fact]
@@ -51,8 +51,8 @@ namespace APIViewUnitTests
 
         [Theory]
         [InlineData(0, 3, 14)]
-        [InlineData(1, 17, 57)]
-        [InlineData(2, 59, 83)]
+        [InlineData(1, 17, 59)]
+        [InlineData(2, 61, 87)]
         public void RenderedResult_Sections_Has_Correct_Lines_In_Sections(int sectionPosition, int firstLineNumber, int lastLineNumber)
         {
             var sectionKey = renderedCodeFile.RenderResult.Sections[sectionPosition].Data.SectionKey;

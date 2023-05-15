@@ -1,0 +1,75 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-management/schema/1.0.0/plan.json",
+    "title": "PlanConfiguration",
+    "description": "A secret rotation plan",
+    "type": "object",
+    "properties": {
+        "name": {
+            "description": "The rotation plan name",
+            "type": "string"
+        },
+        "rotationPeriod": {
+            "description": "Time span indicating when the secret should expire after rotation",
+            "type": "string"
+        },
+        "rotationThreshold": {
+            "description": "Time span indicating when the secret should be rotated before it expires",
+            "type": "string"
+        },
+        "revokeAfterPeriod": {
+            "description": "Time span indicating when the old secret values should be revoked after rotation",
+            "type": "string"
+        },
+        "description": {
+            "description": "A description of the secret being rotated by this plan",
+            "type": "string"
+        },
+        "tags": {
+            "description": "Plan tags",
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "uniqueItems": true
+        },
+        "stores": {
+            "description": "The stores participating in the rotation plan",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "The store name",
+                        "type": "string"
+                    },
+                    "type": {
+                        "description": "The store type",
+                        "type": "string"
+                    },
+                    "isOrigin": {
+                        "description": "Is this store the origin of the secret?",
+                        "type": "boolean"
+                    },
+                    "isPrimary": {
+                        "description": "Is this store the primary store for the secret metadata?",
+                        "type": "boolean"
+                    },
+                    "parameters": {
+                        "description": "Store specific parameters",
+                        "type": "object",
+                        "propertyValues": { "type": "string" },
+                        "additionalProperties": true
+                    }
+                }
+            },
+            "minItems": 1
+        },
+        "$schema": {
+            "description": "JSON Schema URI (used by some editors)",
+            "type": "string"
+        }
+    },
+    "required": [ "rotationThreshold", "rotationPeriod", "stores" ],
+    "unevaluatedProperties": false
+}

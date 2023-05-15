@@ -7,6 +7,8 @@ param clusterLocation string = 'westus3'
 param staticTestKeyvaultName string
 param staticTestKeyvaultGroup string
 param monitoringLocation string = 'centralus'
+param defaultAgentPoolMinNodes int = 6
+param defaultAgentPoolMaxNodes int = 20
 param tags object
 // AKS does not allow agentPool updates via existing managed cluster resources
 param updateNodes bool = false
@@ -75,6 +77,8 @@ module cluster 'cluster/cluster.bicep' = {
         updateNodes: updateNodes
         location: clusterLocation
         clusterName: clusterName
+        defaultAgentPoolMinNodes: defaultAgentPoolMinNodes
+        defaultAgentPoolMaxNodes: defaultAgentPoolMaxNodes
         tags: tags
         groupSuffix: groupSuffix
         workspaceId: logWorkspace.outputs.id

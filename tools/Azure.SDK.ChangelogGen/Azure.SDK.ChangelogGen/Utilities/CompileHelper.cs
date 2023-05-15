@@ -34,6 +34,7 @@ namespace Azure.SDK.ChangelogGen.Utilities
                 var emitResult = compilation.Emit(dllStream);
                 if (!emitResult.Success)
                 {
+                    // When possible, try to fix the compiler error of missing reference automatically when it can be found in runtime folder.
                     List<string> missingRefs = new List<string>();
                     Regex regex = new Regex(@"'(?<name>[^\s\\\/\:\*\?\""]+?), Version=(?<version>[\d\.]+?), Culture=(?<culture>[\w]+?), PublicKeyToken=(?<publickey>[\w]+?)'");
                     foreach (var diag in emitResult.Diagnostics)
@@ -52,7 +53,6 @@ namespace Azure.SDK.ChangelogGen.Utilities
                     List<string> newRefs = refPaths.Concat(missingRefs).Distinct().ToList();
                     if (newRefs.Count > refPaths.Count)
                     {
-                        // let's fix ref from runtime first
                         return Compile(assemblyFileName, src, newRefs);
                     }
                     else

@@ -6,8 +6,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using LibGit2Sharp;
-using Markdig.Helpers;
-using Markdig.Parsers;
 using Markdig.Syntax;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -16,7 +14,8 @@ namespace Azure.SDK.ChangelogGen.Utilities
 {
     internal static class Helper
     {
-        public static string GetLastReleaseversionFromGitBranch(this Branch branch, string fileKey, bool includePreview, out string releaseDate)
+        #region release
+        public static string GetLastReleaseVersionFromGitBranch(this Branch branch, string fileKey, bool includePreview, out string releaseDate)
         {
             string content = branch.GetFileContent(fileKey);
             return GetLastReleaseVersion(content, includePreview, out releaseDate);
@@ -52,6 +51,13 @@ namespace Azure.SDK.ChangelogGen.Utilities
             }
         }
 
+        public static bool IsPreviewRelease(string version)
+        {
+            return Regex.IsMatch(version, @"beta|alpha|preview", RegexOptions.IgnoreCase);
+        }
+        #endregion
+
+        #region git
         public static string GetFileContent(this TreeEntry te)
         {
             Debug.Assert(te.TargetType == TreeEntryTargetType.Blob);
@@ -77,16 +83,10 @@ namespace Azure.SDK.ChangelogGen.Utilities
 
         public static Tree GetTreeByTag(this Repository repo, string tagFriendlyName)
         {
-            var tag = repo.Tags.FirstOrDefault(t => t.FriendlyName == tagFriendlyName);
-            if (tag == null)
-            {
+            var tag = repo.Tags.FirstOrDefault(t => t.FriendlyName == tagFriendlyName) ??
                 throw new InvalidOperationException($"Can't find Tag with FriendlyName {tagFriendlyName}. Please make sure the Tag exists (i.e. not released yet?) and has been refreshed properly locally (i.e. by 'git fetch upstream main --tags')");
-            }
-            var commit = repo.Lookup<Commit>(tag.Target.Id);
-            if (commit == null)
-            {
+            var commit = repo.Lookup<Commit>(tag.Target.Id) ??
                 throw new InvalidOperationException("Can't find the commit for Tag " + tagFriendlyName);
-            }
             return commit.Tree;
         }
 
@@ -105,19 +105,19 @@ namespace Azure.SDK.ChangelogGen.Utilities
             Tree cur = tree;
             for (int i = 0; i < segs.Length - 1; i++)
             {
-                TreeEntry? curSeg = cur.FirstOrDefault(c => c.Name.ToLower() == segs[i].ToLower());
-                if (curSeg == null)
+                TreeEntry? curSeg = cur.FirstOrDefault(c => c.Name.ToLower() == segs[i].ToLower()) ??
                     throw new InvalidOperationException($"Can't find file '{fileKey}' in Git at '{segs[i]}'. Git tree id = '{tree.Id}'");
                 Debug.Assert(curSeg.Target.GetType() == typeof(Tree));
                 cur = (Tree)curSeg.Target;
             }
-            var te = cur.FirstOrDefault(c => c.Name.ToLower() == segs[^1].ToLower());
-            if (te == null)
+            var te = cur.FirstOrDefault(c => c.Name.ToLower() == segs[^1].ToLower()) ??
                 throw new InvalidOperationException($"Cannot find file '{fileKey}' in Git at '{segs[^1]}'. Git tree id = '{tree.Id}'");
 
             return te.GetFileContent();
         }
+        #endregion
 
+        #region api
         public static bool IsObsoleted(this PropertyInfo propertyInfo)
         {
             return propertyInfo.GetCustomAttribute<ObsoleteAttribute>() != null;
@@ -185,7 +185,7 @@ namespace Azure.SDK.ChangelogGen.Utilities
             string name = (fullName && type.FullName != null) ? type.FullName : type.Name;
             int index = name.IndexOf('`');
             if (index >= 0)
-                name = name.Substring(0, index);
+                name = name[..index];
             return $"{name}{genericPart}";
         }
 
@@ -197,80 +197,6 @@ namespace Azure.SDK.ChangelogGen.Utilities
             var paramList = ci.GetParameters();
 
             return $"{ci.Name}({string.Join(", ", paramList.Select(p => $"{p.ParameterType.ToFriendlyString()} {p.Name}"))})";
-        }
-
-        public static Dictionary<string, object> LoadYaml(this MarkdownDocument md, bool expandTag)
-        {
-            var lines = md.Where(b =>
-            {
-                FencedCodeBlock? fcb = b as FencedCodeBlock;
-                if (fcb == null)
-                    return false;
-                return (fcb.Info == "yaml" && string.IsNullOrEmpty(fcb.Arguments));
-            }).SelectMany(b => ((FencedCodeBlock)b).Lines.Lines).ToList();
-            var defaultYaml = string.Join("\n", lines);
-
-            var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(HyphenatedNamingConvention.Instance)
-                .Build();
-            var dict = deserializer.Deserialize<Dictionary<string, object>>(defaultYaml);
-
-            List<StringLine> conditionalLines = expandTag ?
-                md.Where(b =>
-                {
-                    FencedCodeBlock? fcb = b as FencedCodeBlock;
-                    if (fcb == null)
-                        return false;
-                    if (fcb.Info != "yaml" || string.IsNullOrEmpty(fcb.Arguments))
-                        return false;
-                    string condition = Regex.Replace(fcb.Arguments, @"\$\((?<var>[\w\-]+?)\)", new MatchEvaluator((m) =>
-                    {
-                        var v = m.Groups["var"].Value;
-                        if (dict.ContainsKey(v))
-                        {
-                            switch (dict[v])
-                            {
-                                case string strValue:
-                                    return strValue.ToLower() switch
-                                    {
-                                        "true" => "true",
-                                        "false" => "false",
-                                        _ => $"'{strValue}'"
-                                    };
-                                case bool boolValue:
-                                    return boolValue ? "true" : "false";
-                                default:
-                                    Logger.Warning("FencedCodeBlock arguments is not string or bool: " + fcb.Arguments);
-                                    return "''";
-
-                            }
-                        }
-                        else
-                        {
-                            return "false";
-                        }
-                    }), RegexOptions.IgnoreCase);
-
-                    if (condition == "''")
-                        return false;
-
-                    try
-                    {
-                        Jint.Engine eng = new Jint.Engine();
-                        var result = eng.Execute(condition).GetCompletionValue().AsBoolean();
-                        return result;
-                    }
-                    catch
-                    {
-                        Logger.Warning($"Can't evaluate FencedCodeBlock condition in md. Default to 'false': Argument = {fcb.Arguments}, condition = {condition}");
-                        return false;
-                    }
-                }).SelectMany(b => ((FencedCodeBlock)b).Lines.Lines).ToList() :
-                new List<StringLine>();
-
-
-            var allYaml = string.Join("\n", lines.Concat(conditionalLines));
-            return deserializer.Deserialize<Dictionary<string, object>>(allYaml);
         }
 
         public static string GetKey(this Type type)
@@ -292,10 +218,26 @@ namespace Azure.SDK.ChangelogGen.Utilities
         {
             return pi.ToString()!;
         }
+        #endregion
 
-        public static bool IsPreviewRelease(string version)
+        #region markdown
+        public static Dictionary<string, object> LoadYaml(this MarkdownDocument md)
         {
-            return Regex.IsMatch(version, @"beta|alpha|preview", RegexOptions.IgnoreCase);
+            var lines = md.Where(b =>
+            {
+                FencedCodeBlock? fcb = b as FencedCodeBlock;
+                if (fcb == null)
+                    return false;
+                return (fcb.Info == "yaml" && string.IsNullOrEmpty(fcb.Arguments));
+            }).SelectMany(b => ((FencedCodeBlock)b).Lines.Lines).ToList();
+
+            // TODO: add support to include yaml from conditional block in markdown when needed
+            var allYaml = string.Join("\n", lines);
+            var deserializer = new DeserializerBuilder()
+                .WithNamingConvention(HyphenatedNamingConvention.Instance)
+                .Build();
+            return deserializer.Deserialize<Dictionary<string, object>>(allYaml);
         }
+        #endregion
     }
 }

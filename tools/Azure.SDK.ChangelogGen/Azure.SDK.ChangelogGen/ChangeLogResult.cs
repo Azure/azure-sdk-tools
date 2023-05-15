@@ -33,16 +33,12 @@ namespace Azure.SDK.ChangelogGen
 
             ReleaseNoteGroup othersGroup = new ReleaseNoteGroup("Other Changes");
             if (SpecVersionChange != null)
-            {
                 othersGroup.Notes.Add(new ReleaseNote(SpecVersionChange.Description, PREFIX));
-            }
-            if (AzureCoreVersionChange != null || AzureResourceManagerVersionChange != null)
-            {
-                if (AzureCoreVersionChange != null)
-                    othersGroup.Notes.Add(new ReleaseNote(AzureCoreVersionChange.Description, PREFIX));
-                if (AzureResourceManagerVersionChange != null)
-                    othersGroup.Notes.Add(new ReleaseNote(AzureResourceManagerVersionChange.Description, PREFIX));
-            }
+            if (AzureCoreVersionChange != null)
+                othersGroup.Notes.Add(new ReleaseNote(AzureCoreVersionChange.Description, PREFIX));
+            if (AzureResourceManagerVersionChange != null)
+                othersGroup.Notes.Add(new ReleaseNote(AzureResourceManagerVersionChange.Description, PREFIX));
+
             var nonbreaking = ApiChange?.GetNonBreakingChanges().Where(b => filter.Count == 0 || filter.Contains(b.ChangeCatogory)).ToList();
             if (nonbreaking != null && nonbreaking.Count > 0)
             {

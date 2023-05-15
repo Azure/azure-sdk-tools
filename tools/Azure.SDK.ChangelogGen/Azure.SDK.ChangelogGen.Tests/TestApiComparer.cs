@@ -16,8 +16,10 @@ namespace Azure.SDK.ChangelogGen.Tests
             string content2 = File.ReadAllText("apiFile2.cs.txt");
             ChangeLogResult r = new ChangeLogResult();
             r.ApiChange = Program.CompareApi(content2, content1);
-            Release release = r.GenerateReleaseNote("1.2.3", "2030.3.3", new List<ChangeCatogory>() { ChangeCatogory.Obsoleted });
+            Release release = r.GenerateReleaseNote("1.2.3", "2030.3.3", filter: new List<ChangeCatogory>() { ChangeCatogory.Obsoleted });
 
+            // we dont expect any breaking change in our release
+            // But in case any breaking changes detected, we will list them anyway so that people are able to notice these unexpected breaking changes when reviewing the changelog and fix them
             string baseline =
 @"## 1.2.3 (2030.3.3)
 

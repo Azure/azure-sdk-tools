@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Markdig.Parsers;
+using System;
 
 namespace Azure.SDK.ChangelogGen.Utilities
 {
@@ -58,9 +59,9 @@ namespace Azure.SDK.ChangelogGen.Utilities
             if (require.StartsWith(SPEC_RAW_PREFIX, StringComparison.OrdinalIgnoreCase))
                 webPath = require;
             else if (require.StartsWith(SPEC_PREFIX_BLOB, StringComparison.OrdinalIgnoreCase))
-                webPath = SPEC_RAW_PREFIX + require.Substring(SPEC_PREFIX_BLOB.Length);
+                webPath = string.Concat(SPEC_RAW_PREFIX, require.AsSpan(SPEC_PREFIX_BLOB.Length));
             else if (require.StartsWith(SPEC_PREFIX_TREE, StringComparison.OrdinalIgnoreCase))
-                webPath = SPEC_RAW_PREFIX + require.Substring(SPEC_PREFIX_TREE.Length);
+                webPath = string.Concat(SPEC_RAW_PREFIX, require.AsSpan(SPEC_PREFIX_TREE.Length));
 
             string specReadme = "";
             if (!string.IsNullOrEmpty(webPath))
@@ -90,7 +91,7 @@ namespace Azure.SDK.ChangelogGen.Utilities
         public static List<string> GetSpecVersionTags(string autorestMdContent, out string specPath)
         {
             var autorestMd = MarkdownParser.Parse(autorestMdContent);
-            var codeGenConfig = autorestMd.LoadYaml(expandTag: false);
+            var codeGenConfig = autorestMd.LoadYaml();
             string specReadme = "";
             List<string> tags;
             specPath = "";
@@ -104,12 +105,11 @@ namespace Azure.SDK.ChangelogGen.Utilities
             {
                 Logger.Warning("No require info found in autorest.md");
             }
-
-            Dictionary<string, object> specConfig = codeGenConfig;
+     
             if (!string.IsNullOrEmpty(specReadme))
             {
                 var specMd = MarkdownParser.Parse(specReadme);
-                specConfig = specMd.LoadYaml(expandTag: false);
+                var specConfig = specMd.LoadYaml();
                 tags = SpecHelper.GetTags(specConfig).ToList();
             }
             else

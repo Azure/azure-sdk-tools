@@ -14,11 +14,13 @@ namespace Azure.SDK.ChangelogGen.Tests
         {
             string content1 = File.ReadAllText("apiFile1.cs.txt");
             string content2 = File.ReadAllText("apiFile2.cs.txt");
-            ChangeLogResult r = new ChangeLogResult();
-            r.ApiChange = Program.CompareApi(content2, content1);
-            r.AzureCoreVersionChange = new StringValueChange("1.1.0", "1.0.1", "Azure Core upgraded");
-            r.AzureResourceManagerVersionChange = new StringValueChange("1.2.0", "1.0.2", "Azure RM upgraded");
-            r.SpecVersionChange = new StringValueChange("2020-01-01", "2030-01-01", "spec upgraded");
+            ChangeLogResult r = new ChangeLogResult
+            {
+                ApiChange = Program.CompareApi(content2, content1),
+                AzureCoreVersionChange = new StringValueChange("1.1.0", "1.0.1", "Azure Core upgraded"),
+                AzureResourceManagerVersionChange = new StringValueChange("1.2.0", "1.0.2", "Azure RM upgraded"),
+                SpecVersionChange = new StringValueChange("2020-01-01", "2030-01-01", "spec upgraded")
+            };
 
             Release newRelease = r.GenerateReleaseNote("1.2.3", "2099-09-10", new List<ChangeCatogory>() { ChangeCatogory.Obsoleted });
 

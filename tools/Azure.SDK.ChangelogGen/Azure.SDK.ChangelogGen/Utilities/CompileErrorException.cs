@@ -7,12 +7,12 @@ namespace Azure.SDK.ChangelogGen.Utilities
 {
     internal class CompileErrorException : Exception
     {
-        EmitResult emitResult;
+        public EmitResult EmitResult { get; private set; }
 
         public CompileErrorException(EmitResult emitResult)
             : base(string.Join("\n", emitResult.Diagnostics.Select(d => d.GetMessage())))
         {
-            this.emitResult = emitResult;
+            this.EmitResult = emitResult;
         }
     }
 }

@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - src/dotnet/Azure.SDK.ChangelogGen
+      - tools/Azure.SDK.ChangelogGen
 
 pr:
   branches:
@@ -19,9 +19,9 @@ pr:
       - hotfix/*
   paths:
     include:
-      - src/dotnet/Azure.SDK.ChangelogGen
+      - tools/Azure.SDK.ChangelogGen
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ToolDirectory: src/dotnet/Azure.SDK.ChangelogGen
+    ToolDirectory: tools/Azure.SDK.ChangelogGen

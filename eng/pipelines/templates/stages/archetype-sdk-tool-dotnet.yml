@@ -91,7 +91,7 @@ stages:
             artifact: packages
             condition: succeededOrFailed()
 
-      - ${{ if not(parameters.StandaloneExeMatrix) }}:
+      - ${{ if ne(length(parameters.StandaloneExeMatrix), 0) }}:
         - job: Produce_Executables
 
           strategy:

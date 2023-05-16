@@ -7,13 +7,14 @@ In detail, following release notes will be generated automatically:
 - The change in the version of dependencies (i.e. Azure.Core, Azure.ResourceManager)
 
 #### Usage:
-
 ```
 > ChangelogGen.exe apiFile version releaseDate(xxxx-xx-xx)
 ```
 
 #### Example:
->ChangelogGen.exe ...\azure-sdk-for-net\sdk\compute\Azure.ResourceManager.Compute\api\Azure.ResourceManager.Compute.netstandard2.0.cs 1.2.3 2099-02-03
+```
+> ChangelogGen.exe ...\azure-sdk-for-net\sdk\compute\Azure.ResourceManager.Compute\api\Azure.ResourceManager.Compute.netstandard2.0.cs 1.2.3 2099-02-03
+```
 
 #### Remark:
 - For preview release, the previous release will be used as baseline to detect changes.

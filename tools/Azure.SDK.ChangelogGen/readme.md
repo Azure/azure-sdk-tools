@@ -18,3 +18,4 @@ Remark:
 - For preview release, the previous release will be used as baseline to detect changes.
 - For GA release, the previous GA release will be used as baseline to detect changes.
 - The generated release notes will be merged into the last release (1.1.0-beta.1 (Unreleased)) in changelog.md.
+- Only Management Plane is supported now and the Data Plane will be supported in next step.

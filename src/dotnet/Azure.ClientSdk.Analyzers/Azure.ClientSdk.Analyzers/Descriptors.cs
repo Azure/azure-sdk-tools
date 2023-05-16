@@ -16,8 +16,8 @@ namespace Azure.ClientSdk.Analyzers
 
         public static DiagnosticDescriptor AZC0002 = new DiagnosticDescriptor(
             nameof(AZC0002),
-            "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called cancellationToken.",
-            "Client method should have cancellationToken as the last optional parameter (both name and it being optional matters)",
+            "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called cancellationToken or an RequestContext parameter called requestContext.",
+            "Client method should have cancellationToken as the last optional parameter (both name and it being optional matters) for convenience method or cancellationToken as the last parameter for protocol method.",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-cancellation"
         );
@@ -111,6 +111,18 @@ namespace Azure.ClientSdk.Analyzers
             "All parts of ServiceVersion members' names must begin with a number or uppercase letter and cannot have consecutive underscores.",
             "Usage",
             DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0017 = new DiagnosticDescriptor(
+            nameof(AZC0017),
+            "Do ensure convenience method take an optional CancellationToken parameter called cancellationToken and take models as parameter type and return type.",
+            "Convenience method should have cancellationToken as the last optional parameter (both name and it being optional matters) and don't have prameters with type RequestContent.",
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null);
+
+        public static DiagnosticDescriptor AZC0018 = new DiagnosticDescriptor(
+            nameof(AZC0018),
+            "Do ensure protocol method take a RequestContext parameter called requestContext and not take models as parameter type or return type.",
+            "Protocol method should have requestContext as the last parameter and don't have model as parameter type or return type.",
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null);
         #endregion
 
         #region General

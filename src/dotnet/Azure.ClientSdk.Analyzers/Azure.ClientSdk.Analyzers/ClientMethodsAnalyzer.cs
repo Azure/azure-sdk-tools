@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -18,7 +19,9 @@ namespace Azure.ClientSdk.Analyzers
             Descriptors.AZC0002,
             Descriptors.AZC0003,
             Descriptors.AZC0004,
-            Descriptors.AZC0015
+            Descriptors.AZC0015,
+            Descriptors.AZC0017,
+            Descriptors.AZC0018
         });
 
         private static void CheckClientMethod(ISymbolAnalysisContext context, IMethodSymbol member)
@@ -50,49 +53,39 @@ namespace Azure.ClientSdk.Analyzers
 
             if (!supportsCancellations)
             {
-                var overloadSupportsCancellations = FindMethod(
-                    member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
-                    member.TypeParameters,
-                    member.Parameters,
-                    p => SupportsCancellationsParameter(p));
-
-                if (overloadSupportsCancellations != null)
-                {
-                    // Skip methods that have overloads with cancellation tokens
-                    return;
-                }
-
                 context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
             }
-            else if (!lastArgument.IsOptional)
+            else if (IsCancellationToken(lastArgument))
             {
-                var overloadWithCancellationToken = FindMethod(
-                    member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
-                    member.TypeParameters,
-                    member.Parameters.RemoveAt(member.Parameters.Length - 1));
-
-                if (overloadWithCancellationToken != null)
+                // A convenience method should have optional CancellationToken
+                if (!lastArgument.IsOptional)
                 {
-                    // Skip methods that have non-optional cancellation token if overload exists without one
-                    return;
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0017, member.Locations.FirstOrDefault()), member);
                 }
 
-                if (IsRequestContext(lastArgument))
+                // A convenience method should not have RequestContent as parameter
+                var requestContent = member.Parameters.FirstOrDefault(parameter => parameter.Type.Name == "RequestContent");
+                if (requestContent != null)
                 {
-                    overloadWithCancellationToken = FindMethod(
-                    member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
-                    member.TypeParameters,
-                    member.Parameters.RemoveAt(member.Parameters.Length - 1),
-                    p => IsCancellationToken(p));
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0017, member.Locations.FirstOrDefault()), member);
+                }
+            }
+            else if (IsRequestContext(lastArgument))
+            {
+                // A protocol method should not have model as type
+                ITypeSymbol unwrappedType = member.ReturnType;
 
-                    if (!SymbolEqualityComparer.Default.Equals(overloadWithCancellationToken, member))
-                    {
-                        // Skip methods that have non-optional request context if overload exists with cancellation tokens
-                        return;
-                    }
+                if (member.ReturnType is INamedTypeSymbol namedTypeSymbol &&
+                    namedTypeSymbol.IsGenericType &&
+                    namedTypeSymbol.Name == "Task")
+                {
+                    unwrappedType = namedTypeSymbol.TypeArguments.Single();
                 }
 
-                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
+                if (unwrappedType.Name == "Response" && unwrappedType is INamedTypeSymbol responseTypeSymbol && responseTypeSymbol.IsGenericType)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, member.Locations.FirstOrDefault()), member);
+                }
             }
         }
 
@@ -140,15 +133,16 @@ namespace Azure.ClientSdk.Analyzers
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
             INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
+            List<IMethodSymbol> visitedSyncMember = new List<IMethodSymbol>();
             foreach (var member in type.GetMembers())
             {
-                if (member is IMethodSymbol methodSymbol && methodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public)
+                if (member is IMethodSymbol asyncMethodSymbol && asyncMethodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public)
                 {
-                    CheckClientMethod(context, methodSymbol);
+                    CheckClientMethod(context, asyncMethodSymbol);
 
                     var syncMemberName = member.Name.Substring(0, member.Name.Length - AsyncSuffix.Length);
 
-                    var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), methodSymbol.TypeParameters, methodSymbol.Parameters);
+                    var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), asyncMethodSymbol.TypeParameters, asyncMethodSymbol.Parameters);
 
                     if (syncMember == null)
                     {
@@ -156,7 +150,17 @@ namespace Azure.ClientSdk.Analyzers
                     }
                     else
                     {
+                        visitedSyncMember.Add(syncMember);
                         CheckClientMethod(context, syncMember);
+                    }
+                }
+                else if (member is IMethodSymbol syncMethodSymbol && !member.IsImplicitlyDeclared && !syncMethodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public && !visitedSyncMember.Contains(syncMethodSymbol))
+                {
+                    var asyncMemberName = member.Name + AsyncSuffix;
+                    var asyncMember = FindMethod(type.GetMembers(asyncMemberName).OfType<IMethodSymbol>(), syncMethodSymbol.TypeParameters, syncMethodSymbol.Parameters);
+                    if (asyncMember == null)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0004, member.Locations.First()), member);
                     }
                 }
             }

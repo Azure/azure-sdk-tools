@@ -199,8 +199,38 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
 
             var parsedNewResults = scanner.ParseExistingResults();
 
-            // assert that parsed results = current output results
+            if (parsedNewResults != null)
+            {
+                AreResultsSame(results, parsedNewResults);
+            }
+            else
+            {
+                Assert.NotNull(parsedNewResults);
+            }
+        }
 
+        public bool AreResultsSame(AssetsResultSet a, AssetsResultSet b)
+        {
+            if (a.Results.Count() != b.Results.Count())
+            {
+                return false;
+            }
+
+            for (int i = 0; i < a.Results.Count(); i++)
+            {
+                AssetsResult aResult = a.Results[i];
+                AssetsResult bResult = b.Results[i];
+
+                Assert.That(bResult.ScanDate, Is.EqualTo(aResult.ScanDate));
+                Assert.That(bResult.AssetsLocation, Is.EqualTo(aResult.AssetsLocation));
+                Assert.That(bResult.Tag, Is.EqualTo(aResult.Tag));
+                Assert.That(bResult.TagRepo, Is.EqualTo(aResult.TagRepo));
+                Assert.That(bResult.Commit, Is.EqualTo(aResult.Commit));
+                Assert.That(bResult.Repo, Is.EqualTo(aResult.Repo));
+                Assert.That(bResult.BackupUri, Is.EqualTo(aResult.BackupUri));
+            }
+
+            return true;
         }
     }
 }

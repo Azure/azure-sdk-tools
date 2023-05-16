@@ -58,18 +58,11 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
                 using var stream = System.IO.File.OpenRead(ResultsFile);
                 using var doc = JsonDocument.Parse(stream);
 
-                try
-                {
-                    var results = JsonSerializer.Deserialize<List<AssetsResult>>(doc);
+                var results = JsonSerializer.Deserialize<List<AssetsResult>>(doc);
 
-                    if (results != null)
-                    {
-                        return new AssetsResultSet(results);
-                    }
-                }
-                catch(Exception e)
+                if (results != null)
                 {
-                    Console.WriteLine(e);
+                    return new AssetsResultSet(results);
                 }
             }
 

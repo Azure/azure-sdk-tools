@@ -21,6 +21,18 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
             ScanDate = scanDate??DateTime.Now;
         }
 
+        public AssetsResult()
+        {
+            Repo = string.Empty;
+            Commit = string.Empty;
+            AssetsLocation = string.Empty;
+            Tag = string.Empty;
+            TagRepo = string.Empty;
+            BackupUri = string.Empty;
+            ScanDate = DateTime.Now;
+        }
+
+
         /// <summary>
         /// The containing repo from within which this result was found.
         /// </summary>

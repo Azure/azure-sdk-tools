@@ -99,6 +99,7 @@ jobs:
       filePath: eng/common/scripts/Verify-Links.ps1
       arguments: >
         -urls '(Get-ChildItem -Path ./ -Recurse -Include *.md)'
+        -rootUrl "file://$(System.DefaultWorkingDirectory)"        
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"

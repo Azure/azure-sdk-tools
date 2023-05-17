@@ -22,9 +22,12 @@
 - spec upgraded
 - Azure Core upgraded
 - Azure RM upgraded
+- Obsoleted method 'Void StaticMethodToBeObsoleted()' in type Azure.ResourceManager.AppService.StaticTypeToBeObsoleted
 - Obsoleted method 'String MethodToBeObsoleted()' in type Azure.ResourceManager.AppService.TestMethod
+- Obsoleted property 'String StaticPropertyToBeObsoleted' in type Azure.ResourceManager.AppService.StaticTypeToBeObsoleted
 - Obsoleted property 'String PropertyToBeObsoleted' in type Azure.ResourceManager.AppService.TestProperty
 - Obsoleted type 'Azure.ResourceManager.AppService.TypeToBeObsoleted'
+- Obsoleted type 'Azure.ResourceManager.AppService.StaticTypeToBeObsoleted'
 
 ## 1.0.1 (2023-02-20)
 

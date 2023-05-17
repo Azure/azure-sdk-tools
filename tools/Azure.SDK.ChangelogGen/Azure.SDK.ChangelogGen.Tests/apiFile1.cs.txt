@@ -8,6 +8,11 @@ namespace Azure.ResourceManager.AppService
     {
         public string SomeProperty { get; set; }
     }
+    public static partial class StaticTypeToBeObsoleted
+    {
+        public static string StaticPropertyToBeObsoleted { get; set; }
+        public static void StaticMethodToBeObsoleted() { throw null; }
+    }
     public partial class TestProperty
     {
         public string PropertyToBeDeleted { get; set; }

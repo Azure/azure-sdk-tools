@@ -16,10 +16,10 @@ namespace Azure.SDK.ChangelogGen
 
         public Release GenerateReleaseNote(string version, string date, List<ChangeCatogory> filter)
         {
-            string PREFIX = "- ";
+            const string PREFIX = "- ";
             Release report = new Release(version, date);
 
-            if (ApiChange?.GetBreakingChanges().Count() > 0)
+            if (ApiChange!= null && ApiChange.GetBreakingChanges().Any())
             {
                 ReleaseNoteGroup breakingGroup = new ReleaseNoteGroup("Breaking Changes");
                 var breaking = ApiChange?.GetBreakingChanges();

@@ -19,7 +19,7 @@ namespace Azure.SDK.ChangelogGen.Compare
 
         public ChangeSet Compare()
         {
-            BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
+            BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static;
             ChangeSet result = new ChangeSet();
 
             CompareList(

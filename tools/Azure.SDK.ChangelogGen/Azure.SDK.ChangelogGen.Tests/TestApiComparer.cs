@@ -35,9 +35,12 @@ namespace Azure.SDK.ChangelogGen.Tests
 
 ### Other Changes
 
+- Obsoleted method 'Void StaticMethodToBeObsoleted()' in type Azure.ResourceManager.AppService.StaticTypeToBeObsoleted
 - Obsoleted method 'String MethodToBeObsoleted()' in type Azure.ResourceManager.AppService.TestMethod
+- Obsoleted property 'String StaticPropertyToBeObsoleted' in type Azure.ResourceManager.AppService.StaticTypeToBeObsoleted
 - Obsoleted property 'String PropertyToBeObsoleted' in type Azure.ResourceManager.AppService.TestProperty
-- Obsoleted type 'Azure.ResourceManager.AppService.TypeToBeObsoleted'";
+- Obsoleted type 'Azure.ResourceManager.AppService.TypeToBeObsoleted'
+- Obsoleted type 'Azure.ResourceManager.AppService.StaticTypeToBeObsoleted'";
             string actual = release.ToString();
             Assert.AreEqual(baseline.Replace("\r\n", "\n"), actual.Replace("\r\n", "\n"));
         }

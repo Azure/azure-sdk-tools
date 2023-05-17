@@ -13,6 +13,14 @@ namespace Azure.ResourceManager.AppService
     {
         public string SomeProperty { get; set; }
     }
+    [System.ObsoleteAttribute("for test", false)]
+    public static partial class StaticTypeToBeObsoleted
+    {
+        [System.ObsoleteAttribute("for test", false)]
+        public static string StaticPropertyToBeObsoleted { get; set; }
+        [System.ObsoleteAttribute("for test", false)]
+        public static void StaticMethodToBeObsoleted() { throw null; }
+    }
     public partial class TestProperty
     {
         public string PropertyAdded { get; set; }

@@ -40,7 +40,7 @@ Note that tsp compile currently requires the "main" line to be there.
 
 ### Emitter additonalProperties
 
-The `-SaveInputs` flag will get forwarded to your emitter as `--option @azure-tools/typespec-csharp.emitter-output-dir=$projectDirectory/src`.  If your emitter or generator creates any temporary files similar to CodeModel.yaml and Configuration.json from autorest then you should honor this flag and not delete those files.  If your emitter does not does not have any of these files you can ignore this flag but be sure you have [additionalProperties set to true](https://github.com/Azure/autorest.java/blob/main/typespec-extension/src/emitter.ts#L41).
+The `-SaveInputs` flag will get forwarded to your emitter as `--option @azure-tools/typespec-csharp.save-inputs=true`.  If your emitter or generator creates any temporary files similar to CodeModel.yaml and Configuration.json from autorest then you should honor this flag and not delete those files.  If your emitter does not does not have any of these files you can ignore this flag but be sure you have [additionalProperties set to true](https://github.com/Azure/autorest.java/blob/main/typespec-extension/src/emitter.ts#L41) or have added `save-inputs` into your schema.
 
 ### Language-Settings.ps1
 

@@ -91,31 +91,32 @@ stages:
             artifact: packages
             condition: succeededOrFailed()
 
-      - job: Produce_Executables
+      - ${{ if ne(length(parameters.StandaloneExeMatrix), 0) }}:
+        - job: Produce_Executables
 
-        strategy:
-          matrix:
-            linux:
-              imageName: 'ubuntu-22.04'
-              poolName: 'azsdk-pool-mms-ubuntu-2204-general'
-              artifactName: 'linux_windows'
-            mac:
-              imageName: 'macos-11'
-              poolName: 'Azure Pipelines'
-              artifactName: 'mac'
+          strategy:
+            matrix:
+              linux:
+                imageName: 'ubuntu-22.04'
+                poolName: 'azsdk-pool-mms-ubuntu-2204-general'
+                artifactName: 'linux_windows'
+              mac:
+                imageName: 'macos-11'
+                poolName: 'Azure Pipelines'
+                artifactName: 'mac'
 
-        pool:
-          name: $(poolName)
-          vmImage: $(imageName)
+          pool:
+            name: $(poolName)
+            vmImage: $(imageName)
 
-        steps:
-          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+          steps:
+            - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
-          - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
-            parameters:
-              StagingDirectory: $(Build.ArtifactStagingDirectory)
-              BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
-              TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
+            - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
+              parameters:
+                StagingDirectory: $(Build.ArtifactStagingDirectory)
+                BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
+                TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
       - job: Test
 

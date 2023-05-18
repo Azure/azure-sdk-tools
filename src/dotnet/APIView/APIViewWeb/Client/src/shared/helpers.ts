@@ -1,4 +1,9 @@
-// Updated Page Setting by Updating UserPreference 
+/**
+* Call APIView controller endpoint (/userprofile/updatereviewpagesettings)
+* to update various page settings
+* Takes a call back function that is run after ajax call succeeds
+* @param { function } a callback function
+*/
 export function updatePageSettings(callBack) {
   var hideLineNumbers = $("#hide-line-numbers").prop("checked");
   if (hideLineNumbers != undefined) { hideLineNumbers = !hideLineNumbers; }
@@ -31,10 +36,18 @@ export function updatePageSettings(callBack) {
   }).done(callBack());
 }
 
+/**
+* Retrieves a codeLineRow using the id
+* @param { string } row id
+*/
 export function getCodeRow(id: string) {
   return $(`.code-line[data-line-id='${id}']`);
 }
 
+/**
+* Retrieves the classList for a codeLineRow using the id
+* @param { string } row id
+*/
 export function getCodeRowSectionClasses(id: string) {
   var codeRow = getCodeRow(id);
   var rowSectionClasses = "";
@@ -44,6 +57,10 @@ export function getCodeRowSectionClasses(id: string) {
   return rowSectionClasses;
 }
 
+/**
+* Retrieves the classes that identifies the codeLine as a section
+* @param { DOMTokenList } classlist
+*/
 export function getRowSectionClasses(classList: DOMTokenList) {
   const rowSectionClasses: string[] = [];
   for (const value of classList.values()) {
@@ -54,13 +71,18 @@ export function getRowSectionClasses(classList: DOMTokenList) {
   return rowSectionClasses.join(' ');
 }
 
-export function toggleCommentIcon(id, show: boolean) {
+/**
+* Updates the state of the comment icon (visible / invisible)
+* @param { string } id
+* @param { boolean } show
+*/
+export function toggleCommentIcon(id: string, show: boolean) {
   getCodeRow(id).find(".icon-comments").toggleClass("invisible", !show);
 }
 
 
 /**
-* Retireved a Specific Cookie from Users Browser
+* Retrieve a Specific Cookie from Users Browser
 * @param { String } cookies (pass document.cookies)
 * @param { String } cookieName
 * @return { String } cookieValue
@@ -80,4 +102,14 @@ export function getCookieValue (cookies: string, cookieName: string)
       return ch.substring(nameEQ.length, ch.length);    
   }
   return null;
+}
+
+/**
+* Retrieve the list of classes on an element
+* @param { JQuery<HTMLElement> | HTMLElement } element
+* @return { string [] } classList - list of classes of the element
+*/
+export function getElementClassList (element : JQuery<HTMLElement> | HTMLElement) {
+  let el : HTMLElement = (element instanceof HTMLElement) ? element : element[0];
+  return Array.from(el.classList);
 }

@@ -7,8 +7,6 @@ import fetch from "node-fetch";
 import * as path from "path";
 import * as fs from "fs";
 
-import * as rvM from "../../../src/pages/review.module";
-
 const fixturesDir = process.env.FIXTURE_DIR as string;
 const baseURL = process.env.BASE_URL as string;
 const apiKey = process.env.APIVIEW_API_KEY as string;
@@ -26,6 +24,7 @@ test.describe('CodeLine Section State Management', () => {
     });
 
     test('codeLine section expands and collapses', async ({ page }) => {
+        test.slow();
         const swaggerTestReview = testReviewIds["Swagger"][0];
         await page.goto(swaggerTestReview);
 
@@ -49,7 +48,7 @@ test.describe('CodeLine Section State Management', () => {
         
         // click on row caret (the test subject)
         btnToTest.click();
-        await page.waitForLoadState('networkidle'); // Give the UI few seconds moment to load
+        await page.waitForLoadState('networkidle', { timeout: 50000 }); // Give the network few seconds moment to load
 
         // Reselect section content rows and ensure they are present
         sectionContentRows = await page.locator(`.${sectionContentClass}`).all();
@@ -57,18 +56,20 @@ test.describe('CodeLine Section State Management', () => {
 
         // Click row caret again
         btnToTest.click();
-        await page.waitForLoadState('networkidle'); // Give the UI few seconds moment to update
 
         // Reselect section content rows and ensure they are hidden
         sectionContentRows = await page.locator(`.${sectionContentClass}`).all();
+
         expect(sectionContentRows.length).toBe(10);
         for (const l of sectionContentRows) {
+            await l.waitFor({state: "hidden"});
             const classes = await l.evaluate((el) => Array.from(el.classList));
             await expect(classes).toContain("d-none");
         }
     });
 
-    test('codeLine subSection expands and collapses', async ({ page }) => {
+    test('codeLine subSection expands and collapses and codeLine section collapses subSection', async ({ page }) => {
+        test.slow();
         const swaggerTestReview = testReviewIds["Swagger"][0];
         await page.goto(swaggerTestReview);
 
@@ -92,7 +93,7 @@ test.describe('CodeLine Section State Management', () => {
         let subSectionParent;
         let subSectionParentClass
         const sectionContentClass = sectionHeadingRowClass.replace("heading", "content");
-        await page.waitForLoadState('networkidle'); // Give the UI few seconds moment to load
+        await page.waitForLoadState('networkidle', { timeout: 50000 }); // Give the UI few seconds moment to load
 
         let sectionContentRows = await page.locator(`.${sectionContentClass}`).all();
         for (const l of sectionContentRows)
@@ -119,7 +120,7 @@ test.describe('CodeLine Section State Management', () => {
 
         // Find row caret thats child of subSectionHeading and click it
         subSectionParent.locator(".row-fold-caret").click();
-        await page.waitForLoadState('networkidle'); // Give the UI few seconds moment to load
+        await page.waitForLoadState('load'); // Give the network few seconds moment to load
 
         // Ensure subsection content is now shown
         sectionContentRows = await page.locator(`.${sectionContentClass}`).all();
@@ -128,12 +129,53 @@ test.describe('CodeLine Section State Management', () => {
             if (sectionContentClasses.filter(c => c.match(/lvl_2_child_/))) {
                 expect(Array.from(sectionContentClasses)).not.toContain("d-none");
             }  
-        } 
+        }
+        
+        // Click heading row caret to close section and subSection
+        btnToTest.click();
+
+        // Ensure section and subsection is hidden
+        sectionContentRows = await page.locator(`.${sectionContentClass}`).all();
+        expect(sectionContentRows.length).toBe(10);
+        for (const l of sectionContentRows) {
+            await l.waitFor({state: "hidden"});
+            const classes = await l.evaluate((el) => Array.from(el.classList));
+            await expect(classes).toContain("d-none");
+        }
     });
 
-    test('codeLine section header collapses subSections', async ({ page }) => {
+    test('codeLine secton and subSection remembers and updates state after page refresh', async ({ page }) => {
+        test.slow();
         const swaggerTestReview = testReviewIds["Swagger"][0];
         await page.goto(swaggerTestReview);
+
+        // Select one row-fold-caret btn to use for test
+        const sectionTriggerBtns = await page.locator(".row-fold-caret").all();
+        const btnToTest = sectionTriggerBtns[2];
+
+        // Select the parent row heading class (the Section Heading)
+        const sectionHeadingRowClass = await btnToTest.evaluate((el) => {
+            let currEl = el;
+            while (currEl && !currEl.classList.contains("code-line")) {
+                currEl = currEl.parentElement!;
+            }
+            return currEl.classList[1];
+        });
+
+        // Ensure that all section content does not exist
+        const sectionContentClass = sectionHeadingRowClass.replace("heading", "content");
+        let sectionContentRows = await page.locator(`.${sectionContentClass}`).all();
+        expect(sectionContentRows.length).toBe(1);
+
+        // click on row caret (the test subject)
+        btnToTest.click();
+        await page.waitForLoadState('networkidle', { timeout: 50000 }); // Give the network few seconds moment to load
+
+        // Reload page
+        await page.reload({ waitUntil: 'networkidle', timeout: 50000 });
+
+        sectionContentRows = await page.locator(`.${sectionContentClass}`).all();
+        expect(sectionContentRows.length).toBe(10);
     });
 });
 

@@ -16,6 +16,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
     public class AssetsScanner
     {
         public string WorkingDirectory { get; set; }
+        public static readonly string GIT_TOKEN_ENV_VAR = "GIT_TOKEN";
 
         private string ResultsFile { get
             {
@@ -71,7 +72,14 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
 
         private List<AssetsResult> ScanRepo(RepoConfiguration config, AssetsResultSet? previousOutput)
         {
-            var targetRepoUri = $"https://github.com/{config.Repo}.git";
+            string? envOverride = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
+            var authString = string.Empty;
+            if (!string.IsNullOrWhiteSpace(envOverride))
+            {
+                authString = $"{envOverride}@";
+            }
+
+            var targetRepoUri = $"https://{authString}github.com/{config.Repo}.git";
             var workingDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             var results = new List<AssetsResult>();
 

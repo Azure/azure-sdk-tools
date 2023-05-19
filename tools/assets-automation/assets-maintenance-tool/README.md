@@ -1,17 +1,12 @@
 # Assets Maintenance Tooling
 
-The solution contained in this directory is made up of two tools surfaced through a single command line API.
+The tool contained within this directory is intended two fulfill three main tasks.
 
+1. Scan the commits of a set of targeted repos and branches to create a representation of all assets.jsons, their targeted tags, and their origin SHAs.
+   * This is just a map of the complete footprint of `test-proxy` assets.
+2. Use the map of data created in step 1 to individually backup tags from the assets repository to a target that we can retrieve later.
+3. Use the map of data created in step 1 to clean up _unnecessary_ tags in the assets repository.
 
-- `azure.sdk.tools.assets.scantool`
-  - Used in combination with an input configuration to identify _all_ references to the assets repo.
-- `azure.sdk.tools.assets.backuptool`
-  - Used to backup individual tags to a storage medium.
-- `azure.sdk.tools.assets.cleanuptool`
-  - Used to delete tags that are not referenced from a `main` commit after a certain period.
-- `azure.sdk.tools.assets.maintainencetool`
-  - Commandline interop with `backuptool` as well as `cleanuptool`.
-
-## How does this tool scan our repos?
+## What does the process look like?
 
 ![example processing layout](processing_layout.png)

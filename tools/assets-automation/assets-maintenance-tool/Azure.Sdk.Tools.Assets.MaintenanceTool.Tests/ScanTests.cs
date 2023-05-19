@@ -1,31 +1,45 @@
 global using NUnit.Framework;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Model;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Scan;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 
 namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
 {
     public class Tests
     {
-        private RunConfiguration GetRunConfiguration()
+        // These tests assume the presence of three integration branches for the purposes of testing.
+        // Azure/azure-sdk-tools
+          // https://github.com/Azure/azure-sdk-tools/tree/integration/assets-test-branch
+        // Azure/azure-sdk-assets-integration
+          // This repo is non-public, and as such a valid GIT_TOKEN must be set or the default git account
+          // on the invoking machine should have permissions to Azure/azure-sdk-assets-integration.
+          // 
+          // https://github.com/Azure/azure-sdk-assets-integration/tree/integration/assets-branch-1
+          // https://github.com/Azure/azure-sdk-assets-integration/tree/integration/assets-branch-2
+        private RunConfiguration RunConfiguration
         {
-            return new RunConfiguration()
+            get
             {
-                Repos = new List<RepoConfiguration>
+                return new RunConfiguration()
                 {
-                    new RepoConfiguration("azure/azure-sdk-tools")
+                    Repos = new List<RepoConfiguration>
                     {
-                        Branches = new List<string>(){ "integration/assets-test-branch" }
-                    },
-                    new RepoConfiguration("azure/azure-sdk-assets-integration")
-                    {
-                        Branches = new List<string>(){
-                            "integration/assets-branch-1",
-                            "integration/assets-branch-2"
+                        new RepoConfiguration("azure/azure-sdk-tools")
+                        {
+                            Branches = new List<string>() { "integration/assets-test-branch" }
+                        },
+                        new RepoConfiguration("azure/azure-sdk-assets-integration")
+                        {
+                            Branches = new List<string>()
+                            {
+                                "integration/assets-branch-1",
+                                "integration/assets-branch-2"
+                            }
                         }
                     }
-                }
-            };
+                };
+            }
         }
 
         public string TestDirectory { get; protected set; } 
@@ -59,7 +73,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         public void TestBasicScanSingleBranch()
         {
             var scanner = new AssetsScanner();
-            var config = GetRunConfiguration();
+            var config = RunConfiguration;
             config.Repos.RemoveAt(0);
             config.Repos.First().Branches.RemoveAt(1);
             var results = scanner.Scan(config);
@@ -94,7 +108,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         public void TestBasicScanMultipleBranches()
         {
             var scanner = new AssetsScanner();
-            var config = GetRunConfiguration();
+            var config = RunConfiguration;
             config.Repos.RemoveAt(0);
             var results = scanner.Scan(config);
 
@@ -142,7 +156,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         public void TestBasicScanMultipleBranchesMultipleRepos()
         {
             var scanner = new AssetsScanner();
-            var config = GetRunConfiguration();
+            var config = RunConfiguration;
             var results = scanner.Scan(config);
 
             Assert.IsNotNull(results);
@@ -172,22 +186,68 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         [Test]
         public void TestScanHonorsPreviousResults()
         {
-            // ensure that a previous set of results is combined with the new set
+            var specificDirectory = Path.Combine(TestDirectory, "TestResources", "basic_output");
+            var scanner = new AssetsScanner(specificDirectory);
+
+            var config = RunConfiguration;
+            var resultSet = scanner.Scan(config);
+
+            Assert.That(resultSet, Is.Not.Null);
+
+            // The only elements that _could_ change (given that git is immutable per commit)
+            // are the BackupURIs and the ScanDates. If we have properly loaded previous results,
+            // these should align.
+            Assert.That(resultSet.Results[0].BackupUri, Is.Null);
+            Assert.That(resultSet.Results[0].ScanDate, Is.EqualTo(DateTime.Parse("2023-05-11T11:05:59")));
+
+            Assert.That(resultSet.Results[1].BackupUri, Is.Null);
+            Assert.That(resultSet.Results[1].ScanDate, Is.EqualTo(DateTime.Parse("2023-05-10T00:00:00")));
+
+            Assert.That(resultSet.Results[2].BackupUri, Is.EqualTo("https://github.com/azure-sdk/azure-sdk-assets/tree/backup_js/agrifood/arm-agrifood_4f244d09c7"));
+            Assert.That(resultSet.Results[2].ScanDate, Is.EqualTo(DateTime.Parse("2023-05-08T00:00:00")));
         }
 
         [Test]
         public void TestParsePreviouslyOutputResults()
         {
-            var scanner = new AssetsScanner(TestDirectory);
+            var specificDirectory = Path.Combine(TestDirectory, "TestResources", "basic_output");
+            var scanner = new AssetsScanner(specificDirectory);
 
             // ensure that we can parse a default set of existing results
+            var resultSet = scanner.ParseExistingResults();
+
+            Assert.That(resultSet, Is.Not.Null);
+
+            Assert.That(resultSet.Results[0].AssetsLocation, Is.EqualTo("sdk/agrifood/arm-agrifood/assets.json"));
+            Assert.That(resultSet.Results[0].Commit, Is.EqualTo("48bca526a2a9972e4219ec87d29a7aa31438581a"));
+            Assert.That(resultSet.Results[0].Repo, Is.EqualTo("azure/azure-sdk-assets-integration"));
+            Assert.That(resultSet.Results[0].Tag, Is.EqualTo("js/agrifood/arm-agrifood_4f244d09c7"));
+            Assert.That(resultSet.Results[0].TagRepo, Is.EqualTo("Azure/azure-sdk-assets"));
+            Assert.That(resultSet.Results[0].BackupUri, Is.Null);
+            Assert.That(resultSet.Results[0].ScanDate, Is.EqualTo(DateTime.Parse("2023-05-11T11:05:59")));
+
+            Assert.That(resultSet.Results[1].AssetsLocation, Is.EqualTo("sdk/storage/storage-blob/assets.json"));
+            Assert.That(resultSet.Results[1].Commit, Is.EqualTo("48bca526a2a9972e4219ec87d29a7aa31438581a"));
+            Assert.That(resultSet.Results[1].Repo, Is.EqualTo("azure/azure-sdk-assets-integration"));
+            Assert.That(resultSet.Results[1].Tag, Is.EqualTo("js/storage/storage-blob_5d5a32b74a"));
+            Assert.That(resultSet.Results[1].TagRepo, Is.EqualTo("Azure/azure-sdk-assets"));
+            Assert.That(resultSet.Results[1].BackupUri, Is.Null);
+            Assert.That(resultSet.Results[1].ScanDate, Is.EqualTo(DateTime.Parse("2023-05-10T00:00:00")));
+
+            Assert.That(resultSet.Results[2].AssetsLocation, Is.EqualTo("sdk/agrifood/arm-agrifood/assets.json"));
+            Assert.That(resultSet.Results[2].Commit, Is.EqualTo("f139c4ddf7aaa4d637282ae7da4466b473044281"));
+            Assert.That(resultSet.Results[2].Repo, Is.EqualTo("azure/azure-sdk-assets-integration"));
+            Assert.That(resultSet.Results[2].Tag, Is.EqualTo("js/agrifood/arm-agrifood_4f244d09c7"));
+            Assert.That(resultSet.Results[2].TagRepo, Is.EqualTo("Azure/azure-sdk-assets"));
+            Assert.That(resultSet.Results[2].BackupUri, Is.EqualTo("https://github.com/azure-sdk/azure-sdk-assets/tree/backup_js/agrifood/arm-agrifood_4f244d09c7"));
+            Assert.That(resultSet.Results[2].ScanDate, Is.EqualTo(DateTime.Parse("2023-05-08T00:00:00")));
         }
 
         [Test]
         public void TestScanOutputsResults()
         {
             var scanner = new AssetsScanner(TestDirectory);
-            var config = GetRunConfiguration();
+            var config = RunConfiguration;
             config.Repos.RemoveAt(0);
             config.Repos.First().Branches.RemoveAt(1);
             var results = scanner.Scan(config);
@@ -209,7 +269,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             }
         }
 
-        public bool AreResultsSame(AssetsResultSet a, AssetsResultSet b)
+        private bool AreResultsSame(AssetsResultSet a, AssetsResultSet b)
         {
             if (a.Results.Count() != b.Results.Count())
             {

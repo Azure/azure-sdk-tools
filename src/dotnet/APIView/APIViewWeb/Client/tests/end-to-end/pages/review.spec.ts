@@ -13,14 +13,12 @@ const apiKey = process.env.APIVIEW_API_KEY as string;
 
 test.describe('CodeLine Section State Management', () => {
     // Test Reviews Ids
-    const testReviewIds = {
-        "Swagger": ["http://localhost:5000/Assemblies/Review/ba9e3dfad3f849e2bdcb5862a89dbfc9"]
-    };
+    const testReviewIds = {};
 
     test.beforeAll(async ({}, testInfo) => {
         // Create automatic Reviews using existing token files
-        //await addAutoReview("webpubsub-data-plane-WebPubSub.Baseline.json", fixturesDir, "Swagger", testReviewIds);
-        //await new Promise(resolve => setTimeout(resolve, 5000)); // Give the upload sometime to complete
+        await addAutoReview("webpubsub-data-plane-WebPubSub.Baseline.json", fixturesDir, "Swagger", testReviewIds);
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Give the upload sometime to complete
     });
 
     test('codeLine section expands and collapses', async ({ page }) => {
@@ -91,7 +89,7 @@ test.describe('CodeLine Section State Management', () => {
 
         // Select subSection row thats a heading
         let subSectionParent;
-        let subSectionParentClass
+        let subSectionParentClass;
         const sectionContentClass = sectionHeadingRowClass.replace("heading", "content");
         await page.waitForLoadState('networkidle', { timeout: 50000 }); // Give the UI few seconds moment to load
 
@@ -144,7 +142,7 @@ test.describe('CodeLine Section State Management', () => {
         }
     });
 
-    test('codeLine secton and subSection remembers and updates state after page refresh', async ({ page }) => {
+    test('codeLine secton and subSection stores heading line numbers in cookies', async ({ page }) => {
         test.slow();
         const swaggerTestReview = testReviewIds["Swagger"][0];
         await page.goto(swaggerTestReview);
@@ -162,20 +160,58 @@ test.describe('CodeLine Section State Management', () => {
             return currEl.classList[1];
         });
 
-        // Ensure that all section content does not exist
-        const sectionContentClass = sectionHeadingRowClass.replace("heading", "content");
-        let sectionContentRows = await page.locator(`.${sectionContentClass}`).all();
-        expect(sectionContentRows.length).toBe(1);
+        // assert cookie value
+        let cookies = await page.context().cookies();
+        let shownSectionHeadingLineNumbers = cookies.find(c => c.name === "shownSectionHeadingLineNumbers");
+        expect(shownSectionHeadingLineNumbers).toBeUndefined();
 
         // click on row caret (the test subject)
         btnToTest.click();
         await page.waitForLoadState('networkidle', { timeout: 50000 }); // Give the network few seconds moment to load
 
-        // Reload page
-        await page.reload({ waitUntil: 'networkidle', timeout: 50000 });
+        // assert cookie value
+        cookies = await page.context().cookies();
+        shownSectionHeadingLineNumbers = cookies.find(c => c.name === "shownSectionHeadingLineNumbers");
+        expect(shownSectionHeadingLineNumbers!.value).toBe("7");
 
-        sectionContentRows = await page.locator(`.${sectionContentClass}`).all();
-        expect(sectionContentRows.length).toBe(10);
+        // Select subSection row thats a heading
+        let subSectionParent;
+        const sectionContentClass = sectionHeadingRowClass.replace("heading", "content");
+        await page.waitForLoadState('networkidle', { timeout: 50000 }); // Give the UI few seconds moment to load
+
+        let sectionContentRows = await page.locator(`.${sectionContentClass}`).all();
+        for (const l of sectionContentRows)
+        {
+            let parentClass = (await l.evaluate((el) => Array.from(el.classList))).filter(c => c.match(/_parent_/));
+            if (parentClass.length > 0)
+            {
+                subSectionParent = l;
+            }
+        }
+
+        // Find row caret thats child of subSectionHeading and click it
+
+        subSectionParent.locator(".row-fold-caret").click();
+        await page.waitForLoadState('networkidle', { timeout: 50000 }); // Give the network few seconds moment to load
+        await page.waitForFunction((sectionContentClass) => document.querySelectorAll(`.${sectionContentClass}`).length > 1, sectionContentClass);// Give the UI few seconds moment to load
+        await page.waitForTimeout(10000);
+
+        // assert cookie value
+        cookies = await page.context().cookies();
+        let shownSubSectionHeadingLineNumbers = cookies.find(c => c.name === "shownSubSectionHeadingLineNumbers");
+        expect(shownSubSectionHeadingLineNumbers!.value).toBe("10");
+
+        // click on row caret again (the test subject)
+        btnToTest.click();
+        await page.waitForLoadState('networkidle', { timeout: 50000 }); // Give the network few seconds moment to load
+        await page.waitForSelector(sectionContentClass, { state: 'hidden' });// Give the UI few seconds moment to load
+        await page.waitForTimeout(10000);
+
+        cookies = await page.context().cookies();
+        shownSectionHeadingLineNumbers = cookies.find(c => c.name === "shownSectionHeadingLineNumbers");
+        shownSubSectionHeadingLineNumbers = cookies.find(c => c.name === "shownSubSectionHeadingLineNumbers");
+        expect(shownSectionHeadingLineNumbers!.value).toBe("");
+        expect(shownSubSectionHeadingLineNumbers!.value).toBe("");
     });
 });
 

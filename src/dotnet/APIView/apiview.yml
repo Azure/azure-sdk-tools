@@ -233,14 +233,14 @@ stages:
             displayName: "Install Playwright Browsers"
 
           - script: |
-              npx playwright test
+              npx playwright test $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\tests\unit\
             workingDirectory: $(WebClientProjectDirectory)
-            displayName: "Run Playwright Tests"
+            displayName: "Run Client-Side Unit Tests"
 
           - task: PublishBuildArtifacts@1
             inputs:
               pathtoPublish: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
-              artifactName: 'Client Test Reports'
+              artifactName: 'Client-Side Unit Test Reports'
   
           - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
             - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml

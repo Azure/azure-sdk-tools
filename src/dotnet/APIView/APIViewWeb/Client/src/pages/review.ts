@@ -16,10 +16,6 @@ $(() => {
 
   rvM.hideCheckboxesIfNotApplicable();
 
-  /* FUNCTIONS
-  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
-
   // Enable SumoSelect
   $(document).ready(function () {
     (<any>$("#revision-select")).SumoSelect({ search: true, searchText: 'Search Revisions...' });
@@ -205,7 +201,26 @@ $(() => {
 
   /* COLLAPSIBLE CODE LINES (EXPAND AND COLLAPSE FEATURE)
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-  rvM.addToggleEventHandlers();
+  rvM.addCodeLineToggleEventHandlers();
+
+  // Ask to update codeLine Section state after page refresh
+  $(document).ready(function () {
+    // Get cookies values holding section state
+    const shownSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSectionHeadingLineNumbers");
+
+    if (shownSectionHeadingLineNumbersCookie != null)
+    {
+      const notification : hp.Notification = {
+        message :  `Will you like to reload previously shown codeLine sections? &nbsp;` +
+        `<button type="button" class="btn btn-link btn-sm" id="loadPreviouslyShownSectionsBtn">Load Sections</button>`,
+        level: hp.NotificationLevel.info
+      }
+      hp.addToastNotification(notification, "loadPreviouslyShownSectionsToast", 100000);
+      $("#loadPreviouslyShownSectionsBtn").on("click", function() {
+        rvM.loadPreviouslyShownSections();
+      });
+    }
+  });
 
   /* RIGHT OFFCANVAS OPERATIONS
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -235,4 +250,7 @@ $(() => {
       document.cookie = `${id}=shown; max-age=${7 * 24 * 60 * 60}`;
     });
   });
+
+  /* RIGHT OFFCANVAS OPERATIONS
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
 });

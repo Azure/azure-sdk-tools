@@ -80,6 +80,7 @@ function updateSectionHeadingIcons(setTo: CodeLineSectionState, caretIcon : JQue
 */
 function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, caretDirection : string,
     caretIcon : JQuery<HTMLElement>) {
+    const rowLineNumber = headingRow.find(".line-number>span").text();
     if (caretDirection.endsWith("right")) {
         // In case the section passed has already been replaced with more rows
         if (sectionContent.length == 1) {
@@ -105,6 +106,11 @@ function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, 
 
         // Update section heading icons to open state
         updateSectionHeadingIcons(CodeLineSectionState.shown, caretIcon, headingRow);
+
+        // maintain lineNumbers of shown headings in cookies
+        let shownSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSectionHeadingLineNumbers") ?? "";
+        shownSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSectionHeadingLineNumbersCookie, rowLineNumber, CodeLineSectionState.shown);
+        document.cookie = `shownSectionHeadingLineNumbers=${shownSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
     }
     else {
         $.each(sectionContent, function (index, value) {
@@ -113,7 +119,13 @@ function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, 
                 if (rowClasses.match(/lvl_[0-9]+_parent_/)) {
                     // Update all heading/parent rows to closed state before hiding it
                     let caretIcon = $(value).find(".row-fold-caret").children("i");
+                    let lineNo = $(value).find(".line-number>span").text();
                     updateSectionHeadingIcons(CodeLineSectionState.hidden, caretIcon, $(value));
+
+                    // maintain lineNumbers of shown headings in cookies
+                    let shownSubSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSubSectionHeadingLineNumbers") ?? "";
+                    shownSubSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSubSectionHeadingLineNumbersCookie, lineNo, CodeLineSectionState.hidden);
+                    document.cookie = `shownSubSectionHeadingLineNumbers=${shownSubSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
                 }
             }
             $(value).addClass("d-none");
@@ -121,6 +133,11 @@ function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, 
 
         // Update section heading icons to closed state
         updateSectionHeadingIcons(CodeLineSectionState.hidden, caretIcon, headingRow);
+
+       // maintain lineNumbers of shown headings in cookies
+       let shownSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSectionHeadingLineNumbers") ?? "";
+       shownSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSectionHeadingLineNumbersCookie, rowLineNumber, CodeLineSectionState.hidden);
+       document.cookie = `shownSectionHeadingLineNumbers=${shownSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
     }
 }
 
@@ -173,6 +190,11 @@ function toggleSubSectionContent(headingRow : JQuery<HTMLElement>, subSectionLev
 
         // Update section heading icons to open state
         updateSectionHeadingIcons(CodeLineSectionState.shown, caretIcon, headingRow);
+
+        // maintain lineNumbers of shown headings in cookies
+        let shownSubSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSubSectionHeadingLineNumbers") ?? "";
+        shownSubSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSubSectionHeadingLineNumbersCookie, lineNumber, CodeLineSectionState.shown);
+        document.cookie = `shownSubSectionHeadingLineNumbers=${shownSubSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
     }
     else {
         var startHiding = false;
@@ -201,7 +223,13 @@ function toggleSubSectionContent(headingRow : JQuery<HTMLElement>, subSectionLev
                                 if (rowClasses.match(/lvl_[0-9]+_parent_.*/)) {
                                     // Update all heading/parent rows to closed state before hiding it
                                     let caretIcon = $(value).find(".row-fold-caret").children("i");
+                                    let lineNo = $(value).find(".line-number>span").text();
                                     updateSectionHeadingIcons(CodeLineSectionState.hidden, caretIcon, $(value));
+
+                                    // maintain lineNumbers of shown headings in cookies
+                                    let shownSubSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSubSectionHeadingLineNumbers") ?? "";
+                                    shownSubSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSubSectionHeadingLineNumbersCookie, lineNo, CodeLineSectionState.hidden);
+                                    document.cookie = `shownSubSectionHeadingLineNumbers=${shownSubSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
                                 }
                             }
                         }
@@ -212,6 +240,11 @@ function toggleSubSectionContent(headingRow : JQuery<HTMLElement>, subSectionLev
 
         // Update section heading icons to closed state
         updateSectionHeadingIcons(CodeLineSectionState.hidden, caretIcon, headingRow);
+
+        // maintain lineNumbers of shown headings in cookies
+        let shownSubSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSubSectionHeadingLineNumbers") ?? "";
+        shownSubSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSubSectionHeadingLineNumbersCookie, lineNumber, CodeLineSectionState.hidden);
+        document.cookie = `shownSubSectionHeadingLineNumbers=${shownSubSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
     }
 }
 
@@ -267,7 +300,7 @@ export function toggleCodeLines(headingRow : JQuery<HTMLElement>) {
                     request.done(function (partialViewResult) {
                         sectionContent.replaceWith(partialViewResult);
                         toggleSectionContent(headingRow, sectionContent, caretDirection, caretIcon);
-                        addToggleEventHandlers();
+                        addCodeLineToggleEventHandlers();
                     });
                     request.fail(function () {
                         if (sectionContent.children(".alert").length == 0) {
@@ -294,7 +327,7 @@ export function toggleCodeLines(headingRow : JQuery<HTMLElement>) {
 }
 
 /* Add event handler for Expand / Collapse of CodeLine Sections and SubSections */
-export function addToggleEventHandlers() {
+export function addCodeLineToggleEventHandlers() {
     $('.row-fold-elipsis, .row-fold-caret').on('click', function (event) {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -331,4 +364,56 @@ export function updateCodeLineSectionState(cookieValue: string, lineNumber: stri
         updatedCookieValue.push(lineNumber);
 
     return updatedCookieValue.join(',');
+}
+
+/**
+* Read section and subSection state (lineNumbers) from cookies and reload them
+*/
+export function loadPreviouslyShownSections() {
+    const shownSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSectionHeadingLineNumbers") ?? "";
+    
+    // Load each section whose heading line number is present in the cookie
+    const elementsWithLineNumbers = Array.from($(".line-number"));
+    for (const lineNumber of shownSectionHeadingLineNumbersCookie.split(',')) {
+        const lineNoElement = elementsWithLineNumbers.filter(element => $(element).find('span').text() === lineNumber);
+        const lineDetailsBtnCell = $(lineNoElement).siblings("td .line-details-button-cell");
+        for (const element of Array.from($(lineDetailsBtnCell))) {
+            const rowCaretCell = Array.from($(element).children(".row-fold-caret"));
+            if (rowCaretCell.length > 0)
+            {
+                rowCaretCell[0].click();
+            }
+        }
+    }
+
+    const shownSubSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSubSectionHeadingLineNumbers") ?? "";
+
+    // Load subSections as the headings become visible on the page
+    const subSectionHeadingLineNumberQueue = shownSubSectionHeadingLineNumbersCookie.split(',');
+    const intervalID = setInterval((subSectionHeadingLineNumberQueue) => {
+        if (subSectionHeadingLineNumberQueue.length > 0)
+        {
+            const lineNumber = subSectionHeadingLineNumberQueue.shift();
+            const lineNoElement = Array.from($(".line-number")).filter(element => $(element).find('span').text() === lineNumber);
+            if (lineNoElement.length > 0) {
+                const lineDetailsBtnCell = $(lineNoElement).siblings("td .line-details-button-cell");
+                for (const element of Array.from($(lineDetailsBtnCell))) {
+                    const rowCaretCell = Array.from($(element).children(".row-fold-caret"));
+                    if (rowCaretCell.length > 0)
+                    {
+                        rowCaretCell[0].click();
+                    }
+                }
+            }
+            else {
+                subSectionHeadingLineNumberQueue.push(lineNumber!);
+            }
+        }
+        else {
+            clearInterval(intervalID);
+        }
+    }, 1000, subSectionHeadingLineNumberQueue);
+
+    // remove toast
+    $("#loadPreviouslyShownSectionsToast").remove();
 }

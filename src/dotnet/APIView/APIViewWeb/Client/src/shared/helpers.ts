@@ -80,7 +80,6 @@ export function toggleCommentIcon(id: string, show: boolean) {
   getCodeRow(id).find(".icon-comments").toggleClass("invisible", !show);
 }
 
-
 /**
 * Retrieve a Specific Cookie from Users Browser
 * @param { String } cookies (pass document.cookies)
@@ -112,4 +111,43 @@ export function getCookieValue (cookies: string, cookieName: string)
 export function getElementClassList (element : JQuery<HTMLElement> | HTMLElement) {
   let el : HTMLElement = (element instanceof HTMLElement) ? element : element[0];
   return Array.from(el.classList);
+}
+
+// ToastNotification
+export enum NotificationLevel { info, warning, error }
+export interface Notification {
+  message : string;
+  level : NotificationLevel
+}
+
+/**
+* Contruct and add a toast notification to the page
+* @param { ToastNotification } notification
+* @param { number } duration - how long should the notification stay on the page
+*/
+export function addToastNotification(notification : Notification, id : string = "", duration : number = 10000) {
+  const newtoast = $('#notification-toast').clone().removeAttr("id").attr("data-bs-delay", duration);
+  if (id != "")
+  {
+    newtoast.attr("id", id);
+  }
+  
+  switch (notification.level) {
+    case 0:
+      newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-circle-info text-info me-1" ></i>`);
+      newtoast.find(".toast-header strong").html("Information");
+      break;
+    case 1:
+      newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-triangle-exclamation text-warning me-1"></i>`);
+      newtoast.find(".toast-header strong").html("Warning");
+      break;
+    case 2:
+      newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-circle-exclamation text-danger me-1"></i>`);
+      newtoast.find(".toast-header strong").html("Error");
+      break;
+  }
+  newtoast.find(".toast-body").html(notification.message);
+  const toastBootstrap = bootstrap.Toast.getOrCreateInstance(newtoast[0]);
+  $("#notification-container").append(newtoast);
+  toastBootstrap.show();
 }

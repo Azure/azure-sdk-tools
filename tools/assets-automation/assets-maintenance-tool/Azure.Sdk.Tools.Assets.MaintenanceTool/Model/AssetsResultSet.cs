@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
 {
+    /// <summary>
+    /// This class abstracts some common query patterns of a set of scanned results.
+    /// </summary>
     public class AssetsResultSet
     {
 

@@ -32,7 +32,6 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
             ScanDate = DateTime.UtcNow;
         }
 
-
         /// <summary>
         /// The containing repo from within which this result was found.
         /// </summary>

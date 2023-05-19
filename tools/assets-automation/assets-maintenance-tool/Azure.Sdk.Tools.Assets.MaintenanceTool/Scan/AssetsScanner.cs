@@ -35,6 +35,14 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             WorkingDirectory = Directory.GetCurrentDirectory();
         }
 
+        /// <summary>
+        /// Walk a run configuration an create a resultSet of all found assets.json references.
+        /// 
+        /// This function automatically takes previous output into account by checking in the current
+        /// working directory for an "output.json" file.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
         public AssetsResultSet Scan(RunConfiguration config)
         {
             var resultSet = new List<AssetsResult>();
@@ -52,6 +60,11 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             return newResults;
         }
 
+        /// <summary>
+        /// If the tool is invoked in a directory containing an `"output.json" file, that file will be parsed
+        /// for it's results. The file itself is merely a List of type AssetsResult serialized to disk.
+        /// </summary>
+        /// <returns></returns>
         public AssetsResultSet? ParseExistingResults()
         {
             if (File.Exists(ResultsFile))
@@ -70,6 +83,12 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             return null;
         }
 
+        /// <summary>
+        /// Given a repo configuration, scan the repo and return the assetsresults from all targeted branches.
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="previousOutput"></param>
+        /// <returns></returns>
         private List<AssetsResult> ScanRepo(RepoConfiguration config, AssetsResultSet? previousOutput)
         {
             string? envOverride = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
@@ -156,6 +175,16 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             return commitSHAs;
         }
 
+        /// <summary>
+        /// We only need to process each commit _once_, as commit SHAs are immutable in git. Given that, once we have
+        /// a list of commits from a targeted branch, we need to check against the previous results to ensure we don't 
+        /// reprocess those and emit duplicate assetsResults.
+        /// 
+        /// This function completes that operation and returns the set of unprocessed commit SHAs.
+        /// </summary>
+        /// <param name="commits"></param>
+        /// <param name="previousResults"></param>
+        /// <returns></returns>
         private List<string> ResolveUnhandledCommits(List<string> commits, AssetsResultSet? previousResults)
         {
             if (previousResults == null)
@@ -168,6 +197,9 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             }
         }
 
+        /// <summary>
+        /// Used to easily parse an assets.json and grab only the properties that this tool cares about.
+        /// </summary>
         private class Assets
         {
             public Assets()
@@ -181,11 +213,24 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             public string Tag { get; set; }
         }
 
+        /// <summary>
+        /// Deserialize an assets.json from disk into a class instance to retrieve the targeted Tag and Assets Repository.
+        /// </summary>
+        /// <param name="assetsJson"></param>
+        /// <returns></returns>
         private Assets? ExtractAssetsData(string assetsJson)
         {
             return JsonSerializer.Deserialize<Assets>(File.ReadAllText(assetsJson));
         }
 
+        /// <summary>
+        /// Find all assets.jsons beneath a targeted folder. Return AssetsResults for each, populating
+        /// other metadata as necessary.
+        /// </summary>
+        /// <param name="repo"></param>
+        /// <param name="commit"></param>
+        /// <param name="workingDirectory"></param>
+        /// <returns></returns>
         private List<AssetsResult> ScanDirectory(string repo, string commit, string workingDirectory)
         {
             Matcher matcher = new();
@@ -208,6 +253,13 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             return locatedAssets;
         }
 
+        /// <summary>
+        /// Walks a set of targeted commits, extracting all available assets.jsons from each.
+        /// </summary>
+        /// <param name="repo"></param>
+        /// <param name="commits"></param>
+        /// <param name="workingDirectory"></param>
+        /// <returns></returns>
         private List<AssetsResult> GetAssetsResults(string repo, List<string> commits, string workingDirectory)
         {
             var allResults = new List<AssetsResult>();
@@ -221,6 +273,11 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             return allResults;
         }
 
+        /// <summary>
+        /// Cleans up a git repo. When swapping between commits, we don't want to accidentally include assets.jsons that are
+        /// present simply because a folder didn't auto delete itself when we switched commits.
+        /// </summary>
+        /// <param name="workingDirectory"></param>
         private void Cleanup(string workingDirectory)
         {
             try
@@ -229,7 +286,6 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             }
             catch (GitProcessException gitException)
             {
-                // special case handling here?
                 Console.WriteLine(gitException.ToString());
                 Environment.Exit(1);
             }
@@ -269,6 +325,11 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             Directory.Delete(gitfolder, false);
         }
 
+        /// <summary>
+        /// The .git folder's .pack files can be super finicky to delete from code.
+        /// This function abstracts the necessary permissions update and cleans that folder for us.
+        /// </summary>
+        /// <param name="workingDirectory"></param>
         private void CleanupWorkingDirectory(string workingDirectory)
         {
             var possibleGitDir = Path.Combine(workingDirectory, ".git");
@@ -281,6 +342,10 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             Directory.Delete(workingDirectory, true);
         }
 
+        /// <summary>
+        /// Writes a resultSet to disk.
+        /// </summary>
+        /// <param name="newResults"></param>
         private void Save(AssetsResultSet newResults)
         {
             using (var stream = System.IO.File.OpenWrite(ResultsFile))

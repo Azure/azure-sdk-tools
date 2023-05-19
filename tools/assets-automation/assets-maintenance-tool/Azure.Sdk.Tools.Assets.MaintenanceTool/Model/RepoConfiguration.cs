@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
 {
+    /// <summary>
+    /// Configuration class describing options available while targeting a repository for scanning.
+    /// </summary>
     public class RepoConfiguration
     {
         public RepoConfiguration(string repo) { 

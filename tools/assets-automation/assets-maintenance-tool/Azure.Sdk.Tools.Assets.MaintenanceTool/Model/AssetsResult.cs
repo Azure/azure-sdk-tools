@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
             Tag = tag;
             TagRepo = tagRepo;
             BackupUri = backupUri;
-            ScanDate = scanDate??DateTime.Now;
+            ScanDate = scanDate??DateTime.UtcNow;
         }
 
         public AssetsResult()
@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
             Tag = string.Empty;
             TagRepo = string.Empty;
             BackupUri = string.Empty;
-            ScanDate = DateTime.Now;
+            ScanDate = DateTime.UtcNow;
         }
 
 

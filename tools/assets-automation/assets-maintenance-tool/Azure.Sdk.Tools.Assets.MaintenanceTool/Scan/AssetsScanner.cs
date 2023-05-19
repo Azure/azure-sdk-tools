@@ -85,9 +85,17 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
                 foreach(var branch in config.Branches)
                 {
                     var commitsOnBranch = GetBranchCommits(targetRepoUri, branch, config.ScanStartDate, workingDirectory);
-
                     var unretrievedCommits = ResolveUnhandledCommits(commitsOnBranch, previousOutput);
-                    results.AddRange(FindAssetsResults(config.Repo, unretrievedCommits, workingDirectory));
+
+                    results.AddRange(GetAssetsResults(config.Repo, unretrievedCommits, workingDirectory));
+
+                    if (previousOutput != null)
+                    {
+                        foreach (var commit in commitsOnBranch.Where(x => !unretrievedCommits.Contains(x)))
+                        {
+                            results.AddRange(previousOutput.ByOriginSHA[commit]);
+                        }
+                    }
                 }
             }
             finally
@@ -192,7 +200,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             return locatedAssets;
         }
 
-        private List<AssetsResult> FindAssetsResults(string repo, List<string> commits, string workingDirectory)
+        private List<AssetsResult> GetAssetsResults(string repo, List<string> commits, string workingDirectory)
         {
             var allResults = new List<AssetsResult>();
             foreach (var commit in commits)

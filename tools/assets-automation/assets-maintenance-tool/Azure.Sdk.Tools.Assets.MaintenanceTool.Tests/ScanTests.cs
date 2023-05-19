@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         [Test]
         public void TestBasicScanSingleBranch()
         {
-            var scanner = new AssetsScanner();
+            var scanner = new AssetsScanner(TestDirectory);
             var config = RunConfiguration;
             config.Repos.RemoveAt(0);
             config.Repos.First().Branches.RemoveAt(1);
@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         [Test]
         public void TestBasicScanMultipleBranches()
         {
-            var scanner = new AssetsScanner();
+            var scanner = new AssetsScanner(TestDirectory);
             var config = RunConfiguration;
             config.Repos.RemoveAt(0);
             var results = scanner.Scan(config);
@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         [Test]
         public void TestBasicScanMultipleBranchesMultipleRepos()
         {
-            var scanner = new AssetsScanner();
+            var scanner = new AssetsScanner(TestDirectory);
             var config = RunConfiguration;
             var results = scanner.Scan(config);
 

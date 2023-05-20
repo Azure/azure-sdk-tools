@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
 {
-    public class Tests
+    public class ScanTests
     {
         // These tests assume the presence of three integration branches for the purposes of testing.
         // Azure/azure-sdk-tools

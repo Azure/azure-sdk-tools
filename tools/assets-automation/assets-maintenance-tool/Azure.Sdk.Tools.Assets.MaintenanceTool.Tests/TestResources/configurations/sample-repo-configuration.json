@@ -1,0 +1,17 @@
+{
+  "Repos": [
+    {
+      "Repo": "azure/azure-sdk-tools",
+      "Branches": [
+        "integration/assets-test-branch"
+      ]
+    },
+    {
+      "Repo": "azure/azure-sdk-assets-integration",
+      "Branches": [
+        "integration/assets-branch-1",
+        "integration/assets-branch-2"
+      ]
+    }
+  ]
+}

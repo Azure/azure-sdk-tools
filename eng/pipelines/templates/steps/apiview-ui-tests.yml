@@ -86,7 +86,7 @@ steps:
     publishTestResults: false
 
 - script: |
-    npx playwright test $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\tests\end-to-end\
+    npx playwright test --project=end-to-end-tests
   workingDirectory: $(WebClientProjectDirectory)
   displayName: "Run Client-Side End-to-End Tests"
   env:

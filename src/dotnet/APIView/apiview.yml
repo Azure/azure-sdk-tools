@@ -233,7 +233,7 @@ stages:
             displayName: "Install Playwright Browsers"
 
           - script: |
-              npx playwright test $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\tests\unit\
+              npx playwright test --project=unit-tests
             workingDirectory: $(WebClientProjectDirectory)
             displayName: "Run Client-Side Unit Tests"
 

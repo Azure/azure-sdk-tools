@@ -142,7 +142,7 @@ test.describe('CodeLine Section State Management', () => {
         }
     });
 
-    test('codeLine secton and subSection stores heading line numbers in cookies', async ({ page }) => {
+    test('codeLine secton and subSection stores heading line numbers in session storage', async ({ page }) => {
         test.slow();
         const swaggerTestReview = testReviewIds["Swagger"][0];
         await page.goto(swaggerTestReview);
@@ -160,19 +160,21 @@ test.describe('CodeLine Section State Management', () => {
             return currEl.classList[1];
         });
 
-        // assert cookie value
-        let cookies = await page.context().cookies();
-        let shownSectionHeadingLineNumbers = cookies.find(c => c.name === "shownSectionHeadingLineNumbers");
-        expect(shownSectionHeadingLineNumbers).toBeUndefined();
+        // assert value in session storage
+        let shownSectionHeadingLineNumbers = await page.evaluate(() => {
+            return window.sessionStorage.getItem("shownSectionHeadingLineNumbers");
+        });
+        expect(shownSectionHeadingLineNumbers).toBeNull();
 
         // click on row caret (the test subject)
         btnToTest.click();
         await page.waitForLoadState('networkidle', { timeout: 50000 }); // Give the network few seconds moment to load
 
-        // assert cookie value
-        cookies = await page.context().cookies();
-        shownSectionHeadingLineNumbers = cookies.find(c => c.name === "shownSectionHeadingLineNumbers");
-        expect(shownSectionHeadingLineNumbers!.value).toBe("7");
+        // assert value in session storage
+        shownSectionHeadingLineNumbers = await page.evaluate(() => {
+            return window.sessionStorage.getItem("shownSectionHeadingLineNumbers");
+        });
+        expect(shownSectionHeadingLineNumbers).toBe("7");
 
         // Select subSection row thats a heading
         let subSectionParent;
@@ -196,10 +198,11 @@ test.describe('CodeLine Section State Management', () => {
         await page.waitForFunction((sectionContentClass) => document.querySelectorAll(`.${sectionContentClass}`).length > 1, sectionContentClass);// Give the UI few seconds moment to load
         await page.waitForTimeout(10000);
 
-        // assert cookie value
-        cookies = await page.context().cookies();
-        let shownSubSectionHeadingLineNumbers = cookies.find(c => c.name === "shownSubSectionHeadingLineNumbers");
-        expect(shownSubSectionHeadingLineNumbers!.value).toBe("10");
+        // assert value in session storage
+        let shownSubSectionHeadingLineNumbers = await page.evaluate(() => {
+            return window.sessionStorage.getItem("shownSubSectionHeadingLineNumbers");
+        });
+        expect(shownSubSectionHeadingLineNumbers).toBe("10");
 
         // click on row caret again (the test subject)
         btnToTest.click();
@@ -207,11 +210,14 @@ test.describe('CodeLine Section State Management', () => {
         await page.waitForSelector(sectionContentClass, { state: 'hidden' });// Give the UI few seconds moment to load
         await page.waitForTimeout(10000);
 
-        cookies = await page.context().cookies();
-        shownSectionHeadingLineNumbers = cookies.find(c => c.name === "shownSectionHeadingLineNumbers");
-        shownSubSectionHeadingLineNumbers = cookies.find(c => c.name === "shownSubSectionHeadingLineNumbers");
-        expect(shownSectionHeadingLineNumbers!.value).toBe("");
-        expect(shownSubSectionHeadingLineNumbers!.value).toBe("");
+        shownSectionHeadingLineNumbers = await page.evaluate(() => {
+            return window.sessionStorage.getItem("shownSectionHeadingLineNumbers");
+        });
+        shownSubSectionHeadingLineNumbers = await page.evaluate(() => {
+            return window.sessionStorage.getItem("shownSubSectionHeadingLineNumbers");
+        });
+        expect(shownSectionHeadingLineNumbers).toBe("");
+        expect(shownSubSectionHeadingLineNumbers).toBe("");
     });
 });
 

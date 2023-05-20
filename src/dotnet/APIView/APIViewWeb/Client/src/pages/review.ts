@@ -205,20 +205,12 @@ $(() => {
 
   // Ask to update codeLine Section state after page refresh
   $(document).ready(function () {
-    // Get cookies values holding section state
-    const shownSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSectionHeadingLineNumbers");
+    // Get sessionStorage values holding section state
+    const shownSectionHeadingLineNumbers = sessionStorage.getItem("shownSectionHeadingLineNumbers");
 
-    if (shownSectionHeadingLineNumbersCookie != null)
+    if (shownSectionHeadingLineNumbers != null)
     {
-      const notification : hp.Notification = {
-        message :  `Will you like to reload previously shown codeLine sections? &nbsp;` +
-        `<button type="button" class="btn btn-link btn-sm" id="loadPreviouslyShownSectionsBtn">Load Sections</button>`,
-        level: hp.NotificationLevel.info
-      }
-      hp.addToastNotification(notification, "loadPreviouslyShownSectionsToast", 100000);
-      $("#loadPreviouslyShownSectionsBtn").on("click", function() {
-        rvM.loadPreviouslyShownSections();
-      });
+      rvM.loadPreviouslyShownSections();
     }
   });
 

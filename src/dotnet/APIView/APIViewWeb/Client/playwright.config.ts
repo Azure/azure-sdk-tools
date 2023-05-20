@@ -36,19 +36,23 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'unit-tests',
+      testDir: './tests/unit',
+      use: {
+        ...devices['Desktop Chrome'],
+        ...devices['Desktop Firefox'],
+        ...devices['Desktop Safari'],
+      }
     },
-
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
+      name: 'end-to-end-tests',
+      testDir: './tests/end-to-end',
+      use: {
+        ...devices['Desktop Chrome'],
+        ...devices['Desktop Firefox'],
+        ...devices['Desktop Safari'],
+      }
+    }
 
     /* Test against mobile viewports. */
     // {

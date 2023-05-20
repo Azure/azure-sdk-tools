@@ -107,10 +107,10 @@ function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, 
         // Update section heading icons to open state
         updateSectionHeadingIcons(CodeLineSectionState.shown, caretIcon, headingRow);
 
-        // maintain lineNumbers of shown headings in cookies
-        let shownSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSectionHeadingLineNumbers") ?? "";
-        shownSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSectionHeadingLineNumbersCookie, rowLineNumber, CodeLineSectionState.shown);
-        document.cookie = `shownSectionHeadingLineNumbers=${shownSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
+        // maintain lineNumbers of shown headings in sessionStorage
+        let shownSectionHeadingLineNumbers = sessionStorage.getItem("shownSectionHeadingLineNumbers") ?? "";
+        shownSectionHeadingLineNumbers = updateCodeLineSectionState(shownSectionHeadingLineNumbers, rowLineNumber, CodeLineSectionState.shown);
+        sessionStorage.setItem("shownSectionHeadingLineNumbers", shownSectionHeadingLineNumbers);
     }
     else {
         $.each(sectionContent, function (index, value) {
@@ -122,10 +122,10 @@ function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, 
                     let lineNo = $(value).find(".line-number>span").text();
                     updateSectionHeadingIcons(CodeLineSectionState.hidden, caretIcon, $(value));
 
-                    // maintain lineNumbers of shown headings in cookies
-                    let shownSubSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSubSectionHeadingLineNumbers") ?? "";
-                    shownSubSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSubSectionHeadingLineNumbersCookie, lineNo, CodeLineSectionState.hidden);
-                    document.cookie = `shownSubSectionHeadingLineNumbers=${shownSubSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
+                    // maintain lineNumbers of shown headings in sessionStorage
+                    let shownSubSectionHeadingLineNumbers = sessionStorage.getItem("shownSubSectionHeadingLineNumbers") ?? "";
+                    shownSubSectionHeadingLineNumbers = updateCodeLineSectionState(shownSubSectionHeadingLineNumbers, lineNo, CodeLineSectionState.hidden);
+                    sessionStorage.setItem("shownSubSectionHeadingLineNumbers", shownSubSectionHeadingLineNumbers)
                 }
             }
             $(value).addClass("d-none");
@@ -134,10 +134,10 @@ function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, 
         // Update section heading icons to closed state
         updateSectionHeadingIcons(CodeLineSectionState.hidden, caretIcon, headingRow);
 
-       // maintain lineNumbers of shown headings in cookies
-       let shownSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSectionHeadingLineNumbers") ?? "";
-       shownSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSectionHeadingLineNumbersCookie, rowLineNumber, CodeLineSectionState.hidden);
-       document.cookie = `shownSectionHeadingLineNumbers=${shownSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
+       // maintain lineNumbers of shown headings in sessionStorage
+       let shownSectionHeadingLineNumbers = sessionStorage.getItem("shownSectionHeadingLineNumbers") ?? "";
+       shownSectionHeadingLineNumbers = updateCodeLineSectionState(shownSectionHeadingLineNumbers, rowLineNumber, CodeLineSectionState.hidden);
+       sessionStorage.setItem("shownSectionHeadingLineNumbers", shownSectionHeadingLineNumbers);
     }
 }
 
@@ -191,10 +191,10 @@ function toggleSubSectionContent(headingRow : JQuery<HTMLElement>, subSectionLev
         // Update section heading icons to open state
         updateSectionHeadingIcons(CodeLineSectionState.shown, caretIcon, headingRow);
 
-        // maintain lineNumbers of shown headings in cookies
-        let shownSubSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSubSectionHeadingLineNumbers") ?? "";
-        shownSubSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSubSectionHeadingLineNumbersCookie, lineNumber, CodeLineSectionState.shown);
-        document.cookie = `shownSubSectionHeadingLineNumbers=${shownSubSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
+        // maintain lineNumbers of shown headings in session storage
+        let shownSubSectionHeadingLineNumbers = sessionStorage.getItem("shownSubSectionHeadingLineNumbers") ?? "";
+        shownSubSectionHeadingLineNumbers = updateCodeLineSectionState(shownSubSectionHeadingLineNumbers, lineNumber, CodeLineSectionState.shown);
+        sessionStorage.setItem("shownSubSectionHeadingLineNumbers", shownSubSectionHeadingLineNumbers);
     }
     else {
         var startHiding = false;
@@ -226,10 +226,10 @@ function toggleSubSectionContent(headingRow : JQuery<HTMLElement>, subSectionLev
                                     let lineNo = $(value).find(".line-number>span").text();
                                     updateSectionHeadingIcons(CodeLineSectionState.hidden, caretIcon, $(value));
 
-                                    // maintain lineNumbers of shown headings in cookies
-                                    let shownSubSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSubSectionHeadingLineNumbers") ?? "";
-                                    shownSubSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSubSectionHeadingLineNumbersCookie, lineNo, CodeLineSectionState.hidden);
-                                    document.cookie = `shownSubSectionHeadingLineNumbers=${shownSubSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
+                                    // maintain lineNumbers of shown headings in sessionStorage
+                                    let shownSubSectionHeadingLineNumbers = sessionStorage.getItem("shownSubSectionHeadingLineNumbers") ?? "";
+                                    shownSubSectionHeadingLineNumbers = updateCodeLineSectionState(shownSubSectionHeadingLineNumbers, lineNo, CodeLineSectionState.hidden);
+                                    sessionStorage.setItem("shownSubSectionHeadingLineNumbers", shownSubSectionHeadingLineNumbers);
                                 }
                             }
                         }
@@ -241,10 +241,10 @@ function toggleSubSectionContent(headingRow : JQuery<HTMLElement>, subSectionLev
         // Update section heading icons to closed state
         updateSectionHeadingIcons(CodeLineSectionState.hidden, caretIcon, headingRow);
 
-        // maintain lineNumbers of shown headings in cookies
-        let shownSubSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSubSectionHeadingLineNumbers") ?? "";
-        shownSubSectionHeadingLineNumbersCookie = updateCodeLineSectionState(shownSubSectionHeadingLineNumbersCookie, lineNumber, CodeLineSectionState.hidden);
-        document.cookie = `shownSubSectionHeadingLineNumbers=${shownSubSectionHeadingLineNumbersCookie}; max-age=${7 * 24 * 60 * 60}; path=${location.pathname}`;
+        // maintain lineNumbers of shown headings in sessionStorage
+        let shownSubSectionHeadingLineNumbers = sessionStorage.getItem("shownSubSectionHeadingLineNumbers") ?? "";
+        shownSubSectionHeadingLineNumbers = updateCodeLineSectionState(shownSubSectionHeadingLineNumbers, lineNumber, CodeLineSectionState.hidden);
+        sessionStorage.setItem("shownSubSectionHeadingLineNumbers", shownSubSectionHeadingLineNumbers);
     }
 }
 
@@ -370,11 +370,11 @@ export function updateCodeLineSectionState(cookieValue: string, lineNumber: stri
 * Read section and subSection state (lineNumbers) from cookies and reload them
 */
 export function loadPreviouslyShownSections() {
-    const shownSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSectionHeadingLineNumbers") ?? "";
+    const shownSectionHeadingLineNumbers = sessionStorage.getItem("shownSectionHeadingLineNumbers") ?? "";
     
     // Load each section whose heading line number is present in the cookie
     const elementsWithLineNumbers = Array.from($(".line-number"));
-    for (const lineNumber of shownSectionHeadingLineNumbersCookie.split(',')) {
+    for (const lineNumber of shownSectionHeadingLineNumbers.split(',')) {
         const lineNoElement = elementsWithLineNumbers.filter(element => $(element).find('span').text() === lineNumber);
         const lineDetailsBtnCell = $(lineNoElement).siblings("td .line-details-button-cell");
         for (const element of Array.from($(lineDetailsBtnCell))) {
@@ -386,10 +386,10 @@ export function loadPreviouslyShownSections() {
         }
     }
 
-    const shownSubSectionHeadingLineNumbersCookie = hp.getCookieValue(document.cookie, "shownSubSectionHeadingLineNumbers") ?? "";
+    const shownSubSectionHeadingLineNumbers = sessionStorage.getItem("shownSubSectionHeadingLineNumbers") ?? "";
 
     // Load subSections as the headings become visible on the page
-    const subSectionHeadingLineNumberQueue = shownSubSectionHeadingLineNumbersCookie.split(',');
+    const subSectionHeadingLineNumberQueue = shownSubSectionHeadingLineNumbers.split(',');
     const intervalID = setInterval((subSectionHeadingLineNumberQueue) => {
         if (subSectionHeadingLineNumberQueue.length > 0)
         {

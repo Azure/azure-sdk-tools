@@ -181,21 +181,14 @@ The below diagram illustrates how an individual assets.json, language repo, and 
 
 > Side note: the `.breadcrumb` file is created/updated as an artifact of the test-proxy restore/push/reset operations. Don't look for one if you haven't restored at least one assets.json first!
 
-One can use visual inspection of the `.breadcrumb` file to _find_ which folder contains the files for your assets.json. Or, they can simply use one of the one-liners above to change directory into their assets.
-
-Powershell one-liner:
+One can use visual inspection of the `.breadcrumb` file to _find_ which folder contains the files for your assets.json. Or, more conveniently, a user can use the `config` verb to access this data!
 
 ```powershell
-# From root of repo. Substitute your target assets.json path in the StartsWith clause.
-cd ".assets/$((Get-Content ".assets/.breadcrumb" | Where-Object { $_.StartsWith("sdk/tables/assets.json") }).Split(";")[1])"
+# From root of repo
+test-proxy config locate -a "sdk/tables/assets.json"
 ```
 
-Bash one-liner:
-
-```bash
-# From root of repo. Substitute your target assets.json path in the initial grep
-A=$(grep "sdk/tables/assets.json" .assets/.breadcrumb | awk '{split($0,a,";"); print a[2];}'); cd .assets/$A
-```
+The `config` verb offers various interactions with an input assets.json path, with `locate` just being one of them!
 
 #### A few details about context directory
 
@@ -281,7 +274,7 @@ This will _force_ the locally cloned assets to align with the assets.json that h
 
 #### Attempt to manually resolve
 
-A **new tag** is pushed with each `test-proxy push` invocation. There should be _no such thing_ as `merge conflicts` when automatically pushing up a new tag. However, if you wish to manually resolve instead of discarding current state, `cd` into the assets repo using one of the one-liners above.
+A **new tag** is pushed with each `test-proxy push` invocation. There should be _no such thing_ as `merge conflicts` when automatically pushing up a new tag. However, if you wish to manually resolve instead of discarding current state, `cd` into the assets repo using the `config locate` command discussed above.
 
 Once there, use standard `git` operations to resolve your issue.
 

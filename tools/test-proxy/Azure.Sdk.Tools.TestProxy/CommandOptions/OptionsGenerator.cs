@@ -57,8 +57,7 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             #endregion
 
 
-            var Description =
-"""
+            var Description = """
 This tool is used by the Azure SDK team in two primary ways:
 
   - Run as a http record/playback server. ("start" / default verb)

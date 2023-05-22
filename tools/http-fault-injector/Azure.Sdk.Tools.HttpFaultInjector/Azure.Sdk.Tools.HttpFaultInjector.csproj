@@ -4,6 +4,11 @@
     <VersionPrefix>0.2.1</VersionPrefix>
 
     <TargetFramework>net6.0</TargetFramework>
+
+    <!--
+      UseAppHost=false enables HTTPS on Mac with no keychain popup.
+      Workaround for https://github.com/dotnet/sdk/issues/22544.
+    -->
     <UseAppHost>false</UseAppHost>
 
     <IsPackable>true</IsPackable>

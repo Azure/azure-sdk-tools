@@ -4,6 +4,7 @@
     <VersionPrefix>0.2.0</VersionPrefix>
 
     <TargetFramework>net6.0</TargetFramework>
+    <UseAppHost>false</UseAppHost>
 
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>

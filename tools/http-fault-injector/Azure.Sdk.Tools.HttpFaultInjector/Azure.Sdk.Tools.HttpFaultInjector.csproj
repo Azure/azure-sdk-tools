@@ -3,7 +3,10 @@
   <PropertyGroup>
     <VersionPrefix>0.2.0</VersionPrefix>
 
-    <TargetFramework>net6.0</TargetFramework>
+    <!--
+      net7.0 enables HTTPS on Mac with no keychain popup (https://github.com/dotnet/aspnetcore/issues/41879)
+    -->
+    <TargetFramework>net7.0</TargetFramework>
 
     <IsPackable>true</IsPackable>
     <PackAsTool>true</PackAsTool>

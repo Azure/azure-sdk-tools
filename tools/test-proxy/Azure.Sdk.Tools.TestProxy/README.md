@@ -149,32 +149,70 @@ For safety, the "official target" version that the azure-sdk team uses is presen
 
 ## Command line arguments
 
-This is the help information for test-proxy. It uses the nuget package [`CommandLineParser`](https://www.nuget.org/packages/CommandLineParser) to parse arguments.
+This is the help information for test-proxy. It uses the nuget package [`System.CommandLine`](https://www.nuget.org/packages/System.CommandLine) to parse arguments.
 
 The test-proxy executable fulfills one of two primary purposes:
 
 1. The test-proxy server (the only option up to this point)
-2. [`asset-sync`](#asset-sync-retrieve-external-test-recordings) push/restore/reset.
+2. [`asset-sync`](#asset-sync-retrieve-external-test-recordings) verbs
+   - `push`
+   - `restore`
+   - `reset`
+   - `config`
 
 This is surfaced by only showing options for the default commands. Each individual command has its own argument set that can be detailed by invoking `test-proxy <command> --help`.
 
 ```text
-/>test-proxy --help
-Azure.Sdk.Tools.TestProxy 1.0.0-dev.20220926.1
-c Microsoft Corporation. All rights reserved.
+/>Azure.Sdk.Tools.TestProxy --help
+Description:
+  This tool is used by the Azure SDK team in two primary ways:
 
-  start      (Default Verb) Start the TestProxy.
+    - Run as a http record/playback server. ("start" / default verb)
+    - Invoke a CLI Tool to interact with recordings in an external store. ("push", "restore", "reset", "config")
 
-  push       Push the assets, referenced by assets.json, into git.
+Usage:
+  Azure.Sdk.Tools.TestProxy [command] [options]
 
-  reset      Reset the assets, referenced by assets.json, from git to their original files referenced by the tag. Will prompt
-             if there are pending changes.
+Options:
+  -l, --storage-location <storage-location>  The path to the target local git repo. If not provided as an argument, Environment
+                                             variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working
+                                             directory will be utilized.
+  -p, --storage-plugin <storage-plugin>      The plugin for the selected storage, default is Git storage is GitStore. (Currently
+                                             the only option) [default: GitStore]
+  --version                                  Show version information
+  -?, -h, --help                             Show help and usage information
 
-  restore    Restore the assets, referenced by assets.json, from git.
+Commands:
+  start <args>  Start the TestProxy.
+  push          Push the assets, referenced by assets.json, into git.
+  restore       Restore the assets, referenced by assets.json, from git.
+  reset         Reset the assets, referenced by assets.json, from git to their original files referenced by the tag. Will prompt if
+                there are pending changes unless indicated by -y/--yes.
+  config        Interact with an assets.json.
+```
 
-  help       Display more information on a specific command.
+For the `config` verb, there are subverbs!
 
-  version    Display version information.
+```text
+/>Azure.Sdk.Tools.TestProxy config --help
+Description:
+  Interact with an assets.json.
+
+Usage:
+  Azure.Sdk.Tools.TestProxy config [command] [options]
+
+Options:
+  -l, --storage-location <storage-location>  The path to the target local git repo. If not provided as an argument, Environment
+                                             variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working
+                                             directory will be utilized.
+  -p, --storage-plugin <storage-plugin>      The plugin for the selected storage, default is Git storage is GitStore. (Currently
+                                             the only option) [default: GitStore]
+  -?, -h, --help                             Show help and usage information
+
+Commands:
+  create  Enter a prompt and create an assets.json.
+  show    Show the content of a given assets.json.
+  locate  Get the assets repo root for a given assets.json path.
 ```
 
 ### Storage Location

@@ -176,7 +176,7 @@ Usage:
 Options:
   -l, --storage-location <storage-location>  The path to the target local git repo. If not provided as an argument, Environment
                                              variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working
-                                             directory will be utilized. []
+                                             directory will be utilized.
   -p, --storage-plugin <storage-plugin>      The plugin for the selected storage, default is Git storage is GitStore. (Currently
                                              the only option) [default: GitStore]
   --version                                  Show version information

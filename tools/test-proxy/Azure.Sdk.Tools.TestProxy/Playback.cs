@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
-                throw new HttpException(HttpStatusCode.BadRequest, "When starting playback, a body must be provided with least one JSON body key 'x-recording-file' or header 'x-recording-id' must be populated when starting playback.");
+                throw new HttpException(HttpStatusCode.BadRequest, "At least one of either JSON body key 'x-recording-file' or header 'x-recording-id' must be populated when starting playback.");
             }
         }
 

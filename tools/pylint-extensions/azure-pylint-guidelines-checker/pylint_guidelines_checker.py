@@ -8,7 +8,6 @@ Pylint custom checkers for SDK guidelines: C4717 - C4749
 """
 
 import logging
-import re
 import astroid
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
@@ -1284,6 +1283,7 @@ class CheckDocstringParameters(BaseChecker):
         :param node: ast.ClassDef or ast.FunctionDef
         :return: None
         """
+        typing_list = ["Optional", "Any", "Union", "List", "Tuple", "Dict", "Iterable", "Iterator", "AsyncIterable", "AsyncIterator"]
         arg_names = []
         vararg_name = None
         # specific case for constructor where docstring found in class def
@@ -1351,9 +1351,7 @@ class CheckDocstringParameters(BaseChecker):
 
             # Check format of param type
             if docparams[param] is not None:
-                # Checks if the param type is a MyPy type, such as "Optional[str]"
-                typing_regex = r".*(\w+\[.*\]|\w+\[\w+(,\s*\w+)*\]).*"
-                if re.match(typing_regex, docparams[param]):
+                if any (t in docparams[param] for t in typing_list):
                         misformated_types.append(param)
 
             if param not in arg_names:

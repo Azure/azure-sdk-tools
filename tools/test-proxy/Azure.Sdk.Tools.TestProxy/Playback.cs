@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
@@ -31,6 +31,11 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             var body = await HttpRequestInteractions.GetBody(Request);
 
+            if (body == null)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "When starting playback, a null body is not a valid input.");
+            }
+
             string file = HttpRequestInteractions.GetBodyKey(body, "x-recording-file", allowNulls: true);
             string recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
             var assetsJson = RecordingHandler.GetAssetsJsonLocation(
@@ -47,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
-                throw new HttpException(HttpStatusCode.BadRequest, "At least one of either JSON body key 'x-recording-file' or header 'x-recording-id' must be populated when starting playback.");
+                throw new HttpException(HttpStatusCode.BadRequest, "When starting playback, a body must be provided with least one JSON body key 'x-recording-file' or header 'x-recording-id' must be populated when starting playback.");
             }
         }
 

@@ -65,7 +65,8 @@ steps:
   displayName: 'Copy from Test Files From Blob'
   env:
     AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
-    
+
+# Should remove Selenium Tests once converted to Playwright   
 - task: DotNetCoreCLI@2
   displayName: 'Build & Test (UI)'
   env:
@@ -83,3 +84,17 @@ steps:
     projects: src/dotnet/APIView/**/APIViewUITests.csproj
     arguments: --logger trx
     publishTestResults: false
+
+- script: |
+    npx playwright test --project=end-to-end-tests
+  workingDirectory: $(WebClientProjectDirectory)
+  displayName: "Run Client-Side End-to-End Tests"
+  env:
+    "BASE_URL": "http://localhost:5000"
+    "FIXTURE_DIR": "$(Build.BinariesDirectory)"
+    "APIVIEW_API_KEY": "$(azuresdk-apiview-apikey)"
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
+    artifactName: 'Client-Side Test Reports'

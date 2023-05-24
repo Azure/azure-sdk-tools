@@ -5,3 +5,8 @@ wwwroot/*.css.map
 # Typescript output
 wwwroot/*.js
 wwwroot/*.js.map
+
+# PlayWright Tests Results
+Client/test-results/
+Client/playwright-report/
+Client/playwright/.cache/

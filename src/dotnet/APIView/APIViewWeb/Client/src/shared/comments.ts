@@ -329,12 +329,12 @@ $(() => {
     $(SEL_COMMENT_CELL).each(function () {
       const id = getElementId(this);
       const checked = $(SHOW_COMMENTS_CHECK).prop("checked");
-      toggleCommentIcon(id, !checked);
+      toggleCommentIcon(id!, !checked);
     });
     $(SEL_CODE_DIAG).each(function () {
       const id = getElementId(this);
       const checked = $(SHOW_SYS_COMMENTS_CHECK).prop("checked");
-      toggleCommentIcon(id, !checked);
+      toggleCommentIcon(id!, !checked);
     });
   });
 

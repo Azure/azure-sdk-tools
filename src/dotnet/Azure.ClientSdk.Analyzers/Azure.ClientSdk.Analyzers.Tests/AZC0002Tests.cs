@@ -242,6 +242,15 @@ namespace RandomNamespace
         public virtual void Get(RequestContext context = default)
         {
         }
+
+        public virtual Task Get2Async(RequestContext context)
+        {
+            return null;
+        }
+
+        public virtual void Get2(RequestContext context)
+        {
+        }
     }
 }";
             await Verifier.CreateAnalyzer(code)

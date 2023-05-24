@@ -38,7 +38,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0018ProducedForMethodsWithGenericResponse()
+        public async Task AZC0018ProducedForMethodsWithGenericResponseOfPrimitive()
         {
             const string code = @"
 using Azure;
@@ -56,6 +56,38 @@ namespace RandomNamespace
         }
 
         public virtual Response<string> {|AZC0018:Get|}(string s, RequestContext context = null)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0018ProducedForMethodsWithGenericResponseOfModel()
+        {
+            const string code = @"
+using Azure;
+using Azure.Core;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class Model
+    {
+        string a;
+    }
+    public class SomeClient
+    {
+        public virtual Task<Response<Model>> {|AZC0018:GetAsync|}(string s, RequestContext context = null)
+        {
+            return null;
+        }
+
+        public virtual Response<Model> {|AZC0018:Get|}(string s, RequestContext context = null)
         {
             return null;
         }

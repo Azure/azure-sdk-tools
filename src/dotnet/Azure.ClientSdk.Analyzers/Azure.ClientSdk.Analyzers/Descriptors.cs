@@ -120,7 +120,7 @@ namespace Azure.ClientSdk.Analyzers
 
         public static DiagnosticDescriptor AZC0018 = new DiagnosticDescriptor(
             nameof(AZC0018),
-            "Do ensure protocol method take a RequestContext parameter called requestContext and not take models as parameter type or return type.",
+            "Do ensure protocol method take a RequestContext parameter called context and not take models as parameter type or return type.",
             "Protocol method should have requestContext as the last parameter and don't have model as parameter type or return type.",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null);
         #endregion

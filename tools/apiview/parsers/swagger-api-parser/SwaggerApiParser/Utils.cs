@@ -211,4 +211,15 @@ public static class Utils
         var referenceSwaggerFilePath = Path.GetFullPath(relativePath, currentSwaggerFilePath!);
         return referenceSwaggerFilePath;
     }
+    public static void SerializePatternedObjects(IDictionary<string, dynamic> patternedObjects, List<CodeFileToken> tokens, SerializeContext context)
+    {
+        if (patternedObjects != null)
+        {
+            foreach (var (key, value) in patternedObjects)
+            {
+                if (Regex.IsMatch(key, "^x-."))
+                    tokens.AddRange(TokenSerializer.KeyValueTokens(key, value, true, context.IteratorPath.CurrentNextPath(key)));
+            }
+        }
+    }
 }

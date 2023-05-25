@@ -8,6 +8,7 @@
     var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
     TempData["UserPreference"] = userPreference;
     TempData["LanguageCssSafeName"] = Model.Review.GetLanguageCssSafeName();
+    TempData["Comments"] = Model.Comments;
     ViewBag.HasSections = (Model.CodeFile.LeafSections?.Count > 0) ? true : false;
 }
 @{

@@ -91,17 +91,43 @@ function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, 
         }
 
         $.each(sectionContent, function (index, value) {
-        let rowClasses = $(value).attr("class");
-        if (rowClasses) {
-            if (rowClasses.match(/lvl_1_/)) {
-                if (rowClasses.match(/comment-row/) && !$("#show-comments-checkbox").prop("checked")) {
-                    hp.toggleCommentIcon($(value).attr("data-line-id")!, true);
-                    return; // Dont show comment row if show comments setting is unchecked
+            let rowClasses = $(value).attr("class");
+            if (rowClasses) {
+                if (rowClasses.match(/comment-row/)) {
+                    // Ensure comment icon is shown on parent row that have comments in its section or subsection
+                    let rowClassList = rowClasses.split(/\s+/);
+                    let sectionClass = rowClassList.find((c) => c.match(/code-line-section-content-[0-9]+/));
+                    let levelClass = rowClassList.find((c) => c.match(/lvl_[0-9]+_child_[0-9]+/));
+                    if (sectionClass && levelClass) {
+                        let levelClassParts = levelClass.split("_");
+                        let level = levelClassParts[1];
+                        let headingLvl = levelClassParts[3];
+                        $(`.${sectionClass}`).each(function(idx, el) {
+                            let classList = hp.getElementClassList(el);
+                            let lvlClass = classList.find((c) => c.match(/lvl_[0-9]+_parent_[0-9]+/));
+                            if (lvlClass && lvlClass.length > 0) {
+                                let lvlClassParts = lvlClass.split("_");
+                                if (Number(lvlClassParts[1]) == Number(level) && Number(lvlClassParts[3]) == Number(headingLvl) && classList.includes("comment-row")) {
+                                    return false;
+                                }
+
+                                if (Number(lvlClassParts[1]) <= Number(level) && Number(lvlClassParts[3]) <= Number(headingLvl) && !classList.includes("comment-row")) {
+                                    $(el).find(".icon-comments").addClass("comment-in-section");
+                                }
+                            }
+                        });
+                    }
                 }
-                $(value).removeClass("d-none");
-                $(value).find("svg").attr("height", `${$(value).height()}`);
+
+                if (rowClasses.match(/lvl_1_/)) {
+                    if (rowClasses.match(/comment-row/) && !$("#show-comments-checkbox").prop("checked")) {
+                        hp.toggleCommentIcon($(value).attr("data-line-id")!, true);
+                        return; // Dont show comment row if show comments setting is unchecked
+                    }
+                    $(value).removeClass("d-none");
+                    $(value).find("svg").attr("height", `${$(value).height()}`);
+                }
             }
-        }
         });
 
         // Update section heading icons to open state

@@ -250,10 +250,12 @@
     top: 2px;
 }
 
+.comment-in-section {
+    visibility: visible !important;
+}
 
 /* Code rendering classes
 ----------------------------------------------------------------------*/
-
 .class {
     color: var(--class-color) !important;
 }

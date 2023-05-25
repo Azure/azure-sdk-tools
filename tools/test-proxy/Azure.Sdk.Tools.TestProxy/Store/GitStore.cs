@@ -463,7 +463,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
                 catch(GitProcessException e)
                 {
-                    throw GenerateInvokeException(e.Result);
+                    if (string.IsNullOrWhiteSpace(e.Result.StdOut) && e.Result.StdErr.Trim() == "fatal: destination path '.' already exists and is not an empty directory.")
+                    {
+                        // do nothing, this isn't a real problem
+                    }
+                    else
+                    {
+                        throw GenerateInvokeException(e.Result);
+                    }
                 }
 
                 CheckoutRepoAtConfig(config);

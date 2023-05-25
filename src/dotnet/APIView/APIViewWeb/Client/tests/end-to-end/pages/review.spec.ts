@@ -89,7 +89,6 @@ test.describe('CodeLine Section State Management', () => {
 
         // Select subSection row thats a heading
         let subSectionParent;
-        let subSectionParentClass;
         const sectionContentClass = sectionHeadingRowClass.replace("heading", "content");
         await page.waitForLoadState('networkidle', { timeout: 50000 }); // Give the UI few seconds moment to load
 
@@ -100,7 +99,6 @@ test.describe('CodeLine Section State Management', () => {
             if (parentClass.length > 0)
             {
                 subSectionParent = l;
-                subSectionParentClass = parentClass[0]; 
             }
         }
 
@@ -119,6 +117,7 @@ test.describe('CodeLine Section State Management', () => {
         // Find row caret thats child of subSectionHeading and click it
         subSectionParent.locator(".row-fold-caret").click();
         await page.waitForLoadState('load'); // Give the network few seconds moment to load
+        await page.waitForTimeout(10000);
 
         // Ensure subsection content is now shown
         sectionContentRows = await page.locator(`.${sectionContentClass}`).all();

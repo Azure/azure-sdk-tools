@@ -16,8 +16,8 @@ namespace Azure.ClientSdk.Analyzers
 
         public static DiagnosticDescriptor AZC0002 = new DiagnosticDescriptor(
             nameof(AZC0002),
-            "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called cancellationToken or an RequestContext parameter called requestContext.",
-            "Client method should have cancellationToken as the last optional parameter (both name and it being optional matters) for convenience method or cancellationToken as the last parameter for protocol method.",
+            "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called cancellationToken or a RequestContext parameter called context.",
+            "Client method should have an optional CancellationToken (both name and it being optional matters) or a RequestContext as the last parameter.",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-cancellation"
         );
@@ -114,8 +114,8 @@ namespace Azure.ClientSdk.Analyzers
 
         public static DiagnosticDescriptor AZC0017 = new DiagnosticDescriptor(
             nameof(AZC0017),
-            "Do ensure convenience method take an optional CancellationToken parameter called cancellationToken and take models as parameter type and return type.",
-            "Convenience method should have cancellationToken as the last optional parameter (both name and it being optional matters) and don't have prameters with type RequestContent.",
+            "Do ensure convenience method not take RequestContent as parameter type.",
+            "Convenience method shouldn't have prameters with type RequestContent.",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null);
 
         public static DiagnosticDescriptor AZC0018 = new DiagnosticDescriptor(

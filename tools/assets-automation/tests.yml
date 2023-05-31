@@ -8,7 +8,7 @@ stages:
     displayName: "Integration Tests"
     jobs:
     - job: Solution_Integration_Test
-      name: Run Solution Tests
+      displayName: Run Solution Tests
 
       strategy:
         matrix:

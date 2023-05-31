@@ -27,6 +27,8 @@ namespace Azure.ClientSdk.Analyzers
 
         public override void Initialize(AnalysisContext context)
         {
+            context.EnableConcurrentExecution();
+            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
             base.Initialize(context);
             context.RegisterCodeBlockAction(c => AnalyzeCodeBlock(c));
         }

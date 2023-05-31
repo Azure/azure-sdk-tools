@@ -270,7 +270,7 @@ stages:
           workingDirectory: $(CLONE_LOCATION)
 
         - pwsh: |
-            Get-ChildItem -Recurse -Path $(CLONE_LOCATION)/sdk/${{ parameters.ServiceDirectory }} -Filter assets.json | `
+            Get-ChildItem -Recurse -Path $(CLONE_LOCATION)/sdk/ -Filter assets.json | `
               ForEach-Object { test-proxy restore -a $_.FullName }
           displayName: Restore Recordings
 

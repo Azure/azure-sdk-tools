@@ -278,7 +278,6 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             config.Repos.First().Branches.RemoveAt(1);
             var results = scanner.Scan(config);
 
-            // now we need to confirm that the output file exists
             var fileThatShouldExist = Path.Combine(TestDirectory, "output.json");
 
             Assert.That(File.Exists(fileThatShouldExist), Is.EqualTo(true));
@@ -287,7 +286,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
 
             if (parsedNewResults != null)
             {
-                AreResultsSame(results, parsedNewResults);
+                AssertResultsSame(results, parsedNewResults);
             }
             else
             {
@@ -295,7 +294,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             }
         }
 
-        private bool AreResultsSame(AssetsResultSet a, AssetsResultSet b)
+        private bool AssertResultsSame(AssetsResultSet a, AssetsResultSet b)
         {
             if (a.Results.Count() != b.Results.Count())
             {

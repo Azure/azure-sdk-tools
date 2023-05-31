@@ -234,7 +234,6 @@ Label,VideoAnalyzer,Azure Video Analyzer,e99695
 Label,Visual Studio,,e99695
 Label,Web Apps,,e99695
 Label,WebPubSub,,e99695
-Label,auto-merge,Apply to PR's that we want to auto-merge when green,5df772
 Label,blocking-release,Blocks release,d73a49
 Label,breaking-change,,d73a49
 Label,bug,This issue requires a change to an existing behavior in the product in order to be resolved.,eaa875

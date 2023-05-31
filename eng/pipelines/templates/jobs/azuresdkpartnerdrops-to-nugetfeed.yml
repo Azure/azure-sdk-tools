@@ -4,7 +4,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20230530.1
+      ref: refs/tags/azure-sdk-build-tools_20230530.2
 
 parameters:
   - name: BuildToolsRepoPath

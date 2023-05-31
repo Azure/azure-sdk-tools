@@ -14,12 +14,12 @@ namespace Azure.SDK.ChangelogGen
         public StringValueChange? AzureCoreVersionChange { get; set; } = null;
         public StringValueChange? AzureResourceManagerVersionChange { get; set; } = null;
 
-        public Release GenerateReleaseNote(string version, string date, List<ChangeCatogory> filter)
+        public Release GenerateReleaseNote(string version, string date, bool ignoreBreakingChange, List<ChangeCatogory> filter)
         {
             const string PREFIX = "- ";
             Release report = new Release(version, date);
 
-            if (ApiChange!= null && ApiChange.GetBreakingChanges().Any())
+            if (!ignoreBreakingChange && ApiChange!= null && ApiChange.GetBreakingChanges().Any())
             {
                 ReleaseNoteGroup breakingGroup = new ReleaseNoteGroup("Breaking Changes");
                 var breaking = ApiChange?.GetBreakingChanges();

@@ -146,7 +146,7 @@ namespace Azure.SDK.ChangelogGen.Utilities
                 return type.GetMethods(flags).Where(m => !m.Name.StartsWith("get_") && !m.Name.StartsWith("set_")).ToArray();
         }
 
-        public static string? ToFriendlyString(this PropertyInfo pi)
+        public static string ToFriendlyString(this PropertyInfo pi)
         {
             if (pi == null)
                 throw new ArgumentNullException(nameof(pi));
@@ -162,7 +162,7 @@ namespace Azure.SDK.ChangelogGen.Utilities
             }
         }
 
-        public static string? ToFriendlyString(this MethodInfo mi)
+        public static string ToFriendlyString(this MethodInfo mi)
         {
             if (mi == null)
                 throw new ArgumentNullException(nameof(mi));
@@ -172,10 +172,10 @@ namespace Azure.SDK.ChangelogGen.Utilities
             var paramList = mi.GetParameters();
             var returnType = mi.ReturnType;
 
-            return $"{returnType.ToFriendlyString()} {mi.Name}{genericPart}({string.Join(", ", paramList.Select(p => $"{p.ParameterType.ToFriendlyString()} {p.Name}"))})";
+            return $"{returnType.ToFriendlyString()} {mi.Name}{genericPart}({string.Join(", ", paramList.Select(p => $"{p.ParameterType.ToFriendlyString()} {p.Name}{(p.DefaultValue != null ? $" = {p.DefaultValue}" : "")}"))})";
         }
 
-        public static string? ToFriendlyString(this Type type, bool fullName = false)
+        public static string ToFriendlyString(this Type type, bool fullName = false)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
@@ -189,7 +189,7 @@ namespace Azure.SDK.ChangelogGen.Utilities
             return $"{name}{genericPart}";
         }
 
-        public static string? ToFriendlyString(this ConstructorInfo ci)
+        public static string ToFriendlyString(this ConstructorInfo ci)
         {
             if (ci == null)
                 throw new ArgumentNullException(nameof(ci));
@@ -206,7 +206,8 @@ namespace Azure.SDK.ChangelogGen.Utilities
 
         public static string GetKey(this MethodInfo mi)
         {
-            return mi.ToString()!;
+            // Use Friendly string we parsed instead of default ToString() because the default ToString() won't consider the parameter default value
+            return mi.ToFriendlyString();
         }
 
         public static string GetKey(this PropertyInfo pi)

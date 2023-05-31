@@ -16,7 +16,7 @@ namespace Azure.SDK.ChangelogGen.Tests
             string content2 = File.ReadAllText("apiFile2.cs.txt");
             ChangeLogResult r = new ChangeLogResult();
             r.ApiChange = Program.CompareApi(content2, content1);
-            Release release = r.GenerateReleaseNote("1.2.3", "2030.3.3", filter: new List<ChangeCatogory>() { ChangeCatogory.Obsoleted });
+            Release release = r.GenerateReleaseNote("1.2.3", "2030.3.3", ignoreBreakingChange: false, filter: new List<ChangeCatogory>() { ChangeCatogory.Obsoleted });
 
             // we dont expect any breaking change in our release
             // But in case any breaking changes detected, we will list them anyway so that people are able to notice these unexpected breaking changes when reviewing the changelog and fix them
@@ -26,6 +26,7 @@ namespace Azure.SDK.ChangelogGen.Tests
 ### Breaking Changes
 
 - Removed method 'String MethodToBeDeleted()' in type Azure.ResourceManager.AppService.TestMethod
+- Removed method 'String MethodChangeDefaultValue(Int32 param = 0)' in type Azure.ResourceManager.AppService.TestMethod
 - Removed method 'String MethodToChangeReturnType()' in type Azure.ResourceManager.AppService.TestMethod
 - Removed method 'String MethodToChangeParameter()' in type Azure.ResourceManager.AppService.TestMethod
 - Removed property 'String PropertyToBeDeleted' in type Azure.ResourceManager.AppService.TestProperty
@@ -43,6 +44,22 @@ namespace Azure.SDK.ChangelogGen.Tests
 - Obsoleted type 'Azure.ResourceManager.AppService.StaticTypeToBeObsoleted'";
             string actual = release.ToString();
             Assert.AreEqual(baseline.Replace("\r\n", "\n"), actual.Replace("\r\n", "\n"));
+
+            Release release2 = r.GenerateReleaseNote("1.2.3", "2030.3.3", ignoreBreakingChange: true, filter: new List<ChangeCatogory>() { ChangeCatogory.Obsoleted });
+
+            string baseline2 =
+@"## 1.2.3 (2030.3.3)
+
+### Other Changes
+
+- Obsoleted method 'Void StaticMethodToBeObsoleted()' in type Azure.ResourceManager.AppService.StaticTypeToBeObsoleted
+- Obsoleted method 'String MethodToBeObsoleted()' in type Azure.ResourceManager.AppService.TestMethod
+- Obsoleted property 'String StaticPropertyToBeObsoleted' in type Azure.ResourceManager.AppService.StaticTypeToBeObsoleted
+- Obsoleted property 'String PropertyToBeObsoleted' in type Azure.ResourceManager.AppService.TestProperty
+- Obsoleted type 'Azure.ResourceManager.AppService.TypeToBeObsoleted'
+- Obsoleted type 'Azure.ResourceManager.AppService.StaticTypeToBeObsoleted'";
+            string actual2 = release2.ToString();
+            Assert.AreEqual(baseline2.Replace("\r\n", "\n"), actual2.Replace("\r\n", "\n"));
         }
     }
 

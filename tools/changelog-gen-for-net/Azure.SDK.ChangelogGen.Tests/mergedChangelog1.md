@@ -10,6 +10,7 @@
 ### Breaking Changes
 
 - Removed method 'String MethodToBeDeleted()' in type Azure.ResourceManager.AppService.TestMethod
+- Removed method 'String MethodChangeDefaultValue(Int32 param = 0)' in type Azure.ResourceManager.AppService.TestMethod
 - Removed method 'String MethodToChangeReturnType()' in type Azure.ResourceManager.AppService.TestMethod
 - Removed method 'String MethodToChangeParameter()' in type Azure.ResourceManager.AppService.TestMethod
 - Removed property 'String PropertyToBeDeleted' in type Azure.ResourceManager.AppService.TestProperty

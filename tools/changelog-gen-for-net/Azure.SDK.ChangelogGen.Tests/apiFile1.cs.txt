@@ -24,6 +24,7 @@ namespace Azure.ResourceManager.AppService
     {
         public string MethodToBeDeleted() { throw null; }
         public string MethodToBeObsoleted() { throw null; }
+        public string MethodChangeDefaultValue(int param = 0){throw null;}
         public string MethodToChangeReturnType() { throw null; }
         public string MethodToChangeParameter() { throw null; }
     }

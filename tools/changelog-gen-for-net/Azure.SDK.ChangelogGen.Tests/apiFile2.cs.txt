@@ -34,6 +34,7 @@ namespace Azure.ResourceManager.AppService
         public string MethodAdded() { throw null; }
         [System.ObsoleteAttribute("for test", false)]
         public string MethodToBeObsoleted() { throw null; }
+        public string MethodChangeDefaultValue(int param = 1){throw null;}
         public int MethodToChangeReturnType() { throw null; }
         public string MethodToChangeParameter(int someParam) { throw null; }
         public string MethodToChangeParameter<T>() { throw null; }

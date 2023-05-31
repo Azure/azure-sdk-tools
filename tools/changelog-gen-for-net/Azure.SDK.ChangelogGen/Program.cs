@@ -82,7 +82,7 @@ namespace Azure.SDK.ChangelogGen
                     string baseAzureRMVersion = baselineTree.GetLastReleaseVersionFromGitTree(context.AzureResourceManagerChangeLogGithubKey, context.IsPreview, out releaseDate);
                     result.AzureResourceManagerVersionChange = CompareVersion(curAzureRMVersion, baseAzureRMVersion, "Azure.ResourceManager");
                 }
-                Release nextRelease = result.GenerateReleaseNote(context.ReleaseVersion, context.ReleaseDate, context.ApiChangeFilter);
+                Release nextRelease = result.GenerateReleaseNote(context.ReleaseVersion, context.ReleaseDate, context.IsPreview, context.ApiChangeFilter);
 
                 if (context.UpdateReleaseVersionDate)
                 {

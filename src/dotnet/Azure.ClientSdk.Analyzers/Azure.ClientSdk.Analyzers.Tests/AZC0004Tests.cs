@@ -103,6 +103,7 @@ namespace RandomNamespace
 }";
             await Verifier.CreateAnalyzer(code)
                 .WithDisabledDiagnostics("AZC0015")
+                .WithDisabledDiagnostics("AZC0018")
                 .RunAsync();
         }
 
@@ -118,11 +119,11 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task GetAsync(RequestContext context)
+        public virtual Task<Response> GetAsync(RequestContext context)
         {
             return null;
         }
-        public virtual Task Get(RequestContext context)
+        public virtual Response Get(RequestContext context)
         {
             return null;
         }
@@ -172,11 +173,11 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0004:GetAsync|}(RequestContext context = null)
+        public virtual Task<Response> {|AZC0004:GetAsync|}(RequestContext context = null)
         {
             return null;
         }
-        public virtual Task {|AZC0004:Get|}(RequestContext context)
+        public virtual Response {|AZC0004:Get|}(RequestContext context)
         {
             return null;
         }
@@ -184,6 +185,7 @@ namespace RandomNamespace
 }";
             await Verifier.CreateAnalyzer(code)
                 .WithDisabledDiagnostics("AZC0015")
+                .WithDisabledDiagnostics("AZC0018")
                 .RunAsync();
         }
 

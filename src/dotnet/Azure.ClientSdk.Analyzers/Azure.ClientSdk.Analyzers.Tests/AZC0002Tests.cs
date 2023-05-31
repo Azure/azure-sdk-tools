@@ -88,6 +88,32 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0002ProducedForMethodsWithNonOptionalCancellationToken()
+        {
+            const string code = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task {|AZC0002:GetAsync|}(CancellationToken cancellationToken)
+        {
+            return null;
+        }
+
+        public virtual void {|AZC0002:Get|}(CancellationToken cancellationToken)
+        {
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
         public async Task AZC0002ProducedForMethodsWhereRequestContextIsNotLast()
         {
             const string code = @"
@@ -218,6 +244,7 @@ namespace RandomNamespace
 }";
             await Verifier.CreateAnalyzer(code)
                 .WithDisabledDiagnostics("AZC0015")
+                .WithDisabledDiagnostics("AZC0018")
                 .WithDisabledDiagnostics("AD0001")
                 .RunAsync();
         }
@@ -255,6 +282,7 @@ namespace RandomNamespace
 }";
             await Verifier.CreateAnalyzer(code)
                 .WithDisabledDiagnostics("AZC0015")
+                .WithDisabledDiagnostics("AZC0018")
                 .RunAsync();
         }
     }

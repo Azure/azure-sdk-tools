@@ -6,23 +6,23 @@ namespace SwaggerApiParser.Specs
 {
     public class SchemaCache
     {
-        public Dictionary<string, Dictionary<string, BaseSchema>> Cache;
-        public Dictionary<string, BaseSchema> ResolvedCache;
+        public Dictionary<string, Dictionary<string, Schema>> Cache;
+        public Dictionary<string, Schema> ResolvedCache;
         public Dictionary<string, Dictionary<string, Parameter>> ParametersCache;
 
         public SchemaCache()
         {
-            this.Cache = new Dictionary<string, Dictionary<string, BaseSchema>>();
-            this.ResolvedCache = new Dictionary<string, BaseSchema>();
+            this.Cache = new Dictionary<string, Dictionary<string, Schema>>();
+            this.ResolvedCache = new Dictionary<string, Schema>();
             this.ParametersCache = new Dictionary<string, Dictionary<string, Parameter>>();
         }
 
-        public void AddSchema(string swaggerFilePath, string key, BaseSchema value)
+        public void AddSchema(string swaggerFilePath, string key, Schema value)
         {
             this.Cache.TryGetValue(swaggerFilePath, out var swaggerSchema);
             if (swaggerSchema == null)
             {
-                swaggerSchema = new Dictionary<string, BaseSchema>();
+                swaggerSchema = new Dictionary<string, Schema>();
                 this.Cache.TryAdd(swaggerFilePath, swaggerSchema);
             }
 
@@ -59,14 +59,14 @@ namespace SwaggerApiParser.Specs
             return RemoveCrossFileReferenceFromRef(Ref) + Utils.GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
         }
 
-        private BaseSchema GetSchemaFromResolvedCache(string Ref, string currentSwaggerFilePath)
+        private Schema GetSchemaFromResolvedCache(string Ref, string currentSwaggerFilePath)
         {
             var resolvedKey = GetResolvedCacheRefKey(Ref, currentSwaggerFilePath);
             this.ResolvedCache.TryGetValue(resolvedKey, out var resolvedSchema);
             return resolvedSchema;
         }
 
-        private BaseSchema GetSchemaFromCache(string Ref, string currentSwaggerFilePath)
+        private Schema GetSchemaFromCache(string Ref, string currentSwaggerFilePath)
         {
             // try get from resolved cache.
 
@@ -120,13 +120,13 @@ namespace SwaggerApiParser.Specs
         {
             if (parameter.IsRefObject())
             {
-                return this.GetParameterFromCache(parameter.Ref, currentSwaggerFilePath);
+                return this.GetParameterFromCache(parameter.@ref, currentSwaggerFilePath);
             }
 
             return parameter;
         }
 
-        public BaseSchema GetResolvedSchema(BaseSchema root, string currentSwaggerFilePath, LinkedList<string> refChain = null)
+        public Schema GetResolvedSchema(Schema root, string currentSwaggerFilePath, LinkedList<string> refChain = null)
         {
             refChain ??= new LinkedList<string>();
             if (root == null)
@@ -134,36 +134,36 @@ namespace SwaggerApiParser.Specs
                 return null;
             }
 
-            root.properties ??= new Dictionary<string, BaseSchema>();
-            root.allOfProperities ??= new Dictionary<string, BaseSchema>();
+            root.properties ??= new Dictionary<string, Schema>();
+            root.allOfProperities ??= new Dictionary<string, Schema>();
 
-            if (root.IsRefObj())
+            if (root.IsRefObject())
             {
-                if (refChain.Contains(root.Ref))
+                if (refChain.Contains(root.@ref))
                 {
                     return root;
                 }
 
-                var resolvedSchema = this.GetSchemaFromResolvedCache(root.Ref, currentSwaggerFilePath);
+                var resolvedSchema = this.GetSchemaFromResolvedCache(root.@ref, currentSwaggerFilePath);
                 if (resolvedSchema != null)
                 {
                     return resolvedSchema;
                 }
 
                 // If refChain already has resolve refKey. Circular reference. return root.
-                if (refChain.Contains(GetResolvedCacheRefKey(root.Ref, currentSwaggerFilePath)))
+                if (refChain.Contains(GetResolvedCacheRefKey(root.@ref, currentSwaggerFilePath)))
                 {
-                    root.originalRef = root.Ref;
-                    root.Ref = null;
+                    root.originalRef = root.@ref;
+                    root.@ref = null;
                     return root;
                 }
 
                 // get from original schema cache.
-                refChain.AddLast(GetResolvedCacheRefKey(root.Ref, currentSwaggerFilePath));
-                var schema = this.GetSchemaFromCache(root.Ref, currentSwaggerFilePath);
-                var ret = this.GetResolvedSchema(schema, Utils.GetReferencedSwaggerFile(root.Ref, currentSwaggerFilePath), refChain);
+                refChain.AddLast(GetResolvedCacheRefKey(root.@ref, currentSwaggerFilePath));
+                var schema = this.GetSchemaFromCache(root.@ref, currentSwaggerFilePath);
+                var ret = this.GetResolvedSchema(schema, Utils.GetReferencedSwaggerFile(root.@ref, currentSwaggerFilePath), refChain);
                 // write back resolved cache
-                this.ResolvedCache.TryAdd(GetResolvedCacheRefKey(root.Ref, currentSwaggerFilePath), schema);
+                this.ResolvedCache.TryAdd(GetResolvedCacheRefKey(root.@ref, currentSwaggerFilePath), schema);
                 refChain.RemoveLast();
 
                 if (ret == null)
@@ -171,7 +171,7 @@ namespace SwaggerApiParser.Specs
                     return null;
                 }
 
-                ret.originalRef = root.Ref;
+                ret.originalRef = root.@ref;
                 return ret;
             }
 
@@ -193,7 +193,7 @@ namespace SwaggerApiParser.Specs
                 }
             }
 
-            if (root.items != null && root.items.Ref != null && !refChain.Contains(root.items.Ref))
+            if (root.items != null && root.items.@ref != null && !refChain.Contains(root.items.@ref))
             {
                 root.items = GetResolvedSchema(root.items, currentSwaggerFilePath, refChain);
             }
@@ -207,7 +207,7 @@ namespace SwaggerApiParser.Specs
                         continue;
                     }
 
-                    if (!refChain.Contains(rootProperty.Value.Ref) && !refChain.Contains(rootProperty.Value.Ref) && !refChain.Contains(rootProperty.Value.items?.Ref))
+                    if (!refChain.Contains(rootProperty.Value.@ref) && !refChain.Contains(rootProperty.Value.@ref) && !refChain.Contains(rootProperty.Value.items?.@ref))
                     {
                         root.properties[rootProperty.Key] = this.GetResolvedSchema(rootProperty.Value, currentSwaggerFilePath, refChain);
                     }

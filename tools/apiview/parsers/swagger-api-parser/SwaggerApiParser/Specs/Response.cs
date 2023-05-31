@@ -1,17 +1,21 @@
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace SwaggerApiParser.Specs
 {
-    public class Response
+    public class Response : Reference
     {
         public string description { get; set; }
-        public BaseSchema schema { get; set; }
+        public Schema schema { get; set; }
         public Dictionary<string, Header> headers { get; set; }
-        
+        public Example examples { get; set; }
+        [JsonExtensionData]
+        public IDictionary<string, dynamic> patternedObjects { get; set; }
+    }
 
-
-        [JsonExtensionData] public IDictionary<string, object> examples { get; set; }
+    public class Example : Dictionary<string, JsonElement>
+    {
     }
 }
 

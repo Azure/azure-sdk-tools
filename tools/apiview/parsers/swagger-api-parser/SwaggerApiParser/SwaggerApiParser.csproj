@@ -5,7 +5,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>swaggerAPIParser</ToolCommandName>
     <TargetFramework>net7.0</TargetFramework>
-    <RootNamespace>swagger_api_parser</RootNamespace>
+    <RootNamespace>SwaggerApiParser</RootNamespace>
     <VersionPrefix>1.0.9</VersionPrefix>
     <AssemblyName>Azure.Sdk.Tools.SwaggerApiParser</AssemblyName>
     <SignAssembly>True</SignAssembly>
@@ -22,8 +22,11 @@
   
   <ItemGroup>
     <Compile Remove="SwaggerApiParserTest\**" />
+    <Compile Remove="SwaggerSpec\**" />
     <EmbeddedResource Remove="SwaggerApiParserTest\**" />
+    <EmbeddedResource Remove="SwaggerSpec\**" />
     <None Remove="SwaggerApiParserTest\**" />
+    <None Remove="SwaggerSpec\**" />
   </ItemGroup>
 
 

@@ -14,7 +14,7 @@ namespace SwaggerApiParser.Specs
         public Operation options { get; set; }
         public Operation head { get; set; }
         public Operation patch { get; set; }
-        public List<IBaseReference> parameters { get; set; }
+        public List<Parameter> parameters { get; set; }
         [JsonExtensionData]
         public IDictionary<string, dynamic> patternedObjects { get; set; }
 

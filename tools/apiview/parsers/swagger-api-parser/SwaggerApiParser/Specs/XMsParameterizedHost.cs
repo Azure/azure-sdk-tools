@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SwaggerApiParser.SwaggerApiView;
 
 namespace SwaggerApiParser.Specs 
 {

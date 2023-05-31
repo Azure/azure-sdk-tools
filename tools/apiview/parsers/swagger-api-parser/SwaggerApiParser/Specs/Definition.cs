@@ -1,8 +1,9 @@
 using System.Collections.Generic;
+using SwaggerApiParser.SwaggerApiView;
 
 namespace SwaggerApiParser.Specs
 {
-    public class Definition : BaseSchema
+    public class Definition : Schema
     {
         public CodeFileToken[] TokenSerializeDefinition(SerializeContext context)
         {

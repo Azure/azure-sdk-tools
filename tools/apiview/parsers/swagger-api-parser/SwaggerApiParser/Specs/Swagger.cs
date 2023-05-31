@@ -16,26 +16,33 @@ namespace SwaggerApiParser.Specs
         public List<string> consumes { get; set; }
         public List<string> produces { get; set; }
         public Dictionary<string, ApiPath> paths { get; set; }
-
-
-        public Security security { get; set; }
-
-
-
-
-        public SecurityDefinitions securityDefinitions { get; set; }
-
-
+        public Dictionary<string, Definition> definitions { get; set; }
         public Dictionary<string, Parameter> parameters { get; set; }
-
         public Dictionary<string, Response> responses { get; set; }
+        public SecurityDefinitions securityDefinitions { get; set; }
+        public Security security { get; set; }
+        public List<Tag> tags { get; set; }
+        public ExternalDocs externalDocs { get; set; }
+        [JsonExtensionData]
+        public IDictionary<string, dynamic> patternedObjects { get; set; }
+
+
+
+
+
+        
+
+
+        
+
+       
 
         [JsonPropertyName("x-ms-paths")] public Dictionary<string, Dictionary<string, Operation>> xMsPaths { get; set; }
 
         [JsonPropertyName("x-ms-parameterized-host")]
         public XMsParameterizedHost xMsParameterizedHost { get; set; }
 
-        public Dictionary<string, Definition> definitions { get; set; }
+        
 
         public object ResolveRefObj(string Ref)
         {

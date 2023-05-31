@@ -90,7 +90,7 @@ public class SwaggerApiViewGenerator
                                 var referenceSwaggerSpec = await SwaggerDeserializer.Deserialize(referenceSwaggerFilePath);
                                 referenceSwaggerSpec.swaggerFilePath = Path.GetFullPath(referenceSwaggerFilePath);
                                 AddDefinitionsToCache(referenceSwaggerSpec, referenceSwaggerFilePath, schemaCache);
-                                param = schemaCache.GetParameterFromCache(parameter.Ref, referenceSwaggerFilePath);
+                                param = schemaCache.GetParameterFromCache(parameter.Ref, currentSwaggerFilePath);
                             }
                             else
                             {

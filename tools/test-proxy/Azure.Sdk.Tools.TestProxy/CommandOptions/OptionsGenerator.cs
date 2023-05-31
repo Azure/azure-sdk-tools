@@ -56,7 +56,16 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             };
             #endregion
 
-            var root = new RootCommand();
+
+            var Description = @"This tool is used by the Azure SDK team in two primary ways:
+
+  - Run as a http record/playback server. (""start"" / default verb)
+  - Invoke a CLI Tool to interact with recordings in an external store. (""push"", ""restore"", ""reset"", ""config"")";
+
+            var root = new RootCommand()
+            {
+                Description = Description
+            };
             root.AddGlobalOption(storageLocationOption);
             root.AddGlobalOption(storagePluginOption);
 

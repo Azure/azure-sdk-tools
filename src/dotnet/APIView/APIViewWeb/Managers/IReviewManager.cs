@@ -40,7 +40,6 @@ namespace APIViewWeb.Managers
         public Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact, string project);
         public Task RequestApproversAsync(ClaimsPrincipal User, string ReviewId, HashSet<string> reviewers);
         public Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, ReviewRevisionModel revision);
-        public Task UpdateSwaggerReviewsMetaData();
         public TreeNode<InlineDiffLine<CodeLine>> ComputeSectionDiff(TreeNode<CodeLine> before, TreeNode<CodeLine> after, RenderedCodeFile beforeFile, RenderedCodeFile afterFile);
         public Task<bool> IsApprovedForFirstRelease(string language, string packageName);
     }

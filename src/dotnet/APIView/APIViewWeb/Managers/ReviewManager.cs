@@ -8,11 +8,8 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
 using ApiView;
-using APIView;
 using APIView.DIff;
 using APIView.Model;
 using APIViewWeb.Models;
@@ -21,8 +18,6 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Azure;
-using Microsoft.VisualStudio.Services.Common;
 
 namespace APIViewWeb.Managers
 {
@@ -389,87 +384,6 @@ namespace APIViewWeb.Managers
             }            
         }
 
-        public async Task UpdateSwaggerReviewsMetaData()
-        {
-            IList<ReviewModel> reviews = (await _reviewsRepository.GetReviewsAsync(isClosed: false, language: "Swagger", fetchAllPages: true)).ToList();
-            reviews.AddRange(await _reviewsRepository.GetReviewsAsync(isClosed: true, language: "Swagger", fetchAllPages: true));
-
-            int reviewsProcessed = 0;
-
-            foreach (var review in reviews)
-            {
-                var comments = await _commentsRepository.GetCommentsAsync(review.ReviewId);
-                
-                foreach (var comment in comments)
-                {
-                    if (comment.ElementId.EndsWith("table") && !String.IsNullOrEmpty(comment.GroupNo))
-                    {
-                        comment.ElementId = comment.ElementId + $"-tr-{comment.GroupNo}";
-                        await _commentsRepository.UpsertCommentAsync(comment);
-                    }
-                }
-
-                foreach (var revision in review.Revisions)
-                {
-                    // Update Number of Lines in LeafSections
-                    var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(revision);
-
-                    for (int i = 0; i < renderedCodeFile.CodeFile.Tokens.Length; i++)
-                    {
-                        if (renderedCodeFile.CodeFile.Tokens[i].Kind == CodeFileTokenKind.LeafSectionPlaceholder)
-                        {
-                            var leafSection = renderedCodeFile.CodeFile.LeafSections[(Convert.ToInt16(renderedCodeFile.CodeFile.Tokens[i].Value))];
-                            CodeLine[] renderedLeafSection = CodeFileHtmlRenderer.Normal.Render(leafSection);
-                            renderedCodeFile.CodeFile.Tokens[i].NumberOfLinesinLeafSection = renderedLeafSection.Length;
-                        }
-                    }
-
-                    await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, revision.SingleFile.ReviewFileId, renderedCodeFile.CodeFile);
-                    await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
-
-                    bool entireFileRendered = false;
-
-                    foreach (var comment in comments)
-                    {
-                        if ((comment.RevisionId == revision.RevisionId) && comment.ElementId.EndsWith("table") && String.IsNullOrEmpty(comment.GroupNo))
-                        {
-                            int rowCount = 0;
-
-                            if (!entireFileRendered)
-                                renderedCodeFile.Render(false);
-
-                            foreach (var codeLine in renderedCodeFile.RenderResult.CodeLines)
-                            {
-                                if (codeLine.SectionKey != null)
-                                {
-                                    var sectionLines = renderedCodeFile.GetCodeLineSection((int)codeLine.SectionKey);
-
-                                    foreach (var sectionLine in sectionLines)
-                                    {
-                                        if (!String.IsNullOrEmpty(sectionLine.ElementId) && sectionLine.ElementId.StartsWith(comment.ElementId))
-                                            rowCount++;
-                                    }
-                                    if (rowCount > 1)
-                                    {
-                                        comment.ElementId = comment.ElementId + $"-tr-{rowCount - 1}";
-                                        await _commentsRepository.UpsertCommentAsync(comment);
-                                        break;
-                                    }
-                                }
-                            }
-                            if (rowCount > 0)
-                            {
-                                break;
-                            }
-                        }
-                    }
-                }
-                reviewsProcessed++;
-                _telemetryClient.TrackTrace("Swagger Reviews Updated: " + reviewsProcessed);
-
-            }                                                                                                                                                                                                                       
-        }
-
         // Languages that full ysupport sandboxing updates reviews using Azure devops pipeline
         // We should batch all eligible reviews to avoid a pipeline run storm
         private async Task UpdateReviewsUsingPipeline(string language, LanguageService languageService, int backgroundBatchProcessCount)
@@ -668,8 +582,11 @@ namespace APIViewWeb.Managers
                         file.PackageName = codeFile.PackageName;
                         await _reviewsRepository.UpsertReviewAsync(review);
 
-                        // Trigger diff calculation using updated code file from sandboxing pipeline
-                        await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
+                        if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+                        {
+                            // Trigger diff calculation using updated code file from sandboxing pipeline
+                            await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
+                        }
                     }
                 }
             }
@@ -856,7 +773,7 @@ namespace APIViewWeb.Managers
                 review.ServiceName = p?.ServiceName ?? review.ServiceName;
             }
 
-            var languageService = language != null ? _languageServices.FirstOrDefault( l=> l.Name == language) : _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
+            var languageService = language != null ? _languageServices.FirstOrDefault(l => l.Name == language) : _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
             // Run pipeline to generate the review if sandbox is enabled
             if (languageService != null && languageService.IsReviewGenByPipeline)
             {
@@ -868,13 +785,17 @@ namespace APIViewWeb.Managers
             await _notificationManager.SubscribeAsync(review, user);
             await _reviewsRepository.UpsertReviewAsync(review);
             await _notificationManager.NotifySubscribersOnNewRevisionAsync(revision, user);
-            if (awaitComputeDiff)
+
+            if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
             {
-                await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
-            }
-            else
-            {
-                _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision));
+                if (awaitComputeDiff)
+                {
+                    await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision);
+                }
+                else
+                {
+                    _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision));
+                }
             }
         }
 

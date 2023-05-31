@@ -26,6 +26,7 @@ using APIViewWeb.Account;
 using APIView.Identity;
 using APIViewWeb.Managers;
 using APIViewWeb.Hubs;
+using System.Text.Json.Serialization;
 
 namespace APIViewWeb
 {
@@ -221,8 +222,8 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, UsageSampleOwnerRequirementHandler>();
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
-            services.AddHostedService<SwaggerReviewsBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
+            services.AddControllersWithViews().AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
             services.AddSignalR(options => {
                 options.EnableDetailedErrors = true;
             });

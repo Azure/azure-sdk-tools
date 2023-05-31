@@ -359,7 +359,10 @@ namespace APIViewWeb.Managers
             pullRequestModel.ReviewId = review.ReviewId;
             review.FilterType = ReviewType.PullRequest;
             await _reviewsRepository.UpsertReviewAsync(review);
-            await _reviewManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, newRevision);
+            if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+            {
+                await _reviewManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, newRevision);
+            }
             await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
         }
 

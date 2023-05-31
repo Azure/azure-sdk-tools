@@ -865,19 +865,19 @@ class SpecifyParameterNamesInCall(BaseChecker):
 class ClientListMethodsUseCorePaging(BaseChecker):
     __implements__ = IAstroidChecker
 
-    name = "client-list-methods-use-paging"
+    name = "client-paging-methods-use-list"
     priority = -1
     msgs = {
         "C4733": (
-            "Operations that return collections should return a value that implements the Paging protocol. See details:"
+            "Operations that return collections should return a value that implements the Paging protocol and be prefixed with list_ or _list_. See details:"
             " https://azure.github.io/azure-sdk/python_design.html#response-formats",
-            "client-list-methods-use-paging",
-            "Client methods that return collections should use the Paging protocol.",
+            "client-paging-methods-use-list",
+            "Client methods that return collections should use the Paging protocol and be prefixed with list_ or _list_.",
         ),
     }
     options = (
         (
-            "ignore-client-list-methods-use-paging",
+            "ignore-client-paging-methods-use-list",
             {
                 "default": False,
                 "type": "yn",
@@ -892,29 +892,33 @@ class ClientListMethodsUseCorePaging(BaseChecker):
         super(ClientListMethodsUseCorePaging, self).__init__(linter)
     
     def visit_return(self, node):
-        """Visits every method in the client and checks that any list_ methods return
-        an ItemPaged or AsyncItemPaged value.
+        """Visits every method in the client and checks that any list methods return
+        an ItemPaged or AsyncItemPaged value. Also, checks that if a method returns an iterable value
+        that the method name starts with list.
 
         :param node: function node
         :type node: ast.FunctionDef
         :return: None
         """
         try:
+            iterable_return = False
+            paging_method = False
             if node.parent.parent.name.endswith("Client") and node.parent.parent.name not in self.ignore_clients and node.parent.is_method():
-                if node.parent.name.startswith("list"):
-                    paging_class = False
+                try:
+                    if any(v for v in node.value.infer() if "def by_page" in v.as_string()):
+                        iterable_return = True
+                except (astroid.exceptions.InferenceError, AttributeError, TypeError): # astroid can't always infer the return
+                    logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
+                    return 
 
-                    try:
-                        if any(v for v in node.value.infer() if "def by_page" in v.as_string()):
-                            paging_class = True
-                    except (astroid.exceptions.InferenceError, AttributeError, TypeError): # astroid can't always infer the return
-                        logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
-                        return 
+                if node.parent.name.startswith("list") or node.parent.name.startswith("_list"):
+                    paging_method = True
 
-                    if not paging_class:
-                        self.add_message(
-                            msgid="client-list-methods-use-paging", node=node.parent, confidence=None
-                        )
+                if (not paging_method and iterable_return) or (paging_method and not iterable_return):
+                    self.add_message(
+                        msgid="client-paging-methods-use-list", node=node.parent, confidence=None
+                    )
+                
         except (AttributeError, TypeError):
             logger.debug("Pylint custom checker failed to check if client list method uses core paging.")
             pass

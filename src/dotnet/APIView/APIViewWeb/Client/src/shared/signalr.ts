@@ -1,15 +1,19 @@
-$(() => {
-  const notificationToast = $('#notification-toast');
+import * as hp from "./helpers";
 
-  var signalR = require('@microsoft/signalr');
+$(() => {
+//-------------------------------------------------------------------------------------------------
+// Create SignalR Connection and Register various events
+//-------------------------------------------------------------------------------------------------
+  const signalR = require('@microsoft/signalr');
 
   const connection = new signalR.HubConnectionBuilder()
-    .withUrl(`${location.origin}/hubs/notification`)
+    .withUrl(`${location.origin}/hubs/notification`, { 
+      skipNegotiation: true,
+      transport: signalR.HttpTransportType.WebSockets })
     .configureLogging(signalR.LogLevel.Information)
     .withAutomaticReconnect()
     .build();
     
-
   async function start() {
     try {
       await connection.start();
@@ -25,25 +29,7 @@ $(() => {
   });
 
   connection.on("RecieveNotification", (notification) => {
-    var newtoast = notificationToast.clone().removeAttr("id");
-    switch (notification.level) {
-      case 0:
-        newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-circle-info text-info me-1" ></i>`);
-        newtoast.find(".toast-header strong").html("Information");
-        break;
-      case 1:
-        newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-triangle-exclamation text-warning me-1"></i>`);
-        newtoast.find(".toast-header strong").html("Warning");
-        break;
-      case 2:
-        newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-circle-exclamation text-danger me-1"></i>`);
-        newtoast.find(".toast-header strong").html("Error");
-        break;
-    }
-    newtoast.find(".toast-body").html(notification.message);
-    const toastBootstrap = bootstrap.Toast.getOrCreateInstance(newtoast[0]);
-    $("#notification-container").append(newtoast);
-    toastBootstrap.show();
+    hp.addToastNotification(notification);
   });
 
   // Start the connection.

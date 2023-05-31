@@ -6,15 +6,16 @@ repo and use the remote typespec definition in the spec repo.
 ## One time language repo setup
 
 There are 3 things that these two scripts expect are set up in your language repo before they will run correctly.
+
 1. Make sure your .gitignore is ignoring the TempTypeSpecFiles
 2. Create a common emitter-package.json for your language
 3. Write the language specific hooks in Language-Settings.ps1
 
 ### TempTypeSpecFiles
 
-You should add a new entry in your .gitignore for your repo so that none of these files are accidentally checked in if [cleanup](#cleanup-anchor) is turned off.
+You should add a new entry in your .gitignore for your repo so that none of these files are accidentally checked in if `-SaveInputs` flag is passed in.
 
-```
+```text
 # .gitignore file
 TempTypeSpecFiles/
 ```
@@ -35,7 +36,11 @@ Example
 }
 ```
 
-Note that cadl compile currently requires the "main" line to be there.
+Note that tsp compile currently requires the "main" line to be there.
+
+### Emitter additionalProperties
+
+The `-SaveInputs` flag will get forwarded to your emitter as `--option @azure-tools/typespec-csharp.save-inputs=true`.  If your emitter or generator creates any temporary files similar to CodeModel.yaml and Configuration.json from autorest then you should honor this flag and not delete those files.  If your emitter does not does not have any of these files you can ignore this flag but be sure you have [additionalProperties set to true](https://github.com/Azure/autorest.java/blob/main/typespec-extension/src/emitter.ts#L41) or have added `save-inputs` into your schema.
 
 ### Language-Settings.ps1
 
@@ -92,7 +97,6 @@ This file should live under the project directory for each service and has the f
 | <a id="additionalDirectories-anchor"></a> additionalDirectories | Sometimes a typespec file will use a relative import that might not be under the main directory.  In this case a single `directory` will not be enough to pull down all necessary files.  To support this you can specify additional directories as a list to sync so that all needed files are synced. | false: default = null |
 | <a id="commit-anchor"></a> commit | The commit sha for the version of the typespec files you want to generate off of.  This allows us to have idempotence on generation until we opt into pointing at a later version. | true |
 | <a id="repo-anchor"></a> repo | The repo this spec lives in.  This should be either `Azure/azure-rest-api-specs` or `Azure/azure-rest-api-specs-pr`.  Note that pr will work locally but not in CI until we add another change to handle token based auth. | true |
-| <a id="cleanup-anchor"></a> cleanup | This will remove the TempTypeSpecFiles directory after generation is complete if true otherwise this directory will be left to support local changes to the files to see how different changes would affect the generation. | false: default = true |
 
 Example
 
@@ -117,7 +121,7 @@ This script will create a `sparse-spec` folder as a sibling to the root of your 
 
 As an example if you have your language repo at `D:\git\azure-sdk-for-net` there will be a new directory `D:\git\sparse-spec\Azure.AI.OpenAI` where the sparse spec will live.
 
-This is then copied over to your project directory so that you can make temporary changes if needed.  The location will be `./{projectDir}/TempTypeSpecFiles`.  This temporary directory will be [cleaned up](#cleanup-anchor) at the end of the generate script if set in the tsp-location.yaml.
+This is then copied over to your project directory so that you can make temporary changes if needed.  The location will be `./{projectDir}/TempTypeSpecFiles`.  This temporary directory will be cleaned up at the end of the generate script unless the -SaveInputs flag is passed into the generate script.
 
 ## TypeSpec-Project-Generate.ps1
 
@@ -126,6 +130,8 @@ This is the second script that should be called and can be found at `./eng/commo
 ```powershell
 ./eng/common/scripts/TypeSpec-Project-Generate.ps1 ./sdk/openai/Azure.AI.OpenAI
 ```
+
+This script takes an optional `-SaveInputs` flag which acts similar to the old `save-inputs: true` configuration in autorest.  It will not delete the `TempTypeSpecFiles` folder and it will forward this flag to your emitter in case your emitter creates any additional intermediate files.  For example in dotnet a cadl.json and configuration.json file will be created as an intermediate step between the emitter and the generator and these will not be cleaned up if this flag is passed in.
 
 The first thing this does is clean up the npm install that might exist in `./{projectDir}/TempTypeSpecFiles`, followed by replacing the package.json with the language static one.
 

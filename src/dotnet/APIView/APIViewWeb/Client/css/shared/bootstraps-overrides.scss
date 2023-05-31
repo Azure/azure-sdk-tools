@@ -41,6 +41,14 @@
     color: var(--link-color);
 }
 
+.btn-link {
+    color: var(--link-color);
+}
+
+.btn-link:hover {
+    color: var(--link-active);
+}
+
 .btn-check:checked + .btn-outline-primary:focus, .btn-check:active + .btn-outline-primary:focus, .btn-outline-primary:active:focus, .btn-outline-primary.active:focus, .btn-outline-primary.dropdown-toggle.show:focus {
     box-shadow: 0 0 0 0.25rem var(--outer-glow);
 }

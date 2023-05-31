@@ -90,6 +90,20 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        
+  - task: PowerShell@2
+    displayName: 'tools link check'
+    condition: succeededOrFailed()
+    inputs:
+      pwsh: true
+      filePath: eng/common/scripts/Verify-Links.ps1
+      arguments: >
+        -urls (Get-ChildItem -Path ./eng/common -Recurse -Include *.md)
+        -rootUrl "file://$(System.DefaultWorkingDirectory)"        
+        -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
+        -inputCacheFile "$(cachefile)"
+        -outputCacheFile "$(cachefile)"
+        -devOpsLogging: $true
 
   - publish: $(cachefile)
     artifact: verify-links-cache.txt

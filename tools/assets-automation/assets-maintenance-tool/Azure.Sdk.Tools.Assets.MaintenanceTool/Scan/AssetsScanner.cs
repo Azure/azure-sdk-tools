@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
                 resultSet.AddRange(ScanRepo(repoConfig, existingResults));
             });
 
-            var newResults = new AssetsResultSet(resultSet, existingResults);
+            var newResults = new AssetsResultSet(resultSet);
 
             Save(newResults);
 

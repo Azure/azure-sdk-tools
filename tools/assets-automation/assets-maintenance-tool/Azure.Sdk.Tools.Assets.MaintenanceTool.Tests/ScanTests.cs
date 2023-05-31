@@ -270,6 +270,19 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
 
         [Test]
         [GitTokenSkip]
+        public void TestLoadConfiguration()
+        {
+            var scanner = new AssetsScanner(TestDirectory);
+            var runConfigurationPath = Path.Combine(TestDirectory, "TestResources", "configurations", "sample-repo-configuration.json");
+            var config = new RunConfiguration(runConfigurationPath);
+
+            var results = scanner.Scan(config);
+
+            Assert.That(results.Results.Count, Is.EqualTo(8));
+        }
+
+        [Test]
+        [GitTokenSkip]
         public void TestScanOutputsResults()
         {
             var scanner = new AssetsScanner(TestDirectory);

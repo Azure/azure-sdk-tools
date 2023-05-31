@@ -18,14 +18,9 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
             CalculateObjects();
         }
 
-        public AssetsResultSet(List<AssetsResult> input, AssetsResultSet? existingSet)
-        {
-            Results = input;
-
-            // todo: coalesce input + existing set
-
-            CalculateObjects();
-        }
+        // Currently we already honor previous results in AssetsScanner::ScanRepo()L#119
+        // leaving this final resolution point in place between the two sets just in case.
+        // This eliminates the need for a constructor that coalesces a previous result set.
 
         public List<AssetsResult> Results { get; set; } = new List<AssetsResult>();
 

@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         }
 
         [Test]
-        [GitTokenSkipAttribute]
+        [GitTokenSkip]
         public void TestBasicScanSingleBranch()
         {
             var scanner = new AssetsScanner(TestDirectory);
@@ -106,7 +106,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         }
 
         [Test]
-        [GitTokenSkipAttribute]
+        [GitTokenSkip]
         public void TestBasicScanMultipleBranches()
         {
             var scanner = new AssetsScanner(TestDirectory);
@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         }
 
         [Test]
-        [GitTokenSkipAttribute]
+        [GitTokenSkip]
         public void TestBasicScanMultipleBranchesMultipleRepos()
         {
             var scanner = new AssetsScanner(TestDirectory);
@@ -187,7 +187,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         }
 
         [Test]
-        [GitTokenSkipAttribute]
+        [GitTokenSkip]
         public void TestScanHonorsPreviousResults()
         {
             var specificDirectory = Path.Combine(TestDirectory, "TestResources", "basic_output");
@@ -232,7 +232,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         }
 
         [Test]
-        [GitTokenSkipAttribute]
+        [GitTokenSkip]
         public void TestParsePreviouslyOutputResults()
         {
             var specificDirectory = Path.Combine(TestDirectory, "TestResources", "basic_output");
@@ -269,7 +269,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
         }
 
         [Test]
-        [GitTokenSkipAttribute]
+        [GitTokenSkip]
         public void TestScanOutputsResults()
         {
             var scanner = new AssetsScanner(TestDirectory);

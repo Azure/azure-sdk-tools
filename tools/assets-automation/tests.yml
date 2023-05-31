@@ -42,35 +42,3 @@ stages:
             testRunTitle: '$(OS) Maintenance tool tests against .NET'
             testResultsFormat: 'VSTest'
             mergeTestResults: true
-
-    - job: CLI_Integration_Test
-      name: Invoke CLI Tool
-      strategy:
-        matrix:
-          Linux:
-            Pool: azsdk-pool-mms-ubuntu-2204-general
-            OS: 'Linux'
-
-      pool:
-        name: $(Pool)
-
-      steps:
-        - template: /eng/pipelines/templates/steps/install-dotnet.yml
-
-        - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) --logger trx $(Build.SourcesDirectory)/tools/assets-automation/assets-maintenance-tool/'
-          displayName: 'Test'
-          env:
-            DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-            DOTNET_CLI_TELEMETRY_OPTOUT: 1
-            DOTNET_MULTILEVEL_LOOKUP: 0
-            GIT_TOKEN: $(azuresdk-github-pat)
-            GIT_COMMIT_OWNER: azure-sdk
-            GIT_COMMIT_EMAIL: azuresdk@microsoft.com
-
-        - task: PublishTestResults@2
-          condition: succeededOrFailed()
-          inputs:
-            testResultsFiles: '**/*.trx'
-            testRunTitle: '$(OS) Maintenance tool tests against .NET'
-            testResultsFormat: 'VSTest'
-            mergeTestResults: true

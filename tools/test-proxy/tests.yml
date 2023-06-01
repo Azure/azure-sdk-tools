@@ -257,7 +257,6 @@ stages:
             git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
           displayName: Clone Repo
 
-
         - pwsh: |
             Write-Host "mvn install -f eng/code-quality-reports/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
             mvn install -f eng/code-quality-reports/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
@@ -269,6 +268,17 @@ stages:
             mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true
           displayName: 'Install azure-core-test'
           workingDirectory: $(CLONE_LOCATION)
+
+        # we want the proxy available so we can restore recordings and avoid the race condition error
+        # however, we also want to not run it such that the local executable is used by the java tests.
+        - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+          parameters:
+            runProxy: false
+
+        - pwsh: |
+            Get-ChildItem -Recurse -Path $(CLONE_LOCATION)/sdk/ -Filter assets.json | `
+              ForEach-Object { test-proxy restore -a $_.FullName }
+          displayName: Restore Recordings
 
         - pwsh: |
             # To run java in 'local' mode, we need to ensure that the natively set CI variable $env:TF_BUILD

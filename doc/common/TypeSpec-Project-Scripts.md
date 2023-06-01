@@ -117,7 +117,7 @@ cleanup: false
   - What does this script do?
     -	fetch `tspconfig.yaml` from remote if it doesn’t exist locally
     -	parse `tspconfig.yaml`
-    - craete the service folder if none exists
+    - create the service folder if none exists
     - create an sdk project folder if none exists
     -	create or update `tsp-location.yaml`
     -	call `TypeSpec-Project-Sync.ps1`

@@ -11,9 +11,7 @@ namespace SwaggerApiParser.SwaggerApiView
 
         public SwaggerApiViewGeneral SwaggerApiViewGeneral { get; set; }
         public SwaggerApiViewPaths Paths { get; set; }
-
         public SwaggerApiViewDefinitions SwaggerApiViewDefinitions { get; set; }
-
         public SwaggerApiViewGlobalParameters SwaggerApiViewGlobalParameters { get; set; }
 
 

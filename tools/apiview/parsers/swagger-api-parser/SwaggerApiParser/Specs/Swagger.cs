@@ -24,25 +24,7 @@ namespace SwaggerApiParser.Specs
         public List<Tag> tags { get; set; }
         public ExternalDocs externalDocs { get; set; }
         [JsonExtensionData]
-        public IDictionary<string, dynamic> patternedObjects { get; set; }
-
-
-
-
-
-        
-
-
-        
-
-       
-
-        [JsonPropertyName("x-ms-paths")] public Dictionary<string, Dictionary<string, Operation>> xMsPaths { get; set; }
-
-        [JsonPropertyName("x-ms-parameterized-host")]
-        public XMsParameterizedHost xMsParameterizedHost { get; set; }
-
-        
+        public Dictionary<string, dynamic> patternedObjects { get; set; }
 
         public object ResolveRefObj(string Ref)
         {
@@ -60,6 +42,10 @@ namespace SwaggerApiParser.Specs
             if (Ref.Contains("definitions"))
             {
                 var key = Ref.Split("/").Last();
+                if (this.definitions == null)
+                {
+                    return null;
+                }
                 this.definitions.TryGetValue(key, out var ret);
                 return ret;
             }

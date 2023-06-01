@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using SwaggerApiParser.Specs;
 using SwaggerApiParser.SwaggerApiView;
 
 namespace SwaggerApiParser
@@ -252,7 +253,25 @@ namespace SwaggerApiParser
                 foreach (var (key, value) in patternedObjects)
                 {
                     if (Regex.IsMatch(key, "^x-."))
-                        tokens.AddRange(TokenSerializer.KeyValueTokens(key, value, true, context.IteratorPath.CurrentNextPath(key)));
+                    {
+                        Type type = value.GetType();
+                        if (value is string || type.IsPrimitive)
+                        {
+                            tokens.AddRange(TokenSerializer.KeyValueTokens(key, value, true, context.IteratorPath.CurrentNextPath(key)));
+                        }
+                        else if (type.IsGenericType)
+                        {
+                        }
+                        else 
+                        {
+                            tokens.Add(new CodeFileToken(key, CodeFileTokenKind.FoldableSectionHeading));
+                            tokens.Add(TokenSerializer.Colon());
+                            tokens.Add(TokenSerializer.NewLine());
+                            tokens.Add(TokenSerializer.FoldableContentStart());
+                            
+                            tokens.Add(TokenSerializer.FoldableContentEnd());
+                        }
+                    }  
                 }
             }
         }

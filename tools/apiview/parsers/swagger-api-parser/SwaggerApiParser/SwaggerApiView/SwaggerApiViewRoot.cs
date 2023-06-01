@@ -21,7 +21,7 @@ namespace SwaggerApiParser.SwaggerApiView
             this.schemaCache = new SchemaCache();
         }
 
-        public async Task AddSwaggerSpec(SwaggerSpec swaggerSpec, string swaggerFilePath, string resourceProvider = "", string swaggerLink = "")
+        public async Task AddSwaggerSpec(Swagger swaggerSpec, string swaggerFilePath, string resourceProvider = "", string swaggerLink = "")
         {
             var swaggerApiViewSpec = await SwaggerApiViewGenerator.GenerateSwaggerApiView(swaggerSpec, swaggerFilePath, this.schemaCache, resourceProvider, swaggerLink);
 
@@ -31,7 +31,7 @@ namespace SwaggerApiParser.SwaggerApiView
             }
         }
 
-        public void AddDefinitionToCache(SwaggerSpec swaggerSpec, string swaggerFilePath)
+        public void AddDefinitionToCache(Swagger swaggerSpec, string swaggerFilePath)
         {
             SwaggerApiViewGenerator.AddDefinitionsToCache(swaggerSpec, swaggerFilePath, this.schemaCache);
         }
@@ -58,13 +58,13 @@ namespace SwaggerApiParser.SwaggerApiView
             List<CodeFileToken> ret = new List<CodeFileToken>();
             foreach (var kv in this.SwaggerApiViewSpecs)
             {
-                // ret.Add(TokenSerializer.Intent(context.intent));
+                // ret.Add(TokenSerializer.Intent(context.indent));
                 var fileName = Path.GetFileName(kv.Key);
                 ret.Add(new CodeFileToken(fileName, CodeFileTokenKind.Keyword));
                 ret.Add(TokenSerializer.Colon());
                 ret.Add(TokenSerializer.NewLine());
 
-                var specContext = new SerializeContext(context.intent + 1, context.IteratorPath);
+                var specContext = new SerializeContext(context.indent + 1, context.IteratorPath);
                 specContext.IteratorPath.Add(fileName);
 
                 var specToken = kv.Value.TokenSerialize(specContext);

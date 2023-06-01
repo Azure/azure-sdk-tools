@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.CommandLine;
 using System.Linq;
 using SwaggerApiParser.SwaggerApiView;
+using SwaggerApiParser.Specs;
 
 namespace SwaggerApiParser
 {
@@ -81,7 +82,7 @@ namespace SwaggerApiParser
             
             SwaggerApiViewRoot root = new SwaggerApiViewRoot(packageName, packageName);
 
-            List<SwaggerSpec> swaggerSpecs = new List<SwaggerSpec>();
+            List<Swagger> swaggerSpecs = new List<Swagger>();
 
             var idx = 0;
             foreach (var swaggerFilePath in swaggerFilePaths)
@@ -117,9 +118,5 @@ namespace SwaggerApiParser
             Console.WriteLine($"Generate codefile {output} successfully.");
             await codeFile.SerializeAsync(writer);
         }
-    }
-
-    internal class SwaggerSpec
-    {
     }
 }

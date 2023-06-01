@@ -7,17 +7,14 @@ namespace SwaggerApiParser.SwaggerApiView
     public class SwaggerApiViewParameter : ITokenSerializable
     {
         public string name { get; set; }
-        public bool required { get; set; }
+        public string @in { get; set; }
         public string description { get; set; }
-
+        public bool required { get; set; }
+        public Schema schema { get; set; }
         public string format { get; set; }
         public string type { get; set; }
-        public string In { get; set; }
-
-        public string Ref { get; set; }
-
-        public Schema schema { get; set; }
-
+        public string @ref { get; set; }
+        
         public List<string> GetKeywords()
         {
             List<string> ret = new List<string>();
@@ -25,7 +22,6 @@ namespace SwaggerApiParser.SwaggerApiView
             {
                 ret.Add("required");
             }
-
             return ret;
         }
 
@@ -49,6 +45,10 @@ namespace SwaggerApiParser.SwaggerApiView
             return ret;
         }
 
+        public bool IsRefObj()
+        {
+            return this.@ref != null;
+        }
 
         public CodeFileToken[] TokenSerialize(SerializeContext context)
         {
@@ -57,11 +57,10 @@ namespace SwaggerApiParser.SwaggerApiView
             {
                 ret.Add(TokenSerializer.NavigableToken("ref", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("ref")));
                 ret.Add(TokenSerializer.Colon());
-                string navigationToId = context.IteratorPath.rootPath() + Utils.GetRefDefinitionIdPath(this.Ref);
-                ret.Add(new CodeFileToken(this.Ref, CodeFileTokenKind.Literal) { NavigateToId = navigationToId });
+                string navigationToId = context.IteratorPath.rootPath() + Utils.GetRefDefinitionIdPath(this.@ref);
+                ret.Add(new CodeFileToken(this.@ref, CodeFileTokenKind.Literal) { NavigateToId = navigationToId });
                 return ret.ToArray();
             }
-
 
             string[] columns = new[] { "name", "Type/Format", "In", "Keywords", "Description" };
 
@@ -74,17 +73,12 @@ namespace SwaggerApiParser.SwaggerApiView
             }
 
             tableRows.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameterType, CodeFileTokenKind.Literal) }));
-            tableRows.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(this.In, CodeFileTokenKind.Literal) }));
+            tableRows.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(this.@in, CodeFileTokenKind.Literal) }));
             tableRows.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(String.Join(",", this.GetKeywords()), CodeFileTokenKind.Literal) }));
             tableRows.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(this.description, CodeFileTokenKind.Literal) }));
             ret.AddRange(TokenSerializer.TokenSerializeAsTableFormat(1, 5, columns, tableRows.ToArray(), context.IteratorPath.CurrentNextPath("table")));
             ret.Add(TokenSerializer.NewLine());
             return ret.ToArray();
-        }
-
-        public bool IsRefObj()
-        {
-            return this.Ref != null;
         }
     }
 

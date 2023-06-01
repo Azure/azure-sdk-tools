@@ -9,30 +9,32 @@ namespace SwaggerApiParser
 {
     public class SwaggerApiViewGenerator
     {
-        public static async Task<SwaggerApiViewSpec> GenerateSwaggerApiView(SwaggerSpec swaggerSpec, string swaggerFilePath, SchemaCache schemaCache, string packageName = "", string swaggerLink = "")
+        public static async Task<SwaggerApiViewSpec> GenerateSwaggerApiView(Swagger swaggerSpec, string swaggerFilePath, SchemaCache schemaCache, string packageName = "", string swaggerLink = "")
         {
             SwaggerApiViewSpec ret = new SwaggerApiViewSpec
             {
                 SwaggerApiViewGeneral =
-            {
-                info = swaggerSpec.info,
-                swagger = swaggerSpec.swagger,
-                host = swaggerSpec.host,
-                schemes = swaggerSpec.schemes,
-                consumes = swaggerSpec.consumes,
-                produces = swaggerSpec.produces,
-                security = swaggerSpec.security,
-                securityDefinitions = swaggerSpec.securityDefinitions,
-                xMsParameterizedHost = swaggerSpec.xMsParameterizedHost,
-                swaggerLink = swaggerLink
-            },
+                {
+                    swaggerLink = swaggerLink,
+                    swagger = swaggerSpec.swagger,
+                    info = swaggerSpec.info,
+                    host = swaggerSpec.host,
+                    basePath = swaggerSpec.basePath,
+                    schemes = swaggerSpec.schemes,
+                    consumes = swaggerSpec.consumes,
+                    produces = swaggerSpec.produces,
+                    securityDefinitions = swaggerSpec.securityDefinitions,
+                    security = swaggerSpec.security,
+                    tags = swaggerSpec.tags,
+                    externalDocs = swaggerSpec.externalDocs,
+                    patternedObjects = swaggerSpec.patternedObjects
+                },
                 fileName = Path.GetFileName(swaggerFilePath),
                 packageName = packageName
             };
 
             AddDefinitionsToCache(swaggerSpec, swaggerFilePath, schemaCache);
-            ret.SwaggerApiViewGeneral.xMsParameterizedHost?.ResolveParameters(schemaCache, swaggerFilePath);
-
+            //ret.SwaggerApiViewGeneral.xMsParameterizedHost?.ResolveParameters(schemaCache, swaggerFilePath);
 
             // If swagger doesn't have any path, it's common definition swagger. 
             if (swaggerSpec.paths.Count == 0)
@@ -40,59 +42,57 @@ namespace SwaggerApiParser
                 return null;
             }
 
-
-            foreach (var (currentPath, operations) in swaggerSpec.paths)
+            foreach (var (currentPath, apiPath) in swaggerSpec.paths)
             {
-                if (operations == null)
+                if (apiPath == null)
                 {
                     continue;
                 }
 
-                foreach (var (key, value) in operations.operations)
+                foreach (var (method, operation) in apiPath.operations)
                 {
                     SwaggerApiViewOperation op = new SwaggerApiViewOperation
                     {
-                        operation = value,
-                        method = key,
+                        operation = operation,
+                        method = method,
                         path = currentPath,
-                        operationId = value.operationId,
-                        description = value.description,
-                        summary = value.summary,
-                        tags = value.tags,
-                        procudes = value.produces,
-                        consumes = value.consumes,
-                        xMSPageable = value.xMsPageable,
-                        operationIdPrefix = Utils.GetOperationIdPrefix(value.operationId),
-                        operationIdAction = Utils.GetOperationIdAction(value.operationId),
+                        operationId = operation.operationId,
+                        tags = operation.tags,
+                        summary = operation.summary,
+                        description = operation.description,
+                        produces = operation.produces,
+                        consumes = operation.consumes,
+                        operationIdPrefix = Utils.GetOperationIdPrefix(operation.operationId),
+                        operationIdAction = Utils.GetOperationIdAction(operation.operationId),
                         PathParameters = new SwaggerApiViewOperationParameters("PathParameters"),
                         QueryParameters = new SwaggerApiViewOperationParameters("QueryParameters"),
                         BodyParameters = new SwaggerApiViewOperationParameters("BodyParameters"),
                         HeaderParameters = new SwaggerApiViewOperationParameters("HeaderParameters"),
                         Responses = new List<SwaggerApiViewResponse>(),
-                        xMsLongRunningOperation = value.xMsLongRunningOperaion
                     };
 
-                    if (value.parameters != null)
+                    if (operation.parameters != null)
                     {
-                        foreach (var parameter in value.parameters)
+                        foreach (var parameter in operation.parameters)
                         {
                             var param = parameter;
                             if (parameter.IsRefObject())
                             {
-                                param = (Parameter)swaggerSpec.ResolveRefObj(parameter.Ref) ?? schemaCache.GetParameterFromCache(parameter.Ref, swaggerFilePath);
+                                param = (Parameter)swaggerSpec.ResolveRefObj(parameter.@ref) ?? schemaCache.GetParameterFromCache(parameter.@ref, swaggerFilePath);
                             }
 
                             var currentSwaggerFilePath = swaggerFilePath;
 
                             if (param == null)
                             {
-                                if (!Path.IsPathFullyQualified(parameter.Ref))
+                                // Need to handle cases where ref is many levels deep
+                                if (!Path.IsPathFullyQualified(parameter.@ref))
                                 {
-                                    var referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(parameter.Ref, currentSwaggerFilePath);
+                                    var referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(parameter.@ref, currentSwaggerFilePath);
                                     var referenceSwaggerSpec = await SwaggerDeserializer.Deserialize(referenceSwaggerFilePath);
                                     referenceSwaggerSpec.swaggerFilePath = Path.GetFullPath(referenceSwaggerFilePath);
                                     AddDefinitionsToCache(referenceSwaggerSpec, referenceSwaggerFilePath, schemaCache);
-                                    param = schemaCache.GetParameterFromCache(parameter.Ref, currentSwaggerFilePath);
+                                    param = schemaCache.GetParameterFromCache(parameter.@ref, currentSwaggerFilePath);
                                 }
                                 else
                                 {
@@ -102,18 +102,17 @@ namespace SwaggerApiParser
 
                             var swaggerApiViewOperationParameter = new SwaggerApiViewParameter
                             {
-                                description = param.description,
                                 name = param.name,
+                                @in = param.@in,
+                                description = param.description,
                                 required = param.required,
-                                format = param.format,
-                                In = param.In,
                                 schema = schemaCache.GetResolvedSchema(param.schema, currentSwaggerFilePath),
-                                Ref = param.Ref,
+                                format = param.format,
+                                @ref = param.@ref,
                                 type = param.type
                             };
 
-
-                            switch (param.In)
+                            switch (param.@in)
                             {
                                 case "path":
                                     op.PathParameters.Add(swaggerApiViewOperationParameter);
@@ -132,7 +131,7 @@ namespace SwaggerApiParser
                     }
 
 
-                    foreach (var (statusCode, response) in value.responses)
+                    foreach (var (statusCode, response) in operation.responses)
                     {
                         var schema = response.schema;
                         var currentSwaggerFilePath = swaggerFilePath;
@@ -167,21 +166,21 @@ namespace SwaggerApiParser
 
             if (swaggerSpec.parameters != null)
             {
-                foreach (var kv in swaggerSpec.parameters)
+                foreach (var (key, value) in swaggerSpec.parameters)
                 {
-                    var param = kv.Value;
+                    var param = value;
                     var swaggerApiViewParameter = new SwaggerApiViewParameter
                     {
                         description = param.description,
                         name = param.name,
                         required = param.required,
                         format = param.format,
-                        In = param.In,
+                        @in = param.@in,
                         schema = schemaCache.GetResolvedSchema(param.schema, swaggerFilePath),
-                        Ref = param.Ref,
+                        @ref = param.@ref,
                         type = param.type
                     };
-                    ret.SwaggerApiViewGlobalParameters.Add(kv.Key, swaggerApiViewParameter);
+                    ret.SwaggerApiViewGlobalParameters.Add(key, swaggerApiViewParameter);
                 }
             }
 
@@ -189,7 +188,7 @@ namespace SwaggerApiParser
             return ret;
         }
 
-        public static void AddDefinitionsToCache(SwaggerSpec swaggerSpec, string swaggerFilePath, SchemaCache schemaCache)
+        public static void AddDefinitionsToCache(Swagger swaggerSpec, string swaggerFilePath, SchemaCache schemaCache)
         {
             var fullPath = Path.GetFullPath(swaggerFilePath);
             if (swaggerSpec.definitions != null)

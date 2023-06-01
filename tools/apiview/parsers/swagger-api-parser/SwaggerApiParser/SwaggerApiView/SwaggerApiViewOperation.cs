@@ -1,37 +1,32 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using SwaggerApiParser.Specs;
 
 namespace SwaggerApiParser.SwaggerApiView
 {
     public class SwaggerApiViewOperation : ITokenSerializable
     {
+        public List<string> tags { get; set; }
+        public string summary { get; set; }
+        public string description { get; set; }
+        public ExternalDocs externalDocs { get; set; }
         public string operationId { get; set; }
+        public List<string> consumes { get; set; }
+        public List<string> produces { get; set; }
+        public List<string> schemes { get; set; }
+        public bool deprecated { get; set; }
+        public List<Security> security { get; set; }
+        public IDictionary<string, dynamic> patternedObjects { get; set; }
         public string operationIdPrefix;
         public string operationIdAction { get; set; }
-        public string description { get; set; }
-
-        public List<string> tags { get; set; }
-
-        public List<string> procudes { get; set; }
-
-        public List<string> consumes { get; set; }
-        public string summary { get; set; }
         public string method { get; set; }
         public string path { get; set; }
-
-        //public XMsPageable xMSPageable { get; set; }
-
-        public Boolean xMsLongRunningOperation { get; set; }
-
         public Operation operation { get; set; }
-
         public SwaggerApiViewOperationParameters PathParameters { get; set; }
         public SwaggerApiViewOperationParameters QueryParameters { get; set; }
         public SwaggerApiViewOperationParameters BodyParameters { get; set; }
-
         public SwaggerApiViewOperationParameters HeaderParameters { get; set; }
-
         public List<SwaggerApiViewResponse> Responses { get; set; }
 
         public string _iteratorPath;
@@ -71,25 +66,25 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.Add(TokenSerializer.NewLine());
             }
 
-            if (this.xMsLongRunningOperation)
-            {
-                ret.Add(TokenSerializer.NavigableToken("x-ms-long-running-operation", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-long-running-operation")));
-                ret.Add(TokenSerializer.Colon());
-                ret.Add(new CodeFileToken("true", CodeFileTokenKind.Literal));
-                ret.Add(TokenSerializer.NewLine());
-            }
+            //if (this.xMsLongRunningOperation)
+            //{
+            //    ret.Add(TokenSerializer.NavigableToken("x-ms-long-running-operation", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-long-running-operation")));
+            //    ret.Add(TokenSerializer.Colon());
+            //    ret.Add(new CodeFileToken("true", CodeFileTokenKind.Literal));
+            //    ret.Add(TokenSerializer.NewLine());
+            //}
+            //
+            //if (this.xMSPageable != null)
+            //{
+            //    ret.Add(TokenSerializer.NavigableToken("x-ms-pageable", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-pageable")));
+            //    ret.Add(TokenSerializer.Colon());
+            //    ret.Add(new CodeFileToken(this.xMSPageable.nextLinkName, CodeFileTokenKind.Literal));
+            //    ret.Add(TokenSerializer.NewLine());
+            //}
 
-            if (this.xMSPageable != null)
+            if (this.produces != null)
             {
-                ret.Add(TokenSerializer.NavigableToken("x-ms-pageable", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-pageable")));
-                ret.Add(TokenSerializer.Colon());
-                ret.Add(new CodeFileToken(this.xMSPageable.nextLinkName, CodeFileTokenKind.Literal));
-                ret.Add(TokenSerializer.NewLine());
-            }
-
-            if (this.procudes != null)
-            {
-                ret.AddRange(TokenSerializer.KeyValueTokens("produces", string.Join(",", this.procudes)));
+                ret.AddRange(TokenSerializer.KeyValueTokens("produces", string.Join(",", this.produces)));
             }
 
             if (this.consumes != null)

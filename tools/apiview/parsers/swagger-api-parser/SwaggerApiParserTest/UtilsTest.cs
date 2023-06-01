@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using SwaggerApiParser;
+using SwaggerApiParser.SwaggerApiView;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -420,8 +422,32 @@ public class UtilsTest
         {
             this.output.WriteLine(prefix);
         }
+    }
+
+    [Fact]
+    public void SerializePatterenedObjectsCreatesTokensFromDiffPropertyTypes()
+    {
+        Dictionary<string, dynamic> patterenedObjects = new Dictionary<string, dynamic>();
+        List<CodeFileToken> tokens = new List<CodeFileToken>();
+        SerializeContext context = new SerializeContext();
+
+        dynamic xMsPagable = new ExpandoObject();
+        xMsPagable.itemName = "itemName";
+        xMsPagable.nextLinkName = "nextLinkName";
+        xMsPagable.operationName = "operationName";
+
+        dynamic xMsParameterGrouping = new ExpandoObject();
+        xMsParameterGrouping.name = "name";
+        xMsParameterGrouping.postfix = "postfix";
+
+        patterenedObjects.Add("x-ms-long-running-operation", true);
+        patterenedObjects.Add("x-ms-pageable", xMsPagable);
+        patterenedObjects.Add("x-ms-parameter-location", "parameter-location");
+        patterenedObjects.Add("x-ms-skip-url-encoding", false);
+        patterenedObjects.Add("x-ms-parameter-grouping", xMsParameterGrouping);
+
+
         
-
-
+        
     }
 }

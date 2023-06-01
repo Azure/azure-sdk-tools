@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using SwaggerApiParser;
+using SwaggerApiParser.SwaggerApiView;
 using Xunit;
 using Xunit.Abstractions;
 

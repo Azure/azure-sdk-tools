@@ -15,13 +15,9 @@ namespace SwaggerApiParser.Specs
         [JsonExtensionData]
         public IDictionary<string, dynamic> patternedObjects { get; set; }
 
-        // Not in the specificaton
-        // public ExternalDocs externalDocs { get; set; }
-
         public CodeFileToken[] TokenSerialize(SerializeContext context)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
-            ret.Add(TokenSerializer.FoldableContentStart());
             ret.AddRange(TokenSerializer.KeyValueTokens("title", title, true, context.IteratorPath.CurrentNextPath("title")));
 
             if (description != null)
@@ -32,7 +28,7 @@ namespace SwaggerApiParser.Specs
 
             if (contact != null)
             {
-                ret.Add(new CodeFileToken("contact", CodeFileTokenKind.FoldableSectionContentEnd));
+                ret.Add(new CodeFileToken("contact", CodeFileTokenKind.FoldableSectionHeading));
                 ret.Add(TokenSerializer.Colon());
                 ret.Add(TokenSerializer.NewLine());
                 ret.Add(TokenSerializer.FoldableContentStart());
@@ -42,7 +38,7 @@ namespace SwaggerApiParser.Specs
 
             if (license != null)
             {
-                ret.Add(new CodeFileToken("license", CodeFileTokenKind.FoldableSectionContentEnd));
+                ret.Add(new CodeFileToken("license", CodeFileTokenKind.FoldableSectionHeading));
                 ret.Add(TokenSerializer.Colon());
                 ret.Add(TokenSerializer.NewLine());
                 ret.Add(TokenSerializer.FoldableContentStart());
@@ -53,19 +49,7 @@ namespace SwaggerApiParser.Specs
             ret.AddRange(TokenSerializer.KeyValueTokens("version", version, true, context.IteratorPath.CurrentNextPath("version")));
 
             Utils.SerializePatternedObjects(patternedObjects, ret, context);
-
-            // Prob not required
-            //if (externalDocs != null)
-            //{
-            //    ret.Add(new CodeFileToken("externalDocs", CodeFileTokenKind.FoldableSectionHeading));
-            //    ret.Add(TokenSerializer.Colon());
-            //    ret.Add(TokenSerializer.NewLine());
-            //    ret.Add(TokenSerializer.FoldableContentStart());
-            //    ret.AddRange(externalDocs.TokenSerialize(context));
-            //    ret.Add(TokenSerializer.FoldableContentEnd());
-            //}
-
-            ret.Add(TokenSerializer.FoldableContentEnd());
+            
             return ret.ToArray();
         }
     }

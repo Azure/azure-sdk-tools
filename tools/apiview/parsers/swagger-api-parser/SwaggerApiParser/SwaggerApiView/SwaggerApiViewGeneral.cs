@@ -6,16 +6,20 @@ namespace SwaggerApiParser.SwaggerApiView
 {
     public class SwaggerApiViewGeneral : ITokenSerializable, INavigable
     {
-        public string swagger { set; get; }
         public string swaggerLink { set; get; }
+        public string swagger { set; get; }
         public Info info { set; get; }
         public string host { get; set; }
-        public Security security { get; set; }
-        public SecurityDefinitions securityDefinitions { get; set; }
-        public XMsParameterizedHost xMsParameterizedHost { get; set; }
+        public string basePath { get; set; }
         public List<string> schemes { get; set; }
         public List<string> consumes { get; set; }
         public List<string> produces { get; set; }
+        public SecurityDefinitions securityDefinitions { get; set; }
+        public Security security { get; set; }
+        public List<Tag> tags { get; set; }
+        public ExternalDocs externalDocs { get; set; }
+        public Dictionary<string, dynamic> patternedObjects { get; set; }
+
         public SwaggerApiViewGeneral()
         {
             this.info = new Info();
@@ -34,7 +38,9 @@ namespace SwaggerApiParser.SwaggerApiView
             ret.Add(new CodeFileToken("info", CodeFileTokenKind.FoldableSectionHeading));
             ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
+            ret.Add(TokenSerializer.FoldableContentStart());
             ret.AddRange(info.TokenSerialize(context));
+            ret.Add(TokenSerializer.FoldableContentEnd());
 
             if (schemes != null)
             {

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
 namespace SwaggerApiParser.SwaggerApiView
-
+{ 
     public class SwaggerApiViewGlobalParameters : SortedDictionary<string, SwaggerApiViewParameter>, ITokenSerializable, INavigable
     {
         public CodeFileToken[] TokenSerialize(SerializeContext context)

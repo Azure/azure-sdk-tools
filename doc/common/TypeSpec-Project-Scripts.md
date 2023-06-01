@@ -1,11 +1,11 @@
 # Integrating with typespec sync and generate scripts
 
-There are 2 common scripts provided for each language to be able to generate from within the language
+There are three common scripts provided for each language to be able to generate from within the language
 repo and use the remote typespec definition in the spec repo.
 
 ## One time language repo setup
 
-There are 3 things that these two scripts expect are set up in your language repo before they will run correctly.
+There are three things that these common scripts expect to be set up in your language repo before they will run correctly.
 
 1. Make sure your .gitignore is ignoring the TempTypeSpecFiles
 2. Create a common emitter-package.json for your language
@@ -73,13 +73,17 @@ function Get-dotnet-EmitterPackageJsonPath() {
 
 #### Get-${Language}-EmitterAdditionalOptions (Optional)
 
-This function allows you to append additional `--option` arguments that will be passed into typespec compile.  One example of this is the `emitter-output-dir`.  For dotnet we want the location of the generated files to be `{projectDir}/src` however in other languages they will have other conventions.  This method will take in a fully qualified path to the project directory so you can construct your relative path to that as the output.
+This function allows you to append additional `--option` arguments that will be passed into typespec compile.  One example of this is the `emitter-output-dir`.  For dotnet we want the location of the generated files to be `{projectDir}/src` however in other languages `emitter-output-dir` would be `$projectDirectory`.  This method will take in a fully qualified path to the project directory so you can construct your relative path to that as the output.
 
 Example
 
 ```powershell
 function Get-dotnet-EmitterAdditionalOptions([string]$projectDirectory) {
   return "--option @azure-tools/typespec-csharp.emitter-output-dir=$projectDirectory/src"
+}
+
+function Get-java-EmitterAdditionalOptions([string]$projectDirectory) {
+  return "--option @azure-tools/typespec-java.emitter-output-dir=$projectDirectory/"
 }
 ```
 
@@ -109,9 +113,33 @@ repo: Azure/azure-rest-api-specs
 cleanup: false
 ```
 
+## TypeSpec-Project-Process.ps1
+  - What does this script do?
+    -	fetch `tspconfig.yaml` from remote if it doesn’t exist locally
+    -	parse `tspconfig.yaml`
+    - create the service folder if none exists
+    - create an sdk project folder if none exists
+    -	create or update `tsp-location.yaml`
+    -	call `TypeSpec-Project-Sync.ps1`
+    -	call `TypeSpec-Project-Generate.ps1`
+  - input: 
+    - typespecProjectDirectory (required)
+      either a folder of `tspconfig.yaml` or a remoteUrl of `tspconfig.yaml`
+    - commitSha (optional)
+    - repoUrl (optional)
+  - output: sdk project folder
+
+```powershell
+./eng/common/scripts/TypeSpec-Project-Process.ps1 /home/rc/repos/tmp/spec-repo/specification/contosowidgetmanager/Contoso.WidgetManager 677e272f33a3eaa724abd769af79383a5ac2bba5 https://github.com/Azure/azure-rest-api-specs
+
+or
+
+./eng/common/scripts/TypeSpec-Project-Process.ps1 https://github.com/Azure/azure-rest-api-specs/blob/677e272f33a3eaa724abd769af79383a5ac2bba5/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml
+```
+
 ## TypeSpec-Project-Sync.ps1
 
-This is the first script that should be called and can be found at `./eng/common/scripts/TypeSpec-Project-Sync.ps1`.  It takes in one parameter which is the root directory of the project which is typically one layer lower than the service directory.  As an example for dotnet this is `./sdk/openai/Azure.AI.OpenAI` where `openai` is the service directory and `Azure.AI.OpenAI` is the project directory.
+It can be found at `./eng/common/scripts/TypeSpec-Project-Sync.ps1`.  It takes in one parameter which is the root directory of the project which is typically one layer lower than the service directory.  As an example for dotnet this is `./sdk/openai/Azure.AI.OpenAI` where `openai` is the service directory and `Azure.AI.OpenAI` is the project directory.
 
 ```powershell
 ./eng/common/scripts/TypeSpec-Project-Sync.ps1 ./sdk/openai/Azure.AI.OpenAI
@@ -125,7 +153,7 @@ This is then copied over to your project directory so that you can make temporar
 
 ## TypeSpec-Project-Generate.ps1
 
-This is the second script that should be called and can be found at `./eng/common/scripts/TypeSpec-Project-Generate.ps1`.  It takes the exact same parameter as the sync script.
+It can be found at `./eng/common/scripts/TypeSpec-Project-Generate.ps1`.  It takes the exact same parameter as the sync script.
 
 ```powershell
 ./eng/common/scripts/TypeSpec-Project-Generate.ps1 ./sdk/openai/Azure.AI.OpenAI
@@ -140,6 +168,10 @@ Once this is done it will run `npm install` followed by `tsp compile` which is t
 The exact command that gets run is output stdout to enable debugging if needed.
 
 We currently don't do anything to the tspconfig.yaml that gets pulled in from the spec repo to limit to just your language emitter instead we use the filter option on the command line `--emit $emitterName`.  This allows you to isolate the generation to only things owned by your language so you can safely add generation dependencies in CI without needing to worry about noisy neighbors.
+
+## Local scenario
+
+User is recommended to run `TypeSpec-Project-Process.ps1` to generate `tsp-location.yaml` automatically then it would call the other two common scripts to generate sdk code. Alternatively, user can prepare `tsp-location.yaml` manually then run the other two scripts manually to generate sdk code.
 
 ## Build tool integration
 

@@ -453,8 +453,7 @@ Start the recording **without a `x-recording-file` body value**.
 
 ```jsonc
 // targeted URI: https://localhost:5001/record/start
-// the request body will be EMPTY
-{}
+// the request body will be NULL / unset
 ```
 
 The POST will return a valid recordingId value which we will call `X`.
@@ -468,6 +467,8 @@ To load this recording for playback...
     "x-recording-id": "X"
 }
 ```
+
+When attempting to use in-memory recording, you cannot submit empty body `{}` to `/Record/Start`. Doing so will result in an error, as it is _expecting_ a recording file if a body provided.
 
 ### See example implementations
 

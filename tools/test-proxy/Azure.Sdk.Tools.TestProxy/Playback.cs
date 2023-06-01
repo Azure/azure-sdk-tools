@@ -31,11 +31,6 @@ namespace Azure.Sdk.Tools.TestProxy
         {
             var body = await HttpRequestInteractions.GetBody(Request);
 
-            if (body == null)
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, "When starting playback, a null body is not a valid input.");
-            }
-
             string file = HttpRequestInteractions.GetBodyKey(body, "x-recording-file", allowNulls: true);
             string recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
             var assetsJson = RecordingHandler.GetAssetsJsonLocation(

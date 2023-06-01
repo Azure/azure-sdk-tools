@@ -87,6 +87,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var playbackContext = new DefaultHttpContext();
             var recordingId = Guid.NewGuid().ToString();
             playbackContext.Request.Headers["x-recording-id"] = recordingId;
+
             var playbackController = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()

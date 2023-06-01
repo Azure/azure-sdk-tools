@@ -269,6 +269,12 @@ stages:
           displayName: 'Install azure-core-test'
           workingDirectory: $(CLONE_LOCATION)
 
+        # we want the proxy available so we can restore recordings and avoid the race condition error
+        # however, we also want to not run it such that the local executable is used by the java tests.
+        - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+          parameters:
+            runProxy: false
+
         - pwsh: |
             Get-ChildItem -Recurse -Path $(CLONE_LOCATION)/sdk/ -Filter assets.json | `
               ForEach-Object { test-proxy restore -a $_.FullName }

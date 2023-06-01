@@ -92,14 +92,14 @@ namespace Azure.SDK.ChangelogGen.Report
                 {
                     foreach(var fromItem in fromGroup.Notes)
                     {
-                        var toItem = toGroup.Notes.FirstOrDefault(t => string.Equals(fromItem.Note, t.Note, StringComparison.OrdinalIgnoreCase));
+                        var toItem = toGroup.Notes.FirstOrDefault(t => string.Equals(fromItem.ToString(), t.ToString(), StringComparison.OrdinalIgnoreCase));
                         if(toItem == null)
                         {
                             toGroup.Notes.Add(fromItem);
                         }
                         else
                         {
-                            Logger.Verbose($"{fromGroup}.{fromItem} ignored in merge");
+                            Logger.Verbose($"Release Note: {fromGroup.Name} -> {fromItem} ignored in merge");
                         }
                     }
                 }

@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/changelog-gen-for-net
+      - tools/net-changelog-gen-mgmt
 
 pr:
   branches:
@@ -19,9 +19,9 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/changelog-gen-for-net
+      - tools/net-changelog-gen-mgmt
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    ToolDirectory: tools/changelog-gen-for-net
+    ToolDirectory: tools/net-changelog-gen-mgmt

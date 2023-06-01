@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Azure.SDK.ChangelogGen\Azure.SDK.ChangelogGen.csproj" />
+    <ProjectReference Include="..\Azure.SDK.Management.ChangelogGen\Azure.SDK.Management.ChangelogGen.csproj" />
   </ItemGroup>
 
   <ItemGroup>

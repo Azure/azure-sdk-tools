@@ -107,7 +107,16 @@ namespace Azure.SDK.ChangelogGen
             if (this.ReleasesInChangelog.Count == 0)
                 throw new InvalidDataException("No release found in changelog.md. At least one Release (Unreleased) expected");
             if (this.ReleasesInChangelog[0].ReleaseDate != "Unreleased")
-                throw new InvalidDataException($"The last release in changelog.md is expected to be marked as 'Unreleased' instead of '{this.ReleasesInChangelog[0].ReleaseDate}'");
+            {
+                if (this.ReleasesInChangelog[0].Version != this.ReleaseVersion)
+                {
+                    throw new InvalidDataException($"The last release ('{this.ReleasesInChangelog[0].ReleaseDate}') in changelog.md is expected to be marked as 'Unreleased' or the same as the given version.");
+                }
+                else
+                {
+                    Logger.Warning($"Last release version in changelog.md is the same as given one. Generated changelog will be merged to it: {this.ReleaseVersion}");
+                }
+            }
 
             if (string.IsNullOrEmpty(BaselineVersion))
             {

@@ -33,7 +33,7 @@ namespace Azure.ResourceManager.AppService
     {
         public string MethodAdded() { throw null; }
         [System.ObsoleteAttribute("for test", false)]
-        public string MethodToBeObsoleted() { throw null; }
+        public string MethodToBeObsoleted(string name, int count, bool isEnabled, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) { throw null; }
         public string MethodChangeDefaultValue(int param = 1){throw null;}
         public int MethodToChangeReturnType() { throw null; }
         public string MethodToChangeParameter(int someParam) { throw null; }

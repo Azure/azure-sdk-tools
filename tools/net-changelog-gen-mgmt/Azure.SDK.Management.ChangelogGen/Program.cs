@@ -54,12 +54,20 @@ namespace Azure.SDK.ChangelogGen
                 using (Repository repo = new Repository(context.RepoRoot))
                 {
                     Tree baselineTree = repo.GetTreeByTag(context.BaselineGithubTag);
-                    Logger.Log("Start checking api files");
-                    Logger.Log("  Check ApiFile at: " + context.ApiFile);
-                    Logger.Log("  Baseline: same file with Github tag " + context.BaselineGithubTag);
-                    string curApiFileContent = File.ReadAllText(context.ApiFile);
-                    string baseApiFileContent = baselineTree.GetFileContent(context.ApiFileGithubKey);
-                    result.ApiChange = CompareApi(curApiFileContent, baseApiFileContent);
+                    // we only compare api change for stable version
+                    if (!context.IsPreview)
+                    {
+                        Logger.Log("Start checking api files");
+                        Logger.Log("  Check ApiFile at: " + context.ApiFile);
+                        Logger.Log("  Baseline: same file with Github tag " + context.BaselineGithubTag);
+                        string curApiFileContent = File.ReadAllText(context.ApiFile);
+                        string baseApiFileContent = baselineTree.GetFileContent(context.ApiFileGithubKey);
+                        result.ApiChange = CompareApi(curApiFileContent, baseApiFileContent);
+                    }
+                    else
+                    {
+                        Logger.Log("Skip API comparison for preview version");
+                    }
 
                     Logger.Log("Start checking Swagger Tag");
                     Logger.Log("  Check Autorest.md at: " + context.AutorestMdFile);
@@ -82,13 +90,20 @@ namespace Azure.SDK.ChangelogGen
                     string baseAzureRMVersion = baselineTree.GetLastReleaseVersionFromGitTree(context.AzureResourceManagerChangeLogGithubKey, context.IsPreview, out releaseDate);
                     result.AzureResourceManagerVersionChange = CompareVersion(curAzureRMVersion, baseAzureRMVersion, "Azure.ResourceManager");
                 }
-                Release nextRelease = result.GenerateReleaseNote(context.ReleaseVersion, context.ReleaseDate, context.IsPreview, context.ApiChangeFilter);
+                Release nextRelease = result.GenerateReleaseNote(context.ReleaseVersion, context.ReleaseDate, context.ApiChangeFilter);
+
 
                 if (context.UpdateReleaseVersionDate)
                 {
                     context.CurRelease.Version = context.ReleaseVersion;
                     context.CurRelease.ReleaseDate = context.ReleaseDate;
                 }
+
+                if (nextRelease.Groups.Count == 0)
+                {
+                    Logger.Warning("No change detected to generate release notes");
+                }
+
                 nextRelease.MergeTo(context.CurRelease, context.MergeMode);
 
                 Logger.Warning($"Release Note generated as below: \r\n" + context.CurRelease.ToString());

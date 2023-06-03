@@ -14,12 +14,12 @@ namespace Azure.SDK.ChangelogGen
         public StringValueChange? AzureCoreVersionChange { get; set; } = null;
         public StringValueChange? AzureResourceManagerVersionChange { get; set; } = null;
 
-        public Release GenerateReleaseNote(string version, string date, bool ignoreBreakingChange, List<ChangeCatogory> filter)
+        public Release GenerateReleaseNote(string version, string date, List<ChangeCatogory> filter)
         {
             const string PREFIX = "- ";
             Release report = new Release(version, date);
 
-            if (!ignoreBreakingChange && ApiChange!= null && ApiChange.GetBreakingChanges().Any())
+            if (ApiChange!= null && ApiChange.GetBreakingChanges().Any())
             {
                 ReleaseNoteGroup breakingGroup = new ReleaseNoteGroup("Breaking Changes");
                 var breaking = ApiChange?.GetBreakingChanges();
@@ -44,7 +44,8 @@ namespace Azure.SDK.ChangelogGen
             {
                 othersGroup.Notes.AddRange(nonbreaking.OrderBy(b => $"{b.ChangeCatogory}/{b.Target}").Select(b => new ReleaseNote(b.Description, PREFIX)));
             }
-            report.Groups.Add(othersGroup);
+            if(othersGroup.Notes.Count > 0)
+                report.Groups.Add(othersGroup);
 
             return report;
         }

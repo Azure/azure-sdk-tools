@@ -172,7 +172,8 @@ namespace Azure.SDK.ChangelogGen.Utilities
             var paramList = mi.GetParameters();
             var returnType = mi.ReturnType;
 
-            return $"{returnType.ToFriendlyString()} {mi.Name}{genericPart}({string.Join(", ", paramList.Select(p => $"{p.ParameterType.ToFriendlyString()} {p.Name}{(p.DefaultValue != null ? $" = {p.DefaultValue}" : "")}"))})";
+            string paramString = string.Join(", ", paramList.Select(p => $"{p.ParameterType.ToFriendlyString()} {p.Name}{(p.HasDefaultValue && p.DefaultValue != null ? $" = {p.DefaultValue}" : "")}"));
+            return $"{returnType.ToFriendlyString()} {mi.Name}{genericPart}({paramString})";
         }
 
         public static string ToFriendlyString(this Type type, bool fullName = false)

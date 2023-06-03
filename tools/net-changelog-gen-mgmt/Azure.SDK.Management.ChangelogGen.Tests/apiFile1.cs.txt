@@ -23,7 +23,7 @@ namespace Azure.ResourceManager.AppService
     public partial class TestMethod
     {
         public string MethodToBeDeleted() { throw null; }
-        public string MethodToBeObsoleted() { throw null; }
+        public string MethodToBeObsoleted(string name, int count, bool isEnabled, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) { throw null; }
         public string MethodChangeDefaultValue(int param = 0){throw null;}
         public string MethodToChangeReturnType() { throw null; }
         public string MethodToChangeParameter() { throw null; }

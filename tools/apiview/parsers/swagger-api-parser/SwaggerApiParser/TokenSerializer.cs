@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
@@ -166,10 +167,17 @@ namespace SwaggerApiParser
                 else if (propType.IsGenericType || propType.IsArray)
                 {
                     ret.Add(NewLine());
-                    foreach (var item in (IEnumerable)value)
+                    if (prop.Name.Equals("patterenedObjects"))
                     {
-                        var child = TokenSerializer.TokenSerialize(item, new SerializeContext(indent: context.indent + 1, context.IteratorPath));
-                        ret.AddRange(child);
+                        Utils.SerializePatternedObjects((value as Dictionary<string, JsonElement>), ret);
+                    }
+                    else 
+                    {
+                        foreach (var item in (IEnumerable)value)
+                        {
+                            var child = TokenSerializer.TokenSerialize(item, new SerializeContext(indent: context.indent + 1, context.IteratorPath));
+                            ret.AddRange(child);
+                        }
                     }
                 }
                 else

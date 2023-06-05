@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
 using SwaggerApiParser.Specs;
 using SwaggerApiParser.SwaggerApiView;
 
@@ -217,36 +220,26 @@ namespace SwaggerApiParser
         }
 
         public static List<string> GetKeywordsFromPatternedObject(List<string> keywords,
-            IDictionary<string, dynamic> patternedObjects)
+            IDictionary<string, JsonElement> patternedObjects)
         {
-            foreach (var (key, value) in patternedObjects)
+            if (patternedObjects != null) 
             {
-                if (value is bool)
-                {
-                    if (value)
-                        keywords.Add(key);
-                }
-                else if (value != null)
+                foreach (var (key, value) in patternedObjects)
                 {
                     var sb = new StringBuilder();
                     if (key.StartsWith("x-"))
                     {
                         sb.Append($"{key}: [");
-                        Type type = value.GetType();
-                        PropertyInfo[] properties = type.GetProperties();
-                        foreach (PropertyInfo property in properties)
-                        {
-                            sb.Append($"{property.Name}: {property.GetValue(value)}, ");
-                        }
-                        var kw = sb.ToString().TrimEnd(new char[] { ' ', ',' });
-                        keywords.Append(kw + ']');
+                        string jsonString = JsonSerializer.Serialize(value, new JsonSerializerOptions { WriteIndented = true});
+                        sb.Append(jsonString + ']');
+                        keywords.Add(sb.ToString());
                     }
                 }
             }
             return keywords;
         }
-
-        public static void SerializePatternedObjects(IDictionary<string, dynamic> patternedObjects, List<CodeFileToken> tokens, SerializeContext context)
+        
+        public static void SerializePatternedObjects(IDictionary<string, JsonElement> patternedObjects, List<CodeFileToken> tokens)
         {
             if (patternedObjects != null)
             {
@@ -254,23 +247,12 @@ namespace SwaggerApiParser
                 {
                     if (Regex.IsMatch(key, "^x-."))
                     {
-                        Type type = value.GetType();
-                        if (value is string || type.IsPrimitive)
-                        {
-                            tokens.AddRange(TokenSerializer.KeyValueTokens(key, value, true, context.IteratorPath.CurrentNextPath(key)));
-                        }
-                        else if (type.IsGenericType)
-                        {
-                        }
-                        else 
-                        {
-                            tokens.Add(new CodeFileToken(key, CodeFileTokenKind.FoldableSectionHeading));
-                            tokens.Add(TokenSerializer.Colon());
-                            tokens.Add(TokenSerializer.NewLine());
-                            tokens.Add(TokenSerializer.FoldableContentStart());
-                            
-                            tokens.Add(TokenSerializer.FoldableContentEnd());
-                        }
+                        tokens.Add(new CodeFileToken(key, CodeFileTokenKind.FoldableSectionHeading));
+                        tokens.Add(TokenSerializer.Colon());
+                        tokens.Add(TokenSerializer.NewLine());
+                        tokens.Add(TokenSerializer.FoldableContentStart());
+                        tokens.AddRange(TokenSerializer.TokenSerializeAsJson(value, true));
+                        tokens.Add(TokenSerializer.FoldableContentEnd());
                     }  
                 }
             }

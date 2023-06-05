@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using SwaggerApiParser.SwaggerApiView;
 
@@ -10,7 +11,7 @@ namespace SwaggerApiParser.Specs
         public string url { get; set; }
         public string email { get; set; }
         [JsonExtensionData]
-        public IDictionary<string, dynamic> patternedObjects { get; set; }
+        public IDictionary<string, JsonElement> patternedObjects { get; set; }
 
         public CodeFileToken[] TokenSerialize(SerializeContext context)
         {
@@ -24,7 +25,7 @@ namespace SwaggerApiParser.Specs
             if (email != null)
                 ret.AddRange(TokenSerializer.KeyValueTokens("email", email, true, context.IteratorPath.CurrentNextPath("email")));
 
-            Utils.SerializePatternedObjects(patternedObjects, ret, context);
+            Utils.SerializePatternedObjects(patternedObjects, ret);
 
             return ret.ToArray();
         }

@@ -14,7 +14,7 @@ namespace SwaggerApiParser
             SwaggerApiViewSpec ret = new SwaggerApiViewSpec
             {
                 SwaggerApiViewGeneral =
-                {
+                {   
                     swaggerLink = swaggerLink,
                     swagger = swaggerSpec.swagger,
                     info = swaggerSpec.info,
@@ -27,7 +27,9 @@ namespace SwaggerApiParser
                     security = swaggerSpec.security,
                     tags = swaggerSpec.tags,
                     externalDocs = swaggerSpec.externalDocs,
-                    patternedObjects = swaggerSpec.patternedObjects
+                    patternedObjects = swaggerSpec.patternedObjects,
+                    schemaCache = schemaCache,
+                    swaggerFilePath = swaggerFilePath
                 },
                 fileName = Path.GetFileName(swaggerFilePath),
                 packageName = packageName

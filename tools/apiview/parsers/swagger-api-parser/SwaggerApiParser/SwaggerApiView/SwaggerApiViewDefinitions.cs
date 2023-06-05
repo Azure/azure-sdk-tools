@@ -37,7 +37,7 @@ namespace SwaggerApiParser.SwaggerApiView
 
                 List<SchemaTableItem> tableItems = null;
                 string[] columns = new[] { "Field", "Type/Format", "Keywords", "Description" };
-                kv.Value.TokenSerializePropertyIntoTableItems(context, tableItems, false);
+                tableItems = kv.Value.TokenSerializePropertyIntoTableItems(context, tableItems, false);
 
                 var tableRet = new List<CodeFileToken>();
                 var tableRows = new List<CodeFileToken>();

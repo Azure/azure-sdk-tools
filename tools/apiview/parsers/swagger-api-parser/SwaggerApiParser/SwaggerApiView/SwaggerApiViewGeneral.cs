@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using SwaggerApiParser.Specs;
 
 namespace SwaggerApiParser.SwaggerApiView 
@@ -18,7 +19,9 @@ namespace SwaggerApiParser.SwaggerApiView
         public Security security { get; set; }
         public List<Tag> tags { get; set; }
         public ExternalDocs externalDocs { get; set; }
-        public Dictionary<string, dynamic> patternedObjects { get; set; }
+        public Dictionary<string, JsonElement> patternedObjects { get; set; }
+        public SchemaCache schemaCache { get; set; }
+        public string swaggerFilePath { get; set; }
 
         public SwaggerApiViewGeneral()
         {
@@ -90,15 +93,35 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.Add(TokenSerializer.FoldableContentEnd());
             }
 
-            if (xMsParameterizedHost != null)
+            if (tags != null && tags.Count > 0)
             {
-                ret.Add(new CodeFileToken("x-ms-parameterized-host", CodeFileTokenKind.FoldableSectionHeading));
+                ret.Add(new CodeFileToken("tags", CodeFileTokenKind.FoldableSectionHeading));
                 ret.Add(TokenSerializer.Colon());
                 ret.Add(TokenSerializer.NewLine());
                 ret.Add(TokenSerializer.FoldableContentStart());
-                ret.AddRange(xMsParameterizedHost.TokenSerialize(context));
+                foreach (var tag in tags)
+                {
+                    if (tag != null)
+                    {
+                        ret.AddRange(tag.TokenSerialize(context));
+                    }
+                }
                 ret.Add(TokenSerializer.FoldableContentEnd());
             }
+
+            if (externalDocs != null)
+            {
+                ret.Add(new CodeFileToken("externalDocs", CodeFileTokenKind.FoldableSectionHeading));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(TokenSerializer.NewLine());
+                ret.Add(TokenSerializer.FoldableContentStart());
+                ret.AddRange(externalDocs.TokenSerialize(context));
+                ret.Add(TokenSerializer.FoldableContentEnd());
+            }
+
+            if (patternedObjects != null && patternedObjects.Count > 0)
+                Utils.SerializePatternedObjects(patternedObjects, ret);
+
             return ret.ToArray();
         }
 

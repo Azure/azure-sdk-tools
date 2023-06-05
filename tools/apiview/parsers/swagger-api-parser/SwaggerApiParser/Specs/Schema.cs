@@ -34,7 +34,7 @@ namespace SwaggerApiParser.Specs
         public new CodeFileToken[] TokenSerialize(SerializeContext context)
         {
             string[] columns = new[] { "Model", "Field", "Type/Format", "Keywords", "Description" };
-            this.TokenSerializePropertyIntoTableItems(context, this.tableItems);
+            tableItems = this.TokenSerializePropertyIntoTableItems(context, this.tableItems);
             var tableRet = new List<CodeFileToken>();
             var tableRows = new List<CodeFileToken>();
             foreach (var tableItem in this.tableItems)
@@ -88,13 +88,14 @@ namespace SwaggerApiParser.Specs
             return this.type + typeFormat;
         }
 
-        public void TokenSerializePropertyIntoTableItems(SerializeContext context, List<SchemaTableItem> retTableItems, bool serializeRef = true, string[] columns = null)
+        public List<SchemaTableItem> TokenSerializePropertyIntoTableItems(SerializeContext context, List<SchemaTableItem> retTableItems, bool serializeRef = true, string[] columns = null)
         {
             if (retTableItems == null)
             {
                 retTableItems = new List<SchemaTableItem>();
                 this.TokenSerializeInternal(context, this, retTableItems, serializeRef);
             }
+            return retTableItems;
         }
 
         private CodeFileToken[] TokenSerializeInternal(SerializeContext context, Schema schema,
@@ -148,7 +149,7 @@ namespace SwaggerApiParser.Specs
                     SchemaTableItem enumItem = new SchemaTableItem { Description = schema.description };
                     const string enumType = "enum<string>";
                     enumItem.TypeFormat = enumType;
-                    if (schema.patternedObjects.ContainsKey("x-ms-enum") && schema.patternedObjects["x-ms-enum"] != null)
+                    if (schema.patternedObjects.ContainsKey("x-ms-enum"))
                     {
                         enumItem.Keywords = string.Join(", ", schema.GetKeywords());
                     }

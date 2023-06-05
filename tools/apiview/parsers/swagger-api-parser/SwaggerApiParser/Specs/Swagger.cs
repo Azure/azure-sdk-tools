@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace SwaggerApiParser.Specs
@@ -24,7 +25,7 @@ namespace SwaggerApiParser.Specs
         public List<Tag> tags { get; set; }
         public ExternalDocs externalDocs { get; set; }
         [JsonExtensionData]
-        public Dictionary<string, dynamic> patternedObjects { get; set; }
+        public Dictionary<string, JsonElement> patternedObjects { get; set; }
 
         public object ResolveRefObj(string Ref)
         {

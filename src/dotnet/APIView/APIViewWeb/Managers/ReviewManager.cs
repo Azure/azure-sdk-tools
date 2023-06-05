@@ -596,6 +596,7 @@ namespace APIViewWeb.Managers
         {
             var review = await GetReviewAsync(User, ReviewId);
             review.RequestedReviewers = reviewers;
+            review.RequestedBy = User.GetGitHubLogin();
             review.ApprovalRequestedOn = DateTime.Now;
             await _reviewsRepository.UpsertReviewAsync(review);
         }

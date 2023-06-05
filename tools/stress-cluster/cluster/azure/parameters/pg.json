@@ -21,10 +21,10 @@
       "value": "rg-stress-secrets-pg"
     },
     "defaultAgentPoolMinNodes": {
-      "value": 2
+      "value": 6
     },
     "defaultAgentPoolMaxNodes": {
-      "value": 10
+      "value": 20
     },
     "tags": {
       "value": {

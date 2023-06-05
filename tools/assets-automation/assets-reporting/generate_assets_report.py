@@ -356,13 +356,13 @@ def evaluate_java_package(package_path: str) -> int:
     possible_test_directory = resolve_java_test_directory(package_path)
     possible_assets_location = os.path.join(os.path.dirname(package_path),'assets.json')
 
-    if not possible_test_directory:
-        return 0
-
-    test_files = glob.glob(os.path.join(possible_test_directory, "**", "*.java"), recursive=True)
-
     if os.path.exists(possible_assets_location):
         return 2
+    
+    if not possible_test_directory:
+        return -1
+
+    test_files = glob.glob(os.path.join(possible_test_directory, "**", "*.java"), recursive=True)
 
     # we only will search the test_files if there are actual session-records present
     session_glob = os.path.join(possible_test_directory, "**", "session-records")

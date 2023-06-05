@@ -129,28 +129,28 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             Assert.That(results.Results[1].Tag, Is.EqualTo("js/storage/storage-blob_5d5a32b74a"));
             Assert.That(results.Results[1].TagRepo, Is.EqualTo("Azure/azure-sdk-assets"));
 
-            Assert.That(results.Results[2].AssetsLocation, Is.EqualTo("sdk/agrifood/arm-agrifood/assets.json"));
-            Assert.That(results.Results[2].Commit, Is.EqualTo("f139c4ddf7aaa4d637282ae7da4466b473044281"));
+            Assert.That(results.Results[2].AssetsLocation, Is.EqualTo("sdk/appconfiguration/app-configuration/assets.json"));
+            Assert.That(results.Results[2].Commit, Is.EqualTo("4b6ee6ea00af2384c0dcc0558e9b96d8051aa8cf"));
             Assert.That(results.Results[2].Repo, Is.EqualTo("azure/azure-sdk-assets-integration"));
-            Assert.That(results.Results[2].Tag, Is.EqualTo("js/agrifood/arm-agrifood_4f244d09c7"));
+            Assert.That(results.Results[2].Tag, Is.EqualTo("js/appconfiguration/app-configuration_61261605e2"));
             Assert.That(results.Results[2].TagRepo, Is.EqualTo("Azure/azure-sdk-assets"));
 
-            Assert.That(results.Results[3].AssetsLocation, Is.EqualTo("sdk/appconfiguration/app-configuration/assets.json"));
+            Assert.That(results.Results[3].AssetsLocation, Is.EqualTo("sdk/keyvault/keyvault-certificates/assets.json"));
             Assert.That(results.Results[3].Commit, Is.EqualTo("4b6ee6ea00af2384c0dcc0558e9b96d8051aa8cf"));
             Assert.That(results.Results[3].Repo, Is.EqualTo("azure/azure-sdk-assets-integration"));
-            Assert.That(results.Results[3].Tag, Is.EqualTo("js/appconfiguration/app-configuration_61261605e2"));
+            Assert.That(results.Results[3].Tag, Is.EqualTo("js/keyvault/keyvault-certificates_43821e21b3"));
             Assert.That(results.Results[3].TagRepo, Is.EqualTo("Azure/azure-sdk-assets"));
 
-            Assert.That(results.Results[4].AssetsLocation, Is.EqualTo("sdk/keyvault/keyvault-certificates/assets.json"));
+            Assert.That(results.Results[4].AssetsLocation, Is.EqualTo("sdk/keyvault/keyvault-keys/assets.json"));
             Assert.That(results.Results[4].Commit, Is.EqualTo("4b6ee6ea00af2384c0dcc0558e9b96d8051aa8cf"));
             Assert.That(results.Results[4].Repo, Is.EqualTo("azure/azure-sdk-assets-integration"));
-            Assert.That(results.Results[4].Tag, Is.EqualTo("js/keyvault/keyvault-certificates_43821e21b3"));
+            Assert.That(results.Results[4].Tag, Is.EqualTo("js/keyvault/keyvault-keys_b69a5239e9"));
             Assert.That(results.Results[4].TagRepo, Is.EqualTo("Azure/azure-sdk-assets"));
 
-            Assert.That(results.Results[5].AssetsLocation, Is.EqualTo("sdk/keyvault/keyvault-keys/assets.json"));
-            Assert.That(results.Results[5].Commit, Is.EqualTo("4b6ee6ea00af2384c0dcc0558e9b96d8051aa8cf"));
+            Assert.That(results.Results[5].AssetsLocation, Is.EqualTo("sdk/agrifood/arm-agrifood/assets.json"));
+            Assert.That(results.Results[5].Commit, Is.EqualTo("f139c4ddf7aaa4d637282ae7da4466b473044281"));
             Assert.That(results.Results[5].Repo, Is.EqualTo("azure/azure-sdk-assets-integration"));
-            Assert.That(results.Results[5].Tag, Is.EqualTo("js/keyvault/keyvault-keys_b69a5239e9"));
+            Assert.That(results.Results[5].Tag, Is.EqualTo("js/agrifood/arm-agrifood_4f244d09c7"));
             Assert.That(results.Results[5].TagRepo, Is.EqualTo("Azure/azure-sdk-assets"));
         }
 
@@ -179,10 +179,10 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             Assert.That(results.ByRepo["azure/azure-sdk-tools"][1].Tag, Is.EqualTo("python/keyvault/azure-keyvault-administration_f6e776f55f"));
             Assert.That(results.ByRepo["azure/azure-sdk-tools"][1].TagRepo, Is.EqualTo("Azure/azure-sdk-assets"));
 
-            Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].AssetsLocation, Is.EqualTo("sdk/keyvault/keyvault-keys/assets.json"));
-            Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].Commit, Is.EqualTo("4b6ee6ea00af2384c0dcc0558e9b96d8051aa8cf"));
+            Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].AssetsLocation, Is.EqualTo("sdk/agrifood/arm-agrifood/assets.json"));
+            Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].Commit, Is.EqualTo("f139c4ddf7aaa4d637282ae7da4466b473044281"));
             Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].Repo, Is.EqualTo("azure/azure-sdk-assets-integration"));
-            Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].Tag, Is.EqualTo("js/keyvault/keyvault-keys_b69a5239e9"));
+            Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].Tag, Is.EqualTo("js/agrifood/arm-agrifood_4f244d09c7"));
             Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].TagRepo, Is.EqualTo("Azure/azure-sdk-assets"));
         }
 

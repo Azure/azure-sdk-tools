@@ -36,6 +36,9 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
             ByTargetTag = new Dictionary<string, List<AssetsResult>>();
             ByOriginSHA = new Dictionary<string, List<AssetsResult>>();
 
+            // sort to ensure that orderings are always the same
+            Results = Results.OrderBy(asset => asset.TagRepo).ThenBy(asset => asset.Commit).ThenBy(asset => asset.Tag).ToList();
+
             foreach (var result in Results)
             {
                 if (!ByRepo.ContainsKey(result.Repo))

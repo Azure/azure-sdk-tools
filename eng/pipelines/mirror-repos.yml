@@ -71,10 +71,6 @@ jobs:
               Azure/azure-sdk-for-c-pr:
               azure-sdk/azure-sdk-for-c:
 
-          Azure/azure-libraries-for-java:
-            TargetRepos:
-              Azure/azure-libraries-for-java-pr:
-
           Microsoft/vcpkg:
             TargetRepos:
               azure-sdk/vcpkg:

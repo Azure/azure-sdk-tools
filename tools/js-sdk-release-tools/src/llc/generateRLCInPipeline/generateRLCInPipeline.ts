@@ -26,14 +26,14 @@ export async function generateRLCInPipeline(options: {
     typespecProject: string | undefined;
     autorestConfig: string | undefined;
     sdkGenerationType: "script" | "command";
-    use?: string;
+    swaggerRepoUrl: string;
+    gitCommitId: string;
     typespecEmitter: string;
+    use?: string;
     outputJson?: any;
     additionalArgs?: string;
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
-    swaggerRepoUrl: string;
-    gitCommitId: string;
 }) {
     let packagePath: string | undefined = undefined;
     let relativePackagePath: string | undefined = undefined;
@@ -41,7 +41,7 @@ export async function generateRLCInPipeline(options: {
         if (!options.skipGeneration) {
             logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.typespecProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
             if(options.sdkGenerationType === "command") {
-                logger.logGreen("Run TypeScript command directly.");
+                logger.logGreen("Run TypeSpec command directly.");
                 const copyPackageJsonName = 'emitter-package.json';
                 logger.logGreen(`copy package.json file if not exist from SDK repo ${copyPackageJsonName}`);
                 const installCommand = prepareCommandToInstallDependenciesForTypeSpecProject(path.join(options.sdkRepo, 'eng', copyPackageJsonName), path.join(options.swaggerRepo, options.typespecProject, 'package.json'));
@@ -60,14 +60,14 @@ export async function generateRLCInPipeline(options: {
                     stdio: 'inherit',
                     cwd: path.join(options.swaggerRepo, options.typespecProject)
                 });
-                logger.logGreen("End TypeScript command directly.");
+                logger.logGreen("End with TypeSpec command.");
             } else {
                 logger.logGreen("Run ./eng/common/scripts/TypeSpec-Project-Process.ps1 script directly.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
                 const scriptCommand = ['pwsh', './eng/common/scripts/TypeSpec-Project-Process.ps1', tspDefDir,  options.gitCommitId, options.swaggerRepoUrl].join(" ");
                 logger.logGreen(`${scriptCommand}`);
                 execSync(scriptCommand, {stdio: 'inherit'});
-                logger.logGreen("End ./eng/common/scripts/TypeSpec-Project-Process.ps1 script directly.");
+                logger.logGreen("End with ./eng/common/scripts/TypeSpec-Project-Process.ps1 script.");
             } 
         }
     } else {

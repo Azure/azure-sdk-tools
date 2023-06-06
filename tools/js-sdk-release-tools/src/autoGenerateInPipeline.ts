@@ -69,7 +69,9 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
             outputJson: outputJson,
             skipGeneration: skipGeneration,
             sdkGenerationType: (sdkGenerationType === "command") ? "command" : "script",
-            runningEnvironment: runningEnvironment
+            runningEnvironment: runningEnvironment,
+            swaggerRepoUrl: repoHttpsUrl,
+            gitCommitId: gitCommitId,
         })
     }
     await restoreNodeModules(String(shell.pwd()));

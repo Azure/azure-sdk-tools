@@ -32,6 +32,8 @@ export async function generateRLCInPipeline(options: {
     additionalArgs?: string;
     skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
+    swaggerRepoUrl: string;
+    gitCommitId: string;
 }) {
     let packagePath: string | undefined = undefined;
     let relativePackagePath: string | undefined = undefined;
@@ -58,8 +60,14 @@ export async function generateRLCInPipeline(options: {
                     stdio: 'inherit',
                     cwd: path.join(options.swaggerRepo, options.typespecProject)
                 });
+                logger.logGreen("End TypeScript command directly.");
             } else {
                 logger.logGreen("Run ./eng/common/scripts/TypeSpec-Project-Process.ps1 script directly.");
+                const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
+                const scriptCommand = ['pwsh', './eng/common/scripts/TypeSpec-Project-Process.ps1', tspDefDir,  options.gitCommitId, options.swaggerRepoUrl].join(" ");
+                logger.logGreen(`${scriptCommand}`);
+                execSync(scriptCommand, {stdio: 'inherit'});
+                logger.logGreen("End ./eng/common/scripts/TypeSpec-Project-Process.ps1 script directly.");
             } 
         }
     } else {

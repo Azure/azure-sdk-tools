@@ -18,8 +18,8 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
         public string WorkingDirectory { get; set; }
         public static readonly string GIT_TOKEN_ENV_VAR = "GIT_TOKEN";
 
-        private string ResultsFile { get
-            {
+        private string ResultsFile {
+            get {
                 return Path.Combine(WorkingDirectory, "output.json");
             }
         }
@@ -104,12 +104,12 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
 
             try
             {
-                if(!Directory.Exists(workingDirectory))
+                if (!Directory.Exists(workingDirectory))
                 {
                     Directory.CreateDirectory(workingDirectory);
                 }
 
-                foreach(var branch in config.Branches)
+                foreach (var branch in config.Branches)
                 {
                     var commitsOnBranch = GetBranchCommits(targetRepoUri, branch, config.ScanStartDate, workingDirectory);
                     var unretrievedCommits = ResolveUnhandledCommits(commitsOnBranch, previousOutput);
@@ -146,7 +146,8 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
             try
             {
                 // if git is already initialized, we just need to checkout a specific branch
-                if (!Directory.Exists(Path.Combine(workingDirectory, ".git"))) {
+                if (!Directory.Exists(Path.Combine(workingDirectory, ".git")))
+                {
                     handler.Run($"clone {uri} --branch {branch} --single-branch .", workingDirectory);
                 }
                 else
@@ -160,13 +161,13 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
                 var tagResult = handler.Run($"log --since={since.ToString("yyyy-MM-dd")} --format=format:%H", workingDirectory);
                 commitSHAs.AddRange(tagResult.StdOut.Split(Environment.NewLine).Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)));
             }
-            catch(GitProcessException gitException)
+            catch (GitProcessException gitException)
             {
                 // special case handling here?
                 Console.WriteLine(gitException.ToString());
                 Environment.Exit(1);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine(e.ToString());
                 Environment.Exit(1);

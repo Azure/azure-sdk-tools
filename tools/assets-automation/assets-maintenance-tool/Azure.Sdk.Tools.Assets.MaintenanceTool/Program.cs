@@ -35,6 +35,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool
 
             // --input-tag <tag on repo>?
                 // SCAN, BACKUP, and CLEANUP individual tag
+
         public static void Main(string[] args)
         {
             StoredArgs = args;

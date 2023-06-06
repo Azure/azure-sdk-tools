@@ -26,7 +26,8 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
 
         public GitProcessHandler handler { get; set; } = new GitProcessHandler();
 
-        public AssetsScanner(string workingDirectory) {
+        public AssetsScanner(string workingDirectory)
+        {
             WorkingDirectory = workingDirectory;
         }
 

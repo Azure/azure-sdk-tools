@@ -11,7 +11,8 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
     /// </summary>
     public class RepoConfiguration
     {
-        public RepoConfiguration(string repo) { 
+        public RepoConfiguration(string repo)
+        { 
             Repo = repo;
         }
 

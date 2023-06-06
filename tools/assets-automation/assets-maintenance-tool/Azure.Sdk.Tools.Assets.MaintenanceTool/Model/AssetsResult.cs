@@ -11,7 +11,8 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
     /// </summary>
     public class AssetsResult
     {
-        public AssetsResult(string repo, string repoCommit, string assetsLocation, string tag, string tagRepo, string? backupUri = null, DateTime? scanDate = null) {
+        public AssetsResult(string repo, string repoCommit, string assetsLocation, string tag, string tagRepo, string? backupUri = null, DateTime? scanDate = null)
+        {
             Repo = repo;
             Commit = repoCommit;
             AssetsLocation = assetsLocation;

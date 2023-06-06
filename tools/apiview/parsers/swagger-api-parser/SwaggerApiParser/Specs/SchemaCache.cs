@@ -91,13 +91,10 @@ namespace SwaggerApiParser.Specs
             return ret;
         }
 
-        public Parameter GetParameterFromCache(string Ref, string currentSwaggerFilePath)
+        public Parameter GetParameterFromCache(string Ref, string currentSwaggerFilePath, ref string referenceSwaggerFilePath)
         {
             // try get from resolved cache.
-
-
-            var referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
-
+            referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
 
             this.ParametersCache.TryGetValue(referenceSwaggerFilePath, out var parameterCache);
             if (parameterCache == null)
@@ -120,7 +117,8 @@ namespace SwaggerApiParser.Specs
         {
             if (parameter.IsRefObject())
             {
-                return this.GetParameterFromCache(parameter.@ref, currentSwaggerFilePath);
+                var resolvedFromPath = String.Empty;
+                return this.GetParameterFromCache(parameter.@ref, currentSwaggerFilePath, ref resolvedFromPath);
             }
 
             return parameter;

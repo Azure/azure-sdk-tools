@@ -48,7 +48,7 @@ namespace SwaggerApiParser
             ReadmeParser parser = new ReadmeParser(readme);
             parser.ParseReadmeConfig();
             string readmeTag = tag;
-            if (tag == "default")
+            if (tag == "default" && parser.basicConfig != null)
             {
                 readmeTag = parser.basicConfig.tag;
             }
@@ -78,23 +78,36 @@ namespace SwaggerApiParser
                     .IgnoreUnmatchedProperties()
                     .Build();
 
-                if (yamlBlock.Lines.ToString().Contains("tag") && basicConfig == null)
+                if (yamlBlock.Lines.Lines.Any(x => x.ToString().StartsWith("tag")) && basicConfig == null)
                 {
                     basicConfig = yamlDeserializer.Deserialize<ReadmeBasicConfiguration>(yamlBlock.Lines.ToString());
                 }
                 else if (yamlBlock.Lines.ToString().Contains("input-file"))
                 {
                     var argument = yamlBlock.Arguments;
-                    var inputSwaggerFiles = yamlDeserializer.Deserialize<InputSwaggerFiles>(yamlBlock.Lines.ToString());
+                    InputSwaggerFiles inputSwaggerFiles = null;
+                    try 
+                    {
+                        inputSwaggerFiles = yamlDeserializer.Deserialize<InputSwaggerFiles>(yamlBlock.Lines.ToString());
+                    } catch (Exception) {
+                        Console.WriteLine($"Invalid Yaml Block [ {yamlBlock.Lines.ToString()} ] in Readme. Consider Updating then Run Parser again.");
+                        continue;
+                    }
+                    
                     if (argument == null)
                     {
                         continue;
                     }
 
                     var tag = ReadmeParser.GetTagFromYamlArguments(argument);
-
-                    inputSwaggerFiles.input?.Sort(StringComparer.InvariantCultureIgnoreCase);
-                    inputSwaggerFilesMap.Add(tag, inputSwaggerFiles);
+                    if (inputSwaggerFiles != null && inputSwaggerFiles.input != null)
+                    {
+                        inputSwaggerFiles.input?.Sort(StringComparer.InvariantCultureIgnoreCase);
+                        if (!inputSwaggerFilesMap.ContainsKey(tag))
+                        {
+                            inputSwaggerFilesMap.Add(tag, inputSwaggerFiles);
+                        }
+                    }
                 }
             }
         }

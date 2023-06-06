@@ -45,19 +45,19 @@ namespace SwaggerApiParser.SwaggerApiView
             ret.AddRange(info.TokenSerialize(context));
             ret.Add(TokenSerializer.FoldableContentEnd());
 
-            if (schemes != null)
+            if (schemes != null && schemes.Count > 0)
             {
                 var schemesStr = String.Join(",", schemes);
                 ret.AddRange(TokenSerializer.KeyValueTokens("schemes", schemesStr, true, context.IteratorPath.CurrentNextPath("schemes")));
             }
 
-            if (consumes != null)
+            if (consumes != null && consumes.Count > 0)
             {
                 var consumesStr = String.Join(",", consumes);
                 ret.AddRange(TokenSerializer.KeyValueTokens("consumes", consumesStr, true, context.IteratorPath.CurrentNextPath("consumes")));
             }
 
-            if (produces != null)
+            if (produces != null && produces.Count > 0)
             {
                 var producesStr = String.Join(",", produces);
                 ret.AddRange(TokenSerializer.KeyValueTokens("produces", producesStr, true, context.IteratorPath.CurrentNextPath("produces")));

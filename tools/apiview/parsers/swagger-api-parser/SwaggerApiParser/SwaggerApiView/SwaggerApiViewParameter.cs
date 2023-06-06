@@ -62,7 +62,7 @@ namespace SwaggerApiParser.SwaggerApiView
                 return ret.ToArray();
             }
 
-            string[] columns = new[] { "name", "Type/Format", "In", "Keywords", "Description" };
+            string[] columns = new[] { "Name", "Type/Format", "In", "Keywords", "Description" };
 
             List<CodeFileToken> tableRows = new List<CodeFileToken>();
             tableRows.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(this.name, CodeFileTokenKind.Literal) }));
@@ -76,8 +76,11 @@ namespace SwaggerApiParser.SwaggerApiView
             tableRows.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(this.@in, CodeFileTokenKind.Literal) }));
             tableRows.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(String.Join(",", this.GetKeywords()), CodeFileTokenKind.Literal) }));
             tableRows.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(this.description, CodeFileTokenKind.Literal) }));
-            ret.AddRange(TokenSerializer.TokenSerializeAsTableFormat(1, 5, columns, tableRows.ToArray(), context.IteratorPath.CurrentNextPath("table")));
-            ret.Add(TokenSerializer.NewLine());
+            if (tableRows.Count > 0)
+            {
+                ret.AddRange(TokenSerializer.TokenSerializeAsTableFormat(1, 5, columns, tableRows.ToArray(), context.IteratorPath.CurrentNextPath("table")));
+                ret.Add(TokenSerializer.NewLine());
+            }
             return ret.ToArray();
         }
     }
@@ -129,8 +132,11 @@ namespace SwaggerApiParser.SwaggerApiView
             ret.Add(TokenSerializer.NewLine());
             string[] columns = new[] { "Name", "Type/Format", "Keywords", "Description" };
             var tableRows = this.TokenSerializeTableRows(context);
-            ret.AddRange(TokenSerializer.TokenSerializeAsTableFormat(this.Count, 4, columns, tableRows, context.IteratorPath.CurrentNextPath("table")));
-            ret.Add(TokenSerializer.NewLine());
+            if (tableRows.Length > 0)
+            {
+                ret.AddRange(TokenSerializer.TokenSerializeAsTableFormat(this.Count, 4, columns, tableRows, context.IteratorPath.CurrentNextPath("table")));
+                ret.Add(TokenSerializer.NewLine());
+            }
             context.IteratorPath.Pop();
             return ret.ToArray();
         }
@@ -143,12 +149,10 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameter.name, CodeFileTokenKind.MemberName) }));
                 var parameterType = parameter.GetTypeFormat();
 
-
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameterType, CodeFileTokenKind.Keyword) }));
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(String.Join(",", parameter.GetKeywords()), CodeFileTokenKind.Literal) }));
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameter.description, CodeFileTokenKind.Literal) }));
             }
-
             return ret.ToArray();
         }
     }

@@ -48,9 +48,11 @@ namespace SwaggerApiParser.SwaggerApiView
                     tableRows.AddRange(tableItem.TokenSerializeWithOptions(serializedFields));
                 }
 
-                tableRet.AddRange(TokenSerializer.TokenSerializeAsTableFormat(tableItems.Count, columns.Length, columns, tableRows.ToArray(), context.IteratorPath.CurrentNextPath("table")));
+                if (tableRows.Count > 0)
+                {
+                    tableRet.AddRange(TokenSerializer.TokenSerializeAsTableFormat(tableItems.Count, columns.Length, columns, tableRows.ToArray(), context.IteratorPath.CurrentNextPath("table")));
+                }
                 tableRet.Add(TokenSerializer.NewLine());
-
 
                 ret.AddRange(tableRet);
                 context.IteratorPath.Pop();

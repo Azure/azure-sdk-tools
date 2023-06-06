@@ -129,12 +129,17 @@ namespace SwaggerApiParser
             Type t = obj.GetType();
             PropertyInfo[] props = t.GetProperties();
 
-
             if (t.IsPrimitive || t == typeof(Decimal) || t == typeof(String))
             {
                 // ret.Add(Intent(intent));
                 ret.Add(new CodeFileToken(obj.ToString(), CodeFileTokenKind.Literal));
                 ret.Add(TokenSerializer.NewLine());
+                return ret.ToArray();
+            }
+
+            if (t.Name == "JsonElement")
+            {
+                ret.AddRange(TokenSerializer.TokenSerializeAsJson((JsonElement)obj, true));
                 return ret.ToArray();
             }
 

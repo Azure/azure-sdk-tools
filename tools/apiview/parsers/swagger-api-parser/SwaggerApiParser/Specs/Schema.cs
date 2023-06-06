@@ -17,7 +17,7 @@ namespace SwaggerApiParser.Specs
         public new Schema items { get; set; } // Should this be an array?
         public List<Schema> allOf { get; set; }
         public Dictionary<string, Schema> properties { get; set; }
-        public Schema additionalProperties { get; set; }
+        public dynamic additionalProperties { get; set; }
         public string discriminator { get; set; }
         public bool readOnly { get; set; }
         public XML xml { get; set; }
@@ -41,7 +41,10 @@ namespace SwaggerApiParser.Specs
             {
                 tableRows.AddRange(tableItem.TokenSerialize());
             }
-            tableRet.AddRange(TokenSerializer.TokenSerializeAsTableFormat(this.tableItems.Count, columns.Length, columns, tableRows.ToArray(), context.IteratorPath.CurrentNextPath("table")));
+            if (tableRows.Count > 0)
+            {
+                tableRet.AddRange(TokenSerializer.TokenSerializeAsTableFormat(this.tableItems.Count, columns.Length, columns, tableRows.ToArray(), context.IteratorPath.CurrentNextPath("table")));
+            }
             tableRet.Add(TokenSerializer.NewLine());
             return tableRet.ToArray();
         }
@@ -149,7 +152,7 @@ namespace SwaggerApiParser.Specs
                     SchemaTableItem enumItem = new SchemaTableItem { Description = schema.description };
                     const string enumType = "enum<string>";
                     enumItem.TypeFormat = enumType;
-                    if (schema.patternedObjects.ContainsKey("x-ms-enum"))
+                    if (schema.patternedObjects != null && schema.patternedObjects.ContainsKey("x-ms-enum"))
                     {
                         enumItem.Keywords = string.Join(", ", schema.GetKeywords());
                     }

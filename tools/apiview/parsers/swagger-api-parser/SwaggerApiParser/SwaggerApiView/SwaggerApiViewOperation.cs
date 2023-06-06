@@ -36,6 +36,13 @@ namespace SwaggerApiParser.SwaggerApiView
             List<CodeFileToken> ret = new List<CodeFileToken>();
 
             ret.Add(TokenSerializer.FoldableContentStart());
+            if (this.summary != null)
+            {
+                ret.Add(TokenSerializer.NavigableToken("summary", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("summary")));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(new CodeFileToken(this.summary, CodeFileTokenKind.Literal));
+                ret.Add(TokenSerializer.NewLine());
+            }
 
             if (this.description != null)
             {
@@ -45,18 +52,26 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.Add(TokenSerializer.NewLine());
             }
 
-            if (this.summary != null)
-            {
-                ret.Add(TokenSerializer.NavigableToken("summary", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("summary")));
-                ret.Add(TokenSerializer.Colon());
-                ret.Add(new CodeFileToken(this.summary, CodeFileTokenKind.Literal));
-                ret.Add(TokenSerializer.NewLine());
-            }
 
             ret.Add(TokenSerializer.NavigableToken("operationId", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
             ret.Add(TokenSerializer.Colon());
             ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
             ret.Add(TokenSerializer.NewLine());
+
+            if (this.consumes != null && consumes.Count > 0)
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens("consumes", string.Join(",", this.consumes)));
+            }
+
+            if (this.produces != null && produces.Count > 0)
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens("produces", string.Join(",", this.produces)));
+            }
+
+            if (this.schemes != null && schemes.Count > 0)
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens("schemes", string.Join(",", this.schemes)));
+            }
 
             if (tags != null)
             {
@@ -81,16 +96,6 @@ namespace SwaggerApiParser.SwaggerApiView
             //    ret.Add(new CodeFileToken(this.xMSPageable.nextLinkName, CodeFileTokenKind.Literal));
             //    ret.Add(TokenSerializer.NewLine());
             //}
-
-            if (this.produces != null)
-            {
-                ret.AddRange(TokenSerializer.KeyValueTokens("produces", string.Join(",", this.produces)));
-            }
-
-            if (this.consumes != null)
-            {
-                ret.AddRange(TokenSerializer.KeyValueTokens("consumes", string.Join(",", this.consumes)));
-            }
 
             // new line for `Parameters` section.
             ret.Add(TokenSerializer.NewLine());

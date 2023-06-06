@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using SwaggerApiParser.Converters;
 
 namespace SwaggerApiParser.Specs
 {
@@ -7,7 +9,7 @@ namespace SwaggerApiParser.Specs
     {
     }
 
-    public class Security : List<Dictionary<string, List<string>>>
+    public class Security : List<Dictionary<string, List<JsonElement>>>
     {
 
     }

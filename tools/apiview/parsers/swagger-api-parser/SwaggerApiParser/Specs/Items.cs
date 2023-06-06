@@ -11,9 +11,9 @@ namespace SwaggerApiParser.Specs
         public Items items { get; set; }
         public string collectionFormat { get; set; }
         public dynamic @default { get; set; }
-        public double maximum { get; set; }
+        public double? maximum { get; set; }
         public bool? exclusiveMaximum { get; set; }
-        public double minimum { get; set; }
+        public double? minimum { get; set; }
         public bool? exclusiveMinimum { get; set; }
         public int? maxLength { get; set; }
         public int? minLength { get; set; }
@@ -22,7 +22,7 @@ namespace SwaggerApiParser.Specs
         public int? minItems { get; set; }
         public bool? uniqueItems { get; set; }
         public List<dynamic> @enum { get; set; }
-        public int? multipleOf { get; set; }
+        public double? multipleOf { get; set; }
         [JsonExtensionData]
         public IDictionary<string, JsonElement> patternedObjects { get; set; }
     }

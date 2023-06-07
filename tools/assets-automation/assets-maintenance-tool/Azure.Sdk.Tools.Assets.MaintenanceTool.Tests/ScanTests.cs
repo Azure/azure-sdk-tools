@@ -1,4 +1,6 @@
 global using NUnit.Framework;
+using System.Text;
+using System.Text.Json;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Model;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Scan;
 
@@ -163,25 +165,25 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             Assert.IsNotNull(results);
             Assert.That(results.Results.Count(), Is.EqualTo(8));
 
-            Assert.That(results.ByRepo.Keys.Count(), Is.EqualTo(2));
+            Assert.That(results.ByLanguageRepo.Keys.Count(), Is.EqualTo(2));
 
-            Assert.That(results.ByRepo["azure/azure-sdk-tools"][0].AssetsLocation, Is.EqualTo("sdk/formrecognizer/azure-ai-formrecognizer/assets.json"));
-            Assert.That(results.ByRepo["azure/azure-sdk-tools"][0].Commit, Is.EqualTo("eeeee9e00cc0d0111edf7471962b0da826d9a5cc"));
-            Assert.That(results.ByRepo["azure/azure-sdk-tools"][0].LanguageRepo, Is.EqualTo("azure/azure-sdk-tools"));
-            Assert.That(results.ByRepo["azure/azure-sdk-tools"][0].Tag, Is.EqualTo("python/formrecognizer/azure-ai-formrecognizer_f60081bf10"));
-            Assert.That(results.ByRepo["azure/azure-sdk-tools"][0].AssetsRepo, Is.EqualTo("Azure/azure-sdk-assets"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-tools"][0].AssetsLocation, Is.EqualTo("sdk/formrecognizer/azure-ai-formrecognizer/assets.json"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-tools"][0].Commit, Is.EqualTo("eeeee9e00cc0d0111edf7471962b0da826d9a5cc"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-tools"][0].LanguageRepo, Is.EqualTo("azure/azure-sdk-tools"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-tools"][0].Tag, Is.EqualTo("python/formrecognizer/azure-ai-formrecognizer_f60081bf10"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-tools"][0].AssetsRepo, Is.EqualTo("Azure/azure-sdk-assets"));
 
-            Assert.That(results.ByRepo["azure/azure-sdk-tools"][1].AssetsLocation, Is.EqualTo("sdk/keyvault/assets.json"));
-            Assert.That(results.ByRepo["azure/azure-sdk-tools"][1].Commit, Is.EqualTo("eeeee9e00cc0d0111edf7471962b0da826d9a5cc"));
-            Assert.That(results.ByRepo["azure/azure-sdk-tools"][1].LanguageRepo, Is.EqualTo("azure/azure-sdk-tools"));
-            Assert.That(results.ByRepo["azure/azure-sdk-tools"][1].Tag, Is.EqualTo("python/keyvault/azure-keyvault-administration_f6e776f55f"));
-            Assert.That(results.ByRepo["azure/azure-sdk-tools"][1].AssetsRepo, Is.EqualTo("Azure/azure-sdk-assets"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-tools"][1].AssetsLocation, Is.EqualTo("sdk/keyvault/assets.json"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-tools"][1].Commit, Is.EqualTo("eeeee9e00cc0d0111edf7471962b0da826d9a5cc"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-tools"][1].LanguageRepo, Is.EqualTo("azure/azure-sdk-tools"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-tools"][1].Tag, Is.EqualTo("python/keyvault/azure-keyvault-administration_f6e776f55f"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-tools"][1].AssetsRepo, Is.EqualTo("Azure/azure-sdk-assets"));
 
-            Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].AssetsLocation, Is.EqualTo("sdk/agrifood/arm-agrifood/assets.json"));
-            Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].Commit, Is.EqualTo("f139c4ddf7aaa4d637282ae7da4466b473044281"));
-            Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].LanguageRepo, Is.EqualTo("azure/azure-sdk-assets-integration"));
-            Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].Tag, Is.EqualTo("js/agrifood/arm-agrifood_4f244d09c7"));
-            Assert.That(results.ByRepo["azure/azure-sdk-assets-integration"][5].AssetsRepo, Is.EqualTo("Azure/azure-sdk-assets"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-assets-integration"][5].AssetsLocation, Is.EqualTo("sdk/agrifood/arm-agrifood/assets.json"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-assets-integration"][5].Commit, Is.EqualTo("f139c4ddf7aaa4d637282ae7da4466b473044281"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-assets-integration"][5].LanguageRepo, Is.EqualTo("azure/azure-sdk-assets-integration"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-assets-integration"][5].Tag, Is.EqualTo("js/agrifood/arm-agrifood_4f244d09c7"));
+            Assert.That(results.ByLanguageRepo["azure/azure-sdk-assets-integration"][5].AssetsRepo, Is.EqualTo("Azure/azure-sdk-assets"));
         }
 
         [Test]
@@ -276,8 +278,6 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
 
             var results = scanner.Scan(config);
 
-            Console.WriteLine(results);
-
             Assert.That(results.Results.Count, Is.EqualTo(8));
         }
 
@@ -293,10 +293,16 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             scanner.Save(resultSet);
 
             var fileThatShouldExist = Path.Combine(TestDirectory, "output.json");
+            var newOutFile = Path.Combine(TestDirectory, "test_output");
 
             Assert.That(File.Exists(fileThatShouldExist), Is.EqualTo(true));
 
             var parsedNewResults = scanner.ParseExistingResults();
+
+            using (var stream = System.IO.File.OpenWrite(newOutFile))
+            {
+                stream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(RunConfiguration)));
+            }
 
             if (parsedNewResults != null)
             {

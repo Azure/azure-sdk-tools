@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
         }
         public List<AssetsResult> Results { get; set; } = new List<AssetsResult>();
 
-        public Dictionary<string, List<AssetsResult>> ByRepo { get; private set; } = new();
+        public Dictionary<string, List<AssetsResult>> ByLanguageRepo { get; private set; } = new();
 
         public Dictionary<string, List<AssetsResult>> ByTargetTag { get; private set; } = new();
 
@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
 
         private void CalculateObjects()
         {
-            ByRepo = new Dictionary<string, List<AssetsResult>>();
+            ByLanguageRepo = new Dictionary<string, List<AssetsResult>>();
             ByTargetTag = new Dictionary<string, List<AssetsResult>>();
             ByOriginSHA = new Dictionary<string, List<AssetsResult>>();
 
@@ -36,11 +36,11 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
 
             foreach (var result in Results)
             {
-                if (!ByRepo.ContainsKey(result.LanguageRepo))
+                if (!ByLanguageRepo.ContainsKey(result.LanguageRepo))
                 {
-                    ByRepo.Add(result.LanguageRepo, new List<AssetsResult>());
+                    ByLanguageRepo.Add(result.LanguageRepo, new List<AssetsResult>());
                 }
-                ByRepo[result.LanguageRepo].Add(result);
+                ByLanguageRepo[result.LanguageRepo].Add(result);
 
                 if (!ByTargetTag.ContainsKey(result.Tag))
                 {

@@ -16,6 +16,10 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
             LanguageRepo = repo;
         }
 
+        public RepoConfiguration() {
+            LanguageRepo = string.Empty;
+        }
+
         /// <summary>
         /// The full orgname/repo-id identifier to access a repo on github. EG: "azure/azure-sdk-for-net"
         /// </summary>

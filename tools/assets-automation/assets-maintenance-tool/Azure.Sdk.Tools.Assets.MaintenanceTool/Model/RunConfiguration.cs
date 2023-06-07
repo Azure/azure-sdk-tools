@@ -13,6 +13,8 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
     /// </summary>
     public class RunConfiguration
     {
+
+
         public RunConfiguration() {
             LanguageRepos = new List<RepoConfiguration>();
         }

@@ -14,6 +14,7 @@ $(() => {
   let CurrentUserSuggestionElements: HTMLElement[] = [];	
   let CurrentUserSuggestionIndex = -1;
   let CurrentCommentToggle = false;
+
   // simple github username match	
   const githubLoginTagMatch = /(\s|^)@([a-zA-Z\d-]+)/g;
 
@@ -68,12 +69,15 @@ $(() => {
 
   $(document).on("mouseenter", SEL_COMMENT_ICON, e => {
     let lineId = getElementId(e.target);
-    if (lineId) {
-      if (getSingleCommentDisplayStatus(lineId)) {
-        CurrentCommentToggle = true;
-      } else {
-        toggleSingleCommentAndDiagnostics(lineId);
-      }
+    if (!lineId) {
+      return;
+    }
+
+    if (getSingleCommentAndDiagnosticsDisplayStatus(lineId)) {
+      CurrentCommentToggle = true;
+    } else {
+      toggleSingleCommentAndDiagnostics(lineId);
+      toggleSingleResolvedComment(lineId);
     }
     e.preventDefault();
   });
@@ -88,12 +92,15 @@ $(() => {
 
   $(document).on("mouseleave", SEL_COMMENT_ICON, e => {
     let lineId = getElementId(e.target);
-    if (lineId) {
-      if (CurrentCommentToggle) {
-        CurrentCommentToggle = false;
-      } else {
-        toggleSingleCommentAndDiagnostics(lineId);
-      }
+    if (!lineId) {
+      return;
+    }
+
+    if (CurrentCommentToggle) {
+      CurrentCommentToggle = false;
+    } else {
+      toggleSingleCommentAndDiagnostics(lineId);
+      toggleSingleResolvedComment(lineId);
     }
     e.preventDefault();
   });
@@ -596,8 +603,15 @@ $(() => {
     getDiagnosticsRow(id).toggleClass("d-none");
   }
 
-  function getSingleCommentDisplayStatus(id: string) {
+  function getSingleCommentAndDiagnosticsDisplayStatus(id: string) {
     return !(getCommentsRow(id).hasClass("d-none") || getDiagnosticsRow(id).hasClass("d-none"));
+  }
+
+  function toggleSingleResolvedComment(id: string) {
+    let commentHolder = $(getCommentsRow(id)).find(".comment-holder").first();
+    if (commentHolder.hasClass("comments-resolved")) {
+      toggleComments(id);
+    }
   }
 
   function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearCommentAnchors = false, returnFirst = false) {

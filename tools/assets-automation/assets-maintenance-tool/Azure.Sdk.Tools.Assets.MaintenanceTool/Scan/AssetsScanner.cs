@@ -18,11 +18,8 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
         public string WorkingDirectory { get; set; }
         public static readonly string GIT_TOKEN_ENV_VAR = "GIT_TOKEN";
 
-        private string ResultsFile {
-            get {
-                return Path.Combine(WorkingDirectory, "output.json");
-            }
-        }
+        private string ResultsFile 
+            => Path.Combine(WorkingDirectory, "output.json");
 
         public GitProcessHandler handler { get; set; } = new GitProcessHandler();
 

@@ -119,7 +119,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
 
                     if (previousOutput != null)
                     {
-                        foreach (var commit in commitsOnBranch.Where(x => !unretrievedCommits.Contains(x)))
+                        foreach (var commit in commitsOnBranch.Where(commit => !unretrievedCommits.Contains(commit)))
                         {
                             results.AddRange(previousOutput.ByOriginSHA[commit]);
                         }

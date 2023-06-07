@@ -16,51 +16,42 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
     public class AssetsScanner
     {
         public string WorkingDirectory { get; set; }
-        public static readonly string GIT_TOKEN_ENV_VAR = "GIT_TOKEN";
+        public static readonly string GitTokenEnvVar = "GIT_TOKEN";
 
         private string ResultsFile 
             => Path.Combine(WorkingDirectory, "output.json");
 
         public GitProcessHandler handler { get; set; } = new GitProcessHandler();
 
-        public AssetsScanner(string workingDirectory)
+        public AssetsScanner(string? workingDirectory = null)
         {
-            WorkingDirectory = workingDirectory;
-        }
-
-        public AssetsScanner()
-        {
-            WorkingDirectory = Directory.GetCurrentDirectory();
+            WorkingDirectory = workingDirectory ?? Directory.GetCurrentDirectory();
         }
 
         /// <summary>
-        /// Walk a run configuration an create a resultSet of all found assets.json references.
+        /// Walk a run configuration and create a resultSet of all found assets.json references.
         /// 
         /// This function automatically takes previous output into account by checking in the current
-        /// working directory for an "output.json" file.
+        /// working directory for an "output.json" file that contains the output of a previously run Scan.
         /// </summary>
         /// <param name="config"></param>
         /// <returns></returns>
         public AssetsResultSet Scan(RunConfiguration config)
         {
             var resultSet = new List<AssetsResult>();
-            var existingResults = ParseExistingResults();
+            AssetsResultSet? existingResults = ParseExistingResults();
 
-            Parallel.ForEach(config.Repos, repoConfig =>
+            Parallel.ForEach(config.LanguageRepos, repoConfig =>
             {
                 resultSet.AddRange(ScanRepo(repoConfig, existingResults));
             });
 
-            var newResults = new AssetsResultSet(resultSet);
-
-            Save(newResults);
-
-            return newResults;
+            return new AssetsResultSet(resultSet);
         }
 
         /// <summary>
-        /// If the tool is invoked in a directory containing an `"output.json" file, that file will be parsed
-        /// for it's results. The file itself is merely a List of type AssetsResult serialized to disk.
+        /// If the tool is invoked in a directory containing an "output.json" file, that file will be parsed
+        /// for its results. The file itself is merely a List of type AssetsResult serialized to disk.
         /// </summary>
         /// <returns></returns>
         public AssetsResultSet? ParseExistingResults()
@@ -82,21 +73,21 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
         }
 
         /// <summary>
-        /// Given a repo configuration, scan the repo and return the assetsresults from all targeted branches.
+        /// Given a repo configuration, scan the repo and return an AssetsResult list from all targeted branches.
         /// </summary>
         /// <param name="config"></param>
         /// <param name="previousOutput"></param>
         /// <returns></returns>
         private List<AssetsResult> ScanRepo(RepoConfiguration config, AssetsResultSet? previousOutput)
         {
-            string? envOverride = Environment.GetEnvironmentVariable(GIT_TOKEN_ENV_VAR);
+            string? envOverride = Environment.GetEnvironmentVariable(GitTokenEnvVar);
             var authString = string.Empty;
             if (!string.IsNullOrWhiteSpace(envOverride))
             {
                 authString = $"{envOverride}@";
             }
 
-            var targetRepoUri = $"https://{authString}github.com/{config.Repo}.git";
+            var targetRepoUri = $"https://{authString}github.com/{config.LanguageRepo}.git";
             var workingDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             var results = new List<AssetsResult>();
 
@@ -112,7 +103,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
                     var commitsOnBranch = GetBranchCommits(targetRepoUri, branch, config.ScanStartDate, workingDirectory);
                     var unretrievedCommits = ResolveUnhandledCommits(commitsOnBranch, previousOutput);
 
-                    results.AddRange(GetAssetsResults(config.Repo, unretrievedCommits, workingDirectory));
+                    results.AddRange(GetAssetsResults(config.LanguageRepo, unretrievedCommits, workingDirectory));
 
                     if (previousOutput != null)
                     {
@@ -331,11 +322,11 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
         /// <param name="workingDirectory"></param>
         private void CleanupWorkingDirectory(string workingDirectory)
         {
-            var possibleGitDir = Path.Combine(workingDirectory, ".git");
+            var gitDir = Path.Combine(workingDirectory, ".git");
 
-            if (Directory.Exists(possibleGitDir))
+            if (Directory.Exists(gitDir))
             {
-                SetPermissionsAndDelete(possibleGitDir);
+                SetPermissionsAndDelete(gitDir);
             }
 
             Directory.Delete(workingDirectory, true);
@@ -345,7 +336,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Scan
         /// Writes a resultSet to disk.
         /// </summary>
         /// <param name="newResults"></param>
-        private void Save(AssetsResultSet newResults)
+        public void Save(AssetsResultSet newResults)
         {
             using (var stream = System.IO.File.OpenWrite(ResultsFile))
             {

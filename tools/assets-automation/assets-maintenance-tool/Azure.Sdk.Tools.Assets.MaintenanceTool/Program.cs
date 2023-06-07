@@ -9,10 +9,11 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool
     {
         public static string[] StoredArgs = new string[] { };
 
-        // working directory is where we will look for previous results "output.json"
+        // By default, we will only search under the CWD for the previous output. This may change
+        // in the future, but we are keeping it simple to start.
 
         // all should honor
-            // --ScanData <-- results from previous scans (todo, currently checks working directory)
+            // --scan-data <-- results from previous scans (todo, currently checks working directory)
             
         // SCAN
             // --configuration: -> path to file
@@ -52,7 +53,9 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool
                 case BaseOptions configOptions:
                     AssetsScanner scanner = new AssetsScanner();
                     var runConfig = new RunConfiguration(configOptions.ConfigLocation);
-                    scanner.Scan(runConfig);
+                    AssetsResultSet results = scanner.Scan(runConfig);
+                    scanner.Save(results);
+
                     break;
                 default:
                     throw new ArgumentException($"Unable to parse the argument set: {string.Join(" ", StoredArgs)}");

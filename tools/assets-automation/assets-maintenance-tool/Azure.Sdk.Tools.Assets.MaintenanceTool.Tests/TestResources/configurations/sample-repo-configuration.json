@@ -1,13 +1,13 @@
 {
-  "Repos": [
+  "LanguageRepos": [
     {
-      "Repo": "azure/azure-sdk-tools",
+      "LanguageRepo": "azure/azure-sdk-tools",
       "Branches": [
         "integration/assets-test-branch"
       ]
     },
     {
-      "Repo": "azure/azure-sdk-assets-integration",
+      "LanguageRepo": "azure/azure-sdk-assets-integration",
       "Branches": [
         "integration/assets-branch-1",
         "integration/assets-branch-2"

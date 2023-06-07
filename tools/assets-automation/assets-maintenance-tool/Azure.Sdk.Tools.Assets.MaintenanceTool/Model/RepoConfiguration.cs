@@ -12,17 +12,20 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
     public class RepoConfiguration
     {
         public RepoConfiguration(string repo)
-        { 
-            Repo = repo;
+        {
+            LanguageRepo = repo;
         }
 
         /// <summary>
         /// The full orgname/repo-id identifier to access a repo on github. EG: "azure/azure-sdk-for-net"
         /// </summary>
-        public string Repo { get; set; }
+        public string LanguageRepo { get; set; }
 
         /// <summary>
-        /// The time from which we will search for commits that contain assets.jsons.
+        /// The time from which we will search for commits that contain assets.jsons. The current default was chosen
+        /// almost arbitrarily. Official test-proxy began supported external assets in late November of 2022, so we don't
+        /// need to go further back then that when examining the SHAs in the language repos. There is no possibility of an
+        /// assets.json past this date!
         /// </summary>
         public DateTime ScanStartDate { get; set; } = DateTime.Parse("2022-12-01");
 

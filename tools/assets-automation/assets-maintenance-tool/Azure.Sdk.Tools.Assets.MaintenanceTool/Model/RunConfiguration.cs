@@ -8,20 +8,20 @@ using System.Threading.Tasks;
 namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
 {
     /// <summary>
-    /// A given RunConfiguration contains multiple repo configurations. This class provides such a container as well as
-    /// mappings to pick up configurations from an incoming path.
+    /// A RunConfiguration is the basic unit of configuration for this maintenance tool. It contains a set of targeted language
+    /// repositories that should be scanned for for assets.jsons.
     /// </summary>
     public class RunConfiguration
     {
         public RunConfiguration() {
-            Repos = new List<RepoConfiguration>();
+            LanguageRepos = new List<RepoConfiguration>();
         }
 
         public RunConfiguration(string configPath)
         {
             if (File.Exists(configPath))
             {
-                Repos = new List<RepoConfiguration>();
+                LanguageRepos = new List<RepoConfiguration>();
 
                 using var stream = System.IO.File.OpenRead(configPath);
                 using var doc = JsonDocument.Parse(stream);
@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
 
                 if (results != null)
                 {
-                    Repos = results.Repos;
+                    LanguageRepos = results.LanguageRepos;
                 }
             }
             else
@@ -39,6 +39,6 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
             }
         }
 
-        public List<RepoConfiguration> Repos { get; set; }
+        public List<RepoConfiguration> LanguageRepos { get; set; }
     }
 }

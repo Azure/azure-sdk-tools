@@ -17,11 +17,6 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
             Results = input;
             CalculateObjects();
         }
-
-        // Currently we already honor previous results in AssetsScanner::ScanRepo()L#119
-        // leaving this final resolution point in place between the two sets just in case.
-        // This eliminates the need for a constructor that coalesces a previous result set.
-
         public List<AssetsResult> Results { get; set; } = new List<AssetsResult>();
 
         public Dictionary<string, List<AssetsResult>> ByRepo { get; private set; } = new();
@@ -37,15 +32,15 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Model
             ByOriginSHA = new Dictionary<string, List<AssetsResult>>();
 
             // sort to ensure that orderings are always the same
-            Results = Results.OrderBy(asset => asset.TagRepo).ThenBy(asset => asset.Commit).ThenBy(asset => asset.Tag).ToList();
+            Results = Results.OrderBy(asset => asset.AssetsRepo).ThenBy(asset => asset.Commit).ThenBy(asset => asset.Tag).ToList();
 
             foreach (var result in Results)
             {
-                if (!ByRepo.ContainsKey(result.Repo))
+                if (!ByRepo.ContainsKey(result.LanguageRepo))
                 {
-                    ByRepo.Add(result.Repo, new List<AssetsResult>());
+                    ByRepo.Add(result.LanguageRepo, new List<AssetsResult>());
                 }
-                ByRepo[result.Repo].Add(result);
+                ByRepo[result.LanguageRepo].Add(result);
 
                 if (!ByTargetTag.ContainsKey(result.Tag))
                 {

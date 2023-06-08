@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -120,7 +121,7 @@ namespace SwaggerApiParser
                                 @in = param.@in,
                                 description = param.description,
                                 required = param.required,
-                                schema = schemaCache.GetResolvedSchema(param.schema, referenceSwaggerFilePath),
+                                schema = schemaCache.GetResolvedSchema(param.schema, referenceSwaggerFilePath, null, swaggerSpec.definitions),
                                 format = param.format,
                                 @ref = param.@ref,
                                 type = param.type
@@ -199,17 +200,22 @@ namespace SwaggerApiParser
                                     var referenceSwaggerSpec = await SwaggerDeserializer.Deserialize(referenceSwaggerFilePath);
                                     AddDefinitionsToCache(referenceSwaggerSpec, referenceSwaggerFilePath, schemaCache);
                                     schema = schemaCache.GetSchemaFromCache(referencePath, referenceSwaggerFilePath, false);
+                                    if (schema.originalRef == null)
+                                    {
+                                        schema.originalRef = referencePath;
+                                    }
+
+                                    if (schema != null && schema.IsRefObject())
+                                        referencePath = schema.@ref;
                                 }
                                 while (schema != null && schema.IsRefObject());
                             }
-                            else 
-                            {
-                                LinkedList<string> refChain = new LinkedList<string>();
-                                // The initial refChain is the root level schema.
-                                // There are some scenarios that the property of the root level schema is a ref to the root level itself (circular reference).
-                                // Like "errorDetail" schema in common types.
-                                schema = schemaCache.GetResolvedSchema(schema, referenceSwaggerFilePath, refChain);
-                            }
+
+                            LinkedList<string> refChain = new LinkedList<string>();
+                            // The initial refChain is the root level schema.
+                            // There are some scenarios that the property of the root level schema is a ref to the root level itself (circular reference).
+                            // Like "errorDetail" schema in common types.
+                            schema = schemaCache.GetResolvedSchema(schema, referenceSwaggerFilePath, refChain, swaggerSpec.definitions);
                         }
 
                         var headers = response.headers ?? new Dictionary<string, Header>();
@@ -218,14 +224,6 @@ namespace SwaggerApiParser
                     }
 
                     ret.Paths.AddSwaggerApiViewOperation(op);
-                }
-            }
-
-            if (swaggerSpec.definitions != null)
-            {
-                foreach (var definition in swaggerSpec.definitions)
-                {
-                    ret.SwaggerApiViewDefinitions.Add(definition.Key, definition.Value);
                 }
             }
 
@@ -241,11 +239,19 @@ namespace SwaggerApiParser
                         required = param.required,
                         format = param.format,
                         @in = param.@in,
-                        schema = schemaCache.GetResolvedSchema(param.schema, swaggerFilePath),
+                        schema = schemaCache.GetResolvedSchema(param.schema, swaggerFilePath, null, swaggerSpec.definitions),
                         @ref = param.@ref,
                         type = param.type
                     };
                     ret.SwaggerApiViewGlobalParameters.Add(key, swaggerApiViewParameter);
+                }
+            }
+
+            if (swaggerSpec.definitions != null)
+            {
+                foreach (var definition in swaggerSpec.definitions)
+                {
+                    ret.SwaggerApiViewDefinitions.Add(definition.Key, definition.Value);
                 }
             }
 

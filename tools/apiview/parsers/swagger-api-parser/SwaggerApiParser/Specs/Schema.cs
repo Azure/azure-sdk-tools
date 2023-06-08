@@ -11,8 +11,8 @@ namespace SwaggerApiParser.Specs
         // Properties in Swagger Spec
         public string title { get; set; }
         public string description { get; set; }
-        public int maxProperties { get; set; }
-        public int minProperties { get; set; }
+        public int? maxProperties { get; set; }
+        public int? minProperties { get; set; }
         public List<string> required { get; set; }
         public new Schema items { get; set; } // Should this be an array?
         public List<Schema> allOf { get; set; }
@@ -37,9 +37,9 @@ namespace SwaggerApiParser.Specs
             tableItems = this.TokenSerializePropertyIntoTableItems(context, this.tableItems);
             var tableRet = new List<CodeFileToken>();
             var tableRows = new List<CodeFileToken>();
-            foreach (var tableItem in this.tableItems)
+            if (tableItems.Count > 0)
             {
-                tableRows.AddRange(tableItem.TokenSerialize());
+                tableRows.AddRange(tableItems[0].TokenSerialize()); // Serialize only forst row to avoid flattened properties
             }
             if (tableRows.Count > 0)
             {
@@ -54,20 +54,25 @@ namespace SwaggerApiParser.Specs
             return this.required != null && this.required.Contains(propertyName);
         }
 
-        public List<string> GetKeywords()
+        public new List<string> GetKeywords()
         {
             List<string> keywords = new List<string>();
             if (this.readOnly)
-            {
                 keywords.Add("readOnly");
-            }
 
-            Utils.GetKeywordsFromPatternedObject(keywords, patternedObjects);
+            if (this.maxProperties != null)
+                keywords.Add($"maxProperties : {this.maxProperties}");
 
-            if (this.@enum != null && this.@enum.Count > 0)
-            {
-                keywords.Add($"enum: [{string.Join(", ", this.@enum)}]");
-            }
+            if (this.minProperties != null)
+                keywords.Add($"minProperties : {this.minProperties}");
+
+            if (!string.IsNullOrEmpty(this.discriminator))
+                keywords.Add($"discriminator : {this.discriminator}");
+
+            if (!string.IsNullOrEmpty(this.discriminator))
+                keywords.Add($"discriminator : {this.discriminator}");
+
+            keywords.AddRange(base.GetKeywords());
 
             return keywords;
         }

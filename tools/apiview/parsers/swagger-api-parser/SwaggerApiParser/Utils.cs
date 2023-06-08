@@ -257,5 +257,40 @@ namespace SwaggerApiParser
                 }
             }
         }
+
+        public static void AddSchemaToRootDefinition(Schema schema, Dictionary<string, Definition> definitions)
+        {
+            if (!String.IsNullOrEmpty(schema.originalRef))
+            {
+                var schemaKey = Utils.GetDefinitionType(schema.originalRef);
+                if (definitions != null)
+                {
+                    if (!definitions.ContainsKey(schemaKey))
+                    {
+                        definitions.Add(schemaKey, (Definition)schema);
+                    }
+                    else 
+                    {
+                        Definition def = (Definition)schema;
+                        if (definitions[schemaKey].IsRefObject())
+                        {
+                            definitions[schemaKey] = def;
+                        }
+                        else 
+                        {
+                            definitions[schemaKey].description = definitions[schemaKey].description ?? def.description;
+                            foreach (var prop in def.properties)
+                            {
+                                if (!definitions[schemaKey].properties.ContainsKey(prop.Key))
+                                {
+                                    definitions[schemaKey].properties.Add(prop.Key, prop.Value);
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
     }
 }

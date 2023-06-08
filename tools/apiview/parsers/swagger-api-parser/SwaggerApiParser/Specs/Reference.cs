@@ -10,7 +10,7 @@ namespace SwaggerApiParser.Specs
 
         public bool IsRefObject()
         {
-            return this.@ref != null;
+            return !string.IsNullOrEmpty(this.@ref);
         }
 
         public CodeFileToken[] TokenSerialize(SerializeContext context)

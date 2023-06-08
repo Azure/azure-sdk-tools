@@ -165,8 +165,9 @@ namespace SwaggerApiParser.Specs
             return parameter;
         }
 
-        public Schema GetResolvedSchema(Schema root, string currentSwaggerFilePath, LinkedList<string> refChain = null)
+        public Schema GetResolvedSchema(Schema root, string currentSwaggerFilePath, LinkedList<string> refChain = null, Dictionary<string, Definition> definitions = null)
         {
+            string schemaKey = string.Empty;
             refChain ??= new LinkedList<string>();
             if (root == null)
             {
@@ -186,6 +187,7 @@ namespace SwaggerApiParser.Specs
                 var resolvedSchema = this.GetSchemaFromResolvedCache(root.@ref, currentSwaggerFilePath);
                 if (resolvedSchema != null)
                 {
+                    Utils.AddSchemaToRootDefinition(resolvedSchema, definitions);
                     return resolvedSchema;
                 }
 
@@ -211,6 +213,7 @@ namespace SwaggerApiParser.Specs
                 }
 
                 ret.originalRef = root.@ref;
+                Utils.AddSchemaToRootDefinition(ret, definitions);
                 return ret;
             }
 
@@ -224,6 +227,8 @@ namespace SwaggerApiParser.Specs
                         continue;
                     }
 
+                    Utils.AddSchemaToRootDefinition(resolvedChild, definitions);
+
                     // should be in allOf property
                     foreach (var prop in resolvedChild.properties)
                     {
@@ -234,7 +239,9 @@ namespace SwaggerApiParser.Specs
 
             if (root.items != null && root.items.@ref != null && !refChain.Contains(root.items.@ref))
             {
-                root.items = GetResolvedSchema(root.items, currentSwaggerFilePath, refChain);
+                var items = GetResolvedSchema(root.items, currentSwaggerFilePath, refChain);
+                root.items = items;
+                Utils.AddSchemaToRootDefinition(items, definitions);
             }
 
             if (root.properties != null)
@@ -248,11 +255,13 @@ namespace SwaggerApiParser.Specs
 
                     if (!refChain.Contains(rootProperty.Value.@ref) && !refChain.Contains(rootProperty.Value.@ref) && !refChain.Contains(rootProperty.Value.items?.@ref))
                     {
-                        root.properties[rootProperty.Key] = this.GetResolvedSchema(rootProperty.Value, currentSwaggerFilePath, refChain);
+                        var property = this.GetResolvedSchema(rootProperty.Value, currentSwaggerFilePath, refChain);
+                        root.properties[rootProperty.Key] = property;
+                        Utils.AddSchemaToRootDefinition(property, definitions);
                     }
                 }
             }
-
+            Utils.AddSchemaToRootDefinition(root, definitions);
             return root;
         }
     }

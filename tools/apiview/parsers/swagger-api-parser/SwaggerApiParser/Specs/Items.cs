@@ -25,5 +25,47 @@ namespace SwaggerApiParser.Specs
         public double? multipleOf { get; set; }
         [JsonExtensionData]
         public IDictionary<string, JsonElement> patternedObjects { get; set; }
+
+        public List<string> GetKeywords()
+        {
+            List<string> keywords = new List<string>();
+            if (!string.IsNullOrEmpty(this.collectionFormat))
+                keywords.Add($"collectionFormat : {this.collectionFormat}");
+
+            if (this.@default != null)
+                keywords.Add($"default : {this.@default.ToString()}");
+
+            if (this.maximum != null)
+                keywords.Add($"maximum : {this.maximum}");
+
+            if (this.exclusiveMaximum != null)
+                keywords.Add($"exclusiveMaximum : {this.exclusiveMaximum}");
+
+            if (this.minimum != null)
+                keywords.Add($"minimum : {this.minimum}");
+
+            if (this.exclusiveMinimum != null)
+                keywords.Add($"exclusiveMinimum : {this.exclusiveMinimum}");
+
+            if (this.maxLength != null)
+                keywords.Add($"maxLength : {this.maxLength}");
+
+            if (this.minLength != null)
+                keywords.Add($"minLength : {this.minLength}");
+
+            if (!string.IsNullOrEmpty(this.pattern))
+                keywords.Add($"pattern : {this.pattern}");
+
+            if (this.maxItems != null)
+                keywords.Add($"maxItems : {this.maxItems}");
+
+            if (this.uniqueItems != null)
+                keywords.Add($"uniqueItems : {this.uniqueItems}");
+
+            if (this.@enum != null && this.@enum.Count > 0)
+                keywords.Add($"enum: [{string.Join(", ", this.@enum)}]");
+
+            return keywords;
+        }
     }
 }

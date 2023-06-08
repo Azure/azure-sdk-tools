@@ -60,7 +60,7 @@ namespace SwaggerApiParserTest
              await codeFile.SerializeAsync(writer);*/
         }
 
-        [Fact]
+        [Fact(Skip ="No longer grouping model proprties")]
         public async Task TestGenerateSwaggerApiViewGroupedModelProperties()
         {
             var runCommandsFilePath = Path.GetFullPath("./fixtures/communicationserviceschat.json");

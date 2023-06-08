@@ -1,16 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using APIViewWeb.Filters;
+using ApiView;
 using APIViewWeb.Managers;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace APIViewWeb.Controllers
@@ -31,6 +26,13 @@ namespace APIViewWeb.Controllers
         {
             await _reviewManager.UpdateReviewCodeFiles(repoName, buildId, artifactPath, project);
             return Ok();
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<ActionResult<string>> GetReviewText(string reviewId)
+        {
+            return await _reviewManager.GenerateAIReview(reviewId);
         }
 
         [HttpPost]

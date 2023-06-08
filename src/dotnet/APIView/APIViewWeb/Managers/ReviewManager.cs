@@ -7,6 +7,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
@@ -712,6 +713,25 @@ namespace APIViewWeb.Managers
                 reviews = await _reviewsRepository.GetApprovedReviews(language, packageName);
             }
             return reviews.Any();
+        }
+
+        /// <summary>
+        /// Sends info to AI service for generating initial review on APIReview file
+        /// </summary>
+        public async Task GenerateAIReview(string reviewId) //, ReviewRevisionModel revision)
+        {
+            var review = await _reviewsRepository.GetReviewAsync(reviewId);
+            var revision = review.Revisions.First();
+            var codeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
+            var codeLines = codeFile.RenderText(false);
+
+            var reviewText = new StringBuilder();
+            
+            foreach (var codeLine in codeLines)
+            {
+                reviewText.AppendLine(codeLine.DisplayString);
+            }
+            return reviewText.ToString();
         }
 
 

@@ -9,12 +9,14 @@ namespace SwaggerApiParser.Specs
         public Dictionary<string, Dictionary<string, Schema>> Cache;
         public Dictionary<string, Schema> ResolvedCache;
         public Dictionary<string, Dictionary<string, Parameter>> ParametersCache;
+        public Dictionary<string, Dictionary<string, Response>> ResponsesCache;
 
         public SchemaCache()
         {
             this.Cache = new Dictionary<string, Dictionary<string, Schema>>();
             this.ResolvedCache = new Dictionary<string, Schema>();
             this.ParametersCache = new Dictionary<string, Dictionary<string, Parameter>>();
+            this.ResponsesCache = new Dictionary<string, Dictionary<string, Response>>();
         }
 
         public void AddSchema(string swaggerFilePath, string key, Schema value)
@@ -39,6 +41,18 @@ namespace SwaggerApiParser.Specs
             }
 
             parameterCache.TryAdd(key, parameter);
+        }
+
+        public void AddResponse(string swaggerFilePath, string key, Response response)
+        {
+            this.ResponsesCache.TryGetValue(swaggerFilePath, out var responseCache);
+            if (responseCache == null)
+            {
+                responseCache = new Dictionary<string, Response>();
+                this.ResponsesCache.TryAdd(swaggerFilePath, responseCache);
+            }
+
+            responseCache.TryAdd(key, response);
         }
 
         public static string GetRefKey(string Ref)
@@ -66,13 +80,13 @@ namespace SwaggerApiParser.Specs
             return resolvedSchema;
         }
 
-        private Schema GetSchemaFromCache(string Ref, string currentSwaggerFilePath)
+        public Schema GetSchemaFromCache(string Ref, string currentSwaggerFilePath, bool resolveSwaggerPath = true)
         {
-            // try get from resolved cache.
-
-
-            var referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
-
+            var referenceSwaggerFilePath = currentSwaggerFilePath;
+            if (resolveSwaggerPath)
+            {
+                referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
+            }
 
             this.Cache.TryGetValue(referenceSwaggerFilePath, out var swaggerSchema);
             if (swaggerSchema == null)
@@ -91,11 +105,14 @@ namespace SwaggerApiParser.Specs
             return ret;
         }
 
-        public Parameter GetParameterFromCache(string Ref, string currentSwaggerFilePath, ref string referenceSwaggerFilePath)
+        public Parameter GetParameterFromCache(string Ref, string currentSwaggerFilePath, bool resolveSwaggerPath = true)
         {
-            // try get from resolved cache.
-            referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
-
+            var referenceSwaggerFilePath = currentSwaggerFilePath;
+            if (resolveSwaggerPath)
+            {
+                referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
+            }
+            
             this.ParametersCache.TryGetValue(referenceSwaggerFilePath, out var parameterCache);
             if (parameterCache == null)
             {
@@ -113,12 +130,36 @@ namespace SwaggerApiParser.Specs
             return ret;
         }
 
+        public Response GetResponseFromCache(string Ref, string currentSwaggerFilePath, bool resolveSwaggerPath = true)
+        {
+            var referenceSwaggerFilePath = currentSwaggerFilePath;
+            if (resolveSwaggerPath)
+            {
+                referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(Ref, currentSwaggerFilePath);
+            }
+
+            this.ResponsesCache.TryGetValue(referenceSwaggerFilePath, out var responseCache);
+            if (responseCache == null)
+            {
+                return null;
+            }
+
+            var key = GetRefKey(Ref);
+            responseCache.TryGetValue(key, out var ret);
+
+            if (ret == null)
+            {
+                throw new Exception($"Reference not found. $ref: {Ref}");
+            }
+
+            return ret;
+        }
+
         public Parameter GetResolvedParameter(Parameter parameter, string currentSwaggerFilePath)
         {
             if (parameter.IsRefObject())
             {
-                var resolvedFromPath = String.Empty;
-                return this.GetParameterFromCache(parameter.@ref, currentSwaggerFilePath, ref resolvedFromPath);
+                return this.GetParameterFromCache(parameter.@ref, currentSwaggerFilePath);
             }
 
             return parameter;

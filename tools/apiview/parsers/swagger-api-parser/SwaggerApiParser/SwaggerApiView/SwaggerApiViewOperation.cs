@@ -81,22 +81,6 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.Add(TokenSerializer.NewLine());
             }
 
-            //if (this.xMsLongRunningOperation)
-            //{
-            //    ret.Add(TokenSerializer.NavigableToken("x-ms-long-running-operation", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-long-running-operation")));
-            //    ret.Add(TokenSerializer.Colon());
-            //    ret.Add(new CodeFileToken("true", CodeFileTokenKind.Literal));
-            //    ret.Add(TokenSerializer.NewLine());
-            //}
-            //
-            //if (this.xMSPageable != null)
-            //{
-            //    ret.Add(TokenSerializer.NavigableToken("x-ms-pageable", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-pageable")));
-            //    ret.Add(TokenSerializer.Colon());
-            //    ret.Add(new CodeFileToken(this.xMSPageable.nextLinkName, CodeFileTokenKind.Literal));
-            //    ret.Add(TokenSerializer.NewLine());
-            //}
-
             // new line for `Parameters` section.
             ret.Add(TokenSerializer.NewLine());
 

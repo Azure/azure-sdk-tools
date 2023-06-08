@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -78,42 +77,41 @@ namespace SwaggerApiParser
                         foreach (var parameter in operation.parameters)
                         {
                             var param = parameter;
-                            var resolvedFromPath = swaggerFilePath;
+                            var referenceSwaggerFilePath = swaggerFilePath;
 
+                            // Resolve Parameter from multilevel reference 
                             if (parameter.IsRefObject())
                             {
                                 param = (Parameter)swaggerSpec.ResolveRefObj(parameter.@ref);
                                 if (param == null)
                                 {
-                                    param = (Parameter)schemaCache.GetParameterFromCache(parameter.@ref, swaggerFilePath, ref resolvedFromPath);
+                                    param = (Parameter)schemaCache.GetParameterFromCache(parameter.@ref, swaggerFilePath);
                                 }
-                            }
 
-                            if (param == null)
-                            {
-                                var referencePath = parameter.@ref;
-                                do
+                                if (param == null)
                                 {
-                                    if (!Path.IsPathFullyQualified(referencePath))
+                                    var referencePath = parameter.@ref;
+                                    do
                                     {
-                                        var referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(referencePath, swaggerFilePath);
-                                        var referenceSwaggerSpec = await SwaggerDeserializer.Deserialize(referenceSwaggerFilePath);
-                                        referenceSwaggerSpec.swaggerFilePath = Path.GetFullPath(referenceSwaggerFilePath);
-                                        AddDefinitionsToCache(referenceSwaggerSpec, referenceSwaggerFilePath, schemaCache);
-                                        param = schemaCache.GetParameterFromCache(referencePath, swaggerFilePath, ref resolvedFromPath);
-                                    }
-                                    else
-                                    {
-                                        var referenceSwaggerSpec = await SwaggerDeserializer.Deserialize(referencePath);
-                                        referenceSwaggerSpec.swaggerFilePath = Path.GetFullPath(referencePath);
-                                        AddDefinitionsToCache(referenceSwaggerSpec, referencePath, schemaCache);
-                                        param = schemaCache.GetParameterFromCache(referencePath, swaggerFilePath, ref resolvedFromPath);
-                                    }
+                                        if (!Path.IsPathFullyQualified(referencePath))
+                                        {
+                                            referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(referencePath, referenceSwaggerFilePath);
+                                            var referenceSwaggerSpec = await SwaggerDeserializer.Deserialize(referenceSwaggerFilePath);
+                                            AddDefinitionsToCache(referenceSwaggerSpec, referenceSwaggerFilePath, schemaCache);
+                                            param = schemaCache.GetParameterFromCache(referencePath, referenceSwaggerFilePath, false);
+                                        }
+                                        else
+                                        {
+                                            var referenceSwaggerSpec = await SwaggerDeserializer.Deserialize(referencePath);
+                                            AddDefinitionsToCache(referenceSwaggerSpec, referencePath, schemaCache);
+                                            param = schemaCache.GetParameterFromCache(referencePath, referencePath, false);
+                                        }
 
-                                    if (param != null && param.IsRefObject())
-                                        referencePath = param.@ref;
+                                        if (param != null && param.IsRefObject())
+                                            referencePath = param.@ref;
+                                    }
+                                    while (param != null && param.IsRefObject());
                                 }
-                                while(param != null && param.IsRefObject());
                             }
 
                             var swaggerApiViewOperationParameter = new SwaggerApiViewParameter
@@ -122,7 +120,7 @@ namespace SwaggerApiParser
                                 @in = param.@in,
                                 description = param.description,
                                 required = param.required,
-                                schema = schemaCache.GetResolvedSchema(param.schema, resolvedFromPath),
+                                schema = schemaCache.GetResolvedSchema(param.schema, referenceSwaggerFilePath),
                                 format = param.format,
                                 @ref = param.@ref,
                                 type = param.type
@@ -149,18 +147,69 @@ namespace SwaggerApiParser
 
                     foreach (var (statusCode, response) in operation.responses)
                     {
-                        var schema = response.schema;
-                        var currentSwaggerFilePath = swaggerFilePath;
+                        var resp = response;
+                        var referenceSwaggerFilePath = swaggerFilePath;
+
+                        if (response.IsRefObject())
+                        {
+                            resp = (Response)swaggerSpec.ResolveRefObj(response.@ref);
+                            if (resp == null)
+                            {
+                                resp = (Response)schemaCache.GetResponseFromCache(response.@ref, swaggerFilePath);
+                            }
+
+                            if (resp == null)
+                            {
+                                var referencePath = response.@ref;
+                                do
+                                {
+                                    if (!Path.IsPathFullyQualified(referencePath))
+                                    {
+                                        referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(referencePath, swaggerFilePath);
+                                        var referenceSwaggerSpec = await SwaggerDeserializer.Deserialize(referenceSwaggerFilePath);
+                                        AddDefinitionsToCache(referenceSwaggerSpec, referenceSwaggerFilePath, schemaCache);
+                                        resp = schemaCache.GetResponseFromCache(referencePath, referenceSwaggerFilePath, false);
+                                    }
+                                    else
+                                    {
+                                        var referenceSwaggerSpec = await SwaggerDeserializer.Deserialize(referencePath);
+                                        AddDefinitionsToCache(referenceSwaggerSpec, referencePath, schemaCache);
+                                        resp = schemaCache.GetResponseFromCache(referencePath, referencePath, false);
+                                    }
+
+                                    if (resp != null && resp.IsRefObject())
+                                        referencePath = resp.@ref;
+                                }
+                                while (resp != null && resp.IsRefObject());
+                            }
+                        }
+
+                        var schema = resp.schema;
 
                         //Resolve ref obj for response schema.
 
-                        if (response.schema != null)
+                        if (schema != null)
                         {
-                            // The initial refChain is the root level schema.
-                            // There are some scenarios that the property of the root level schema is a ref to the root level itself (circular reference).
-                            // Like "errorDetail" schema in common types.
-                            LinkedList<string> refChain = new LinkedList<string>();
-                            schema = schemaCache.GetResolvedSchema(schema, currentSwaggerFilePath, refChain);
+                            if (schema.IsRefObject())
+                            {
+                                var referencePath = schema.@ref;
+                                do
+                                {
+                                    referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(referencePath, referenceSwaggerFilePath);
+                                    var referenceSwaggerSpec = await SwaggerDeserializer.Deserialize(referenceSwaggerFilePath);
+                                    AddDefinitionsToCache(referenceSwaggerSpec, referenceSwaggerFilePath, schemaCache);
+                                    schema = schemaCache.GetSchemaFromCache(referencePath, referenceSwaggerFilePath, false);
+                                }
+                                while (schema != null && schema.IsRefObject());
+                            }
+                            else 
+                            {
+                                LinkedList<string> refChain = new LinkedList<string>();
+                                // The initial refChain is the root level schema.
+                                // There are some scenarios that the property of the root level schema is a ref to the root level itself (circular reference).
+                                // Like "errorDetail" schema in common types.
+                                schema = schemaCache.GetResolvedSchema(schema, referenceSwaggerFilePath, refChain);
+                            }
                         }
 
                         var headers = response.headers ?? new Dictionary<string, Header>();
@@ -226,6 +275,17 @@ namespace SwaggerApiParser
                     if (!schemaCache.ParametersCache.ContainsKey(parameter.Key))
                     {
                         schemaCache.AddParameter(fullPath, parameter.Key, parameter.Value);
+                    }
+                }
+            }
+
+            if (swaggerSpec.responses != null)
+            {
+                foreach (var response in swaggerSpec.responses)
+                {
+                    if (!schemaCache.ResponsesCache.ContainsKey(response.Key))
+                    {
+                        schemaCache.AddResponse(fullPath, response.Key, response.Value);
                     }
                 }
             }

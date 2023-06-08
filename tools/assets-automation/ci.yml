@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/asset-sync
+      - tools/assets-automation
 
 pr:
   branches:
@@ -19,10 +19,9 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/asset-sync
+      - tools/assets-automation
 
 extends:
-  template: /eng/common/pipelines/templates/stages/archetype-sdk-tool-pwsh.yml
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
-    TargetDirectory: tools/asset-sync/
-    TargetTags: 'Unit'
+    ToolDirectory: tools/assets-automation/assets-maintenance-tool/

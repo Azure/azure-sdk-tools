@@ -2,6 +2,8 @@
 
 The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
+Colloquially, any file that is stored externally using the `asset-sync` feature of the `test-proxy` is called an `asset`.
+
 ![asset sync block diagram](../_images/asset_sync_block_diagram.png)
 
 In the context of a `monorepo`, this means that we store FAR less data per feature. To update recordings, the only change alongside the source code is to update the targeted tag.

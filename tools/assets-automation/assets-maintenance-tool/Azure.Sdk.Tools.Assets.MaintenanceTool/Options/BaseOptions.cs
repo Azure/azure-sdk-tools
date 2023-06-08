@@ -7,40 +7,39 @@ using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.CommandOptions;
 
-namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Options
+namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Options;
+
+public class BaseOptions
 {
-    public class BaseOptions
+    public string ConfigLocation { get; set; } = string.Empty;
+}
+
+public class BaseOptionsBinder : BinderBase<BaseOptions>
+{
+    private readonly Option<string> _configLocationOption;
+
+    public BaseOptionsBinder(Option<string> configLocationOption)
     {
-        public string ConfigLocation { get; set; } = string.Empty;
+        _configLocationOption = configLocationOption;
     }
 
-    public class BaseOptionsBinder : BinderBase<BaseOptions>
+    protected override BaseOptions GetBoundValue(BindingContext bindingContext)
     {
-        private readonly Option<string> _configLocationOption;
+        var result = bindingContext.ParseResult.GetValueForOption(_configLocationOption);
 
-        public BaseOptionsBinder(Option<string> configLocationOption)
+        if (result != null)
         {
-            _configLocationOption = configLocationOption;
+            return new BaseOptions
+            {
+                ConfigLocation = result
+            };
         }
-
-        protected override BaseOptions GetBoundValue(BindingContext bindingContext)
+        else
         {
-            var result = bindingContext.ParseResult.GetValueForOption(_configLocationOption);
-
-            if (result != null)
+            return new BaseOptions
             {
-                return new BaseOptions
-                {
-                    ConfigLocation = result
-                };
-            }
-            else
-            {
-                return new BaseOptions
-                {
-                    ConfigLocation = string.Empty
-                };
-            }
+                ConfigLocation = string.Empty
+            };
         }
     }
 }

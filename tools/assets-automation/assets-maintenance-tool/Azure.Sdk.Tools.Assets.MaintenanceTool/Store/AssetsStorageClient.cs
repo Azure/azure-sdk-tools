@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Store
+namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Store;
+
+/// <summary>
+/// Used to write our backup entries.
+/// </summary>
+public class AssetsStorageClient
 {
-    /// <summary>
-    /// Used to write our backup entries.
-    /// </summary>
-    public class AssetsStorageClient
-    {
-    }
+    // placeholder for now.
 }

@@ -21,6 +21,9 @@ jobs:
             TargetRepos:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
+              openapi-env-test/azure-rest-api-specs:
+              test-repo-billy/azure-rest-api-specs:
+              test-repo-billy/azure-rest-api-specs-pr:
 
           Azure/azure-sdk-for-cpp:
             TargetRepos:
@@ -91,18 +94,6 @@ jobs:
             TargetRepos:
               Azure/azure-dev-pr:
 
-          Azure/azure-rest-api-specs:
-            TargetRepos: 
-              openapi-env-test/azure-rest-api-specs:
-                Rebase: true
-              test-repo-billy/azure-rest-api-specs:
-                Rebase: true
-
-          Azure/azure-rest-api-specs-pr:
-            TargetRepos: 
-              test-repo-billy/azure-rest-api-specs-pr:
-                Rebase: true
-
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
@@ -114,3 +105,8 @@ jobs:
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
+
+          Azure/azure-rest-api-specs-pr:
+            Branch: RPSaasMaster
+            TargetRepos:
+              test-repo-billy/azure-rest-api-specs-pr:

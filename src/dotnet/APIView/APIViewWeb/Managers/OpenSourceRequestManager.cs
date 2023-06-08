@@ -37,23 +37,36 @@ namespace APIViewWeb.Managers
         }
 
         public async Task<OpenSourceUserInfo> GetUserInfo(string githubUserId)
-        {            
-            try
+        {
+            int retryCount = 0;
+            bool authCheckCompleted = false;
+            while (!authCheckCompleted && retryCount < 3)
             {
-                var ossClient = new HttpClient();
-                await SetHeaders(ossClient);
-                var response = await ossClient.GetAsync($"https://repos.opensource.microsoft.com/api/people/links/github/{githubUserId}");
-                response.EnsureSuccessStatusCode();
-                var userDetailsJson = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<OpenSourceUserInfo>(userDetailsJson);
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
-                _telemetryClient.TrackTrace($"Github username {githubUserId} is not found");
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
+                try
+                {
+                    retryCount++;
+                    var ossClient = new HttpClient();
+                    await SetHeaders(ossClient);
+                    var response = await ossClient.GetAsync($"https://repos.opensource.microsoft.com/api/people/links/github/{githubUserId}");
+                    response.EnsureSuccessStatusCode();
+                    var userDetailsJson = await response.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<OpenSourceUserInfo>(userDetailsJson);
+                }
+                catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    _telemetryClient.TrackTrace($"GitHub username {githubUserId} is not found");
+                    authCheckCompleted = true;
+                }
+                catch (Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+                }
+
+                if(!authCheckCompleted && retryCount < 3)
+                {
+                    await Task.Delay(2000);
+                    _telemetryClient.TrackTrace($"Retrying to check user authorization for user Id {githubUserId}");
+                }
             }
             return null;            
         }
@@ -63,7 +76,7 @@ namespace APIViewWeb.Managers
             var resp = await GetUserInfo(githubUserId);
             if (resp == null)
                 return false;
-            // For now we only need to check if user info is availableon MS OSS
+            // For now we only need to check if user info is available on MS OSS
             return true;
         }
 

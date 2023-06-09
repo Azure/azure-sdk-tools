@@ -8,7 +8,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
@@ -21,6 +20,10 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
+using DeepPromptSDK;
+using System.Net.Http;
+using System.Text.Json;
 
 namespace APIViewWeb.Managers
 {
@@ -28,22 +31,15 @@ namespace APIViewWeb.Managers
     {
 
         private readonly IAuthorizationService _authorizationService;
-
         private readonly ICosmosReviewRepository _reviewsRepository;
-
         private readonly IBlobCodeFileRepository _codeFileRepository;
-
         private readonly IBlobOriginalsRepository _originalsRepository;
-
         private readonly ICosmosCommentsRepository _commentsRepository;
-
         private readonly IEnumerable<LanguageService> _languageServices;
-
         private readonly INotificationManager _notificationManager;
-
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
-
         private readonly IPackageNameManager _packageNameManager;
+        private readonly IConfiguration _configuration;
 
         private readonly IHubContext<SignalRHub> _signalRHubContext;
 
@@ -54,7 +50,7 @@ namespace APIViewWeb.Managers
             IBlobCodeFileRepository codeFileRepository, IBlobOriginalsRepository originalsRepository,
             ICosmosCommentsRepository commentsRepository, IEnumerable<LanguageService> languageServices,
             INotificationManager notificationManager, IDevopsArtifactRepository devopsClient,
-            IPackageNameManager packageNameManager, IHubContext<SignalRHub> signalRHubContext)
+            IPackageNameManager packageNameManager, IConfiguration configuration, IHubContext<SignalRHub> signalRHubContext)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -65,7 +61,7 @@ namespace APIViewWeb.Managers
             _notificationManager = notificationManager;
             _devopsArtifactRepository = devopsClient;
             _packageNameManager = packageNameManager;
-            _signalRHubContext = signalRHubContext;
+            _configuration = configuration;
         }
 
         public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis, string langauge, bool awaitComputeDiff = false)
@@ -718,20 +714,50 @@ namespace APIViewWeb.Managers
         /// <summary>
         /// Sends info to AI service for generating initial review on APIReview file
         /// </summary>
-        public async Task GenerateAIReview(string reviewId) //, ReviewRevisionModel revision)
+        public async Task GenerateAIReview(string reviewId)//, ReviewRevisionModel revision)
         {
             var review = await _reviewsRepository.GetReviewAsync(reviewId);
-            var revision = review.Revisions.First();
+            var revision = review.Revisions.Last();
             var codeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
             var codeLines = codeFile.RenderText(false);
 
             var reviewText = new StringBuilder();
-            
             foreach (var codeLine in codeLines)
             {
-                reviewText.AppendLine(codeLine.DisplayString);
+                reviewText.Append(codeLine.DisplayString);
+                reviewText.Append("\\n");
             }
-            return reviewText.ToString();
+
+            //var gitHubToken = _configuration["github-access-token"];
+            //Core deepPromptClient = new Core("github", gitHubToken);
+            //
+            //var context = new Dictionary<string, string>()
+            //{
+            //    { "language", review.Language },
+            //    { "content", reviewText.ToString() }
+            //};
+            //try
+            //{
+            //    // Call DeepPrompt API
+            //    response = deepPromptClient.Query(query: "api_review", intent: "api_review", context: context);
+            //}
+            //catch (Exception exception)
+            //{
+            //    Console.WriteLine(exception.Message);
+            //    response = null;
+            //}
+
+            var url = "https://apiviewcopilot.azurewebsites.net/python";
+            var client = new HttpClient();
+            var payload = new
+            {
+                content = reviewText.ToString()
+            };
+            var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
+
+            List<dynamic> result = JsonSerializer.Deserialize<List<dynamic>>(response);
+
+            Console.WriteLine("Something Here");
         }
 
 
@@ -828,6 +854,7 @@ namespace APIViewWeb.Managers
                     _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision));
                 }
             }
+            //await GenerateAIReview(review, revision);
         }
 
         private async Task<ReviewCodeFileModel> CreateFileAsync(

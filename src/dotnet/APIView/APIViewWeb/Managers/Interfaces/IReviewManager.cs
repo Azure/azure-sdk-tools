@@ -42,6 +42,6 @@ namespace APIViewWeb.Managers
         public Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, ReviewRevisionModel revision);
         public TreeNode<InlineDiffLine<CodeLine>> ComputeSectionDiff(TreeNode<CodeLine> before, TreeNode<CodeLine> after, RenderedCodeFile beforeFile, RenderedCodeFile afterFile);
         public Task<bool> IsApprovedForFirstRelease(string language, string packageName);
-        public Task<string> GenerateAIReview(string reviewId); //, ReviewRevisionModel revision);
+        public Task GenerateAIReview(string reviewId); //, ReviewRevisionModel revision);
     }
 }

@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackAsTool>True</PackAsTool>
-    <ToolCommandName>changelogGen-mgmt</ToolCommandName>
+    <ToolCommandName>changelog-gen-mgmt</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup>

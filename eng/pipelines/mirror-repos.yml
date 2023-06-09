@@ -22,8 +22,11 @@ jobs:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
               openapi-env-test/azure-rest-api-specs:
+                Rebase: true
               test-repo-billy/azure-rest-api-specs:
+                Rebase: true
               test-repo-billy/azure-rest-api-specs-pr:
+                Rebase: true
 
           Azure/azure-sdk-for-cpp:
             TargetRepos:
@@ -105,8 +108,3 @@ jobs:
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
-
-          Azure/azure-rest-api-specs-pr:
-            Branch: RPSaasMaster
-            TargetRepos:
-              test-repo-billy/azure-rest-api-specs-pr:

@@ -21,9 +21,9 @@ using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
-using DeepPromptSDK;
 using System.Net.Http;
 using System.Text.Json;
+using CsvHelper.Configuration;
 
 namespace APIViewWeb.Managers
 {
@@ -714,10 +714,10 @@ namespace APIViewWeb.Managers
         /// <summary>
         /// Sends info to AI service for generating initial review on APIReview file
         /// </summary>
-        public async Task GenerateAIReview(string reviewId)//, ReviewRevisionModel revision)
+        public async Task GenerateAIReview(string reviewId, string revisionId)
         {
             var review = await _reviewsRepository.GetReviewAsync(reviewId);
-            var revision = review.Revisions.Last();
+            var revision = review.Revisions.Where(r => r.RevisionId == revisionId).FirstOrDefault();
             var codeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
             var codeLines = codeFile.RenderText(false);
 
@@ -753,11 +753,32 @@ namespace APIViewWeb.Managers
             {
                 content = reviewText.ToString()
             };
+
             var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
 
-            List<dynamic> result = JsonSerializer.Deserialize<List<dynamic>>(response);
+            // Get rid of escape characters then deserialize
+            var responseSanitized = JsonSerializer.Deserialize<string>(response);
+            var results = JsonSerializer.Deserialize<List<AIReviewModel>>(responseSanitized);
 
-            Console.WriteLine("Something Here");
+            // Write back result as comments to APIView
+            foreach (var result in results)
+            {
+                var codeLine = Array.FindAll(codeLines, cl => cl.DisplayString.Trim() == result.code.Trim());
+                foreach (var line in codeLine)
+                {
+                    var comment = new CommentModel();
+                    comment.TimeStamp = DateTime.UtcNow;
+                    comment.ReviewId = reviewId;
+                    comment.RevisionId = revisionId;
+                    comment.ElementId = line.ElementId;
+                    //comment.SectionClass = sectionClass; // This will be needed for swagger
+                    comment.Comment = $"{result.comment}\n{result.suggestion}";
+                    comment.ResolutionLocked = false;
+                    comment.Username = "azure-sdk";
+
+                    await _commentsRepository.UpsertCommentAsync(comment);
+                }
+            }
         }
 
 

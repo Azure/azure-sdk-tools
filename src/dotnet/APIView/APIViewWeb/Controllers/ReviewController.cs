@@ -30,9 +30,9 @@ namespace APIViewWeb.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task GetReviewText(string reviewId)
+        public async Task GenerateAIReview(string reviewId, string revisionId)
         {
-            await _reviewManager.GenerateAIReview(reviewId);
+            await _reviewManager.GenerateAIReview(reviewId, revisionId);
         }
 
         [HttpPost]

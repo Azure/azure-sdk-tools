@@ -1,0 +1,89 @@
+# Package is parsed using apiview-stub-generator(version:0.3.7), Python version: 3.10.11
+
+class azure.eventgrid.EventGridEvent(EventGridEvent):
+    ivar data: object
+    ivar data_version: str
+    ivar event_time: datetime
+    ivar event_type: str
+    ivar id: str
+    ivar metadata_version: str
+    ivar subject: str
+    ivar topic: str
+    def __eq__(self, other: Any) -> bool
+    def __init__(
+            self, 
+            subject, 
+            event_type, 
+            data, 
+            data_version, 
+            event_time, 
+            id, 
+            metadata_version, 
+            topic, 
+        )
+    def __ne__(self, other: Any) -> bool
+    def __repr__(self)
+    def __str__(self) -> str
+    @classmethod
+    def deserialize(
+            cls: Type[ModelType], 
+            data: Any, 
+            content_type: Optional[str] = None
+        ) -> ModelType
+    @classmethod
+    def enable_additional_properties_sending(cls) -> None
+    @classmethod
+    def from_dict(
+            cls: Type[ModelType], 
+            data: Any, 
+            key_extractors: Optional[Callable[[str, Dict[str, Any], Any], Any]] = None, 
+            content_type: Optional[str] = None
+        ) -> ModelType
+    @classmethod
+    def from_json(cls, event: object) -> EventGridEvent
+    @classmethod
+    def is_xml_model(cls) -> bool
+    def as_dict(
+            self, 
+            keep_readonly: bool = True, 
+            key_transformer: Callable[[str, Dict[str, Any], Any], Any] = attribute_transformer, 
+            **kwargs: Any
+        ) -> JSON
+    def serialize(
+            self, 
+            keep_readonly: bool = False, 
+            **kwargs: Any
+        ) -> JSON
+
+class azure.eventgrid.EventGridPublisherClientSync: implements ContextManager
+    def __init__(
+            self, 
+            endpoint: str, 
+            credential: Union[AzureKeyCredential, AzureSasCredential, TokenCredential], 
+            options: ClientOptions
+        ) -> None
+    def close(self) -> None
+    @distributed_trace
+    def send(
+            self, 
+            events, 
+            channel_name, 
+            content_type, 
+        )
+
+class azure.eventgrid.aio.EventGridPublisherClientAsync: implements AsyncContextManager
+    def __init__(
+            self, 
+            endpoint: str, 
+            credential: Union[AsyncTokenCredential, AzureKeyCredential, AzureSasCredential], 
+            options: ClientOptions
+        ) -> None
+    async def close(self) -> None
+    @distributed_trace_async
+    async def send(
+            self, 
+            events: SendType, 
+            channel_name: Optional[str] = ..., 
+            content_type: Optional[str] = ..., 
+            **kwargs: Any
+        ) -> None

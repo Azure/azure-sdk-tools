@@ -214,16 +214,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (allowReset)
             {
-                try
-                {
-                    GitHandler.Run("checkout *", config);
-                    GitHandler.Run("clean -xdf", config);
-                }
-                catch(GitProcessException e)
-                {
-                    HideOrigin(config);
-                    throw GenerateInvokeException(e.Result);
-                }
+                Clean(config);
 
                 if (!string.IsNullOrWhiteSpace(config.Tag))
                 {
@@ -233,6 +224,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             HideOrigin(config);
+        }
+
+        private void Clean(GitAssetsConfiguration config)
+        {
+            try
+            {
+                GitHandler.Run("checkout *", config);
+                GitHandler.Run("clean -xdf", config);
+            }
+            catch (GitProcessException e)
+            {
+                HideOrigin(config);
+                throw GenerateInvokeException(e.Result);
+            }
         }
 
         /// <summary>
@@ -299,9 +304,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="config"></param>
         public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
         {
+            // we are already on a targeted tag and as such don't want to discard our recordings
             if (Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag)
             {
                 return;
+            }
+            // if we are NOT on our targeted tag, before we attempt to switch we need to reset without asking for permission
+            else
+            {
+                Clean(config);
             }
 
             var checkoutPaths = ResolveCheckoutPaths(config);

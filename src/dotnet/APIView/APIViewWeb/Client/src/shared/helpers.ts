@@ -151,3 +151,12 @@ export function addToastNotification(notification : Notification, id : string = 
   $("#notification-container").append(newtoast);
   toastBootstrap.show();
 }
+
+let connectionId: string;
+export function setSignalRConnectionId(id: string) {
+  connectionId = id;
+}
+
+export function getSignalRConnectionId() {
+  return connectionId;
+}

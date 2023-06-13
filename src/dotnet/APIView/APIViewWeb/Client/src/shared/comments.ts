@@ -1,6 +1,6 @@
 import {
   updatePageSettings, getCodeRow, getCodeRowSectionClasses,
-  getRowSectionClasses, toggleCommentIcon
+  getRowSectionClasses, toggleCommentIcon, getSignalRConnectionId
 } from "../shared/helpers";
 
 $(() => {
@@ -123,6 +123,7 @@ $(() => {
       serializedForm.push({ name: "revisionId", value: getRevisionId(e.target) });
       serializedForm.push({ name: "sectionClass", value: rowSectionClasses });
       serializedForm.push({ name: "taggedUsers", value: getTaggedUsers(e.target) });
+      serializedForm.push({ name: "signalRConnectionId", value: getSignalRConnectionId() });
       
       if (inlineRowNo.length > 0) {
         let groupNo = inlineRowNo.text().replace("ROW-", '');
@@ -681,4 +682,11 @@ $(() => {
       });
     }
   }
+//  /**
+//   * Given a CommentDTO object, adds the comment to client UI. Does not add the comment to CosmosDB.
+//   * @param { CommentDto } comment
+//   */
+//  function autoRefreshComment(comment: CommentDto) {
+//    // check review id against current revision id 
+//  }
 });

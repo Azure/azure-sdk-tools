@@ -1,11 +1,16 @@
 using System;
 using System.Threading.Tasks;
+using APIViewWeb.DTO;
 using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
+using Azure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Azure.Cosmos.Linq;
+using Microsoft.Extensions.Azure;
+using Octokit;
 
 namespace APIViewWeb.Controllers
 {
@@ -14,10 +19,10 @@ namespace APIViewWeb.Controllers
     {
         private readonly ICommentsManager _commentsManager;
         private readonly IReviewManager _reviewManager;
-        private readonly IHubContext<NotificationHub> _notificationHubContext;
+        private readonly IHubContext<SignalRHub> _notificationHubContext;
         private readonly INotificationManager _notificationManager;
 
-        public CommentsController(ICommentsManager commentsManager, IReviewManager reviewManager, INotificationManager notificationManager, IHubContext<NotificationHub> notificationHub)
+        public CommentsController(ICommentsManager commentsManager, IReviewManager reviewManager, INotificationManager notificationManager, IHubContext<SignalRHub> notificationHub)
         {
             _notificationHubContext = notificationHub;
             _commentsManager = commentsManager;
@@ -26,7 +31,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false, string signalRConnectionId = null)
         {
             if (string.IsNullOrEmpty(commentText))
             {
@@ -58,6 +63,19 @@ namespace APIViewWeb.Controllers
             {
                 await _notificationManager.SubscribeAsync(review,User);
             }
+
+            var commentDto = new CommentDto(); 
+            commentDto.TimeStamp = DateTime.UtcNow;
+            commentDto.ReviewId = reviewId;
+            commentDto.RevisionId = revisionId;
+            commentDto.ElementId = elementId;
+            commentDto.Username = comment.Username;
+            commentDto.Comment = commentText;
+            commentDto.CommentId = comment.CommentId;
+
+            //await _notificationHubContext.Clients.AllExcept(signalRConnectionId).SendAsync("ReceiveComment", commentDto); // TODO: need to check if valid signalR connection id 
+            await _notificationHubContext.Clients.All.SendAsync("ReceiveComment", commentDto); // TODO: for debugging. remove for PR 
+
             return await CommentPartialAsync(reviewId, comment.ElementId);
         }
 

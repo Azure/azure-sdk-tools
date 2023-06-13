@@ -1,4 +1,7 @@
 import * as hp from "./helpers";
+import * as comments from "./comments";
+import { ConsoleLogger, createLogger } from "@microsoft/signalr/dist/esm/Utils";
+import { LogLevel } from "@microsoft/signalr";
 
 $(() => {
 //-------------------------------------------------------------------------------------------------
@@ -13,7 +16,7 @@ $(() => {
     .configureLogging(signalR.LogLevel.Information)
     .withAutomaticReconnect()
     .build();
-    
+
   async function start() {
     try {
       await connection.start();
@@ -30,6 +33,17 @@ $(() => {
 
   connection.on("RecieveNotification", (notification) => {
     hp.addToastNotification(notification);
+  });
+
+  connection.on("ReceiveConnectionId", (connectionId) => {
+    hp.setSignalRConnectionId(connectionId);
+  });
+
+  connection.on("ReceiveComment", (commentDto) => {
+    // TODO
+    // find a way to update their comments
+    // if current client has same review id open and received this same message,
+    // use the id to find where to add comment 
   });
 
   // Start the connection.

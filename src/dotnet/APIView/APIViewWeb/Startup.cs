@@ -286,7 +286,7 @@ namespace APIViewWeb
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();
                 endpoints.MapDefaultControllerRoute();
-                endpoints.MapHub<NotificationHub>("hubs/notification");
+                endpoints.MapHub<SignalRHub>("hubs/notification");
             });
         }
     }

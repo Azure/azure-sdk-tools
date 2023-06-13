@@ -310,12 +310,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 return;
             }
             // if we are NOT on our targeted tag, before we attempt to switch we need to reset without asking for permission
-            else
+            else if (cleanEnabled)
             {
-                if (cleanEnabled)
-                {
-                    Clean(config);
-                }
+                Clean(config);
             }
 
             var checkoutPaths = ResolveCheckoutPaths(config);

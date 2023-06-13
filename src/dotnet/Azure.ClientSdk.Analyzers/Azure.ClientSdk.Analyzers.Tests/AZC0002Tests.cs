@@ -194,7 +194,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0002NotProducedForMethodsWithRequestContentAndCancellationToken()
+        public async Task AZC0002NotProducedForMethodsWithRequestContextAndCancellationToken()
         {
             const string code = @"
 using Azure;

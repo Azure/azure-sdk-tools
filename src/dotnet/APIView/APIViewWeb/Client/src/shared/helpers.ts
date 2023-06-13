@@ -22,13 +22,13 @@ export function updatePageSettings(callBack) {
   if (hideIndexPageOptions != undefined) { hideIndexPageOptions = !hideIndexPageOptions; }
 
   var uri = location.origin + `/userprofile/updatereviewpagesettings?` +
-                              `hideLineNumbers=${hideLineNumbers}&` +
-                              `hideLeftNavigation=${hideLeftNavigation}&` +
-                              `showHiddenApis=${showHiddenApis}&` +
-                              `hideReviewPageOptions=${hideReviewPageOptions}&` +
-                              `hideIndexPageOptions=${hideIndexPageOptions}&` +
-                              `showComments=${showComments}&` +
-                              `showSystemComments=${showSystemComments}`;
+    `hideLineNumbers=${hideLineNumbers}&` +
+    `hideLeftNavigation=${hideLeftNavigation}&` +
+    `showHiddenApis=${showHiddenApis}&` +
+    `hideReviewPageOptions=${hideReviewPageOptions}&` +
+    `hideIndexPageOptions=${hideIndexPageOptions}&` +
+    `showComments=${showComments}&` +
+    `showSystemComments=${showSystemComments}`;
 
   $.ajax({
     type: "PUT",
@@ -86,19 +86,16 @@ export function toggleCommentIcon(id: string, show: boolean) {
 * @param { String } cookieName
 * @return { String } cookieValue
 */
-export function getCookieValue (cookies: string, cookieName: string)
-{
+export function getCookieValue(cookies: string, cookieName: string) {
   const nameEQ = `${cookieName}=`;
   const charArr = cookies.split(';');
-  for (let i = 0; i < charArr.length; i++)
-  {
+  for (let i = 0; i < charArr.length; i++) {
     let ch = charArr[i];
-    while(ch.charAt(0) === ' ')
-    {
+    while (ch.charAt(0) === ' ') {
       ch = ch.substring(1, ch.length);
     }
     if (ch.indexOf(nameEQ) === 0)
-      return ch.substring(nameEQ.length, ch.length);    
+      return ch.substring(nameEQ.length, ch.length);
   }
   return null;
 }
@@ -108,16 +105,16 @@ export function getCookieValue (cookies: string, cookieName: string)
 * @param { JQuery<HTMLElement> | HTMLElement } element
 * @return { string [] } classList - list of classes of the element
 */
-export function getElementClassList (element : JQuery<HTMLElement> | HTMLElement) {
-  let el : HTMLElement = (element instanceof HTMLElement) ? element : element[0];
+export function getElementClassList(element: JQuery<HTMLElement> | HTMLElement) {
+  let el: HTMLElement = (element instanceof HTMLElement) ? element : element[0];
   return Array.from(el.classList);
 }
 
 // ToastNotification
 export enum NotificationLevel { info, warning, error }
 export interface Notification {
-  message : string;
-  level : NotificationLevel
+  message: string;
+  level: NotificationLevel
 }
 
 /**
@@ -125,13 +122,12 @@ export interface Notification {
 * @param { ToastNotification } notification
 * @param { number } duration - how long should the notification stay on the page
 */
-export function addToastNotification(notification : Notification, id : string = "", duration : number = 10000) {
+export function addToastNotification(notification: Notification, id: string = "", duration: number = 10000) {
   const newtoast = $('#notification-toast').clone().removeAttr("id").attr("data-bs-delay", duration);
-  if (id != "")
-  {
+  if (id != "") {
     newtoast.attr("id", id);
   }
-  
+
   switch (notification.level) {
     case 0:
       newtoast.find(".toast-header").prepend(`<i class="fa-solid fa-circle-info text-info me-1" ></i>`);
@@ -150,6 +146,151 @@ export function addToastNotification(notification : Notification, id : string = 
   const toastBootstrap = bootstrap.Toast.getOrCreateInstance(newtoast[0]);
   $("#notification-container").append(newtoast);
   toastBootstrap.show();
+}
+
+/**
+ * @returns true if the current reviewId is equivalent to the @reviewId and @revisionId
+ *          whether we check @revisionId depends on the value of @checkRevision
+ *          false otherwise
+ * @param checkRevision true indicates that both @reviewId and @revisionId must match,
+ *                      false indicates that only @reviewId can match
+ */
+export function checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, checkRevision) {
+  let href = location.href;
+  let result = getReviewAndRevisionIdFromUrl(href);
+  let currReviewId = result["reviewId"];
+  let currRevisionId = result["revisionId"];
+
+  if (currReviewId != reviewId) {
+    return false;
+  }
+
+  if (checkRevision && currRevisionId && currRevisionId === revisionId) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * gets the review and revision id of review from given uri, if they exist
+ * @param uri uri of api view page 
+ * @returns result dictionary of "reviewId" and "revisionId", if they exist; undefined otherwise
+ */
+export function getReviewAndRevisionIdFromUrl(uri) {
+  const regex = /.+(Review|Conversation|Revisions|Samples)\/([a-zA-Z0-9]+)(\?revisionId=([a-zA-Z0-9]+))?/;
+
+  const match = uri.match(regex);
+  const result = {}
+
+  if (match) {
+    result["reviewId"] = match[2];
+    result["revisionId"] = match[4];  // undefined if latest revision 
+  }
+
+  return result;
+}
+
+export function getCommentsRow(id: string) {
+  return $(`.comment-row[data-line-id='${id}']`);
+}
+
+
+// side effect: creates a comment row if it doesn't already exist
+export function showCommentBox(id: string, classes: string = '', groupNo: string = '', moveFocus: boolean = true) {
+  let commentForm;
+  let commentsRow = getCommentsRow(id);
+  let commentRowClasses = "comment-row";
+  if (classes) {
+    commentRowClasses = `${commentRowClasses} ${classes}`;
+  }
+
+  if (commentsRow.length === 0) {
+    commentForm = createCommentForm(groupNo);
+    commentsRow =
+      $(`<tr class="${commentRowClasses}" data-line-id="${id}">`)
+        .append($("<td colspan=\"3\">")
+          .append(commentForm));
+
+    commentsRow.insertAfter(getDiagnosticsRow(id).get(0) || getCodeRow(id).get(0));
+  }
+  else {
+    // there is one or more comment rows - insert form
+    let replyArea = $(commentsRow).find(".review-thread-reply");
+    let targetReplyArea = replyArea.first();
+    let firstReplyId = targetReplyArea.attr("data-reply-id");
+    let insertAtBegining = false;
+
+    if (groupNo) {
+      replyArea.siblings(".comment-form").remove();
+      if (Number(groupNo) < Number(firstReplyId)) {
+        insertAtBegining = true;
+      }
+      else {
+        replyArea.each(function (index, value) {
+          let replyId = $(value).attr("data-reply-id");
+
+          if (replyId == groupNo) {
+            targetReplyArea = $(value);
+            return false;
+          }
+
+          if (Number(replyId) > Number(groupNo)) {
+            return false;
+          }
+
+          targetReplyArea = $(value);
+        });
+      }
+    }
+    else {
+      let rowGroupNo = getReplyGroupNo($(targetReplyArea));
+      if (rowGroupNo.length > 0) {
+        insertAtBegining = true;
+      }
+    }
+
+    commentForm = $(targetReplyArea).next();
+    if (!commentForm.hasClass("comment-form")) {
+      if (insertAtBegining) {
+        let commentThreadContent = $(targetReplyArea).closest(".comment-thread-contents");
+        $(createCommentForm(groupNo)).prependTo(commentThreadContent);
+      }
+      else {
+        commentForm = $(createCommentForm(groupNo)).insertAfter(targetReplyArea);
+      }
+    }
+    replyArea.hide();
+    commentForm.show();
+    commentsRow.show(); // ensure that entire comment row isn't being hidden
+  }
+
+  $(getDiagnosticsRow(id)).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
+
+  // If comment checkbox is unchecked, show the icon for new comment
+  if (!($("#show-comments-checkbox").prop("checked"))) {
+    toggleCommentIcon(id, true);
+  }
+
+  if (moveFocus) {
+    commentForm.find(".new-thread-comment-text").focus();
+  }
+}
+
+export function createCommentForm(groupNo: string = '') {
+  var commentForm = $("#js-comment-form-template").children().clone();
+  if (groupNo) {
+    commentForm.find("form .new-comment-content").prepend(`<span class="badge badge-pill badge-light mb-2"><small>ROW-${groupNo}</small></span>`);
+  }
+  return commentForm;
+}
+
+export function getDiagnosticsRow(id: string) {
+  return $(`.code-diagnostics[data-line-id='${id}']`);
+}
+
+export function getReplyGroupNo(sibling: JQuery<HTMLElement>) {
+  return $(sibling).prevAll("a").first().find("small");
 }
 
 // Auto Refresh Comment
@@ -239,129 +380,21 @@ export function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearC
 }
 
 /**
- * gets the review and revision id of review from given uri, if they exist
- * @param uri uri of api view page 
- * @returns result dictionary of "reviewId" and "revisionId", if they exist; undefined otherwise
+ * Auto refresh sends the entire partial view result of the comment thread, including the sender's profile picture.
+ * Overrides the sender's profile picture with the current user's picture
  */
-export function getReviewAndRevisionIdFromUrl(uri) {
-  const regex = /.+(Review|Conversation|Revisions|Samples)\/([a-zA-Z0-9]+)(\?revisionId=([a-zA-Z0-9]+))?/;
+export function updateUserIcon() {
+  let size = 28;
+  let $navLinks = $("nav.navbar a.nav-link");
 
-  const match = uri.match(regex);
-  const result = {}
-
-  if (match) {
-    result["reviewId"] = match[2];
-    result["revisionId"] = match[4];  // undefined if latest revision 
-  } 
-
-  return result;
-}
-
-export function getCommentsRow(id: string) {
-  return $(`.comment-row[data-line-id='${id}']`);
-}
-
-// side effect: creates a comment row if it doesn't already exist
-export function showCommentBox(id: string, classes: string = '', groupNo: string = '', moveFocus: boolean = true) {
-  let commentForm;
-  let commentsRow = getCommentsRow(id);
-  let commentRowClasses = "comment-row";
-  if (classes) {
-    commentRowClasses = `${commentRowClasses} ${classes}`;
-  }
-
-  if (commentsRow.length === 0) {
-    commentForm = createCommentForm(groupNo);
-    commentsRow =
-      $(`<tr class="${commentRowClasses}" data-line-id="${id}">`)
-        .append($("<td colspan=\"3\">")
-          .append(commentForm));
-
-    commentsRow.insertAfter(getDiagnosticsRow(id).get(0) || getCodeRow(id).get(0));
-  }
-  else {
-    // there is one or more comment rows - insert form
-    let replyArea = $(commentsRow).find(".review-thread-reply");
-    let targetReplyArea = replyArea.first();
-    let firstReplyId = targetReplyArea.attr("data-reply-id");
-    let insertAtBegining = false;
-
-    if (groupNo) {
-      replyArea.siblings(".comment-form").remove();
-      if (Number(groupNo) < Number(firstReplyId)) {
-        insertAtBegining = true;
-      }
-      else {
-        replyArea.each(function (index, value) {
-          let replyId = $(value).attr("data-reply-id");
-
-          if (replyId == groupNo) {
-            targetReplyArea = $(value);
-            return false;
-          }
-
-          if (Number(replyId) > Number(groupNo)) {
-            return false;
-          }
-
-          targetReplyArea = $(value);
-        });
+  for (let nav of $navLinks) {
+    if (nav.innerText.includes("Profile")) {
+      let href = nav.getAttribute("href");
+      if (href) {
+        let hrefString: string = href;
+        let hrefSplit = hrefString.split("/");
+        return;
       }
     }
-    else {
-      let rowGroupNo = getReplyGroupNo($(targetReplyArea));
-      if (rowGroupNo.length > 0) {
-        insertAtBegining = true;
-      }
-    }
-
-    commentForm = $(targetReplyArea).next();
-    if (!commentForm.hasClass("comment-form")) {
-      if (insertAtBegining) {
-        let commentThreadContent = $(targetReplyArea).closest(".comment-thread-contents");
-        $(createCommentForm(groupNo)).prependTo(commentThreadContent);
-      }
-      else {
-        commentForm = $(createCommentForm(groupNo)).insertAfter(targetReplyArea);
-      }
-    }
-    replyArea.hide();
-    commentForm.show();
-    commentsRow.show(); // ensure that entire comment row isn't being hidden
   }
-
-  $(getDiagnosticsRow(id)).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
-
-  // If comment checkbox is unchecked, show the icon for new comment
-  if (!($("#show-comments-checkbox").prop("checked"))) {
-    toggleCommentIcon(id, true);
-  }
-
-  if (moveFocus) {
-    commentForm.find(".new-thread-comment-text").focus();
-  }
-}
-
-function createCommentForm(groupNo: string = '') {
-  var commentForm = $("#js-comment-form-template").children().clone();
-  if (groupNo) {
-    commentForm.find("form .new-comment-content").prepend(`<span class="badge badge-pill badge-light mb-2"><small>ROW-${groupNo}</small></span>`);
-  }
-  return commentForm;
-}
-
-export function getDiagnosticsRow(id: string) {
-  return $(`.code-diagnostics[data-line-id='${id}']`);
-}
-
-export function getReplyGroupNo(sibling: JQuery<HTMLElement>) {
-  return $(sibling).prevAll("a").first().find("small");
-}
-
-export function getElementId(element: HTMLElement, idName: string = "data-line-id") {
-  return getParentData(element, idName);
-}
-
-export function getParentData(element: HTMLElement, name: string) {
-  return $(element).closest(`[${name}]`).attr(name);
 }

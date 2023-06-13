@@ -12,12 +12,14 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
 using APIView.Model;
+using APIViewWeb.Hubs;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb.Managers
 {
@@ -42,14 +44,16 @@ namespace APIViewWeb.Managers
 
         private readonly IPackageNameManager _packageNameManager;
 
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
+
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
-        public ReviewManager (
+        public ReviewManager(
             IAuthorizationService authorizationService, ICosmosReviewRepository reviewsRepository,
             IBlobCodeFileRepository codeFileRepository, IBlobOriginalsRepository originalsRepository,
             ICosmosCommentsRepository commentsRepository, IEnumerable<LanguageService> languageServices,
             INotificationManager notificationManager, IDevopsArtifactRepository devopsClient,
-            IPackageNameManager packageNameManager)
+            IPackageNameManager packageNameManager, IHubContext<SignalRHub> signalRHubContext)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -60,6 +64,7 @@ namespace APIViewWeb.Managers
             _notificationManager = notificationManager;
             _devopsArtifactRepository = devopsClient;
             _packageNameManager = packageNameManager;
+            _signalRHubContext = signalRHubContext;
         }
 
         public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis, string langauge, bool awaitComputeDiff = false)
@@ -69,7 +74,7 @@ namespace APIViewWeb.Managers
                 Author = user.GetGitHubLogin(),
                 CreationDate = DateTime.UtcNow,
                 RunAnalysis = runAnalysis,
-                Name = fileStream != null? originalName : Path.GetFileName(originalName),
+                Name = fileStream != null ? originalName : Path.GetFileName(originalName),
                 FilterType = ReviewType.Manual
             };
             await AddRevisionAsync(user, review, originalName, label, fileStream, langauge, awaitComputeDiff);
@@ -225,7 +230,7 @@ namespace APIViewWeb.Managers
             {
                 await fileStream.CopyToAsync(memoryStream);
                 memoryStream.Position = 0;
-            }            
+            }
             CodeFile codeFile = null;
             if (languageService.IsReviewGenByPipeline)
             {
@@ -299,17 +304,23 @@ namespace APIViewWeb.Managers
             var revision = review.Revisions.Single(r => r.RevisionId == revisionId);
             await AssertApprover(user, revision);
             var userId = user.GetGitHubLogin();
+            bool approvalStatus;
             if (revision.Approvers.Contains(userId))
             {
                 //Revert approval
                 revision.Approvers.Remove(userId);
+                approvalStatus = false;
             }
             else
             {
                 //Approve revision
                 revision.Approvers.Add(userId);
                 review.ApprovalDate = DateTime.Now;
+                approvalStatus = true;
             }
+            await _signalRHubContext.Clients.Group(user.Identity.Name).SendAsync("ReceiveApprovalSelf", review.ReviewId, revisionId, approvalStatus);
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", review.ReviewId, revisionId, userId, approvalStatus);
+
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
@@ -342,7 +353,7 @@ namespace APIViewWeb.Managers
 
         public async Task UpdateReviewBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount)
         {
-            foreach(var language in LanguageService.SupportedLanguages)
+            foreach (var language in LanguageService.SupportedLanguages)
             {
                 if (updateDisabledLanguages.Contains(language))
                 {
@@ -380,8 +391,8 @@ namespace APIViewWeb.Managers
                             _telemetryClient.StopOperation(operation);
                         }
                     }
-                }                
-            }            
+                }
+            }
         }
 
         // Languages that full ysupport sandboxing updates reviews using Azure devops pipeline
@@ -391,7 +402,7 @@ namespace APIViewWeb.Managers
             var reviews = await _reviewsRepository.GetReviewsAsync(false, language, fetchAllPages: true);
             var paramList = new List<ReviewGenPipelineParamModel>();
 
-            foreach(var review in reviews)
+            foreach (var review in reviews)
             {
                 foreach (var revision in review.Revisions.Reverse())
                 {
@@ -424,7 +435,7 @@ namespace APIViewWeb.Managers
                     // We should try to increase the number of revisions in the batch than number of runs.
                     await Task.Delay(600000);
                     paramList.Clear();
-                }                
+                }
             }
 
             if (paramList.Count > 0)
@@ -828,7 +839,7 @@ namespace APIViewWeb.Managers
             return _languageServices.FirstOrDefault(service => service.Name == language);
         }
 
-        private void  AssertReviewDeletion(ReviewModel reviewModel)
+        private void AssertReviewDeletion(ReviewModel reviewModel)
         {
             // We allow deletion of manual API review only.
             // Server side assertion to ensure we are not processing any requests to delete automatic and PR API review

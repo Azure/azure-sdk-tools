@@ -16,6 +16,8 @@ using System.Security.Claims;
 using Azure.Storage.Blobs.Models;
 using APIView.Identity;
 using APIViewWeb.Managers;
+using Microsoft.AspNetCore.SignalR;
+using APIViewWeb.Hubs;
 
 namespace APIViewIntegrationTests
 {
@@ -24,14 +26,14 @@ namespace APIViewIntegrationTests
         private readonly CosmosClient _cosmosClient;
         private readonly BlobContainerClient _blobCodeFileContainerClient;
         private readonly BlobContainerClient _blobOriginalContainerClient;
-        
+
         public PackageNameManager PackageNameManager { get; private set; }
         public ReviewManager ReviewManager { get; private set; }
         public BlobCodeFileRepository BlobCodeFileRepository { get; private set; }
         public CosmosReviewRepository ReviewRepository { get; private set; }
         public CosmosCommentsRepository CommentRepository { get; private set; }
         public ClaimsPrincipal User { get; private set; }
-        public  string TestDataPath { get; private set; }
+        public string TestDataPath { get; private set; }
 
         public TestsBaseFixture()
         {
@@ -92,9 +94,11 @@ namespace APIViewIntegrationTests
             devopsArtifactRepositoryMoq.Setup(_ => _.RunPipeline(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
+            var signalRHubContextMoq = new Mock<IHubContext<SignalRHub>>();
+
             ReviewManager = new ReviewManager(
                 authorizationServiceMoq.Object, ReviewRepository, BlobCodeFileRepository, blobOriginalsRepository, CommentRepository,
-                languageService, notificationManager, devopsArtifactRepositoryMoq.Object, PackageNameManager);
+                languageService, notificationManager, devopsArtifactRepositoryMoq.Object, PackageNameManager, signalRHubContextMoq.Object);
 
             TestDataPath = config["TestPkgPath"];
         }

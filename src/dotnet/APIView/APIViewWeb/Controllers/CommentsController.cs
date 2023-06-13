@@ -1,16 +1,19 @@
 using System;
 using System.Threading.Tasks;
+using APIViewWeb.DTO;
 using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb.Controllers
 {
-    [Authorize("RequireOrganization")]
-    public class CommentsController: Controller
+    //[Authorize("RequireOrganization")]
+    [AllowAnonymous]
+    public class CommentsController : Controller
     {
         private readonly ICommentsManager _commentsManager;
         private readonly IReviewManager _reviewManager;
@@ -47,7 +50,7 @@ namespace APIViewWeb.Controllers
             comment.ResolutionLocked = !resolutionLock.Equals("on");
             comment.Username = User.GetGitHubLogin();
 
-            foreach(string user in taggedUsers)
+            foreach (string user in taggedUsers)
             {
                 comment.TaggedUsers.Add(user);
             }
@@ -56,16 +59,16 @@ namespace APIViewWeb.Controllers
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
             if (review != null)
             {
-                await _notificationManager.SubscribeAsync(review,User);
+                await _notificationManager.SubscribeAsync(review, User);
             }
-            
-            return await CommentPartialAsync(reviewId, comment.ElementId); 
+
+            return await CommentPartialAsync(reviewId, comment.ElementId);
         }
 
         [HttpPost]
         public async Task<ActionResult> Update(string reviewId, string commentId, string commentText, string[] taggedUsers)
         {
-            var comment =  await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText, taggedUsers);
+            var comment = await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText, taggedUsers);
 
             return await CommentPartialAsync(reviewId, comment.ElementId);
         }

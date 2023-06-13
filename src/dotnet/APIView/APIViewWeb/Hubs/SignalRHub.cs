@@ -1,15 +1,17 @@
 using System.Threading.Tasks;
+using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Hubs
 {
     [Authorize]
-    public class NotificationHub : Hub
+    public class SignalRHub : Hub
     {
-        private readonly ILogger<NotificationHub> _logger;
-        public NotificationHub(ILogger<NotificationHub> logger) {
+        private readonly ILogger<SignalRHub> _logger;
+        public SignalRHub(ILogger<SignalRHub> logger) {
             _logger = logger;
         }
 
@@ -19,9 +21,9 @@ namespace APIViewWeb.Hubs
             if (!string.IsNullOrEmpty(name))
             {
                 Groups.AddToGroupAsync(Context.ConnectionId, name);
+                Clients.Caller.SendAsync("ReceiveConnectionId", Context.ConnectionId);
             }
             return base.OnConnectedAsync();
         }
-
     }
 }

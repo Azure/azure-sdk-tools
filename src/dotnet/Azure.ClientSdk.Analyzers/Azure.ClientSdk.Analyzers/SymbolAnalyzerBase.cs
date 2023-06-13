@@ -16,7 +16,7 @@ namespace Azure.ClientSdk.Analyzers
 
         protected INamedTypeSymbol ClientOptionsType { get; private set; }
 
-        public sealed override void Initialize(AnalysisContext context)
+        public override void Initialize(AnalysisContext context)
         {
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
             context.EnableConcurrentExecution();

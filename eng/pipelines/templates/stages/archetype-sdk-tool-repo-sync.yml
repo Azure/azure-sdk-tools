@@ -174,8 +174,7 @@ stages:
                         workingDirectory: $(System.DefaultWorkingDirectory)
                         filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
                         arguments: >
-                          -RepoOwner "Azure"
-                          -RepoName ${{ repo }}
+                          -RepoId "Azure/${{ repo }}"
                           -BranchRegex "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
                           -AuthToken $(azuresdk-github-pat)
 

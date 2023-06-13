@@ -4,10 +4,14 @@ using APIViewWeb.DTO;
 using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
+using Azure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Azure.Cosmos.Linq;
+using Microsoft.Extensions.Azure;
+using Octokit;
 
 namespace APIViewWeb.Controllers
 {
@@ -29,7 +33,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false, string signalRConnectionId = null)
         {
             if (string.IsNullOrEmpty(commentText))
             {

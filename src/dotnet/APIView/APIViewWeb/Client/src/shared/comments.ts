@@ -129,6 +129,7 @@ $(() => {
       serializedForm.push({ name: "revisionId", value: revisionId });
       serializedForm.push({ name: "sectionClass", value: rowSectionClasses });
       serializedForm.push({ name: "taggedUsers", value: getTaggedUsers(e.target) });
+      serializedForm.push({ name: "signalRConnectionId", value: getSignalRConnectionId() });
       
       if (inlineRowNo.length > 0) {
         let groupNo = inlineRowNo.text().replace("ROW-", '');

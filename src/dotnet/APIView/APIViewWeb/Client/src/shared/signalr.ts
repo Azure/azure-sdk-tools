@@ -1,4 +1,7 @@
 import * as hp from "./helpers";
+import * as comments from "./comments";
+import { ConsoleLogger, createLogger } from "@microsoft/signalr/dist/esm/Utils";
+import { LogLevel } from "@microsoft/signalr";
 
 let connection;
 // sender/server side of comment refresh 

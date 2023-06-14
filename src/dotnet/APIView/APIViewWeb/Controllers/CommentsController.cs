@@ -73,8 +73,8 @@ namespace APIViewWeb.Controllers
             commentDto.Comment = commentText;
             commentDto.CommentId = comment.CommentId;
 
-            await _notificationHubContext.Clients.AllExcept(signalRConnectionId).SendAsync("ReceiveComment", commentDto);
-            await _notificationHubContext.Clients.User(signalRConnectionId).SendAsync("ReceiveCommentTest", commentDto); // NOTE: for debugging purposes only
+            //await _notificationHubContext.Clients.AllExcept(signalRConnectionId).SendAsync("ReceiveComment", commentDto); // TODO: need to check if valid signalR connection id 
+            await _notificationHubContext.Clients.All.SendAsync("ReceiveComment", commentDto); // TODO: for debugging. remove for PR 
 
             return await CommentPartialAsync(reviewId, comment.ElementId);
         }

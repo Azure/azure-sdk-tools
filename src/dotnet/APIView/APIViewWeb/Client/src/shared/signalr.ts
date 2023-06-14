@@ -40,19 +40,10 @@ $(() => {
   });
 
   connection.on("ReceiveComment", (commentDto) => {
-    console.log("comment received");
-
-    // push to everyone except current
+    // TODO
     // find a way to update their comments
     // if current client has same review id open and received this same message,
     // use the id to find where to add comment 
-  });
-
-  // NOTE: for debugging purposes only. remove for PR 
-  connection.on("ReceiveCommentTest", (commentDto) => {
-
-    let logger = createLogger();
-    logger.log(LogLevel.Information, "comment received");
   });
 
   // Start the connection.

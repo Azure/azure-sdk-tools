@@ -17,7 +17,7 @@ namespace SwaggerApiParser.Specs
         public new Schema items { get; set; } // Should this be an array?
         public List<Schema> allOf { get; set; }
         public Dictionary<string, Schema> properties { get; set; }
-        public dynamic additionalProperties { get; set; }
+        public JsonElement additionalProperties { get; set; }
         public string discriminator { get; set; }
         public bool readOnly { get; set; }
         public XML xml { get; set; }

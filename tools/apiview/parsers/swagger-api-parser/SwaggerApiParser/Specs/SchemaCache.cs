@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 namespace SwaggerApiParser.Specs
 {
@@ -242,6 +243,20 @@ namespace SwaggerApiParser.Specs
                 var items = GetResolvedSchema(root.items, currentSwaggerFilePath, refChain);
                 root.items = items;
                 Utils.AddSchemaToRootDefinition(items, definitions);
+            }
+
+            if (root.additionalProperties.ValueKind == JsonValueKind.Object) 
+            {
+                var additionalProperties = JsonSerializer.Deserialize<Dictionary<string, string>>(root.additionalProperties);
+                if (additionalProperties.ContainsKey("$ref"))
+                {
+                    var schema = new Schema();
+                    schema.@ref = additionalProperties["$ref"].ToString();
+                    var refKey = GetRefKey(schema.@ref);
+                    schema = GetResolvedSchema(schema, currentSwaggerFilePath, refChain);
+                    root.properties[refKey] = schema;
+                    Utils.AddSchemaToRootDefinition(schema, definitions);
+                }
             }
 
             if (root.properties != null)

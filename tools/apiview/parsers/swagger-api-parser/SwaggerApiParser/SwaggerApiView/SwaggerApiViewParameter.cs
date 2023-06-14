@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SwaggerApiParser.Specs;
 
 namespace SwaggerApiParser.SwaggerApiView
@@ -146,7 +147,7 @@ namespace SwaggerApiParser.SwaggerApiView
         private CodeFileToken[] TokenSerializeTableRows(SerializeContext context)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
-            foreach (var parameter in this)
+            foreach (var parameter in this.OrderBy(x => x.name))
             {
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameter.name, CodeFileTokenKind.MemberName) }));
                 var parameterType = parameter.GetTypeFormat();

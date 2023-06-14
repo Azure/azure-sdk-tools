@@ -10,7 +10,7 @@ namespace SwaggerApiParser.Specs
         public string format { get; set; }
         public Items items { get; set; }
         public string collectionFormat { get; set; }
-        public dynamic @default { get; set; }
+        public JsonElement @default { get; set; }
         public double? maximum { get; set; }
         public bool? exclusiveMaximum { get; set; }
         public double? minimum { get; set; }
@@ -32,7 +32,7 @@ namespace SwaggerApiParser.Specs
             if (!string.IsNullOrEmpty(this.collectionFormat))
                 keywords.Add($"collectionFormat : {this.collectionFormat}");
 
-            if (this.@default != null)
+            if (@default.ValueKind == JsonValueKind.String)
                 keywords.Add($"default : {this.@default.ToString()}");
 
             if (this.maximum != null)

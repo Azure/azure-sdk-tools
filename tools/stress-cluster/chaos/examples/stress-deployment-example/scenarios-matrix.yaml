@@ -1,7 +1,7 @@
 matrix:
   # Set subscriptionConfig here ONLY for a global override for all scenarios.
   # The value should match the name of the secret in the static secrets keyvault for the cluster.
-  # subscriptionConfig: yourCustomSubscriptionConfig
+  # subscriptionConfig: <your subscription config secret name>
   scenarios:
     deploy-default:
       description: "Example for using default subscription config"
@@ -9,4 +9,4 @@ matrix:
       description: "Example for overriding subscription config"
       # Set subscriptionConfig here to use a custom subscription for this scenario only.
       # This line should be removed if using the environment default or the global override.
-      # subscriptionConfig: yourCustomSubscriptionConfig
+      # subscriptionConfig: <your subscription config secret name>

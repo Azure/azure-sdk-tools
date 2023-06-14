@@ -244,7 +244,7 @@ that do not exist in the cluster subscription, or if azure resource deployments 
 To set up a custom subscription:
 
 1. Create a service principal with Contributor access to your subscription (or Owner if your bicep file needs to set RBAC policies).
-2. Set a secret with your desired name in the static keyvault provisioned for the stress cluster. The keyvault name can be found in the [addons values config](/tools/stress-cluster/cluster/kubernetes/stress-test-addons/values.yaml) for the desired environment under the key `staticTestSecretsKeyvaultName`.
+2. Set a secret with your desired name in the static keyvault provisioned for the stress cluster. The keyvault name can be found in the [addons values config](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/values.yaml) for the desired environment under the key `staticTestSecretsKeyvaultName`.
 
 The secret contents should look like:
 
@@ -257,12 +257,12 @@ AZURE_SUBSCRIPTION_ID=<Subscription ID>
 ```
 
 3. Update your scenarios-matrix.yaml file to set the `subscriptionConfig` field for the scenarios that should deploy to the custom subscription.
-   The value should match the secret name in keyvault. See [scenarios-matrix.yaml](examples/stress-deployment-example/scenarios-matrix.yaml) or below for examples.
+   The value should match the secret name in keyvault. See [scenarios-matrix.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/stress-deployment-example/scenarios-matrix.yaml) or below for examples.
 
 Override subscription for ALL scenarios
 ```
 matrix:
-  subscriptionConfig: yourCustomSubscriptionConfigSecret
+  subscriptionConfig: <your subscription config secret name>
   scenarios:
     myScenario1:
       foo: bar1
@@ -276,14 +276,14 @@ Override subscription for individual scenarios
     deploy-default:
       foo: bar
     deploy-custom:
-      subscriptionConfig: yourCustomSubscriptionConfigSecret
+      subscriptionConfig: <your subscription config secret name>
       foo: bar
 ```
 
 As an example, for the above samples, the following command would set up the custom subscription for use in the Azure SDK Engineering System `pg` cluster:
 
 ```
-az keyvault secret set --vault-name stress-secrets-pg -n yourCustomSubscriptionConfigSecret -f <path to sub config>
+az keyvault secret set --vault-name stress-secrets-pg -n <your subscription config secret name> -f <path to sub config>
 ```
 
 ### Helm Chart File

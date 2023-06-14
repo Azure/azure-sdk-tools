@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Text.Json;
 using SwaggerApiParser.SwaggerApiView;
 
 namespace SwaggerApiParser.Specs
@@ -22,7 +22,7 @@ namespace SwaggerApiParser.Specs
         public bool readOnly { get; set; }
         public XML xml { get; set; }
         public ExternalDocs externalDocs { get; set; }
-        public dynamic example { get; set; }
+        public JsonElement example { get; set; }
 
         // Extra Properties For Parsing
 

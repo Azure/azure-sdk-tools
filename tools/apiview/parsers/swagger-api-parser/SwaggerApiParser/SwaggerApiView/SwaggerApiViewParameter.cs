@@ -4,24 +4,26 @@ using SwaggerApiParser.Specs;
 
 namespace SwaggerApiParser.SwaggerApiView
 {
-    public class SwaggerApiViewParameter : ITokenSerializable
+    public class SwaggerApiViewParameter : Items
     {
         public string name { get; set; }
         public string @in { get; set; }
         public string description { get; set; }
         public bool required { get; set; }
         public Schema schema { get; set; }
-        public string format { get; set; }
-        public string type { get; set; }
-        public string @ref { get; set; }
+        public bool allowEmptyValue { get; set; }
+  
         
-        public List<string> GetKeywords()
+        public new List<string> GetKeywords()
         {
             List<string> ret = new List<string>();
             if (this.required)
-            {
                 ret.Add("required");
-            }
+
+            if (this.allowEmptyValue)
+                ret.Add("allowEmptyValue");
+
+            ret.AddRange(base.GetKeywords());
             return ret;
         }
 
@@ -50,7 +52,7 @@ namespace SwaggerApiParser.SwaggerApiView
             return this.@ref != null;
         }
 
-        public CodeFileToken[] TokenSerialize(SerializeContext context)
+        public new CodeFileToken[] TokenSerialize(SerializeContext context)
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
             if (this.IsRefObj())
@@ -150,7 +152,7 @@ namespace SwaggerApiParser.SwaggerApiView
                 var parameterType = parameter.GetTypeFormat();
 
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameterType, CodeFileTokenKind.Keyword) }));
-                ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(String.Join(",", parameter.GetKeywords()), CodeFileTokenKind.Literal) }));
+                ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(String.Join(", ", parameter.GetKeywords()), CodeFileTokenKind.Literal) }));
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameter.description, CodeFileTokenKind.Literal) }));
             }
             return ret.ToArray();

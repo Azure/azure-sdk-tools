@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using SwaggerApiParser.Specs;
 
@@ -14,20 +15,22 @@ namespace SwaggerApiParser.SwaggerApiView
         public string operationId { get; set; }
         public List<string> consumes { get; set; }
         public List<string> produces { get; set; }
-        public List<string> schemes { get; set; }
-        public bool deprecated { get; set; }
-        public List<Security> security { get; set; }
-        public IDictionary<string, dynamic> patternedObjects { get; set; }
-        public string operationIdPrefix;
-        public string operationIdAction { get; set; }
-        public string method { get; set; }
-        public string path { get; set; }
-        public Operation operation { get; set; }
         public SwaggerApiViewOperationParameters PathParameters { get; set; }
         public SwaggerApiViewOperationParameters QueryParameters { get; set; }
         public SwaggerApiViewOperationParameters BodyParameters { get; set; }
         public SwaggerApiViewOperationParameters HeaderParameters { get; set; }
         public List<SwaggerApiViewResponse> Responses { get; set; }
+        public List<string> schemes { get; set; }
+        public bool deprecated { get; set; }
+        public List<Security> security { get; set; }
+        public IDictionary<string, JsonElement> patternedObjects { get; set; }
+
+
+        public string operationIdPrefix;
+        public string operationIdAction { get; set; }
+        public string method { get; set; }
+        public string path { get; set; }
+        public Operation operation { get; set; }
 
         public string _iteratorPath;
 
@@ -36,7 +39,15 @@ namespace SwaggerApiParser.SwaggerApiView
             List<CodeFileToken> ret = new List<CodeFileToken>();
 
             ret.Add(TokenSerializer.FoldableContentStart());
-            if (this.summary != null)
+            if (tags != null && tags.Count > 0)
+            {
+                ret.Add(TokenSerializer.NavigableToken("tags", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("tags")));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(new CodeFileToken(string.Join(", ", tags), CodeFileTokenKind.Literal));
+                ret.Add(TokenSerializer.NewLine());
+            }
+
+            if (!string.IsNullOrEmpty(this.summary))
             {
                 ret.Add(TokenSerializer.NavigableToken("summary", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("summary")));
                 ret.Add(TokenSerializer.Colon());
@@ -44,7 +55,7 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.Add(TokenSerializer.NewLine());
             }
 
-            if (this.description != null)
+            if (!string.IsNullOrEmpty(this.description))
             {
                 ret.Add(TokenSerializer.NavigableToken("description", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("description")));
                 ret.Add(TokenSerializer.Colon());
@@ -52,34 +63,51 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.Add(TokenSerializer.NewLine());
             }
 
+            if (externalDocs != null)
+            {
+                ret.Add(new CodeFileToken("externalDocs", CodeFileTokenKind.FoldableSectionHeading));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(TokenSerializer.NewLine());
+                ret.Add(TokenSerializer.FoldableContentStart());
+                ret.AddRange(externalDocs.TokenSerialize(context));
+                ret.Add(TokenSerializer.FoldableContentEnd());
+            }
 
-            ret.Add(TokenSerializer.NavigableToken("operationId", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
-            ret.Add(TokenSerializer.Colon());
-            ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
-            ret.Add(TokenSerializer.NewLine());
+            if (!string.IsNullOrEmpty(this.operationId)) 
+            {
+                ret.Add(TokenSerializer.NavigableToken("operationId", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("operationId")));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
+                ret.Add(TokenSerializer.NewLine());
+            }
 
             if (this.consumes != null && consumes.Count > 0)
             {
-                ret.AddRange(TokenSerializer.KeyValueTokens("consumes", string.Join(",", this.consumes)));
+                ret.AddRange(TokenSerializer.KeyValueTokens("consumes", string.Join(", ", this.consumes)));
             }
 
             if (this.produces != null && produces.Count > 0)
             {
-                ret.AddRange(TokenSerializer.KeyValueTokens("produces", string.Join(",", this.produces)));
+                ret.AddRange(TokenSerializer.KeyValueTokens("produces", string.Join(", ", this.produces)));
             }
 
             if (this.schemes != null && schemes.Count > 0)
             {
-                ret.AddRange(TokenSerializer.KeyValueTokens("schemes", string.Join(",", this.schemes)));
+                ret.AddRange(TokenSerializer.KeyValueTokens("schemes", string.Join(", ", this.schemes)));
             }
 
-            if (tags != null)
+            if (this.deprecated)
             {
-                ret.Add(TokenSerializer.NavigableToken("tags", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("tags")));
-                ret.Add(TokenSerializer.Colon());
-                ret.Add(new CodeFileToken(string.Join(",", tags), CodeFileTokenKind.Literal));
+                ret.Add(TokenSerializer.NavigableToken("deprecated", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("deprecated")));
                 ret.Add(TokenSerializer.NewLine());
             }
+
+            if (this.security != null && security.Count > 0)
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens("security", string.Join(", ", this.security)));
+            }
+
+            Utils.SerializePatternedObjects(patternedObjects, ret);
 
             // new line for `Parameters` section.
             ret.Add(TokenSerializer.NewLine());
@@ -91,7 +119,6 @@ namespace SwaggerApiParser.SwaggerApiView
 
             // new line for `Response` section.
             ret.Add(TokenSerializer.NewLine());
-
 
             ret.Add(TokenSerializer.NavigableToken("Responses", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Responses")));
             ret.Add(TokenSerializer.Colon());

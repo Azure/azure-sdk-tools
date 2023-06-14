@@ -32,7 +32,7 @@ namespace SwaggerApiParser.SwaggerApiView
         {
             List<CodeFileToken> ret = new List<CodeFileToken>();
 
-            if (swaggerLink != "")
+            if (!String.IsNullOrEmpty(swaggerLink))
             {
                 ret.AddRange(TokenSerializer.KeyValueTokens("swaggerLink", swaggerLink, true, context.IteratorPath.CurrentNextPath("swaggerLink")));
             }
@@ -45,39 +45,31 @@ namespace SwaggerApiParser.SwaggerApiView
             ret.AddRange(info.TokenSerialize(context));
             ret.Add(TokenSerializer.FoldableContentEnd());
 
+            if (!String.IsNullOrEmpty(host))
+                ret.AddRange(TokenSerializer.KeyValueTokens("host", host, true, context.IteratorPath.CurrentNextPath("host")));
+
+            if (!String.IsNullOrEmpty(basePath))
+                ret.AddRange(TokenSerializer.KeyValueTokens("basePath", basePath, true, context.IteratorPath.CurrentNextPath("basePath")));
+
             if (schemes != null && schemes.Count > 0)
             {
-                var schemesStr = String.Join(",", schemes);
+                var schemesStr = String.Join(", ", schemes);
                 ret.AddRange(TokenSerializer.KeyValueTokens("schemes", schemesStr, true, context.IteratorPath.CurrentNextPath("schemes")));
             }
 
             if (consumes != null && consumes.Count > 0)
             {
-                var consumesStr = String.Join(",", consumes);
+                var consumesStr = String.Join(", ", consumes);
                 ret.AddRange(TokenSerializer.KeyValueTokens("consumes", consumesStr, true, context.IteratorPath.CurrentNextPath("consumes")));
             }
 
             if (produces != null && produces.Count > 0)
             {
-                var producesStr = String.Join(",", produces);
+                var producesStr = String.Join(", ", produces);
                 ret.AddRange(TokenSerializer.KeyValueTokens("produces", producesStr, true, context.IteratorPath.CurrentNextPath("produces")));
             }
 
-            if (security != null)
-            {
-                string securityStr = "";
-                foreach (var it in security)
-                {
-                    foreach (var kv in it)
-                    {
-                        securityStr += kv.Key + ": [" + string.Join(",", kv.Value) + "]";
-                    }
-                }
-
-                ret.AddRange(TokenSerializer.KeyValueTokens("security", securityStr, true, context.IteratorPath.CurrentNextPath("secuirty")));
-            }
-
-            if (securityDefinitions != null)
+            if (securityDefinitions != null && securityDefinitions.Count > 0)
             {
                 ret.Add(new CodeFileToken("securityDefinitions", CodeFileTokenKind.FoldableSectionHeading));
                 ret.Add(TokenSerializer.Colon());
@@ -91,6 +83,20 @@ namespace SwaggerApiParser.SwaggerApiView
                     ret.AddRange(TokenSerializer.TokenSerializeAsJson(kv.Value, true));
                 }
                 ret.Add(TokenSerializer.FoldableContentEnd());
+            }
+
+            if (security != null && security.Count > 0)
+            {
+                string securityStr = "";
+                foreach (var it in security)
+                {
+                    foreach (var kv in it)
+                    {
+                        securityStr += kv.Key + ": [" + string.Join(", ", kv.Value) + "]";
+                    }
+                }
+
+                ret.AddRange(TokenSerializer.KeyValueTokens("security", securityStr, true, context.IteratorPath.CurrentNextPath("secuirty")));
             }
 
             if (tags != null && tags.Count > 0)
@@ -119,8 +125,7 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.Add(TokenSerializer.FoldableContentEnd());
             }
 
-            if (patternedObjects != null && patternedObjects.Count > 0)
-                Utils.SerializePatternedObjects(patternedObjects, ret);
+            Utils.SerializePatternedObjects(patternedObjects, ret);
 
             return ret.ToArray();
         }

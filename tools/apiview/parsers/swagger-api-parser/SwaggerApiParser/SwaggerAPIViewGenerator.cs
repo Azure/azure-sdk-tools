@@ -122,9 +122,24 @@ namespace SwaggerApiParser
                                 description = param.description,
                                 required = param.required,
                                 schema = schemaCache.GetResolvedSchema(param.schema, referenceSwaggerFilePath, null, swaggerSpec.definitions),
+                                type = param.type,
                                 format = param.format,
+                                items = param.items,
+                                collectionFormat = param.collectionFormat,
+                                @default = param.@default,
+                                maximum = param.maximum,
+                                exclusiveMaximum = param.exclusiveMaximum,
+                                minimum = param.minimum,
+                                exclusiveMinimum = param.exclusiveMinimum,
+                                maxLength = param.maxLength,
+                                minLength = param.minLength,
+                                pattern = param.pattern,
+                                maxItems = param.maxItems,
+                                minItems = param.minItems,
+                                uniqueItems = param.uniqueItems,
+                                multipleOf = param.multipleOf,
+                                patternedObjects = param.patternedObjects,
                                 @ref = param.@ref,
-                                type = param.type
                             };
 
                             switch (param.@in)
@@ -218,7 +233,7 @@ namespace SwaggerApiParser
                             schema = schemaCache.GetResolvedSchema(schema, referenceSwaggerFilePath, refChain, swaggerSpec.definitions);
                         }
 
-                        var headers = response.headers ?? new Dictionary<string, Header>();
+                        var headers = resp.headers ?? new Dictionary<string, Header>();
 
                         op.Responses.Add(new SwaggerApiViewResponse() { description = response.description, statusCode = statusCode, schema = schema, headers = headers });
                     }
@@ -234,14 +249,29 @@ namespace SwaggerApiParser
                     var param = value;
                     var swaggerApiViewParameter = new SwaggerApiViewParameter
                     {
-                        description = param.description,
                         name = param.name,
-                        required = param.required,
-                        format = param.format,
                         @in = param.@in,
+                        description = param.description,
+                        required = param.required,
                         schema = schemaCache.GetResolvedSchema(param.schema, swaggerFilePath, null, swaggerSpec.definitions),
+                        type = param.type,
+                        format = param.format,
+                        items = param.items,
+                        collectionFormat = param.collectionFormat,
+                        @default = param.@default,
+                        maximum = param.maximum,
+                        exclusiveMaximum = param.exclusiveMaximum,
+                        minimum = param.minimum,
+                        exclusiveMinimum = param.exclusiveMinimum,
+                        maxLength = param.maxLength,
+                        minLength = param.minLength,
+                        pattern = param.pattern,
+                        maxItems = param.maxItems,
+                        minItems = param.minItems,
+                        uniqueItems = param.uniqueItems,
+                        multipleOf = param.multipleOf,
+                        patternedObjects = param.patternedObjects,
                         @ref = param.@ref,
-                        type = param.type
                     };
                     ret.SwaggerApiViewGlobalParameters.Add(key, swaggerApiViewParameter);
                 }

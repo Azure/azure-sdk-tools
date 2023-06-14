@@ -162,7 +162,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 InitializeAssetsRepo(config);
             }
 
-            CheckoutRepoAtConfig(config);
+            CheckoutRepoAtConfig(config, cleanEnabled: true);
             await BreadCrumb.Update(config);
 
             return config.AssetsRepoLocation.ToString();
@@ -214,25 +214,29 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (allowReset)
             {
-                try
-                {
-                    GitHandler.Run("checkout *", config);
-                    GitHandler.Run("clean -xdf", config);
-                }
-                catch(GitProcessException e)
-                {
-                    HideOrigin(config);
-                    throw GenerateInvokeException(e.Result);
-                }
-
                 if (!string.IsNullOrWhiteSpace(config.Tag))
                 {
-                    CheckoutRepoAtConfig(config);
+                    Clean(config);
+                    CheckoutRepoAtConfig(config, cleanEnabled: false);
                     await BreadCrumb.Update(config);
                 }
             }
 
             HideOrigin(config);
+        }
+
+        private void Clean(GitAssetsConfiguration config)
+        {
+            try
+            {
+                GitHandler.Run("checkout *", config);
+                GitHandler.Run("clean -xdf", config);
+            }
+            catch (GitProcessException e)
+            {
+                HideOrigin(config);
+                throw GenerateInvokeException(e.Result);
+            }
         }
 
         /// <summary>
@@ -297,11 +301,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Given a configuration, set the sparse-checkout directory for the config, then attempt checkout of the targeted Tag.
         /// </summary>
         /// <param name="config"></param>
-        public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
+        /// <param name="cleanEnabled">A newly initialized repo should not be 'cleaned', as that will result in a git error. However, a new
+        /// clone looks the same as being on the wrong tag. This variable allows us to prevent over-active cleaning that would result in exceptions.</param>
+        public void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled = true)
         {
+            // we are already on a targeted tag and as such don't want to discard our recordings
             if (Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag)
             {
                 return;
+            }
+            // if we are NOT on our targeted tag, before we attempt to switch we need to reset without asking for permission
+            else if (cleanEnabled)
+            {
+                Clean(config);
             }
 
             var checkoutPaths = ResolveCheckoutPaths(config);
@@ -466,7 +478,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     throw GenerateInvokeException(e.Result);
                 }
 
-                CheckoutRepoAtConfig(config);
+                CheckoutRepoAtConfig(config, cleanEnabled: false);
                 workCompleted = true;
             }
 

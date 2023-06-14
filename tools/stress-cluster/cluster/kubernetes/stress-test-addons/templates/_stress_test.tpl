@@ -55,6 +55,7 @@ spec:
 {{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $jobCtx) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
+{{- include "stress-test-addons.static-secrets" $global }}
 {{- end -}}
 
 {{- define "stress-test-addons.env-job-template.tpl" -}}
@@ -101,4 +102,5 @@ spec:
 {{- $tpl := fromYaml (include "stress-test-addons.env-job-template.tpl" $jobCtx) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
+{{- include "stress-test-addons.static-secrets" $global }}
 {{- end -}}

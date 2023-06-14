@@ -23,7 +23,7 @@
       mountPath: /mnt/testresources
     - name: test-env-{{ lower .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
       mountPath: /mnt/outputs
-    - name: "static-secrets-{{ .Release.Name }}"
+    - name: "static-secrets-{{ .Release.Name }}-{{ .Stress.SubscriptionConfig }}"
       mountPath: "/mnt/secrets/static"
       readOnly: true
 {{ end }}

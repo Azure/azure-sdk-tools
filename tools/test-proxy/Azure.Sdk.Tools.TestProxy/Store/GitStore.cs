@@ -162,7 +162,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 InitializeAssetsRepo(config);
             }
 
-            CheckoutRepoAtConfig(config, true);
+            CheckoutRepoAtConfig(config, cleanEnabled: true);
             await BreadCrumb.Update(config);
 
             return config.AssetsRepoLocation.ToString();
@@ -216,7 +216,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 if (!string.IsNullOrWhiteSpace(config.Tag))
                 {
-                    CheckoutRepoAtConfig(config, true);
+                    Clean(config);
+                    CheckoutRepoAtConfig(config, cleanEnabled: false);
                     await BreadCrumb.Update(config);
                 }
             }
@@ -477,7 +478,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     throw GenerateInvokeException(e.Result);
                 }
 
-                CheckoutRepoAtConfig(config, false);
+                CheckoutRepoAtConfig(config, cleanEnabled: false);
                 workCompleted = true;
             }
 

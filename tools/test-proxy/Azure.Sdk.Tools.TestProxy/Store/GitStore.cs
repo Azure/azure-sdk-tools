@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
 
         /// <summary>
-        /// We need to lock repo inititialization behind a semaphore queue.
+        /// We need to lock repo inititialization behind a queue.
         /// This is due to the fact that Restore() can be called from multiple parallel
         /// requests, as multiple "startplayback" can be firing at the same time.
         /// 

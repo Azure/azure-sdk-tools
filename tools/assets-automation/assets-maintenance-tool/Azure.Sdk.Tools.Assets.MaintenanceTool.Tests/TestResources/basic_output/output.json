@@ -1,0 +1,29 @@
+[
+  {
+    "LanguageRepo": "azure/azure-sdk-assets-integration",
+    "Commit": "48bca526a2a9972e4219ec87d29a7aa31438581a",
+    "AssetsLocation": "sdk/agrifood/arm-agrifood/assets.json",
+    "Tag": "js/agrifood/arm-agrifood_4f244d09c7",
+    "AssetsRepo": "Azure/azure-sdk-assets",
+    "BackupUri": null,
+    "CreationDate": "2023-05-11T11:05:59"
+  },
+  {
+    "LanguageRepo": "azure/azure-sdk-assets-integration",
+    "Commit": "48bca526a2a9972e4219ec87d29a7aa31438581a",
+    "AssetsLocation": "sdk/storage/storage-blob/assets.json",
+    "Tag": "js/storage/storage-blob_5d5a32b74a",
+    "AssetsRepo": "Azure/azure-sdk-assets",
+    "BackupUri": null,
+    "CreationDate": "2023-05-10T00:00:00"
+  },
+  {
+    "LanguageRepo": "azure/azure-sdk-assets-integration",
+    "Commit": "f139c4ddf7aaa4d637282ae7da4466b473044281",
+    "AssetsLocation": "sdk/agrifood/arm-agrifood/assets.json",
+    "Tag": "js/agrifood/arm-agrifood_4f244d09c7",
+    "AssetsRepo": "Azure/azure-sdk-assets",
+    "BackupUri": "https://github.com/azure-sdk/azure-sdk-assets/tree/backup_js/agrifood/arm-agrifood_4f244d09c7",
+    "CreationDate": "2023-05-08T00:00:00"
+  }
+]

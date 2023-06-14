@@ -10,7 +10,7 @@ import {RunningEnvironment} from "./utils/runningEnvironment";
 const shell = require('shelljs');
 const fs = require('fs');
 
-async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPath: string, use: string | undefined, typespecEmitter: string | undefined) {
+async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPath: string, use: string | undefined, typespecEmitter: string | undefined, sdkGenerationType: string | undefined) {
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, {encoding: 'utf-8'}));
     const specFolder: string = inputJson['specFolder'];
     const readmeFiles: string[] | string | undefined = inputJson['relatedReadmeMdFiles']? inputJson['relatedReadmeMdFiles']: inputJson['relatedReadmeMdFile'];
@@ -68,7 +68,10 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
             typespecEmitter: !!typespecEmitter? typespecEmitter : `@azure-tools/typespec-ts`,
             outputJson: outputJson,
             skipGeneration: skipGeneration,
-            runningEnvironment: runningEnvironment
+            sdkGenerationType: (sdkGenerationType === "command") ? "command" : "script",
+            runningEnvironment: runningEnvironment,
+            swaggerRepoUrl: repoHttpsUrl,
+            gitCommitId: gitCommitId,
         })
     }
     await restoreNodeModules(String(shell.pwd()));
@@ -78,12 +81,13 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
 const optionDefinitions = [
     {name: 'use', type: String},
     {name: 'typespecEmitter', type: String},
+    {name: 'sdkGenerationType', type: String},
     {name: 'inputJsonPath', type: String},
     {name: 'outputJsonPath', type: String},
 ];
 const commandLineArgs = require('command-line-args');
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter).catch(e => {
+automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType).catch(e => {
     logger.logError(e.message);
     process.exit(1);
 });

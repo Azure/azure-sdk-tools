@@ -24,12 +24,15 @@ export async function generateRLCInPipeline(options: {
     swaggerRepo: string;
     readmeMd: string | undefined;
     typespecProject: string | undefined;
-    autorestConfig: string | undefined
-    use?: string;
+    autorestConfig: string | undefined;
+    sdkGenerationType: "script" | "command";
+    swaggerRepoUrl: string;
+    gitCommitId: string;
     typespecEmitter: string;
+    use?: string;
     outputJson?: any;
     additionalArgs?: string;
-    skipGeneration?: boolean,
+    skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
 }) {
     let packagePath: string | undefined = undefined;
@@ -37,24 +40,35 @@ export async function generateRLCInPipeline(options: {
     if (options.typespecProject) {
         if (!options.skipGeneration) {
             logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.typespecProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
-            const copyPackageJsonName = 'emitter-package.json';
-            logger.logGreen(`copy package.json file if not exist from SDK repo ${copyPackageJsonName}`);
-            const installCommand = prepareCommandToInstallDependenciesForTypeSpecProject(path.join(options.sdkRepo, 'eng', copyPackageJsonName), path.join(options.swaggerRepo, options.typespecProject, 'package.json'));
-            logger.logGreen(installCommand);
-            execSync(installCommand, {
-                stdio: 'inherit',
-                cwd: path.join(options.swaggerRepo, options.typespecProject)
-            });
-            updateTypeSpecProjectYamlFile(path.join(options.swaggerRepo, options.typespecProject, 'tspconfig.yaml'), options.sdkRepo, options.typespecEmitter);
-            let typespecSource = '.';
-            if (fs.existsSync(path.join(options.swaggerRepo, options.typespecProject, 'client.tsp'))) {
-                typespecSource = 'client.tsp';
-            }
-            logger.logGreen(`npx tsp compile ${typespecSource} --emit ${options.typespecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`);
-            execSync(`npx tsp compile ${typespecSource} --emit ${options.typespecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`, {
-                stdio: 'inherit',
-                cwd: path.join(options.swaggerRepo, options.typespecProject)
-            });
+            if(options.sdkGenerationType === "command") {
+                logger.logGreen("Run TypeSpec command directly.");
+                const copyPackageJsonName = 'emitter-package.json';
+                logger.logGreen(`copy package.json file if not exist from SDK repo ${copyPackageJsonName}`);
+                const installCommand = prepareCommandToInstallDependenciesForTypeSpecProject(path.join(options.sdkRepo, 'eng', copyPackageJsonName), path.join(options.swaggerRepo, options.typespecProject, 'package.json'));
+                logger.logGreen(installCommand);
+                execSync(installCommand, {
+                    stdio: 'inherit',
+                    cwd: path.join(options.swaggerRepo, options.typespecProject)
+                });
+                updateTypeSpecProjectYamlFile(path.join(options.swaggerRepo, options.typespecProject, 'tspconfig.yaml'), options.sdkRepo, options.typespecEmitter);
+                let typespecSource = '.';
+                if (fs.existsSync(path.join(options.swaggerRepo, options.typespecProject, 'client.tsp'))) {
+                    typespecSource = 'client.tsp';
+                }
+                logger.logGreen(`npx tsp compile ${typespecSource} --emit ${options.typespecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`);
+                execSync(`npx tsp compile ${typespecSource} --emit ${options.typespecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`, {
+                    stdio: 'inherit',
+                    cwd: path.join(options.swaggerRepo, options.typespecProject)
+                });
+                logger.logGreen("End with TypeSpec command.");
+            } else {
+                logger.logGreen("Run ./eng/common/scripts/TypeSpec-Project-Process.ps1 script directly.");
+                const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
+                const scriptCommand = ['pwsh', './eng/common/scripts/TypeSpec-Project-Process.ps1', tspDefDir,  options.gitCommitId, options.swaggerRepoUrl].join(" ");
+                logger.logGreen(`${scriptCommand}`);
+                execSync(scriptCommand, {stdio: 'inherit'});
+                logger.logGreen("End with ./eng/common/scripts/TypeSpec-Project-Process.ps1 script.");
+            } 
         }
     } else {
         logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);

@@ -1,6 +1,6 @@
 {
     "name": "@autorest/testmodeler",
-    "version": "2.5.1",
+    "version": "2.5.2",
     "description": "Autorest extension for testmodeler",
     "main": "dist/index.js",
     "scripts": {
@@ -30,9 +30,9 @@
     "author": "Microsoft Corporation",
     "license": "MIT",
     "devDependencies": {
-        "@autorest/codemodel": "^4.19.2",
+        "@autorest/codemodel": "^4.19.3",
         "@autorest/extension-base": "^3.5.0",
-        "@azure-tools/codegen": "^2.9.1",
+        "@azure-tools/codegen": "^2.9.2",
         "@types/jest": "^26.0.24",
         "@types/node": "^14.0.0",
         "@typescript-eslint/eslint-plugin": "^5.17.0",

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace SwaggerApiParser.Specs
@@ -16,7 +17,7 @@ namespace SwaggerApiParser.Specs
         public Operation patch { get; set; }
         public List<Parameter> parameters { get; set; }
         [JsonExtensionData]
-        public IDictionary<string, dynamic> patternedObjects { get; set; }
+        public IDictionary<string, JsonElement> patternedObjects { get; set; }
 
         private static readonly List<string> operationMethods = new List<string>() { "get", "put", "post", "delete", "options", "head", "patch" };
 

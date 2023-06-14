@@ -11,7 +11,7 @@ namespace SwaggerApiParser.Specs
         public Dictionary<string, Header> headers { get; set; }
         public Example examples { get; set; }
         [JsonExtensionData]
-        public IDictionary<string, dynamic> patternedObjects { get; set; }
+        public IDictionary<string, JsonElement> patternedObjects { get; set; }
     }
 
     public class Example : Dictionary<string, JsonElement>

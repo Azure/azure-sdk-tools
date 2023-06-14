@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using SwaggerApiParser.SwaggerApiView;
 
@@ -13,7 +14,7 @@ namespace SwaggerApiParser.Specs
         public bool attribute { get; set; }
         public bool wrapped { get; set; }
         [JsonExtensionData]
-        public IDictionary<string, dynamic> patternedObjects { get; set; }
+        public IDictionary<string, JsonElement> patternedObjects { get; set; }
         public CodeFileToken[] TokenSerialize(SerializeContext context)
         {
             return TokenSerializer.TokenSerialize(this, context);

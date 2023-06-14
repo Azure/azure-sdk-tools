@@ -250,9 +250,7 @@ namespace SwaggerApiParser
                         tokens.Add(new CodeFileToken(key, CodeFileTokenKind.FoldableSectionHeading));
                         tokens.Add(TokenSerializer.Colon());
                         tokens.Add(TokenSerializer.NewLine());
-                        tokens.Add(TokenSerializer.FoldableContentStart());
                         tokens.AddRange(TokenSerializer.TokenSerializeAsJson(value, true));
-                        tokens.Add(TokenSerializer.FoldableContentEnd());
                     }  
                 }
             }

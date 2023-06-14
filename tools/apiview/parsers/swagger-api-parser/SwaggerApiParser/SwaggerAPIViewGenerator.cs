@@ -54,23 +54,28 @@ namespace SwaggerApiParser
                 foreach (var (method, operation) in apiPath.operations)
                 {
                     SwaggerApiViewOperation op = new SwaggerApiViewOperation
-                    {
-                        operation = operation,
-                        method = method,
-                        path = currentPath,
-                        operationId = operation.operationId,
+                    {                    
                         tags = operation.tags,
                         summary = operation.summary,
                         description = operation.description,
-                        produces = operation.produces,
+                        operationId = operation.operationId,
                         consumes = operation.consumes,
-                        operationIdPrefix = Utils.GetOperationIdPrefix(operation.operationId),
-                        operationIdAction = Utils.GetOperationIdAction(operation.operationId),
+                        produces = operation.produces,
                         PathParameters = new SwaggerApiViewOperationParameters("PathParameters"),
                         QueryParameters = new SwaggerApiViewOperationParameters("QueryParameters"),
                         BodyParameters = new SwaggerApiViewOperationParameters("BodyParameters"),
                         HeaderParameters = new SwaggerApiViewOperationParameters("HeaderParameters"),
                         Responses = new List<SwaggerApiViewResponse>(),
+                        schemes = operation.schemes,
+                        deprecated = operation.deprecated,
+                        security = operation.security,
+                        patternedObjects = operation.patternedObjects,
+
+                        operationIdPrefix = Utils.GetOperationIdPrefix(operation.operationId),
+                        operationIdAction = Utils.GetOperationIdAction(operation.operationId),                        
+                        method = method,
+                        path = currentPath,
+                        operation = operation
                     };
 
                     if (operation.parameters != null)

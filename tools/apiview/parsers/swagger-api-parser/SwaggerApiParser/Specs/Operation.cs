@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace SwaggerApiParser.Specs
@@ -20,7 +21,7 @@ namespace SwaggerApiParser.Specs
         public bool deprecated { get; set; }
         public List<Security> security { get; set; }
         [JsonExtensionData]
-        public IDictionary<string, dynamic> patternedObjects { get; set; }
+        public IDictionary<string, JsonElement> patternedObjects { get; set; }
     }
 }
 

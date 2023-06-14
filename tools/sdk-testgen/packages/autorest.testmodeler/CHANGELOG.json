@@ -2,6 +2,18 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "2.5.2",
+      "tag": "@autorest/testmodeler_v2.5.2",
+      "date": "Wed, 14 Jun 2023 08:54:31 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Upgrade m4 core version."
+          }
+        ]
+      }
+    },
+    {
       "version": "2.5.1",
       "tag": "@autorest/testmodeler_v2.5.1",
       "date": "Mon, 13 Mar 2023 02:20:40 GMT",

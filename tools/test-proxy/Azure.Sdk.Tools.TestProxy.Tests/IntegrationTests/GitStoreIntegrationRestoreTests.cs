@@ -335,13 +335,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             }
         }
 
-        // Scenario 3 - Restore from Tag, add and remove files, Reset response Y
-        // 1. Restore from Tag python/tables_9e81fb
-        // 2. Expect: 4 files with versions they were checked in with
-        // 3. Update add/remove files
-        // 4. Expect: Untouched files are the same versions as step 2, added files are version 1, removed files are gone
-        // 5. Reset with Y
-        // 6. Expect: each file should be at it's initial version, the version that was in the original Tag
         [EnvironmentConditionalSkipTheory]
         [InlineData(
         @"{

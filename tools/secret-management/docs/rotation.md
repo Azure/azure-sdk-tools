@@ -6,7 +6,7 @@ Rotation happens in 5 main phases:
 
 The rotation plan's primary store is read to get the current value and metadata for a secret.
 The expiration date is compared to the plan's expiration and rotation thresholds.
-If the `--expired` option is specified and the plan's expiration date is not within the rotation or expiration thresholds, the plan will not be rotated.
+By default, if the plan's expiration date is not within the rotation or expiration thresholds, the plan will not be rotated.  To rotate plans that are not yet expired or expiring, use the `--force` option.
 
 ## Origination
 

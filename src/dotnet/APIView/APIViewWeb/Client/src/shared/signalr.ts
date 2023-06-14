@@ -50,6 +50,12 @@ $(() => {
     let result = hp.getReviewAndRevisionIdFromUrl(href);
     let currReviewId = result["reviewId"];
 
+  connection.on("ReceiveComment", (commentDto) => {
+    // push to everyone except current
+    // find a way to update their comments
+    // if current client has same review id open and received this same message,
+    // use the id to find where to add comment 
+  });
     if (currReviewId != reviewId) {
       return;
     }

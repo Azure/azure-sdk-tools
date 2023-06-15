@@ -43,6 +43,21 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
 
+        /// <summary>
+        /// We need to lock repo inititialization behind a queue.
+        /// This is due to the fact that Restore() can be called from multiple parallel
+        /// requests, as multiple "startplayback" can be firing at the same time.
+        /// 
+        /// While the Restore() action itself is idempotent, the Initialization of the assets repo
+        /// is NOT. We will use this queue to force ONE single initialization at a time.
+        /// 
+        /// We don't want to gate ALL initializations behind the same gate though. We can restore 
+        /// multiple DIFFERENT assets.jsons at the same time. It's specifically when two restores for the SAME
+        /// assets.json are fired that we run into problems.
+        /// 
+        /// Everything else will still run in parallel.
+        /// </summary>
+        private ConcurrentDictionary<string, TaskQueue> InitTasks = new ConcurrentDictionary<string, TaskQueue>();
 
         public ConcurrentDictionary<string, string> Assets = new ConcurrentDictionary<string, string>();
 
@@ -453,34 +468,39 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public bool InitializeAssetsRepo(GitAssetsConfiguration config, bool forceInit = false)
         {
-            var assetRepo = config.AssetsRepoLocation;
-            var initialized = IsAssetsRepoInitialized(config);
             var workCompleted = false;
+            var initQueue = InitTasks.GetOrAdd(config.AssetsRepoLocation, new TaskQueue());
 
-            if (forceInit)
+            initQueue.Enqueue(() =>
             {
-                DirectoryHelper.DeleteGitDirectory(assetRepo.ToString());
-                Directory.CreateDirectory(assetRepo.ToString());
-                initialized = false;
-            }
+                var assetRepo = config.AssetsRepoLocation;
+                var initialized = IsAssetsRepoInitialized(config);
 
-            if (!initialized)
-            {
-                try
+                if (forceInit)
                 {
-                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
-                    // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
-                    GitHandler.Run($"sparse-checkout init", config);
-                }
-                catch(GitProcessException e)
-                {
-                    throw GenerateInvokeException(e.Result);
+                    DirectoryHelper.DeleteGitDirectory(assetRepo.ToString());
+                    Directory.CreateDirectory(assetRepo.ToString());
+                    initialized = false;
                 }
 
-                CheckoutRepoAtConfig(config, cleanEnabled: false);
-                workCompleted = true;
-            }
+                if (!initialized)
+                {
+                    try
+                    {
+                        var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
+                        // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
+                        GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
+                        GitHandler.Run($"sparse-checkout init", config);
+                    }
+                    catch (GitProcessException e)
+                    {
+                        throw GenerateInvokeException(e.Result);
+                    }
+
+                    CheckoutRepoAtConfig(config, cleanEnabled: false);
+                    workCompleted = true;
+                }
+            });
 
             return workCompleted;
         }

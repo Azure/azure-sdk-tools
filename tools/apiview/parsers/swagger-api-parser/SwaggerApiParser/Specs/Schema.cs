@@ -166,11 +166,11 @@ namespace SwaggerApiParser.Specs
             }
 
             // Now recurse into nested model definitions so all properties are grouped with their models.
-            while (this.propertyQueue.TryDequeue(out var property))
-            {
-                var (item, childContext) = property;
-                ret.AddRange(item.TokenSerializeInternal(childContext, item, flattenedTableItems, serializeRef));
-            }
+            //while (this.propertyQueue.TryDequeue(out var property))
+            //{
+            //    var (item, childContext) = property;
+            //    ret.AddRange(item.TokenSerializeInternal(childContext, item, flattenedTableItems, serializeRef));
+            //}
 
             return ret.ToArray();
         }

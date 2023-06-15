@@ -118,6 +118,8 @@ namespace SwaggerApiParser
                                     }
                                     while (param != null && param.IsRefObject());
                                 }
+
+                                referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(parameter.@ref, referenceSwaggerFilePath);
                             }
 
                             var swaggerApiViewOperationParameter = new SwaggerApiViewParameter

@@ -205,7 +205,11 @@ namespace SwaggerApiParser.Specs
                 var schema = this.GetSchemaFromCache(root.@ref, currentSwaggerFilePath);
                 var ret = this.GetResolvedSchema(schema, Utils.GetReferencedSwaggerFile(root.@ref, currentSwaggerFilePath), refChain);
                 // write back resolved cache
-                this.ResolvedCache.TryAdd(GetResolvedCacheRefKey(root.@ref, currentSwaggerFilePath), schema);
+                if (root.@ref != null)
+                {
+                    this.ResolvedCache.TryAdd(GetResolvedCacheRefKey(root.@ref, currentSwaggerFilePath), schema);
+                }
+                
                 refChain.RemoveLast();
 
                 if (ret == null)
@@ -222,7 +226,8 @@ namespace SwaggerApiParser.Specs
             {
                 foreach (var allOfItem in root.allOf)
                 {
-                    var resolvedChild = this.GetResolvedSchema(allOfItem, currentSwaggerFilePath, refChain);
+                    var @ref = root.@ref ?? root.originalRef;
+                    var resolvedChild = this.GetResolvedSchema(allOfItem, Utils.GetReferencedSwaggerFile(@ref, currentSwaggerFilePath), refChain);
                     if (resolvedChild == null)
                     {
                         continue;
@@ -247,15 +252,13 @@ namespace SwaggerApiParser.Specs
 
             if (root.additionalProperties.ValueKind == JsonValueKind.Object) 
             {
-                var additionalProperties = JsonSerializer.Deserialize<Dictionary<string, string>>(root.additionalProperties);
+                var additionalProperties = JsonSerializer.Deserialize<Dictionary<string, object>>(root.additionalProperties);
                 if (additionalProperties.ContainsKey("$ref"))
                 {
                     var schema = new Schema();
                     schema.@ref = additionalProperties["$ref"].ToString();
                     var refKey = GetRefKey(schema.@ref);
-                    schema = GetResolvedSchema(schema, currentSwaggerFilePath, refChain);
                     root.properties[refKey] = schema;
-                    Utils.AddSchemaToRootDefinition(schema, definitions);
                 }
             }
 
@@ -268,9 +271,10 @@ namespace SwaggerApiParser.Specs
                         continue;
                     }
 
-                    if (!refChain.Contains(rootProperty.Value.@ref) && !refChain.Contains(rootProperty.Value.@ref) && !refChain.Contains(rootProperty.Value.items?.@ref))
+                    if (!refChain.Contains(rootProperty.Value.@ref) && !refChain.Contains(rootProperty.Value.items?.@ref))
                     {
-                        var property = this.GetResolvedSchema(rootProperty.Value, currentSwaggerFilePath, refChain);
+                        var @ref = root.@ref ?? root.originalRef;
+                        var property = this.GetResolvedSchema(rootProperty.Value, Utils.GetReferencedSwaggerFile(@ref, currentSwaggerFilePath), refChain);
                         root.properties[rootProperty.Key] = property;
                         Utils.AddSchemaToRootDefinition(property, definitions);
                     }

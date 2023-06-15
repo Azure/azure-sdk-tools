@@ -258,6 +258,11 @@ namespace SwaggerApiParser
 
         public static void AddSchemaToRootDefinition(Schema schema, Dictionary<string, Definition> definitions)
         {
+            if (schema == null)
+            {
+                return;
+            }
+            
             if (!String.IsNullOrEmpty(schema.originalRef))
             {
                 var schemaKey = Utils.GetDefinitionType(schema.originalRef);

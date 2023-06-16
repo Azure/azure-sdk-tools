@@ -11,6 +11,14 @@ import {
     ImplementationLocation,
     Languages,
     ObjectSchema,
+    Property,
+    StringSchema,
+    NumberSchema,
+    BooleanSchema,
+    DateTimeSchema,
+    DurationSchema,
+    BinarySchema,
+    UriSchema,
     Operation,
     OperationGroup,
     Parameter,
@@ -119,8 +127,11 @@ export class ExampleValue {
         usedProperties: Set<string[]>,
         schema: Schema,
         language: Languages,
+        extensions: Record<string, any>,
         searchDescents = true,
     ): ExampleValue {
+        const X_MS_FORMAT = "x-ms-format";
+        const X_MS_FORMAT_ELEMENT_TYPE = "x-ms-format-element-type";
         const instance = new ExampleValue(schema, language);
         if (!schema) {
             instance.rawValue = rawValue;
@@ -128,14 +139,14 @@ export class ExampleValue {
         }
 
         function addParentValue(parent: ComplexSchema) {
-            const parentValue = ExampleValue.createInstance(session, rawValue, usedProperties, parent, parent.language, false);
+            const parentValue = ExampleValue.createInstance(session, rawValue, usedProperties, parent, parent.language, parent.extensions, false);
             if ((parentValue.properties && Object.keys(parentValue.properties).length > 0) || (parentValue.parentsValue && Object.keys(parentValue.parentsValue).length > 0)) {
                 instance.parentsValue[parent.language.default.name] = parentValue;
             }
         }
 
         if (schema.type === SchemaType.Array && Array.isArray(rawValue)) {
-            instance.elements = rawValue.map((x) => this.createInstance(session, x, new Set(), (schema as ArraySchema).elementType, undefined));
+            instance.elements = rawValue.map((x) => this.createInstance(session, x, new Set(), (schema as ArraySchema).elementType, undefined, undefined));
         } else if (schema.type === SchemaType.Object && rawValue === Object(rawValue)) {
             const childSchema: ComplexSchema = searchDescents ? Helper.findInDescents(schema as ObjectSchema, rawValue) : schema;
             instance.schema = childSchema;
@@ -153,6 +164,7 @@ export class ExampleValue {
                                 Helper.filterPathsByPrefix(usedProperties, property.flattenedNames),
                                 property.schema,
                                 property.language,
+                                property.extensions
                             );
                             instance.properties[property.serializedName].flattenedNames = property.flattenedNames;
                             usedProperties.add(property.flattenedNames);
@@ -166,6 +178,7 @@ export class ExampleValue {
                             Helper.filterPathsByPrefix(usedProperties, [property.serializedName]),
                             property.schema,
                             property.language,
+                            property.extensions
                         );
                         usedProperties.add([property.serializedName]);
                     }
@@ -196,11 +209,63 @@ export class ExampleValue {
             instance.properties = {};
             for (const [key, value] of Object.entries(rawValue)) {
                 if (!Helper.pathIsIncluded(usedProperties, [key])) {
-                    instance.properties[key] = this.createInstance(session, value, new Set([...usedProperties]), (schema as DictionarySchema).elementType, undefined);
+                    instance.properties[key] = this.createInstance(session, value, new Set([...usedProperties]), (schema as DictionarySchema).elementType, undefined, undefined);
                     usedProperties.add([key]);
                 }
             }
-        } else {
+        }
+        else if (schema.type === SchemaType.AnyObject && extensions && extensions[X_MS_FORMAT] && extensions[X_MS_FORMAT].startsWith("dfe-")) {
+            // Rebuild example value for DataFactoryElement
+            const DFE_OBJECT_TYPE = "type";
+            const DFE_OBJECT_TYPE_VALUES = ["Expression", "SecureString", "AzureKeyVaultSecretReference"];
+            const DFE_OBJECT_VALUE = "value";
+            const DFE_OBJECT_SCHEMA_PREFIX = "DataFactoryElement-";
+            let createSchemaForDfeObject = (raw: any, dfeFormat: string): ObjectSchema | undefined => {
+                if (Object(raw) && raw[DFE_OBJECT_TYPE] && raw[DFE_OBJECT_VALUE] && DFE_OBJECT_TYPE_VALUES.includes(raw[DFE_OBJECT_TYPE])) {
+                    var r = new ObjectSchema(DFE_OBJECT_SCHEMA_PREFIX + raw[DFE_OBJECT_TYPE], "");
+                    r.addProperty(new Property(DFE_OBJECT_TYPE, "", new StringSchema(`${dfeFormat}-${DFE_OBJECT_TYPE}`, "")));
+                    r.addProperty(new Property(DFE_OBJECT_VALUE, "", new StringSchema(`${dfeFormat}-${DFE_OBJECT_VALUE}`, "")));
+                    return r;
+                }
+                return undefined;
+            }
+            let createSchemaForDfeLiteral = (raw: any, dfeFormat: string, eleFormat: string): Schema => {
+                switch (dfeFormat) {
+                    case "dfe-string": return new StringSchema(dfeFormat, "");
+                    case "dfe-bool": return new BooleanSchema(dfeFormat, "");
+                    case "dfe-int": return new NumberSchema(dfeFormat, "", SchemaType.Integer, 32);
+                    case "dfe-double": return new NumberSchema(dfeFormat, "", SchemaType.Number, 64);
+                    case "dfe-date-time": return new DateTimeSchema(dfeFormat, "");
+                    case "dfe-duration": return new DurationSchema(dfeFormat, "");
+                    case "dfe-uri": return new UriSchema(dfeFormat, "");
+                    case "dfe-list-string": return new ArraySchema(dfeFormat, "", new StringSchema(dfeFormat + "-element", ""));
+                    case "dfe-key-value-pairs": return new DictionarySchema(dfeFormat, "", new StringSchema(dfeFormat + "-element", ""));
+                    case "dfe-object": return new BinarySchema("");
+                    case "dfe-list-generic":
+                        // TODO: do we need to search more schema store for the element?
+                        // just searching object schemas seems enough for now. Consider add more when needed
+                        var eleSchema = session.model.schemas.objects.find(s => s.language.default.name === eleFormat);
+                        if (!eleSchema)
+                            throw new Error("Can't find schema for the element of DataFactoryElement with type dfe-list-generic: " + (eleFormat ?? "<null>"));
+                        return new ArraySchema(dfeFormat, "", eleSchema);
+                    default:
+                        throw new Error("Unknown dfeFormat" + dfeFormat);
+                }
+            }
+
+            let format = extensions[X_MS_FORMAT];
+            let elementFormat = extensions[X_MS_FORMAT_ELEMENT_TYPE];
+
+            var dfeObjSchema = createSchemaForDfeObject(rawValue, format);
+            if (dfeObjSchema) {
+                return this.createInstance(session, rawValue, usedProperties, dfeObjSchema, language, undefined, searchDescents);
+            }
+            else {
+                var dfeLiterlSchema = createSchemaForDfeLiteral(rawValue, format, elementFormat);
+                return this.createInstance(session, rawValue, usedProperties, dfeLiterlSchema, language, undefined, searchDescents);
+            }
+        }
+        else {
             instance.rawValue = rawValue;
         }
         return instance;
@@ -214,7 +279,7 @@ export class ExampleParameter {
 
     public constructor(session: Session<TestCodeModel>, parameter: Parameter, rawValue: any) {
         this.parameter = parameter;
-        this.exampleValue = ExampleValue.createInstance(session, rawValue, new Set(), parameter?.schema, parameter.language);
+        this.exampleValue = ExampleValue.createInstance(session, rawValue, new Set(), parameter?.schema, parameter.language, parameter.extensions   );
     }
 }
 
@@ -235,7 +300,7 @@ export class ExampleResponse {
     public static createInstance(session: Session<TestCodeModel>, rawResponse: ExampleExtensionResponse, schema: Schema, language: Languages): ExampleResponse {
         const instance = new ExampleResponse();
         if (rawResponse.body !== undefined) {
-            instance.body = ExampleValue.createInstance(session, rawResponse.body, new Set(), schema, language);
+            instance.body = ExampleValue.createInstance(session, rawResponse.body, new Set(), schema, language, undefined);
         }
         instance.headers = rawResponse.headers;
         return instance;

@@ -3578,12 +3578,6 @@ class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
 
-        # Import HttpResponse, but from in `azure.core`.
-        importfrom_node = astroid.extract_node("from .. import HttpResponse")
-        importfrom_node.root().name = "azure.core"
-        with self.assertNoMessages():
-            self.checker.visit_importfrom(importfrom_node)
-
 class TestCheckNoLegacyAzureCoreHttpResponseImport(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed imports and allowing allowed imports."""
     CHECKER_CLASS = checker.NoLegacyAzureCoreHttpResponseImport

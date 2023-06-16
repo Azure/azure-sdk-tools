@@ -2,10 +2,14 @@
 // Licensed under the MIT License.
 
 using ApiView;
+using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace APIViewWeb.Controllers
@@ -13,11 +17,14 @@ namespace APIViewWeb.Controllers
     public class ReviewController : Controller
     {
         private readonly IReviewManager _reviewManager;
+        private readonly IHubContext<NotificationHub> _notificationHubContext;
+
         private readonly ILogger _logger;
 
-        public ReviewController(IReviewManager reviewManager, ILogger<ReviewController> logger)
+        public ReviewController(IReviewManager reviewManager, IHubContext<NotificationHub> notificationHub, ILogger<ReviewController> logger)
         {
             _reviewManager = reviewManager;
+            _notificationHubContext = notificationHub;
             _logger = logger;
         }
 
@@ -28,11 +35,23 @@ namespace APIViewWeb.Controllers
             return Ok();
         }
 
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task GenerateAIReview(string reviewId, string revisionId)
+        [HttpPost]
+        public async Task GenerateAIReview(
+            [FromQuery] string reviewId, [FromQuery]string revisionId = null)
         {
+            var review = await _reviewManager.GetReviewAsync(User, reviewId);
+
+            if (string.IsNullOrEmpty(reviewId))
+                revisionId = review.Revisions.Last().RevisionId;
+
             await _reviewManager.GenerateAIReview(reviewId, revisionId);
+            await _notificationHubContext.Clients.All.SendAsync("RecieveAIReviewGenerationStatus", new
+            {
+                reviewId,
+                revisionId,
+                isLatest = (revisionId == review.Revisions.Last().RevisionId),
+                status = "generating"
+            });
         }
 
         [HttpPost]

@@ -146,11 +146,11 @@
                 }
             }
         </ul>
-        <p class="h6">
-            <a data-bs-toggle="collapse" href="#generateAIReviewCollapse" aria-expanded="true" aria-controls="generateAIReviewCollapse">Generate AI Review&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
-        </p>
         @if (Model.Review.Language == "Python")
         {
+            <p class="h6">
+                <a data-bs-toggle="collapse" href="#generateAIReviewCollapse" aria-expanded="true" aria-controls="generateAIReviewCollapse">Generate AI Review&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+            </p>
             var generateAIReviewCollapseState = String.Empty;
             if (Request.Cookies.ContainsKey("generateAIReviewCollapse"))
             {
@@ -159,8 +159,8 @@
             }
             <ul class="list-group collapse mb-3@(generateAIReviewCollapseState)" id="generateAIReviewCollapse">
                 <div class="d-grid">
-                    <button class="btn btn-sm btn-outline-primary" id="triggerAIReviewGeneration">Generate AI Review</button>
-                </div>
+                    <button class="btn btn-outline-primary" asp-page-handler="GenerateAIReview" id="generateAIReviewButton">Generate AI Review</button>
+                </div>  
             </ul>
         }
         <p class="h6">

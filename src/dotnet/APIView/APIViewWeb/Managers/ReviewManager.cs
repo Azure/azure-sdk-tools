@@ -23,7 +23,9 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http;
 using System.Text.Json;
-using CsvHelper.Configuration;
+using Microsoft.AspNetCore.SignalR;
+using APIViewWeb.Hubs;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 
 namespace APIViewWeb.Managers
 {
@@ -40,7 +42,6 @@ namespace APIViewWeb.Managers
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
         private readonly IPackageNameManager _packageNameManager;
         private readonly IConfiguration _configuration;
-
         private readonly IHubContext<SignalRHub> _signalRHubContext;
 
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
@@ -61,6 +62,7 @@ namespace APIViewWeb.Managers
             _notificationManager = notificationManager;
             _devopsArtifactRepository = devopsClient;
             _packageNameManager = packageNameManager;
+            _signalRHubContext = signalRHubContext;
             _configuration = configuration;
         }
 
@@ -779,6 +781,14 @@ namespace APIViewWeb.Managers
                     await _commentsRepository.UpsertCommentAsync(comment);
                 }
             }
+            var revID = (revisionId == review.Revisions.Last().RevisionId) ? "Latest" : revisionId;
+            await _notificationHubContext.Clients.All.SendAsync("RecieveAIReviewGenerationStatus", new
+            {
+                reviewId,
+                revisionId,
+                isLatest = (revisionId == review.Revisions.Last().RevisionId),
+                status = "done"
+            });
         }
 
 

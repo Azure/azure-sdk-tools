@@ -119,6 +119,22 @@ $(() => {
     }
   })
 
+  connection.on("RecieveAIReviewGenerationStatus", (aiReviewStatus) => {
+    const ids = hp.getReviewAndRevisionIdFromUrl(location.href);
+    const reviewId = ids["reviewId"];
+    const revisionId = ids["revisionId"];
+
+    if (revisionId) {
+      if (reviewId === aiReviewStatus.reviewId && revisionId === aiReviewStatus.revisionId) {
+        $("#generateAIReviewButton").text = aiReviewStatus.status;
+      }
+    }
+    else if (aiReviewStatus.isLatest) {
+      if (reviewId === aiReviewStatus.reviewId) {
+        $("#generateAIReviewButton").text = aiReviewStatus.status;
+      }
+    }
+  });
   // Start the connection.
   start();
 });

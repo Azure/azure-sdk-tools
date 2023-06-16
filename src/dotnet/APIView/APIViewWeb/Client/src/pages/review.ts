@@ -232,7 +232,8 @@ $(() => {
   });
 
   // Manage Expand / Collapse State of options
-  [$("#approveCollapse"), $("#requestReviewersCollapse"), $("#reviewOptionsCollapse"), $("#pageSettingsCollapse"), $("#associatedPRCollapse"), $("#associatedReviewsCollapse")].forEach(function (value, index) {
+  [$("#approveCollapse"), $("#requestReviewersCollapse"), $("#reviewOptionsCollapse"), $("#pageSettingsCollapse"),
+    $("#associatedPRCollapse"), $("#associatedReviewsCollapse"), $("#generateAIReviewCollapse")].forEach(function (value, index) {
     const id = value.attr("id");
     value.on('hidden.bs.collapse', function () {
       document.cookie = `${id}=hidden; max-age=${7 * 24 * 60 * 60}`;
@@ -242,6 +243,21 @@ $(() => {
     });
   });
 
-  /* RIGHT OFFCANVAS OPERATIONS
+  /* GENERATE AI REVIEW
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  $("#generateAIReviewButton").on("click", function () {
+    var ids = hp.getReviewAndRevisionIdFromUrl();
+    const reviewId = ids["reviewId"];
+    const revisionId = ids["revisionId"];
+    let uri = location.origin + `/Review/GenerateAIReview?ReviewId=${reviewId}`;
+
+    if (revisionId) {
+      uri = uri + `&RevisionId=${revisionId}`;
+    }
+
+    $.ajax({
+      type: "POST",
+      url: uri
+    });
+  });
 });

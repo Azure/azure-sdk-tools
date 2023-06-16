@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
@@ -24,21 +25,13 @@ namespace APIViewWeb.Pages.Assemblies
     {
         private static int REVIEW_DIFF_CONTEXT_SIZE = 3;
         private const string DIFF_CONTEXT_SEPERATOR = "<br><span>.....</span><br>";
-
         private readonly IReviewManager _manager;
-
         private readonly IPullRequestManager _pullRequestManager;
-
         private readonly IBlobCodeFileRepository _codeFileRepository;
-
         private readonly ICommentsManager _commentsManager;
-
         private readonly INotificationManager _notificationManager;
-
         public readonly UserPreferenceCache _preferenceCache;
-
         private readonly ICosmosUserProfileRepository _userProfileRepository;
-
         private readonly IConfiguration _configuration;
 
         private readonly IHubContext<SignalRHub> _signalRHubContext;
@@ -63,7 +56,6 @@ namespace APIViewWeb.Pages.Assemblies
             _userProfileRepository = userProfileRepository;
             _configuration = configuration;
             _signalRHubContext = signalRHub;
-
         }
 
         public ReviewModel Review { get; set; }

@@ -2,13 +2,16 @@
 // Licensed under the MIT License.
 
 using ApiView;
+using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
+using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -17,14 +20,14 @@ namespace APIViewWeb.Controllers
     public class ReviewController : Controller
     {
         private readonly IReviewManager _reviewManager;
-        private readonly IHubContext<NotificationHub> _notificationHubContext;
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
 
         private readonly ILogger _logger;
 
-        public ReviewController(IReviewManager reviewManager, IHubContext<NotificationHub> notificationHub, ILogger<ReviewController> logger)
+        public ReviewController(IReviewManager reviewManager, IHubContext<SignalRHub> signalRHubContext, ILogger<ReviewController> logger)
         {
             _reviewManager = reviewManager;
-            _notificationHubContext = notificationHub;
+            _signalRHubContext = signalRHubContext;
             _logger = logger;
         }
 
@@ -41,17 +44,20 @@ namespace APIViewWeb.Controllers
         {
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
 
-            if (string.IsNullOrEmpty(reviewId))
+            if (string.IsNullOrEmpty(revisionId))
                 revisionId = review.Revisions.Last().RevisionId;
 
-            await _reviewManager.GenerateAIReview(reviewId, revisionId);
-            await _notificationHubContext.Clients.All.SendAsync("RecieveAIReviewGenerationStatus", new
+            await SendAIReviewGenerationStatus(review, reviewId, revisionId, AIReviewGenerationStatus.Generating);
+
+            try {
+                var commentsGenerated = await _reviewManager.GenerateAIReview(reviewId, revisionId);
+                await SendAIReviewGenerationStatus(review, reviewId, revisionId, AIReviewGenerationStatus.Succeeded, commentsGenerated);
+            }
+            catch (Exception ex)
             {
-                reviewId,
-                revisionId,
-                isLatest = (revisionId == review.Revisions.Last().RevisionId),
-                status = "generating"
-            });
+                _logger.LogError(ex, "Error generating AI review");
+                await SendAIReviewGenerationStatus(review, reviewId, revisionId, AIReviewGenerationStatus.Error);
+            }
         }
 
         [HttpPost]
@@ -59,6 +65,34 @@ namespace APIViewWeb.Controllers
         {
             await _reviewManager.ApprovePackageNameAsync(User, id);
             return RedirectToPage("/Assemblies/Review",  new { id = id });
+        }
+
+        private async Task SendAIReviewGenerationStatus(ReviewModel review, string reviewId, string revisionId, AIReviewGenerationStatus status, int? noOfCommentsGenerated = null)
+        {
+            var notification = new AIReviewGenerationNotificationModel
+            {
+                ReviewId = reviewId,
+                RevisionId = revisionId,
+                IsLatestRevision = (revisionId == review.Revisions.Last().RevisionId),
+                Status = status
+            };
+
+            switch (status)
+            {
+                case AIReviewGenerationStatus.Generating:
+                    notification.Message = "Generating Review. ";
+                    notification.Level = NotificatonLevel.Info;
+                    break;
+                case AIReviewGenerationStatus.Succeeded:
+                    notification.Message = $"Succeeded! {noOfCommentsGenerated} comment(s) added.";
+                    notification.Level = NotificatonLevel.Info;
+                    break;
+                case AIReviewGenerationStatus.Error:
+                    notification.Message = "Failed.";
+                    notification.Level = NotificatonLevel.Error;
+                    break;
+            }
+            await _signalRHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveAIReviewGenerationStatus", notification);
         }
     }
 }

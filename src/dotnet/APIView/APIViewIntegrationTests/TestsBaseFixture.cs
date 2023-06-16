@@ -16,8 +16,8 @@ using System.Security.Claims;
 using Azure.Storage.Blobs.Models;
 using APIView.Identity;
 using APIViewWeb.Managers;
-using Microsoft.AspNetCore.SignalR;
 using APIViewWeb.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewIntegrationTests
 {

@@ -412,3 +412,19 @@ export function updateUserIcon() {
     }
   }
 }
+
+/**
+* Contruct and add a toast notification and update Generate Review Button
+* @param { ToastNotification } notification
+*/
+export function updateAIReviewGenerationStatus(notification: any) {
+  $("#generateAIReviewButton").text(notification.message);
+  if (notification.status === 0) {
+    $("#generateAIReviewButton").append(`<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`);
+    $("#generateAIReviewButton").prop("disabled", true);
+  }
+  else {
+    $("#generateAIReviewButton").prop("disabled", false);
+  }
+  addToastNotification(notification);
+}

@@ -52,6 +52,7 @@ namespace APIViewWeb.Managers
             ICosmosCommentsRepository commentsRepository, IEnumerable<LanguageService> languageServices,
             INotificationManager notificationManager, IDevopsArtifactRepository devopsClient,
             IPackageNameManager packageNameManager, IConfiguration configuration, IHubContext<SignalRHub> signalRHubContext)
+
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -716,7 +717,7 @@ namespace APIViewWeb.Managers
         /// <summary>
         /// Sends info to AI service for generating initial review on APIReview file
         /// </summary>
-        public async Task GenerateAIReview(string reviewId, string revisionId)
+        public async Task<int> GenerateAIReview(string reviewId, string revisionId)
         {
             var review = await _reviewsRepository.GetReviewAsync(reviewId);
             var revision = review.Revisions.Where(r => r.RevisionId == revisionId).FirstOrDefault();
@@ -759,13 +760,13 @@ namespace APIViewWeb.Managers
             var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
 
             // Get rid of escape characters then deserialize
-            var responseSanitized = JsonSerializer.Deserialize<string>(response);
-            var results = JsonSerializer.Deserialize<List<AIReviewModel>>(responseSanitized);
+            //var responseSanitized = JsonSerializer.Deserialize<string>(response);
+            var results = JsonSerializer.Deserialize<List<AIReviewModel>>(response);
 
             // Write back result as comments to APIView
             foreach (var result in results)
             {
-                var codeLine = Array.FindAll(codeLines, cl => cl.DisplayString.Trim() == result.code.Trim());
+                var codeLine = Array.FindAll(codeLines, cl => cl.DisplayString.Trim().StartsWith(result.code.Trim()));
                 foreach (var line in codeLine)
                 {
                     var comment = new CommentModel();
@@ -782,13 +783,7 @@ namespace APIViewWeb.Managers
                 }
             }
             var revID = (revisionId == review.Revisions.Last().RevisionId) ? "Latest" : revisionId;
-            await _notificationHubContext.Clients.All.SendAsync("RecieveAIReviewGenerationStatus", new
-            {
-                reviewId,
-                revisionId,
-                isLatest = (revisionId == review.Revisions.Last().RevisionId),
-                status = "done"
-            });
+            return results.Count;
         }
 
 

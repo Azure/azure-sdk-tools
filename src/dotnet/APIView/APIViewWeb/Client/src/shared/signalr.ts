@@ -119,19 +119,19 @@ $(() => {
     }
   })
 
-  connection.on("RecieveAIReviewGenerationStatus", (aiReviewStatus) => {
+  connection.on("RecieveAIReviewGenerationStatus", (notification) => {
     const ids = hp.getReviewAndRevisionIdFromUrl(location.href);
     const reviewId = ids["reviewId"];
     const revisionId = ids["revisionId"];
 
     if (revisionId) {
-      if (reviewId === aiReviewStatus.reviewId && revisionId === aiReviewStatus.revisionId) {
-        $("#generateAIReviewButton").text = aiReviewStatus.status;
+      if (reviewId === notification.reviewId && revisionId === notification.revisionId) {
+        hp.updateAIReviewGenerationStatus(notification);
       }
     }
-    else if (aiReviewStatus.isLatest) {
-      if (reviewId === aiReviewStatus.reviewId) {
-        $("#generateAIReviewButton").text = aiReviewStatus.status;
+    else if (notification.isLatestRevision) {
+      if (reviewId === notification.reviewId) {
+        hp.updateAIReviewGenerationStatus(notification);
       }
     }
   });

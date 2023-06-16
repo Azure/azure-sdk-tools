@@ -246,14 +246,18 @@ $(() => {
   /* GENERATE AI REVIEW
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $("#generateAIReviewButton").on("click", function () {
-    var ids = hp.getReviewAndRevisionIdFromUrl();
+    var ids = hp.getReviewAndRevisionIdFromUrl(location.href);
     const reviewId = ids["reviewId"];
     const revisionId = ids["revisionId"];
-    let uri = location.origin + `/Review/GenerateAIReview?ReviewId=${reviewId}`;
+    let uri = location.origin + `/Review/GenerateAIReview?reviewId=${reviewId}`;
 
     if (revisionId) {
-      uri = uri + `&RevisionId=${revisionId}`;
+      uri = uri + `&revisionId=${revisionId}`;
     }
+
+    console.log(`reviewId=${reviewId}`);
+    console.log(`revisionId=${revisionId}`);
+    console.log(`uri=${uri}`);
 
     $.ajax({
       type: "POST",

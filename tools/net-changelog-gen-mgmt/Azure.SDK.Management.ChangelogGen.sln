@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33502.453
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.SDK.Management.ChangelogGen", "Azure.SDK.Management.ChangelogGen\Azure.SDK.Management.ChangelogGen.csproj", "{51B93101-91AD-450B-802E-995B7A7D6FE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.SDK.Management.ChangelogGen.Tests", "Azure.SDK.Management.ChangelogGen.Tests\Azure.SDK.Management.ChangelogGen.Tests.csproj", "{42D89F9C-1FB8-4EAA-AEBB-97EF8D764A46}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{51B93101-91AD-450B-802E-995B7A7D6FE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51B93101-91AD-450B-802E-995B7A7D6FE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51B93101-91AD-450B-802E-995B7A7D6FE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51B93101-91AD-450B-802E-995B7A7D6FE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42D89F9C-1FB8-4EAA-AEBB-97EF8D764A46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42D89F9C-1FB8-4EAA-AEBB-97EF8D764A46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42D89F9C-1FB8-4EAA-AEBB-97EF8D764A46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42D89F9C-1FB8-4EAA-AEBB-97EF8D764A46}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6548FB06-340F-4182-9197-0F87364E3D0A}
+	EndGlobalSection
+EndGlobal

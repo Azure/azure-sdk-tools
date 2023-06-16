@@ -10,8 +10,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class InvocationTests
     {
-
-
         [Theory]
         [InlineData("start", "-i", "-d")]
         [InlineData("start")]
@@ -49,6 +47,63 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 Assert.False(((StartOptions)obj).Dump);
             }
+        }
+
+        [Theory]
+        [InlineData("push", "-a", "path/to/assets.json")]
+        [InlineData("push", "--assets-json-path", "path/to/assets.json")]
+        public async Task TestAssetsOptions(params string[] input)
+        {
+            var obj = new object();
+            var rootCommand = OptionsGenerator.GenerateCommandLineOptions((DefaultOptions) =>
+            {
+                obj = DefaultOptions;
+
+                return Task.CompletedTask;
+            });
+            var exitCode = await rootCommand.InvokeAsync(input);
+
+            Assert.Equal(0, exitCode);
+            Assert.True(obj is PushOptions);
+            Assert.Equal("path/to/assets.json", ((PushOptions)obj).AssetsJsonPath);
+        }
+
+        [Theory]
+        [InlineData("start", "-l", "C:/repo/sdk-for-python")]
+        [InlineData("start", "--storage-location", "C:/repo/sdk-for-python")]
+        public async Task TestStorageLocationOptions(params string[] input)
+        {
+            var obj = new object();
+            var rootCommand = OptionsGenerator.GenerateCommandLineOptions((DefaultOptions) =>
+            {
+                obj = DefaultOptions;
+
+                return Task.CompletedTask;
+            });
+            var exitCode = await rootCommand.InvokeAsync(input);
+
+            Assert.Equal(0, exitCode);
+            Assert.True(obj is StartOptions);
+            Assert.Equal("C:/repo/sdk-for-python", ((StartOptions)obj).StorageLocation);
+        }
+
+        [Theory]
+        [InlineData("push", "-a", "path/to/assets.json", "-p", "BlobStore")]
+        [InlineData("push", "-a", "path/to/assets.json", "--storage-plugin", "BlobStore")]
+        public async Task TestStoragePluginOptions(params string[] input)
+        {
+            var obj = new object();
+            var rootCommand = OptionsGenerator.GenerateCommandLineOptions((DefaultOptions) =>
+            {
+                obj = DefaultOptions;
+
+                return Task.CompletedTask;
+            });
+            var exitCode = await rootCommand.InvokeAsync(input);
+
+            Assert.Equal(0, exitCode);
+            Assert.True(obj is PushOptions);
+            Assert.Equal("BlobStore", ((PushOptions)obj).StoragePlugin);
         }
 
         [Fact]
@@ -168,7 +223,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         [Theory]
         [InlineData("push", "-a", "path/to/assets.json")]
-
         public async Task TestPushOptions(params string[] input)
         {
             var output = new StringWriter();
@@ -211,6 +265,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Theory]
         [InlineData("reset", "-a", "path/to/assets.json")]
         [InlineData("reset", "-y", "-a", "path/to/assets.json")]
+        [InlineData("reset", "--yes", "-a", "path/to/assets.json")]
         public async Task TestResetOptions(params string[] input)
         {
             var output = new StringWriter();

@@ -1,0 +1,37 @@
+# Mirror the .github/workflows folder to all subscribed repos.
+#
+# For more information on this file, please see:
+# doc/common/common_engsys.md
+parameters:
+- name: DirectoryToSync
+  type: string
+  default: .github/workflows
+- name: Repos
+  type: object
+  default:
+    - azure-sdk
+    - azure-sdk-for-android
+    - azure-sdk-for-c
+    - azure-sdk-for-cpp
+    - azure-sdk-for-go
+    - azure-sdk-for-ios
+    - azure-sdk-for-java
+    - azure-sdk-for-js
+    - azure-sdk-for-net
+    - azure-sdk-for-python
+
+trigger: none
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - .github/workflows
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-repo-sync.yml
+  parameters:
+    DirectoryToSync: ${{ parameters.DirectoryToSync }}
+    Repos: ${{ parameters.Repos }}

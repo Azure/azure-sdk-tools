@@ -15,13 +15,13 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
                 name: "--storage-location",
                 description: "The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.",
                 getDefaultValue: () => null);
-            storageLocationOption.AddAlias("-f");
+            storageLocationOption.AddAlias("-l");
 
             var storagePluginOption = new Option<string>(
                 name: "--storage-plugin",
                 description: "The plugin for the selected storage, default is Git storage is GitStore. (Currently the only option)",
                 getDefaultValue: () => "GitStore");
-            storagePluginOption.AddAlias("-l");
+            storagePluginOption.AddAlias("-p");
 
             var assetsJsonPathOption = new Option<string>(
                 name: "--assets-json-path",
@@ -56,7 +56,16 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             };
             #endregion
 
-            var root = new RootCommand();
+
+            var Description = @"This tool is used by the Azure SDK team in two primary ways:
+
+  - Run as a http record/playback server. (""start"" / default verb)
+  - Invoke a CLI Tool to interact with recordings in an external store. (""push"", ""restore"", ""reset"", ""config"")";
+
+            var root = new RootCommand()
+            {
+                Description = Description
+            };
             root.AddGlobalOption(storageLocationOption);
             root.AddGlobalOption(storagePluginOption);
 

@@ -74,7 +74,5 @@ jobs:
           -Filters $(Filters)
           -Environment '${{ parameters.Environment }}'
           -Repository '$(Agent.JobName)'
-          -PushImages
-          -Login
           -DeployId '$(Build.BuildNumber)'
           -CI

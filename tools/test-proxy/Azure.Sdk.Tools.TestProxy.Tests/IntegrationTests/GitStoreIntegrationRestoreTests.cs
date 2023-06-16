@@ -342,6 +342,78 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""main"",
+              ""Tag"": ""python/tables_9e81fb""
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task VerifyRestoreDiscardsChanges(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+            try
+            {
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+                await _defaultStore.Restore(jsonFileLocation);
+
+                // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
+                // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
+                // will be a forward one as expected by git but on Windows this won't result in a usable path.
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
+
+                // Verify files from Tag
+                Assert.Equal(4, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 2));
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file4.txt", 1));
+
+                // Delete a couple of files
+                File.Delete(Path.Combine(localFilePath, "file2.txt"));
+                File.Delete(Path.Combine(localFilePath, "file4.txt"));
+
+                // Add a file
+                TestHelpers.CreateFileWithInitialVersion(localFilePath, "file5.txt");
+
+                // Verify the set of files after the additions/deletions
+                Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
+
+                // simulate a feature branch checkout in the langauge repo. change the targeted
+                // tag in place. The changes from lines above should be automatically discarded.
+                var existingAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
+                existingAssets.Tag = "python/tables_fc54d0";
+                TestHelpers.UpdateAssetsFile(existingAssets, jsonFileLocation);
+
+                await _defaultStore.Restore(jsonFileLocation);
+
+                // Verify the only files there are ones from the Tag
+                Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file2.txt", 1));
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 1));
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+            }
+        }
+
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""main"",
               ""Tag"": ""language/tables_bb2223""
         }")]
         [Trait("Category", "Integration")]

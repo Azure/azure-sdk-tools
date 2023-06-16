@@ -20,6 +20,12 @@
     "staticTestKeyvaultGroup": {
       "value": "rg-stress-secrets-pg"
     },
+    "defaultAgentPoolMinNodes": {
+      "value": 6
+    },
+    "defaultAgentPoolMaxNodes": {
+      "value": 20
+    },
     "tags": {
       "value": {
         "environment": "pg",

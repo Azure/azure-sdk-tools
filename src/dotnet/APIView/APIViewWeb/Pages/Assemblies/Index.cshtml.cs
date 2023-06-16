@@ -7,26 +7,28 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Azure;
-using System.Security.Claims;
 using APIViewWeb.Managers;
-using Octokit;
 using Microsoft.TeamFoundation.Common;
 using APIViewWeb.Helpers;
 using Microsoft.VisualStudio.Services.Common;
+using APIViewWeb.Hubs;
+using Microsoft.AspNetCore.SignalR;
+using System.Text;
 
 namespace APIViewWeb.Pages.Assemblies
 {
     public class IndexPageModel : PageModel
     {
         private readonly IReviewManager _manager;
+        private readonly IHubContext<NotificationHub> _notificationHubContext;
         public readonly UserPreferenceCache _preferenceCache;
         public readonly IUserProfileManager _userProfileManager;
         public const int _defaultPageSize = 50;
         public const string _defaultSortField = "LastUpdated";
 
-        public IndexPageModel(IReviewManager manager, IUserProfileManager userProfileManager, UserPreferenceCache preferenceCache)
+        public IndexPageModel(IReviewManager manager, IUserProfileManager userProfileManager, UserPreferenceCache preferenceCache, IHubContext<NotificationHub> notificationHub)
         {
+            _notificationHubContext = notificationHub;
             _manager = manager;
             _preferenceCache = preferenceCache;
             _userProfileManager = userProfileManager;
@@ -74,7 +76,17 @@ namespace APIViewWeb.Pages.Assemblies
         {
             if (!ModelState.IsValid)
             {
-                return RedirectToPage();
+                var errors = new StringBuilder();
+                foreach (var modelState in ModelState.Values)
+                {
+                    foreach (var error in modelState.Errors)
+                    {
+                        errors.AppendLine(error.ErrorMessage);
+                    }
+                }
+                var notifcation = new NotificationModel() { Message = errors.ToString(), Level = NotificatonLevel.Error };
+                await _notificationHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveNotification", notifcation);
+                return new NoContentResult();
             }
 
             var file = Upload.Files?.SingleOrDefault();

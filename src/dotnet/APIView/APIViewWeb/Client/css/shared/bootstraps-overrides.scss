@@ -41,6 +41,14 @@
     color: var(--link-color);
 }
 
+.btn-link {
+    color: var(--link-color);
+}
+
+.btn-link:hover {
+    color: var(--link-active);
+}
+
 .btn-check:checked + .btn-outline-primary:focus, .btn-check:active + .btn-outline-primary:focus, .btn-outline-primary:active:focus, .btn-outline-primary.active:focus, .btn-outline-primary.dropdown-toggle.show:focus {
     box-shadow: 0 0 0 0.25rem var(--outer-glow);
 }
@@ -188,6 +196,19 @@ select {
 
 .table {
     color: var(--base-text-color);
+}
+
+.toast {
+    background-color: var(--base-bg-color);
+    background-clip: padding-box;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-color);
+}
+
+.toast-header {
+    background-color: var(--base-fg-color);
+    color: var(--base-text-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .nav-link {

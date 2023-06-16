@@ -10,11 +10,11 @@ $(() => {
   const SEL_COMMENT_CELL = ".comment-cell";
   const SHOW_COMMENTS_CHECK = "#show-comments-checkbox";
   const SHOW_SYS_COMMENTS_CHECK = "#show-system-comments-checkbox";
-  const COMMENT_CONTENT_BOX = ".new-comment-content";	
-  const COMMENT_TEXTBOX = ".new-thread-comment-text";
 
   let CurrentUserSuggestionElements: HTMLElement[] = [];	
-  let CurrentUserSuggestionIndex = -1;	
+  let CurrentUserSuggestionIndex = -1;
+  let CurrentCommentToggle = false;
+
   // simple github username match	
   const githubLoginTagMatch = /(\s|^)@([a-zA-Z\d-]+)/g;
 
@@ -67,10 +67,40 @@ $(() => {
     });
   });
 
+  $(document).on("mouseenter", SEL_COMMENT_ICON, e => {
+    let lineId = getElementId(e.target);
+    if (!lineId) {
+      return;
+    }
+
+    if (getSingleCommentAndDiagnosticsDisplayStatus(lineId)) {
+      CurrentCommentToggle = true;
+    } else {
+      toggleSingleCommentAndDiagnostics(lineId);
+      toggleSingleResolvedComment(lineId);
+    }
+    e.preventDefault();
+  });
+
   $(document).on("click", SEL_COMMENT_ICON, e => {
     let lineId = getElementId(e.target);
     if (lineId) {
+      CurrentCommentToggle = !CurrentCommentToggle;
+    }
+    e.preventDefault();
+  });
+
+  $(document).on("mouseleave", SEL_COMMENT_ICON, e => {
+    let lineId = getElementId(e.target);
+    if (!lineId) {
+      return;
+    }
+
+    if (CurrentCommentToggle) {
+      CurrentCommentToggle = false;
+    } else {
       toggleSingleCommentAndDiagnostics(lineId);
+      toggleSingleResolvedComment(lineId);
     }
     e.preventDefault();
   });
@@ -331,12 +361,12 @@ $(() => {
     $(SEL_COMMENT_CELL).each(function () {
       const id = getElementId(this);
       const checked = $(SHOW_COMMENTS_CHECK).prop("checked");
-      toggleCommentIcon(id, !checked);
+      toggleCommentIcon(id!, !checked);
     });
     $(SEL_CODE_DIAG).each(function () {
       const id = getElementId(this);
       const checked = $(SHOW_SYS_COMMENTS_CHECK).prop("checked");
-      toggleCommentIcon(id, !checked);
+      toggleCommentIcon(id!, !checked);
     });
   });
 
@@ -571,6 +601,17 @@ $(() => {
   function toggleSingleCommentAndDiagnostics(id: string) {
     getCommentsRow(id).toggleClass("d-none");
     getDiagnosticsRow(id).toggleClass("d-none");
+  }
+
+  function getSingleCommentAndDiagnosticsDisplayStatus(id: string) {
+    return !(getCommentsRow(id).hasClass("d-none") || getDiagnosticsRow(id).hasClass("d-none"));
+  }
+
+  function toggleSingleResolvedComment(id: string) {
+    let commentHolder = $(getCommentsRow(id)).find(".comment-holder").first();
+    if (commentHolder.hasClass("comments-resolved")) {
+      toggleComments(id);
+    }
   }
 
   function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearCommentAnchors = false, returnFirst = false) {

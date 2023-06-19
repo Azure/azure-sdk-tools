@@ -31,7 +31,7 @@ describe('ExampleValue.createInstance(...)', () => {
     it('create with primitive schema', async () => {
         const spyCreateInstance = jest.spyOn(ExampleValue, 'createInstance');
         const rawValue = [1, 2, 3];
-        const instance = ExampleValue.createInstance(mockedSession, rawValue, new Set(), MockTool.createSchema(SchemaType.Any), MockTool.createLanguages(),undefined);
+        const instance = ExampleValue.createInstance(mockedSession, rawValue, new Set(), MockTool.createSchema(SchemaType.Any), MockTool.createLanguages(), undefined);
         expect(spyCreateInstance).toHaveBeenCalledTimes(1);
         expect(instance).toMatchSnapshot();
     });
@@ -39,18 +39,22 @@ describe('ExampleValue.createInstance(...)', () => {
     it('create with DataFactoryElement', async () => {
         const spyCreateInstance = jest.spyOn(ExampleValue, 'createInstance');
         const rawValue = {
-            "value": "@dataset().MyFolderPath",
-            "type": "Expression"
+            value: '@dataset().MyFolderPath',
+            type: 'Expression',
         };
-        const instance = ExampleValue.createInstance(mockedSession, rawValue, new Set(), MockTool.createSchema(SchemaType.AnyObject), MockTool.createLanguages(), { "x-ms-format": "dfe-string" });
+        const instance = ExampleValue.createInstance(mockedSession, rawValue, new Set(), MockTool.createSchema(SchemaType.AnyObject), MockTool.createLanguages(), {
+            'x-ms-format': 'dfe-string',
+        });
         expect(spyCreateInstance).toHaveBeenCalledTimes(4);
         expect(instance).toMatchSnapshot();
     });
 
     it('create with DataFactoryElement with Literal value', async () => {
         const spyCreateInstance = jest.spyOn(ExampleValue, 'createInstance');
-        const rawValue = ["a", "b", "c"];
-        const instance = ExampleValue.createInstance(mockedSession, rawValue, new Set(), MockTool.createSchema(SchemaType.AnyObject), MockTool.createLanguages(), { "x-ms-format": "dfe-list-string" });
+        const rawValue = ['a', 'b', 'c'];
+        const instance = ExampleValue.createInstance(mockedSession, rawValue, new Set(), MockTool.createSchema(SchemaType.AnyObject), MockTool.createLanguages(), {
+            'x-ms-format': 'dfe-list-string',
+        });
         expect(spyCreateInstance).toHaveBeenCalledTimes(5);
         expect(instance).toMatchSnapshot();
     });
@@ -64,7 +68,7 @@ describe('ExampleValue.createInstance(...)', () => {
             new Set(),
             MockTool.createArraySchema(MockTool.createSchema(SchemaType.Integer)),
             MockTool.createLanguages(),
-            undefined
+            undefined,
         );
         expect(spyCreateInstance).toHaveBeenCalledTimes(rawValue.length + 1);
         expect(instance).toMatchSnapshot();
@@ -85,7 +89,7 @@ describe('ExampleValue.createInstance(...)', () => {
                 properties: [MockTool.createProperty('abc', integerSchema), MockTool.createProperty('bcd', integerSchema)],
             }),
             MockTool.createLanguages(),
-            undefined
+            undefined,
         );
         expect(spyCreateInstance).toHaveBeenCalledTimes(Object.keys(rawValue).length + 1);
         expect(instance).toMatchSnapshot();
@@ -106,7 +110,7 @@ describe('ExampleValue.createInstance(...)', () => {
                 elementType: integerSchema,
             }),
             MockTool.createLanguages(),
-            undefined
+            undefined,
         );
         expect(spyCreateInstance).toHaveBeenCalledTimes(Object.keys(rawValue).length + 1);
         expect(instance).toMatchSnapshot();

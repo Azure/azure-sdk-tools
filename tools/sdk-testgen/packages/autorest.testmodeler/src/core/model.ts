@@ -15,9 +15,9 @@ import {
     ImplementationLocation,
     Languages,
     NumberSchema,
+    ObjectSchema,
     Operation,
     OperationGroup,
-    ObjectSchema,
     Parameter,
     Property,
     Schema,
@@ -164,7 +164,7 @@ export class ExampleValue {
                                 Helper.filterPathsByPrefix(usedProperties, property.flattenedNames),
                                 property.schema,
                                 property.language,
-                                property.extensions
+                                property.extensions,
                             );
                             instance.properties[property.serializedName].flattenedNames = property.flattenedNames;
                             usedProperties.add(property.flattenedNames);
@@ -178,7 +178,7 @@ export class ExampleValue {
                             Helper.filterPathsByPrefix(usedProperties, [property.serializedName]),
                             property.schema,
                             property.language,
-                            property.extensions
+                            property.extensions,
                         );
                         usedProperties.add([property.serializedName]);
                     }
@@ -213,63 +213,73 @@ export class ExampleValue {
                     usedProperties.add([key]);
                 }
             }
-        }
-        else if (schema.type === SchemaType.AnyObject && extensions && extensions[xMsFormat] && extensions[xMsFormat].startsWith('dfe-')) {
+        } else if (schema.type === SchemaType.AnyObject && extensions && extensions[xMsFormat] && extensions[xMsFormat].startsWith('dfe-')) {
             // Becuase DataFactoryElement is defined as AnyObject schema, so have to explicitly build it's example value according to x_ms_format here
-            const dfeObjectType = 'type';
-            const dfeObjectValue = 'value';
-            const dfeObjectTypeValues = ['Expression', 'SecureString', 'AzureKeyVaultSecretReference'];
-            const dfeObjectSchemaPrefix = 'DataFactoryElement-';
-            const createSchemaForDfeObject = (raw: any, dfeFormat: string): ObjectSchema | undefined => {
-                if (Object(raw) && raw[dfeObjectType] && raw[dfeObjectValue] && dfeObjectTypeValues.includes(raw[dfeObjectType])) {
-                    var r = new ObjectSchema(dfeObjectSchemaPrefix + raw[dfeObjectType], '');
-                    r.addProperty(new Property(dfeObjectType, '', new StringSchema(`${dfeFormat}-${dfeObjectType}`, '')));
-                    r.addProperty(new Property(dfeObjectValue, '', new StringSchema(`${dfeFormat}-${dfeObjectValue}`, '')));
-                    return r;
-                }
-                return undefined;
-            };
-            const createSchemaForDfeLiteral = (raw: any, dfeFormat: string, eleFormat: string): Schema => {
-                switch (dfeFormat) {
-                    case 'dfe-string': return new StringSchema(dfeFormat, '');
-                    case 'dfe-bool': return new BooleanSchema(dfeFormat, '');
-                    case 'dfe-int': return new NumberSchema(dfeFormat, '', SchemaType.Integer, 32);
-                    case 'dfe-double': return new NumberSchema(dfeFormat, '', SchemaType.Number, 64);
-                    case 'dfe-date-time': return new DateTimeSchema(dfeFormat, '');
-                    case 'dfe-duration': return new DurationSchema(dfeFormat, '');
-                    case 'dfe-uri': return new UriSchema(dfeFormat, '');
-                    case 'dfe-list-string': return new ArraySchema(dfeFormat, '', new StringSchema(dfeFormat + '-element', ''));
-                    case 'dfe-key-value-pairs': return new DictionarySchema(dfeFormat, '', new StringSchema(dfeFormat + '-element', ''));
-                    case 'dfe-object': return new BinarySchema('');
-                    case 'dfe-list-generic':
-                        // TODO: do we need to search more schema store for the element?
-                        // just searching object schemas seems enough for now. Consider add more when needed
-                        const eleSchema = session.model.schemas.objects.find((s) => s.language.default.name === eleFormat);
-                        if (!eleSchema) {
-                            throw new Error('Cant find schema for the element of DataFactoryElement with type dfe-list-generic: ' + (eleFormat ?? '<null>'));
-                        }
-                        return new ArraySchema(dfeFormat, '', eleSchema);
-                    default:
-                        throw new Error('Unknown dfeFormat' + dfeFormat);
-                }
-            };
-
             const format = extensions[xMsFormat];
             const elementFormat = extensions[xMsFormatElementType];
 
-            const dfeObjSchema = createSchemaForDfeObject(rawValue, format);
+            const dfeObjSchema = ExampleValue.createSchemaForDfeObject(rawValue, format);
             if (dfeObjSchema) {
                 return this.createInstance(session, rawValue, usedProperties, dfeObjSchema, language, undefined, searchDescents);
-            }
-            else {
-                const dfeLiterlSchema = createSchemaForDfeLiteral(rawValue, format, elementFormat);
+            } else {
+                const dfeLiterlSchema = ExampleValue.createSchemaForDfeLiteral(session, rawValue, format, elementFormat);
                 return this.createInstance(session, rawValue, usedProperties, dfeLiterlSchema, language, undefined, searchDescents);
             }
-        }
-        else {
+        } else {
             instance.rawValue = rawValue;
         }
         return instance;
+    }
+
+    private static createSchemaForDfeObject(raw: any, dfeFormat: string): ObjectSchema | undefined {
+        const dfeObjectType = 'type';
+        const dfeObjectValue = 'value';
+        const dfeObjectTypeValues = ['Expression', 'SecureString', 'AzureKeyVaultSecretReference'];
+        const dfeObjectSchemaPrefix = 'DataFactoryElement-';
+
+        if (Object(raw) && raw[dfeObjectType] && raw[dfeObjectValue] && dfeObjectTypeValues.includes(raw[dfeObjectType])) {
+            const r = new ObjectSchema(dfeObjectSchemaPrefix + raw[dfeObjectType], '');
+            r.addProperty(new Property(dfeObjectType, '', new StringSchema(`${dfeFormat}-${dfeObjectType}`, '')));
+            r.addProperty(new Property(dfeObjectValue, '', new StringSchema(`${dfeFormat}-${dfeObjectValue}`, '')));
+            return r;
+        }
+        return undefined;
+    }
+
+    private static createSchemaForDfeLiteral(session: Session<TestCodeModel>, raw: any, dfeFormat: string, eleFormat: string): Schema {
+        switch (dfeFormat) {
+            case 'dfe-string':
+                return new StringSchema(dfeFormat, '');
+            case 'dfe-bool':
+                return new BooleanSchema(dfeFormat, '');
+            case 'dfe-int':
+                return new NumberSchema(dfeFormat, '', SchemaType.Integer, 32);
+            case 'dfe-double':
+                return new NumberSchema(dfeFormat, '', SchemaType.Number, 64);
+            case 'dfe-date-time':
+                return new DateTimeSchema(dfeFormat, '');
+            case 'dfe-duration':
+                return new DurationSchema(dfeFormat, '');
+            case 'dfe-uri':
+                return new UriSchema(dfeFormat, '');
+            case 'dfe-list-string':
+                return new ArraySchema(dfeFormat, '', new StringSchema(dfeFormat + '-element', ''));
+            case 'dfe-key-value-pairs':
+                return new DictionarySchema(dfeFormat, '', new StringSchema(dfeFormat + '-element', ''));
+            case 'dfe-object':
+                return new BinarySchema('');
+            case 'dfe-list-generic': {
+                // TODO: do we need to search more schema store for the element?
+                // just searching object schemas seems enough for now. Consider add more when needed
+                const eleSchema = session.model.schemas.objects.find((s) => s.language.default.name === eleFormat);
+                if (!eleSchema) {
+                    throw new Error('Cant find schema for the element of DataFactoryElement with type dfe-list-generic: ' + (eleFormat ?? '<null>'));
+                }
+                return new ArraySchema(dfeFormat, '', eleSchema);
+            }
+            default:
+                throw new Error('Unknown dfeFormat' + dfeFormat);
+        }
     }
 }
 

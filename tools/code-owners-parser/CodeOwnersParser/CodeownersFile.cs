@@ -3,16 +3,46 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
     public static class CodeownersFile
     {
+
+        private static string teamUserBlobUri = $"https://{StorageConstants.AzureBlobAccountName}.blob.core.windows.net/{StorageConstants.AzureSdkWriteTeamsContainer}/{StorageConstants.AzureSdkWriteTeamsBlobName}";
+        private static Dictionary<string, List<string>>? teamUserDict = null;
         public static List<CodeownersEntry> GetCodeownersEntriesFromFileOrUrl(
             string codeownersFilePathOrUrl)
         {
             string content = FileHelpers.GetFileOrUrlContents(codeownersFilePathOrUrl);
             return GetCodeownersEntries(content);
+        }
+
+        public static Dictionary<string, List<string>>?GetTeamUserData()
+        {
+            if (null == teamUserDict)
+            {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
+
+                string rawJson = FileHelpers.GetFileOrUrlContents(teamUserBlobUri);
+                stopWatch.Stop();
+                // Get the elapsed time as a TimeSpan value.
+                TimeSpan ts = stopWatch.Elapsed;
+
+                // Format and display the TimeSpan value.
+                string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                    ts.Hours, ts.Minutes, ts.Seconds,
+                    ts.Milliseconds / 10);
+                Console.WriteLine($"Time to pull teamUserBlob: {elapsedTime}");
+                var list = JsonSerializer.Deserialize<List<KeyValuePair<string, List<string>>>>(rawJson);
+                if (null != list)
+                {
+                    teamUserDict = list.ToDictionary((keyItem) => keyItem.Key, (valueItem) => valueItem.Value);
+                }
+            }
+            return teamUserDict;
         }
 
         public static List<CodeownersEntry> GetCodeownersEntries(string codeownersContent)

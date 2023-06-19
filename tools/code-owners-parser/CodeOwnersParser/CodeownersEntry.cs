@@ -106,11 +106,69 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             line = ParsePath(line);
             line = RemoveCommentIfAny(line);
 
-            foreach (string author in SplitLine(line, OwnerSeparator).ToList())
+            // If the line doesn't contain the OwnerSeparator AKA no owners, then the foreach loop below
+            // won't work. For example, the following line would end up causing "/sdk/communication" to
+            // be added as an owner when one is not listed
+            // /sdk/communication/
+            if (line.Contains(OwnerSeparator))
             {
-                if (!string.IsNullOrWhiteSpace(author))
-                    Owners.Add(author.Trim());
+                foreach (string author in SplitLine(line, OwnerSeparator).ToList())
+                {
+                    if (!string.IsNullOrWhiteSpace(author))
+                    {
+                        // If the author is a team, get the user list and add that to the Owners
+                        if (!IsGitHubUserAlias(author))
+                        {
+                            var teamUsers = GetUsersForTeam(author.Trim());
+                            // If the team is found in team user data, add the list of users to
+                            // the owners and ensure the end result is a distinct list
+                            if (teamUsers.Count > 0)
+                            {
+                                // The union of the two lists will ensure the result a distinct list
+                                Owners = Owners.Union(teamUsers).ToList();
+                            }
+                            // Else, the team user data did not contain an entry or there were no user
+                            // for the team. In that case, just add the team to the list of authors
+                            else
+                            {
+                                Owners.Add(author);
+                            }
+                        }
+                        else
+                        {
+                            Owners.Add(author.Trim());
+                        }
+                    }
+                }
             }
+            else
+            {
+                Console.WriteLine($"Warning: CODEOWNERS line '{line}' does not have an owner entry.");
+            }
+        }
+
+        private static List<string> GetUsersForTeam(string teamName)
+        {
+            // The teamName in the codeowners file should be in the form <org>/<team>.
+            // The dictionary's team names do not contain the org so the org needs to
+            // be stripped off. Handle the case where the teamName passed in does and
+            // does not being with @org/
+            string teamWithoutOrg = teamName.Trim();
+            if (teamName.Contains('/'))
+            {
+                teamWithoutOrg = teamName.Split("/")[1].Trim();
+            }
+            var teamUserDict = CodeownersFile.GetTeamUserData();
+            if (teamUserDict != null)
+            {
+                if (teamUserDict.ContainsKey(teamWithoutOrg))
+                {
+                    Console.WriteLine($"Found team entry for {teamWithoutOrg}");
+                    return teamUserDict[teamWithoutOrg];
+                }
+                Console.WriteLine($"Warning: TeamUserDictionary did not contain a team entry for {teamWithoutOrg}");
+            }
+            return new List<string>();
         }
 
         private static bool IsComment(string line)

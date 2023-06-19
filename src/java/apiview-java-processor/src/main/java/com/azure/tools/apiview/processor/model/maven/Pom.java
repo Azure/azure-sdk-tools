@@ -161,7 +161,7 @@ public class Pom implements MavenGAV {
     private Gav createGav(final XPath xPath, final Document xmlDocument, final String root) throws XPathExpressionException {
         final String groupIdExpression = root + "/groupId";
         final Node groupIdNode = (Node) xPath.evaluate(groupIdExpression, xmlDocument, XPathConstants.NODE);
-        final String groupId = groupIdNode == null ? "" : groupIdNode.getTextContent();
+        String groupId = groupIdNode == null ? "" : groupIdNode.getTextContent();
 
         final String artifactIdExpression = root + "/artifactId";
         final Node artifactIdNode = (Node) xPath.evaluate(artifactIdExpression, xmlDocument, XPathConstants.NODE);
@@ -169,7 +169,20 @@ public class Pom implements MavenGAV {
 
         final String versionExpression = root + "/version";
         final Node versionNode = (Node) xPath.evaluate(versionExpression, xmlDocument, XPathConstants.NODE);
-        final String version = versionNode == null ? "" : versionNode.getTextContent();
+        String version = versionNode == null ? "" : versionNode.getTextContent();
+
+        // it is possible to inherit the groupId and version from the parent, so if group ID or version is empty here,
+        // lets go up to the parent to get it from there
+        if (groupId.isEmpty()) {
+            final String parentGroupIdExpression = root + "/parent/groupId";
+            final Node parentGroupIdNode = (Node) xPath.evaluate(parentGroupIdExpression, xmlDocument, XPathConstants.NODE);
+            groupId = parentGroupIdNode == null ? "" : parentGroupIdNode.getTextContent();
+        }
+        if (version.isEmpty()) {
+            final String parentVersionExpression = root + "/parent/version";
+            final Node parentVersionNode = (Node) xPath.evaluate(parentVersionExpression, xmlDocument, XPathConstants.NODE);
+            version = parentVersionNode == null ? "" : parentVersionNode.getTextContent();
+        }
 
         return new Gav(groupId, artifactId, version);
     }

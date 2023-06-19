@@ -24,7 +24,7 @@ public class Diagnostics {
     private final List<DiagnosticRule> diagnostics = new ArrayList<>();
 
     public Diagnostics() {
-        diagnostics.add(new PackageNameDiagnosticRule());
+//        diagnostics.add(new PackageNameDiagnosticRule());
         diagnostics.add(new ImportsDiagnosticRule("com.sun"));
         diagnostics.add(new IllegalPackageAPIExportsDiagnosticRule("implementation", "netty"));
         diagnostics.add(new NoPublicFieldsDiagnosticRule());
@@ -52,6 +52,7 @@ public class Diagnostics {
         diagnostics.add(new BuilderTraitsDiagnosticRule());
         diagnostics.add(new MavenPackageAndDescriptionDiagnosticRule());
         diagnostics.add(new ExpandableStringEnumDiagnosticRule());
+        diagnostics.add(new UpperCaseEnumValuesDiagnosticRule());
 
         // common APIs for all builders (below we will do rules for http or amqp builders)
         diagnostics.add(new RequiredBuilderMethodsDiagnosticRule(null)

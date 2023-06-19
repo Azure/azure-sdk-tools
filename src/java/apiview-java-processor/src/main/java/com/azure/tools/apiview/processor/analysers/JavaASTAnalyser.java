@@ -150,8 +150,10 @@ public class JavaASTAnalyser implements Analyser {
 
     private boolean filterFilePaths(Path filePath) {
         String fileName = filePath.toString();
-        // Skip paths that are directories or are in implementation.
-        if (Files.isDirectory(filePath) || fileName.contains("implementation")) {
+        // Skip paths that are directories, in implementation, or are files contained within META-INF
+        if (Files.isDirectory(filePath)
+                || fileName.contains("implementation")
+                || fileName.contains("META-INF")) {
             return false;
         } else {
             // Only include Java files.
@@ -210,9 +212,9 @@ public class JavaASTAnalyser implements Analyser {
 //            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
 
             ParserConfiguration parserConfiguration = new ParserConfiguration()
-                .setStoreTokens(true)
-                .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
-                .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
+                    .setStoreTokens(true)
+                    .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
+                    .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
 
             // Configure JavaParser to use type resolution
             StaticJavaParser.setConfiguration(parserConfiguration);
@@ -223,10 +225,10 @@ public class JavaASTAnalyser implements Analyser {
             if (path.endsWith("package-info.java")) {
                 compilationUnit.getPackageDeclaration().ifPresent(pd -> {
                     compilationUnit.getAllComments().stream()
-                        .filter(Comment::isJavadocComment)
-                        .map(Comment::asJavadocComment)
-                        .findFirst()
-                        .ifPresent(comment -> packageNameToPackageInfoJavaDoc.put(pd.getNameAsString(), comment));
+                            .filter(Comment::isJavadocComment)
+                            .map(Comment::asJavadocComment)
+                            .findFirst()
+                            .ifPresent(comment -> packageNameToPackageInfoJavaDoc.put(pd.getNameAsString(), comment));
                 });
 
                 return Optional.empty();
@@ -617,7 +619,7 @@ public class JavaASTAnalyser implements Analyser {
 
                 // create a unique id for enum constants
                 final String name = enumConstantDeclaration.getNameAsString();
-                final String definitionId = makeId(enumDeclaration.getFullyQualifiedName().get() + "." + counter);
+                final String definitionId = makeId(enumConstantDeclaration);// makeId(enumDeclaration.getFullyQualifiedName().get() + "." + counter);
                 final boolean isDeprecated = enumConstantDeclaration.isAnnotationPresent("Deprecated");
 
                 if (isDeprecated) {

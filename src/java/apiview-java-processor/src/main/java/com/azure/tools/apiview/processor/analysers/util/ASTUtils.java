@@ -90,7 +90,15 @@ public final class ASTUtils {
      * @return All type declarations contained in the compilation unit.
      */
     public static Stream<TypeDeclaration<?>> getClasses(CompilationUnit cu) {
-        return cu.getTypes().stream();
+        // previously we simply return 'cu.getTypes().stream()', but this had the effect of not returning all inner
+        // types, as was expected. This is because the 'getTypes()' method only returns the top-level types, and not
+        // member types. To fix this, we now return a stream of all types, including member types.
+        return Stream.concat(
+                cu.getTypes().stream(), // top-level types
+                cu.getTypes().stream()  // member types
+                     .flatMap(type -> type.getMembers().stream()
+                          .filter(member -> member instanceof TypeDeclaration<?>)
+                          .map(member -> (TypeDeclaration<?>) member)));
     }
 
     /**
@@ -194,6 +202,10 @@ public final class ASTUtils {
 
     public static String makeId(FieldDeclaration fieldDeclaration) {
         return makeId(fieldDeclaration.getVariables().get(0));
+    }
+
+    public static String makeId(EnumConstantDeclaration enumDeclaration) {
+        return makeId(getNodeFullyQualifiedName(enumDeclaration.getParentNode()) + "." + enumDeclaration.getNameAsString());
     }
 
     public static String makeId(String fullPath) {

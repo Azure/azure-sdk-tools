@@ -1,7 +1,10 @@
 import {
   updatePageSettings, getCodeRow, getCodeRowSectionClasses,
-  getRowSectionClasses, toggleCommentIcon, getSignalRConnectionId
+  getRowSectionClasses, toggleCommentIcon, getSignalRConnectionId,
+  updateCommentThread, addCommentThreadNavigation, getDisplayedCommentRows,
+  getCommentsRow
 } from "../shared/helpers";
+import { getConnection, ReceiveComment } from "./signalr";
 
 $(() => {
   const INVISIBLE = "invisible";
@@ -116,14 +119,15 @@ $(() => {
 
     if (lineId) {
       let commentRow = getCommentsRow(lineId);
+      let reviewId = getReviewId(e.target);
+      let revisionId = getRevisionId(e.target);
       let rowSectionClasses = getRowSectionClasses(commentRow[0].classList);
       let serializedForm = form.serializeArray();
       serializedForm.push({ name: "elementId", value: lineId });
-      serializedForm.push({ name: "reviewId", value: getReviewId(e.target) });
-      serializedForm.push({ name: "revisionId", value: getRevisionId(e.target) });
+      serializedForm.push({ name: "reviewId", value: reviewId });
+      serializedForm.push({ name: "revisionId", value: revisionId });
       serializedForm.push({ name: "sectionClass", value: rowSectionClasses });
       serializedForm.push({ name: "taggedUsers", value: getTaggedUsers(e.target) });
-      serializedForm.push({ name: "signalRConnectionId", value: getSignalRConnectionId() });
       
       if (inlineRowNo.length > 0) {
         let groupNo = inlineRowNo.text().replace("ROW-", '');
@@ -137,6 +141,11 @@ $(() => {
       }).done(partialViewResult => {
         updateCommentThread(commentRow, partialViewResult);
         addCommentThreadNavigation();
+        var connection = getConnection();
+        if (connection) {
+          ReceiveComment(reviewId, revisionId, lineId, partialViewResult);
+          // TODO: refactor to make client fetch the message from the server (database) instead of sending partial view result 
+        }
       });
     }
     e.preventDefault();
@@ -448,10 +457,6 @@ $(() => {
     return $(`.review-comment[data-comment-id='${commentId}']`);
   }
 
-  function getCommentsRow(id: string) {
-    return $(`.comment-row[data-line-id='${id}']`);
-  }
-
   function getDiagnosticsRow(id: string) {
     return $(`.code-diagnostics[data-line-id='${id}']`);
   }
@@ -561,12 +566,6 @@ $(() => {
     return form;
   }
 
-  function updateCommentThread(commentBox, partialViewResult) {
-    partialViewResult = $.parseHTML(partialViewResult);
-    $(commentBox).replaceWith(partialViewResult);
-    return false;
-  }
-
   function toggleAllCommentsVisibility(showComments: boolean) {
     $(SEL_COMMENT_CELL).each(function () {
       const id = getElementId(this);
@@ -614,79 +613,4 @@ $(() => {
       toggleComments(id);
     }
   }
-
-  function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearCommentAnchors = false, returnFirst = false) {
-    var displayedCommentRows: JQuery<HTMLElement>[] = [];
-    commentRows.each(function (index) {
-      if (clearCommentAnchors) {
-        $(this).find('.comment-thread-anchor').removeAttr("id");
-        $(this).find('.comment-navigation-buttons').empty();
-      }
-
-      if ($(this).hasClass("d-none")) {
-        return;
-      }
-
-      let commentHolder = $(this).find(".comment-holder").first();
-      if (commentHolder.hasClass("comments-resolved") && commentHolder.css("display") != "block") {
-        return;
-      }
-      displayedCommentRows.push($(this));
-      if (returnFirst) {
-        return false;
-      }
-    });
-    return displayedCommentRows
-  }
-
-  function addCommentThreadNavigation(){
-    var commentRows = $('.comment-row');
-    var displayedCommentRows = getDisplayedCommentRows(commentRows, true, false);
-
-    commentRows.each(function (index) {
-      $(this).find('.comment-thread-anchor').removeAttr("id");
-      $(this).find('.comment-navigation-buttons').empty();
-
-      if ($(this).hasClass("d-none")) {
-        return;
-      }
-
-      let commentHolder = $(this).find(".comment-holder").first();
-      if (commentHolder.hasClass("comments-resolved") && commentHolder.css("display") != "block") {
-        return;
-      }
-      displayedCommentRows.push($(this));
-    });
-
-    if (displayedCommentRows.length > 1) {
-      displayedCommentRows.forEach(function (value, index) {
-        var commentThreadAnchorId = "comment-thread-" + index;
-        $(value).find('.comment-thread-anchor').first().prop('id', commentThreadAnchorId);
-
-        var commentNavigationButtons = $(value).find('.comment-navigation-buttons').last();
-        commentNavigationButtons.empty();
-
-        var nextCommentThreadAnchor = "comment-thread-" + (index + 1);
-        var previousCommentThreadAnchor = "comment-thread-" + (index - 1);
-
-        if (index == 0) {
-          commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
-        }
-        else if (index == displayedCommentRows.length - 1) {
-          commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
-        }
-        else {
-          commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
-          commentNavigationButtons.append(`<a class="btn btn-outline-secondary ml-1" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
-        }
-      });
-    }
-  }
-//  /**
-//   * Given a CommentDTO object, adds the comment to client UI. Does not add the comment to CosmosDB.
-//   * @param { CommentDto } comment
-//   */
-//  function autoRefreshComment(comment: CommentDto) {
-//    // check review id against current revision id 
-//  }
 });

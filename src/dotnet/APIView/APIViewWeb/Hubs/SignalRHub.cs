@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
-using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Hubs
@@ -24,6 +22,14 @@ namespace APIViewWeb.Hubs
                 Clients.Caller.SendAsync("ReceiveConnectionId", Context.ConnectionId);
             }
             return base.OnConnectedAsync();
+        }
+
+        // create a callback that receives what you push (3 param) 
+        public async Task ReceiveComment(string reviewId, string revisionId, string elementId, string partialViewResult)
+        {
+            if (!string.IsNullOrEmpty(reviewId) && !string.IsNullOrEmpty(elementId)) { 
+                await Clients.Others.SendAsync("ReceiveComment", reviewId, revisionId, elementId, partialViewResult);
+            }
         }
     }
 }

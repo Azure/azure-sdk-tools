@@ -4,17 +4,15 @@ using APIViewWeb.DTO;
 using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
-using Azure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Azure.Cosmos.Linq;
-using Microsoft.Extensions.Azure;
-using Octokit;
 
 namespace APIViewWeb.Controllers
 {
-    [Authorize("RequireOrganization")]
+    //[Authorize("RequireOrganization")]
+    [AllowAnonymous]
     public class CommentsController: Controller
     {
         private readonly ICommentsManager _commentsManager;
@@ -31,7 +29,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false, string signalRConnectionId = null)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false)
         {
             if (string.IsNullOrEmpty(commentText))
             {
@@ -63,25 +61,8 @@ namespace APIViewWeb.Controllers
             {
                 await _notificationManager.SubscribeAsync(review,User);
             }
-
-            var commentDto = new CommentDto(); 
-            commentDto.TimeStamp = DateTime.UtcNow;
-            commentDto.ReviewId = reviewId;
-            commentDto.RevisionId = revisionId;
-            commentDto.ElementId = elementId;
-            commentDto.Username = comment.Username;
-            commentDto.Comment = commentText;
-            commentDto.CommentId = comment.CommentId;
-
-<<<<<<< HEAD
-            //await _notificationHubContext.Clients.AllExcept(signalRConnectionId).SendAsync("ReceiveComment", commentDto); // TODO: need to check if valid signalR connection id 
-            await _notificationHubContext.Clients.All.SendAsync("ReceiveComment", commentDto); // TODO: for debugging. remove for PR 
-=======
-            await _notificationHubContext.Clients.AllExcept(signalRConnectionId).SendAsync("ReceiveComment", commentDto);
-            await _notificationHubContext.Clients.User(signalRConnectionId).SendAsync("ReceiveCommentTest", commentDto); // NOTE: for debugging purposes only
->>>>>>> dc4d3ab8b2a65db64c1bbddf40ba119ef4c49d40
-
-            return await CommentPartialAsync(reviewId, comment.ElementId);
+            
+            return await CommentPartialAsync(reviewId, comment.ElementId); 
         }
 
         [HttpPost]

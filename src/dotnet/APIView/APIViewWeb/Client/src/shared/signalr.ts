@@ -1,15 +1,36 @@
 import * as hp from "./helpers";
-import * as comments from "./comments";
-import { ConsoleLogger, createLogger } from "@microsoft/signalr/dist/esm/Utils";
-import { LogLevel } from "@microsoft/signalr";
+
+const signalR = require('@microsoft/signalr');
+
+let connection;
+
+export function getConnection() {
+  if (connection.state === signalR.HubConnectionState.Connected) {
+    return connection;
+  }
+  return null;
+}
+
+// sender/server side of comment refresh 
+export function ReceiveComment(reviewId, revisionId, elementId, partialViewResult) {
+  let result = hp.getReviewAndRevisionIdFromUrl();
+  let currReviewId = result["reviewId"];
+  let currRevisionId = result["revisionId"];
+
+  if (currRevisionId === undefined) {
+    // latest revision
+    // TODO: each revision can have its own set of comments - what to do? 
+  }
+
+  connection.invoke("ReceiveComment", reviewId, revisionId, elementId, partialViewResult);
+  hp.updateCommentThread(elementId, partialViewResult);
+}
 
 $(() => {
 //-------------------------------------------------------------------------------------------------
 // Create SignalR Connection and Register various events
 //-------------------------------------------------------------------------------------------------
-  const signalR = require('@microsoft/signalr');
-
-  const connection = new signalR.HubConnectionBuilder()
+  connection = new signalR.HubConnectionBuilder()
     .withUrl(`${location.origin}/hubs/notification`, { 
       skipNegotiation: true,
       transport: signalR.HttpTransportType.WebSockets })
@@ -39,11 +60,26 @@ $(() => {
     hp.setSignalRConnectionId(connectionId);
   });
 
-  connection.on("ReceiveComment", (commentDto) => {
-    // push to everyone except current
-    // find a way to update their comments
-    // if current client has same review id open and received this same message,
-    // use the id to find where to add comment 
+  // receiver/client side of comment refresh 
+  connection.on("ReceiveComment", (reviewId, revisionId, elementId, partialViewResult) => {
+    let result = hp.getReviewAndRevisionIdFromUrl();
+    let currReviewId = result["reviewId"];
+    let currRevisionId = result["revisionId"];
+    // TODO: do this later - match against current review id and current revision id
+
+    if (currReviewId !== reviewId) {
+      return; 
+    }
+
+    if (revisionId === undefined) {
+      // TODO: latest version
+    }
+
+    let commentsRow = hp.getCommentsRow(elementId); 
+
+    hp.updateCommentThread(commentsRow, partialViewResult);
+    // commented because we don't want to navigate user to updated comment
+    //hp.addCommentThreadNavigation();  
   });
 
   // Start the connection.

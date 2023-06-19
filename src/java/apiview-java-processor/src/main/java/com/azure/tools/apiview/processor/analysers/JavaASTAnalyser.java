@@ -212,9 +212,9 @@ public class JavaASTAnalyser implements Analyser {
 //            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
 
             ParserConfiguration parserConfiguration = new ParserConfiguration()
-                    .setStoreTokens(true)
-                    .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
-                    .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
+                .setStoreTokens(true)
+                .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
+                .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
 
             // Configure JavaParser to use type resolution
             StaticJavaParser.setConfiguration(parserConfiguration);
@@ -225,10 +225,10 @@ public class JavaASTAnalyser implements Analyser {
             if (path.endsWith("package-info.java")) {
                 compilationUnit.getPackageDeclaration().ifPresent(pd -> {
                     compilationUnit.getAllComments().stream()
-                            .filter(Comment::isJavadocComment)
-                            .map(Comment::asJavadocComment)
-                            .findFirst()
-                            .ifPresent(comment -> packageNameToPackageInfoJavaDoc.put(pd.getNameAsString(), comment));
+                        .filter(Comment::isJavadocComment)
+                        .map(Comment::asJavadocComment)
+                        .findFirst()
+                        .ifPresent(comment -> packageNameToPackageInfoJavaDoc.put(pd.getNameAsString(), comment));
                 });
 
                 return Optional.empty();

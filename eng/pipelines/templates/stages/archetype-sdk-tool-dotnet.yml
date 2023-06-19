@@ -18,6 +18,9 @@ parameters:
   - name: NoWarn
     type: boolean
     default: false
+  - name: TestPreSteps
+    type: object
+    default: []
   - name: TestPostSteps
     type: object
     default: []
@@ -36,6 +39,7 @@ parameters:
   - name: ReleaseBinaries
     type: boolean
     default: false
+
 
 variables:
   - template: ../variables/globals.yml
@@ -138,6 +142,8 @@ stages:
 
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+          - ${{ parameters.TestPreSteps }}
 
           - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
             displayName: 'Test'

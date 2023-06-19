@@ -66,3 +66,7 @@ extends:
     - rid: linux-arm64
       framework: net6.0
       assembly: Azure.Sdk.Tools.TestProxy
+    TestPreSteps:
+      - pwsh: |
+          #vso[task.setvariable variable=COMPlus_Pkcs12UnspecifiedPasswordIterationLimit]-1
+        displayName: Override Acceptable Password Iteration Count

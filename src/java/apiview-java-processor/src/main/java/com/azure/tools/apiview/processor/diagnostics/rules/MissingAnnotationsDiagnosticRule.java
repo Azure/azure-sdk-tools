@@ -15,7 +15,7 @@ public class MissingAnnotationsDiagnosticRule implements DiagnosticRule {
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         getClasses(cu)
-            .filter(type -> getPackageName(type).equals("com.azure"))   // we only want to give this guidance to Azure SDK developers
+            .filter(type -> getPackageName(type).startsWith("com.azure"))   // we only want to give this guidance to Azure SDK developers
             .forEach(typeDeclaration -> {
                 String className = typeDeclaration.getNameAsString();
 

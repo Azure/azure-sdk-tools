@@ -7,6 +7,8 @@ to documentation in your specific language repository in order to configure reco
 | [JavaScript](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on-how-to-write-tests.md)
 | [.NET](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core.TestFramework/README.md)
 | [Python](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md)
+| [C++](https://github.com/Azure/azure-sdk-for-cpp/blob/main/doc/TestProxy.md)
+| [Go](https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/developer_setup.md)
 
 ## Table of contents
 

@@ -53,7 +53,6 @@ $(() => {
     let result = hp.getReviewAndRevisionIdFromUrl();
     let currReviewId = result["reviewId"];
     let currRevisionId = result["revisionId"];
-    // TODO: do this later - match against current review id and current revision id
 
     if (currReviewId !== reviewId) {
       return; 

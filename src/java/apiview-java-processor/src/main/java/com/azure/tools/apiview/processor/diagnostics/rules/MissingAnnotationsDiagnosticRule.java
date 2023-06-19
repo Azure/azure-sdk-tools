@@ -25,7 +25,7 @@ public class MissingAnnotationsDiagnosticRule implements DiagnosticRule {
                 if (!typeDeclaration.isAnnotationPresent("ServiceClientBuilder")) {
                     listing.addDiagnostic(new Diagnostic(
                         INFO,
-                        makeId(cu),
+                        makeId(typeDeclaration),
                         "Classes named *Builder are potential candidates to have the @ServiceClientBuilder annotation applied.",
                         "https://azure.github.io/azure-sdk/java_introduction.html#service-client-creation"));
                 }
@@ -34,7 +34,7 @@ public class MissingAnnotationsDiagnosticRule implements DiagnosticRule {
                 if (!typeDeclaration.isAnnotationPresent("ServiceClient")) {
                     listing.addDiagnostic(new Diagnostic(
                         INFO,
-                        makeId(cu),
+                        makeId(typeDeclaration),
                         "Classes named *Client are potential candidates to have the @ServiceClient annotation applied.",
                         "https://azure.github.io/azure-sdk/java_introduction.html#service-client"));
                 }
@@ -56,7 +56,7 @@ public class MissingAnnotationsDiagnosticRule implements DiagnosticRule {
                     // warn user to double check
                     listing.addDiagnostic(new Diagnostic(
                         WARNING,
-                        makeId(cu),
+                        makeId(typeDeclaration),
                     "There is a low number of methods annotated with @ServiceMethod. " +
                             "Please review to ensure all appropriate methods have this annotation.",
                         "https://azure.github.io/azure-sdk/java_introduction.html#service-client"));

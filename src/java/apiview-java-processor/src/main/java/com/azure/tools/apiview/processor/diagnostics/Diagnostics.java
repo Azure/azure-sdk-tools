@@ -24,7 +24,7 @@ public class Diagnostics {
     private final List<DiagnosticRule> diagnostics = new ArrayList<>();
 
     public Diagnostics() {
-//        diagnostics.add(new PackageNameDiagnosticRule());
+        diagnostics.add(new PackageNameDiagnosticRule());
         diagnostics.add(new ImportsDiagnosticRule("com.sun"));
         diagnostics.add(new IllegalPackageAPIExportsDiagnosticRule("implementation", "netty"));
         diagnostics.add(new NoPublicFieldsDiagnosticRule());

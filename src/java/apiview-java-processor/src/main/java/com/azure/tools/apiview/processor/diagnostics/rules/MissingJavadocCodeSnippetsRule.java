@@ -34,7 +34,7 @@ public class MissingJavadocCodeSnippetsRule implements DiagnosticRule {
                 if (!javadocContainsCodeSnippetTag(typeDeclaration.getJavadocComment().get().getContent())) {
                     listing.addDiagnostic((new Diagnostic(
                             INFO,
-                            makeId(cu),
+                            makeId(typeDeclaration),
                             "JavaDoc for clients and builders should include code samples to instantiate clients.",
                             "https://github.com/Azure/azure-sdk-for-java/wiki/JavaDoc-with-CodeSnippet"
                     )));
@@ -57,7 +57,7 @@ public class MissingJavadocCodeSnippetsRule implements DiagnosticRule {
                 if (!serviceMethodHasCodesnippets) {
                     listing.addDiagnostic((new Diagnostic(
                             INFO,
-                            makeId(cu),
+                            makeId(typeDeclaration),
                             "JavaDoc for service methods should include code samples.",
                             "https://github.com/Azure/azure-sdk-for-java/wiki/JavaDoc-with-CodeSnippet"
                     )));

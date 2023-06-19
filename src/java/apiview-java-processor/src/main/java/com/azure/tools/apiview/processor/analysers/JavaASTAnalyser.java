@@ -617,9 +617,10 @@ public class JavaASTAnalyser implements Analyser {
                 // annotations
                 getAnnotations(enumConstantDeclaration, false, false);
 
-                // create a unique id for enum constants
+                // create a unique id for enum constants by using the fully-qualified constant name
+                // (package, enum name, and enum constant name)
                 final String name = enumConstantDeclaration.getNameAsString();
-                final String definitionId = makeId(enumConstantDeclaration);// makeId(enumDeclaration.getFullyQualifiedName().get() + "." + counter);
+                final String definitionId = makeId(enumConstantDeclaration);
                 final boolean isDeprecated = enumConstantDeclaration.isAnnotationPresent("Deprecated");
 
                 if (isDeprecated) {

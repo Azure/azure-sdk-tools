@@ -9,6 +9,9 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
 
+/**
+ * This diagnostic encourages developers to use upper case enum values, with underscores between words.
+ */
 public class UpperCaseEnumValuesDiagnosticRule implements DiagnosticRule {
 
     @Override

@@ -215,7 +215,7 @@ export class ExampleValue {
             }
         }
         else if (schema.type === SchemaType.AnyObject && extensions && extensions[X_MS_FORMAT] && extensions[X_MS_FORMAT].startsWith("dfe-")) {
-            // Rebuild example value for DataFactoryElement
+            // Becuase DataFactoryElement is defined as AnyObject schema, so have to explicitly build it's example value according to x_ms_format here
             const DFE_OBJECT_TYPE = "type";
             const DFE_OBJECT_TYPE_VALUES = ["Expression", "SecureString", "AzureKeyVaultSecretReference"];
             const DFE_OBJECT_VALUE = "value";

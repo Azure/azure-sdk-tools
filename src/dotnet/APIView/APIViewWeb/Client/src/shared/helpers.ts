@@ -365,3 +365,96 @@ export function getElementId(element: HTMLElement, idName: string = "data-line-i
 export function getParentData(element: HTMLElement, name: string) {
   return $(element).closest(`[${name}]`).attr(name);
 }
+
+export function updateCommentThread(commentBox, partialViewResult) {
+  partialViewResult = $.parseHTML(partialViewResult);
+  $(commentBox).replaceWith(partialViewResult);
+  return false;
+}
+
+export function addCommentThreadNavigation() {
+  var commentRows = $('.comment-row');
+  var displayedCommentRows = getDisplayedCommentRows(commentRows, true, false);
+
+  commentRows.each(function (index) {
+    $(this).find('.comment-thread-anchor').removeAttr("id");
+    $(this).find('.comment-navigation-buttons').empty();
+
+    if ($(this).hasClass("d-none")) {
+      return;
+    }
+
+    let commentHolder = $(this).find(".comment-holder").first();
+    if (commentHolder.hasClass("comments-resolved") && commentHolder.css("display") != "block") {
+      return;
+    }
+    displayedCommentRows.push($(this));
+  });
+
+  if (displayedCommentRows.length > 1) {
+    displayedCommentRows.forEach(function (value, index) {
+      var commentThreadAnchorId = "comment-thread-" + index;
+      $(value).find('.comment-thread-anchor').first().prop('id', commentThreadAnchorId);
+
+      var commentNavigationButtons = $(value).find('.comment-navigation-buttons').last();
+      commentNavigationButtons.empty();
+
+      var nextCommentThreadAnchor = "comment-thread-" + (index + 1);
+      var previousCommentThreadAnchor = "comment-thread-" + (index - 1);
+
+      if (index == 0) {
+        commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+      }
+      else if (index == displayedCommentRows.length - 1) {
+        commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+      }
+      else {
+        commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+        commentNavigationButtons.append(`<a class="btn btn-outline-secondary ml-1" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+      }
+    });
+  }
+}
+
+export function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearCommentAnchors = false, returnFirst = false) {
+  var displayedCommentRows: JQuery<HTMLElement>[] = [];
+  commentRows.each(function (index) {
+    if (clearCommentAnchors) {
+      $(this).find('.comment-thread-anchor').removeAttr("id");
+      $(this).find('.comment-navigation-buttons').empty();
+    }
+
+    if ($(this).hasClass("d-none")) {
+      return;
+    }
+
+    let commentHolder = $(this).find(".comment-holder").first();
+    if (commentHolder.hasClass("comments-resolved") && commentHolder.css("display") != "block") {
+      return;
+    }
+    displayedCommentRows.push($(this));
+    if (returnFirst) {
+      return false;
+    }
+  });
+  return displayedCommentRows
+}
+
+export function getReviewAndRevisionIdFromUrl() {
+  const uri = location.href
+  const regex = /.+Review\/([a-zA-Z0-9]+)\?revisionId=([a-zA-Z0-9]+)/;
+  const match = uri.match(regex);
+  const result = {}
+  if (match) {
+    result["reviewId"] = match[1];
+    result["revisionId"] = match[2];
+  }
+  else {
+    result["reviewId"] = location.pathname.split("/")[3];
+  }
+  return result;
+}
+
+export function getCommentsRow(id: string) {
+  return $(`.comment-row[data-line-id='${id}']`);
+}

@@ -1,7 +1,4 @@
 import * as hp from "./helpers";
-import * as comments from "./comments";
-import { ConsoleLogger, createLogger } from "@microsoft/signalr/dist/esm/Utils";
-import { LogLevel } from "@microsoft/signalr";
 
 const signalR = require('@microsoft/signalr');
 
@@ -19,6 +16,7 @@ $(() => {
 //-------------------------------------------------------------------------------------------------
 
   connection = new signalR.HubConnectionBuilder()
+  const connection = new signalR.HubConnectionBuilder()
     .withUrl(`${location.origin}/hubs/notification`, { 
       skipNegotiation: true,
       transport: signalR.HttpTransportType.WebSockets })
@@ -50,11 +48,26 @@ $(() => {
     let result = hp.getReviewAndRevisionIdFromUrl(href);
     let currReviewId = result["reviewId"];
 
-  connection.on("ReceiveComment", (commentDto) => {
-    // push to everyone except current
-    // find a way to update their comments
-    // if current client has same review id open and received this same message,
-    // use the id to find where to add comment 
+  // receiver/client side of comment refresh 
+  connection.on("ReceiveComment", (reviewId, revisionId, elementId, partialViewResult) => {
+    let result = hp.getReviewAndRevisionIdFromUrl();
+    let currReviewId = result["reviewId"];
+    let currRevisionId = result["revisionId"];
+    // TODO: do this later - match against current review id and current revision id
+
+    if (currReviewId !== reviewId) {
+      return; 
+    }
+
+    if (revisionId === undefined) {
+      // TODO: latest version
+    }
+
+    let commentsRow = hp.getCommentsRow(elementId); 
+
+    hp.updateCommentThread(commentsRow, partialViewResult);
+    // commented because we don't want to navigate user to updated comment
+    //hp.addCommentThreadNavigation();  
   });
     if (currReviewId != reviewId) {
       return;

@@ -36,11 +36,6 @@ namespace GitHubTeamUserStore
             await gitHubEventClient.UploadToBlobStorage(jsonString);
         }
 
-        // This is going to end up being a recursive call. For each team, get the list of users for that team and
-        // store them in the dictionary, if they're not already there, and do the same thing for all child teams of
-        // that team if there are any.
-        // The teams don't come back their name being @<Org>/<teamName> (ex. @azure/azure-sdk-eng) they only come back
-        // with the team name without the "@<Org>/" it's unclear if we want to add that or not when it's being stored
         /// <summary>
         /// Call GitHub to get users for the team and add a dictionary entry for the team/users. Note: GitHub returns 
         /// a distinct list of all of the users, including users from any/all child teams. After that, get the list
@@ -64,6 +59,11 @@ namespace GitHubTeamUserStore
                 // list of users. The Login is what's used in @mentions, assignments etc
                 var members = teamMembers.Select(s => s.Login).ToList();
                 _teamUserDict.Add(team.Name, members);
+            }
+            else
+            {
+                // It seems better to report this than to add a team to the dictionary with no users
+                Console.WriteLine($"Warning: team {team.Name} has no members and will not be added to the dictionary.");
             }
             var childTeams = await gitHubEventClient.GetAllChildTeams(team);
             foreach (Team childTeam in childTeams)

@@ -11,6 +11,11 @@ export function getConnection() {
   return null;
 }
 
+// call function for comment box
+// fetch comment box
+// get ocmment data and show it
+// showCommentBox(elementId, )
+
 // sender/server side of comment refresh 
 export function ReceiveComment(reviewId, revisionId, elementId, partialViewResult) {
   let result = hp.getReviewAndRevisionIdFromUrl();
@@ -23,7 +28,8 @@ export function ReceiveComment(reviewId, revisionId, elementId, partialViewResul
   }
 
   connection.invoke("ReceiveComment", reviewId, revisionId, elementId, partialViewResult);
-  hp.updateCommentThread(elementId, partialViewResult);
+  //hp.updateCommentThread(elementId, partialViewResult);
+  //hp.addCommentThreadNavigation();  
 }
 
 $(() => {
@@ -73,12 +79,25 @@ $(() => {
     if (revisionId === undefined) {
       // TODO: latest version
     }
+    var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
+    hp.showCommentBox(elementId, rowSectionClasses); // side effect of creating a comment box/row
+    let commentsRow = hp.getCommentsRow(elementId); // TODO: new comment thread doesn't have a comments row
 
-    let commentsRow = hp.getCommentsRow(elementId); 
+    //let inlineId = hp.getElementId(elementId, "data-inline-id");
+    //  if (inlineId) {
+    //    let groupNo = inlineId.replace(`${elementId}-tr-`, '');
+    //  }
+    //  else {
+    //    hp.showCommentBox(elementId, rowSectionClasses);
+    //    // create comment form
+    //    // update/add
+    //    // get displayed comment rows 
+    //  }
+    //}
 
     hp.updateCommentThread(commentsRow, partialViewResult);
     // commented because we don't want to navigate user to updated comment
-    //hp.addCommentThreadNavigation();  
+    hp.addCommentThreadNavigation();  
   });
 
   // Start the connection.

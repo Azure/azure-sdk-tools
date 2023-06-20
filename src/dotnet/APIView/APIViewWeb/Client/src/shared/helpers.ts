@@ -253,3 +253,105 @@ export function getReviewAndRevisionIdFromUrl() {
 export function getCommentsRow(id: string) {
   return $(`.comment-row[data-line-id='${id}']`);
 }
+
+export function showCommentBox(id: string, classes: string = '', groupNo: string = '') {
+  let commentForm;
+  let commentsRow = getCommentsRow(id);
+  let commentRowClasses = "comment-row";
+  if (classes) {
+    commentRowClasses = `${commentRowClasses} ${classes}`;
+  }
+
+  if (commentsRow.length === 0) {
+    commentForm = createCommentForm(groupNo);
+    commentsRow =
+      $(`<tr class="${commentRowClasses}" data-line-id="${id}">`)
+        .append($("<td colspan=\"3\">")
+          .append(commentForm));
+
+    commentsRow.insertAfter(getDiagnosticsRow(id).get(0) || getCodeRow(id).get(0));
+  }
+  else {
+    // there is one or more comment rows - insert form
+    let replyArea = $(commentsRow).find(".review-thread-reply");
+    let targetReplyArea = replyArea.first();
+    let firstReplyId = targetReplyArea.attr("data-reply-id");
+    let insertAtBegining = false;
+
+    if (groupNo) {
+      replyArea.siblings(".comment-form").remove();
+      if (Number(groupNo) < Number(firstReplyId)) {
+        insertAtBegining = true;
+      }
+      else {
+        replyArea.each(function (index, value) {
+          let replyId = $(value).attr("data-reply-id");
+
+          if (replyId == groupNo) {
+            targetReplyArea = $(value);
+            return false;
+          }
+
+          if (Number(replyId) > Number(groupNo)) {
+            return false;
+          }
+
+          targetReplyArea = $(value);
+        });
+      }
+    }
+    else {
+      let rowGroupNo = getReplyGroupNo($(targetReplyArea));
+      if (rowGroupNo.length > 0) {
+        insertAtBegining = true;
+      }
+    }
+
+    commentForm = $(targetReplyArea).next();
+    if (!commentForm.hasClass("comment-form")) {
+      if (insertAtBegining) {
+        let commentThreadContent = $(targetReplyArea).closest(".comment-thread-contents");
+        $(createCommentForm(groupNo)).prependTo(commentThreadContent);
+      }
+      else {
+        commentForm = $(createCommentForm(groupNo)).insertAfter(targetReplyArea);
+      }
+    }
+    replyArea.hide();
+    commentForm.show();
+    commentsRow.show(); // ensure that entire comment row isn't being hidden
+  }
+
+  $(getDiagnosticsRow(id)).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
+
+  // If comment checkbox is unchecked, show the icon for new comment
+  if (!($("#show-comments-checkbox").prop("checked"))) {
+    toggleCommentIcon(id, true);
+  }
+
+  commentForm.find(".new-thread-comment-text").focus();
+}
+
+function createCommentForm(groupNo: string = '') {
+  var commentForm = $("#js-comment-form-template").children().clone();
+  if (groupNo) {
+    commentForm.find("form .new-comment-content").prepend(`<span class="badge badge-pill badge-light mb-2"><small>ROW-${groupNo}</small></span>`);
+  }
+  return commentForm;
+}
+
+export function getDiagnosticsRow(id: string) {
+  return $(`.code-diagnostics[data-line-id='${id}']`);
+}
+
+export function getReplyGroupNo(sibling: JQuery<HTMLElement>) {
+  return $(sibling).prevAll("a").first().find("small");
+}
+
+export function getElementId(element: HTMLElement, idName: string = "data-line-id") {
+  return getParentData(element, idName);
+}
+
+export function getParentData(element: HTMLElement, name: string) {
+  return $(element).closest(`[${name}]`).attr(name);
+}

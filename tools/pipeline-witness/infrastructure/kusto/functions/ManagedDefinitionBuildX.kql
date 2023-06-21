@@ -1,0 +1,25 @@
+.create-or-alter function ManagedDefinitionBuildX()
+{ 
+    ManagedDefinition
+    | project-rename
+        DefinitionUri = Uri,
+        DefinitionData = Data
+    | join kind=inner (
+        LatestOwners
+        | project BuildDefinitionId, Owners
+        ) on BuildDefinitionId
+        | project-away BuildDefinitionId1
+    | join kind=inner (
+        Build
+        | project
+            BuildDefinitionId = DefinitionId,
+            BuildUri = Uri,
+            BuildData = Data,
+            BuildId,
+            Result,
+            SourceBranch,
+            Trigger = Reason,
+            FinishTime
+        ) on BuildDefinitionId
+        | project-away BuildDefinitionId1
+}

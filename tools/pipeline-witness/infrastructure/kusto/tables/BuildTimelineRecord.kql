@@ -1,6 +1,9 @@
 .create-merge table BuildTimelineRecord (
     OrganizationName: string,
     ProjectId: string,
+    ProjectName: string,
+    BuildDefinitionId: long,
+    BuildDefinitionName: string,
     BuildId: long,
     BuildTimelineId: string,
     RepositoryId: string,
@@ -35,6 +38,9 @@
 .alter table BuildTimelineRecord ingestion json mapping 'BuildTimelineRecord_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
+    { "column": "ProjectName", "path": "$['projectName']" },
+    { "column": "BuildDefinitionId", "path": "$['buildDefinitionId']" },
+    { "column": "BuildDefinitionName", "path": "$['buildDefinitionName']" },
     { "column": "BuildId", "path": "$['buildId']" },
     { "column": "BuildTimelineId", "path": "$['buildTimelineId']" },
     { "column": "RepositoryId", "path": "$['repositoryId']" },

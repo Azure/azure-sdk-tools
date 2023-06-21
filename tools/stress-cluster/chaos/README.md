@@ -12,6 +12,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
      * [Stress Test Secrets](#stress-test-secrets)
      * [Stress Test File Share](#stress-test-file-share)
      * [Stress Test Azure Resources](#stress-test-azure-resources)
+       * [Deploying to a Custom Subscription](#deploying-to-a-custom-subscription)
      * [Helm Chart File](#helm-chart-file)
         * [Customize Docker Build](#customize-docker-build)
      * [Manifest Special Fields](#manifest-special-fields)
@@ -232,6 +233,57 @@ resource config 'Microsoft.AppConfiguration/configurationStores@2020-07-01-previ
 
 output RESOURCE_GROUP string = resourceGroup().name
 output APP_CONFIG_NAME string = config.name
+```
+
+#### Deploying to a Custom Subscription
+
+By default, the stress test environment will load credentials targeting the subscription that the stress cluster is deployed to.
+However it is possible to have tests deploy Azure resources to a custom subscription. This can be useful in cases where resources require ARM feature flags
+that do not exist in the cluster subscription, or if azure resource deployments should be billed to a different team owning the custom subscription.
+
+To set up a custom subscription:
+
+1. Create a service principal with Contributor access to your subscription (or Owner if your bicep file needs to set RBAC policies).
+2. Set a secret with your desired name in the static keyvault provisioned for the stress cluster. The keyvault name can be found in the [addons values config](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/values.yaml) for the desired environment under the key `staticTestSecretsKeyvaultName`.
+
+The secret contents should look like:
+
+```
+AZURE_CLIENT_SECRET=<Service Principal password>
+AZURE_CLIENT_ID=<Service Principal app id>
+AZURE_CLIENT_OID=<Service Principal object id>
+AZURE_TENANT_ID=<AAD tenant ID>
+AZURE_SUBSCRIPTION_ID=<Subscription ID>
+```
+
+3. Update your scenarios-matrix.yaml file to set the `subscriptionConfig` field for the scenarios that should deploy to the custom subscription.
+   The value should match the secret name in keyvault. See [scenarios-matrix.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/stress-deployment-example/scenarios-matrix.yaml) or below for examples.
+
+Override subscription for ALL scenarios
+```
+matrix:
+  subscriptionConfig: <your subscription config secret name>
+  scenarios:
+    myScenario1:
+      foo: bar1
+    myScenario2:
+      foo: bar2
+```
+
+Override subscription for individual scenarios
+```
+  scenarios:
+    deploy-default:
+      foo: bar
+    deploy-custom:
+      subscriptionConfig: <your subscription config secret name>
+      foo: bar
+```
+
+As an example, for the above samples, the following command would set up the custom subscription for use in the Azure SDK Engineering System `pg` cluster:
+
+```
+az keyvault secret set --vault-name stress-secrets-pg -n <your subscription config secret name> -f <path to sub config>
 ```
 
 ### Helm Chart File

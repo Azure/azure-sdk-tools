@@ -68,7 +68,7 @@ $(() => {
     }
     var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
     hp.showCommentBox(elementId, rowSectionClasses); // side effect of creating a comment box/row
-    let commentsRow = hp.getCommentsRow(elementId); // TODO: new comment thread doesn't have a comments row
+    let commentsRow = hp.getCommentsRow(elementId);
 
     var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
     hp.showCommentBox(elementId, rowSectionClasses, undefined, false);

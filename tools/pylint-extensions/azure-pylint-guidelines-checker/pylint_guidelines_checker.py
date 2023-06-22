@@ -1350,12 +1350,17 @@ class CheckDocstringParameters(BaseChecker):
             if docparams[param] is None:
                 missing_types.append(param)
 
+            indv_types = []
             # Check format of param type
             if docparams[param] is not None:
+
+                # Parse and split type up into individual types using regex (i.e. Dict[str, int] -> Dict, str, int)
                 docparams[param] = re.sub(r'^\s+|\s+$', '', docparams[param])
-                if "[" in docparams[param]:
-                    docparams[param] = docparams[param].split("[")[0]
-                if any (t in docparams[param] for t in typing_list if t == docparams[param]):
+                indv_types = re.split(r'\s+|,|\[+|\]+', docparams[param])
+                indv_types = [t for t in indv_types if t != ""]
+
+                # Check that none of the types are misformatted like "Dict[str, int]" or "List[int]"
+                if any (mypy_type in indv_types for mypy_type in typing_list):
                         misformated_types.append(param)
 
             if param not in arg_names:

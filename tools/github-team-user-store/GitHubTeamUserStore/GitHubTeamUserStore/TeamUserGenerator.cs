@@ -25,10 +25,10 @@ namespace GitHubTeamUserStore
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <returns></returns>
-        public static async Task GenerateTeamUserList(GitHubEventClient gitHubEventClient)
+        public static async Task GenerateAndStoreTeamUserList(GitHubEventClient gitHubEventClient)
         {
             Team azureSdkWrite = await gitHubEventClient.GetTeamById(ProductAndTeamConstants.AzureSdkWriteTeamId);
-            await GetUsersForTeam(gitHubEventClient, azureSdkWrite);
+            await CreateTeamUserEntry(gitHubEventClient, azureSdkWrite);
             // Serializing the Dictionary<string, List<string>> directly won't work with the JsonSerializer but
             // a List<KeyValuePair<string, List<string>>> will and it's easy enough to convert to/from.
             var list = _teamUserDict.ToList();
@@ -43,7 +43,7 @@ namespace GitHubTeamUserStore
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="team">Octokit.Team to get users for.</param>
-        public static async Task GetUsersForTeam(GitHubEventClient gitHubEventClient, Team team)
+        public static async Task CreateTeamUserEntry(GitHubEventClient gitHubEventClient, Team team)
         {
             // If this team has already been added to the dictionary then there's nothing to do. This
             // should prevent any weirdness if there ends up being some kind of circular team reference
@@ -68,7 +68,7 @@ namespace GitHubTeamUserStore
             var childTeams = await gitHubEventClient.GetAllChildTeams(team);
             foreach (Team childTeam in childTeams)
             {
-                await GetUsersForTeam(gitHubEventClient, childTeam);
+                await CreateTeamUserEntry(gitHubEventClient, childTeam);
             }
         }
 
@@ -89,7 +89,7 @@ namespace GitHubTeamUserStore
             if (_teamUserDict.Keys.Count != storedDictionary.Keys.Count)
             {
                 // At this point list the teams and return, don't bother looking at the users.
-                Console.WriteLine($"Error::Created dictionary has {_teamUserDict.Keys.Count} teams and stored dictionary has {storedDictionary.Keys.Count} teams.");
+                Console.WriteLine($"Error! Created dictionary has {_teamUserDict.Keys.Count} teams and stored dictionary has {storedDictionary.Keys.Count} teams.");
                 Console.WriteLine(string.Format("created list teams {0}", string.Join(", ", _teamUserDict.Keys)));
                 Console.WriteLine(string.Format("stored list teams {0}", string.Join(", ", storedDictionary.Keys)));
                 return !hasError;

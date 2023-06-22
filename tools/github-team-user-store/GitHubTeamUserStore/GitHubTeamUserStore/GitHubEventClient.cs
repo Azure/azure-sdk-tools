@@ -11,10 +11,18 @@ namespace GitHubTeamUserStore
 {
     public class GitHubEventClient
     {
+        private const int MaxPageSize = 100;
+        // This needs to be done set because both GetAllMembers and GetAllChildTeams API calls auto-paginate
+        // but default to a page size of 30. Default to 100/page to reduce the number of API calls
+        private static ApiOptions _apiOptions = new ApiOptions() { PageSize = MaxPageSize };
         public GitHubClient _gitHubClient = null;
         public int CoreRateLimit { get; set; } = 0;
         private int _numRetries = 5;
         private int _delayTimeInMs = 1000;
+
+        public string AzureBlobAccountName { get; set; }
+        public string AzureSdkWriteTeamsContainer { get; set; }
+        public string AzureSdkWriteTeamsBlobName { get; set; }
 
         public GitHubEventClient(string productHeaderName)
         {
@@ -90,9 +98,6 @@ namespace GitHubTeamUserStore
         /// <exception cref="ApplicationException">Thrown if GetAllMembers fails after all retries have been exhausted.</exception>
         public async Task<IReadOnlyList<User>> GetTeamMembers(Team team)
         {
-            ApiOptions apiOptions = new ApiOptions();
-            apiOptions.PageSize = 100;
-
             // For the cases where exceptions/retries fail and an empty ReadOnlyList needs to be returned
             List<User> emptyUserList = new List<User>();
 
@@ -102,7 +107,7 @@ namespace GitHubTeamUserStore
                 tryNumber++;
                 try
                 {
-                    return await _gitHubClient.Organization.Team.GetAllMembers(team.Id, apiOptions);
+                    return await _gitHubClient.Organization.Team.GetAllMembers(team.Id, _apiOptions);
                 }
                 // This is what gets thrown if we try and get a userList for certain special teams on GitHub. 
                 // None of these teams are used directly in anything and neither team is a child team of 
@@ -134,15 +139,13 @@ namespace GitHubTeamUserStore
         /// <exception cref="ApplicationException">Thrown if GetAllChildTeams fails after all retries have been exhausted</exception>
         public async Task<IReadOnlyList<Team>> GetAllChildTeams(Team team)
         {
-            ApiOptions apiOptions = new ApiOptions();
-            apiOptions.PageSize = 100;
             int tryNumber = 0;
             while (tryNumber < _numRetries)
             {
                 tryNumber++;
                 try
                 {
-                    return await _gitHubClient.Organization.Team.GetAllChildTeams(team.Id, apiOptions);
+                    return await _gitHubClient.Organization.Team.GetAllChildTeams(team.Id, _apiOptions);
                 }
                 // The only time we should get down here is if there's an exception caused by a network hiccup.
                 // Sleep for a second and try again.
@@ -169,12 +172,11 @@ namespace GitHubTeamUserStore
             {
                 throw new ApplicationException("AZURE_SDK_TEAM_USER_STORE_SAS cannot be null or empty");
             }
-            // "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams";
-            string blobUri = $"https://{StorageConstants.AzureBlobAccountName}.blob.core.windows.net";
+            string blobUri = $"https://{AzureBlobAccountName}.blob.core.windows.net";
 
             BlobServiceClient blobServiceClient = new BlobServiceClient(new Uri($"{blobUri}?{azureSdkWriteTeamsSAS}"), null);
-            BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient(StorageConstants.AzureSdkWriteTeamsContainer);
-            BlobClient blobClient = blobContainerClient.GetBlobClient(StorageConstants.AzureSdkWriteTeamsBlobName);
+            BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient(AzureSdkWriteTeamsContainer);
+            BlobClient blobClient = blobContainerClient.GetBlobClient(AzureSdkWriteTeamsBlobName);
             await blobClient.UploadAsync(BinaryData.FromString(rawJson), overwrite: true);
         }
 
@@ -186,7 +188,7 @@ namespace GitHubTeamUserStore
         public async Task<string> GetTeamUserBlobFromStorage()
         {
             HttpClient client = new HttpClient();
-            string blobUri = $"https://{StorageConstants.AzureBlobAccountName}.blob.core.windows.net/{StorageConstants.AzureSdkWriteTeamsContainer}/{StorageConstants.AzureSdkWriteTeamsBlobName}";
+            string blobUri = $"https://{DefaultStorageConstants.DefaultAzureBlobAccountName}.blob.core.windows.net/{DefaultStorageConstants.DefaultAzureSdkWriteTeamsContainer}/{DefaultStorageConstants.DefaultAzureSdkWriteTeamsBlobName}";
             HttpResponseMessage response = await client.GetAsync(blobUri);
             if (response.IsSuccessStatusCode)
             {

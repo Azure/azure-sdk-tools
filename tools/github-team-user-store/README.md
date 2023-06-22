@@ -2,7 +2,7 @@
 
 ## Overview
 
-The github-team-user-store is an internal only tool. The tool will get the list of teams/users under azure-sdk-write and store the results as a json string in Azure blob storage. The purpose of this is to enable team usage in CODEOWNERS by allowing the CodeOwnersParser to pull the list of users when it encounters a non-user, or team, entry. The reason why this code isn't directly in the CodeOwnersParser is because it requires a specific, fine-grained Personal Access Token (PAT) in order to be able to get the users for teams which isn't something that's readily available or prudent to be added to all of the places where CodeOwnersParser is used.
+The github-team-user-store is an internal only tool. The tool will recursively get the list of teams/users, that includes the Azure/azure-sdk-write and all of the teams within that hierarchy, and store the results as a json string in Azure blob storage. The purpose of this is to enable team usage in CODEOWNERS by allowing the CodeOwnersParser to pull the list of users when it encounters a non-user, or team, entry. The reason why this code isn't directly in the CodeOwnersParser is because it requires a specific, fine-grained Personal Access Token (PAT) in order to be able to get the users for teams which isn't something that's readily available or prudent to be added to all of the places where CodeOwnersParser is used.
 
 ### github-team-user-store processing
 

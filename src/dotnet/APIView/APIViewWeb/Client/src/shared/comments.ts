@@ -143,7 +143,6 @@ $(() => {
         updateCommentThread(commentRow, partialViewResult);
         addCommentThreadNavigation();
         ReceiveComment(reviewId, revisionId, lineId, partialViewResult);
-        // TODO: refactor to make client fetch the message from the server (database) instead of sending partial view result 
       });
     }
     e.preventDefault();

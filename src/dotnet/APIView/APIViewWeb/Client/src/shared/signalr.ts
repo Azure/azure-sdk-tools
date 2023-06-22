@@ -1,7 +1,5 @@
 import * as hp from "./helpers";
 
-const signalR = require('@microsoft/signalr');
-
 let connection;
 // sender/server side of comment refresh 
 export function PushComment(reviewId, elementId, partialViewResult) {
@@ -64,18 +62,6 @@ $(() => {
     var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
     hp.showCommentBox(elementId, rowSectionClasses); // side effect of creating a comment box/row
     let commentsRow = hp.getCommentsRow(elementId); // TODO: new comment thread doesn't have a comments row
-
-    //let inlineId = hp.getElementId(elementId, "data-inline-id");
-    //  if (inlineId) {
-    //    let groupNo = inlineId.replace(`${elementId}-tr-`, '');
-    //  }
-    //  else {
-    //    hp.showCommentBox(elementId, rowSectionClasses);
-    //    // create comment form
-    //    // update/add
-    //    // get displayed comment rows 
-    //  }
-    //}
 
     hp.updateCommentThread(commentsRow, partialViewResult);
     // commented because we don't want to navigate user to updated comment

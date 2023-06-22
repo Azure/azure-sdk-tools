@@ -2,6 +2,18 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "2.6.0",
+      "tag": "@autorest/testmodeler_v2.6.0",
+      "date": "Mon, 19 Jun 2023 08:50:04 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Support DataFactoryElement"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.5.2",
       "tag": "@autorest/testmodeler_v2.5.2",
       "date": "Wed, 14 Jun 2023 08:54:31 GMT",

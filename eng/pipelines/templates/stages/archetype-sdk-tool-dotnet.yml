@@ -3,7 +3,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20230530.2
+      ref: refs/tags/azure-sdk-build-tools_20230613.1
 
 parameters:
   - name: ToolDirectory
@@ -18,6 +18,9 @@ parameters:
   - name: NoWarn
     type: boolean
     default: false
+  - name: TestPreSteps
+    type: object
+    default: []
   - name: TestPostSteps
     type: object
     default: []
@@ -39,6 +42,7 @@ parameters:
   - name: ShouldPublishSymbols
     type: boolean
     default: true
+
 
 variables:
   - template: ../variables/globals.yml
@@ -141,6 +145,8 @@ stages:
 
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+          - ${{ parameters.TestPreSteps }}
 
           - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
             displayName: 'Test'

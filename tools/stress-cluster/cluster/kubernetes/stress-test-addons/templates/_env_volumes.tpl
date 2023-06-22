@@ -13,10 +13,10 @@
     readOnly: true
     volumeAttributes:
       secretProviderClass: stress-cluster-kv-{{ .Release.Name }}
-- name: static-secrets-{{ .Release.Name }}
+- name: static-secrets-{{ .Release.Name }}-{{ .Stress.SubscriptionConfig }}
   csi:
     driver: secrets-store.csi.k8s.io
     readOnly: true
     volumeAttributes:
-      secretProviderClass: stress-static-kv-{{ .Release.Name }}
+      secretProviderClass: stress-static-kv-{{ .Release.Name }}-{{ .Stress.SubscriptionConfig }}
 {{ end }}

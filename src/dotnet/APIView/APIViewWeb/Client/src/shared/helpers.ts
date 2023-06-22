@@ -152,15 +152,7 @@ export function addToastNotification(notification : Notification, id : string = 
   toastBootstrap.show();
 }
 
-let connectionId: string;
-export function setSignalRConnectionId(id: string) {
-  connectionId = id;
-}
-
-export function getSignalRConnectionId() {
-  return connectionId;
-}
-
+// Auto Refresh Comment 
 export function updateCommentThread(commentBox, partialViewResult) {
   partialViewResult = $.parseHTML(partialViewResult);
   $(commentBox).replaceWith(partialViewResult);

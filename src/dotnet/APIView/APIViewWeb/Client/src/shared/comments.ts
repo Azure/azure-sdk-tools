@@ -1,11 +1,11 @@
 import {
   updatePageSettings, getCodeRow, getCodeRowSectionClasses,
-  getRowSectionClasses, toggleCommentIcon, getSignalRConnectionId,
+  getRowSectionClasses, toggleCommentIcon,
   updateCommentThread, addCommentThreadNavigation, getDisplayedCommentRows,
   getCommentsRow, showCommentBox, getDiagnosticsRow, getReplyGroupNo,
   getElementId, getParentData
 } from "../shared/helpers";
-import { getConnection, ReceiveComment } from "./signalr";
+import { ReceiveComment } from "./signalr";
 
 $(() => {
   const INVISIBLE = "invisible";
@@ -142,12 +142,8 @@ $(() => {
       }).done(partialViewResult => {
         updateCommentThread(commentRow, partialViewResult);
         addCommentThreadNavigation();
-        var connection = getConnection();
-        if (connection) { // TODO: is this necessary?
-          console.log(partialViewResult);
-          ReceiveComment(reviewId, revisionId, lineId, partialViewResult);
-          // TODO: refactor to make client fetch the message from the server (database) instead of sending partial view result 
-        }
+        ReceiveComment(reviewId, revisionId, lineId, partialViewResult);
+        // TODO: refactor to make client fetch the message from the server (database) instead of sending partial view result 
       });
     }
     e.preventDefault();

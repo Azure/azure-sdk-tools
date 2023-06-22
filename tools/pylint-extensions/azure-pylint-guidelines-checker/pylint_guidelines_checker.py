@@ -9,6 +9,7 @@ Pylint custom checkers for SDK guidelines: C4717 - C4749
 
 import logging
 import astroid
+import re
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 logger = logging.getLogger(__name__)
@@ -1351,7 +1352,10 @@ class CheckDocstringParameters(BaseChecker):
 
             # Check format of param type
             if docparams[param] is not None:
-                if any (t in docparams[param] for t in typing_list):
+                docparams[param] = re.sub(r'^\s+|\s+$', '', docparams[param])
+                if "[" in docparams[param]:
+                    docparams[param] = docparams[param].split("[")[0]
+                if any (t in docparams[param] for t in typing_list if t == docparams[param]):
                         misformated_types.append(param)
 
             if param not in arg_names:

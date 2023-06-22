@@ -1,0 +1,64 @@
+parameters:
+  # Provde a list of repos
+  # Example:
+  #   Azure/azure-rest-api-specs-pr:
+  #     Branch: main
+  #     TargetBranches:
+  #       RPSaaSDev:
+  #         Theirs: "**"
+  #         Ours: "specification"
+  #         Merge: "specification/common-types, custom-words.txt"
+  #         AcceptTheirsForFinalMerge: true
+  #       RPSaaSDev:
+  #         Theirs: "**"
+  #         Ours: "specification"
+  #         Merge: "specification/common-types, custom-words.txt"
+  #         AcceptTheirsForFinalMerge: true
+  - name: Repos
+    type: object
+  - name: GH_TOKEN
+    type: string
+  - name: WorkingDirectory
+    type: string
+    default: $(System.DefaultWorkingDirectory)
+
+steps:
+
+- ${{ each repo in parameters.Repos }}:
+  - pwsh: |
+      git clone "https://${{ parameters.GH_TOKEN }}@github.com/${{ repo.key }}.git" ${{ repo.key }}
+    displayName: Clone ${{ repo.key }}
+    workingDirectory: ${{ parameters.WorkingDirectory }}
+
+  - ${{ each target in repo.value.TargetBranches }}:
+    - pwsh: |
+        git checkout ${{ target.key }}
+      displayName: Checkout ${{ target.key }}
+      workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
+
+    - task: PowerShell@2
+      displayName: Merge branch from ${{ repo.value.Branch }} into ${{ target.key }}
+      inputs:
+        pwsh: true
+        workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
+        filePath: eng/scripts/Merge-Branch.ps1
+        arguments: >
+          -Verbose
+          -SourceBranch ${{ repo.value.Branch }}
+          -Theirs ${{ target.value.Theirs }}
+          -Ours ${{ target.value.Ours }}
+          -Merge ${{ target.value.Merge }}
+          -AcceptTheirsForFinalMerge $${{ target.value.AcceptTheirsForFinalMerge }}
+
+    - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+      parameters:
+        RepoName: ${{ repo.key }}
+        PROwner: Azure # We don't want to use azure-sdk fork for these PRs
+        BaseBranchName: ${{ target.key }}
+        PRBranchName: sync-${{ repo.value.Branch }}-to-${{ target.key }}
+        CommitMsg: Merge branch from ${{ repo.value.Branch }} into ${{ target.key }}
+        PRTitle: Merge branch from ${{ repo.value.Branch }} into ${{ target.key }}
+        PushArgs: -f
+        WorkingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
+        ScriptDirectory: eng/common/scripts
+        GHReviewers: weshaggard

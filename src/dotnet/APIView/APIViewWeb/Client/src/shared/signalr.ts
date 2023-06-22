@@ -52,16 +52,13 @@ $(() => {
     let currReviewId = result["reviewId"];
     let currRevisionId = result["revisionId"];
 
-    if (currReviewId !== reviewId) {
-      return; 
+    if (currRevisionId && currRevisionId !== revisionId) {
+      return;
     }
 
-    if (revisionId === undefined) {
-      // TODO: latest version
-    }
     var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
     hp.showCommentBox(elementId, rowSectionClasses); // side effect of creating a comment box/row
-    let commentsRow = hp.getCommentsRow(elementId); // TODO: new comment thread doesn't have a comments row
+    let commentsRow = hp.getCommentsRow(elementId);
 
     hp.updateCommentThread(commentsRow, partialViewResult);
     // commented because we don't want to navigate user to updated comment

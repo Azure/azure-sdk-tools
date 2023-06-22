@@ -1356,7 +1356,7 @@ class CheckDocstringParameters(BaseChecker):
 
                 # Parse and split type up into individual types using regex (i.e. Dict[str, int] -> Dict, str, int)
                 docparams[param] = re.sub(r'^\s+|\s+$', '', docparams[param])
-                indv_types = re.split(r'\s+|,|\[+|\]+', docparams[param])
+                indv_types = re.split(r'\s+|,|\[+|\]+|\(+|\)+', docparams[param])
                 indv_types = [t for t in indv_types if t != ""]
 
                 # Check that none of the types are misformatted like "Dict[str, int]" or "List[int]"

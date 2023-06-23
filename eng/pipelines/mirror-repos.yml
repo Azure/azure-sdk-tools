@@ -102,3 +102,22 @@ jobs:
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
+
+    - template: ./templates/steps/sync-repo-merge-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
+          Azure/azure-rest-api-specs-pr:
+            Branch: main
+            TargetBranches:
+              RPSaaSDev:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              RPSaaSMaster:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+                

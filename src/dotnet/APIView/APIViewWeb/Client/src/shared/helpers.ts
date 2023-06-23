@@ -246,7 +246,8 @@ export function getCommentsRow(id: string) {
   return $(`.comment-row[data-line-id='${id}']`);
 }
 
-export function showCommentBox(id: string, classes: string = '', groupNo: string = '') {
+// side effect: creates a comment row if it doesn't already exist
+export function showCommentBox(id: string, classes: string = '', groupNo: string = '', moveFocus: boolean = true) {
   let commentForm;
   let commentsRow = getCommentsRow(id);
   let commentRowClasses = "comment-row";
@@ -321,7 +322,9 @@ export function showCommentBox(id: string, classes: string = '', groupNo: string
     toggleCommentIcon(id, true);
   }
 
-  commentForm.find(".new-thread-comment-text").focus();
+  if (moveFocus) {
+    commentForm.find(".new-thread-comment-text").focus();
+  }
 }
 
 function createCommentForm(groupNo: string = '') {

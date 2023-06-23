@@ -24,10 +24,10 @@ namespace APIViewWeb.Hubs
         }
 
         // create a callback that receives what you push (3 param) 
-        public async Task ReceiveComment(string reviewId, string revisionId, string elementId, string partialViewResult)
+        public async Task ReceiveComment(string reviewId, string elementId, string partialViewResult)
         {
             if (!string.IsNullOrEmpty(reviewId) && !string.IsNullOrEmpty(elementId)) { 
-                await Clients.Others.SendAsync("ReceiveComment", reviewId, revisionId, elementId, partialViewResult);
+                await Clients.Others.SendAsync("ReceiveComment", reviewId, elementId, partialViewResult);
             }
         }
     }

@@ -142,7 +142,7 @@ $(() => {
       }).done(partialViewResult => {
         updateCommentThread(commentRow, partialViewResult);
         addCommentThreadNavigation();
-        ReceiveComment(reviewId, revisionId, lineId, partialViewResult);
+        ReceiveComment(reviewId, lineId, partialViewResult);
       });
     }
     e.preventDefault();

@@ -32,7 +32,13 @@ steps:
 
   - ${{ each target in repo.value.TargetBranches }}:
     - pwsh: |
+        Write-Host "git checkout ${{ target.key }}"
         git checkout ${{ target.key }}
+
+        # Need to checkout the new branch before the merge in order to preserve the merge commit
+        $mergeBranch = "merge-${{ repo.value.Branch }}-to-${{ target.key }}"
+        Write-Host "git checkout -b $mergeBranch"
+        git checkout -b $mergeBranch
       displayName: Checkout ${{ target.key }}
       workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
 
@@ -50,15 +56,22 @@ steps:
           -Merge ${{ target.value.Merge }}
           -AcceptTheirsForFinalMerge $${{ target.value.AcceptTheirsForFinalMerge }}
 
-    - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
-      parameters:
-        RepoName: ${{ repo.key }}
-        PROwner: Azure # We don't want to use azure-sdk fork for these PRs
-        BaseBranchName: ${{ target.key }}
-        PRBranchName: sync-${{ repo.value.Branch }}-to-${{ target.key }}
-        CommitMsg: Merge branch from ${{ repo.value.Branch }} into ${{ target.key }}
-        PRTitle: Merge branch from ${{ repo.value.Branch }} into ${{ target.key }}
-        PushArgs: -f
-        WorkingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
-        ScriptDirectory: eng/common/scripts
-        GHReviewers: weshaggard
+    - pwsh: |
+        $mergeBranch = (git rev-parse --abbrev-ref HEAD)
+        $commitMessage = "Merge branch ${{ repo.value.Branch }} into ${{ target.key }}"
+
+        Write-Host "git -c user.name='azure-sdk' -c user.email='azuresdk@microsoft.com' commit -m $commitMessage"
+        git -c user.name='azure-sdk' -c user.email='azuresdk@microsoft.com' commit -m $commitMessage
+
+        Write-Host "git push origin $mergeBranch -f"
+        git push origin $mergeBranch -f
+
+        Write-Host "gh pr create --base ${{ target.key }} --head  --reviewer weshaggard --repo ${{ repo.key }} --body $commitMessage --title $commitMessage"
+        gh pr create --base ${{ target.key }} --head $mergeBranch --reviewer weshaggard --repo ${{ repo.key }} --body $commitMessage --title $commitMessage
+
+        Write-Host "gh pr merge $mergeBranch --auto --merge --repo ${{ repo.key }}"
+        gh pr merge $mergeBranch --auto --merge --repo ${{ repo.key }}
+      displayName: Create Pull Request for merge
+      workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
+      env:
+        GH_TOKEN: $(azuresdk-github-pat)

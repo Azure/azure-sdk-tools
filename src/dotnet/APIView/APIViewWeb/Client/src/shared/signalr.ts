@@ -67,7 +67,8 @@ $(() => {
       return;
     }
     var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
-    hp.showCommentBox(elementId, rowSectionClasses); // side effect of creating a comment box/row
+    hp.showCommentBox(elementId, rowSectionClasses, undefined, false);
+
     let commentsRow = hp.getCommentsRow(elementId);
 
     var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);

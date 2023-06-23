@@ -23,7 +23,6 @@ namespace APIViewWeb.Hubs
             return base.OnConnectedAsync();
         }
 
-        // create a callback that receives what you push (3 param) 
         public async Task ReceiveComment(string reviewId, string elementId, string partialViewResult)
         {
             if (!string.IsNullOrEmpty(reviewId) && !string.IsNullOrEmpty(elementId)) { 

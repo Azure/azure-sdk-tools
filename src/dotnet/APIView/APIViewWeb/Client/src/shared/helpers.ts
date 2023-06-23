@@ -152,7 +152,7 @@ export function addToastNotification(notification : Notification, id : string = 
   toastBootstrap.show();
 }
 
-// Auto Refresh Comment 
+// Auto Refresh Comment
 export function updateCommentThread(commentBox, partialViewResult) {
   partialViewResult = $.parseHTML(partialViewResult);
   $(commentBox).replaceWith(partialViewResult);

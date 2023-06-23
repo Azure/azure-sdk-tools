@@ -50,16 +50,15 @@ $(() => {
   connection.on("ReceiveComment", (reviewId, revisionId, elementId, partialViewResult) => {
     let result = hp.getReviewAndRevisionIdFromUrl();
     let currReviewId = result["reviewId"];
-    let currRevisionId = result["revisionId"];
 
-    if (currRevisionId && currRevisionId !== revisionId) {
+    if (currReviewId != reviewId) {
       return;
     }
 
     var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
-    hp.showCommentBox(elementId, rowSectionClasses); // side effect of creating a comment box/row
-    let commentsRow = hp.getCommentsRow(elementId);
+    hp.showCommentBox(elementId, rowSectionClasses, undefined, false);
 
+    let commentsRow = hp.getCommentsRow(elementId);
     hp.updateCommentThread(commentsRow, partialViewResult);
     // commented because we don't want to navigate user to updated comment
     hp.addCommentThreadNavigation();  

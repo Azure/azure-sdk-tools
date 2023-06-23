@@ -1,7 +1,10 @@
 import * as hp from "./helpers";
-import * as comments from "./comments";
-import { ConsoleLogger, createLogger } from "@microsoft/signalr/dist/esm/Utils";
-import { LogLevel } from "@microsoft/signalr";
+
+let connection;
+// sender/server side of comment refresh 
+export function ReceiveComment(reviewId, elementId, partialViewResult) {
+  connection.invoke("ReceiveComment", reviewId, elementId, partialViewResult);
+}
 
 $(() => {
 //-------------------------------------------------------------------------------------------------
@@ -9,7 +12,7 @@ $(() => {
 //-------------------------------------------------------------------------------------------------
   const signalR = require('@microsoft/signalr');
 
-  const connection = new signalR.HubConnectionBuilder()
+  connection = new signalR.HubConnectionBuilder()
     .withUrl(`${location.origin}/hubs/notification`, { 
       skipNegotiation: true,
       transport: signalR.HttpTransportType.WebSockets })
@@ -35,15 +38,21 @@ $(() => {
     hp.addToastNotification(notification);
   });
 
-  connection.on("ReceiveConnectionId", (connectionId) => {
-    hp.setSignalRConnectionId(connectionId);
-  });
+  // receiver/client side of comment refresh 
+  connection.on("ReceiveComment", (reviewId, elementId, partialViewResult) => {
+    let result = hp.getReviewAndRevisionIdFromUrl();
+    let currReviewId = result["reviewId"];
 
-  connection.on("ReceiveComment", (commentDto) => {
-    // TODO
-    // find a way to update their comments
-    // if current client has same review id open and received this same message,
-    // use the id to find where to add comment 
+    if (currReviewId != reviewId) {
+      return;
+    }
+
+    var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
+    hp.showCommentBox(elementId, rowSectionClasses, undefined, false);
+
+    let commentsRow = hp.getCommentsRow(elementId);
+    hp.updateCommentThread(commentsRow, partialViewResult);
+    hp.addCommentThreadNavigation();
   });
 
   // Start the connection.

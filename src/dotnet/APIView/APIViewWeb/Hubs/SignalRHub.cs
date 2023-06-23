@@ -25,5 +25,12 @@ namespace APIViewWeb.Hubs
             }
             return base.OnConnectedAsync();
         }
+
+        public async Task ReceiveComment(string reviewId, string elementId, string partialViewResult)
+        {
+            if (!string.IsNullOrEmpty(reviewId) && !string.IsNullOrEmpty(elementId)) { 
+                await Clients.Others.SendAsync("ReceiveComment", reviewId, elementId, partialViewResult);
+            }
+        }
     }
 }

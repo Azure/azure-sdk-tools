@@ -7,6 +7,7 @@ using APIViewWeb.Models;
 using Azure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Azure.Cosmos.Linq;
 using Microsoft.Extensions.Azure;
@@ -14,7 +15,8 @@ using Octokit;
 
 namespace APIViewWeb.Controllers
 {
-    [Authorize("RequireOrganization")]
+    //[Authorize("RequireOrganization")]
+    [AllowAnonymous]
     public class CommentsController: Controller
     {
         private readonly ICommentsManager _commentsManager;
@@ -63,20 +65,8 @@ namespace APIViewWeb.Controllers
             {
                 await _notificationManager.SubscribeAsync(review,User);
             }
-
-            var commentDto = new CommentDto(); 
-            commentDto.TimeStamp = DateTime.UtcNow;
-            commentDto.ReviewId = reviewId;
-            commentDto.RevisionId = revisionId;
-            commentDto.ElementId = elementId;
-            commentDto.Username = comment.Username;
-            commentDto.Comment = commentText;
-            commentDto.CommentId = comment.CommentId;
-
-            //await _notificationHubContext.Clients.AllExcept(signalRConnectionId).SendAsync("ReceiveComment", commentDto); // TODO: need to check if valid signalR connection id 
-            await _notificationHubContext.Clients.All.SendAsync("ReceiveComment", commentDto); // TODO: for debugging. remove for PR 
-
-            return await CommentPartialAsync(reviewId, comment.ElementId);
+            
+            return await CommentPartialAsync(reviewId, comment.ElementId); 
         }
 
         [HttpPost]

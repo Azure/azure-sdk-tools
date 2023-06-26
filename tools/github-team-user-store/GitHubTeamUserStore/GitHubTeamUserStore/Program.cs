@@ -8,40 +8,24 @@ namespace GitHubTeamUserStore
     {
         static async Task Main(string[] args)
         {
-            var azureBlobAccountNameOption = new Option<string>
-                (name: "--blobAccountName",
-                description: "The name of the Azure blob account.",
-                getDefaultValue: () => DefaultStorageConstants.DefaultAzureBlobAccountName);
-
-            var azureSdkWriteTeamsContainerOption = new Option<string>
-                (name: "--teamsContainer",
-                description: "The name of the Azure SDK Write Teams Container.",
-                getDefaultValue: () => DefaultStorageConstants.DefaultAzureSdkWriteTeamsContainer);
-
-            var azureSdkWriteTeamsBlobNameOption = new Option<string>
-                (name: "--teamsBlobName",
-                description: "The name of the Azure SDK Write Teams Blob.",
-                getDefaultValue: () => DefaultStorageConstants.DefaultAzureSdkWriteTeamsBlobName);
+            var blobStorageURIOption = new Option<string>
+                (name: "--blobStorageURI",
+                description: "The blob storage URI including the SAS.");
+            blobStorageURIOption.IsRequired = true;
 
             var rootCommand = new RootCommand
             {
-                azureBlobAccountNameOption,
-                azureSdkWriteTeamsContainerOption,
-                azureSdkWriteTeamsBlobNameOption
+                blobStorageURIOption,
             };
-            rootCommand.SetHandler(PopulateTeamUserData, 
-                                   azureBlobAccountNameOption, 
-                                   azureSdkWriteTeamsContainerOption, 
-                                   azureSdkWriteTeamsBlobNameOption);
+            rootCommand.SetHandler(PopulateTeamUserData,
+                                   blobStorageURIOption);
 
             int returnCode = await rootCommand.InvokeAsync(args);
             Console.WriteLine($"Exiting with return code {returnCode}");
             Environment.Exit(returnCode);
         }
 
-        private static async Task<int> PopulateTeamUserData(string azureBlobAccountName,
-                                                            string azureSdkWriteTeamsContainer,
-                                                            string azureSdkWriteTeamsBlobName)
+        private static async Task<int> PopulateTeamUserData(string blobStorageURI)
         {
 
             // Default the returnCode code to non-zero. If everything is successful it'll be set to 0
@@ -49,13 +33,7 @@ namespace GitHubTeamUserStore
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            GitHubEventClient gitHubEventClient = new GitHubEventClient(ProductAndTeamConstants.ProductHeaderName);
-            gitHubEventClient.AzureBlobAccountName = azureBlobAccountName;
-            Console.WriteLine($"AzureBlobAccountName={gitHubEventClient.AzureBlobAccountName}");
-            gitHubEventClient.AzureSdkWriteTeamsBlobName = azureSdkWriteTeamsBlobName;
-            Console.WriteLine($"AzureSdkWriteTeamsBlobName={gitHubEventClient.AzureSdkWriteTeamsBlobName}");
-            gitHubEventClient.AzureSdkWriteTeamsContainer = azureSdkWriteTeamsContainer;
-            Console.WriteLine($"AzureSdkWriteTeamsContainer={gitHubEventClient.AzureSdkWriteTeamsContainer}");
+            GitHubEventClient gitHubEventClient = new GitHubEventClient(ProductAndTeamConstants.ProductHeaderName, blobStorageURI);
 
             await gitHubEventClient.WriteRateLimits("RateLimit at start of execution:");
             await TeamUserGenerator.GenerateAndStoreTeamUserList(gitHubEventClient);

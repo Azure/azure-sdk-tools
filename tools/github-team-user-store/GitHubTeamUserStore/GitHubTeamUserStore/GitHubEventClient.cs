@@ -20,11 +20,13 @@ namespace GitHubTeamUserStore
         private int _numRetries = 5;
         private int _delayTimeInMs = 1000;
 
-        private string AzureBlobStorageURI { get; set; }
+        private BlobUriBuilder AzureBlobUriBuilder { get; set; } = null;
         public GitHubEventClient(string productHeaderName, string azureBlobStorageURI)
         {
             _gitHubClient = CreateClientWithGitHubEnvToken(productHeaderName);
-            AzureBlobStorageURI = azureBlobStorageURI;
+            Uri blobStorageUri = new Uri(azureBlobStorageURI);
+            BlobUriBuilder blobUriBuilder = new BlobUriBuilder(blobStorageUri);
+            AzureBlobUriBuilder = blobUriBuilder;
         }
 
         /// <summary>
@@ -165,12 +167,9 @@ namespace GitHubTeamUserStore
         /// <exception cref="ApplicationException">If there is no AZURE_SDK_TEAM_USER_STORE_SAS in the environment</exception>
         public async Task UploadToBlobStorage(string rawJson)
         {
-            Uri blobStorageUri = new Uri(AzureBlobStorageURI);
-            BlobUriBuilder blobUriBuilder = new BlobUriBuilder(blobStorageUri);
-
-            BlobServiceClient blobServiceClient = new BlobServiceClient(blobStorageUri);
-            BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient(blobUriBuilder.BlobContainerName);
-            BlobClient blobClient = blobContainerClient.GetBlobClient(blobUriBuilder.BlobName);
+            BlobServiceClient blobServiceClient = new BlobServiceClient(AzureBlobUriBuilder.ToUri());
+            BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient(AzureBlobUriBuilder.BlobContainerName);
+            BlobClient blobClient = blobContainerClient.GetBlobClient(AzureBlobUriBuilder.BlobName);
             await blobClient.UploadAsync(BinaryData.FromString(rawJson), overwrite: true);
         }
 
@@ -182,10 +181,7 @@ namespace GitHubTeamUserStore
         public async Task<string> GetTeamUserBlobFromStorage()
         {
             HttpClient client = new HttpClient();
-            // string blobUri = $"https://{DefaultStorageConstants.DefaultAzureBlobAccountName}.blob.core.windows.net/{DefaultStorageConstants.DefaultAzureSdkWriteTeamsContainer}/{DefaultStorageConstants.DefaultAzureSdkWriteTeamsBlobName}?<SASTOKENFROMSECRET>";
-            Uri blobStorageUri = new Uri(AzureBlobStorageURI);
-            BlobUriBuilder blobUriBuilder = new BlobUriBuilder(blobStorageUri);
-            string blobUri = $"https://{blobUriBuilder.Host}/{blobUriBuilder.BlobContainerName}/{blobUriBuilder.BlobName}";
+            string blobUri = $"https://{AzureBlobUriBuilder.Host}/{AzureBlobUriBuilder.BlobContainerName}/{AzureBlobUriBuilder.BlobName}";
             HttpResponseMessage response = await client.GetAsync(blobUri);
             if (response.IsSuccessStatusCode)
             {

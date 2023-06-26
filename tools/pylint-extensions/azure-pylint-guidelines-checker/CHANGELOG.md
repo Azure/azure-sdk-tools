@@ -1,4 +1,4 @@
 # Release History
 
-## Version 0.1.0 (06-26-2023)
+## Version 0.0.9 (2023-06-26)
 Fix bug with varargs in CheckDocstringParameters checker.

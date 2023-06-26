@@ -1,16 +1,19 @@
 import * as hp from "./helpers";
 
+const signalR = require('@microsoft/signalr');
+
 let connection;
 // sender/server side of comment refresh 
-export function ReceiveComment(reviewId, elementId, partialViewResult) {
-  connection.invoke("ReceiveComment", reviewId, elementId, partialViewResult);
+export function PushComment(reviewId, elementId, partialViewResult) {
+  if (connection && connection.state === signalR.HubConnectionState.Connected) {
+    connection.invoke("PushComment", reviewId, elementId, partialViewResult);
+  }
 }
 
 $(() => {
 //-------------------------------------------------------------------------------------------------
 // Create SignalR Connection and Register various events
 //-------------------------------------------------------------------------------------------------
-  const signalR = require('@microsoft/signalr');
 
   connection = new signalR.HubConnectionBuilder()
     .withUrl(`${location.origin}/hubs/notification`, { 

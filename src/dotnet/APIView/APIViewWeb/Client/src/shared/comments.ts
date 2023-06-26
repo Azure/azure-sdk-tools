@@ -5,7 +5,7 @@ import {
   getCommentsRow, showCommentBox, getDiagnosticsRow, getReplyGroupNo,
   getElementId, getParentData
 } from "../shared/helpers";
-import { ReceiveComment } from "./signalr";
+import { PushComment } from "./signalr";
 
 $(() => {
   const INVISIBLE = "invisible";
@@ -142,7 +142,7 @@ $(() => {
       }).done(partialViewResult => {
         updateCommentThread(commentRow, partialViewResult);
         addCommentThreadNavigation();
-        ReceiveComment(reviewId, lineId, partialViewResult);
+        PushComment(reviewId, lineId, partialViewResult);
       });
     }
     e.preventDefault();

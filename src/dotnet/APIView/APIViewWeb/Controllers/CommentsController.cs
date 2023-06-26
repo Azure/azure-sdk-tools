@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using APIViewWeb.DTO;
 using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;

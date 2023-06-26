@@ -3389,6 +3389,23 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
+    def test_docstring_vararg_keyword_args(self):
+        node = astroid.extract_node(
+            """
+            def function_foo(x, y, *z, a="Hello", b="World"):
+                '''
+                :param x: x
+                :type x: str
+                :param str y: y
+                :param str z: z
+                :keyword str a: a
+                :keyword str b: b
+                '''
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
     def test_docstring_varag_no_type(self):
         node = astroid.extract_node(
             """

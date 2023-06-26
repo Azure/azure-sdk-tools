@@ -3441,3 +3441,29 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                 )
         ):
             self.checker.visit_functiondef(node)
+
+    def test_docstring_type_has_space(self):
+        # Error on documenting keyword only args as param after *args in docstring
+        node = astroid.extract_node(
+            """
+            def function_foo(x):
+                '''
+                :param dict[str, int] x: x
+                '''
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_type_has_many_spaces(self):
+        # Error on documenting keyword only args as param after *args in docstring
+        node = astroid.extract_node(
+            """
+            def function_foo(x):
+                '''
+                :param  dict[str, int]  x: x
+                '''
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)

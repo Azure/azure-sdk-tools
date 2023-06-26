@@ -3472,11 +3472,11 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
                     msg_id="docstring-missing-return",
-                    line=4,
+                    line=3,
                     args=None,
                     node=node,
                     col_offset=0, 
-                    end_line=4, 
+                    end_line=3, 
                     end_col_offset=16
                 ),
         ):

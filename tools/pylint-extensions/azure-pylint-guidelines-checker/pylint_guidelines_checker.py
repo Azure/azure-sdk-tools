@@ -1295,21 +1295,28 @@ class CheckDocstringParameters(BaseChecker):
         :return: None
         """
         arg_names = []
+        vararg_name = None
         # specific case for constructor where docstring found in class def
         if isinstance(node, astroid.ClassDef):
             for constructor in node.body:
                 if isinstance(constructor, astroid.FunctionDef) and constructor.name == "__init__":
                     arg_names = [arg.name for arg in constructor.args.args]
+                    vararg_name = node.args.vararg
                     break
 
         if isinstance(node, astroid.FunctionDef):
             arg_names = [arg.name for arg in node.args.args]
+            vararg_name = node.args.vararg
 
         try:
             # not every method will have a docstring so don't crash here, just return
             docstring = node.doc.split(":")
         except AttributeError:
             return
+        
+        # If there is a vararg, treat it as a param
+        if vararg_name:
+            arg_names.append(vararg_name)
 
         docparams = {}
         for idx, line in enumerate(docstring):

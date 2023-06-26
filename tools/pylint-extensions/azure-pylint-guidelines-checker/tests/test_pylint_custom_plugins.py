@@ -3376,6 +3376,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
 
     def test_docstring_vararg(self):
         node = astroid.extract_node(
+            # Check that we recognize *args as param in docstring
             """
             def function_foo(x, y, *z):
                 '''
@@ -3390,6 +3391,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
             self.checker.visit_functiondef(node)
 
     def test_docstring_vararg_keyword_args(self):
+        # Check that we recognize kwargs after *args in docstring
         node = astroid.extract_node(
             """
             def function_foo(x, y, *z, a="Hello", b="World"):
@@ -3407,6 +3409,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
             self.checker.visit_functiondef(node)
 
     def test_docstring_varag_no_type(self):
+        # Error on documenting kwargs as param after *args in docstring
         node = astroid.extract_node(
             """
             def function_foo(*x, y, z):

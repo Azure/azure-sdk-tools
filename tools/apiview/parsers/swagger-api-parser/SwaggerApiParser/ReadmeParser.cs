@@ -2,100 +2,113 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using Markdig;
 using Markdig.Syntax;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace SwaggerApiParser;
-
-public class ReadmeBasicConfiguration
+namespace SwaggerApiParser
 {
-    public string title { get; set; }
-    public string tag { get; set; }
-}
-
-public class InputSwaggerFiles
-{
-    [YamlMember(Alias = "input-file", ApplyNamingConventions = false)]
-    public List<string> input { get; set; }
-}
-
-public class ReadmeParser
-{
-    private string readmeFilePath;
-
-    public Dictionary<string, InputSwaggerFiles> inputSwaggerFilesMap;
-    public ReadmeBasicConfiguration basicConfig;
-
-    public ReadmeParser(string readmeFilePath)
+    public class ReadmeBasicConfiguration
     {
-        this.readmeFilePath = readmeFilePath;
-        this.inputSwaggerFilesMap = new Dictionary<string, InputSwaggerFiles>();
-        this.basicConfig = null;
+        public string title { get; set; }
+        public string tag { get; set; }
     }
 
-    public static string GetTagFromYamlArguments(string arguments)
+    public class InputSwaggerFiles
     {
-        string pattern = @"\$\(tag\)=='(.*)'";
-        var matchResult = Regex.Match(arguments.Replace(" ", ""), pattern);
-        return matchResult.Success ? matchResult.Groups[1].Value : "";
+        [YamlMember(Alias = "input-file", ApplyNamingConventions = false)]
+        public List<string> input { get; set; }
     }
 
-    public static IEnumerable<string> GetSwaggerFilesFromReadme(string readme, string tag)
+    public class ReadmeParser
     {
-        ReadmeParser parser = new ReadmeParser(readme);
-        parser.ParseReadmeConfig();
-        string readmeTag = tag;
-        if (tag == "default")
+        private string readmeFilePath;
+
+        public Dictionary<string, InputSwaggerFiles> inputSwaggerFilesMap;
+        public ReadmeBasicConfiguration basicConfig;
+
+        public ReadmeParser(string readmeFilePath)
         {
-            readmeTag = parser.basicConfig.tag;
+            this.readmeFilePath = readmeFilePath;
+            this.inputSwaggerFilesMap = new Dictionary<string, InputSwaggerFiles>();
+            this.basicConfig = null;
         }
 
-        parser.inputSwaggerFilesMap.TryGetValue(readmeTag, out InputSwaggerFiles inputFiles);
-        return inputFiles?.input ?? Enumerable.Empty<string>();
-    }
-    private void ParseReadmeConfig()
-    {
-        var readmeContent = File.ReadAllText(readmeFilePath);
-        MarkdownDocument document = Markdown.Parse(readmeContent);
-
-        foreach (var block in document)
+        public static string GetTagFromYamlArguments(string arguments)
         {
-            if (block is not FencedCodeBlock yamlBlock)
+            string pattern = @"\$\(tag\)=='(.*)'";
+            var matchResult = Regex.Match(arguments.Replace(" ", ""), pattern);
+            return matchResult.Success ? matchResult.Groups[1].Value : "";
+        }
+
+        public static IEnumerable<string> GetSwaggerFilesFromReadme(string readme, string tag)
+        {
+            ReadmeParser parser = new ReadmeParser(readme);
+            parser.ParseReadmeConfig();
+            string readmeTag = tag;
+            if (tag == "default" && parser.basicConfig != null)
             {
-                continue;
+                readmeTag = parser.basicConfig.tag;
             }
 
-            if (yamlBlock.Info != "yaml")
-            {
-                continue;
-            }
+            parser.inputSwaggerFilesMap.TryGetValue(readmeTag, out InputSwaggerFiles inputFiles);
+            return inputFiles?.input ?? Enumerable.Empty<string>();
+        }
+        private void ParseReadmeConfig()
+        {
+            var readmeContent = File.ReadAllText(readmeFilePath);
+            MarkdownDocument document = Markdown.Parse(readmeContent);
 
-            var yamlDeserializer = new YamlDotNet.Serialization.DeserializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .IgnoreUnmatchedProperties()
-                .Build();
-
-            if (yamlBlock.Lines.ToString().Contains("tag") && basicConfig == null)
+            foreach (var block in document)
             {
-                basicConfig = yamlDeserializer.Deserialize<ReadmeBasicConfiguration>(yamlBlock.Lines.ToString());
-            }
-            else if (yamlBlock.Lines.ToString().Contains("input-file"))
-            {
-                var argument = yamlBlock.Arguments;
-                var inputSwaggerFiles = yamlDeserializer.Deserialize<InputSwaggerFiles>(yamlBlock.Lines.ToString());
-                if (argument == null)
+                if (block is not FencedCodeBlock yamlBlock)
                 {
                     continue;
                 }
 
-                var tag = ReadmeParser.GetTagFromYamlArguments(argument);
+                if (yamlBlock.Info != "yaml")
+                {
+                    continue;
+                }
 
-                inputSwaggerFiles.input?.Sort(StringComparer.InvariantCultureIgnoreCase);
-                inputSwaggerFilesMap.Add(tag, inputSwaggerFiles);
+                var yamlDeserializer = new YamlDotNet.Serialization.DeserializerBuilder()
+                    .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                    .IgnoreUnmatchedProperties()
+                    .Build();
+
+                if (yamlBlock.Lines.Lines.Any(x => x.ToString().StartsWith("tag")) && basicConfig == null)
+                {
+                    basicConfig = yamlDeserializer.Deserialize<ReadmeBasicConfiguration>(yamlBlock.Lines.ToString());
+                }
+                else if (yamlBlock.Lines.ToString().Contains("input-file"))
+                {
+                    var argument = yamlBlock.Arguments;
+                    InputSwaggerFiles inputSwaggerFiles = null;
+                    try 
+                    {
+                        inputSwaggerFiles = yamlDeserializer.Deserialize<InputSwaggerFiles>(yamlBlock.Lines.ToString());
+                    } catch (Exception) {
+                        Console.WriteLine($"Invalid Yaml Block [ {yamlBlock.Lines.ToString()} ] in Readme. Consider Updating then Run Parser again.");
+                        continue;
+                    }
+                    
+                    if (argument == null)
+                    {
+                        continue;
+                    }
+
+                    var tag = ReadmeParser.GetTagFromYamlArguments(argument);
+                    if (inputSwaggerFiles != null && inputSwaggerFiles.input != null)
+                    {
+                        inputSwaggerFiles.input?.Sort(StringComparer.InvariantCultureIgnoreCase);
+                        if (!inputSwaggerFilesMap.ContainsKey(tag))
+                        {
+                            inputSwaggerFilesMap.Add(tag, inputSwaggerFiles);
+                        }
+                    }
+                }
             }
         }
     }

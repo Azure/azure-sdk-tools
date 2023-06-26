@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using SwaggerApiParser;
+using SwaggerApiParser.SwaggerApiView;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -420,8 +422,5 @@ public class UtilsTest
         {
             this.output.WriteLine(prefix);
         }
-        
-
-
     }
 }

@@ -27,6 +27,7 @@ using APIView.Identity;
 using APIViewWeb.Managers;
 using APIViewWeb.Hubs;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb
 {
@@ -226,6 +227,7 @@ namespace APIViewWeb
             services.AddControllersWithViews().AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
             services.AddSignalR(options => {
                 options.EnableDetailedErrors = true;
+                options.MaximumReceiveMessageSize =  1024 * 1024;
             });
         }
 
@@ -286,7 +288,7 @@ namespace APIViewWeb
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();
                 endpoints.MapDefaultControllerRoute();
-                endpoints.MapHub<NotificationHub>("hubs/notification");
+                endpoints.MapHub<SignalRHub>("hubs/notification");
             });
         }
     }

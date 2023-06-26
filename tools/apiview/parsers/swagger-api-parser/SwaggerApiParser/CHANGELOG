@@ -1,5 +1,14 @@
 # Release History
 
+## 1.1.0 (6-26-2023)
++ Disabled flatteneing of nested model.
++ Updated definitions to include models all referenced models
++ Included definations referenced in external files
++ Ensure enum values are parsed
++ Ensure all inline schema is parsed
++ Handle allOf an additional Properties
++ Ensure definiton Properties are sorted
+
 ## 1.0.9 (5-22-2023)
 + Support schema for parameters referenced in relative files
 

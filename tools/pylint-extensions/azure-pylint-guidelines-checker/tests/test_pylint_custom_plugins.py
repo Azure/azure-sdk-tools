@@ -3368,3 +3368,50 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
         )
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
+
+class TestDocstringParameters(pylint.testutils.CheckerTestCase):
+
+    """Test that we are checking the docstring is correct"""
+    CHECKER_CLASS = checker.CheckDocstringParameters
+
+    def test_docstring_vararg(self):
+        node = astroid.extract_node(
+            """
+            from typing import Dict
+            
+            @property
+            def function_foo(self) -> Dict[str,str]:
+                '''The current headers collection.
+                :rtype: dict[str, str]
+                '''
+
+                return {"hello": "world"}
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_varag_no_type(self):
+        node = astroid.extract_node(
+            """
+            from typing import Dict
+
+            def function_foo(self) -> Dict[str,str]:
+                '''The current headers collection.
+                :rtype: dict[str, str]
+                '''
+                return {"hello": "world"}
+            """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-missing-return",
+                    line=4,
+                    args=None,
+                    node=node,
+                    col_offset=0, 
+                    end_line=4, 
+                    end_col_offset=16
+                ),
+        ):
+            self.checker.visit_functiondef(node)

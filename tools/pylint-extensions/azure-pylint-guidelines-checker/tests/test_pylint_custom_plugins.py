@@ -3376,6 +3376,74 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
 
     def test_docstring_vararg(self):
         node = astroid.extract_node(
+            # Check that we recognize *args as param in docstring
+            """
+            def function_foo(x, y, *z):
+                '''
+                :param x: x
+                :type x: str
+                :param str y: y
+                :param str z: z
+                '''
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_vararg_keyword_args(self):
+        # Check that we recognize keyword-only args after *args in docstring
+        node = astroid.extract_node(
+            """
+            def function_foo(x, y, *z, a="Hello", b="World"):
+                '''
+                :param x: x
+                :type x: str
+                :param str y: y
+                :param str z: z
+                :keyword str a: a
+                :keyword str b: b
+                '''
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_varag_no_type(self):
+        # Error on documenting keyword only args as param after *args in docstring
+        node = astroid.extract_node(
+            """
+            def function_foo(*x, y, z):
+                '''
+                :param x: x
+                :param str y: y
+                :param str z: z
+                '''
+            """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-missing-type",
+                    line=2,
+                    args='x',
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=16
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-should-be-keyword",
+                    line=2,
+                    args='y, z',
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=16
+                )
+        ):
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_property_decorator(self):
+        node = astroid.extract_node(
             """
             from typing import Dict
             
@@ -3384,18 +3452,16 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                 '''The current headers collection.
                 :rtype: dict[str, str]
                 '''
-
                 return {"hello": "world"}
             """
         )
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_varag_no_type(self):
+    def test_docstring_no_property_decorator(self):
         node = astroid.extract_node(
             """
             from typing import Dict
-
             def function_foo(self) -> Dict[str,str]:
                 '''The current headers collection.
                 :rtype: dict[str, str]

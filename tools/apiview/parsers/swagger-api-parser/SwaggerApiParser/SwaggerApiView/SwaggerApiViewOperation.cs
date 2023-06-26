@@ -1,137 +1,149 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using SwaggerApiParser.Specs;
 
-namespace SwaggerApiParser;
-
-public class SwaggerApiViewOperation : ITokenSerializable
+namespace SwaggerApiParser.SwaggerApiView
 {
-    public string operationId { get; set; }
-    public string operationIdPrefix;
-    public string operationIdAction { get; set; }
-    public string description { get; set; }
-    
-    public List<string> tags { get; set; }
-
-    public List<string> procudes { get; set; }
-    
-    public List<string> consumes { get; set; }
-    public string summary { get; set; }
-    public string method { get; set; }
-    public string path { get; set; }
-    
-    public XMsPageable xMSPageable { get; set; }
-
-    public Boolean xMsLongRunningOperation { get; set; }
-    
-    public Operation operation { get; set; }
-
-    public SwaggerApiViewOperationParameters PathParameters { get; set; }
-    public SwaggerApiViewOperationParameters QueryParameters { get; set; }
-    public SwaggerApiViewOperationParameters BodyParameters { get; set; }
-    
-    public SwaggerApiViewOperationParameters HeaderParameters { get; set; }
-
-    public List<SwaggerApiViewResponse> Responses { get; set; }
-
-    public string _iteratorPath;
-
-    public CodeFileToken[] TokenSerialize(SerializeContext context)
+    public class SwaggerApiViewOperation : ITokenSerializable
     {
-        List<CodeFileToken> ret = new List<CodeFileToken>();
+        public List<string> tags { get; set; }
+        public string summary { get; set; }
+        public string description { get; set; }
+        public ExternalDocs externalDocs { get; set; }
+        public string operationId { get; set; }
+        public List<string> consumes { get; set; }
+        public List<string> produces { get; set; }
+        public SwaggerApiViewOperationParameters PathParameters { get; set; }
+        public SwaggerApiViewOperationParameters QueryParameters { get; set; }
+        public SwaggerApiViewOperationParameters BodyParameters { get; set; }
+        public SwaggerApiViewOperationParameters HeaderParameters { get; set; }
+        public List<SwaggerApiViewResponse> Responses { get; set; }
+        public List<string> schemes { get; set; }
+        public bool deprecated { get; set; }
+        public List<Security> security { get; set; }
+        public IDictionary<string, JsonElement> patternedObjects { get; set; }
 
-        ret.Add(TokenSerializer.FoldableContentStart());
-        
-        if (this.description != null)
+
+        public string operationIdPrefix;
+        public string operationIdAction { get; set; }
+        public string method { get; set; }
+        public string path { get; set; }
+        public Operation operation { get; set; }
+
+        public string _iteratorPath;
+
+        public CodeFileToken[] TokenSerialize(SerializeContext context)
         {
-            ret.Add(TokenSerializer.NavigableToken("description", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("description")));
-            ret.Add(TokenSerializer.Colon());
-            ret.Add(new CodeFileToken(this.description, CodeFileTokenKind.Literal));
+            List<CodeFileToken> ret = new List<CodeFileToken>();
+
+            ret.Add(TokenSerializer.FoldableContentStart());
+            if (tags != null && tags.Count > 0)
+            {
+                ret.Add(TokenSerializer.NavigableToken("tags", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("tags")));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(new CodeFileToken(string.Join(", ", tags), CodeFileTokenKind.Literal));
+                ret.Add(TokenSerializer.NewLine());
+            }
+
+            if (!string.IsNullOrEmpty(this.summary))
+            {
+                ret.Add(TokenSerializer.NavigableToken("summary", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("summary")));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(new CodeFileToken(this.summary, CodeFileTokenKind.Literal));
+                ret.Add(TokenSerializer.NewLine());
+            }
+
+            if (!string.IsNullOrEmpty(this.description))
+            {
+                ret.Add(TokenSerializer.NavigableToken("description", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("description")));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(new CodeFileToken(this.description, CodeFileTokenKind.Literal));
+                ret.Add(TokenSerializer.NewLine());
+            }
+
+            if (externalDocs != null)
+            {
+                ret.Add(new CodeFileToken("externalDocs", CodeFileTokenKind.FoldableSectionHeading));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(TokenSerializer.NewLine());
+                ret.Add(TokenSerializer.FoldableContentStart());
+                ret.AddRange(externalDocs.TokenSerialize(context));
+                ret.Add(TokenSerializer.FoldableContentEnd());
+            }
+
+            if (!string.IsNullOrEmpty(this.operationId)) 
+            {
+                ret.Add(TokenSerializer.NavigableToken("operationId", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("operationId")));
+                ret.Add(TokenSerializer.Colon());
+                ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
+                ret.Add(TokenSerializer.NewLine());
+            }
+
+            if (this.consumes != null && consumes.Count > 0)
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens("consumes", string.Join(", ", this.consumes)));
+            }
+
+            if (this.produces != null && produces.Count > 0)
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens("produces", string.Join(", ", this.produces)));
+            }
+
+            if (this.schemes != null && schemes.Count > 0)
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens("schemes", string.Join(", ", this.schemes)));
+            }
+
+            if (this.deprecated)
+            {
+                ret.Add(TokenSerializer.NavigableToken("deprecated", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("deprecated")));
+                ret.Add(TokenSerializer.NewLine());
+            }
+
+            if (this.security != null && security.Count > 0)
+            {
+                ret.AddRange(TokenSerializer.KeyValueTokens("security", string.Join(", ", this.security)));
+            }
+
+            Utils.SerializePatternedObjects(patternedObjects, ret);
+
+            // new line for `Parameters` section.
             ret.Add(TokenSerializer.NewLine());
-        }
-        
-        if (this.summary != null)
-        {
-            ret.Add(TokenSerializer.NavigableToken("summary", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("summary")));
-            ret.Add(TokenSerializer.Colon());
-            ret.Add(new CodeFileToken(this.summary, CodeFileTokenKind.Literal));
+
+            ret.AddRange(PathParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath)));
+            ret.AddRange(QueryParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath)));
+            ret.AddRange(BodyParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath)));
+            ret.AddRange(HeaderParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath)));
+
+            // new line for `Response` section.
             ret.Add(TokenSerializer.NewLine());
-        }
 
-        ret.Add(TokenSerializer.NavigableToken("operationId", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Parameters")));
-        ret.Add(TokenSerializer.Colon());
-        ret.Add(new CodeFileToken(this.operationId, CodeFileTokenKind.TypeName));
-        ret.Add(TokenSerializer.NewLine());
-
-        if (tags != null)
-        {
-            ret.Add(TokenSerializer.NavigableToken("tags", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("tags")));
+            ret.Add(TokenSerializer.NavigableToken("Responses", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Responses")));
             ret.Add(TokenSerializer.Colon());
-            ret.Add(new CodeFileToken(string.Join(",", tags), CodeFileTokenKind.Literal));
             ret.Add(TokenSerializer.NewLine());
-        }
-    
-        if (this.xMsLongRunningOperation)
-        {
-            ret.Add(TokenSerializer.NavigableToken("x-ms-long-running-operation", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-long-running-operation")));
-            ret.Add(TokenSerializer.Colon());
-            ret.Add(new CodeFileToken("true", CodeFileTokenKind.Literal));
+
+            context.IteratorPath.Add("Responses");
+            foreach (var response in Responses)
+            {
+                ret.AddRange(response.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath)));
+            }
+            context.IteratorPath.Pop();
+
             ret.Add(TokenSerializer.NewLine());
+
+            ret.Add(TokenSerializer.FoldableContentEnd());
+
+            return ret.ToArray();
         }
-
-        if (this.xMSPageable != null)
-        {
-            ret.Add(TokenSerializer.NavigableToken("x-ms-pageable", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("x-ms-pageable")));
-            ret.Add(TokenSerializer.Colon());
-            ret.Add(new CodeFileToken(this.xMSPageable.nextLinkName, CodeFileTokenKind.Literal));
-            ret.Add(TokenSerializer.NewLine());
-        }
-
-        if (this.procudes!=null)
-        {
-            ret.AddRange(TokenSerializer.KeyValueTokens("produces", string.Join(",", this.procudes)));
-        }
-
-        if (this.consumes != null)
-        {
-            ret.AddRange(TokenSerializer.KeyValueTokens("consumes", string.Join(",", this.consumes)));
-        }
-
-        // new line for `Parameters` section.
-        ret.Add(TokenSerializer.NewLine());
-
-        ret.AddRange(PathParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
-        ret.AddRange(QueryParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
-        ret.AddRange(BodyParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
-        ret.AddRange(HeaderParameters.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
-        
-        // new line for `Response` section.
-        ret.Add(TokenSerializer.NewLine());
-
-
-        ret.Add(TokenSerializer.NavigableToken("Responses", CodeFileTokenKind.Keyword, context.IteratorPath.CurrentNextPath("Responses")));
-        ret.Add(TokenSerializer.Colon());
-        ret.Add(TokenSerializer.NewLine());
-
-        context.IteratorPath.Add("Responses");
-        foreach (var response in Responses)
-        {
-            ret.AddRange(response.TokenSerialize(new SerializeContext(context.intent + 1, context.IteratorPath)));
-        }
-        context.IteratorPath.Pop();
-
-        ret.Add(TokenSerializer.NewLine());
-
-        ret.Add(TokenSerializer.FoldableContentEnd());
-
-        return ret.ToArray();
     }
-}
 
-public class SwaggerApiViewOperationComp : IComparer<SwaggerApiViewOperation>
-{
-    public int Compare(SwaggerApiViewOperation a, SwaggerApiViewOperation b)
+    public class SwaggerApiViewOperationComp : IComparer<SwaggerApiViewOperation>
     {
-        Dictionary<string, int> priority = new Dictionary<string, int>()
+        public int Compare(SwaggerApiViewOperation a, SwaggerApiViewOperation b)
+        {
+            Dictionary<string, int> priority = new Dictionary<string, int>()
         {
             {"post", 1},
             {"put", 2},
@@ -143,32 +155,33 @@ public class SwaggerApiViewOperationComp : IComparer<SwaggerApiViewOperation>
         };
 
 
-        priority.TryGetValue(GetMethodType(a), out var priorityA);
-        priority.TryGetValue(GetMethodType(b), out var priorityB);
-        if (priorityA == priorityB)
-        {
-            return 0;
+            priority.TryGetValue(GetMethodType(a), out var priorityA);
+            priority.TryGetValue(GetMethodType(b), out var priorityB);
+            if (priorityA == priorityB)
+            {
+                return 0;
+            }
+
+            if (priorityA < priorityB)
+            {
+                return -1;
+            }
+
+            return 1;
         }
 
-        if (priorityA < priorityB)
+        /*
+         * Post:  /<service>/<resource-collection>/<resource-id>. CreateOrUpdate
+         * Post action:  /<service>/<resource-collection>/<resource-id>:<action>. PostAction
+         */
+        private static string GetMethodType(SwaggerApiViewOperation operation)
         {
-            return -1;
+            return operation.method switch
+            {
+                "post" => operation.path == null || operation.path.Split("/").Length % 2 == 1 ? "post" : "post-action",
+                "get" => operation.path == null || operation.path.Split("/").Length % 2 == 1 ? "get" : "get-action",
+                _ => operation.method
+            };
         }
-
-        return 1;
-    }
-
-    /*
-     * Post:  /<service>/<resource-collection>/<resource-id>. CreateOrUpdate
-     * Post action:  /<service>/<resource-collection>/<resource-id>:<action>. PostAction
-     */
-    private static string GetMethodType(SwaggerApiViewOperation operation)
-    {
-        return operation.method switch
-        {
-            "post" => operation.path == null || operation.path.Split("/").Length % 2 == 1 ? "post" : "post-action",
-            "get" => operation.path == null || operation.path.Split("/").Length % 2 == 1 ? "get" : "get-action",
-            _ => operation.method
-        };
     }
 }

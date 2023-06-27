@@ -37,6 +37,7 @@ public static class Program
     /// Defaults to ".git".
     /// Example usage: ".git|foo|bar"
     /// </param>
+    /// <param name="teamStorageURI">Override for the default URI where the team/storage blob data resides</param>
     /// <returns>
     /// On STDOUT: The JSON representation of the matched CodeownersEntry.
     /// "new CodeownersEntry()" if no path in the CODEOWNERS data matches.
@@ -48,7 +49,8 @@ public static class Program
         string codeownersFilePathOrUrl,
         bool excludeNonUserAliases = false,
         string? targetDir = null,
-        string ignoredPathPrefixes = DefaultIgnoredPrefixes)
+        string ignoredPathPrefixes = DefaultIgnoredPrefixes,
+        string? teamStorageURI = null)
     {
         try 
         {
@@ -71,11 +73,13 @@ public static class Program
                     targetDir!,
                     codeownersFilePathOrUrl,
                     excludeNonUserAliases,
-                    SplitIgnoredPathPrefixes())
+                    SplitIgnoredPathPrefixes(),
+                    teamStorageURI)
                 : GetCodeownersForSimplePath(
                     targetPath,
                     codeownersFilePathOrUrl,
-                    excludeNonUserAliases);
+                    excludeNonUserAliases,
+                    teamStorageURI);
 
             string codeownersJson = JsonSerializer.Serialize(
                 codeownersData,
@@ -101,7 +105,8 @@ public static class Program
         string targetDir,
         string codeownersFilePathOrUrl,
         bool excludeNonUserAliases,
-        string[]? ignoredPathPrefixes = null)
+        string[]? ignoredPathPrefixes = null,
+        string? teamStorageURI=null)
     {
         ignoredPathPrefixes ??= Array.Empty<string>();
 
@@ -110,7 +115,8 @@ public static class Program
                 targetPath,
                 targetDir,
                 codeownersFilePathOrUrl,
-                ignoredPathPrefixes);
+                ignoredPathPrefixes,
+                teamStorageURI);
 
         if (excludeNonUserAliases)
             codeownersEntries.Values.ToList().ForEach(entry => entry.ExcludeNonUserAliases());
@@ -121,12 +127,14 @@ public static class Program
     private static CodeownersEntry GetCodeownersForSimplePath(
         string targetPath,
         string codeownersFilePathOrUrl,
-        bool excludeNonUserAliases)
+        bool excludeNonUserAliases,
+        string? teamStorageURI = null)
     {
         CodeownersEntry codeownersEntry =
             CodeownersFile.GetMatchingCodeownersEntry(
                 targetPath,
-                codeownersFilePathOrUrl);
+                codeownersFilePathOrUrl,
+                teamStorageURI);
 
         if (excludeNonUserAliases)
             codeownersEntry.ExcludeNonUserAliases();

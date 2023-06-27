@@ -3441,3 +3441,43 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                 )
         ):
             self.checker.visit_functiondef(node)
+
+    def test_docstring_property_decorator(self):
+        node = astroid.extract_node(
+            """
+            from typing import Dict
+            
+            @property
+            def function_foo(self) -> Dict[str,str]:
+                '''The current headers collection.
+                :rtype: dict[str, str]
+                '''
+                return {"hello": "world"}
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_no_property_decorator(self):
+        node = astroid.extract_node(
+            """
+            from typing import Dict
+            def function_foo(self) -> Dict[str,str]:
+                '''The current headers collection.
+                :rtype: dict[str, str]
+                '''
+                return {"hello": "world"}
+            """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-missing-return",
+                    line=3,
+                    args=None,
+                    node=node,
+                    col_offset=0, 
+                    end_line=3, 
+                    end_col_offset=16
+                ),
+        ):
+            self.checker.visit_functiondef(node)

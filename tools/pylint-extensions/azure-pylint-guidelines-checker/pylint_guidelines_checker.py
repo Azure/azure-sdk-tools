@@ -1375,6 +1375,8 @@ class CheckDocstringParameters(BaseChecker):
         :param node: ast.FunctionDef
         :return: None
         """
+        # Get decorators on the function
+        function_decorators = node.decoratornames()
         try:
             returns = next(node.infer_call_result()).as_string()
             if returns == "None":
@@ -1396,7 +1398,8 @@ class CheckDocstringParameters(BaseChecker):
             if line.startswith("rtype"):
                 has_rtype = True
 
-        if has_return is False:
+        # If is an @property decorator, don't require :return: as it is repetitive
+        if has_return is False and "builtins.property" not in function_decorators:
             self.add_message(
                 msgid="docstring-missing-return", node=node, confidence=None
             )

@@ -3481,3 +3481,29 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                 ),
         ):
             self.checker.visit_functiondef(node)
+
+    def test_docstring_type_has_space(self):
+        # Don't error if there is extra spacing in the type
+        node = astroid.extract_node(
+            """
+            def function_foo(x):
+                '''
+                :param dict[str, int] x: x
+                '''
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_type_has_many_spaces(self):
+        # Don't error if there is extra spacing around the type
+        node = astroid.extract_node(
+            """
+            def function_foo(x):
+                '''
+                :param  dict[str, int]  x: x
+                '''
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)

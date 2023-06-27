@@ -37,7 +37,8 @@ public static class Program
     /// Defaults to ".git".
     /// Example usage: ".git|foo|bar"
     /// </param>
-    /// <param name="teamStorageURI">Override for the default URI where the team/storage blob data resides</param>
+    /// <param name="teamStorageURI">Override for the default URI where the team/storage blob data resides.</param>
+    /// <param name="ownersDataOutputFile">File to output the owners data to, will overwrite if the file exist.</param>
     /// <returns>
     /// On STDOUT: The JSON representation of the matched CodeownersEntry.
     /// "new CodeownersEntry()" if no path in the CODEOWNERS data matches.
@@ -50,7 +51,8 @@ public static class Program
         bool excludeNonUserAliases = false,
         string? targetDir = null,
         string ignoredPathPrefixes = DefaultIgnoredPrefixes,
-        string? teamStorageURI = null)
+        string? teamStorageURI = null,
+        string? ownersDataOutputFile = null)
     {
         try 
         {
@@ -86,6 +88,16 @@ public static class Program
                 new JsonSerializerOptions { WriteIndented = true });
 
             Console.WriteLine(codeownersJson);
+
+            // If the output data file is specified, write the json to that. 
+            if (!string.IsNullOrEmpty(ownersDataOutputFile))
+            {
+                // False in the ctor is to overwrite, not append
+                using (StreamWriter outputFile = new StreamWriter(ownersDataOutputFile, false))
+                {
+                    outputFile.WriteLine(codeownersJson);
+                }
+            }
             return 0;
 
             string[] SplitIgnoredPathPrefixes()

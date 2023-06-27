@@ -1372,6 +1372,24 @@ class CheckDocstringParameters(BaseChecker):
                 node=node,
                 confidence=None
             )
+    def has_return_value(self, return_node):
+        """Check if a return node returns something.
+
+        :param return_node: The return node.
+        :type return_node: astroid.Return
+        :rtype: bool
+        :return: True if the return node has a value, False otherwise.
+        """
+        # Get the value of the return node
+        value = return_node.value
+
+        if value is None:
+            return False
+    
+        if isinstance(value, astroid.Const):
+            return value.value is not None
+        
+        return True
 
     def check_return(self, node):
         """Checks if function returns anything.
@@ -1382,12 +1400,14 @@ class CheckDocstringParameters(BaseChecker):
         """
         # Get decorators on the function
         function_decorators = node.decoratornames()
-        try:
-            returns = next(node.infer_call_result()).as_string()
-            if returns == "None":
-                return
-        except (astroid.exceptions.InferenceError, AttributeError):
-            # this function doesn't return anything, just return
+
+        returns = [sub_node for sub_node in node.body if isinstance(sub_node, astroid.Return)]
+
+        # Check for return value
+        has_return_value = any(self.has_return_value(r) for r in returns)
+ 
+        # Function doesn't return anything, so don't check for return doc
+        if has_return_value is False:
             return
 
         try:

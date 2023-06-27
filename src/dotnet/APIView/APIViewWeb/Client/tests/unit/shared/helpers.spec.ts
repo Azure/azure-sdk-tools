@@ -70,4 +70,32 @@ test.describe('getReviewAndRevisionIdFromUrl should return valid review and revi
     expect(result["reviewId"]).toBe(undefined);
     expect(result["revisionId"]).toBe(undefined);
   });
+
+  test('getReviewAndRevisionIdFromUrl on review conversation page returns its reviewId', async ({ page }) => {
+    const testUrlString = 'https://apiview.dev/Assemblies/Conversation/7c1724b222bd4a49bfeba6100d77297e';
+    const result = hp.getReviewAndRevisionIdFromUrl(testUrlString);
+    expect(result["reviewId"]).toBe('7c1724b222bd4a49bfeba6100d77297e');
+    expect(result["revisionId"]).toBe(undefined);
+  });
+
+  test('getReviewAndRevisionIdFromUrl on review revisions page returns its reviewId', async ({ page }) => {
+    const testUrlString = 'https://apiview.dev/Assemblies/Revisions/7c1724b222bd4a49bfeba6100d77297e';
+    const result = hp.getReviewAndRevisionIdFromUrl(testUrlString);
+    expect(result["reviewId"]).toBe('7c1724b222bd4a49bfeba6100d77297e');
+    expect(result["revisionId"]).toBe(undefined);
+  });
+
+  test('getReviewAndRevisionIdFromUrl on review usage samples page returns its reviewId', async ({ page }) => {
+    const testUrlString = 'https://apiview.dev/Assemblies/Samples/7c1724b222bd4a49bfeba6100d77297e';
+    const result = hp.getReviewAndRevisionIdFromUrl(testUrlString);
+    expect(result["reviewId"]).toBe('7c1724b222bd4a49bfeba6100d77297e');
+    expect(result["revisionId"]).toBe(undefined);
+  });
+
+  test('getReviewAndRevisionIdFromUrl on requested reviews page returns null values', async ({ page }) => {
+    const testUrlString = 'http://localhost:5000/Assemblies/RequestedReviews';
+    const result = hp.getReviewAndRevisionIdFromUrl(testUrlString);
+    expect(result["reviewId"]).toBe(undefined);
+    expect(result["revisionId"]).toBe(undefined);
+  });
 })

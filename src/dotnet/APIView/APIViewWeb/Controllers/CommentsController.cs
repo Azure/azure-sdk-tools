@@ -3,14 +3,9 @@ using System.Threading.Tasks;
 using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
-using Azure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Azure.Cosmos.Linq;
-using Microsoft.Extensions.Azure;
-using Octokit;
 
 namespace APIViewWeb.Controllers
 {

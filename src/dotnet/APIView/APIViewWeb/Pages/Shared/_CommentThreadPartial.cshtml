@@ -10,7 +10,7 @@
 
 @if (Model != null && Model.Comments.Any())
 {
-    var commentsDisplayState = (userPreference!.ShowComments == true)? String.Empty : " d-none";
+    var commentsDisplayState = (userPreference!.ShowComments == true || TempData["page"].Equals("conversation")) ? String.Empty : " d-none";
     <tr class="comment-row @Model.LineClass@commentsDisplayState" data-line-id="@Model.LineId">
         <td class="comment-cell border-top border-bottom" colspan="3">
             <a class="comment-thread-anchor"></a>

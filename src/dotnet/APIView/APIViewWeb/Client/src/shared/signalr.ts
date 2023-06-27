@@ -43,7 +43,8 @@ $(() => {
 
   // receiver/client side of comment refresh 
   connection.on("ReceiveComment", (reviewId, elementId, partialViewResult) => {
-    let result = hp.getReviewAndRevisionIdFromUrl();
+    let href = location.href;
+    let result = hp.getReviewAndRevisionIdFromUrl(href);
     let currReviewId = result["reviewId"];
 
     if (currReviewId != reviewId) {

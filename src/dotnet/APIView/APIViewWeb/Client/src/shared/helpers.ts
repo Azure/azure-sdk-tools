@@ -227,18 +227,17 @@ export function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearC
   return displayedCommentRows
 }
 
-export function getReviewAndRevisionIdFromUrl() {
-  const uri = location.href
-  const regex = /.+Review\/([a-zA-Z0-9]+)\?revisionId=([a-zA-Z0-9]+)/;
+export function getReviewAndRevisionIdFromUrl(uri) {
+  const regex = /.+Review\/([a-zA-Z0-9]+)(\?revisionId=([a-zA-Z0-9]+))?/;
+
   const match = uri.match(regex);
   const result = {}
+
   if (match) {
     result["reviewId"] = match[1];
-    result["revisionId"] = match[2];
+    result["revisionId"] = match[3];
   }
-  else {
-    result["reviewId"] = location.pathname.split("/")[3];
-  }
+  
   return result;
 }
 

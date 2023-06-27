@@ -26,3 +26,6 @@ The json blob is read anonymously. The json blob is created from the dictionary 
     var list = JsonSerializer.Deserialize<List<KeyValuePair<string, List<string>>>>(rawJson);
     var TeamUSerDictionary = list.ToDictionary((keyItem) => keyItem.Key, (valueItem) => valueItem.Value);
 ```
+
+### The pipeline where this will run
+This will run as part of the [pipeline-owners-extracton](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112&_a=summary) pipeline.

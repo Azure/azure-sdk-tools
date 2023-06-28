@@ -247,10 +247,9 @@ namespace SwaggerApiParser
                 {
                     if (Regex.IsMatch(key, "^x-."))
                     {
-                        tokens.Add(new CodeFileToken(key, CodeFileTokenKind.FoldableSectionHeading));
+                        tokens.Add(new CodeFileToken(key, CodeFileTokenKind.Keyword));
                         tokens.Add(TokenSerializer.Colon());
-                        tokens.Add(TokenSerializer.NewLine());
-                        tokens.AddRange(TokenSerializer.TokenSerializeAsJson(value, true));
+                        tokens.AddRange(TokenSerializer.TokenSerializeJsonToCodeLines(value));
                     }  
                 }
             }

@@ -278,14 +278,17 @@ namespace SwaggerApiParser
             {
                 PopScope();
 
-                // Force the format string to be written on a new line, but
-                // don't add an extra one if we just wrote a newline.
-                if (!_isNewline && newline)
+                if (!string.IsNullOrEmpty(format))
                 {
-                    WriteLine();
-                }
+                    // Force the format string to be written on a new line, but
+                    // don't add an extra one if we just wrote a newline.
+                    if (!_isNewline && newline)
+                    {
+                        WriteLine();
+                    }
 
-                Write(kind, format, args);
+                    Write(kind, format, args);
+                }
             }
 
             /// <summary>

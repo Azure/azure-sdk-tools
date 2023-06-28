@@ -57,6 +57,7 @@ $(() => {
     let commentsRow = hp.getCommentsRow(elementId);
     hp.updateCommentThread(commentsRow, partialViewResult);
     hp.addCommentThreadNavigation();
+    hp.removeCommentIconIfEmptyCommentBox(elementId);
   });
 
   // Start the connection.

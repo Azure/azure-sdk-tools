@@ -3,7 +3,7 @@ import {
   getRowSectionClasses, toggleCommentIcon,
   updateCommentThread, addCommentThreadNavigation, getDisplayedCommentRows,
   getCommentsRow, showCommentBox, getDiagnosticsRow, getReplyGroupNo,
-  getElementId, getParentData
+  getElementId, getParentData, removeCommentIconIfEmptyCommentBox
 } from "../shared/helpers";
 import { PushComment } from "./signalr";
 
@@ -142,6 +142,7 @@ $(() => {
       }).done(partialViewResult => {
         updateCommentThread(commentRow, partialViewResult);
         addCommentThreadNavigation();
+        removeCommentIconIfEmptyCommentBox(lineId);
         PushComment(reviewId, lineId, partialViewResult);
       });
     }

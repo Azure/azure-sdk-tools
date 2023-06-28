@@ -159,6 +159,17 @@ export function updateCommentThread(commentBox, partialViewResult) {
   return false;
 }
 
+/**
+ * remove comment icon if the comment box is empty (has no comments)
+ * @param id lineid of the comment box 
+ */
+export function removeCommentIconIfEmptyCommentBox(id) {
+  var commentRows = getCommentsRow(id);
+  if (commentRows.length == 0 && !($("#show-comments-checkbox").prop("checked"))) {
+    toggleCommentIcon(id, false);
+  }
+}
+
 export function addCommentThreadNavigation() {
   var commentRows = $('.comment-row');
   var displayedCommentRows = getDisplayedCommentRows(commentRows, true, false);

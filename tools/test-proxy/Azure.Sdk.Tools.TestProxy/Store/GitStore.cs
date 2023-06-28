@@ -138,7 +138,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         throw GenerateInvokeException(SHAResult);
                     }
 
-                    GitHandler.Run($"tag {generatedTagName}", config);
+                    GitHandler.Run($"tag --no-sign {generatedTagName}", config);
 
                     var remoteResult = GitHandler.Run($"ls-remote origin --tags {generatedTagName}", config);
 

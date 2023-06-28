@@ -26,12 +26,10 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.Add(TokenSerializer.NewLine());
                 foreach (var header in headers)
                 {
-                    ret.Add(new CodeFileToken(header.Key, CodeFileTokenKind.FoldableSectionHeading));
+                    ret.Add(new CodeFileToken(header.Key, CodeFileTokenKind.Keyword));
                     ret.Add(TokenSerializer.Colon());
                     ret.Add(TokenSerializer.NewLine());
-                    ret.Add(TokenSerializer.FoldableContentStart());
                     ret.AddRange(header.Value.TokenSerialize(context));
-                    ret.Add(TokenSerializer.FoldableContentEnd());
                 }
                 ret.Add(TokenSerializer.NewLine());
 

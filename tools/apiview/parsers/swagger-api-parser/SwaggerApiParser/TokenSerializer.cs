@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
@@ -115,6 +114,16 @@ namespace SwaggerApiParser
                 ret.Add(TokenSerializer.FoldableContentEnd());
             }
 
+            return ret.ToArray();
+        }
+
+        public static CodeFileToken[] TokenSerializeJsonToCodeLines(JsonElement jsonElement)
+        {
+            List<CodeFileToken> ret = new List<CodeFileToken>();
+            Visitor visitor = new Visitor();
+            visitor.Visit(jsonElement, excludeJsonPunctuations: true);
+            ret.AddRange(visitor.Writer.ToTokens());
+            ret.Add(TokenSerializer.NewLine());
             return ret.ToArray();
         }
 
@@ -330,15 +339,15 @@ namespace SwaggerApiParser
         /// <param name="element">The JSON value.</param>
         /// <param name="scopeStart"></param>
         /// <param name="scopeEnd"></param>
-        public void Visit(JsonElement element, string scopeStart = "{ ", string scopeEnd = " }")
+        public void Visit(JsonElement element, string scopeStart = "{ ", string scopeEnd = " }", bool excludeJsonPunctuations = false)
         {
             switch (element.ValueKind)
             {
                 case JsonValueKind.Object:
-                    VisitObject(element, scopeStart, scopeEnd);
+                    VisitObject(element, scopeStart, scopeEnd, excludeJsonPunctuations);
                     break;
                 case JsonValueKind.Array:
-                    VisitArray(element);
+                    VisitArray(element, excludeJsonPunctuations: excludeJsonPunctuations);
                     break;
                 case JsonValueKind.False:
                 case JsonValueKind.Null:
@@ -346,7 +355,7 @@ namespace SwaggerApiParser
                 case JsonValueKind.String:
                 case JsonValueKind.True:
                 case JsonValueKind.Undefined:
-                    VisitLiteral(element);
+                    VisitLiteral(element, excludeJsonPunctuations: excludeJsonPunctuations);
                     break;
                 default:
                     break;
@@ -359,10 +368,13 @@ namespace SwaggerApiParser
         /// <param name="obj">The JSON object.</param>
         /// <param name="scopeStart"></param>
         /// <param name="scopeEnd"></param>
-        private void VisitObject(JsonElement obj, string scopeStart = "{", string scopeEnd = "}")
+        private void VisitObject(JsonElement obj, string scopeStart = "{", string scopeEnd = "}", bool excludeJsonPunctuations = false)
         {
             bool multiLine = AlwaysMultiLine(obj);
-
+            if (excludeJsonPunctuations)
+            {
+                scopeStart = scopeEnd = String.Empty;
+            }
             using (this.Writer.Scope(scopeStart, scopeEnd, multiLine))
             {
                 // Optionally sort the values
@@ -377,7 +389,9 @@ namespace SwaggerApiParser
 
                     var isCollapsible = IsCurObjCollapsible(property.Name);
                     // Write the property name
-                    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+                    if (!excludeJsonPunctuations)
+                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+                    
                     var propertyType = isCollapsible ? CodeFileTokenKind.TypeName : CodeFileTokenKind.MemberName;
                     this.Writer.Write(propertyType, property.Name);
 
@@ -393,13 +407,17 @@ namespace SwaggerApiParser
                     // Visit the value
                     if (isCollapsible)
                     {
-                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\": ");
+                        var punctuation = excludeJsonPunctuations ? ": " : "\": ";
+                        this.Writer.Write(CodeFileTokenKind.Punctuation, punctuation);
+
                         this.Writer.WriteLine();
                         this.Writer.Write(CodeFileTokenKind.FoldableSectionHeading, null);
-                        Visit(property.Value);
+                        Visit(property.Value, excludeJsonPunctuations: excludeJsonPunctuations);
                         if (property.Name != values.Last().Name)
                         {
-                            this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+                            if (!excludeJsonPunctuations)
+                                this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+
                             if (multiLine) { this.Writer.WriteLine(); }
                         }
 
@@ -407,11 +425,15 @@ namespace SwaggerApiParser
                     }
                     else
                     {
-                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\": ");
-                        Visit(property.Value);
+                        var punctuation = excludeJsonPunctuations ? ": " : "\": ";
+                        this.Writer.Write(CodeFileTokenKind.Punctuation, punctuation);
+
+                        Visit(property.Value, excludeJsonPunctuations: excludeJsonPunctuations);
                         if (property.Name != values.Last().Name)
                         {
-                            this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+                            if (!excludeJsonPunctuations)
+                                this.Writer.Write(CodeFileTokenKind.Punctuation, ", ");
+
                             if (multiLine) { this.Writer.WriteLine(); }
                         }
                     }
@@ -434,9 +456,13 @@ namespace SwaggerApiParser
         /// <param name="array">The array.</param>
         /// <param name="scopeStart"></param>
         /// <param name="scopeEnd"></param>
-        private void VisitArray(JsonElement array, string scopeStart = "[ ", string scopeEnd = " ]")
+        private void VisitArray(JsonElement array, string scopeStart = "[ ", string scopeEnd = " ]", bool excludeJsonPunctuations = false)
         {
             bool multiLine = AlwaysMultiLine(array);
+            if (excludeJsonPunctuations)
+            {
+                scopeStart = scopeEnd = String.Empty;
+            }
             using (this.Writer.Scope(scopeStart, scopeEnd, multiLine))
             {
                 int index = 0;
@@ -451,7 +477,7 @@ namespace SwaggerApiParser
                     }
 
                     this.iteratorPath.Add(index.ToString());
-                    Visit(child);
+                    Visit(child, excludeJsonPunctuations: excludeJsonPunctuations);
                     this.iteratorPath.Pop();
                     index++;
                 }
@@ -462,7 +488,7 @@ namespace SwaggerApiParser
         /// Generate the listing for a literal value.
         /// </summary>
         /// <param name="value">The literal value.</param>
-        private void VisitLiteral(JsonElement value)
+        private void VisitLiteral(JsonElement value, bool excludeJsonPunctuations = false)
         {
             switch (value.ValueKind)
             {
@@ -482,12 +508,14 @@ namespace SwaggerApiParser
                     this.Writer.Write(CodeFileTokenKind.Literal, value.GetDouble().ToString());
                     break;
                 case JsonValueKind.String:
-                    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+                    if (!excludeJsonPunctuations)
+                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
                     this.Writer.Write(CodeFileTokenKind.StringLiteral, value.GetString());
                     this.iteratorPath.Add(value.GetString());
                     this.Writer.AnnotateDefinition(this.iteratorPath.CurrentPath());
                     this.iteratorPath.Pop();
-                    this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
+                    if (!excludeJsonPunctuations)
+                        this.Writer.Write(CodeFileTokenKind.Punctuation, "\"");
                     break;
                 default:
                     throw new InvalidOperationException($"Expected a literal JSON element, not {value.ValueKind}.");

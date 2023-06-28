@@ -406,7 +406,7 @@
                     <label class="form-check-label" for="hide-left-navigation">Show Left Navigation</label>
                 </div>
             </li>
-            @if (!String.IsNullOrEmpty(Model.DiffRevisionId))
+            @if (!String.IsNullOrEmpty(Model.DiffRevisionId) && Model.Review.Language != "Swagger")
             {
                 <li class="list-group-item">
                     <div class="form-check form-switch">

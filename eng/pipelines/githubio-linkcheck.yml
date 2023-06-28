@@ -25,6 +25,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        -requestTimeoutSec 60 # For the nightly link checks increase timeout to handle some of the links that are redirects and can take longer
 
   - task: PowerShell@2
     displayName: 'azure-sdk link check with caching'

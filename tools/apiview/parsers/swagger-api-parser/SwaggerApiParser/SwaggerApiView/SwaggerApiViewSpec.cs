@@ -42,7 +42,7 @@ namespace SwaggerApiParser.SwaggerApiView
             ret.Add(TokenSerializer.NavigableToken("Paths", CodeFileTokenKind.FoldableSectionHeading, context.IteratorPath.CurrentPath()));
             ret.Add(TokenSerializer.Colon());
             ret.Add(TokenSerializer.NewLine());
-            var pathTokens = this.Paths.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath));
+            var pathTokens = this.Paths.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath, context.definitionsNames));
             ret.AddRange(pathTokens);
             context.IteratorPath.Pop();
 
@@ -53,7 +53,7 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.Add(TokenSerializer.NavigableToken("Definitions", CodeFileTokenKind.FoldableSectionHeading, context.IteratorPath.CurrentPath()));
                 ret.Add(TokenSerializer.Colon());
                 ret.Add(TokenSerializer.NewLine());
-                var definitionTokens = this.SwaggerApiViewDefinitions.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath));
+                var definitionTokens = this.SwaggerApiViewDefinitions.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath, context.definitionsNames));
                 ret.AddRange(definitionTokens);
                 context.IteratorPath.Pop();
             }

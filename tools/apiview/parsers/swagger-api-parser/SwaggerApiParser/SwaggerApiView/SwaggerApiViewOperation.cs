@@ -127,7 +127,7 @@ namespace SwaggerApiParser.SwaggerApiView
             context.IteratorPath.Add("Responses");
             foreach (var response in Responses)
             {
-                ret.AddRange(response.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath)));
+                ret.AddRange(response.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath, context.definitionsNames)));
             }
             context.IteratorPath.Pop();
 

@@ -130,6 +130,9 @@ function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, 
             }
         });
 
+        // Add jump-lint event for classes
+        addClickEventToClassesInSections();
+
         // Update section heading icons to open state
         updateSectionHeadingIcons(CodeLineSectionState.shown, caretIcon, headingRow);
 
@@ -213,6 +216,9 @@ function toggleSubSectionContent(headingRow : JQuery<HTMLElement>, subSectionLev
                 }
             }
         });
+
+        // Add jump-lint event for classes
+        addClickEventToClassesInSections();
 
         // Update section heading icons to open state
         updateSectionHeadingIcons(CodeLineSectionState.shown, caretIcon, headingRow);
@@ -442,4 +448,49 @@ export function loadPreviouslyShownSections() {
 
     // remove toast
     $("#loadPreviouslyShownSectionsToast").remove();
+}
+
+/**
+* Call a callback function after expanging a codeline section
+* @param { String } targetAnchorId
+* @param { Function } callback
+*/
+export function runAfterExpandingCodeline(targetAnchorId, callback) {
+  var targetAnchor = document.getElementById(targetAnchorId);
+  if (targetAnchor) {
+    var targetAnchorRow = $(targetAnchor).parents(".code-line").first();
+    var rowFoldSpan = targetAnchorRow.find(".row-fold-caret");
+    if (rowFoldSpan.length > 0) {
+      var caretIcon = rowFoldSpan.children("i");
+      var caretClasses = caretIcon.attr("class");
+      var caretDirection = caretClasses ? caretClasses.split(' ').filter(c => c.startsWith('fa-angle-'))[0] : "";
+      if (caretDirection.endsWith("right")) {
+        window.location.hash = `#${targetAnchorId}`;
+        $.when(toggleCodeLines(targetAnchorRow)).then(callback);
+      }
+    }
+  }
+}
+
+/**
+* Adds custom click event to classes in codeline sections
+*/
+export function addClickEventToClassesInSections() {
+  $(".code-inner li a").off("click").on("click", function (e) {
+    e.preventDefault();
+    const anchorHash = $(this).attr("href");
+    if (anchorHash) {
+      const targetAnchorId = anchorHash.replace('#', '');
+      const definitionsAnchorId = targetAnchorId.substring(0, targetAnchorId.lastIndexOf("Definitions") + "Definitions".length)
+      const target = $(`[data-line-id="${targetAnchorId}"]`);
+      if (target.length == 0 || target.hasClass("d-none")) {
+        runAfterExpandingCodeline(definitionsAnchorId, function () {
+          window.location.hash = anchorHash;
+        });
+      }
+      else {
+        window.location.hash = anchorHash;
+      }
+    }
+  });
 }

@@ -98,7 +98,7 @@ namespace SwaggerApiParser.SwaggerApiView
                     ret.Add(TokenSerializer.NavigableToken($"{operation.method.ToUpper()}", CodeFileTokenKind.FoldableSectionHeading, context.IteratorPath.CurrentPath()));
                     ret.Add(TokenSerializer.NewLine());
 
-                    ret.AddRange(operation.TokenSerialize(new SerializeContext(context.indent + 2, context.IteratorPath)));
+                    ret.AddRange(operation.TokenSerialize(new SerializeContext(context.indent + 2, context.IteratorPath, context.definitionsNames)));
 
                     context.IteratorPath.PopMulti(3);
                     idx += 1;

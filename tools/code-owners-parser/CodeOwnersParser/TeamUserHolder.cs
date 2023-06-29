@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 {
                     return list.ToDictionary((keyItem) => keyItem.Key, (valueItem) => valueItem.Value);
                 }
-                Console.WriteLine($"Error! Unable to deserialize json team/user data. rawJson={rawJson}");
+                Console.WriteLine($"Error! Unable to deserialize json team/user data from {TeamUserStorageURI}. rawJson={rawJson}");
                 return new Dictionary<string, List<string>>();
             }
             return _teamUserDict;

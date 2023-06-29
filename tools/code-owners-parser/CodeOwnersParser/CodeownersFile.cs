@@ -3,20 +3,24 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
     public static class CodeownersFile
     {
+
         public static List<CodeownersEntry> GetCodeownersEntriesFromFileOrUrl(
-            string codeownersFilePathOrUrl)
+            string codeownersFilePathOrUrl,
+            string? teamStorageURI = null)
         {
             string content = FileHelpers.GetFileOrUrlContents(codeownersFilePathOrUrl);
-            return GetCodeownersEntries(content);
+            return GetCodeownersEntries(content, teamStorageURI);
         }
 
-        public static List<CodeownersEntry> GetCodeownersEntries(string codeownersContent)
+        public static List<CodeownersEntry> GetCodeownersEntries(string codeownersContent, string? teamStorageURI = null)
         {
+            TeamUserHolder teamUserHolder = new TeamUserHolder(teamStorageURI);
             List<CodeownersEntry> entries = new List<CodeownersEntry>();
             
             // We are going to read line by line until we find a line that is not a comment
@@ -28,7 +32,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             using StringReader sr = new StringReader(codeownersContent);
             while (sr.ReadLine() is { } line)
             {
-                entry = ProcessCodeownersLine(line, entry, entries);
+                entry = ProcessCodeownersLine(line, entry, entries, teamUserHolder);
             }
 
             return entries;
@@ -36,9 +40,10 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         public static CodeownersEntry GetMatchingCodeownersEntry(
             string targetPath,
-            string codeownersFilePathOrUrl)
+            string codeownersFilePathOrUrl,
+            string? teamStorageURI = null)
         {
-            var codeownersEntries = GetCodeownersEntriesFromFileOrUrl(codeownersFilePathOrUrl);
+            var codeownersEntries = GetCodeownersEntriesFromFileOrUrl(codeownersFilePathOrUrl, teamStorageURI);
             return GetMatchingCodeownersEntry(targetPath, codeownersEntries);
         }
 
@@ -46,11 +51,12 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             GlobFilePath targetPath,
             string targetDir,
             string codeownersFilePathOrUrl,
-            string[]? ignoredPathPrefixes = null)
+            string[]? ignoredPathPrefixes = null,
+            string? teamStorageURI = null)
         {
             ignoredPathPrefixes ??= Array.Empty<string>();
 
-            var codeownersEntries = GetCodeownersEntriesFromFileOrUrl(codeownersFilePathOrUrl);
+            var codeownersEntries = GetCodeownersEntriesFromFileOrUrl(codeownersFilePathOrUrl, teamStorageURI);
 
             Dictionary<string, CodeownersEntry> codeownersEntriesByPath = targetPath
                 .ResolveGlob(targetDir, ignoredPathPrefixes)
@@ -74,7 +80,8 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         private static CodeownersEntry ProcessCodeownersLine(
             string line,
             CodeownersEntry entry,
-            List<CodeownersEntry> entries)
+            List<CodeownersEntry> entries,
+            TeamUserHolder teamUserHolder)
         {
             line = NormalizeLine(line);
 
@@ -85,7 +92,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
             if (!IsCommentLine(line) || (IsCommentLine(line) && IsPlaceholderEntry(line)))
             {
-                entry.ParseOwnersAndPath(line);
+                entry.ParseOwnersAndPath(line, teamUserHolder);
 
                 if (entry.IsValid)
                     entries.Add(entry);

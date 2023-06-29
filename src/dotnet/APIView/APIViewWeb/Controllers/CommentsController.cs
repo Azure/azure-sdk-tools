@@ -14,12 +14,12 @@ namespace APIViewWeb.Controllers
     {
         private readonly ICommentsManager _commentsManager;
         private readonly IReviewManager _reviewManager;
-        private readonly IHubContext<NotificationHub> _notificationHubContext;
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly INotificationManager _notificationManager;
 
-        public CommentsController(ICommentsManager commentsManager, IReviewManager reviewManager, INotificationManager notificationManager, IHubContext<NotificationHub> notificationHub)
+        public CommentsController(ICommentsManager commentsManager, IReviewManager reviewManager, INotificationManager notificationManager, IHubContext<SignalRHub> signalRHub)
         {
-            _notificationHubContext = notificationHub;
+            _signalRHubContext = signalRHub;
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;
             _notificationManager = notificationManager;
@@ -31,7 +31,7 @@ namespace APIViewWeb.Controllers
             if (string.IsNullOrEmpty(commentText))
             {
                 var notifcation = new NotificationModel() { Message = "Comment Text cannot be empty. Please type your comment entry and try again.", Level = NotificatonLevel.Error };
-                await _notificationHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveNotification", notifcation);
+                await _signalRHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveNotification", notifcation);
                 return new BadRequestResult();
             }
 
@@ -58,7 +58,8 @@ namespace APIViewWeb.Controllers
             {
                 await _notificationManager.SubscribeAsync(review,User);
             }
-            return await CommentPartialAsync(reviewId, comment.ElementId);
+            
+            return await CommentPartialAsync(reviewId, comment.ElementId); 
         }
 
         [HttpPost]

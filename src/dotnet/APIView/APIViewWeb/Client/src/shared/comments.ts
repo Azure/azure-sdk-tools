@@ -1,7 +1,11 @@
 import {
   updatePageSettings, getCodeRow, getCodeRowSectionClasses,
-  getRowSectionClasses, toggleCommentIcon
+  getRowSectionClasses, toggleCommentIcon,
+  updateCommentThread, addCommentThreadNavigation, getDisplayedCommentRows,
+  getCommentsRow, showCommentBox, getDiagnosticsRow, getReplyGroupNo,
+  getElementId, getParentData, removeCommentIconIfEmptyCommentBox
 } from "../shared/helpers";
+import { PushComment } from "./signalr";
 
 $(() => {
   const INVISIBLE = "invisible";
@@ -116,11 +120,13 @@ $(() => {
 
     if (lineId) {
       let commentRow = getCommentsRow(lineId);
+      let reviewId = getReviewId(e.target);
+      let revisionId = getRevisionId(e.target);
       let rowSectionClasses = getRowSectionClasses(commentRow[0].classList);
       let serializedForm = form.serializeArray();
       serializedForm.push({ name: "elementId", value: lineId });
-      serializedForm.push({ name: "reviewId", value: getReviewId(e.target) });
-      serializedForm.push({ name: "revisionId", value: getRevisionId(e.target) });
+      serializedForm.push({ name: "reviewId", value: reviewId });
+      serializedForm.push({ name: "revisionId", value: revisionId });
       serializedForm.push({ name: "sectionClass", value: rowSectionClasses });
       serializedForm.push({ name: "taggedUsers", value: getTaggedUsers(e.target) });
       
@@ -136,6 +142,8 @@ $(() => {
       }).done(partialViewResult => {
         updateCommentThread(commentRow, partialViewResult);
         addCommentThreadNavigation();
+        removeCommentIconIfEmptyCommentBox(lineId);
+        PushComment(reviewId, lineId, partialViewResult);
       });
     }
     e.preventDefault();
@@ -405,10 +413,6 @@ $(() => {
     return getParentData(element, "data-revision-id");
   }
 
-  function getElementId(element: HTMLElement, idName: string = "data-line-id") {
-    return getParentData(element, idName);
-  }
-
   function getTaggedUsers(element: HTMLFormElement): string[] {	
     githubLoginTagMatch.lastIndex = 0;	
     let matchArray;	
@@ -420,16 +424,8 @@ $(() => {
     return taggedUsers;	
   }
 
-  function getReplyGroupNo(sibling: JQuery<HTMLElement>) {
-    return $(sibling).prevAll("a").first().find("small");
-  }
-
   function getCommentId(element: HTMLElement) {
     return getParentData(element, "data-comment-id");
-  }
-
-  function getParentData(element: HTMLElement, name: string) {
-    return $(element).closest(`[${name}]`).attr(name);
   }
 
   function toggleComments(id: string) {
@@ -447,14 +443,6 @@ $(() => {
     return $(`.review-comment[data-comment-id='${commentId}']`);
   }
 
-  function getCommentsRow(id: string) {
-    return $(`.comment-row[data-line-id='${id}']`);
-  }
-
-  function getDiagnosticsRow(id: string) {
-    return $(`.code-diagnostics[data-line-id='${id}']`);
-  }
-
   function hideCommentBox(id: string) {
     let commentsRow = getCommentsRow(id);
     let replyDiv = commentsRow.find(".review-thread-reply");
@@ -467,103 +455,11 @@ $(() => {
     }
   }
 
-  function showCommentBox(id: string, classes: string = '', groupNo: string = '') {
-    let commentForm;
-    let commentsRow = getCommentsRow(id);
-    let commentRowClasses = "comment-row";
-    if (classes) {
-      commentRowClasses = `${commentRowClasses} ${classes}`;
-    }
-
-    if (commentsRow.length === 0) {
-      commentForm = createCommentForm(groupNo);
-      commentsRow =
-      $(`<tr class="${commentRowClasses}" data-line-id="${id}">`)
-              .append($("<td colspan=\"3\">")
-                .append(commentForm));
-
-      commentsRow.insertAfter(getDiagnosticsRow(id).get(0) || getCodeRow(id).get(0));
-    }
-    else {
-      // there is one or more comment rows - insert form
-      let replyArea = $(commentsRow).find(".review-thread-reply");
-      let targetReplyArea = replyArea.first();
-      let firstReplyId = targetReplyArea.attr("data-reply-id");
-      let insertAtBegining = false;
-
-      if (groupNo) {
-        replyArea.siblings(".comment-form").remove();
-        if (Number(groupNo) < Number(firstReplyId)) {
-          insertAtBegining = true;
-        }
-        else {
-          replyArea.each(function (index, value) {
-            let replyId = $(value).attr("data-reply-id");
-
-            if (replyId == groupNo) {
-              targetReplyArea = $(value);
-              return false;
-            }
-
-            if (Number(replyId) > Number(groupNo)) {
-              return false;
-            }
-
-            targetReplyArea = $(value);
-          });
-        }
-      }
-      else {
-        let rowGroupNo = getReplyGroupNo($(targetReplyArea));
-        if (rowGroupNo.length > 0) {
-          insertAtBegining = true;
-        }
-      }
-
-      commentForm = $(targetReplyArea).next();
-      if (!commentForm.hasClass("comment-form")) {
-        if (insertAtBegining) {
-          let commentThreadContent = $(targetReplyArea).closest(".comment-thread-contents");
-          $(createCommentForm(groupNo)).prependTo(commentThreadContent);
-        }
-        else {
-          commentForm = $(createCommentForm(groupNo)).insertAfter(targetReplyArea);
-        }
-      }
-      replyArea.hide();
-      commentForm.show();
-      commentsRow.show(); // ensure that entire comment row isn't being hidden
-    }
-
-    $(getDiagnosticsRow(id)).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
-
-    // If comment checkbox is unchecked, show the icon for new comment
-    if (!($("#show-comments-checkbox").prop("checked"))) {
-        toggleCommentIcon(id, true);
-    }
-
-    commentForm.find(".new-thread-comment-text").focus();
-  }
-
-  function createCommentForm(groupNo: string = '') {
-    var commentForm = $("#js-comment-form-template").children().clone();
-    if (groupNo) {
-      commentForm.find("form .new-comment-content").prepend(`<span class="badge badge-pill badge-light mb-2"><small>ROW-${groupNo}</small></span>`);
-    }
-    return commentForm;
-  }
-
   function createCommentEditForm(commentId: string, text: string) {
     let form = $("#js-comment-edit-form-template").children().clone();
     form.find(".js-comment-id").val(commentId);
     form.find(".new-thread-comment-text").html(text);
     return form;
-  }
-
-  function updateCommentThread(commentBox, partialViewResult) {
-    partialViewResult = $.parseHTML(partialViewResult);
-    $(commentBox).replaceWith(partialViewResult);
-    return false;
   }
 
   function toggleAllCommentsVisibility(showComments: boolean) {
@@ -611,74 +507,6 @@ $(() => {
     let commentHolder = $(getCommentsRow(id)).find(".comment-holder").first();
     if (commentHolder.hasClass("comments-resolved")) {
       toggleComments(id);
-    }
-  }
-
-  function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearCommentAnchors = false, returnFirst = false) {
-    var displayedCommentRows: JQuery<HTMLElement>[] = [];
-    commentRows.each(function (index) {
-      if (clearCommentAnchors) {
-        $(this).find('.comment-thread-anchor').removeAttr("id");
-        $(this).find('.comment-navigation-buttons').empty();
-      }
-
-      if ($(this).hasClass("d-none")) {
-        return;
-      }
-
-      let commentHolder = $(this).find(".comment-holder").first();
-      if (commentHolder.hasClass("comments-resolved") && commentHolder.css("display") != "block") {
-        return;
-      }
-      displayedCommentRows.push($(this));
-      if (returnFirst) {
-        return false;
-      }
-    });
-    return displayedCommentRows
-  }
-
-  function addCommentThreadNavigation(){
-    var commentRows = $('.comment-row');
-    var displayedCommentRows = getDisplayedCommentRows(commentRows, true, false);
-
-    commentRows.each(function (index) {
-      $(this).find('.comment-thread-anchor').removeAttr("id");
-      $(this).find('.comment-navigation-buttons').empty();
-
-      if ($(this).hasClass("d-none")) {
-        return;
-      }
-
-      let commentHolder = $(this).find(".comment-holder").first();
-      if (commentHolder.hasClass("comments-resolved") && commentHolder.css("display") != "block") {
-        return;
-      }
-      displayedCommentRows.push($(this));
-    });
-
-    if (displayedCommentRows.length > 1) {
-      displayedCommentRows.forEach(function (value, index) {
-        var commentThreadAnchorId = "comment-thread-" + index;
-        $(value).find('.comment-thread-anchor').first().prop('id', commentThreadAnchorId);
-
-        var commentNavigationButtons = $(value).find('.comment-navigation-buttons').last();
-        commentNavigationButtons.empty();
-
-        var nextCommentThreadAnchor = "comment-thread-" + (index + 1);
-        var previousCommentThreadAnchor = "comment-thread-" + (index - 1);
-
-        if (index == 0) {
-          commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
-        }
-        else if (index == displayedCommentRows.length - 1) {
-          commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
-        }
-        else {
-          commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
-          commentNavigationButtons.append(`<a class="btn btn-outline-secondary ml-1" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
-        }
-      });
     }
   }
 });

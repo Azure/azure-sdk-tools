@@ -151,3 +151,217 @@ export function addToastNotification(notification : Notification, id : string = 
   $("#notification-container").append(newtoast);
   toastBootstrap.show();
 }
+
+// Auto Refresh Comment
+export function updateCommentThread(commentBox, partialViewResult) {
+  partialViewResult = $.parseHTML(partialViewResult);
+  $(commentBox).replaceWith(partialViewResult);
+  return false;
+}
+
+/**
+ * remove comment icon if the comment box is empty (has no comments)
+ * @param id lineid of the comment box 
+ */
+export function removeCommentIconIfEmptyCommentBox(id) {
+  var commentRows = getCommentsRow(id);
+  if (commentRows.length == 0 && !($("#show-comments-checkbox").prop("checked"))) {
+    toggleCommentIcon(id, false);
+  }
+}
+
+export function addCommentThreadNavigation() {
+  var commentRows = $('.comment-row');
+  var displayedCommentRows = getDisplayedCommentRows(commentRows, true, false);
+
+  commentRows.each(function (index) {
+    $(this).find('.comment-thread-anchor').removeAttr("id");
+    $(this).find('.comment-navigation-buttons').empty();
+
+    if ($(this).hasClass("d-none")) {
+      return;
+    }
+
+    let commentHolder = $(this).find(".comment-holder").first();
+    if (commentHolder.hasClass("comments-resolved") && commentHolder.css("display") != "block") {
+      return;
+    }
+    displayedCommentRows.push($(this));
+  });
+
+  if (displayedCommentRows.length > 1) {
+    displayedCommentRows.forEach(function (value, index) {
+      var commentThreadAnchorId = "comment-thread-" + index;
+      $(value).find('.comment-thread-anchor').first().prop('id', commentThreadAnchorId);
+
+      var commentNavigationButtons = $(value).find('.comment-navigation-buttons').last();
+      commentNavigationButtons.empty();
+
+      var nextCommentThreadAnchor = "comment-thread-" + (index + 1);
+      var previousCommentThreadAnchor = "comment-thread-" + (index - 1);
+
+      if (index == 0) {
+        commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+      }
+      else if (index == displayedCommentRows.length - 1) {
+        commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+      }
+      else {
+        commentNavigationButtons.append(`<a class="btn btn-outline-secondary" href="#${previousCommentThreadAnchor}" title="Previous Comment"><i class="fa fa-chevron-up" aria-hidden="true"></i></a>`)
+        commentNavigationButtons.append(`<a class="btn btn-outline-secondary ml-1" href="#${nextCommentThreadAnchor}" title="Next Comment"><i class="fa fa-chevron-down" aria-hidden="true"></i></a>`)
+      }
+    });
+  }
+}
+
+export function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearCommentAnchors = false, returnFirst = false) {
+  var displayedCommentRows: JQuery<HTMLElement>[] = [];
+  commentRows.each(function (index) {
+    if (clearCommentAnchors) {
+      $(this).find('.comment-thread-anchor').removeAttr("id");
+      $(this).find('.comment-navigation-buttons').empty();
+    }
+
+    if ($(this).hasClass("d-none")) {
+      return;
+    }
+
+    let commentHolder = $(this).find(".comment-holder").first();
+    if (commentHolder.hasClass("comments-resolved") && commentHolder.css("display") != "block") {
+      return;
+    }
+    displayedCommentRows.push($(this));
+    if (returnFirst) {
+      return false;
+    }
+  });
+  return displayedCommentRows
+}
+
+/**
+ * gets the review and revision id of review from given uri, if they exist
+ * @param uri uri of api view page 
+ * @returns result dictionary of "reviewId" and "revisionId", if they exist; undefined otherwise
+ */
+export function getReviewAndRevisionIdFromUrl(uri) {
+  const regex = /.+(Review|Conversation|Revisions|Samples)\/([a-zA-Z0-9]+)(\?revisionId=([a-zA-Z0-9]+))?/;
+
+  const match = uri.match(regex);
+  const result = {}
+
+  if (match) {
+    result["reviewId"] = match[2];
+    result["revisionId"] = match[4];  // undefined if latest revision 
+  } 
+
+  return result;
+}
+
+export function getCommentsRow(id: string) {
+  return $(`.comment-row[data-line-id='${id}']`);
+}
+
+// side effect: creates a comment row if it doesn't already exist
+export function showCommentBox(id: string, classes: string = '', groupNo: string = '', moveFocus: boolean = true) {
+  let commentForm;
+  let commentsRow = getCommentsRow(id);
+  let commentRowClasses = "comment-row";
+  if (classes) {
+    commentRowClasses = `${commentRowClasses} ${classes}`;
+  }
+
+  if (commentsRow.length === 0) {
+    commentForm = createCommentForm(groupNo);
+    commentsRow =
+      $(`<tr class="${commentRowClasses}" data-line-id="${id}">`)
+        .append($("<td colspan=\"3\">")
+          .append(commentForm));
+
+    commentsRow.insertAfter(getDiagnosticsRow(id).get(0) || getCodeRow(id).get(0));
+  }
+  else {
+    // there is one or more comment rows - insert form
+    let replyArea = $(commentsRow).find(".review-thread-reply");
+    let targetReplyArea = replyArea.first();
+    let firstReplyId = targetReplyArea.attr("data-reply-id");
+    let insertAtBegining = false;
+
+    if (groupNo) {
+      replyArea.siblings(".comment-form").remove();
+      if (Number(groupNo) < Number(firstReplyId)) {
+        insertAtBegining = true;
+      }
+      else {
+        replyArea.each(function (index, value) {
+          let replyId = $(value).attr("data-reply-id");
+
+          if (replyId == groupNo) {
+            targetReplyArea = $(value);
+            return false;
+          }
+
+          if (Number(replyId) > Number(groupNo)) {
+            return false;
+          }
+
+          targetReplyArea = $(value);
+        });
+      }
+    }
+    else {
+      let rowGroupNo = getReplyGroupNo($(targetReplyArea));
+      if (rowGroupNo.length > 0) {
+        insertAtBegining = true;
+      }
+    }
+
+    commentForm = $(targetReplyArea).next();
+    if (!commentForm.hasClass("comment-form")) {
+      if (insertAtBegining) {
+        let commentThreadContent = $(targetReplyArea).closest(".comment-thread-contents");
+        $(createCommentForm(groupNo)).prependTo(commentThreadContent);
+      }
+      else {
+        commentForm = $(createCommentForm(groupNo)).insertAfter(targetReplyArea);
+      }
+    }
+    replyArea.hide();
+    commentForm.show();
+    commentsRow.show(); // ensure that entire comment row isn't being hidden
+  }
+
+  $(getDiagnosticsRow(id)).show(); // ensure that any code diagnostic for this row is shown in case it was previously hidden
+
+  // If comment checkbox is unchecked, show the icon for new comment
+  if (!($("#show-comments-checkbox").prop("checked"))) {
+    toggleCommentIcon(id, true);
+  }
+
+  if (moveFocus) {
+    commentForm.find(".new-thread-comment-text").focus();
+  }
+}
+
+function createCommentForm(groupNo: string = '') {
+  var commentForm = $("#js-comment-form-template").children().clone();
+  if (groupNo) {
+    commentForm.find("form .new-comment-content").prepend(`<span class="badge badge-pill badge-light mb-2"><small>ROW-${groupNo}</small></span>`);
+  }
+  return commentForm;
+}
+
+export function getDiagnosticsRow(id: string) {
+  return $(`.code-diagnostics[data-line-id='${id}']`);
+}
+
+export function getReplyGroupNo(sibling: JQuery<HTMLElement>) {
+  return $(sibling).prevAll("a").first().find("small");
+}
+
+export function getElementId(element: HTMLElement, idName: string = "data-line-id") {
+  return getParentData(element, idName);
+}
+
+export function getParentData(element: HTMLElement, name: string) {
+  return $(element).closest(`[${name}]`).attr(name);
+}

@@ -1384,7 +1384,7 @@ class CheckDocstringParameters(BaseChecker):
         function_decorators = node.decoratornames()
         try:
             returns = next(node.infer_call_result()).as_string()
-            if returns == "None":
+            if returns == "None" or returns == astroid.Uninferable:
                 return
         except (astroid.exceptions.InferenceError, AttributeError):
             # this function doesn't return anything, just return

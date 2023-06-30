@@ -120,4 +120,3 @@ jobs:
                 Ours: '@("specification", "custom-words.txt")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
-                

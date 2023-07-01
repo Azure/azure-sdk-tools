@@ -2,6 +2,7 @@ using System.CommandLine;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Model;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Options;
 using Azure.Sdk.Tools.Assets.MaintenanceTool.Scan;
+using Azure.Sdk.Tools.Assets.MaintenanceTool.Store;
 
 namespace Azure.Sdk.Tools.Assets.MaintenanceTool;
 
@@ -48,13 +49,25 @@ public class Program
 
     public static void Run(object commandObj)
     {
+        AssetsScanner scanner = new AssetsScanner();
+        AssetsBackupClient bkupClient = new AssetsBackupClient();
+
         switch (commandObj)
         {
-            case BaseOptions configOptions:
-                AssetsScanner scanner = new AssetsScanner();
-                var runConfig = new RunConfiguration(configOptions.ConfigLocation);
-                AssetsResultSet results = scanner.Scan(runConfig);
-                scanner.Save(results);
+            case ScanOptions configOptions:
+                var scanConfig = new RunConfiguration(configOptions.ConfigLocation);
+                AssetsResultSet scanResults = scanner.Scan(scanConfig);
+                scanner.Save(scanResults);
+
+                break;
+            case BackupOptions backupOptions:
+                var backupConfig = new RunConfiguration(backupOptions.ConfigLocation);
+                AssetsResultSet backupResultSet = scanner.Scan(backupConfig);
+                scanner.Save(backupResultSet);
+
+                var backedResultSet = bkupClient.Backup(backupResultSet);
+
+
 
                 break;
             default:
@@ -77,9 +90,17 @@ public class Program
         scanCommand.AddOption(configOption);
         scanCommand.SetHandler(
             (configOpts) => action(configOpts),
-            new BaseOptionsBinder(configOption)
+            new ScanOptionsBinder(configOption)
         );
         root.Add(scanCommand);
+
+        var backupCommand = new Command("backup", "Scan a set of repositories, then back-up each discovered tag. The prior-to-backup scanning is identical to that which is completed using the 'scan' command.");
+        scanCommand.AddOption(configOption);
+        scanCommand.SetHandler(
+            (configOpts) => action(configOpts),
+            new ConfigOptionsBinder(configOption)
+        );
+        root.Add(backupCommand);
 
         return root;
     }

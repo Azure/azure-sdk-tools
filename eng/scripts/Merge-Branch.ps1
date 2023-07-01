@@ -56,21 +56,30 @@ if ($LASTEXITCODE -and -not $mergeOutput.EndsWith('Automatic merge failed; fix c
 
 # update paths matching "theirs", except for "ours" and "merge", to the state in $SourceBranch
 if ($Theirs.Length) {
-    Write-Verbose "git restore -s $SourceBranch --staged --worktree --theirs -- $theirIncludes $ourExcludes $mergeExcludes"
-    git restore -s $SourceBranch --staged --worktree --theirs -- $theirIncludes $ourExcludes $mergeExcludes
+    Write-Verbose "git restore -s $SourceBranch --worktree --theirs -- $theirIncludes $ourExcludes $mergeExcludes"
+    git restore -s $SourceBranch --worktree --theirs -- $theirIncludes $ourExcludes $mergeExcludes
+    if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
+    Write-Verbose "git add -A"
+    git add -A
     if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
 }
 
 # update paths matching "ours", except for "merge", to their pre-merge state
 if ($Ours.Length) {
-    Write-Verbose "git restore -s (git rev-parse HEAD) --staged --worktree --theirs -- $ourIncludes $mergeExcludes"
-    git restore -s (git rev-parse HEAD) --staged --worktree --theirs -- $ourIncludes $mergeExcludes
+    Write-Verbose "git restore -s (git rev-parse HEAD) --worktree --theirs -- $ourIncludes $mergeExcludes"
+    git restore -s (git rev-parse HEAD) --worktree --theirs -- $ourIncludes $mergeExcludes
+    if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
+    Write-Verbose "git add -A"
+    git add -A
     if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
 }
 
 if ($AcceptTheirsForFinalMerge) {
-    Write-Verbose "git restore -s $SourceBranch --staged --worktree --theirs -- $mergeIncludes"
-    git restore -s $SourceBranch --staged --worktree --theirs -- $mergeIncludes
+    Write-Verbose "git restore -s $SourceBranch --worktree --theirs -- $mergeIncludes"
+    git restore -s $SourceBranch --worktree --theirs -- $mergeIncludes
+    if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
+    Write-Verbose "git add -A"
+    git add -A
     if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
 }
 else {

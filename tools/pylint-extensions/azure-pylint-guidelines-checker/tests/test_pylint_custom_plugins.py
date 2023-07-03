@@ -3507,3 +3507,30 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         )
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
+
+    def test_docstring_raises(self):
+        node = astroid.extract_node(
+            """
+            def function_foo():
+                '''
+                :raises: ValueError
+                '''
+                print("hello")
+                raise ValueError("hello")
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_raises_uninferable(self):
+        node = astroid.extract_node(
+            """
+            def function_foo():
+                '''
+                :raises: ValueError
+                '''
+                raise ValueError("hello")
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)

@@ -60,6 +60,13 @@ steps:
         $mergeBranch = (git rev-parse --abbrev-ref HEAD)
         $commitMessage = "Merge branch ${{ repo.value.Branch }} into ${{ target.key }}"
 
+        Write-Host "git diff --name-status --cached --exit-code"
+        git diff --name-status --cached --exit-code
+        if ($LASTEXITCODE -eq 0) {
+          Write-Host "No changed files in this merge so skipping pull request."
+          exit 0
+        }
+
         Write-Host "git -c user.name='azure-sdk' -c user.email='azuresdk@microsoft.com' commit -m $commitMessage"
         git -c user.name='azure-sdk' -c user.email='azuresdk@microsoft.com' commit -m $commitMessage
 

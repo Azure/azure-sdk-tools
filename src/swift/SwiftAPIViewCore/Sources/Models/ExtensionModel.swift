@@ -168,7 +168,14 @@ extension Array<ExtensionModel> {
         var resolved = [String: ExtensionModel]()
         for ext in self {
             if let match = resolved[ext.definitionId] {
-                match.members.append(contentsOf: ext.members)
+                let resolvedMembers = Dictionary(uniqueKeysWithValues: match.members.map { ($0.definitionId, $0) } )
+                for member in ext.members {
+                    if resolvedMembers[member.definitionId] != nil {
+                        continue
+                    } else {
+                        match.members.append(member)
+                    }
+                }
             } else {
                 resolved[ext.definitionId] = ext
             }

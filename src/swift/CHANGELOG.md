@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.2.2 (Unreleased)
+- Fix issue where extension members were duplicated.
+
 ## Version 0.2.1 (Unreleased)
 - Fix issue where framework-generated APIViews had an
   unstable order.

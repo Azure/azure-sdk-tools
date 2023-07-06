@@ -58,7 +58,8 @@ class FunctionNode(NodeEntityBase):
             self.node = None
         self._inspect()
         self.kwargs = OrderedDict(sorted(self.kwargs.items()))
-        self.namespace_id = self._regenerate_function_id()
+        # FIXME: Does this fix the thing?
+        # self.namespace_id = self._regenerate_function_id()
 
     def _regenerate_function_id(self):
         """

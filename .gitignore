@@ -496,6 +496,16 @@ tools/oav-traffic-converter/input-example/
 tools/oav-traffic-converter/output-example/
 tools/oav-traffic-converter/build/
 
+# assets reporting
+tools/assets-automation/assets-reporting/generated/
+tools/assets-automation/assets-reporting/summary.md
+tools/assets-automation/assets-reporting/python.md
+tools/assets-automation/assets-reporting/java.md
+tools/assets-automation/assets-reporting/go.md
+tools/assets-automation/assets-reporting/js.md
+tools/assets-automation/assets-reporting/.net.md
+tools/assets-automation/assets-reporting/cpp.md
+
 # ios
 src/swift/*.xcworkspace/xcuserdata/
 src/swift/**/*.xcodeproj/xcuserdata/

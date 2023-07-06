@@ -64,15 +64,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public GitStore()
         {
             _consoleWrapper = new ConsoleWrapper();
+            BreadCrumb.RefreshLocalCache(Assets);
         }
 
         public GitStore(IConsoleWrapper consoleWrapper)
         {
             _consoleWrapper = consoleWrapper;
+            BreadCrumb.RefreshLocalCache(Assets);
         }
 
         public GitStore(GitProcessHandler processHandler) {
             GitHandler = processHandler;
+            BreadCrumb.RefreshLocalCache(Assets);
         }
 
         #region push, reset, restore, and other asset repo implementations

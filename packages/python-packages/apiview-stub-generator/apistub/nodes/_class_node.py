@@ -174,10 +174,6 @@ class ClassNode(NodeEntityBase):
                         overload_nodes.append(overload_node)
                 except AttributeError:
                     continue
-        # Append a numeric tag to overloads to distinguish them from one another.
-        # This will break down if overloads are moved around in the source file.
-        for x, overload in enumerate(overload_nodes):
-            overload.namespace_id = self.namespace_id + f"_{x+1}"
         return overload_nodes
 
     def _inspect(self):
@@ -215,7 +211,11 @@ class ClassNode(NodeEntityBase):
                 if not name.startswith("_") or name.startswith("__"):
                     func_node = FunctionNode(self.namespace, self, obj=child_obj)
                     func_overloads = [x for x in overloads if x.name == func_node.name]
-                    for overload in func_overloads:
+
+                    # Append a numeric tag to overloads to distinguish them from one another.
+                    # This will break down if overloads are moved around in the source file.
+                    for x, overload in enumerate(func_overloads):
+                        overload.namespace_id = overload.namespace_id + f"_{x+1}"
                         self.child_nodes.append(overload)
                     self.child_nodes.append(func_node)
             elif name == "__annotations__":

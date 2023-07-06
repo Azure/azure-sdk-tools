@@ -25,7 +25,7 @@ class EnumNode(NodeEntityBase):
         apiview.add_punctuation("=")
         apiview.add_space()
         if isinstance(self.value, str):
-            apiview.add_stringliteral(self.value)
+            apiview.add_string_literal(self.value)
         else:
             apiview.add_literal(str(self.value))
         for err in self.pylint_errors:

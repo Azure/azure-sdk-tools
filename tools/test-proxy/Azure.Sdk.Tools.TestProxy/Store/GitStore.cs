@@ -737,11 +737,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 File.WriteAllText(config.AssetsJsonLocation.ToString(), content);
             }
         }
-
-        public Task SetContext(string targetDirectory)
-        {
-            throw new NotImplementedException();
-        }
         #endregion
     }
 }

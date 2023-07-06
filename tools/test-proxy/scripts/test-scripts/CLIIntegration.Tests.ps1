@@ -506,6 +506,56 @@ Describe "AssetsModuleTests" {
                 }
             }
         }
+        It "Should restore, make a change, then restore again and maintain the changed files." {
+            if ($env:CLI_TEST_WITH_DOCKER) {
+                Set-ItResult -Skipped
+            }
+            else {
+                $testGuid = [Guid]::NewGuid()
+                $created_tag_prefix = "test_$testGuid"
+                $creationPath = Join-Path "sdk" "keyvault" "azure-keyvault-keys" "tests" "recordings"
+                $file1 = Join-Path $creationPath "file1.txt"
+                $file2 = Join-Path $creationPath "file2.txt"
+                $file3 = Join-Path $creationPath "file3.txt"
+                $recordingJson = [PSCustomObject]@{
+                    AssetsRepo           = "Azure/azure-sdk-assets-integration"
+                    AssetsRepoPrefixPath = ""
+                    AssetsRepoId         = ""
+                    TagPrefix            = $created_tag_prefix
+                    Tag                  = ""
+                }
+
+                $assetsJsonRelativePath = Join-Path "sdk" "keyvault" "azure-keyvault-keys" "assets.json"
+
+                $files = @(
+                    $assetsJsonRelativePath
+                )
+                $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $false
+
+                $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $LASTEXITCODE | Should -Be 0
+
+                $localAssetsFilePath = Join-Path $testFolder ".assets"
+                $assetsFolder = $(Get-ChildItem $localAssetsFilePath -Directory)[0].FullName
+                mkdir -p $(Join-Path $assetsFolder $creationPath)
+
+                # Create new files. These are in a predictable location with predicatable content so we can generate the same SHA twice in a row.
+                Edit-FileVersion -FilePath $assetsFolder -FileName $file1 -Version 3
+                Edit-FileVersion -FilePath $assetsFolder -FileName $file2 -Version 3
+                Edit-FileVersion -FilePath $assetsFolder -FileName $file3 -Version 3
+                
+                # now lets restore again
+                $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $LASTEXITCODE | Should -Be 0
+
+                # same file updates. we should still have these same files around!
+                Test-FileVersion -FilePath $assetsFolder -FileName $file1 -ExpectedVersion 3
+                Test-FileVersion -FilePath $assetsFolder -FileName $file2 -ExpectedVersion 3
+                Test-FileVersion -FilePath $assetsFolder -FileName $file3 -ExpectedVersion 3
+            }
+        }
         AfterEach {
             Remove-Test-Folder $testFolder
             Remove-Integration-Tag $updatedAssets

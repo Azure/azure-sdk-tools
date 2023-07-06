@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.8 (UNRELEASED)
+Display `--source-url` as an actual clickable link.
+
 ## Version 0.3.7 (2023-03-09)
 Fix incorrect type annotation.
 Update to follow best practices for accessing '__annotations__'.

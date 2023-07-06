@@ -170,13 +170,9 @@ class ApiView:
         self._add_type_token(type_name, line_id)
 
     def add_link(self, url):
-        tokens = [
-            Token(kind=TokenKind.ExternalLinkStart),
-            Token(url),
-            Token(kind=TokenKind.ExternalLinkEnd)
-        ]
-        for token in tokens:
-            self.add_token(token)
+        self.add_token(Token(url, TokenKind.ExternalLinkStart))
+        self.add_token(Token(url))
+        self.add_token(Token(kind=TokenKind.ExternalLinkEnd))
 
     def _add_token_for_type_name(self, type_name, line_id = None):
         logging.debug("Generating tokens for type name {}".format(type_name))

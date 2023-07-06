@@ -106,9 +106,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             });
         }
 
-        public void RefreshLocalCache(ConcurrentDictionary<string, string> localCache)
+        public void RefreshLocalCache(ConcurrentDictionary<string, string> localCache, GitAssetsConfiguration config)
         {
-            var breadLocation = GetBreadCrumbLocation(new GitAssetsConfiguration());
+            var breadLocation = GetBreadCrumbLocation(config);
 
             if (File.Exists(breadLocation))
             {

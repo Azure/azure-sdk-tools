@@ -40,6 +40,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         // variables that GIT recognizes, this is on purpose.
         public static readonly string GIT_COMMIT_OWNER_ENV_VAR = "GIT_COMMIT_OWNER";
         public static readonly string GIT_COMMIT_EMAIL_ENV_VAR = "GIT_COMMIT_EMAIL";
+        private bool LocalCacheRefreshed = false;
 
         public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
 
@@ -64,18 +65,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public GitStore()
         {
             _consoleWrapper = new ConsoleWrapper();
-            BreadCrumb.RefreshLocalCache(Assets);
         }
 
         public GitStore(IConsoleWrapper consoleWrapper)
         {
             _consoleWrapper = consoleWrapper;
-            BreadCrumb.RefreshLocalCache(Assets);
         }
 
         public GitStore(GitProcessHandler processHandler) {
             GitHandler = processHandler;
-            BreadCrumb.RefreshLocalCache(Assets);
         }
 
         #region push, reset, restore, and other asset repo implementations
@@ -173,6 +171,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public async Task<string> Restore(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
+
             var initialized = IsAssetsRepoInitialized(config);
 
             if (!initialized)
@@ -453,8 +452,24 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
+        /// <summary>
+        /// Verifies whether or not a local repo has initialized for the targeted assets configuration
+        /// </summary>
+        /// <param name="config"></param>
         public bool IsAssetsRepoInitialized(GitAssetsConfiguration config)
         {
+            // we have to ensure that multiple threads hitting this same segment of code won't stomp on each other
+            if (!LocalCacheRefreshed)
+            {
+                var breadCrumbQueue = InitTasks.GetOrAdd("breadcrumbload", new TaskQueue());
+                breadCrumbQueue.Enqueue(() =>
+                {
+
+                    BreadCrumb.RefreshLocalCache(Assets, config);
+                    LocalCacheRefreshed = true;
+                });
+            }
+
             if (Assets.ContainsKey(config.AssetsJsonRelativeLocation.ToString()))
             {
                 return true;
@@ -721,6 +736,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 }
                 File.WriteAllText(config.AssetsJsonLocation.ToString(), content);
             }
+        }
+
+        public Task SetContext(string targetDirectory)
+        {
+            throw new NotImplementedException();
         }
         #endregion
     }

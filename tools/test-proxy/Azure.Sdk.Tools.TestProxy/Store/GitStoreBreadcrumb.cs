@@ -108,13 +108,17 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public void RefreshLocalCache(ConcurrentDictionary<string, string> localCache)
         {
+            var breadLocation = GetBreadCrumbLocation(new GitAssetsConfiguration());
 
-            var readLines = File.ReadAllLines(GetBreadCrumbLocation(new GitAssetsConfiguration()));
-            var lines = readLines.Select(x => new BreadcrumbLine(x)).ToDictionary(x => x.PathToAssetsJson, x => x);
-
-            foreach( var line in lines)
+            if (File.Exists(breadLocation))
             {
-                localCache.AddOrUpdate(line.Value.PathToAssetsJson, line.Value.Tag, (key, oldValue) => line.Value.Tag);
+                var readLines = File.ReadAllLines(breadLocation);
+                var lines = readLines.Select(x => new BreadcrumbLine(x)).ToDictionary(x => x.PathToAssetsJson, x => x);
+
+                foreach (var line in lines)
+                {
+                    localCache.AddOrUpdate(line.Value.PathToAssetsJson, line.Value.Tag, (key, oldValue) => line.Value.Tag);
+                }
             }
         }
     }

@@ -57,7 +57,7 @@ class ArgType:
         if default is not None:
             apiview.add_punctuation("=", True, True)
             if isinstance(default, str) and default not in SPECIAL_DEFAULT_VALUES:
-                apiview.add_stringliteral(default)
+                apiview.add_string_literal(default)
             else:
                 if isinstance(default, astroid.node_classes.Name):
                     value = default.name

@@ -1,5 +1,9 @@
 # Release History
 
+## Version 0.3.8 (2023-07-06)
+Display `--source-url` as an actual clickable link.
+Fix issue with line ids in diffs so that the entire signature doesn't turn red if something is changed. 
+
 ## Version 0.3.7 (2023-03-09)
 Fix incorrect type annotation.
 Update to follow best practices for accessing '__annotations__'.

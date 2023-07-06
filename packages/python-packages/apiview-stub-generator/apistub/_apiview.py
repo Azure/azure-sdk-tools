@@ -3,6 +3,7 @@ import logging
 import re
 import os
 import platform
+from typing import Optional
 
 from ._node_index import NodeIndex
 from ._token import Token
@@ -57,7 +58,8 @@ class ApiView:
         self.add_line_marker("GLOBAL")
         if source_url:
             self.set_blank_lines(1)
-            self.add_literal(f"# Source URL: {source_url}")
+            self.add_literal("# Source URL: ")
+            self.add_link(source_url)
         self.add_token(Token("", TokenKind.SkipDiffRangeEnd))
         self.set_blank_lines(2)
 
@@ -73,10 +75,10 @@ class ApiView:
         """End current group by moving indent to left
         """
         if not self.indent:
-            raise ValueError("Invalid intendation")
+            raise ValueError("Invalid indentation")
         self.indent -= 1
 
-    def add_whitespace(self, count: int = None):
+    def add_whitespace(self, count: Optional[int] = None):
         """ Inject appropriate whitespace for indentation,
             or inject a specific number of whitespace characters.
         """
@@ -86,7 +88,7 @@ class ApiView:
             self.add_token(Token(" " * (count)))
 
     def add_space(self):
-        """ Used to add a single space. Cannot add mutliple spaces.
+        """ Used to add a single space. Cannot add multiple spaces.
         """
         if self.tokens[-1].kind != TokenKind.Whitespace:
             self.add_token(Token(" ", TokenKind.Whitespace))
@@ -158,7 +160,7 @@ class ApiView:
 
         type_name = type_name.replace(":class:", "")
         logging.debug("Processing type {}".format(type_name))
-        # Check if multiple types are listed with 'or' seperator
+        # Check if multiple types are listed with 'or' separator
         # Encode multiple types with or separator into Union
         if TYPE_OR_SEPARATOR in type_name:
             types = [t.strip() for t in type_name.split(TYPE_OR_SEPARATOR) if t != TYPE_OR_SEPARATOR]
@@ -167,6 +169,10 @@ class ApiView:
 
         self._add_type_token(type_name, line_id)
 
+    def add_link(self, url):
+        self.add_token(Token(url, TokenKind.ExternalLinkStart))
+        self.add_token(Token(url))
+        self.add_token(Token(kind=TokenKind.ExternalLinkEnd))
 
     def _add_token_for_type_name(self, type_name, line_id = None):
         logging.debug("Generating tokens for type name {}".format(type_name))
@@ -213,7 +219,7 @@ class ApiView:
         self.add_token(token)
 
 
-    def add_stringliteral(self, value):
+    def add_string_literal(self, value):
         self.add_token(Token("\u0022{}\u0022".format(value), TokenKind.StringLiteral))
 
 

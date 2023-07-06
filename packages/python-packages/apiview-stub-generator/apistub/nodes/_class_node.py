@@ -174,6 +174,10 @@ class ClassNode(NodeEntityBase):
                         overload_nodes.append(overload_node)
                 except AttributeError:
                     continue
+        # Append a numeric tag to overloads to distinguish them from one another.
+        # This will break down if overloads are moved around in the source file.
+        for x, overload in enumerate(overload_nodes):
+            overload.namespace_id = self.namespace_id + f"_{x+1}"
         return overload_nodes
 
     def _inspect(self):

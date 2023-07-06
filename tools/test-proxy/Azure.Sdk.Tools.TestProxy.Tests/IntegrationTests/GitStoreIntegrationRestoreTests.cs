@@ -464,7 +464,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Verify that the same set of 3 files is still present!
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath).Count());
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file1.txt", 1));
-                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 1));
+                Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file3.txt", 2));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath, "file5.txt", 1));
                 await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }

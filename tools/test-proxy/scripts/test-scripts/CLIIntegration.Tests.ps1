@@ -453,7 +453,7 @@ Describe "AssetsModuleTests" {
                         $assetsJsonRelativePath
                     )
                     $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $false
-    
+
                     $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
                     Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
                     $LASTEXITCODE | Should -Be 0
@@ -554,6 +554,59 @@ Describe "AssetsModuleTests" {
                 Test-FileVersion -FilePath $assetsFolder -FileName $file1 -ExpectedVersion 3
                 Test-FileVersion -FilePath $assetsFolder -FileName $file2 -ExpectedVersion 3
                 Test-FileVersion -FilePath $assetsFolder -FileName $file3 -ExpectedVersion 3
+            }
+        }
+        It "Should restore, make a change, then restore a different tag (same assets.json) and have pending changes properly discarded." {
+            if ($env:CLI_TEST_WITH_DOCKER) {
+                Set-ItResult -Skipped
+            }
+            else {
+
+                $creationPath = Join-Path "sdk" "tables" "azure-data-tables" "tests" "recordings"
+                $file1 = Join-Path $creationPath "file1.txt"
+                $file2 = Join-Path $creationPath "file2.txt"
+                $file3 = Join-Path $creationPath "file3.txt"
+                $recordingJson = [PSCustomObject]@{
+                    AssetsRepo           = "Azure/azure-sdk-assets-integration"
+                    AssetsRepoPrefixPath = "python"
+                    TagPrefix            = "python/tables"
+                    Tag                  = "python/tables_0ec485b8d6"
+                }
+
+                $assetsJsonRelativePath = Join-Path "sdk" "tables" "azure-data-tables" "assets.json"
+
+                $files = @(
+                    $assetsJsonRelativePath
+                )
+                $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $false
+
+                # restore a set of files
+                $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $LASTEXITCODE | Should -Be 0
+                $localAssetsFilePath = Join-Path $testFolder ".assets"
+                $assetsFolder = $(Get-ChildItem $localAssetsFilePath -Directory)[0].FullName
+                mkdir -p $(Join-Path $assetsFolder $creationPath)
+
+                # Create new files. These are in a predictable location with predicatable content so we can be certain they are around
+                Edit-FileVersion -FilePath $assetsFolder -FileName $file1 -Version 3
+                Edit-FileVersion -FilePath $assetsFolder -FileName $file2 -Version 3
+                Edit-FileVersion -FilePath $assetsFolder -FileName $file3 -Version 3
+               
+                # now lets modify the targeted tag. this simulates a user checking out a different branch or commit in their language repo
+                $assetsJsonLocation = Join-Path $testFolder $assetsJsonRelativePath
+                $recordingJson.Tag = "python/tables_fc54d0"
+                $recordingJson | ConvertTo-Json | Set-Content -Path $assetsJsonLocation | Out-Null
+
+                # now lets restore again, this should discard pending changes
+                $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $LASTEXITCODE | Should -Be 0
+
+                
+                Test-Path -Path (Join-Path $assetsFolder $file1) | Should -Be $false
+                Test-Path -Path (Join-Path $assetsFolder $file2) | Should -Be $false
+                Test-Path -Path (Join-Path $assetsFolder $file3) | Should -Be $false
             }
         }
         AfterEach {

@@ -25,46 +25,13 @@ var workbookContent = {
         ]
         parameters: [
           {
-            id: '8f132ca2-e11d-4ec4-b2cf-e3d33a7cca0b'
-            version: 'KqlParameterItem/1.0'
-            name: 'PodUidParameter'
-            label: 'Pod'
-            type: 2
-            description: 'Pod+Container name for metrics'
-            isRequired: true
-            multiSelect: true
-            quote: '\''
-            delimiter: ','
-            query: 'Perf \r\n| where ObjectName == "K8SContainer"\r\n| distinct InstanceName\r\n| extend ResourceId = split(InstanceName, \'/\')\r\n| extend PodUid = strcat(ResourceId[-2])\r\n| extend ContainerName = strcat(ResourceId[-1])\r\n| distinct ContainerName, PodUid\r\n// Exclude init containers\r\n| where ContainerName !startswith "init-"\r\n| join kind=inner (\r\n  KubePodInventory\r\n  | where Namespace != "kube-system" and Namespace != "stress-infra"\r\n  | distinct Namespace, Name, PodUid\r\n) on PodUid\r\n| project value = PodUid, label = Name, group = Namespace\r\n'
-            crossComponentResources: [
-              logAnalyticsResource
-            ]
-            typeSettings: {
-              additionalResourceOptions: [
-                'value::all'
-              ]
-              showDefault: false
-            }
-            timeContext: {
-              durationMs: 3600000
-            }
-            queryType: 0
-            resourceType: 'microsoft.operationalinsights/workspaces'
-          }
-          {
-            id: '7f1f155e-7592-404a-a809-10d06ba6eaf7'
+            id: 'df8aa152-61f4-47b9-a013-bdd4389be1da'
             version: 'KqlParameterItem/1.0'
             name: 'TimeRange'
             type: 4
             isRequired: true
-            value: {
-              durationMs: 14400000
-            }
             typeSettings: {
               selectableValues: [
-                {
-                  durationMs: 300000
-                }
                 {
                   durationMs: 1800000
                 }
@@ -86,19 +53,82 @@ var workbookContent = {
                 {
                   durationMs: 604800000
                 }
+                {
+                  durationMs: 2592000000
+                }
               ]
               allowCustom: true
             }
             timeContext: {
-              durationMs: 3600000
+              durationMs: 604800000
             }
+            value: {
+              durationMs: 86400000
+            }
+          }
+          {
+            id: '1564be20-11df-4136-8075-032d684c1c37'
+            version: 'KqlParameterItem/1.0'
+            name: 'NamespaceParameter'
+            label: 'Namespace'
+            type: 2
+            isRequired: true
+            multiSelect: true
+            quote: '\''
+            delimiter: ','
+            query: 'KubePodInventory\r\n| distinct Namespace\r\n| where Namespace !in ("kube-system", "kubernetes-dashboard", "gatekeeper-system")'
+            crossComponentResources: [
+              logAnalyticsResource
+            ]
+            typeSettings: {
+              additionalResourceOptions: [
+                'value::all'
+              ]
+              showDefault: false
+            }
+            timeContext: {
+              durationMs: 0
+            }
+            timeContextFromParameter: 'TimeRange'
+            queryType: 0
+            resourceType: 'microsoft.operationalinsights/workspaces'
+            value: null
+          }
+          {
+            id: '2ce95e10-b3d6-4545-8b01-37bee8c5db89'
+            version: 'KqlParameterItem/1.0'
+            name: 'PodUidParameter'
+            label: 'Pod'
+            type: 2
+            description: 'Pod+Container name for metrics'
+            isRequired: true
+            multiSelect: true
+            quote: '\''
+            delimiter: ','
+            query: 'Perf \r\n| where ObjectName == "K8SContainer"\r\n| extend DayBin = bin(TimeGenerated, 3d)\r\n| summarize arg_max(TimeGenerated, *) by InstanceName\r\n| extend ResourceId = split(InstanceName, "/")\r\n| extend PodUid = strcat(ResourceId[-2])\r\n| extend ContainerName = strcat(ResourceId[-1])\r\n// Exclude init containers\r\n| where ContainerName !startswith "init-"\r\n| join kind=inner (\r\n  KubePodInventory\r\n  | where Namespace in ({NamespaceParameter})\r\n  | distinct Namespace, Name, PodUid\r\n) on PodUid\r\n| extend day = tostring(format_datetime(DayBin, "MM/dd"))\r\n| sort by day desc\r\n| project value = PodUid, label = Name, group = day\r\n'
+            crossComponentResources: [
+              logAnalyticsResource
+            ]
+            typeSettings: {
+              additionalResourceOptions: [
+                'value::all'
+              ]
+              showDefault: false
+            }
+            timeContext: {
+              durationMs: 0
+            }
+            timeContextFromParameter: 'TimeRange'
+            queryType: 0
+            resourceType: 'microsoft.operationalinsights/workspaces'
+            value: null
           }
         ]
         style: 'pills'
         queryType: 0
         resourceType: 'microsoft.operationalinsights/workspaces'
       }
-      name: 'parameters - 1'
+      name: 'parameters - 5'
     }
     {
       type: 12

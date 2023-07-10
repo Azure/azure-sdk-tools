@@ -1,12 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>swaggerAPIParser</ToolCommandName>
-    <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>swagger_api_parser</RootNamespace>
-    <VersionPrefix>1.0.8</VersionPrefix>
+    <TargetFramework>net7.0</TargetFramework>
+    <RootNamespace>SwaggerApiParser</RootNamespace>
+    <VersionPrefix>1.1.0</VersionPrefix>
     <AssemblyName>Azure.Sdk.Tools.SwaggerApiParser</AssemblyName>
     <SignAssembly>True</SignAssembly>
     <InformationalVersion>$(OfficialBuildId)</InformationalVersion>
@@ -22,14 +22,17 @@
   
   <ItemGroup>
     <Compile Remove="SwaggerApiParserTest\**" />
+    <Compile Remove="SwaggerSpec\**" />
     <EmbeddedResource Remove="SwaggerApiParserTest\**" />
+    <EmbeddedResource Remove="SwaggerSpec\**" />
     <None Remove="SwaggerApiParserTest\**" />
+    <None Remove="SwaggerSpec\**" />
   </ItemGroup>
 
 
   <ItemGroup>
     <PackageReference Include="Markdig.Signed" Version="0.30.2" />
-    <PackageReference Include="NuGet.CommandLine" Version="6.2.2">
+    <PackageReference Include="NuGet.CommandLine" Version="6.2.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

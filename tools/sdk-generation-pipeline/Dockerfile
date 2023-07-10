@@ -17,7 +17,7 @@ ENV M2_HOME /usr/maven
 ENV MAVEN_HOME=/usr/maven
 ENV PATH $M2_HOME/bin:$PATH
 RUN mkdir -p "$MAVEN_HOME"
-RUN curl -fL -o maven.tgz https://dlcdn.apache.org/maven/maven-3/3.8.7/binaries/apache-maven-3.8.7-bin.tar.gz
+RUN curl -fL -o maven.tgz https://dlcdn.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
 RUN tar --extract --file maven.tgz --directory "$MAVEN_HOME" --strip-components 1 --no-same-owner
 RUN rm maven.tgz
 

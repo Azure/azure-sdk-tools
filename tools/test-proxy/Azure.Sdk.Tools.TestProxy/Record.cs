@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
@@ -26,18 +26,30 @@ namespace Azure.Sdk.Tools.TestProxy
             _logger = loggerFactory.CreateLogger<Record>();
         }
 
+
         [HttpPost]
         public async Task Start()
         {
             var body = await HttpRequestInteractions.GetBody(Request);
 
-            string file = HttpRequestInteractions.GetBodyKey(body, "x-recording-file", allowNulls: true);
+            if (body == null)
+            {
+                await _recordingHandler.StartRecordingAsync(null, Response, null);
+            }
+            else
+            {
+                string file = HttpRequestInteractions.GetBodyKey(body, "x-recording-file", allowNulls: false);
+                var assetsJson = RecordingHandler.GetAssetsJsonLocation(
+                    HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true),
+                    _recordingHandler.ContextDirectory);
 
-            var assetsJson = RecordingHandler.GetAssetsJsonLocation(
-                HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true),
-                _recordingHandler.ContextDirectory);
+                if (string.IsNullOrWhiteSpace(file))
+                {
+                    throw new HttpException(HttpStatusCode.BadRequest, "If providing a body to /Record/Start, the key 'x-recording-file' must be provided. If attempting to start an in-memory recording, provide NO body.");
+                }
 
-            await _recordingHandler.StartRecordingAsync(file, Response, assetsJson);
+                await _recordingHandler.StartRecordingAsync(file, Response, assetsJson);
+            }
         }
 
 

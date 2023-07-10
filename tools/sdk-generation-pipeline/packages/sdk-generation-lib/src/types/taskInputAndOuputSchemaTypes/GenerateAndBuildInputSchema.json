@@ -23,8 +23,8 @@
       // Related readme.md files that pending generation.
       "type": "string"
     },
-    "relatedCadlProjectFolder": {
-      // Related cadl project folder that pending generation.
+    "relatedTypeSpecProjectFolder": {
+      // Related typespec project folder that pending generation.
       "type": "string"
     },
     "serviceType": {

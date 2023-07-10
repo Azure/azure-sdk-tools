@@ -1,0 +1,44 @@
+trigger: none
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+stages:
+  - stage: IntegrationTests
+    displayName: "Integration Tests"
+    jobs:
+    - job: Solution_Integration_Test
+      displayName: Run Solution Tests
+
+      strategy:
+        matrix:
+          Windows:
+            Pool: 'azsdk-pool-mms-win-2022-general'
+            OS: 'Windows'
+          Linux:
+            Pool: azsdk-pool-mms-ubuntu-2204-general
+            OS: 'Linux'
+
+      pool:
+        name: $(Pool)
+
+      steps:
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+        - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) --logger trx $(Build.SourcesDirectory)/tools/assets-automation/assets-maintenance-tool/'
+          displayName: 'Test'
+          env:
+            DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+            DOTNET_CLI_TELEMETRY_OPTOUT: 1
+            DOTNET_MULTILEVEL_LOOKUP: 0
+            GIT_TOKEN: $(azuresdk-github-pat)
+            GIT_COMMIT_OWNER: azure-sdk
+            GIT_COMMIT_EMAIL: azuresdk@microsoft.com
+
+        - task: PublishTestResults@2
+          condition: succeededOrFailed()
+          inputs:
+            testResultsFiles: '**/*.trx'
+            testRunTitle: '$(OS) Maintenance tool tests against .NET'
+            testResultsFormat: 'VSTest'
+            mergeTestResults: true

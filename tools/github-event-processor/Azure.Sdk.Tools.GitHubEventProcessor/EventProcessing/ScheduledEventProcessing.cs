@@ -14,63 +14,68 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
     public class ScheduledEventProcessing
     {
-        // Each repository has rate limit for actions of 1000/hour. Because scheduled tasks have the potential
-        // to cause a large number of updates, put an initial limit on the number of updates a scheduled task
-        // can make.
-        private static int ScheduledTaskUpdateLimit = 100;
-        // There's a secondary limit to the search API which is 1000 items. The default page size for the search
-        // is 100 items (which is also the max per page)
-        private static int MaxSearchResults = 1000;
-
         /// <summary>
-        /// 
+        /// Scheduled events, unlike regular actions, need to have which scheduled event to run, passed in otherwise, it require
+        /// looking at the cron schedule to determine the event. Doing it this way means if the schedule changes only the cron
+        /// in the yml file needs to change rather than having to coordinate actions processing changes with the yml update. 
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
-        /// <param name="cronTaskToRun">String, the scheduled even</param>
+        /// <param name="cronTaskToRun">String, the scheduled event</param>
         public static async Task ProcessScheduledEvent(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload, string cronTaskToRun)
         {
-            switch (cronTaskToRun)
+            // Scheduled events can make multiple calls to SearchIssues due to pagination. Any call to SearchIssues can
+            // run into a SecondaryRateLimitExceededException, regardless of the page, and there could be pending updates
+            // from previous pages that were processed. Because of this, the call to process pending updates should be made
+            // regardless of whether there is an exception or not. If there aren't any updates then the call is effectively
+            // a no-op so it's good either way.
+            try
             {
-                case RulesConstants.CloseAddressedIssues:
-                    {
-                        await CloseAddressedIssues(gitHubEventClient, scheduledEventPayload);
-                        break;
-                    }
-                case RulesConstants.CloseStaleIssues:
-                    {
-                        await CloseStaleIssues(gitHubEventClient, scheduledEventPayload);
-                        break;
-                    }
-                case RulesConstants.CloseStalePullRequests:
-                    {
-                        await CloseStalePullRequests(gitHubEventClient, scheduledEventPayload);
-                        break;
-                    }
-                case RulesConstants.IdentifyStaleIssues:
-                    {
-                        await IdentifyStaleIssues(gitHubEventClient, scheduledEventPayload);
-                        break;
-                    }
-                case RulesConstants.IdentifyStalePullRequests:
-                    {
-                        await IdentifyStalePullRequests(gitHubEventClient, scheduledEventPayload);
-                        break;
-                    }
-                case RulesConstants.LockClosedIssues:
-                    {
-                        await LockClosedIssues(gitHubEventClient, scheduledEventPayload);
-                        break;
-                    }
-                default:
-                    {
-                        Console.WriteLine($"{cronTaskToRun} is not valid Scheduled Event rule. Please ensure the scheduled event yml is correctly passing in the correct rules constant.");
-                        break;
-                    }
+                switch (cronTaskToRun)
+                {
+                    case RulesConstants.CloseAddressedIssues:
+                        {
+                            await CloseAddressedIssues(gitHubEventClient, scheduledEventPayload);
+                            break;
+                        }
+                    case RulesConstants.CloseStaleIssues:
+                        {
+                            await CloseStaleIssues(gitHubEventClient, scheduledEventPayload);
+                            break;
+                        }
+                    case RulesConstants.CloseStalePullRequests:
+                        {
+                            await CloseStalePullRequests(gitHubEventClient, scheduledEventPayload);
+                            break;
+                        }
+                    case RulesConstants.IdentifyStaleIssues:
+                        {
+                            await IdentifyStaleIssues(gitHubEventClient, scheduledEventPayload);
+                            break;
+                        }
+                    case RulesConstants.IdentifyStalePullRequests:
+                        {
+                            await IdentifyStalePullRequests(gitHubEventClient, scheduledEventPayload);
+                            break;
+                        }
+                    case RulesConstants.LockClosedIssues:
+                        {
+                            await LockClosedIssues(gitHubEventClient, scheduledEventPayload);
+                            break;
+                        }
+                    default:
+                        {
+                            Console.WriteLine($"{cronTaskToRun} is not valid Scheduled Event rule. Please ensure the scheduled event yml is correctly passing in the correct rules constant.");
+                            break;
+                        }
+                }
             }
-            // The second argument is IssueOrPullRequestNumber which isn't applicable to scheduled events (cron tasks)
-            // since they're not going to be changing a single IssueUpdate like rules processing does.
-            await gitHubEventClient.ProcessPendingUpdates(scheduledEventPayload.Repository.Id);
+            finally
+            {
+                // The second argument is IssueOrPullRequestNumber which isn't applicable to scheduled events (cron tasks)
+                // since they're not going to be changing a single IssueUpdate like rules processing does.
+                await gitHubEventClient.ProcessPendingUpdates(scheduledEventPayload.Repository.Id);
+            }
         }
 
         /// <summary>
@@ -89,6 +94,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.CloseAddressedIssues))
             {
+                int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 List<string> includeLabels = new List<string>
                 {
@@ -106,7 +112,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 int numUpdates = 0;
                 // In theory, maximumPage will be 10 since there's 100 results per-page returned by default but
                 // this ensures that if we opt to change the page size
-                int maximumPage = MaxSearchResults / request.PerPage;
+                int maximumPage = RateLimitConstants.SearchIssuesRateLimit / request.PerPage;
                 for (request.Page = 1; request.Page <= maximumPage; request.Page++)
                 {
                     SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
@@ -167,6 +173,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.CloseStaleIssues))
             {
+                int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
+
                 List<string> includeLabels = new List<string>
                 {
                     LabelConstants.NeedsAuthorFeedback,
@@ -185,7 +193,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 int numUpdates = 0;
                 // In theory, maximumPage will be 10 since there's 100 results per-page returned by default but
                 // this ensures that if we opt to change the page size
-                int maximumPage = MaxSearchResults / request.PerPage;
+                int maximumPage = RateLimitConstants.SearchIssuesRateLimit / request.PerPage;
                 for (request.Page = 1;request.Page <= maximumPage; request.Page++)
                 {
                     SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
@@ -241,6 +249,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.CloseStalePullRequests))
             {
+                int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 List<string> includeLabels = new List<string>
                 {
@@ -258,7 +267,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 int numUpdates = 0;
                 // In theory, maximumPage will be 10 since there's 100 results per-page returned by default but
                 // this ensures that if we opt to change the page size
-                int maximumPage = MaxSearchResults / request.PerPage;
+                int maximumPage = RateLimitConstants.SearchIssuesRateLimit / request.PerPage;
                 for (request.Page = 1; request.Page <= maximumPage; request.Page++)
                 {
                     SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
@@ -319,6 +328,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.IdentifyStalePullRequests))
             {
+                int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 List<string> excludeLabels = new List<string>
                 {
@@ -337,7 +347,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 int numUpdates = 0;
                 // In theory, maximumPage will be 10 since there's 100 results per-page returned by default but
                 // this ensures that if we opt to change the page size
-                int maximumPage = MaxSearchResults / request.PerPage;
+                int maximumPage = RateLimitConstants.SearchIssuesRateLimit / request.PerPage;
+                
                 for (request.Page = 1; request.Page <= maximumPage; request.Page++)
                 {
                     SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
@@ -398,6 +409,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.IdentifyStaleIssues))
             {
+                int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 List<string> includeLabels = new List<string>
                 {
@@ -421,7 +433,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 int numUpdates = 0;
                 // In theory, maximumPage will be 10 since there's 100 results per-page returned by default but
                 // this ensures that if we opt to change the page size
-                int maximumPage = MaxSearchResults / request.PerPage;
+                int maximumPage = RateLimitConstants.SearchIssuesRateLimit / request.PerPage;
                 for (request.Page = 1; request.Page <= maximumPage; request.Page++)
                 {
                     SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);
@@ -480,6 +492,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         {
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.LockClosedIssues))
             {
+                int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(
                     scheduledEventPayload.Repository.Owner.Login,
@@ -492,7 +505,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 int numUpdates = 0;
                 // In theory, maximumPage will be 10 since there's 100 results per-page returned by default but
                 // this ensures that if we opt to change the page size
-                int maximumPage = MaxSearchResults / request.PerPage;
+                int maximumPage = RateLimitConstants.SearchIssuesRateLimit / request.PerPage;
                 for (request.Page = 1; request.Page <= maximumPage; request.Page++)
                 {
                     SearchIssuesResult result = await gitHubEventClient.QueryIssues(request);

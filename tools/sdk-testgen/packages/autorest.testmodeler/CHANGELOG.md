@@ -1,6 +1,20 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Mon, 13 Mar 2023 02:20:40 GMT and should not be manually modified.
+This log was last generated on Mon, 19 Jun 2023 08:50:04 GMT and should not be manually modified.
+
+## 2.6.0
+Mon, 19 Jun 2023 08:50:04 GMT
+
+### Minor changes
+
+- Support DataFactoryElement
+
+## 2.5.2
+Wed, 14 Jun 2023 08:54:31 GMT
+
+### Patches
+
+- Upgrade m4 core version.
 
 ## 2.5.1
 Mon, 13 Mar 2023 02:20:40 GMT

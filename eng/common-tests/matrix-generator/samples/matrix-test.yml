@@ -9,7 +9,7 @@ jobs:
       JobTemplatePath: /eng/common-tests/matrix-generator/samples/matrix-job-sample.yml
       AdditionalParameters: {}
       Pool: Azure Pipelines
-      OsVmImage: ubuntu-18.04
+      OsVmImage: ubuntu-20.04
       CloudConfig:
         SubscriptionConfiguration: $(sub-config-azure-cloud-test-resources)
         Location: eastus2

@@ -5,14 +5,13 @@ pr: none
 
 pool:
   name: azsdk-pool-mms-ubuntu-2204-general
-  vmImage: MMSUbuntu22.04
+  vmImage: ubuntu-22.04
 
 jobs:
   - job: SyncRepos
     displayName: Sync public repos
 
     steps:
-    - checkout: none
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
@@ -22,6 +21,10 @@ jobs:
             TargetRepos:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
+
+          Azure/azure-sdk-for-cpp:
+            TargetRepos:
+              Azure/azure-sdk-for-cpp-pr:
 
           Azure/azure-sdk-for-go:
             TargetRepos:
@@ -68,10 +71,6 @@ jobs:
               Azure/azure-sdk-for-c-pr:
               azure-sdk/azure-sdk-for-c:
 
-          Azure/azure-libraries-for-java:
-            TargetRepos:
-              Azure/azure-libraries-for-java-pr:
-
           Microsoft/vcpkg:
             TargetRepos:
               azure-sdk/vcpkg:
@@ -88,6 +87,10 @@ jobs:
             TargetRepos:
               Azure/azure-dev-pr:
 
+          MicrosoftDocs/azure-dev-docs-pr:
+            TargetRepos:
+              azure-sdk/azure-dev-docs-pr:
+
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
@@ -99,3 +102,21 @@ jobs:
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
+
+    - template: ./templates/steps/sync-repo-merge-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
+          Azure/azure-rest-api-specs-pr:
+            Branch: main
+            TargetBranches:
+              RPSaaSDev:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              RPSaaSMaster:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true

@@ -238,7 +238,6 @@ TEST_F(TestParser, CompileWithErrors)
   }
 }
 
-
 struct NsDumper : AstDumper
 {
   // Inherited via AstDumper
@@ -451,11 +450,11 @@ TEST_F(TestParser, Class1)
 
   auto& db = processor.GetClassesDatabase();
   EXPECT_EQ(16ul, db->GetAstNodeMap().size());
-  
+
   NsDumper dumper;
   db->DumpClassDatabase(&dumper);
   EXPECT_EQ(31ul, dumper.Messages.size());
-  
+
   size_t internalTypes = 0;
   for (const auto& msg : dumper.Messages)
   {
@@ -465,7 +464,7 @@ TEST_F(TestParser, Class1)
     }
   }
   EXPECT_EQ(internalTypes, 8ul);
-  
+
   EXPECT_TRUE(SyntaxCheckClassDb(db, "Classes1.cpp"));
 }
 TEST_F(TestParser, Class2)
@@ -529,7 +528,42 @@ TEST_F(TestParser, Templates)
 
   auto& db = processor.GetClassesDatabase();
   // Until we get parsing types working correctly, we can't do the syntax check tests.
-//  EXPECT_TRUE(SyntaxCheckClassDb(db, "Template1.cpp"));
+  //  EXPECT_TRUE(SyntaxCheckClassDb(db, "Template1.cpp"));
+}
+
+TEST_F(TestParser, UsingNamespace)
+{
+  ApiViewProcessor processor("tests", R"({
+  "sourceFilesToProcess": [
+    "UsingNamespace.cpp"
+  ],
+  "additionalIncludeDirectories": [],
+  "additionalCompilerSwitches": null,
+  "allowInternal": false,
+  "includeDetail": false,
+  "includePrivate": false,
+  "filterNamespace": null
+}
+)"_json);
+
+  EXPECT_EQ(processor.ProcessApiView(), 0);
+
+  auto& db = processor.GetClassesDatabase();
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "UsingNamespace1.cpp"));
+
+  NsDumper dumper;
+  db->DumpClassDatabase(&dumper);
+  EXPECT_EQ(1ul, dumper.Messages.size());
+
+  size_t usingNamespaces = 0;
+  for (const auto& msg : dumper.Messages)
+  {
+    if (msg.DiagnosticId == "CPA0009")
+    {
+      usingNamespaces += 1;
+    }
+  }
+  EXPECT_EQ(usingNamespaces, 1ul);
 }
 
 #if 0

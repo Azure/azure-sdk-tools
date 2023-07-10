@@ -78,8 +78,7 @@ resource values from the newly provisioned dev environment that are required by 
 Avoid checking in the updated dev values, they are for local use only.
 
 ```
-# -Login only needs to be run once or if the azure container registry credentials have expired (~24 hours)
-<tools repo>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login -Environment dev
+<tools repo>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Environment dev
 ```
 
 ## Playground Cluster
@@ -122,7 +121,7 @@ Steps for deploying the stress test addons helm chart:
 1. Increment the version number in stress test addons' [Chart.yaml](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/Chart.yaml) (e.g. 0.1.0 -> 0.1.1).
 1. Run [deploy.ps1](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/cluster/kubernetes/stress-test-addons/deploy.ps1).
 1. Update all the helm chart versions for stress-test-addons dependency references in `azure-sdk-tools/tools/stress-cluster/chaos/examples/**/Chart.yaml`.
-1. Run azure-sdk-tools\eng\common\scripts\stress-testing\deploy-stress-tests.ps1 script in the [examples](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples) directory, this will update all the nested helm charts (-login tag is needed for the first run).
+1. Run azure-sdk-tools\eng\common\scripts\stress-testing\deploy-stress-tests.ps1 script in the [examples](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples) directory, this will update all the nested helm charts (the -SkipLogin parameter can be used to speed up the script or if interactive login isn't supported by the shell).
    1. Run `kubectl get pods -n examples -w` to monitor the status of each pod and look for Running/Completed and make sure there are no errors.
 1. Update all the stress tests' Chart.yaml files across the other repos in the same manner.
 
@@ -166,8 +165,7 @@ may still be an invalid kubernetes manifest, so the example stress test should a
 the full set of changes:
 
 ```
-# -Login only needs to be run once or if the azure container registry credentials have expired (~24 hours)
-<tools repo>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login
+<tools repo>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
 ```
 
 For more helm debugging info, see [here](https://helm.sh/docs/chart_template_guide/debugging/).

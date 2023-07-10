@@ -2148,6 +2148,39 @@ public:
   }
 };
 
+class AstUsingDirective : public AstNode {
+  std::string m_namedNamespace;
+
+public:
+  AstUsingDirective(
+      UsingDirectiveDecl const* usingDirective,
+      AzureClassesDatabase* const azureClassesDatabase,
+      std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
+      : AstNode(usingDirective), m_namedNamespace{usingDirective->getNominatedNamespaceAsWritten()
+                                                      ->getQualifiedNameAsString()}
+  {
+    azureClassesDatabase->CreateApiViewMessage(
+        ApiViewMessages::UsingDirectiveFound, m_namedNamespace);
+  }
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
+  {
+    if (dumpOptions.NeedsLeftAlign)
+    {
+      dumper->LeftAlign();
+    }
+    dumper->InsertKeyword("using");
+    dumper->InsertWhitespace();
+    dumper->InsertKeyword("namespace");
+    dumper->InsertWhitespace();
+    dumper->InsertTypeName(m_namedNamespace, m_namedNamespace);
+    dumper->InsertPunctuation(';');
+    if (dumpOptions.NeedsTrailingNewline)
+    {
+      dumper->Newline();
+    }
+  }
+};
+
 class AstEnumerator : public AstNamedNode {
   std::unique_ptr<AstExpr> m_initializer;
 
@@ -2748,6 +2781,12 @@ std::unique_ptr<AstNode> AstNode::Create(
     case Decl::Kind::Friend:
       return std::make_unique<AstFriend>(cast<FriendDecl>(decl), azureClassesDatabase, parentNode);
 
+    case Decl::Kind::UsingDirective:
+      // A "UsingDirective" is a "using namespace" directive. We consider this an error
+      // condition, add an AstNode so the error appears in the ApiView.
+      return std::make_unique<AstUsingDirective>(
+          cast<UsingDirectiveDecl>(decl), azureClassesDatabase, parentNode);
+
     case Decl::Kind::NamespaceAlias:
       return nullptr;
       //    return std::make_unique<AstNamespaceAlias>(cast<NamespaceAliasDecl>(decl,
@@ -2759,7 +2798,6 @@ std::unique_ptr<AstNode> AstNode::Create(
       //    azureClassesDatabase));
     case Decl::Kind::Using:
       return nullptr;
-      //   return std::make_unique<AstUsing>(cast<UsingDecl>(decl));
     default: {
       llvm::errs() << raw_ostream::Colors::RED << "Unknown DECL node "
                    << cast<NamedDecl>(decl)->getNameAsString()

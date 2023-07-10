@@ -30,13 +30,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         /// <param name="AIServiceReturnsLabels">Whether or not the AI Service should return labels</param>
         [Category("static")]
-        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, true)]
-        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, false)]
-        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.Off, false)]
-        public async Task TestInitialIssueTriage(string rule, string payloadFile, RuleState ruleState, bool AIServiceReturnsLabels)
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, true, true, true)]
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, false, true, true)]
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.Off, false, false, false)]
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, false, false, true)]
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, false, true, false)]
+        [TestCase(RulesConstants.InitialIssueTriage, "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json", RuleState.On, false, false, false)]
+        public async Task TestInitialIssueTriage(string rule, string payloadFile, RuleState ruleState, bool AIServiceReturnsLabels, bool isMemberOfOrg, bool hasWriteOrAdmin)
         {
             var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
             mockGitHubEventClient.RulesConfiguration.Rules[rule] = ruleState;
+            mockGitHubEventClient.UserHasPermissionsReturn = hasWriteOrAdmin;
+            mockGitHubEventClient.IsUserMemberOfOrgReturn = isMemberOfOrg;
             var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
             var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
             List<string> expectedLabels = new List<string>
@@ -58,22 +63,35 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
             if (RuleState.On == ruleState)
             {
+                // The only update is labels being added, the number of which depends on the AI label serice returning labels
+                // and whether the user's org and collaborator permissions
                 Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
-                // Retrieve the IssueUpdate and verify the expected changes
-                var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
                 if (AIServiceReturnsLabels)
                 {
-                    Assert.True(issueUpdate.Labels.Contains(LabelConstants.NeedsTeamTriage), $"IssueUpdate does not contain {LabelConstants.NeedsTeamTriage} which should have been added when labels were predicted.");
-                    // Verify the labels returned by the AI service
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamTriage), $"Labels to add should contain {LabelConstants.NeedsTeamTriage} which should have been added when labels were predicted.");
+                    // Verify the labels returned by the AI service have been added
                     foreach (string label in expectedLabels)
                     {
-                        Assert.True(issueUpdate.Labels.Contains(label), $"IssueUpdate does not contain {label} which was returned by the AI service and should have been added.");
+                        Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(label), $"Labels to add should contain {label} which was returned by the AI service and should have been added.");
                     }
                 }
                 else
                 {
                     // If the AI Label service doesn't predict labels, the label added is NeedsTriage
-                    Assert.True(issueUpdate.Labels.Contains(LabelConstants.NeedsTriage), $"IssueUpdate does not contain {LabelConstants.NeedsTriage} which should have been added when no labels were predicted.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTriage), $"Labels to add should contain {LabelConstants.NeedsTriage} which should have been added when no labels were predicted.");
+                }
+
+                // If the user is not part of the Azure org AND they don't have write or admin collaborator permissions
+                // then customer-reported and question labels should be added to the issue
+                if (!isMemberOfOrg && !hasWriteOrAdmin)
+                {
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CustomerReported), $"Labels to add should contain {LabelConstants.CustomerReported} which it should when the user is not part of the org and doesn't have write/admin collaborator permissions.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.Question), $"Labels to add should contain {LabelConstants.Question} which it should when the user is not part of the org and doesn't have write/admin collaborator permissions.");
+                }
+                else
+                {
+                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CustomerReported), $"Labels to add contains {LabelConstants.CustomerReported} and shouldn't when the user is part of the org or has write/admin collaborator permissions.");
+                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.Question), $"Labels to add contains {LabelConstants.Question} and shouldn't when the user is part of the org or has write/admin collaborator permissions.");
                 }
             }
             else
@@ -124,12 +142,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 {
                     // There should be one update, an IssueUpdate with the NoRecentActivity label removed
                     Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
-
-                    // Retrieve the IssueUpdate and verify the expected changes
-                    var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                    Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate with {LabelConstants.NeedsTriage} removed.");
                     // Verify that NeedsTriage was removed
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.NeedsTriage), $"IssueUpdate contains {LabelConstants.NeedsTriage} label which should have been removed.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTriage), $"Labels to remove should contain {LabelConstants.NeedsTriage} and does not.");
                 }
             }
             else
@@ -248,10 +262,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 {
                     // There should be one comment created and no other updates
                     Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
-                    // Verify that no issues update was produced
-                    var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                    Assert.IsNull(issueUpdate, $"{rule} should not have produced an IssueUpdate.");
-
                     // Verify that a single comment was created
                     Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, $"{rule} should have produced a single comment.");
                 }
@@ -269,6 +279,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// Conditions: Issue is open
         ///             Has "customer-reported" label
         ///             Label removed is "Service Attention" OR "CXP Attention"
+        ///             Issue does not have "Service Attention" OR "CXP Attention"
+        ///             (in other words if both labels are on the issue and one is removed, this
+        ///             shouldn't process)
         /// Resulting Action: Add "needs-team-triage" label
         /// </summary>
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
@@ -276,12 +289,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         /// <param name="alreadyHasNeedsTeamTriage">Whether or not the payload already has the needs-team-triage label</param>
         [Category("static")]
-        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_CXP_attention.json", RuleState.Off, false)]
-        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_CXP_attention.json", RuleState.On, false)]
-        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_service_attention.json", RuleState.Off, false)]
-        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_service_attention.json", RuleState.On, false)]
-        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_has_needs-team-triage.json", RuleState.On, true)]
-        public async Task TestManualTriageAfterExternalAssignment(string rule, string payloadFile, RuleState ruleState, bool alreadyHasNeedsTeamTriage)
+        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_CXP_attention.json", RuleState.Off, false, false)]
+        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_CXP_attention.json", RuleState.On, false, true)]
+        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_CXP_attention_has_service_attention.json", RuleState.On, false, false)]
+        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_service_attention.json", RuleState.Off, false, false)]
+        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_service_attention.json", RuleState.On, false, true)]
+        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_service_attention_has_CXP_attention.json", RuleState.On, false, false)]
+        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_has_needs-team-triage.json", RuleState.On, true, false)]
+        public async Task TestManualTriageAfterExternalAssignment(string rule, string payloadFile, RuleState ruleState, bool alreadyHasNeedsTeamTriage, bool shouldAddLabel)
         {
             var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
             mockGitHubEventClient.RulesConfiguration.Rules[rule] = ruleState;
@@ -302,13 +317,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 }
                 else
                 {
-                    // There should be one update, an IssueUpdate with the NoRecentActivity label removed
-                    Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
-                    // Retrieve the IssueUpdate and verify the expected changes
-                    var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                    Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate with {LabelConstants.NeedsTeamTriage} added.");
-                    // Verify that NeedsTeamTriage was added
-                    Assert.True(issueUpdate.Labels.Contains(LabelConstants.NeedsTeamTriage), $"IssueUpdate does not the {LabelConstants.NeedsTeamTriage} label which should have been added.");
+                    if (shouldAddLabel)
+                    {
+                        // There should be one update, the label NoRecentActivity should have been added
+                        Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
+                        // Verify that NeedsTeamTriage was added
+                        Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamTriage), $"Labels to add should contain {LabelConstants.NeedsTeamTriage} and does not.");
+                    }
+                    else
+                    {
+                        Assert.AreEqual(0, totalUpdates, $"The issue only 1 of {LabelConstants.CXPAttention} or {LabelConstants.ServiceAttention}. With the other still being on the issue there should have been no updates.");
+                    }
                 }
             }
             else
@@ -347,14 +366,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
             if (RuleState.On == ruleState)
             {
-                // There should be one update, an IssueUpdate with the NoRecentActivity label removed
+                // There should be one update, the NoRecentActivity label removed
                 Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
 
-                // Retrieve the IssueUpdate and verify the expected changes
-                var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate with {LabelConstants.NoRecentActivity} removed.");
                 // Verify that NoRecentActivity was removed
-                Assert.False(issueUpdate.Labels.Contains(LabelConstants.NoRecentActivity), $"IssueUpdate contains {LabelConstants.NoRecentActivity} label which should have been removed.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove should contain {LabelConstants.NoRecentActivity} and does not.");
             }
             else
             {
@@ -398,14 +414,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
             if (RuleState.On == ruleState)
             {
-                // There should be one update, an IssueUpdate with the NoRecentActivity label removed
+                // There should be one update, the NeedsTeamAttention label added
                 Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
 
-                // Retrieve the IssueUpdate and verify the expected changes
-                var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate with {LabelConstants.NeedsTeamAttention} added.");
                 // Verify that NeedsTeamAttention was added
-                Assert.True(issueUpdate.Labels.Contains(LabelConstants.NeedsTeamAttention), $"IssueUpdate does not contain {LabelConstants.NeedsTeamAttention} label which should have been added.");
+                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamAttention), $"Lables to add should contain {LabelConstants.NeedsTeamAttention} and does not.");
             }
             else
             {
@@ -446,24 +459,26 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
             if (RuleState.On == ruleState)
             {
-                // If there are no labels to remove, there should be no updates
+                // If there are no labels to remove, there should be 1 update which is a comment
                 if (!hasLabelsToRemove)
                 {
-                    Assert.AreEqual(0, totalUpdates, $"The label being removed, {LabelConstants.NeedsTriage}, was not on the Issue and should have not produced any updates.");
+                    Assert.AreEqual(1, totalUpdates, $"With no labels to remove there only be 1 update, a comment.");
                 }
                 else
                 {
-                    // There should be one update, an IssueUpdate with the NeedsTriage, NeedsTeamTriage and NeedsTeamAttention labels removed.
-                    Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
+                    // There should be 4 updates, NeedsTriage, NeedsTeamTriage and NeedsTeamAttention labels removed and a comment added
+                    Assert.AreEqual(4, totalUpdates, $"The number of updates should have been 3 but was instead, {totalUpdates}");
 
-                    // Retrieve the IssueUpdate and verify the expected changes
-                    var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                    Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate with {LabelConstants.NeedsTriage} removed.");
                     // Verify that NeedsTriage, NeedsTeamTriage and NeedsTeamAttention were removed
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.NeedsTriage), $"IssueUpdate contains {LabelConstants.NeedsTriage} label which should have been removed.");
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.NeedsTeamTriage), $"IssueUpdate contains {LabelConstants.NeedsTeamTriage} label which should have been removed.");
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.NeedsTeamAttention), $"IssueUpdate contains {LabelConstants.NeedsTeamAttention} label which should have been removed.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTriage), $"Labels to remove should contain {LabelConstants.NeedsTriage} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTeamTriage), $"Labels to remove should contain {LabelConstants.NeedsTeamTriage} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTeamAttention), $"Labels to remove should contain {LabelConstants.NeedsTeamAttention} and does not.");
                 }
+
+                // The comment should be created regardless
+                int numComments = mockGitHubEventClient.GetComments().Count;
+                Assert.AreEqual(1, numComments, $"There should have been one comment created but instead there were {numComments} created.");
+
             }
             else
             {
@@ -478,7 +493,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// Conditions: Issue is open
         ///             Label added is "issue-addressed"
         /// Resulting Action: 
-        ///     Remove "needs-triage" label
+        ///     Remove "needs-triage" label if it exists
         ///     Remove "needs-team-triage" label
         ///     Remove "needs-team-attention" label
         ///     Remove "needs-author-feedback" label
@@ -514,23 +529,20 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 }
                 else
                 {
-                    // There should be one update, an IssueUpdate with the NoRecentActivity label removed
-                    Assert.AreEqual(2, totalUpdates, $"The number of updates should have been 2 but was instead, {totalUpdates}");
+                    // There should be one comment and up to 5 labels removed, the no-recent-activity and all needs-* labels removed 
+                    // (the test payload has them all but real events will only remove the ones that are there)
+                    Assert.AreEqual(6, totalUpdates, $"The number of updates should have been 2 but was instead, {totalUpdates}");
 
-                    // Retrieve the IssueUpdate and verify the expected changes
-                    var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                    Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate with {LabelConstants.NeedsTriage} removed.");
-
-                    // Verify that NeedsTriage was removed
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.NeedsTriage), $"IssueUpdate contains {LabelConstants.NeedsTriage} label which should have been removed.");
-                    // Verify that NeedsTeamTriage was removed
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.NeedsTeamTriage), $"IssueUpdate contains {LabelConstants.NeedsTeamTriage} label which should have been removed.");
-                    // Verify that NeedsTeamAttention was removed
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.NeedsTeamAttention), $"IssueUpdate contains {LabelConstants.NeedsTeamAttention} label which should have been removed.");
-                    // Verify that NeedsAuthorFeedback was removed
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.NeedsAuthorFeedback), $"IssueUpdate contains {LabelConstants.NeedsAuthorFeedback} label which should have been removed.");
-                    // Verify that NoRecentActivity was removed
-                    Assert.False(issueUpdate.Labels.Contains(LabelConstants.NoRecentActivity), $"IssueUpdate contains {LabelConstants.NoRecentActivity} label which should have been removed.");
+                    // Verify that NeedsTriage was added to the remove list
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTriage), $"Labels to remove should contain {LabelConstants.NeedsTriage} and does not.");
+                    // Verify that NeedsTeamTriage was added to the remove list
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTeamTriage), $"Labels to remove should contain {LabelConstants.NeedsTeamTriage} and does not.");
+                    // Verify that NeedsTeamAttention was added to the remove list
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTeamAttention), $"Labels to remove should contain {LabelConstants.NeedsTeamAttention} and does not.");
+                    // Verify that NeedsAuthorFeedback was added to the remove list
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsAuthorFeedback), $"Labels to remove should contain {LabelConstants.NeedsAuthorFeedback} and does not.");
+                    // Verify that NoRecentActivity was added to the remove list
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove should contain {LabelConstants.NoRecentActivity} and does not.");
                 }
                 // Regardless of whether or not there were labels to remove, a single comment should be created.
                 Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, $"{rule} should have produced a single comment.");
@@ -582,14 +594,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
             if (RuleState.On == ruleState)
             {
-                // There should be one update, an IssueUpdate with the NoRecentActivity label removed
+                // There should be one update, the NoRecentActivity label removed
                 Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
 
-                // Retrieve the IssueUpdate and verify the expected changes
-                var issueUpdate = mockGitHubEventClient.GetIssueUpdate();
-                Assert.IsNotNull(issueUpdate, $"{rule} is {ruleState} and should have produced an IssueUpdate with {LabelConstants.IssueAddressed} removed.");
-                // Verify that IssueAddressed was removed
-                Assert.False(issueUpdate.Labels.Contains(LabelConstants.IssueAddressed), $"IssueUpdate contains {LabelConstants.IssueAddressed} label which should have been removed.");
+                // Verify that IssueAddressed was added to the remove list
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.IssueAddressed), $"Labels to remove should contain {LabelConstants.IssueAddressed} and does not.");
             }
             else
             {

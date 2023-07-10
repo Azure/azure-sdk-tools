@@ -4,7 +4,7 @@ trigger: none
 
 pool:
   name: azsdk-pool-mms-ubuntu-2204-general
-  vmImage: MMSUbuntu22.04
+  vmImage: ubuntu-22.04
 
 parameters:
   - name: Reviews
@@ -20,7 +20,7 @@ parameters:
 variables:
   PythonIndexUrl: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
   PythonVersion: '3.10'
-  ApiStubVersion: '0.3.5'
+  ApiStubVersion: '0.3.7'
 
 jobs:
 - job: CreatePythonReviewCodeFile
@@ -36,8 +36,8 @@ jobs:
 
   - script: |
       python -m pip install virtualenv aiohttp chardet trio
-      python -m pip install api-stub-generator==$(ApiStubVersion) --index-url $(PythonIndexUrl)
-    displayName: 'Install api-stub-generator'
+      python -m pip install apiview-stub-generator==$(ApiStubVersion) --index-url $(PythonIndexUrl)
+    displayName: 'Install apiview-stub-generator'
 
   - template: /eng/pipelines/templates/steps/apiview-review-gen.yml
     parameters:

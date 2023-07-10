@@ -80,8 +80,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                         if (removeLabel)
                         {
-                            var issueUpdate = gitHubEventClient.GetIssueUpdate(prCommentPayload.Issue);
-                            issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
+                            gitHubEventClient.RemoveLabel(LabelConstants.NoRecentActivity);
                         }
                     }
                 }
@@ -130,9 +129,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         }
                         if (reOpen)
                         {
-                            var issueUpdate = gitHubEventClient.GetIssueUpdate(prCommentPayload.Issue);
-                            issueUpdate.State = ItemState.Open;
-                            issueUpdate.RemoveLabel(LabelConstants.NoRecentActivity);
+                            gitHubEventClient.SetIssueState(prCommentPayload.Issue, ItemState.Open);
+                            gitHubEventClient.RemoveLabel(LabelConstants.NoRecentActivity);
                         }
                         else
                         {

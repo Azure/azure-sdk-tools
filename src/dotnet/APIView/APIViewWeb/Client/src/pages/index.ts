@@ -10,8 +10,11 @@ $(() => {
   const typeFilter = $( '#type-filter-select' );
   const searchBox = $( '#reviews-table-search-box' );
   const searchButton = $( '#reviews-search-button' );
-  const resetButton = $('#reset-filter-button');
-  const languageSelect = $('#review-language-select');
+  const resetButton = $( '#reset-filter-button' );
+  const languageSelect = $( '#review-language-select' );
+  const reviewUploadForm = $( '#review-upload-form' );
+  const reviewUploadSubmitBtn = $( '#review-upload-submit-btn' );
+
 
   // Import underscorejs
   var _ = require('underscore');
@@ -92,6 +95,14 @@ $(() => {
     });
   });
 
+  $("#review-upload-submit-btn").on("click", function (event) {
+    event.preventDefault();
+    reviewUploadForm.submit();
+
+    reviewUploadSubmitBtn.prop("disabled", true);
+    setTimeout(() => { reviewUploadSubmitBtn.prop("disabled", false); }, 5000);
+  });
+
   // Update list of reviews when any dropdown is changed
   [languageFilter, stateFilter, statusFilter, typeFilter].forEach(function(value, index) {
     value.on('sumo:closed', function() {
@@ -119,7 +130,6 @@ $(() => {
     updateListedReviews();
   });
 
-  var prevLanguageValue = languageSelect.val();
   languageSelect.on('sumo:closed', function (e) {
     var val = $(this).val() as string;
     if (val == "C++" || val == "C#") {
@@ -128,13 +138,14 @@ $(() => {
     $("#uploadModel").find(".card-body > div").addClass("d-none");
     var helpName = "#" + val.toLowerCase() + "-help";
     $(helpName).removeClass("d-none");
-    if (val == 'Cadl' || prevLanguageValue == 'Cadl') {
-      const fileSelectors = $(".package-selector");
-      for (var i = 0; i < fileSelectors.length; i++) {
-        $(fileSelectors[i]).toggleClass("d-none");
-      }
+    if (val == 'TypeSpec') {
+      $("#create-review-via-upload").addClass("d-none");
+      $("#create-review-via-path").removeClass("d-none");
     }
-    prevLanguageValue = val;
+    else {
+      $("#create-review-via-upload").removeClass("d-none");
+      $("#create-review-via-path").addClass("d-none");
+    }
   });
 
   // Open / Close right Offcanvas Menu

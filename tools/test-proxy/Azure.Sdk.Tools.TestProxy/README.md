@@ -1,5 +1,19 @@
 # Azure SDK Tools Test Proxy
 
+**To users writing SDK tests:** This document is not intended to be a test preperation reference. You should instead refer
+to documentation in your specific language repository in order to configure recorded tests.
+
+#### Test documentation by language:
+
+- [Java](https://github.com/Azure/azure-sdk-for-java/blob/main/CONTRIBUTING.md)
+- [JavaScript](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on-how-to-write-tests.md)
+- [.NET](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core.TestFramework/README.md)
+- [Python](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md)
+- [C++](https://github.com/Azure/azure-sdk-for-cpp/blob/main/doc/TestProxy.md)
+- [Go](https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/developer_setup.md)
+
+## Table of contents
+
 - [Azure SDK Tools Test Proxy](#azure-sdk-tools-test-proxy)
   - [Installation](#installation)
     - [Via Local Compile or .NET](#via-local-compile-or-net)
@@ -149,32 +163,70 @@ For safety, the "official target" version that the azure-sdk team uses is presen
 
 ## Command line arguments
 
-This is the help information for test-proxy. It uses the nuget package [`CommandLineParser`](https://www.nuget.org/packages/CommandLineParser) to parse arguments.
+This is the help information for test-proxy. It uses the nuget package [`System.CommandLine`](https://www.nuget.org/packages/System.CommandLine) to parse arguments.
 
 The test-proxy executable fulfills one of two primary purposes:
 
 1. The test-proxy server (the only option up to this point)
-2. [`asset-sync`](#asset-sync-retrieve-external-test-recordings) push/restore/reset.
+2. [`asset-sync`](#asset-sync-retrieve-external-test-recordings) verbs
+   - `push`
+   - `restore`
+   - `reset`
+   - `config`
 
 This is surfaced by only showing options for the default commands. Each individual command has its own argument set that can be detailed by invoking `test-proxy <command> --help`.
 
 ```text
-/>test-proxy --help
-Azure.Sdk.Tools.TestProxy 1.0.0-dev.20220926.1
-c Microsoft Corporation. All rights reserved.
+/>Azure.Sdk.Tools.TestProxy --help
+Description:
+  This tool is used by the Azure SDK team in two primary ways:
 
-  start      (Default Verb) Start the TestProxy.
+    - Run as a http record/playback server. ("start" / default verb)
+    - Invoke a CLI Tool to interact with recordings in an external store. ("push", "restore", "reset", "config")
 
-  push       Push the assets, referenced by assets.json, into git.
+Usage:
+  Azure.Sdk.Tools.TestProxy [command] [options]
 
-  reset      Reset the assets, referenced by assets.json, from git to their original files referenced by the tag. Will prompt
-             if there are pending changes.
+Options:
+  -l, --storage-location <storage-location>  The path to the target local git repo. If not provided as an argument, Environment
+                                             variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working
+                                             directory will be utilized.
+  -p, --storage-plugin <storage-plugin>      The plugin for the selected storage, default is Git storage is GitStore. (Currently
+                                             the only option) [default: GitStore]
+  --version                                  Show version information
+  -?, -h, --help                             Show help and usage information
 
-  restore    Restore the assets, referenced by assets.json, from git.
+Commands:
+  start <args>  Start the TestProxy.
+  push          Push the assets, referenced by assets.json, into git.
+  restore       Restore the assets, referenced by assets.json, from git.
+  reset         Reset the assets, referenced by assets.json, from git to their original files referenced by the tag. Will prompt if
+                there are pending changes unless indicated by -y/--yes.
+  config        Interact with an assets.json.
+```
 
-  help       Display more information on a specific command.
+For the `config` verb, there are subverbs!
 
-  version    Display version information.
+```text
+/>Azure.Sdk.Tools.TestProxy config --help
+Description:
+  Interact with an assets.json.
+
+Usage:
+  Azure.Sdk.Tools.TestProxy config [command] [options]
+
+Options:
+  -l, --storage-location <storage-location>  The path to the target local git repo. If not provided as an argument, Environment
+                                             variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working
+                                             directory will be utilized.
+  -p, --storage-plugin <storage-plugin>      The plugin for the selected storage, default is Git storage is GitStore. (Currently
+                                             the only option) [default: GitStore]
+  -?, -h, --help                             Show help and usage information
+
+Commands:
+  create  Enter a prompt and create an assets.json.
+  show    Show the content of a given assets.json.
+  locate  Get the assets repo root for a given assets.json path.
 ```
 
 ### Storage Location
@@ -415,8 +467,7 @@ Start the recording **without a `x-recording-file` body value**.
 
 ```jsonc
 // targeted URI: https://localhost:5001/record/start
-// the request body will be EMPTY
-{}
+// the request body will be NULL / unset
 ```
 
 The POST will return a valid recordingId value which we will call `X`.
@@ -430,6 +481,8 @@ To load this recording for playback...
     "x-recording-id": "X"
 }
 ```
+
+When attempting to use in-memory recording, you cannot submit empty body `{}` to `/Record/Start`. Doing so will result in an error, as it is _expecting_ a recording file if a body provided.
 
 ### See example implementations
 
@@ -480,6 +533,8 @@ Add a more expansive Header sanitizer that uses a target group instead of filter
     "groupForReplace": "account"
 }
 ```
+
+> Note: Regex strings are being passed as a member of a JSON object. As visible in the above example, escape characters must be _double escaped_. `\n` -> `\\n`. `\\` -> `\\\\`. Read the "string" description on [json.org](https://json.org) for more detail.
 
 #### A note about where sanitizers apply
 
@@ -581,11 +636,9 @@ The test-proxy offers further customization beyond that offered by sanitizers, m
 
 ### Redirection Settings
 
-The test-proxy does NOT transparent follow redirects by default. That means that if the initial request sent by the test-proxy results in some `3XX` redirect status, it **will not** follow. It will return that redirect response to the client to allow THEM to handle the redirect.
+The test-proxy follows redirects by default. That means that if the initial request sent by the test-proxy results in some `3XX` redirect status, it **will follow the redirect**.
 
-In certain cases, this is not a possibility for the client. Javascript Browser tests are a great example of this. Since both "modes" are supported, the test-proxy exposes this as a setting `HandleRedirects`.
-
-To set this setting, POST to the `/Admin/SetRecordingOptions` route.
+In certain cases, a user will want to utilize both behaviors in their tests. For instance, the javascript `browser` tests run with redirect enabled, however for their `node` versions, the redirect functionality is explicitly disabled. The test-proxy exposes this as a setting `HandleRedirects` within the settings object POST-ed to `/Admin/SetRecordingOptions`.
 
 Example:
 

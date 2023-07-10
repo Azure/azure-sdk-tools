@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -70,6 +71,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public GitStoreBreadcrumb() { }
 
+        public string GetBreadCrumbLocation(GitAssetsConfiguration configuration)
+        {
+            return Path.Join(configuration.ResolveAssetsStoreLocation().ToString(), ".breadcrumb");
+        }
+
         /// <summary>
         /// Updates an existing breadcrumb file with an assets configuration. Add/Update only. Should never remove.
         /// </summary>
@@ -77,7 +83,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public async Task Update(GitAssetsConfiguration configuration)
         {
-            var breadcrumbFile = Path.Join(configuration.ResolveAssetsStoreLocation().ToString(), ".breadcrumb");
+            var breadcrumbFile = GetBreadCrumbLocation(configuration);
             var targetKey = configuration.AssetsJsonRelativeLocation.ToString();
 
             await BreadCrumbWorker.EnqueueAsync(async () =>
@@ -98,6 +104,22 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 
                 File.WriteAllLines(breadcrumbFile, linesForWriting, System.Text.Encoding.UTF8);
             });
+        }
+
+        public void RefreshLocalCache(ConcurrentDictionary<string, string> localCache, GitAssetsConfiguration config)
+        {
+            var breadLocation = GetBreadCrumbLocation(config);
+
+            if (File.Exists(breadLocation))
+            {
+                var readLines = File.ReadAllLines(breadLocation);
+                var lines = readLines.Select(x => new BreadcrumbLine(x)).ToDictionary(x => x.PathToAssetsJson, x => x);
+
+                foreach (var line in lines)
+                {
+                    localCache.AddOrUpdate(line.Value.PathToAssetsJson, line.Value.Tag, (key, oldValue) => line.Value.Tag);
+                }
+            }
         }
     }
 

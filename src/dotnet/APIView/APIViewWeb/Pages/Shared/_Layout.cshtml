@@ -76,6 +76,16 @@
 
     <main role="main">
         @RenderBody()
+        <div id="notification-container" class="position-fixed bottom-0 start-0 p-3">
+            <div id="notification-toast" class="toast hide mt-1" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="10000">
+                <div class="toast-header">
+                    <strong class="me-auto"></strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                </div>
+            </div>
+        </div>
     </main>
 
     <footer class="border-top footer text-muted">
@@ -124,6 +134,8 @@
     <script src="https://cdn.jsdelivr.net/npm/underscore@stable/underscore-umd-min.js"
             crossorigin="anonymous">
     </script>
+    <!--SignalR-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
     <script src="~/main.js" asp-append-version="true"></script>
 
     @RenderSection("Scripts", required: false)

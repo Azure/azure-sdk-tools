@@ -2,6 +2,8 @@
 
 The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
+Colloquially, any file that is stored externally using the `asset-sync` feature of the `test-proxy` is called an `asset`.
+
 ![asset sync block diagram](../_images/asset_sync_block_diagram.png)
 
 In the context of a `monorepo`, this means that we store FAR less data per feature. To update recordings, the only change alongside the source code is to update the targeted tag.
@@ -16,7 +18,7 @@ The combination of the the `assets.json` context and the original test-path will
 
 An `assets.json` contains _targeting_ information for use by the test-proxy when restoring (or updating) recordings "below" a specific path.
 
-> For the `azure-sdk` team specifically, engineers are encouraged to place their `assets.json` files under a path of form `sdk/<service>/assets.json`
+> For the `azure-sdk` team specifically, engineers are encouraged to place their `assets.json` files under a path of form `sdk/<service>/<package>/assets.json`
 
 An `assets.json` takes the form:
 
@@ -65,9 +67,15 @@ Interactions with the external assets repository are accessible when the proxy i
 
 Each of these CLI Commands takes an `assets.json` argument that provides the _context_ that should be pushed to the external repository.
 
-## test-proxy CLI commands
+### A note about using on Windows + WSL
+
+When using a Windows machine, it is technically possible to invoke tests from WSL against a windows clone. That path would appear under `/mnt/c/path/to/your/repo`. This is _not_ a supported scenario, as the `test-proxy` shells out to git for the push/restore actions. Running a `git push/pull` from _linux_ against a repo that was cloned down using a _windows_ git client can have unexpected results. Better to avoid the situation entirely and use an entirely separate clone for work on WSL.
+
+## test-proxy CLI (asset) commands
 
 The test-proxy also offers interactions with the external assets repository as a CLI. Invoking `test-proxy --help` will show the available list of commands. `test-proxy <command> --help` will show the help and options for an individual command. The options for a given command are all `--<option>`, for example, `--assets-json-path`, but each option has an abbreviation shown in the help, those are a single dash. For example the abbreviation for `--assets-json-path` is `-a`.
+
+Please note that all test-proxy asset commands should be invoked **in the context of the language repository itself**.
 
 ### The following CLI commands are available for manipulation of assets
 
@@ -97,6 +105,30 @@ After assets have been restored and then modified (re-recorded etc.) a push will
 
 ```bash
 test-proxy push --assets-json-path <assetsJsonPath>
+```
+
+#### Config Commands
+
+When a client provides the additional body key `x-recording-assets-file` to `/Record/Start` or `/Playback/Start`, the test-proxy will invoke that test using **external assets**.
+
+It's great that recordings are externalized, but this adds some complexity as these recordings don't live directly next to their test code anymore. The test-proxy provides the `config` verb to offer easy insight into interactions with the `assets.json` to assist with these complexities.
+
+Currently there are two sub-verbs for `test-proxy config`:
+
+- `locate`
+- `show`
+
+`locate`: Dumps which folder under the `.assets` folder contains your recordings. [See `config` usage in layout section below.](#layout-within-a-language-repo)
+`show`: Dumps the contents of the targeted assets.json.
+
+```bash
+# from C:/repo/azure-sdk-for-python, the root of the python language repository
+test-proxy config locate --assets-json-file sdk/keyvault/azure-keyvault-keys/assets.json
+```
+
+```bash
+# from C:/repo/azure-sdk-for-js, the root of the js language repository
+test-proxy config show -a sdk/tables/data-tables/assets.json
 ```
 
 ## Using `asset-sync` for azure sdk development
@@ -153,10 +185,9 @@ First, ensure that your language-specific "shim" supports the automatic addition
 - [PR Enabling in JS](https://github.com/Azure/azure-sdk-for-js/pull/23405)
 - [PR Enabling in Go](https://github.com/Azure/azure-sdk-for-go/pull/19322)
 
-Use [the transition script](../../scripts/transition-scripts/generate-assets-json.ps1) and follow the [readme](../../scripts/transition-scripts/README.md)!
+Use [the transition script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/transition-scripts/generate-assets-json.ps1) and follow the [readme](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/testproxy/transition-scripts/README.md)!
 
 In summary, once an assets.json is present, the shim _must_ be updated to **actually send** a reference to that assets.json inside the `record/start` or `playback/start` requests!
-
 
 ![assets diagram](../_images/before_after.png)
 
@@ -178,21 +209,15 @@ The below diagram illustrates how an individual assets.json, language repo, and 
 
 > Side note: the `.breadcrumb` file is created/updated as an artifact of the test-proxy restore/push/reset operations. Don't look for one if you haven't restored at least one assets.json first!
 
-One can use visual inspection of the `.breadcrumb` file to _find_ which folder contains the files for your assets.json. Or, they can simply use one of the one-liners above to change directory into their assets.
-
-Powershell one-liner:
+One can use visual inspection of the `.breadcrumb` file to _find_ which folder contains the files for your assets.json. Or, more conveniently, a user can use the `config` verb to access this data! Using assets diagram directly above. we can work an example:
 
 ```powershell
-# From root of repo. Substitute your target assets.json path in the StartsWith clause.
-cd ".assets/$((Get-Content ".assets/.breadcrumb" | Where-Object { $_.StartsWith("sdk/tables/assets.json") }).Split(";")[1])"
+# from the root of the azure-sdk-for-net repo, run:
+test-proxy config locate -a "sdk/confidentialledger/Azure.Security.ConfidentialLedger/assets.json"
+# returns -> path/to/azure-sdk-for-net/.assets/2Km0Z8755m/net/"
 ```
 
-Bash one-liner:
-
-```bash
-# From root of repo. Substitute your target assets.json path in the initial grep
-A=$(grep "sdk/tables/assets.json" .assets/.breadcrumb | awk '{split($0,a,";"); print a[2];}'); cd .assets/$A
-```
+The `config` verb offers various interactions with an input assets.json path, with `locate` just being one of them! In all cases, all interactions with the `config` verb should be made in the context of the **language repository**, where the source for a given package resides.
 
 #### A few details about context directory
 
@@ -278,7 +303,7 @@ This will _force_ the locally cloned assets to align with the assets.json that h
 
 #### Attempt to manually resolve
 
-A **new tag** is pushed with each `test-proxy push` invocation. There should be _no such thing_ as `merge conflicts` when automatically pushing up a new tag. However, if you wish to manually resolve instead of discarding current state, `cd` into the assets repo using one of the one-liners above.
+A **new tag** is pushed with each `test-proxy push` invocation. There should be _no such thing_ as `merge conflicts` when automatically pushing up a new tag. However, if you wish to manually resolve instead of discarding current state, `cd` into the assets repo using the `config locate` command discussed above.
 
 Once there, use standard `git` operations to resolve your issue.
 

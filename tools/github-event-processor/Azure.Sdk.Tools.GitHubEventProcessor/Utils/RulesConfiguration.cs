@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using System.IO;
+using Azure.Sdk.Tools.CodeOwnersParser;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 {
@@ -27,8 +28,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
     /// </summary>
     public class RulesConfiguration
     {
-        private static readonly string RulesConfigFileName = "event-processor.config";
-        private static readonly string RulesConfigSubDirectory = ".github";
+        public static readonly string RulesConfigFileName = "event-processor.config";
+        public static readonly string RulesConfigSubDirectory = ".github";
+        public static string rulesConfigFilePathOverride = null;
         public Dictionary<string, RuleState> Rules { get; set; }
         public string RulesConfigFile { get; set; } = null;
         public RulesConfiguration() 
@@ -47,9 +49,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
             string configLoc = configurationFile;
             if (configLoc == null)
             {
-                // Load the config from the well known location, somewhere under the .github directory
-                // which is in the root of the repository
-                configLoc = DirectoryUtils.FindFileInRepository(RulesConfigFileName, RulesConfigSubDirectory);
+                if (null != rulesConfigFilePathOverride)
+                {
+                    // If the user overrode the location
+                    configLoc = rulesConfigFilePathOverride;
+                }
+                else
+                {
+                    // Load the config from the well known location, somewhere under the .github directory
+                    // which is in the root of the repository
+                    configLoc = DirectoryUtils.FindFileInRepository(RulesConfigFileName, RulesConfigSubDirectory);
+                }
             }
             RulesConfigFile = configLoc;
             LoadRulesFromConfig();
@@ -63,8 +73,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         {
             if (null != RulesConfigFile)
             {
+                string rawJson = FileHelpers.GetFileOrUrlContents(RulesConfigFile);
                 Console.WriteLine($"Loading repository rules from {RulesConfigFile}");
-                string rawJson = File.ReadAllText(RulesConfigFile);
                 Rules = JsonSerializer.Deserialize<Dictionary<string, RuleState>>(rawJson);
                 // Report any rules that might be missing from the config file.
                 ReportMissingRulesFromConfig();

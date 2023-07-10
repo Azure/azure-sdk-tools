@@ -1,0 +1,34 @@
+{
+  "$schema": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-management/schema/1.0.0/plan.json",
+  "rotationPeriod": "1.00:00:00",
+  "rotationThreshold": "23:59:00",
+  "revokeAfterPeriod": "00:05:00",
+  "tags": [ "manual", "random" ],
+  "stores": [
+    {
+      "type": "Random String",
+      "isOrigin": true,
+      "parameters": {
+        "length": 16,
+        "useLowercase": true,
+        "useUppercase": true,
+        "useNumbers": true,
+        "useSpecialCharacters": true
+      }
+    },
+    {
+      "type": "Key Vault Secret",
+      "isPrimary": true,
+      "parameters": {
+        "secretUri": "https://azsdk-rotation-test.vault.azure.net/secrets/manual-value",
+        "revocationAction": "disableVersion"
+      }
+    },
+    {
+      "type": "Manual Action",
+      "parameters": {
+        "prompt": "Please update the password in all external stores."
+      }
+    }
+  ]
+}

@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "x-ms-useragent",
             "x-ms-version",
             "If-None-Match",
-            "sec-cha-ua",
+            "sec-ch-ua",
             "sec-ch-ua-mobile",
             "sec-ch-ua-platform",
             "Referrer",

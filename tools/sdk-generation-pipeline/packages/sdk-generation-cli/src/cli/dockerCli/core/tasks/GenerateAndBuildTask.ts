@@ -34,12 +34,12 @@ export class GenerateAndBuildTask implements SDKGenerationTaskBase {
         const generateAndBuildOptions = generateAndBuildTask as GenerateAndBuildOptions;
         const runOptions = generateAndBuildOptions.generateAndBuildScript;
         const readmeMdAbsolutePath = !!this.context.readmeMdPath? path.join(this.context.specRepo.repoPath, this.context.readmeMdPath) : '';
-        const cadlProjectFolderAbsolutPath = !!this.context.cadlProjectFolderPath?
-            path.join(this.context.specRepo.repoPath, this.context.cadlProjectFolderPath) : '';
+        const typespecProjectFolderAbsolutPath = !!this.context.typespecProjectFolderPath?
+            path.join(this.context.specRepo.repoPath, this.context.typespecProjectFolderPath) : '';
         const specRepoPath = this.context.specRepo.repoPath.includes('specification')?
             this.context.specRepo.repoPath : path.join(this.context.specRepo.repoPath, 'specification');
         const relatedReadmeMdFileRelativePath = !!readmeMdAbsolutePath? path.relative(specRepoPath, readmeMdAbsolutePath) : '';
-        const relatedCadlProjectFolderRelativePath = !!cadlProjectFolderAbsolutPath? path.relative(specRepoPath, cadlProjectFolderAbsolutPath) : '';
+        const relatedTypeSpecProjectFolderRelativePath = !!typespecProjectFolderAbsolutPath? path.relative(specRepoPath, typespecProjectFolderAbsolutPath) : '';
         const inputContent: GenerateAndBuildInput = {
             specFolder: specRepoPath,
             headSha: this.context.specRepo.headSha,
@@ -49,8 +49,8 @@ export class GenerateAndBuildTask implements SDKGenerationTaskBase {
             autorestConfig: this.context.autorestConfig,
             skipGeneration: this.context.skipGeneration
         };
-        if (!!relatedCadlProjectFolderRelativePath) {
-            inputContent.relatedCadlProjectFolder = relatedCadlProjectFolderRelativePath;
+        if (!!relatedTypeSpecProjectFolderRelativePath) {
+            inputContent.relatedTypeSpecProjectFolder = relatedTypeSpecProjectFolderRelativePath;
         } else if (!!relatedReadmeMdFileRelativePath) {
             inputContent.relatedReadmeMdFile = relatedReadmeMdFileRelativePath;
         }

@@ -93,7 +93,7 @@ steps:
           -DefinitionId "$(${{repo}}-template-definition-id)"
           -VsoQueuedPipelines "QUEUEDPIPELINES"
           -CancelPreviousBuilds $True
-          -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
+          -AuthToken $(System.AccessToken)
 
     - task: PowerShell@2
       displayName: Queue live-test template pipeline
@@ -109,7 +109,7 @@ steps:
           -DefinitionId "$(${{repo}}-template-tests-definition-id)"
           -VsoQueuedPipelines "QUEUEDPIPELINES"
           -CancelPreviousBuilds $True
-          -Base64EncodedAuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
+          -AuthToken $(System.AccessToken)
 
   - task: PowerShell@2
     displayName: Write Queued Pipeline Information to Tools PR

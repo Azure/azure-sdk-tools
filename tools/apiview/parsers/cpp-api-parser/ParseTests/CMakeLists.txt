@@ -17,7 +17,7 @@ add_executable(parseTests
     TestCases/TemplateTests.cpp
     TestCases/ClassesWithInternalAndDetail.cpp 
     TestCases/ExpressionTests.cpp
-    )
+     TestCases/UsingNamespace.cpp )
 add_dependencies(parseTests ApiViewProcessor)
 
 target_include_directories(parseTests PRIVATE ${ApiViewProcessor_SOURCE_DIR})

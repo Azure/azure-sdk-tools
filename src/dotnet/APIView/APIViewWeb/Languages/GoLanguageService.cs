@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -13,7 +13,7 @@ namespace APIViewWeb
     public class GoLanguageService : LanguageProcessor
     {
         public override string Name { get; } = "Go";
-        public override string Extension { get; } = ".gosource";
+        public override string [] Extensions { get; } = { ".gosource" };
         public override string ProcessName { get; } = "apiviewgo";
         public override string VersionString { get; } = "2";
 
@@ -36,7 +36,7 @@ namespace APIViewWeb
             zipStream.Position = 0;
             var archive = new ZipArchive(zipStream);            
             archive.ExtractToDirectory(tempDirectory);
-            var packageRootDirectory = originalFilePath.Replace(Extension, "");
+            var packageRootDirectory = originalFilePath.Replace(Extensions[0], "");
 
             try
             {

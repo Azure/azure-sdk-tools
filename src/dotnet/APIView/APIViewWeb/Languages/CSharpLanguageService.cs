@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -17,7 +17,7 @@ namespace APIViewWeb
     {
         private static Regex _packageNameParser = new Regex("([A-Za-z.]*[a-z]).([\\S]*)", RegexOptions.Compiled);
         public override string Name { get; } = "C#";
-        public override string Extension { get; } = ".dll";
+        public override string[] Extensions { get; } = { ".dll" };
 
         public override bool IsSupportedFile(string name)
         {

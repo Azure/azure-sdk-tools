@@ -3,7 +3,7 @@ pr: none
 
 pool:
   name: azsdk-pool-mms-ubuntu-2204-general
-  vmImage: MMSUbuntu22.04
+  vmImage: ubuntu-22.04
 
 variables:
   cachefile: verify-links-cache.txt
@@ -25,6 +25,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        -requestTimeoutSec 60 # For the nightly link checks increase timeout to handle some of the links that are redirects and can take longer
 
   - task: PowerShell@2
     displayName: 'azure-sdk link check with caching'
@@ -86,6 +87,20 @@ jobs:
       filePath: eng/common/scripts/Verify-Links.ps1
       arguments: >
         -urls "https://azure.github.io/azure-sdk-for-python/index.html"
+        -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
+        -inputCacheFile "$(cachefile)"
+        -outputCacheFile "$(cachefile)"
+        -devOpsLogging: $true
+        
+  - task: PowerShell@2
+    displayName: 'tools link check'
+    condition: succeededOrFailed()
+    inputs:
+      pwsh: true
+      filePath: eng/common/scripts/Verify-Links.ps1
+      arguments: >
+        -urls (Get-ChildItem -Path ./eng/common -Recurse -Include *.md)
+        -rootUrl "file://$(System.DefaultWorkingDirectory)"        
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"

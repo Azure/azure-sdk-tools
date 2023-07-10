@@ -1,5 +1,6 @@
 using System.IO;
 using System.Threading.Tasks;
+using Azure.Sdk.tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Console;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
@@ -29,6 +30,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
-        public abstract Task<string> GetPath(string pathToAssetsJson);
+        public abstract Task<NormalizedString> GetPath(string pathToAssetsJson);
     }
 }

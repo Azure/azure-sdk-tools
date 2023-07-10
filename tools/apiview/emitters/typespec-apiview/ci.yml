@@ -34,7 +34,7 @@ stages:
 
         pool:
           name: azsdk-pool-mms-ubuntu-2204-general
-          vmImage: MMSUbuntu22.04
+          vmImage: ubuntu-22.04
 
         steps:
           - task: NodeTool@0
@@ -76,7 +76,7 @@ stages:
         displayName: 'Publish typespec-apiview package to devops feed'
         pool:
           name: azsdk-pool-mms-ubuntu-2204-general
-          vmImage: MMSUbuntu22.04
+          vmImage: ubuntu-22.04
         steps:
         - checkout: none
         - download: current

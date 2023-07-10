@@ -58,18 +58,15 @@ func NewPkg(dir, modulePath string) (*Pkg, error) {
 		types:       map[string]typeDef{},
 	}
 	modulePathWithoutVersion := strings.TrimSuffix(versionReg.ReplaceAllString(modulePath, "/"), "/")
-	if _, after, found := strings.Cut(modulePathWithoutVersion, "azure-sdk-for-go/sdk/"); found {
-		if _, after, found := strings.Cut(dir, filepath.Clean(after)); found {
-			pk.relName = path.Base(modulePathWithoutVersion)
-			if after != "" {
-				pk.relName += after
-			}
-			pk.relName = strings.ReplaceAll(pk.relName, "\\", "/")
-		} else {
-			return nil, errors.New(dir + " isn't part of module " + modulePath)
+	moduleName := filepath.Base(modulePathWithoutVersion)
+	if _, after, found := strings.Cut(dir, moduleName); found {
+		pk.relName = moduleName
+		if after != "" {
+			pk.relName += after
 		}
+		pk.relName = strings.ReplaceAll(pk.relName, "\\", "/")
 	} else {
-		return nil, errors.New(dir + " isn't part of module " + modulePath)
+		return nil, errors.New(dir + " isn't part of module " + moduleName)
 	}
 	pk.files = map[string][]byte{}
 	pk.fs = token.NewFileSet()
@@ -175,12 +172,12 @@ func (p *Pkg) indexFile(f *ast.File) {
 						if _, _, found := strings.Cut(impPath, p.modulePath); found && !strings.Contains(impPath, "internal") {
 							expr := p.getText(t.Pos(), t.End())
 							p.c.addSimpleType(*p, x.Name.Name, p.Name(), expr, imports)
-						} else {
-							// This is a re-exported type e.g. "type TokenCredential = shared.TokenCredential".
-							// Track it as an alias so we can later hoist its definition into this package.
-							qn := impPath + "." + t.Sel.Name
-							p.typeAliases[x.Name.Name] = qn
 						}
+
+						// This is a re-exported type e.g. "type TokenCredential = shared.TokenCredential".
+						// Track it as an alias so we can later hoist its definition into this package.
+						qn := impPath + "." + t.Sel.Name
+						p.typeAliases[x.Name.Name] = qn
 					} else {
 						// Non-SDK underlying type e.g. "type EDMDateTime time.Time". Handle it like a simple type
 						// because we don't want to hoist its definition into this package.

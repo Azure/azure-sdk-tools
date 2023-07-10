@@ -126,6 +126,8 @@ namespace APIViewWeb
         // Approvers requested for review and when (for hiding older reviews)
         public HashSet<string> RequestedReviewers { get; set; } = null;
 
+        public string RequestedBy { get; set; } = null;
+
         public DateTime ApprovalRequestedOn;
 
         public DateTime ApprovalDate;

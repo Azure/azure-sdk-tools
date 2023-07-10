@@ -1,5 +1,11 @@
 # Release History
 
+## Version 0.4.4 (04-18-2023)
+Support future beta releases of TypeSpec.
+
+## Version 0.4.3 (04-17-2023)
+Support latest release of TypeSpec.
+
 ## Version 0.4.2 (03-16-2023)
 Support latest release of TypeSpec.
 

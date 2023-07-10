@@ -2,7 +2,7 @@ parameters:
   - name: readmeFile
     type: string
 
-  - name: cadlProject
+  - name: typespecProject
     type: string
 
   - name: trigger
@@ -36,14 +36,14 @@ steps:
     condition: ne('${{ parameters.triggerType }}', 'release')
     
   - bash: |
-      cadlProjectLen=`echo ${{ parameters.cadlProject }} | wc -L`
-      if [ 2 -lt ${cadlProjectLen} ]; then
+      typespecProjectLen=`echo ${{ parameters.typespecProject }} | wc -L`
+      if [ 2 -lt ${typespecProjectLen} ]; then
         docker run --privileged \
           -v $(SPEC_REPO):/spec-repo \
           -v $(SDK_REPO):/sdk-repo \
           -v /tmp/output:/tmp/output \
           $(DOCKER_IMAGE) \
-          --cadl-project=${{ parameters.cadlProject }} $(DOCKER_EX_CMD)
+          --typespec-project=${{ parameters.typespecProject }} $(DOCKER_EX_CMD)
       else
         if [ "${{ parameters.serviceType }}" = "resource-manager" ];then
           docker run --privileged \

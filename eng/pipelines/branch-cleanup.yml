@@ -5,6 +5,7 @@ parameters:
 - name: Repos
   type: object
   default:
+    - Azure/azure-sdk
     - Azure/azure-sdk-for-android
     - Azure/azure-sdk-for-c
     - Azure/azure-sdk-for-cpp
@@ -49,14 +50,28 @@ jobs:
             workingDirectory: $(System.DefaultWorkingDirectory)
             filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
             arguments: >
-              -RepoId ${{ repo }} 
+              -RepoId ${{ repo }}
               -CentralRepoId "Azure/azure-sdk-tools"
               -BranchRegex "^sync-eng/common.*-(?<PrNumber>\d+).*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
+        - task: PowerShell@2
+          displayName: Clean Up ${{ repo }} Sync Workflows Branches
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            pwsh: true
+            workingDirectory: $(System.DefaultWorkingDirectory)
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+            arguments: >
+              -RepoId ${{ repo }}
+              -CentralRepoId "Azure/azure-sdk-tools"
+              -BranchRegex "^sync-.github/workflows.*-(?<PrNumber>\d+).*$"
+              -AuthToken $(azuresdk-github-pat)
+              -WhatIf:$${{parameters.WhatIfPreference}}
       - ${{ each repo in parameters.SDKPrivate }}:
         - task: PowerShell@2
-          displayName: Clean Up ${{ repo }} swagger private SDK PR and branches 
+          displayName: Clean Up ${{ repo }} swagger private SDK PR and branches
           condition: succeededOrFailed()
           continueOnError: true
           inputs:
@@ -81,5 +96,5 @@ jobs:
               -RepoId ${{ repo }}
               -BranchRegex "^daily"
               -LastCommitOlderThan ((Get-Date).AddDays(-7))
-              -AuthToken $(azuresdk-github-pat) 
+              -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}

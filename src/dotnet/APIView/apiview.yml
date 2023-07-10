@@ -10,6 +10,7 @@ trigger:
       - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/go
       - src/swift
       - tools/apiview/parsers/js-api-parser
 
@@ -25,6 +26,7 @@ pr:
       - .azure-pipelines/apiview.yml
       - src/dotnet/APIView
       - src/java/apiview-java-processor
+      - src/go
       - src/swift
       - tools/apiview/parsers/js-api-parser
 
@@ -40,6 +42,7 @@ variables:
   NugetSecurityAnalysisWarningLevel: 'none'
   AzuriteConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1"
   CosmosEmulatorConnectionString: "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+  TestingDataContainer: "https://apiviewuitest.blob.core.windows.net/testingdata"
   ${{ if ne(variables['System.TeamProject'], 'internal') }}:
     CollectCoverage: false
   ${{ if eq(variables['System.TeamProject'], 'internal') }}:
@@ -171,6 +174,16 @@ stages:
               dotnet --version
             displayName: 'List .Net run times'
 
+          - task: GoTool@0
+            inputs:
+              version: '$(GoVersion)'
+            displayName: "Use Go $(GoVersion)"
+              
+          - script: |
+              go test ./... -v
+            workingDirectory: $(GoParserPackagePath)
+            displayName: 'Test Go parser'
+            
           - script: >-
               dotnet test src/dotnet/APIView/APIViewUnitTests/APIViewUnitTests.csproj
               --logger trx --collect:"XPlat Code Coverage"
@@ -208,6 +221,26 @@ stages:
               APIVIEW_ENDPOINT: "http://localhost:5000"
               APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
               APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
+          
+          - script: |
+              npm install
+            workingDirectory: $(WebClientProjectDirectory)
+            displayName: "Install Client Dependencies"
+
+          - script: |
+              npx playwright install --with-deps
+            workingDirectory: $(WebClientProjectDirectory)
+            displayName: "Install Playwright Browsers"
+
+          - script: |
+              npx playwright test --project=unit-tests
+            workingDirectory: $(WebClientProjectDirectory)
+            displayName: "Run Client-Side Unit Tests"
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathtoPublish: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
+              artifactName: 'Client-Side Unit Test Reports'
   
           - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
             - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml

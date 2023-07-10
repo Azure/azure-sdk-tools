@@ -1,0 +1,203 @@
+parameters:
+- name: PRDataFileName
+  type: string
+  default: PRsCreated.txt
+- name: ArtifactName
+  type: string
+  default: pullrequestdata
+- name: DirectoryToSync
+  type: string
+  default: not-specified
+- name: BaseBranchName
+  type: string
+  default: $(Build.SourceBranch)
+- name: Repos
+  type: object
+  default: []
+
+stages:
+  - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+    - stage: CreateSync
+      jobs:
+        - job: SyncEngCommon
+          displayName: Sync ${{ parameters.DirectoryToSync }} Directory
+
+          pool:
+            name: azsdk-pool-mms-ubuntu-2204-general
+            vmImage: ubuntu-22.04
+
+          steps:
+            - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+              parameters:
+                Paths:
+                  - ${{ parameters.DirectoryToSync }}
+
+            - pwsh: |
+                Set-PsDebug -Trace 1
+                $patchDir = "$(Build.ArtifactStagingDirectory)/patchfiles"
+                $patchfiles = git format-patch --output-directory $patchDir HEAD...origin/$(system.pullRequest.targetBranch) -- "${{ parameters.DirectoryToSync }}"
+                if ($patchfiles -and ($LASTEXITCODE -eq 0)) {
+                  echo "##vso[task.setvariable variable=PatchFilesLocation]$patchDir"
+                  echo "Setting PatchFilesLocation"
+                }
+                else {
+                  Write-Host "Failed to Create PatchFiles from Pull Request [https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber)]"
+                  exit 1
+                }
+              displayName: Create Patch Files from Changes in PR
+              workingDirectory: $(System.DefaultWorkingDirectory)
+
+            - task: PublishPipelineArtifact@1
+              condition: and(succeeded(), ne(variables['PatchFilesLocation'],''))
+              inputs:
+                artifactName: patchfiles
+                path: "$(PatchFilesLocation)"
+
+            - template: /eng/pipelines/templates/steps/sync-directory.yml
+              parameters:
+                CommitMessage: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository for Tools PR $(System.PullRequest.PullRequestNumber)"
+                DirectoryToSync: ${{ parameters.DirectoryToSync }}
+                UpstreamBranchName: "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+                BaseBranchName: $(system.pullRequest.targetBranch)
+                SkipCheckingForChanges: true
+                Repos: ${{ parameters.Repos }}
+
+    - stage: CreateSyncPRs
+      jobs:
+        - deployment: CreateSyncPullRequests
+          displayName: Create Sync Pull Requests
+          environment: githubmerges
+
+          pool:
+            name: azsdk-pool-mms-win-2022-general
+            vmImage: windows-2022
+
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+                    parameters:
+                      Paths:
+                        - ${{ parameters.DirectoryToSync }}
+
+                  - pwsh: |
+                      New-Item -Path $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} -ItemType File
+                    displayName: Create PRData Artifact
+
+                  - task: PowerShell@2
+                    displayName: 'Get alias of the Tools PR Creator'
+                    inputs:
+                      targetType: filePath
+                      filePath: $(Build.SourcesDirectory)/eng/common/scripts/Get-PullRequestCreator.ps1
+                      arguments: >
+                        -RepoOwner "Azure"
+                        -RepoName "azure-sdk-tools"
+                        -PullRequestNumber "$(System.PullRequest.PullRequestNumber)"
+                        -AuthToken "$(azuresdk-github-pat)"
+                      pwsh: true
+
+                  - ${{ each repo in parameters.Repos }}:
+                    - task: PowerShell@2
+                      displayName: Create pull request
+                      condition: succeeded()
+                      inputs:
+                        pwsh: true
+                        workingDirectory: ${{ parameters.WorkingDirectory }}
+                        filePath: $(Build.SourcesDirectory)/eng/common/scripts/Submit-PullRequest.ps1
+                        arguments: >
+                          -RepoOwner "Azure"
+                          -RepoName "${{ repo }}"
+                          -BaseBranch $(system.pullRequest.targetBranch)
+                          -PROwner "Azure"
+                          -PRBranch "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+                          -AuthToken "$(azuresdk-github-pat)"
+                          -PRTitle "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR $(System.PullRequest.PullRequestNumber)"
+                          -PRLabels "Central-EngSys,EngSys"
+                          -UserReviewers $(System.PullRequest.Creator)
+                          -Assignees $(System.PullRequest.Creator)
+                          -PRBody "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools for PR https://github.com/Azure/azure-sdk-tools/pull/$(System.PullRequest.PullRequestNumber) `
+                          See [eng/common workflow](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/README.md#workflow)"
+
+                    - pwsh: |
+                        $PRData = "Azure;${{ repo }};$(Submitted.PullRequest.Number)"
+                        Add-Content -Path "$(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}" -Value $PRData
+                      displayName: Write Sync PR Data to Artifact File
+                      condition: succeeded()
+
+                  - task: PublishPipelineArtifact@1
+                    condition: succeeded()
+                    displayName: Publish ${{ parameters.PRDataFileName }}
+                    inputs:
+                      artifactName: ${{ parameters.ArtifactName }}
+                      path: $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }}
+
+    - stage: VerifyAndMerge
+      jobs:
+        - deployment: VerifyandMergeSyncPrs
+          displayName: Verify and Merge Sync PRs
+          environment: githubmerges
+
+          pool:
+            name: azsdk-pool-mms-win-2022-general
+            vmImage: windows-2022
+
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+                    parameters:
+                      Paths:
+                        - ${{ parameters.DirectoryToSync }}
+
+                  - download: current
+                    artifact: ${{parameters.ArtifactName}}
+                    displayName: Download ${{ parameters.PRDataFileName }}
+
+                  - task: PowerShell@2
+                    displayName: 'Verify then Merge Pull Requests'
+                    inputs:
+                      targetType: filePath
+                      filePath: $(Build.SourcesDirectory)/eng/scripts/Verify-And-Merge-PRs.ps1
+                      arguments: >
+                        -PRDataArtifactPath "$(Pipeline.Workspace)/${{parameters.ArtifactName}}/${{ parameters.PRDataFileName }}"
+                        -AuthToken "$(azuresdk-github-pat)"
+                      pwsh: true
+
+                  - ${{ each repo in parameters.Repos }}:
+                    - task: PowerShell@2
+                      displayName: Clean Up Sync Common Branches
+                      condition: succeeded()
+                      inputs:
+                        pwsh: true
+                        workingDirectory: $(System.DefaultWorkingDirectory)
+                        filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+                        arguments: >
+                          -RepoId "Azure/${{ repo }}"
+                          -BranchRegex "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
+                          -AuthToken $(azuresdk-github-pat)
+
+  - ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+    - stage: CreateSync
+      jobs:
+        - job: SyncEngCommon
+          displayName: Sync ${{ parameters.DirectoryToSync }} Directory
+
+          pool:
+            name: azsdk-pool-mms-ubuntu-2204-general
+            vmImage: ubuntu-22.04
+
+          steps:
+            - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+              parameters:
+                Paths:
+                  - ${{ parameters.DirectoryToSync }}
+
+            - template: /eng/pipelines/templates/steps/sync-directory.yml
+              parameters:
+                CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
+                DirectoryToSync: ${{ parameters.DirectoryToSync }}
+                UpstreamBranchName: "sync-${{ parameters.DirectoryToSync }}"
+                BaseBranchName: ${{ parameters.BaseBranchName }}
+                Repos: ${{ parameters.Repos }}

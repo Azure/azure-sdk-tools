@@ -60,10 +60,10 @@ You can rename a swagger file as mentioned below and upload it to APIView in cas
 1. Rename swagger json to replace file extension to .swagger `Rename-Item PetSwagger.json -NewName PetSwagger.swagger`
 2. Upload renamed `.swagger` file
 
-### CADL
-CADL API review is generated automatically from a pull request and this should be good enough in most scenarios. You can also generate API review manually for a CADL package by providing URL path to CADL package specification root path.
-1. Click and `Create Review` and select CADL from language dropdown.
-2. Provide URL to cadl project root path.
+### TypeSpec
+TypeSpec API review is generated automatically from a pull request and this should be good enough in most scenarios. You can also generate API review manually for a TypeSpec package by providing URL path to TypeSpec package specification root path.
+1. Click and `Create Review` and select TypeSpec from language dropdown.
+2. Provide URL to typespec project root path.
 
 
 ## How does it retrieve public API information

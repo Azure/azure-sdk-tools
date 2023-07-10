@@ -17,7 +17,7 @@ stages:
       - job: BuildPackage
         pool:
           name: azsdk-pool-mms-ubuntu-2204-general
-          vmImage: MMSUbuntu22.04
+          vmImage: ubuntu-22.04
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
           - pwsh: |
@@ -42,7 +42,7 @@ stages:
           environment: ${{ parameters.Staging.EnvironmentName }}
           pool:
             name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: MMSUbuntu22.04
+            vmImage: ubuntu-22.04
           strategy:
             runOnce:
               deploy:
@@ -69,7 +69,7 @@ stages:
           environment: ${{ parameters.Production.EnvironmentName }}
           pool:
             name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: MMSUbuntu22.04
+            vmImage: ubuntu-22.04
           strategy:
             runOnce:
                 deploy:

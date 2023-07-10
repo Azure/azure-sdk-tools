@@ -8,14 +8,16 @@ using APIViewWeb.Models;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
 using APIViewWeb.Helpers;
+using Microsoft.VisualStudio.Services.Common;
+using System.Linq;
 
 namespace APIViewWeb
 {
     public abstract class LanguageService
     {
         public abstract string Name { get; }
-        public abstract string Extension { get; }
-        public virtual bool IsSupportedFile(string name) => name.EndsWith(Extension, StringComparison.OrdinalIgnoreCase);
+        public abstract string [] Extensions { get; }
+        public virtual bool IsSupportedFile(string name) => Extensions.Any(x => name.EndsWith(x, StringComparison.OrdinalIgnoreCase));
         public abstract bool CanUpdate(string versionString);
         public abstract Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis);
         public virtual bool IsReviewGenByPipeline { get; set; } = false;

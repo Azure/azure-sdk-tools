@@ -1,0 +1,200 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Azure Communication Chat Service",
+    "description": "Azure Communication Chat Service",
+    "version": "2023-07-01-preview"
+  },
+  "paths": {
+    "/chat/threads": {
+      "get": {
+        "tags": [
+          "Threads"
+        ],
+        "summary": "Gets the list of chat threads of a user.",
+        "operationId": "Chat_ListChatThreads",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "maxPageSize",
+            "description": "The maximum number of chat threads returned per page.",
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "in": "query",
+            "name": "startTime",
+            "description": "The earliest point in time to get chat threads up to. The timestamp should be in RFC3339 format: `yyyy-MM-ddTHH:mm:ssZ`.",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request successful. The action returns a `GetThreadsResponse` resource.",
+            "schema": {
+              "$ref": "#/definitions/ChatThreadsItemCollection"
+            }
+          }
+        },
+        "x-ms-pageable": {
+          "nextLinkName": "nextLink",
+          "itemName": "value"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ChatThreadItem": {
+      "description": "Summary information of a chat thread.",
+      "required": [
+        "id",
+        "topic"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Chat thread id.",
+          "type": "string",
+          "example": "19:uni01_uy5ucb66ugp3lrhe7pxso6xx4hsmm3dl6eyjfefv2n6x3rrurpea@thread.v2"
+        },
+        "topic": {
+          "description": "Chat thread topic.",
+          "type": "string",
+          "example": "Lunch Chat thread"
+        },
+        "deletedOn": {
+          "format": "date-time",
+          "description": "The timestamp when the chat thread was deleted. The timestamp is in RFC3339 format: `yyyy-MM-ddTHH:mm:ssZ`.",
+          "type": "string",
+          "example": "2020-10-30T10:50:50Z"
+        },
+        "lastMessageReceivedOn": {
+          "format": "date-time",
+          "description": "The timestamp when the last message arrived at the server. The timestamp is in RFC3339 format: `yyyy-MM-ddTHH:mm:ssZ`.",
+          "type": "string",
+          "readOnly": true,
+          "example": "2020-10-30T10:50:50Z"
+        },
+        "retentionPolicy": {
+          "$ref": "#/definitions/RetentionPolicy"
+        }
+      }
+    },
+    "ChatThreadsItemCollection": {
+      "description": "Collection of chat threads.",
+      "required": [
+        "value"
+      ],
+      "type": "object",
+      "properties": {
+        "value": {
+          "description": "Collection of chat threads.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ChatThreadItem"
+          }
+        },
+        "nextLink": {
+          "description": "If there are more chat threads that can be retrieved, the next link will be populated.",
+          "type": "string",
+          "readOnly": true
+        }
+      }
+    },
+    "RetentionPolicy": {
+      "description": "Data retention policy for auto deletion.",
+      "type": "object",
+      "discriminator": "policyType",
+      "properties": {
+        "policyType": {
+          "description": "Retention Policy Type",
+          "enum": [
+            "basedOnThreadCreationDate"
+          ],
+          "type": "string",
+          "x-ms-enum": {
+            "name": "policyType",
+            "modelAsString": true,
+            "values": [
+              {
+                "value": "basedOnThreadCreationDate",
+                "description": "Thread retention policy based on thread creation date."
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "policyType"
+      ]
+    },
+    "BasedOnThreadCreationDateRetentionPolicy": {
+      "description": "Thread retention policy based on thread creation date.",
+      "type": "object",
+      "x-ms-discriminator-value": "basedOnThreadCreationDate",
+      "allOf": [
+        {
+          "$ref": "#/definitions/RetentionPolicy"
+        }
+      ],
+      "properties": {
+        "daysAfterCreation": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Indicates how many days after the thread creation the thread will be deleted. Only 90 is accepted for now."
+        }
+      },
+      "required": [
+        "daysAfterCreation"
+      ]
+    }
+  },
+  "parameters": {
+    "ApiVersionParameter": {
+      "in": "query",
+      "name": "api-version",
+      "description": "Version of API to invoke.",
+      "required": true,
+      "type": "string",
+      "x-ms-parameter-location": "method"
+    },
+    "Endpoint": {
+      "in": "path",
+      "name": "endpoint",
+      "description": "The endpoint of the Azure Communication resource.",
+      "required": true,
+      "type": "string",
+      "x-ms-skip-url-encoding": true,
+      "x-ms-parameter-location": "client"
+    }
+  },
+  "securityDefinitions": {
+    "Authorization": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "An ACS (Azure Communication Services) user access token."
+    }
+  },
+  "security": [
+    {
+      "Authorization": []
+    }
+  ],
+  "x-ms-parameterized-host": {
+    "hostTemplate": "{endpoint}",
+    "useSchemePrefix": false,
+    "parameters": [
+      {
+        "$ref": "#/parameters/Endpoint"
+      }
+    ]
+  }
+}

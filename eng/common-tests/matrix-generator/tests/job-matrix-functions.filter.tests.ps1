@@ -6,7 +6,7 @@ BeforeAll {
     $matrixConfig = @"
 {
     "matrix": {
-        "operatingSystem": [ "windows-2022", "ubuntu-18.04", "macos-11" ],
+        "operatingSystem": [ "windows-2022", "ubuntu-20.04", "macos-11" ],
         "framework": [ "net461", "netcoreapp2.1" ],
         "additionalArguments": [ "", "mode=test" ]
     }
@@ -19,7 +19,7 @@ Describe "Matrix Filter" -Tag "UnitTest", "filter" {
     It "Should filter by matrix display name" -TestCases @(
         @{ regex = "windows.*"; expectedFirst = "windows2022_net461"; length = 4 }
         @{ regex = "windows2022_netcoreapp21_modetest"; expectedFirst = "windows2022_netcoreapp21_modetest"; length = 1 }
-        @{ regex = ".*ubuntu.*"; expectedFirst = "ubuntu1804_net461"; length = 4 }
+        @{ regex = ".*ubuntu.*"; expectedFirst = "ubuntu2004_net461"; length = 4 }
     ) {
         [array]$matrix = GenerateMatrix $config "all" $regex
         $matrix.Length | Should -Be $length

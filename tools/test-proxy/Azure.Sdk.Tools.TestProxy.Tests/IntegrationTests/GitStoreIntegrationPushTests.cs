@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""language/tables"",
-              ""Tag"": ""language/tables_fc54d0""
+              ""Tag"": ""python/tables_fc54d0""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario1(string inputJson)
@@ -59,8 +59,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest:true);
             try
             {
-                // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.TagPrefix);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -105,6 +105,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(assets);
                 TestHelpers.CleanupIntegrationTestTag(updatedAssets);
             }
         }
@@ -141,8 +142,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             try
             {
-                // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.Tag);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -187,6 +188,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(assets);
                 TestHelpers.CleanupIntegrationTestTag(updatedAssets);
             }
         }
@@ -207,7 +209,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""language/tables"",
-              ""Tag"": ""language/tables_9e81fb""
+              ""Tag"": ""python/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario3(string inputJson)
@@ -223,8 +225,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             try
             {
-                // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.Tag);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -280,6 +282,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(assets);
                 TestHelpers.CleanupIntegrationTestTag(updatedAssets);
             }
         }
@@ -316,8 +319,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             try
             {
-                // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.Tag);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -362,6 +365,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(assets);
                 TestHelpers.CleanupIntegrationTestTag(updatedAssets);
             }
         }
@@ -384,7 +388,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
               ""AssetsRepoPrefixPath"": ""pull/scenarios"",
               ""AssetsRepoId"": """",
               ""TagPrefix"": ""language/tables"",
-              ""Tag"": ""language/tables_9e81fb""
+              ""Tag"": ""python/tables_9e81fb""
         }")]
         [Trait("Category", "Integration")]
         public async Task Scenario5(string inputJson)
@@ -401,14 +405,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             // The first restore needs to be done with isPushTest set to true so it creates the branch
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             // The second restore needs to use the assets that was updated in the first restore so it
-            // restores from the branch we're going to push to
+            // restores from the tag we're going to push to
             var testFolder2 = TestHelpers.DescribeTestFolder(assets, folderStructure);
             try
             {
-                // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.Tag);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+                assets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
 
                 var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
                 await _defaultStore.Restore(jsonFileLocation);
@@ -474,10 +479,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the targeted tag is present on the repo
                 TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
-
+                
                 // Update the second assets file and do another restore
                 TestHelpers.UpdateAssetsFile(updatedAssets, jsonFileLocation2);
                 await defaultStore2.Restore(jsonFileLocation2);
+                updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation2);
 
                 // Verify the files pushes in another directory are restored correctly here
                 Assert.Equal(3, System.IO.Directory.EnumerateFiles(localFilePath2).Count());
@@ -485,11 +491,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath2, "file2.txt", 3));
                 Assert.True(TestHelpers.VerifyFileVersion(localFilePath2, "file6.txt", 1));
                 await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
-
+            }
+            catch(Exception)
+            {
+                throw;
             }
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(assets);
                 TestHelpers.CleanupIntegrationTestTag(updatedAssets);
                 DirectoryHelper.DeleteGitDirectory(testFolder2);
             }
@@ -530,8 +540,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
             try
             {
-                // Ensure that the TagPrefix was updated
-                Assert.NotEqual(originalTagPrefix, assets.TagPrefix);
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.Tag);
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
@@ -567,6 +577,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(assets);
                 TestHelpers.CleanupIntegrationTestTag(updatedAssets);
             }
         }

@@ -5,8 +5,8 @@ param (
     [Parameter(Position=0)]
     [ValidateNotNullOrEmpty()]
     [string] $ProjectDirectory,
-    [Parameter(Position=1)]
-    [string] $typespecAdditionalOptions ## addtional typespec emitter options, separated by semicolon if more than one, e.g. option1=value1;option2=value2
+    [string] $TypespecAdditionalOptions = $null, ## addtional typespec emitter options, separated by semicolon if more than one, e.g. option1=value1;option2=value2
+    [switch] $SaveInputs = $false ## saves the temporary files during execution, default false
 )
 
 $ErrorActionPreference = "Stop"
@@ -66,6 +66,12 @@ function NpmInstallAtRoot() {
         if (Test-Path "node_modules") {
             Write-Host "Remove existing node_modules at"(Get-Location)
             Remove-Item -Path "node_modules" -Force -Recurse
+        }
+
+        $useAlphaNpmRegistry = (Get-Content $replacementPackageJson -Raw).Contains("-alpha.")
+        if($useAlphaNpmRegistry) {
+            Write-Host "Package.json contains '-alpha.' in the version, Creating .npmrc using public/azure-sdk-for-js-test-autorest feed."
+            "registry=https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js-test-autorest/npm/registry/ `n`nalways-auth=true" | Out-File '.npmrc'
         }
 
         $hasPackageFile = Test-Path "package.json"
@@ -145,12 +151,17 @@ try {
         }
     }
     $typespecCompileCommand = "npx tsp compile $mainTypeSpecFile --emit $emitterName$emitterAdditionalOptions"
-    if ($typespecAdditionalOptions) {
-        $options = $typespecAdditionalOptions.Split(";");
+    if ($TypespecAdditionalOptions) {
+        $options = $TypespecAdditionalOptions.Split(";");
         foreach ($option in $options) {
             $typespecCompileCommand += " --option $emitterName.$option"
         }
     }
+
+    if ($SaveInputs) {
+        $typespecCompileCommand += " --option $emitterName.save-inputs=true"
+    }
+
     Write-Host($typespecCompileCommand)
     Invoke-Expression $typespecCompileCommand
 
@@ -160,7 +171,8 @@ finally {
     Pop-Location
 }
 
-$shouldCleanUp = $configuration["cleanup"] ?? $true
+$shouldCleanUp = !$SaveInputs
 if ($shouldCleanUp) {
     Remove-Item $tempFolder -Recurse -Force
 }
+exit 0

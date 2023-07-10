@@ -10,50 +10,65 @@ import { getOutputPackageInfo } from "../../utils/getOutputPackageInfo";
 import { getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory } from "../../utils/git";
 import { logger } from "../../utils/logger";
 import { RunningEnvironment } from "../../utils/runningEnvironment";
-import { prepareCommandToInstallDependenciesForCadlProject } from '../utils/prepareCommandToInstallDependenciesForCadlProject';
+import { prepareCommandToInstallDependenciesForTypeSpecProject } from '../utils/prepareCommandToInstallDependenciesForTypeSpecProject';
 import { generateChangelog } from "../utils/generateChangelog";
 import {
     generateAutorestConfigurationFileForMultiClientByPrComment,
     generateAutorestConfigurationFileForSingleClientByPrComment, replaceRequireInAutorestConfigurationFile
 } from '../utils/generateSampleReadmeMd';
-import { updateCadlProjectYamlFile } from '../utils/updateCadlProjectYamlFile';
+import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile';
 import { getRelativePackagePath } from "../utils/utils";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
     swaggerRepo: string;
     readmeMd: string | undefined;
-    cadlProject: string | undefined;
-    autorestConfig: string | undefined
+    typespecProject: string | undefined;
+    autorestConfig: string | undefined;
+    sdkGenerationType: "script" | "command";
+    swaggerRepoUrl: string;
+    gitCommitId: string;
+    typespecEmitter: string;
     use?: string;
-    cadlEmitter: string;
     outputJson?: any;
     additionalArgs?: string;
-    skipGeneration?: boolean,
+    skipGeneration?: boolean, 
     runningEnvironment?: RunningEnvironment;
 }) {
     let packagePath: string | undefined = undefined;
     let relativePackagePath: string | undefined = undefined;
-    if (options.cadlProject) {
+    if (options.typespecProject) {
         if (!options.skipGeneration) {
-            logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.cadlProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
-            logger.logGreen(`copy package.json file if not exist`);
-            const installCommand = prepareCommandToInstallDependenciesForCadlProject(path.join(options.sdkRepo, 'eng', 'typescript-emitter-package.json'), path.join(options.swaggerRepo, options.cadlProject, 'package.json'));
-            logger.logGreen(installCommand);
-            execSync(installCommand, {
-                stdio: 'inherit',
-                cwd: path.join(options.swaggerRepo, options.cadlProject)
-            });
-            updateCadlProjectYamlFile(path.join(options.swaggerRepo, options.cadlProject, 'cadl-project.yaml'), options.sdkRepo, options.cadlEmitter);
-            let cadlSource = '.';
-            if (fs.existsSync(path.join(options.swaggerRepo, options.cadlProject, 'client.cadl'))) {
-                cadlSource = 'client.cadl';
-            }
-            logger.logGreen(`npx cadl compile ${cadlSource} --emit ${options.cadlEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`);
-            execSync(`npx cadl compile ${cadlSource} --emit ${options.cadlEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`, {
-                stdio: 'inherit',
-                cwd: path.join(options.swaggerRepo, options.cadlProject)
-            });
+            logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.typespecProject}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
+            if(options.sdkGenerationType === "command") {
+                logger.logGreen("Run TypeSpec command directly.");
+                const copyPackageJsonName = 'emitter-package.json';
+                logger.logGreen(`copy package.json file if not exist from SDK repo ${copyPackageJsonName}`);
+                const installCommand = prepareCommandToInstallDependenciesForTypeSpecProject(path.join(options.sdkRepo, 'eng', copyPackageJsonName), path.join(options.swaggerRepo, options.typespecProject, 'package.json'));
+                logger.logGreen(installCommand);
+                execSync(installCommand, {
+                    stdio: 'inherit',
+                    cwd: path.join(options.swaggerRepo, options.typespecProject)
+                });
+                updateTypeSpecProjectYamlFile(path.join(options.swaggerRepo, options.typespecProject, 'tspconfig.yaml'), options.sdkRepo, options.typespecEmitter);
+                let typespecSource = '.';
+                if (fs.existsSync(path.join(options.swaggerRepo, options.typespecProject, 'client.tsp'))) {
+                    typespecSource = 'client.tsp';
+                }
+                logger.logGreen(`npx tsp compile ${typespecSource} --emit ${options.typespecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`);
+                execSync(`npx tsp compile ${typespecSource} --emit ${options.typespecEmitter} --arg "js-sdk-folder=${options.sdkRepo}"`, {
+                    stdio: 'inherit',
+                    cwd: path.join(options.swaggerRepo, options.typespecProject)
+                });
+                logger.logGreen("End with TypeSpec command.");
+            } else {
+                logger.logGreen("Run ./eng/common/scripts/TypeSpec-Project-Process.ps1 script directly.");
+                const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
+                const scriptCommand = ['pwsh', './eng/common/scripts/TypeSpec-Project-Process.ps1', tspDefDir,  options.gitCommitId, options.swaggerRepoUrl].join(" ");
+                logger.logGreen(`${scriptCommand}`);
+                execSync(scriptCommand, {stdio: 'inherit'});
+                logger.logGreen("End with ./eng/common/scripts/TypeSpec-Project-Process.ps1 script.");
+            } 
         }
     } else {
         logger.logGreen(`>>>>>>>>>>>>>>>>>>> Start: "${options.readmeMd}" >>>>>>>>>>>>>>>>>>>>>>>>>`);
@@ -169,7 +184,7 @@ export async function generateRLCInPipeline(options: {
         }
     }
 
-    const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.cadlProject);
+    const outputPackageInfo = getOutputPackageInfo(options.runningEnvironment, options.readmeMd, options.typespecProject);
 
     try {
         if (!packagePath || !relativePackagePath) {
@@ -230,8 +245,8 @@ export async function generateRLCInPipeline(options: {
         }
     } catch (e) {
         logger.logError('Error:');
-        if (options.cadlProject) {
-            logger.logError(`An error occurred while run build for cadl project: "${options.cadlProject}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
+        if (options.typespecProject) {
+            logger.logError(`An error occurred while run build for typespec project: "${options.typespecProject}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
         } else {
             logger.logError(`An error occurred while run build for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
         }

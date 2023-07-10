@@ -44,7 +44,7 @@ namespace Stress.Generator
                 Console.WriteLine($"2. Add test code to ./src/");
                 Console.WriteLine($"3. Update 'Dockerfile' (see contents for help).");
                 Console.WriteLine($"4. Run the following command from within your language repository to deploy the package:");
-                Console.WriteLine($"   pwsh -c $(git rev-parse --show-toplevel)/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Login -PushImages");
+                Console.WriteLine($"   pwsh -c $(git rev-parse --show-toplevel)/eng/common/scripts/stress-testing/deploy-stress-tests.ps1");
                 Console.WriteLine($"********************************************************************************");
             });
         }

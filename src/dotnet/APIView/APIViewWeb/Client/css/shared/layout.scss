@@ -4,6 +4,10 @@
     width: 30px;
 }
 
+#notification-container {
+    z-index: 1100;
+}
+
 @include placeholder {
     font-style: italic;
 }

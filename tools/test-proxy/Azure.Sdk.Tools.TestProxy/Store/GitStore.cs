@@ -40,9 +40,25 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         // variables that GIT recognizes, this is on purpose.
         public static readonly string GIT_COMMIT_OWNER_ENV_VAR = "GIT_COMMIT_OWNER";
         public static readonly string GIT_COMMIT_EMAIL_ENV_VAR = "GIT_COMMIT_EMAIL";
+        private bool LocalCacheRefreshed = false;
 
         public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
 
+        /// <summary>
+        /// We need to lock repo inititialization behind a queue.
+        /// This is due to the fact that Restore() can be called from multiple parallel
+        /// requests, as multiple "startplayback" can be firing at the same time.
+        /// 
+        /// While the Restore() action itself is idempotent, the Initialization of the assets repo
+        /// is NOT. We will use this queue to force ONE single initialization at a time.
+        /// 
+        /// We don't want to gate ALL initializations behind the same gate though. We can restore 
+        /// multiple DIFFERENT assets.jsons at the same time. It's specifically when two restores for the SAME
+        /// assets.json are fired that we run into problems.
+        /// 
+        /// Everything else will still run in parallel.
+        /// </summary>
+        private ConcurrentDictionary<string, TaskQueue> InitTasks = new ConcurrentDictionary<string, TaskQueue>();
 
         public ConcurrentDictionary<string, string> Assets = new ConcurrentDictionary<string, string>();
 
@@ -66,16 +82,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <returns></returns>
-        public async Task<string> GetPath(string pathToAssetsJson)
+        public async Task<NormalizedString> GetPath(string pathToAssetsJson)
         {
             var config = await ParseConfigurationFile(pathToAssetsJson);
 
-            if (!string.IsNullOrWhiteSpace(config.AssetsRepoPrefixPath.ToString()))
+            if (!string.IsNullOrWhiteSpace(config.AssetsRepoPrefixPath))
             {
-                return Path.Combine(config.AssetsRepoLocation.ToString(), config.AssetsRepoPrefixPath.ToString());
+                return new NormalizedString(Path.Combine(config.AssetsRepoLocation, config.AssetsRepoPrefixPath));
             }
 
-            return config.AssetsRepoLocation.ToString();
+            return new NormalizedString(config.AssetsRepoLocation);
         }
 
         /// <summary>
@@ -123,8 +139,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         throw GenerateInvokeException(SHAResult);
                     }
 
-                    GitHandler.Run($"tag {generatedTagName}", config);
-                    GitHandler.Run($"push origin {generatedTagName}", config);
+                    GitHandler.Run($"tag --no-sign {generatedTagName}", config);
+
+                    var remoteResult = GitHandler.Run($"ls-remote origin --tags {generatedTagName}", config);
+
+                    if (string.IsNullOrWhiteSpace(remoteResult.StdOut))
+                    {
+                        GitHandler.Run($"push origin {generatedTagName}", config);
+                    }
+                    else
+                    {
+                        _consoleWrapper.WriteLine($"Not attempting to push tag '{generatedTagName}', as it already exists within the assets repo");
+                    }
                 }
                 catch(GitProcessException e)
                 {
@@ -145,6 +171,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public async Task<string> Restore(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
+
             var initialized = IsAssetsRepoInitialized(config);
 
             if (!initialized)
@@ -152,7 +179,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 InitializeAssetsRepo(config);
             }
 
-            CheckoutRepoAtConfig(config);
+            CheckoutRepoAtConfig(config, cleanEnabled: true);
             await BreadCrumb.Update(config);
 
             return config.AssetsRepoLocation.ToString();
@@ -204,25 +231,29 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (allowReset)
             {
-                try
-                {
-                    GitHandler.Run("checkout *", config);
-                    GitHandler.Run("clean -xdf", config);
-                }
-                catch(GitProcessException e)
-                {
-                    HideOrigin(config);
-                    throw GenerateInvokeException(e.Result);
-                }
-
                 if (!string.IsNullOrWhiteSpace(config.Tag))
                 {
-                    CheckoutRepoAtConfig(config);
+                    Clean(config);
+                    CheckoutRepoAtConfig(config, cleanEnabled: false);
                     await BreadCrumb.Update(config);
                 }
             }
 
             HideOrigin(config);
+        }
+
+        private void Clean(GitAssetsConfiguration config)
+        {
+            try
+            {
+                GitHandler.Run("checkout *", config);
+                GitHandler.Run("clean -xdf", config);
+            }
+            catch (GitProcessException e)
+            {
+                HideOrigin(config);
+                throw GenerateInvokeException(e.Result);
+            }
         }
 
         /// <summary>
@@ -287,11 +318,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Given a configuration, set the sparse-checkout directory for the config, then attempt checkout of the targeted Tag.
         /// </summary>
         /// <param name="config"></param>
-        public void CheckoutRepoAtConfig(GitAssetsConfiguration config)
+        /// <param name="cleanEnabled">A newly initialized repo should not be 'cleaned', as that will result in a git error. However, a new
+        /// clone looks the same as being on the wrong tag. This variable allows us to prevent over-active cleaning that would result in exceptions.</param>
+        public void CheckoutRepoAtConfig(GitAssetsConfiguration config, bool cleanEnabled = true)
         {
+            // we are already on a targeted tag and as such don't want to discard our recordings
             if (Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag)
             {
                 return;
+            }
+            // if we are NOT on our targeted tag, before we attempt to switch we need to reset without asking for permission
+            else if (cleanEnabled)
+            {
+                Clean(config);
             }
 
             var checkoutPaths = ResolveCheckoutPaths(config);
@@ -413,8 +452,24 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
         }
 
+        /// <summary>
+        /// Verifies whether or not a local repo has initialized for the targeted assets configuration
+        /// </summary>
+        /// <param name="config"></param>
         public bool IsAssetsRepoInitialized(GitAssetsConfiguration config)
         {
+            // we have to ensure that multiple threads hitting this same segment of code won't stomp on each other
+            if (!LocalCacheRefreshed)
+            {
+                var breadCrumbQueue = InitTasks.GetOrAdd("breadcrumbload", new TaskQueue());
+                breadCrumbQueue.Enqueue(() =>
+                {
+
+                    BreadCrumb.RefreshLocalCache(Assets, config);
+                    LocalCacheRefreshed = true;
+                });
+            }
+
             if (Assets.ContainsKey(config.AssetsJsonRelativeLocation.ToString()))
             {
                 return true;
@@ -431,34 +486,39 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public bool InitializeAssetsRepo(GitAssetsConfiguration config, bool forceInit = false)
         {
-            var assetRepo = config.AssetsRepoLocation;
-            var initialized = IsAssetsRepoInitialized(config);
             var workCompleted = false;
+            var initQueue = InitTasks.GetOrAdd(config.AssetsRepoLocation, new TaskQueue());
 
-            if (forceInit)
+            initQueue.Enqueue(() =>
             {
-                DirectoryHelper.DeleteGitDirectory(assetRepo.ToString());
-                Directory.CreateDirectory(assetRepo.ToString());
-                initialized = false;
-            }
+                var assetRepo = config.AssetsRepoLocation;
+                var initialized = IsAssetsRepoInitialized(config);
 
-            if (!initialized)
-            {
-                try
+                if (forceInit)
                 {
-                    var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
-                    // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
-                    GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
-                    GitHandler.Run($"sparse-checkout init", config);
-                }
-                catch(GitProcessException e)
-                {
-                    throw GenerateInvokeException(e.Result);
+                    DirectoryHelper.DeleteGitDirectory(assetRepo.ToString());
+                    Directory.CreateDirectory(assetRepo.ToString());
+                    initialized = false;
                 }
 
-                CheckoutRepoAtConfig(config);
-                workCompleted = true;
-            }
+                if (!initialized)
+                {
+                    try
+                    {
+                        var cloneUrl = GetCloneUrl(config.AssetsRepo, config.RepoRoot);
+                        // The -c core.longpaths=true is basically for Windows and is a noop for other platforms
+                        GitHandler.Run($"clone -c core.longpaths=true --no-checkout --filter=tree:0 {cloneUrl} .", config);
+                        GitHandler.Run($"sparse-checkout init", config);
+                    }
+                    catch (GitProcessException e)
+                    {
+                        throw GenerateInvokeException(e.Result);
+                    }
+
+                    CheckoutRepoAtConfig(config, cleanEnabled: false);
+                    workCompleted = true;
+                }
+            });
 
             return workCompleted;
         }

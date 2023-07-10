@@ -11,7 +11,7 @@ BeforeAll {
     "matrix": {
         "operatingSystem": [
           "windows-2022",
-          "ubuntu-18.04",
+          "ubuntu-20.04",
           "macos-11"
         ],
         "framework": [
@@ -40,7 +40,7 @@ BeforeAll {
             "framework": "netcoreapp2.1"
         },
         {
-            "operatingSystem": ["macos-11", "ubuntu-18.04"],
+            "operatingSystem": ["macos-11", "ubuntu-20.04"],
             "additionalArguments": "--enableFoo"
         }
     ]
@@ -274,7 +274,7 @@ Describe "Platform Matrix Generation" -Tag "UnitTest", "generate" {
     "matrix": {
         "operatingSystem": [
           "windows-2022",
-          "ubuntu-18.04",
+          "ubuntu-20.04",
           "macos-11"
         ],
         "framework": [
@@ -318,7 +318,7 @@ Describe "Platform Matrix Generation" -Tag "UnitTest", "generate" {
         $element.name | Should -Be "windows2022_net461"
 
         $element = GetNdMatrixElement @(1, 1, 1) $matrix $dimensions
-        $element.name | Should -Be "ubuntu1804_netcoreapp21_withFoo"
+        $element.name | Should -Be "ubuntu2004_netcoreapp21_withFoo"
 
         $element = GetNdMatrixElement @(2, 1, 1) $matrix $dimensions
         $element.name | Should -Be "macOS11_netcoreapp21_withFoo"
@@ -335,7 +335,7 @@ Describe "Platform Matrix Generation" -Tag "UnitTest", "generate" {
         $element.additionalArguments | Should -Be ""
 
         $element = GetNdMatrixElement @(1, 1, 1) $matrix $dimensions
-        $element.parameters.operatingSystem | Should -Be "ubuntu-18.04"
+        $element.parameters.operatingSystem | Should -Be "ubuntu-20.04"
         $element.parameters.framework | Should -Be "netcoreapp2.1"
         $element.parameters.additionalArguments | Should -Be "--enableFoo"
 
@@ -347,7 +347,7 @@ Describe "Platform Matrix Generation" -Tag "UnitTest", "generate" {
 
     It "Should initialize a sparse matrix from an N-dimensional matrix" -TestCases @(
         @{ i = 0; name = "windows2022_net461"; operatingSystem = "windows-2022"; framework = "net461"; additionalArguments = ""; }
-        @{ i = 1; name = "ubuntu1804_netcoreapp21_withfoo"; operatingSystem = "ubuntu-18.04"; framework = "netcoreapp2.1"; additionalArguments = "--enableFoo"; }
+        @{ i = 1; name = "ubuntu2004_netcoreapp21_withfoo"; operatingSystem = "ubuntu-20.04"; framework = "netcoreapp2.1"; additionalArguments = "--enableFoo"; }
         @{ i = 2; name = "macOS11_net461"; operatingSystem = "macos-11"; framework = "net461"; additionalArguments = ""; }
     ) {
         $sparseMatrix = GenerateSparseMatrix $generateConfig.matrixParameters $generateConfig.displayNamesLookup
@@ -435,9 +435,9 @@ Describe "Platform Matrix Post Transformation" -Tag "UnitTest", "transform" {
         $matrix[1].parameters.framework | Should -Be "netcoreapp2.1"
         $matrix[1].parameters.additionalArguments | Should -Be "--enableFoo"
 
-        $matrix[2].name | Should -Be "ubuntu1804_net461"
+        $matrix[2].name | Should -Be "ubuntu2004_net461"
         $matrix[2].parameters.framework | Should -Be "net461"
-        $matrix[2].parameters.operatingSystem | Should -Be "ubuntu-18.04"
+        $matrix[2].parameters.operatingSystem | Should -Be "ubuntu-20.04"
         $matrix[2].parameters.additionalArguments | Should -Be ""
 
         $matrix[4].name | Should -Be "macOS11_net461"
@@ -580,7 +580,7 @@ Describe "Platform Matrix Job and Display Names" -Tag "UnitTest", "displaynames"
         "--enableFoo": "withfoo"
     },
     "matrix": {
-        "operatingSystem": "ubuntu-18.04",
+        "operatingSystem": "ubuntu-20.04",
         "framework": [
           "net461",
           "netcoreapp2.1"
@@ -603,18 +603,18 @@ Describe "Platform Matrix Job and Display Names" -Tag "UnitTest", "displaynames"
         $generateconfig.displayNamesLookup["netcoreapp2.1"] = (New-Object string[] 150) -join "a"
         $matrix = GenerateFullMatrix $generateconfig.matrixParameters $generateconfig.displayNamesLookup
 
-        $matrix[0].name | Should -Be "ubuntu1804_123some456invalid_formatnamefoo_TestObjectValueName"
+        $matrix[0].name | Should -Be "ubuntu2004_123some456invalid_formatnamefoo_TestObjectValueName"
 
         $matrix[1].name.Length | Should -Be 100
         # The withfoo part of the argument gets cut off at the character limit
-        $matrix[1].name | Should -BeLike "ubuntu1804_aaaaaaaaaaaaaaaaa*"
+        $matrix[1].name | Should -BeLike "ubuntu2004_aaaaaaaaaaaaaaaaa*"
     }
 
     It "Should create a valid display name when there are leading numbers" {
-        $generateconfig.displayNamesLookup["ubuntu-18.04"] = '123_ubuntu1804'
+        $generateconfig.displayNamesLookup["ubuntu-20.04"] = '123_ubuntu2004'
         $matrix = GenerateFullMatrix $generateconfig.matrixParameters $generateconfig.displayNamesLookup
 
-        $matrix[0].name | Should -Be "job_123_ubuntu1804_net461_TestObjectValueName"
+        $matrix[0].name | Should -Be "job_123_ubuntu2004_net461_TestObjectValueName"
     }
 
     It "Should create a valid job name when there are leading numbers" {
@@ -649,6 +649,6 @@ Describe "Platform Matrix Job and Display Names" -Tag "UnitTest", "displaynames"
 
     It "Should generate a display name with null and object values" {
         $matrix = GenerateMatrix $generateConfig "sparse"
-        $matrix[0].name | Should -Be "ubuntu1804_net461_TestObjectValueName"
+        $matrix[0].name | Should -Be "ubuntu2004_net461_TestObjectValueName"
     }
 }

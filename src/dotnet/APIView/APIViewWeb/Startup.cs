@@ -25,6 +25,9 @@ using APIViewWeb.Filters;
 using APIViewWeb.Account;
 using APIView.Identity;
 using APIViewWeb.Managers;
+using APIViewWeb.Hubs;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb
 {
@@ -113,7 +116,7 @@ namespace APIViewWeb
             services.AddSingleton<LanguageService, SwaggerLanguageService>();
             services.AddSingleton<LanguageService, SwiftLanguageService>();
             services.AddSingleton<LanguageService, XmlLanguageService>();
-            services.AddSingleton<LanguageService, CadlLanguageService>();
+            services.AddSingleton<LanguageService, TypeSpecLanguageService>();
 
             if (Environment.IsDevelopment() && Configuration["AuthenticationScheme"] == "Test")
             {
@@ -221,6 +224,11 @@ namespace APIViewWeb
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
+            services.AddControllersWithViews().AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
+            services.AddSignalR(options => {
+                options.EnableDetailedErrors = true;
+                options.MaximumReceiveMessageSize =  1024 * 1024;
+            });
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)
@@ -280,6 +288,7 @@ namespace APIViewWeb
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();
                 endpoints.MapDefaultControllerRoute();
+                endpoints.MapHub<SignalRHub>("hubs/notification");
             });
         }
     }

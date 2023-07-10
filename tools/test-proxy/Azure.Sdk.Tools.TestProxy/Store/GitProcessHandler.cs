@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,11 +20,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public Exception CommandException;
     }
 
+
     /// <summary>
     /// This class offers an easy wrapper abstraction for shelling out to git.
     /// </summary>
     public class GitProcessHandler
     {
+        public const int RETRY_INTERMITTENT_FAILURE_COUNT = 3;
         /// <summary>
         /// Internal class to hold the minimum supported version of git. If that
         /// version changes we only need to change it here.
@@ -127,54 +128,73 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 try
                 {
-                    DebugLogger.LogInformation($"git {arguments}");
-
-                    var output = new List<string>();
-                    var error = new List<string>();
-
-                    using (var process = new Process())
+                    int attempts = 1;
+                    while (attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
                     {
-                        process.StartInfo = processStartInfo;
+                        DebugLogger.LogInformation($"git {arguments}");
 
-                        process.OutputDataReceived += (s, e) =>
+                        var output = new List<string>();
+                        var error = new List<string>();
+
+                        using (var process = new Process())
                         {
-                            lock (output)
+                            process.StartInfo = processStartInfo;
+
+                            process.OutputDataReceived += (s, e) =>
                             {
-                                output.Add(e.Data);
-                            }
-                        };
+                                lock (output)
+                                {
+                                    output.Add(e.Data);
+                                }
+                            };
 
-                        process.ErrorDataReceived += (s, e) =>
-                        {
-                            lock (error)
+                            process.ErrorDataReceived += (s, e) =>
                             {
-                                error.Add(e.Data);
+                                lock (error)
+                                {
+                                    error.Add(e.Data);
+                                }
+                            };
+
+                            process.Start();
+                            process.BeginErrorReadLine();
+                            process.BeginOutputReadLine();
+                            process.WaitForExit();
+
+                            int returnCode = process.ExitCode;
+                            var stdOut = string.Join(Environment.NewLine, output);
+                            var stdError = string.Join(Environment.NewLine, error);
+
+                            DebugLogger.LogDebug($"StdOut: {stdOut}");
+                            DebugLogger.LogDebug($"StdErr: {stdError}");
+                            DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
+
+                            result.ExitCode = process.ExitCode;
+                            result.StdErr = string.Join(Environment.NewLine, stdError);
+                            result.StdOut = string.Join(Environment.NewLine, stdOut);
+
+                            if (result.ExitCode == 0)
+                            {
+                                break;
                             }
-                        };
+                            var continueToAttempt = IsRetriableGitError(result);
 
-                        process.Start();
-                        process.BeginErrorReadLine();
-                        process.BeginOutputReadLine();
-                        process.WaitForExit();
+                            if (!continueToAttempt)
+                            {
+                                throw new GitProcessException(result);
+                            }
 
-                        int returnCode = process.ExitCode;
-                        var stdOut = string.Join(Environment.NewLine, output);
-                        var stdError = string.Join(Environment.NewLine, error);
+                            attempts++;
 
-                        DebugLogger.LogDebug($"StdOut: {stdOut}");
-                        DebugLogger.LogDebug($"StdErr: {stdError}");
-                        DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
-
-                        result.ExitCode = process.ExitCode;
-                        result.StdErr = string.Join(Environment.NewLine, stdError);
-                        result.StdOut = string.Join(Environment.NewLine, stdOut);
-
-                        if (result.ExitCode != 0)
-                        {
-                            throw new GitProcessException(result);
+                            if (continueToAttempt && attempts < RETRY_INTERMITTENT_FAILURE_COUNT)
+                            {
+                                Task.Delay(attempts * 2 * 1000).Wait();
+                            }
                         }
                     }
                 }
+                // exceptions caught here will be to do with inability to start the git process
+                // otherwise all "error" states should be handled by the output to stdErr and non-zero exitcode.
                 catch (Exception e)
                 {
                     DebugLogger.LogDebug(e.Message);
@@ -187,6 +207,52 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             });
 
             return result;
+        }
+
+        /// <summary>
+        /// This function evaluates a git command invocation result. The result of "yes you should retry this" only occurs
+        /// when the necessary data is available. Otherwise we default to NOT retry.
+        ///
+        /// Check Azure/azure-sdk-tools#5660 for additional detail on occurrence.
+        /// </summary>
+        /// <param name="result"></param>
+        /// <returns></returns>
+        public bool IsRetriableGitError(CommandResult result)
+        {
+            if (result.ExitCode != 0) {
+                // we cannot evaluate an empty stderr to see if it is retriable
+                if (string.IsNullOrEmpty(result.StdErr))
+                {
+                    return false;
+                }
+
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': The requested URL returned error: 429
+                if (result.StdErr.Contains("The requested URL returned error: 429"))
+                {
+                    return true;
+                }
+
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443: Connection timed out
+                if (result.StdErr.Contains("Failed to connect to github.com port 443: Connection timed out"))
+                {
+                    return true;
+                }
+
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443: Operation timed out
+                if (result.StdErr.Contains("Failed to connect to github.com port 443: Operation timed out"))
+                {
+                    return true;
+                }
+
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443 after 21019 ms: Couldn't connect to server
+                var regex = new Regex(@"Failed to connect to github.com port 443 after [\d]+ ms: Couldn't connect to server");
+                if (regex.IsMatch(result.StdErr))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -214,52 +280,71 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 try
                 {
-                    DebugLogger.LogInformation($"git {arguments}");
-                    var output = new List<string>();
-                    var error = new List<string>();
-
-                    using (var process = new Process())
+                    int attempts = 1;
+                    bool continueToAttempt = true;
+                    while (continueToAttempt && attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
                     {
-                        process.StartInfo = processStartInfo;
+                        DebugLogger.LogInformation($"git {arguments}");
+                        var output = new List<string>();
+                        var error = new List<string>();
 
-                        process.OutputDataReceived += (s, e) =>
+                        using (var process = new Process())
                         {
-                            lock (output)
+                            process.StartInfo = processStartInfo;
+
+                            process.OutputDataReceived += (s, e) =>
                             {
-                                output.Add(e.Data);
-                            }
-                        };
+                                lock (output)
+                                {
+                                    output.Add(e.Data);
+                                }
+                            };
 
-                        process.ErrorDataReceived += (s, e) =>
-                        {
-                            lock (error)
+                            process.ErrorDataReceived += (s, e) =>
                             {
-                                error.Add(e.Data);
+                                lock (error)
+                                {
+                                    error.Add(e.Data);
+                                }
+                            };
+
+                            process.Start();
+                            process.BeginErrorReadLine();
+                            process.BeginOutputReadLine();
+                            process.WaitForExit();
+
+                            int returnCode = process.ExitCode;
+                            var stdOut = string.Join(Environment.NewLine, output);
+                            var stdError = string.Join(Environment.NewLine, error);
+
+                            DebugLogger.LogDebug($"StdOut: {stdOut}");
+                            DebugLogger.LogDebug($"StdErr: {stdError}");
+                            DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
+
+                            commandResult = new CommandResult()
+                            {
+                                ExitCode = process.ExitCode,
+                                StdErr = stdError,
+                                StdOut = stdOut,
+                                Arguments = arguments
+                            };
+
+                            if (commandResult.ExitCode == 0)
+                            {
+                                break;
                             }
-                        };
+                            continueToAttempt = IsRetriableGitError(commandResult);
 
-                        process.Start();
-                        process.BeginErrorReadLine();
-                        process.BeginOutputReadLine();
-                        process.WaitForExit();
-
-                        int returnCode = process.ExitCode;
-                        var stdOut = string.Join(Environment.NewLine, output);
-                        var stdError = string.Join(Environment.NewLine, error);
-
-                        DebugLogger.LogDebug($"StdOut: {stdOut}");
-                        DebugLogger.LogDebug($"StdErr: {stdError}");
-                        DebugLogger.LogDebug($"ExitCode: {process.ExitCode}");
-
-                        commandResult = new CommandResult()
-                        {
-                            ExitCode = process.ExitCode,
-                            StdErr = stdError,
-                            StdOut = stdOut,
-                            Arguments = arguments
-                        };
+                            attempts++;
+                            if (continueToAttempt && attempts < RETRY_INTERMITTENT_FAILURE_COUNT)
+                            {
+                                Task.Delay(attempts * 2 * 1000).Wait();
+                            }
+                        }
                     }
                 }
+                // exceptions caught here will be to do with inability to start the git process
+                // otherwise all "error" states should be handled by the output to stdErr and non-zero exitcode.
                 catch (Exception e)
                 {
                     DebugLogger.LogDebug(e.Message);

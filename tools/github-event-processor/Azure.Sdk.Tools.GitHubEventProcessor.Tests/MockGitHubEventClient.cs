@@ -39,8 +39,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
 
         public SearchIssuesResult SearchIssuesResultReturn { get; set; } = new SearchIssuesResult();
 
-        public MockGitHubEventClient(string productHeaderName, string? rulesConfigLocation = null) : 
-            base(productHeaderName, rulesConfigLocation)
+        public MockGitHubEventClient(string productHeaderName) : 
+            base(productHeaderName)
         {
 
         }
@@ -63,6 +63,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
             {
                 Console.WriteLine("MockGitHubEventClient::ProcessPendingUpdates, Issue Update is null");
             }
+
+            if (_labelsToAdd.Count > 0)
+            {
+                Console.WriteLine($"MockGitHubEventClient::ProcessPendingUpdates, number of labels to add = {_labelsToAdd.Count} (only 1 call)");
+                // Adding labels is a single call to add them all
+                numUpdates++;
+            }
+
+            Console.WriteLine($"MockGitHubEventClient::ProcessPendingUpdates, number of labels to remove = {_labelsToRemove.Count}");
+            // Removing labels is a call for each one being removed
+            numUpdates += _labelsToRemove.Count;
+
             Console.WriteLine($"MockGitHubEventClient::ProcessPendingUpdates, number of pending comments = {_gitHubComments.Count}");
             numUpdates += _gitHubComments.Count;
 
@@ -435,6 +447,24 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         }
 
         /// <summary>
+        /// Convenience function for testing, get labels to add stored on the GitHubEventClient
+        /// </summary>
+        /// <returns>List of strings</returns>
+        public List<string> GetLabelsToAdd()
+        {
+            return _labelsToAdd;
+        }
+
+        /// <summary>
+        /// Convenience function for testing, get labels to remove stored on the GitHubEventClient
+        /// </summary>
+        /// <returns>List of strings</returns>
+        public List<string> GetLabelsToRemove()
+        {
+            return _labelsToRemove;
+        }
+
+        /// <summary>
         /// Convenience function for testing, get the list of GitHub issues to update. For normal action
         /// processing this list won't be used as actions make changes to a common IssueUpdate. For scheduled,
         /// or cron, tasks, those will potentially end up updating multiple, differnt issues.
@@ -454,6 +484,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         public List<GitHubIssueToLock> GetGitHubIssuesToLock()
         {
             return _gitHubIssuesToLock;
+        }
+
+        /// <summary>
+        /// Override for the GitHubEventClient funcion which computes this based upon the repository's core rate limit.
+        /// Since this isn't necessary for the tests, just return the 100 which is the size of one page.
+        /// </summary>
+        /// <returns>int</returns>
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public override async Task<int> ComputeScheduledTaskUpdateLimit()
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        {
+            return 100;
         }
     }
 }

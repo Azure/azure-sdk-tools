@@ -1,9 +1,9 @@
 lockfileVersion: 5.3
 
 specifiers:
-  '@autorest/codemodel': ^4.19.2
+  '@autorest/codemodel': ^4.19.3
   '@autorest/extension-base': ^3.5.0
-  '@azure-tools/codegen': ^2.9.1
+  '@azure-tools/codegen': ^2.9.2
   '@rush-temp/testmodeler': file:./projects/testmodeler.tgz
   '@types/jest': ^26.0.24
   '@types/lodash': ^4.14.176
@@ -33,9 +33,9 @@ specifiers:
   webpack-cli: ^5.0.1
 
 dependencies:
-  '@autorest/codemodel': 4.19.2
+  '@autorest/codemodel': 4.19.3
   '@autorest/extension-base': 3.5.0
-  '@azure-tools/codegen': 2.9.1
+  '@azure-tools/codegen': 2.9.2
   '@rush-temp/testmodeler': file:projects/testmodeler.tgz
   '@types/jest': 26.0.24
   '@types/lodash': 4.14.181
@@ -108,11 +108,11 @@ packages:
       call-me-maybe: 1.0.1
     dev: false
 
-  /@autorest/codemodel/4.19.2:
-    resolution: {integrity: sha512-MENLWZxm4bcoJJw20egNeD4nmuhVUOftoIAMgCx+Qicb32sJxJiPBD6L7rjPjmSWlDQe8hP6vWc4Ig1ncZ3J4g==}
+  /@autorest/codemodel/4.19.3:
+    resolution: {integrity: sha512-8RMPjq2BmLNn080EHGbSc0E9pk7EO6i+vi3vGrz8xrfnTBydOZPJUZqmOpEmNnV6LRbr23cthXQo0JbA/bStWg==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@azure-tools/codegen': 2.9.1
+      '@azure-tools/codegen': 2.9.2
       js-yaml: 4.0.0
     dev: false
 
@@ -120,7 +120,7 @@ packages:
     resolution: {integrity: sha512-G+jRTAm9Zd0GRpj6Slsj7QPQDKuy4SFtnuWT7XTcCOJ/R5FU3jPBC73J57Jd4S2SDnlAnWmmX12IeBy/XqJFTw==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@azure-tools/codegen': 2.9.1
+      '@azure-tools/codegen': 2.9.2
       js-yaml: 4.0.0
       vscode-jsonrpc: 3.6.2
     dev: false
@@ -137,8 +137,8 @@ packages:
       proper-lockfile: 2.0.1
     dev: false
 
-  /@azure-tools/codegen/2.9.1:
-    resolution: {integrity: sha512-qlQSMaSUtrhlnW/XqgOeOcAfDw5kLUWq16DcjbnvxRC/F4QepqtNth4PHgHM+1UXZeWuiGj5sAsLQnm/9CApDQ==}
+  /@azure-tools/codegen/2.9.2:
+    resolution: {integrity: sha512-brVLyffOtPiEijYYBYgV+4q7IyAfqXIec7XbdEqvv7As6SeEdq5WtbtN9N0LdGVHDWtEfc+JArwIx9aYGFdMUg==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@azure-tools/async-io': 3.0.254
@@ -7448,13 +7448,13 @@ packages:
     dev: false
 
   file:projects/testmodeler.tgz:
-    resolution: {integrity: sha512-Gmuxc7J//mF3c8nkqc5qwDD8ptpZ9dxKL5o5/ToC70WmXbdpuEomEyq4bXVqTdBkqTBXtvBe8umkIIKfmrxTYw==, tarball: file:projects/testmodeler.tgz}
+    resolution: {integrity: sha512-uFIkAPUF/GcRrzCeecRe4FMeqD2rUxYlRiYojHH0IFXa2k1cEyYDXLOpyQ5IzkgTScc+bLtNvj5uveCOfDfbhA==, tarball: file:projects/testmodeler.tgz}
     name: '@rush-temp/testmodeler'
     version: 0.0.0
     dependencies:
-      '@autorest/codemodel': 4.19.2
+      '@autorest/codemodel': 4.19.3
       '@autorest/extension-base': 3.5.0
-      '@azure-tools/codegen': 2.9.1
+      '@azure-tools/codegen': 2.9.2
       '@types/jest': 26.0.24
       '@types/lodash': 4.14.181
       '@types/node': 14.18.36

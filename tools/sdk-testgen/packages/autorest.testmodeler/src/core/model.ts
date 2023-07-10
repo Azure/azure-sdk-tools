@@ -5,19 +5,27 @@ import * as path from 'path';
 import { ApiScenarioLoader } from 'oav/dist/lib/apiScenario/apiScenarioLoader';
 import {
     ArraySchema,
+    BinarySchema,
+    BooleanSchema,
     CodeModel,
     ComplexSchema,
+    DateTimeSchema,
     DictionarySchema,
+    DurationSchema,
     ImplementationLocation,
     Languages,
+    NumberSchema,
     ObjectSchema,
     Operation,
     OperationGroup,
     Parameter,
+    Property,
     Schema,
     SchemaResponse,
     SchemaType,
     SecurityScheme,
+    StringSchema,
+    UriSchema,
     codeModelSchema,
 } from '@autorest/codemodel';
 import { AutorestExtensionHost, Session, startSession } from '@autorest/extension-base';
@@ -119,8 +127,11 @@ export class ExampleValue {
         usedProperties: Set<string[]>,
         schema: Schema,
         language: Languages,
+        extensions: Record<string, any>,
         searchDescents = true,
     ): ExampleValue {
+        const xMsFormat = 'x-ms-format';
+        const xMsFormatElementType = 'x-ms-format-element-type';
         const instance = new ExampleValue(schema, language);
         if (!schema) {
             instance.rawValue = rawValue;
@@ -128,14 +139,14 @@ export class ExampleValue {
         }
 
         function addParentValue(parent: ComplexSchema) {
-            const parentValue = ExampleValue.createInstance(session, rawValue, usedProperties, parent, parent.language, false);
+            const parentValue = ExampleValue.createInstance(session, rawValue, usedProperties, parent, parent.language, parent.extensions, false);
             if ((parentValue.properties && Object.keys(parentValue.properties).length > 0) || (parentValue.parentsValue && Object.keys(parentValue.parentsValue).length > 0)) {
                 instance.parentsValue[parent.language.default.name] = parentValue;
             }
         }
 
         if (schema.type === SchemaType.Array && Array.isArray(rawValue)) {
-            instance.elements = rawValue.map((x) => this.createInstance(session, x, new Set(), (schema as ArraySchema).elementType, undefined));
+            instance.elements = rawValue.map((x) => this.createInstance(session, x, new Set(), (schema as ArraySchema).elementType, undefined, undefined));
         } else if (schema.type === SchemaType.Object && rawValue === Object(rawValue)) {
             const childSchema: ComplexSchema = searchDescents ? Helper.findInDescents(schema as ObjectSchema, rawValue) : schema;
             instance.schema = childSchema;
@@ -153,6 +164,7 @@ export class ExampleValue {
                                 Helper.filterPathsByPrefix(usedProperties, property.flattenedNames),
                                 property.schema,
                                 property.language,
+                                property.extensions,
                             );
                             instance.properties[property.serializedName].flattenedNames = property.flattenedNames;
                             usedProperties.add(property.flattenedNames);
@@ -166,6 +178,7 @@ export class ExampleValue {
                             Helper.filterPathsByPrefix(usedProperties, [property.serializedName]),
                             property.schema,
                             property.language,
+                            property.extensions,
                         );
                         usedProperties.add([property.serializedName]);
                     }
@@ -196,14 +209,77 @@ export class ExampleValue {
             instance.properties = {};
             for (const [key, value] of Object.entries(rawValue)) {
                 if (!Helper.pathIsIncluded(usedProperties, [key])) {
-                    instance.properties[key] = this.createInstance(session, value, new Set([...usedProperties]), (schema as DictionarySchema).elementType, undefined);
+                    instance.properties[key] = this.createInstance(session, value, new Set([...usedProperties]), (schema as DictionarySchema).elementType, undefined, undefined);
                     usedProperties.add([key]);
                 }
+            }
+        } else if (schema.type === SchemaType.AnyObject && extensions && extensions[xMsFormat] && extensions[xMsFormat].startsWith('dfe-')) {
+            // Becuase DataFactoryElement is defined as AnyObject schema, so have to explicitly build it's example value according to x_ms_format here
+            const format = extensions[xMsFormat];
+            const elementFormat = extensions[xMsFormatElementType];
+
+            const dfeObjSchema = ExampleValue.createSchemaForDfeObject(rawValue, format);
+            if (dfeObjSchema) {
+                return this.createInstance(session, rawValue, usedProperties, dfeObjSchema, language, undefined, searchDescents);
+            } else {
+                const dfeLiterlSchema = ExampleValue.createSchemaForDfeLiteral(session, rawValue, format, elementFormat);
+                return this.createInstance(session, rawValue, usedProperties, dfeLiterlSchema, language, undefined, searchDescents);
             }
         } else {
             instance.rawValue = rawValue;
         }
         return instance;
+    }
+
+    private static createSchemaForDfeObject(raw: any, dfeFormat: string): ObjectSchema | undefined {
+        const dfeObjectType = 'type';
+        const dfeObjectValue = 'value';
+        const dfeObjectTypeValues = ['Expression', 'SecureString', 'AzureKeyVaultSecretReference'];
+        const dfeObjectSchemaPrefix = 'DataFactoryElement-';
+
+        if (Object(raw) && raw[dfeObjectType] && raw[dfeObjectValue] && dfeObjectTypeValues.includes(raw[dfeObjectType])) {
+            const r = new ObjectSchema(dfeObjectSchemaPrefix + raw[dfeObjectType], '');
+            r.addProperty(new Property(dfeObjectType, '', new StringSchema(`${dfeFormat}-${dfeObjectType}`, '')));
+            r.addProperty(new Property(dfeObjectValue, '', new StringSchema(`${dfeFormat}-${dfeObjectValue}`, '')));
+            return r;
+        }
+        return undefined;
+    }
+
+    private static createSchemaForDfeLiteral(session: Session<TestCodeModel>, raw: any, dfeFormat: string, eleFormat: string): Schema {
+        switch (dfeFormat) {
+            case 'dfe-string':
+                return new StringSchema(dfeFormat, '');
+            case 'dfe-bool':
+                return new BooleanSchema(dfeFormat, '');
+            case 'dfe-int':
+                return new NumberSchema(dfeFormat, '', SchemaType.Integer, 32);
+            case 'dfe-double':
+                return new NumberSchema(dfeFormat, '', SchemaType.Number, 64);
+            case 'dfe-date-time':
+                return new DateTimeSchema(dfeFormat, '');
+            case 'dfe-duration':
+                return new DurationSchema(dfeFormat, '');
+            case 'dfe-uri':
+                return new UriSchema(dfeFormat, '');
+            case 'dfe-list-string':
+                return new ArraySchema(dfeFormat, '', new StringSchema(dfeFormat + '-element', ''));
+            case 'dfe-key-value-pairs':
+                return new DictionarySchema(dfeFormat, '', new StringSchema(dfeFormat + '-element', ''));
+            case 'dfe-object':
+                return new BinarySchema('');
+            case 'dfe-list-generic': {
+                // TODO: do we need to search more schema store for the element?
+                // just searching object schemas seems enough for now. Consider add more when needed
+                const eleSchema = session.model.schemas.objects.find((s) => s.language.default.name === eleFormat);
+                if (!eleSchema) {
+                    throw new Error('Cant find schema for the element of DataFactoryElement with type dfe-list-generic: ' + (eleFormat ?? '<null>'));
+                }
+                return new ArraySchema(dfeFormat, '', eleSchema);
+            }
+            default:
+                throw new Error('Unknown dfeFormat' + dfeFormat);
+        }
     }
 }
 
@@ -214,7 +290,7 @@ export class ExampleParameter {
 
     public constructor(session: Session<TestCodeModel>, parameter: Parameter, rawValue: any) {
         this.parameter = parameter;
-        this.exampleValue = ExampleValue.createInstance(session, rawValue, new Set(), parameter?.schema, parameter.language);
+        this.exampleValue = ExampleValue.createInstance(session, rawValue, new Set(), parameter?.schema, parameter.language, parameter.extensions);
     }
 }
 
@@ -235,7 +311,7 @@ export class ExampleResponse {
     public static createInstance(session: Session<TestCodeModel>, rawResponse: ExampleExtensionResponse, schema: Schema, language: Languages): ExampleResponse {
         const instance = new ExampleResponse();
         if (rawResponse.body !== undefined) {
-            instance.body = ExampleValue.createInstance(session, rawResponse.body, new Set(), schema, language);
+            instance.body = ExampleValue.createInstance(session, rawResponse.body, new Set(), schema, language, undefined);
         }
         instance.headers = rawResponse.headers;
         return instance;

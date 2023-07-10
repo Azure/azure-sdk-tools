@@ -32,7 +32,29 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0004NotProducedForMethodsWithoutSyncAlternative()
+        public async Task AZC0004ProducedForMethodsWithoutAsyncAlternative()
+        {
+            const string code = @"
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task {|AZC0004:Get|}(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004NotProducedForMethodsWithCancellationToken()
         {
             const string code = @"
 using System.Threading;
@@ -54,6 +76,116 @@ namespace RandomNamespace
 }";
             await Verifier.CreateAnalyzer(code)
                 .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004NotProducedForMethodsWithOptionalRequestContext()
+        {
+            const string code = @"
+using Azure;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task GetAsync(RequestContext context = null)
+        {
+            return null;
+        }
+        public virtual Task Get(RequestContext context = null)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .WithDisabledDiagnostics("AZC0018")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004NotProducedForMethodsWithRequiredRequestContext()
+        {
+            const string code = @"
+using Azure;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task<Response> GetAsync(RequestContext context)
+        {
+            return null;
+        }
+        public virtual Response Get(RequestContext context)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004ProducedForMethodsNotMatch()
+        {
+            const string code = @"
+using Azure;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task {|AZC0004:GetAsync|}(string a, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+        public virtual Task {|AZC0004:Get|}(string a, RequestContext context)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004ProducedForMethodsWithNotMatchedRequestContext()
+        {
+            const string code = @"
+using Azure;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task<Response> {|AZC0004:GetAsync|}(RequestContext context = null)
+        {
+            return null;
+        }
+        public virtual Response {|AZC0004:Get|}(RequestContext context)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .WithDisabledDiagnostics("AZC0018")
                 .RunAsync();
         }
 
@@ -207,7 +339,7 @@ namespace RandomNamespace
             return null;
         }
 
-        public virtual void Get(string sameNameDifferentType, CancellationToken cancellationToken = default)
+        public virtual void {|AZC0004:Get|}(string sameNameDifferentType, CancellationToken cancellationToken = default)
         {
         }
     }
@@ -263,7 +395,7 @@ namespace RandomNamespace
             return null;
         }
 
-        public virtual void Query<T>(Expression<Func<T, string, bool>> filter, CancellationToken cancellationToken = default)
+        public virtual void {|AZC0004:Query|}<T>(Expression<Func<T, string, bool>> filter, CancellationToken cancellationToken = default)
         {
         }
     }
@@ -327,7 +459,7 @@ namespace RandomNamespace
         }
 
 
-        public virtual void Append(
+        public virtual void {|AZC0004:Append|}(
             string[] arr,
             CancellationToken cancellationToken = default)
         {
@@ -355,7 +487,7 @@ namespace RandomNamespace
             return null;
         }
 
-        public virtual void Get(int differentName, CancellationToken cancellationToken = default)
+        public virtual void {|AZC0004:Get|}(int differentName, CancellationToken cancellationToken = default)
         {
         }
     }

@@ -5,7 +5,7 @@ dotenv.config();
 
 export class DockerCliInput {
     readmeMdPath: string;
-    cadlProjectFolderPath: string;
+    typespecProjectFolderPath: string;
     tag: string;
     sdkList: string;
     specRepo: string;
@@ -28,12 +28,12 @@ export const dockerCliInput = convict<DockerCliInput>({
         format: String,
         doc: 'The relative path to readme.md, which is from the root of spec repo'
     },
-    cadlProjectFolderPath: {
+    typespecProjectFolderPath: {
         default: '',
-        env: 'CADL_PROJECT',
-        arg: 'cadl-project',
+        env: 'TYPESPEC_PROJECT',
+        arg: 'typespec-project',
         format: String,
-        doc: 'The relative path to cadl project folder, which is from the root of spec repo'
+        doc: 'The relative path to typespec project folder, which is from the root of spec repo'
     },
     tag: {
         default: '',

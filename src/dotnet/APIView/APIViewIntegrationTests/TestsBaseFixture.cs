@@ -24,11 +24,14 @@ namespace APIViewIntegrationTests
         private readonly CosmosClient _cosmosClient;
         private readonly BlobContainerClient _blobCodeFileContainerClient;
         private readonly BlobContainerClient _blobOriginalContainerClient;
-
+        
         public PackageNameManager PackageNameManager { get; private set; }
         public ReviewManager ReviewManager { get; private set; }
+        public BlobCodeFileRepository BlobCodeFileRepository { get; private set; }
         public CosmosReviewRepository ReviewRepository { get; private set; }
+        public CosmosCommentsRepository CommentRepository { get; private set; }
         public ClaimsPrincipal User { get; private set; }
+        public  string TestDataPath { get; private set; }
 
         public TestsBaseFixture()
         {
@@ -65,7 +68,7 @@ namespace APIViewIntegrationTests
             _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId");
             _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Profiles", "/id");
             ReviewRepository = new CosmosReviewRepository(config);
-            var cosmosCommentsRepository = new CosmosCommentsRepository(config);
+            CommentRepository = new CosmosCommentsRepository(config);
             var cosmosUserProfileRepository = new CosmosUserProfileRepository(config);
 
             _blobCodeFileContainerClient = new BlobContainerClient(config["Blob:ConnectionString"], "codefiles");
@@ -73,7 +76,7 @@ namespace APIViewIntegrationTests
             _ = _blobCodeFileContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
             _ = _blobOriginalContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
 
-            var blobCodeFileRepository = new BlobCodeFileRepository(config, memoryCache);
+            BlobCodeFileRepository = new BlobCodeFileRepository(config, memoryCache);
             var blobOriginalsRepository = new BlobOriginalsRepository(config);
 
             var authorizationServiceMoq = new Mock<IAuthorizationService>();
@@ -90,8 +93,10 @@ namespace APIViewIntegrationTests
                 .Returns(Task.CompletedTask);
 
             ReviewManager = new ReviewManager(
-                authorizationServiceMoq.Object, ReviewRepository, blobCodeFileRepository, blobOriginalsRepository, cosmosCommentsRepository,
+                authorizationServiceMoq.Object, ReviewRepository, BlobCodeFileRepository, blobOriginalsRepository, CommentRepository,
                 languageService, notificationManager, devopsArtifactRepositoryMoq.Object, PackageNameManager);
+
+            TestDataPath = config["TestPkgPath"];
         }
 
         public void Dispose()

@@ -52,7 +52,7 @@ namespace APIViewWeb.Repositories
                     }
                     downloadUrl = downloadUrl.Split("?")[0] + "?format=" + format + "&subPath=" + filePath;
                 }
-                
+
                 var downloadResp = await GetFromDevopsAsync(downloadUrl);
                 downloadResp.EnsureSuccessStatusCode();
                 return await downloadResp.Content.ReadAsStreamAsync();
@@ -65,9 +65,9 @@ namespace APIViewWeb.Repositories
             SetDevopsClientHeaders();
             var downloadResp = await _devopsClient.GetAsync(request);
             int count = 0;
-            while (downloadResp.StatusCode == HttpStatusCode.TooManyRequests && count < 5)
+            while ((downloadResp.StatusCode == HttpStatusCode.TooManyRequests || downloadResp.StatusCode == HttpStatusCode.BadRequest) && count < 5)
             {
-                var retryAfter = downloadResp.Headers.RetryAfter.ToString();
+                var retryAfter = (downloadResp.Headers.RetryAfter is null) ? "10" : downloadResp.Headers.RetryAfter.ToString();
                 _telemetryClient.TrackTrace($"Download request from devops artifact is throttled. Retry After: {retryAfter}, Retry count: {count}");
                 await Task.Delay(int.Parse(retryAfter) * 1000);
                 downloadResp = await _devopsClient.GetAsync(request);

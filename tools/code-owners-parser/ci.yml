@@ -20,17 +20,14 @@ pr:
   paths:
     include:
       - tools/code-owners-parser
-      - eng/common/scripts/get-codeowners.ps1
+      - eng/common/scripts/get-codeowners
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/code-owners-parser
     TestPostSteps:
-      - task: PowerShell@2
-        displayName: Test on code owner script
-        inputs:
-          pwsh: true
-          filePath: eng/common/scripts/get-codeowners.ps1
-          arguments: >
-            -Test
+      - template: /eng/common/pipelines/templates/steps/run-pester-tests.yml
+        parameters:
+          TargetDirectory: eng/common-tests/get-codeowners
+          TargetTags: UnitTest

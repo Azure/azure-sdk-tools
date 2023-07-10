@@ -19,7 +19,8 @@
                             <th scope="col" class="border-left pl-3">Author</th>
                             <th scope="col" class="border-left pl-3">Last Updated</th>
                             <th scope="col" class="border-left pl-3">Type</th>
-                            <th scope="col" class="border-left pl-3">Approval Requested</th>
+                            <th scope="col" class="border-left pl-3">Requested on</th>
+                            <th scope="col" class="border-left pl-3">Requested by</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -56,6 +57,9 @@
                                     </td>
                                     <td class="align-middle border-left pl-3">
                                         <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.ApprovalRequestedOn.ToLocalTime()"></span>
+                                    </td>
+                                    <td class="align-middle border-left pl-3">
+                                        <a username="@review.RequestedBy">@review.RequestedBy</a>
                                     </td>
                                 </tr>
                             }

@@ -297,7 +297,7 @@ namespace Azure.ClientSdk.Analyzers
             List<IMethodSymbol> visitedSyncMember = new List<IMethodSymbol>();
             foreach (var member in type.GetMembers())
             {
-                if (member is IMethodSymbol asyncMethodSymbol && asyncMethodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public)
+                if (member is IMethodSymbol asyncMethodSymbol && asyncMethodSymbol.MethodKind == MethodKind.Ordinary && asyncMethodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public)
                 {
                     CheckClientMethod(context, asyncMethodSymbol);
 
@@ -315,7 +315,7 @@ namespace Azure.ClientSdk.Analyzers
                         CheckClientMethod(context, syncMember);
                     }
                 }
-                else if (member is IMethodSymbol syncMethodSymbol && !member.IsImplicitlyDeclared && !syncMethodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public && !visitedSyncMember.Contains(syncMethodSymbol))
+                else if (member is IMethodSymbol syncMethodSymbol && syncMethodSymbol.MethodKind == MethodKind.Ordinary && !member.IsImplicitlyDeclared && !syncMethodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public && !visitedSyncMember.Contains(syncMethodSymbol))
                 {
                     var asyncMemberName = member.Name + AsyncSuffix;
                     var asyncMember = FindMethod(type.GetMembers(asyncMemberName).OfType<IMethodSymbol>(), syncMethodSymbol.TypeParameters, syncMethodSymbol.Parameters);

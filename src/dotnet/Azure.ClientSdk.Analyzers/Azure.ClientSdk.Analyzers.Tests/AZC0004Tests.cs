@@ -496,5 +496,30 @@ namespace RandomNamespace
                 .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
+
+        [Fact]
+        public async Task AZC0004NotProducedForConstructorOrProperty()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        private string _id;
+        public virtual string Id => _id;
+
+        protected SomeClient()
+        {
+        }
+
+        public SomeClient(string id)
+        {
+            _id = id;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
     }
 }

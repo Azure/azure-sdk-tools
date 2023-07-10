@@ -1,41 +1,49 @@
 ################
 # Misc
 ################
-/*                               @azure/azure-sdk-eng
-/.devcontainer/                  @azure/azure-sdk-eng
-/doc/                            @azure/azure-sdk-eng
+/*                                     @azure/azure-sdk-eng
+/.devcontainer/                        @azure/azure-sdk-eng
+/doc/                                  @azure/azure-sdk-eng
 # Note: directories below are scheduled to be reorganized.
 # For details, see: https://github.com/Azure/azure-sdk-tools/issues/5056
-/src/                            @azure/azure-sdk-eng
+/src/                                  @azure/azure-sdk-eng
 
 ################
 # Automation
 ################
 
-# Git Hub integration and bot rules
-/.github/                        @jsquire @ronniegeraghty
-/.github/CODEOWNERS              @azure/azure-sdk-eng
+# Git Hub integration
+/.github/CODEOWNERS                    @azure/azure-sdk-eng
+
+# Repository tooling
+/tools/github                          @jsquire @ronniegeraghty
+/tools/github-issues                   @jsquire @ronniegeraghty
 
 ###########
 # Eng Sys
 ###########
-/eng/                            @azure/azure-sdk-eng
-/eng/common/                     @konrad-jamrozik @weshaggard @benbp
-/eng/common/TestResources/       @benbp @weshaggard @heaths
+/eng/                                  @azure/azure-sdk-eng
+/eng/common/                           @konrad-jamrozik @weshaggard @benbp
+/eng/common/TestResources/             @benbp @weshaggard @heaths
 
 ###########
 # Eng Sys Tools
 ###########
-/tools/                          @azure/azure-sdk-eng
-/tools/check-enforcer/           @praveenkuttappan @weshaggard
-/tools/github-issues/            @praveenkuttappan @weshaggard
-/tools/js-sdk-release-tools/     @qiaozha @MaryGao
-/tools/mock-service-host/        @raych1 @tadelesh
-/tools/perf-automation/          @mikeharder @benbp
-/tools/pipeline-generator/       @weshaggard @benbp
-/tools/pipeline-witness/         @praveenkuttappan @weshaggard
-/tools/sdk-generation-pipeline/  @weshaggard @praveenkuttappan @maririos
-/tools/sdk-testgen/              @raych1 @tadelesh
-/tools/stress-cluster/           @benbp @ckairen
-/tools/test-proxy/               @scbedd @mikeharder
-/tools/webhook-router/           @praveenkuttappan @weshaggard
+/tools/                                @azure/azure-sdk-eng
+/tools/check-enforcer/                 @praveenkuttappan @weshaggard
+/tools/github-issues/                  @praveenkuttappan @weshaggard
+/tools/js-sdk-release-tools/           @qiaozha @MaryGao
+/tools/mock-service-host/              @raych1 @tadelesh
+/tools/perf-automation/                @mikeharder @benbp
+/tools/pipeline-generator/             @weshaggard @benbp
+/tools/pipeline-witness/               @praveenkuttappan @weshaggard
+/tools/sdk-generation-pipeline/        @weshaggard @praveenkuttappan @maririos
+/tools/sdk-testgen/                    @raych1 @tadelesh
+/tools/stress-cluster/                 @benbp @ckairen
+/tools/test-proxy/                     @scbedd @mikeharder
+/tools/webhook-router/                 @praveenkuttappan @weshaggard
+
+###########
+# .NET Client Tools
+###########
+/src/dotnet/Azure.ClientSdk.Analyzers  @jsquire @pallavit @JoshLove-msft @christothes @annelo-msft @KrzysztofCwalina @tg-msft @heaths @m-nash

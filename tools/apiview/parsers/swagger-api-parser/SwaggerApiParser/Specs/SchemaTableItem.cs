@@ -31,7 +31,7 @@ namespace SwaggerApiParser.Specs
                     if (property.Name == "Model" && TypeFormat == "object" && context.definitionsNames.Contains(Model))
                     {
                         var navigateToId = $"{context.IteratorPath.rootPath()}-Definitions-{Model}";
-                        ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(property.GetValue(this, null)?.ToString(), CodeFileTokenKind.TypeName) { NavigateToId = navigateToId } }));
+                        ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(Model, CodeFileTokenKind.TypeName) { NavigateToId = navigateToId } }));
                     }
                     else if (property.Name == "TypeFormat" && !String.IsNullOrEmpty(TypeFormat))
                     {
@@ -41,26 +41,26 @@ namespace SwaggerApiParser.Specs
                             if (context.definitionsNames.Contains(arrayType))
                             {
                                 var navigateToId = $"{context.IteratorPath.rootPath()}-Definitions-{arrayType}";
-                                ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(property.GetValue(this, null)?.ToString(), CodeFileTokenKind.TypeName) { NavigateToId = navigateToId } }));
+                                ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(TypeFormat, CodeFileTokenKind.TypeName) { NavigateToId = navigateToId } }));
                             }
                             else
                             {
-                                ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(property.GetValue(this, null)?.ToString(), CodeFileTokenKind.Literal) }));
+                                ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(TypeFormat, CodeFileTokenKind.Literal) }));
                             }
                         }
                         else if (context.definitionsNames.Contains(TypeFormat))
                         {
                             var navigateToId = $"{context.IteratorPath.rootPath()}-Definitions-{TypeFormat}";
-                            ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(property.GetValue(this, null)?.ToString(), CodeFileTokenKind.TypeName) { NavigateToId = navigateToId } }));
+                            ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(TypeFormat, CodeFileTokenKind.TypeName) { NavigateToId = navigateToId } }));
                         }
                         else 
                         {
-                            ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(property.GetValue(this, null)?.ToString(), CodeFileTokenKind.Literal) }));
+                            ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(TypeFormat, CodeFileTokenKind.Literal) }));
                         }
                     }
                     else if (property.Name == "Field")
                     {
-                        ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(property.GetValue(this, null)?.ToString(), CodeFileTokenKind.MemberName) }));
+                        ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(Field, CodeFileTokenKind.MemberName) }));
                     }
                     else
                     {

@@ -152,7 +152,16 @@ namespace SwaggerApiParser.SwaggerApiView
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameter.name, CodeFileTokenKind.MemberName) }));
                 var parameterType = parameter.GetTypeFormat();
 
-                ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameterType, CodeFileTokenKind.Keyword) }));
+                if (context.definitionsNames.Contains(parameterType))
+                {
+                    var navigateToId = $"{context.IteratorPath.rootPath()}-Definitions-{parameterType}";
+                    ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameterType, CodeFileTokenKind.TypeName) { NavigateToId = navigateToId } }));
+                }
+                else
+                {
+                    ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameterType, CodeFileTokenKind.Keyword) }));
+                }
+                
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(String.Join(", ", parameter.GetKeywords()), CodeFileTokenKind.Literal) }));
                 ret.AddRange(TokenSerializer.TableCell(new[] { new CodeFileToken(parameter.description, CodeFileTokenKind.Literal) }));
             }

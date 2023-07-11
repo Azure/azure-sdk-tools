@@ -2204,7 +2204,7 @@ class DoNotImportLegacySix(BaseChecker):
     priority = -1
     msgs = {
         "C4757": (
-            "Do not import the six package in your library. Six was used with python 3.6, which is no longer supported.",
+            "Do not import the six package in your library. Six was used to work with python2, which is no longer supported.",
             "do-not-import-legacy-six",
             "Do not import the six package in your library."
         ),

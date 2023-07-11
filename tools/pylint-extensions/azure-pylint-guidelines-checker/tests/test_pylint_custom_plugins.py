@@ -3534,3 +3534,51 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         )
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
+
+class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed imports and allowing allowed imports."""
+    CHECKER_CLASS = checker.DoNotImportLegacySix
+
+    def test_disallowed_import_from(self):
+        """Check that illegal imports raise warnings"""
+        importfrom_node = astroid.extract_node("from six import with_metaclass")
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-import-legacy-six",
+                    line=1,
+                    node=importfrom_node,
+                    col_offset=0,
+                )
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_disallowed_import(self):
+        """Check that illegal imports raise warnings"""
+        importfrom_node = astroid.extract_node("import six")
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-import-legacy-six",
+                    line=1,
+                    node=importfrom_node,
+                    col_offset=0,
+                )
+        ):
+            self.checker.visit_import(importfrom_node)
+
+    def test_allowed_imports(self):
+        """Check that allowed imports don't raise warnings."""
+        # import not in the blocked list.
+        importfrom_node = astroid.extract_node("from math import PI")
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+        # from import not in the blocked list.
+        importfrom_node = astroid.extract_node("from azure.core.pipeline import Pipeline")
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+        # Import HttpResponse, but from in `azure.core`.
+        importfrom_node = astroid.extract_node("from .. import HttpResponse")
+        importfrom_node.root().name = "azure.core"
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)

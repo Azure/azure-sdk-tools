@@ -1214,7 +1214,7 @@ class CheckDocstringParameters(BaseChecker):
             'Param types misformatted in docstring: "%s". Docstring types are not MyPy types. See details: '
             'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
             "docstring-misformatted-type",
-            "Docstring misformatted for param type.",
+            "Docstring misformatted for param type. Do not use MyPy types.",
         ),
     }
     options = (
@@ -1395,9 +1395,7 @@ class CheckDocstringParameters(BaseChecker):
         function_decorators = node.decoratornames()
         try:
             returns = next(node.infer_call_result())
-            # If returns None, or raises an error ignore
-            if returns == astroid.Uninferable:
-                return
+            # If function raises an error will need to locally ignore
             if returns.as_string() == "None":
                 return
         except (astroid.exceptions.InferenceError, AttributeError):

@@ -1394,9 +1394,9 @@ class CheckDocstringParameters(BaseChecker):
         # Get decorators on the function
         function_decorators = node.decoratornames()
         try:
-            returns = next(node.infer_call_result())
             # If function raises an error will need to locally ignore
-            if returns.as_string() == "None":
+            returns = next(node.infer_call_result()).as_string()
+            if returns == "None":
                 return
         except (astroid.exceptions.InferenceError, AttributeError):
             # this function doesn't return anything, just return

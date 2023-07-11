@@ -246,7 +246,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             try
             {
-                GitHandler.Run("checkout *", config);
+                GitHandler.Run("checkout .", config);
                 GitHandler.Run("clean -xdf", config);
             }
             catch (GitProcessException e)

@@ -2581,10 +2581,6 @@ AstClassLike::AstClassLike(
     m_isAnonymousNamedStruct = true;
     m_anonymousNamedStructName = cast<FieldDecl>(decl->getNextDeclInContext())->getNameAsString();
   }
-  if (decl->getNameAsString() == "Md5Hash")
-  {
-    decl->dump(llvm::outs());
-  }
   if (parentNode)
   {
     parentNode = parentNode->InsertChildNode(

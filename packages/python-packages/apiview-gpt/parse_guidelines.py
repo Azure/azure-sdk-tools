@@ -3,8 +3,8 @@ import json
 
 from src._markdown_parser import parse_markdown
 
-_REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-_GUIDELINES_FOLDER = os.path.join(_REPO_ROOT, "guidelines")
+_PACKAGE_ROOT = os.path.dirname(os.path.abspath(__file__))
+_GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
 if __name__ == "__main__":
 

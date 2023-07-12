@@ -22,6 +22,12 @@ class azure.contoso.ContosoManager:
 
     def get_widget(self, options: dict) -> WidgetResult
 
+class azure.contoso.WidgetColor(Enum):
+
+    blue = "blue"
+    green = "green"
+    red = "red"
+
 class azure.contoso.WidgetResult:
 
     def __init__(

@@ -17,6 +17,10 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 OPENAI_API_VERSION = "2023-05-15"
 
+_PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
+
+
 class GptReviewer:
     def __init__(self):
         self.llm = AzureChatOpenAI(deployment_name="gpt-4", openai_api_version=OPENAI_API_VERSION)
@@ -38,34 +42,36 @@ class GptReviewer:
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt_template)
 
     def get_response(self, apiview, language):
-        # FIXME: Restore this
-        # general_guidelines, language_guidelines = self.retrieve_guidelines(language)
-        # all_guidelines = general_guidelines + language_guidelines
+        general_guidelines, language_guidelines = self.retrieve_guidelines(language)
+        all_guidelines = general_guidelines + language_guidelines
 
-        # FIXME: Restore this
-        # guidelines = self.select_guidelines(all_guidelines, [
-        #     "python-client-sync-async-separate-clients",
-        #     "python-client-naming",
-        #     "python-client-constructor-form",
-        #     "python-client-options-naming",
-        #     "python-codestyle-pep484"
-        # ])
+        guidelines = self.select_guidelines(all_guidelines, [
+            "python-client-naming",
+            "python-client-options-naming",
+            "python-models-async",
+            "python-models-dict-result",
+            "python-models-enum-string",
+            "python-models-enum-name-uppercase",
+            "python-client-sync-async",
+            "python-client-async-keywords",
+            "python-client-separate-sync-async",
+            "python-client-same-name-sync-async",
+            "python-client-namespace-sync",
+        ])
 
         for i, g in enumerate(guidelines):
             g["number"] = i
 
         results = self.chain.run(apiview=apiview, guidelines=guidelines, language=language)
-        parsed = self.output_parser.parse(results)
-        with open(os.path.join(os.path.dirname(__file__), "output.json"), "w") as f:
-            f.write(parsed.json(indent=2))
+        return self.output_parser.parse(results)
 
     def select_guidelines(self, all, select_ids):
         return [guideline for guideline in all if guideline["id"] in select_ids]
 
     def retrieve_guidelines(self, language):
         general_guidelines = []
-        general_guidelines_path = os.path.join(os.path.dirname(__file__), "..", "docs", "general")
-        language_guidelines_path = os.path.join(os.path.dirname(__file__), "..", "docs", language)
+        general_guidelines_path = os.path.join(_GUIDELINES_FOLDER, "general")
+        language_guidelines_path = os.path.join(_GUIDELINES_FOLDER, language)
         for filename in os.listdir(general_guidelines_path):
             with open(os.path.join(general_guidelines_path, filename), "r") as f:
                 items = json.loads(f.read())

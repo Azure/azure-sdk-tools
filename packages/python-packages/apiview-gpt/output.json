@@ -1,0 +1,45 @@
+{
+  "status": "Error",
+  "violations": [
+    {
+      "rule_ids": [
+        "python-client-naming"
+      ],
+      "bad_code": "class azure.contoso.ContosoAsyncManager",
+      "suggestion": "class azure.contoso.ContosoAsyncClient",
+      "comment": "Service client types should have a Client suffix."
+    },
+    {
+      "rule_ids": [
+        "python-client-naming"
+      ],
+      "bad_code": "class azure.contoso.ContosoManager",
+      "suggestion": "class azure.contoso.ContosoClient",
+      "comment": "Service client types should have a Client suffix."
+    },
+    {
+      "rule_ids": [
+        "python-client-options-naming"
+      ],
+      "bad_code": "options: dict",
+      "suggestion": "Use individual keyword-only arguments instead of an options dict.",
+      "comment": "Do not use an options bag object to group optional parameters."
+    },
+    {
+      "rule_ids": [
+        "python-client-separate-sync-async"
+      ],
+      "bad_code": "class azure.contoso.ContosoAsyncManager",
+      "suggestion": "class azure.contoso.aio.ContosoAsyncClient",
+      "comment": "Async clients should be in a separate namespace with .aio appended."
+    },
+    {
+      "rule_ids": [
+        "python-client-same-name-sync-async"
+      ],
+      "bad_code": "ContosoManager and ContosoAsyncManager",
+      "suggestion": "Use the same client name for sync and async packages, e.g., ContosoClient and ContosoAsyncClient.",
+      "comment": "Sync and async clients should have the same name."
+    }
+  ]
+}

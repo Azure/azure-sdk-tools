@@ -6,7 +6,9 @@ from langchain.prompts import PromptTemplate
 from langchain.chat_models import AzureChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 import openai
+from typing import List
 
+from ._sectioned_document import SectionedDocument, Section
 from ._models import GuidelinesResult
 
 dotenv.load_dotenv()
@@ -23,7 +25,7 @@ _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
 class GptReviewer:
     def __init__(self):
-        self.llm = AzureChatOpenAI(deployment_name="gpt-4", openai_api_version=OPENAI_API_VERSION)
+        self.llm = AzureChatOpenAI(client=openai.ChatCompletion, deployment_name="gpt-4", openai_api_version=OPENAI_API_VERSION, temperature=0)
         self.output_parser = PydanticOutputParser(pydantic_object=GuidelinesResult)
         self.prompt_template = PromptTemplate(
             input_variables=["apiview", "guidelines", "language"],
@@ -62,8 +64,24 @@ class GptReviewer:
         for i, g in enumerate(guidelines):
             g["number"] = i
 
-        results = self.chain.run(apiview=apiview, guidelines=guidelines, language=language)
-        return self.output_parser.parse(results)
+        chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=True)
+
+        final_results = GuidelinesResult(status="Success", violations=[])
+        for chunk in chunked_apiview.sections:
+            if self.should_evaluate(chunk):
+                results = self.chain.run(apiview=str(chunk), guidelines=guidelines, language=language)
+                output = self.output_parser.parse(results)
+                # FIXME: Associate line numbers with violations
+                final_results.violations.extend(output.violations)
+                if output.status == "Error":
+                    final_results.status = output.status
+        return final_results
+
+    def should_evaluate(self, chunk: Section):
+        for line in chunk.lines:
+            if not line.strip().startswith("#") and not line.strip() == "":
+                return True
+        return False
 
     def select_guidelines(self, all, select_ids):
         return [guideline for guideline in all if guideline["id"] in select_ids]

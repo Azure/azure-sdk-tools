@@ -5,16 +5,8 @@
       "rule_ids": [
         "python-client-naming"
       ],
-      "bad_code": "class azure.contoso.ContosoAsyncManager",
-      "suggestion": "class azure.contoso.ContosoAsyncClient",
-      "comment": "Service client types should have a Client suffix."
-    },
-    {
-      "rule_ids": [
-        "python-client-naming"
-      ],
-      "bad_code": "class azure.contoso.ContosoManager",
-      "suggestion": "class azure.contoso.ContosoClient",
+      "bad_code": "class azure.contoso.ContosoAsyncManager:",
+      "suggestion": "class azure.contoso.ContosoClient:",
       "comment": "Service client types should have a Client suffix."
     },
     {
@@ -22,24 +14,64 @@
         "python-client-options-naming"
       ],
       "bad_code": "options: dict",
-      "suggestion": "Use individual keyword-only arguments instead of an options dict.",
-      "comment": "Do not use an options bag object to group optional parameters."
+      "suggestion": "individual keyword-only arguments",
+      "comment": "Do not use an 'options bag' object to group optional parameters."
     },
     {
       "rule_ids": [
         "python-client-separate-sync-async"
       ],
-      "bad_code": "class azure.contoso.ContosoAsyncManager",
-      "suggestion": "class azure.contoso.aio.ContosoAsyncClient",
-      "comment": "Async clients should be in a separate namespace with .aio appended."
+      "bad_code": "class azure.contoso.ContosoAsyncManager:",
+      "suggestion": "class azure.contoso.aio.ContosoClient:",
+      "comment": "Provide separate client classes for synchronous and asynchronous operations."
     },
     {
       "rule_ids": [
         "python-client-same-name-sync-async"
       ],
-      "bad_code": "ContosoManager and ContosoAsyncManager",
-      "suggestion": "Use the same client name for sync and async packages, e.g., ContosoClient and ContosoAsyncClient.",
-      "comment": "Sync and async clients should have the same name."
+      "bad_code": "class azure.contoso.ContosoAsyncManager:",
+      "suggestion": "class azure.contoso.aio.ContosoClient:",
+      "comment": "Use the same client name for sync and async packages."
+    },
+    {
+      "rule_ids": [
+        "python-client-namespace-sync"
+      ],
+      "bad_code": "class azure.contoso.ContosoAsyncManager:",
+      "suggestion": "class azure.contoso.aio.ContosoClient:",
+      "comment": "Use the same namespace for the synchronous client as the synchronous version of the package with .aio appended."
+    },
+    {
+      "rule_ids": [
+        "python-client-naming"
+      ],
+      "bad_code": "class azure.contoso.ContosoManager:",
+      "suggestion": "class azure.contoso.ContosoClient:",
+      "comment": "Service client types should have a Client suffix."
+    },
+    {
+      "rule_ids": [
+        "python-client-options-naming"
+      ],
+      "bad_code": "options: dict",
+      "suggestion": "individual keyword-only arguments",
+      "comment": "Do not use an 'options bag' object to group optional parameters. Instead, pass as individual keyword-only arguments."
+    },
+    {
+      "rule_ids": [
+        "python-client-options-naming"
+      ],
+      "bad_code": "def get_widget(self, options: dict) -> WidgetResult",
+      "suggestion": "def get_widget(self, **kwargs) -> WidgetResult",
+      "comment": "Do not use an 'options bag' object to group optional parameters. Instead, pass as individual keyword-only arguments."
+    },
+    {
+      "rule_ids": [
+        "python-models-enum-name-uppercase"
+      ],
+      "bad_code": "class azure.contoso.WidgetColor(Enum):\n\n    blue = \"blue\"\n    green = \"green\"\n    red = \"red\"",
+      "suggestion": "class azure.contoso.WidgetColor(Enum):\n\n    BLUE = \"blue\"\n    GREEN = \"green\"\n    RED = \"red\"",
+      "comment": "Enum names should be in UPPERCASE."
     }
   ]
 }

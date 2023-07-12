@@ -110,13 +110,24 @@ jobs:
           Azure/azure-rest-api-specs-pr:
             Branch: main
             TargetBranches:
-              RPSaaSDev:
-                Theirs: '@("**")'
-                Ours: '@("specification", "custom-words.txt")'
-                Merge: '@("specification/common-types")'
-                AcceptTheirsForFinalMerge: true
               RPSaaSMaster:
                 Theirs: '@("**")'
                 Ours: '@("specification", "custom-words.txt")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
+              RPSaaSDev:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              ARMCoreRPDev:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              InternalARMContracts:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+

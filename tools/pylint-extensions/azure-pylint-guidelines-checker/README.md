@@ -87,3 +87,4 @@ docstring-missing-type | pylint:disable=docstring-missing-type    |       Docstr
 docstring-missing-return | pylint:disable=docstring-missing-return    |       Docstring missing return.                        | [link](https://azure.github.io/azure-sdk/python_documentation.html#docstrings)           |
 docstring-missing-rtype | pylint:disable=docstring-missing-rtype    |       Docstring missing return type.                        | [link](https://azure.github.io/azure-sdk/python_documentation.html#docstrings)           |
 docstring-should-be-keyword | pylint:disable=docstring-should-be-keyword    |       Docstring should use keywords.                        | [link](https://azure.github.io/azure-sdk/python_documentation.html#docstrings)           |
+do-not-import-legacy-six | pylint:disable=do-not-import-legacy-six    |       Do not import six.                        | No Link.          |

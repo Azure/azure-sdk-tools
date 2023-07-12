@@ -2196,6 +2196,39 @@ class DeleteOperationReturnStatement(BaseChecker):
         except:
             pass
 
+class DoNotImportLegacySix(BaseChecker):
+    __implements__ = IAstroidChecker
+
+    """Rule to check that libraries do not import the six package."""
+    name = "do-not-import-legacy-six"
+    priority = -1
+    msgs = {
+        "C4757": (
+            "Do not import the six package in your library. Six was used to work with python2, which is no longer supported.",
+            "do-not-import-legacy-six",
+            "Do not import the six package in your library."
+        ),
+    }
+
+    def visit_importfrom(self, node):
+        """Check that we aren't importing from six."""
+        if node.modname == "six": 
+            self.add_message(
+                msgid=f"do-not-import-legacy-six",
+                node=node,
+                confidence=None,
+            )
+    
+    def visit_import(self, node):
+        """Check that we aren't importing six."""
+        for name, _ in node.names:
+            if name == "six":
+                self.add_message(
+                    msgid=f"do-not-import-legacy-six",
+                    node=node,
+                    confidence=None,
+                )
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2223,6 +2256,7 @@ def register(linter):
     linter.register_checker(NameExceedsStandardCharacterLength(linter))
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
+    linter.register_checker(DoNotImportLegacySix(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

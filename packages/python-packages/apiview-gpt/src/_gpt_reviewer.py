@@ -1,3 +1,4 @@
+import os
 import dotenv
 import json
 from langchain.chains import LLMChain
@@ -5,11 +6,8 @@ from langchain.prompts import PromptTemplate
 from langchain.chat_models import AzureChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 import openai
-from pydantic import BaseModel, Field
-from typing import List
 
-import os
-import sys
+from ._models import GuidelinesResult
 
 dotenv.load_dotenv()
 
@@ -18,16 +16,6 @@ openai.api_base = os.getenv("OPENAI_API_BASE")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 OPENAI_API_VERSION = "2023-05-15"
-
-class Violation(BaseModel):
-    rule_ids: List[str] = Field(description="unique rule ID or IDs that were violated.")
-    bad_code: str = Field(description="the original code that was bad.")
-    suggestion: str = Field(description="the suggested fix for the bad code.")
-    comment: str = Field(description="a comment about the violation.")
-
-class GuidelinesResult(BaseModel):
-    status: str = Field(description="Succeeded if the request completed, or Error if it did not")
-    violations: List[Violation] = Field(description="list of violations if any")
 
 class GptReviewer:
     def __init__(self):
@@ -50,23 +38,18 @@ class GptReviewer:
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt_template)
 
     def get_response(self, apiview, language):
-        general_guidelines, language_guidelines = self.retrieve_guidelines(language)
-        all_guidelines = general_guidelines + language_guidelines
+        # FIXME: Restore this
+        # general_guidelines, language_guidelines = self.retrieve_guidelines(language)
+        # all_guidelines = general_guidelines + language_guidelines
 
-        guidelines = self.select_guidelines(all_guidelines, [
-            "python-client-sync-async-separate-clients",
-            "python-client-naming",
-            "python-client-constructor-form",
-            "python-client-options-naming",
-            "python-codestyle-pep484"
-        ])
-
-        # TODO: remove this!
-        guidelines.append({
-            "id": "all-pizza-classes",
-            "text": "DO ensure all class names end with Pizza",
-            "category": "naming",
-        })
+        # FIXME: Restore this
+        # guidelines = self.select_guidelines(all_guidelines, [
+        #     "python-client-sync-async-separate-clients",
+        #     "python-client-naming",
+        #     "python-client-constructor-form",
+        #     "python-client-options-naming",
+        #     "python-codestyle-pep484"
+        # ])
 
         for i, g in enumerate(guidelines):
             g["number"] = i
@@ -94,12 +77,3 @@ class GptReviewer:
                 items = json.loads(f.read())
                 language_guidelines.extend(items)
         return general_guidelines, language_guidelines
-
-if __name__ == "__main__":
-    review = GptReviewer()
-    filename = "test.txt"
-    file_path = os.path.join(os.path.dirname(__file__), filename)
-    with open(file_path, "r") as f:
-        apiview_text = f.read()
-    result = review.get_response(apiview_text, "python")
-    print(json.dumps(result, indent=2))

@@ -62,6 +62,16 @@ namespace RandomNamespace
         {
             return null;
         }
+
+        public virtual Task<Operation<AsyncPageable<BinaryData>>> GetOperationOfPageableAsync(string s, RequestContext context)
+        {
+            return null;
+        }
+
+        public virtual Operation<Pageable<BinaryData>> GetOperationOfPageable(string s, RequestContext context)
+        {
+            return null;
+        }
     }
 }";
             await Verifier.CreateAnalyzer(code)
@@ -193,6 +203,38 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0018ProducedForMethodsWithOperationOfPageableModel()
+        {
+            const string code = @"
+using Azure;
+using Azure.Core;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class Model
+    {
+        string a;
+    }
+    public class SomeClient
+    {
+        public virtual Task<Operation<AsyncPageable<Model>>> {|AZC0018:GetAsync|}(string s, RequestContext context)
+        {
+            return null;
+        }
+
+        public virtual Operation<Pageable<Model>> {|AZC0018:Get|}(string s, RequestContext context)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
+
+        [Fact]
         public async Task AZC0018ProducedForMethodsWithParameterModel()
         {
             const string code = @"
@@ -226,7 +268,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0018ProducedForMethodsWithNoRequestContentAndOptionalRequestContext()
+        public async Task AZC0018NotProducedForMethodsWithNoRequestContentAndRequiredContext()
         {
             const string code = @"
 using Azure;
@@ -239,6 +281,74 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
+        public virtual Task<Response> GetAsync(string a, Azure.RequestContext context)
+        {
+            return null;
+        }
+
+        public virtual Response Get(string a, Azure.RequestContext context)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0018NotProducedForMethodsWithNoRequestContentButOnlyProtocol()
+        {
+            const string code = @"
+using Azure;
+using Azure.Core;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task<Response> GetAsync(string a, Azure.RequestContext context = null)
+        {
+            return null;
+        }
+
+        public virtual Response Get(string a, Azure.RequestContext context = null)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0018ProducedForMethodsWithNoRequestContentButProtocolAndConvenience()
+        {
+            const string code = @"
+using Azure;
+using Azure.Core;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Task<Response> GetAsync(string a, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual Response Get(string a, CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
         public virtual Task<Response> {|AZC0018:GetAsync|}(string a, Azure.RequestContext context = null)
         {
             return null;

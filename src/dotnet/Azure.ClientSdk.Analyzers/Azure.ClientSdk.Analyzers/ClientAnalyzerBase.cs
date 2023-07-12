@@ -26,16 +26,26 @@ namespace Azure.ClientSdk.Analyzers
             AnalyzeCore(context);
         }
 
+        protected class ParameterEquivalenceComparerOptionalIgnore : ParameterEquivalenceComparer
+        {
+            public static new ParameterEquivalenceComparerOptionalIgnore Default { get; } = new ParameterEquivalenceComparerOptionalIgnore();
+
+            public override bool Equals(IParameterSymbol x, IParameterSymbol y)
+            {
+                return x.Name.Equals(y.Name) && TypeSymbolEquals(x.Type, y.Type);
+            }
+        }
+
         protected class ParameterEquivalenceComparer : IEqualityComparer<IParameterSymbol>, IEqualityComparer<ITypeParameterSymbol>
         {
             public static ParameterEquivalenceComparer Default { get; } = new ParameterEquivalenceComparer();
 
-            public bool Equals(IParameterSymbol x, IParameterSymbol y)
+            public virtual bool Equals(IParameterSymbol x, IParameterSymbol y)
             {
                 return x.Name.Equals(y.Name) && TypeSymbolEquals(x.Type, y.Type) && x.IsOptional == y.IsOptional;
             }
 
-            private bool TypeSymbolEquals(ITypeSymbol x, ITypeSymbol y)
+            protected bool TypeSymbolEquals(ITypeSymbol x, ITypeSymbol y)
             {
                 switch (x)
                 {
@@ -86,20 +96,19 @@ namespace Azure.ClientSdk.Analyzers
                 parameters.SequenceEqual(symbol.Parameters, ParameterEquivalenceComparer.Default));
         }
 
-        protected static IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<ITypeParameterSymbol> genericParameters, ImmutableArray<IParameterSymbol> parameters, Func<IParameterSymbol, bool> lastParameter)
+        protected static IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<ITypeParameterSymbol> genericParameters, ImmutableArray<IParameterSymbol> parameters, Func<IParameterSymbol, bool> lastParameter, ParameterEquivalenceComparer comparer = null)
         {
 
             return methodSymbols.SingleOrDefault(symbol =>
             {
-
-                if (!symbol.Parameters.Any() || !genericParameters.SequenceEqual(symbol.TypeParameters, ParameterEquivalenceComparer.Default))
+                if (!symbol.Parameters.Any() || !genericParameters.SequenceEqual(symbol.TypeParameters, comparer ?? ParameterEquivalenceComparer.Default))
                 {
                     return false;
                 }
 
                 var allButLast = symbol.Parameters.RemoveAt(symbol.Parameters.Length - 1);
 
-                return allButLast.SequenceEqual(parameters, ParameterEquivalenceComparer.Default) && lastParameter(symbol.Parameters.Last());
+                return allButLast.SequenceEqual(parameters, comparer ?? ParameterEquivalenceComparer.Default) && lastParameter(symbol.Parameters.Last());
             });
         }
 

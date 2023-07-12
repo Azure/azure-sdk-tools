@@ -36,7 +36,7 @@ namespace Azure.ClientSdk.Analyzers
         private void AnalyzeCodeBlock(CodeBlockAnalysisContext codeBlock)
         {
             var symbol = codeBlock.OwningSymbol;
-            if (symbol is IMethodSymbol methodSymbol)
+            if (symbol is IMethodSymbol methodSymbol && !IsCheckExempt(methodSymbol))
             {
                 var lastParameter = methodSymbol.Parameters.LastOrDefault();
                 if (lastParameter != null && IsRequestContext(lastParameter))
@@ -111,16 +111,16 @@ namespace Azure.ClientSdk.Analyzers
             return parameterSymbol.Name == "context" && parameterSymbol.Type.Name == "RequestContext";
         }
 
+        private static bool IsCancellationToken(IParameterSymbol parameterSymbol)
+        {
+            return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken" && parameterSymbol.IsOptional;
+        }
+
         private static void CheckClientMethod(ISymbolAnalysisContext context, IMethodSymbol member)
         {
             static bool IsCancellationOrRequestContext(IParameterSymbol parameterSymbol)
             {
                 return IsCancellationToken(parameterSymbol) || IsRequestContext(parameterSymbol);
-            }
-
-            static bool IsCancellationToken(IParameterSymbol parameterSymbol)
-            {
-                return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken" && parameterSymbol.IsOptional;
             }
 
             CheckClientMethodReturnType(context, member);
@@ -168,7 +168,9 @@ namespace Azure.ClientSdk.Analyzers
         }
 
         // A protocol method should not have model as parameter. If it has ambiguity with convenience method, it should have required RequestContext.
-        // Ambiguity: no RequestContent or has optional RequestContent.
+        // Ambiguity:
+        // 1) has optional RequestContent.
+        // 2) doesn't have a RequestContent, but there is a method ending with CancellationToken has same type of parameters 
         // No ambiguity: has required RequestContent.
         private static void CheckProtocolMethodParameters(ISymbolAnalysisContext context, IMethodSymbol method)
         {
@@ -185,9 +187,12 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             var requestContent = method.Parameters.FirstOrDefault(p => p.Type.Name == "RequestContent");
-            if (requestContent == null)
+            if (requestContent == null && method.Parameters.Last().IsOptional)
             {
-                if (method.Parameters.LastOrDefault().IsOptional)
+                INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
+                var methodList = type.GetMembers(method.Name).OfType<IMethodSymbol>().Where(member => !SymbolEqualityComparer.Default.Equals(member, method));
+                var convenienceMethod = FindMethod(methodList, method.TypeParameters, method.Parameters.RemoveAt(method.Parameters.Length - 1), symbol => IsCancellationToken(symbol), ParameterEquivalenceComparerOptionalIgnore.Default);
+                if (convenienceMethod != null)
                 {
                     context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
                 }
@@ -195,9 +200,31 @@ namespace Azure.ClientSdk.Analyzers
             // Optional RequestContent or required RequestContent is checked in AnalyzeCodeBlock.
         }
 
-        // A protocol method should not have model as type. Accepted return type: Response, Task<Response>, Pageable<BinaryData>, AsyncPageable<BinaryData>, Operation<BinaryData>, Task<Operation<BinaryData>>, Operation, Task<Operation>
+        // A protocol method should not have model as type. Accepted return type: Response, Task<Response>, Pageable<BinaryData>, AsyncPageable<BinaryData>, Operation<BinaryData>, Task<Operation<BinaryData>>, Operation, Task<Operation>, Operation<Pageable<BinaryData>>, Task<Operation<AsyncPageable<BinaryData>>>
         private static void CheckProtocolMethodReturnType(ISymbolAnalysisContext context, IMethodSymbol method)
         {
+            bool IsValidPageable(ITypeSymbol typeSymbol)
+            {
+                if (typeSymbol.Name != "Pageable" && typeSymbol.Name != "AsyncPageable")
+                {
+                    return false;
+                }
+
+                var pageableTypeSymbol = typeSymbol as INamedTypeSymbol;
+                if (!pageableTypeSymbol.IsGenericType)
+                {
+                    return false;
+                }
+
+                var pageableReturn = pageableTypeSymbol.TypeArguments.Single();
+                if (pageableReturn.Name != "BinaryData")
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
             ITypeSymbol originalType = method.ReturnType;
             ITypeSymbol unwrappedType = method.ReturnType;
 
@@ -221,6 +248,15 @@ namespace Azure.ClientSdk.Analyzers
                 if (unwrappedType is INamedTypeSymbol operationTypeSymbol && operationTypeSymbol.IsGenericType)
                 {
                     var operationReturn = operationTypeSymbol.TypeArguments.Single();
+                    if (operationReturn.Name  == "Pageable" || operationReturn.Name == "AsyncPageable")
+                    {
+                        if (!IsValidPageable(operationReturn))
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
+                        }
+                        return;
+                    }
+
                     if (operationReturn.Name != "BinaryData")
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
@@ -229,21 +265,11 @@ namespace Azure.ClientSdk.Analyzers
                 return;
             }
             else if (originalType.Name == "Pageable" || originalType.Name == "AsyncPageable")
-            {
-                if (originalType is INamedTypeSymbol pageableTypeSymbol)
+            { 
+                if (!IsValidPageable(originalType))
                 {
-                    if (!pageableTypeSymbol.IsGenericType)
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
-                    }
-
-                    var pageableReturn = pageableTypeSymbol.TypeArguments.Single();
-                    if (pageableReturn.Name != "BinaryData")
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
-                    }
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
                 }
-
                 return;
             }
 
@@ -291,13 +317,22 @@ namespace Azure.ClientSdk.Analyzers
 
         }
 
+        private bool IsCheckExempt(IMethodSymbol method)
+        {
+            return method.MethodKind != MethodKind.Ordinary ||
+                method.DeclaredAccessibility != Accessibility.Public ||
+                method.OverriddenMethod != null ||
+                method.IsImplicitlyDeclared ||
+                (method.Name.StartsWith("Get") && method.Name.EndsWith("Client"));
+        }
+        
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
             INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
             List<IMethodSymbol> visitedSyncMember = new List<IMethodSymbol>();
             foreach (var member in type.GetMembers())
             {
-                if (member is IMethodSymbol asyncMethodSymbol && asyncMethodSymbol.MethodKind == MethodKind.Ordinary && asyncMethodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public)
+                if (member is IMethodSymbol asyncMethodSymbol && !IsCheckExempt(asyncMethodSymbol) && asyncMethodSymbol.Name.EndsWith(AsyncSuffix))
                 {
                     CheckClientMethod(context, asyncMethodSymbol);
 
@@ -315,7 +350,7 @@ namespace Azure.ClientSdk.Analyzers
                         CheckClientMethod(context, syncMember);
                     }
                 }
-                else if (member is IMethodSymbol syncMethodSymbol && syncMethodSymbol.MethodKind == MethodKind.Ordinary && !member.IsImplicitlyDeclared && !syncMethodSymbol.Name.EndsWith(AsyncSuffix) && member.DeclaredAccessibility == Accessibility.Public && !visitedSyncMember.Contains(syncMethodSymbol))
+                else if (member is IMethodSymbol syncMethodSymbol && !IsCheckExempt(syncMethodSymbol) && !syncMethodSymbol.Name.EndsWith(AsyncSuffix) && !visitedSyncMember.Contains(syncMethodSymbol))
                 {
                     var asyncMemberName = member.Name + AsyncSuffix;
                     var asyncMember = FindMethod(type.GetMembers(asyncMemberName).OfType<IMethodSymbol>(), syncMethodSymbol.TypeParameters, syncMethodSymbol.Parameters);

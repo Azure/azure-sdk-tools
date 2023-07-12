@@ -498,7 +498,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0004NotProducedForConstructorOrProperty()
+        public async Task AZC0004NotProducedForConstructorOrPropertyOrOverride()
         {
             const string code = @"
 namespace RandomNamespace
@@ -508,6 +508,8 @@ namespace RandomNamespace
         private string _id;
         public virtual string Id => _id;
 
+        public override bool Equals(object obj) => base.Equals(obj);
+
         protected SomeClient()
         {
         }
@@ -516,6 +518,28 @@ namespace RandomNamespace
         {
             _id = id;
         }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
+
+        [Fact]
+        public async Task AZC0004NotProducedForGetSubClientMethod()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public SubClient GetSubClient()
+        {
+            return null;
+        }
+    }
+
+    public class SubClient
+    {
     }
 }";
             await Verifier.CreateAnalyzer(code)

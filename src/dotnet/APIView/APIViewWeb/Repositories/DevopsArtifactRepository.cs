@@ -23,20 +23,24 @@ namespace APIViewWeb.Repositories
 {
     public class DevopsArtifactRepository : IDevopsArtifactRepository
     {
-        static readonly HttpClient _devopsClient = new();
+        private readonly HttpClient _devopsClient;
         private readonly IConfiguration _configuration;
 
         private readonly string _devopsAccessToken;
         private readonly string _hostUrl;
 
-        private IMemoryCache _pipelineNameCache;
-        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
-        public DevopsArtifactRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMemoryCache cache)
+        private readonly TelemetryClient _telemetryClient;
+        public DevopsArtifactRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _configuration = configuration;
             _devopsAccessToken = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", _configuration["Azure-Devops-PAT"])));
             _hostUrl = _configuration["APIVIew-Host-Url"];
-            _pipelineNameCache = cache;
+            _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
+
+            _devopsClient = new HttpClient();
+            _devopsClient.DefaultRequestHeaders.Accept.Clear();
+            _devopsClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            _devopsClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _devopsAccessToken);
         }
 
         public async Task<Stream> DownloadPackageArtifact(string repoName, string buildId, string artifactName, string filePath, string project, string format= "file")
@@ -62,7 +66,6 @@ namespace APIViewWeb.Repositories
 
         private async Task<HttpResponseMessage> GetFromDevopsAsync(string request)
         {
-            SetDevopsClientHeaders();
             var downloadResp = await _devopsClient.GetAsync(request);
             int count = 0;
             while ((downloadResp.StatusCode == HttpStatusCode.TooManyRequests || downloadResp.StatusCode == HttpStatusCode.BadRequest) && count < 5)
@@ -74,13 +77,6 @@ namespace APIViewWeb.Repositories
                 count++;
             }
             return downloadResp;
-        }
-
-        private void SetDevopsClientHeaders()
-        {
-            _devopsClient.DefaultRequestHeaders.Accept.Clear();
-            _devopsClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-            _devopsClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _devopsAccessToken);
         }
 
         private async Task<string> GetDownloadArtifactUrl(string repoName, string buildId, string artifactName, string project)

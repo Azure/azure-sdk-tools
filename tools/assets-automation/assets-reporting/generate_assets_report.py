@@ -53,7 +53,7 @@ SUMMARY_TABLE_LAYER: str = """|{}|{}|{:.0%}|{:.0%}|
 SUMMARY_NOTES = """
 ## A few notes about how this data was generated
 
-- Markdown for these wiki pages is generated from a [single python script.](https://github.com/Azure/azure-sdk-tools/tree/main/eng/scripts/python/assets-automation)
+- Markdown for these wiki pages is generated from a [single python script.](https://github.com/Azure/azure-sdk-tools/tree/main/tools/assets-automation/assets-reporting/generate_assets_report.py)
   - Within the script follow `generate_<language>_report()` definition to understand how the data for that language was obtained.
 - The `Package Count` for each language is NOT the actual total count of packages within each monorepo. It is the count of packages that are slated to transition _at some point_. 
 - Where applicable, counts only include `track 2` packages, upholding the previous point about "intended to transition eventually."

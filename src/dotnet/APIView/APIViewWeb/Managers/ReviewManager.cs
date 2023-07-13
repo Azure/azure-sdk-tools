@@ -12,12 +12,14 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
 using APIView.Model;
+using APIViewWeb.Hubs;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb.Managers
 {
@@ -42,6 +44,8 @@ namespace APIViewWeb.Managers
 
         private readonly IPackageNameManager _packageNameManager;
 
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
+
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
         public ReviewManager (
@@ -49,7 +53,7 @@ namespace APIViewWeb.Managers
             IBlobCodeFileRepository codeFileRepository, IBlobOriginalsRepository originalsRepository,
             ICosmosCommentsRepository commentsRepository, IEnumerable<LanguageService> languageServices,
             INotificationManager notificationManager, IDevopsArtifactRepository devopsClient,
-            IPackageNameManager packageNameManager)
+            IPackageNameManager packageNameManager, IHubContext<SignalRHub> signalRHubContext)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -60,6 +64,7 @@ namespace APIViewWeb.Managers
             _notificationManager = notificationManager;
             _devopsArtifactRepository = devopsClient;
             _packageNameManager = packageNameManager;
+            _signalRHubContext = signalRHubContext;
         }
 
         public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis, string langauge, bool awaitComputeDiff = false)
@@ -303,12 +308,14 @@ namespace APIViewWeb.Managers
             {
                 //Revert approval
                 revision.Approvers.Remove(userId);
+                await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", review.ReviewId, revisionId, userId, false);
             }
             else
             {
                 //Approve revision
                 revision.Approvers.Add(userId);
                 review.ApprovalDate = DateTime.Now;
+                await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", review.ReviewId, revisionId, userId, true);
             }
             await _reviewsRepository.UpsertReviewAsync(review);
         }

@@ -5,7 +5,7 @@ import {
   getCommentsRow, showCommentBox, getDiagnosticsRow, getReplyGroupNo,
   getElementId, getParentData, removeCommentIconIfEmptyCommentBox, getReviewAndRevisionIdFromUrl
 } from "../shared/helpers";
-import { PushComment } from "./signalr";
+import { pushComment } from "./signalr";
 
 $(() => {
   const INVISIBLE = "invisible";
@@ -143,7 +143,7 @@ $(() => {
         updateCommentThread(commentRow, partialViewResult);
         addCommentThreadNavigation();
         removeCommentIconIfEmptyCommentBox(lineId);
-        PushComment(reviewId, lineId, partialViewResult);
+        pushComment(reviewId, lineId, partialViewResult);
       });
     }
     e.preventDefault();

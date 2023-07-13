@@ -1,12 +1,10 @@
 using System;
 using System.Threading.Tasks;
-using APIViewWeb.DTO;
 using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb.Controllers

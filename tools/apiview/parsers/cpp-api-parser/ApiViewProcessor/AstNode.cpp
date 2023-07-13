@@ -806,6 +806,8 @@ public:
 class AstImplicitValueInit : public AstExpr {
   AstType m_underlyingType;
 
+  bool IsEmptyExpression() const override { return true; }
+
 public:
   AstImplicitValueInit(ImplicitValueInitExpr const* expression, ASTContext& context)
       : AstExpr(expression, context), m_underlyingType{expression->getType()}

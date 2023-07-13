@@ -17,7 +17,6 @@ $(() => {
 //-------------------------------------------------------------------------------------------------
 
   connection = new signalR.HubConnectionBuilder()
-  const connection = new signalR.HubConnectionBuilder()
     .withUrl(`${location.origin}/hubs/notification`, { 
       skipNegotiation: true,
       transport: signalR.HttpTransportType.WebSockets })

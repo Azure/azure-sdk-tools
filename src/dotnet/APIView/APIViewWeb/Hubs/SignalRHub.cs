@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,7 @@ namespace APIViewWeb.Hubs
             if (!string.IsNullOrEmpty(name))
             {
                 Groups.AddToGroupAsync(Context.ConnectionId, name);
+                Clients.Caller.SendAsync("ReceiveConnectionId", Context.ConnectionId);
             }
             return base.OnConnectedAsync();
         }

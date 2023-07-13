@@ -105,7 +105,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                                                  IssueTypeQualifier.Issue,
                                                                  ItemState.Open,
                                                                  7, // more than 7 days old
-                                                                 null,
+                                                                 new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                                                                  includeLabels);
                 // Need to stop updating when the we hit the limit but, until then, after exhausting every
                 // issue in the page returned, the query needs to be rerun to get the next page
@@ -185,7 +185,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                                                  IssueTypeQualifier.Issue,
                                                                  ItemState.Open,
                                                                  14, // more than 14 days since last update
-                                                                 null,
+                                                                 new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                                                                  includeLabels);
 
                 // Need to stop updating when the we hit the limit but, until then, after exhausting every
@@ -260,7 +260,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                                                  IssueTypeQualifier.PullRequest,
                                                                  ItemState.Open,
                                                                  7, // more than 7 days old
-                                                                 null,
+                                                                 new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                                                                  includeLabels);
                 // Need to stop updating when the we hit the limit but, until then, after exhausting every
                 // issue in the page returned, the query needs to be rerun to get the next page
@@ -339,7 +339,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                                                  IssueTypeQualifier.PullRequest,
                                                                  ItemState.Open,
                                                                  60, // more than 60 days since last update
-                                                                 null,
+                                                                 new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                                                                  null,
                                                                  excludeLabels);
                 // Need to stop updating when the we hit the limit but, until then, after exhausting every
@@ -424,7 +424,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                                                                  IssueTypeQualifier.Issue,
                                                                  ItemState.Open,
                                                                  7, // more than 7 days since the last update
-                                                                 null,
+                                                                 new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                                                                  includeLabels,
                                                                  excludeLabels);
 

@@ -45,13 +45,7 @@ $(() => {
 
   // receiver/client side of comment refresh 
   connection.on("ReceiveComment", (reviewId, elementId, partialViewResult) => {
-    let href = location.href;
-    let result = hp.getReviewAndRevisionIdFromUrl(href);
-    let currReviewId = result["reviewId"];
-
-    if (currReviewId != reviewId) {
-      return;
-    }
+    checkReviewIdAgainstCurrent(reviewId);
 
     var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
     hp.showCommentBox(elementId, rowSectionClasses, undefined, false);
@@ -78,33 +72,41 @@ $(() => {
     hp.removeCommentIconIfEmptyCommentBox(elementId);
   });
 
-  connection.on("ReceiveApproval", (reviewId, revisionId, approver, approvalToggle) => {
-    let href = location.href;
-    let result = hp.getReviewAndRevisionIdFromUrl(href);
-    let currReviewId = result["reviewId"];
-    let currRevisionId = result["revisionId"];
+  let approvalPendingText = "Current Revision Approval Pending";
+  let approvedByText = "Approved by:";
+  let approvesCurrentRevisionText = "Approves the current revision of the API";
 
-    if (currReviewId != reviewId) {
+  connection.on("ReceiveApprovalSelf", (reviewId, revisionId, approvalToggle) => {
+    if (!checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
+      console.log("what");
       return;
     }
-
-    if (currRevisionId && currRevisionId != revisionId) { // TODO: need to identify if the currRevisionId === null && revisionId !== latest revision
-      return;
-    }
-
-    // ----------------- add user to approved by -----------------
-    // TODO: fix spacings 
-    let approvalPendingText = "Current Revision Approval Pending";
-    let approvedByText = "Approved by:";
-    let approvesCurrentRevisionText = "Approves the current revision of the API";
-    let firstReleaseText = "Approved for First Release";
 
     let $approvalSpans: JQuery<HTMLElement> = $("#approveCollapse span.small.text-muted");
 
     var indexResult = parseApprovalSpanIndex($approvalSpans, approvedByText, approvalPendingText, approvesCurrentRevisionText);
+    let upperTextSpan = indexResult["upperText"];
 
+    var indexResult = parseApprovalSpanIndex($approvalSpans, approvedByText, approvalPendingText, approvesCurrentRevisionText);
+
+    if (approvalToggle) {
+      removeUpperTextSpan(upperTextSpan, $approvalSpans);
+      addButtonApproval();
+    } else {
+      addUpperTextSpan(approvesCurrentRevisionText);
+      removeButtonApproval();
+    }
+  });
+
+  connection.on("ReceiveApproval", (reviewId, revisionId, approver, approvalToggle) => {
+    if (!checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
+      return;
+    }
+
+    let $approvalSpans: JQuery<HTMLElement> = $("#approveCollapse span.small.text-muted");
+
+    var indexResult = parseApprovalSpanIndex($approvalSpans, approvedByText, approvalPendingText, approvesCurrentRevisionText);
     let approversIndex = indexResult["approvers"];
-    let upperTextSpan = indexResult["upperText"];        
 
     if (approversIndex === -1) {
       return;
@@ -113,84 +115,71 @@ $(() => {
     let lowerTextSpan: HTMLElement = $approvalSpans[approversIndex];
     let approverHref = `/Assemblies/Profile/${approver}`;
 
-    // TODO: figure out spacing
-    // TODO: add checks to prevent clicking multiple times before it reloads
-    // TODO: check if the current user is the sender (connectionId)
-    // TODO: revision dropdown refresh
-    // TODO: first approval icon refresh
-
-
     if (approvalToggle) {
-      // add this user to approval list
-
-      // other approvers are in the list
-      if (lowerTextSpan.textContent?.includes(approvedByText)) {
-        lowerTextSpan.append(" , ");  // works
-      } else {
-        lowerTextSpan.textContent = approvedByText; // works 
-        addApprovedBorder();  // works 
-
-        // attempt: 
-        //let $reviewInfoBar = $("div#review-info-bar.input-group.input-group-sm");
-        //let $reviewInfoBarSpans = $("div#review-info-bar.input-group.input-group-sm span.input-group-text");
-        //if ($reviewInfoBarSpans.length === 0) {
-        //  let $firstReleaseSpan = $("<span>").addClass("input-group-text");
-        //  $firstReleaseSpan.attr("data-bs-toggle", "tooltip");
-        //  $firstReleaseSpan.attr("title");
-        //  $firstReleaseSpan.attr("data-bs-original-title", firstReleaseText);
-
-        //  let $firstReleaseIcon = $("<i>").addClass("fa-regular fa-circle-check text-success");
-
-        //  $firstReleaseSpan.append($firstReleaseIcon);
-        //  $reviewInfoBar.after($reviewInfoBarSpans[1]);
-        //}
-      }
-
-      $(lowerTextSpan).append('<a href="' + approverHref + '">' + approver + '</a>'); // works
-
-      // TODO: check if the client is the current user
-      removeUpperTextSpan(upperTextSpan, $approvalSpans); // works
-      addButtonApproval();
+      addApprover(lowerTextSpan, approvedByText, approverHref, approver);
     } else {
-      // ==================== remove this user from approver list ====================
-      let children = lowerTextSpan.children;
-      let numApprovers = children.length;
-
-      // multiple reviewers
-      if (numApprovers > 1) {
-        removeApproverFromApproversList(children, approver);
-      } else {
-        lowerTextSpan.textContent = approvalPendingText;
-        removeApprovalBorder();
-      }
-
-      // TODO: if the client is for the current user, then also change approve button and top text
-      addUpperTextSpan(approvesCurrentRevisionText);
-      removeButtonApproval();
+      removeApprover(lowerTextSpan, approver, approvalPendingText);
     }
-
-
-    // js
-    // add id to approval section to grab it
-    // upddate username
-    // select green border objects -> add css
-    // check for approved for release
-    // revision dropdown (refresh the whole dropdown)
-
-    // notifiction "page was approved by this user"
-    // create a function that updates everyhting at the same time 
   })
 
   // Start the connection.
   start();
 });
 
+/**
+ * Removes the @approver from @lowerTextSpan of review page
+ * @param lowerTextSpan HTMLElement of the span that contains who approved the review or pending approval
+ * @param approver GitHub username of the review approver
+ * @param approvalPendingText string of approval pending text to use when removing the last approver
+ */
+function removeApprover(lowerTextSpan: HTMLElement, approver: string, approvalPendingText: string) {
+    let children = lowerTextSpan.children;
+    let numApprovers = children.length;
+
+    if (numApprovers > 1) {
+        removeApproverFromApproversList(children, approver);
+    } else {
+        lowerTextSpan.textContent = approvalPendingText;
+        removeApprovalBorder();
+    }
+}
+
+/**
+ * adds the @approver to @lowerTextSpan of review page
+ * @param lowerTextSpan HTMLElement of the span that contains who approved the review or pending approval
+ * @param approvedByText string that comes before list of approvers
+ * @param approverHref relative href of user's apiview profile
+ * @param approver GitHub username of the review approver 
+ */
+function addApprover(lowerTextSpan: HTMLElement, approvedByText: string, approverHref: string, approver: any) {
+    if (lowerTextSpan.textContent?.includes(approvedByText)) {
+        lowerTextSpan.append(" , ");
+    } else {
+        lowerTextSpan.textContent = approvedByText;
+        addApprovedBorder();
+    }
+    addApproverHrefToApprovers(lowerTextSpan, approverHref, approver);
+}
+
+/**
+ * adds the @approver with a hyperlink to their apiview profile to @lowerTextSpan
+ */
+function addApproverHrefToApprovers(lowerTextSpan: HTMLElement, approverHref: string, approver: any) {
+    $(lowerTextSpan).append('<a href="' + approverHref + '">' + approver + '</a>');
+}
+
+/**
+ * adds the text above the approve button to indicate whether the current user approved the review
+ */
 function addUpperTextSpan(approvesCurrentRevisionText: string) {
     let $upperTextSpan = $("<span>").text(approvesCurrentRevisionText).addClass("small text-muted");
     let $upperTextForm = $("ul#approveCollapse form.form-inline");
     $upperTextForm.prepend($upperTextSpan);
 }
 
+/**
+ * change the button state from a green "not approved" to grey "approved"
+ */
 function addButtonApproval() {
     let $approveBtn = $("form.form-inline button.btn.btn-success");
     $approveBtn.removeClass("btn-success");
@@ -198,6 +187,9 @@ function addButtonApproval() {
     $approveBtn.text("Revert API Approval");
 }
 
+/**
+ * change the button state from a grey "approved" to green "not approved" 
+ */
 function removeButtonApproval() {
     let $approveBtn = $("form.form-inline button.btn.btn-outline-secondary");
     $approveBtn.removeClass("btn-outline-secondary");
@@ -205,6 +197,24 @@ function removeButtonApproval() {
     $approveBtn.text("Approve");
 }
 
+/**
+ * change the review panel border state from grey "not approved" to green "approved"
+ */
+function addApprovedBorder() {
+  let reviewLeft = $("#review-left");
+  reviewLeft.addClass("review-approved");
+  reviewLeft.removeClass("border");
+  reviewLeft.removeClass("rounded-1");
+
+  let reviewRight = $("#review-right");
+  reviewRight.addClass("review-approved");
+  reviewRight.removeClass("border");
+  reviewRight.removeClass("rounded-1");
+}
+
+/**
+ * change the review panel border state from green "approved" to grey "not approved"
+ */
 function removeApprovalBorder() {
     let $reviewLeft = $("#review-left");
     $reviewLeft.removeClass("review-approved");
@@ -217,6 +227,14 @@ function removeApprovalBorder() {
     $reviewRight.addClass("rounded-1");
 }
 
+/**
+ * parse the approval spans for its existence and order
+ * @param $approvalSpans may contain <upper text>, <approve button>, and/or <lower text>
+ * @param approvedByText string for <lower text> that indicates preexisting approvers
+ * @param approvalPendingText string for <lower text> that indicates no current approvers
+ * @param approvesCurrentRevisionText string for <upper text> that indicates the current user did not approve
+ * @returns a dictionary with the index of the upper and lower text elements. Value is -1 if an element does not exist.
+ */
 function parseApprovalSpanIndex($approvalSpans: JQuery<HTMLElement>, approvedByText: string, approvalPendingText: string, approvesCurrentRevisionText: string) {
   let indexResult = {
       "approvers": -1,
@@ -241,6 +259,11 @@ function parseApprovalSpanIndex($approvalSpans: JQuery<HTMLElement>, approvedByT
   return indexResult;
 }
 
+/**
+ * call when the current user approves the current review. removes the upper text 
+ * @param upperTextIndex index of the upper text in @$approvalSpans
+ * @param $approvalSpans span that includes revision approval block 
+ */
 function removeUpperTextSpan(upperTextIndex: number, $approvalSpans: JQuery<HTMLElement>) {
     if (upperTextIndex !== -1) {
         let upperTextSpan: HTMLElement = $approvalSpans[upperTextIndex];
@@ -248,32 +271,52 @@ function removeUpperTextSpan(upperTextIndex: number, $approvalSpans: JQuery<HTML
     }
 }
 
-function removeApproverFromApproversList(children, approver) {
-  for (var i = 0; i < children.length; i++) {
-    if (children[i].innerHTML === approver) {
-      //"Approved by:" "," <approver> "," <approver> "\n" => first item: remove after
-      //"Approved by:" <approver> "," "," <approver> "\n" => middle item: remove either
-      //"Approved by:" <approver> "," <approver> "," "\n" => last item: remove before
-      // remove before unless the previous text is "Approved by:" because it's more likely to accidentally approve (latest approver)
+/**
+ * remove the @approver from list of @approvers 
+ * @param approvers list of preexisting approvers
+ * @param approver GitHub username of user to remove from the list 
+ */
+function removeApproverFromApproversList(approvers, approver) {
+  for (var i = 0; i < approvers.length; i++) {
+    if (approvers[i].innerHTML === approver) {
       if (i === 0) {
-        children[i].nextSibling?.remove();
+        approvers[i].nextSibling?.remove();
       } else {
-        children[i].previousSibling?.remove();
+        approvers[i].previousSibling?.remove();
       }
-      children[i].remove();
+      approvers[i].remove();
       break;
     }
   }
 }
 
-function addApprovedBorder() {
-  let reviewLeft = $("#review-left");
-  reviewLeft.addClass("review-approved");
-  reviewLeft.removeClass("border");
-  reviewLeft.removeClass("rounded-1");
+/**
+ * returns true if the current reviewId is equivalent to the @reviewId and false otherwise
+ */
+function checkReviewIdAgainstCurrent(reviewId) {
+  return checkReviewRevisionIdAgainstCurrent(reviewId, null, false);
+}
 
-  let reviewRight = $("#review-right");
-  reviewRight.addClass("review-approved");
-  reviewRight.removeClass("border");
-  reviewRight.removeClass("rounded-1");
+/**
+ * @returns true if the current reviewId is equivalent to the @reviewId and @revisionId
+ *          whether we check @revisionId depends on the value of @checkRevision
+ *          false otherwise
+ * @param checkRevision true indicates that both @reviewId and @revisionId must match,
+ *                      false indicates that only @reviewId can match
+ */
+function checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, checkRevision) {
+  let href = location.href;
+  let result = hp.getReviewAndRevisionIdFromUrl(href);
+  let currReviewId = result["reviewId"];
+  let currRevisionId = result["revisionId"];
+
+  if (currReviewId != reviewId) {
+    return false;
+  }
+
+  if (checkRevision && currRevisionId && currRevisionId === revisionId) {
+    return false;
+  }
+
+  return true;
 }

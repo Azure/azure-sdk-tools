@@ -20,6 +20,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Azure.Cosmos;
 
 namespace APIViewWeb.Managers
 {
@@ -308,6 +309,7 @@ namespace APIViewWeb.Managers
             {
                 //Revert approval
                 revision.Approvers.Remove(userId);
+                await _signalRHubContext.Clients.Group(user.Identity.Name).SendAsync("ReceiveApprovalSelf", review.ReviewId, revisionId, false);
                 await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", review.ReviewId, revisionId, userId, false);
             }
             else
@@ -315,6 +317,7 @@ namespace APIViewWeb.Managers
                 //Approve revision
                 revision.Approvers.Add(userId);
                 review.ApprovalDate = DateTime.Now;
+                await _signalRHubContext.Clients.Group(user.Identity.Name).SendAsync("ReceiveApprovalSelf", review.ReviewId, revisionId, true);
                 await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", review.ReviewId, revisionId, userId, true);
             }
             await _reviewsRepository.UpsertReviewAsync(review);

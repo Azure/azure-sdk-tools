@@ -39,7 +39,7 @@ namespace SwaggerApiParser.SwaggerApiView
             ret.AddRange(TokenSerializer.KeyValueTokens("description", this.description, true, context.IteratorPath.CurrentNextPath("description")));
             if (this.schema != null)
             {
-                ret.AddRange(this.schema.TokenSerialize(new SerializeContext(context.indent + 2, context.IteratorPath)));
+                ret.AddRange(this.schema.TokenSerialize(new SerializeContext(context.indent + 2, context.IteratorPath, context.definitionsNames)));
             }
 
             return ret.ToArray();

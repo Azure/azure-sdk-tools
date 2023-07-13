@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using SwaggerApiParser.Specs;
 
@@ -66,6 +67,8 @@ namespace SwaggerApiParser.SwaggerApiView
 
                 var specContext = new SerializeContext(context.indent + 1, context.IteratorPath);
                 specContext.IteratorPath.Add(fileName);
+
+                specContext.definitionsNames = kv.Value.SwaggerApiViewDefinitions.Keys.ToList();
 
                 var specToken = kv.Value.TokenSerialize(specContext);
 

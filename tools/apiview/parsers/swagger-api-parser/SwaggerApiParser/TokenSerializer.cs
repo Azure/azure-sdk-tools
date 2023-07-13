@@ -80,6 +80,7 @@ namespace SwaggerApiParser
     {
         public int indent = 0;
         public readonly IteratorPath IteratorPath;
+        public List<string> definitionsNames { get; set; }
 
         public SerializeContext()
         {
@@ -90,6 +91,13 @@ namespace SwaggerApiParser
         {
             this.indent = indent;
             this.IteratorPath = new IteratorPath(iteratorPath);
+        }
+
+        public SerializeContext(int indent, IteratorPath iteratorPath, List<string> definitionNames)
+        {
+            this.indent = indent;
+            this.IteratorPath = new IteratorPath(iteratorPath);
+            this.definitionsNames = definitionNames;
         }
     }
 

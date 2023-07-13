@@ -112,10 +112,10 @@ namespace SwaggerApiParser.SwaggerApiView
             // new line for `Parameters` section.
             ret.Add(TokenSerializer.NewLine());
 
-            ret.AddRange(PathParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath)));
-            ret.AddRange(QueryParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath)));
-            ret.AddRange(BodyParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath)));
-            ret.AddRange(HeaderParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath)));
+            ret.AddRange(PathParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath, context.definitionsNames)));
+            ret.AddRange(QueryParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath, context.definitionsNames)));
+            ret.AddRange(BodyParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath, context.definitionsNames)));
+            ret.AddRange(HeaderParameters.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath, context.definitionsNames)));
 
             // new line for `Response` section.
             ret.Add(TokenSerializer.NewLine());
@@ -127,7 +127,7 @@ namespace SwaggerApiParser.SwaggerApiView
             context.IteratorPath.Add("Responses");
             foreach (var response in Responses)
             {
-                ret.AddRange(response.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath)));
+                ret.AddRange(response.TokenSerialize(new SerializeContext(context.indent + 1, context.IteratorPath, context.definitionsNames)));
             }
             context.IteratorPath.Pop();
 

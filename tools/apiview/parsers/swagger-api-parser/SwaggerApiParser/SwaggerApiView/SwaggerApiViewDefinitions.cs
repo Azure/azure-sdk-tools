@@ -45,7 +45,7 @@ namespace SwaggerApiParser.SwaggerApiView
                 foreach (var tableItem in tableItems)
                 {
                     string[] serializedFields = new[] { "Field", "TypeFormat", "Keywords", "Description" };
-                    tableRows.AddRange(tableItem.TokenSerializeWithOptions(serializedFields));
+                    tableRows.AddRange(tableItem.TokenSerializeWithOptions(serializedFields, context));
                 }
 
                 if (tableRows.Count > 0)

@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var uriRegexSanitizer = new BodyKeySanitizer(jsonPath: "$..trunks", value: "redacted.com", regex: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}.*");
 
             session.Session.Sanitize(uriRegexSanitizer);
-            var newBody = session.Session.Entries[2].Response.Body;
+            var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
 
             Assert.Contains("redacted.com", newBody);
         }
@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             #endregion
 
             session.Session.Sanitize(registeredSanitizer);
-            var newBody = session.Session.Entries[2].Response.Body;
+            var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
             Assert.Contains("redacted.com", newBody);
         }
     }

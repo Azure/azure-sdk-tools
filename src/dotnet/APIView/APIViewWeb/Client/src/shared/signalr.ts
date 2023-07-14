@@ -43,7 +43,7 @@ $(() => {
   });
 
   // receiver/client side of comment refresh 
-  connection.on("ReceiveComment", (reviewId, elementId, partialViewResult) => {
+  connection.on("ReceiveComment", (reviewId, elementId, partialViewResult, username) => {
     checkReviewIdAgainstCurrent(reviewId);
 
     var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
@@ -69,6 +69,11 @@ $(() => {
     hp.updateCommentThread(commentsRow, partialViewResult);
     hp.addCommentThreadNavigation();
     hp.removeCommentIconIfEmptyCommentBox(elementId);
+
+    let size = 28;
+    let url: string = "https://github.com/" + username + ".png?size=" + size;
+    console.log(username); 
+    $("div.review-thread-reply div.reply-cell img.comment-icon").attr("src", url);
   });
 
   let approvalPendingText = "Current Revision Approval Pending";
@@ -76,6 +81,8 @@ $(() => {
   let approvesCurrentRevisionText = "Approves the current revision of the API";
 
   connection.on("ReceiveApprovalSelf", (reviewId, revisionId, approvalToggle) => {
+    hp.disableButtonTemp("form.form-inline button.btn", 5000);
+
     if (!checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
       return;
     }
@@ -92,8 +99,6 @@ $(() => {
       addUpperTextSpan(approvesCurrentRevisionText);
       removeButtonApproval();
     }
-
-    hp.disableButtonTemp("form.form-inline button.btn", 5000);
   });
 
   connection.on("ReceiveApproval", (reviewId, revisionId, approver, approvalToggle) => {

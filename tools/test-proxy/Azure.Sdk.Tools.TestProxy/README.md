@@ -351,6 +351,8 @@ To start an individual test recording or playback, users will POST to a route on
 
 You will receive a recordingId in the reponse under header `x-recording-id`. This value should be included under header `x-recording-id` in all further requests.
 
+For playback, you will receive the location of the recording file (if it is on disk) in the header `x-recording-file-location`.
+
 ### Run your tests
 
 The implicit assumption about this proxy is that you as a dev have _some way_ to reroute your existing requests (with some header additions) to the test-proxy.

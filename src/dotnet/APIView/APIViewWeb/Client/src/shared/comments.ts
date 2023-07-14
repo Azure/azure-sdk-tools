@@ -110,6 +110,8 @@ $(() => {
   });
 
   $(document).on("submit", "form[data-post-update='comments']", e => {
+    disableButtonTemp('button.comment-submit-button', 5000);
+
     const form = <HTMLFormElement><any>$(e.target);
     let lineId = getElementId(e.target);
     let inlineRowNo = $(e.target).find(".new-comment-content small");

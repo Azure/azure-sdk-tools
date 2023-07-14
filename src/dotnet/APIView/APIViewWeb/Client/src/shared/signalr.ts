@@ -77,7 +77,6 @@ $(() => {
 
   connection.on("ReceiveApprovalSelf", (reviewId, revisionId, approvalToggle) => {
     if (!checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
-      console.log("what");
       return;
     }
 
@@ -86,8 +85,6 @@ $(() => {
     var indexResult = parseApprovalSpanIndex($approvalSpans, approvedByText, approvalPendingText, approvesCurrentRevisionText);
     let upperTextSpan = indexResult["upperText"];
 
-    var indexResult = parseApprovalSpanIndex($approvalSpans, approvedByText, approvalPendingText, approvesCurrentRevisionText);
-
     if (approvalToggle) {
       removeUpperTextSpan(upperTextSpan, $approvalSpans);
       addButtonApproval();
@@ -95,6 +92,8 @@ $(() => {
       addUpperTextSpan(approvesCurrentRevisionText);
       removeButtonApproval();
     }
+
+    hp.disableButtonTemp("form.form-inline button.btn", 5000);
   });
 
   connection.on("ReceiveApproval", (reviewId, revisionId, approver, approvalToggle) => {

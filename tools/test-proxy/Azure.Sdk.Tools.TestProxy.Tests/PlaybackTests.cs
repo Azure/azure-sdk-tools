@@ -77,6 +77,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var value = playbackContext.Response.Headers["x-recording-id"].ToString();
             Assert.NotNull(value);
+            // Ensure in-memory recordings don't return this header.
+            Assert.True(String.IsNullOrEmpty(recordLocation));
             Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(value));
             Assert.True(testRecordingHandler.InMemorySessions.Count() == 1);
         }

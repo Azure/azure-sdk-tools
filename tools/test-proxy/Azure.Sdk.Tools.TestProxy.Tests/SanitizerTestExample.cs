@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             session.Session.Sanitize(uriRegexSanitizer);
             var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
-
+            Console.WriteLine(newBody);
             Assert.Contains("redacted.com", newBody);
         }
 
@@ -86,7 +86,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             session.Session.Sanitize(uriRegexSanitizer);
             var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
+            Console.WriteLine("Sample1");
 
+            Console.WriteLine(newBody);
             Assert.Contains("redacted", newBody);
         }
 

@@ -1,3 +1,7 @@
+# Manual test to verify the threadsafety of "Install-ModuleIfNotInstalled"
+# If test runs several iterations with no errors, the function is likely threadsafe
+# If test throws any errors related to isntalling or loading the module, the function likely has a race condition
+
 $command = {
     . $PWD/../../common/scripts/Helpers/PSModule-Helpers.ps1
     Write-Host 'Install-ModuleIfNotInstalled "powershell-yaml" "0.4.1" | Import-Module'

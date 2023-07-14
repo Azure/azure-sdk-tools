@@ -110,7 +110,7 @@ $(() => {
   });
 
   $(document).on("submit", "form[data-post-update='comments']", e => {
-    disableButtonTemp('button.comment-submit-button', 3000);
+    disableButtonTemp('button.comment-submit-button', 2000);
 
     const form = <HTMLFormElement><any>$(e.target);
     let lineId = getElementId(e.target);

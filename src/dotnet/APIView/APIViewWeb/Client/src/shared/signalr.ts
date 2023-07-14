@@ -94,7 +94,7 @@ $(() => {
   let approvesCurrentRevisionText = "Approves the current revision of the API";
 
   connection.on("ReceiveApprovalSelf", (reviewId, revisionId, approvalToggle) => {
-    hp.disableButtonTemp("form.form-inline button.btn", 5000);
+    hp.disableButtonTemp("form.form-inline button.btn", 2000);
 
     if (!checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
       return;

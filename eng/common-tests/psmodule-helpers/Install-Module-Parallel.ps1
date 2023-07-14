@@ -1,6 +1,6 @@
 # Manual test to verify the threadsafety of "Install-ModuleIfNotInstalled"
 # If test runs several iterations with no errors, the function is likely threadsafe
-# If test throws any errors related to isntalling or loading the module, the function likely has a race condition
+# If test throws any errors related to installing or loading the module, the function likely has a race condition
 
 $command = {
     . $PWD/../../common/scripts/Helpers/PSModule-Helpers.ps1

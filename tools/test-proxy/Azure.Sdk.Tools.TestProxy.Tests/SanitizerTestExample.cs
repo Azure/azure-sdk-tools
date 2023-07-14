@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/sample_entry.json");
 
-            var uriRegexSanitizer = new BodyKeySanitizer(jsonPath: "$..trunks", value: "redacted.com", regex: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}.*");
+            var uriRegexSanitizer = new BodyKeySanitizer(jsonPath: "$..trunks.*~", value: "redacted.com", regex: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}.*");
 
             session.Session.Sanitize(uriRegexSanitizer);
             var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             // this is what your json body will look like coming over the wire. Notice the double escapes to prevent JSON parse break.
             // it is an identical sanitizer registration to the one above
-            var overTheWire = "{ \"value\": \"redacted.com\", \"regex\": \"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}.*\", \"jsonPath\": \"$..trunks\" }";
+            var overTheWire = "{ \"value\": \"redacted.com\", \"regex\": \"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}.*\", \"jsonPath\": \"$..trunks.*~\" }";
 
             // Target the type of sanitizer using this. (This is similar to selecting a constructor above)
             var sanitizerName = "BodyKeySanitizer";

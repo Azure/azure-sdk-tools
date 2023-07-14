@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await controller.Start();
 
             var value = httpContext.Response.Headers["x-recording-id"].ToString();
-            var recordLocation = httpContext.Response.Headers["x-recording-f3le-location"].ToString();
+            var recordLocation = httpContext.Response.Headers["x-recording-file-location"].ToString();
             Assert.False(String.IsNullOrEmpty(value));
             Assert.False(String.IsNullOrEmpty(recordLocation));
             Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(value));

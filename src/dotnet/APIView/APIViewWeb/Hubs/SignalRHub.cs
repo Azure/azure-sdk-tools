@@ -20,14 +20,14 @@ namespace APIViewWeb.Hubs
             if (!string.IsNullOrEmpty(name))
             {
                 Groups.AddToGroupAsync(Context.ConnectionId, name);
-                Clients.Caller.SendAsync("ReceiveConnectionId", Context.ConnectionId);
             }
             return base.OnConnectedAsync();
         }
 
         public async Task PushComment(string reviewId, string elementId, string partialViewResult)
         {
-            if (!string.IsNullOrEmpty(reviewId) && !string.IsNullOrEmpty(elementId)) { 
+            if (!string.IsNullOrEmpty(reviewId) && !string.IsNullOrEmpty(elementId)) 
+            {
                 await Clients.Others.SendAsync("ReceiveComment", reviewId, elementId, partialViewResult);
             }
         }

@@ -43,7 +43,7 @@ $(() => {
   });
 
   // receiver/client side of comment refresh 
-  connection.on("ReceiveComment", (reviewId, elementId, partialViewResult, username) => {
+  connection.on("ReceiveComment", (reviewId, elementId, partialViewResult) => {
     checkReviewIdAgainstCurrent(reviewId);
 
     var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
@@ -71,8 +71,21 @@ $(() => {
     hp.removeCommentIconIfEmptyCommentBox(elementId);
 
     let size = 28;
+    let $navLinks = $("nav.navbar a.nav-link");
+    let username;
+
+    for (let nav of $navLinks) {
+      if (nav.innerText.includes("Profile")) {
+        let href = nav.getAttribute("href");
+        if (href) {
+          let hrefString: string = href;
+          let hrefSplit = hrefString.split("/");
+          username = hrefSplit[hrefSplit.length - 1];
+        }
+      }
+    }
+
     let url: string = "https://github.com/" + username + ".png?size=" + size;
-    console.log(username); 
     $("div.review-thread-reply div.reply-cell img.comment-icon").attr("src", url);
   });
 

@@ -31,6 +31,9 @@
     <None Update="Test.Certificates\about.md">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+    <None Update="Test.RecordEntries\sample_entry.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

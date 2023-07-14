@@ -37,9 +37,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await controller.Start();
 
             var value = httpContext.Response.Headers["x-recording-id"].ToString();
-            var path = httpContext.Response.Headers["x-recording-file-location"].ToString();
-            Assert.NotNull(value);
-            Assert.NotNull(path);
+            var recordLocation = httpContext.Response.Headers["x-recording-f3le-location"].ToString();
+            Assert.False(String.IsNullOrEmpty(value));
+            Assert.False(String.IsNullOrEmpty(recordLocation));
             Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(value));
         }
 
@@ -76,8 +76,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await playbackController.Start();
 
             var value = playbackContext.Response.Headers["x-recording-id"].ToString();
-            Assert.NotNull(value);
-            // Ensure in-memory recordings don't return this header.
+            var recordLocation = playbackContext.Response.Headers["x-recording-file-location"].ToString();
+            Assert.False(String.IsNullOrEmpty(value));
             Assert.True(String.IsNullOrEmpty(recordLocation));
             Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(value));
             Assert.True(testRecordingHandler.InMemorySessions.Count() == 1);
@@ -210,7 +210,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await controller.Start();
 
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
-            Assert.NotNull(recordingId);
+            Assert.False(String.IsNullOrEmpty(recordingId));
             Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(recordingId));
             var entry = testRecordingHandler.PlaybackSessions[recordingId].Session.Entries[0];
             HttpRequest request = TestHelpers.CreateRequestFromEntry(entry);
@@ -245,7 +245,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await controller.Start();
 
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
-            Assert.NotNull(recordingId);
+            Assert.False(String.IsNullOrEmpty(recordingId));
             Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(recordingId));
             var entry = testRecordingHandler.PlaybackSessions[recordingId].Session.Entries[0];
             HttpRequest request = TestHelpers.CreateRequestFromEntry(entry);

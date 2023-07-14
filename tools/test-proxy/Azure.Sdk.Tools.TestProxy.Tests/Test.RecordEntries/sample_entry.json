@@ -103,6 +103,7 @@
             "sipSignalingPort": 1234
           }
         },
+        "containerUri": "https://sdktest.blob.core.windows.net/test",
         "routes": [
           {
             "description": "desc0",

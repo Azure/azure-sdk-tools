@@ -30,10 +30,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/sample_entry.json");
 
-            var generalRegexSanitizer = new GeneralRegexSanitizer(value: "https://replacementvalue.table.core.windows.net", regex: "https://.*.table.core.windows.net");
+            var uriRegexSanitizer = new BodyKeySanitizer(jsonPath: "$..trunks", value: "redacted.com", regex: "[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}.*");
 
-            session.Session.Sanitize(generalRegexSanitizer);
-            Assert.Contains("replacementvalue", session.Session.Entries.First().RequestUri);
+            session.Session.Sanitize(uriRegexSanitizer);
+            var newBody = session.Session.Entries[2].Response.Body;
+
+            Assert.Contains("redacted.com", newBody);
         }
 
         [Fact]
@@ -43,10 +45,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             // this is what your json body will look like coming over the wire. Notice the double escapes to prevent JSON parse break.
             // it is an identical sanitizer registration to the one above
-            var overTheWire = "{ \"value\": \"https://replacementvalue.table.core.windows.net\", \"regex\": \"https://.*.table.core.windows.net\" }";
+            var overTheWire = "{ \"value\": \"redacted.com\", \"regex\": \"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}.*\", \"jsonPath\": \"$..trunks\" }";
 
             // Target the type of sanitizer using this. (This is similar to selecting a constructor above)
-            var sanitizerName = "GeneralRegexSanitizer";
+            var sanitizerName = "BodyKeySanitizer";
 
 
             #region API registration and running of sanitizer
@@ -70,7 +72,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             #endregion
 
             session.Session.Sanitize(registeredSanitizer);
-            Assert.Contains("replacementvalue", session.Session.Entries.First().RequestUri);
+            var newBody = session.Session.Entries[2].Response.Body;
+            Assert.Contains("redacted.com", newBody);
         }
     }
 }

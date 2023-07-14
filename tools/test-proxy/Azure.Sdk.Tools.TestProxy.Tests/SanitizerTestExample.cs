@@ -1,17 +1,8 @@
-using Azure.Sdk.Tools.TestProxy.Common;
-using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging.Abstractions;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -34,7 +25,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             session.Session.Sanitize(uriRegexSanitizer);
             var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
-            Console.WriteLine(newBody);
+            System.Console.WriteLine(newBody);
             Assert.Contains("redacted.com", newBody);
         }
 
@@ -86,9 +77,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             session.Session.Sanitize(uriRegexSanitizer);
             var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
-            Console.WriteLine("Sample1");
+            System.Console.WriteLine("Sample1");
 
-            Console.WriteLine(newBody);
+           System.Console.WriteLine(newBody);
             Assert.Contains("redacted", newBody);
         }
 

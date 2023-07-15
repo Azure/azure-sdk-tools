@@ -94,28 +94,23 @@ function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, 
             let rowClasses = $(value).attr("class");
             if (rowClasses) {
                 if (rowClasses.match(/comment-row/)) {
-                    // Ensure comment icon is shown on parent row that have comments in its section or subsection
+                    // Ensure comment icon is shown on parent row that have comments in its subsection
                     let rowClassList = rowClasses.split(/\s+/);
-                    let sectionClass = rowClassList.find((c) => c.match(/code-line-section-content-[0-9]+/));
                     let levelClass = rowClassList.find((c) => c.match(/lvl_[0-9]+_child_[0-9]+/));
-                    if (sectionClass && levelClass) {
-                        let levelClassParts = levelClass.split("_");
-                        let level = levelClassParts[1];
-                        let headingLvl = levelClassParts[3];
-                        $(`.${sectionClass}`).each(function(idx, el) {
-                            let classList = hp.getElementClassList(el);
-                            let lvlClass = classList.find((c) => c.match(/lvl_[0-9]+_parent_[0-9]+/));
-                            if (lvlClass && lvlClass.length > 0) {
-                                let lvlClassParts = lvlClass.split("_");
-                                if (Number(lvlClassParts[1]) == Number(level) && Number(lvlClassParts[3]) == Number(headingLvl) && classList.includes("comment-row")) {
-                                    return false;
-                                }
-
-                                if (Number(lvlClassParts[1]) <= Number(level) && Number(lvlClassParts[3]) <= Number(headingLvl) && !classList.includes("comment-row")) {
-                                    $(el).find(".icon-comments").addClass("comment-in-section");
-                                }
+                    if (levelClass)
+                    {
+                        let level = Number(levelClass.split('_')[1]) - 1;
+                        let parent = $(value);
+                        while (level > 0)
+                        {
+                            parent = parent.prevAll(`[class*='lvl_${level}_parent']:first`);
+                            if (parent)
+                            {
+                                parent.find(".icon-comments").addClass("comment-in-section");
                             }
-                        });
+                            level--;
+                        }
+
                     }
                 }
 

@@ -128,6 +128,44 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             session.Session.Sanitize(registeredSanitizer);
             var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
             Assert.Contains("redacted", newBody);
+        } 
+        
+        [Fact]
+        public async Task ThisShouldWork()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/sample_entry.json");
+
+            // this is what your json body will look like coming over the wire. Notice the double escapes to prevent JSON parse break.
+            // it is an identical sanitizer registration to the one above
+            var overTheWire = "{ \"value\": \".sanitized.com\", \"regex\": \"-[0-9a-fA-F]{32}\\.[0-9a-zA-Z\\.]*(\\.com|\\.net|\\.test)\" }";
+
+            // Target the type of sanitizer using this. (This is similar to selecting a constructor above)
+            var sanitizerName = "GeneralRegexSanitizer";
+
+
+            #region API registration and running of sanitizer
+            // feel free to ignore this setup, bunch of implementation details to register as if coming from external request
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.Sanitizers.Clear();
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers["x-abstraction-identifier"] = sanitizerName;
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(overTheWire);
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+            var controller = new Admin(testRecordingHandler, new NullLoggerFactory())
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.AddSanitizer();
+            var registeredSanitizer = testRecordingHandler.Sanitizers[0];
+            Assert.NotNull(registeredSanitizer);
+            #endregion
+
+            session.Session.Sanitize(registeredSanitizer);
+            var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
+            Assert.Contains(".sanitized.com", newBody);
         }
     }
 }

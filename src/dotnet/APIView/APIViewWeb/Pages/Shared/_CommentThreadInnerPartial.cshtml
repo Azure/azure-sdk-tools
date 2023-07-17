@@ -21,10 +21,7 @@
                     <div class="dropdown-menu dropdown-menu-right">
                         @if (Model.Username == User.GetGitHubLogin())
                         {
-                            <form data-post-update="comments" asp-controller="Comments" asp-action="Delete" method="post" asp-route-reviewId="@Model.ReviewId">
-                                <input type="hidden" name="commentId" value="@Model.CommentId" />
-                                <button id="@Model.CommentId" type="submit" class="text-danger dropdown-item">Delete</button>
-                            </form>
+                            <a href="#" class="dropdown-item js-delete-comment text-danger">Delete</a>
                             <a href="#" class="dropdown-item js-edit-comment">Edit</a>
                             <li><hr class="dropdown-divider"></li>
                         }

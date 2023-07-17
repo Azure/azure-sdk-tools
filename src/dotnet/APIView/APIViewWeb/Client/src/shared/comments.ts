@@ -3,7 +3,7 @@ import {
   getRowSectionClasses, toggleCommentIcon,
   updateCommentThread, addCommentThreadNavigation, getDisplayedCommentRows,
   getCommentsRow, showCommentBox, getDiagnosticsRow, getReplyGroupNo,
-  getElementId, getParentData, removeCommentIconIfEmptyCommentBox
+  getElementId, getParentData, removeCommentIconIfEmptyCommentBox, getReviewAndRevisionIdFromUrl
 } from "../shared/helpers";
 import { PushComment } from "./signalr";
 
@@ -178,6 +178,18 @@ $(() => {
       editComment(commentId);
     }
     e.preventDefault();
+  });
+
+  $(document).on("click", ".js-delete-comment", e => {
+    let commentId = getCommentId(e.target);
+    let lineId = getElementId(e.target);
+    if (lineId) {
+      let commentRow = getCommentsRow(lineId);
+      if (commentId) {
+        deleteComment(commentId, lineId, commentRow);
+      }
+      e.preventDefault();
+    }
   });
 
   $(document).on("click", ".js-github", e => {
@@ -437,6 +449,21 @@ $(() => {
     let commentText = commentElement.find(".js-comment-raw").html();
     let template = createCommentEditForm(commentId, commentText);
     commentElement.replaceWith(template);
+  }
+
+  function deleteComment(commentId: string, lineId: string, commentRow: JQuery<HTMLElement>) {
+    const reviewId = getReviewAndRevisionIdFromUrl(document.location.href)["reviewId"];
+    const elementId = getElementId(getCommentElement(commentId)[0]);
+    const url = location.origin + `/comments/delete?reviewid=${reviewId}&commentid=${commentId}&elementid=${elementId}`;
+    $.ajax({
+      type: "POST",
+      url: url,
+    }).done(partialViewResult => {
+      updateCommentThread(commentRow, partialViewResult);
+      addCommentThreadNavigation();
+      removeCommentIconIfEmptyCommentBox(lineId);
+      PushComment(reviewId, lineId, partialViewResult);
+    });
   }
 
   function getCommentElement(commentId: string) {

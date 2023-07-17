@@ -42,51 +42,33 @@ $(() => {
     hp.addToastNotification(notification);
   });
 
-  // receiver/client side of comment refresh 
-  connection.on("ReceiveComment", (reviewId, elementId, partialViewResult) => {
-    checkReviewIdAgainstCurrent(reviewId);
-
-    var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
-    hp.showCommentBox(elementId, rowSectionClasses, undefined, false);
-
-    let commentsRow = hp.getCommentsRow(elementId);
-    hp.updateCommentThread(commentsRow, partialViewResult);
-    // commented because we don't want to navigate user to updated comment
-    hp.addCommentThreadNavigation();  
+  /**
+   * receiver/client side of comment refresh
+   * SignalRHub does not have function to send to all users except for a particular group
+   * solution: send to all users AND the group and raise flag
+   */
+  let alreadyRefreshedComment = false;
+  connection.on("ReceiveCommentSelf", (reviewId, elementId, partialViewResult) => {
+    replaceRowWIthPartialViewResult(reviewId, elementId, partialViewResult);
+    alreadyRefreshedComment = true;
   });
-    if (currReviewId != reviewId) {
+
+  connection.on("ReceiveComment", (reviewId, elementId, partialViewResult) => {
+    if (alreadyRefreshedComment) {
+      alreadyRefreshedComment = false;
       return;
     }
-    var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
-    hp.showCommentBox(elementId, rowSectionClasses, undefined, false);
 
-    let commentsRow = hp.getCommentsRow(elementId);
+    console.log(partialViewResult);
 
-    var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
-    hp.showCommentBox(elementId, rowSectionClasses, undefined, false);
+    //$(partialViewResult)
+    /**
+     * remove all row's menu dropup remove/edit buttons that does not match the current user
+     * add remove/edit buttons for this current user
+     * get username from profile button
+     */
+    replaceRowWIthPartialViewResult(reviewId, elementId, partialViewResult);
 
-    let commentsRow = hp.getCommentsRow(elementId);
-    hp.updateCommentThread(commentsRow, partialViewResult);
-    hp.addCommentThreadNavigation();
-    hp.removeCommentIconIfEmptyCommentBox(elementId);
-
-    let size = 28;
-    let $navLinks = $("nav.navbar a.nav-link");
-    let username;
-
-    for (let nav of $navLinks) {
-      if (nav.innerText.includes("Profile")) {
-        let href = nav.getAttribute("href");
-        if (href) {
-          let hrefString: string = href;
-          let hrefSplit = hrefString.split("/");
-          username = hrefSplit[hrefSplit.length - 1];
-        }
-      }
-    }
-
-    let url: string = "https://github.com/" + username + ".png?size=" + size;
-    $("div.review-thread-reply div.reply-cell img.comment-icon").attr("src", url);
   });
 
   let approvalPendingText = "Current Revision Approval Pending";
@@ -114,6 +96,12 @@ $(() => {
     }
   });
 
+  /**
+   * Known issues are related to approval for first release. They are resolved upon refreshing.
+   * - Navigation bar checkmark for first release does not show up
+   * - Approve for First Release button can get unselected instead of being replaced by text 
+   * - Unselecting Approve For First Release button behaves in the same way as a regular Approve button
+   */
   connection.on("ReceiveApproval", (reviewId, revisionId, approver, approvalToggle) => {
     if (!checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
       return;
@@ -141,6 +129,40 @@ $(() => {
   // Start the connection.
   start();
 });
+
+function replaceRowWIthPartialViewResult(reviewId: any, elementId: any, partialViewResult: any) {
+    checkReviewIdAgainstCurrent(reviewId);
+
+    var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
+    hp.showCommentBox(elementId, rowSectionClasses, undefined, false);
+
+    let commentsRow = hp.getCommentsRow(elementId);
+    hp.updateCommentThread(commentsRow, partialViewResult);
+    hp.addCommentThreadNavigation();
+    hp.removeCommentIconIfEmptyCommentBox(elementId);
+
+    updateUserIcon();
+}
+
+function updateUserIcon() {
+    let size = 28;
+    let $navLinks = $("nav.navbar a.nav-link");
+    let username;
+
+    for (let nav of $navLinks) {
+        if (nav.innerText.includes("Profile")) {
+            let href = nav.getAttribute("href");
+            if (href) {
+                let hrefString: string = href;
+                let hrefSplit = hrefString.split("/");
+                username = hrefSplit[hrefSplit.length - 1];
+            }
+        }
+    }
+
+    let url: string = "https://github.com/" + username + ".png?size=" + size;
+    $("div.review-thread-reply div.reply-cell img.comment-icon").attr("src", url);
+}
 
 /**
  * Removes the @approver from @lowerTextSpan of review page

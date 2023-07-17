@@ -2,6 +2,8 @@ using System.Threading.Tasks;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Hubs
@@ -28,6 +30,7 @@ namespace APIViewWeb.Hubs
         {
             if (!string.IsNullOrEmpty(reviewId) && !string.IsNullOrEmpty(elementId)) 
             {
+                await Clients.OthersInGroup(Context.User.GetGitHubLogin()).SendAsync("ReceiveCommentSelf", reviewId, elementId, partialViewResult);
                 await Clients.Others.SendAsync("ReceiveComment", reviewId, elementId, partialViewResult);
             }
         }

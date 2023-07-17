@@ -137,12 +137,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             // this is what your json body will look like coming over the wire. Notice the double escapes to prevent JSON parse break.
             // it is an identical sanitizer registration to the one above
-            var overTheWire = "{ \"value\": \".sanitized.com\", \"regex\": \"-[0-9a-fA-F]{32}\\.[0-9a-zA-Z\\.]*(\\.com|\\.net|\\.test)\" }";
+            var overTheWire = "{ \"value\": \".sanitized.com\", \"regex\": \"([0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}[^/?]+)\" }";
 
             // Target the type of sanitizer using this. (This is similar to selecting a constructor above)
-            var sanitizerName = "GeneralRegexSanitizer";
+            var sanitizerName = "BodyRegexSanitizer";
 
-
+    
             #region API registration and running of sanitizer
             // feel free to ignore this setup, bunch of implementation details to register as if coming from external request
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

@@ -15,6 +15,14 @@ namespace Azure.ClientSdk.Analyzers
     {
         private const string AsyncSuffix = "Async";
 
+        private const string PageableTypeName = "Pageable";
+        private const string AsyncPageableTypeName = "AsyncPageable";
+        private const string BinaryDataTypeName = "BinaryData";
+        private const string ResponseTypeName = "Response";
+        private const string NullableResponseTypeName = "NullableResponse";
+        private const string OperationTypeName = "Operation";
+        private const string TaskTypeName = "Task";
+
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(new[]
         {
             Descriptors.AZC0002,
@@ -140,8 +148,7 @@ namespace Azure.ClientSdk.Analyzers
             else if (IsCancellationToken(lastArgument))
             {
                 // A convenience method should not have RequestContent as parameter
-                var requestContent = member.Parameters.FirstOrDefault(parameter => parameter.Type.Name == "RequestContent");
-                if (requestContent != null)
+                if (member.Parameters.FirstOrDefault(IsRequestContent) != null)
                 {
                     context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0017, member.Locations.FirstOrDefault()), member);
                 }
@@ -186,7 +193,7 @@ namespace Azure.ClientSdk.Analyzers
                 return;
             }
 
-            var requestContent = method.Parameters.FirstOrDefault(p => p.Type.Name == "RequestContent");
+            var requestContent = method.Parameters.FirstOrDefault(IsRequestContent);
             if (requestContent == null && method.Parameters.Last().IsOptional)
             {
                 INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
@@ -205,7 +212,7 @@ namespace Azure.ClientSdk.Analyzers
         {
             bool IsValidPageable(ITypeSymbol typeSymbol)
             {
-                if (typeSymbol.Name != "Pageable" && typeSymbol.Name != "AsyncPageable")
+                if ((!IsOrImplements(typeSymbol, PageableTypeName)) && (!IsOrImplements(typeSymbol, AsyncPageableTypeName)))
                 {
                     return false;
                 }
@@ -217,7 +224,7 @@ namespace Azure.ClientSdk.Analyzers
                 }
 
                 var pageableReturn = pageableTypeSymbol.TypeArguments.Single();
-                if (pageableReturn.Name != "BinaryData")
+                if (!IsOrImplements(pageableReturn, BinaryDataTypeName))
                 {
                     return false;
                 }
@@ -230,12 +237,12 @@ namespace Azure.ClientSdk.Analyzers
 
             if (method.ReturnType is INamedTypeSymbol namedTypeSymbol &&
                 namedTypeSymbol.IsGenericType &&
-                namedTypeSymbol.Name == "Task")
+                namedTypeSymbol.Name == TaskTypeName)
             {
                 unwrappedType = namedTypeSymbol.TypeArguments.Single();
             }
 
-            if (unwrappedType.Name == "Response")
+            if (IsOrImplements(unwrappedType, ResponseTypeName))
             {
                 if (unwrappedType is INamedTypeSymbol responseTypeSymbol && responseTypeSymbol.IsGenericType)
                 {
@@ -243,12 +250,12 @@ namespace Azure.ClientSdk.Analyzers
                 }
                 return;
             }
-            else if (unwrappedType.Name == "Operation")
+            else if (IsOrImplements(unwrappedType, OperationTypeName))
             {
                 if (unwrappedType is INamedTypeSymbol operationTypeSymbol && operationTypeSymbol.IsGenericType)
                 {
                     var operationReturn = operationTypeSymbol.TypeArguments.Single();
-                    if (operationReturn.Name  == "Pageable" || operationReturn.Name == "AsyncPageable")
+                    if (IsOrImplements(operationReturn, PageableTypeName) || IsOrImplements(operationReturn, AsyncPageableTypeName))
                     {
                         if (!IsValidPageable(operationReturn))
                         {
@@ -257,14 +264,14 @@ namespace Azure.ClientSdk.Analyzers
                         return;
                     }
 
-                    if (operationReturn.Name != "BinaryData")
+                    if (!IsOrImplements(operationReturn, BinaryDataTypeName))
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
                     }
                 }
                 return;
             }
-            else if (originalType.Name == "Pageable" || originalType.Name == "AsyncPageable")
+            else if (IsOrImplements(originalType, PageableTypeName) || IsOrImplements(originalType, AsyncPageableTypeName))
             { 
                 if (!IsValidPageable(originalType))
                 {
@@ -276,45 +283,44 @@ namespace Azure.ClientSdk.Analyzers
             context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
         }
 
-        private static void CheckClientMethodReturnType(ISymbolAnalysisContext context, IMethodSymbol method)
+        private static bool IsOrImplements(ITypeSymbol typeSymbol, string typeName)
         {
-            bool IsOrImplements(ITypeSymbol typeSymbol, string typeName)
+            if (typeSymbol.Name == typeName)
             {
-                if (typeSymbol.Name == typeName)
-                {
-                    return true;
-                }
-
-                if (typeSymbol.BaseType != null)
-                {
-                    return IsOrImplements(typeSymbol.BaseType, typeName);
-                }
-
-                return false;
+                return true;
             }
 
+            if (typeSymbol.BaseType != null)
+            {
+                return IsOrImplements(typeSymbol.BaseType, typeName);
+            }
+
+            return false;
+        }
+
+        private static void CheckClientMethodReturnType(ISymbolAnalysisContext context, IMethodSymbol method)
+        {
             ITypeSymbol originalType = method.ReturnType;
             ITypeSymbol unwrappedType = method.ReturnType;
 
             if (method.ReturnType is INamedTypeSymbol namedTypeSymbol &&
                 namedTypeSymbol.IsGenericType &&
-                namedTypeSymbol.Name == "Task")
+                namedTypeSymbol.Name == TaskTypeName)
             {
                 unwrappedType = namedTypeSymbol.TypeArguments.Single();
             }
 
-            if (IsOrImplements(unwrappedType, "Response") ||
-                IsOrImplements(unwrappedType, "NullableResponse") ||
-                IsOrImplements(unwrappedType, "Operation") ||
-                IsOrImplements(originalType, "Pageable") ||
-                IsOrImplements(originalType, "AsyncPageable") ||
+            if (IsOrImplements(unwrappedType, ResponseTypeName) ||
+                IsOrImplements(unwrappedType, NullableResponseTypeName) ||
+                IsOrImplements(unwrappedType, OperationTypeName) ||
+                IsOrImplements(originalType, PageableTypeName) ||
+                IsOrImplements(originalType, AsyncPageableTypeName) ||
                 originalType.Name.EndsWith(ClientSuffix))
             {
                 return;
             }
 
             context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0015, method.Locations.FirstOrDefault(), originalType.ToDisplayString()), method);
-
         }
 
         private bool IsCheckExempt(IMethodSymbol method)
@@ -323,7 +329,7 @@ namespace Azure.ClientSdk.Analyzers
                 method.DeclaredAccessibility != Accessibility.Public ||
                 method.OverriddenMethod != null ||
                 method.IsImplicitlyDeclared ||
-                (method.Name.StartsWith("Get") && method.Name.EndsWith("Client"));
+                (method.Name.StartsWith("Get") && method.Name.EndsWith(ClientSuffix));
         }
         
         public override void AnalyzeCore(ISymbolAnalysisContext context)

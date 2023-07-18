@@ -23,10 +23,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     /// 
     /// Below a generalRegexSanitizer is being used, feel free to replace with any sanitizer provided in Azure.Sdk.Tools.TestProxy.Sanitizers.
     /// </summary>
-    public class SanitizerTestExample
+    public class URITestExample
     {
         [Fact]
-        public void SanitizerWorksAgainstSample()
+        public void URISanitizerWorksAgainstSample()
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/uri_entry.json");
 

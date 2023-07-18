@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             #endregion
 
             session.Session.Sanitize(registeredSanitizer);
-            var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
+            var newBody = Encoding.UTF8.GetString(session.Session.Entries[1].Response.Body);
             Assert.Contains("REDACTED", newBody);
         }
     }

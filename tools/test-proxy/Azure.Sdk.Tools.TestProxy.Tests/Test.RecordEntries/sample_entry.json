@@ -29,6 +29,9 @@
       },
       "ResponseBody": {
         "trunks": {},
+        "containerUri": "REDACTED",
+        "inputDataUri": "REDACTED",
+        "inputDataFormat": "microsoft.qio.v2",
         "routes": [
           {
             "description": "desc0",

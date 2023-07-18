@@ -16,10 +16,32 @@ $(() => {
 
   rvM.hideCheckboxesIfNotApplicable();
 
-  // Enable SumoSelect
-  $(document).ready(function () {
+  // Run when document is ready
+  $(function() {
+    // Enable SumoSelect
     (<any>$("#revision-select")).SumoSelect({ search: true, searchText: 'Search Revisions...' });
     (<any>$("#diff-select")).SumoSelect({ search: true, searchText: 'Search Revisons for Diff...' });
+
+    // Update codeLine Section state after page refresh
+    const shownSectionHeadingLineNumbers = sessionStorage.getItem("shownSectionHeadingLineNumbers");
+
+    if (shownSectionHeadingLineNumbers != null)
+    {
+      rvM.loadPreviouslyShownSections();
+    }
+
+    // Scroll ids into view for Ids hidden in collapsed sections
+    const uriHash = location.hash;
+    console.log(`Initial uriHash: ${uriHash}`);
+    if (uriHash) {
+      let targetAnchorId = uriHash.replace('#', '');
+      targetAnchorId = decodeURIComponent(targetAnchorId);
+      const targetAnchor = $(`[id="${targetAnchorId}"]`);
+      if (targetAnchor.length == 0) {
+        console.log(`Target anchor not found, calling findTargetAnchorWithinSections`);
+        rvM.findTargetAnchorWithinSections(targetAnchorId);
+      }
+    }
   });
 
   /* ADD FUNCTIONS TO LEFT NAVIGATION
@@ -190,17 +212,6 @@ $(() => {
   /* COLLAPSIBLE CODE LINES (EXPAND AND COLLAPSE FEATURE)
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   rvM.addCodeLineToggleEventHandlers();
-
-  // Ask to update codeLine Section state after page refresh
-  $(document).ready(function () {
-    // Get sessionStorage values holding section state
-    const shownSectionHeadingLineNumbers = sessionStorage.getItem("shownSectionHeadingLineNumbers");
-
-    if (shownSectionHeadingLineNumbers != null)
-    {
-      rvM.loadPreviouslyShownSections();
-    }
-  });
 
   /* RIGHT OFFCANVAS OPERATIONS
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/

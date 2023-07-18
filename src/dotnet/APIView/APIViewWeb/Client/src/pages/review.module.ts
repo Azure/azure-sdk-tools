@@ -472,20 +472,102 @@ export function runAfterExpandingCodeline(targetAnchorId, callback) {
 */
 export function addClickEventToClassesInSections() {
   $(".code-inner li a").off("click").on("click", function (e) {
-    e.preventDefault();
-    const anchorHash = $(this).attr("href");
-    if (anchorHash) {
-      const targetAnchorId = anchorHash.replace('#', '');
-      const definitionsAnchorId = targetAnchorId.substring(0, targetAnchorId.lastIndexOf("Definitions") + "Definitions".length)
-      const target = $(`[data-line-id="${targetAnchorId}"]`);
-      if (target.length == 0 || target.hasClass("d-none")) {
-        runAfterExpandingCodeline(definitionsAnchorId, function () {
-          window.location.hash = anchorHash;
-        });
-      }
-      else {
-        window.location.hash = anchorHash;
-      }
-    }
+        e.preventDefault();
+        const anchorHash = $(this).attr("href");
+        if (anchorHash) {
+            const targetAnchorId = anchorHash.replace('#', '');
+            const definitionsAnchorId = targetAnchorId.substring(0, targetAnchorId.lastIndexOf("Definitions") + "Definitions".length)
+            const target = $(`[data-line-id="${targetAnchorId}"]`);
+            if (target.length == 0 || target.hasClass("d-none")) {
+                runAfterExpandingCodeline(definitionsAnchorId, function () {
+                window.location.hash = anchorHash;
+                });
+            }
+            else {
+                window.location.hash = anchorHash;
+            }
+        }
   });
+}
+
+/**
+* Check if targetAnchor is present, if its not present, expand the section and scroll to the targetAnchor
+* @param { String } uriHash  the hash/id of the anchor we are looking for
+* @param { String [] } mainSections the sections to be expanded if the targetAnchor is not present or hidden
+*/
+export function findTargetAnchorWithinSections(uriHash : string, mainSections: string[] = ["Paths", "Definitions"]) {
+    if (uriHash.startsWith('#'))
+        uriHash = uriHash.replace('#', '');
+
+    uriHash = decodeURIComponent(uriHash);
+    let targetAnchor = $(`[id="${uriHash}"]`);
+
+    if (targetAnchor.length == 0)
+        targetAnchor = $(`[data-line-id="${uriHash}"]`);
+
+    if (targetAnchor.length == 0) {
+        if (mainSections.length == 0) {
+            return;
+        }
+
+        const anchorBase = uriHash.substring(0, uriHash.indexOf("json") + "json".length);
+        let anchorToExpand = anchorBase;
+        if (uriHash.includes("-Paths-")) {
+            anchorToExpand = anchorToExpand + "-" + mainSections.shift();
+        }
+        else {
+            anchorToExpand = anchorToExpand + "-" + mainSections.pop();
+        }
+        runAfterExpandingCodeline(anchorToExpand, function() {
+            findTargetAnchorWithinSections(uriHash, mainSections)
+        });
+    }
+    else {
+        const anchorCodeLineRow = $(targetAnchor[0]).hasClass("code-line") ? $(targetAnchor[0]) : $(targetAnchor[0]).parents(".code-line").first();
+
+        if (anchorCodeLineRow.hasClass("d-none")) {
+            // Get anchor parents up to a level thats not hidden, expand each before scrolling to the anchor
+            const parentsToExpand = new Map<number, JQuery<HTMLElement>>();
+            let parent = anchorCodeLineRow.prevAll(`[class*='parent']:first`);
+            let parentClass = parent.attr("class")?.split(/\s+/).find((c) => c.match(/lvl_[0-9]+_parent_[0-9]+/));
+            let parentLevel = Number(parentClass?.split("_")[1]);
+
+            while(parentLevel > 0)
+            {
+                if (!parentsToExpand.has(parentLevel))
+                    parentsToExpand.set(parentLevel, parent);
+
+                if (!parent.hasClass("d-none"))
+                    break;
+
+                parent = parent.prevAll(`[class*='parent']:first`);
+                parentClass = parent.attr("class")?.split(/\s+/).find((c) => c.match(/lvl_[0-9]+_parent_[0-9]+/));
+                parentLevel = Number(parentClass?.split("_")[1]);
+            }
+
+            while (parentsToExpand.size > 0)
+            {
+                const key = Math.min(...parentsToExpand.keys());
+                const rowToExpand = parentsToExpand.get(key);
+
+                // Expand Row
+                var rowFoldSpan = rowToExpand!.find(".row-fold-caret");
+                if (rowFoldSpan.length > 0) {
+                var caretIcon = rowFoldSpan.children("i");
+                var caretClasses = caretIcon.attr("class");
+                var caretDirection = caretClasses ? caretClasses.split(' ').filter(c => c.startsWith('fa-angle-'))[0] : "";
+                    if (caretDirection.endsWith("right")) {
+                        toggleCodeLines(rowToExpand!)
+                    }
+                }
+
+                parentsToExpand.delete(key);
+            }
+            window.location.hash = `#${uriHash}`;
+        }
+        else {
+            window.location.hash = `#${uriHash}`;
+        }
+
+    }
 }

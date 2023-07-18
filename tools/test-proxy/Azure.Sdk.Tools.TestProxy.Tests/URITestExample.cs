@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var uriRegexSanitizer = new BodyKeySanitizer(jsonPath: "$..containerUri", value: "redacted");
 
             session.Session.Sanitize(uriRegexSanitizer);
-            var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
+            var newBody = Encoding.UTF8.GetString(session.Session.Entries[1].Response.Body);
             Assert.Contains("REDACTED", newBody);
         }
 

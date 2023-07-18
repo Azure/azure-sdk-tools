@@ -28,65 +28,27 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void SanitizerWorksAgainstSample()
         {
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/sample_entry.json");
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/uri_entry.json");
 
-            var uriRegexSanitizer = new BodyKeySanitizer(jsonPath: "$..trunks", value: "redacted.com");
+            var uriRegexSanitizer = new BodyKeySanitizer(jsonPath: "$..containerUri", value: "redacted");
 
             session.Session.Sanitize(uriRegexSanitizer);
             var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
-            System.Console.WriteLine(newBody);
-            Assert.Contains("redacted.com", newBody);
+            Assert.Contains("REDACTED", newBody);
         }
 
+    
         [Fact]
-        public async Task APISanitizerWorksAgainstSample()
+        public async Task ThisShouldWorkContainerURI()
         {
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/sample_entry.json");
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/uri_entry.json");
 
             // this is what your json body will look like coming over the wire. Notice the double escapes to prevent JSON parse break.
             // it is an identical sanitizer registration to the one above
-            var overTheWire = "{ \"value\": \"redacted.com\", \"jsonPath\": \"$..trunks\" }";
+            var overTheWire = "{ \"value\": \"REDACTED\", \"jsonPath\": \"$..containerUri\" }";
 
             // Target the type of sanitizer using this. (This is similar to selecting a constructor above)
             var sanitizerName = "BodyKeySanitizer";
-
-
-            #region API registration and running of sanitizer
-            // feel free to ignore this setup, bunch of implementation details to register as if coming from external request
-            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            testRecordingHandler.Sanitizers.Clear();
-            var httpContext = new DefaultHttpContext();
-            httpContext.Request.Headers["x-abstraction-identifier"] = sanitizerName;
-            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(overTheWire);
-            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
-            var controller = new Admin(testRecordingHandler, new NullLoggerFactory())
-            {
-                ControllerContext = new ControllerContext()
-                {
-                    HttpContext = httpContext
-                }
-            };
-            await controller.AddSanitizer();
-            var registeredSanitizer = testRecordingHandler.Sanitizers[0];
-            Assert.NotNull(registeredSanitizer);
-            #endregion
-
-            session.Session.Sanitize(registeredSanitizer);
-            var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
-            Assert.Contains("redacted.com", newBody);
-        }
-        
-        [Fact]
-        public async Task ThisShouldWork()
-        {
-            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/sample_entry.json");
-
-            // this is what your json body will look like coming over the wire. Notice the double escapes to prevent JSON parse break.
-            // it is an identical sanitizer registration to the one above
-            var overTheWire = "{ \"value\": \".sanitized.com\", \"regex\": \"([0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}[^/?]+)\" }";
-
-            // Target the type of sanitizer using this. (This is similar to selecting a constructor above)
-            var sanitizerName = "BodyRegexSanitizer";
 
     
             #region API registration and running of sanitizer
@@ -111,7 +73,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             session.Session.Sanitize(registeredSanitizer);
             var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
-            Assert.Contains(".sanitized.com", newBody);
-        }    
+            Assert.Contains("REDACTED", newBody);
+        }
     }
 }

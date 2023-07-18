@@ -34,6 +34,9 @@
     <None Update="Test.RecordEntries\sample_entry.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Test.RecordEntries\uri_entry.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

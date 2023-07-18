@@ -8,11 +8,13 @@ using APIView;
 using APIView.DIff;
 using APIView.Model;
 using APIViewWeb.Helpers;
+using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 
 
@@ -39,6 +41,8 @@ namespace APIViewWeb.Pages.Assemblies
 
         private readonly IConfiguration _configuration;
 
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
+
         public ReviewPageModel(
             IReviewManager manager,
             IPullRequestManager pullRequestManager,
@@ -47,7 +51,8 @@ namespace APIViewWeb.Pages.Assemblies
             INotificationManager notificationManager,
             UserPreferenceCache preferenceCache,
             ICosmosUserProfileRepository userProfileRepository,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IHubContext<SignalRHub> signalRHub)
         {
             _manager = manager;
             _pullRequestManager = pullRequestManager;
@@ -57,6 +62,7 @@ namespace APIViewWeb.Pages.Assemblies
             _preferenceCache = preferenceCache;
             _userProfileRepository = userProfileRepository;
             _configuration = configuration;
+            _signalRHubContext = signalRHub;
 
         }
 
@@ -125,6 +131,12 @@ namespace APIViewWeb.Pages.Assemblies
                     fileHtmlLines);
 
                 Lines = CreateLines(fileDiagnostics, diffLines, Comments);
+                if (Lines.Length == 0)
+                {
+                    var notifcation = new NotificationModel() { Message = "There is no diff between the two revisions.", Level = NotificatonLevel.Info };
+                    await _signalRHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveNotification", notifcation);
+                    return Redirect(Request.Headers["referer"]);
+                }
             }
             else
             {
@@ -342,6 +354,10 @@ namespace APIViewWeb.Pages.Assemblies
             if (ShowDiffOnly)
             {
                 lines = CreateDiffOnlyLines(lines);
+                if (lines.Length == 0)
+                {
+                    return Array.Empty<CodeLineModel>();
+                }
             }
             List<int> documentedByLines = new List<int>();
             int lineNumberExcludingDocumentation = 0;

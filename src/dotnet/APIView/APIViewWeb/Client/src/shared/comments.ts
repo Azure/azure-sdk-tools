@@ -110,7 +110,8 @@ $(() => {
   });
 
   $(document).on("submit", "form[data-post-update='comments']", e => {
-    disableButtonTemp('button.comment-submit-button', 2000);
+    // TODO: this 
+    //$(e.target).find('button[type="submit"]').prop('disabled', true);
 
     const form = <HTMLFormElement><any>$(e.target);
     let lineId = getElementId(e.target);
@@ -149,6 +150,7 @@ $(() => {
       });
     }
     e.preventDefault();
+    $('button.comment-submit-button').prop("disabled", false);
   });
 
   $(document).on("click", ".review-thread-reply-button", e => {
@@ -165,7 +167,6 @@ $(() => {
     }
     e.preventDefault();
   });
-
   $(document).on("click", ".toggle-comments", e => {
     let lineId = getElementId(e.target);
     if (lineId) {
@@ -464,7 +465,7 @@ $(() => {
       updateCommentThread(commentRow, partialViewResult);
       addCommentThreadNavigation();
       removeCommentIconIfEmptyCommentBox(lineId);
-      PushComment(reviewId, lineId, partialViewResult);
+      pushComment(reviewId, lineId, partialViewResult);
     });
   }
 

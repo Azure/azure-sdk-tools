@@ -30,7 +30,7 @@ namespace APIViewWeb.Hubs
         {
             if (!string.IsNullOrEmpty(reviewId) && !string.IsNullOrEmpty(elementId)) 
             {
-                await Clients.OthersInGroup(Context.User.GetGitHubLogin()).SendAsync("ReceiveCommentSelf", reviewId, elementId, partialViewResult);
+                //await Clients.OthersInGroup(Context.User.GetGitHubLogin()).SendAsync("ReceiveCommentSelf", reviewId, elementId, partialViewResult);
                 await Clients.Others.SendAsync("ReceiveComment", reviewId, elementId, partialViewResult);
             }
         }

@@ -49,24 +49,44 @@ $(() => {
    */
   let alreadyRefreshedComment = false;
   connection.on("ReceiveCommentSelf", (reviewId, elementId, partialViewResult) => {
-    replaceRowWIthPartialViewResult(reviewId, elementId, partialViewResult);
-    alreadyRefreshedComment = true;
+    //replaceRowWIthPartialViewResult(reviewId, elementId, partialViewResult);
+    //alreadyRefreshedComment = true;
   });
 
   connection.on("ReceiveComment", (reviewId, elementId, partialViewResult) => {
-    if (alreadyRefreshedComment) {
-      alreadyRefreshedComment = false;
-      return;
-    }
+    //if (alreadyRefreshedComment == true) {
+    //  alreadyRefreshedComment = false;
+    //  return;
+    //}
 
-    console.log(partialViewResult);
-
-    //$(partialViewResult)
     /**
      * remove all row's menu dropup remove/edit buttons that does not match the current user
      * add remove/edit buttons for this current user
      * get username from profile button
      */
+
+    // remove all delete and edit anchors
+    let a = $(partialViewResult).find("a.dropdown-item.js-delete-comment");
+    //$(partialViewResult).remove("a.dropdown-item.js-delete-comment");
+    let b = a.next();
+    let c = b.next();
+    a.each((index, value) => {
+      $(value).remove();
+      //a[index].remove();
+    });
+    $(a).remove();
+    $(b).remove();
+    $(c).remove();
+    console.log("a delete")
+    console.log(a);
+    console.log("b edit")
+    console.log(b);
+    console.log("c line")
+    console.log(c);
+
+    // verify name and add delete and edit anchors
+
+
     replaceRowWIthPartialViewResult(reviewId, elementId, partialViewResult);
 
   });
@@ -76,7 +96,8 @@ $(() => {
   let approvesCurrentRevisionText = "Approves the current revision of the API";
 
   connection.on("ReceiveApprovalSelf", (reviewId, revisionId, approvalToggle) => {
-    hp.disableButtonTemp("form.form-inline button.btn", 2000);
+    // TODO: this 
+    //$("form.form-inline button.btn").prop("disabled", true);
 
     if (!checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
       return;

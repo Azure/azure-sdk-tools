@@ -18,7 +18,7 @@ namespace APIViewWeb.Controllers
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly INotificationManager _notificationManager;
 
-        public CommentsController(ICommentsManager commentsManager, IReviewManager reviewManager, INotificationManager notificationManager, IHubContext<SignalRHub> notificationHub)
+        public CommentsController(ICommentsManager commentsManager, IReviewManager reviewManager, INotificationManager notificationManager, IHubContext<SignalRHub> signalRHub)
         {
             _signalRHubContext = signalRHub;
             _commentsManager = commentsManager;

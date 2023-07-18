@@ -1,16 +1,19 @@
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using SwaggerApiParser.Specs;
 
-namespace SwaggerApiParser;
-
-public static class SwaggerDeserializer
+namespace SwaggerApiParser 
 {
-    public static async Task<SwaggerSpec> Deserialize(string swaggerFilePath)
+    public static class SwaggerDeserializer
     {
-        var fullPath = Path.GetFullPath(swaggerFilePath);
-        await using FileStream openStream = File.OpenRead(swaggerFilePath);
-        SwaggerSpec swaggerSpec = await JsonSerializer.DeserializeAsync<SwaggerSpec>(openStream);
-        return swaggerSpec;
+        public static async Task<Swagger> Deserialize(string swaggerFilePath)
+        {
+            var fullPath = Path.GetFullPath(swaggerFilePath);
+            await using FileStream openStream = File.OpenRead(swaggerFilePath);
+            Swagger swaggerSpec = await JsonSerializer.DeserializeAsync<Swagger>(openStream);
+            return swaggerSpec;
+        }
     }
 }
+

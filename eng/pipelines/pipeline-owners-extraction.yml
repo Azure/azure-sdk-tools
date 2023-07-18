@@ -40,3 +40,10 @@ stages:
         displayName: Publish pipelineOwners artifact
         artifact: pipelineOwners
         condition: succeededOrFailed()
+
+      - pwsh: |
+          dotnet run --blobStorageURI "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob?$(azuresdkartifacts-azure-sdk-write-teams-sas)"
+        displayName: 'Fetch and store team/user data'
+        workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
+        env:
+          GITHUB_TOKEN: $(azuresdkartifacts-azure-sdk-write-teams-github-pat)

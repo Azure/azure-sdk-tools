@@ -14,10 +14,12 @@ struct HelperClass
 class TestClass {
 public:
   std::string PublicField1;
+  [[deprecated]]
   std::string PublicField2{"Test Constructor"};
   std::string PublicField3 = "Test Copy Initializer ";
   bool BoolField = true;
   bool BoolField2{false};
+  [[deprecated("Use field BoolField2 instead.")]]
   bool BoolField3{};
   int IntField = 20;
   int IntField2{};

@@ -123,10 +123,12 @@ cleanup: false
     -	call `TypeSpec-Project-Sync.ps1`
     -	call `TypeSpec-Project-Generate.ps1`
   - input: 
-    - typespecProjectDirectory (required)
+    - TypespecProjectDirectory (required)
       either a folder of `tspconfig.yaml` or a remoteUrl of `tspconfig.yaml`
-    - commitSha (optional)
-    - repoUrl (optional)
+    - CommitSha (optional)
+    - RepoUrl (optional)
+    - SkipSyncAndGenerate (optional)
+      skip the call to `TypeSpec-Project-Sync.ps1` and `TypeSpec-Project-Generate.ps1` in case of existed sdk project
   - output: sdk project folder
 
 ```powershell
@@ -141,6 +143,11 @@ or
 
 It can be found at `./eng/common/scripts/TypeSpec-Project-Sync.ps1`.  It takes in one parameter which is the root directory of the project which is typically one layer lower than the service directory.  As an example for dotnet this is `./sdk/openai/Azure.AI.OpenAI` where `openai` is the service directory and `Azure.AI.OpenAI` is the project directory.
 
+- input: 
+    - ProjectDirectory (required)
+    - LocalSpecRepoPath (optional)
+      If this parameter is provided, then this script would use the typespecs in this local repo path for sync.
+
 ```powershell
 ./eng/common/scripts/TypeSpec-Project-Sync.ps1 ./sdk/openai/Azure.AI.OpenAI
 ```
@@ -154,6 +161,14 @@ This is then copied over to your project directory so that you can make temporar
 ## TypeSpec-Project-Generate.ps1
 
 It can be found at `./eng/common/scripts/TypeSpec-Project-Generate.ps1`.  It takes the exact same parameter as the sync script.
+
+- input: 
+    - ProjectDirectory (required)
+    - TypespecAdditionalOptions (optional)
+      addtional typespec emitter options, separated by semicolon if more than one, e.g. option1=value1;option2=value2
+    - SaveInputs (optional)
+      saves the temporary files during execution, default value is false
+
 
 ```powershell
 ./eng/common/scripts/TypeSpec-Project-Generate.ps1 ./sdk/openai/Azure.AI.OpenAI

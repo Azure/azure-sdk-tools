@@ -17,8 +17,7 @@ function ReadFiles([IO.FileInfo[]] $files) {
 $lines = @()
 
 $lines += ReadFiles (Get-ChildItem -Path "$PSScriptRoot/tables/" -Include "*.kql" -Recurse)
-$lines += ReadFiles (Get-ChildItem -Path "$PSScriptRoot/functions/" -Include "*.kql" -Exclude "DashboardQuery.kql", "ManagedDefinitionBuild.kql" -Recurse)
-$lines += ReadFiles (Get-Item -Path "$PSScriptRoot/functions/DashboardQuery.kql")
-$lines += ReadFiles (Get-Item -Path "$PSScriptRoot/functions/ManagedDefinitionBuild.kql")
+$lines += ReadFiles (Get-ChildItem -Path "$PSScriptRoot/views/" -Include "*.kql" -Recurse)
+$lines += ReadFiles (Get-ChildItem -Path "$PSScriptRoot/functions/" -Include "*.kql" -Recurse)
 
 $lines | Set-Content $OutputPath

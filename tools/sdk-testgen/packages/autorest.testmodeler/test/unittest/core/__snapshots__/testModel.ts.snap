@@ -35,6 +35,185 @@ ExampleParameter {
 }
 `;
 
+exports[`ExampleValue.createInstance(...) create with DataFactoryElement 1`] = `
+ExampleValue {
+  "language": Object {
+    "default": Object {
+      "description": "mocked description",
+      "name": "mocked name",
+    },
+  },
+  "parentsValue": Object {},
+  "properties": Object {
+    "type": ExampleValue {
+      "language": Languages {
+        "default": Object {
+          "description": "",
+          "name": "type",
+        },
+      },
+      "rawValue": "Expression",
+      "schema": StringSchema {
+        "language": Languages {
+          "default": Object {
+            "description": "",
+            "name": "dfe-string-type",
+          },
+        },
+        "protocol": Protocols {},
+        "type": "string",
+      },
+    },
+    "value": ExampleValue {
+      "language": Languages {
+        "default": Object {
+          "description": "",
+          "name": "value",
+        },
+      },
+      "rawValue": "@dataset().MyFolderPath",
+      "schema": StringSchema {
+        "language": Languages {
+          "default": Object {
+            "description": "",
+            "name": "dfe-string-value",
+          },
+        },
+        "protocol": Protocols {},
+        "type": "string",
+      },
+    },
+  },
+  "schema": ObjectSchema {
+    "language": Languages {
+      "default": Object {
+        "description": "",
+        "name": "DataFactoryElement-Expression",
+      },
+    },
+    "properties": Array [
+      Property {
+        "language": Languages {
+          "default": Object {
+            "description": "",
+            "name": "type",
+          },
+        },
+        "protocol": Protocols {},
+        "schema": StringSchema {
+          "language": Languages {
+            "default": Object {
+              "description": "",
+              "name": "dfe-string-type",
+            },
+          },
+          "protocol": Protocols {},
+          "type": "string",
+        },
+        "serializedName": "type",
+      },
+      Property {
+        "language": Languages {
+          "default": Object {
+            "description": "",
+            "name": "value",
+          },
+        },
+        "protocol": Protocols {},
+        "schema": StringSchema {
+          "language": Languages {
+            "default": Object {
+              "description": "",
+              "name": "dfe-string-value",
+            },
+          },
+          "protocol": Protocols {},
+          "type": "string",
+        },
+        "serializedName": "value",
+      },
+    ],
+    "protocol": Protocols {},
+    "type": "object",
+  },
+}
+`;
+
+exports[`ExampleValue.createInstance(...) create with DataFactoryElement with Literal value 1`] = `
+ExampleValue {
+  "elements": Array [
+    ExampleValue {
+      "language": undefined,
+      "rawValue": "a",
+      "schema": StringSchema {
+        "language": Languages {
+          "default": Object {
+            "description": "",
+            "name": "dfe-list-string-element",
+          },
+        },
+        "protocol": Protocols {},
+        "type": "string",
+      },
+    },
+    ExampleValue {
+      "language": undefined,
+      "rawValue": "b",
+      "schema": StringSchema {
+        "language": Languages {
+          "default": Object {
+            "description": "",
+            "name": "dfe-list-string-element",
+          },
+        },
+        "protocol": Protocols {},
+        "type": "string",
+      },
+    },
+    ExampleValue {
+      "language": undefined,
+      "rawValue": "c",
+      "schema": StringSchema {
+        "language": Languages {
+          "default": Object {
+            "description": "",
+            "name": "dfe-list-string-element",
+          },
+        },
+        "protocol": Protocols {},
+        "type": "string",
+      },
+    },
+  ],
+  "language": Object {
+    "default": Object {
+      "description": "mocked description",
+      "name": "mocked name",
+    },
+  },
+  "schema": ArraySchema {
+    "elementType": StringSchema {
+      "language": Languages {
+        "default": Object {
+          "description": "",
+          "name": "dfe-list-string-element",
+        },
+      },
+      "protocol": Protocols {},
+      "type": "string",
+    },
+    "language": Languages {
+      "default": Object {
+        "description": "",
+        "name": "dfe-list-string",
+      },
+    },
+    "protocol": Protocols {},
+    "type": "array",
+  },
+}
+`;
+
 exports[`ExampleValue.createInstance(...) create with primitive schema 1`] = `
 ExampleValue {
   "language": Object {

@@ -1,5 +1,19 @@
 # Azure SDK Tools Test Proxy
 
+**To users writing SDK tests:** This document is not intended to be a test preperation reference. You should instead refer
+to documentation in your specific language repository in order to configure recorded tests.
+
+#### Test documentation by language:
+
+- [Java](https://github.com/Azure/azure-sdk-for-java/blob/main/CONTRIBUTING.md)
+- [JavaScript](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on-how-to-write-tests.md)
+- [.NET](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core.TestFramework/README.md)
+- [Python](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md)
+- [C++](https://github.com/Azure/azure-sdk-for-cpp/blob/main/doc/TestProxy.md)
+- [Go](https://github.com/Azure/azure-sdk-for-go/blob/main/documentation/developer_setup.md)
+
+## Table of contents
+
 - [Azure SDK Tools Test Proxy](#azure-sdk-tools-test-proxy)
   - [Installation](#installation)
     - [Via Local Compile or .NET](#via-local-compile-or-net)
@@ -336,6 +350,8 @@ To start an individual test recording or playback, users will POST to a route on
 ```
 
 You will receive a recordingId in the reponse under header `x-recording-id`. This value should be included under header `x-recording-id` in all further requests.
+
+For playback, you will receive the location of the recording file (if it is on disk) in the header `x-recording-file-location`.
 
 ### Run your tests
 

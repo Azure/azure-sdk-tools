@@ -150,8 +150,10 @@ public class JavaASTAnalyser implements Analyser {
 
     private boolean filterFilePaths(Path filePath) {
         String fileName = filePath.toString();
-        // Skip paths that are directories or are in implementation.
-        if (Files.isDirectory(filePath) || fileName.contains("implementation")) {
+        // Skip paths that are directories, in implementation, or are files contained within META-INF
+        if (Files.isDirectory(filePath)
+                || fileName.contains("implementation")
+                || fileName.contains("META-INF")) {
             return false;
         } else {
             // Only include Java files.
@@ -615,9 +617,10 @@ public class JavaASTAnalyser implements Analyser {
                 // annotations
                 getAnnotations(enumConstantDeclaration, false, false);
 
-                // create a unique id for enum constants
+                // create a unique id for enum constants by using the fully-qualified constant name
+                // (package, enum name, and enum constant name)
                 final String name = enumConstantDeclaration.getNameAsString();
-                final String definitionId = makeId(enumDeclaration.getFullyQualifiedName().get() + "." + counter);
+                final String definitionId = makeId(enumConstantDeclaration);
                 final boolean isDeprecated = enumConstantDeclaration.isAnnotationPresent("Deprecated");
 
                 if (isDeprecated) {

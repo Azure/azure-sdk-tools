@@ -35,7 +35,7 @@ class VariableNode(NodeEntityBase):
         apiview.add_punctuation("=", True, True)
         if not self.dataclass_properties:
             if self.type in ["str", "Optional[str]"]:
-                apiview.add_stringliteral(self.value)
+                apiview.add_string_literal(self.value)
             else:
                 apiview.add_literal(self.value)
         else:

@@ -1,0 +1,77 @@
+{
+  "status": "Error",
+  "violations": [
+    {
+      "rule_ids": [
+        "python-client-naming"
+      ],
+      "bad_code": "class azure.contoso.ContosoAsyncManager:",
+      "suggestion": "class azure.contoso.ContosoClient:",
+      "comment": "Service client types should have a Client suffix."
+    },
+    {
+      "rule_ids": [
+        "python-client-options-naming"
+      ],
+      "bad_code": "options: dict",
+      "suggestion": "individual keyword-only arguments",
+      "comment": "Do not use an 'options bag' object to group optional parameters."
+    },
+    {
+      "rule_ids": [
+        "python-client-separate-sync-async"
+      ],
+      "bad_code": "class azure.contoso.ContosoAsyncManager:",
+      "suggestion": "class azure.contoso.aio.ContosoClient:",
+      "comment": "Provide separate client classes for synchronous and asynchronous operations."
+    },
+    {
+      "rule_ids": [
+        "python-client-same-name-sync-async"
+      ],
+      "bad_code": "class azure.contoso.ContosoAsyncManager:",
+      "suggestion": "class azure.contoso.aio.ContosoClient:",
+      "comment": "Use the same client name for sync and async packages."
+    },
+    {
+      "rule_ids": [
+        "python-client-namespace-sync"
+      ],
+      "bad_code": "class azure.contoso.ContosoAsyncManager:",
+      "suggestion": "class azure.contoso.aio.ContosoClient:",
+      "comment": "Use the same namespace for the synchronous client as the synchronous version of the package with .aio appended."
+    },
+    {
+      "rule_ids": [
+        "python-client-naming"
+      ],
+      "bad_code": "class azure.contoso.ContosoManager:",
+      "suggestion": "class azure.contoso.ContosoClient:",
+      "comment": "Service client types should have a Client suffix."
+    },
+    {
+      "rule_ids": [
+        "python-client-options-naming"
+      ],
+      "bad_code": "options: dict",
+      "suggestion": "individual keyword-only arguments",
+      "comment": "Do not use an 'options bag' object to group optional parameters. Instead, pass as individual keyword-only arguments."
+    },
+    {
+      "rule_ids": [
+        "python-client-options-naming"
+      ],
+      "bad_code": "def get_widget(self, options: dict) -> WidgetResult",
+      "suggestion": "def get_widget(self, **kwargs) -> WidgetResult",
+      "comment": "Do not use an 'options bag' object to group optional parameters. Instead, pass as individual keyword-only arguments."
+    },
+    {
+      "rule_ids": [
+        "python-models-enum-name-uppercase"
+      ],
+      "bad_code": "class azure.contoso.WidgetColor(Enum):\n\n    blue = \"blue\"\n    green = \"green\"\n    red = \"red\"",
+      "suggestion": "class azure.contoso.WidgetColor(Enum):\n\n    BLUE = \"blue\"\n    GREEN = \"green\"\n    RED = \"red\"",
+      "comment": "Enum names should be in UPPERCASE."
+    }
+  ]
+}

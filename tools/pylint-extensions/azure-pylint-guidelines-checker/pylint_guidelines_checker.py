@@ -1295,21 +1295,28 @@ class CheckDocstringParameters(BaseChecker):
         :return: None
         """
         arg_names = []
+        vararg_name = None
         # specific case for constructor where docstring found in class def
         if isinstance(node, astroid.ClassDef):
             for constructor in node.body:
                 if isinstance(constructor, astroid.FunctionDef) and constructor.name == "__init__":
                     arg_names = [arg.name for arg in constructor.args.args]
+                    vararg_name = node.args.vararg
                     break
 
         if isinstance(node, astroid.FunctionDef):
             arg_names = [arg.name for arg in node.args.args]
+            vararg_name = node.args.vararg
 
         try:
             # not every method will have a docstring so don't crash here, just return
             docstring = node.doc.split(":")
         except AttributeError:
             return
+        
+        # If there is a vararg, treat it as a param
+        if vararg_name:
+            arg_names.append(vararg_name)
 
         docparams = {}
         for idx, line in enumerate(docstring):
@@ -1320,6 +1327,11 @@ class CheckDocstringParameters(BaseChecker):
             # this param has its type on the same line
             if line.startswith("param") and line.count(" ") == 2:
                 _, param_type, param = line.split(" ")
+                docparams[param] = param_type
+            # if the param has its type on the same line with additional spaces
+            if line.startswith("param") and line.count(" ") > 2:
+                param = line.split(" ")[-1]
+                param_type = ("").join(line.split(" ")[1:-1])
                 docparams[param] = param_type
             if line.startswith("type"):
                 param = line.split("type ")[1]
@@ -1368,9 +1380,14 @@ class CheckDocstringParameters(BaseChecker):
         :param node: ast.FunctionDef
         :return: None
         """
+        # Get decorators on the function
+        function_decorators = node.decoratornames()
         try:
-            returns = next(node.infer_call_result()).as_string()
-            if returns == "None":
+            returns = next(node.infer_call_result())
+            # If returns None, or raises an error ignore
+            if returns == astroid.Uninferable:
+                return
+            if returns.as_string() == "None":
                 return
         except (astroid.exceptions.InferenceError, AttributeError):
             # this function doesn't return anything, just return
@@ -1389,7 +1406,8 @@ class CheckDocstringParameters(BaseChecker):
             if line.startswith("rtype"):
                 has_rtype = True
 
-        if has_return is False:
+        # If is an @property decorator, don't require :return: as it is repetitive
+        if has_return is False and "builtins.property" not in function_decorators:
             self.add_message(
                 msgid="docstring-missing-return", node=node, confidence=None
             )
@@ -2178,6 +2196,39 @@ class DeleteOperationReturnStatement(BaseChecker):
         except:
             pass
 
+class DoNotImportLegacySix(BaseChecker):
+    __implements__ = IAstroidChecker
+
+    """Rule to check that libraries do not import the six package."""
+    name = "do-not-import-legacy-six"
+    priority = -1
+    msgs = {
+        "C4757": (
+            "Do not import the six package in your library. Six was used to work with python2, which is no longer supported.",
+            "do-not-import-legacy-six",
+            "Do not import the six package in your library."
+        ),
+    }
+
+    def visit_importfrom(self, node):
+        """Check that we aren't importing from six."""
+        if node.modname == "six": 
+            self.add_message(
+                msgid=f"do-not-import-legacy-six",
+                node=node,
+                confidence=None,
+            )
+    
+    def visit_import(self, node):
+        """Check that we aren't importing six."""
+        for name, _ in node.names:
+            if name == "six":
+                self.add_message(
+                    msgid=f"do-not-import-legacy-six",
+                    node=node,
+                    confidence=None,
+                )
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2205,6 +2256,7 @@ def register(linter):
     linter.register_checker(NameExceedsStandardCharacterLength(linter))
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
+    linter.register_checker(DoNotImportLegacySix(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

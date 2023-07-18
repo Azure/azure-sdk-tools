@@ -1,6 +1,7 @@
-namespace SwaggerApiParser;
-
-public interface ITokenSerializable
+namespace SwaggerApiParser.SwaggerApiView
 {
-    public CodeFileToken[] TokenSerialize(SerializeContext context);
+    public interface ITokenSerializable
+    {
+        public CodeFileToken[] TokenSerialize(SerializeContext context);
+    }
 }

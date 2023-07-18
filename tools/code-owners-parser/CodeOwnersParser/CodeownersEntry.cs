@@ -1,7 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
@@ -45,7 +48,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         }
 
         private static string[] SplitLine(string line, char splitOn)
-            => line.Split(new char[] { splitOn }, StringSplitOptions.RemoveEmptyEntries);
+            => line.Split(new char[] { splitOn }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         public override string ToString()
             => $"HasWildcard:{ContainsWildcard} Expression:{PathExpression} " +
@@ -85,14 +88,11 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             line = line[(colonPosition + 1)..].Trim();
             foreach (string label in SplitLine(line, LabelSeparator).ToList())
             {
-                if (!string.IsNullOrWhiteSpace(label))
-                {
-                    yield return label.Trim();
-                }
+                yield return label;
             }
         }
 
-        public void ParseOwnersAndPath(string line)
+        public void ParseOwnersAndPath(string line, TeamUserHolder teamUserHolder)
         {
             if (
                 string.IsNullOrEmpty(line)
@@ -106,10 +106,42 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             line = ParsePath(line);
             line = RemoveCommentIfAny(line);
 
-            foreach (string author in SplitLine(line, OwnerSeparator).ToList())
+            // If the line doesn't contain the OwnerSeparator AKA no owners, then the foreach loop below
+            // won't work. For example, the following line would end up causing "/sdk/communication" to
+            // be added as an owner when one is not listed
+            // /sdk/communication/
+            if (line.Contains(OwnerSeparator))
             {
-                if (!string.IsNullOrWhiteSpace(author))
-                    Owners.Add(author.Trim());
+                foreach (string author in SplitLine(line, OwnerSeparator).ToList())
+                {
+                    // If the author is a team, get the user list and add that to the Owners
+                    if (!IsGitHubUserAlias(author))
+                    {
+                        var teamUsers = teamUserHolder.GetUsersForTeam(author);
+                        // If the team is found in team user data, add the list of users to
+                        // the owners and ensure the end result is a distinct list
+                        if (teamUsers.Count > 0)
+                        {
+                            // The union of the two lists will ensure the result a distinct list
+                            Owners = Owners.Union(teamUsers).ToList();
+                        }
+                        // Else, the team user data did not contain an entry or there were no user
+                        // for the team. In that case, just add the team to the list of authors
+                        else
+                        {
+                            Owners.Add(author);
+                        }
+                    }
+                    // If the entry isn't a team, then just add it
+                    else
+                    {
+                        Owners.Add(author);
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine($"Warning: CODEOWNERS line '{line}' does not have an owner entry.");
             }
         }
 

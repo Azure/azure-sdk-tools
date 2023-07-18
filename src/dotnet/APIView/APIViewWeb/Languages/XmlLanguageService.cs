@@ -10,7 +10,7 @@ namespace APIViewWeb
         public override string Name { get; } = "Xml";
         public override string[] Extensions { get; } = { ".xml" };
         public override string ProcessName { get; } = "java";
-        public override string VersionString { get; } = "apiview-java-processor-1.28.0.jar";
+        public override string VersionString { get; } = "apiview-java-processor-1.29.0.jar";
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {

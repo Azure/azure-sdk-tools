@@ -3368,3 +3368,217 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
         )
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
+
+class TestDocstringParameters(pylint.testutils.CheckerTestCase):
+
+    """Test that we are checking the docstring is correct"""
+    CHECKER_CLASS = checker.CheckDocstringParameters
+
+    def test_docstring_vararg(self):
+        node = astroid.extract_node(
+            # Check that we recognize *args as param in docstring
+            """
+            def function_foo(x, y, *z):
+                '''
+                :param x: x
+                :type x: str
+                :param str y: y
+                :param str z: z
+                '''
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_vararg_keyword_args(self):
+        # Check that we recognize keyword-only args after *args in docstring
+        node = astroid.extract_node(
+            """
+            def function_foo(x, y, *z, a="Hello", b="World"):
+                '''
+                :param x: x
+                :type x: str
+                :param str y: y
+                :param str z: z
+                :keyword str a: a
+                :keyword str b: b
+                '''
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_varag_no_type(self):
+        # Error on documenting keyword only args as param after *args in docstring
+        node = astroid.extract_node(
+            """
+            def function_foo(*x, y, z):
+                '''
+                :param x: x
+                :param str y: y
+                :param str z: z
+                '''
+            """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-missing-type",
+                    line=2,
+                    args='x',
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=16
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-should-be-keyword",
+                    line=2,
+                    args='y, z',
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=16
+                )
+        ):
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_property_decorator(self):
+        node = astroid.extract_node(
+            """
+            from typing import Dict
+            
+            @property
+            def function_foo(self) -> Dict[str,str]:
+                '''The current headers collection.
+                :rtype: dict[str, str]
+                '''
+                return {"hello": "world"}
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_no_property_decorator(self):
+        node = astroid.extract_node(
+            """
+            from typing import Dict
+            def function_foo(self) -> Dict[str,str]:
+                '''The current headers collection.
+                :rtype: dict[str, str]
+                '''
+                return {"hello": "world"}
+            """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-missing-return",
+                    line=3,
+                    args=None,
+                    node=node,
+                    col_offset=0, 
+                    end_line=3, 
+                    end_col_offset=16
+                ),
+        ):
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_type_has_space(self):
+        # Don't error if there is extra spacing in the type
+        node = astroid.extract_node(
+            """
+            def function_foo(x):
+                '''
+                :param dict[str, int] x: x
+                '''
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_type_has_many_spaces(self):
+        # Don't error if there is extra spacing around the type
+        node = astroid.extract_node(
+            """
+            def function_foo(x):
+                '''
+                :param  dict[str, int]  x: x
+                '''
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_raises(self):
+        node = astroid.extract_node(
+            """
+            def function_foo():
+                '''
+                :raises: ValueError
+                '''
+                print("hello")
+                raise ValueError("hello")
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_raises_uninferable(self):
+        node = astroid.extract_node(
+            """
+            def function_foo():
+                '''
+                :raises: ValueError
+                '''
+                raise ValueError("hello")
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed imports and allowing allowed imports."""
+    CHECKER_CLASS = checker.DoNotImportLegacySix
+
+    def test_disallowed_import_from(self):
+        """Check that illegal imports raise warnings"""
+        importfrom_node = astroid.extract_node("from six import with_metaclass")
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-import-legacy-six",
+                    line=1,
+                    node=importfrom_node,
+                    col_offset=0,
+                )
+        ):
+            self.checker.visit_importfrom(importfrom_node)
+
+    def test_disallowed_import(self):
+        """Check that illegal imports raise warnings"""
+        importfrom_node = astroid.extract_node("import six")
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="do-not-import-legacy-six",
+                    line=1,
+                    node=importfrom_node,
+                    col_offset=0,
+                )
+        ):
+            self.checker.visit_import(importfrom_node)
+
+    def test_allowed_imports(self):
+        """Check that allowed imports don't raise warnings."""
+        # import not in the blocked list.
+        importfrom_node = astroid.extract_node("from math import PI")
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+        # from import not in the blocked list.
+        importfrom_node = astroid.extract_node("from azure.core.pipeline import Pipeline")
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)
+
+        # Import HttpResponse, but from in `azure.core`.
+        importfrom_node = astroid.extract_node("from .. import HttpResponse")
+        importfrom_node.root().name = "azure.core"
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)

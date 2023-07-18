@@ -32,21 +32,9 @@ $(() => {
       var navItemHash = navItemLink.prop('hash');
       if (navItemHash) {
         var targetAnchorId = navItemHash.replace('#', '');
-        var targetAnchor = document.getElementById(targetAnchorId);
-        if (targetAnchor) {
-          var targetAnchorRow = $(targetAnchor).parents(".code-line").first();
-          var rowFoldSpan = targetAnchorRow.find(".row-fold-caret");
-          if (rowFoldSpan.length > 0) {
-            var caretIcon = rowFoldSpan.children("i");
-            var caretClasses = caretIcon.attr("class");
-            var caretDirection = caretClasses ? caretClasses.split(' ').filter(c => c.startsWith('fa-angle-'))[0] : "";
-            if (caretDirection.endsWith("right")) {
-              $.when(rvM.toggleCodeLines(targetAnchorRow)).then(function () {
-                navItemRow.removeClass("nav-list-collapsed");
-              });
-            }
-          }
-        }
+        rvM.runAfterExpandingCodeline(targetAnchorId, function () {
+          navItemRow.removeClass("nav-list-collapsed");
+        });
       }
       navItemRow.removeClass("nav-list-collapsed");
     }

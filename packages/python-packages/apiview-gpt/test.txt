@@ -1,0 +1,37 @@
+# Package is parsed using apiview-stub-generator(version:0.3.7), Python version: 3.10.12
+
+class azure.contoso.ContosoAsyncManager:
+
+    async def __init__(
+            self, 
+            endpoint, 
+            credential, 
+            options: dict
+        )
+
+    async def get_widget_async(self, options: dict) -> WidgetResult
+
+class azure.contoso.ContosoManager:
+
+    def __init__(
+            self, 
+            endpoint, 
+            credential, 
+            options: dict
+        )
+
+    def get_widget(self, options: dict) -> WidgetResult
+
+class azure.contoso.WidgetColor(Enum):
+
+    blue = "blue"
+    green = "green"
+    red = "red"
+
+class azure.contoso.WidgetResult:
+
+    def __init__(
+            self, 
+            name: str, 
+            color: WidgetColor
+        )

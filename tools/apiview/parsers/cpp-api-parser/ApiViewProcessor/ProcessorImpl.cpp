@@ -117,7 +117,7 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
   CurrentDirectorySetter currentDirectory{directoryToProcess};
 
   // Let's make sure we understand all the values passed in.
-  for (auto nodeName : configurationJson.items())
+  for (auto const& nodeName : configurationJson.items())
   {
     if (std::find(KnownSettings.begin(), KnownSettings.end(), nodeName.key())
         == KnownSettings.end())

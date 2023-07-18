@@ -45,7 +45,7 @@ if ($PSCmdlet.ParameterSetName -eq 'RepositoryFile') {
 }
 
 $date = $StartDate
-$milestones = do {
+[pscustomobject[]] $milestones = do {
     # Start with the first of the month at 23:59 UTC.
     $date = [DateTimeOffset]::Parse("$($date.ToString('yyyy-MM'))-01T23:59:59Z")
 
@@ -68,8 +68,13 @@ if (!$milestones) {
     return
 }
 
+$completed = 0
+$total = $Repositories.Length * $milestones.Length
+Write-Progress -Activity ($activity = 'Creating milestones') -PercentComplete 0
+
 foreach ($repo in $Repositories) {
     foreach ($m in $milestones) {
+        Write-Progress -Activity $activity -Status "In $repo" -CurrentOperation "Milestone $($m.Title)" -PercentComplete ($completed / $total * 100)
         if ($Force -or $PSCmdlet.ShouldProcess(
             "Creating milestone $($m.Title) ending $($m.DueOn) in $repo",
             "Create milestone $($m.Title) ending $($m.DueOn) in $repo?",
@@ -85,8 +90,10 @@ foreach ($repo in $Repositories) {
                 Write-Verbose "Created $($result.url) for milestone $($m.Title) in $repo"
             }
         }
+        $completed++
     }
 }
+Write-Progress -Activity $activity -Completed
 
 <#
 .SYNOPSIS

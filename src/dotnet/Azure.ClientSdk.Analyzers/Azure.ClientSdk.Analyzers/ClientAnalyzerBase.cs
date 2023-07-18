@@ -45,7 +45,7 @@ namespace Azure.ClientSdk.Analyzers
                 return x.Name.Equals(y.Name) && TypeSymbolEquals(x.Type, y.Type) && x.IsOptional == y.IsOptional;
             }
 
-            protected bool TypeSymbolEquals(ITypeSymbol x, ITypeSymbol y)
+            protected virtual bool TypeSymbolEquals(ITypeSymbol x, ITypeSymbol y)
             {
                 switch (x)
                 {

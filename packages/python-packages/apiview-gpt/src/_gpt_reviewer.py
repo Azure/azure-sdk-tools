@@ -9,7 +9,7 @@ import openai
 from typing import List
 
 from ._sectioned_document import SectionedDocument, Section
-from ._models import GuidelinesResult
+from ._models import GuidelinesResult, Violation
 
 dotenv.load_dotenv()
 
@@ -71,11 +71,44 @@ class GptReviewer:
             if self.should_evaluate(chunk):
                 results = self.chain.run(apiview=str(chunk), guidelines=guidelines, language=language)
                 output = self.output_parser.parse(results)
-                # FIXME: Associate line numbers with violations
-                final_results.violations.extend(output.violations)
+                final_results.violations.extend(self.process_violations(output.violations, chunk))
                 if output.status == "Error":
                     final_results.status = output.status
         return final_results
+
+    def process_violations(self, violations: List[Violation], section: Section) -> List[Violation]:
+        if not violations:
+            return violations
+
+        combined_violations = {}
+        for violation in violations:
+            line_no = self.find_line_number(section, violation.bad_code)
+            violation.line_no = line_no
+            existing = combined_violations.get(line_no, None)
+            if existing:
+                for rule_id in violation.rule_ids:
+                    if rule_id not in existing.rule_ids:
+                        existing.rule_ids.append(rule_id)
+                        if existing.suggestion != violation.suggestion:
+                            # FIXME: Collect all suggestions and use the most popular??
+                            existing.suggestion = violation.suggestion
+                        existing.comment = existing.comment + " " + violation.comment
+            else:
+                combined_violations[line_no] = violation
+        return [x for x in combined_violations.values()]
+
+    def find_line_number(self, chunk: Section, bad_code: str) -> int:
+        offset = chunk.start_line_no
+        line_no = None
+        for i, line in enumerate(chunk.lines):
+            if line.strip() == bad_code.strip():
+                if line_no is None:
+                    line_no = offset + i
+                else:
+                    raise Exception(f"Found multiple instances of bad code in the given chunk: {bad_code}")
+        if not line_no:
+            raise Exception(f"Unable to find line number for bad code: {bad_code}")
+        return line_no
 
     def should_evaluate(self, chunk: Section):
         for line in chunk.lines:

@@ -20,7 +20,6 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Azure.Cosmos;
 
 namespace APIViewWeb.Managers
 {
@@ -305,21 +304,23 @@ namespace APIViewWeb.Managers
             var revision = review.Revisions.Single(r => r.RevisionId == revisionId);
             await AssertApprover(user, revision);
             var userId = user.GetGitHubLogin();
+            bool approvalStatus;
             if (revision.Approvers.Contains(userId))
             {
                 //Revert approval
                 revision.Approvers.Remove(userId);
-                await _signalRHubContext.Clients.Group(user.Identity.Name).SendAsync("ReceiveApprovalSelf", review.ReviewId, revisionId, false);
-                await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", review.ReviewId, revisionId, userId, false);
+                approvalStatus = false;
             }
             else
             {
                 //Approve revision
                 revision.Approvers.Add(userId);
                 review.ApprovalDate = DateTime.Now;
-                await _signalRHubContext.Clients.Group(user.Identity.Name).SendAsync("ReceiveApprovalSelf", review.ReviewId, revisionId, true);
-                await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", review.ReviewId, revisionId, userId, true);
+                approvalStatus = true;
             }
+            await _signalRHubContext.Clients.Group(user.Identity.Name).SendAsync("ReceiveApprovalSelf", review.ReviewId, revisionId, approvalStatus);
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", review.ReviewId, revisionId, userId, approvalStatus);
+
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 

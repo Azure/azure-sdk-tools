@@ -583,35 +583,38 @@ export function findTargetAnchorWithinSections(uriHash : string, mainSections: s
 export function getCurrentUserPartialViewResult(partialViewResult: string) {
   let partialView = $(partialViewResult);
 
-    // remove all delete and edit anchors
-    partialView.find("a.dropdown-item.js-delete-comment").next().next().remove();
-    partialView.find("a.dropdown-item.js-delete-comment").next().remove();
-    partialView.find("a.dropdown-item.js-delete-comment").remove();
+  // remove all delete and edit anchors
+  partialView.find("a.dropdown-item.js-delete-comment").next().next().remove();
+  partialView.find("a.dropdown-item.js-delete-comment").next().remove();
+  partialView.find("a.dropdown-item.js-delete-comment").remove();
 
-    //verify name and add delete and edit anchors
-    let $commentContents = partialView.find("div.comment-contents > span");
-    $commentContents.each((index, value) => {
-        let commenter = value.children[0];
-        if (!commenter) {
-            return;
-        }
+  //verify name and add delete and edit anchors
+  let $commentContents = partialView.find("div.comment-contents > span");
+  $commentContents.each((index, value) => {
+    let commenter;
+    if (value.children) {
+      commenter = value.children[0];
+    }
+    if (!commenter) {
+        return;
+    }
 
-        let commenterHref = commenter.attributes.getNamedItem('href')?.value;
-        let profileHref;
-        $('ul.navbar-nav.ms-auto > li.nav-item > a.nav-link').each((index, value) => {
-            if (value.textContent && value.textContent.trim() === 'Profile') {
-                profileHref = value.attributes.getNamedItem('href')?.value;
-            }
-        });
-
-
-        if (profileHref === commenterHref) {
-            let dropdown = partialView.find('div.dropdown-menu.dropdown-menu-right')[index];
-            $('<li><hr class="dropdown-divider"></li>').prependTo(dropdown);
-            $('<a href="#" class="dropdown-item js-edit-comment">Edit</a>').prependTo(dropdown);
-            $('<a href="#" class="dropdown-item js-delete-comment text-danger">Delete</a>').prependTo(dropdown);
+    let commenterHref = commenter.attributes.getNamedItem('href')?.value;
+    let profileHref;
+    $('ul.navbar-nav.ms-auto > li.nav-item > a.nav-link').each((index, value) => {
+        if (value.textContent && value.textContent.trim() === 'Profile') {
+            profileHref = value.attributes.getNamedItem('href')?.value;
         }
     });
+
+
+    if (profileHref === commenterHref) {
+        let dropdown = partialView.find('div.dropdown-menu.dropdown-menu-right')[index];
+        $('<li><hr class="dropdown-divider"></li>').prependTo(dropdown);
+        $('<a href="#" class="dropdown-item js-edit-comment">Edit</a>').prependTo(dropdown);
+        $('<a href="#" class="dropdown-item js-delete-comment text-danger">Delete</a>').prependTo(dropdown);
+    }
+  });
 
     let partialViewString = partialViewResult.split("<td")[0] + partialView.html() + "</tr>";
     return partialViewString;
@@ -644,21 +647,18 @@ export function replaceRowWIthPartialViewResult(reviewId: any, elementId: any, p
 export function updateUserIcon() {
   let size = 28;
   let $navLinks = $("nav.navbar a.nav-link");
-  let username;
 
   for (let nav of $navLinks) {
-      if (nav.innerText.includes("Profile")) {
-          let href = nav.getAttribute("href");
-          if (href) {
-              let hrefString: string = href;
-              let hrefSplit = hrefString.split("/");
-              username = hrefSplit[hrefSplit.length - 1];
-          }
+    if (nav.innerText.includes("Profile")) {
+      let href = nav.getAttribute("href");
+      if (href) {
+        let hrefString: string = href;
+        let hrefSplit = hrefString.split("/");
+        return;
       }
+    }
   }
 
-  let url: string = "https://github.com/" + username + ".png?size=" + size;
-  $("div.review-thread-reply div.reply-cell img.comment-icon").attr("src", url);
 }
 
 /**

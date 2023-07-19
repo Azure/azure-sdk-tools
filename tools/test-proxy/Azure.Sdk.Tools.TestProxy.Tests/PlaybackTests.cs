@@ -18,12 +18,16 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 
-        [Fact]
-        public async void TestStartPlaybackSimple()
+        [Theory]
+        [InlineData("oauth_request.json")]
+        [InlineData("nonascii_file_name«úü¡»¿.json")]
+        [InlineData("¥.json")]
+        public async void TestStartPlaybackSimple(string recordingFile)
         {
-            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var creationPath = Path.Combine(Directory.GetCurrentDirectory(), "Test.RecordEntries");
+            RecordingHandler testRecordingHandler = new RecordingHandler(creationPath);
             var httpContext = new DefaultHttpContext();
-            var body = "{\"x-recording-file\":\"Test.RecordEntries/requests_with_continuation.json\"}";
+            var body = "{\"x-recording-file\":\"" + recordingFile + "\"}";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = body.Length;
 

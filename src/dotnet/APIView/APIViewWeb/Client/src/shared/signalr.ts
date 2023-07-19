@@ -54,10 +54,10 @@ $(() => {
   });
 
   connection.on("ReceiveComment", (reviewId, elementId, partialViewResult) => {
-    //if (alreadyRefreshedComment == true) {
-    //  alreadyRefreshedComment = false;
-    //  return;
-    //}
+    if (alreadyRefreshedComment == true) {
+      alreadyRefreshedComment = false;
+      return;
+    }
 
     // remove all delete and edit anchors
     let tr = $('<tr class="comment-row" data-line-id="Azure.ResourceManager.Communication.CommunicationDomainResource.ResourceType"></tr>');
@@ -82,12 +82,12 @@ $(() => {
         }
       })
 
-      //if (profileHref === commenterHref) {
-      //  let dropdown = partialView.find('div.dropdown-menu.dropdown-menu-right')[index];
-      //  $('<li><hr class="dropdown-divider"></li>').prependTo(dropdown);
-      //  $('<a href="#" class="dropdown-item js-edit-comment">Edit</a>').prependTo(dropdown);
-      //  $('<a href="#" class="dropdown-item js-delete-comment text-danger">Delete</a>').prependTo(dropdown);
-      //}
+      if (profileHref === commenterHref) {
+        let dropdown = partialView.find('div.dropdown-menu.dropdown-menu-right')[index];
+        $('<li><hr class="dropdown-divider"></li>').prependTo(dropdown);
+        $('<a href="#" class="dropdown-item js-edit-comment">Edit</a>').prependTo(dropdown);
+        $('<a href="#" class="dropdown-item js-delete-comment text-danger">Delete</a>').prependTo(dropdown);
+      }
     })
     
     replaceRowWIthPartialViewResult(reviewId, elementId, partialView.html());

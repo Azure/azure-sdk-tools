@@ -148,7 +148,7 @@ stages:
 
           - ${{ parameters.TestPreSteps }}
 
-          - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
+          - script: 'dotnet test -l "console;verbosity=detailed" /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
             displayName: 'Test'
             workingDirectory: '${{ coalesce(parameters.TestDirectory, parameters.ToolDirectory) }}'
             env:

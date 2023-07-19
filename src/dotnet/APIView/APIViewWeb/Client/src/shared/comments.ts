@@ -23,8 +23,8 @@ $(() => {
   });
 
   $(document).on("click", ".line-comment-button", e => {
-    let id = hp.getElementId(e.target);
-    let inlineId = hp.getElementId(e.target, "data-inline-id");
+    let id = getElementId(e.target);
+    let inlineId = getElementId(e.target, "data-inline-id");
     if (id) {
       var rowSectionClasses = hp.getCodeRowSectionClasses(id);
       if (inlineId) {
@@ -39,7 +39,7 @@ $(() => {
   });
 
   $(document).on("click", ".comment-cancel-button", e => {
-    let id = hp.getElementId(e.target);
+    let id = getElementId(e.target);
     if (id) {
       hideCommentBox(id);
       // if a comment was added and then cancelled, and there are no other
@@ -66,7 +66,7 @@ $(() => {
   });
 
   $(document).on("mouseenter", SEL_COMMENT_ICON, e => {
-    let lineId = hp.getElementId(e.target);
+    let lineId = getElementId(e.target);
     if (!lineId) {
       return;
     }
@@ -81,7 +81,7 @@ $(() => {
   });
 
   $(document).on("click", SEL_COMMENT_ICON, e => {
-    let lineId = hp.getElementId(e.target);
+    let lineId = getElementId(e.target);
     if (lineId) {
       CurrentCommentToggle = !CurrentCommentToggle;
     }
@@ -89,7 +89,7 @@ $(() => {
   });
 
   $(document).on("mouseleave", SEL_COMMENT_ICON, e => {
-    let lineId = hp.getElementId(e.target);
+    let lineId = getElementId(e.target);
     if (!lineId) {
       return;
     }
@@ -110,7 +110,7 @@ $(() => {
     console.log($($(e.target).find('button')));
 
     const form = <HTMLFormElement><any>$(e.target);
-    let lineId = hp.getElementId(e.target);
+    let lineId = getElementId(e.target);
     let inlineRowNo = $(e.target).find(".new-comment-content small");
 
     if (inlineRowNo.length == 0) {
@@ -149,7 +149,7 @@ $(() => {
   });
 
   $(document).on("click", ".review-thread-reply-button", e => {
-    let lineId = hp.getElementId(e.target);
+    let lineId = getElementId(e.target);
     let inlineRowNo = hp.getReplyGroupNo($(e.target).parent().parent());
     if (lineId) {
       if (inlineRowNo.length > 0) {
@@ -163,7 +163,7 @@ $(() => {
     e.preventDefault();
   });
   $(document).on("click", ".toggle-comments", e => {
-    let lineId = hp.getElementId(e.target);
+    let lineId = getElementId(e.target);
     if (lineId) {
       toggleComments(lineId);
     }
@@ -171,7 +171,7 @@ $(() => {
   });
 
   $(document).on("click", ".js-edit-comment", e => {
-    let commentId = hp.getCommentId(e.target);
+    let commentId = getCommentId(e.target);
     if (commentId) {
       editComment(commentId);
     }
@@ -179,12 +179,12 @@ $(() => {
   });
 
   $(document).on("click", ".js-delete-comment", e => {
-    let commentId = hp.getCommentId(e.target);
-    let lineId = hp.getElementId(e.target);
+    let commentId = getCommentId(e.target);
+    let lineId = getElementId(e.target);
     if (lineId) {
       let commentRow = hp.getCommentsRow(lineId);
       if (commentId) {
-        hp.deleteComment(commentId, lineId, commentRow);
+        deleteComment(commentId, lineId, commentRow);
       }
       e.preventDefault();
     }
@@ -200,7 +200,7 @@ $(() => {
     if (!language) {
       language = target.attr("data-repo-language");
     }
-    let commentElement = hp.getCommentElement(hp.getCommentId(e.target)!);
+    let commentElement = getCommentElement(getCommentId(e.target)!);
     let comment = commentElement.find(".js-comment-raw").html();
     let codeLine = commentElement.closest(".comment-row").prev(".code-line").find(".code");
     let apiViewUrl = "";
@@ -213,7 +213,7 @@ $(() => {
     else {
       // otherwise we construct the link from the current URL and the element ID
       // Double escape the element - this is used as the URL back to API View and GitHub will render one layer of the encoding.
-      apiViewUrl = window.location.href.split("#")[0] + "%23" + escape(escape(hp.getElementId(commentElement[0])!));
+      apiViewUrl = window.location.href.split("#")[0] + "%23" + escape(escape(getElementId(commentElement[0])!));
     }
 
     let issueBody = escape("```" + language + "\n" + codeLine.text().trim() + "\n```\n#\n" + comment);
@@ -377,12 +377,12 @@ $(() => {
     highlightCurrentRow();
     hp.addCommentThreadNavigation();
     $(SEL_COMMENT_CELL).each(function () {
-      const id = hp.getElementId(this);
+      const id = getElementId(this);
       const checked = $(SHOW_COMMENTS_CHECK).prop("checked");
       hp.toggleCommentIcon(id!, !checked);
     });
     $(SEL_CODE_DIAG).each(function () {
-      const id = hp.getElementId(this);
+      const id = getElementId(this);
       const checked = $(SHOW_SYS_COMMENTS_CHECK).prop("checked");
       hp.toggleCommentIcon(id!, !checked);
     });
@@ -412,15 +412,15 @@ $(() => {
   }
 
   function getReviewId(element: HTMLElement) {
-    return hp.getParentData(element, "data-review-id");
+    return getParentData(element, "data-review-id");
   }
 
   function getLanguage(element: HTMLElement) {
-    return hp.getParentData(element, "data-language");
+    return getParentData(element, "data-language");
   }
 
   function getRevisionId(element: HTMLElement) {
-    return hp.getParentData(element, "data-revision-id");
+    return getParentData(element, "data-revision-id");
   }
 
   function getTaggedUsers(element: HTMLFormElement): string[] {	
@@ -439,12 +439,25 @@ $(() => {
   }
 
   function editComment(commentId: string) {
-    let commentElement = $(hp.getCommentElement(commentId));
+    let commentElement = $(getCommentElement(commentId));
     let commentText = commentElement.find(".js-comment-raw").html();
     let template = createCommentEditForm(commentId, commentText);
     commentElement.replaceWith(template);
   }
-
+  function deleteComment(commentId: string, lineId: string, commentRow: JQuery<HTMLElement>) {
+    const reviewId = hp.getReviewAndRevisionIdFromUrl(document.location.href)["reviewId"];
+    const elementId = getElementId(getCommentElement(commentId)[0]);
+    const url = location.origin + `/comments/delete?reviewid=${reviewId}&commentid=${commentId}&elementid=${elementId}`;
+    $.ajax({
+      type: "POST",
+      url: url,
+    }).done(partialViewResult => {
+      hp.updateCommentThread(commentRow, partialViewResult);
+      hp.addCommentThreadNavigation();
+      hp.removeCommentIconIfEmptyCommentBox(lineId);
+      pushComment(reviewId, lineId, partialViewResult);
+    });
+  }
   function hideCommentBox(id: string) {
     let commentsRow = hp.getCommentsRow(id);
     let replyDiv = commentsRow.find(".review-thread-reply");
@@ -466,7 +479,7 @@ $(() => {
 
   function toggleAllCommentsVisibility(showComments: boolean) {
     $(SEL_COMMENT_CELL).each(function () {
-      const id = hp.getElementId(this);
+      const id = getElementId(this);
       if (id) {
         const tbRow = hp.getCommentsRow(id);
         const prevRow = tbRow.prev(".code-line");
@@ -482,7 +495,7 @@ $(() => {
 
   function toggleAllDiagnosticsVisibility(showComments: boolean) {
     $(SEL_CODE_DIAG).each(function () {
-      const id = hp.getElementId(this);
+      const id = getElementId(this);
       if (id) {
         const tbRow = hp.getDiagnosticsRow(id);
         const prevRow = tbRow.prev(".code-line");
@@ -510,5 +523,21 @@ $(() => {
     if (commentHolder.hasClass("comments-resolved")) {
       toggleComments(id);
     }
+  }
+
+  function getCommentId(element: HTMLElement) {
+    return getParentData(element, "data-comment-id");
+  }
+
+  function getCommentElement(commentId: string) {
+    return $(`.review-comment[data-comment-id='${commentId}']`);
+  }
+
+  function getElementId(element: HTMLElement, idName: string = "data-line-id") {
+    return getParentData(element, idName);
+  }
+
+  function getParentData(element: HTMLElement, name: string) {
+    return $(element).closest(`[${name}]`).attr(name);
   }
 });

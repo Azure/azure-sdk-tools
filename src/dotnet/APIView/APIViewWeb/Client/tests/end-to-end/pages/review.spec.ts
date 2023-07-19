@@ -258,4 +258,3 @@ async function addAutoReview(fileName: string, fileDirectory: string, language: 
         })
         .catch(error => console.log("error uploading auto review", error));
 }
-

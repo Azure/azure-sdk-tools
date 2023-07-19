@@ -61,6 +61,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             session.Session.Sanitize(registeredSanitizer);
             var newBody = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
+            Console.WriteLine(newBody);
             Assert.Contains("REDACTED", newBody);
         }    
     }

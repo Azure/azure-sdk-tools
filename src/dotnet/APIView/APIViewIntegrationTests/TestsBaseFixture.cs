@@ -16,6 +16,8 @@ using System.Security.Claims;
 using Azure.Storage.Blobs.Models;
 using APIView.Identity;
 using APIViewWeb.Managers;
+using Microsoft.AspNetCore.SignalR;
+using APIViewWeb.Hubs;
 
 namespace APIViewIntegrationTests
 {
@@ -92,9 +94,11 @@ namespace APIViewIntegrationTests
             devopsArtifactRepositoryMoq.Setup(_ => _.RunPipeline(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
+            var signalRHubContextMoq = new Mock<IHubContext<SignalRHub>>();
+
             ReviewManager = new ReviewManager(
                 authorizationServiceMoq.Object, ReviewRepository, BlobCodeFileRepository, blobOriginalsRepository, CommentRepository,
-                languageService, notificationManager, devopsArtifactRepositoryMoq.Object, PackageNameManager);
+                languageService, notificationManager, devopsArtifactRepositoryMoq.Object, PackageNameManager, signalRHubContextMoq.Object);
 
             TestDataPath = config["TestPkgPath"];
         }

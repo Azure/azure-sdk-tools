@@ -1,10 +1,4 @@
-import {
-  updatePageSettings, getCodeRow, getCodeRowSectionClasses,
-  getRowSectionClasses, toggleCommentIcon,
-  updateCommentThread, addCommentThreadNavigation, getDisplayedCommentRows,
-  getCommentsRow, showCommentBox, getDiagnosticsRow, getReplyGroupNo,
-  getElementId, getParentData, removeCommentIconIfEmptyCommentBox, getReviewAndRevisionIdFromUrl
-} from "../shared/helpers";
+import * as hp from "../shared/helpers";
 import { PushComment } from "./signalr";
 
 $(() => {
@@ -23,56 +17,56 @@ $(() => {
   const githubLoginTagMatch = /(\s|^)@([a-zA-Z\d-]+)/g;
 
   $(document).on("click", ".commentable", e => {
-    var rowSectionClasses = getCodeRowSectionClasses(e.target.id);
-    showCommentBox(e.target.id, rowSectionClasses);
+    var rowSectionClasses = hp.getCodeRowSectionClasses(e.target.id);
+    hp.showCommentBox(e.target.id, rowSectionClasses);
     e.preventDefault();
   });
 
   $(document).on("click", ".line-comment-button", e => {
-    let id = getElementId(e.target);
-    let inlineId = getElementId(e.target, "data-inline-id");
+    let id = hp.getElementId(e.target);
+    let inlineId = hp.getElementId(e.target, "data-inline-id");
     if (id) {
-      var rowSectionClasses = getCodeRowSectionClasses(id);
+      var rowSectionClasses = hp.getCodeRowSectionClasses(id);
       if (inlineId) {
         let groupNo = inlineId.replace(`${id}-tr-`, '');
-        showCommentBox(id, rowSectionClasses, groupNo);
+        hp.showCommentBox(id, rowSectionClasses, groupNo);
       }
       else {
-        showCommentBox(id, rowSectionClasses);
+        hp.showCommentBox(id, rowSectionClasses);
       }
   }
   e.preventDefault();
   });
 
   $(document).on("click", ".comment-cancel-button", e => {
-    let id = getElementId(e.target);
+    let id = hp.getElementId(e.target);
     if (id) {
       hideCommentBox(id);
       // if a comment was added and then cancelled, and there are no other
       // comments for the thread, we should remove the comments icon.
-      if (getCommentsRow(id).find(SEL_COMMENT_CELL).length === 0) {
-          getCodeRow(id).find(SEL_COMMENT_ICON).addClass(INVISIBLE);
+      if (hp.getCommentsRow(id).find(SEL_COMMENT_CELL).length === 0) {
+        hp.getCodeRow(id).find(SEL_COMMENT_ICON).addClass(INVISIBLE);
       }
     }
     e.preventDefault();
   });
 
   $(document).on("click", SHOW_COMMENTS_CHECK, e => {
-    updatePageSettings(function () {
+    hp.updatePageSettings(function () {
       const checked = $(SHOW_COMMENTS_CHECK).prop("checked");
       toggleAllCommentsVisibility(checked);
     });
   });
 
   $(document).on("click", SHOW_SYS_COMMENTS_CHECK, e => {
-    updatePageSettings(function () {
+    hp.updatePageSettings(function () {
       const checked = $(SHOW_SYS_COMMENTS_CHECK).prop("checked");
       toggleAllDiagnosticsVisibility(checked);
     });
   });
 
   $(document).on("mouseenter", SEL_COMMENT_ICON, e => {
-    let lineId = getElementId(e.target);
+    let lineId = hp.getElementId(e.target);
     if (!lineId) {
       return;
     }
@@ -87,7 +81,7 @@ $(() => {
   });
 
   $(document).on("click", SEL_COMMENT_ICON, e => {
-    let lineId = getElementId(e.target);
+    let lineId = hp.getElementId(e.target);
     if (lineId) {
       CurrentCommentToggle = !CurrentCommentToggle;
     }
@@ -95,7 +89,7 @@ $(() => {
   });
 
   $(document).on("mouseleave", SEL_COMMENT_ICON, e => {
-    let lineId = getElementId(e.target);
+    let lineId = hp.getElementId(e.target);
     if (!lineId) {
       return;
     }
@@ -110,19 +104,20 @@ $(() => {
   });
 
   $(document).on("submit", "form[data-post-update='comments']", e => {
+    $(e.target).find('button').prop("disabled", true);
     const form = <HTMLFormElement><any>$(e.target);
-    let lineId = getElementId(e.target);
+    let lineId = hp.getElementId(e.target);
     let inlineRowNo = $(e.target).find(".new-comment-content small");
 
     if (inlineRowNo.length == 0) {
-      inlineRowNo = getReplyGroupNo($(e.target));
+      inlineRowNo = hp.getReplyGroupNo($(e.target));
     }
 
     if (lineId) {
-      let commentRow = getCommentsRow(lineId);
+      let commentRow = hp.getCommentsRow(lineId);
       let reviewId = getReviewId(e.target);
       let revisionId = getRevisionId(e.target);
-      let rowSectionClasses = getRowSectionClasses(commentRow[0].classList);
+      let rowSectionClasses = hp.getRowSectionClasses(commentRow[0].classList);
       let serializedForm = form.serializeArray();
       serializedForm.push({ name: "elementId", value: lineId });
       serializedForm.push({ name: "reviewId", value: reviewId });
@@ -140,9 +135,9 @@ $(() => {
         url: $(form).prop("action"),
         data: $.param(serializedForm)
       }).done(partialViewResult => {
-        updateCommentThread(commentRow, partialViewResult);
-        addCommentThreadNavigation();
-        removeCommentIconIfEmptyCommentBox(lineId);
+        hp.updateCommentThread(commentRow, partialViewResult);
+        hp.addCommentThreadNavigation();
+        hp.removeCommentIconIfEmptyCommentBox(lineId);
         PushComment(reviewId, lineId, partialViewResult);
       });
     }
@@ -150,22 +145,22 @@ $(() => {
   });
 
   $(document).on("click", ".review-thread-reply-button", e => {
-    let lineId = getElementId(e.target);
-    let inlineRowNo = getReplyGroupNo($(e.target).parent().parent());
+    let lineId = hp.getElementId(e.target);
+    let inlineRowNo = hp.getReplyGroupNo($(e.target).parent().parent());
     if (lineId) {
       if (inlineRowNo.length > 0) {
         let groupNo = inlineRowNo.text().replace("ROW-", '');
-        showCommentBox(lineId,'', groupNo);
+        hp.showCommentBox(lineId,'', groupNo);
       }
       else {
-        showCommentBox(lineId);
+        hp.showCommentBox(lineId);
       }
     }
     e.preventDefault();
   });
 
   $(document).on("click", ".toggle-comments", e => {
-    let lineId = getElementId(e.target);
+    let lineId = hp.getElementId(e.target);
     if (lineId) {
       toggleComments(lineId);
     }
@@ -182,9 +177,9 @@ $(() => {
 
   $(document).on("click", ".js-delete-comment", e => {
     let commentId = getCommentId(e.target);
-    let lineId = getElementId(e.target);
+    let lineId = hp.getElementId(e.target);
     if (lineId) {
-      let commentRow = getCommentsRow(lineId);
+      let commentRow = hp.getCommentsRow(lineId);
       if (commentId) {
         deleteComment(commentId, lineId, commentRow);
       }
@@ -215,7 +210,7 @@ $(() => {
     else {
       // otherwise we construct the link from the current URL and the element ID
       // Double escape the element - this is used as the URL back to API View and GitHub will render one layer of the encoding.
-      apiViewUrl = window.location.href.split("#")[0] + "%23" + escape(escape(getElementId(commentElement[0])!));
+      apiViewUrl = window.location.href.split("#")[0] + "%23" + escape(escape(hp.getElementId(commentElement[0])!));
     }
 
     let issueBody = escape("```" + language + "\n" + codeLine.text().trim() + "\n```\n#\n" + comment);
@@ -377,16 +372,16 @@ $(() => {
 
   $(document).ready(function() {
     highlightCurrentRow();
-    addCommentThreadNavigation();
+    hp.addCommentThreadNavigation();
     $(SEL_COMMENT_CELL).each(function () {
-      const id = getElementId(this);
+      const id = hp.getElementId(this);
       const checked = $(SHOW_COMMENTS_CHECK).prop("checked");
-      toggleCommentIcon(id!, !checked);
+      hp.toggleCommentIcon(id!, !checked);
     });
     $(SEL_CODE_DIAG).each(function () {
-      const id = getElementId(this);
+      const id = hp.getElementId(this);
       const checked = $(SHOW_SYS_COMMENTS_CHECK).prop("checked");
-      toggleCommentIcon(id!, !checked);
+      hp.toggleCommentIcon(id!, !checked);
     });
   });
 
@@ -400,13 +395,13 @@ $(() => {
 
   $("#jump-to-first-comment").on("click", function () {
     var commentRows = $('.comment-row');
-    var displayedCommentRows = getDisplayedCommentRows(commentRows, false, true);
+    var displayedCommentRows = hp.getDisplayedCommentRows(commentRows, false, true);
     $(displayedCommentRows[0])[0].scrollIntoView();
   });
 
   function highlightCurrentRow(rowElement: JQuery<HTMLElement> = $(), isInlineRow: boolean = false) {
     if (location.hash.length < 1 && !isInlineRow) return;
-    var row = (rowElement.length > 0) ? rowElement : getCodeRow(location.hash.substring(1));
+    var row = (rowElement.length > 0) ? rowElement : hp.getCodeRow(location.hash.substring(1));
     row.addClass("active");
     row.on("animationend", () => {
         row.removeClass("active");
@@ -414,15 +409,15 @@ $(() => {
   }
 
   function getReviewId(element: HTMLElement) {
-    return getParentData(element, "data-review-id");
+    return hp.getParentData(element, "data-review-id");
   }
 
   function getLanguage(element: HTMLElement) {
-    return getParentData(element, "data-language");
+    return hp.getParentData(element, "data-language");
   }
 
   function getRevisionId(element: HTMLElement) {
-    return getParentData(element, "data-revision-id");
+    return hp.getParentData(element, "data-revision-id");
   }
 
   function getTaggedUsers(element: HTMLFormElement): string[] {	
@@ -437,11 +432,11 @@ $(() => {
   }
 
   function getCommentId(element: HTMLElement) {
-    return getParentData(element, "data-comment-id");
+    return hp.getParentData(element, "data-comment-id");
   }
 
   function toggleComments(id: string) {
-    $(getCommentsRow(id)).find(".comment-holder").toggle();
+    $(hp.getCommentsRow(id)).find(".comment-holder").toggle();
   }
 
   function editComment(commentId: string) {
@@ -452,16 +447,16 @@ $(() => {
   }
 
   function deleteComment(commentId: string, lineId: string, commentRow: JQuery<HTMLElement>) {
-    const reviewId = getReviewAndRevisionIdFromUrl(document.location.href)["reviewId"];
-    const elementId = getElementId(getCommentElement(commentId)[0]);
+    const reviewId = hp.getReviewAndRevisionIdFromUrl(document.location.href)["reviewId"];
+    const elementId = hp.getElementId(getCommentElement(commentId)[0]);
     const url = location.origin + `/comments/delete?reviewid=${reviewId}&commentid=${commentId}&elementid=${elementId}`;
     $.ajax({
       type: "POST",
       url: url,
     }).done(partialViewResult => {
-      updateCommentThread(commentRow, partialViewResult);
-      addCommentThreadNavigation();
-      removeCommentIconIfEmptyCommentBox(lineId);
+      hp.updateCommentThread(commentRow, partialViewResult);
+      hp.addCommentThreadNavigation();
+      hp.removeCommentIconIfEmptyCommentBox(lineId);
       PushComment(reviewId, lineId, partialViewResult);
     });
   }
@@ -471,7 +466,7 @@ $(() => {
   }
 
   function hideCommentBox(id: string) {
-    let commentsRow = getCommentsRow(id);
+    let commentsRow = hp.getCommentsRow(id);
     let replyDiv = commentsRow.find(".review-thread-reply");
     if (replyDiv.length > 0) {
       replyDiv.show();
@@ -491,49 +486,50 @@ $(() => {
 
   function toggleAllCommentsVisibility(showComments: boolean) {
     $(SEL_COMMENT_CELL).each(function () {
-      const id = getElementId(this);
+      const id = hp.getElementId(this);
       if (id) {
-        const tbRow = getCommentsRow(id);
+        const tbRow = hp.getCommentsRow(id);
         const prevRow = tbRow.prev(".code-line");
         const nextRow = tbRow.next(".code-line");
         if ((prevRow != undefined && prevRow.hasClass("d-none")) && (nextRow != undefined && nextRow.hasClass("d-none")))
           return;
 
         (showComments) ? tbRow.removeClass("d-none") : tbRow.addClass("d-none");
-        toggleCommentIcon(id, !showComments);
+        hp.toggleCommentIcon(id, !showComments);
       }
     });
   }
 
   function toggleAllDiagnosticsVisibility(showComments: boolean) {
     $(SEL_CODE_DIAG).each(function () {
-      const id = getElementId(this);
+      const id = hp.getElementId(this);
       if (id) {
-        const tbRow = getDiagnosticsRow(id);
+        const tbRow = hp.getDiagnosticsRow(id);
         const prevRow = tbRow.prev(".code-line");
         const nextRow = tbRow.next(".code-line");
         if ((prevRow != undefined && prevRow.hasClass("d-none")) && (nextRow != undefined && nextRow.hasClass("d-none")))
           return;
 
         (showComments) ? tbRow.removeClass("d-none") : tbRow.addClass("d-none");
-        toggleCommentIcon(id, !showComments);
+        hp.toggleCommentIcon(id, !showComments);
       }
     });
   }
 
   function toggleSingleCommentAndDiagnostics(id: string) {
-    getCommentsRow(id).toggleClass("d-none");
-    getDiagnosticsRow(id).toggleClass("d-none");
+    hp.getCommentsRow(id).toggleClass("d-none");
+    hp.getDiagnosticsRow(id).toggleClass("d-none");
   }
 
   function getSingleCommentAndDiagnosticsDisplayStatus(id: string) {
-    return !(getCommentsRow(id).hasClass("d-none") || getDiagnosticsRow(id).hasClass("d-none"));
+    return !(hp.getCommentsRow(id).hasClass("d-none") || hp.getDiagnosticsRow(id).hasClass("d-none"));
   }
 
   function toggleSingleResolvedComment(id: string) {
-    let commentHolder = $(getCommentsRow(id)).find(".comment-holder").first();
+    let commentHolder = $(hp.getCommentsRow(id)).find(".comment-holder").first();
     if (commentHolder.hasClass("comments-resolved")) {
       toggleComments(id);
     }
   }
+
 });

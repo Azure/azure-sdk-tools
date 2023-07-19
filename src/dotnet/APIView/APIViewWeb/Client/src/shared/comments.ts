@@ -104,10 +104,7 @@ $(() => {
   });
 
   $(document).on("submit", "form[data-post-update='comments']", e => {
-    console.log(e.target);
-    console.log($(e.target).find('button'));
     $(e.target).find('button').prop("disabled", true);
-    console.log($($(e.target).find('button')));
 
     const form = <HTMLFormElement><any>$(e.target);
     let lineId = getElementId(e.target);

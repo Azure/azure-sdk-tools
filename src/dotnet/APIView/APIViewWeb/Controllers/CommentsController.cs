@@ -9,8 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb.Controllers
 {
-    //[Authorize("RequireOrganization")]
-    [AllowAnonymous]
+    [Authorize("RequireOrganization")]
     public class CommentsController: Controller
     {
         private readonly ICommentsManager _commentsManager;

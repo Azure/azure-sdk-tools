@@ -1,6 +1,3 @@
-using System.Web;
-using Microsoft.AspNetCore.Mvc;
-
 namespace APIViewWeb.Models
 {
     public class CommentPartialViewResultModel

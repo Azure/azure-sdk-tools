@@ -1,9 +1,6 @@
 using System.Threading.Tasks;
-using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Hubs

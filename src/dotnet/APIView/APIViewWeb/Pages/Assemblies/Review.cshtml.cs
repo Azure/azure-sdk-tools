@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 using ApiView;
 using APIView;
 using APIView.DIff;
-using APIView.Model;
-using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;

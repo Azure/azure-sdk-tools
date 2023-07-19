@@ -1,3 +1,5 @@
+import { pushComment } from './signalr';
+
 /**
 * Call APIView controller endpoint (/userprofile/updatereviewpagesettings)
 * to update various page settings
@@ -364,4 +366,27 @@ export function getElementId(element: HTMLElement, idName: string = "data-line-i
 
 export function getParentData(element: HTMLElement, name: string) {
   return $(element).closest(`[${name}]`).attr(name);
+}
+
+export function getCommentId(element: HTMLElement) {
+  return getParentData(element, "data-comment-id");
+}
+
+export function deleteComment(commentId: string, lineId: string, commentRow: JQuery<HTMLElement>) {
+  const reviewId = getReviewAndRevisionIdFromUrl(document.location.href)["reviewId"];
+  const elementId = getElementId(getCommentElement(commentId)[0]);
+  const url = location.origin + `/comments/delete?reviewid=${reviewId}&commentid=${commentId}&elementid=${elementId}`;
+  $.ajax({
+    type: "POST",
+    url: url,
+  }).done(partialViewResult => {
+    updateCommentThread(commentRow, partialViewResult);
+    addCommentThreadNavigation();
+    removeCommentIconIfEmptyCommentBox(lineId);
+    pushComment(reviewId, lineId, partialViewResult);
+  });
+}
+
+export function getCommentElement(commentId: string) {
+  return $(`.review-comment[data-comment-id='${commentId}']`);
 }

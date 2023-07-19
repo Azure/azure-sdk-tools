@@ -53,15 +53,14 @@ $(() => {
     //alreadyRefreshedComment = true;
   });
 
-  connection.on("ReceiveComment", (reviewId, elementId, partialViewResult) => {
+  connection.on("ReceiveComment", (reviewId: string, elementId: string, partialViewResult: string) => {
     if (alreadyRefreshedComment == true) {
       alreadyRefreshedComment = false;
       return;
     }
 
     // remove all delete and edit anchors
-    let tr = $('<tr class="comment-row" data-line-id="Azure.ResourceManager.Communication.CommunicationDomainResource.ResourceType"></tr>');
-    let partialView = $(partialViewResult).appendTo(tr);
+    let partialView = $(partialViewResult);
     partialView.find("a.dropdown-item.js-delete-comment").next().next().remove();
     partialView.find("a.dropdown-item.js-delete-comment").next().remove();
     partialView.find("a.dropdown-item.js-delete-comment").remove();
@@ -74,7 +73,7 @@ $(() => {
         return;
       }
 
-      let commenterHref = commenter.attributes.getNamedItem('href').value;
+      let commenterHref = commenter.attributes.getNamedItem('href')?.value;
       let profileHref;
       $('ul.navbar-nav.ms-auto > li.nav-item > a.nav-link').each((index, value) => {
         if (value.textContent && value.textContent.trim() === 'Profile') {
@@ -89,8 +88,10 @@ $(() => {
         $('<a href="#" class="dropdown-item js-delete-comment text-danger">Delete</a>').prependTo(dropdown);
       }
     })
-    
-    replaceRowWIthPartialViewResult(reviewId, elementId, partialView.html());
+
+    let partialViewString = partialViewResult.split("<td")[0] + partialView.html() + "</tr>";
+
+    replaceRowWIthPartialViewResult(reviewId, elementId, partialViewString);
   });
 
   let approvalPendingText = "Current Revision Approval Pending";
@@ -98,9 +99,6 @@ $(() => {
   let approvesCurrentRevisionText = "Approves the current revision of the API";
 
   connection.on("ReceiveApprovalSelf", (reviewId, revisionId, approvalToggle) => {
-    // TODO: this 
-    //$("form.form-inline button.btn").prop("disabled", true);
-
     if (!checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
       return;
     }
@@ -154,37 +152,37 @@ $(() => {
 });
 
 function replaceRowWIthPartialViewResult(reviewId: any, elementId: any, partialViewResult: any) {
-    checkReviewIdAgainstCurrent(reviewId);
+  checkReviewIdAgainstCurrent(reviewId);
 
-    var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
-    hp.showCommentBox(elementId, rowSectionClasses, undefined, false);
+  var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
+  hp.showCommentBox(elementId, rowSectionClasses, undefined, false);
 
-    let commentsRow = hp.getCommentsRow(elementId);
-    hp.updateCommentThread(commentsRow, partialViewResult);
-    hp.addCommentThreadNavigation();
-    hp.removeCommentIconIfEmptyCommentBox(elementId);
+  let commentsRow = hp.getCommentsRow(elementId);
+  hp.updateCommentThread(commentsRow, partialViewResult);
+  hp.addCommentThreadNavigation();
+  hp.removeCommentIconIfEmptyCommentBox(elementId);
 
-    updateUserIcon();
+  updateUserIcon();
 }
 
 function updateUserIcon() {
-    let size = 28;
-    let $navLinks = $("nav.navbar a.nav-link");
-    let username;
+  let size = 28;
+  let $navLinks = $("nav.navbar a.nav-link");
+  let username;
 
-    for (let nav of $navLinks) {
-        if (nav.innerText.includes("Profile")) {
-            let href = nav.getAttribute("href");
-            if (href) {
-                let hrefString: string = href;
-                let hrefSplit = hrefString.split("/");
-                username = hrefSplit[hrefSplit.length - 1];
-            }
-        }
-    }
+  for (let nav of $navLinks) {
+      if (nav.innerText.includes("Profile")) {
+          let href = nav.getAttribute("href");
+          if (href) {
+              let hrefString: string = href;
+              let hrefSplit = hrefString.split("/");
+              username = hrefSplit[hrefSplit.length - 1];
+          }
+      }
+  }
 
-    let url: string = "https://github.com/" + username + ".png?size=" + size;
-    $("div.review-thread-reply div.reply-cell img.comment-icon").attr("src", url);
+  let url: string = "https://github.com/" + username + ".png?size=" + size;
+  $("div.review-thread-reply div.reply-cell img.comment-icon").attr("src", url);
 }
 
 /**
@@ -194,15 +192,15 @@ function updateUserIcon() {
  * @param approvalPendingText string of approval pending text to use when removing the last approver
  */
 function removeApprover(lowerTextSpan: HTMLElement, approver: string, approvalPendingText: string) {
-    let children = lowerTextSpan.children;
-    let numApprovers = children.length;
+  let children = lowerTextSpan.children;
+  let numApprovers = children.length;
 
-    if (numApprovers > 1) {
-        removeApproverFromApproversList(children, approver);
-    } else {
-        lowerTextSpan.textContent = approvalPendingText;
-        removeApprovalBorder();
-    }
+  if (numApprovers > 1) {
+      removeApproverFromApproversList(children, approver);
+  } else {
+      lowerTextSpan.textContent = approvalPendingText;
+      removeApprovalBorder();
+  }
 }
 
 /**
@@ -213,49 +211,49 @@ function removeApprover(lowerTextSpan: HTMLElement, approver: string, approvalPe
  * @param approver GitHub username of the review approver 
  */
 function addApprover(lowerTextSpan: HTMLElement, approvedByText: string, approverHref: string, approver: any) {
-    if (lowerTextSpan.textContent?.includes(approvedByText)) {
-        lowerTextSpan.append(" , ");
-    } else {
-        lowerTextSpan.textContent = approvedByText;
-        addApprovedBorder();
-    }
-    addApproverHrefToApprovers(lowerTextSpan, approverHref, approver);
+  if (lowerTextSpan.textContent?.includes(approvedByText)) {
+      lowerTextSpan.append(" , ");
+  } else {
+      lowerTextSpan.textContent = approvedByText;
+      addApprovedBorder();
+  }
+  addApproverHrefToApprovers(lowerTextSpan, approverHref, approver);
 }
 
 /**
  * adds the @approver with a hyperlink to their apiview profile to @lowerTextSpan
  */
 function addApproverHrefToApprovers(lowerTextSpan: HTMLElement, approverHref: string, approver: any) {
-    $(lowerTextSpan).append('<a href="' + approverHref + '">' + approver + '</a>');
+  $(lowerTextSpan).append('<a href="' + approverHref + '">' + approver + '</a>');
 }
 
 /**
  * adds the text above the approve button to indicate whether the current user approved the review
  */
 function addUpperTextSpan(approvesCurrentRevisionText: string) {
-    let $upperTextSpan = $("<span>").text(approvesCurrentRevisionText).addClass("small text-muted");
-    let $upperTextForm = $("ul#approveCollapse form.form-inline");
-    $upperTextForm.prepend($upperTextSpan);
+  let $upperTextSpan = $("<span>").text(approvesCurrentRevisionText).addClass("small text-muted");
+  let $upperTextForm = $("ul#approveCollapse form.form-inline");
+  $upperTextForm.prepend($upperTextSpan);
 }
 
 /**
  * change the button state from a green "not approved" to grey "approved"
  */
 function addButtonApproval() {
-    let $approveBtn = $("form.form-inline button.btn.btn-success");
-    $approveBtn.removeClass("btn-success");
-    $approveBtn.addClass("btn-outline-secondary");
-    $approveBtn.text("Revert API Approval");
+  let $approveBtn = $("form.form-inline button.btn.btn-success");
+  $approveBtn.removeClass("btn-success");
+  $approveBtn.addClass("btn-outline-secondary");
+  $approveBtn.text("Revert API Approval");
 }
 
 /**
  * change the button state from a grey "approved" to green "not approved" 
  */
 function removeButtonApproval() {
-    let $approveBtn = $("form.form-inline button.btn.btn-outline-secondary");
-    $approveBtn.removeClass("btn-outline-secondary");
-    $approveBtn.addClass("btn-success");
-    $approveBtn.text("Approve");
+  let $approveBtn = $("form.form-inline button.btn.btn-outline-secondary");
+  $approveBtn.removeClass("btn-outline-secondary");
+  $approveBtn.addClass("btn-success");
+  $approveBtn.text("Approve");
 }
 
 /**
@@ -277,15 +275,15 @@ function addApprovedBorder() {
  * change the review panel border state from green "approved" to grey "not approved"
  */
 function removeApprovalBorder() {
-    let $reviewLeft = $("#review-left");
-    $reviewLeft.removeClass("review-approved");
-    $reviewLeft.addClass("border");
-    $reviewLeft.addClass("rounded-1");
+  let $reviewLeft = $("#review-left");
+  $reviewLeft.removeClass("review-approved");
+  $reviewLeft.addClass("border");
+  $reviewLeft.addClass("rounded-1");
 
-    let $reviewRight = $("#review-right");
-    $reviewRight.removeClass("review-approved");
-    $reviewRight.addClass("border");
-    $reviewRight.addClass("rounded-1");
+  let $reviewRight = $("#review-right");
+  $reviewRight.removeClass("review-approved");
+  $reviewRight.addClass("border");
+  $reviewRight.addClass("rounded-1");
 }
 
 /**
@@ -326,10 +324,10 @@ function parseApprovalSpanIndex($approvalSpans: JQuery<HTMLElement>, approvedByT
  * @param $approvalSpans span that includes revision approval block 
  */
 function removeUpperTextSpan(upperTextIndex: number, $approvalSpans: JQuery<HTMLElement>) {
-    if (upperTextIndex !== -1) {
-        let upperTextSpan: HTMLElement = $approvalSpans[upperTextIndex];
-      upperTextSpan.remove();
-    }
+  if (upperTextIndex !== -1) {
+      let upperTextSpan: HTMLElement = $approvalSpans[upperTextIndex];
+    upperTextSpan.remove();
+  }
 }
 
 /**

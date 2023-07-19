@@ -33,10 +33,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             // this is what your json body will look like coming over the wire. Notice the double escapes to prevent JSON parse break.
             // it is an identical sanitizer registration to the one above
-            var overTheWire = "{ \"value\": \".sanitized.com\", \"regex\": \"(-[0-9a-fA-F]{32}.[0-9a-fA-F]{8}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{4}\\\\-[0-9a-fA-F]{12}[^/?]+)\" }";
+            var overTheWire = "{ \"value\": \"REDACTED\", \"jsonPath\": \"$..to\" }";
 
             // Target the type of sanitizer using this. (This is similar to selecting a constructor above)
-            var sanitizerName = "BodyRegexSanitizer";
+            var sanitizerName = "BodyKeySanitizer";
 
     
             #region API registration and running of sanitizer
@@ -60,8 +60,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             #endregion
 
             session.Session.Sanitize(registeredSanitizer);
-            var newBody = Encoding.UTF8.GetString(session.Session.Entries[2].Response.Body);
-            Assert.Contains(".sanitized.com", newBody);
+            var newBody = Encoding.UTF8.GetString(session.Session.Entries[0].Response.Body);
+            Assert.Contains("REDACTED", newBody);
         }    
     }
 }

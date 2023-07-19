@@ -3,48 +3,29 @@
   "violations": [
     {
       "rule_ids": [
-        "python-client-naming"
+        "python-client-naming",
+        "python-client-separate-sync-async",
+        "python-client-same-name-sync-async"
       ],
+      "line_no": 2,
       "bad_code": "class azure.contoso.ContosoAsyncManager:",
-      "suggestion": "class azure.contoso.ContosoClient:",
-      "comment": "Service client types should have a Client suffix."
+      "suggestion": "class azure.contoso.aio.ContosoClient:",
+      "comment": "Service client types should have a Client suffix. Async client should be in a separate aio namespace and have the same name as the sync client. Async client should have the same name as the sync client."
     },
     {
       "rule_ids": [
         "python-client-options-naming"
       ],
+      "line_no": 8,
       "bad_code": "options: dict",
       "suggestion": "individual keyword-only arguments",
       "comment": "Do not use an 'options bag' object to group optional parameters."
     },
     {
       "rule_ids": [
-        "python-client-separate-sync-async"
-      ],
-      "bad_code": "class azure.contoso.ContosoAsyncManager:",
-      "suggestion": "class azure.contoso.aio.ContosoClient:",
-      "comment": "Provide separate client classes for synchronous and asynchronous operations."
-    },
-    {
-      "rule_ids": [
-        "python-client-same-name-sync-async"
-      ],
-      "bad_code": "class azure.contoso.ContosoAsyncManager:",
-      "suggestion": "class azure.contoso.aio.ContosoClient:",
-      "comment": "Use the same client name for sync and async packages."
-    },
-    {
-      "rule_ids": [
-        "python-client-namespace-sync"
-      ],
-      "bad_code": "class azure.contoso.ContosoAsyncManager:",
-      "suggestion": "class azure.contoso.aio.ContosoClient:",
-      "comment": "Use the same namespace for the synchronous client as the synchronous version of the package with .aio appended."
-    },
-    {
-      "rule_ids": [
         "python-client-naming"
       ],
+      "line_no": 13,
       "bad_code": "class azure.contoso.ContosoManager:",
       "suggestion": "class azure.contoso.ContosoClient:",
       "comment": "Service client types should have a Client suffix."
@@ -53,24 +34,36 @@
       "rule_ids": [
         "python-client-options-naming"
       ],
+      "line_no": 19,
       "bad_code": "options: dict",
-      "suggestion": "individual keyword-only arguments",
-      "comment": "Do not use an 'options bag' object to group optional parameters. Instead, pass as individual keyword-only arguments."
-    },
-    {
-      "rule_ids": [
-        "python-client-options-naming"
-      ],
-      "bad_code": "def get_widget(self, options: dict) -> WidgetResult",
-      "suggestion": "def get_widget(self, **kwargs) -> WidgetResult",
-      "comment": "Do not use an 'options bag' object to group optional parameters. Instead, pass as individual keyword-only arguments."
+      "suggestion": "Replace 'options: dict' with individual keyword-only arguments.",
+      "comment": "Do not use an 'options bag' object to group optional parameters."
     },
     {
       "rule_ids": [
         "python-models-enum-name-uppercase"
       ],
-      "bad_code": "class azure.contoso.WidgetColor(Enum):\n\n    blue = \"blue\"\n    green = \"green\"\n    red = \"red\"",
-      "suggestion": "class azure.contoso.WidgetColor(Enum):\n\n    BLUE = \"blue\"\n    GREEN = \"green\"\n    RED = \"red\"",
+      "line_no": 26,
+      "bad_code": "blue = \"blue\"",
+      "suggestion": "BLUE = \"blue\"",
+      "comment": "Enum names should be in UPPERCASE."
+    },
+    {
+      "rule_ids": [
+        "python-models-enum-name-uppercase"
+      ],
+      "line_no": 27,
+      "bad_code": "green = \"green\"",
+      "suggestion": "GREEN = \"green\"",
+      "comment": "Enum names should be in UPPERCASE."
+    },
+    {
+      "rule_ids": [
+        "python-models-enum-name-uppercase"
+      ],
+      "line_no": 28,
+      "bad_code": "red = \"red\"",
+      "suggestion": "RED = \"red\"",
       "comment": "Enum names should be in UPPERCASE."
     }
   ]

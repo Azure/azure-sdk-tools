@@ -49,7 +49,7 @@ $(() => {
    */
   let alreadyRefreshedComment = false;
   connection.on("ReceiveCommentSelf", (reviewId, elementId, partialViewResult) => {
-    rvM.replaceRowWIthPartialViewResult(reviewId, elementId, partialViewResult);
+    replaceRowWIthPartialViewResult(reviewId, elementId, partialViewResult);
     alreadyRefreshedComment = true;
   });
 
@@ -59,8 +59,8 @@ $(() => {
       return;
     }
 
-    let partialViewString = rvM.getCurrentUserPartialViewResult(partialViewResult);
-    rvM.replaceRowWIthPartialViewResult(reviewId, elementId, partialViewString);
+    let partialViewString = getCurrentUserPartialViewResult(partialViewResult);
+    replaceRowWIthPartialViewResult(reviewId, elementId, partialViewString);
   });
 
   let approvalPendingText = "Current Revision Approval Pending";
@@ -68,7 +68,7 @@ $(() => {
   let approvesCurrentRevisionText = "Approves the current revision of the API";
 
   connection.on("ReceiveApprovalSelf", (reviewId, revisionId, approvalToggle) => {
-    if (!rvM.checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
+    if (!hp.checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
       return;
     }
 
@@ -93,7 +93,7 @@ $(() => {
    * - Unselecting Approve For First Release button behaves in the same way as a regular Approve button
    */
   connection.on("ReceiveApproval", (reviewId, revisionId, approver, approvalToggle) => {
-    if (!rvM.checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
+    if (!hp.checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, true)) {
       return;
     }
 
@@ -119,3 +119,70 @@ $(() => {
   // Start the connection.
   start();
 });
+
+/**
+* Auto refresh's raw partial view result input is sent w.r.t. the sender's profile
+* Remove remove/edit buttons of sender's comments
+* Add remove/edit buttons to current user's comments (if any)
+* @param partialViewResult
+* @returns partial view result for the current user 
+*/
+function getCurrentUserPartialViewResult(partialViewResult: string) {
+  let partialView = $(partialViewResult);
+
+  // remove all delete and edit anchors
+  partialView.find("a.dropdown-item.js-delete-comment").next().next().remove();
+  partialView.find("a.dropdown-item.js-delete-comment").next().remove();
+  partialView.find("a.dropdown-item.js-delete-comment").remove();
+
+  //verify name and add delete and edit anchors
+  let $commentContents = partialView.find("div.comment-contents > span");
+  $commentContents.each((index, value) => {
+    let commenter;
+    if (value.children) {
+      commenter = value.children[0];
+    }
+    if (!commenter) {
+      return;
+    }
+
+    let commenterHref = commenter.attributes.getNamedItem('href')?.value;
+    let profileHref;
+    $('ul.navbar-nav.ms-auto > li.nav-item > a.nav-link').each((index, value) => {
+      if (value.textContent && value.textContent.trim() === 'Profile') {
+        profileHref = value.attributes.getNamedItem('href')?.value;
+      }
+    });
+
+
+    if (profileHref === commenterHref) {
+      let dropdown = partialView.find('div.dropdown-menu.dropdown-menu-right')[index];
+      $('<li><hr class="dropdown-divider"></li>').prependTo(dropdown);
+      $('<a href="#" class="dropdown-item js-edit-comment">Edit</a>').prependTo(dropdown);
+      $('<a href="#" class="dropdown-item js-delete-comment text-danger">Delete</a>').prependTo(dropdown);
+    }
+  });
+
+  let partialViewString = partialViewResult.split("<td")[0] + partialView.html() + "</tr>";
+  return partialViewString;
+}
+
+/**
+ * Replaces the row or comment thread with partial view result
+ * @param reviewId
+ * @param elementId
+ * @param partialViewResult
+ */
+function replaceRowWIthPartialViewResult(reviewId: any, elementId: any, partialViewResult: any) {
+  hp.checkReviewRevisionIdAgainstCurrent(reviewId, null, false);
+
+  var rowSectionClasses = hp.getCodeRowSectionClasses(elementId);
+  hp.showCommentBox(elementId, rowSectionClasses, undefined, false);
+
+  let commentsRow = hp.getCommentsRow(elementId);
+  hp.updateCommentThread(commentsRow, partialViewResult);
+  hp.addCommentThreadNavigation();
+  hp.removeCommentIconIfEmptyCommentBox(elementId);
+
+  hp.updateUserIcon();
+}

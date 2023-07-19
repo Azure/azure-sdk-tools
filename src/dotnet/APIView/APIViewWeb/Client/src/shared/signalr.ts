@@ -59,36 +59,38 @@ $(() => {
     //  return;
     //}
 
-    /**
-     * remove all row's menu dropup remove/edit buttons that does not match the current user
-     * add remove/edit buttons for this current user
-     * get username from profile button
-     */
-
     // remove all delete and edit anchors
-    let a = $(partialViewResult).find("a.dropdown-item.js-delete-comment");
-    //$(partialViewResult).remove("a.dropdown-item.js-delete-comment");
-    let b = a.next();
-    let c = b.next();
-    a.each((index, value) => {
-      $(value).remove();
-      //a[index].remove();
-    });
-    $(a).remove();
-    $(b).remove();
-    $(c).remove();
-    console.log("a delete")
-    console.log(a);
-    console.log("b edit")
-    console.log(b);
-    console.log("c line")
-    console.log(c);
+    let tr = $('<tr class="comment-row" data-line-id="Azure.ResourceManager.Communication.CommunicationDomainResource.ResourceType"></tr>');
+    let partialView = $(partialViewResult).appendTo(tr);
+    partialView.find("a.dropdown-item.js-delete-comment").next().next().remove();
+    partialView.find("a.dropdown-item.js-delete-comment").next().remove();
+    partialView.find("a.dropdown-item.js-delete-comment").remove();
 
-    // verify name and add delete and edit anchors
+    //verify name and add delete and edit anchors
+    let $commentContents = partialView.find("div.comment-contents > span");
+    $commentContents.each((index, value) => {
+      let commenter = value.children[0];
+      if (!commenter) {
+        return;
+      }
 
+      let commenterHref = commenter.attributes.getNamedItem('href').value;
+      let profileHref;
+      $('ul.navbar-nav.ms-auto > li.nav-item > a.nav-link').each((index, value) => {
+        if (value.textContent && value.textContent.trim() === 'Profile') {
+          profileHref = value.attributes.getNamedItem('href')?.value;
+        }
+      })
 
-    replaceRowWIthPartialViewResult(reviewId, elementId, partialViewResult);
-
+      //if (profileHref === commenterHref) {
+      //  let dropdown = partialView.find('div.dropdown-menu.dropdown-menu-right')[index];
+      //  $('<li><hr class="dropdown-divider"></li>').prependTo(dropdown);
+      //  $('<a href="#" class="dropdown-item js-edit-comment">Edit</a>').prependTo(dropdown);
+      //  $('<a href="#" class="dropdown-item js-delete-comment text-danger">Delete</a>').prependTo(dropdown);
+      //}
+    })
+    
+    replaceRowWIthPartialViewResult(reviewId, elementId, partialView.html());
   });
 
   let approvalPendingText = "Current Revision Approval Pending";

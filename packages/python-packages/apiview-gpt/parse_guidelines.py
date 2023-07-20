@@ -12,8 +12,12 @@ if __name__ == "__main__":
     rest_api_guidelines_path = os.getenv('REST_API_GUIDELINES_PATH')
     if not azure_sdk_path:
         raise Exception('Please set the AZURE_SDK_REPO_PATH environment variable manually or in your .env file.')
+    else:
+        azure_sdk_path = os.path.normpath(azure_sdk_path)
     if not rest_api_guidelines_path:
         raise Exception('Please set the REST_API_GUIDELINES_PATH environment variable manually or in your .env file.')
+    else:
+        rest_api_guidelines_path = os.path.normpath(rest_api_guidelines_path)
 
     # Generate Azure SDK JSON
     sdk_folders_to_parse = ["android", "clang", "cpp", "dotnet", "general", "golang", "ios", "java", "python", "typescript"]

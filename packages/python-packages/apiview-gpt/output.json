@@ -4,13 +4,12 @@
     {
       "rule_ids": [
         "python-client-naming",
-        "python-client-separate-sync-async",
-        "python-client-same-name-sync-async"
+        "python-client-separate-sync-async"
       ],
       "line_no": 2,
       "bad_code": "class azure.contoso.ContosoAsyncManager:",
       "suggestion": "class azure.contoso.aio.ContosoClient:",
-      "comment": "Service client types should have a Client suffix. Async client should be in a separate aio namespace and have the same name as the sync client. Async client should have the same name as the sync client."
+      "comment": "Service client types should have a 'Client' suffix. Async client should be in a separate 'aio' namespace and have the same name as the sync client."
     },
     {
       "rule_ids": [
@@ -36,12 +35,12 @@
       ],
       "line_no": 19,
       "bad_code": "options: dict",
-      "suggestion": "Replace 'options: dict' with individual keyword-only arguments.",
+      "suggestion": "Replace the options dict with individual keyword-only arguments.",
       "comment": "Do not use an 'options bag' object to group optional parameters."
     },
     {
       "rule_ids": [
-        "python-models-enum-name-uppercase"
+        "python_design.html#python-models-enum-name-uppercase"
       ],
       "line_no": 26,
       "bad_code": "blue = \"blue\"",
@@ -50,7 +49,7 @@
     },
     {
       "rule_ids": [
-        "python-models-enum-name-uppercase"
+        "python_design.html#python-models-enum-name-uppercase"
       ],
       "line_no": 27,
       "bad_code": "green = \"green\"",
@@ -59,7 +58,7 @@
     },
     {
       "rule_ids": [
-        "python-models-enum-name-uppercase"
+        "python_design.html#python-models-enum-name-uppercase"
       ],
       "line_no": 28,
       "bad_code": "red = \"red\"",

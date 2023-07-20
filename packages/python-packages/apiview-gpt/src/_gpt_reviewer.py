@@ -47,18 +47,19 @@ class GptReviewer:
         general_guidelines, language_guidelines = self.retrieve_guidelines(language)
         all_guidelines = general_guidelines + language_guidelines
 
+        # TODO: Make this not hard-coded!
         guidelines = self.select_guidelines(all_guidelines, [
-            "python-client-naming",
-            "python-client-options-naming",
-            "python-models-async",
-            "python-models-dict-result",
-            "python-models-enum-string",
-            "python-models-enum-name-uppercase",
-            "python-client-sync-async",
-            "python-client-async-keywords",
-            "python-client-separate-sync-async",
-            "python-client-same-name-sync-async",
-            "python-client-namespace-sync",
+            "python_design.html#python-client-naming",
+            "python_design.html#python-client-options-naming",
+            "python_design.html#python-models-async",
+            "python_design.html#python-models-dict-result",
+            "python_design.html#python-models-enum-string",
+            "python_design.html#python-models-enum-name-uppercase",
+            "python_design.html#python-client-sync-async",
+            "python_design.html#python-client-async-keywords",
+            "python_design.html#python-client-separate-sync-async",
+            "python_design.html#python-client-same-name-sync-async",
+            "python_design.html#python-client-namespace-sync",
         ])
 
         for i, g in enumerate(guidelines):

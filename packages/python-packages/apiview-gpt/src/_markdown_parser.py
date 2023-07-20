@@ -59,9 +59,9 @@ def parse_markdown(file, root_path) -> List[dict]:
         # Skip the explanations of rule types in introduction section
         if category == 'Prescriptive Guidance':
             continue
-
+        
         if item.name == 'p':
-            text, id = _split_tags(item)
+            text, id = _split_tags(item, file)
             text = _add_links(text, item)
             text = _expand_include_tags(text, root_path, os.path.dirname(file))
 
@@ -87,7 +87,7 @@ def parse_markdown(file, root_path) -> List[dict]:
         elif item.name in ['ol', 'ul']:
             items = item.find_all('li')
             for item in items:
-                item_text, id = _split_tags(item)
+                item_text, id = _split_tags(item, file)
                 item_text = _add_links(item_text, item)
                 item_text = _expand_include_tags(item_text, root_path, os.path.dirname(file))
                 if id:
@@ -164,7 +164,7 @@ def _convert_code_tag_to_markdown(html):
  
 
 # Split the tag from the ID
-def _split_tags(item) -> Tuple[str, Optional[str]]:
+def _split_tags(item, file) -> Tuple[str, Optional[str]]:
     text = item.text
     id = _extract_id_from_inline(item)
     text = re.sub(MAY_PATTERN, MAY_REPLACE, text)
@@ -178,6 +178,14 @@ def _split_tags(item) -> Tuple[str, Optional[str]]:
     text = re.sub(INCLUDE_NOTE_PATTERN, INCLUDE_NOTE_REPLACE, text)
     text = re.sub(INCLUDE_IMPORTANT_PATTERN, INCLUDE_IMPORTANT_REPLACE, text)
     text = re.sub(INCLUDE_DRAFT_PATTERN, INCLUDE_DRAFT_REPLACE, text)
+
+    # REST API guidelines don't actually have IDs.
+    if not file.endswith("Guidelines.md"):
+        segments = file.split(os.sep)
+        relevant_segments = segments[segments.index("docs") + 1:]
+        prefix = "_".join(relevant_segments).replace(".md", ".html")
+        id = f"{prefix}#{id}" if id else id
+
     return text, id
 
 

@@ -22,9 +22,9 @@ param (
 
     [Parameter(ParameterSetName = 'Languages')]
     [ValidateNotNullOrEmpty()]
-    [string[]] $Languages = @('cpp', 'go', 'java', 'js', 'net', 'python'),
+    [string[]] $Languages = @('cpp', 'go', 'java', 'js', 'net', 'python', 'c', 'ios', 'android'),
 
-    [Parameter(Mandatory=$false)]
+    [Parameter()]
     [ValidateRange(0,100)]
     [int]$DelayMinutes = 2,
 
@@ -54,7 +54,7 @@ $activity = "Synchronizing labels"
 Write-Progress -Activity $activity -PercentComplete 0
 
 $totalLabels = $labels.Count * $Repositories.Count
-$labelCount = 1
+$labelCount = 0
 
 foreach ($repo in $Repositories) {
     if ($Force -or $PSCmdlet.ShouldProcess(
@@ -69,9 +69,9 @@ foreach ($repo in $Repositories) {
                 Write-Error "Failed to create or update the common labels to ${repo}: $result"
             }
 
+            $labelCount++
             $completed = ($labelCount / $totalLabels) * 100
             Write-Progress -Activity $activity -Status "$($repo): $($label.Name)" -PercentComplete $completed
-            $labelCount++
         }
 
         # Pause for a moment between repositories, if configured to do so.

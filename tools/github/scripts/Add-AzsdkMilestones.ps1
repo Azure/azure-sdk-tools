@@ -18,7 +18,7 @@ param (
 
     [Parameter(ParameterSetName = 'Languages')]
     [ValidateNotNullOrEmpty()]
-    [string[]] $Languages = @('cpp', 'go', 'java', 'js', 'net', 'python'),
+    [string[]] $Languages = @('cpp', 'go', 'java', 'js', 'net', 'python', 'c', 'ios', 'android'),
 
     [Parameter()]
     [DateTimeOffset] $StartDate = [DateTimeOffset]::Now,

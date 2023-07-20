@@ -19,7 +19,7 @@ This area is focused on the management of the Azure SDK GitHub repositories, con
   _The core scripts for repository management, such as managing milestones and labels._
 
 * **data**  
-  _The data associated with the scripts.  This includes items such as the set of centrally managed Azure SDK repositories and the labels common to all repositories. set of labels for Azure SDK repositories and the set of repositories that are centrally managed._
+  _The data associated with the scripts.  This includes items such as the set of centrally managed Azure SDK repositories and the labels common to all repositories._
 
 * **data/repository-snapshots**  
   _The container for a snapshot of the labels that exist in each managed repository; primarily used to help detect and report on new labels that have been added outside the common set._
@@ -71,8 +71,8 @@ This area is focused on the management of the Azure SDK GitHub repositories, con
    # View the help for the full set of parameters.
    get-help ./Sync-AzsdkLabels.ps1 -full
    ```
-   
-  ### `Sync-AzsdkLabels.ps1`
+
+  ### `Snapshot-AzsdkLabels.ps1`
    _Creates or updates the set of labels expected to be common across the Azure SDK repositories, ensuring that names, descriptions, and colors share the common configuration._
    
    ```powershell

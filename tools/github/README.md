@@ -10,8 +10,19 @@ This area is focused on the management of the Azure SDK GitHub repositories, con
 
 ## Structure
 
+## Structure
+
 * **root**  
-  _The root contains the core scripts for managing data and the set of centrally managed Azure SDK repositories._
+  _The root contains the scripts used for repository management and their associated data._
+
+* **scripts**  
+  _The core scripts for repository management, such as managing milestones and labels._
+
+* **data**  
+  _The data associated with the scripts.  This includes items such as the set of centrally managed Azure SDK repositories and the labels common to all repositories._
+
+* **data/repository-snapshots**  
+  _The container for a snapshot of the labels that exist in each managed repository; primarily used to help detect and report on new labels that have been added outside the common set._
 
  ## Scripts
  
@@ -45,6 +56,38 @@ This area is focused on the management of the Azure SDK GitHub repositories, con
  # View the help for the full set of parameters.
  get-help ./Add-AzsdkProjectIssues.ps1 -full
  ```
+ 
+ ### `Sync-AzsdkLabels.ps1`
+   _Creates or updates the set of labels expected to be common across the Azure SDK repositories, ensuring that names, descriptions, and colors share the common configuration._
+   
+   ```powershell
+   # Uses the files from the `data` directory to synchronize the common labels to all centrally managed 
+   # repositories using the default delay between each repository to guard against GitHub throttling.
+   ./Sync-AzsdkLabels.ps1 
+
+   # Synchronize the common labels to the Azure SDK for .NET repository.
+   ./Sync-AzsdkLabels.ps1 -LabelsFilePath "../data/common-labels.csv" -Languages 'net' 
+   
+   # View the help for the full set of parameters.
+   get-help ./Sync-AzsdkLabels.ps1 -full
+   ```
+
+  ### `Snapshot-AzsdkLabels.ps1`
+   _Creates or updates the set of labels expected to be common across the Azure SDK repositories, ensuring that names, descriptions, and colors share the common configuration._
+   
+   ```powershell
+   # Uses the files from the "data" directory to generate snapshots of non-common labels for each 
+   # of the centrally managed repositories in the "data/repository-snapshots" directory while 
+   # writing any new non-common labels created for the repository to the host.
+   ./Snapshot-AzsdkLabels.ps1 -Diff
+
+   # Create a snapshot for the Azure SDK for .NET repository, treating the labels defined in 
+   # "../data/common-labels.csv" as the expected common set.  The resulting snapshot is written to the ""./snapshots" directory.
+   ./Snapshot-AzsdkLabels.ps1 -LabelsFilePath "../data/common-labels.csv" -Languages 'net' -RepositoryFilePath "snapshots"
+   
+   # View the help for the full set of parameters.
+   get-help ./Snapshot-AzsdkLabels.ps1 -full
+   ```
    
 ## References and Resources
   

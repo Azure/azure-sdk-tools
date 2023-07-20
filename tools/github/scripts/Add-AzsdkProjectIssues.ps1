@@ -21,11 +21,11 @@ param (
 
     [Parameter(ParameterSetName = 'Languages')]
     [ValidateNotNullOrEmpty()]
-    [string[]] $Languages = @('cpp', 'go', 'java', 'js', 'net', 'python'),
+    [string[]] $Languages = @('cpp', 'go', 'java', 'js', 'net', 'python', 'c', 'ios', 'android'),
 
     [Parameter(ParameterSetName = 'RepositoryFile')]
     [ValidateScript({Test-Path $_ -PathType 'Leaf'})]
-    [string]$RepositoryFilePath = "$PSScriptRoot/../repositories.txt",
+    [string]$RepositoryFilePath = "$PSScriptRoot/../data/repositories.txt",
 
     [Parameter()]
     [ValidateNotNullOrEmpty()]

@@ -402,8 +402,11 @@ export function updateUserIcon() {
     if (nav.innerText.includes("Profile")) {
       let href = nav.getAttribute("href");
       if (href) {
-        let hrefString: string = href;
+        let hrefString = href;
         let hrefSplit = hrefString.split("/");
+        let username = hrefSplit[hrefSplit.length - 1];
+        let url: string = "https://github.com/" + username + ".png?size=" + size;
+        $("div.review-thread-reply div.reply-cell img.comment-icon").attr("src", url);
         return;
       }
     }

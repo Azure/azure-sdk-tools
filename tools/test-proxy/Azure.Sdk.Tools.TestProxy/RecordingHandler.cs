@@ -372,7 +372,8 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 await RestoreAssetsJson(assetsPath, true);
                 var path = await GetRecordingPath(sessionId, assetsPath);
-                outgoingResponse.Headers.Add("x-recording-file-location", path);
+                var base64path = Convert.ToBase64String(Encoding.UTF8.GetBytes(path));
+                outgoingResponse.Headers.Add("x-base64-recording-file-location", base64path);
                 if (!File.Exists(path))
                 {
                     throw new TestRecordingMismatchException($"Recording file path {path} does not exist.");

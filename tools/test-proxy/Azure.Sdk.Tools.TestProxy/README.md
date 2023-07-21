@@ -351,7 +351,7 @@ To start an individual test recording or playback, users will POST to a route on
 
 You will receive a recordingId in the reponse under header `x-recording-id`. This value should be included under header `x-recording-id` in all further requests.
 
-For playback, you will receive the location of the recording file (if it is on disk) in the header `x-recording-file-location`.
+For playback, you will receive the location of the recording file (if it is on disk) in the header `x-base64-recording-file-location`. This will be a base64 encoded string, as it can contain characters that are not allowed in header values.
 
 ### Run your tests
 

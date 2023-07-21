@@ -23,7 +23,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            var body = "{\"x-recording-file\":\"Test.RecordEntries/requests_with_continuation.json\"}";
+            var path = "Test.RecordEntries/requests_with_continuation.json";
+            var body = $"{{\"x-recording-file\":\"{path}\"}}";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = body.Length;
 
@@ -37,9 +38,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await controller.Start();
 
             var value = httpContext.Response.Headers["x-recording-id"].ToString();
-            var recordLocation = httpContext.Response.Headers["x-recording-file-location"].ToString();
+            var recordLocation = httpContext.Response.Headers["x-base64-recording-file-location"].ToString();
             Assert.False(String.IsNullOrEmpty(value));
             Assert.False(String.IsNullOrEmpty(recordLocation));
+            var decodedRecordLocation = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(recordLocation));
+            Assert.EndsWith(path, decodedRecordLocation, StringComparison.OrdinalIgnoreCase);
             Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(value));
         }
 
@@ -76,7 +79,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await playbackController.Start();
 
             var value = playbackContext.Response.Headers["x-recording-id"].ToString();
-            var recordLocation = playbackContext.Response.Headers["x-recording-file-location"].ToString();
+            var recordLocation = playbackContext.Response.Headers["x-base64-recording-file-location"].ToString();
             Assert.False(String.IsNullOrEmpty(value));
             Assert.True(String.IsNullOrEmpty(recordLocation));
             Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(value));

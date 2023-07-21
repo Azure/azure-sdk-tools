@@ -234,7 +234,6 @@ export class ExampleValue {
     private static createSchemaForDfeObject(session: Session<TestCodeModel>, raw: any, dfeFormat: string): ObjectSchema | undefined {
         const dfeObjectType = 'type';
         const dfeObjectValue = 'value';
-        const dfeObjectTypeValues = ['Expression', 'SecureString', 'AzureKeyVaultSecretReference'];
         const dfeObjectSchemaPrefix = 'DataFactoryElement-';
 
         if (Object(raw) && raw[dfeObjectType] && raw[dfeObjectValue]) {
@@ -245,12 +244,14 @@ export class ExampleValue {
                 case 'SecureString':
                     r.addProperty(new Property(dfeObjectValue, '', new StringSchema(`${dfeFormat}-${dfeObjectValue}`, '')));
                     return r;
-                case 'AzureKeyVaultSecretReference':
-                    const valueSchema = session.model.schemas.objects.find((s) => s.language.default.name === "AzureKeyVaultSecretReference");
-                    if (!valueSchema)
+                case 'AzureKeyVaultSecretReference': {
+                    const valueSchema = session.model.schemas.objects.find((s) => s.language.default.name === `AzureKeyVaultSecretReference`);
+                    if (!valueSchema) {
                         throw new Error('Cant find schema for the value of DataFactoryElement KeyVaultSecret Reference');
+                    }
                     r.addProperty(new Property(dfeObjectValue, '', valueSchema));
                     return r;
+                }
                 default:
                     return undefined;
             }

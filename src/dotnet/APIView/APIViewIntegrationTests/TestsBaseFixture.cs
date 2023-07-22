@@ -98,7 +98,7 @@ namespace APIViewIntegrationTests
 
             ReviewManager = new ReviewManager(
                 authorizationServiceMoq.Object, ReviewRepository, BlobCodeFileRepository, blobOriginalsRepository, CommentRepository,
-                languageService, notificationManager, devopsArtifactRepositoryMoq.Object, PackageNameManager, config, signalRHubContextMoq.Object);
+                languageService, notificationManager, devopsArtifactRepositoryMoq.Object, PackageNameManager, signalRHubContextMoq.Object);
 
             TestDataPath = config["TestPkgPath"];
         }

@@ -23,9 +23,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using System.Net.Http;
 using System.Text.Json;
-using Microsoft.AspNetCore.SignalR;
-using APIViewWeb.Hubs;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
+using System.Data;
 
 namespace APIViewWeb.Managers
 {
@@ -41,7 +39,6 @@ namespace APIViewWeb.Managers
         private readonly INotificationManager _notificationManager;
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
         private readonly IPackageNameManager _packageNameManager;
-        private readonly IConfiguration _configuration;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
 
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
@@ -51,7 +48,7 @@ namespace APIViewWeb.Managers
             IBlobCodeFileRepository codeFileRepository, IBlobOriginalsRepository originalsRepository,
             ICosmosCommentsRepository commentsRepository, IEnumerable<LanguageService> languageServices,
             INotificationManager notificationManager, IDevopsArtifactRepository devopsClient,
-            IPackageNameManager packageNameManager, IConfiguration configuration, IHubContext<SignalRHub> signalRHubContext)
+            IPackageNameManager packageNameManager, IHubContext<SignalRHub> signalRHubContext)
 
         {
             _authorizationService = authorizationService;
@@ -64,7 +61,6 @@ namespace APIViewWeb.Managers
             _devopsArtifactRepository = devopsClient;
             _packageNameManager = packageNameManager;
             _signalRHubContext = signalRHubContext;
-            _configuration = configuration;
         }
 
         public async Task<ReviewModel> CreateReviewAsync(ClaimsPrincipal user, string originalName, string label, Stream fileStream, bool runAnalysis, string langauge, bool awaitComputeDiff = false)
@@ -731,25 +727,6 @@ namespace APIViewWeb.Managers
                 reviewText.Append("\\n");
             }
 
-            //var gitHubToken = _configuration["github-access-token"];
-            //Core deepPromptClient = new Core("github", gitHubToken);
-            //
-            //var context = new Dictionary<string, string>()
-            //{
-            //    { "language", review.Language },
-            //    { "content", reviewText.ToString() }
-            //};
-            //try
-            //{
-            //    // Call DeepPrompt API
-            //    response = deepPromptClient.Query(query: "api_review", intent: "api_review", context: context);
-            //}
-            //catch (Exception exception)
-            //{
-            //    Console.WriteLine(exception.Message);
-            //    response = null;
-            //}
-
             var url = "https://apiviewcopilot.azurewebsites.net/python";
             var client = new HttpClient();
             var payload = new
@@ -757,33 +734,44 @@ namespace APIViewWeb.Managers
                 content = reviewText.ToString()
             };
 
-            var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
-
-            // Get rid of escape characters then deserialize
-            //var responseSanitized = JsonSerializer.Deserialize<string>(response);
-            var results = JsonSerializer.Deserialize<List<AIReviewModel>>(response);
-
+            var result = new AIReviewModel();
+            try {
+                var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
+                var responseSanitized = JsonSerializer.Deserialize<string>(response);
+                result = JsonSerializer.Deserialize<AIReviewModel>(responseSanitized);
+            }
+            catch (Exception e ) {
+                throw new Exception($"Call to APIView Copilot Failed: {e.Message}");
+            }
+           
             // Write back result as comments to APIView
-            foreach (var result in results)
+            foreach (var violation in result.Violations)
             {
-                var codeLine = Array.FindAll(codeLines, cl => cl.DisplayString.Trim().StartsWith(result.code.Trim()));
-                foreach (var line in codeLine)
+                var codeLine = codeLines[violation.LineNo + 1];
+                if (codeLine.DisplayString.StartsWith(violation.Code))
                 {
                     var comment = new CommentModel();
                     comment.TimeStamp = DateTime.UtcNow;
                     comment.ReviewId = reviewId;
                     comment.RevisionId = revisionId;
-                    comment.ElementId = line.ElementId;
+                    comment.ElementId = codeLine.ElementId;
                     //comment.SectionClass = sectionClass; // This will be needed for swagger
-                    comment.Comment = $"{result.comment}\n{result.suggestion}";
+
+                    var commentText = new StringBuilder();
+                    commentText.AppendLine($"Suggestion: {violation.Suggestion}");
+                    commentText.AppendLine();
+                    commentText.AppendLine(violation.Comment);
+                    foreach (var id in violation.RuleIds)
+                    {
+                        commentText.AppendLine($"See: https://guidelinescollab.github.io/azure-sdk/{id}");
+                    }
                     comment.ResolutionLocked = false;
                     comment.Username = "azure-sdk";
 
                     await _commentsRepository.UpsertCommentAsync(comment);
                 }
             }
-            var revID = (revisionId == review.Revisions.Last().RevisionId) ? "Latest" : revisionId;
-            return results.Count;
+            return result.Violations.Count;
         }
 
 

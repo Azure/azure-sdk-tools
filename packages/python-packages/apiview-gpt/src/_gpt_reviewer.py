@@ -73,7 +73,7 @@ class GptReviewer:
                 results = self.chain.run(apiview=str(chunk), guidelines=guidelines, language=language)
                 output = self.output_parser.parse(results)
                 final_results.violations.extend(self.process_violations(output.violations, chunk))
-                # I got one result that there was a violation but the status was "Success" so I'm adding this check
+                # FIXME see: https://github.com/Azure/azure-sdk-tools/issues/6571
                 if len(output.violations) > 0:
                     final_results.status = "Error"
         return final_results
@@ -103,11 +103,8 @@ class GptReviewer:
         offset = chunk.start_line_no
         line_no = None
         for i, line in enumerate(chunk.lines):
-            # I got one result that the bad code was
-            # class azure.eventhub.extensions.checkpointstoreblob.BlobCheckpointStore(CheckpointStore)
-            # while the line was
-            # class azure.eventhub.extensions.checkpointstoreblob.BlobCheckpointStore(CheckpointStore): implements ContextManager
-            if bad_code.strip() in line.strip():
+            # FIXME: see: https://github.com/Azure/azure-sdk-tools/issues/6572
+            if line.strip().startswith(bad_code.strip()):
                 if line_no is None:
                     line_no = offset + i
                 else:

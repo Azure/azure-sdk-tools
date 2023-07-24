@@ -37,9 +37,9 @@ namespace SwaggerApiParser.Specs
             tableItems = this.TokenSerializePropertyIntoTableItems(context, this.tableItems);
             var tableRet = new List<CodeFileToken>();
             var tableRows = new List<CodeFileToken>();
-            if (tableItems.Count > 0)
+            foreach (var tableItem in this.tableItems)
             {
-                tableRows.AddRange(tableItems[0].TokenSerialize(context)); // Serialize only first row to avoid flattened properties
+                tableRows.AddRange(tableItem.TokenSerialize(context));
             }
             if (tableRows.Count > 0)
             {

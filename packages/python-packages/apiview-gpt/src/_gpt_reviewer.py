@@ -73,8 +73,9 @@ class GptReviewer:
                 results = self.chain.run(apiview=str(chunk), guidelines=guidelines, language=language)
                 output = self.output_parser.parse(results)
                 final_results.violations.extend(self.process_violations(output.violations, chunk))
-                if output.status == "Error":
-                    final_results.status = output.status
+                # I got one result that there was a violation but the status was "Success" so I'm adding this check
+                if len(output.violations) > 0:
+                    final_results.status = "Error"
         return final_results
 
     def process_violations(self, violations: List[Violation], section: Section) -> List[Violation]:
@@ -102,7 +103,11 @@ class GptReviewer:
         offset = chunk.start_line_no
         line_no = None
         for i, line in enumerate(chunk.lines):
-            if line.strip() == bad_code.strip():
+            # I got one result that the bad code was
+            # class azure.eventhub.extensions.checkpointstoreblob.BlobCheckpointStore(CheckpointStore)
+            # while the line was
+            # class azure.eventhub.extensions.checkpointstoreblob.BlobCheckpointStore(CheckpointStore): implements ContextManager
+            if bad_code.strip() in line.strip():
                 if line_no is None:
                     line_no = offset + i
                 else:

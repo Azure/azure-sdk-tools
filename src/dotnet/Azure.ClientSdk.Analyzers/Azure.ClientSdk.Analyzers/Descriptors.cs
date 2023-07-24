@@ -120,8 +120,8 @@ namespace Azure.ClientSdk.Analyzers
 
         public static DiagnosticDescriptor AZC0018 = new DiagnosticDescriptor(
             nameof(AZC0018),
-            "Do ensure protocol methods take a RequestContext parameter called `context` and do not take models as parameter or return types. Do ensure protocol methods will not cause an ambiguous overload resolution with convenience methods.",
-            "Protocol method should have `requestContext` as the last parameter and not use a model as parameter or return types. Protocol methods should not have optional parameters if ambiguity exists between the protocol method and convenience methods.",
+            "Invalid protocl method signature.",
+            "Protocol method should take a RequestContext parameter called `context` and not use a model as parameter or return types. Protocol methods should not have optional parameters if ambiguity exists between the protocol method and convenience methods.",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null);
         #endregion
 

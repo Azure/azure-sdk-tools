@@ -1284,7 +1284,7 @@ class CheckDocstringParameters(BaseChecker):
         :param node: ast.ClassDef or ast.FunctionDef
         :return: None
         """
-        typing_list = ["Optional", "Any", "Union", "List", "Tuple", "Dict", "Iterable", "Iterator", "AsyncIterable", "AsyncIterator"]
+        typing_list = ["Optional", "Any", "Union", "List", "Tuple", "Dict", "Iterable", "Iterator"]
         arg_names = []
         vararg_name = None
         # specific case for constructor where docstring found in class def

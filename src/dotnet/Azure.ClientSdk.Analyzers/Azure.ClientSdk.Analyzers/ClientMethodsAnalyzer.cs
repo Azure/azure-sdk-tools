@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Azure.ClientSdk.Analyzers
@@ -30,84 +29,9 @@ namespace Azure.ClientSdk.Analyzers
             Descriptors.AZC0004,
             Descriptors.AZC0015,
             Descriptors.AZC0017,
-            Descriptors.AZC0018
+            Descriptors.AZC0018,
+            Descriptors.AZC0019,
         });
-
-        public override void Initialize(AnalysisContext context)
-        {
-            context.EnableConcurrentExecution();
-            context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
-            base.Initialize(context);
-            context.RegisterCodeBlockAction(c => AnalyzeCodeBlock(c));
-        }
-
-        private void AnalyzeCodeBlock(CodeBlockAnalysisContext codeBlock)
-        {
-            var symbol = codeBlock.OwningSymbol;
-            if (symbol is IMethodSymbol methodSymbol && !IsCheckExempt(methodSymbol))
-            {
-                var lastParameter = methodSymbol.Parameters.LastOrDefault();
-                if (lastParameter != null && IsRequestContext(lastParameter))
-                {
-                    var requestContent = methodSymbol.Parameters.FirstOrDefault(p => IsRequestContent(p));
-                    if (requestContent != null)
-                    {
-                        bool isRequired = ContainsAssertNotNull(codeBlock, requestContent.Name);
-                        if (isRequired && !lastParameter.IsOptional)
-                        {
-                            codeBlock.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, symbol.Locations.FirstOrDefault()));
-                        }
-                        if (!isRequired && lastParameter.IsOptional)
-                        {
-                            codeBlock.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, symbol.Locations.FirstOrDefault()));
-                        }
-                    }
-                }
-            }
-        }
-
-        private static bool ContainsAssertNotNull(CodeBlockAnalysisContext codeBlock, string variableName)
-        {
-            // Check Argument.AssertNotNull(variableName, nameof(variableName));
-            foreach (var invocation in codeBlock.CodeBlock.DescendantNodes().OfType<InvocationExpressionSyntax>())
-            {
-                if (invocation.Expression is MemberAccessExpressionSyntax assertNotNull && assertNotNull.Name.Identifier.Text == "AssertNotNull")
-                {
-                    if (assertNotNull.Expression is IdentifierNameSyntax identifierName && identifierName.Identifier.Text == "Argument" ||
-                        assertNotNull.Expression is MemberAccessExpressionSyntax memberAccessExpression && memberAccessExpression.Name.Identifier.Text == "Argument")
-                    {
-                        var argumentsList = invocation.ArgumentList.Arguments;
-                        if (argumentsList.Count != 2)
-                        {
-                            continue;
-                        }
-                        if (argumentsList.First().Expression is IdentifierNameSyntax first)
-                        {
-                            if (first.Identifier.Text != variableName)
-                            {
-                                continue;
-                            }
-                            if (argumentsList.Last().Expression is InvocationExpressionSyntax second)
-                            {
-                                if (second.Expression is IdentifierNameSyntax nameof && nameof.Identifier.Text == "nameof")
-                                {
-                                    if (second.ArgumentList.Arguments.Count != 1)
-                                    {
-                                        continue;
-                                    }
-                                    if (second.ArgumentList.Arguments.First().Expression is IdentifierNameSyntax contentName && contentName.Identifier.Text == variableName)
-                                    {
-                                        return true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return false;
-        }
 
         private static bool IsRequestContent(IParameterSymbol parameterSymbol)
         {
@@ -175,10 +99,8 @@ namespace Azure.ClientSdk.Analyzers
         }
 
         // A protocol method should not have model as parameter. If it has ambiguity with convenience method, it should have required RequestContext.
-        // Ambiguity:
-        // 1) has optional RequestContent.
-        // 2) doesn't have a RequestContent, but there is a method ending with CancellationToken has same type of parameters 
-        // No ambiguity: has required RequestContent.
+        // Ambiguity: doesn't have a RequestContent, but there is a method ending with CancellationToken has same type of parameters 
+        // No ambiguity: has RequestContent.
         private static void CheckProtocolMethodParameters(ISymbolAnalysisContext context, IMethodSymbol method)
         {
             var containsModel = method.Parameters.Any(p =>
@@ -202,10 +124,9 @@ namespace Azure.ClientSdk.Analyzers
                 IMethodSymbol convenienceMethod = FindMethod(methodList, method.TypeParameters, parametersWithoutLast, symbol => IsCancellationToken(symbol), ParameterEquivalenceComparerOptionalIgnore.Default);
                 if (convenienceMethod != null)
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0019, method.Locations.FirstOrDefault()), method);
                 }
             }
-            // Optional RequestContent or required RequestContent is checked in AnalyzeCodeBlock.
         }
 
         // A protocol method should not have model as type. Accepted return type: Response, Task<Response>, Pageable<BinaryData>, AsyncPageable<BinaryData>, Operation<BinaryData>, Task<Operation<BinaryData>>, Operation, Task<Operation>, Operation<Pageable<BinaryData>>, Task<Operation<AsyncPageable<BinaryData>>>

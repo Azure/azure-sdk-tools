@@ -326,7 +326,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0018ProducedForMethodsWithNoRequestContentButProtocolAndConvenience()
+        public async Task AZC0018NotProducedForMethodsWithRequestContentAndOptionalRequestContext()
         {
             const string code = @"
 using Azure;
@@ -339,110 +339,12 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task<Response> GetAsync(string a, CancellationToken cancellationToken = default)
+        public virtual Task<Response> GetAsync(RequestContent content, RequestContext context = null)
         {
             return null;
         }
 
-        public virtual Response Get(string a, CancellationToken cancellationToken = default)
-        {
-            return null;
-        }
-
-        public virtual Task<Response> {|AZC0018:GetAsync|}(string a, Azure.RequestContext context = null)
-        {
-            return null;
-        }
-
-        public virtual Response {|AZC0018:Get|}(string a, Azure.RequestContext context = null)
-        {
-            return null;
-        }
-    }
-}";
-            await Verifier.CreateAnalyzer(code)
-                .RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0018ProducedForMethodsWithRequiredRequestContentAndRequiredRequestContext()
-        {
-            const string code = @"
-using Azure;
-using Azure.Core;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-
-namespace Azure.Core
-{
-    internal static partial class Argument
-    {
-        public static void AssertNotNull<T>(T value, string name)
-        {
-            if (value is null)
-            {
-                throw new System.ArgumentNullException(name);
-            }
-        }
-    }
-}
-
-namespace RandomNamespace
-{
-    public class SomeClient
-    {
-        public virtual Task<Response> {|AZC0018:GetAsync|}(RequestContent content, RequestContext context)
-        {
-            Argument.AssertNotNull(content, nameof(content));
-            return null;
-        }
-
-        public virtual Response {|AZC0018:Get|}(RequestContent content, RequestContext context)
-        {
-            Argument.AssertNotNull(content, nameof(content));
-            return null;
-        }
-    }
-}";
-            await Verifier.CreateAnalyzer(code)
-                .RunAsync();
-        }
-
-        [Fact]
-        public async Task AZC0018ProducedForMethodsWithOptionalRequestContentAndOptionalRequestContext()
-        {
-            const string code = @"
-using Azure;
-using Azure.Core;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-
-namespace Azure.Core
-{
-    internal static partial class Argument
-    {
-        public static void AssertNotNull<T>(T value, string name)
-        {
-            if (value is null)
-            {
-                throw new System.ArgumentNullException(name);
-            }
-        }
-    }
-}
-
-namespace RandomNamespace
-{
-    public class SomeClient
-    {
-        public virtual Task<Response> {|AZC0018:GetAsync|}(RequestContent content, RequestContext context = null)
-        {
-            return null;
-        }
-
-        public virtual Response {|AZC0018:Get|}(RequestContent content, RequestContext context = null)
+        public virtual Response Get(RequestContent content, RequestContext context = null)
         {
             return null;
         }

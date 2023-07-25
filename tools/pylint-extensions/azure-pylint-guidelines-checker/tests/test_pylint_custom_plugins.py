@@ -3488,32 +3488,97 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
-    def test_docstring_raises(self):
+    def test_docstring_param_misformatted(self):
         node = astroid.extract_node(
             """
-            def function_foo():
+            def function_foo(x, y, z):
                 '''
-                :raises: ValueError
+                :param x: x
+                :type x: Union[str, int]
+                :param str y: y
+                :param str z: z
                 '''
-                print("hello")
-                raise ValueError("hello")
             """
         )
-        with self.assertNoMessages():
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-misformatted-type",
+                    line=2,
+                    args='x',
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=16
+                )
+        ):
             self.checker.visit_functiondef(node)
 
-    def test_docstring_raises_uninferable(self):
+    def test_docstring_param_capitilization(self):
         node = astroid.extract_node(
             """
-            def function_foo():
+            def function_foo(x, y, z):
                 '''
-                :raises: ValueError
+                :param x: x
+                :type x: dict
+                :param str y: y
+                :param str z: z
                 '''
-                raise ValueError("hello")
             """
         )
-        with self.assertNoMessages():
+        with self.assertNoMessages(
+        ):
             self.checker.visit_functiondef(node)
+
+    def test_docstring_param_misformatted_internal_value(self):
+        node = astroid.extract_node(
+            """
+            def function_foo(x, y, z):
+                '''
+                :param x: x
+                :type x: dict[str, List[str]]
+                :param str y: y
+                :param str z: z
+                '''
+            """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-misformatted-type",
+                    line=2,
+                    args='x',
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=16
+                )
+        ):
+            self.checker.visit_functiondef(node)
+
+    def test_docstring_param_misformatted_with_parentheses(self):
+        node = astroid.extract_node(
+            """
+            def function_foo(x, y, z):
+                '''
+                :param x: x
+                :type x: List()
+                :param str y: y
+                :param str z: z
+                '''
+            """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-misformatted-type",
+                    line=2,
+                    args='x',
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=16
+                )
+        ):
+            self.checker.visit_functiondef(node)
+
 
 class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed imports and allowing allowed imports."""

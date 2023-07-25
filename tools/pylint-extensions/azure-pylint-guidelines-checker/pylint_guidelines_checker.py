@@ -2229,6 +2229,37 @@ class DoNotImportLegacySix(BaseChecker):
                     confidence=None,
                 )
 
+class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
+    __implements__ = IAstroidChecker
+
+    """Rule to check that we aren't importing azure.core.pipeline.transport.HttpResponse outside of Azure Core."""
+    name = "no-legacy-azure-core-http-response-import"
+    priority = -1
+    msgs = {
+        "C4756": (
+            "Do not import HttpResponse from azure.core.pipeline.transport outside of Azure Core.",
+            "no-legacy-azure-core-http-response-import",
+            "Do not import HttpResponse from azure.core.pipeline.transport outside of Azure Core. You can import HttpResponse from azure.core.rest instead."
+        ),
+    }
+
+    AZURE_CORE_NAME = "azure.core"
+    AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
+    RESPONSE_CLASSES = ["HttpResponse", "AsyncHttpResponse"]
+
+    def visit_importfrom(self, node):
+        """Check that we aren't importing from azure.core.pipeline.transport import HttpResponse."""
+        if node.root().name.startswith(self.AZURE_CORE_NAME): 
+            return
+        if node.modname == self.AZURE_CORE_TRANSPORT_NAME: 
+            for name, _ in node.names:
+                if name in self.RESPONSE_CLASSES:
+                    self.add_message(
+                        msgid=f"no-legacy-azure-core-http-response-import",
+                        node=node,
+                        confidence=None,
+                    )
+
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):
     linter.register_checker(ClientsDoNotUseStaticMethods(linter))
@@ -2257,6 +2288,7 @@ def register(linter):
     linter.register_checker(DeleteOperationReturnStatement(linter))
     linter.register_checker(ClientMethodsHaveTracingDecorators(linter))
     linter.register_checker(DoNotImportLegacySix(linter))
+    linter.register_checker(NoLegacyAzureCoreHttpResponseImport(linter))
 
     # disabled by default, use pylint --enable=check-docstrings if you want to use it
     linter.register_checker(CheckDocstringParameters(linter))

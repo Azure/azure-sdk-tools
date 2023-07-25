@@ -6,7 +6,7 @@ from langchain.prompts import PromptTemplate
 from langchain.chat_models import AzureChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 import openai
-from typing import List
+from typing import List, Union
 
 from ._sectioned_document import SectionedDocument, Section
 from ._models import GuidelinesResult, Violation
@@ -73,7 +73,7 @@ class GptReviewer:
                 results = self.chain.run(apiview=str(chunk), guidelines=guidelines, language=language)
                 output = self.output_parser.parse(results)
                 final_results.violations.extend(self.process_violations(output.violations, chunk))
-                # I got one result that there was a violation but the status was "Success" so I'm adding this check
+                # FIXME see: https://github.com/Azure/azure-sdk-tools/issues/6571
                 if len(output.violations) > 0:
                     final_results.status = "Error"
         return final_results
@@ -86,6 +86,9 @@ class GptReviewer:
         for violation in violations:
             line_no = self.find_line_number(section, violation.bad_code)
             violation.line_no = line_no
+            # FIXME see: https://github.com/Azure/azure-sdk-tools/issues/6590
+            if not line_no:
+                continue
             existing = combined_violations.get(line_no, None)
             if existing:
                 for rule_id in violation.rule_ids:
@@ -99,21 +102,25 @@ class GptReviewer:
                 combined_violations[line_no] = violation
         return [x for x in combined_violations.values()]
 
-    def find_line_number(self, chunk: Section, bad_code: str) -> int:
+    def find_line_number(self, chunk: Section, bad_code: str) -> Union[int, None]:
         offset = chunk.start_line_no
         line_no = None
         for i, line in enumerate(chunk.lines):
-            # I got one result that the bad code was
-            # class azure.eventhub.extensions.checkpointstoreblob.BlobCheckpointStore(CheckpointStore)
-            # while the line was
-            # class azure.eventhub.extensions.checkpointstoreblob.BlobCheckpointStore(CheckpointStore): implements ContextManager
-            if bad_code.strip() in line.strip():
+            # FIXME: see: https://github.com/Azure/azure-sdk-tools/issues/6572
+            if line.strip().startswith(bad_code.strip()):
                 if line_no is None:
                     line_no = offset + i
                 else:
-                    raise Exception(f"Found multiple instances of bad code in the given chunk: {bad_code}")
+                    print(f"WARNING: Found multiple instances of bad code, default to first: {bad_code}")
+        # FIXME: see: https://github.com/Azure/azure-sdk-tools/issues/6572
         if not line_no:
-            raise Exception(f"Unable to find line number for bad code: {bad_code}")
+            print(f"WARNING: Could not find bad code. Trying less precise method: {bad_code}")
+            for i, line in enumerate(chunk.lines):
+                if bad_code.strip().startswith(line.strip()):
+                    if line_no is None:
+                        line_no = offset + i
+                    else:
+                        print(f"WARNING: Found multiple instances of bad code, default to first: {bad_code}")
         return line_no
 
     def should_evaluate(self, chunk: Section):

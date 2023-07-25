@@ -28,17 +28,15 @@ class SectionedDocument:
                 line_data.append(LineData(i, indent, line))
 
             top_level_lines = [x for x in line_data if x.indent == 0 and x.line != ""]
-            for i in range(len(top_level_lines) - 1):
+            for i in range(len(top_level_lines)):
                 line1 = top_level_lines[i]
-                line2 = top_level_lines[i + 1]
-                lines_between = line_data[line1.line_no : line2.line_no]
+                try:
+                    line2 = top_level_lines[i + 1]
+                    lines_between = line_data[line1.line_no : line2.line_no]
+                except IndexError:
+                    lines_between = line_data[line1.line_no:]
                 section = Section([x.line for x in lines_between], line1.line_no)
                 self.sections.append(section)
-            # add the last section
-            last_line = top_level_lines[-1]
-            lines_between = line_data[last_line.line_no :]
-            section = Section([x.line for x in lines_between], last_line.line_no)
-            self.sections.append(section)
         else:
             # just do one big chunk
             self.sections.append(Section(lines, 0))

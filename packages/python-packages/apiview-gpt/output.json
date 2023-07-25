@@ -9,7 +9,7 @@
       "line_no": 2,
       "bad_code": "class azure.contoso.ContosoAsyncManager:",
       "suggestion": "class azure.contoso.aio.ContosoClient:",
-      "comment": "Service client types should have a 'Client' suffix. Async client should be in a separate 'aio' namespace and have the same name as the sync client."
+      "comment": "Service client types should have a 'Client' suffix. Provide separate client classes for synchronous and asynchronous operations."
     },
     {
       "rule_ids": [
@@ -22,7 +22,7 @@
     },
     {
       "rule_ids": [
-        "python-client-naming"
+        "python_design.html#python-client-naming"
       ],
       "line_no": 13,
       "bad_code": "class azure.contoso.ContosoManager:",
@@ -31,7 +31,7 @@
     },
     {
       "rule_ids": [
-        "python-client-options-naming"
+        "python_design.html#python-client-options-naming"
       ],
       "line_no": 19,
       "bad_code": "options: dict",
@@ -64,6 +64,16 @@
       "bad_code": "red = \"red\"",
       "suggestion": "RED = \"red\"",
       "comment": "Enum names should be in UPPERCASE."
+    },
+    {
+      "rule_ids": [
+        "python_design.html#python-client-naming",
+        "python_design.html#python-models-dict-result"
+      ],
+      "line_no": 30,
+      "bad_code": "class azure.contoso.WidgetResult:",
+      "suggestion": "Use a simple Mapping (e.g. dict) instead of creating a WidgetResult class if the WidgetResult class is not used as an input parameter for other APIs.",
+      "comment": "Service client types should have a Client suffix. Consider using a simple Mapping instead of creating a separate class for operation results."
     }
   ]
 }

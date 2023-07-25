@@ -4,13 +4,12 @@
     {
       "rule_ids": [
         "python-client-naming",
-        "python-client-separate-sync-async",
-        "python-client-same-name-sync-async"
+        "python-client-separate-sync-async"
       ],
       "line_no": 2,
       "bad_code": "class azure.contoso.ContosoAsyncManager:",
       "suggestion": "class azure.contoso.aio.ContosoClient:",
-      "comment": "Service client types should have a Client suffix. Provide separate client classes for synchronous and asynchronous operations. Use the same client name for sync and async packages."
+      "comment": "Service client types should have a 'Client' suffix. Provide separate client classes for synchronous and asynchronous operations."
     },
     {
       "rule_ids": [

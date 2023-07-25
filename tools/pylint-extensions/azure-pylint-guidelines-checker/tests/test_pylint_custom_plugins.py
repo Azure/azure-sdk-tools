@@ -3595,19 +3595,6 @@ class TestCheckNoLegacyAzureCoreHttpResponseImport(pylint.testutils.CheckerTestC
         ):
             self.checker.visit_importfrom(importfrom_node)
 
-    def test_disallowed_import(self):
-        """Check that illegal imports raise warnings"""
-        importfrom_node = astroid.extract_node("import azure.core.pipeline.transport.HttpResponse")
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id="no-legacy-azure-core-http-response-import",
-                    line=1,
-                    node=importfrom_node,
-                    col_offset=0,
-                )
-        ):
-            self.checker.visit_import(importfrom_node)
-
     def test_allowed_imports(self):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.

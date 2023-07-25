@@ -2259,21 +2259,6 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
                         node=node,
                         confidence=None,
                     )
-    
-    def visit_import(self, node):
-        """Check that we aren't importing import azure.core.pipeline.transport.HttpResponse."""
-        if node.root().name.startswith(self.AZURE_CORE_NAME): 
-            return
-        for name, _ in node.names:
-            if self.AZURE_CORE_TRANSPORT_NAME in name:
-                name = name.split(self.AZURE_CORE_TRANSPORT_NAME)[1].strip(".")
-                if name in self.RESPONSE_CLASSES:
-                    self.add_message(
-                            msgid=f"no-legacy-azure-core-http-response-import",
-                            node=node,
-                            confidence=None,
-                        )
-
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):

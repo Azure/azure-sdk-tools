@@ -396,6 +396,9 @@ def generate_java_report() -> ScanResult:
 
     # we don't care about packages that start with 'microsoft-' as they are track 1 and will never migrate
     packages = [package for package in packages if not "microsoft-" in os.path.dirname(package)]
+    packages = [package for package in packages if not "azure-communication-callingserver" in os.path.dirname(package)]
+    packages = [package for package in packages if not "azure-maps-elevation" in os.path.dirname(package)]
+    packages = [package for package in packages if not "azure-verticals-agrifood-farming" in os.path.dirname(package)]
    
     result.packages = sorted([os.path.basename(os.path.dirname(pkg)) for pkg in packages])
 

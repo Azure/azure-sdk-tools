@@ -45,6 +45,18 @@ jobs:
         GH_TOKEN: $(azuresdk-github-pat)
         Repos:
 
+          Azure/azure-sdk-for-python:
+            Branch: release/v3
+            TargetRepos:
+              Azure/azure-sdk-for-python-pr:
+              azure-sdk/azure-sdk-for-python:
+              azure-sdk/azure-sdk-for-python-pr:
+
+                - template: ./templates/steps/sync-repo-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
+
           Azure/azure-rest-api-specs:
             TargetRepos:
               Azure/azure-rest-api-specs-pr:
@@ -118,15 +130,3 @@ jobs:
           MicrosoftDocs/azure-dev-docs-pr:
             TargetRepos:
               azure-sdk/azure-dev-docs-pr:
-
-    - template: ./templates/steps/sync-repo-branch.yml
-      parameters:
-        GH_TOKEN: $(azuresdk-github-pat)
-        Repos:
-
-          Azure/azure-sdk-for-python:
-            Branch: release/v3
-            TargetRepos:
-              Azure/azure-sdk-for-python-pr:
-              azure-sdk/azure-sdk-for-python:
-              azure-sdk/azure-sdk-for-python-pr:

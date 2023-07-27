@@ -22,6 +22,41 @@ jobs:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 
+
+    - template: ./templates/steps/sync-repo-merge-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
+
+          Azure/azure-rest-api-specs-pr:
+            Branch: main
+            TargetBranches:
+              RPSaaSMaster:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              RPSaaSDev:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              ARMCoreRPDev:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+              InternalARMContracts:
+                Theirs: '@("**")'
+                Ours: '@("specification", "custom-words.txt")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+
+    - template: ./templates/steps/sync-repo-branch.yml
+      parameters:
+        GH_TOKEN: $(azuresdk-github-pat)
+        Repos:
+
           Azure/azure-sdk-for-cpp:
             TargetRepos:
               Azure/azure-sdk-for-cpp-pr:
@@ -102,32 +137,3 @@ jobs:
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
-
-    - template: ./templates/steps/sync-repo-merge-branch.yml
-      parameters:
-        GH_TOKEN: $(azuresdk-github-pat)
-        Repos:
-          Azure/azure-rest-api-specs-pr:
-            Branch: main
-            TargetBranches:
-              RPSaaSMaster:
-                Theirs: '@("**")'
-                Ours: '@("specification", "custom-words.txt")'
-                Merge: '@("specification/common-types")'
-                AcceptTheirsForFinalMerge: true
-              RPSaaSDev:
-                Theirs: '@("**")'
-                Ours: '@("specification", "custom-words.txt")'
-                Merge: '@("specification/common-types")'
-                AcceptTheirsForFinalMerge: true
-              ARMCoreRPDev:
-                Theirs: '@("**")'
-                Ours: '@("specification", "custom-words.txt")'
-                Merge: '@("specification/common-types")'
-                AcceptTheirsForFinalMerge: true
-              InternalARMContracts:
-                Theirs: '@("**")'
-                Ours: '@("specification", "custom-words.txt")'
-                Merge: '@("specification/common-types")'
-                AcceptTheirsForFinalMerge: true
-

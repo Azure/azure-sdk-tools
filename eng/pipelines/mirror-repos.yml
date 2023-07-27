@@ -1,4 +1,5 @@
 # Mirror the default branch for each repo folder to all subscribed langauge repos.
+# Repos should be merged in approximate order from fastest to slowest
 
 trigger: none
 pr: none

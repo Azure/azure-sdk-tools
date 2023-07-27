@@ -73,7 +73,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public string GetBreadCrumbLocation(GitAssetsConfiguration configuration)
         {
-            return Path.Join(configuration.ResolveAssetsStoreLocation().ToString(), ".breadcrumb");
+            var breadCrumbFolder = Path.Combine(configuration.ResolveAssetsStoreLocation().ToString(), "breadcrumb");
+
+            if (!Directory.Exists(breadCrumbFolder))
+            {
+                Directory.CreateDirectory(breadCrumbFolder);
+            }
+
+            return Path.Join(breadCrumbFolder, $"{configuration.AssetRepoShortHash}.breadcrumb");
         }
 
         /// <summary>

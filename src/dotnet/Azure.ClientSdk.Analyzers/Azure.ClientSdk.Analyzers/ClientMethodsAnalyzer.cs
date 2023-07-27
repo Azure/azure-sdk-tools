@@ -121,7 +121,7 @@ namespace Azure.ClientSdk.Analyzers
                 INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
                 IEnumerable<IMethodSymbol> methodList = type.GetMembers(method.Name).OfType<IMethodSymbol>().Where(member => !SymbolEqualityComparer.Default.Equals(member, method));
                 ImmutableArray<IParameterSymbol> parametersWithoutLast = method.Parameters.RemoveAt(method.Parameters.Length - 1);
-                IMethodSymbol convenienceMethod = FindMethod(methodList, method.TypeParameters, parametersWithoutLast, symbol => IsCancellationToken(symbol), ParameterEquivalenceComparerOptionalIgnore.Default);
+                IMethodSymbol convenienceMethod = FindMethod(methodList, method.TypeParameters, parametersWithoutLast, symbol => IsCancellationToken(symbol));
                 if (convenienceMethod != null)
                 {
                     context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0019, method.Locations.FirstOrDefault()), method);

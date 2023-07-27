@@ -16,35 +16,45 @@ jobs:
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
         Repos:
+          # 22s
           Azure/azure-rest-api-specs-pr:
             Branch: main
             TargetBranches:
+              # 12s
               RPSaaSMaster:
                 Theirs: '@("**")'
                 Ours: '@("specification", "custom-words.txt")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
+
+              # 9s
               RPSaaSDev:
                 Theirs: '@("**")'
                 Ours: '@("specification", "custom-words.txt")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
+
+              # 12s
               ARMCoreRPDev:
                 Theirs: '@("**")'
                 Ours: '@("specification", "custom-words.txt")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
+
+              # 11s
               InternalARMContracts:
                 Theirs: '@("**")'
                 Ours: '@("specification", "custom-words.txt")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
 
+
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
         Repos:
 
+          # 14s
           Azure/azure-sdk-for-python:
             Branch: release/v3
             TargetRepos:
@@ -52,81 +62,97 @@ jobs:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
 
+
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
         Repos:
 
+          # 4s
+          Azure/azure-dev:
+            TargetRepos:
+              Azure/azure-dev-pr:
+
+          # 4s
+          Azure/azure-sdk-for-android:
+            TargetRepos:
+              Azure/azure-sdk-for-android-pr:
+              azure-sdk/azure-sdk-for-android:
+
+          # 4s
+          Azure/azure-sdk-for-cpp:
+            TargetRepos:
+              Azure/azure-sdk-for-cpp-pr:
+
+          # 5s
+          Azure/azure-sdk-for-c:
+            TargetRepos:
+              Azure/azure-sdk-for-c-pr:
+              azure-sdk/azure-sdk-for-c:
+
+          # 5s
+          Azure/azure-sdk-for-ios:
+            TargetRepos:
+              Azure/azure-sdk-for-ios-pr:
+              azure-sdk/azure-sdk-for-ios:
+
+          # 9s
+          Azure/azure-resource-manager-schemas:
+            TargetRepos:
+              azure-sdk/azure-resource-manager-schemas:
+
+          # 12s
+          Microsoft/vcpkg:
+            TargetRepos:
+              azure-sdk/vcpkg:
+
+          # 19s
+          MicrosoftDocs/azure-dev-docs-pr:
+            TargetRepos:
+              azure-sdk/azure-dev-docs-pr:
+
+          # 22s
           Azure/azure-rest-api-specs:
             TargetRepos:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 
-          Azure/azure-sdk-for-cpp:
-            TargetRepos:
-              Azure/azure-sdk-for-cpp-pr:
-
-          Azure/azure-sdk-for-go:
-            TargetRepos:
-              Azure/azure-sdk-for-go-pr:
-              azure-sdk/azure-sdk-for-go:
-              azure-sdk/azure-sdk-for-go-pr:
-
-          Azure/azure-sdk-for-java:
-            TargetRepos:
-              Azure/azure-sdk-for-java-pr:
-              azure-sdk/azure-sdk-for-java:
-              azure-sdk/azure-sdk-for-java-pr:
-
+          # 31s
           Azure/azure-sdk-for-js:
             TargetRepos:
               Azure/azure-sdk-for-js-pr:
               azure-sdk/azure-sdk-for-js:
               azure-sdk/azure-sdk-for-js-pr:
 
-          Azure/azure-sdk-for-net:
+          # 37s
+          Azure/azure-sdk-for-go:
             TargetRepos:
-              Azure/azure-sdk-for-net-pr:
-              azure-sdk/azure-sdk-for-net:
-              azure-sdk/azure-sdk-for-net-pr:
+              Azure/azure-sdk-for-go-pr:
+              azure-sdk/azure-sdk-for-go:
+              azure-sdk/azure-sdk-for-go-pr:
 
+          # 51s
           Azure/azure-sdk-for-python:
             TargetRepos:
               Azure/azure-sdk-for-python-pr:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
 
-          Azure/azure-sdk-for-ios:
-            TargetRepos:
-              Azure/azure-sdk-for-ios-pr:
-              azure-sdk/azure-sdk-for-ios:
-
-          Azure/azure-sdk-for-android:
-            TargetRepos:
-              Azure/azure-sdk-for-android-pr:
-              azure-sdk/azure-sdk-for-android:
-
-          Azure/azure-sdk-for-c:
-            TargetRepos:
-              Azure/azure-sdk-for-c-pr:
-              azure-sdk/azure-sdk-for-c:
-
-          Microsoft/vcpkg:
-            TargetRepos:
-              azure-sdk/vcpkg:
-
+          # 3m 8s
           Azure/azure-docs-sdk-java:
             TargetRepos:
               azure-sdk/azure-docs-sdk-java:
 
-          Azure/azure-resource-manager-schemas:
+          # 3m 41s
+          Azure/azure-sdk-for-java:
             TargetRepos:
-              azure-sdk/azure-resource-manager-schemas:
+              Azure/azure-sdk-for-java-pr:
+              azure-sdk/azure-sdk-for-java:
+              azure-sdk/azure-sdk-for-java-pr:
 
-          Azure/azure-dev:
+          # 3m 55s
+          Azure/azure-sdk-for-net:
             TargetRepos:
-              Azure/azure-dev-pr:
-
-          MicrosoftDocs/azure-dev-docs-pr:
-            TargetRepos:
-              azure-sdk/azure-dev-docs-pr:
+              Azure/azure-sdk-for-net-pr:
+              azure-sdk/azure-sdk-for-net:
+              azure-sdk/azure-sdk-for-net-pr:

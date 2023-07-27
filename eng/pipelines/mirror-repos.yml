@@ -52,7 +52,7 @@ jobs:
               azure-sdk/azure-sdk-for-python:
               azure-sdk/azure-sdk-for-python-pr:
 
-                - template: ./templates/steps/sync-repo-branch.yml
+    - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
         Repos:

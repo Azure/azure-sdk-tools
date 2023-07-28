@@ -317,7 +317,7 @@ Function Get-AssetsFilePath {
   $folders = Get-ChildItem $startingPath -Directory -Exclude "breadcrumb"
 
   Write-Host "What we see overall in the assets folder is"
-  Get-ChildItem $startingPath -Directory | % { $_.FullName }
+  Get-ChildItem $startingPath -Recurse | % { $_.FullName }
 
   # There should only be one folder
   if (1 -ne $numDirs) {

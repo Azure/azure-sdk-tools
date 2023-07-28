@@ -482,7 +482,7 @@ Describe "AssetsModuleTests" {
                     $LASTEXITCODE | Should -Be 0
 
                     $newlocalAssetsFilePath = Join-Path $newTestFolder ".assets"
-                    $newAssetsFolder = $(Get-ChildItem $newlocalAssetsFilePath -Directory)[0].FullName
+                    $newAssetsFolder = $(Get-ChildItem $newlocalAssetsFilePath -Directory | Where-Object { $_.Name -ne "breadcrumb" })[0].FullName
                     mkdir -p $(Join-Path $newAssetsFolder $creationPath)
 
                     # same file updates. we should have an identical sha!
@@ -585,7 +585,7 @@ Describe "AssetsModuleTests" {
                 Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
                 $LASTEXITCODE | Should -Be 0
                 $localAssetsFilePath = Join-Path $testFolder ".assets"
-                $assetsFolder = $(Get-ChildItem $localAssetsFilePath -Directory)[0].FullName
+                $assetsFolder = $(Get-ChildItem $localAssetsFilePath -Directory | Where-Object { $_.Name -ne "breadcrumb" })[0].FullName
                 mkdir -p $(Join-Path $assetsFolder $creationPath)
 
                 # Create new files. These are in a predictable location with predicatable content so we can be certain they are around
@@ -603,7 +603,6 @@ Describe "AssetsModuleTests" {
                 Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
                 $LASTEXITCODE | Should -Be 0
 
-                
                 Test-Path -Path (Join-Path $assetsFolder $file1) | Should -Be $false
                 Test-Path -Path (Join-Path $assetsFolder $file2) | Should -Be $false
                 Test-Path -Path (Join-Path $assetsFolder $file3) | Should -Be $false

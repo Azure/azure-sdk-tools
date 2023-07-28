@@ -7,43 +7,43 @@ stages:
   - stage: IntegrationTests
     displayName: "Asset Sync Integration Tests"
     jobs:
-    # - job: Solution_Integration_Test
+    - job: Solution_Integration_Test
 
-    #   strategy:
-    #     matrix:
-    #       Windows:
-    #         Pool: 'azsdk-pool-mms-win-2022-general'
-    #         OS: 'Windows'
-    #       Linux:
-    #         Pool: azsdk-pool-mms-ubuntu-2204-general
-    #         OS: 'Linux'
-    #       Mac:
-    #         Pool: 'Azure Pipelines'
-    #         OS: 'Mac'
+      strategy:
+        matrix:
+          Windows:
+            Pool: 'azsdk-pool-mms-win-2022-general'
+            OS: 'Windows'
+          Linux:
+            Pool: azsdk-pool-mms-ubuntu-2204-general
+            OS: 'Linux'
+          Mac:
+            Pool: 'Azure Pipelines'
+            OS: 'Mac'
 
-    #   pool:
-    #     name: $(Pool)
+      pool:
+        name: $(Pool)
 
-    #   steps:
-    #     - template: /eng/pipelines/templates/steps/install-dotnet.yml
+      steps:
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
-    #     - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) --filter "Category=Integration" --logger trx $(Build.SourcesDirectory)/tools/test-proxy/'
-    #       displayName: 'Test'
-    #       env:
-    #         DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-    #         DOTNET_CLI_TELEMETRY_OPTOUT: 1
-    #         DOTNET_MULTILEVEL_LOOKUP: 0
-    #         GIT_TOKEN: $(azuresdk-github-pat)
-    #         GIT_COMMIT_OWNER: azure-sdk
-    #         GIT_COMMIT_EMAIL: azuresdk@microsoft.com
+        - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) --filter "Category=Integration" --logger trx $(Build.SourcesDirectory)/tools/test-proxy/'
+          displayName: 'Test'
+          env:
+            DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+            DOTNET_CLI_TELEMETRY_OPTOUT: 1
+            DOTNET_MULTILEVEL_LOOKUP: 0
+            GIT_TOKEN: $(azuresdk-github-pat)
+            GIT_COMMIT_OWNER: azure-sdk
+            GIT_COMMIT_EMAIL: azuresdk@microsoft.com
 
-    #     - task: PublishTestResults@2
-    #       condition: succeededOrFailed()
-    #       inputs:
-    #         testResultsFiles: '**/*.trx'
-    #         testRunTitle: '$(OS) AssetSync tests against .NET'
-    #         testResultsFormat: 'VSTest'
-    #         mergeTestResults: true
+        - task: PublishTestResults@2
+          condition: succeededOrFailed()
+          inputs:
+            testResultsFiles: '**/*.trx'
+            testRunTitle: '$(OS) AssetSync tests against .NET'
+            testResultsFormat: 'VSTest'
+            mergeTestResults: true
 
     - job: CLI_Integration_Test
 
@@ -109,181 +109,181 @@ stages:
               CLI_TEST_DOCKER_TAG: $(CLI_TEST_DOCKER_TAG)
               DISABLE_INTEGRATION_BRANCH_CLEANUP: true
 
-  # - stage: RepoUnitTests
-  #   displayName: Repo-Specific Unit Tests
-  #   dependsOn: []
-  #   jobs:
-  #   - job: Test_JS_Utils
+  - stage: RepoUnitTests
+    displayName: Repo-Specific Unit Tests
+    dependsOn: []
+    jobs:
+    - job: Test_JS_Utils
 
-  #     displayName: Invoke JS Utils CI Tests
+      displayName: Invoke JS Utils CI Tests
 
-  #     strategy:
-  #       matrix:
-  #         Windows:
-  #           Pool: 'azsdk-pool-mms-win-2022-general'
-  #           OS: 'Windows'
-  #         Linux:
-  #           Pool: azsdk-pool-mms-ubuntu-2204-general
-  #           OS: 'Linux'
-  #         Mac:
-  #           Pool: 'Azure Pipelines'
-  #           OS: 'Mac'
+      strategy:
+        matrix:
+          Windows:
+            Pool: 'azsdk-pool-mms-win-2022-general'
+            OS: 'Windows'
+          Linux:
+            Pool: azsdk-pool-mms-ubuntu-2204-general
+            OS: 'Linux'
+          Mac:
+            Pool: 'Azure Pipelines'
+            OS: 'Mac'
 
-  #     pool:
-  #       name: $(Pool)
+      pool:
+        name: $(Pool)
 
-  #     variables:
-  #       REPO: "Azure/azure-sdk-for-js"
-  #       CLONE_LOCATION: "$(Agent.BuildDirectory)/js_repo"
+      variables:
+        REPO: "Azure/azure-sdk-for-js"
+        CLONE_LOCATION: "$(Agent.BuildDirectory)/js_repo"
 
-  #     steps:
-  #       - template: /eng/pipelines/templates/steps/install-dotnet.yml
+      steps:
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
-  #       - task: NodeTool@0
-  #         inputs:
-  #           versionSpec: "16.x"
-  #         displayName: "Use Node 16.x"
+        - task: NodeTool@0
+          inputs:
+            versionSpec: "16.x"
+          displayName: "Use Node 16.x"
 
-  #       - pwsh: |
-  #           git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
-  #         displayName: Clone Repo
+        - pwsh: |
+            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
+          displayName: Clone Repo
 
-  #       - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
-  #         parameters:
-  #           runProxy: true
-  #           rootFolder: $(CLONE_LOCATION)
+        - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+          parameters:
+            runProxy: true
+            rootFolder: $(CLONE_LOCATION)
 
-  #       - pwsh: |
-  #           npm install -g @microsoft/rush@5.48.0
-  #           rush update
-  #           rush build -t .
-  #         displayName: 'Install Rush, build and install proxy tests project'
-  #         workingDirectory: $(CLONE_LOCATION)/sdk/test-utils/recorder
-  #         env:
-  #           PROXY_MANUAL_START: "true"
+        - pwsh: |
+            npm install -g @microsoft/rush@5.48.0
+            rush update
+            rush build -t .
+          displayName: 'Install Rush, build and install proxy tests project'
+          workingDirectory: $(CLONE_LOCATION)/sdk/test-utils/recorder
+          env:
+            PROXY_MANUAL_START: "true"
 
-  #       - pwsh: |
-  #           rushx test:node
-  #         displayName: 'Invoke Tests'
-  #         workingDirectory: $(CLONE_LOCATION)/sdk/test-utils/recorder
-  #         env:
-  #           PROXY_MANUAL_START: "true"
+        - pwsh: |
+            rushx test:node
+          displayName: 'Invoke Tests'
+          workingDirectory: $(CLONE_LOCATION)/sdk/test-utils/recorder
+          env:
+            PROXY_MANUAL_START: "true"
 
-  #   - job: Test_Python_Tables
+    - job: Test_Python_Tables
 
-  #     displayName: Run Python Tables CI Tests
+      displayName: Run Python Tables CI Tests
 
-  #     strategy:
-  #       matrix:
-  #         Windows:
-  #           Pool: 'azsdk-pool-mms-win-2022-general'
-  #           OS: 'Windows'
-  #         Linux:
-  #           Pool: azsdk-pool-mms-ubuntu-2204-general
-  #           OS: 'Linux'
-  #         Mac:
-  #           Pool: 'Azure Pipelines'
-  #           OS: 'Mac'
+      strategy:
+        matrix:
+          Windows:
+            Pool: 'azsdk-pool-mms-win-2022-general'
+            OS: 'Windows'
+          Linux:
+            Pool: azsdk-pool-mms-ubuntu-2204-general
+            OS: 'Linux'
+          Mac:
+            Pool: 'Azure Pipelines'
+            OS: 'Mac'
 
-  #     pool:
-  #       name: $(Pool)
+      pool:
+        name: $(Pool)
 
-  #     variables:
-  #       REPO: "Azure/azure-sdk-for-python"
-  #       CLONE_LOCATION: "$(Agent.BuildDirectory)/python_repo"
+      variables:
+        REPO: "Azure/azure-sdk-for-python"
+        CLONE_LOCATION: "$(Agent.BuildDirectory)/python_repo"
 
-  #     steps:
-  #       - template: /eng/pipelines/templates/steps/install-dotnet.yml
+      steps:
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
-  #       - template: /eng/pipelines/templates/steps/use-python-version.yml
-  #         parameters:
-  #           versionSpec: '3.9'
+        - template: /eng/pipelines/templates/steps/use-python-version.yml
+          parameters:
+            versionSpec: '3.9'
 
-  #       - pwsh: |
-  #           git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
-  #         displayName: Clone Repo
+        - pwsh: |
+            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
+          displayName: Clone Repo
 
-  #       - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
-  #         parameters:
-  #           runProxy: true
-  #           rootFolder: $(CLONE_LOCATION)
+        - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+          parameters:
+            runProxy: true
+            rootFolder: $(CLONE_LOCATION)
 
-  #       - pwsh: |
-  #           python -m pip install -r dev_requirements.txt
-  #           python -m pip install .
-  #         displayName: 'Install requirements and package'
-  #         workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
+        - pwsh: |
+            python -m pip install -r dev_requirements.txt
+            python -m pip install .
+          displayName: 'Install requirements and package'
+          workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
 
-  #       - pwsh: |
-  #           pytest .
-  #         displayName: 'Invoke Tests'
-  #         workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
-  #         env:
-  #           PROXY_URL: "http://localhost:5000"
-  #           PROXY_MANUAL_START: true
+        - pwsh: |
+            pytest .
+          displayName: 'Invoke Tests'
+          workingDirectory: $(CLONE_LOCATION)/sdk/tables/azure-data-tables/
+          env:
+            PROXY_URL: "http://localhost:5000"
+            PROXY_MANUAL_START: true
 
-  #   - job: Test_Java_Core
+    - job: Test_Java_Core
 
-  #     displayName: Run Java Core Local Tests
+      displayName: Run Java Core Local Tests
 
-  #     strategy:
-  #       matrix:
-  #         Windows:
-  #           Pool: 'azsdk-pool-mms-win-2022-general'
-  #           OS: 'Windows'
-  #         Linux:
-  #           Pool: azsdk-pool-mms-ubuntu-2204-general
-  #           OS: 'Linux'
-  #         Mac:
-  #           Pool: 'Azure Pipelines'
-  #           OS: 'Mac'
+      strategy:
+        matrix:
+          Windows:
+            Pool: 'azsdk-pool-mms-win-2022-general'
+            OS: 'Windows'
+          Linux:
+            Pool: azsdk-pool-mms-ubuntu-2204-general
+            OS: 'Linux'
+          Mac:
+            Pool: 'Azure Pipelines'
+            OS: 'Mac'
 
-  #     pool:
-  #       name: $(Pool)
+      pool:
+        name: $(Pool)
 
-  #     variables:
-  #       REPO: "Azure/azure-sdk-for-java"
-  #       CLONE_LOCATION: "$(Agent.BuildDirectory)/java_repo"
+      variables:
+        REPO: "Azure/azure-sdk-for-java"
+        CLONE_LOCATION: "$(Agent.BuildDirectory)/java_repo"
 
-  #     steps:
+      steps:
 
-  #       - template: /eng/pipelines/templates/steps/install-dotnet.yml
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
-  #       - template: /eng/pipelines/templates/steps/use-python-version.yml
-  #         parameters:
-  #           versionSpec: '3.9'
+        - template: /eng/pipelines/templates/steps/use-python-version.yml
+          parameters:
+            versionSpec: '3.9'
 
-  #       - pwsh: |
-  #           git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
-  #         displayName: Clone Repo
+        - pwsh: |
+            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
+          displayName: Clone Repo
 
-  #       - pwsh: |
-  #           Write-Host "mvn install -f eng/code-quality-reports/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
-  #           mvn install -f eng/code-quality-reports/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
-  #           Write-Host "mvn install -f sdk/core/azure-json/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
-  #           mvn install -f sdk/core/azure-json/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
-  #           Write-Host "mvn install -f sdk/core/azure-core/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
-  #           mvn install -f sdk/core/azure-core/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
-  #           Write-Host "mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true"
-  #           mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true
-  #         displayName: 'Install azure-core-test'
-  #         workingDirectory: $(CLONE_LOCATION)
+        - pwsh: |
+            Write-Host "mvn install -f eng/code-quality-reports/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
+            mvn install -f eng/code-quality-reports/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-json/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
+            mvn install -f sdk/core/azure-json/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-core/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true"
+            mvn install -f sdk/core/azure-core/pom.xml "-Dcodesnippet.skip" "-Drevapi.skip" "-Dspotbugs.skip" -DskipTests=true "-Djacoco.skip" "-Dmaven.javadoc.skip=true" -DskipTestCompile -DskipCheckStyle=true
+            Write-Host "mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true"
+            mvn install -f sdk/core/azure-core-test/pom.xml -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true
+          displayName: 'Install azure-core-test'
+          workingDirectory: $(CLONE_LOCATION)
 
-  #       # we want the proxy available so we can restore recordings and avoid the race condition error
-  #       # however, we also want to not run it such that the local executable is used by the java tests.
-  #       - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
-  #         parameters:
-  #           runProxy: false
+        # we want the proxy available so we can restore recordings and avoid the race condition error
+        # however, we also want to not run it such that the local executable is used by the java tests.
+        - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+          parameters:
+            runProxy: false
 
-  #       - pwsh: |
-  #           Get-ChildItem -Recurse -Path $(CLONE_LOCATION)/sdk/ -Filter assets.json | `
-  #             ForEach-Object { test-proxy restore -a $_.FullName }
-  #         displayName: Restore Recordings
+        - pwsh: |
+            Get-ChildItem -Recurse -Path $(CLONE_LOCATION)/sdk/ -Filter assets.json | `
+              ForEach-Object { test-proxy restore -a $_.FullName }
+          displayName: Restore Recordings
 
-  #       - pwsh: |
-  #           # To run java in 'local' mode, we need to ensure that the natively set CI variable $env:TF_BUILD
-  #           # is not populated. Given it's auto-populated at step init by devops, we do it inline here.
-  #           $env:TF_BUILD=""
-  #           mvn surefire:test -f sdk/core/azure-core-test/pom.xml
-  #         displayName: 'Invoke Tests'
-  #         workingDirectory: $(CLONE_LOCATION)
+        - pwsh: |
+            # To run java in 'local' mode, we need to ensure that the natively set CI variable $env:TF_BUILD
+            # is not populated. Given it's auto-populated at step init by devops, we do it inline here.
+            $env:TF_BUILD=""
+            mvn surefire:test -f sdk/core/azure-core-test/pom.xml
+          displayName: 'Invoke Tests'
+          workingDirectory: $(CLONE_LOCATION)

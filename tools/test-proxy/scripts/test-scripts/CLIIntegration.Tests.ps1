@@ -556,7 +556,7 @@ Describe "AssetsModuleTests" {
                 Test-FileVersion -FilePath $assetsFolder -FileName $file3 -ExpectedVersion 3
             }
         }
-        It "Should restore, make a change, then restore a different tag (same assets.json) and have pending changes properly discarded." -Tag "Problematic"  {
+        It "Should restore, make a change, then restore a different tag (same assets.json) and have pending changes properly discarded." {
             if ($env:CLI_TEST_WITH_DOCKER) {
                 Set-ItResult -Skipped
             }
@@ -585,7 +585,7 @@ Describe "AssetsModuleTests" {
                 Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
                 $LASTEXITCODE | Should -Be 0
                 $localAssetsFilePath = Join-Path $testFolder ".assets"
-                $assetsFolder = $(Get-ChildItem $localAssetsFilePath -Directory)[0].FullName
+                $assetsFolder = $(Get-ChildItem $localAssetsFilePath -Directory | Where-Object { $_.Name -ne "breadcrumb")[0].FullName
                 mkdir -p $(Join-Path $assetsFolder $creationPath)
 
                 # Create new files. These are in a predictable location with predicatable content so we can be certain they are around

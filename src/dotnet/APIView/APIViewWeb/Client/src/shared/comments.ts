@@ -531,5 +531,4 @@ $(() => {
       toggleComments(id);
     }
   }
-
 });

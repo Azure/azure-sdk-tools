@@ -153,9 +153,9 @@ export function addToastNotification(notification : Notification, id : string = 
 }
 
 // Auto Refresh Comment
-export function updateCommentThread(commentBox, partialViewResult) {
-  partialViewResult = $.parseHTML(partialViewResult);
-  $(commentBox).replaceWith(partialViewResult);
+export function updateCommentThread(commentBox, commentThreadHTML) {
+  commentThreadHTML = $.parseHTML(commentThreadHTML);
+  $(commentBox).replaceWith(commentThreadHTML);
   return false;
 }
 
@@ -383,7 +383,7 @@ export function checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, checkR
     return false;
   }
 
-  if (checkRevision && currRevisionId && currRevisionId === revisionId) {
+  if (checkRevision && currRevisionId && currRevisionId != revisionId) {
     return false;
   }
 

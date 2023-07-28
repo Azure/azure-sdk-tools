@@ -482,7 +482,7 @@ Describe "AssetsModuleTests" {
                     $LASTEXITCODE | Should -Be 0
 
                     $newlocalAssetsFilePath = Join-Path $newTestFolder ".assets"
-                    $newAssetsFolder = $(Get-ChildItem $newlocalAssetsFilePath -Directory)[0].FullName
+                    $newAssetsFolder = $(Get-ChildItem $newlocalAssetsFilePath -Directory | Where-Object { $_.Name -ne "breadcrumb" })[0].FullName
                     mkdir -p $(Join-Path $newAssetsFolder $creationPath)
 
                     # same file updates. we should have an identical sha!
@@ -556,7 +556,7 @@ Describe "AssetsModuleTests" {
                 Test-FileVersion -FilePath $assetsFolder -FileName $file3 -ExpectedVersion 3
             }
         }
-        It "Should restore, make a change, then restore a different tag (same assets.json) and have pending changes properly discarded." {
+        It "Should restore, make a change, then restore a different tag (same assets.json) and have pending changes properly discarded." -Tag "Problematic"  {
             if ($env:CLI_TEST_WITH_DOCKER) {
                 Set-ItResult -Skipped
             }
@@ -603,7 +603,6 @@ Describe "AssetsModuleTests" {
                 Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
                 $LASTEXITCODE | Should -Be 0
 
-                
                 Test-Path -Path (Join-Path $assetsFolder $file1) | Should -Be $false
                 Test-Path -Path (Join-Path $assetsFolder $file2) | Should -Be $false
                 Test-Path -Path (Join-Path $assetsFolder $file3) | Should -Be $false

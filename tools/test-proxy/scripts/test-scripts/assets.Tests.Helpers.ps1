@@ -315,15 +315,6 @@ Function Get-AssetsFilePath {
   $numDirs = Get-ChildItem $startingPath -Directory | Where-Object { $_.Name -ne "breadcrumb" } | Measure-Object | ForEach-Object{$_.Count}
   $folders = Get-ChildItem $startingPath -Directory | Where-Object { $_.Name -ne "breadcrumb" } 
 
-  # Write-Host "What we see overall in the assets folder is"
-  # Get-ChildItem $startingPath -Recurse | % { Write-Host $_.FullName } | Out-Null
-
-  # Write-Host "What we see when we GCI and exclude breadcrumb"
-  # Get-ChildItem $startingPath -Directory | Where-Object { $_.Name != "breadcrumb" } | % { Write-Host $_.FullName } | Out-Null
-
-  # Write-Host "What we see when we GCI"
-  # Get-ChildItem $startingPath -Directory | Where-Object { $_.Name != "breadcrumb" } | % { Write-Host $_.FullName } | Out-Null
-
   # There should only be one folder
   if (1 -ne $numDirs) {
     LogError "The assets directory ($startingPath) should only contain 1 subfolder not $numDirs ($folders -join $([Environment]::NewLine))"

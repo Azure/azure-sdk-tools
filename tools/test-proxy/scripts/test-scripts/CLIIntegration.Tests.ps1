@@ -585,7 +585,7 @@ Describe "AssetsModuleTests" {
                 Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
                 $LASTEXITCODE | Should -Be 0
                 $localAssetsFilePath = Join-Path $testFolder ".assets"
-                $assetsFolder = $(Get-ChildItem $localAssetsFilePath -Directory | Where-Object { $_.Name -ne "breadcrumb")[0].FullName
+                $assetsFolder = $(Get-ChildItem $localAssetsFilePath -Directory | Where-Object { $_.Name -ne "breadcrumb" })[0].FullName
                 mkdir -p $(Join-Path $assetsFolder $creationPath)
 
                 # Create new files. These are in a predictable location with predicatable content so we can be certain they are around

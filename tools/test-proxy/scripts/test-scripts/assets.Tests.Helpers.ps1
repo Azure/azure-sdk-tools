@@ -312,7 +312,7 @@ Function Get-AssetsFilePath {
     $startingPath = Join-Path -Path $assetsDir -ChildPath ".assets"
   }
   # It's odd that $folder.Count and $folders.Length work and we need to do this
-  $numDirs = Get-ChildItem $startingPath -Directory | Where-Object { $_.Name -ne "breadcrumb" } | Measure-Object | ForEach-Object{$_.Count}
+  $numDirs = Get-ChildItem $startingPath -Directory | Where-Object { $_.Name -ne "breadcrumb" } | Measure-Object | ForEach-Object { $_.Count }
   $folders = Get-ChildItem $startingPath -Directory | Where-Object { $_.Name -ne "breadcrumb" } 
 
   # There should only be one folder

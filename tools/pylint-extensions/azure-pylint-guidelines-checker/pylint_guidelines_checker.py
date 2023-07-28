@@ -1211,7 +1211,7 @@ class CheckDocstringParameters(BaseChecker):
             "Docstring should use keywords.",
         ),
         "C4755": (
-            'Param types misformatted in docstring: "%s". Docstring types are not MyPy types. See details: '
+            'Param types misformatted in docstring: "%s". Docstring types are not type hints. See details: '
             'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
             "docstring-misformatted-type",
             "Docstring misformatted for param type. Do not use MyPy types.",
@@ -1284,7 +1284,7 @@ class CheckDocstringParameters(BaseChecker):
         :param node: ast.ClassDef or ast.FunctionDef
         :return: None
         """
-        typing_list = ["Optional", "Any", "Union", "List", "Tuple", "Dict", "Iterable", "Iterator"]
+        typing_list = ["Optional", "Any", "Union", "List", "Tuple", "Dict", "Iterable", "Iterator", "Mapping", "MutableMapping", "TypedDict", "Sequence", "Literal", "Callable"]
         arg_names = []
         vararg_name = None
         # specific case for constructor where docstring found in class def

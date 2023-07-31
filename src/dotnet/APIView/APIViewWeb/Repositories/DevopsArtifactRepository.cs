@@ -30,7 +30,7 @@ namespace APIViewWeb.Repositories
         private readonly string _hostUrl;
 
         private readonly TelemetryClient _telemetryClient;
-        public DevopsArtifactRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public DevopsArtifactRepository(IConfiguration configuration)
         {
             _configuration = configuration;
             _devopsAccessToken = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", _configuration["Azure-Devops-PAT"])));
@@ -39,7 +39,7 @@ namespace APIViewWeb.Repositories
 
             _devopsClient = new HttpClient();
             _devopsClient.DefaultRequestHeaders.Accept.Clear();
-            _devopsClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            _devopsClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _devopsClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", _devopsAccessToken);
         }
 
@@ -68,11 +68,11 @@ namespace APIViewWeb.Repositories
         {
             var downloadResp = await _devopsClient.GetAsync(request);
             int count = 0;
-            while ((downloadResp.StatusCode == HttpStatusCode.TooManyRequests || downloadResp.StatusCode == HttpStatusCode.BadRequest) && count < 5)
+            int[] waitTimes = new int[] { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256 };
+            while ((downloadResp.StatusCode == HttpStatusCode.TooManyRequests || downloadResp.StatusCode == HttpStatusCode.BadRequest) && count < waitTimes.Length)
             {
-                var retryAfter = (downloadResp.Headers.RetryAfter is null) ? "10" : downloadResp.Headers.RetryAfter.ToString();
-                _telemetryClient.TrackTrace($"Download request from devops artifact is throttled. Retry After: {retryAfter}, Retry count: {count}");
-                await Task.Delay(int.Parse(retryAfter) * 1000);
+                _telemetryClient.TrackTrace($"Download request from devops artifact is either throttled or flaky, waiting {waitTimes[count]} seconds before retrying, Retry count: {count}");
+                await Task.Delay(TimeSpan.FromSeconds(waitTimes[count]));
                 downloadResp = await _devopsClient.GetAsync(request);
                 count++;
             }

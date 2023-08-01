@@ -28,25 +28,25 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public async Task Reset()
+        public void Reset()
         {
-            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+            DebugLogger.LogRequestDetails(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
             _recordingHandler.SetDefaultExtensions(recordingId);
         }
 
         [HttpGet]
-        public async Task IsAlive()
+        public void IsAlive()
         {
-            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+            DebugLogger.LogRequestDetails(_logger, Request);
             Response.StatusCode = 200;
         }
 
         [HttpPost]
         public async Task AddTransform()
         {
-            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+            DebugLogger.LogRequestDetails(_logger, Request);
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
@@ -65,7 +65,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task AddSanitizer()
         {
-            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+            DebugLogger.LogRequestDetails(_logger, Request);
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
@@ -84,7 +84,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task SetMatcher()
         {
-            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+            DebugLogger.LogRequestDetails(_logger, Request);
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
@@ -102,9 +102,9 @@ namespace Azure.Sdk.Tools.TestProxy
 
         [HttpPost]
         [AllowEmptyBody]
-        public async Task SetRecordingOptions([FromBody()] IDictionary<string, object> options = null)
+        public void SetRecordingOptions([FromBody()] IDictionary<string, object> options = null)
         {
-            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+            DebugLogger.LogRequestDetails(_logger, Request);
 
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 

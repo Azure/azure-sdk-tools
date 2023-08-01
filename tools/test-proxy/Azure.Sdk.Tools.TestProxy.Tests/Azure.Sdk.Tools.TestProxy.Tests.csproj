@@ -25,12 +25,19 @@
     <None Update="Test.Certificates\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\..\..\eng\AzureSDKToolsKey.snk">
+      <Link>AzureSDKToolsKey.snk</Link>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Test.Certificates\about.md">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
 
 </Project>

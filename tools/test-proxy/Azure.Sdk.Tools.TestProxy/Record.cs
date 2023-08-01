@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task Push([FromBody()] IDictionary<string, object> options = null)
         {
-            await DebugLogger.LogRequestDetailsAsync(_logger, Request);
+            DebugLogger.LogRequestDetails(_logger, Request);
 
             var pathToAssets = RecordingHandler.GetAssetsJsonLocation(StoreResolver.ParseAssetsJsonBody(options), _recordingHandler.ContextDirectory);
 

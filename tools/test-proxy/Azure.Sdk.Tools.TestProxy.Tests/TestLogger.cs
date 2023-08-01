@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class TestLogger : ILogger
     {
-        internal readonly List<object> Logs = new List<object>();
+        internal List<object> Logs { get; }= new List<object>();
 
         public IDisposable BeginScope<TState>(TState state)
         {

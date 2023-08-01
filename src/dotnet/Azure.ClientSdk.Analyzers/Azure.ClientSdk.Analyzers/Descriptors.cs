@@ -123,6 +123,13 @@ namespace Azure.ClientSdk.Analyzers
             "Do ensure protocol method take a RequestContext parameter called context and not take models as parameter type or return type.",
             "Protocol method should have requestContext as the last parameter and don't have model as parameter type or return type.",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null);
+
+        public static DiagnosticDescriptor AZC0020 = new DiagnosticDescriptor(
+            nameof(AZC0020),
+            "Avoid using banned types in public API",
+            "The Azure.Core internal shared source type {0} should not be used outside Azure.Core.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
         #endregion
 
         #region General

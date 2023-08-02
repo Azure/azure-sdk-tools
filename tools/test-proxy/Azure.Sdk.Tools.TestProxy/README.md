@@ -276,7 +276,7 @@ The test-proxy is integrated with the following environment variables.
 | `Logging__LogLevel__Azure.Sdk.Tools.TestProxy`| Set to `Debug` to see request level logs emitted by the Test Proxy.|
 
 Both of the above variables can be set in the `docker` runtime by providing additional arguments 
-EG: `docker run -e Logging__LogLevel__TestProxy=Warning azsdkengsys.azurecr.
+EG: `docker run -e Logging__LogLevel__Default=Warning azsdkengsys.azurecr.
 io/engsys/test-proxy:latest`. For multiple environment variables, just use multiple `-e` provisions.
 
 ## How do I use the test-proxy to get a recording?

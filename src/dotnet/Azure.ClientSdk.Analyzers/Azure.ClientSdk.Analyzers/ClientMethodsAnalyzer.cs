@@ -222,6 +222,11 @@ namespace Azure.ClientSdk.Analyzers
 
         private static void CheckClientMethodReturnType(ISymbolAnalysisContext context, IMethodSymbol method)
         {
+            IsClientMethodReturnType(context, method, true);
+        }
+
+        private static bool IsClientMethodReturnType(ISymbolAnalysisContext context, IMethodSymbol method, bool throwError = false)
+        {
             ITypeSymbol originalType = method.ReturnType;
             ITypeSymbol unwrappedType = method.ReturnType;
 
@@ -236,56 +241,55 @@ namespace Azure.ClientSdk.Analyzers
                 IsOrImplements(unwrappedType, NullableResponseTypeName) ||
                 IsOrImplements(unwrappedType, OperationTypeName) ||
                 IsOrImplements(originalType, PageableTypeName) ||
-                IsOrImplements(originalType, AsyncPageableTypeName) ||
-                originalType.Name.EndsWith(ClientSuffix))
+                IsOrImplements(originalType, AsyncPageableTypeName))
             {
-                return;
+                return true;
             }
 
-            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0015, method.Locations.FirstOrDefault(), originalType.ToDisplayString()), method);
+            if (throwError)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0015, method.Locations.FirstOrDefault(), originalType.ToDisplayString()), method);
+            }
+            return false;
         }
 
-        private bool IsCheckExempt(IMethodSymbol method)
+        private bool IsCheckExempt(ISymbolAnalysisContext context, IMethodSymbol method)
         {
             return method.MethodKind != MethodKind.Ordinary ||
                 method.DeclaredAccessibility != Accessibility.Public ||
                 method.OverriddenMethod != null ||
                 method.IsImplicitlyDeclared ||
-                (method.Name.StartsWith("Get") && method.Name.EndsWith(ClientSuffix));
+                !IsClientMethodReturnType(context, method);
         }
         
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
             INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
-            List<IMethodSymbol> visitedSyncMember = new List<IMethodSymbol>();
             foreach (var member in type.GetMembers())
             {
-                if (member is IMethodSymbol asyncMethodSymbol && !IsCheckExempt(asyncMethodSymbol) && asyncMethodSymbol.Name.EndsWith(AsyncSuffix))
+                if (member is IMethodSymbol asyncMethodSymbol && !IsCheckExempt(context, asyncMethodSymbol) && asyncMethodSymbol.Name.EndsWith(AsyncSuffix))
                 {
-                    CheckClientMethod(context, asyncMethodSymbol);
-
                     var syncMemberName = member.Name.Substring(0, member.Name.Length - AsyncSuffix.Length);
-
                     var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), asyncMethodSymbol.TypeParameters, asyncMethodSymbol.Parameters);
 
                     if (syncMember == null)
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0004, member.Locations.First()), member);
                     }
-                    else
-                    {
-                        visitedSyncMember.Add(syncMember);
-                        CheckClientMethod(context, syncMember);
-                    }
+
+                    CheckClientMethod(context, asyncMethodSymbol);
                 }
-                else if (member is IMethodSymbol syncMethodSymbol && !IsCheckExempt(syncMethodSymbol) && !syncMethodSymbol.Name.EndsWith(AsyncSuffix) && !visitedSyncMember.Contains(syncMethodSymbol))
+                else if (member is IMethodSymbol syncMethodSymbol && !IsCheckExempt(context, syncMethodSymbol) && !syncMethodSymbol.Name.EndsWith(AsyncSuffix))
                 {
                     var asyncMemberName = member.Name + AsyncSuffix;
                     var asyncMember = FindMethod(type.GetMembers(asyncMemberName).OfType<IMethodSymbol>(), syncMethodSymbol.TypeParameters, syncMethodSymbol.Parameters);
+
                     if (asyncMember == null)
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0004, member.Locations.First()), member);
                     }
+
+                    CheckClientMethod(context, syncMethodSymbol);
                 }
             }
         }

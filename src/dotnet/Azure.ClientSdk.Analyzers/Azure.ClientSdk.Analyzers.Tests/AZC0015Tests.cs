@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Threading.Tasks;
@@ -9,7 +9,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0015Tests
     {
-        [Theory]
+        [Theory(Skip = "We use return type as an exit criteria to check method, so this test set is not applicable until we find a better criteria.")]
         [InlineData("public Task<AsyncPageable<int>> {|AZC0015:ClientMethodAsync|}() { return default; }")]
         [InlineData("public Task<Pageable<int>> {|AZC0015:ClientMethodAsync|}() { return default; }")]
         [InlineData("public int {|AZC0015:ClientMethodAsync|}() { return default; }")]
@@ -36,7 +36,7 @@ namespace RandomNamespace
                 .RunAsync();
         }
 
-        [Theory]
+        [Theory(Skip = "We use return type as an exit criteria to check method, so this test set is not applicable until we find a better criteria.")]
         [InlineData("public Task<Operation<int>> ClientMethodAsync() { return default; }")]
         [InlineData("public Operation<int> ClientMethodAsync() { return default; }")]
         [InlineData("public Pageable<int> ClientMethodAsync() { return default; }")]

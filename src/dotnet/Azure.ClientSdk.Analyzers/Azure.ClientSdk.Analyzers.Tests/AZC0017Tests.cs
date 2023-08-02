@@ -13,6 +13,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
         public async Task AZC0017ProducedForMethodsWithRequestContentParameter()
         {
             const string code = @"
+using Azure;
 using Azure.Core;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,13 +22,14 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0017:GetAsync|}(RequestContent content, CancellationToken cancellationToken = default)
+        public virtual Response {|AZC0017:GetAsync|}(RequestContent content, CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public virtual void {|AZC0017:Get|}(RequestContent content, CancellationToken cancellationToken = default)
+        public virtual Response {|AZC0017:Get|}(RequestContent content, CancellationToken cancellationToken = default)
         {
+            return null;
         }
     }
 }";

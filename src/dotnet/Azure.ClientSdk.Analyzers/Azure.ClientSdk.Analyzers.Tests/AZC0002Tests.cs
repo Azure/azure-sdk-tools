@@ -13,19 +13,21 @@ namespace Azure.ClientSdk.Analyzers.Tests
         public async Task AZC0002ProducedForMethodsWithoutCancellationTokenOrRequestContext()
         {
             const string code = @"
+using Azure;
 using System.Threading.Tasks;
 
 namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0002:GetAsync|}()
+        public virtual Response {|AZC0002:GetAsync|}()
         {
             return null;
         }
 
-        public virtual void {|AZC0002:Get|}()
+        public virtual Response {|AZC0002:Get|}()
         {
+            return null;
         }
     }
 }";
@@ -38,6 +40,7 @@ namespace RandomNamespace
         public async Task AZC0002ProducedForMethodsWithWrongNameCancellationToken()
         {
             const string code = @"
+using Azure;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -45,13 +48,14 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0002:GetAsync|}(CancellationToken cancellation = default)
+        public virtual Response {|AZC0002:GetAsync|}(CancellationToken cancellation = default)
         {
             return null;
         }
 
-        public virtual void {|AZC0002:Get|}(CancellationToken cancellation = default)
+        public virtual Response {|AZC0002:Get|}(CancellationToken cancellation = default)
         {
+            return null;
         }
     }
 }";
@@ -65,6 +69,7 @@ namespace RandomNamespace
         {
             const string code = @"
 using Azure;
+using Azure.Core;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -72,13 +77,14 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0002:GetAsync|}(RequestContext cancellation = default)
+        public virtual Response {|AZC0002:GetAsync|}(RequestContext cancellation = default)
         {
             return null;
         }
 
-        public virtual void {|AZC0002:Get|}(RequestContext cancellation = default)
+        public virtual Response {|AZC0002:Get|}(RequestContext cancellation = default)
         {
+            return null;
         }
     }
 }";
@@ -91,6 +97,7 @@ namespace RandomNamespace
         public async Task AZC0002ProducedForMethodsWithNonOptionalCancellationToken()
         {
             const string code = @"
+using Azure;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -98,13 +105,14 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0002:GetAsync|}(CancellationToken cancellationToken)
+        public virtual Response {|AZC0002:GetAsync|}(CancellationToken cancellationToken)
         {
             return null;
         }
 
-        public virtual void {|AZC0002:Get|}(CancellationToken cancellationToken)
+        public virtual Response {|AZC0002:Get|}(CancellationToken cancellationToken)
         {
+            return null;
         }
     }
 }";
@@ -125,13 +133,14 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0002:GetAsync|}(RequestContext context = default, string text = default)
+        public virtual Response {|AZC0002:GetAsync|}(RequestContext context = default, string text = default)
         {
             return null;
         }
 
-        public virtual void {|AZC0002:Get|}(RequestContext context = default, string text = default)
+        public virtual Response {|AZC0002:Get|}(RequestContext context = default, string text = default)
         {
+            return null;
         }
     }
 }";
@@ -152,13 +161,14 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0002:GetAsync|}(CancellationToken cancellationToken = default, string text = default)
+        public virtual Response {|AZC0002:GetAsync|}(CancellationToken cancellationToken = default, string text = default)
         {
             return null;
         }
 
-        public virtual void {|AZC0002:Get|}(CancellationToken cancellationToken = default, string text = default)
+        public virtual Response {|AZC0002:Get|}(CancellationToken cancellationToken = default, string text = default)
         {
+            return null;
         }
     }
 }";

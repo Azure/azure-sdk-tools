@@ -21,6 +21,8 @@ using System.Threading.Tasks;
 
 namespace RandomNamespace
 {
+public class AssetConversion {}
+
     public class SomeClient
     {
         public virtual Task<Response> GetResponseAsync(string s, RequestContext context)

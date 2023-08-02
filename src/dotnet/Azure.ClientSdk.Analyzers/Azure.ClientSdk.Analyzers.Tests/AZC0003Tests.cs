@@ -13,6 +13,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
         public async Task AZC0003ProducedForNonVirtualMethods()
         {
             const string code = @"
+using Azure;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,13 +21,14 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public Task {|AZC0003:GetAsync|](CancellationToken cancellationToken = default)
+        public Response {|AZC0003:GetAsync|](CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public void {|AZC0003:Get|](CancellationToken cancellationToken = default)
+        public Response {|AZC0003:Get|](CancellationToken cancellationToken = default)
         {
+            return null;
         }
     }
 }";

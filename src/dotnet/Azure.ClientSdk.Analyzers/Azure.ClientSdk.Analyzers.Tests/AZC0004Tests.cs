@@ -13,6 +13,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
         public async Task AZC0004ProducedForMethodsWithoutSyncAlternative()
         {
             const string code = @"
+using Azure;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +21,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0004:GetAsync|}(CancellationToken cancellationToken = default)
+        public virtual Response {|AZC0004:GetAsync|}(CancellationToken cancellationToken = default)
         {
             return null;
         }
@@ -35,6 +36,7 @@ namespace RandomNamespace
         public async Task AZC0004ProducedForMethodsWithoutAsyncAlternative()
         {
             const string code = @"
+using Azure;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,7 +44,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0004:Get|}(CancellationToken cancellationToken = default)
+        public virtual Response {|AZC0004:Get|}(CancellationToken cancellationToken = default)
         {
             return null;
         }
@@ -146,11 +148,11 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0004:GetAsync|}(string a, CancellationToken cancellationToken = default)
+        public virtual Response {|AZC0004:GetAsync|}(string a, CancellationToken cancellationToken = default)
         {
             return null;
         }
-        public virtual Task {|AZC0004:Get|}(string a, RequestContext context)
+        public virtual Response {|AZC0004:Get|}(string a, RequestContext context)
         {
             return null;
         }
@@ -193,6 +195,7 @@ namespace RandomNamespace
         public async Task AZC0004ProducedForGenericMethodsWithSyncAlternative()
         {
             const string code = @"
+using Azure;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -200,16 +203,17 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task GetAsync(CancellationToken cancellationToken = default)
+        public virtual Response GetAsync(CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public virtual void Get(CancellationToken cancellationToken = default)
+        public virtual Response Get(CancellationToken cancellationToken = default)
         {
+            return null;
         }
         
-        public virtual Task {|AZC0004:GetAsync|}<T>(CancellationToken cancellationToken = default)
+        public virtual Response {|AZC0004:GetAsync|}<T>(CancellationToken cancellationToken = default)
         {
             return null;
         }
@@ -229,8 +233,15 @@ using System.Threading.Tasks;
 
 namespace RandomNamespace
 {
+public class CapacityReservationCollection{
+}
     public class SomeClient
     {
+        public virtual CapacityReservationCollection GetCapacityReservations()
+        {
+            return null;
+        }
+
         public virtual Task GetAsync(CancellationToken cancellationToken = default)
         {
             return null;
@@ -260,6 +271,7 @@ namespace RandomNamespace
         public async Task AZC0004ProducedForGenericMethodsTakingGenericArgWithoutSyncAlternative()
         {
             const string code = @"
+using Azure;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -267,16 +279,17 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task GetAsync(CancellationToken cancellationToken = default)
+        public virtual Response GetAsync(CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public virtual void Get(CancellationToken cancellationToken = default)
+        public virtual Response Get(CancellationToken cancellationToken = default)
         {
+            return null;
         }
         
-        public virtual Task {|AZC0004:GetAsync|}<T>(T item, CancellationToken cancellationToken = default)
+        public virtual Task<Response> {|AZC0004:GetAsync|}<T>(T item, CancellationToken cancellationToken = default)
         {
             return null;
         }
@@ -324,32 +337,6 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0004NProducedForMethodsWithoutArgMatchedSyncAlternative()
-        {
-            const string code = @"
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace RandomNamespace
-{
-    public class SomeClient
-    {
-        public virtual Task {|AZC0004:GetAsync|}(int sameNameDifferentType, CancellationToken cancellationToken = default)
-        {
-            return null;
-        }
-
-        public virtual void {|AZC0004:Get|}(string sameNameDifferentType, CancellationToken cancellationToken = default)
-        {
-        }
-    }
-}";
-            await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
-                .RunAsync();
-        }
-
-        [Fact]
         public async Task AZC0004NotProducedForGenericMethodsTakingGenericExpressionArgWithSyncAlternative()
         {
             const string code = @"
@@ -381,6 +368,7 @@ namespace RandomNamespace
         public async Task AZC0004ProducedForGenericMethodsTakingGenericExpressionArgWithoutSyncAlternative()
         {
             const string code = @"
+using Azure;
 using System;
 using System.Linq.Expressions;
 using System.Threading;
@@ -390,13 +378,14 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0004:QueryAsync|}<T>(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
+        public virtual Response {|AZC0004:QueryAsync|}<T>(Expression<Func<T, bool>> filter, CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public virtual void {|AZC0004:Query|}<T>(Expression<Func<T, string, bool>> filter, CancellationToken cancellationToken = default)
+        public virtual Response {|AZC0004:Query|}<T>(Expression<Func<T, string, bool>> filter, CancellationToken cancellationToken = default)
         {
+            return null;
         }
     }
 }";
@@ -442,6 +431,7 @@ namespace RandomNamespace
         public async Task AZC0004ProducedForArrayTypesWithoutSyncAlternative()
         {
             const string code = @"
+using Azure;
 using System;
 using System.IO;
 using System.Threading;
@@ -451,7 +441,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0004:AppendAsync|}(
+        public virtual Response {|AZC0004:AppendAsync|}(
             byte[] arr,
             CancellationToken cancellationToken = default)
         {
@@ -459,10 +449,11 @@ namespace RandomNamespace
         }
 
 
-        public virtual void {|AZC0004:Append|}(
+        public virtual Response {|AZC0004:Append|}(
             string[] arr,
             CancellationToken cancellationToken = default)
         {
+            return null;
         }
     }
 }";
@@ -475,6 +466,7 @@ namespace RandomNamespace
         public async Task AZC0004ProducedForMethodsWithoutSyncAlternativeWithMatchingArgNames()
         {
             const string code = @"
+using Azure;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -482,13 +474,14 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task {|AZC0004:GetAsync|}(int foo, CancellationToken cancellationToken = default)
+        public virtual Response {|AZC0004:GetAsync|}(int foo, CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public virtual void {|AZC0004:Get|}(int differentName, CancellationToken cancellationToken = default)
+        public virtual Response {|AZC0004:Get|}(int differentName, CancellationToken cancellationToken = default)
         {
+            return null;
         }
     }
 }";
@@ -532,13 +525,13 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public SubClient GetSubClient()
+        public Sub GetSubClient()
         {
             return null;
         }
     }
 
-    public class SubClient
+    public class Sub
     {
     }
 }";

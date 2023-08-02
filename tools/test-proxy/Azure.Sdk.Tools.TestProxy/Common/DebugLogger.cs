@@ -1,15 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks;
 using System.Text;
-using System.IO;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text.Json;
-using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -40,7 +34,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             if (Logger == null && factory != null)
             {
-                Logger = factory.CreateLogger("DebugLogging");
+                Logger = factory.CreateLogger("Azure.Sdk.Tools.TestProxy");
             }
         }
 

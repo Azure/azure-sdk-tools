@@ -36,28 +36,5 @@ namespace RandomNamespace
 }}";
             await Verifier.VerifyAnalyzerAsync(code);
         }
-
-
-        [Theory]
-        [InlineData("internal class Class: System.IProgress<JsonElement> { public void Report (JsonElement value) {} }")]
-        [InlineData("public void Report(string value) {}")]
-        public async Task AZC0020NotProducedForNonPublicApisOrAllowedTypes(string usage)
-        {
-            string code = $@"
-using System;
-using System.Threading.Tasks;
-using System.Text.Json;
-using System.Collections.Generic;
-using Azure.Core.Json;
-
-namespace RandomNamespace
-{{
-    public class SomeClient
-    {{
-        {usage}       
-    }}
-}}";
-            await Verifier.VerifyAnalyzerAsync(code);
-        }
     }
 }

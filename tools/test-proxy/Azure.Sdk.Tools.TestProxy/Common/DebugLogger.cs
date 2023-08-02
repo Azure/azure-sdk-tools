@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             if (Logger == null && factory != null)
             {
-                Logger = factory.CreateLogger("TestProxy");
+                Logger = factory.CreateLogger("Azure.Sdk.Tools.TestProxy");
             }
         }
 

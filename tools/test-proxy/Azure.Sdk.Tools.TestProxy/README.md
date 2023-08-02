@@ -272,7 +272,8 @@ The test-proxy is integrated with the following environment variables.
 | Variable                       | Usage                                                                                                                                                                              |
 |--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `TEST_PROXY_FOLDER`            | if command-line argument `storage-location` is not provided when invoking the proxy, this environment variable is also checked for a valid directory to use as test-proxy context. |
-| `Logging__LogLevel__TestProxy` | Defaults to `Information`. Possible valid values are <br/><br/>`Debug`, `Information`, `Warning`, `Error`, `Critical`.                                          |
+| `Logging__LogLevel__Default` | Defaults to `Information`. Possible valid values are <br/><br/>`Debug`, `Information`, `Warning`, `Error`, `Critical`.|
+| `Logging__LogLevel__Azure.Sdk.Tools.TestProxy`| Set to `Debug` to see request level logs emitted by the Test Proxy.|
 
 Both of the above variables can be set in the `docker` runtime by providing additional arguments 
 EG: `docker run -e Logging__LogLevel__TestProxy=Warning azsdkengsys.azurecr.

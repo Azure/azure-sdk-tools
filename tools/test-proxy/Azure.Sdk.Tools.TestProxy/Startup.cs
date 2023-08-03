@@ -21,10 +21,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.CommandLine;
 using Azure.Sdk.Tools.TestProxy.CommandOptions;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using System.Text.Json;
 using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Options;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -151,7 +150,9 @@ namespace Azure.Sdk.Tools.TestProxy
                         loggingBuilder.AddConsole(options =>
                         {
                             options.LogToStandardErrorThreshold = LogLevel.Error;
-                            options.TimestampFormat = "";
+                        }).AddSimpleConsole(options =>
+                        {
+                            options.TimestampFormat = "[HH:mm:ss] ";
                         });
                         loggingBuilder.AddDebug();
                         loggingBuilder.AddEventSourceLogger();

@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 {
                     if (packageName == primaryPackage)
                     {
-                        await Util.RunAsync(pip, "install -e .", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+                        await Util.RunAsync(pip, "install .", projectDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
                     }
                     // TODO: Consider installing source versions of non-primary packages.  Would require finding package in source tree.
                     //       So far, this seems unnecessary, since dev-requirements.txt usually includes core.

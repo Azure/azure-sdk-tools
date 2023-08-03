@@ -48,7 +48,7 @@ void AstDumper::OpenNamespace(std::string_view const& namespaceName)
   LeftAlign();
   InsertKeyword("namespace");
   InsertWhitespace();
-  InsertMemberName(namespaceName);
+  InsertIdentifier(namespaceName);
   InsertWhitespace();
   InsertPunctuation('{');
   AdjustIndent(namespaceIndent);

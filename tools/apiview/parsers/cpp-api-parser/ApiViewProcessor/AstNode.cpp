@@ -586,7 +586,7 @@ public:
     else
     {
       dumper->InsertWhitespace();
-      dumper->InsertMemberName(m_referencedName);
+      dumper->InsertIdentifier(m_referencedName);
     }
   }
 };
@@ -604,7 +604,7 @@ public:
     m_type.Dump(dumper, dumpOptions);
     dumper->InsertPunctuation(':');
     dumper->InsertPunctuation(':');
-    dumper->InsertMemberName(m_referencedName);
+    dumper->InsertIdentifier(m_referencedName);
   }
 };
 
@@ -700,7 +700,7 @@ public:
     {
       dumper->InsertPunctuation('{');
     }
-    dumper->InsertMemberName(m_methodToCall);
+    dumper->InsertIdentifier(m_methodToCall);
     dumper->InsertPunctuation('(');
     DumpList(
         m_arguments.begin(),
@@ -1169,8 +1169,61 @@ void AstBaseClass::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
   m_baseClass.Dump(dumper, dumpOptions);
 }
 
+// For functions, we want the navigation ID to be the full signature, including the return type
+// to handle overloads.
+static std::string GetNavigationId(clang::FunctionDecl const* func)
+{
+  std::string navigationId;
+  clang::PrintingPolicy pp{LangOptions{}};
+  pp.adjustForCPlusPlus();
+  pp.FullyQualifiedName = true;
+  pp.TerseOutput = true;
+  llvm::raw_string_ostream os(navigationId);
+
+  func->print(os, pp);
+  return navigationId;
+}
+
+static std::string GetNavigationId(clang::ParmVarDecl const* param)
+{
+
+  std::string navigationId;
+  auto dc = param->getParentFunctionOrMethod();
+  if (dc)
+  {
+    auto fd = cast<FunctionDecl>(dc);
+    navigationId = GetNavigationId(fd) + " param " + param->getNameAsString();
+  }
+  else
+  {
+    param->dump(llvm::outs());
+  }
+  return navigationId;
+}
+
+static std::string GetNavigationId(
+    clang::ClassTemplateSpecializationDecl const* templateSpecialization)
+{
+  std::string navigationId = templateSpecialization->getQualifiedNameAsString();
+  navigationId += "<";
+  for (const auto& arg : templateSpecialization->getTemplateArgs().asArray())
+  {
+    navigationId += " " + arg.getAsType().getAsString();
+  }
+  navigationId += ">";
+  return navigationId;
+}
+
+static std::string GetNavigationId(UsingDecl const* usingDeclaration)
+{
+  std::string navigationId = "using ";
+  navigationId += usingDeclaration->getQualifiedNameAsString();
+  return navigationId;
+}
+
 class AstParamVariable : public AstNamedNode {
   std::string m_typeAsString;
+  std::string m_fullTypeAsString;
   AstType m_type;
   bool m_isStatic{};
   bool m_isArray{};
@@ -1183,9 +1236,11 @@ public:
       AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(var, database, parentNode), m_type{var->getType(), var->getASTContext()},
-        m_isStatic(var->isStaticDataMember())
+        m_fullTypeAsString{var->getQualifiedNameAsString()}, m_isStatic(var->isStaticDataMember())
 
   {
+    m_navigationId = GetNavigationId(var);
+
     clang::PrintingPolicy pp{LangOptions{}};
     pp.adjustForCPlusPlus();
 
@@ -1222,7 +1277,12 @@ public:
     }
     dumper->InsertLiteral(m_typeAsString);
     dumper->InsertWhitespace();
-    dumper->InsertMemberName(Name());
+
+    // If the parameter name isn't provided, there's nothing to insert into the output.
+    if (!Name().empty())
+    {
+      dumper->InsertMemberName(Name(), m_navigationId);
+    }
     if (m_isArray)
     {
       dumper->InsertPunctuation('[');
@@ -1313,7 +1373,7 @@ public:
     }
     dumper->InsertLiteral(m_typeAsString);
     dumper->InsertWhitespace();
-    dumper->InsertMemberName(Name());
+    dumper->InsertMemberName(Name(), m_navigationId);
     if (m_isArray)
     {
       dumper->InsertPunctuation('[');
@@ -1382,7 +1442,7 @@ public:
     if (!m_paramName.empty())
     {
       dumper->InsertWhitespace();
-      dumper->InsertMemberName(m_paramName);
+      dumper->InsertIdentifier(m_paramName);
       if (m_defaultValue)
       {
         dumper->InsertWhitespace();
@@ -1478,13 +1538,13 @@ public:
     dumper->InsertWhitespace();
     dumper->InsertKeyword("class");
     dumper->InsertWhitespace();
-    dumper->InsertMemberName(m_paramName);
+    dumper->InsertIdentifier(m_paramName);
     if (!m_defaultTypeName.empty())
     {
       dumper->InsertWhitespace();
       dumper->InsertPunctuation('=');
       dumper->InsertWhitespace();
-      dumper->InsertMemberName(m_defaultTypeName);
+      dumper->InsertIdentifier(m_defaultTypeName);
     }
   }
 };
@@ -1550,7 +1610,7 @@ public:
     }
     dumper->InsertKeyword("using");
     dumper->InsertWhitespace();
-    dumper->InsertMemberName(Name());
+    dumper->InsertTypeName(Name(), m_navigationId);
     dumper->InsertWhitespace();
     dumper->InsertPunctuation('=');
     dumper->InsertWhitespace();
@@ -1643,6 +1703,7 @@ public:
             func->getKind() == Decl::CXXConstructor || func->getKind() == Decl::CXXDestructor},
         m_exceptionSpecification{func->getExceptionSpecType()}
   {
+    m_navigationId = GetNavigationId(func);
     if (m_exceptionSpecification == EST_DependentNoexcept)
     {
       auto typePtr = func->getType().getTypePtr();
@@ -1706,13 +1767,13 @@ public:
     }
     if (dumpOptions.IncludeNamespace)
     {
-      dumper->InsertMemberName(Namespace());
+      dumper->InsertIdentifier(Namespace());
       dumper->InsertPunctuation(':');
       dumper->InsertPunctuation(':');
     }
     if (dumpOptions.IncludeContainingClass && !m_parentClass.empty())
     {
-      dumper->InsertMemberName(m_parentClass);
+      dumper->InsertIdentifier(m_parentClass);
       dumper->InsertPunctuation(':');
       dumper->InsertPunctuation(':');
     }
@@ -2234,6 +2295,7 @@ public:
       : AstClassLike(templateDecl, azureClassesDatabase, parentNode)
 
   {
+    m_navigationId = GetNavigationId(templateDecl);
     for (const auto& arg : templateDecl->getTemplateArgs().asArray())
     {
       m_arguments.push_back(std::make_unique<AstType>(arg.getAsType()));
@@ -2375,7 +2437,7 @@ public:
     }
     else
     {
-      dumper->InsertTypeName(m_friendType, m_friendType);
+      dumper->InsertIdentifier(m_friendType);
       if (dumpOptions.NeedsTrailingSemi)
       {
         dumper->InsertPunctuation(';');
@@ -2431,7 +2493,7 @@ public:
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(usingDecl, azureClassesDatabase, parentNode)
   {
-    usingDecl->dump(llvm::outs());
+    m_navigationId = GetNavigationId(usingDecl);
     if (usingDecl->getQualifier())
     {
       std::string qualifier;
@@ -2459,7 +2521,7 @@ public:
     {
       fullName.erase(0, Namespace().size());
     }
-    dumper->InsertTypeName(fullName, Namespace());
+    dumper->InsertTypeName(fullName, m_navigationId);
     dumper->InsertPunctuation(';');
     if (dumpOptions.NeedsTrailingNewline)
     {
@@ -2487,7 +2549,7 @@ public:
   {
     DumpAttributes(dumper, dumpOptions);
     dumper->LeftAlign();
-    dumper->InsertMemberName(Name());
+    dumper->InsertMemberName(Name(), m_navigationId);
     if (m_initializer)
     {
       dumper->InsertWhitespace();
@@ -2505,6 +2567,7 @@ class AstEnum : public AstNamedNode {
   bool m_isScoped;
   bool m_isScopedWithClass;
   bool m_isFixed;
+  bool m_isForwardDeclaration;
 
 public:
   AstEnum(
@@ -2513,8 +2576,9 @@ public:
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(enumDecl, azureClassesDatabase, parentNode),
         m_underlyingType{enumDecl->getIntegerType().getAsString()},
-        m_isScoped{enumDecl->isScoped()},
-        m_isScopedWithClass{enumDecl->isScopedUsingClassTag()}, m_isFixed{enumDecl->isFixed()}
+        m_isScoped{enumDecl->isScoped()}, m_isScopedWithClass{enumDecl->isScopedUsingClassTag()},
+        m_isFixed{enumDecl->isFixed()}, m_isForwardDeclaration{
+                                            enumDecl != enumDecl->getDefinition()}
   {
     if (!m_isScoped)
     {
@@ -2800,7 +2864,14 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
   }
   DumpTag(dumper, dumpOptions);
   dumper->InsertWhitespace();
-  dumper->InsertTypeName(Name(), m_navigationId);
+  if (m_isForwardDeclaration)
+  {
+    dumper->InsertIdentifier(Name());
+  }
+  else
+  {
+    dumper->InsertTypeName(Name(), m_navigationId);
+  }
   DumpTemplateSpecializationArguments(dumper, dumpOptions);
   if (!m_isForwardDeclaration)
   {
@@ -2846,7 +2917,7 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
     if (m_isAnonymousNamedStruct && !m_anonymousNamedStructName.empty())
     {
       dumper->InsertWhitespace();
-      dumper->InsertTypeName(m_anonymousNamedStructName, m_navigationId);
+      dumper->InsertTypeName(m_anonymousNamedStructName, m_navigationId+m_anonymousNamedStructName);
     }
   }
   if (dumpOptions.NeedsTrailingSemi)
@@ -2887,36 +2958,44 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) co
     }
   }
   dumper->InsertWhitespace();
-  dumper->InsertTypeName(Name(), m_navigationId);
-  if (m_isFixed)
+  if (m_isForwardDeclaration)
   {
-    dumper->InsertWhitespace();
-    dumper->InsertPunctuation(':');
-    dumper->InsertWhitespace();
-    dumper->InsertMemberName(m_underlyingType);
+    dumper->InsertIdentifier(Name());
   }
-  dumper->Newline();
-  dumper->LeftAlign();
-  dumper->InsertPunctuation('{');
-  dumper->AdjustIndent(2);
-  dumper->Newline();
+  else
+  {
+    dumper->InsertTypeName(Name(), m_navigationId);
 
-  {
-    DumpNodeOptions innerOptions{dumpOptions};
-    innerOptions.NeedsLeadingNewline = true;
-    DumpList(
-        m_enumerators.begin(),
-        m_enumerators.end(),
-        dumper,
-        innerOptions,
-        [&](AstDumper* dumper, std::unique_ptr<AstNode> const& enumerator) {
-          enumerator->DumpNode(dumper, dumpOptions);
-        });
+    if (m_isFixed)
+    {
+      dumper->InsertWhitespace();
+      dumper->InsertPunctuation(':');
+      dumper->InsertWhitespace();
+      dumper->InsertIdentifier(m_underlyingType);
+    }
+    dumper->Newline();
+    dumper->LeftAlign();
+    dumper->InsertPunctuation('{');
+    dumper->AdjustIndent(2);
+    dumper->Newline();
+
+    {
+      DumpNodeOptions innerOptions{dumpOptions};
+      innerOptions.NeedsLeadingNewline = true;
+      DumpList(
+          m_enumerators.begin(),
+          m_enumerators.end(),
+          dumper,
+          innerOptions,
+          [&](AstDumper* dumper, std::unique_ptr<AstNode> const& enumerator) {
+            enumerator->DumpNode(dumper, dumpOptions);
+          });
+    }
+    dumper->Newline();
+    dumper->AdjustIndent(-2);
+    dumper->LeftAlign();
+    dumper->InsertPunctuation('}');
   }
-  dumper->Newline();
-  dumper->AdjustIndent(-2);
-  dumper->LeftAlign();
-  dumper->InsertPunctuation('}');
   if (dumpOptions.NeedsTrailingSemi)
   {
     dumper->InsertPunctuation(';');
@@ -2936,7 +3015,7 @@ void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) c
   }
   m_fieldType.Dump(dumper, dumpOptions);
   dumper->InsertWhitespace();
-  dumper->InsertMemberName(Name());
+  dumper->InsertMemberName(Name(), m_navigationId);
   // if (m_initializer)
   //{
   //   DumpNodeOptions innerOptions{dumpOptions};
@@ -2964,7 +3043,7 @@ void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) c
 
 void AstType::Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
 {
-  dumper->InsertMemberName(m_internalTypeName);
+  dumper->InsertIdentifier(m_internalTypeName);
 }
 
 void AstExpr::Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
@@ -2988,7 +3067,7 @@ void AstMemberExpr::Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) 
   }
   m_member->Dump(dumper, dumpOptions);
   dumper->InsertPunctuation('.');
-  dumper->InsertMemberName(m_memberMethod);
+  dumper->InsertIdentifier(m_memberMethod);
   dumper->InsertPunctuation('(');
   dumper->InsertPunctuation(')');
   if (dumpOptions.DumpListInitializer)

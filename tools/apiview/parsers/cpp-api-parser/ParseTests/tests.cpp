@@ -252,7 +252,8 @@ struct NsDumper : AstDumper
       std::string_view const& typeNavigationId) override
   {
   }
-  virtual void InsertMemberName(std::string_view const& member) override {}
+  virtual void InsertMemberName(std::string_view const& member, std::string_view const&) override {}
+  virtual void InsertIdentifier(std::string_view const& identifier) override {}
   virtual void InsertStringLiteral(std::string_view const& str) override {}
   virtual void InsertLiteral(std::string_view const& str) override {}
   virtual void InsertComment(std::string_view const& comment) override {}

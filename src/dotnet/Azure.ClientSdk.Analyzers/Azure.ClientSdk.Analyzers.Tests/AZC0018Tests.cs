@@ -25,6 +25,16 @@ public class AssetConversion {}
 
     public class SomeClient
     {
+        public virtual Task<Response<bool>> GetHeadAsBooleanAsync(string s, RequestContext context)
+        {
+            return null;
+        }
+
+        public virtual Response<bool> GetHeadAsBoolean(string s, RequestContext context)
+        {
+            return null;
+        }
+
         public virtual Task<Response> GetResponseAsync(string s, RequestContext context)
         {
             return null;

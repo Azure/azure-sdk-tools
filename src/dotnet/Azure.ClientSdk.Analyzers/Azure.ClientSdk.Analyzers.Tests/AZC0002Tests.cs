@@ -295,5 +295,43 @@ namespace RandomNamespace
                 .WithDisabledDiagnostics("AZC0018")
                 .RunAsync();
         }
+
+        [Fact]
+        public async Task AZC0002NotProducedIfThereIsAnOverloadWithCancellationToken()
+        {
+            const string code = @"
+using Azure;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual Response GetAsync(string s)
+        {
+            return null;
+        }
+
+        public virtual Response Get(string s)
+        {
+            return null;
+        }
+
+        public virtual Response GetAsync(string s, CancellationToken cancellationToken)
+        {
+            return null;
+        }
+
+        public virtual Response Get(string s, CancellationToken cancellationToken)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .WithDisabledDiagnostics("AZC0015")
+                .RunAsync();
+        }
     }
 }

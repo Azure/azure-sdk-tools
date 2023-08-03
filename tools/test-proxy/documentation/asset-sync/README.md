@@ -207,9 +207,7 @@ The below diagram illustrates how an individual assets.json, language repo, and 
 
 ![assets diagram](../_images/organization_of_assets.png)
 
-> Side note: the `.breadcrumb` file is created/updated as an artifact of the test-proxy restore/push/reset operations. Don't look for one if you haven't restored at least one assets.json first!
-
-One can use visual inspection of the `.breadcrumb` file to _find_ which folder contains the files for your assets.json. Or, more conveniently, a user can use the `config` verb to access this data! Using assets diagram directly above. we can work an example:
+A user can use the `config` verb to access this the location of their assets on disk! Using assets diagram directly as a reference. we can work an example:
 
 ```powershell
 # from the root of the azure-sdk-for-net repo, run:

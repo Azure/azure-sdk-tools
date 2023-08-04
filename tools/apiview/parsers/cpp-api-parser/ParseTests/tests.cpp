@@ -305,7 +305,7 @@ TEST_F(TestParser, NamespaceFilter1)
   EXPECT_EQ("CPA0003", dumper.Messages[0].DiagnosticId);
   EXPECT_EQ("GlobalFunction4", dumper.Messages[0].FailingId);
   EXPECT_EQ("CPA0002", dumper.Messages[1].DiagnosticId);
-  EXPECT_EQ("GlobalFunction4", dumper.Messages[1].FailingId);
+  EXPECT_EQ("char *GlobalFunction4(int character)", dumper.Messages[1].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[2].DiagnosticId);
   EXPECT_EQ("A::AB::ABC::FunctionABC", dumper.Messages[2].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[3].DiagnosticId);
@@ -345,7 +345,7 @@ TEST_F(TestParser, NamespaceFilter2)
   EXPECT_EQ("CPA0003", dumper.Messages[2].DiagnosticId);
   EXPECT_EQ("GlobalFunction4", dumper.Messages[2].FailingId);
   EXPECT_EQ("CPA0002", dumper.Messages[3].DiagnosticId);
-  EXPECT_EQ("GlobalFunction4", dumper.Messages[3].FailingId);
+  EXPECT_EQ("char *GlobalFunction4(int character)", dumper.Messages[3].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[4].DiagnosticId);
   EXPECT_EQ("A::AB::ABC::FunctionABC", dumper.Messages[4].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[5].DiagnosticId);
@@ -387,7 +387,7 @@ TEST_F(TestParser, NamespaceFilter3)
   EXPECT_EQ("CPA0003", dumper.Messages[3].DiagnosticId);
   EXPECT_EQ("GlobalFunction4", dumper.Messages[3].FailingId);
   EXPECT_EQ("CPA0002", dumper.Messages[4].DiagnosticId);
-  EXPECT_EQ("GlobalFunction4", dumper.Messages[4].FailingId);
+  EXPECT_EQ("char *GlobalFunction4(int character)", dumper.Messages[4].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[5].DiagnosticId);
   EXPECT_EQ("A::AB::ABC::FunctionABC", dumper.Messages[5].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[6].DiagnosticId);
@@ -428,7 +428,7 @@ TEST_F(TestParser, NamespaceFilter4)
   EXPECT_EQ("CPA0003", dumper.Messages[2].DiagnosticId);
   EXPECT_EQ("GlobalFunction4", dumper.Messages[2].FailingId);
   EXPECT_EQ("CPA0002", dumper.Messages[3].DiagnosticId);
-  EXPECT_EQ("GlobalFunction4", dumper.Messages[3].FailingId);
+  EXPECT_EQ("char *GlobalFunction4(int character)", dumper.Messages[3].FailingId);
 
   EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated4.cpp"));
 }

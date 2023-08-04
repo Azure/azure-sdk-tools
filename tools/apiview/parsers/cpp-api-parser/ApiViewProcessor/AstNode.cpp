@@ -585,7 +585,6 @@ public:
     }
     else
     {
-      dumper->InsertWhitespace();
       dumper->InsertIdentifier(m_referencedName);
     }
   }
@@ -1833,7 +1832,6 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
-    DumpAttributes(dumper, dumpOptions);
     if (dumpOptions.NeedsLeftAlign)
     {
       dumper->LeftAlign();
@@ -1919,7 +1917,6 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
-    DumpAttributes(dumper, dumpOptions);
     if (dumpOptions.NeedsLeftAlign)
     {
       dumper->LeftAlign();
@@ -2025,23 +2022,21 @@ public:
   {
   }
   AstAccessSpec(AccessSpecifier specifier) : AstNode(nullptr), m_accessSpecifier{specifier} {}
-  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override;
-};
-
-void AstAccessSpec::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
-{
-  // We want to left-indent the "public:", "private:" and "protected" items so they stick
-  // out from the fields in the class.
-  dumper->AdjustIndent(-2);
-  if (dumpOptions.NeedsLeftAlign)
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
-    dumper->LeftAlign();
+    // We want to left-indent the "public:", "private:" and "protected" items so they stick
+    // out from the fields in the class.
+    dumper->AdjustIndent(-2);
+    if (dumpOptions.NeedsLeftAlign)
+    {
+      dumper->LeftAlign();
+    }
+    dumper->InsertKeyword(AccessSpecifierToString(m_accessSpecifier));
+    dumper->InsertPunctuation(':');
+    dumper->AdjustIndent(2);
+    dumper->Newline();
   }
-  dumper->InsertKeyword(AccessSpecifierToString(m_accessSpecifier));
-  dumper->InsertPunctuation(':');
-  dumper->AdjustIndent(2);
-  dumper->Newline();
-}
+};
 
 /**
  * Represents an AST class or structure.
@@ -2730,9 +2725,9 @@ AstClassLike::AstClassLike(
         // virtual functions are always included in the API View. We need to adjust the access
         // specifier for these functions so that they are emitted as private.
         //
-        // Friend nodes ignore access specifiers, so there is no need to adjust access specifiers
-        // for them.
-        if (child->getKind() != Decl::Kind::Friend)
+        // Friend nodes and static_assert nodes ignore access specifiers, so there is no need to
+        // adjust access specifiers for them.
+        if (child->getKind() != Decl::Kind::Friend && child->getKind() != Decl::Kind::StaticAssert)
         {
 
           if (child->getKind() == Decl::Kind::AccessSpec)
@@ -2917,7 +2912,8 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
     if (m_isAnonymousNamedStruct && !m_anonymousNamedStructName.empty())
     {
       dumper->InsertWhitespace();
-      dumper->InsertTypeName(m_anonymousNamedStructName, m_navigationId+m_anonymousNamedStructName);
+      dumper->InsertTypeName(
+          m_anonymousNamedStructName, m_navigationId + m_anonymousNamedStructName);
     }
   }
   if (dumpOptions.NeedsTrailingSemi)

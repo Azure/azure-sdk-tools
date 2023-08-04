@@ -197,15 +197,15 @@ In summary, once an assets.json is present, the shim _must_ be updated to **actu
 
 Once a package or service has an assets.json and a targeted tag, each language-repo test framework will automatically provide this assets.json alongside the recording file path. This will allow the test-proxy to automatically restore recordings as necessary.
 
-Here is the result of running tests in `playback`-mode for a couple packages within the python repo:
+In practice, this is what a code repo will look like after running `playback`-mode for a couple packages. Specifically, this is for the python repo.
 
-![assets store](../_images/example_assets_store.png)
+![assets store](../_images/assets_on_disk.png)
 
 One can see the automatically restored assets repos within the `.assets` folder. Each of the top-level folders within the `.assets` folder contains a single slice of the assets repo.
 
-The below diagram illustrates how an individual assets.json, language repo, and assets repo relate to each other. Text that appears as a specific color can be traced to its source in the assets.json.
+The below diagram illustrates how an individual assets.json, language repo, and assets repo relate to each other.
 
-![assets diagram](../_images/organization_of_assets.png)
+![assets diagram](../_images/organization_of_assets1.png)
 
 A user can use the `config` verb to access this the location of their assets on disk! Using assets diagram directly as a reference. we can work an example:
 

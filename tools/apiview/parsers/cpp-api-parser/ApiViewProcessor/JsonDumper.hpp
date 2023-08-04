@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 
 using namespace nlohmann::literals;
 
@@ -37,6 +38,32 @@ class JsonDumper : public AstDumper {
     InheritanceInfoEnd = 18
   };
 
+  // Validate that the json we've created won't cause problems for ApiView.
+  void ValidateJson()
+  {
+    std::unordered_set<std::string> definitions;
+    for (const auto& token : m_json["Tokens"])
+    {
+      if (token.contains("DefinitionId") && token["DefinitionId"].is_string())
+      {
+        auto definitionId = token["DefinitionId"].get<std::string>();
+        if (definitions.find(definitionId) != definitions.end())
+        {
+          throw std::runtime_error("Duplicate DefinitionId: " + definitionId);
+        }
+        definitions.emplace(definitionId);
+      }
+      if (!token.contains("Value"))
+      {
+        throw std::runtime_error("Missing Value in token");
+      }
+      if (!token.contains("Kind"))
+      {
+        throw std::runtime_error("Missing Kind in token");
+      }
+    }
+  }
+
 public:
   JsonDumper(
       std::string_view reviewName,
@@ -56,13 +83,17 @@ public:
     m_json["Tokens"] = nlohmann::json::array();
   }
 
-  void DumpToFile(std::ostream& outfile) { outfile << m_json; }
+  void DumpToFile(std::ostream& outfile)
+  {
+    ValidateJson();
+    outfile << m_json;
+  }
   nlohmann::json const& GetJson() { return m_json; }
 
   // Each ApiView node has 4 mandatory members:
   //
-  // DefinitionId: ID used in the Navigation pane for type navigation.
-  // NavigateToId: ???
+  // DefinitionId: A unique value used to represent an entity where comments can be left. This MUST be unique.
+  // NavigateToId: ID used in the Navigation pane for type navigation.
   // Value: Value to display in ApiView (mandatory)
   // Kind: Type of node, used for color coding output.
 
@@ -116,6 +147,14 @@ public:
          {"Value", nullptr},
          {"Kind", TokenKinds::LineIdMarker}}); // Not clear if this is used at all.
   }
+  virtual void InsertIdentifier(std::string_view const& id) override
+  {
+    m_json["Tokens"].push_back(
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", id},
+         {"Kind", TokenKinds::TypeName}});
+  }
   virtual void InsertTypeName(std::string_view const& type, std::string_view const& navigationId)
       override
   {
@@ -125,10 +164,12 @@ public:
          {"Value", type},
          {"Kind", TokenKinds::TypeName}});
   }
-  virtual void InsertMemberName(std::string_view const& member) override
+  virtual void InsertMemberName(
+      std::string_view const& member,
+      std::string_view const& memberFullName) override
   {
     m_json["Tokens"].push_back(
-        {{"DefinitionId", member},
+        {{"DefinitionId", memberFullName},
          {"NavigateToId", nullptr},
          {"Value", member},
          {"Kind", TokenKinds::MemberName}});

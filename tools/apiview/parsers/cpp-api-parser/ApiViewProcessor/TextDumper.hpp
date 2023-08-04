@@ -24,9 +24,13 @@ public:
   {
     m_stream << type;
   }
-  virtual void InsertMemberName(std::string_view const& member) override { m_stream << member; }
+  virtual void InsertMemberName(std::string_view const& member, std::string_view const&) override
+  {
+    m_stream << member;
+  }
   virtual void InsertStringLiteral(std::string_view const& str) override { m_stream << str; }
   virtual void InsertLiteral(std::string_view const& str) override { m_stream << str; }
+  virtual void InsertIdentifier(std::string_view const& str) override { m_stream << str; }
   virtual void InsertComment(std::string_view const& comment) override { m_stream << comment; }
   virtual void AddDocumentRangeStart() override { m_stream << "/*"; }
   virtual void AddDocumentRangeEnd() override { m_stream << "*/"; }

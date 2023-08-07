@@ -29,11 +29,11 @@ namespace Azure.ClientSdk.Analyzers.Tests
             {
                 ReferenceAssemblies = DefaultReferenceAssemblies,
                 SolutionTransforms = {(solution, projectId) =>
-                        {
-                            var project = solution.GetProject(projectId);
-                            var parseOptions = (CSharpParseOptions)project.ParseOptions;
-                            return solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(languageVersion));
-                        }},
+                {
+                    var project = solution.GetProject(projectId);
+                    var parseOptions = (CSharpParseOptions)project.ParseOptions;
+                    return solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(languageVersion));
+                }},
                 TestCode = source,
                 TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck
             };

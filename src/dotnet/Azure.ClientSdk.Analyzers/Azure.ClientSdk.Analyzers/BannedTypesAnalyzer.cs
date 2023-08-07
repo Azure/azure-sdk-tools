@@ -57,10 +57,6 @@ namespace Azure.ClientSdk.Analyzers
                     CheckType(context, parameterSymbol.Type, parameterSymbol);
                     break;
                 case IMethodSymbol methodSymbol:
-                    if (methodSymbol.MethodKind == MethodKind.PropertyGet || methodSymbol.MethodKind == MethodKind.PropertySet)
-                    {
-                        return;
-                    }
                     CheckType(context, methodSymbol.ReturnType, methodSymbol);
                     break;
                 case IEventSymbol eventSymbol:

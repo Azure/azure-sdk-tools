@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Collections.Immutable;
@@ -19,12 +19,13 @@ namespace Azure.ClientSdk.Analyzers.Tests
             ReferenceAssemblies.Default.AddPackages(ImmutableArray.Create(
                 new PackageIdentity("Azure.Core", "1.26.0"),
                 new PackageIdentity("Microsoft.Bcl.AsyncInterfaces", "1.1.0"),
-                new PackageIdentity("System.Text.Json", "4.6.0"),
                 new PackageIdentity("Newtonsoft.Json", "12.0.3"),
+                new PackageIdentity("System.Text.Json", "4.6.0"),
                 new PackageIdentity("System.Threading.Tasks.Extensions", "4.5.3")));
 
         public static CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> CreateAnalyzer(string source, LanguageVersion languageVersion = LanguageVersion.Latest)
-            => new CSharpAnalyzerTest<TAnalyzer, XUnitVerifier>
+        {
+            CSharpAnalyzerTest < TAnalyzer, XUnitVerifier > test = new CSharpAnalyzerTest<TAnalyzer, XUnitVerifier>
             {
                 ReferenceAssemblies = DefaultReferenceAssemblies,
                 SolutionTransforms = {(solution, projectId) =>
@@ -36,6 +37,27 @@ namespace Azure.ClientSdk.Analyzers.Tests
                 TestCode = source,
                 TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck
             };
+
+            test.TestState.Sources.Add(("MutableJsonDocument.cs", @"
+                namespace Azure.Core.Json
+                {
+                    internal sealed partial class MutableJsonDocument
+                    {
+                    }
+                }
+                "));
+
+            test.TestState.Sources.Add(("MutableJsonElement.cs", @"
+                namespace Azure.Core.Json
+                {
+                    internal sealed partial class MutableJsonElement
+                    {
+                    }
+                }
+                "));
+
+            return test;
+        }
 
         public static Task VerifyAnalyzerAsync(string source, LanguageVersion languageVersion = LanguageVersion.Latest) 
             => CreateAnalyzer(source, languageVersion).RunAsync(CancellationToken.None);

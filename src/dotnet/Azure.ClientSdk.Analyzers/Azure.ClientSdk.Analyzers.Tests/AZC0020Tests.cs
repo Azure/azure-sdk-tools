@@ -9,31 +9,51 @@ namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0020Tests
     {
-        [Theory]
-        [InlineData("public class {|AZC0020:Class|}: System.IProgress<MutableJsonDocument> { public void Report (JsonElement {|AZC0020:value|}) {} }")]
-        [InlineData("public void Report(MutableJsonDocument {|AZC0020:value|}) {}")]
-        [InlineData("public MutableJsonDocument {|AZC0020:Report|}() { return default; }")]
-        [InlineData("public IEnumerable<MutableJsonDocument> {|AZC0020:Report|}() { return default; }")]
-        [InlineData("public MutableJsonDocument {|AZC0020:Report|} { get; }")]
-        [InlineData("public MutableJsonDocument {|AZC0020:Report|};")]
-        [InlineData("public event EventHandler<MutableJsonDocument> {|AZC0020:Report|};")]
-        [InlineData("protected MutableJsonDocument {|AZC0020:Report|};")]
-        public async Task AZC0020ProducedForMutableJsonTypeUsageInPublicApi(string usage)
+        [Fact]
+        public async Task AZC0020ProducedForMutableJsonDocumentUsage()
         {
-            string code = $@"
-using System;
-using System.Threading.Tasks;
-using System.Text.Json;
-using System.Collections.Generic;
+            string code = @"
 using Azure.Core.Json;
 
-namespace RandomNamespace
-{{
-    public class SomeClient
-    {{
-        {usage}       
-    }}
-}}";
+namespace LibraryNamespace
+{
+    public class Model
+    {
+        MutableJsonDocument {|AZC0020:_document|};
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0020ProducedForMutableJsonElementUsage()
+        {
+            string code = @"
+using Azure.Core.Json;
+
+namespace LibraryNamespace
+{
+    public class Model
+    {
+        MutableJsonElement {|AZC0020:_element|};
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0020NotProducedForAllowedTypeUsage()
+        {
+            string code = @"
+using System.Text.Json;
+
+namespace LibraryNamespace
+{
+    public class Model
+    {
+        JsonElement _element;
+    }
+}";
             await Verifier.VerifyAnalyzerAsync(code);
         }
     }

@@ -18,7 +18,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private static readonly string BannedTypesMessageArgs = string.Join(", ", BannedTypes);
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Descriptors.AZC0014);
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(Descriptors.AZC0020);
 
         public override SymbolKind[] SymbolKinds { get; } = new[]
         {
@@ -49,11 +49,6 @@ namespace Azure.ClientSdk.Analyzers
                         }
                     }
                 }
-            }
-
-            if (!IsPublicApi(context.Symbol))
-            {
-                return;
             }
 
             switch (context.Symbol)

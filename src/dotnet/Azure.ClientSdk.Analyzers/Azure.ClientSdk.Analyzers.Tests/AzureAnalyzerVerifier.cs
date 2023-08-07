@@ -26,17 +26,17 @@ namespace Azure.ClientSdk.Analyzers.Tests
 
         public static CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> CreateAnalyzer(string source, LanguageVersion languageVersion = LanguageVersion.Latest)
             => new CSharpAnalyzerTest<TAnalyzer, XUnitVerifier>
-                {
-                    ReferenceAssemblies = DefaultReferenceAssemblies,
-                    SolutionTransforms = {(solution, projectId) =>
+            {
+                ReferenceAssemblies = DefaultReferenceAssemblies,
+                SolutionTransforms = {(solution, projectId) =>
                         {
                             var project = solution.GetProject(projectId);
                             var parseOptions = (CSharpParseOptions)project.ParseOptions;
                             return solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(languageVersion));
                         }},
-                    TestCode = source,
-                    TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck
-                };
+                TestCode = source,
+                TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck
+            };
 
         public static Task VerifyAnalyzerAsync(string source, LanguageVersion languageVersion = LanguageVersion.Latest)
             => CreateAnalyzer(source, languageVersion).RunAsync(CancellationToken.None);

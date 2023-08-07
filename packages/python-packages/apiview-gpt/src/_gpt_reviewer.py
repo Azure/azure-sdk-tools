@@ -44,6 +44,7 @@ class GptReviewer:
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt_template)
 
     def get_response(self, apiview, language):
+        apiview = self.unescape(apiview)
         general_guidelines, language_guidelines = self.retrieve_guidelines(language)
         all_guidelines = general_guidelines + language_guidelines
 
@@ -77,6 +78,9 @@ class GptReviewer:
                 if len(output.violations) > 0:
                     final_results.status = "Error"
         return final_results
+
+    def unescape(self, text: str) -> str:
+        return str(bytes(text, "utf-8").decode("unicode_escape"))
 
     def process_violations(self, violations: List[Violation], section: Section) -> List[Violation]:
         if not violations:

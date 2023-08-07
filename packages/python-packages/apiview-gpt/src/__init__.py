@@ -12,7 +12,7 @@ def console_entry_point():
     print("Running apiview-gpt version {}".format(__version__))
     reviewer = GptReviewer()
     # FIXME: Make this a proper CLI
-    input_filename = "test.txt"
+    input_filename = "test2.txt"
     file_path = os.path.join(_PACKAGE_ROOT, input_filename)
     with open(file_path, "r") as f:
         apiview_text = f.read()

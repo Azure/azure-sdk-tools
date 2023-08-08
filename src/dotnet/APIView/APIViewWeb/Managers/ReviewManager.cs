@@ -747,7 +747,7 @@ namespace APIViewWeb.Managers
             // Write back result as comments to APIView
             foreach (var violation in result.Violations)
             {
-                var codeLine = codeLines[violation.LineNo + 1];
+                var codeLine = codeLines[violation.LineNo];
                 if (codeLine.DisplayString.StartsWith(violation.Code))
                 {
                     var comment = new CommentModel();
@@ -767,6 +767,7 @@ namespace APIViewWeb.Managers
                     }
                     comment.ResolutionLocked = false;
                     comment.Username = "azure-sdk";
+                    comment.Comment = commentText.ToString();
 
                     await _commentsRepository.UpsertCommentAsync(comment);
                 }

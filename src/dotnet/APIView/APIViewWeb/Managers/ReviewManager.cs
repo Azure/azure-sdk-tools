@@ -729,6 +729,7 @@ namespace APIViewWeb.Managers
 
             var url = "https://apiviewcopilot.azurewebsites.net/python";
             var client = new HttpClient();
+            client.Timeout = TimeSpan.FromMinutes(5);
             var payload = new
             {
                 content = reviewText.ToString()
@@ -748,29 +749,26 @@ namespace APIViewWeb.Managers
             foreach (var violation in result.Violations)
             {
                 var codeLine = codeLines[violation.LineNo];
-                if (codeLine.DisplayString.StartsWith(violation.Code))
+                var comment = new CommentModel();
+                comment.TimeStamp = DateTime.UtcNow;
+                comment.ReviewId = reviewId;
+                comment.RevisionId = revisionId;
+                comment.ElementId = codeLine.ElementId;
+                //comment.SectionClass = sectionClass; // This will be needed for swagger
+
+                var commentText = new StringBuilder();
+                commentText.AppendLine($"Suggestion: {violation.Suggestion}");
+                commentText.AppendLine();
+                commentText.AppendLine(violation.Comment);
+                foreach (var id in violation.RuleIds)
                 {
-                    var comment = new CommentModel();
-                    comment.TimeStamp = DateTime.UtcNow;
-                    comment.ReviewId = reviewId;
-                    comment.RevisionId = revisionId;
-                    comment.ElementId = codeLine.ElementId;
-                    //comment.SectionClass = sectionClass; // This will be needed for swagger
-
-                    var commentText = new StringBuilder();
-                    commentText.AppendLine($"Suggestion: {violation.Suggestion}");
-                    commentText.AppendLine();
-                    commentText.AppendLine(violation.Comment);
-                    foreach (var id in violation.RuleIds)
-                    {
-                        commentText.AppendLine($"See: https://guidelinescollab.github.io/azure-sdk/{id}");
-                    }
-                    comment.ResolutionLocked = false;
-                    comment.Username = "azure-sdk";
-                    comment.Comment = commentText.ToString();
-
-                    await _commentsRepository.UpsertCommentAsync(comment);
+                    commentText.AppendLine($"See: https://guidelinescollab.github.io/azure-sdk/{id}");
                 }
+                comment.ResolutionLocked = false;
+                comment.Username = "azure-sdk";
+                comment.Comment = commentText.ToString();
+
+                await _commentsRepository.UpsertCommentAsync(comment);
             }
             return result.Violations.Count;
         }

@@ -757,7 +757,7 @@ namespace APIViewWeb.Managers
                 //comment.SectionClass = sectionClass; // This will be needed for swagger
 
                 var commentText = new StringBuilder();
-                commentText.AppendLine($"Suggestion: {violation.Suggestion}");
+                commentText.AppendLine($"Suggestion: `{violation.Suggestion}`");
                 commentText.AppendLine();
                 commentText.AppendLine(violation.Comment);
                 foreach (var id in violation.RuleIds)

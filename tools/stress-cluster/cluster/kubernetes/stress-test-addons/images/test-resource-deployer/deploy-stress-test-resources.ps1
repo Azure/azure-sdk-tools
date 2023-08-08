@@ -15,6 +15,10 @@ mkdir /azure
 Copy-Item "/scripts/stress-test/test-resources-post.ps1" -Destination "/azure/"
 Copy-Item "/mnt/testresources/*" -Destination "/azure/"
 
+while (kubectl get pods -n $env:namespace $env:BASE_NAME -o jsonpath='{.items[?(@.metadata.annotations.batch\.kubernetes\.io/job-completion-index=="0")].metadata.name}' -nq "Complete") {
+    sleep 10
+}
+
 # Capture output so we don't print environment variable secrets
 $env = & /common/TestResources/New-TestResources.ps1 `
     -BaseName $env:BASE_NAME `

@@ -50,3 +50,4 @@
 # .NET Client Tools
 ###########
 /src/dotnet/Azure.ClientSdk.Analyzers  @jsquire @pallavit @JoshLove-msft @christothes @annelo-msft @KrzysztofCwalina @tg-msft @heaths @m-nash
+/src/dotnet/APIView                    @chidozieononiwu

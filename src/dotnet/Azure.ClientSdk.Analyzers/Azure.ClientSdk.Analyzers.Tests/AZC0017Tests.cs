@@ -22,7 +22,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Response {|AZC0017:GetAsync|}(RequestContent content, CancellationToken cancellationToken = default)
+        public virtual Task<Response> {|AZC0017:GetAsync|}(RequestContent content, CancellationToken cancellationToken = default)
         {
             return null;
         }
@@ -34,7 +34,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -42,6 +41,7 @@ namespace RandomNamespace
         public async Task AZC0017NotProducedForMethodsWithCancellationToken()
         {
             const string code = @"
+using Azure;
 using Azure.Core;
 using System.Threading;
 using System.Threading.Tasks;
@@ -50,18 +50,18 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task GetAsync(string s, CancellationToken cancellationToken = default)
+        public virtual Task<Response> GetAsync(string s, CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public virtual void Get(string s, CancellationToken cancellationToken = default)
+        public virtual Response Get(string s, CancellationToken cancellationToken = default)
         {
+            return null;
         }
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
     }

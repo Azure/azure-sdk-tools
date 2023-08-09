@@ -20,7 +20,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Response {|AZC0002:GetAsync|}()
+        public virtual Task<Response> {|AZC0002:GetAsync|}()
         {
             return null;
         }
@@ -32,7 +32,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -48,7 +47,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Response {|AZC0002:GetAsync|}(CancellationToken cancellation = default)
+        public virtual Task<Response> {|AZC0002:GetAsync|}(CancellationToken cancellation = default)
         {
             return null;
         }
@@ -60,7 +59,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -77,7 +75,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Response {|AZC0002:GetAsync|}(RequestContext cancellation = default)
+        public virtual Task<Response> {|AZC0002:GetAsync|}(RequestContext cancellation = default)
         {
             return null;
         }
@@ -89,7 +87,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -105,7 +102,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Response {|AZC0002:GetAsync|}(CancellationToken cancellationToken)
+        public virtual Task<Response> {|AZC0002:GetAsync|}(CancellationToken cancellationToken)
         {
             return null;
         }
@@ -117,7 +114,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -133,7 +129,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Response {|AZC0002:GetAsync|}(RequestContext context = default, string text = default)
+        public virtual Task<Response> {|AZC0002:GetAsync|}(RequestContext context = default, string text = default)
         {
             return null;
         }
@@ -145,7 +141,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -161,7 +156,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Response {|AZC0002:GetAsync|}(CancellationToken cancellationToken = default, string text = default)
+        public virtual Task<Response> {|AZC0002:GetAsync|}(CancellationToken cancellationToken = default, string text = default)
         {
             return null;
         }
@@ -173,7 +168,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -181,6 +175,7 @@ namespace RandomNamespace
         public async Task AZC0002NotProducedForMethodsWithCancellationToken()
         {
             const string code = @"
+using Azure;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -188,18 +183,18 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task GetAsync(CancellationToken cancellationToken = default)
+        public virtual Task<Response> GetAsync(CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public virtual void Get(CancellationToken cancellationToken = default)
+        public virtual Response Get(CancellationToken cancellationToken = default)
         {
+            return null;
         }
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -215,45 +210,48 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task Get1Async(string s, CancellationToken cancellationToken = default)
+        public virtual Task<Response> Get1Async(string s, CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public virtual void Get1(string s, CancellationToken cancellationToken = default)
-        {
-        }
-
-        public virtual Task Get1Async(string s, RequestContext context)
+        public virtual Response Get1(string s, CancellationToken cancellationToken = default)
         {
             return null;
         }
 
-        public virtual void Get1(string s, RequestContext context)
-        {
-        }
-
-        public virtual Task Get2Async(CancellationToken cancellationToken = default)
+        public virtual Task<Response> Get1Async(string s, RequestContext context)
         {
             return null;
         }
 
-        public virtual void Get2(CancellationToken cancellationToken = default)
-        {
-        }
-
-        public virtual Task Get2Async(RequestContext context)
+        public virtual Response Get1(string s, RequestContext context)
         {
             return null;
         }
 
-        public virtual void Get2(RequestContext context)
+        public virtual Task<Response> Get2Async(CancellationToken cancellationToken = default)
         {
+            return null;
+        }
+
+        public virtual Response Get2(CancellationToken cancellationToken = default)
+        {
+            return null;
+        }
+
+        public virtual Task<Response> Get2Async(RequestContext context)
+        {
+            return null;
+        }
+
+        public virtual Response Get2(RequestContext context)
+        {
+            return null;
         }
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .WithDisabledDiagnostics("AZC0018")
                 .WithDisabledDiagnostics("AD0001")
                 .RunAsync();
@@ -271,27 +269,28 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task GetAsync(RequestContext context = default)
+        public virtual Task<Response> GetAsync(RequestContext context = default)
         {
             return null;
         }
 
-        public virtual void Get(RequestContext context = default)
-        {
-        }
-
-        public virtual Task Get2Async(RequestContext context)
+        public virtual Response Get(RequestContext context = default)
         {
             return null;
         }
 
-        public virtual void Get2(RequestContext context)
+        public virtual Task<Response> Get2Async(RequestContext context)
         {
+            return null;
+        }
+
+        public virtual Response Get2(RequestContext context)
+        {
+            return null;
         }
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .WithDisabledDiagnostics("AZC0018")
                 .RunAsync();
         }
@@ -308,7 +307,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Response GetAsync(string s)
+        public virtual Task<Response> GetAsync(string s)
         {
             return null;
         }
@@ -318,7 +317,7 @@ namespace RandomNamespace
             return null;
         }
 
-        public virtual Response GetAsync(string s, CancellationToken cancellationToken)
+        public virtual Task<Response> GetAsync(string s, CancellationToken cancellationToken)
         {
             return null;
         }
@@ -330,7 +329,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
     }

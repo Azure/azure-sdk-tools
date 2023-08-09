@@ -21,7 +21,7 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public Response {|AZC0003:GetAsync|](CancellationToken cancellationToken = default)
+        public Task<Response> {|AZC0003:GetAsync|](CancellationToken cancellationToken = default)
         {
             return null;
         }
@@ -33,7 +33,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -59,7 +58,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
 
@@ -93,7 +91,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0015")
                 .RunAsync();
         }
     }

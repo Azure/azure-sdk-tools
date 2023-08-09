@@ -91,6 +91,7 @@ namespace Azure.ClientSdk.Analyzers
 
             return methodSymbols.SingleOrDefault(symbol =>
             {
+
                 if (!symbol.Parameters.Any() || !genericParameters.SequenceEqual(symbol.TypeParameters, ParameterEquivalenceComparer.Default))
                 {
                     return false;

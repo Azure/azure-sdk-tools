@@ -21,8 +21,6 @@ using System.Threading.Tasks;
 
 namespace RandomNamespace
 {
-public class AssetConversion {}
-
     public class SomeClient
     {
         public virtual Task<Response<bool>> GetHeadAsBooleanAsync(string s, RequestContext context)

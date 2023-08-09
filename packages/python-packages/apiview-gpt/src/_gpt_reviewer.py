@@ -44,8 +44,8 @@ class GptReviewer:
         self.chain = LLMChain(llm=self.llm, prompt=self.prompt_template)
 
     def get_response(self, apiview, language):
-        general_guidelines, language_guidelines = self.retrieve_guidelines(language)
-        all_guidelines = general_guidelines + language_guidelines
+        apiview = self.unescape(apiview)
+        all_guidelines = self.retrieve_guidelines(language)
 
         # TODO: Make this not hard-coded!
         guidelines = self.select_guidelines(all_guidelines, [
@@ -76,7 +76,45 @@ class GptReviewer:
                 # FIXME see: https://github.com/Azure/azure-sdk-tools/issues/6571
                 if len(output.violations) > 0:
                     final_results.status = "Error"
+        self.process_rule_ids(final_results, all_guidelines)
         return final_results
+
+    """ Ensure that each rule ID matches with an actual guideline ID. 
+        This ensures that the links that appear in APIView should never be broken (404).
+    """
+    def process_rule_ids(self, results, guidelines):
+        # create an index for easy lookup
+        index = { x["id"]: x for x in guidelines }
+        for violation in results.violations:
+            to_remove = []
+            to_add = []
+            for rule_id in violation.rule_ids:
+                try:
+                    index[rule_id]
+                    continue
+                except KeyError:
+                    # see if any guideline ID ends with the rule_id. If so, update it and preserve in the index
+                    matched = False
+                    for guideline in guidelines:
+                        if guideline["id"].endswith(rule_id):
+                            to_remove.append(rule_id)
+                            to_add.append(guideline["id"])
+                            index[rule_id] = guideline["id"]
+                            matched = True
+                            break
+                    if matched:
+                        continue
+                    # no match or partial match found, so remove the rule_id
+                    to_remove.append(rule_id)
+                    print(f"WARNING: Rule ID {rule_id} not found. Possible hallucination.")
+            # update the rule_ids arrays with the new values. Don't modify the array while iterating over it!
+            for rule_id in to_remove:
+                violation.rule_ids.remove(rule_id)
+            for rule_id in to_add:
+                violation.rule_ids.append(rule_id)
+
+    def unescape(self, text: str) -> str:
+        return str(bytes(text, "utf-8").decode("unicode_escape"))
 
     def process_violations(self, violations: List[Violation], section: Section) -> List[Violation]:
         if not violations:
@@ -146,4 +184,4 @@ class GptReviewer:
             with open(os.path.join(language_guidelines_path, filename), "r") as f:
                 items = json.loads(f.read())
                 language_guidelines.extend(items)
-        return general_guidelines, language_guidelines
+        return general_guidelines + language_guidelines

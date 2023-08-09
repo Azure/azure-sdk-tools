@@ -51,6 +51,11 @@ namespace Azure.ClientSdk.Analyzers
                 }
             }
 
+            if (IsAzureCore(context.Symbol.ContainingAssembly))
+            {
+                return;
+            }
+
             switch (context.Symbol)
             {
                 case IParameterSymbol parameterSymbol:
@@ -76,6 +81,11 @@ namespace Azure.ClientSdk.Analyzers
                     }
                     break;
             }
+        }
+
+        private bool IsAzureCore(IAssemblySymbol assembly)
+        {
+            return assembly.Name.Equals("Azure.Core");
         }
     }
 }

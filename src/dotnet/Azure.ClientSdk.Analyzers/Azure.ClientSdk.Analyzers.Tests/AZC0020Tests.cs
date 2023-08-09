@@ -83,5 +83,22 @@ namespace LibraryNamespace
 }";
             await Verifier.VerifyAnalyzerAsync(code, _sharedSourceFiles);
         }
+
+        [Fact]
+        public async Task AZC0020NotProducedForTypeWithBannedNameButAllowedNamespace()
+        {
+            string code = @"
+namespace LibraryNamespace
+{
+    public class MutableJsonDocument
+    {
+    }
+    public class Model
+    {
+        MutableJsonDocument _document;
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code, _sharedSourceFiles);
+        }
     }
 }

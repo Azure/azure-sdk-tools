@@ -11,9 +11,10 @@ namespace Azure.ClientSdk.Analyzers
     {
         private static HashSet<string> BannedTypes = new HashSet<string>()
         {
-            "MutableJsonDocument",
-            "MutableJsonElement",
-            "MutableJsonChange",
+            "Azure.Core.Json.MutableJsonDocument",
+            "Azure.Core.Json.MutableJsonElement",
+            "Azure.Core.Json.MutableJsonChange",
+            "Azure.Core.Json.MutableJsonChangeKind",
         };
 
         private static readonly string BannedTypesMessageArgs = string.Join(", ", BannedTypes);
@@ -68,7 +69,7 @@ namespace Azure.ClientSdk.Analyzers
         {
             if (type is INamedTypeSymbol namedTypeSymbol)
             {
-                if (BannedTypes.Contains(type.Name))
+                if (IsBannedType(namedTypeSymbol))
                 {
                     context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0020, symbol.Locations.First(), BannedTypesMessageArgs), symbol);
                 }
@@ -83,7 +84,12 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private bool IsAzureCore(IAssemblySymbol assembly)
+        private static bool IsBannedType(INamedTypeSymbol namedTypeSymbol)
+        {
+            return BannedTypes.Contains($"{namedTypeSymbol.ContainingNamespace}.{namedTypeSymbol.Name}");
+        }
+
+        private static bool IsAzureCore(IAssemblySymbol assembly)
         {
             return assembly.Name.Equals("Azure.Core");
         }

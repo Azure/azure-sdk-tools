@@ -13,7 +13,7 @@ namespace Azure.ClientSdk.Analyzers
         {
             "MutableJsonDocument",
             "MutableJsonElement",
-            "MutableJsonChange"
+            "MutableJsonChange",
         };
 
         private static readonly string BannedTypesMessageArgs = string.Join(", ", BannedTypes);
@@ -27,30 +27,11 @@ namespace Azure.ClientSdk.Analyzers
             SymbolKind.Property,
             SymbolKind.Parameter,
             SymbolKind.Event,
-            SymbolKind.NamedType
+            SymbolKind.NamedType,
         };
 
         public override void Analyze(ISymbolAnalysisContext context)
         {
-            static void CheckType(ISymbolAnalysisContext context, ITypeSymbol type, ISymbol symbol)
-            {
-                if (type is INamedTypeSymbol namedTypeSymbol)
-                {
-                    if (BannedTypes.Contains(type.Name))
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0020, symbol.Locations.First(), BannedTypesMessageArgs), symbol);
-                    }
-
-                    if (namedTypeSymbol.IsGenericType)
-                    {
-                        foreach (var typeArgument in namedTypeSymbol.TypeArguments)
-                        {
-                            CheckType(context, typeArgument, symbol);
-                        }
-                    }
-                }
-            }
-
             if (IsAzureCore(context.Symbol.ContainingAssembly))
             {
                 return;
@@ -80,6 +61,25 @@ namespace Azure.ClientSdk.Analyzers
                         CheckType(context, iface, namedTypeSymbol);
                     }
                     break;
+            }
+        }
+
+        private static void CheckType(ISymbolAnalysisContext context, ITypeSymbol type, ISymbol symbol)
+        {
+            if (type is INamedTypeSymbol namedTypeSymbol)
+            {
+                if (BannedTypes.Contains(type.Name))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0020, symbol.Locations.First(), BannedTypesMessageArgs), symbol);
+                }
+
+                if (namedTypeSymbol.IsGenericType)
+                {
+                    foreach (var typeArgument in namedTypeSymbol.TypeArguments)
+                    {
+                        CheckType(context, typeArgument, symbol);
+                    }
+                }
             }
         }
 

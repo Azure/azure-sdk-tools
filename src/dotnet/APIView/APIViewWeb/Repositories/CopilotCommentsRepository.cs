@@ -14,12 +14,9 @@ namespace APIViewWeb.Repositories
         private readonly string collectionName = "testCollection";
         private readonly IMongoDatabase _database;
         private readonly IMongoCollection<CopilotCommentModel> _collection;
-        private readonly IConfiguration _configuration;
-        private readonly string _index;
 
         public CopilotCommentsRepository(IConfiguration configuration)
         {
-            _configuration = configuration;
             _mongoClient = new MongoClient(configuration["MongoDBConnection"]);
             _database = _mongoClient.GetDatabase(databaseName);
             _collection = _database.GetCollection<CopilotCommentModel>(collectionName);

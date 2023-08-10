@@ -324,7 +324,7 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0004NProducedForMethodsWithoutArgMatchedSyncAlternative()
+        public async Task AZC0004ProducedForMethodsWithoutArgMatchedSyncAlternative()
         {
             const string code = @"
 using Azure;

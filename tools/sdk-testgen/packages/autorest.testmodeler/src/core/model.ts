@@ -490,7 +490,9 @@ export class TestCodeModeler {
         return await startSession<TestCodeModel>(host, {}, codeModelSchema);
     }
 
-    public findOperationByOperationId(operationId: string): {
+    public findOperationByOperationId(
+        operationId: string,
+    ): {
         operation: Operation;
         operationGroup: OperationGroup;
     } {

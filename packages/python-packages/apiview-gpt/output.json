@@ -3,8 +3,8 @@
   "violations": [
     {
       "rule_ids": [
-        "python-client-naming",
-        "python-client-separate-sync-async"
+        "python_design.html#python-client-naming",
+        "python_design.html#python-client-separate-sync-async"
       ],
       "line_no": 2,
       "bad_code": "class azure.contoso.ContosoAsyncManager:",
@@ -13,7 +13,7 @@
     },
     {
       "rule_ids": [
-        "python-client-options-naming"
+        "python_design.html#python-client-options-naming"
       ],
       "line_no": 8,
       "bad_code": "options: dict",
@@ -64,16 +64,6 @@
       "bad_code": "red = \"red\"",
       "suggestion": "RED = \"red\"",
       "comment": "Enum names should be in UPPERCASE."
-    },
-    {
-      "rule_ids": [
-        "python_design.html#python-client-naming",
-        "python_design.html#python-models-dict-result"
-      ],
-      "line_no": 30,
-      "bad_code": "class azure.contoso.WidgetResult:",
-      "suggestion": "Use a simple Mapping (e.g. dict) instead of creating a WidgetResult class if the WidgetResult class is not used as an input parameter for other APIs.",
-      "comment": "Service client types should have a Client suffix. Consider using a simple Mapping instead of creating a separate class for operation results."
     }
   ]
 }

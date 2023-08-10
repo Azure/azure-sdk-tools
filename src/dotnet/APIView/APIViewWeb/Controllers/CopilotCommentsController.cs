@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Threading.Tasks;
 using APIViewWeb.Managers;
 using Microsoft.AspNetCore.Http;
@@ -26,7 +27,7 @@ namespace APIViewWeb.Controllers
                 _logger.LogInformation("Added a new document to database.");
                 return StatusCode(statusCode: StatusCodes.Status201Created, id);
             }
-            _logger.LogInformation("Request does not have the required badCode field for insert.");
+            _logger.LogInformation("Request does not have the required badCode field for CREATE.");
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
         }
 
@@ -36,15 +37,18 @@ namespace APIViewWeb.Controllers
             if (id != null)
             {
                 var result = await _copilotManager.UpdateDocumentAsync(User.GetGitHubLogin(), id, badCode, goodCode, language, comment, guidelineIds);
-                if (result.IsAcknowledged)
+                if (result.ModifiedCount > 0)
                 {
-                    _logger.LogInformation("Found existing document with id. Updating document.");
-                    return Ok();
+                    _logger.LogInformation("Found existing document with ID. Updating document.");
+                    var document = await _copilotManager.GetDocumentAsync(id);
+                    return Ok(document);
+                } else
+                {
+                    _logger.LogInformation("Could not find a match for the given ID.");
+                    return StatusCode(statusCode: StatusCodes.Status404NotFound);
                 }
-                _logger.LogInformation("Failed to update.");
-                return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
-            _logger.LogInformation("Request does not have the required id field for update.");
+            _logger.LogInformation("Request does not have the required ID field for UPDATE.");
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
         }
 
@@ -63,7 +67,7 @@ namespace APIViewWeb.Controllers
                     return StatusCode(statusCode: StatusCodes.Status404NotFound);
                 }
             }
-            _logger.LogInformation("Request does not have the required id field.");
+            _logger.LogInformation("Request does not have the required ID field for GET.");
             return StatusCode(statusCode: StatusCodes.Status400BadRequest);
         }
 
@@ -72,15 +76,10 @@ namespace APIViewWeb.Controllers
         {
             if (id != null)
             {
-                var updateResult = await _copilotManager.DeleteDocumentAsync(User.GetGitHubLogin(), id);
-                if (updateResult.IsAcknowledged)
-                {
-                    return Ok();
-                }
-                _logger.LogInformation("Failed to delete document.");
-                return StatusCode(statusCode: StatusCodes.Status404NotFound);
+                await _copilotManager.DeleteDocumentAsync(User.GetGitHubLogin(), id);
+                return StatusCode(statusCode: StatusCodes.Status204NoContent);
             }
-            _logger.LogInformation("Request does not have the required id field.");
+            _logger.LogInformation("Request does not have the required ID field for DELETE.");
             return StatusCode(statusCode: StatusCodes.Status400BadRequest); 
         }
     }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -29,10 +30,13 @@ namespace Azure.ClientSdk.Analyzers
             SymbolKind.Parameter,
             SymbolKind.Event,
             SymbolKind.NamedType,
+            SymbolKind.Local,
         };
 
         public override void Analyze(ISymbolAnalysisContext context)
         {
+            Debug.WriteLine($"{context.Symbol}");
+
             if (IsAzureCore(context.Symbol.ContainingAssembly))
             {
                 return;
@@ -55,6 +59,9 @@ namespace Azure.ClientSdk.Analyzers
                 case IFieldSymbol fieldSymbol:
                     CheckType(context, fieldSymbol.Type, fieldSymbol);
                     break;
+                case ILocalSymbol localSymbol:
+                    CheckType(context, localSymbol.Type, localSymbol);
+                    break;
                 case INamedTypeSymbol namedTypeSymbol:
                     CheckType(context, namedTypeSymbol.BaseType, namedTypeSymbol);
                     foreach (var iface in namedTypeSymbol.Interfaces)
@@ -63,6 +70,8 @@ namespace Azure.ClientSdk.Analyzers
                     }
                     break;
             }
+
+            Debug.WriteLine($"done");
         }
 
         private static void CheckType(ISymbolAnalysisContext context, ITypeSymbol type, ISymbol symbol)

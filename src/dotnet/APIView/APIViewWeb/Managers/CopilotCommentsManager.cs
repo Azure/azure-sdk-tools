@@ -119,9 +119,6 @@ namespace APIViewWeb.Managers
 
         private async Task<float[]> GetEmbeddingsAsync(string badCode)
         {
-            // check if too many tokens (2048 max) 
-            // https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/embeddings?tabs=csharp
-
             // structure of Embeddings object 
             //{
             //    { "Data", 

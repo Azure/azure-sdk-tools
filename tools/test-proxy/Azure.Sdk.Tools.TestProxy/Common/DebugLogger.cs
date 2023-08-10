@@ -1,14 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks;
 using System.Text;
-using System.IO;
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Text.Json;
-using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -32,13 +27,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     /// </summary>
     public static class DebugLogger
     {
-        private static ILogger logger = null;
+        // internal for testing
+        internal static ILogger Logger { get; set; }
 
         public static void ConfigureLogger(ILoggerFactory factory)
         {
-            if (logger == null && factory != null)
+            if (Logger == null && factory != null)
             {
-                logger = factory.CreateLogger("DebugLogging");
+                Logger = factory.CreateLogger("Azure.Sdk.Tools.TestProxy");
             }
         }
 
@@ -50,7 +46,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <returns></returns>
         public static bool CheckLogLevel(LogLevel level)
         {
-            var result = logger?.IsEnabled(LogLevel.Debug);
+            var result = Logger?.IsEnabled(LogLevel.Debug);
 
             if (result.HasValue)
             {
@@ -68,9 +64,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="details">The content which should be logged.</param>
         public static void LogInformation(string details)
         {
-            if (null != logger)
+            if (null != Logger)
             {
-                logger.LogInformation(details);
+                Logger.LogInformation(details);
             }
             else
             {
@@ -80,9 +76,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static void LogError(string details)
         {
-            if (null != logger)
+            if (null != Logger)
             {
-                logger.LogError(details);
+                Logger.LogError(details);
             }
             else
             {
@@ -93,9 +89,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public static void LogError(int statusCode, Exception e)
         {
             var details = statusCode.ToString() + Environment.NewLine + e.Message + Environment.NewLine + e.StackTrace;
-            if (null != logger)
+            if (null != Logger)
             {
-                logger.LogError(details);
+                Logger.LogError(details);
             }
             else
             {
@@ -109,9 +105,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="details">The content which should be logged.</param>
         public static void LogDebug(string details)
         {
-            if (logger != null)
+            if (Logger != null)
             {
-                logger.LogDebug(details);
+                Logger.LogDebug(details);
             }
             else
             {
@@ -151,11 +147,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="loggerInstance">Usually will be the DI-ed individual ILogger instance from a controller. However any valid ILogger instance is fine here.</param>
         /// <param name="req">The http request which needs to be detailed.</param>
         /// <returns></returns>
-        public static async Task LogRequestDetailsAsync(ILogger loggerInstance, HttpRequest req)
+        public static void LogRequestDetails(ILogger loggerInstance, HttpRequest req)
         {
             if(CheckLogLevel(LogLevel.Debug))
             {
-                loggerInstance.LogDebug(await _generateLogLine(req));
+                loggerInstance.LogDebug(_generateLogLine(req, null));
             }
         }
 
@@ -164,12 +160,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// actually logging anything, this function is entirely passthrough.
         /// </summary>
         /// <param name="req">The http request which needs to be detailed.</param>
-        /// <returns></returns>
-        public static async Task LogRequestDetailsAsync(HttpRequest req)
+        /// <param name="sanitizers">The set of sanitizers to apply before logging.</param>
+        /// <returns>The log line.</returns>
+        public static void LogRequestDetails(HttpRequest req, IEnumerable<RecordedTestSanitizer> sanitizers)
         {
             if (CheckLogLevel(LogLevel.Debug))
             {
-                logger.LogDebug(await _generateLogLine(req));
+                Logger.LogDebug(_generateLogLine(req, sanitizers));
             }
         }
 
@@ -177,20 +174,26 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// Generate a line of data from an http request. This is non-destructive, which means it does not mess 
         /// with the request Body stream at all.
         /// </summary>
-        /// <param name="req"></param>
-        /// <returns></returns>
-        private static async Task<string> _generateLogLine(HttpRequest req)
+        /// <param name="req">The request</param>
+        /// <param name="sanitizers">The set of sanitizers to apply before logging.</param>
+        /// <returns>The log line.</returns>
+        private static string _generateLogLine(HttpRequest req, IEnumerable<RecordedTestSanitizer> sanitizers)
         {
-            StringBuilder sb = new StringBuilder();
-            string headers = string.Empty;
+            RecordEntry entry = RecordingHandler.CreateNoBodyRecordEntry(req);
 
-            using (MemoryStream ms = new MemoryStream())
+            if (sanitizers != null)
             {
-                await JsonSerializer.SerializeAsync(ms, req.Headers);
-                headers = Encoding.UTF8.GetString(ms.ToArray());
+                foreach (var sanitizer in sanitizers)
+                {
+                    sanitizer.Sanitize(entry);
+                }
             }
 
-            sb.AppendLine("URI: [ " + req.GetDisplayUrl() + "]");
+            var headers = Encoding.UTF8.GetString(JsonSerializer.SerializeToUtf8Bytes(entry.Request.Headers));
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine("URI: [ " + entry.RequestUri + "]");
             sb.AppendLine("Headers: [" + headers + "]");
 
             return sb.ToString();

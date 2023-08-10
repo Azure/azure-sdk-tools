@@ -1,0 +1,627 @@
+[
+  {
+    "id": "clang_design.html#clang-general-follow-general-guidelines",
+    "category": "General Guidelines",
+    "text": "DO follow the [General Azure SDK Guidelines]."
+  },
+  {
+    "id": "clang_design.html#clang-general-repository",
+    "category": "General Guidelines",
+    "text": "DO locate all source code in the [azure/azure-sdk-for-c] GitHub repository."
+  },
+  {
+    "id": "clang_design.html#clang-general-engsys",
+    "category": "General Guidelines",
+    "text": "DO follow Azure SDK engineering systems guidelines for working in the [azure/azure-sdk-for-c] GitHub repository.\n\nThis document contains guidelines developed primarily for typical Azure REST services, i.e. stateless services with request-response based interaction model. Many of the guidelines in this document are more broadly applicable, but some might be specific to such REST services.\n\nTODO: Implement general guidelines for non-HTTP protocols and discuss MQTT.\n\nAzure services will be exposed to Embedded C developers as one or more service client types and a set of supporting types. The API surface of your client library must have the most thought as it is the primary interaction that the consumer has with your service."
+  },
+  {
+    "id": "clang_design.html#clang-c99",
+    "category": "Supported platforms",
+    "text": "DO implement the client library in C99 (https://en.wikipedia.org/wiki/C99) to ensure maximum portability of your code. While MSVC supports most C99 features, it is not fully compatible with C99 yet.  If using MSVC (or if Windows is required), ensure you avoid non-supported C99 features in MSVC.\n\nTODO: Provide a link to non-supported C99 features in MSVC"
+  },
+  {
+    "id": "clang_design.html#clang-platform",
+    "category": "Supported platforms",
+    "text": "YOU SHOULD support the following platforms and associated compilers when implementing your client library.\n\n| Operating System    | Architecture | Compiler Version                        |\n|---------------------|:------------:|:----------------------------------------|\n| Ubuntu 16.04 (LTS)  | x64          | gcc-5.4.0                               |\n| Ubuntu 18.04 (LTS)  | x86          | gcc-7.3                                 |\n| Ubuntu 18.04 (LTS)  | x64          | Clang 6.0.x                             |\n| OSX 10.13.4         | x64          | XCode 9.4.1                             |\n| Windows Server 2016 | x86          | MSVC 14.16.x                            |\n| Windows Server 2016 | x64          | MSVC 14.16.x                            |\n| Windows Server 2016 | x64          | MSVC 14.23.x                            |\n| Windows Server 2016 | x86,x64      | MSVC 14.23.x                            |\n| Debian 9 Stretch    | x64          | gcc-7.x                                 |\n\nTODO: This is based on versions supported by the Azure IoT SDK for C.  Additional investigation is needed to ensure it is up to date.  We need to make sure the version supported is the latest long term servicing with wide adoption available for each platform.  Suggested additions: RHEL 8 (gcc 8.2.1) and Fedora (30 with gcc 9.1.1) + Alpine.  Windows Server 2016 includes Windows 8 - should we switch?\n\nTODO: provide any common flags to be used with each compiler."
+  },
+  {
+    "id": "clang_design.html#clang-cpp-extensions",
+    "category": "Supported platforms",
+    "text": "YOU SHOULD NOT use compiler extensions.  Examples of extensions to avoid include:\nMSVC compiler extensions (https://docs.microsoft.com/cpp/build/reference/microsoft-extensions-to-c-and-cpp) \nClang language extensions (https://clang.llvm.org/docs/LanguageExtensions.html) \nGNU C compiler extensions (https://gcc.gnu.org/extensions.html) \n\nUse the appropriate options for each compiler to prevent the use of such extensions."
+  },
+  {
+    "id": "clang_design.html#clang-cpp-options",
+    "category": "Supported platforms",
+    "text": "DO use compiler flags to identify warnings:\n\n| Compiler                 | Compiler Flags   |\n|:-------------------------|------------------|\n| gcc                      | -Wall -Wextra  |\n| Clang and XCode          | -Wall -Wextra   |\n| MSVC                     | /W4            |\n\nhen configuring your client library, particular care must be taken to ensure that the consumer of your client library can properly configure the connectivity to your Azure service both globally (along with other client libraries the consumer is using) and specifically with your client library.\n\nIn C, your API surface will consist of one or more service client initializers that the consumer will call to define a connection to your service, plus a set of supporting functions that perform network requests."
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-serviceclientnaming",
+    "category": "The Service Client",
+    "text": "DO the signature of the\nservice client initializer should be\nAZ_NODISCARD az_result az_shortname_client_init(az_shortname_client*, <args>).\nThe function may assume that storage has been allocated, and the first parameter points to\nallocated (but not nessassarly initialized) storage."
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-serviceclientclosing",
+    "category": "The Service Client",
+    "text": "DO allow the consumer to release resources by calling void az_shortname_client_destroy(az_shortname_client*).  This allows the library to manage memory on behalf of the user for the purposes of the client as well."
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-serviceclient-types",
+    "category": "The Service Client",
+    "text": "DO define a type az_shortname_client that represents the response from the service client initializer.\n\nA typical definition might look like:\n\nHeader file:\n\n{% highlight c %}\n#ifndef KEYVAULT_CLIENT_H\n#define KEYVAULT_CLIENT_H\n\ntypedef struct az_keyvault_client az_keyvault_client;\ntypedef struct az_keyvault_client_credentials az_keyvault_client_credentials;\ntypedef struct az_keyvault_http_handler_pipeline az_keyvault_http_handler_pipeline;\n\nAZ_NODISCARD az_result az_keyvault_client_init(az_keyvault_client* self);\nvoid az_keyvault_client_destroy(az_keyvault_client *client);\n\n/* C does not support overloading function names, so we use a different name */\nAZ_NODISCARD az_result az_keyvault_client_init_with_credentials(az_keyvault_client self,\naz_keyvault_client_credentials *credentials);\n\n/* Other functions related to kevault client /\nAZ_NODISCARD az_result az_keyvault_client_backup_certificate_with_http_messages(az_keyvault_client self,\nchar *vault_base_url, char *certificate_name, char **custom_headers, int headers_count);\n\n/* client used to create other types /\nAZ_NODISCARD az_result az_keyvault_client_init_http_handler_pipeline(az_keyvault_client self,\naz_http_client_handler handler, az_keyvault_http_handler_pipeline pipeline);\nvoid az_keyvault_client_destroy_http_handler_pipeline(az_keyvault_client* self,\naz_keyvault_http_handler_pipeline *handler_pipeline);\n\n#endif /* IOT_CLIENT_API_H */\n{% endhighlight %}\n\nSource file:\n\n{% highlight c %}\n#include <stdbool.h>\n#include <stddef.h>\n/* for az_http_client_handler*/\n#include \"http_client.h\"\n#include \"keyvault_client.h\"\n\ntypedef struct az_keyvault_client {\nchar *accept_language;\nchar *api_version;\naz_keyvault_client_credentials *credentials;\nbool generate_clientrequest_id;\nint long_running_operation_retry_timeout;\nchar *vault_without_scheme;\n} az_keyvault_client;\n\ntypedef struct az_keyvault_client_credentials {\nchar version;\n/ remaining struct members here */\n} az_keyvault_client_credentials;\n\ntypedef struct az_keyvault_http_handler_pipeline {\nchar version;\n/ remaining struct members here */\n} az_keyvault_http_handler_pipeline;\n\naz_keyvault_client az_keyvault_create_client() {\n/ implementation */\nreturn NULL;\n}\n\nvoid az_keyvault_client_destroy(az_keyvault_client client)\n{\n/ implementation */\n}\n\naz_result az_keyvault_create_client_with_credentials(az_keyvault_client* client,\naz_keyvault_client_credentials *credentials) {\nclient = {0};\n/ implementation */\nreturn AZ_OK;\n}\n\naz_result az_keyvault_client_backup_certificate_with_http_messages(az_keyvault_client* client,\nchar *vault_base_url, char *certificate_name, char *custom_headers, int headers_count)\n{\n/ implementation */\nreturn AZ_OK;\n}\n\naz_result az_keyvault_client_init_http_handler_pipeline(az_keyvault_client* self,\naz_http_client_handler handler, az_keyvault_http_handler_pipeline pipeline);\n{\n/* implementation */\nreturn AZ_OK;\n}\n\nvoid az_keyvault_client_destroy_http_handler_pipeline(az_keyvault_client* self,\naz_keyvault_http_handler_pipeline handler_pipeline);\n{\n/ implementation */\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-serviceclientconstructor",
+    "category": "The Service Client",
+    "text": "DO allow the consumer to construct a service client with the minimal information needed to connect and authenticate to the service."
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-standardized-verbs",
+    "category": "The Service Client",
+    "text": "DO standardize verb prefixes within a set of client libraries for a service.  The service must be able to speak about a specific operation in a cross-language manner within outbound materials (such as documentation, blogs, and public speaking). They cannot do this if the same operation is referred to by different verbs in different languages.  The following verbs are preferred for CRUD operations:\n\nNote: The prefix in below table is az_<shortname>_<objname>\n\n<div class=\"standard-verbs-table-container\">\n    <!-- Table Header -->\n    <div class=\"standard-verbs-table-row\">\n        <div class=\"standard-verbs-table-cell standard-verbs-table-cell-header standard-verbs-table-cell-verb\">Verb</div>\n        <div class=\"standard-verbs-table-cell standard-verbs-table-cell-header\">Parameters</div>\n        <div class=\"standard-verbs-table-cell standard-verbs-table-cell-header\">Returns</div>\n        <div class=\"standard-verbs-table-cell standard-verbs-table-cell-header standard-verbs-table-cell-comments\">\n            Comments</div>\n    </div>\n    <!-- Table Rows -->\n    {% for item in data %}\n    {% assign mod = forloop.index0 | modulo:2 %}\n    {% if mod == 0 %}\n    {% include tables/standard_verbs_row.html perRowCellStyle=\"standard-verbs-table-cell-pair\"%}\n    {% else %}\n    {% include tables/standard_verbs_row.html perRowStyle=\"\"%}\n    {% endif %}\n    {% endfor %}\n</div>\n\n\nSome examples:\n\n{% highlight c %}\nvoid az_keyvault_client_delete_key(az_keyvault_client *client, char *vault_base_url, char *key_name);\nvoid az_keyvault_client_delete_key_async(az_keyvault_client *client, char *vault_base_url, char *key_name, az_keyvault_callback *callback, void *callback_context);\n\naz_keyvault_certificate_bundle *az_keyvault_client_get_certificate(az_keyvault_client *client, char *certtificate_id);\nvoid az_keyvault_client_get_certificate_async(az_keyvault_client *client, char *certtificate_id, az_keyvault_callback *callback, void *callback_context);\n\nbool az_keyvault_client_exists_key(az_keyvault_client *client, char *key_name);\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-lro-initiation",
+    "category": "The Service Client",
+    "text": "DO use az_<shortname>_<objname>_begin_<verb>_<noun> for methods that initiate a long running operation.  For example: az_storage_blob_begin_copy_from_url()."
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-supportallfeatures",
+    "category": "The Service Client",
+    "text": "DO support as close as possible to 100% of the commonly used features provided by the Azure service the client library represents.  Unlike more general purpose object-orientated languages, the scenarios that need to be supported in C are more limited."
+  },
+  {
+    "id": "clang_design.html#clang-config-global-config",
+    "category": "Client Configuration",
+    "text": "DO use relevant global configuration settings either by default or when explicitly requested to by the user."
+  },
+  {
+    "id": "clang_design.html#clang-config-global-config-howto",
+    "category": "Client Configuration",
+    "text": "YOU SHOULD Use an \"options\" structure\nto allow user specified configuration, in particular when there are many configuration options\nfor one client constructor.\n\nFor example,\n\n```c\ntypedef struct az_widgets_client_options {\n    uint32_t num_sides;\n    bool was_frobnicated;\n} az_widgets_client_options;\n\nAZ_NODISCARD az_widgets_client_options az_widgets_client_default_options(void);\n\nAZ_NODISCARD az_result az_widgets_client_init(az_widgets_client* self, const az_widgets_default_client_options* options);\n\n```\n\nThe user can request the default with:\n\n```c\naz_widgets_client client = {0};\naz_result res = az_widgets_client_init(&amp;client, NULL);\n\n```\n\nor specify their own options with:\n\n```c\naz_widgets_client client = {0};\naz_widgets_client_options options = az_widgets_client_default_options();\noptions.num_sides = 4;\naz_result res = az_widgets_client_init(&amp;client, &amp;options);\n\n```"
+  },
+  {
+    "id": "clang_design.html#clang-config-for-different-clients",
+    "category": "Client Configuration",
+    "text": "DO allow different clients of the same type to use different configurations."
+  },
+  {
+    "id": "clang_design.html#clang-config-optout",
+    "category": "Client Configuration",
+    "text": "DO allow consumers of your service clients to opt out of all global configuration settings at once."
+  },
+  {
+    "id": "clang_design.html#clang-config-global-overrides",
+    "category": "Client Configuration",
+    "text": "DO allow all global configuration settings to be overridden by client-provided options. The names of these options should align with any user-facing global configuration keys."
+  },
+  {
+    "id": "clang_design.html#clang-config-defaults-consistent",
+    "category": "Client Configuration",
+    "text": "DO Have consistent defaults across\nall supported systems and build configurations. This means changing settings such as\ndefault buffer sizes based on the target platform or build settings is prohibited.\n\nFor example, consider the structure:\n\n```c\ntypedef struct az_widgets_widget {\n    int num_sides;\n    uint8_t side_buffer[AZ_WIDGETS_SIDE_BUFFER_SIZE];\n} az_widgets_widget;\n\n```\n\nThis is OK:\n\n```cmake\n...\nset(AZ_WIDGETS_SIDE_BUFFER_SIZE 1024 CACHE STRING \"default size of side buffer\")\ntarget_compile_definitions(az_widgets PUBLIC AZ_WIDGETS_SIDE_BUFFER_SIZE=${AZ_WIDGETS_SIDE_BUFFER_SIZE})\n\n```\n\nThis is not OK:\n\n```cmake\nif(TARGETING_DESKTOP)\n    set(AZ_WIDGETS_SIDE_BUFFER_SIZE 4096 CACHE STRING \"default size of side buffer\")\nelse()\n    set(AZ_WIDGETS_SIDE_BUFFER_SIZE 1024 CACHE STRING \"default size of side buffer\")\nendif()\ntarget_compile_definitions(az_widgets PUBLIC CAT_BUFFER_SIZE=${AZ_WIDGETS_SIDE_BUFFER_SIZE})\n\n```"
+  },
+  {
+    "id": "clang_design.html#clang-config-defaults-nochange",
+    "category": "Client Configuration",
+    "text": "DO NOT Change the default values of client configuration options based on runtime system or client state."
+  },
+  {
+    "id": "clang_design.html#clang-config-defaults-nobuildchange",
+    "category": "Client Configuration",
+    "text": "DO NOT Change default values of\nclient configuration options based on how the client library was built."
+  },
+  {
+    "id": "clang_design.html#clang-config-noruntime",
+    "category": "Client Configuration",
+    "text": "DO NOT use client library specific runtime\nconfiguration such as environment variables or a config file. Keep in mind that many IoT devices\nwon't have a filesystem or an \"environment block\" to read from.\n\nTODO: The Embedded C library does not allow configuring the service version.\n\nTODO: The Embedded C library only provides synchronous APIs.\n\nTODO: Add a note about this."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-concise",
+    "category": "Naming",
+    "text": "DO use clear and concise names."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-abbrev",
+    "category": "Naming",
+    "text": "YOU SHOULD NOT use abbreviations unless necessary or when they are commonly used and understood.  For example, az is allowed since it is commonly used to mean Azure, and iot is used since it is a commonly understood industry term.  However, using kv for Key Vault would not be allowed since kv is not commonly used to refer to Key Vault."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-lowercase",
+    "category": "Naming",
+    "text": "DO use lower-case for all variable, function, and struct names."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-underbar",
+    "category": "Naming",
+    "text": "DO use underscores (_) to separate name components (commonly refered to as snake-casing)."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-internal",
+    "category": "Naming",
+    "text": "DO use a single leading underscore to indicate that a name is not part of the public API and is not guaranteed to be stable."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-units",
+    "category": "Variables",
+    "text": "DO include units in names.  If a variable represents time, weight, or some other unit, then include the unit in the name so developers can more easily spot problems.  For example:\n\n{% highlight c %}\n// Bad\nuint32 timeout;\nuint32 my_weight;\n\n// Goog\nuint32 timeout_msecs;\nuint32 my_weight_kg;\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-optimize-position",
+    "category": "Variables",
+    "text": "DO declare variables in structures organized by use in a manner that minimizes memory wastage because of compiler alignment issues and size.  All things being equal, use alphabetical ordering.\n\n{% highlight c %}\n// Bad\nstruct foo {\nint a;\nchar *b;\nint c;\nchar *d;\n};\n\n// Good\nstruct foo {\nint a;\nint c;\nchar *b;\nchar *d;\n};\n{% endhighlight %}\n\nEach variable is normally defined with its own type and line.  An exception can be made when declaring bitfields (to clarify that the variable is a part of one bitfield).  The use of bitfields in general is discouraged."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-staticvars",
+    "category": "Variables",
+    "text": "DO declare all variables that are only used within the same source file as static.  Static variables may contain only the variable name (no prefixes).  For example:\n\n{% highlight c %}\nstatic uint32_t byte_counter = 0;\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-no-globals",
+    "category": "Globals",
+    "text": "YOU SHOULD NOT use global variables.  If a global variable is absolutely necessary:\nDeclare the global at the top of your file.\nName the global g_az_<svcname>_<globalname>."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-global-const",
+    "category": "Globals",
+    "text": "DO name public global constants using all upper-case, with the AZ_ prefix, and with snake-casing.  For example:\n\n{% highlight c %}\n// Bad\nconst int Global_Foo = 5;\n\n// Good\nconst int AZ_WIDGETS_TIMEOUT_MSEC = 5;\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-global-private-const",
+    "category": "Globals",
+    "text": "DO name private/internal global constants in all uppercase with the prefix _az. For example:\n\n```c\n// bad\nconst int _AZ_PRIVATE_CONSTANT = 5;\n\n// bad\nconst int az_PRIVATE_CONSTANT = 5;\n\n// good\nconst int _az_PRIVATE_CONSTANT = 5;\n\n```\n\nNote that this differs slightly from the guidance on internal function naming below. This is because _AZ_PRIVATE_MEOW is a reserved name."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-declare-structs",
+    "category": "Structs",
+    "text": "DO declare major structures at the top of the file in which they are used, or in separate header files if they are used in multiple source files."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-struct-definition",
+    "category": "Structs",
+    "text": "DO declare structs using typedef.  Name the struct and typedef according to the normal naming for types.  For example:\n\n{% highlight c %}\ntypedef struct az_iot_client {\nchar *api_version;\naz_iot_client_credentials *credentials;\nint retry_timeout;\n} az_iot_client;\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-struct-no-const",
+    "category": "Structs",
+    "text": "DO NOT declare const fields within structs. Pointers to const are fine, however. For example:\n\n```c\n// bad\ntypedef struct az_iot_client {\n    const int retry_timeout;\n    char* const api_version;\n} az_iot_client;\n\n// good\ntypedef struct az_iot_client {\n    int retry_timeout;\n    char const * api_version;\n} az_iot_client;\n\n```\n\nThe reason to avoid such members is that it makes it impossible to ever reassign a variable of the struct type. For example:\n\n```c\ntypedef struct az_iot_client {\n    int retry_timeout;\n    char const* const api_version;\n};\n\naz_iot_client az_iot_create_client() {\n    az_iot_client result = {4, \"some version\"};\n    return result;\n}\n\nvoid az_iot_client_do_operation(az_iot_client const * client);\n\nint main(void) {\n    az_iot_client client = az_iot_create_client();\n    az_iot_client_do_operation(&amp;client);\n    // done, need to connect to some other service endpoint\n    client = az_iot_create_client(); // &lt;--- does not compile\n    // do things with the other client\n}\n\n\n```"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-enum",
+    "category": "Enums",
+    "text": "DO use snake-casing to name enum types, and include the az__ prefix."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-enumerators",
+    "category": "Enums",
+    "text": "DO\nName enumerators (the \"members\" of an enum) with ALL_CAPS and with\nthe AZ__ prefix. For example:\n\n{% highlight c %}\ntypedef enum az_pin_state {\nAZ_PIN_STATE_OFF,\nAZ_PIN_STATE_ON\n} az_pin_state;\n{% endhighlight %}\n\nEnums do not have a guaranteed size.  If you have a type that can take a known range of values and it is transported in a message, you cannot use an enum as the type."
+  },
+  {
+    "id": "clang_design.html#clang-design-modelasstring",
+    "category": "Enums",
+    "text": "DO Use strings, not enums\nas the datatype for service data with the \"ModelAsString\" swagger attribute."
+  },
+  {
+    "id": "clang_design.html#clang-design-enumsareinternal",
+    "category": "Enums",
+    "text": "DO NOT use C enums to model any data sent to the service. Use C enums only for types completely internal to the client library."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-enum-errors",
+    "category": "Enums",
+    "text": "YOU SHOULD use the first label within an enum for an error state, if it exists.\n\n{% highlight c %}\ntypedef enum az_iot_service_state {\nAZ_IOT_SERVICE_STATE_ERR,\nAZ_IOT_SERVICE_STATE_OPEN,\nAZ_IOT_SERVICE_STATE_RUNNING,\nAZ_IOT_SERVICE_STATE_DYING\n} az_iot_service_state;\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-funcname",
+    "category": "Functions",
+    "text": "DO name functions with all-lowercase.  If part of the public API, start with az_<svcname>_[<objname>_].  If not, start with _. For example:\n\n{% highlight c %}\n// Part of the private API\nint64_t _az_compute_hash(int32_t a, int32_t b);\n\n// Part of the public API\nAZ_NODISCARD az_result az_widgets_client_init(az_widgets_client* self);\n\n// Bad - no leading underscore\nint64_t compute_hash(int32_t a, int32_t b);\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-funcstatic",
+    "category": "Functions",
+    "text": "DO declare all functions that initialize structures with ..._<objname>_init.  These functions can fail and must return an az_result.\n\n{% highlight c %}\n\n// Initialize the object\nAZ_NODISCARD az_result az_widgets_client_init(az_widgets_client* self);\n\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-funcstatic",
+    "category": "Functions",
+    "text": "DO declare all functions that return an initialized options structure (which can be examined/modified) with ..._<objname>_options_default.  These functions must always succeed.\n\n{% highlight c %}\n\n// Default initialized options object\nAZ_NODISCARD az_widgets_options az_widgets_options_default();\n\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-funcstatic",
+    "category": "Functions",
+    "text": "YOU SHOULD declare all functions that are only used within the same source file as static.  Static functions may contain only the function name (no prefixes).  For example:\n\n{% highlight c %}\nstatic int64_t compute_hash(int32_t a, int32_t b) {\n// ...\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-paramnames",
+    "category": "Functions",
+    "text": "YOU SHOULD use a meaningful name for parameters and local variable names.  Parameters and local variable names should be named as all lower-case words, separated by underscores (snake-casing)."
+  },
+  {
+    "id": "clang_design.html#clang-design-const-parameters",
+    "category": "Functions",
+    "text": "DO NOT use first level const for parameters or return types for function signatures.\nPointers to const are fine. First level const on function parameters do not provide any additional guarantees to the caller, and can be confusing. For example:\n\nThis is not OK:\n\n```c\nconst int az_iot_client_set_widget_id(az_iot_client *client, const int id);\n\n```\n\nInstead write:\n\n```c\nint az_iot_client_set_widget_id(az_iot_client *client, int id);\n\n```\n\nThis is also not OK\n\n```c\nconst int az_iot_client_get_widget_id(az_iot_client const *const client, int *const id);\n\n```\n\nInstead write:\n\n```c\nint az_iot_client_get(az_iot_client const *client, int *id);\n\n```\n\nNote: You may use first level const when defining a function, if you want to ensure you don't modify the value. Similarly you may use first level const on\ndefinitions of inline functions (which are in headers).\n\nFunctions that request a callback with a context should order the callback first and then the context.  For example:\n\n{% highlight c %}\naz_iot_client az_iot_client_send_async(az_iot_client *client,\naz_iot_message *message, az_iot_release_callback release_message,\naz_iot_client_result_callback callback, az_iot_client_result_context context)\n{% endhighlight %}\n\nCallbacks that receive the context should do so as the first argument:\n\n{% highlight c %}\nstatic void on_client_result(az_iot_client_result_context context,\naz_iot_result result, az_iot_message_received message)\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-macros1",
+    "category": "Macros",
+    "text": "DO name macros with upper-case snake-casing."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-macro-params",
+    "category": "Macros",
+    "text": "DO wrap the macro expression in parentheses.  This avoids potential communitive operation ambiguity."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-macros-form",
+    "category": "Macros",
+    "text": "DO prepend macro names with AZ_<SVCNAME> to make macros unique."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-macros2",
+    "category": "Macros",
+    "text": "DO avoid side-effects when implementing macros.\n\nIf the macro is an inline expansion of a function, the function is defined in lowercase and the macro must have the same name in uppercase.  If the macro is an expression, wrap the expression in parenthesis.\n\nFor example:\n\n{% highlight c %}\n#define MAX(a,b) ((a > b) ? a : b)\n#define IS_ERR(err) (err < 0)\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-macros3",
+    "category": "Macros",
+    "text": "YOU SHOULD wrap the macro in do { ... } while(0) if the macro is more than a single statement, so that a trailing semicolon works.  Right-justify backslashes to ensure the macro is easy to read.  For example:\n\n{% highlight c %}\n#define MACRO(v, w, x, y)           \ndo {                                \nv = (x) + (y);                  \nw = (y) + 2;                    \n} while (0)\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-macros-donoevil",
+    "category": "Macros",
+    "text": "DO NOT change syntax via macro substitution.  It makes the program unintelligible (https://gist.github.com/aras-p/6224951) to all but the perpetrator."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-macros-inlinefunc",
+    "category": "Macros",
+    "text": "YOU SHOULD replace macros with inline functions where possible.  Macros are not required for code efficiency.\n\n{% highlight c %}\n// Bad\n#define MAX(a,b) ((a > b) ? a : b)\n\n// Good\ninline int max(int x, int y) {\nreturn (x > y ? x : y);\n}\n{% endhighlight %}\n\nTODO: Implement the spirit of the general guidelines for network requests - explicitly, how to use Azure Core for making network requests\n\nTODO: Add a discussion about context.\n\nTODO: Add a discussion about options parameter in Embedded C.\n\nThe service client will have several methods that perform requests on the service.  Service parameters are directly passed across the wire to an Azure service.  Client parameters are not passed directly to the service, but used within the client library to fulfill the request.  Examples of client parameters include values that are used to construct a URI, or a file that needs to be uploaded to storage."
+  },
+  {
+    "id": "clang_design.html#clang-params-client-validation",
+    "category": "Parameter Validation",
+    "text": "DO validate client parameters."
+  },
+  {
+    "id": "clang_design.html#clang-params-server-validation",
+    "category": "Parameter Validation",
+    "text": "DO NOT validate service parameters.  This includes null checks, empty strings, and other common validating conditions. Let the service validate any request parameters."
+  },
+  {
+    "id": "clang_design.html#clang-params-check-devex",
+    "category": "Parameter Validation",
+    "text": "DO validate the developer experience when the service parameters are invalid to ensure appropriate error messages are generated by the service.  If the developer experience is compromised due to service-side error messages, work with the service team to correct prior to release.\n\nAlthough object-orientated languages can eschew low-level pagination APIs in favor of high-level abstractions, C acts as a lower level language and thus embraces pagination APIs provided by the service.  You should work within the confines of the paging system provided by the service."
+  },
+  {
+    "id": "clang_design.html#clang-pagination-use-paging",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO export the same paging API as the service provides."
+  },
+  {
+    "id": "clang_design.html#clang-last-page",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO indicate in the return type if the consumer has reached the end of the result set."
+  },
+  {
+    "id": "clang_design.html#clang-size-of-page",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO indicate how many items were returned by the service, and have a list of those items for the consumer to iterate over.\n\nTODO: The Embedded C library does not support long-running operations.\nTODO: Implement general guidelines for LRO\n\nTODO: The Embedded C library does not support conditional request methods.\n\nTODO: The Embedded C library does not support hierarchical clients.\n\nTODO: Add a discussion about model types in Embedded C."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-enum",
+    "category": "Enumerations",
+    "text": "DO use snake-casing to name enum types, and include the az__ prefix."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-enumerators",
+    "category": "Enumerations",
+    "text": "DO\nName enumerators (the \"members\" of an enum) with ALL_CAPS and with\nthe AZ__ prefix. For example:\n\n{% highlight c %}\ntypedef enum az_pin_state {\nAZ_PIN_STATE_OFF,\nAZ_PIN_STATE_ON\n} az_pin_state;\n{% endhighlight %}\n\nEnums do not have a guaranteed size.  If you have a type that can take a known range of values and it is transported in a message, you cannot use an enum as the type."
+  },
+  {
+    "id": "clang_design.html#clang-design-modelasstring",
+    "category": "Enumerations",
+    "text": "DO Use strings, not enums\nas the datatype for service data with the \"ModelAsString\" swagger attribute."
+  },
+  {
+    "id": "clang_design.html#clang-design-enumsareinternal",
+    "category": "Enumerations",
+    "text": "DO NOT use C enums to model any data sent to the service. Use C enums only for types completely internal to the client library."
+  },
+  {
+    "id": "clang_design.html#clang-design-naming-enum-errors",
+    "category": "Enumerations",
+    "text": "YOU SHOULD use the first label within an enum for an error state, if it exists.\n\n{% highlight c %}\ntypedef enum az_iot_service_state {\nAZ_IOT_SERVICE_STATE_ERR,\nAZ_IOT_SERVICE_STATE_OPEN,\nAZ_IOT_SERVICE_STATE_RUNNING,\nAZ_IOT_SERVICE_STATE_DYING\n} az_iot_service_state;\n{% endhighlight %}\n\nTODO: Add details on how to use azure core types.\n\nTODO: Add details on how to use Embedded C primitive types.\n\nError handling is an important aspect of implementing a client library. It is the primary method by which problems are communicated to the consumer. Because we intend for the C client libraries to be used on a wide range of devices with a wide range of reliability requirements, it's important to provide robust error handling.\n\nWe distinguish between several different types of errors:\nPre-Conditions\n: Pre-Condition errors occur when a caller violates the expectations of a function, for example by passing an out-of-range value or a null pointer. These are always avoidable by the direct caller, and will always require a source code change (by the caller) to fix.\nPost-Conditions\n: Post-Condition violations happen when some function didn't do the correct thing, these are always bugs in the function itself, and users shouldn't be expected to handle them.\nExhaustion / Act of God\n: errors like running out of stack space, or dealing with power failure that, in general, can not be anticipated and after which it may be hard to execute any more code, let alone recover. Code handling these errors needs to be written to very specific requirements, for example not doing any allocations and never growing the stack.\nRecoverable Error\n: Things like trying to open a file that doesn't exist, or trying to write to a full disk. These kinds of errors can usually be handled by a function's caller directly, and need to be considered by callers that want to be robust."
+  },
+  {
+    "id": "clang_design.html#clang-error-prec-contract",
+    "category": "Pre-conditions",
+    "text": "YOU SHOULD check preconditions with a contract macro. For example:\n\n{% highlight c %}\n#ifdef INCLUDE_CONTRACTS\n\n<code>do {                                    \\\n  if(!(x)) return az_panic_function();\t\\\n} while(0);\n</code>\n\n#else\n\n#endif\naz_result some_unction(int some_arg) {\nCONTRACT_CHECK(some_arg > 0);\n}\n\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-error-prec-panic",
+    "category": "define CONTRACT_CHECK(x)",
+    "text": "DO call a \"panic function\" on a (checked) precondition failure. This function should be either provided by the user, or marked as a \"weak symbol\" if supported by the compiler.\n\nFor example\n\n{% highlight c %}\naz_result az_panic() {\nreturn AZ_ERROR_INVALID_ARGUMENT;\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-error-prec-disablecheck",
+    "category": "define CONTRACT_CHECK(x)",
+    "text": "YOU MAY provide an option to disable any checks, and omit checking code from built binaries."
+  },
+  {
+    "id": "clang_design.html#clang-error-prec-document",
+    "category": "define CONTRACT_CHECK(x)",
+    "text": "DO document all function preconditions. For conditions like \"not null\", a [not nullable] annotation is satisfactory."
+  },
+  {
+    "id": "clang_design.html#clang-error-postc-check",
+    "category": "Post Conditions",
+    "text": "YOU SHOULD NOT check post-conditions in a way that changes the computational complexity of the function."
+  },
+  {
+    "id": "clang_design.html#clang-error-postc-disablecheck",
+    "category": "Post Conditions",
+    "text": "DO provide a way to disable postcondition checks, and omit checking code from built binaries.\n\n{% include requirement/MUSTNOT id=\"clang-error-exh-return error\" %} return an error to the caller."
+  },
+  {
+    "id": "clang_design.html#clang-error-exh-crash",
+    "category": "Exhaustion / Act of God",
+    "text": "YOU MAY crash, if possible.\n\nNote: if your client library needs to be resilient to these kinds of errors you must either provide a fallback system, or construct your code in a way to facilitate proving that such errors can not occur."
+  },
+  {
+    "id": "clang_design.html#clang-error-recov-reporting",
+    "category": "Recoverable errors",
+    "text": "DO report errors via an error code enum. The core library defines such an enum called az_result.\n\nFor example:\n\n{% highlight c %}\nAZ_NODISCARD az_result az_widgets_count_widgets(az_widgets_client* client, int* widgets) {\nif(client->no_widget_storage) {\nreturn AZ_RESULT_WIDGETS_NO_STORAGE;\n}\n*widgets = clinet->num_widgets;\nreturn AZ_OK;\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-error-recov-nodiscard",
+    "category": "Recoverable errors",
+    "text": "DO mark all functions returning errors as AZ_NODISCARD. This will cause supported compilers to emit a warning if the caller ignores the error code."
+  },
+  {
+    "id": "clang_design.html#clang-error-recov-success",
+    "category": "Recoverable errors",
+    "text": "DO return AZ_OK or AZ_RESULT_MEOW from successful functions, unless the function has no error conditions."
+  },
+  {
+    "id": "clang_design.html#clang-error-recov-error",
+    "category": "Recoverable errors",
+    "text": "DO produce a recoverable error when any HTTP request fails with an HTTP status code that is not defined by the service/Swagger as a successful status code."
+  },
+  {
+    "id": "clang_design.html#clang-error-recov-document",
+    "category": "Recoverable errors",
+    "text": "DO document all recoverable errors each function generates.\n\nWe all want to be able to handle low memory situations gracefully and effectively, and C is \"helpful\" in that most memory allocation functions return an error or null pointer if they fail, including in the case of \"out of memory\". If you need to allocate memory of a dynamic (user specified) size, or of an extremely large size, then failures of that allocation should always be treated as a recoverable error. However, for small, compile-time constant sized allocations the decision of weather to treat a failure as an \"Act of God\" or a \"Recoverable error\" is more subtle and should be decided when you start a new library (with Architectural Review Board consultation).\n\nOn some platforms, mainly those that overcommit, it's extremely hard to handle OOM gracefully. Additionally, if you are \"almost\" out of memory and attempt to grow the stack - by calling functions, for example - then the system MIGHT NOT TELL YOU and your program's state will be corrupted. To recover from out of memory errors the program must have bounded stack size and must set the stack size to that bound at the start of the program. Additionally, the library must not allocate on the OOM error handling path.\n\nAzure services use a variety of different authentication schemes to allow clients to access the service. Conceptually, there are two entities responsible in this process: a credential and an authentication policy.  Credentials provide confidential authentication data.  Authentication policies use the data provided by a credential to authenticate requests to the service."
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-support-all-auth-techniques",
+    "category": "Authentication",
+    "text": "DO support all authentication techniques that the service supports and are available to a client application (as opposed to service side).  C is used only for client applications when talking to Azure, so some authentication techniques may not be valid."
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-use-azure-core",
+    "category": "Authentication",
+    "text": "DO use credential and authentication policy implementations from the Azure Core library where available."
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-prefer-token-auth",
+    "category": "Authentication",
+    "text": "DO provide credential types that can be used to fetch all data needed to authenticate a request to the service in a non-blocking atomic manner for each authentication scheme that does not have an implementation in Azure Core."
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-auth-in-constructors",
+    "category": "Authentication",
+    "text": "DO provide service client constructors or factories that accept any supported authentication credentials.\n\nClient libraries may support providing credential data via a connection string ONLY IF the service provides a connection string to users via the portal or other tooling."
+  },
+  {
+    "id": "clang_design.html#clang-apisurface-no-connection-strings",
+    "category": "Authentication",
+    "text": "DO NOT support constructing a service client with a connection string unless such connection string is available within tooling (for copy/paste operations).\n\nThe C programming language does not have the concept of a namespace.  Instead, a common prefix is used for all structs, variables, and functions within the library.  This allows the developer to easily distinguish between specific libraries.  For example:\n\n{% highlight c %}\naz_keyvault_key *az_keyvault_keyclient_create_key(char *info);\naz_eventhub_eph_process_partition(az_eventhub_partition_info *partition_info);\nvoid az_iot_credential_init(az_iot_credential *credential);\nvoid az_iot_credential_deinit(az_iot_credential *credential);\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#general-namespaces-shortened-name",
+    "category": "Namespaces",
+    "text": "DO pick a shortened service name that allows the consumer to tie the package to the service being used.  As a default, use the compressed service name (that is, the service name with all spaces removed and lower-cased).  The namespace does NOT change when the branding of the product changes, so avoid the use of marketing names that may change."
+  },
+  {
+    "id": "clang_design.html#clang-namespaces-prefix",
+    "category": "Namespaces",
+    "text": "DO prefix all exposed functions with az_ and the short name of the service; i.e. az_<svcname>_.  When using objects (see the Object model later on), add the object name to the list (i.e. az_<svcname>_<objname>_)."
+  },
+  {
+    "id": "clang_design.html#clang-namespaces-register",
+    "category": "Namespaces",
+    "text": "DO register the short name of the client library with the [Architecture Board]."
+  },
+  {
+    "id": "clang_design.html#clang-tooling-test-tools",
+    "category": "Support for Mocking",
+    "text": "DO use the following tools for testing:\n\nAzure C Test for unit test running: https://github.com/Azure/azure-ctest (https://github.com/Azure/azure-ctest) \n\nAzure micro mock C umock-c (https://github.com/Azure/umock-c (https://github.com/Azure/umock-c)   https://github.com/Azure/umock-c\n\n\nUse TestRunnerSwitcher, which is a simple library to switch test runners between azure-ctest (https://github.com/Azure/azure-ctest.git) and CppUnitTest: https://github.com/Azure/azure-c-testrunnerswitcher (https://github.com/Azure/azure-c-testrunnerswitcher) \n\nAzure C Test for unit test running: https://github.com/Azure/azure-ctest (https://github.com/Azure/azure-ctest) \n\nAzure micro mock C umock-c (https://github.com/Azure/umock-c (https://github.com/Azure/umock-c)   https://github.com/Azure/umock-c\n\nUse TestRunnerSwitcher, which is a simple library to switch test runners between azure-ctest (https://github.com/Azure/azure-ctest.git) and CppUnitTest: https://github.com/Azure/azure-c-testrunnerswitcher (https://github.com/Azure/azure-c-testrunnerswitcher) "
+  },
+  {
+    "id": "clang_design.html#clang-package-dynamic",
+    "category": "Packaging",
+    "text": "YOU SHOULD provide both dynamic and static linking options for your library.  Each has its own merits and use cases."
+  },
+  {
+    "id": "clang_design.html#clang-package-source",
+    "category": "Packaging",
+    "text": "DO publish your package in source code format.  Due to differences in platforms, this is the most common publishing mechanism for C libraries."
+  },
+  {
+    "id": "clang_design.html#clang-package-vcpkg",
+    "category": "Packaging",
+    "text": "DO publish your package to vcpkg (https://github.com/Microsoft/vcpkg)  a C++ library manager supporting Windows, Linux, and MacOS."
+  },
+  {
+    "id": "clang_design.html#clang-package-linux",
+    "category": "Packaging",
+    "text": "YOU SHOULD publish libraries targeted to Linux to standard Linux package managers.\n\nTODO: decide which Linux package managers to support plus which repositories we bless.\n\nTODO:  Decide if we need to publish to GitHub Package Registry.  If we do, then we likely want to do it across all languages.\u00df\n\nTODO: Add details about how code is shared.\n\nUnlike other languages, client libraries written for the C ecosystem are tied to a single API version within the service.  Different client library versions may target different service API versions."
+  },
+  {
+    "id": "clang_design.html#clang-version-library-api",
+    "category": "Versioning",
+    "text": "DO include a SHORTNAME_VERSIONINFO definition in the main header file that defines the current version of the library."
+  },
+  {
+    "id": "clang_design.html#clang-version-service-api",
+    "category": "Versioning",
+    "text": "DO include a SHORTNAME_SERVICEVERSION definition in the main header file that defines the API version of the service that is targetted by the library if the service supports different concurrent versions on the REST API.\n\nExample:\n\n{% highlight c %}\n#ifndef azure_devicetwin_h\n#define azure_devicetwin_h\n\n#define DEVICETWIN_VERSIONINFO \"1.0.0\"\n#define DEVICETWIN_SERVICEVERSION \"2018-11-28\"\n\n#endif /* azure_devicetwin_h */\n{% endhighlight %}\n\nDependencies bring in many considerations that are often easily avoided by avoiding the\ndependency.\nVersioning - Many programming languages do not allow a consumer to load multiple versions of the same package. So, if we have an client library that requires v3 of package Foo and the consumer wants to use v5 of package Foo, then the consumer cannot build their application. This means that client libraries should not have dependencies by default.\nSize - Consumer applications must be able to deploy as fast as possible into the cloud and move in various ways across networks. Removing additional code (like dependencies) improves deployment performance.\nLicensing - You must be conscious of the licensing restrictions of a dependency and often provide proper attribution and notices when using them.\nCompatibility - Often times you do not control a dependency and it may choose to evolve in a direction that is incompatible with your original use.\nSecurity - If a security vulnerability is discovered in a dependency, it may be difficult ortime consuming to get the vulnerability corrected if Microsoft does not control the dependencys code base."
+  },
+  {
+    "id": "clang_design.html#clang-dependencies-stdlibc",
+    "category": "Dependencies",
+    "text": "DO use the C standard library (https://en.wikipedia.org/wiki/C_standard_library)   The C standard library is sometimes referred to as libc, the C-Runtime, CRT, or (for Windows) Universal CRT."
+  },
+  {
+    "id": "clang_design.html#clang-dependencies-azure-core",
+    "category": "Dependencies",
+    "text": "DO depend on the Azure Core library for functionality that is common across all client libraries.  This library includes APIs for HTTP connectivity, global configuration, and credential handling.\n\nTODO: Move the azure/azure-c-shared-utility into azure-core as a prerequisite for release of the guidelines."
+  },
+  {
+    "id": "clang_design.html#clang-dependencies-approved-only",
+    "category": "Dependencies",
+    "text": "DO NOT be dependent on any other packages within the client library distribution package. Dependencies are by-exception and need a thorough vetting through architecture review.  This does not apply to build dependencies, which are acceptable and commonly used."
+  },
+  {
+    "id": "clang_design.html#clang-dependencies-vendoring",
+    "category": "Dependencies",
+    "text": "YOU SHOULD consider copying or linking required code into the client library in order to avoid taking a dependency on another package that could conflict with the ecosystem. Make sure that you are not violating any licensing agreements and consider the maintenance that will be required of the duplicated code. [\"A little copying is better than a little dependency\"][1] (YouTube)."
+  },
+  {
+    "id": "clang_design.html#clang-dependencies-concrete",
+    "category": "Dependencies",
+    "text": "DO NOT depend on concrete logging, dependency injection, or configuration technologies (except as implemented in the Azure Core library).  The client library will be used in applications that might be using the logging, DI, and configuration technologies of their choice.\n\nUnlike many other programming languages, which have large runtimes, the C standard runtime is limited in functionality and scope. The standard library covers areas such as memory and string manipulation, sandard input/output, floating point and others. However, many of the features required for modern applications and services; e.g. those required for synchronization, networking and advanced memory management and threading are not part of the standard library. Instead, many of those features are included in open source C libraries that are also cross-platform with good support for Windows, OSX and most Linux platforms. Because of that support and because Azure SDK implementations will need such functionality, it is expected that client libraries will take dependencies on these libraries.  Ensure the version matches to allow for compatibility when an application integrates multiple client libraries."
+  },
+  {
+    "id": "clang_design.html#clang-approved-dependencies",
+    "category": "C language specifics",
+    "text": "DO utilize the following libraries as needed for commonly required operations:\n\n| Library    | Version | Usage                                            |\n|------------|---------|--------------------------------------------------|\n"
+  },
+  {
+    "id": "clang_design.html#clang-dependencies-adparch",
+    "category": "C language specifics",
+    "text": "DO consult the [Architecture Board] if you wish to use a dependency that is not on the list of approved dependencies.\n\nTODO: This section is not applicable for the Embedded C SDK.\n\nTODO: Add link to the Documentation Style section below or restructure it.\n\nThere are several documentation deliverables that must be included in or as a companion to your client library. Beyond complete and helpful API documentation within the code itself (docstrings), you need a great README and other supporting documentation.\nREADME.md - Resides in the root of your library's directory within the SDK repository; includes package installation and client library usage information. ([example][README-EXAMPLE])\nAPI reference - Generated from the docstrings in your code; published on docs.microsoft.com.\nCode snippets - Short code examples that demonstrate single (atomic) operations for the champion scenarios you've identified for your library; included in your README, docstrings, and Quickstart.\nQuickstart - Article on docs.microsoft.com that is similar to but expands on the README content; typically written by your service's content developer.\nConceptual - Long-form documentation like Quickstarts, Tutorials, How-to guides, and other content on docs.microsoft.com; typically written by your service's content developer."
+  },
+  {
+    "id": "clang_design.html#clang-docs-contentdev",
+    "category": "Repository Guidelines",
+    "text": "DO include your service's content developer in the Architecture Board review for your library. To find the content developer you should work with, check with your team's Program Manager."
+  },
+  {
+    "id": "clang_design.html#clang-docs-contributors-guide",
+    "category": "Repository Guidelines",
+    "text": "DO follow the [Azure SDK Contributors Guide]. (MICROSOFT INTERNAL)"
+  },
+  {
+    "id": "clang_design.html#clang-docs-style-guide",
+    "category": "Repository Guidelines",
+    "text": "DO adhere to the specifications set forth in the Microsoft style guides when you write public-facing documentation. This applies to both long-form documentation like a README and the docstrings in your code. (MICROSOFT INTERNAL)\n[Microsoft Writing Style Guide].\n[Microsoft Cloud Style Guide]."
+  },
+  {
+    "id": "clang_design.html#clang-docs-to-silence",
+    "category": "Repository Guidelines",
+    "text": "YOU SHOULD attempt to document your library into silence. Preempt developers' usage questions and minimize GitHub issues by clearly explaining your API in the docstrings. Include information on service limits and errors they might hit, and how to avoid and recover from those errors.\n\nAs you write your code, doc it so you never hear about it again. The less questions you have to answer about your client library, the more time you have to build new features for your service."
+  },
+  {
+    "id": "clang_design.html#clang-style-filenaming",
+    "category": "Files",
+    "text": "DO name all files as lowercase, prefixed by the service short name; separate words with underscores, and end with the appropriate extension (.c or .h).  For example, iot_credential.c is valid, while IoTCredential.cl is not."
+  },
+  {
+    "id": "clang_design.html#clang-style-publicapi-hdr",
+    "category": "Files",
+    "text": "DO identify the file containing the public API with <svcname>_<objname>.h.  For example, iot_credential.h."
+  },
+  {
+    "id": "clang_design.html#clang-style-privateapi-hdr",
+    "category": "Files",
+    "text": "DO place include files that are not part of the public API in the src directory."
+  },
+  {
+    "id": "clang_design.html#clang-style-internalapi-hdr",
+    "category": "Files",
+    "text": "DO place include files that are exposed to other sdk components but not part of the public api in\nthe internal directory (a sibling of src and inc)."
+  },
+  {
+    "id": "clang_design.html#clang-style-publicapi-hdr-includes",
+    "category": "Files",
+    "text": "DO NOT include internal or private headers in public headers."
+  },
+  {
+    "id": "clang_design.html#clang-style-publicapi-hdr-expose",
+    "category": "Files",
+    "text": "DO NOT expose internal implementation details (fields, types, or methods) within the public surface area and header files. The following note issues one exception to this guidance.\n\nNote: It is allowed for a public header to declare internal structures to be used only within another internal structure or API. See example below.\n\nFor example, the following can be part of a public header.\n{% highlight c %}\n// internal structure only used by another _internal field\ntypedef struct {\nint x;\n} _az_internal_structure;\n\n// Public structure with a nested _internal structure\ntypedef struct {\nint y; // Public field in a public struct.\nstruct {\n_az_internal_structure nested; // This is OK.\n} _internal;\n} az_public_struct;\n{% endhighlight %}\n\nOn the contrary, the following cannot be part of a public header.\n{% highlight c %}\n// Public structure with an internal struct exposed as a public field rather than within a nested _internal struct.\ntypedef struct {\nint y; // Public field in a public struct.\n_az_internal_structure nested; // This is not OK. Exposing internal field as public.\n} az_public_struct;\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-style-install-internal-private-headers",
+    "category": "Files",
+    "text": "DO NOT install internal or private headers with make install or equivalent."
+  },
+  {
+    "id": "clang_design.html#clang-style-filenames",
+    "category": "Files",
+    "text": "DO use characters in the range [a-z0-9_] for the name portion (before the file extension).  No other characters are permitted.\n\nFilenames should be concise, but convey what role the file plays within the library."
+  },
+  {
+    "id": "clang_design.html#clang-style-headerguards",
+    "category": "Files",
+    "text": "DO use header file guards:\n\n{% highlight c %}\n#ifndef IOT_CLIENT_H\n#define IOT_CLIENT_H\n\n/* Contents of iot_client.h */\n\n#endif /* IOT_CLIENT_H */\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-docs-doxygen",
+    "category": "Documentation Style",
+    "text": "DO include docstrings compatible with the doxygen (http://www.doxygen.nl/index.html) tool for generating reference documentation.\n\nFor example, a (very) simple docstring might look like:\n{% highlight c %}\n/**\n@struct az_appconf_client\n@brief The az_appconf_client represents the resources required for a connection to\n\n     an Azure AppcConfiguration resource.\n\n\n\n<code>     an Azure AppcConfiguration resource.\n</code>\n\n*/\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-docs-doxygen-cmd",
+    "category": "Documentation Style",
+    "text": "DO use doxygen's @cmd style docstrings"
+  },
+  {
+    "id": "clang_design.html#clang-docs-doxygen-params",
+    "category": "Documentation Style",
+    "text": "DO format parameter documentation like the following:\n\n{% highlight c %}\n/* <....documentation....>\n\\param[] <param_name> <additional_annotations> description\n<....documentation....>\n*/\n{% endhighlight %}\n\n<additional_annotations> is a space-separated list of the following annotations:\n[transfer none|full|container]\n: indicates who owns a parameter and how that ownership is transferred by a given function\neach ownership transfer mode is defined below. The recipient of a value is the caller for [callee allocates] parameters and the callee for [caller allocates] parameters\n[transfer none]\n: indicates no change in ownership for this parameter. This is sometimes called \"borrowing\"\n[transfer full]\n: indicates complete ownership transfer. After a call to the function the recipient (either the caller or the callee) will be\nresponsible for the value. This usually means the recipient will at least need to arrange for any memory referred to by\nthe value to be freed.\n[transfer container]\n: indicates full ownership transfer for a container value, but not for its contents. For example a char** parameter (that referrers to an array of cstrings)\nwould be annotated as [transfer container] if the recipient is expected to free the array, but not free each element therein.\n[nullable]\n: the parameter may be set to NULL, only valid for pointer parameters/return values. Don't annotate return values or out parameters as [nullable]\nif NULL is used to report errors. If a parameter is marked [nullable] document what happens when it is null.\n[not nullable]\n: The parameter may not be null.\n[caller allocates]\n: memory for the value is expected to be allocated by the caller. This is the default for [in] parameters, and [out]/[in,out] parameters\nthat have a single indirection (that is Foo* p is [caller allocates] but Foo** p is not).\n[callee allocates]\n: memory for the value will be allocated by the callee. This usually means the caller will need to free said memory when it's no longer needed.\n\nFor example:\n{% highlight c %}\n/**\n@brief execute a blocking get request\n\n@memberof az_appconf_client\n\n@param[in] client [transfer none]\n@param[in] path_and_query [transfer none][not nullable]\n\n \t  The query to execute relative to the base url of the client\n\n\n@param[out] result [transfer full][not nullable][callee allocates]\n@param[out] result_sz [not nullable] size of the result\n/\naz_appconf_err az_appconf_req_get(\naz_appconf_client client, const char* path_and_query, unsigned char** result, size_t* result_sz);\n{% endhighlight %}\n\n<code> \t  The query to execute relative to the base url of the client\n</code>\n\nHere we see that the first two parameters are input parameters, with no ownership transfer (that is, they are a \"borrow\"). The result output parameter is labeled as [callee allocates] because it allocates memory for the output parameter itself. Since result is owned by the caller after az_appconf_req_get returns it's annotated as [transfer full].\n\nThe annotations do not require any special doxygen support and are simply convention.\n\n{% include requirement/MAY id=\"clang-docs-doxygen-defaults \" %} assume the following default annotations:\n[not nullable]\nFor [out] and [in,out] pointer parameters: [caller allocates][transfer none]\nFor [out] and [in,out] pointer-to-pointer parameters: [callee allocates][transfer full]\nfor [in] parameters: [caller allocates] (Note: [callee allocates] doesn't make sense for [in] parameters)"
+  },
+  {
+    "id": "clang_design.html#clang-docs-doxygen-nullable",
+    "category": "Documentation Style",
+    "text": "DO document what happens to parameters that are set to null.\n\nFor example:\n\n{% highlight c %}\n/**\n@brief get properties of a widget (e.g. place of manufacture, number of sides, material)\n\n@param[in] self [transfer none] the widget to operate on\n@param[out] props [nullable][caller-allocates] pointer to an array of num_props, or null\n@param[in,out] num_props [non nullable][caller-allocates] pointer to the number of properties to\n\n                                                          retrieve or to a location to store the number of\n\n\n\n                                                          properties queried as described below\n\n\n\nIf @p props is NULL then return the number of properties available in @p num_props,\notherwise return @p num_props into the array at @p props\n/\naz_error az_widgets_get_widget_properties(az_widgets_widget self, az_widgets_widget_properties* props, size_t* num_props);\n{% endhighlight %}\n\n<code>                                                          retrieve or to a location to store the number of\n</code>\n\n<code>                                                          properties queried as described below\n</code>\n\nThis function returns an array using all caller-allocated memory. In order to figure out the size of the array the caller can pass NULL for the array [out] parameter. They can then allocate the required memory and call the function again."
+  },
+  {
+    "id": "clang_design.html#clang-docs-doxygen-ptr-dir",
+    "category": "Documentation Style",
+    "text": "DO provide a <direction> for all parameters that are pointers or structs/unions containing a pointer.\n\nNote:\nThese annotations are derived from gobject-introspection-annotations (https://wiki.gnome.org/Projects/GObjectIntrospection/Annotations)   It's not a big deal that we use that form, it's just critical that there is a standard way to indicate ownership of reference parameters"
+  },
+  {
+    "id": "clang_design.html#clang-docs-doxygen-failure",
+    "category": "Documentation Style",
+    "text": "DO document how your function can fail. For example, if returning an error code, document when each possible code will be returned."
+  },
+  {
+    "id": "clang_design.html#clang-docs-buildsystem",
+    "category": "Buildsystem integration",
+    "text": "DO Provide a buildsystem target called \"docs\" to build\nthe documentation"
+  },
+  {
+    "id": "clang_design.html#clang-docs-buildsystem-option",
+    "category": "Buildsystem integration",
+    "text": "DO Provide an option BUILD_DOCS to control\nbuilding of the docs, this should default to OFF\n\nTo provide this you can use the CMake FindDoxygen module as follows:\n\n{% highlight cmake %}\noption(BUILD_DOCS \"Build documentation\" OFF)\nif(BUILD_DOCS)\nfind_package(Doxygen REQUIRED doxygen)\n\n<code># note: DOXYGEN_ options are strings to cmake, not\n# booleans, thus use only YES and NO\nset(DOXYGEN_GENERATE_XML YES)\nset(DOXYGEN_GENERATE_HTML YES)\n\nset(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)\nset(DOXYGEN_EXTRACT_PACKAGE YES)\nset(DOXYGEN_INLINE_SIMPLE_STRUCTS YES)\nset(DOXYGEN_TYPEDEF_HIDES_STRUCT YES)\ndoxygen_add_docs(docs\n    ${PROJECT_SOURCE_DIR}/inc\n    ${PROJECT_SOURCE_DIR}/doc\n    ${PROJECT_SOURCE_DIR}/src\n    COMMENT \"Generate Documentation\")\n</code>\n\nendif()\n{% endhighlight %}\n\nTODO: Fill out this section."
+  },
+  {
+    "id": "clang_design.html#clang-docs-include-snippets",
+    "category": "Samples",
+    "text": "DO include example code snippets alongside your library's code within the repository. The snippets should clearly and succinctly demonstrate the operations most developers need to perform with your library. Include snippets for every common operation, and especially for those that are complex or might otherwise be difficult for new users of your library. At a bare minimum, include snippets for the champion scenarios you've identified for the library."
+  },
+  {
+    "id": "clang_design.html#clang-docs-build-snippets",
+    "category": "Samples",
+    "text": "DO build and test your example code snippets using the repository's continuous integration (CI) to ensure they remain functional."
+  },
+  {
+    "id": "clang_design.html#clang-docs-snippets-in-docstrings",
+    "category": "Samples",
+    "text": "DO include the example code snippets in your library's docstrings so they appear in its API reference. If the language and its tools support it, ingest these snippets directly into the API reference from within the docstrings.\n\nFor example, consider a function called az_do_something_or_other:\n{% highlight c %}\n/**\n@brief some structure type\n*/\ntypedef struct az_some_struct {\nint member;\n} az_some_struct;\n\n/**\n@brief do something, or maybe do some other thing\n@memberof az_some_struct\n/\nvoid az_do_something_or_other(az_some_struct s);\n{% endhighlight %}\nIt can be used as follows:\n{% highlight c %}\n/**\n@example example_1.c\n*/\nint main() {\naz_some_struct a;\naz_do_something_or_other(&a);\nreturn 1;\n}\n{% endhighlight %}\nWhen doxygen processes these files, it will see the @example command in example_1.c and\nadd it to the \"examples\" section of the documentation, it will also see the usage of\naz_some_struct in the example and add a link from the documentation of az_some_struct to the\ndocumentation (including source code) for example_1.c.\n\nUse @include or @snippet to include examples directly in the documentation for a function or structure.\nFor example:\n\n{% highlight c %}\n/**\n@brief some structure type\n*/\ntypedef struct az_some_struct {\nint member;\n} az_some_struct;\n\n/**\n@brief do something, or maybe do some other thing\n@memberof az_some_struct\nsee @snippet example_1.c use az_some_struct\n/\nvoid az_do_something_or_other(az_some_struct s);\n{% endhighlight %}\nIt can be used as follows:\n{% highlight c %}\n/**\n@example example_1.c\n/\nint main() {\n/* [use az_some_struct] /\naz_some_struct a;\naz_do_something_or_other(&a);\n/* [use az_some_struct] */\nreturn 1;\n}\n{% endhighlight %}\n\nNote that automatic links from documentation to examples will only be generated in struct documentation,\nnot in function documentation. To generate a link from a function's documentation to an example use @dontinclude. For example:\n\n{% highlight c %}\n/**\n@brief do something, or maybe do some other thing\n@memberof az_some_struct\n@dontinclude example_1.c\n/\nvoid az_do_something_or_other(az_some_struct s);\n{% endhighlight %}"
+  },
+  {
+    "id": "clang_design.html#clang-docs-operation-combinations",
+    "category": "Samples",
+    "text": "DO NOT combine more than one operation in a code snippet unless it's required for demonstrating the type or member, or it's in addition to existing snippets that demonstrate atomic operations. For example, a Cosmos DB code snippet should not include both account and container creation operations--create two different snippets, one for account creation, and one for container creation.\n\nCombined operations cause unnecessary friction for a library consumer by requiring knowledge of additional operations which might be outside their current focus. It requires them to first understand the tangential code surrounding the operation they're working on, then carefully extract just the code they need for their task. The developer can no longer simply copy and paste the code snippet into their project.\n\n[OpenTelemetry]: https://opentelemetry.io\n[Azure Monitor]: https://azure.microsoft.com/services/monitor/\n[azure/azure-sdk-for-c]: https://github.com/azure/azure-sdk-for-c\n[1]: https://www.youtube.com/watch?v=PAAkCSZUG1c&t=9m28s"
+  }
+]

@@ -1,0 +1,7 @@
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Azure.Sdk.Tools.TestProxy.Tests, PublicKey=0024000004800000940000000602000000240000525341310004000001000100259ae92701e6c1d912e6126950be871a0aa0bc76c69b573a8f549708e4f5b9658246d97f239964447af47052f09df117f955af39c1bfc43c369ada5460750e7dd0b0f178a70bb970a8fb74f9d892636a4ac38234157de5482482d3debd80f082d6b55a5761cc97c261e5ad3ba3025c06990011f1f86cc021de48381c8174049a")]
+

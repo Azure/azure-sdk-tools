@@ -14,6 +14,7 @@
 namespace clang {
 class Decl;
 class ASTContext;
+class Attr;
 enum AccessSpecifier : int;
 } // namespace clang
 
@@ -29,17 +30,16 @@ struct DumpNodeOptions
   bool IncludeContainingClass{false};
 };
 
-class AstNode
-{
+class AstNode {
 protected:
   explicit AstNode(clang::Decl const* decl);
 
 public:
   // AstNode's don't have namespaces or names, so return something that would make callers happy.
-  virtual std::string_view const Namespace() { return ""; }
-  virtual std::string_view const Name() { return ""; }
+  virtual std::string_view const Namespace() const { return ""; }
+  virtual std::string_view const Name() const { return ""; }
 
-  virtual void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) = 0;
+  virtual void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const = 0;
 
   static std::string GetCommentForNode(clang::ASTContext& context, clang::Decl const* decl);
   static std::string GetCommentForNode(clang::ASTContext& context, clang::Decl const& decl);
@@ -50,9 +50,11 @@ public:
   static std::string GetNamespaceForDecl(clang::Decl const* decl);
 };
 
+
 class AstNamedNode : public AstNode {
   std::string m_namespace;
   std::string m_name;
+  std::vector<std::unique_ptr<AstNode>> m_nodeAttributes;
 
 protected:
   AzureClassesDatabase* const m_classDatabase;
@@ -66,10 +68,11 @@ protected:
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode);
 
 public:
-  virtual void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) override
+  void DumpAttributes(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const;
+  virtual void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     assert(!"Pure virtual base - missing implementation of DumpNode in derived class.");
   };
-  std::string_view const Namespace() override { return m_namespace; }
-  std::string_view const Name() override { return m_name; }
+  std::string_view const Namespace() const override { return m_namespace; }
+  std::string_view const Name() const override { return m_name; }
 };

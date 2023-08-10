@@ -187,12 +187,14 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task HandleRecordRequestAsync(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
         {
-            await DebugLogger.LogRequestDetailsAsync(incomingRequest);
-
             if (!RecordingSessions.TryGetValue(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
+
+            var sanitizers = session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers;
+
+            DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
 
             (RecordEntry entry, byte[] requestBody) = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
@@ -372,7 +374,8 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 await RestoreAssetsJson(assetsPath, true);
                 var path = await GetRecordingPath(sessionId, assetsPath);
-
+                var base64path = Convert.ToBase64String(Encoding.UTF8.GetBytes(path));
+                outgoingResponse.Headers.Add("x-base64-recording-file-location", base64path);
                 if (!File.Exists(path))
                 {
                     throw new TestRecordingMismatchException($"Recording file path {path} does not exist.");
@@ -428,12 +431,14 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task HandlePlaybackRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)
         {
-            await DebugLogger.LogRequestDetailsAsync(incomingRequest);
-
             if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
+
+            var sanitizers = session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers;
+
+            DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
 
             var entry = (await CreateEntryAsync(incomingRequest).ConfigureAwait(false)).Item1;
 
@@ -532,6 +537,16 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static async Task<(RecordEntry, byte[])> CreateEntryAsync(HttpRequest request)
         {
+            var entry = CreateNoBodyRecordEntry(request);
+
+            byte[] bytes = await ReadAllBytes(request.Body).ConfigureAwait(false);
+            entry.Request.Body = CompressionUtilities.DecompressBody(bytes, request.Headers);
+
+            return (entry, bytes);
+        }
+
+        public static RecordEntry CreateNoBodyRecordEntry(HttpRequest request)
+        {
             var entry = new RecordEntry();
             entry.RequestUri = GetRequestUri(request).AbsoluteUri;
             entry.RequestMethod = new RequestMethod(request.Method);
@@ -544,10 +559,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            byte[] bytes = await ReadAllBytes(request.Body).ConfigureAwait(false);
-
-            entry.Request.Body = CompressionUtilities.DecompressBody(bytes, request.Headers);
-            return (entry, bytes);
+            return entry;
         }
 
         #endregion

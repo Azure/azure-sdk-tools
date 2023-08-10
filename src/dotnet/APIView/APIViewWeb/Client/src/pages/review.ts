@@ -16,10 +16,32 @@ $(() => {
 
   rvM.hideCheckboxesIfNotApplicable();
 
-  // Enable SumoSelect
-  $(document).ready(function () {
+  // Run when document is ready
+  $(function() {
+    // Enable SumoSelect
     (<any>$("#revision-select")).SumoSelect({ search: true, searchText: 'Search Revisions...' });
     (<any>$("#diff-select")).SumoSelect({ search: true, searchText: 'Search Revisons for Diff...' });
+
+    // Update codeLine Section state after page refresh
+    const shownSectionHeadingLineNumbers = sessionStorage.getItem("shownSectionHeadingLineNumbers");
+
+    if (shownSectionHeadingLineNumbers != null)
+    {
+      rvM.loadPreviouslyShownSections();
+    }
+
+    // Scroll ids into view for Ids hidden in collapsed sections
+    const uriHash = location.hash;
+    console.log(`Initial uriHash: ${uriHash}`);
+    if (uriHash) {
+      let targetAnchorId = uriHash.replace('#', '');
+      targetAnchorId = decodeURIComponent(targetAnchorId);
+      const targetAnchor = $(`[id="${targetAnchorId}"]`);
+      if (targetAnchor.length == 0) {
+        console.log(`Target anchor not found, calling findTargetAnchorWithinSections`);
+        rvM.findTargetAnchorWithinSections(targetAnchorId);
+      }
+    }
   });
 
   /* ADD FUNCTIONS TO LEFT NAVIGATION
@@ -32,21 +54,9 @@ $(() => {
       var navItemHash = navItemLink.prop('hash');
       if (navItemHash) {
         var targetAnchorId = navItemHash.replace('#', '');
-        var targetAnchor = document.getElementById(targetAnchorId);
-        if (targetAnchor) {
-          var targetAnchorRow = $(targetAnchor).parents(".code-line").first();
-          var rowFoldSpan = targetAnchorRow.find(".row-fold-caret");
-          if (rowFoldSpan.length > 0) {
-            var caretIcon = rowFoldSpan.children("i");
-            var caretClasses = caretIcon.attr("class");
-            var caretDirection = caretClasses ? caretClasses.split(' ').filter(c => c.startsWith('fa-angle-'))[0] : "";
-            if (caretDirection.endsWith("right")) {
-              $.when(rvM.toggleCodeLines(targetAnchorRow)).then(function () {
-                navItemRow.removeClass("nav-list-collapsed");
-              });
-            }
-          }
-        }
+        rvM.runAfterExpandingCodeline(targetAnchorId, function () {
+          navItemRow.removeClass("nav-list-collapsed");
+        });
       }
       navItemRow.removeClass("nav-list-collapsed");
     }
@@ -202,17 +212,6 @@ $(() => {
   /* COLLAPSIBLE CODE LINES (EXPAND AND COLLAPSE FEATURE)
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   rvM.addCodeLineToggleEventHandlers();
-
-  // Ask to update codeLine Section state after page refresh
-  $(document).ready(function () {
-    // Get sessionStorage values holding section state
-    const shownSectionHeadingLineNumbers = sessionStorage.getItem("shownSectionHeadingLineNumbers");
-
-    if (shownSectionHeadingLineNumbers != null)
-    {
-      rvM.loadPreviouslyShownSections();
-    }
-  });
 
   /* RIGHT OFFCANVAS OPERATIONS
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/

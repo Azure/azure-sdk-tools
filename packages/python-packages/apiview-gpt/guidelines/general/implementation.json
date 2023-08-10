@@ -1,0 +1,352 @@
+[
+  {
+    "id": "general_implementation.html#general-config-global-config",
+    "category": "Client configuration",
+    "text": "DO use relevant global configuration settings either by default or when explicitly requested to by the user, for example by passing in a configuration object to a client constructor."
+  },
+  {
+    "id": "general_implementation.html#general-config-for-different-clients",
+    "category": "Client configuration",
+    "text": "DO allow different clients of the same type to use different configurations."
+  },
+  {
+    "id": "general_implementation.html#general-config-optout",
+    "category": "Client configuration",
+    "text": "DO allow consumers of your service clients to opt out of all global configuration settings at once."
+  },
+  {
+    "id": "general_implementation.html#general-config-global-overrides",
+    "category": "Client configuration",
+    "text": "DO allow all global configuration settings to be overridden by client-provided options. The names of these options should align with any user-facing global configuration keys."
+  },
+  {
+    "id": "general_implementation.html#general-config-behaviour-changes",
+    "category": "Client configuration",
+    "text": "DO NOT change behavior based on configuration changes that occur after the client is constructed. Hierarchies of clients inherit parent client configuration unless explicitly changed or overridden. Exceptions to this requirement are as follows:\nLog level, which must take effect immediately across the Azure SDK.\nTracing on/off, which must take effect immediately across the Azure SDK."
+  },
+  {
+    "id": "general_implementation.html#general-config-envvars-prefix",
+    "category": "Service-specific environment variables",
+    "text": "DO prefix Azure-specific environment variables with AZURE_."
+  },
+  {
+    "id": "general_implementation.html#general-config-envvars-use-client-specific",
+    "category": "Service-specific environment variables",
+    "text": "YOU MAY use client library-specific environment variables for portal-configured settings which are provided as parameters to your client library. This generally includes credentials and connection details. For example, Service Bus could support the following environment variables:\nAZURE_SERVICEBUS_CONNECTION_STRING\nAZURE_SERVICEBUS_NAMESPACE\nAZURE_SERVICEBUS_ISSUER\nAZURE_SERVICEBUS_ACCESS_KEY\n\nStorage could support:\nAZURE_STORAGE_ACCOUNT\nAZURE_STORAGE_ACCESS_KEY\nAZURE_STORAGE_DNS_SUFFIX\nAZURE_STORAGE_CONNECTION_STRING"
+  },
+  {
+    "id": "general_implementation.html#general-config-envvars-get-approval",
+    "category": "Service-specific environment variables",
+    "text": "DO get approval from the [Architecture Board] for every new environment variable."
+  },
+  {
+    "id": "general_implementation.html#general-config-envvars-format",
+    "category": "Service-specific environment variables",
+    "text": "DO use this syntax for environment variables specific to a particular Azure service:\nAZURE_<ServiceName>_<ConfigurationKey>\n\nwhere ServiceName is the canonical shortname without spaces, and ConfigurationKey refers to an unnested configuration key for that client library."
+  },
+  {
+    "id": "general_implementation.html#general-config-envvars-posix-compatible",
+    "category": "Service-specific environment variables",
+    "text": "DO NOT use non-alpha-numeric characters in your environment variable names with the exception of underscore. This ensures broad interoperability.\n\nThe service client will have methods that send requests to the service. These methods take two kinds of parameters: service parameters and client parameters. Service parameters are sent across the wire to the service as URL segments, query parameters, request header values, and request bodies (typically JSON or XML).  Client parameters are used solely within the client library and are not sent to the service; examples are path parameters, CancellationTokens or file paths.  If, for example, a path parameter is not validated, it could result in sending a request to a malformed URI, which could prevent the service from having the opportunity to do validation on it."
+  },
+  {
+    "id": "general_implementation.html#general-params-client-validation",
+    "category": "Parameter validation",
+    "text": "DO validate client parameters.  This includes checks for null values for required path parameters, and checks for empty string values if a required path parameter declares a minLength greater than zero."
+  },
+  {
+    "id": "general_implementation.html#general-params-server-validation",
+    "category": "Parameter validation",
+    "text": "DO NOT validate service parameters.  This includes null checks, empty strings, and other common validating conditions. Let the service validate any request parameters."
+  },
+  {
+    "id": "general_implementation.html#general-params-check-devex",
+    "category": "Parameter validation",
+    "text": "DO validate the developer experience when the service parameters are invalid to ensure appropriate error messages are generated by the service.  If the developer experience is compromised due to service-side error messages, work with the service team to correct prior to release.\n\nEach supported language has an Azure Core library that contains common mechanisms for cross cutting concerns such as configuration and doing HTTP requests."
+  },
+  {
+    "id": "general_implementation.html#general-requests-use-pipeline",
+    "category": "Network requests",
+    "text": "DO use the HTTP pipeline component within Azure Core for communicating to service REST endpoints.\n\nThe HTTP pipeline consists of a HTTP transport that is wrapped by multiple policies. Each policy is a control point during which the pipeline can modify either the request and/or response. We prescribe a default set of policies to standardize how client libraries interact with Azure services.  The order in the list is the most sensible order for implementation."
+  },
+  {
+    "id": "general_implementation.html#general-requests-implement-policies",
+    "category": "Network requests",
+    "text": "DO implement the following policies in the HTTP pipeline:\nTelemetry\nUnique Request ID\nRetry\nAuthentication\nResponse downloader\nDistributed tracing\nLogging"
+  },
+  {
+    "id": "general_implementation.html#general-requests-use-azurecore-impl",
+    "category": "Network requests",
+    "text": "YOU SHOULD use the policy implementations in Azure Core whenever possible.  Do not try to \"write your own\" policy unless it is doing something unique to your service.  If you need another option to an existing policy, engage with the [Architecture Board] to add the option.\n\nWhen implementing authentication, don't open up the consumer to security holes like PII (personally identifiable information) leakage or credential leakage.  Credentials are generally issued with a time limit, and must be refreshed periodically to ensure that the service connection continues to function as expected.  Ensure your client library follows all current security recommendations and consider an independent security review of the client library to ensure you're not introducing potential security problems for the consumer."
+  },
+  {
+    "id": "general_implementation.html#general-authimpl-no-persisting",
+    "category": "Authentication",
+    "text": "DO NOT persist, cache, or reuse security credentials.  Security credentials should be considered short lived to cover both security concerns and credential refresh situations.\n\nIf your service implements a non-standard credential system (that is, a credential system that is not supported by Azure Core), then you need to produce an authentication policy for the HTTP pipeline that can authenticate requests given the alternative credential types provided by the client library."
+  },
+  {
+    "id": "general_implementation.html#general-authimpl-provide-auth-policy",
+    "category": "Authentication",
+    "text": "DO provide a suitable authentication policy that authenticates the HTTP request in the HTTP pipeline when using non-standard credentials.  This includes custom connection strings, if supported.\n\nSome languages support the development of platform-specific native code plugins.  These cause compatibility issues and require additional scrutiny.  Certain languages compile to a machine-native format (for example, C or C++), whereas most modern languages opt to compile to an intermediary format to aid in cross-platform support."
+  },
+  {
+    "id": "general_implementation.html#general-no-nativecode",
+    "category": "Native code",
+    "text": "YOU SHOULD write platform-specific / native code unless the language compiles to a machine-native format.\n\nError handling is an important aspect of implementing a client library.  It is the primary method by which problems are communicated to the consumer.  There are two methods by which errors are reported to the consumer.  Either the method throws an exception, or the method returns an error code (or value) as its return value, which the consumer must then check.  In this section we refer to \"producing an error\" to mean returning an error value or throwing an exception, and \"an error\" to be the error value or exception object."
+  },
+  {
+    "id": "general_implementation.html#general-errors-prefer-exceptions",
+    "category": "Error handling",
+    "text": "YOU SHOULD prefer the use of exceptions over returning an error value when producing an error."
+  },
+  {
+    "id": "general_implementation.html#general-errors-for-failed-requests",
+    "category": "Error handling",
+    "text": "DO produce an error when any HTTP request fails with an HTTP status code that is not defined by the service/Swagger as a successful status code. These errors should also be logged as errors."
+  },
+  {
+    "id": "general_implementation.html#general-errors-include-request-response",
+    "category": "Error handling",
+    "text": "DO ensure that the error produced contains the HTTP response (including status code and headers) and originating request (including URL, query parameters, and headers).\n\nIn the case of a higher-level method that produces multiple HTTP requests, either the last exception or an aggregate exception of all failures should be produced."
+  },
+  {
+    "id": "general_implementation.html#general-errors-rich-info",
+    "category": "Error handling",
+    "text": "DO ensure that if the service returns rich error information (via the response headers or body), the rich information must be available via the error produced in service-specific properties/fields."
+  },
+  {
+    "id": "general_implementation.html#general-errors-no-new-types",
+    "category": "Error handling",
+    "text": "YOU SHOULD NOT create a new error type unless the developer can perform an alternate action to remediate the error.  Specialized error types should be based on existing error types present in the Azure Core package."
+  },
+  {
+    "id": "general_implementation.html#general-errors-use-system-types",
+    "category": "Error handling",
+    "text": "DO NOT create a new error type when a language-specific error type will suffice.  Use system-provided error types for validation."
+  },
+  {
+    "id": "general_implementation.html#general-errors-documentation",
+    "category": "Error handling",
+    "text": "DO document the errors that are produced by each method (with the exception of commonly thrown errors that are generally not documented in the target language).\n\nClient libraries must support robust logging mechanisms so that the consumer can adequately diagnose issues with the method calls and quickly determine whether the issue is in the consumer code, client library code, or service.\n\nIn general, our advice to consumers of these libraries is to establish logging in their preferred manner at the WARNING level or above in production to capture problems with the application, and this level should be enough for customer support situations.  Informational or verbose logging can be enabled on a case-by-case basis to assist with issue resolution."
+  },
+  {
+    "id": "general_implementation.html#general-logging-pluggable-logger",
+    "category": "Logging",
+    "text": "DO support pluggable log handlers."
+  },
+  {
+    "id": "general_implementation.html#general-logging-console-logger",
+    "category": "Logging",
+    "text": "DO make it easy for a consumer to enable logging output to the console. The specific steps required to enable logging to the console must be documented."
+  },
+  {
+    "id": "general_implementation.html#general-logging-levels",
+    "category": "Logging",
+    "text": "DO use one of the following log levels when emitting logs: Verbose (details), Informational (things happened), Warning (might be a problem or not), and Error."
+  },
+  {
+    "id": "general_implementation.html#general-logging-failure",
+    "category": "Logging",
+    "text": "DO use the Error logging level for failures that the application is unlikely to recover from (out of memory, etc.)."
+  },
+  {
+    "id": "general_implementation.html#general-logging-warning",
+    "category": "Logging",
+    "text": "DO use the Warning logging level when a function fails to perform its intended task. This generally means that the function will raise an exception.  Do not include occurrences of self-healing events (for example, when a request will be automatically retried)."
+  },
+  {
+    "id": "general_implementation.html#general-logging-slowlinks",
+    "category": "Logging",
+    "text": "YOU MAY log the request and response (see below) at the Warning when a request/response cycle (to the start of the response body) exceeds a service-defined threshold.  The threshold should be chosen to minimize false-positives and identify service issues."
+  },
+  {
+    "id": "general_implementation.html#general-logging-info",
+    "category": "Logging",
+    "text": "DO use the Informational logging level when a function operates normally."
+  },
+  {
+    "id": "general_implementation.html#general-logging-verbose",
+    "category": "Logging",
+    "text": "DO use the Verbose logging level for detailed troubleshooting scenarios. This is primarily intended for developers or system administrators to diagnose specific failures."
+  },
+  {
+    "id": "general_implementation.html#general-logging-no-sensitive-info",
+    "category": "Logging",
+    "text": "DO only log headers and query parameters that are in a service-provided \"allow-list\" of approved headers and query parameters.  All other headers and query parameters must have their values redacted."
+  },
+  {
+    "id": "general_implementation.html#general-logging-requests",
+    "category": "Logging",
+    "text": "DO log request line and headers as an Informational message. The log should include the following information:\nThe HTTP method.\nThe URL.\nThe query parameters (redacted if not in the allow-list).\nThe request headers (redacted if not in the allow-list).\nAn SDK provided request ID for correlation purposes.\nThe number of times this request has been attempted."
+  },
+  {
+    "id": "general_implementation.html#general-logging-responses",
+    "category": "Logging",
+    "text": "DO log response line and headers as an Informational message.  The format of the log should be the following:\nThe SDK provided request ID (see above).\nThe status code.\nAny message provided with the status code.\nThe response headers (redacted if not in the allow-list).\nThe time period between the first attempt of the request and the first byte of the body."
+  },
+  {
+    "id": "general_implementation.html#general-logging-cancellations",
+    "category": "Logging",
+    "text": "DO log an Informational message if a service call is cancelled.  The log should include:\nThe SDK provided request ID (see above).\nThe reason for the cancellation (if available)."
+  },
+  {
+    "id": "general_implementation.html#general-logging-exceptions",
+    "category": "Logging",
+    "text": "DO log exceptions thrown as a Warning level message. If the log level set to Verbose, append stack trace information to the message.\n\nDistributed tracing mechanisms allow the consumer to trace their code from frontend to backend. The distributed tracing library creates spans - units of unique work.  Each span is in a parent-child relationship.  As you go deeper into the hierarchy of code, you create more spans.  These spans can then be exported to a suitable receiver as needed.  To keep track of the spans, a distributed tracing context (called a context in the remainder of this section) is passed into each successive layer.  For more information on this topic, visit the OpenTelemetry (https://opentelemetry.io) topic on tracing."
+  },
+  {
+    "id": "general_implementation.html#general-tracing-opentelemetry",
+    "category": "Distributed Tracing",
+    "text": "DO support OpenTelemetry (https://opentelemetry.io) for distributed tracing."
+  },
+  {
+    "id": "general_implementation.html#general-tracing-accept-context",
+    "category": "Distributed Tracing",
+    "text": "DO accept a context from calling code to establish a parent span."
+  },
+  {
+    "id": "general_implementation.html#general-tracing-pass-context",
+    "category": "Distributed Tracing",
+    "text": "DO pass the context to the backend service through the appropriate headers (traceparent and tracestate per W3C Trace-Context (https://www.w3.org/TR/trace-context/) standard)) to support Azure Monitor (https://azure.microsoft.com/services/monitor/)   This is generally done with the HTTP pipeline."
+  },
+  {
+    "id": "general_implementation.html#general-tracing-new-span-per-method",
+    "category": "Distributed Tracing",
+    "text": "DO create only one span for client method that user code calls.  New spans must be children of the context that was passed in.  If no context was passed in, a new root span must be created."
+  },
+  {
+    "id": "general_implementation.html#general-tracing-suppress-client-spans-for-inner-methods",
+    "category": "Distributed Tracing",
+    "text": "DO When client method creates a new span and internally calls into other public client methods of the same or different Azure SDK, spans created for inner client methods MUST be suppressed, their attributes and events ignored.  Nested spans created for REST calls MUST be the children of the outer client call span.  Suppression is generally done by Azure Core."
+  },
+  {
+    "id": "general_implementation.html#general-tracing-new-span-per-method-conventions",
+    "category": "Distributed Tracing",
+    "text": "DO populate span properties according to [Tracing Conventions]."
+  },
+  {
+    "id": "general_implementation.html#general-tracing-new-span-per-method-naming",
+    "category": "Distributed Tracing",
+    "text": "DO us <client> <method> as the name of the per-method span without namespace or async suffix. Follow language-specific conventions on casing or separator."
+  },
+  {
+    "id": "general_implementation.html#general-tracing-new-span-per-method-duration",
+    "category": "Distributed Tracing",
+    "text": "DO start per-method spans before sending the request or calling any significantly time consuming code that might fail. End the span only after all network, IO or other unreliable and time consuming operations are complete."
+  },
+  {
+    "id": "general_implementation.html#general-tracing-new-span-per-method-failure",
+    "category": "Distributed Tracing",
+    "text": "DO If method throws exception, record exception on span. Do not record exception if exception is handled within service method."
+  },
+  {
+    "id": "general_implementation.html#general-tracing-new-span-per-rest-call",
+    "category": "Distributed Tracing",
+    "text": "DO create a new span (which must be a child of the per-method span) for each REST call that the client library makes.  This is generally done with the HTTP pipeline.\n\nSome of these requirements will be handled by the HTTP pipeline.  However, as a client library writer, you must handle the incoming context appropriately.\n\nAzure services should not require customers to use more than HTTP and JSON (where a JSON string is either a \"pure\" string or else parseable/formattable as either an RFC 3339 Date/Time, a UUID, or a Base-64 encoded bytes).  This is in order to minimize the learning curve for customers, increase potential customer reach, as well as reduce support costs for Microsoft (a tenet that the Azure review boards are chartered to oversee and manage).  Azure SDK Languages have already selected libraries to assist with these technologies.\n\nIf a service needs a technology beyond that which has already been selected, the following process can be used:\n\nFirst, the service team can petition the Azure API Stewardship Board to approve technologies that require client-side components.  This must be done early in the design process.  The petitioning team must gather relevant data to justify the critical business need (e.g. competitive advantage, widespread adoption and/or support in the community, improved performance, etc.), why that need cannot reasonably be fulfilled via REST & JSON, the future viability and sustainability of the technology, as well as documentation for the cases/conditions where use of the new technology is indicated.   Evaluation includes a discussion of impact across all languages, especially those supported by Azure SDKs.\n\n\nHaving gained approval, then to avoid issues with SDKs taking hard dependencies on 3rd party libraries such as versioning, quality, and security issues in code that Microsoft does not own and cannot control, SDKs can offer an extensibility point allowing the end-customer to integrate the 3rd-party library and version they desire into the SDK.  In this case, the SDK\u2019s documentation must have examples showing a customer how to do this correctly for each SDK language.\n\n\nFirst, the service team can petition the Azure API Stewardship Board to approve technologies that require client-side components.  This must be done early in the design process.  The petitioning team must gather relevant data to justify the critical business need (e.g. competitive advantage, widespread adoption and/or support in the community, improved performance, etc.), why that need cannot reasonably be fulfilled via REST & JSON, the future viability and sustainability of the technology, as well as documentation for the cases/conditions where use of the new technology is indicated.   Evaluation includes a discussion of impact across all languages, especially those supported by Azure SDKs.\n\nHaving gained approval, then to avoid issues with SDKs taking hard dependencies on 3rd party libraries such as versioning, quality, and security issues in code that Microsoft does not own and cannot control, SDKs can offer an extensibility point allowing the end-customer to integrate the 3rd-party library and version they desire into the SDK.  In this case, the SDK\u2019s documentation must have examples showing a customer how to do this correctly for each SDK language.\n\nThe following are considerations that will be discussed in any petition to include additional technologies:\nVersioning - Many programming languages do not allow a consumer to load multiple versions of the same package. So, if we have an client library that requires v3 of package Foo and the consumer wants to use v5 of package Foo, then the consumer cannot build their application. This means that client libraries should not have dependencies by default.\nSize - Consumer applications must be able to deploy as fast as possible into the cloud and move in various ways across networks. Removing additional code (like dependencies) improves deployment performance.\nLicensing - You must be conscious of the licensing restrictions of a dependency and often provide proper attribution and notices when using them.\nCompatibility - Often times you do not control a dependency and it may choose to evolve in a direction that is incompatible with your original use.\nSecurity - If a security vulnerability is discovered in a dependency, it may be difficult or time consuming to get the vulnerability corrected if Microsoft does not control the dependency's code base."
+  },
+  {
+    "id": "general_implementation.html#general-dependencies-azure-core",
+    "category": "Dependencies",
+    "text": "DO depend on the Azure Core library for functionality that is common across all client libraries.  This library includes APIs for HTTP connectivity, global configuration, and credential handling."
+  },
+  {
+    "id": "general_implementation.html#general-dependencies-approved-only",
+    "category": "Dependencies",
+    "text": "DO NOT be dependent on any other packages within the client library distribution package. Dependencies are by-exception and need a thorough vetting through architecture review.  This does not apply to build dependencies, which are acceptable and commonly used."
+  },
+  {
+    "id": "general_implementation.html#general-dependencies-vendoring",
+    "category": "Dependencies",
+    "text": "YOU SHOULD consider copying or linking required code into the client library in order to avoid taking a dependency on another package that could conflict with the ecosystem. Make sure that you are not violating any licensing agreements and consider the maintenance that will be required of the duplicated code. \"A little copying is better than a little dependency\" (https://www.youtube.com/watch?v=PAAkCSZUG1c&t=9m28s) (YouTube)."
+  },
+  {
+    "id": "general_implementation.html#general-dependencies-concrete",
+    "category": "Dependencies",
+    "text": "DO NOT depend on concrete logging, dependency injection, or configuration technologies (except as implemented in the Azure Core library).  The client library will be used in applications that might be using the logging, DI, and configuration technologies of their choice.\n\nThe above considerations may differ in degree between languages, and so it's important to check the approved dependencies and guidelines for any given language early in the design phase.  (Also note that, in some rare cases, the Azure SDK Architecture Board may opt to take a hard dependency on an additional third party library if, after substantial vetting, the board believes that there is minimal risk to supporting our customers in a sustained manner by doing so.)\n\nThere are occasions when common code needs to be shared between several client libraries.  For example, a set of cooperating client libraries may wish to share a set of exceptions or models."
+  },
+  {
+    "id": "general_implementation.html#general-commonlib-approval",
+    "category": "Service-specific common library code",
+    "text": "DO gain [Architecture Board] approval prior to implementing a common library."
+  },
+  {
+    "id": "general_implementation.html#general-commonlib-minimize-code",
+    "category": "Service-specific common library code",
+    "text": "DO minimize the code within a common library.  Code within the common library is available to the consumer of the client library and shared by multiple client libraries within the same namespace."
+  },
+  {
+    "id": "general_implementation.html#general-commonlib-namespace",
+    "category": "Service-specific common library code",
+    "text": "DO store the common library in the same namespace as the associated client libraries.\n\nA common library will only be approved if:\nThe consumer of the non-shared library will consume the objects within the common library directly, AND\nThe information will be shared between multiple client libraries.\n\nLet's take two examples:\n\nImplementing two Cognitive Services client libraries, we find a model is required that is produced by one Cognitive Services client library and consumed by another Coginitive Services client library, or the same model is produced by two client libraries.  The consumer is required to do the passing of the model in their code, or may need to compare the model produced by one client library vs. that produced by another client library.  This is a good candidate for choosing a common library.\n\n\nTwo Cognitive Services client libraries throw an ObjectNotFound exception to indicate that an object was not detected in an image.  The user might trap the exception, but otherwise will not operate on the exception.  There is no linkage between the ObjectNotFound exception in each client library.  This is not a good candidate for creation of a common library (although you may wish to place this exception in a common library if one exists for the namespace already).  Instead, produce two different exceptions - one in each client library.\n\n\nImplementing two Cognitive Services client libraries, we find a model is required that is produced by one Cognitive Services client library and consumed by another Coginitive Services client library, or the same model is produced by two client libraries.  The consumer is required to do the passing of the model in their code, or may need to compare the model produced by one client library vs. that produced by another client library.  This is a good candidate for choosing a common library.\n\nTwo Cognitive Services client libraries throw an ObjectNotFound exception to indicate that an object was not detected in an image.  The user might trap the exception, but otherwise will not operate on the exception.  There is no linkage between the ObjectNotFound exception in each client library.  This is not a good candidate for creation of a common library (although you may wish to place this exception in a common library if one exists for the namespace already).  Instead, produce two different exceptions - one in each client library.\n\nSoftware testing provides developers a safety net. Investing in tests upfront saves time overall due to increased certainty over the development process that changes are not resulting in divergence from stated requirements and specifications. The intention of these testing guidelines is to focus on the complexities around testing APIs that are backed by live services when in their normal operating mode. We want to enable open source development of our client libraries, with certainty that regardless of the developer making code changes there always remains conformance to the initial design goals of the code. Additionally, our goal is to ensure that developers building atop the Azure client libraries can meaningfully test their own code, without incurring additional complexity or expense through unnecessary interactions with a live Azure service."
+  },
+  {
+    "id": "general_implementation.html#general-testing-1",
+    "category": "Testing",
+    "text": "DO write tests that ensure all APIs fulfil their contract and algorithms work as specified. Focus particular attention on client functionality, and places where payloads are serialized and deserialized."
+  },
+  {
+    "id": "general_implementation.html#general-testing-2",
+    "category": "Testing",
+    "text": "DO ensure that client libraries have appropriate unit test coverage, focusing on quality tests (https://martinfowler.com/bliki/TestCoverage.html)  using code coverage reporting tools to identify areas where more tests would be beneficial. Each client library should define its minimum level of code coverage, and ensure that this is maintained as the code base evolves."
+  },
+  {
+    "id": "general_implementation.html#general-testing-3",
+    "category": "Testing",
+    "text": "DO use unique, descriptive test case names so test failures in CI (especially external PRs) are readily understandable."
+  },
+  {
+    "id": "general_implementation.html#general-testing-4",
+    "category": "Testing",
+    "text": "DO ensure that users can run all tests without needing access to Microsoft-internal resources. If internal-only tests are necessary, these should be a separate test suite triggered via a separate command, so that they are not executed by users who will then encounter test failures that they cannot resolve."
+  },
+  {
+    "id": "general_implementation.html#general-testing-5",
+    "category": "Testing",
+    "text": "DO NOT rely on pre-existing test resources or infrastructure and DO NOT leave test resources around after tests have completed. Anything needed for a test should be initialized and cleaned up as part of the test execution (whether by running an ARM template prior to starting tests, or by setting up and tearing down resources in the tests themselves)."
+  },
+  {
+    "id": "general_implementation.html#general-testing-6",
+    "category": "Recorded tests",
+    "text": "DO ensure that all tests work without the need for any network connectivity or access to Azure services."
+  },
+  {
+    "id": "general_implementation.html#general-testing-7",
+    "category": "Recorded tests",
+    "text": "DO write tests that use a mock service implementation, with a set of recorded tests per service version supported by the client library. This ensures that the service client continues to properly consume service responses as APIs and implementations evolve. Recorded tests must be run using the language-appropriate trigger to enable the specific service version support in the client library."
+  },
+  {
+    "id": "general_implementation.html#general-testing-8",
+    "category": "Recorded tests",
+    "text": "DO recreate recorded tests for latest service version when notified by the service team of any changes to the endpoint APIs for that service version. In the absence of this notification, recordings should not be updated needlessly. When the service team requires recorded tests to be recreated, or when a recorded test begins to fail unexpectedly, notify the architecture board before recreating the tests."
+  },
+  {
+    "id": "general_implementation.html#general-testing-9",
+    "category": "Recorded tests",
+    "text": "DO enable all network-mocked tests to also connect to live Azure service. The test assertions should remain unchanged regardless of whether the service call is mocked or not."
+  },
+  {
+    "id": "general_implementation.html#general-testing-10",
+    "category": "Recorded tests",
+    "text": "DO NOT include sensitive information in recorded tests.\n\nAs outlined above, writing tests that we can run constantly is critical for confidence in our client library offering, but equally critical is enabling users of the Azure client libraries to write tests for their applications and libraries. End users want to be certain that their code is performing appropriately, and in cases where this code interacts with the Azure client libraries, end users do not want complex or costly Azure interactions to prevent their ability to test their software."
+  },
+  {
+    "id": "general_implementation.html#general-testing-mocking",
+    "category": "Testability",
+    "text": "DO support mocking of service client methods through standard mocking frameworks or other means."
+  },
+  {
+    "id": "general_implementation.html#general-testing-11",
+    "category": "Testability",
+    "text": "DO support the ability to instantiate and set all properties on model objects, such that users may return these from their code."
+  },
+  {
+    "id": "general_implementation.html#general-testing-12",
+    "category": "Testability",
+    "text": "DO support user tests to operate in a network-mocked manner without the need for network access."
+  },
+  {
+    "id": "general_implementation.html#general-testing-13",
+    "category": "Testability",
+    "text": "DO provide clear documentation on how users should instantiate the client library such that it can be mocked.\n\n[Architecture Board]: https://github.com/azure/azure-sdk/issues\n\n[General Azure SDK Guidelines]: {{ site.baseurl }}{% link docs/general/introduction.md %}\n[Azure SDK Contributors Guide]: https://review.docs.microsoft.com/help/contribute-ref/contribute-ref-how-to-document-sdk\n[Microsoft Writing Style Guide]: https://styleguides.azurewebsites.net/StyleGuide/Read?id=2700\n[Microsoft Cloud Style Guide]: https://styleguides.azurewebsites.net/Styleguide/Read?id=2696\n[Acrolinx VS Code extension]: https://aka.ms/azsdk/acrolinx-vscode\n[rest-lro]: https://github.com/microsoft/api-guidelines/blob/vNext/Guidelines.md#13-long-running-operations\n\n[general-guidelines]: {{ site.baseurl }}{% link docs/general/introduction.md %}\n[android-guidelines]: {{ site.baseurl }}{% link docs/android/design.md %}\n[clang-guidelines]: {{ site.baseurl }}{% link docs/clang/design.md %}\n[cpp-guidelines]: {{ site.baseurl }}{% link docs/cpp/introduction.md %}\n[dotnet-guidelines]: {{ site.baseurl }}{% link docs/dotnet/introduction.md %}\n[golang-guidelines]: {{ site.baseurl }}{% link docs/golang/introduction.md %}\n[ios-guidelines]: {{ site.baseurl }}{% link docs/ios/introduction.md %}\n[java-guidelines]: {{ site.baseurl }}{% link docs/java/introduction.md %}\n[python-guidelines]: {{ site.baseurl }}{% link docs/python/design.md %}\n[typescript-guidelines]: {{ site.baseurl }}{% link docs/typescript/introduction.md %}\n\n[android-latest-releases]: {{ site.baseurl }}{% link releases/latest/android.md %}\n[dotnet-latest-releases]: {{ site.baseurl }}{% link releases/latest/dotnet.md %}\n[go-latest-releases]: {{ site.baseurl }}{% link releases/latest/go.md %}\n[ios-latest-releases]: {{ site.baseurl }}{% link releases/latest/ios.md %}\n[java-latest-releases]: {{ site.baseurl }}{% link releases/latest/java.md %}\n[js-latest-releases]: {{ site.baseurl }}{% link releases/latest/js.md %}\n[python-latest-releases]: {{ site.baseurl }}{% link releases/latest/python.md %}\n[cpp-latest-releases]: {{ site.baseurl }}{% link releases/latest/cpp.md %}\n[c-latest-releases]: {{ site.baseurl }}{% link releases/latest/c.md %}\n\n[README-EXAMPLE]: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-EXAMPLE.md\n[README-TEMPLATE]: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md\n\n\n[Tracing Conventions]: {{ site.baseurl }}{% link docs/tracing/distributed-tracing-conventions.md %}"
+  }
+]

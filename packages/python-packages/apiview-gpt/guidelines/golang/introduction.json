@@ -1,0 +1,437 @@
+[
+  {
+    "id": "golang_introduction.html#golang-general-follow-general-guidelines",
+    "category": "General Guidelines {#golang-general}",
+    "text": "DO follow the [General Azure SDK Guidelines]."
+  },
+  {
+    "id": "golang_introduction.html#golang-general-use-azcore-pipeline",
+    "category": "General Guidelines {#golang-general}",
+    "text": "DO use azcore.Pipeline to implement all methods that call Azure REST services."
+  },
+  {
+    "id": "golang_introduction.html#golang-general-idiomatic-code",
+    "category": "General Guidelines {#golang-general}",
+    "text": "DO write idiomatic Go code.  If you're not familiar with the language, a great place to start is https://golang.org/doc/effective_go.  Do NOT simply attempt to translate your language of choice into Go.\n\nThis document contains guidelines developed primarily for typical Azure REST services, i.e. stateless services with request-response based interaction model. Many of the guidelines in this document are more broadly applicable, but some might be specific to such REST services.\n\nAzure services will be exposed to Go developers as one or more service client types and a set of supporting types.\n\nYour API surface consists of one or more service clients that the consumer instantiates to connect to your service, plus a set of supporting types."
+  },
+  {
+    "id": "golang_introduction.html#golang-client-naming",
+    "category": "Service Clients {#golang-client}",
+    "text": "DO name service client types with the Client suffix.\n\n```go\ntype WidgetClient struct {\n\t// all fields MUST NOT be exported\n}\n\n```"
+  },
+  {
+    "id": "golang_introduction.html#golang-client-constructors",
+    "category": "Service Client Constructors",
+    "text": "DO provide one or more constructors in the following format that return a new instance of a service client type.  The \"simple named\" constructor MUST use an azcore.TokenCredential, assuming the service supports AAD authentication.  If not, then the preferred credential type is used instead.  Constructors MUST return the client instance by reference.\n\n```go\n// NewWidgetClient creates a new instance of WidgetClient with the specified values.\n// endpoint - The URI of the Widget.\n// cred - The AAD token credential used to authenticate with the Widget service.\n// options - Optional WidgetClient values.  Pass nil to accept default values.\nfunc NewWidgetClient(endpoint string, cred azcore.TokenCredential, options *WidgetClientOptions) (*WidgetClient, error) {\n\t// ...\n}\n\n// NewWidgetClientWithNoCredential creates a new instance of WidgetClient with the specified values.\n// endpoint - The URI of the Widget that supports anonymous/SAS authentication\n// options - Optional WidgetClient values.  Pass nil to accept default values.\nfunc NewWidgetClientWithNoCredential(endpoint string, options *WidgetClientOptions) (*WidgetClient, error) {\n\t// ...\n}\n\n// NewWidgetClientFromConnectionString creates a new instance of WidgetClient from the specified connection string.\n// options - Optional WidgetClient values.  Pass nil to accept default values.\nfunc NewWidgetClientFromConnectionString(connectionString string, options *WidgetClientOptions) (*WidgetClient, error) {\n\t// ...\n}\n\n```"
+  },
+  {
+    "id": "golang_introduction.html#golang-client-constructors-params",
+    "category": "Service Client Constructors",
+    "text": "DO document all constructor parameters as part of the method block comment.\n\nTODO\n\nTODO"
+  },
+  {
+    "id": "golang_introduction.html#golang-api-service-client-immutable",
+    "category": "Client Immutability",
+    "text": "DO ensure that all service client types are safe for concurrent use by multiple goroutines.  Ideally, all client state is immutable which will satisfy this guideline."
+  },
+  {
+    "id": "golang_introduction.html#golang-api-service-client-fields",
+    "category": "Client Immutability",
+    "text": "DO NOT export any fields on client types.  This is to support mocking of clients via interface types.\n\nService methods are the methods on the client that invoke operations on the service.\n\nThe Go idiom is to expose only synchronous methods.  This allows callers to implement asynchronous calls as appropriate for their use-case."
+  },
+  {
+    "id": "golang_introduction.html#golang-api-sync-only",
+    "category": "Sync and Async",
+    "text": "DO NOT create any goroutines inside an API call or return any channels which implies concurrent behavior.  This allows the consumer to control the concurrent implementation in a way that works best with their application."
+  },
+  {
+    "id": "golang_introduction.html#golang-api-async-helper",
+    "category": "Sync and Async",
+    "text": "YOU SHOULD create higher-level abstractions that work asynchronously where appropriate, allowing consumers the ability to opt-in to the async behavior."
+  },
+  {
+    "id": "golang_introduction.html#golang-client-crud-verbs",
+    "category": "Naming",
+    "text": "DO prefer the use of the following terms for CRUD operations:\n\n| Verb           | Parameters | Comments |\n| Set<noun>    | key,item   | Adds new item or updates existing item. |\n| Add<noun>    | key,item   | Adds a new item.  Fails if item already exists. |\n| Update<noun> | key,item   | Updates an existing item.  Fails if item doesn't exist. |\n| Delete<noun> | key        | Deletes an existing item. Doesn't fail if item doesn't exist. |\n| Get<noun>    | key        | Will retun an error if item doesn't exist. |\n| List<noun>   |            | Returns list of items.  Returns empty list if no items exist. |\n| <noun>Exists | key        | Returns true if the item exists. |"
+  },
+  {
+    "id": "golang_introduction.html#golang-client-verbs-flexible",
+    "category": "Naming",
+    "text": "YOU SHOULD remain flexible and use names best suited for developer experience. Don\u2019t conflict with terminology used by the service team\u2019s documentation, blogs, and presentations."
+  },
+  {
+    "id": "golang_introduction.html#golang-api-multimethods",
+    "category": "Naming",
+    "text": "DO NOT provide multiple methods for a single REST endpoint.\n\nRequests to the service fall into two basic groups: methods that make a single logical request, and methods that make a deterministic sequence of requests. An example of a single logical request is a request that may be retried inside the operation. An example of a deterministic sequence of requests is a paged operation.\n\nThe response envelope is a protocol neutral representation of a response. The response envelope may combine data from headers and response body. For example, you may expose an ETag header as a property on the response envelope. <Client><Method>Response is the \u2018response envelope\u2019. It contains HTTP headers and the object (a deserialized object created from the response body).  Response envelopes MUST be returned by value."
+  },
+  {
+    "id": "golang_introduction.html#golang-response-logical-entity",
+    "category": "Return Types",
+    "text": "DO return the response envelope for the normal form of a service method. The response envelope MUST represent the information needed in the 99%+ case.\n\n```go\n// WidgetClientGetResponse contains the response from method WidgetClient.Get.\ntype WidgetClientGetResponse struct {\n\t// ETag contains the value from the ETag header.\n\tETag *azcore.ETag\n\n\t// LastModified contains the value from the last-modified header.\n\tLastModified *time.Time\n\n\t// Widget contains the unmarshalled response body in Widget format.\n\tWidget\n}\n\ntype Widget struct {\n\tName string\n\tColor WidgetColor\n}\n\nfunc (c *WidgetClient) Get(ctx context.Context, name string, options *WidgetClientGetOptions) (WidgetClientGetResponse, error) {\n\t// ...\n}\n\n```"
+  },
+  {
+    "id": "golang_introduction.html#golang-response-examples",
+    "category": "Return Types",
+    "text": "DO provide examples on how to access the streamed response for a request, where exposed by the client library. We don\u2019t expect all methods to expose a streamed response.\n\n```go\n// WidgetClientGetBinaryResponse contains the response from method WidgetClient.GetBinaryResponse.\ntype WidgetClientGetBinaryResponse struct {\n\t// Body contains the streaming response.\n\tBody io.ReadCloser\n}\n\nfunc (c *WidgetClient) GetBinaryResponse(ctx context.Context, name string, options *WidgetClientGetBinaryResponseOptions) (WidgetClientGetBinaryResponse, error) {\n\t// ...\n}\n\n```"
+  },
+  {
+    "id": "golang_introduction.html#golang-response-logical-paging",
+    "category": "Return Types",
+    "text": "DO provide an idiomatic way to enumerate all logical entities for a paged operation, automatically fetching new pages as needed.  For more information on what to return for List operations, refer to Pagination.\n\nFor methods that combine multiple requests into a single call:"
+  },
+  {
+    "id": "golang_introduction.html#golang-response-no-headers",
+    "category": "Return Types",
+    "text": "DO NOT return headers and other per-request metadata unless it\u2019s obvious as to which specific HTTP request the method\u2019s return value corresponds to."
+  },
+  {
+    "id": "golang_introduction.html#golang-response-failure-info",
+    "category": "Return Types",
+    "text": "DO provide enough information in failure cases for an application to take appropriate corrective action.\n\nModel structures are types that consumers use to provide required information into client library methods.  They can also be returned from client methods. These structures typically represent the domain model, or option structures that must be configured before the request can be made."
+  },
+  {
+    "id": "golang_introduction.html#golang-model-types",
+    "category": "Return Types",
+    "text": "DO export all fields on model types to allow for mocking."
+  },
+  {
+    "id": "golang_introduction.html#golang-model-types-ro",
+    "category": "Return Types",
+    "text": "DO document all read-only fields and exclude their values when marshalling the structure to be sent over the wire.\n\nCancellation is handled via the context (https://pkg.go.dev/context) Context paramater, which is always the first method parameter.  All APIs that perform I/O of any kind, sleep, or perform a significant amount of CPU-bound work must take a context.Context as its first parameter.  Please see the documentation for context for more information, including examples."
+  },
+  {
+    "id": "golang_introduction.html#golang-methods-thread-safety",
+    "category": "Thread Safety",
+    "text": "DO be safe for concurrent use across multiple goroutines."
+  },
+  {
+    "id": "golang_introduction.html#golang-api-service-client-byref",
+    "category": "Service Method Parameters",
+    "text": "DO ensure that all methods on client types pass their receiver by reference."
+  },
+  {
+    "id": "golang_introduction.html#golang-api-context",
+    "category": "Service Method Parameters",
+    "text": "DO accept a context.Context object as the first parameter to every method that performs any I/O operations."
+  },
+  {
+    "id": "golang_introduction.html#golang-api-mandatory-params",
+    "category": "Service Method Parameters",
+    "text": "DO have every I/O method accept all required parameters after the mandatory context.Context object."
+  },
+  {
+    "id": "golang_introduction.html#golang-api-options-struct",
+    "category": "Optional Parameters",
+    "text": "DO define a <Client><Method>Options structure for every method.  This structure includes fields for all non-mandatory parameters. The structure can have fields added to it over time to simplify versioning.  To disambiguate names, use the client type name for a prefix.  If the method contains no optional parameters, the options struct should have a comment indicating it's a placeholder for future optional parameters.\n\n```go\n// WidgetClientGetOptions contains the optional parameters for the WidgetClient.Get method.\ntype WidgetClientGetOptions struct {\n\tTag *string\n\tLength *int\n}\n\n// WidgetClientSetOptions contains the optional parameters for the WidgetClient.Set method.\ntype WidgetClientSetOptions struct {\n\t// placeholder for future optional parameters\n}\n\n```"
+  },
+  {
+    "id": "golang_introduction.html#golang-api-options-ptr",
+    "category": "Optional Parameters",
+    "text": "DO allow the user to pass a pointer to the structure as the last parameter. If the user passes nil, then the method should assume appropriate default values for all the structure\u2019s fields.  Note that nil and a zero-initialized <Client><Method>Options structure are required to be semantically equivalent."
+  },
+  {
+    "id": "golang_introduction.html#golang-api-params",
+    "category": "Optional Parameters",
+    "text": "DO document all parameters as part of the method block comment.\n\n```go\n// Get retrieves the specified Widget.\n// ctx - The context used to control the lifetime of the request.\n// name - The name of the Widget to retrieve.\n// options - Any optional parameters.\nfunc (c *WidgetClient) Get(ctx context.Context, name string, options *WidgetClientGetOptions) (WidgetClientGetResponse, error) {\n\t// ...\n}\n\n```\n\nThe service client will have several methods that perform requests on the service. Service parameters are directly passed across the wire to an Azure service. Client parameters are not passed directly to the service, but used within the client library to fulfill the request.  Examples of client parameters include values that are used to construct a URI, or a file that needs to be uploaded to storage."
+  },
+  {
+    "id": "golang_introduction.html#golang-params-client-validation",
+    "category": "Parameter Validation",
+    "text": "DO validate client parameters."
+  },
+  {
+    "id": "golang_introduction.html#golang-params-service-validation",
+    "category": "Parameter Validation",
+    "text": "DO NOT validate service parameters. This includes null checks, empty strings, and other common validating conditions. Let the service validate any request parameters."
+  },
+  {
+    "id": "golang_introduction.html#golang-params-devex",
+    "category": "Parameter Validation",
+    "text": "DO validate the developer experience when the service parameters are invalid to ensure appropriate error messages are generated by the service. If the developer experience is compromised due to service-side error messages, work with the service team to correct prior to release."
+  },
+  {
+    "id": "golang_introduction.html#golang-pagination",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO return an instance of *runtime.Pager[T] for operations that return pages.  runtime.Pager[T] allows consumers to iterate over all pages as defined by the service."
+  },
+  {
+    "id": "golang_introduction.html#golang-pagination",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO name methods that return a *runtime.Pager[T] with pattern New<Operation>Pager."
+  },
+  {
+    "id": "golang_introduction.html#golang-params-service-validation",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO NOT perform any IO when creating the runtime.Pager[T].  This implies that the method does NOT take a context and does NOT return an error.\n\n```go\nfunc (c *WidgetClient) NewListPager(options *WidgetClientListOptions) *runtime.Pager[WidgetClientListResponse] {\n\t// ...\n}\n\ntype WidgetClientListResponse struct {\n\tWidgetsListResult\n}\n\ntype WidgetsListResult struct {\n\tValues []*Widget\n\n\tNextLink *string\n}\n\npager := client.NewListPager(nil)\nfor pager.More() {\n\tpage, err := pager.NextPage(context.Background())\n\tif err != nil {\n\t\t// handle error...\n\t}\n\tfor _, w := range page.Value {\n\t\tprocess(w)\n\t}\n}\n\n```"
+  },
+  {
+    "id": "golang_introduction.html#golang-pagination-serialization",
+    "category": "Methods Returning Collections (Paging)",
+    "text": "DO provide means to serialize and deserialize a runtime.Pager[T] so that paging can pause and continue, potentially on another machine."
+  },
+  {
+    "id": "golang_introduction.html#golang-lro-poller",
+    "category": "Methods Invoking Long Running Operations",
+    "text": "DO return an instance of *runtime.Poller[T] for long-running operation methods.  runtime.Poller[T] encapsulates the polling and status of the long-running operation."
+  },
+  {
+    "id": "golang_introduction.html#golang-lro-method-naming",
+    "category": "Methods Invoking Long Running Operations",
+    "text": "DO prefix methods which return a *runtime.Poller[T] with Begin.\n\n```go\n// BeginCreate creates a new widget with the specified name.\nfunc (c *WidgetClient) BeginCreate(ctx context.Context, name string, options *WidgetClientBeginCreateOptions) (*runtime.Poller[WidgetClientCreateResponse], error) {\n\t// ...\n}\n\n// WidgetClientCreateResponse contains the response from method WidgetClient.BeginCreate.\ntype WidgetClientCreateResponse struct {\n\tWidget\n}\n\n```"
+  },
+  {
+    "id": "golang_introduction.html#golang-lro-resuming-operations",
+    "category": "Methods Invoking Long Running Operations",
+    "text": "DO provide a field named ResumeToken in the <Client><Method>Options type used to instantiate a *runtime.Poller[T] type with the ResumeToken from a previous call to Poller[T].ResumeToken().\n\n```go\n// WidgetClientBeginCreateOptions contains the optional parameters for the WidgetClient.BeginCreate method.\ntype WidgetClientBeginCreateOptions struct {\n\t// Resumes the LRO from the provided token.\n\tResumeToken string\n}\n\n```"
+  },
+  {
+    "id": "golang_introduction.html#golang-lro-cancel",
+    "category": "Methods Invoking Long Running Operations",
+    "text": "DO NOT cancel the LRO when cancellation is requested via a context. The context is cancelling the polling operation and should not have any effect on the service."
+  },
+  {
+    "id": "golang_introduction.html#golang-lro-pattern",
+    "category": "Methods Invoking Long Running Operations",
+    "text": "DO follow the operation pattern for all LROs.\n\n```go\n// example #1, blocking call to PollUntilDone()\npoller, err := client.BeginCreate(context.Background(), \"blue_widget\", nil)\nif err != nil {\n\t// handle error...\n}\n\nw, err = poller.PollUntilDone(context.Background(), &amp;runtime.PollUntilDoneOptions{Frequency: 5*time.Second})\nif err != nil {\n\t// handle error...\n}\n\nprocess(w)\n\n// example #2, customized poll loop\npoller, err := client.BeginCreate(context.Background(), \"green_widget\")\nif err != nil {\n\t// handle error...\n}\n\nfor {\n\tresp, err := poller.Poll(context.Background())\n\tif err != nil {\n\t\t// handle error ...\n\t}\n\tif poller.Done() {\n\t\tbreak\n\t}\n\tif delay := runtime.RetryAfter(resp); delay &gt; 0 {\n\t\ttime.Sleep(delay)\n\t} else {\n\t\ttime.Sleep(frequency)\n\t}\n}\nw, err := poller.Result(context.Background())\nif err != nil {\n\t// handle error ...\n}\nprocess(w)\n\n// example #3, resuming from a previous operation\n// getting the resume token from a previous poller instance\npoller, err := client.BeginCreate(context.Background(), \"blue_widget\", nil)\nif err != nil {\n\t// handle error...\n}\n\ntk, err := poller.ResumeToken()\nif err != nil {\n\t// handle error ...\n}\n\n// resuming from the resume token that was previously saved\npoller, err = client.BeginCreate(context.Background(), \"\", &amp;WidgetClientBeginCreateOptions{\n\tResumeToken: tk,\n})\nif err != nil {\n\t// handle error ...\n}\n\nw, err = poller.PollUntilDone(context.Background(), nil)\nif err != nil {\n\t// handle error...\n}\nprocess(w)\n\n```\n\nTODO\n\nTODO\n\nIn addition to service client types, Azure SDK APIs provide and use other supporting types as well.\n\nTODO\n\nTODO"
+  },
+  {
+    "id": "golang_introduction.html#golang-const",
+    "category": "Constants as Enumerations",
+    "text": "DO use a const for parameters, fields, and return types when values are known.\n\nTODO\n\nTODO"
+  },
+  {
+    "id": "golang_introduction.html#golang-errors",
+    "category": "Error Handling",
+    "text": "DO return an error if a method fails to perform its intended functionality.  For methods that return multiple items, the error object is always the last item in the return signature."
+  },
+  {
+    "id": "golang_introduction.html#golang-errors-wrapping",
+    "category": "Error Handling",
+    "text": "YOU SHOULD wrap an error with another error if it would help in the diagnosis of the underlying failure.  Expect consumers to use error helper functions (https://blog.golang.org/go1.13-errors) like errors.As() and errors.Is().\n\n```go\nerr := xml.Unmarshal(resp.Payload, v)\nif err != nil {\n\treturn fmt.Errorf(\"unmarshalling type %s: %w\", reflect.TypeOf(v).Elem().Name(), err)\n}\n\n```"
+  },
+  {
+    "id": "golang_introduction.html#golang-errors-on-request-failed",
+    "category": "Error Handling",
+    "text": "DO return the service/operation specific error type when an HTTP request fails with an unsuccessful HTTP status code as defined by the service.  For operations that do not define an error type, return the HTTP response body in string format if available, else return the Status string on the HTTP response."
+  },
+  {
+    "id": "golang_introduction.html#golang-errors-include-response",
+    "category": "Error Handling",
+    "text": "DO include the HTTP response and originating request in the returned error.  Use runtime.NewResponseError() from the sdk/internal module to provide this information.\n\nIn the case of a method that makes multiple HTTP requests, the first error encountered should stop the remainder of the operation and this error (or another error wrapping it) should be returned."
+  },
+  {
+    "id": "golang_introduction.html#golang-errors-distinct-types",
+    "category": "Error Handling",
+    "text": "DO return distinct error types so that consumers can distinguish between a client error (incomplete/incorrect API parameter values) and other SDK failures (failure to send the request, marshalling/unmarshalling, parsing errors)."
+  },
+  {
+    "id": "golang_introduction.html#golang-errors-documentation",
+    "category": "Error Handling",
+    "text": "DO document the error types that are returned by each method.  Don't document commonly returned error types, for example context.DeadlineExceeded when an HTTP request times out."
+  },
+  {
+    "id": "golang_introduction.html#golang-errors-other-types",
+    "category": "Error Handling",
+    "text": "DO NOT create arbitrary error types.  Use error types provided by the service, standard library, or azcore.\n\nAzure services use different kinds of authentication schemes to allow clients to access the service. Conceptually, there are two entities responsible in this process: a credential and an authentication policy. Credentials provide confidential authentication data. Authentication policies use the data provided by a credential to modify an HTTP request before it is sent to the service."
+  },
+  {
+    "id": "golang_introduction.html#golang-auth-support",
+    "category": "Authentication",
+    "text": "DO support all authentication techniques that the service supports."
+  },
+  {
+    "id": "golang_introduction.html#golang-auth-use-azidentity",
+    "category": "Authentication",
+    "text": "DO use credential and authentication policy implementations from the azcore or azidentity package where available."
+  },
+  {
+    "id": "golang_introduction.html#golang-auth-concurrency",
+    "category": "Authentication",
+    "text": "DO provide credential types that can be used to fetch all data needed to authenticate a request to the service. If using a service-specific credential type, the implementation must be safe for concurrent use by multiple goroutines."
+  },
+  {
+    "id": "golang_introduction.html#golang-auth-connection-strings",
+    "category": "Authentication",
+    "text": "DO NOT support constructing a service client with a connection string unless such connection string is available within tooling (e.g. Azure portal, for copy/paste operations). A connection string is a combination of an endpoint, credential data, and other options used to simplify service client configuration. Connection strings are easily integrated into an application by copy/paste from the portal. However, credentials within a connection string can\u2019t be rotated within a running process. Their use should be discouraged in production apps.  If the client library supports connection strings, the constructor should look like this:\n\n```go\n// NewWidgetClientFromConnectionString creates a new instance of WidgetClient with the specified values.  It uses the default pipeline configuration.\nfunc NewWidgetClientFromConnectionString(con string, options *WidgetClientOptions) (*WidgetClient, error) {\n\t// ...\n}\n\n```\n\nWhen implementing authentication, don't open up the consumer to security holes like PII (personally identifiable information) leakage or credential leakage. Credentials are generally issued with a time limit, and must be refreshed periodically to ensure that the service connection continues to function as expected. Ensure your client library follows all current security recommendations and consider an independent security review of the client library to ensure you're not introducing potential security problems for the consumer."
+  },
+  {
+    "id": "golang_introduction.html#golang-auth-persistence",
+    "category": "Authentication",
+    "text": "DO NOT persist, cache, or reuse security credentials. Security credentials should be considered short lived to cover both security concerns and credential refresh situations."
+  },
+  {
+    "id": "golang_introduction.html#golang-auth-policy-impl",
+    "category": "Authentication",
+    "text": "DO provide a suitable authentication policy if your service implements a non-standard authentication system (that is, an authentication system that is not supported by Azure Core).  You also need to produce an authentication policy for the HTTP pipeline that can add credentials to requests given the alternative authentication mechanism provided by the service.  Custom credentials will need to implement the azcore.Credentials interface.\n\nTODO (namespaces in other languages)\n\nOne of the key things we want to support is to allow consumers of the package to easily write repeatable unit-tests for their applications without activating a service. This allows them to reliably and quickly test their code without worrying about the vagaries of the underlying service implementation (including, for example, network conditions or service outages). Mocking is also helpful to simulate failures, edge cases, and hard to reproduce situations (for example: does code work on February 29th)."
+  },
+  {
+    "id": "golang_introduction.html#golang-mock-friendly",
+    "category": "Support for Mocking",
+    "text": "DO generate types and methods that can be mocked to simulate a response from an Azure endpoint."
+  },
+  {
+    "id": "golang_introduction.html#golang-mock-procedure",
+    "category": "Support for Mocking",
+    "text": "DO document the tools and procedures recommended to generate client interfaces for mocking."
+  },
+  {
+    "id": "golang_introduction.html#golang-mock-lro-pages",
+    "category": "Support for Mocking",
+    "text": "DO generate interface types for LRO and pageable response types that contain all of the methods for their respective types.  The interface type name will be the same as the LRO/pageable response type name."
+  },
+  {
+    "id": "golang_introduction.html#golang-test-recordings",
+    "category": "Support for Mocking",
+    "text": "DO support HTTP request and response recording/playback via the pipeline.\n\nGo groups related types in a package.  In Go, the package should be named <prefix><service>, where <prefix> is either arm or az, and where <service> is the service name represented as a single word."
+  },
+  {
+    "id": "golang_introduction.html#golang-package-prefix",
+    "category": "Packages {#golang-packages}",
+    "text": "DO start the package with arm or az to indicate an Azure client package.  Use arm for management-plane packages, and az for all other packages."
+  },
+  {
+    "id": "golang_introduction.html#golang-package-name",
+    "category": "Packages {#golang-packages}",
+    "text": "DO construct the package name with all lowercase letters (uppercase letters, hyphens and underscores are not allowed). For example, the Azure compute management package would be named armcompute and the Azure blob storage package would be named azblob."
+  },
+  {
+    "id": "golang_introduction.html#golang-package-registration",
+    "category": "Packages {#golang-packages}",
+    "text": "DO register the chosen package name with the [Architecture Board]. Open an issue to request the package name. See the registered package list for a list of the currently registered packages."
+  },
+  {
+    "id": "golang_introduction.html#golang-pkgpath-construction",
+    "category": "Directory Structure",
+    "text": "DO construct a package import path that allows the consumer to tie its packages to the service being used. The package path does NOT change when the branding of the product changes. Avoid the use of marketing names that may change."
+  },
+  {
+    "id": "golang_introduction.html#golang-pkgpath-leaf",
+    "category": "Directory Structure",
+    "text": "DO ensure that the package leaf directory name matches the package name declared in the source code."
+  },
+  {
+    "id": "golang_introduction.html#golang-pkgpath-apiver",
+    "category": "Directory Structure",
+    "text": "DO ensure that each service API version is in its own directory, IFF that service supports multiple API versions."
+  },
+  {
+    "id": "golang_introduction.html#golang-pkgpath-mgmt",
+    "category": "Directory Structure",
+    "text": "DO place the management (Azure Resource Manager) API in the arm path. Use the grouping ./sdk/arm/<group>/<api-version>/arm<service> for the package path. Since more services require management APIs than data plane APIs, other paths may be used explicitly for management only. Data plane usage is by exception only. Additional paths that can be used for control plane SDKs include:\n\n| Namespace Group  | Functional Area                                          |\n|:-----------------|:---------------------------------------------------------|\n| `appmodel`       | Application models, such as Functions or App Frameworks  |\n| `compute`        | Virtual machines, containers, and other compute services |\n| `integration`    | Integration services (such as Logic Apps)                |\n| `management`     | Management services (such as Cost Analytics)             |\n| `networking`     | Services such as VPN, WAN, and Networking                |\n\n\nMany management APIs do not have a data plane because they deal with management of the Azure account. Place the management package in the arm path. For example, use sdk/arm/costanalysis/... instead of sdk/arm/management/costanalysis.\n\nHere is a complete example.\n\nData-plane packages:\ngithub.com/Azure/azure-sdk-for-go/sdk/keyvault/7.0/azkeyvault\ngithub.com/Azure/azure-sdk-for-go/sdk/storage/blob/2019-12-19/azblob\ngithub.com/Azure/azure-sdk-for-go/sdk/storage/queue/2019-12-19/azqueue\ngithub.com/Azure/azure-sdk-for-go/sdk/storage/table/2019-12-19/aztable\n\nManagement-plane packages:\ngithub.com/Azure/azure-sdk-for-go/sdk/arm/keyvault/2019-09-01/armkeyvault\ngithub.com/Azure/azure-sdk-for-go/sdk/arm/storage/2019-01-01/armstorage\ngithub.com/Azure/azure-sdk-for-go/sdk/arm/storage/2019-02-01/armstorage\n\nThere are occasions when common code needs to be shared between several client packages. For example, a set of cooperating client packages may wish to share a set of errors or models."
+  },
+  {
+    "id": "golang_introduction.html#golang-commonlib-approval",
+    "category": "Common Packages",
+    "text": "DO gain [Architecture Board] approval prior to implementing a common package."
+  },
+  {
+    "id": "golang_introduction.html#golang-commonlib-minimize-code",
+    "category": "Common Packages",
+    "text": "DO minimize the code within a common package. Code within the common package is treated the same as any other client package."
+  },
+  {
+    "id": "golang_introduction.html#golang-commonlib-namespace",
+    "category": "Common Packages",
+    "text": "DO store the common package in the same directory as the associated client packages.\n\nA common package will only be approved if:\nThe consumer of the non-shared package will consume the objects within the common package directly, AND\nThe information will be shared between multiple client package.\n\nLet's take two examples:\n\nImplementing two Cognitive Services client packages, we find a model is required that is produced by one Cognitive Services client package and consumed by another Coginitive Services client package, or the same model is produced by two client packages. The consumer is required to do the passing of the model in their code, or may need to compare the model produced by one client package vs. that produced by another client package. This is a good candidate for choosing a common package.\n\n\nTwo Cognitive Services client packages return a BoundingBox model to indicate where an object was detected in an image. There is no linkage between the BoundingBox model in each client package, and it is not passed into another client package. This is not a good candidate for creation of a common package (although you may wish to place this model in a common package if one exists for the namespace already). Instead, produce two different models - one in each client package.\n\n\nImplementing two Cognitive Services client packages, we find a model is required that is produced by one Cognitive Services client package and consumed by another Coginitive Services client package, or the same model is produced by two client packages. The consumer is required to do the passing of the model in their code, or may need to compare the model produced by one client package vs. that produced by another client package. This is a good candidate for choosing a common package.\n\nTwo Cognitive Services client packages return a BoundingBox model to indicate where an object was detected in an image. There is no linkage between the BoundingBox model in each client package, and it is not passed into another client package. This is not a good candidate for creation of a common package (although you may wish to place this model in a common package if one exists for the namespace already). Instead, produce two different models - one in each client package."
+  },
+  {
+    "id": "golang_introduction.html#golang-versioning-modules",
+    "category": "Package Versioning",
+    "text": "DO release each package as a Go module (https://blog.golang.org/using-go-modules)   Legacy dependency management tools such as dep and glide are not supported."
+  },
+  {
+    "id": "golang_introduction.html#golang-versioning-semver",
+    "category": "Package Versioning",
+    "text": "DO release versions of modules in accordance with semver 2.0 (https://semver.org/spec/v2.0.0.html) "
+  },
+  {
+    "id": "golang_introduction.html#golang-versioning-beta",
+    "category": "Package Versioning",
+    "text": "DO clearly version prerelease modules.  For new modules, use a v0 major version with no suffix (v0.1.0).  For existing modules, use a -beta suffix (v1.1.0-beta, v2.0.0-beta).\n\nPackages should strive to avoid taking dependencies on packages outside of the standard library for the following reasons:\nVersioning - Exposing types defined outside the standard library (i.e. exchange types) can indroduce versioning complexity.  If we have an client package that exposes types from a v3 of package Foo and the consumer wants to use v5 of package Foo, then the consumer cannot use the v5 types to satisfy the v3 requirement.\nSize - Consumer applications must be able to deploy as fast as possible into the cloud and move in various ways across networks. Removing additional code (like dependencies) improves deployment performance.\nLicensing - You must be conscious of the licensing restrictions of a dependency and often provide proper attribution and notices when using them.\nCompatibility - Often times you do not control a dependency and it may choose to evolve in a direction that is incompatible with your original use.\nSecurity - If a security vulnerability is discovered in a dependency, it may be difficult or time consuming to get the vulnerability corrected if Microsoft does not control the dependency's code base."
+  },
+  {
+    "id": "golang_introduction.html#golang-dependencies-exch-types",
+    "category": "Dependencies",
+    "text": "DO limit exchange types to those provided by the standard library (NO EXCEPTIONS)."
+  },
+  {
+    "id": "golang_introduction.html#golang-dependencies-azure-core",
+    "category": "Dependencies",
+    "text": "DO depend on the azcore package for functionality that is common across all client packages.  This package includes APIs for HTTP connectivity, global configuration, logging, credential handling, and more."
+  },
+  {
+    "id": "golang_introduction.html#golang-dependencies-azure-core",
+    "category": "Dependencies",
+    "text": "DO depend on the sdk/internal package for functionality that is common across all client packages that should not be publicly exported.  This package includes helpers for creating errors with stack frame information, and more."
+  },
+  {
+    "id": "golang_introduction.html#golang-dependencies-approved-list",
+    "category": "Dependencies",
+    "text": "DO NOT be dependent on any other packages within the client package distribution package, with the exception of the following:\n\n| Library    | Version | Usage                                            |\n|------------|---------|--------------------------------------------------|\n| `github.com/pkg/browser` | v0.0.0-20180916011732-0a3d74bf9ce4 | Used for opening URLs in the user's default browser.  Used in `azidentity` interactive credential. |\n\n\nTODO"
+  },
+  {
+    "id": "golang_introduction.html#golang-document-everything",
+    "category": "Doc Comments",
+    "text": "DO document every exported constant, function, and type within a package."
+  },
+  {
+    "id": "golang_introduction.html#golang-general-repository",
+    "category": "Repository Guidelines",
+    "text": "DO locate all source code in the [azure/azure-sdk-for-go] GitHub repository."
+  },
+  {
+    "id": "golang_introduction.html#golang-general-engsys",
+    "category": "Repository Guidelines",
+    "text": "DO follow Azure SDK engineering systems guidelines for working in the [azure/azure-sdk-for-go] GitHub repository."
+  },
+  {
+    "id": "golang_introduction.html#golang-docs-to-silence",
+    "category": "Documentation Style",
+    "text": "YOU SHOULD attempt to document your library into silence. Preempt developers' usage questions and minimize GitHub issues by clearly explaining your API in the [GoDoc]. Include information on service limits and errors they might hit, and how to avoid and recover from those errors.\n\nAs you write your code, doc it so you never hear about it again. The less questions you have to answer about your client library, the more time you have to build new features for your service.\n\nTODO\n\nCode examples are small functions that demonstrate a certain feature that is relevant to the client library.  Examples allow developers to quickly understand the full usage requirements of your client library.  Code examples shouldn't be any more complex than needed to demonstrate the feature.  Don't write full applications.  Examples should have a high signal to noise ratio between useful code and boilerplate code for non-related reasons."
+  },
+  {
+    "id": "golang_introduction.html#golang-include-code-examples",
+    "category": "Samples",
+    "text": "DO include code examples within your package\u2019s code. The examples should clearly and succinctly demonstrate the code most developers need to write with your library. Include examples for all common operations. Pay attention to operations that are complex or might be difficult for new users of your library. Include examples for the champion scenarios you\u2019ve identified for the library."
+  },
+  {
+    "id": "golang_introduction.html#golang-code-example-location",
+    "category": "Samples",
+    "text": "DO place code examples within the package directory, for example in an examples_test.go file."
+  },
+  {
+    "id": "golang_introduction.html#golang-code-example-comments",
+    "category": "Samples",
+    "text": "DO add an Output: or Unordered output: comment (https://golang.org/pkg/testing/#hdr-Examples) at the end of the example if the output is deterministic and suitable for running as a unit test."
+  },
+  {
+    "id": "golang_introduction.html#golang-code-example-graft",
+    "category": "Samples",
+    "text": "DO ensure that code examples can be easily grafted from the documentation into a user\u2019s own application."
+  },
+  {
+    "id": "golang_introduction.html#golang-code-example-readability",
+    "category": "Samples",
+    "text": "DO write code examples for ease of reading and comprehension over code compactness and efficiency."
+  },
+  {
+    "id": "golang_introduction.html#golang-code-example-platforms",
+    "category": "Samples",
+    "text": "DO ensure that examples can run in Windows, macOS, and Linux development environments."
+  },
+  {
+    "id": "golang_introduction.html#golang-code-example-builds",
+    "category": "Samples",
+    "text": "DO build and test your code examples using the repository\u2019s continuous integration (CI) to ensure they remain functional."
+  },
+  {
+    "id": "golang_introduction.html#golang-code-example-exports",
+    "category": "Samples",
+    "text": "DO ensure that all exported types, members, functions, and methods are documented."
+  },
+  {
+    "id": "golang_introduction.html#golang-code-example-combination",
+    "category": "Samples",
+    "text": "DO NOT combine multiple operations in a code example unless it\u2019s required for demonstrating the type or member. For example, a Cosmos DB code example doesn\u2019t include both account and container creation operations. Create an example for account creation, and another example for container creation.\n\nCombined operations require knowledge of additional operations that might be outside the user\u2019s current focus. The developer must first understand the code surrounding the operation they\u2019re working on and can\u2019t copy and paste the code example into their project.\n\n[OpenTelemetry]: https://opentelemetry.io\n[Azure Monitor]: https://azure.microsoft.com/services/monitor/\n[azure/azure-sdk-for-go]: https://github.com/azure/azure-sdk-for-go\n[GoDoc]: https://godoc.org\n[1]: https://www.youtube.com/watch?v=PAAkCSZUG1c&t=9m28s"
+  }
+]

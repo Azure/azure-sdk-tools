@@ -1,0 +1,92 @@
+[
+  {
+    "id": "android_implementation.html#android-implementation",
+    "category": "API Implementation",
+    "text": "DO NOT allow implementation code (that is, code that doesn't form part of the public API) to be mistaken as public API. There are two valid arrangements for implementation code, which in order of preference are the following:\nImplementation classes can be made package-private and placed within the same package as the consuming class.\nImplementation classes can be placed within a subpackage named implementation.\n\nCheckStyle checks ensure that classes within an implementation package aren\u2019t exposed through public API, but it is better that the API not be public in the first place, so preferring to have package-private is the better approach where practicable."
+  },
+  {
+    "id": "android_implementation.html#java-async-blocking",
+    "category": "Async Service Client",
+    "text": "DO include blocking calls inside async client library code.\n\nThe Azure SDK team has provided an [Azure Core] library that contains common mechanisms for cross cutting concerns such as configuration and doing HTTP requests."
+  },
+  {
+    "id": "android_implementation.html#android-requests-use-pipeline",
+    "category": "Using the HTTP Pipeline",
+    "text": "DO use the HTTP pipeline component within Azure Core for communicating to service REST endpoints.\n\nThe HTTP pipeline consists of a HTTP transport that is wrapped by multiple policies. Each policy is a control point during which the pipeline can modify either the request and/or response. We prescribe a default set of policies to standardize how client libraries interact with Azure services. The order in the list is the most sensible order for implementation."
+  },
+  {
+    "id": "android_implementation.html#android-requests-implement-policies",
+    "category": "Using the HTTP Pipeline",
+    "text": "DO include the following policies provided by Azure Core when constructing the HTTP pipeline:\nTelemetry\nUnique Request ID\nRetry\nAuthentication\nResponse downloader\nLogging"
+  },
+  {
+    "id": "android_implementation.html#ios-requests-use-azure-core-impl",
+    "category": "Using the HTTP Pipeline",
+    "text": "YOU SHOULD use the policy implementations in Azure Core whenever possible.  Do not try to \"write your own\" policy unless it is doing something unique to your service. If you need another option to an existing policy, engage with the [Architecture Board] to add the option.\n\nInclude the following annotations on the service client class. For example, this code sample shows a sample class demonstrating the use of these two annotations:\n\n```java\n@ServiceClient(builder = ConfigurationAsyncClientBuilder.class, isAsync = true, service = ConfigurationService.class)\npublic final class ConfigurationAsyncClient {\n    @ServiceMethod(returns = ReturnType.COLLECTION)\n    public Mono&lt;Response&lt;ConfigurationSetting&gt;&gt; addSetting(String key, String value) {\n        ...\n    }\n}\n\n```\n\n| Annotation | Location | Description |\n|:-----------|:---------|:------------|\n| @ServiceClient | Service Client | Specifies the builder responsible for instantiating the service client, whether the API is asynchronous, and a reference back to the service interface (the interface annotated with @ServiceInterface). |\n| @ServiceMethod | Service Method | Placed on all service client methods that do network operations. |\n\nThe @ServiceClientBuilder annotation should be placed on any class that is responsible for instantiating service clients (that is, instantiating classes annotated with @ServiceClient). For example:\n\n```java\n@ServiceClientBuilder(serviceClients = {ConfigurationClient.class, ConfigurationAsyncClient.class})\npublic final class ConfigurationClientBuilder { ... }\n\n```\n\nThis builder states that it can build instances of ConfigurationClient and ConfigurationAsyncClient.\n\nThere are two annotations of note that should be applied on model classes, when applicable:\nThe @Fluent annotation is applied to all model classes that are expected to provide a fluent API to end users.\nThe @Immutable annotation is applied to all immutable classes.\n\nTODO: Include the @HeaderCollection annotation.\n\nWhen configuring your client library, particular care must be taken to ensure that the consumer of your client library can properly configure the connectivity to your Azure service both globally (along with other client libraries the consumer is using) and specifically with your client library. For Android applications, configuration can be applied in a variety of ways, such as through application preferences or using a .properties file, to name a few.\n\nTODO: Determine a recommended way to pass configuration parameters to Android libraries\n\nClient libraries must make use of the robust logging mechanisms in Azure Core, so that the consumers can adequately diagnose issues with method calls and quickly determine whether the issue is in the consumer code, client library code, or service.\n\nRequest logging will be done automatically by the HttpPipeline. If a client library needs to add custom logging, follow the same guidelines and mechanisms as the pipeline logging mechanism. If a client library wants to do custom logging, the designer of the library must ensure that the logging mechanism is pluggable in the same way as the HttpPipeline logging policy."
+  },
+  {
+    "id": "android_implementation.html#android-logging-directly",
+    "category": "Logging",
+    "text": "DO follow [the logging section of the Azure SDK General Guidelines][logging-general-guidelines] and the following guidelines if logging directly (as opposed to through the HttpPipeline)."
+  },
+  {
+    "id": "android_implementation.html#android-logging-clientlogger",
+    "category": "Using the ClientLogger interface",
+    "text": "DO use the ClientLogger API provided within Azure Core as the sole logging API throughout all client libraries. Internally, ClientLogger logs to the Android Logcat buffer.\n\nTODO: Determine if we want ClientLogger to wrap SLF4J like it's Java counterpart."
+  },
+  {
+    "id": "android_implementation.html#android-logging-create-new",
+    "category": "Using the ClientLogger interface",
+    "text": "DO create a new instance of a ClientLogger per instance of all relevant classes. For example, the code below will create a ClientLogger instance for the ConfigurationAsyncClient:\n\n```java\npublic final class ConfigurationAsyncClient {\n    private final ClientLogger logger = new ClientLogger(ConfigurationAsyncClient.class);\n\n    // Example call to a service.\n    public Response&lt;String&gt; setSetting(ConfigurationSetting setting) {\n        Response&lt;String&gt; response = service.setKey(serviceEndpoint, setting.key(), setting.label(), setting, getETagValue(setting.etag()), null);\n        \n        logger.info(\"Set ConfigurationSetting - {}\", response.value());\n        \n        return response;\n    }\n}\n\n```\n\nDon't create static logger instances. Static logger instances are long-lived and the memory allocated to them is not released until the application is terminated."
+  },
+  {
+    "id": "android_implementation.html#android-logging-log-and-throw",
+    "category": "Using the ClientLogger interface",
+    "text": "DO throw all exceptions created within the client library code through one of the logger APIs - ClientLogger.logThrowableAsError(), ClientLogger.logThrowableAsWarning(), ClientLogger.logExceptionAsError() or ClientLogger.logExceptionAsWarning().\n\nFor example:\n\n```java\n// NO!!!!\nif (priority != null &amp;&amp; priority &lt; 0) {\n    throw new IllegalArgumentException(\"'priority' cannot be a negative value. Please specify a zero or positive long value.\");\n}\n\n// Good\n\n// Log any Throwable as error and throw the exception\nif (!file.exists()) {\n    throw logger.logThrowableAsError(new IOException(\"File does not exist \" + file.getName()));\n}\n\n// Log any Throwable as warning and throw the exception\nif (!file.exists()) {\n    throw logger.logThrowableAsWarning(new IOException(\"File does not exist \" + file.getName()));\n}\n\n// Log a RuntimeException as error and throw the exception\nif (priority != null &amp;&amp; priority &lt; 0) {\n    throw logger.logExceptionAsError(new IllegalArgumentException(\"'priority' cannot be a negative value. Please specify a zero or positive long value.\"));\n}\n\n// Log a RuntimeException as warning and throw the exception\nif (numberOfAttempts &lt; retryPolicy.getMaxRetryCount()) {\n    throw logger.logExceptionAsWarning(new RetryableException(\"A transient error occurred. Another attempt will be made after \" + retryPolicy.getDelay()));\n}\n\n```\n\nDistributed tracing is uncommon in a mobile context. If you feel like you need to support distributed tracing, contact the Azure SDK mobile team for advice.\n\nOne of the key things we want to support is to allow consumers of the library to easily write repeatable unit-tests for their applications without activating a service. This allows them to reliably and quickly test their code without worrying about the vagaries of the underlying service implementation (including, for example, network conditions or service outages). Mocking is also helpful to simulate failures, edge cases, and hard to reproduce situations (for example: does code work on February 29th)."
+  },
+  {
+    "id": "android_implementation.html#android-testing-patterns",
+    "category": "Testing",
+    "text": "DO parameterize all applicable unit tests to make use of all available HTTP clients and service versions. Parameterized runs of all tests must occur as part of live tests. Shorter runs, consisting of just Netty and the latest service version, can be run whenever PR validation occurs.\n\nTODO: Document how to write good tests using JUnit on Android.\n\nTODO: Revisit min API level chosen.\n\nAndroid developers need to concern themselves with the runtime environment they are running in. The Android ecosystem is fragmented, with a wide variety of runtimes deployed."
+  },
+  {
+    "id": "android_implementation.html#android-library-sync-support",
+    "category": "Other Android-related considerations",
+    "text": "DO support at least Android API level 15 and later (Ice Cream Sandwich). This value can be found in your project's top level build.gradle file as minSdkVersion.\n\nThere are two things that are of concern when discussing the minimum API level to choose:\nThe minimum API level that Google supports.\nThe reach of selecting a particular API level.\n\nWe require the minimum API level that Google supports that reaches the most Android devices while still allowing for the use of widely adopted tools by the developer community, such as popular HTTP clients or serialization libraries. We have currently landed on API level 15, which covers more than 99.8% of all Android devices (as of May 2021). The reach of a particular API level can be found when clicking \"Help me choose\" in Android Studio's \"Create New Project\" screen, after selecting the type of project to create."
+  },
+  {
+    "id": "android_implementation.html#android-library-target-sdk-version",
+    "category": "Other Android-related considerations",
+    "text": "DO set the targetSdkVersion to be API level 26 or higher in your project's top level build.gradle file.\n\nAs of November 2018, all existing Android apps are required to target API level 26 or higher. For more information, see Improving app security and performance on Google Play for years to come (https://android-developers.googleblog.com/2017/12/improving-app-security-and-performance.html) "
+  },
+  {
+    "id": "android_implementation.html#android-library-max-sdk-version",
+    "category": "Other Android-related considerations",
+    "text": "DO set the maxSdkVersion to be the latest API level that you have run tests on in your project's top level build.gradle file. This should be the latest API level that is supported by Google at the point at which the SDK is released."
+  },
+  {
+    "id": "android_implementation.html#android-library-source-compat",
+    "category": "Other Android-related considerations",
+    "text": "DO set your Gradle project's source and target compatibility level to 1.8."
+  },
+  {
+    "id": "android_implementation.html#android-library-aar",
+    "category": "Other Android-related considerations",
+    "text": "DO release the library as an Android AAR."
+  },
+  {
+    "id": "android_implementation.html#android-library-resource-prefix",
+    "category": "Other Android-related considerations",
+    "text": "DO define a resourcePrefix of azure_<service> in the build.gradle android section if using resources."
+  },
+  {
+    "id": "android_implementation.html#android-library-shrink-code",
+    "category": "Other Android-related considerations",
+    "text": "YOU SHOULD include a Proguard configuration in the AAR to assist developers in correctly minifying their applications when using the library."
+  },
+  {
+    "id": "android_implementation.html#android-library-proguard",
+    "category": "Other Android-related considerations",
+    "text": "DO use consumerProguardFiles if you include a Proguard configuration in the library.\n\n<!-- Project Links -->\n<!-- Example Links -->\n<!-- Intra-document references -->\n"
+  }
+]

@@ -37,8 +37,8 @@ else
 {
     <div class="container-fluid mx-0 px-0 sub-header-content">
         <div class="row mx-1 px-0 py-2">
-            <div class="col-md-4">
-                <div class="input-group-sm input-group">
+            <div class="col-md-8">
+                <div class="input-group-sm input-group" id="review-info-bar">
                     <partial name="Shared/_ReviewBadge" model="Model.Review" />
                     @if (Model.SampleContent.Length > 0)
                     {
@@ -65,19 +65,19 @@ else
                             }
                         </select>
                     }
+                    @if (Model.SampleContent.Length > 0)
+                    {
+                        <button type="button" class="btn btn-sm border shadow-sm btn-light" data-bs-toggle="modal" data-bs-target="#updateModel"><i class="fa-solid fa-pen-to-square"></i>&nbsp;&nbsp;Edit</button>
+                        @if (Model.Sample.CreatedBy == User.GetGitHubLogin())
+                        {
+                            <button type="button" class="btn btn-sm shadow-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModel"><i class="fas fa-times-circle"></i>&nbsp;&nbsp;Delete</button>
+                        }
+                    }
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-1">
             </div>
-            <div class="col-md-4">
-                @if (Model.SampleContent.Length > 0)
-                {
-                    <button type="button" class="btn btn-sm border shadow-sm btn-light" data-bs-toggle="modal" data-bs-target="#updateModel"><i class="fa-solid fa-pen-to-square"></i>&nbsp;&nbsp;Edit</button>
-                    @if (Model.Sample.CreatedBy == User.GetGitHubLogin())
-                    {
-                        <button type="button" class="btn btn-sm shadow-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModel"><i class="fas fa-times-circle"></i>&nbsp;&nbsp;Delete</button>
-                    }
-                }
+            <div class="col-md-3">
             </div>
         </div>
         <partial name="Shared/_ReviewNavBar" />

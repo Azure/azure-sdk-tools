@@ -153,9 +153,9 @@ export function addToastNotification(notification : Notification, id : string = 
 }
 
 // Auto Refresh Comment
-export function updateCommentThread(commentBox, partialViewResult) {
-  partialViewResult = $.parseHTML(partialViewResult);
-  $(commentBox).replaceWith(partialViewResult);
+export function updateCommentThread(commentBox, commentThreadHTML) {
+  commentThreadHTML = $.parseHTML(commentThreadHTML);
+  $(commentBox).replaceWith(commentThreadHTML);
   return false;
 }
 
@@ -342,7 +342,7 @@ export function showCommentBox(id: string, classes: string = '', groupNo: string
   }
 }
 
-function createCommentForm(groupNo: string = '') {
+export function createCommentForm(groupNo: string = '') {
   var commentForm = $("#js-comment-form-template").children().clone();
   if (groupNo) {
     commentForm.find("form .new-comment-content").prepend(`<span class="badge badge-pill badge-light mb-2"><small>ROW-${groupNo}</small></span>`);
@@ -364,4 +364,51 @@ export function getElementId(element: HTMLElement, idName: string = "data-line-i
 
 export function getParentData(element: HTMLElement, name: string) {
   return $(element).closest(`[${name}]`).attr(name);
+}
+
+/**
+ * @returns true if the current reviewId is equivalent to the @reviewId and @revisionId
+ *          whether we check @revisionId depends on the value of @checkRevision
+ *          false otherwise
+ * @param checkRevision true indicates that both @reviewId and @revisionId must match,
+ *                      false indicates that only @reviewId can match
+ */
+export function checkReviewRevisionIdAgainstCurrent(reviewId, revisionId, checkRevision) {
+  let href = location.href;
+  let result = getReviewAndRevisionIdFromUrl(href);
+  let currReviewId = result["reviewId"];
+  let currRevisionId = result["revisionId"];
+
+  if (currReviewId != reviewId) {
+    return false;
+  }
+
+  if (checkRevision && currRevisionId && currRevisionId != revisionId) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Auto refresh sends the entire partial view result of the comment thread, including the sender's profile picture.
+ * Overrides the sender's profile picture with the current user's picture
+ */
+export function updateUserIcon() {
+  let size = 28;
+  let $navLinks = $("nav.navbar a.nav-link");
+
+  for (let nav of $navLinks) {
+    if (nav.innerText.includes("Profile")) {
+      let href = nav.getAttribute("href");
+      if (href) {
+        let hrefString = href;
+        let hrefSplit = hrefString.split("/");
+        let username = hrefSplit[hrefSplit.length - 1];
+        let url: string = "https://github.com/" + username + ".png?size=" + size;
+        $("div.review-thread-reply div.reply-cell img.comment-icon").attr("src", url);
+        return;
+      }
+    }
+  }
 }

@@ -1,0 +1,327 @@
+[
+  {
+    "id": "python_implementation.html#python-network-http-pipeline",
+    "category": "Http pipeline",
+    "text": "DO use the [HTTP pipeline] to send requests to service REST endpoints."
+  },
+  {
+    "id": "python_implementation.html#python-network-use-policies",
+    "category": "Http pipeline",
+    "text": "YOU SHOULD include the following policies in the HTTP pipeline:\nUnique Request ID (azure.core.pipeline.policies.RequestIdPolicy)\nHeaders (azure.core.pipeline.policies.HeadersPolicy)\nTelemetry (azure.core.pipeline.policies.UserAgentPolicy)\nProxy (azure.core.pipeline.policies.ProxyPolicy)\nContent decoding (azure.core.pipeline.policies.ContentDecodePolicy)\nRetry (azure.core.pipeline.policies.RetryPolicy and azure.core.pipeline.policies.AsyncRetryPolicy)\nCredentials (e.g. BearerTokenCredentialPolicy, AzureKeyCredentialPolicy, etc)\nDistributed tracing (azure.core.pipeline.policies.DistributedTracingPolicy)\nLogging (azure.core.pipeline.policies.NetworkTraceLoggingPolicy)\n\n```python\n\nfrom azure.core.pipeline import Pipeline\n\nfrom azure.core.pipeline.policies import (\n    BearerTokenCredentialPolicy,\n    ContentDecodePolicy,\n    DistributedTracingPolicy,\n    HeadersPolicy,\n    HttpLoggingPolicy,\n    NetworkTraceLoggingPolicy,\n    UserAgentPolicy,\n)\n\nclass ExampleClient(object):\n\n    ...\n\n    def _create_pipeline(self, credential, base_url=None, **kwargs):\n        transport = kwargs.get('transport') or RequestsTransport(**kwargs)\n\n        try:\n            policies = kwargs['policies']\n        except KeyError:\n            scope = base_url.strip(\"/\") + \"/.default\"\n            if hasattr(credential, \"get_token\"):\n                credential_policy = BearerTokenCredentialPolicy(credential, scope)\n            else:\n                raise ValueError(\n                    \"Please provide an instance from azure-identity or a class that implement the 'get_token protocol\"\n                )\n            policies = [\n                HeadersPolicy(**kwargs),\n                UserAgentPolicy(**kwargs),\n                ContentDecodePolicy(**kwargs),\n                RetryPolicy(**kwargs),\n                credential_policy,\n                HttpLoggingPolicy(**kwargs),\n                DistributedTracingPolicy(**kwargs),\n                NetworkTraceLoggingPolicy(**kwargs)\n            ]\n\n        return Pipeline(transport, policies)\n\n\n```\n\nSome services may require custom policies to be implemented. For example, custom policies may implement fall back to secondary endpoints during retry, request signing, or other specialized authentication techniques."
+  },
+  {
+    "id": "python_implementation.html#python-pipeline-core-policies",
+    "category": "Custom policies",
+    "text": "YOU SHOULD use the policy implementations in azure-core whenever possible."
+  },
+  {
+    "id": "python_implementation.html#python-custom-policy-review",
+    "category": "Custom policies",
+    "text": "DO review the proposed policy with the Azure SDK [Architecture Board]. There may already be an existing policy that can be modified/parameterized to satisfy your need."
+  },
+  {
+    "id": "python_implementation.html#python-custom-policy-base-class",
+    "category": "Custom policies",
+    "text": "DO derive from HTTPPolicy (https://azuresdkdocs.blob.core.windows.net/$web/python/azure-core/1.9.0/azure.core.pipeline.policies.html#azure.core.pipeline.policies.HTTPPolicy) AsyncHTTPPolicy (https://azuresdkdocs.blob.core.windows.net/$web/python/azure-core/1.9.0/azure.core.pipeline.policies.html#azure.core.pipeline.policies.AsyncHTTPPolicy) (if you need to make network calls) or SansIOHTTPPolicy (https://azuresdkdocs.blob.core.windows.net/$web/python/azure-core/1.9.0/azure.core.pipeline.policies.html#azure.core.pipeline.policies.SansIOHTTPPolicy) (if you do not)."
+  },
+  {
+    "id": "python_implementation.html#python-custom-policy-thread-safe",
+    "category": "Custom policies",
+    "text": "DO ensure thread-safety for custom policies. A practical consequence of this is that you should keep any per-request or connection bookkeeping data in the context rather than in the policy instance itself."
+  },
+  {
+    "id": "python_implementation.html#python-pipeline-document-policies",
+    "category": "Custom policies",
+    "text": "DO document any custom policies in your package. The documentation should make it clear how a user of your library is supposed to use the policy."
+  },
+  {
+    "id": "python_implementation.html#python-pipeline-policy-namespace",
+    "category": "Custom policies",
+    "text": "DO add the policies to the azure.<package name>.pipeline.policies namespace."
+  },
+  {
+    "id": "python_implementation.html#python-client-parameter-validation",
+    "category": "Parameter validation",
+    "text": "DO NOT use isinstance to validate parameter value types other than for built-in types (https://docs.python.org/3/library/stdtypes.html) (e.g. str etc). For other types, use [structural type checking]."
+  },
+  {
+    "id": "python_implementation.html#python-models-repr",
+    "category": "Supporting types",
+    "text": "DO implement __repr__ for model types. The representation must include the type name and any key properties (that is, properties that help identify the model instance)."
+  },
+  {
+    "id": "python_implementation.html#python-models-repr-length",
+    "category": "Supporting types",
+    "text": "DO truncate the output of __repr__ after 1024 characters.\n\nAny Enums defined in the SDK should be interchangeable with case-insensitive strings. This is achieved by using the CaseInsensitiveEnumMeta class defined in azure-core.\n\n```python\nfrom enum import Enum\nfrom six import with_metaclass\n\nfrom azure.core import CaseInsensitiveEnumMeta\n\nclass MyCustomEnum(with_metaclass(CaseInsensitiveEnumMeta, str, Enum)):\n    FOO = 'foo'\n    BAR = 'bar'\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-envvars-global",
+    "category": "Configuration",
+    "text": "DO honor the following environment variables for global configuration settings:\n\n| Environment Variable          | Purpose                                                                                    |\n|-------------------------------|--------------------------------------------------------------------------------------------|\n| **Proxy Settings**            |                                                                                            |\n| HTTP_PROXY                    | Proxy for HTTP connections                                                                 |\n| HTTPS_PROXY                   | Proxy for HTTPS connections                                                                |\n| NO_PROXY                      | Hosts which must not use a proxy                                                           |\n| ALL_PROXY                     | Proxy for HTTP and/or HTTPS connections in case HTTP_PROXY and/or HTTPS_PROXY are not defined |\n| **Identity**                  |                                                                                            |\n| MSI_ENDPOINT                  | Azure AD MSI Credentials                                                                   |\n| MSI_SECRET                    | Azure AD MSI Credentials                                                                   |\n| AZURE_USERNAME                | Azure username for U/P Auth                                                                |\n| AZURE_PASSWORD                | Azure password for U/P Auth                                                                |\n| AZURE_CLIENT_CERTIFICATE_PATH | Azure Active Directory                                                                     |\n| AZURE_CLIENT_ID               | Azure Active Directory                                                                     |\n| AZURE_CLIENT_SECRET           | Azure Active Directory                                                                     |\n| AZURE_TENANT_ID               | Azure Active Directory                                                                     |\n| AZURE_AUTHORITY_HOST          | Azure Active Directory                                                                     |\n| **Pipeline Configuration**    |                                                                                            |\n| AZURE_TELEMETRY_DISABLED      | Disables telemetry                                                                         |\n| AZURE_LOG_LEVEL               | Enable logging by setting a log level.                                                     |\n| AZURE_TRACING_DISABLED        | Disables tracing                                                                           |\n| **General SDK Configuration** |                                                                                            |\n| AZURE_CLOUD                   | Name of the sovereign cloud                                                                |\n| AZURE_SUBSCRIPTION_ID         | Azure subscription                                                                         |\n| AZURE_RESOURCE_GROUP          | Azure Resource Group                                                                       |\n"
+  },
+  {
+    "id": "python_implementation.html#python-logging-usage",
+    "category": "Logging",
+    "text": "DO use Pythons standard logging module (https://docs.python.org/3/library/logging.html) "
+  },
+  {
+    "id": "python_implementation.html#python-logging-nameed-logger",
+    "category": "Logging",
+    "text": "DO provide a named logger for your library.\n\nThe logger for your package must use the name of the module. The library may provide additional child loggers. If child loggers are provided, document them.\n\nFor example:\nPackage name: azure-someservice\nModule name: azure.someservice\nLogger name: azure.someservice\nChild logger: azure.someservice.achild\n\nThese naming rules allow the consumer to enable logging for all Azure libraries, a specific client library, or a subset of a client library."
+  },
+  {
+    "id": "python_implementation.html#python-logging-error",
+    "category": "Logging",
+    "text": "DO use the ERROR logging level for failures where it's unlikely the application will recover (for example, out of memory)."
+  },
+  {
+    "id": "python_implementation.html#python-logging-warn",
+    "category": "Logging",
+    "text": "DO use the WARNING logging level when a function fails to perform its intended task. The function should also raise an exception.\n\nDon't include occurrences of self-healing events (for example, when a request will be automatically retried)."
+  },
+  {
+    "id": "python_implementation.html#python-logging-info",
+    "category": "Logging",
+    "text": "DO use the INFO logging level when a function operates normally."
+  },
+  {
+    "id": "python_implementation.html#python-logging-debug",
+    "category": "Logging",
+    "text": "DO use the DEBUG logging level for detailed trouble shooting scenarios.\n\nThe DEBUG logging level is intended for developers or system administrators to diagnose specific failures."
+  },
+  {
+    "id": "python_implementation.html#python-logging-sensitive-info",
+    "category": "Logging",
+    "text": "DO NOT send sensitive information in log levels other than DEBUG.  For example, redact or remove account keys when logging headers."
+  },
+  {
+    "id": "python_implementation.html#python-logging-request",
+    "category": "Logging",
+    "text": "DO log the request line, response line, and headers for an outgoing request as an INFO message."
+  },
+  {
+    "id": "python_implementation.html#python-logging-cancellation",
+    "category": "Logging",
+    "text": "DO log an INFO message, if a service call is canceled."
+  },
+  {
+    "id": "python_implementation.html#python-logging-exceptions",
+    "category": "Logging",
+    "text": "DO log exceptions thrown as a WARNING level message. If the log level set to DEBUG, append stack trace information to the message.\n\nYou can determine the logging level for a given logger by calling logging.Logger.isEnabledFor (https://docs.python.org/3/library/logging.html#logging.Logger.isEnabledFor) "
+  },
+  {
+    "id": "python_implementation.html#python-tracing-span-per-method",
+    "category": "Distributed tracing",
+    "text": "DO create a new trace span for each library method invocation. The easiest way to do so is by adding the distributed tracing decorator from azure.core.tracing."
+  },
+  {
+    "id": "python_implementation.html#python-tracing-span-name",
+    "category": "Distributed tracing",
+    "text": "DO use <package name>/<method name> as the name of the span."
+  },
+  {
+    "id": "python_implementation.html#python-tracing-span-per-call",
+    "category": "Distributed tracing",
+    "text": "DO create a new span for each outgoing network call. If using the HTTP pipeline, the new span is created for you."
+  },
+  {
+    "id": "python_implementation.html#python-tracing-propagate",
+    "category": "Distributed tracing",
+    "text": "DO propagate tracing context on each outgoing service request.\n\nClient library usage telemetry is used by service teams (not consumers) to monitor what SDK language, client library version, and language/platform info a client is using to call into their service. Clients can prepend additional information indicating the name and version of the client application."
+  },
+  {
+    "id": "python_implementation.html#python-http-telemetry-useragent",
+    "category": "Telemetry",
+    "text": "DO send telemetry information in the [User-Agent header] using the following format:\n\n<code>[&lt;application_id&gt; ]azsdk-python-&lt;package_name&gt;/&lt;package_version&gt; &lt;platform_info&gt;\n</code>\n<application_id>: optional application-specific string. May contain a slash, but must not contain a space. The string is supplied by the user of the client library, e.g. \"AzCopy/10.0.4-Preview\"\n<package_name>: client library (distribution) package name as it appears to the developer, replacing slashes with dashes and removing the Azure indicator.  For example, \"azure-keyvault-secrets\" would specify \"azsdk-python-keyvault-secrets\".\n<package_version>: the version of the package. Note: this is not the version of the service\n<platform_info>: information about the currently executing language runtime and OS, e.g. \"Python/3.8.4 (Windows-10-10.0.19041-SP0)\"\n\nFor example, if we re-wrote AzCopy in Python using the Azure Blob Storage client library, we may end up with the following user-agent strings:\n(Python) AzCopy/10.0.4-Preview azsdk-python-storage/4.0.0 Python/3.7.3 (Ubuntu; Linux x86_64; rv:34.0)\n\nThe azure.core.pipeline.policies.UserAgentPolicy will provide this functionality if added to the HttpPipeline."
+  },
+  {
+    "id": "python_implementation.html#python-azurecore-http-telemetry-dynamic",
+    "category": "Telemetry",
+    "text": "YOU SHOULD send additional (dynamic) telemetry information as a semi-colon separated set of key-value types in the X-MS-AZSDK-Telemetry header.  For example:\n\n```http\nX-MS-AZSDK-Telemetry: class=BlobClient;method=DownloadFile;blobType=Block\n\n```\n\nThe content of the header is a semi-colon key=value list.  The following keys have specific meaning:\nclass is the name of the type within the client library that the consumer called to trigger the network operation.\nmethod is the name of the method within the client library type that the consumer called to trigger the network operation.\n\nAny other keys that are used should be common across all client libraries for a specific service.  DO NOT include personally identifiable information (even encoded) in this header.  Services need to configure log gathering to capture the X-MS-SDK-Telemetry header in such a way that it can be queried through normal analytics systems."
+  },
+  {
+    "id": "python_implementation.html#python-azurecore-http-telemetry-appid",
+    "category": "Considerations for clients not using the UserAgentPolicy from azure-core",
+    "text": "DO allow the consumer of the library to set the application ID by passing in an application_id parameter to the service client constructor.  This allows the consumer to obtain cross-service telemetry for their app."
+  },
+  {
+    "id": "python_implementation.html#python-azurecore-http-telemetry-appid-length",
+    "category": "Considerations for clients not using the UserAgentPolicy from azure-core",
+    "text": "DO enforce that the application ID is no more than 24 characters in length.  Shorter application IDs allows service teams to include diagnostic information in the \"platform information\" section of the user agent, while still allowing the consumer to obtain telemetry information for their own application."
+  },
+  {
+    "id": "python_implementation.html#python-testing-pytest",
+    "category": "Testing",
+    "text": "DO use pytest (https://docs.pytest.org/en/latest/) as the test framework."
+  },
+  {
+    "id": "python_implementation.html#python-testing-async",
+    "category": "Testing",
+    "text": "YOU SHOULD use pytest-asyncio (https://github.com/pytest-dev/pytest-asyncio) for testing of async code."
+  },
+  {
+    "id": "python_implementation.html#python-testing-live",
+    "category": "Testing",
+    "text": "DO make your scenario tests runnable against live services. Strongly consider using the Python Azure-DevTools (https://github.com/Azure/azure-sdk-for-python/tree/main/tools/azure-devtools) package for scenario tests."
+  },
+  {
+    "id": "python_implementation.html#python-testing-record",
+    "category": "Testing",
+    "text": "DO provide recordings to allow running tests offline/without an Azure subscription"
+  },
+  {
+    "id": "python_implementation.html#python-testing-parallel",
+    "category": "Testing",
+    "text": "DO support simultaneous test runs in the same subscription."
+  },
+  {
+    "id": "python_implementation.html#python-testing-independent",
+    "category": "Testing",
+    "text": "DO make each test case independent of other tests."
+  },
+  {
+    "id": "python_implementation.html#python-tooling-pylint",
+    "category": "Code Analysis and Style Tools",
+    "text": "DO use pylint (https://www.pylint.org/) for your code. Use the pylintrc file in the root of the repository (https://github.com/Azure/azure-sdk-for-python/blob/main/pylintrc) "
+  },
+  {
+    "id": "python_implementation.html#python-tooling-flake8",
+    "category": "Code Analysis and Style Tools",
+    "text": "DO use flake8-docstrings (https://gitlab.com/pycqa/flake8-docstrings) to verify doc comments."
+  },
+  {
+    "id": "python_implementation.html#python-tooling-black",
+    "category": "Code Analysis and Style Tools",
+    "text": "DO use Black (https://black.readthedocs.io/en/stable/) for formatting your code."
+  },
+  {
+    "id": "python_implementation.html#python-tooling-mypy",
+    "category": "Code Analysis and Style Tools",
+    "text": "YOU SHOULD use MyPy (https://mypy.readthedocs.io/en/latest/) to statically check the public surface area of your library.\n\nYou don't need to check non-shipping code such as tests.\n\nThe azure-core package provides common functionality for client libraries. Documentation and usage examples can be found in the [azure/azure-sdk-for-python] repository.\n\nThe HTTP pipeline is an HTTP transport that is wrapped by multiple policies. Each policy is a control point that can modify either the request or response. A default set of policies is provided to standardize how client libraries interact with Azure services.\n\nFor more information on the Python implementation of the pipeline, see the documentation (https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/core/azure-core) \n\nMany of the protocols mandated by the design guidelines have default implementations in azure-core.\n\n```python\nT = TypeVar(\"T\")\nclass LROPoller(Protocol):\n\n    def result(self, timeout=None) -&gt; T:\n        \"\"\" Retrieve the final result of the long running operation.\n\n        :param timeout: How long to wait for operation to complete (in seconds). If not specified, there is no timeout.\n        :raises TimeoutException: If the operation has not completed before it timed out.\n        \"\"\"\n        ...\n\n    def wait(self, timeout=None) -&gt; None:\n        \"\"\" Wait for the operation to complete.\n\n        :param timeout: How long to wait for operation to complete (in seconds). If not specified, there is no timeout.\n        \"\"\"\n\n    def done(self) -&gt; boolean:\n        \"\"\" Check if long running operation has completed.\n        \"\"\"\n\n    def add_done_callback(self, func) -&gt; None:\n        \"\"\" Register callback to be invoked when operation completes.\n\n        :param func: Callable that will be called with the eventual result ('T') of the operation.\n        \"\"\"\n        ...\n\n```\n\nazure.core.polling.LROPoller implements the LROPoller protocol.\n\n```python\nT = TypeVar(\"T\")\nclass ByPagePaged(Protocol, Iterable[Iterable[T]]):\n    continuation_token: \"str\"\n\nclass ItemPaged(Protocol, Iterable[T]):\n    continuation_token: \"str\"\n\n    def by_page(self) -&gt; ByPagePaged[T] ...\n\n```\n\nazure.core.ItemPaged implements the ItemPaged protocol.\n\nSee the ItemPaged protocol for additional information.\n\n```python\nclass ResponseHook(Protocol):\n\n    __call__(self, headers, deserialized_response): -&gt; None ...\n\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-pep8",
+    "category": "Python language and code style",
+    "text": "DO follow the general guidelines in PEP8 (https://www.python.org/dev/peps/pep-0008/) unless explicitly overridden in this document."
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-idiomatic",
+    "category": "Python language and code style",
+    "text": "DO NOT \"borrow\" coding paradigms from other languages.\n\nFor example, no matter how common Reactive programming is in the Java community, it's still unfamiliar for most Python developers."
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-consistency",
+    "category": "Python language and code style",
+    "text": "DO favor consistency with other Python components over other libraries for the same service.\n\nIt's more likely that a developer will use many different libraries using the same language than a developer will use the same service from many different languages."
+  },
+  {
+    "id": "python_implementation.html#python-errors-use-chaining",
+    "category": "Error handling",
+    "text": "DO use exception chaining to include the original source of the error when catching and raising new exceptions.\n\n```python\n# Yes:\ntry:\n    # do something\n    something()\nexcept:\n    # __context__ will be set correctly\n    raise MyOwnErrorWithNoContext()\n\n# No:\nsuccess = True\ntry:\n    # do something\n    something()\nexcept:\n    success = False\nif not success:\n    # __context__ is lost...\n    raise MyOwnErrorWithNoContext()\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-vars-naming",
+    "category": "Naming conventions",
+    "text": "DO use snake_case for variable, function, and method names:\n\n```python\n# Yes:\nservice_client = ServiceClient()\n\nservice_client.list_things()\n\ndef do_something():\n    ...\n\n# No:\nserviceClient = ServiceClient()\n\nservice_client.listThings()\n\ndef DoSomething():\n    ...\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-type-naming",
+    "category": "Naming conventions",
+    "text": "DO use Pascal case for types:\n\n```python\n# Yes:\nclass ThisIsCorrect(object):\n    pass\n\n# No:\nclass this_is_not_correct(object):\n    pass\n\n# No:\nclass camelCasedTypeName(object):\n    pass\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-const-naming",
+    "category": "Naming conventions",
+    "text": "DO use ALL CAPS for constants:\n\n```python\n# Yes:\nMAX_SIZE = 4711\n\n# No:\nmax_size = 4711\n\n# No:\nMaxSize = 4711\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-module-naming",
+    "category": "Naming conventions",
+    "text": "DO use snake_case for module names."
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-static-methods",
+    "category": "Method signatures",
+    "text": "DO NOT use static methods (staticmethod (https://docs.python.org/3/library/functions.html#staticmethod) . Prefer module level functions instead.\n\nStatic methods are rare and usually forced by other libraries."
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-properties",
+    "category": "Method signatures",
+    "text": "DO NOT use simple getter and setter functions. Use properties instead.\n\n```python\n# Yes\nclass GoodThing(object):\n\n    @property\n    def something(self):\n        \"\"\" Example of a good read-only property.\"\"\"\n        return self._something\n\n# No\nclass BadThing(object):\n\n    def get_something(self):\n        \"\"\" Example of a bad 'getter' style method.\"\"\"\n        return self._something\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-long-args",
+    "category": "Method signatures",
+    "text": "YOU SHOULD NOT have methods that require more than five positional parameters. Optional/flag parameters can be accepted using keyword-only arguments, or **kwargs.\n\nSee TODO: insert link for general guidance on positional vs. optional parameters here."
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-optional-args",
+    "category": "Method signatures",
+    "text": "DO use keyword-only arguments for optional or less-often-used arguments for modules that only need to support Python 3.\n\n```python\n# Yes\ndef foo(a, b, *, c, d=None):\n    # Note that I can even have required keyword-only arguments...\n    ...\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-kwargs",
+    "category": "Method signatures",
+    "text": "DO use keyword-only arguments for arguments that have no obvious ordering.\n\n```python\n# Yes - `source` and `dest` have logical order, `recurse` and `overwrite` do not.\ndef copy(source, dest, *, recurse=False, overwrite=False) ...\n\n\n# No\ndef copy(source, dest, recurse=False, overwrite=False) ...\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-positional-params",
+    "category": "Method signatures",
+    "text": "DO specify the parameter name when calling methods with more than two required positional parameters.\n\n```python\ndef foo(a, b, c):\n    pass\n\n\ndef bar(d, e):\n    pass\n\n\n# Yes:\nfoo(a=1, b=2, c=3)\nbar(1, 2)\nbar(e=3, d=4)\n\n# No:\nfoo(1, 2, 3)\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-optional-param-calling",
+    "category": "Method signatures",
+    "text": "DO specify the parameter name for optional parameters when calling functions.\n\n```python\ndef foo(a, b=1, c=None):\n    pass\n\n\n# Yes:\nfoo(1, b=2, c=3)\n\n# No:\nfoo(1, 2, 3)\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-private-api",
+    "category": "Public vs \"private\"",
+    "text": "DO use a single leading underscore to indicate that a name isn't part of the public API.  Non-public APIs aren't guaranteed to be stable."
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-double-underscore",
+    "category": "Public vs \"private\"",
+    "text": "DO NOT use leading double underscore prefixed method names unless name clashes in the inheritance hierarchy are likely.  Name clashes are rare."
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-public-api",
+    "category": "Public vs \"private\"",
+    "text": "DO add public methods and types to the module's __all__ attribute."
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-interal-module",
+    "category": "Public vs \"private\"",
+    "text": "DO use a leading underscore for internal modules. You may omit a leading underscore if the module is a submodule of an internal module.\n\n```python\n# Yes:\nazure.exampleservice._some_internal_module\n\n# Yes - some_internal_module is still considered internal since it is a submodule of an internal module:\nazure.exampleservice._internal.some_internal_module\n\n# No - some_internal_module is considered public:\nazure.exampleservice.some_internal_module\n\n```"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-structural-subtyping",
+    "category": "Types (or not)",
+    "text": "DO prefer structural subtyping and protocols over explicit type checks."
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-abstract-collections",
+    "category": "Types (or not)",
+    "text": "DO derive from the abstract collections base classes collections.abc (or collections for Python 2.7) to provide custom mapping types."
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-pep484",
+    "category": "Types (or not)",
+    "text": "DO provide type hints PEP484 (https://www.python.org/dev/peps/pep-0484/) for publicly documented classes and functions.\nSee the suggested syntax for Python 2.7 and 2.7-3.x straddling code (https://www.python.org/dev/peps/pep-0484/#suggested-syntax-for-python-2-7-and-straddling-code) for guidance for Python 2.7 compatible code. Do not do this for code that is Python 3 specific (e.g. async clients.)"
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-thread-affinity",
+    "category": "Threading",
+    "text": "DO maintain thread affinity for user-provided callbacks unless explicitly documented to not do so."
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-document-thread-safety",
+    "category": "Threading",
+    "text": "DO explicitly include the fact that a method (function/class) is thread safe in its documentation.\n\nExamples: asyncio.loop.call_soon_threadsafe (https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.call_soon_threadsafe)  queue (https://docs.python.org/3/library/queue.html) "
+  },
+  {
+    "id": "python_implementation.html#python-codestyle-use-executor",
+    "category": "Threading",
+    "text": "YOU SHOULD allow callers to pass in an Executor (https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Executor) instance rather than defining your own thread or process management for parallelism.\n\nYou may do your own thread management if the thread isn't exposed to the caller in any way. For example, the LROPoller implementation uses a background poller thread.\n\n[Zen of Python]: https://www.python.org/dev/peps/pep-0020/\n[universal package]: https://packaging.python.org/guides/distributing-packages-using-setuptools/#id75\n[Architecture board]: https://azure.github.io/azure-sdk/policies_reviewprocess.html\n[issue]: https://github.com/azure/azure-sdk/issues\n\n<!-- Intra-document links -->\n[Packaging]: python_implementation.html#packaging\n[HTTP pipeline]: python_implementation.html#azure-core\n[PagingDesign]: python_design.html#methods-returning-collections-paging\n[azure/azure-sdk-for-python]: https://github.com/azure/azure-sdk-for-python\n[positional and keyword-only arguments]: python_implementation.html#python-codestyle-long-args\n[structural type checking]: python_implementation.html#types-or-not"
+  }
+]

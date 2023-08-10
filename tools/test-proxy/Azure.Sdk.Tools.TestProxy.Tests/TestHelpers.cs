@@ -355,7 +355,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         public static void CheckBreadcrumbAgainstAssetsConfig(GitAssetsConfiguration configuration)
         {
             var assetsStorePath = configuration.ResolveAssetsStoreLocation();
-            var breadCrumbFile = Path.Join(assetsStorePath.ToString(), ".breadcrumb");
+            var breadCrumbFile = Path.Join(assetsStorePath.ToString(), "breadcrumb", $"{configuration.AssetRepoShortHash}.breadcrumb");
             var targetKey = configuration.AssetsJsonRelativeLocation.ToString();
 
             Assert.True(File.Exists(breadCrumbFile));

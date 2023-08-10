@@ -1,0 +1,67 @@
+[
+  {
+    "id": "python_documentation.html#python-docs-content-dev",
+    "category": "title: \"Python Guidelines: Documentation\"\nkeywords: guidelines python\npermalink: python_documentation.html\nfolder: python\nsidebar: general_sidebar",
+    "text": "DO include your service's content developer in the adparch review for your library. To find the content developer you should work with, check with your team's Program Manager."
+  },
+  {
+    "id": "python_documentation.html#python-docs-contributor-guide",
+    "category": "title: \"Python Guidelines: Documentation\"\nkeywords: guidelines python\npermalink: python_documentation.html\nfolder: python\nsidebar: general_sidebar",
+    "text": "DO follow the [Azure SDK Contributors Guide]. (MICROSOFT INTERNAL)"
+  },
+  {
+    "id": "python_documentation.html#python-docs-style-guide",
+    "category": "title: \"Python Guidelines: Documentation\"\nkeywords: guidelines python\npermalink: python_documentation.html\nfolder: python\nsidebar: general_sidebar",
+    "text": "DO adhere to the specifications set forth in the Microsoft style guides when you write public-facing documentation. This applies to both long-form documentation like a README and the docstrings in your code. (MICROSOFT INTERNAL)\n[Microsoft Writing Style Guide].\n[Microsoft Cloud Style Guide]."
+  },
+  {
+    "id": "python_documentation.html#python-docs-into-silence",
+    "category": "title: \"Python Guidelines: Documentation\"\nkeywords: guidelines python\npermalink: python_documentation.html\nfolder: python\nsidebar: general_sidebar",
+    "text": "YOU SHOULD attempt to document your library into silence. Preempt developers' usage questions and minimize GitHub issues by clearly explaining your API in the docstrings. Include information on service limits and errors they might hit, and how to avoid and recover from those errors.\n\nAs you write your code, doc it so you never hear about it again. The less questions you have to answer about your client library, the more time you have to build new features for your service."
+  },
+  {
+    "id": "python_documentation.html#python-docstrings-pydocs",
+    "category": "Docstrings",
+    "text": "DO follow the documentation guidelines (http://aka.ms/pydocs) unless explicitly overridden in this document."
+  },
+  {
+    "id": "python_documentation.html#python-docstrings-all",
+    "category": "Docstrings",
+    "text": "DO provide docstrings for all public modules, types, and methods."
+  },
+  {
+    "id": "python_documentation.html#python-docstrings-kwargs",
+    "category": "Docstrings",
+    "text": "DO document any **kwargs directly consumed by a method and add a ref link to core options (https://aka.ms/azsdk/python/options) to provide introduction for shared options. You may refer to the signature of a called method if the **kwargs are passed through.\n\nExample:\n\n```python\ndef request(method, url, headers, **kwargs): ...\n\ndef get(*args, **kwargs):\n    \"\"\"Calls `request` with the method \"GET\" and forwards all other arguments.\n\n    :param str method-param: The method-param parameter\n    :keyword int method-kwarg: The optional method-kwarg parameter\n\n    For additional request configuration options, please see https://aka.ms/azsdk/python/options.\n    \"\"\"\n    return request(\"GET\", *args, **kwargs)\n\n```"
+  },
+  {
+    "id": "python_documentation.html#python-docstrings-defaults",
+    "category": "Docstrings",
+    "text": "DO document any default values as part of your docstrings using the format recommended\nby sphinx.\n\nExample:\n\n```python\ndef get(*args, **kwargs):\n    \"\"\"Calls `request` with the method \"GET\" and forwards all other arguments.\n\n    :keyword str value_param: A value param, defaults to \"cat\".\n    :keyword class type_param: A type param, defaults to :py:class:`namespace.TypeName`\n    \"\"\"\n    return request(\"GET\", *args, **kwargs)\n\n```"
+  },
+  {
+    "id": "python_documentation.html#python-docstrings-exceptions",
+    "category": "Docstrings",
+    "text": "DO document exceptions that may be raised explicitly in the method and any exceptions raised by the called method."
+  },
+  {
+    "id": "python_documentation.html#python-snippets-include",
+    "category": "Code snippets",
+    "text": "DO include example code snippets alongside your library's code within the repository. The snippets should clearly and succinctly demonstrate the operations most developers need to perform with your library. Include snippets for every common operation, and especially for those that are complex or might otherwise be difficult for new users of your library. At a bare minimum, include snippets for the champion scenarios you've identified for the library."
+  },
+  {
+    "id": "python_documentation.html#python-snippets-build",
+    "category": "Code snippets",
+    "text": "DO build and test your example code snippets using the repository's continuous integration (CI) to ensure they remain functional."
+  },
+  {
+    "id": "python_documentation.html#python-snippets-docstrings",
+    "category": "Code snippets",
+    "text": "DO include the example code snippets in your library's docstrings so they appear in its API reference. If the language and its tools support it, ingest these snippets directly into the API reference from within the docstrings. Each sample should be a valid pytest.\n\nUse the literalinclude directive in Python docstrings to instruct Sphinx to [ingest the snippets automatically][1]."
+  },
+  {
+    "id": "python_documentation.html#python-snippets-combinations",
+    "category": "Code snippets",
+    "text": "DO NOT combine more than one operation in a code snippet unless it's required for demonstrating the type or member, or it's in addition to existing snippets that demonstrate atomic operations. For example, a Cosmos DB code snippet should not include both account and container creation operations--create two different snippets, one for account creation, and one for container creation.\n\nCombined operations cause unnecessary friction for a library consumer by requiring knowledge of additional operations which might be outside their current focus. It requires them to first understand the tangential code surrounding the operation they're working on, then carefully extract just the code they need for their task. The developer can no longer simply copy and paste the code snippet into their project.\n\n[Zen of Python]: https://www.python.org/dev/peps/pep-0020/\n[universal package]: https://packaging.python.org/guides/distributing-packages-using-setuptools/#id75\n[Architecture board]: https://azure.github.io/azure-sdk/policies_reviewprocess.html\n[issue]: https://github.com/azure/azure-sdk/issues\n\n<!-- Intra-document links -->\n[Packaging]: python_implementation.html#packaging\n[HTTP pipeline]: python_implementation.html#azure-core\n[PagingDesign]: python_design.html#methods-returning-collections-paging\n[azure/azure-sdk-for-python]: https://github.com/azure/azure-sdk-for-python\n[positional and keyword-only arguments]: python_implementation.html#python-codestyle-long-args\n[structural type checking]: python_implementation.html#types-or-not"
+  }
+]

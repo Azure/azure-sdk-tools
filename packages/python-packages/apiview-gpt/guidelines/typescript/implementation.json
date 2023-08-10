@@ -1,0 +1,517 @@
+[
+  {
+    "id": "typescript_implementation.html#ts-should-use-template",
+    "category": "title: \"TypeScript Guidelines: Implementation\"\nkeywords: guidelines typescript\npermalink: typescript_implementation.html\nfolder: typescript\nsidebar: general_sidebar",
+    "text": "YOU SHOULD use the [TypeScript client library template].\n\nTODO: Please add a discussion of how to use the Http Pipeline to implement a service method, if relevant, and on creating and adding custom policies to the pipeline.\n\nWhen configuring your client library, particular care must be taken to ensure that the consumer of your client library can properly configure the connectivity to your Azure service both globally (along with other client libraries the consumer is using) and specifically with your client library."
+  },
+  {
+    "id": "typescript_implementation.html#ts-configuration-use-core-lib",
+    "category": "Configuration {#ts-configuration}",
+    "text": "DO use the @azure/core-configuration package.  The @azure/core-configuration package implements the general guidelines for configuration; specifically:\nRetrieve any relevant settings from the environment.\nRetrieve any relevant global settings from the consumers code."
+  },
+  {
+    "id": "typescript_implementation.html#ts-configuration-use-global-config",
+    "category": "Client configuration",
+    "text": "DO use relevant global configuration settings either by default or when explicitly requested to by the user, for example by passing in a configuration object to a client constructor."
+  },
+  {
+    "id": "typescript_implementation.html#ts-configuration-allow-different-configs",
+    "category": "Client configuration",
+    "text": "DO allow different clients of the same type to use different configurations."
+  },
+  {
+    "id": "typescript_implementation.html#ts-configuration-allow-optout",
+    "category": "Client configuration",
+    "text": "DO allow consumers of your service clients to opt out of all global configuration settings at once."
+  },
+  {
+    "id": "typescript_implementation.html#ts-configuration-allow-overrides",
+    "category": "Client configuration",
+    "text": "DO allow all global configuration settings to be overridden by client-provided options. The names of these options should align with any user-facing global configuration keys."
+  },
+  {
+    "id": "typescript_implementation.html#ts-configuration-no-config-changes-after-construction",
+    "category": "Client configuration",
+    "text": "DO NOT change behavior based on configuration changes that occur after the client is constructed. Hierarchies of clients inherit parent client configuration unless explicitly changed or overridden. Exceptions to this requirement are as follows:\nLog level, which must take effect immediately across the Azure SDK.\nTracing on/off, which must take effect immediately across the Azure SDK."
+  },
+  {
+    "id": "typescript_implementation.html#ts-configuration-env-prefix",
+    "category": "Service-specific environment variables",
+    "text": "DO prefix Azure-specific environment variables with AZURE_."
+  },
+  {
+    "id": "typescript_implementation.html#ts-configuration-service-envs",
+    "category": "Service-specific environment variables",
+    "text": "YOU MAY use client library-specific environment variables for portal-configured settings which are provided as parameters to your client library. This generally includes credentials and connection details. For example, Service Bus could support the following environment variables:\nAZURE_SERVICEBUS_CONNECTION_STRING\nAZURE_SERVICEBUS_NAMESPACE\nAZURE_SERVICEBUS_ISSUER\nAZURE_SERVICEBUS_ACCESS_KEY\n\nStorage could support:\nAZURE_STORAGE_ACCOUNT\nAZURE_STORAGE_ACCESS_KEY\nAZURE_STORAGE_DNS_SUFFIX\nAZURE_STORAGE_CONNECTION_STRING"
+  },
+  {
+    "id": "typescript_implementation.html#ts-configuration-approval-for-envs",
+    "category": "Service-specific environment variables",
+    "text": "DO get approval from the [Architecture Board] for every new environment variable."
+  },
+  {
+    "id": "typescript_implementation.html#ts-configuration-env-syntax",
+    "category": "Service-specific environment variables",
+    "text": "DO use this syntax for environment variables specific to a particular Azure service:\nAZURE_<ServiceName>_<ConfigurationKey>\n\nwhere ServiceName is the canonical shortname without spaces, and ConfigurationKey refers to an unnested configuration key for that client library."
+  },
+  {
+    "id": "typescript_implementation.html#ts-configuration-posix-envs",
+    "category": "Service-specific environment variables",
+    "text": "DO NOT use non-alpha-numeric characters in your environment variable names with the exception of underscore. This ensures broad interoperability.\n\nThe service client will have several methods that perform requests on the service.  Service parameters are directly passed across the wire to an Azure service.  Client parameters are not passed directly to the service, but used within the client library to fulfill the request.  Examples of client parameters include values that are used to construct a URI, or a file that needs to be uploaded to storage."
+  },
+  {
+    "id": "typescript_implementation.html#general-parameter-validation-client",
+    "category": "Parameter validation {#general-parameter-validation}",
+    "text": "DO validate client parameters."
+  },
+  {
+    "id": "typescript_implementation.html#general-parameter-validation-service",
+    "category": "Parameter validation {#general-parameter-validation}",
+    "text": "DO NOT validate service parameters.  This includes null checks, empty strings, and other common validating conditions. Let the service validate any request parameters."
+  },
+  {
+    "id": "typescript_implementation.html#general-parameter-validation-errors",
+    "category": "Parameter validation {#general-parameter-validation}",
+    "text": "DO validate the developer experience when the service parameters are invalid to ensure appropriate error messages are generated by the service.  If the developer experience is compromised due to service-side error messages, work with the service team to correct prior to release.\n\nEach supported language has an Azure Core library that contains common mechanisms for cross cutting concerns such as configuration and doing HTTP requests."
+  },
+  {
+    "id": "typescript_implementation.html#general-implementing-httppipeline",
+    "category": "Network requests {#general-network-requests}",
+    "text": "DO use the HTTP pipeline component within @azure/core-http package for communicating to service REST endpoints.\n\nThe HTTP pipeline consists of a HTTP transport that is wrapped by multiple policies. Each policy is a control point during which the pipeline can modify either the request and/or response. We prescribe a default set of policies to standardize how client libraries interact with Azure services.  The order in the list is the most sensible order for implementation."
+  },
+  {
+    "id": "typescript_implementation.html#general-implementing-policies",
+    "category": "Network requests {#general-network-requests}",
+    "text": "DO implement the following policies in the HTTP pipeline:\nTelemetry\nUnique Request ID\nRetry\nAuthentication\nResponse downloader\nDistributed tracing\nLogging\n\nTODO: If these policies are already implemented in Azure Core, does the library developer need to do this?  If not, please remove this guidance."
+  },
+  {
+    "id": "typescript_implementation.html#general-implementing-use-core-policies",
+    "category": "Network requests {#general-network-requests}",
+    "text": "YOU SHOULD use the policy implementations in Azure Core whenever possible.  Do not try to \"write your own\" policy unless it is doing something unique to your service.  If you need another option to an existing policy, engage with the [Architecture Board] to add the option.\n\nWhen implementing authentication, don't open up the consumer to security holes like PII (personally identifiable information) leakage or credential leakage.  Credentials are generally issued with a time limit, and must be refreshed periodically to ensure that the service connection continues to function as expected.  Ensure your client library follows all current security recommendations and consider an independent security review of the client library to ensure you're not introducing potential security problems for the consumer."
+  },
+  {
+    "id": "typescript_implementation.html#general-implementing-no-persistence-auth",
+    "category": "Authentication {#general-implementing-auth}",
+    "text": "DO NOT persist, cache, or reuse security credentials.  Security credentials should be considered short lived to cover both security concerns and credential refresh situations.\n\nIf your service implements a non-standard credential system (that is, a credential system that is not supported by Azure Core), then you need to produce an authentication policy for the HTTP pipeline that can authenticate requests given the alternative credential types provided by the client library."
+  },
+  {
+    "id": "typescript_implementation.html#general-implementing-auth-policy",
+    "category": "Authentication {#general-implementing-auth}",
+    "text": "DO provide a suitable authentication policy that authenticates the HTTP request in the HTTP pipeline when using non-standard credentials.  This includes custom connection strings, if supported.\n\nTODO: Would a code sample be helpful here?\n\nSome languages support the development of platform-specific native code plugins.  These cause compatibility issues and require additional scrutiny.  Certain languages compile to a machine-native format (for example, C or C++), whereas most modern languages opt to compile to an intermediary format to aid in cross-platform support."
+  },
+  {
+    "id": "typescript_implementation.html#general-implementing-nonativecode",
+    "category": "Native code {#general-native-code}",
+    "text": "YOU SHOULD write platform-specific / native code unless the language compiles to a machine-native format.\n\nError handling is an important aspect of implementing a client library.  It is the primary method by which problems are communicated to the consumer.  There are two methods by which errors are reported to the consumer.  Either the method throws an exception, or the method returns an error code (or value) as its return value, which the consumer must then check.  In this section we refer to \"producing an error\" to mean returning an error value or throwing an exception, and \"an error\" to be the error value or exception object."
+  },
+  {
+    "id": "typescript_implementation.html#general-errors-prefer-exceptions",
+    "category": "Error handling {#general-error-handling}",
+    "text": "YOU SHOULD prefer the use of exceptions over returning an error value when producing an error."
+  },
+  {
+    "id": "typescript_implementation.html#general-errors-when-http-fails",
+    "category": "Error handling {#general-error-handling}",
+    "text": "DO produce an error when any HTTP request fails with an HTTP status code that is not defined by the service/Swagger as a successful status code. These errors should also be logged as errors."
+  },
+  {
+    "id": "typescript_implementation.html#general-errors-include-response",
+    "category": "Error handling {#general-error-handling}",
+    "text": "DO ensure that the error produced contains the HTTP response (including status code and headers) and originating request (including URL, query parameters, and headers).\n\nIn the case of a higher-level method that produces multiple HTTP requests, either the last exception or an aggregate exception of all failures should be produced."
+  },
+  {
+    "id": "typescript_implementation.html#general-errors-rich-information",
+    "category": "Error handling {#general-error-handling}",
+    "text": "DO ensure that if the service returns rich error information (via the response headers or body), the rich information must be available via the error produced in service-specific properties/fields."
+  },
+  {
+    "id": "typescript_implementation.html#general-errors-no-new-errors",
+    "category": "Error handling {#general-error-handling}",
+    "text": "YOU SHOULD NOT create a new error type unless the developer can perform an alternate action to remediate the error.  Specialized error types should be based on existing error types present in the Azure Core package."
+  },
+  {
+    "id": "typescript_implementation.html#general-errors-use-system-errors",
+    "category": "Error handling {#general-error-handling}",
+    "text": "DO NOT create a new error type when a language-specific error type will suffice.  Use system-provided error types for validation."
+  },
+  {
+    "id": "typescript_implementation.html#ts-error-handling",
+    "category": "Error handling {#general-error-handling}",
+    "text": "DO use ECMAScript built-in error types for validation failures when appropriate. Specifically,\nUse TypeError for errors relating to passing in an incorrect type, such as an Object when a string is expected.\nUse RangeError for errors relating to values that are outside an allowable range, such as passing 0 for a number that must be greater than 0.\nUse Error for all other validation failures."
+  },
+  {
+    "id": "typescript_implementation.html#ts-error-handling-coercion",
+    "category": "Error handling {#general-error-handling}",
+    "text": "YOU SHOULD coerce incorrect types into an appropriate type, if possible. JavaScript users expect some amount of fuzziness with parameters as the standard library will coerce types if possible. TypeScript users should get pedantic types as they've opted in to types and expect errors."
+  },
+  {
+    "id": "typescript_implementation.html#ts-errors-documentation",
+    "category": "Error handling {#general-error-handling}",
+    "text": "DO document the errors that are produced by each method (with the exception of commonly thrown errors that are generally not documented in the target language)."
+  },
+  {
+    "id": "typescript_implementation.html#ts-error-use-name",
+    "category": "Error handling {#general-error-handling}",
+    "text": "YOU SHOULD check the name property inside catch clauses rather than using instanceof.\n\nClient libraries must support robust logging mechanisms so that the consumer can adequately diagnose issues with the method calls and quickly determine whether the issue is in the consumer code, client library code, or service."
+  },
+  {
+    "id": "typescript_implementation.html#ts-logging-use-debug-module",
+    "category": "Logging {#general-logging}",
+    "text": "DO use the debug module to log to stderr or the browser console."
+  },
+  {
+    "id": "typescript_implementation.html#general-logging-console",
+    "category": "Logging {#general-logging}",
+    "text": "DO make it easy for a consumer to enable logging output to the console. The specific steps required to enable logging to the console must be documented."
+  },
+  {
+    "id": "typescript_implementation.html#ts-logging-prefix-channel-names",
+    "category": "Logging {#general-logging}",
+    "text": "DO prefix channel names with azure:<service-name>."
+  },
+  {
+    "id": "typescript_implementation.html#ts-logging-channels",
+    "category": "Logging {#general-logging}",
+    "text": "DO create log channels for the following log levels with the following channel name suffixes:\nError: :error\nWarning: :warning\nInfo: :info\nVerbose: :verbose"
+  },
+  {
+    "id": "typescript_implementation.html#ts-logging-additional-channels",
+    "category": "Logging {#general-logging}",
+    "text": "YOU MAY have additional log channels, for example, to log from separate components. However, these channels MUST still provide the three log levels from above for each subchannel."
+  },
+  {
+    "id": "typescript_implementation.html#ts-logging-top-level-exports",
+    "category": "Logging {#general-logging}",
+    "text": "DO expose all log channels as top-level exports of your package, allowing the consumer to configure how the logging happens and integrate with 3rd-party loggers."
+  },
+  {
+    "id": "typescript_implementation.html#general-logging-levels-error",
+    "category": "Logging {#general-logging}",
+    "text": "DO use the Error channel for failures that the application is unlikely to recover from (out of memory, etc.)."
+  },
+  {
+    "id": "typescript_implementation.html#general-logging-levels-warning",
+    "category": "Logging {#general-logging}",
+    "text": "DO use the Warning channel when a function fails to perform its intended task. This generally means that the function will raise an exception.  Do not include occurrences of self-healing events (for example, when a request will be automatically retried)."
+  },
+  {
+    "id": "typescript_implementation.html#general-logging-levels-informational",
+    "category": "Logging {#general-logging}",
+    "text": "DO use the Info channel when a function operates normally."
+  },
+  {
+    "id": "typescript_implementation.html#general-logging-levels-verbose",
+    "category": "Logging {#general-logging}",
+    "text": "DO use the Verbose channel for detailed troubleshooting scenarios. This is primarily intended for developers or system administrators to diagnose specific failures."
+  },
+  {
+    "id": "typescript_implementation.html#general-logging-no-sensitive-info",
+    "category": "Logging {#general-logging}",
+    "text": "DO NOT send sensitive information in channels other than Verbose. For example, remove account keys when logging headers."
+  },
+  {
+    "id": "typescript_implementation.html#general-logging-requests-in-info",
+    "category": "Logging {#general-logging}",
+    "text": "DO log request line, response line, and headers on the Info channel."
+  },
+  {
+    "id": "typescript_implementation.html#general-logging-info-if-cancelled",
+    "category": "Logging {#general-logging}",
+    "text": "DO log to the Info channel if a service call is cancelled."
+  },
+  {
+    "id": "typescript_implementation.html#general-logging-error-if-exceptions",
+    "category": "Logging {#general-logging}",
+    "text": "DO log exceptions thrown to the Warning channel. Additionally, send stack trace information to the Verbose channel.\n\nDistributed tracing mechanisms allow the consumer to trace their code from frontend to backend. The distributed tracing library creates spans - units of unique work.  Each span is in a parent-child relationship.  As you go deeper into the hierarchy of code, you create more spans.  These spans can then be exported to a suitable receiver as needed.  To keep track of the spans, a distributed tracing context (called a context in the remainder of this section) is passed into each successive layer.  For more information on this topic, visit the [OpenTelemetry] topic on tracing.\n\n**DRAFT:** DRAFT GUIDELINES"
+  },
+  {
+    "id": "typescript_implementation.html#general-tracing-support-opentelemetry",
+    "category": "Distributed tracing {#general-distributed-tracing}",
+    "text": "DO support [OpenTelemetry] for distributed tracing."
+  },
+  {
+    "id": "typescript_implementation.html#general-tracing-parent-span",
+    "category": "Distributed tracing {#general-distributed-tracing}",
+    "text": "DO take an option named parentSpanId for all asynchronous operations."
+  },
+  {
+    "id": "typescript_implementation.html#general-tracing-pass-context",
+    "category": "Distributed tracing {#general-distributed-tracing}",
+    "text": "DO pass the context to the backend service through the appropriate headers (traceparent, tracestate, etc.) to support [Azure Monitor].  This is generally done with the HTTP pipeline."
+  },
+  {
+    "id": "typescript_implementation.html#general-tracing-create-span-on-entry",
+    "category": "Distributed tracing {#general-distributed-tracing}",
+    "text": "DO create a new span for each method that user code calls.  New spans must be children of the context that was passed in.  If no context was passed in, a new root span must be created."
+  },
+  {
+    "id": "typescript_implementation.html#general-tracing-create-span-on-rest",
+    "category": "Distributed tracing {#general-distributed-tracing}",
+    "text": "DO create a new span (which must be a child of the per-method span) for each REST call that the client library makes.  This is generally done with the HTTP pipeline.\n\nSome of these requirements will be handled by the HTTP pipeline.  However, as a client library writer, you must handle the incoming context appropriately.  JavaScript doesn't have primitives similar to a local context.  As such, we must manually plumb parent span IDs into the library.\n\nTODO: Please add a discussion of how to set the user-agent string for implementation of the SDK Telemetry feature.\n\nDependencies bring in many considerations that are often easily avoided by avoiding the dependency:\n\nVersioning: Many programming languages don't allow a consumer to load multiple versions of the same package. For example, if we have a client library that requires v3 of package Foo and the consumer wants to use v5 of package Foo, then the consumer can't build their application. Client libraries shouldn't have dependencies by default.\n\nSize: Consumer applications need to deploy as fast as possible into the cloud. Remove additional code (like dependencies) to improve deployment performance.\n\nLicensing: You must be conscious of the licensing restrictions of a dependency and often provide proper attribution and notices when using them.\n\nCompatibility: You don't control the dependency. It may choose to evolve in a direction that is incompatible with your original use.\n\nSecurity: If a vulnerability is discovered in a dependency, it may be difficult or time consuming to get the vulnerability corrected."
+  },
+  {
+    "id": "typescript_implementation.html#ts-dependencies-azure-core",
+    "category": "Dependencies {#ts-dependencies}",
+    "text": "DO depend on the Azure Core library for functionality that is common across all client libraries.  This library includes APIs for HTTP connectivity, global configuration, and credential handling."
+  },
+  {
+    "id": "typescript_implementation.html#ts-dependencies-no-other-packages",
+    "category": "Dependencies {#ts-dependencies}",
+    "text": "DO NOT depend any other packages within the client library distribution package. Dependencies are thoroughly vetted through architecture review.  Build dependencies, by contrast, are acceptable and commonly used."
+  },
+  {
+    "id": "typescript_implementation.html#ts-dependencies-consider-vendoring",
+    "category": "Dependencies {#ts-dependencies}",
+    "text": "YOU SHOULD consider copying or linking required code into the client library to avoid taking a dependency on another package. Don't violate the license agreements. Consider the maintenance that will be required when duplicating code. \"A little copying is better than a little dependency\" (https://www.youtube.com/watch?v=PAAkCSZUG1c&t=9m28s) (YouTube)."
+  },
+  {
+    "id": "typescript_implementation.html#general-no-concrete-logging",
+    "category": "Dependencies {#ts-dependencies}",
+    "text": "DO NOT depend on concrete logging, dependency injection, or configuration technologies (except as implemented in the Azure Core library)."
+  },
+  {
+    "id": "typescript_implementation.html#ts-dependencies-no-tiny-libraries",
+    "category": "Dependencies {#ts-dependencies}",
+    "text": "YOU SHOULD NOT take dependencies on tiny libraries as the cost of many small libraries adds up over time. Larger dependencies are subject to approval."
+  },
+  {
+    "id": "typescript_implementation.html#ts-dependencies-no-polyfills",
+    "category": "Dependencies {#ts-dependencies}",
+    "text": "YOU SHOULD NOT depend directly on polyfills or other libraries that modify global scope. If developers using older runtimes need to polyfill some capability, the package install and usage instructions (in the README) should indicate this dependency.\n\nThe following table lists the well-known and already-blessed dependencies outside of Azure Core that may be used in production (non-test) code.\n\n\n\n| Package             | Usage  |\n|---------------------|--------|\n| `axios`             | HTTP client abstraction with browser and node support |\n| `debug`             | Logging library |\n| `events`            | Node EventEmitter polyfill |\n| `stream-browserify` | Node Stream polyfill for browsers |\n| `process`           | Node Process polyfill (though you should prefer to use small stubs) |\n| `rhea`              | Library for talking over AMQP |\n| `rhea-promise`      | Promisified version of `rhea` |\n| `tough-cookie`      | Support cookies, even in Node |\n| `url`               | Node Url polyfill |\n| `util`              | Node Util polyfill |\n| `uuid`              | Generate GUIDs |\n\n\nThere are occasions when common code needs to be shared between several client libraries.  For example, a set of cooperating client libraries may wish to share a set of exceptions or models."
+  },
+  {
+    "id": "typescript_implementation.html#general-implementing-common-library-usage",
+    "category": "Service-specific common library code",
+    "text": "DO gain [Architecture Board] approval prior to implementing a common library."
+  },
+  {
+    "id": "typescript_implementation.html#general-implementing-minimal-common-content",
+    "category": "Service-specific common library code",
+    "text": "DO minimize the code within a common library.  Code within the common library is available to the consumer of the client library and shared by multiple client libraries within the same namespace."
+  },
+  {
+    "id": "typescript_implementation.html#general-implementing-common-namespace",
+    "category": "Service-specific common library code",
+    "text": "DO store the common library in the same namespace as the associated client libraries.\n\nA common library will only be approved if:\nThe consumer of the non-shared library will consume the objects within the common library directly, AND\nThe information will be shared between multiple client libraries.\n\nLet's take two examples:\n\nImplementing two Cognitive Services client libraries, we find a model is required that is produced by one Cognitive Services client library and consumed by another Coginitive Services client library, or the same model is produced by two client libraries.  The consumer is required to do the passing of the model in their code, or may need to compare the model produced by one client library vs. that produced by another client library.  This is a good candidate for choosing a common library.\n\n\nTwo Cognitive Services client libraries throw an ObjectNotFound exception to indicate that an object was not detected in an image.  The user might trap the exception, but otherwise will not operate on the exception.  There is no linkage between the ObjectNotFound exception in each client library.  This is not a good candidate for creation of a common library (although you may wish to place this exception in a common library if one exists for the namespace already).  Instead, produce two different exceptions - one in each client library.\n\n\nImplementing two Cognitive Services client libraries, we find a model is required that is produced by one Cognitive Services client library and consumed by another Coginitive Services client library, or the same model is produced by two client libraries.  The consumer is required to do the passing of the model in their code, or may need to compare the model produced by one client library vs. that produced by another client library.  This is a good candidate for choosing a common library.\n\nTwo Cognitive Services client libraries throw an ObjectNotFound exception to indicate that an object was not detected in an image.  The user might trap the exception, but otherwise will not operate on the exception.  There is no linkage between the ObjectNotFound exception in each client library.  This is not a good candidate for creation of a common library (although you may wish to place this exception in a common library if one exists for the namespace already).  Instead, produce two different exceptions - one in each client library."
+  },
+  {
+    "id": "typescript_implementation.html#ts-use-mocha-karma",
+    "category": "Testing TypeScript libraries",
+    "text": "YOU SHOULD use Mocha (https://mochajs.org/) and Karma (http://karma-runner.github.io/4.0/index.html) as these tools support build pipelines and work in browsers and node.\n\nConsistent versioning allows consumers to determine what to expect from a new version of the library.  However, versioning rules tend to be very idiomatic to the language.  The engineering system release guidelines require the use of MAJOR.MINOR.PATCH format for the version."
+  },
+  {
+    "id": "typescript_implementation.html#general-versioning-bump",
+    "category": "Versioning {#ts-versioning}",
+    "text": "DO change the version number of the client library when ANYTHING changes in the client library."
+  },
+  {
+    "id": "typescript_implementation.html#general-versioning-patch",
+    "category": "Versioning {#ts-versioning}",
+    "text": "DO increment the patch version when fixing a bug."
+  },
+  {
+    "id": "typescript_implementation.html#general-versioning-no-features-in-patch",
+    "category": "Versioning {#ts-versioning}",
+    "text": "DO NOT include new features in a patch release."
+  },
+  {
+    "id": "typescript_implementation.html#general-versioning-adding-features",
+    "category": "Versioning {#ts-versioning}",
+    "text": "DO increment the major or minor version when adding support for a service API version, or add a backwards-compatible feature."
+  },
+  {
+    "id": "typescript_implementation.html#general-versioning-no-breaking-changes",
+    "category": "Versioning {#ts-versioning}",
+    "text": "DO NOT make breaking changes.  If a breaking change is absolutely required, then you MUST engage with the [Architecture Board] prior to making the change.  If a breaking change is approved, increment the major version."
+  },
+  {
+    "id": "typescript_implementation.html#general-versioning-major-bump",
+    "category": "Versioning {#ts-versioning}",
+    "text": "YOU SHOULD increment the major version when making large feature changes."
+  },
+  {
+    "id": "typescript_implementation.html#general-versioning-serviceapi-support",
+    "category": "Versioning {#ts-versioning}",
+    "text": "DO provide the ability to call a specific supported version of the service API.\n\nA particular (major.minor) version of a library can choose what service APIs it supports.  We recommend the support window be no less than two service versions (if available) and no less than what is specified in the Fixed Lifecycle Policy for Microsoft business, developer, and desktop systems (https://support.microsoft.com/help/14085) "
+  },
+  {
+    "id": "typescript_implementation.html#ts-versioning-semver",
+    "category": "Versioning {#ts-versioning}",
+    "text": "DO version with semver (https://semver.org/)  Deprecated features and flags must offer an alternate stable or beta path for developers."
+  },
+  {
+    "id": "typescript_implementation.html#ts-versioning-no-ga-prerelease",
+    "category": "Versioning {#ts-versioning}",
+    "text": "DO NOT have a pre-release version or any additional build metadata for stable packages."
+  },
+  {
+    "id": "typescript_implementation.html#ts-versioning-beta",
+    "category": "Versioning {#ts-versioning}",
+    "text": "DO give beta packages a pre-release version of the format 1.0.0-beta.X where X is an integer. Pre-release package versions shouldn't have additional build metadata."
+  },
+  {
+    "id": "typescript_implementation.html#ts-versioning-no-version-0",
+    "category": "Versioning {#ts-versioning}",
+    "text": "DO NOT use a major version of 0, even for beta packages."
+  },
+  {
+    "id": "typescript_implementation.html#general-versioning-bump",
+    "category": "Versioning {#ts-versioning}",
+    "text": "DO select a version number greater than the highest version number of any other released Track 1 package for the service in any other npm scope or language.\n\nSemantic versioning is more of a lofty ideal than a practical specification for some libraries. Also, one person's bug might be another person's key feature (https://xkcd.com/1172/)  Package authors are required to follow semver in a way that is useful for their consumers.\n\nFor more details, review the [Releases policy]({{ site.baseurl }}/policies_releases.html)."
+  },
+  {
+    "id": "typescript_implementation.html#ts-npm-package-ownership",
+    "category": "Packaging {#ts-npm-package}",
+    "text": "DO have npm package ownership set to either the Azure or Microsoft organizations.\n\nUse the following canonical file structure for your npm package:\n\n\n<code>azure-library\n\u251c\u2500 README.md\n\u251c\u2500 LICENSE\n\u251c\u2500 dist\n\u2502  \u251c\u2500 index.js\n\u2502  \u251c\u2500 index.js.map\n\u2502  \u2514\u2500 ... *.js\n\u2502\n\u251c\u2500 dist-esm\n\u2502  \u2514\u2500 lib\n\u2502    \u251c\u2500 index.js\n\u2502    \u251c\u2500 index.js.map\n\u2502    \u2514\u2500 ... *.js\n\u2502\n\u251c\u2500 types\n\u2502  \u2514\u2500 service.d.ts\n\u2502\n\u2514\u2500 package.json\n</code>"
+  },
+  {
+    "id": "typescript_implementation.html#ts-file-layout-conventions",
+    "category": "Package Layout {#ts-package-file-layout}",
+    "text": "DO follow these conventions where applicable."
+  },
+  {
+    "id": "typescript_implementation.html#ts-no-tsconfig",
+    "category": "Package Layout {#ts-package-file-layout}",
+    "text": "DO NOT include a tsconfig.json file in your package. While generally useful to include, our tsconfig.json files are heavily tied to our monorepo structure and so won't work properly when read from inside an individual package."
+  },
+  {
+    "id": "typescript_implementation.html#ts-can-have-other-files",
+    "category": "Package Layout {#ts-package-file-layout}",
+    "text": "YOU MAY include other files."
+  },
+  {
+    "id": "typescript_implementation.html#ts-no-npmignore",
+    "category": "Package Layout {#ts-package-file-layout}",
+    "text": "DO NOT use .npmignore files to control which files are included in the package. All files must be added to the package explicitly using the package.json files key.\n\nThe following sections describe the package.json file that must be included with every npm package. A compliant package.json file looks like the following:\n\n\n```javascript\n{\n  \"name\": \"@azure/package\",\n  \"description\": \"A pithy but accurate description\",\n  \"keywords\": [\n    \"azure\",\n    \"cloud\",\n    \"...\"\n  ],\n  \"version\": \"1.0.0\",\n  \"author\": \"Microsoft Corporation\",\n  \"main\": \"./dist/index.js\",\n  \"module\": \"./dist-esm/index.js\",\n  \"browser\": {\n    \"./dist-esm/src/index.js\": \"./dist-esm/src/index.browser.js\"\n  },\n  \"types\": \"./dist-esm/index.d.ts\",\n  \"engine\": {\n    \"node\": \"&gt;=6.0.0\"\n  },\n  \"scripts\": {\n    \"build\": \"...\",\n    \"test\": \"...\",\n    \"prepack\": \"npm install &amp;&amp; npm run build\"\n  },\n  \"files\": [\n    \"dist\",\n    \"dist-esm\"\n  ],\n  \"devDependencies\": { /* ... */ },,\n  \"dependencies\": { /* ... */ },\n  \"repository\": \"github:Azure/azure-sdk\",\n  \"homepage\": \"https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/servicebus/service-bus\",\n  \"bugs\": {\n    \"url\": \"https://github.com/Azure/azure-sdk-for-js/issues\"\n  },\n  \"license\": \"MIT\",\n  \"sideEffects\": false\n}\n\n```"
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-name",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set name to @azure/<name>, where <name> is the name of the service. Package names are kebab-case: all lowercase with words joined by dashes."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-homepage",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set homepage to a URL pointing to your library's readme inside the git repo. Since the repository link goes to the monorepo, this link exists to serve as an easier way to reach the actual package's source."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-bugs",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set bugs to an object with a url key pointing to your library's issue tracker: https://github.com/Azure/azure-sdk-for-js/issues."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-repo",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set repository to the JS SDK monorepo - github:Azure/azure-sdk-for-js. Use of the github:user/repo short-hand is recommended."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-description",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set description to a useful but terse description of your library. The description is used and shown when searching for packages on npmjs.org (https://npmjs.org) "
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-keywords",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set keywords to an array that includes at least the entries \"Azure\" and \"cloud\". It must also contain at least the name of your service. It should contain other entries relevant to your SDK."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-author",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set author to \"Microsoft Corporation\"."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-sideeffects",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set sideEffects to false. Side effecting libraries must be explicitly approved during design review. The sideEffects field is used by Webpack (https://webpack.js.org) and potentially other tools as an indicator of how aggressively the package can be optimized.\n\nSide effects are modifications to the runtime environment of the program. For example, including a polyfill library is a sideEffect. It mutates the global environment. Side effects make it harder for tools to optimize your build and should be avoided."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-main-is-cjs",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set main to point to either a CommonJS or a UMD module. Main is the entry point of your application for Node users."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-main-is-not-es6",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO NOT set main to include any ES6+ syntax."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-module",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set module to the ES6 module entrypoint of your application.\n\nTools such as Webpack (https://webpack.js.org) use this key to discover the static module graph of your application for optimization purposes."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-browser",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO include a file map in the browser object if your library supports the browser and needs browser-specific module substitutions.\n\nFor example, the following JSON snippet demonstrates the minimum requirements, assuming you have a separate entrypoint for browsers.\n\n```json\n{\n    \"main\": \"./dist/index.js\",\n    \"browser\": {\n        \"./dist/index.js\": \"./dist/index.browser.js\"\n    }\n}\n\n```"
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-engine-is-present",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set engine to the versions of Node your library supports. See [#ts-supported-node-versions] for Node support requirements."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-required-scripts",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set scripts to an object with the following scripts:\n\"build\": generates the main export of the application.\n\"test\": runs your package's functional test suite for inner-loop development. Additional test tasks (for example, continuous integration tests) are allowed but test must be how developers test your package during development."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-required-scripts-for-development",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO NOT depend on shell scripts to build or test the package.  Shell scripts need to be platform-specific.  Include a script for any task required during development of your package."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-files-required",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set files to an array containing paths of your package contents. Setting this field prevents extraneous files from ending up in your package by being explicit about which files you ship to npm."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-types",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set types to point to the TypeScript type declarations for your library's public surface area, usually \"./types/index.d.ts\"."
+  },
+  {
+    "id": "typescript_implementation.html#ts-package-json-license",
+    "category": "The package.json file {#ts-package-json}",
+    "text": "DO set license to \"MIT\".\n\nModern npm packages often ship multiple source distributions targeting different usage scenarios. Packages must include a CJS or UMD build, an ESM build, and original soure files. Packages may include other source distributions as necessary for their particular usage scenarios. The main downside of including additional source distributions is the increased package size (larger packages mean CIs take longer). However, performance, compatibility, and developer experience goals are often more important."
+  },
+  {
+    "id": "typescript_implementation.html#ts-include-original-source",
+    "category": "Distributions {#ts-source-distros}",
+    "text": "DO include the source code in your source map files' sourcesContent by using the TypeScript compiler option inlineSources.\n\nThe source code in your package helps developers debug your package. Go-to-definition is a quick way to confirm how to use a function. Seeing useful names and readable source code in call stacks helps with debugging. We can aggressively optimize the build artifacts since users won't need to puzzle through the mangled code."
+  },
+  {
+    "id": "typescript_implementation.html#ts-include-cjs",
+    "category": "Distributions {#ts-source-distros}",
+    "text": "DO include a CommonJS (CJS) or UMD build in your package if you intend to support Node."
+  },
+  {
+    "id": "typescript_implementation.html#ts-flatten-umd",
+    "category": "Distributions {#ts-source-distros}",
+    "text": "DO flatten the CommonJS or UMD module.  Rollup (https://rollupjs.org) is recommended for producing a flattened module.\n\nThe process of packing multiple modules into a single file is known as flattening. It's used to significantly reduce the load time for the library.  Flattening can make a measurable impact on cold start times for services such as Azure Functions. While performance-sensitive developers will likely package their applications themselves, faster start-up is still important especially during development."
+  },
+  {
+    "id": "typescript_implementation.html#ts-include-esm",
+    "category": "Distributions {#ts-source-distros}",
+    "text": "DO include an ECMAScript Module (ESM) build in your package."
+  },
+  {
+    "id": "typescript_implementation.html#ts-include-esm-not-flattened",
+    "category": "Distributions {#ts-source-distros}",
+    "text": "DO NOT flatten the ESM build.\n\nAn ESM distribution is consumed by tools such as Webpack (https://webpack.js.org) that optimize the module graph. It should be \"transpiled\" to support the runtime versions you're targeting. Versions of Webpack before Webpack 4.0 produce better optimized bundles if the ESM build is flattened. However, flattening doesn't play so well with tree-shaking. The latest versions of Webpack do a better job when using an unflattened ESM build."
+  },
+  {
+    "id": "typescript_implementation.html#ts-no-browser-bundle",
+    "category": "Distributions {#ts-source-distros}",
+    "text": "\n\n\n\nDO NOT include a browser bundle in your package. Shipping browser bundles is convenient for users but comes with some significant downsides too. For example, browser bundles must flatten the entire dependency tree and re-distribute all open source components it depends on. This requires ThirdPartyNotices.txt to be accurate which is a complex and error-prone. Security vulnerabilities in any dependency requires servicing the browser bundle as well.\n\nIn practice, users working on production applications will likely be using a bundler. Moreover, modern bundlers are much easier to use relative to earlier incarnation. Azure client libraries should work with most popular bundlers."
+  },
+  {
+    "id": "typescript_implementation.html#ts-modules-only-named",
+    "category": "Modules {#ts-modules}",
+    "text": "DO have named exports at the top level"
+  },
+  {
+    "id": "typescript_implementation.html#ts-modules-no-default",
+    "category": "Modules {#ts-modules}",
+    "text": "DO NOT have a default export at the top level\n\nAzure packages authored using TypeScript export standard ES6 modules. As Node doesn't support ES6 modules natively, authoring ES6 modules for consumption in Node has a bit of friction. Most notably, a commonJS package can only import a single value.\n\n[RequireJS]: https://requirejs.org/\n\n[azure/azure-sdk-for-js]: https://github.com/azure/azure-sdk-for-js\n[TypeScript client library template]: https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/template/template\n[cjs]: https://nodejs.org/api/modules.html\n[esm]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import\n[namespace guidelines]: typescript_design.html#ts-namespaces"
+  }
+]

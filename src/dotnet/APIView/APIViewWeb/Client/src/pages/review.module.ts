@@ -94,28 +94,23 @@ function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, 
             let rowClasses = $(value).attr("class");
             if (rowClasses) {
                 if (rowClasses.match(/comment-row/)) {
-                    // Ensure comment icon is shown on parent row that have comments in its section or subsection
+                    // Ensure comment icon is shown on parent row that have comments in its subsection
                     let rowClassList = rowClasses.split(/\s+/);
-                    let sectionClass = rowClassList.find((c) => c.match(/code-line-section-content-[0-9]+/));
                     let levelClass = rowClassList.find((c) => c.match(/lvl_[0-9]+_child_[0-9]+/));
-                    if (sectionClass && levelClass) {
-                        let levelClassParts = levelClass.split("_");
-                        let level = levelClassParts[1];
-                        let headingLvl = levelClassParts[3];
-                        $(`.${sectionClass}`).each(function(idx, el) {
-                            let classList = hp.getElementClassList(el);
-                            let lvlClass = classList.find((c) => c.match(/lvl_[0-9]+_parent_[0-9]+/));
-                            if (lvlClass && lvlClass.length > 0) {
-                                let lvlClassParts = lvlClass.split("_");
-                                if (Number(lvlClassParts[1]) == Number(level) && Number(lvlClassParts[3]) == Number(headingLvl) && classList.includes("comment-row")) {
-                                    return false;
-                                }
-
-                                if (Number(lvlClassParts[1]) <= Number(level) && Number(lvlClassParts[3]) <= Number(headingLvl) && !classList.includes("comment-row")) {
-                                    $(el).find(".icon-comments").addClass("comment-in-section");
-                                }
+                    if (levelClass)
+                    {
+                        let level = Number(levelClass.split('_')[1]) - 1;
+                        let parent = $(value);
+                        while (level > 0)
+                        {
+                            parent = parent.prevAll(`[class*='lvl_${level}_parent']:first`);
+                            if (parent)
+                            {
+                                parent.find(".icon-comments").addClass("comment-in-section");
                             }
-                        });
+                            level--;
+                        }
+
                     }
                 }
 
@@ -129,6 +124,9 @@ function toggleSectionContent(headingRow : JQuery<HTMLElement>, sectionContent, 
                 }
             }
         });
+
+        // Add jump-lint event for classes
+        addClickEventToClassesInSections();
 
         // Update section heading icons to open state
         updateSectionHeadingIcons(CodeLineSectionState.shown, caretIcon, headingRow);
@@ -213,6 +211,9 @@ function toggleSubSectionContent(headingRow : JQuery<HTMLElement>, subSectionLev
                 }
             }
         });
+
+        // Add jump-lint event for classes
+        addClickEventToClassesInSections();
 
         // Update section heading icons to open state
         updateSectionHeadingIcons(CodeLineSectionState.shown, caretIcon, headingRow);
@@ -443,3 +444,294 @@ export function loadPreviouslyShownSections() {
     // remove toast
     $("#loadPreviouslyShownSectionsToast").remove();
 }
+
+/**
+* Call a callback function after expanging a codeline section
+* @param { String } targetAnchorId
+* @param { Function } callback
+*/
+export function runAfterExpandingCodeline(targetAnchorId, callback) {
+  var targetAnchor = document.getElementById(targetAnchorId);
+  if (targetAnchor) {
+    var targetAnchorRow = $(targetAnchor).parents(".code-line").first();
+    var rowFoldSpan = targetAnchorRow.find(".row-fold-caret");
+    if (rowFoldSpan.length > 0) {
+      var caretIcon = rowFoldSpan.children("i");
+      var caretClasses = caretIcon.attr("class");
+      var caretDirection = caretClasses ? caretClasses.split(' ').filter(c => c.startsWith('fa-angle-'))[0] : "";
+      if (caretDirection.endsWith("right")) {
+        window.location.hash = `#${targetAnchorId}`;
+        $.when(toggleCodeLines(targetAnchorRow)).then(callback);
+      }
+    }
+  }
+}
+
+/**
+* Adds custom click event to classes in codeline sections
+*/
+export function addClickEventToClassesInSections() {
+  $(".code-inner li a").off("click").on("click", function (e) {
+        e.preventDefault();
+        const anchorHash = $(this).attr("href");
+        if (anchorHash) {
+            const targetAnchorId = anchorHash.replace('#', '');
+            const definitionsAnchorId = targetAnchorId.substring(0, targetAnchorId.lastIndexOf("Definitions") + "Definitions".length)
+            const target = $(`[data-line-id="${targetAnchorId}"]`);
+            if (target.length == 0 || target.hasClass("d-none")) {
+                runAfterExpandingCodeline(definitionsAnchorId, function () {
+                window.location.hash = anchorHash;
+                });
+            }
+            else {
+                window.location.hash = anchorHash;
+            }
+        }
+  });
+}
+
+/**
+* Check if targetAnchor is present, if its not present, expand the section and scroll to the targetAnchor
+* @param { String } uriHash  the hash/id of the anchor we are looking for
+* @param { String [] } mainSections the sections to be expanded if the targetAnchor is not present or hidden
+*/
+export function findTargetAnchorWithinSections(uriHash : string, mainSections: string[] = ["Paths", "Definitions"]) {
+    if (uriHash.startsWith('#'))
+        uriHash = uriHash.replace('#', '');
+
+    uriHash = decodeURIComponent(uriHash);
+    let targetAnchor = $(`[id="${uriHash}"]`);
+
+    if (targetAnchor.length == 0)
+        targetAnchor = $(`[data-line-id="${uriHash}"]`);
+
+    if (targetAnchor.length == 0) {
+        if (mainSections.length == 0) {
+            return;
+        }
+
+        const anchorBase = uriHash.substring(0, uriHash.indexOf("json") + "json".length);
+        let anchorToExpand = anchorBase;
+        if (uriHash.includes("-Paths-")) {
+            anchorToExpand = anchorToExpand + "-" + mainSections.shift();
+        }
+        else {
+            anchorToExpand = anchorToExpand + "-" + mainSections.pop();
+        }
+        runAfterExpandingCodeline(anchorToExpand, function() {
+            findTargetAnchorWithinSections(uriHash, mainSections)
+        });
+    }
+    else {
+        const anchorCodeLineRow = $(targetAnchor[0]).hasClass("code-line") ? $(targetAnchor[0]) : $(targetAnchor[0]).parents(".code-line").first();
+
+        if (anchorCodeLineRow.hasClass("d-none")) {
+            // Get anchor parents up to a level thats not hidden, expand each before scrolling to the anchor
+            const parentsToExpand = new Map<number, JQuery<HTMLElement>>();
+            let parent = anchorCodeLineRow.prevAll(`[class*='parent']:first`);
+            let parentClass = parent.attr("class")?.split(/\s+/).find((c) => c.match(/lvl_[0-9]+_parent_[0-9]+/));
+            let parentLevel = Number(parentClass?.split("_")[1]);
+
+            while(parentLevel > 0)
+            {
+                if (!parentsToExpand.has(parentLevel))
+                    parentsToExpand.set(parentLevel, parent);
+
+                if (!parent.hasClass("d-none"))
+                    break;
+
+                parent = parent.prevAll(`[class*='parent']:first`);
+                parentClass = parent.attr("class")?.split(/\s+/).find((c) => c.match(/lvl_[0-9]+_parent_[0-9]+/));
+                parentLevel = Number(parentClass?.split("_")[1]);
+            }
+
+            while (parentsToExpand.size > 0)
+            {
+                const key = Math.min(...parentsToExpand.keys());
+                const rowToExpand = parentsToExpand.get(key);
+
+                // Expand Row
+                var rowFoldSpan = rowToExpand!.find(".row-fold-caret");
+                if (rowFoldSpan.length > 0) {
+                var caretIcon = rowFoldSpan.children("i");
+                var caretClasses = caretIcon.attr("class");
+                var caretDirection = caretClasses ? caretClasses.split(' ').filter(c => c.startsWith('fa-angle-'))[0] : "";
+                    if (caretDirection.endsWith("right")) {
+                        toggleCodeLines(rowToExpand!)
+                    }
+                }
+
+                parentsToExpand.delete(key);
+            }
+            window.location.hash = `#${uriHash}`;
+        }
+        else {
+            window.location.hash = `#${uriHash}`;
+        }
+
+    }
+}
+
+/**
+ * adds the @approver to @lowerTextSpan of review page
+ * @param lowerTextSpan HTMLElement of the span that contains who approved the review or pending approval
+ * @param approvedByText string that comes before list of approvers
+ * @param approverHref relative href of user's apiview profile
+ * @param approver GitHub username of the review approver 
+ */
+export function addApprover(lowerTextSpan: HTMLElement, approvedByText: string, approverHref: string, approver: any) {
+    if (lowerTextSpan.textContent?.includes(approvedByText)) {
+        lowerTextSpan.append(" , ");
+    } else {
+        lowerTextSpan.textContent = approvedByText;
+        addApprovedBorder();
+    }
+    addApproverHrefToApprovers(lowerTextSpan, approverHref, approver);
+  }
+  
+  /**
+   * Removes the @approver from @lowerTextSpan of review page
+   * @param lowerTextSpan HTMLElement of the span that contains who approved the review or pending approval
+   * @param approver GitHub username of the review approver
+   * @param approvalPendingText string of approval pending text to use when removing the last approver
+   */
+  export function removeApprover(lowerTextSpan: HTMLElement, approver: string, approvalPendingText: string) {
+    let children = lowerTextSpan.children;
+    let numApprovers = children.length;
+  
+    if (numApprovers > 1) {
+      removeApproverFromApproversList(children, approver);
+    } else {
+      lowerTextSpan.textContent = approvalPendingText;
+      removeApprovalBorder();
+    }
+  }
+  
+  /**
+   * adds the @approver with a hyperlink to their apiview profile to @lowerTextSpan
+   */
+  export function addApproverHrefToApprovers(lowerTextSpan: HTMLElement, approverHref: string, approver: any) {
+    $(lowerTextSpan).append('<a href="' + approverHref + '">' + approver + '</a>');
+  }
+  
+  /**
+   * adds the text above the approve button to indicate whether the current user approved the review
+   */
+  export function addUpperTextSpan(approvesCurrentRevisionText: string) {
+    let $upperTextSpan = $("<span>").text(approvesCurrentRevisionText).addClass("small text-muted");
+    let $upperTextForm = $("ul#approveCollapse form.form-inline");
+    $upperTextForm.prepend($upperTextSpan);
+  }
+  
+  /**
+   * change the button state from a green "not approved" to grey "approved"
+   */
+  export function addButtonApproval() {
+    let $approveBtn = $("form.form-inline button.btn.btn-success");
+    $approveBtn.removeClass("btn-success");
+    $approveBtn.addClass("btn-outline-secondary");
+    $approveBtn.text("Revert API Approval");
+  }
+  
+  /**
+   * change the button state from a grey "approved" to green "not approved" 
+   */
+  export function removeButtonApproval() {
+    let $approveBtn = $("form.form-inline button.btn.btn-outline-secondary");
+    $approveBtn.removeClass("btn-outline-secondary");
+    $approveBtn.addClass("btn-success");
+    $approveBtn.text("Approve");
+  }
+  
+  /**
+   * change the review panel border state from grey "not approved" to green "approved"
+   */
+  export function addApprovedBorder() {
+    let reviewLeft = $("#review-left");
+    reviewLeft.addClass("review-approved");
+    reviewLeft.removeClass("border");
+    reviewLeft.removeClass("rounded-1");
+  
+    let reviewRight = $("#review-right");
+    reviewRight.addClass("review-approved");
+    reviewRight.removeClass("border");
+    reviewRight.removeClass("rounded-1");
+  }
+  
+  /**
+   * change the review panel border state from green "approved" to grey "not approved"
+   */
+  export function removeApprovalBorder() {
+    let $reviewLeft = $("#review-left");
+    $reviewLeft.removeClass("review-approved");
+    $reviewLeft.addClass("border");
+    $reviewLeft.addClass("rounded-1");
+  
+    let $reviewRight = $("#review-right");
+    $reviewRight.removeClass("review-approved");
+    $reviewRight.addClass("border");
+    $reviewRight.addClass("rounded-1");
+  }
+  
+  /**
+   * parse the approval spans for its existence and order
+   * @param $approvalSpans may contain <upper text>, <approve button>, and/or <lower text>
+   * @param approvedByText string for <lower text> that indicates preexisting approvers
+   * @param approvalPendingText string for <lower text> that indicates no current approvers
+   * @param approvesCurrentRevisionText string for <upper text> that indicates the current user did not approve
+   * @returns a dictionary with the index of the upper and lower text elements. Value is -1 if an element does not exist.
+   */
+  export function parseApprovalSpanIndex($approvalSpans: JQuery<HTMLElement>, approvedByText: string, approvalPendingText: string, approvesCurrentRevisionText: string) {
+    let indexResult = {
+        "approvers": -1,
+        "upperText": -1,
+    };
+  
+    for (var i = 0; i < $approvalSpans.length; i++) {
+      let content = $approvalSpans[i].textContent;
+  
+      if (!content) {
+        return indexResult;
+      }
+  
+      if (content.includes(approvedByText) || content.includes(approvalPendingText)) {
+            indexResult["approvers"] = i;
+        }
+      if (content.includes(approvesCurrentRevisionText)) {
+        indexResult["upperText"] = i;
+        }
+    }
+  
+    return indexResult;
+  }
+  
+  /**
+   * call when the current user approves the current review. removes the upper text 
+   * @param upperTextIndex index of the upper text in @$approvalSpans
+   * @param $approvalSpans span that includes revision approval block 
+   */
+  export function removeUpperTextSpan(upperTextIndex: number, $approvalSpans: JQuery<HTMLElement>) {
+    if (upperTextIndex !== -1) {
+        let upperTextSpan: HTMLElement = $approvalSpans[upperTextIndex];
+      upperTextSpan.remove();
+    }
+  }
+  
+  /**
+   * remove the @approver from list of @approvers 
+   * @param approvers list of preexisting approvers
+   * @param approver GitHub username of user to remove from the list 
+   */
+  export function removeApproverFromApproversList(approvers, approver) {
+    for (var i = 0; i < approvers.length; i++) {
+      if (approvers[i].innerHTML === approver) {
+        if (i === 0) {
+          approvers[i].nextSibling?.remove();
+        } else {
+          approvers[i].previousSibling?.remove();
+        }
+        approvers[i].remove();
+        break;
+      }
+    }
+  }

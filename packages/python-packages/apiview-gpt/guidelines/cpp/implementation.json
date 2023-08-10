@@ -1,0 +1,372 @@
+[
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-enum",
+    "category": "Enumeration-like Structs",
+    "text": "DO name enum classes and enumerators using PascalCase."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-enum-class",
+    "category": "Enumeration-like Structs",
+    "text": "DO use enum class for enumerations. For example:\n\n{% highlight cpp %}\nenum class PinState {\nOff,\nOn\n};\n{% endhighlight %}\n\nSubtypes of Operation<T> are returned from service client methods invoking long running operations."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-lro-return",
+    "category": "Implementing Subtypes of Operation<T> {#cpp-implement-operation}",
+    "text": "DO check the value of IsDone in subclass implementations of PollInternal and PollUntilDoneInternal and immediately return the result of GetRawResponse if it is true.\n\nTODO: Show an example implementation for Operation."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-lro-return",
+    "category": "Implementing Subtypes of Operation<T> {#cpp-implement-operation}",
+    "text": "DO throw from methods on Operation<T> subclasses in the following scenarios.\nIf an underlying service operation call from Poll or PollUntilDone throws, re-throw RequestFailedException or its subtype.\nIf the operation completes with a non-success result, throw RequestFailedException or its subtype from Poll or PollUntilDone.\n\nInclude any relevant error state information in the exception message.\n\n\nInclude any relevant error state information in the exception message.\nInclude any relevant error state information in the exception message.\n\nTODO: Show an example of how to handle errors.\nIf the Value property is evaluated after the operation failed (HasValue is false and IsDone is true) throw the same exception as the one thrown when the operation failed.\n\nTODO: Show an example of how to throw in this case.\nIf the Value property is evaluated before the operation is complete (IsDone is false) throw TODO: What to throw.\n\nThe exception message should be: \"The operation has not yet completed.\"\n\n\nThe exception message should be: \"The operation has not yet completed.\"\nThe exception message should be: \"The operation has not yet completed.\"\n\nTODO: DO we want this behavior.\nTODO: Show an example of how to throw in this case.\n\nTODO: This section needs to be driven by code in the Core library.\n\nRequest logging will be done automatically by the HttpPipeline.  If a client library needs to add custom logging, follow the same guidelines and mechanisms as the pipeline logging mechanism.  If a client library wants to do custom logging, the designer of the library must ensure that the logging mechanism is pluggable in the same way as the HttpPipeline logging policy."
+  },
+  {
+    "id": "cpp_implementation.html#dotnet-logging-follow-guidelines",
+    "category": "Logging",
+    "text": "DO follow the logging section of the Azure SDK General Guidelines if logging directly (as opposed to through the HttpPipeline).\n\nTODO: This additional logging info may need a new home.\n\nClient libraries must support robust logging mechanisms so that the consumer can adequately diagnose issues with the method calls and quickly determine whether the issue is in the consumer code, client library code, or service.\n\nIn general, our advice to consumers of these libraries is to establish logging in their preferred manner at the WARNING level or above in production to capture problems with the application, and this level should be enough for customer support situations.  Informational or verbose logging can be enabled on a case-by-case basis to assist with issue resolution."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-use-azurecore",
+    "category": "C++ Logging specific details",
+    "text": "DO use the Azure Core library for logging."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-pluggable-logger",
+    "category": "C++ Logging specific details",
+    "text": "DO support pluggable log handlers."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-console-logger",
+    "category": "C++ Logging specific details",
+    "text": "DO make it easy for a consumer to enable logging output to the console. The specific steps required to enable logging to the console must be documented."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-levels",
+    "category": "C++ Logging specific details",
+    "text": "DO use one of the following log levels when emitting logs: Verbose (details), Informational (things happened), Warning (might be a problem or not), and Error."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-failure",
+    "category": "C++ Logging specific details",
+    "text": "DO use the Error logging level for failures that the application is unlikely to recover from (out of memory, etc.)."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-warning",
+    "category": "C++ Logging specific details",
+    "text": "DO use the Warning logging level when a function fails to perform its intended task. This generally means that the function will raise an exception.  Do not include occurrences of self-healing events (for example, when a request will be automatically retried)."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-slowlinks",
+    "category": "C++ Logging specific details",
+    "text": "YOU MAY log the request and response (see below) at the Warning when a request/response cycle (to the start of the response body) exceeds a service-defined threshold.  The threshold should be chosen to minimize false-positives and identify service issues."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-info",
+    "category": "C++ Logging specific details",
+    "text": "DO use the Informational logging level when a function operates normally."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-verbose",
+    "category": "C++ Logging specific details",
+    "text": "DO use the Verbose logging level for detailed troubleshooting scenarios. This is primarily intended for developers or system administrators to diagnose specific failures."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-no-sensitive-info",
+    "category": "C++ Logging specific details",
+    "text": "DO only log headers and query parameters that are in a service-provided \"allow-list\" of approved headers and query parameters.  All other headers and query parameters must have their values redacted."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-requests",
+    "category": "C++ Logging specific details",
+    "text": "DO log request line and headers as an Informational message. The log should include the following information:\nThe HTTP method.\nThe URL.\nThe query parameters (redacted if not in the allow-list).\nThe request headers (redacted if not in the allow-list).\nAn SDK provided request ID for correlation purposes.\nThe number of times this request has been attempted."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-responses",
+    "category": "C++ Logging specific details",
+    "text": "DO log response line and headers as an Informational message.  The format of the log should be the following:\nThe SDK provided request ID (see above).\nThe status code.\nAny message provided with the status code.\nThe response headers (redacted if not in the allow-list).\nThe time period between the first attempt of the request and the first byte of the body."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-cancellations",
+    "category": "C++ Logging specific details",
+    "text": "DO log an Informational message if a service call is cancelled.  The log should include:\nThe SDK provided request ID (see above).\nThe reason for the cancellation (if available)."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-logging-exceptions",
+    "category": "C++ Logging specific details",
+    "text": "DO log exceptions thrown as a Warning level message. If the log level set to Verbose, append stack trace information to the message.\n\n**DRAFT:** Guidance coming soon ...\n\nTODO: Add guidance for distributed tracing implementation\n\nTODO: Add guidance regarding user agent strings\n\nWe believe testing is a part of the development process, so we expect unit and integration tests to be a part of the source code.  All components must be covered by automated testing, and developers should strive to test corner cases and main flows for every use case.\n\nAll code should contain, at least, requirements, unit tests, end-to-end tests, and samples.\n\nTests should be written using the [Google Test][] library.\n\nUnlike many other programming languages, which have large runtimes, the C++ standard runtime is limited in functionality and scope. The standard library covers areas such as memory and string manipulation, standard input/output, floating point and others. However, many of the features required for modern applications and services; e.g. those required for networking and advanced memory management are not part of the standard library. Instead, many of those features are included in open source C++ libraries that are also cross-platform with good support for Windows, OSX and most Linux platforms. Because of that support and because Azure SDK implementations will need such functionality, it is expected that client libraries will take dependencies on these libraries.  Ensure the version matches to allow for compatibility when an application integrates multiple client libraries."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-approved-dependencies",
+    "category": "Language-specific other",
+    "text": "DO utilize the following libraries as needed for commonly required operations:\n\n| Library    | Version | Usage                                               |\n|------------|---------|-----------------------------------------------------|\n| libxml2    | 2.7.6   | XML parser - http://www.xmlsoft.org/                |\n| gtest      | 1.10.0  | Google Test - https://github.com/google/googletest/ |\n\n> Note: None of the libraries in this list currently throw C++ exceptions; policy for propagation\n> of C++ exceptions from dependencies needs to be evaluated on a dependency-by-dependency basis.\n"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-test-implicit-assign",
+    "category": "Language-specific other",
+    "text": "DO NOT use implicit assignment inside a test.  This is generally an accidental omission of the second = of the logical compare. The following is confusing and prone to error.\n\n{% highlight cpp %}\nif (a = b) { ... }\n{% endhighlight %}\n\nDoes the programmer really mean assignment here? Sometimes yes, but usually no. Instead use explicit tests and avoid assignment with an implicit test. The recommended form is to do the assignment before doing the test:\n\n{% highlight cpp %}\na = b;\nif (a) { ... }\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-no-register",
+    "category": "Language-specific other",
+    "text": "DO NOT use the register keyword.  Modern compilers will put variables in registers automatically."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-be-const-correct",
+    "category": "Language-specific other",
+    "text": "DO be const correct.  C++ provides the const keyword to allow passing as parameters objects that cannot change to indicate when a method doesn't modify its object. Using const in all the right places is called \"const correctness.\""
+  },
+  {
+    "id": "cpp_implementation.html#cpp-use-hashif",
+    "category": "Language-specific other",
+    "text": "DO use #if instead of #ifdef.  For example:\n\n{% highlight cpp %}\n// Bad example\n#ifdef DEBUG\nTemporaryDebuggerBreak();\n#endif\n{% endhighlight %}\n\nSomeone else might compile the code with turned-of debug info like:\n\n{% highlight cpp %}\ncc -c lurker.cc -DDEBUG=0\n{% endhighlight %}\n\nAlway use #if if you have to use the preprocessor. This works fine, and does the right thing, even if DEBUG is not defined at all (!)\n\n{% highlight cpp %}\n// Good example\n#if DEBUG\nTemporaryDebuggerBreak();\n#endif\n{% endhighlight %}\n\nIf you really need to test whether a symbol is defined or not, test it with the defined() construct, which allows you to add more things later to the conditional without editing text that's already in the program:\n\n{% highlight cpp %}\n#if !defined(USER_NAME)\n#define USER_NAME \"john smith\"\n#endif\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-large-comments",
+    "category": "Language-specific other",
+    "text": "DO\nUse #if to comment out large code blocks.\n\nSometimes large blocks of code need to be commented out for testing.  The easiest way to do this is with an #if 0 block:\n\n{% highlight cpp %}\nvoid Example()\n{\ngreat looking code\n\n<code>#if 0\n  many lines  of code\n#endif\n\nmore code\n</code>\n\n}\n{% endhighlight %}\n\nYou can't use /**/ style comments because comments can't contain comments and a large block of your code will probably contain connects.\n\nDo not use #if 0 directly.  Instead, use descriptive macro names:\n\n{% highlight cpp %}\n#if NOT_YET_IMPLEMENTED\n#if OBSOLETE\n#if TEMP_DISABLED\n{% endhighlight %}\n\nAlways add a short comment explaining why it is commented out."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-",
+    "category": "Language-specific other",
+    "text": "DO NOT put data definitions in header files.  For example, this should be avoided:\n\n{% highlight cpp %}\n/* aheader.hpp */\nint x = 0;\n{% endhighlight %}\n\nIt's bad magic to have space consuming code silently inserted through the innocent use of header files.  It's not common practice to define variables in the header file, so it will not occur to developers to look for this when there are problems.  Instead, define the variable once in a source file and then use an extern statement to reference it in the header file."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-no-magic-numbers",
+    "category": "Language-specific other",
+    "text": "DO NOT use magic numbers. A magic number is a bare naked number used in source code. It's magic because no-one will know what it means after a while.  This significantly reduces maintainability. For example:\n\n{% highlight cpp %}\n// Don't write this.\nif (19 == foo) { RefundLotsMoney(); }}\nelse           { HappyDaysIKnowWhyIAmHere(); }\n{% endhighlight %}\n\nInstead of magic numbers, use a real name that means something. You can use constexpr for names. For example:\n\n{% highlight cpp %}\nconstexpr int WE_GOOFED = 19;\n\nif (WE_GOOFED == foo) { RefundLotsMoney(); }\nelse                  { HappyDaysIKnowWhyIAmHere(); }\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-check-syscall-errors",
+    "category": "Language-specific other",
+    "text": "DO check every system call for an error return, unless you know you wish to ignore errors. For example, printf returns an error code but it is rarely relevant. Cast the return to (void) if you do not care about the error code.\n\n{% highlight cpp %}\n(void)printf(\"The return value is ignored\");\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-include-errorstr",
+    "category": "Language-specific other",
+    "text": "DO include the system error text when reporting system error messages."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-init-all-vars",
+    "category": "Complexity Management",
+    "text": "YOU SHOULD Initialize all variables. Only leave them\nuninitialized if there is a real performance reason to do so. Use static and dynamic analysis tools to\ncheck for uninitialized access. You may leave \"result\" variables uninitialized so long as they clearly do\nnot escape from the innermost lexical scope."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-function-size",
+    "category": "Complexity Management",
+    "text": "YOU SHOULD limit function bodies to one page of code (40 lines, approximately)."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-document-null-bodies",
+    "category": "Complexity Management",
+    "text": "DO document null statements.  Always document a null body for a for or while statement so that it is clear the null body is intentional."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-use-explicit-compares",
+    "category": "Complexity Management",
+    "text": "DO use explicit comparisons when testing for failure.  Use if (FAIL != f()) rather than if (f()), even though FAIL may have the value 0 which C considers to be false.  An explicit test will help you out later when somebody decides that a failure return should be -1 instead of 0.\n\nExplicit comparison should be used even if the comparison value will never change.  e.g. if (!(bufsize % sizeof(int))) should be written as if (0 == (bufsize % sizeof(int)) to reflect the numeric (not boolean) nature of the test.\n\nA frequent trouble spot is using strcmp to test for string equality.  You should never use a default action.  The preferred approach is to use an inline function:\n\n{% highlight cpp %}\ninline bool StringEqual(char *a, char *b) {\nreturn (0 == strcmp(a, b));\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-embedded-assign",
+    "category": "Complexity Management",
+    "text": "~ Should\nYOU SHOULD NOT use embedded assignments.  There is a time and a place for embedded assignment statements.  In some constructs, there is no better way to accomplish the results without making the code bulkier and less readable.\n\n{% highlight cpp %}\nwhile (EOF != (c = getchar())) {\n/* process the character */\n}\n{% endhighlight %}\n\nHowever, one should consider the tradeoff between increased speed and decreased maintainability that results when embedded assignments are used in artificial places."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-templates",
+    "category": "Templates",
+    "text": "DO name function templates and class templates the same as one would name non-templates."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-templates-parameters",
+    "category": "Templates",
+    "text": "DO name template arguments with PascalCase."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-macros-avoid",
+    "category": "Macros",
+    "text": "YOU SHOULD avoid use of macros. It is acceptable to use macros in the following situations. Use outside of these situations should contact the Azure Review Board.\nPlatform, compiler, or other environment detection (for example, _WIN32 or _MSC_VER).\nEmission or suppression of diagnostics.\nEmission or supression of debugging asserts.\nImport declarations. (__declspec(dllimport), __declspec(dllexport))\n\nTODO: Need to involve Charlie in how we want to talk about import declarations"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-macros-caps",
+    "category": "Macros",
+    "text": "DO name macros with ALL_CAPITAL_SNAKE_CASE."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-macros-form",
+    "category": "Macros",
+    "text": "DO prepend macro names with AZ_<SERVICENAME> to make macros unique."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-macros-functions",
+    "category": "Macros",
+    "text": "DO NOT use macros where an inline function or function template would achieve the same effect. Macros are not required for code efficiency.\n\n{% highlight cpp %}\n// Bad\n##define MAX(a,b) ((a > b) ? a : b)\n\n// Good\ntemplate\n[[nodiscard]] inline T Max(T x, T y) {\nreturn x > y ? x : y;\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-macros-donoevil",
+    "category": "Macros",
+    "text": "DO NOT change syntax via macro substitution.  It makes the program unintelligible (https://gist.github.com/aras-p/6224951) to all but the perpetrator."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-rule-of-zero",
+    "category": "Type Safety Recommendations",
+    "text": "DO In class types, implement the \"rule of zero\", the \"rule of 3\", or the \"rule of 5\". That is, of the special member functions, a type should implement exactly one of the following:\nNo copy constructor, no copy assignment operator, no move constructor, no move assignment operator, or destructor.\nA copy constructor, a copy assignment operator, no move constructor, no move assignment operator, and a destructor.\nA copy constructor, a copy assignment operator, a move constructor, a move assignment operator, and a destructor.\n\nThis encourages use of resource managing types like std::unique_ptr (which implements the rule of 5) as a compositional tool in more complex data models that implement the rule of zero."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-initialize-all-data",
+    "category": "Type Safety Recommendations",
+    "text": "DO provide types which are usable when default-initialized. (That is, every constructor must initialize all type invariants, not assume members have default values of 0 or similar.)\n\n{% highlight cpp %}\nclass TypeWithInvariants {\nint m_member;\npublic:\nTypeWithInvariants() noexcept : member(0) {} // Good: initializes all parts of the object\n[[nodiscard]] int Next() noexcept  {\nreturn m_member++;\n}\n};\n\nclass BadTypeWithInvariants {\nint m_member;\npublic:\nBadTypeWithInvariants() {} // Bad: Does not initialize all parts of the object\nint Next() {\nreturn m_member++;\n}\n};\n\nvoid TheCustomerCode() {\nTypeWithInvariants a{}; // value-initializes a TypeWithInvariants, OK\nTypeWithInvariants b; // default-initializes a TypeWithInvariants, we want this to be OK\nBadTypeWithInvariants c{}; // value-initializes a BadTypeWithInvariants, OK\nBadTypeWithInvariants d; // default-initializes a BadTypeWithInvariants, this will trigger\n// undefined behavior if anyone calls d.Next()\n}\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-no-getters-or-setters",
+    "category": "Type Safety Recommendations",
+    "text": "DO define getters and setters for data transfer objects.  Expose the members directly to users unless you need to enforce some constraints on the data.  For example:\n{% highlight cpp %}\n// Good - no restrictions on values\nstruct ExampleRequest {\nint RetryTimeoutMs;\nconst char* Text;\n};\n\n// Bad - no restrictions on parameters and access is not idiomatic\nclass ExampleRequest {\nint m_retryTimeoutMs;\nconst char* m_text;\npublic:\n[[nodiscard]] int GetRetryTimeoutMs() const noexcept {\nreturn m_retryTimeoutMs;\n}\nvoid SetRetryTimeoutMs(int i) noexcept {\nm_retryTimeoutMs = i;\n}\n[[nodiscard]] const char* GetText() const noexcept {\nreturn m_text;\n}\nvoid SetText(const char* i) noexcept {\nm_text = i;\n}\n};\n\n// Good - type maintains invariants\nclass TypeWhichEnforcesDataRequirements {\nsize_t m_size;\nint* m_data;\npublic:\n[[nodiscard]] size_t GetSize() const noexcept {\nreturn m_size;\n}\nvoid AddData(int i) noexcept {\nm_data[m_size++] = i;\n}\n};\n\n// Also Good\nclass TypeWhichClamps {\nint m_retryTimeout;\npublic:\n[[nodiscard]] int GetRetryTimeout() const noexcept {\nreturn m_retryTimeout;\n}\nvoid SetRetryTimeout(int i) noexcept {\nif (i < 0) i = 0; // clamp i to the range [0, 1000]\nif (i > 1000) i = 1000;\nm_retryTimeout = i;\n}\n};\n\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-optimize-position",
+    "category": "Type Safety Recommendations",
+    "text": "DO declare variables in structures organized by use in a manner that minimizes memory wastage because of compiler alignment issues and size.  All things being equal, use alphabetical ordering.\n\n{% highlight cpp %}\n// Bad\nstruct Foo {\nint A; // the compiler will insert 4 bytes of padding after A to align B\nchar *B;\nint C;\nchar *D;\n};\n\n// Good\nstruct Foo {\nint A; // C is now stored in that padding\nint C;\nchar *B;\nchar *D;\n};\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-enumsareinternal",
+    "category": "Type Safety Recommendations",
+    "text": "DO NOT use enums to model any data sent to the service. Use enums only for types completely internal to the client library. For example, an enum to disable Nagle's algorithm would be OK, but an enum to ask the service to create a particular entity kind is not."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-no-const-or-reference-members",
+    "category": "Const and Reference members",
+    "text": "DO NOT declare types with const or reference members. Const and reference members artificially make your types non-Regular as they aren't assignable, and have surprising interactions with C++ Core language rules. For example, many accesses to const or reference members would need to involve use of std::launder to avoid undefined behavior, but std::launder was added in C++17, a later version than the SDKs currently target. See C++ Core Working Group CWG1116 \"Aliasing of union members\" (http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#1116)  CWG1776 \"Replacement of class objects containing reference members\" (http://www.open-std.org/jtc1/sc22/wg21/docs/cwg_defects.html#1776)  and P0137R1 \"Replacement of class objects containing reference members\" (http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2016/p0137r1.html) for additional details.\n\nIf you want a type to provide effectively const data except assignment, declare all your member functions const. Const member functions only get a const view of the class' data.\n\n{% highlight cpp %}\n// Bad\nclass RetrySettings {\nconst int m_maxRetryCount;\npublic:\nint GetMaxRetryCount() {\n// intent: disallow m_maxRetryCount = aDifferentValue;\nreturn m_maxRetryCount;\n}\n};\n\n// Good\nclass RetrySettings {\nint m_maxRetryCount;\npublic:\nint GetMaxRetryCount() const {\n// still prohibits m_maxRetryCount = aDifferentValue; without making RetrySettings un-assignable\nreturn m_maxRetryCount;\n}\n};\n{% endhighlight %}\n\nThe following integer rules are listed in rough priority order. Integer size selections are primarily driven by service future compatibility. For example, just because today a service might have a 2 GiB file size limit does not mean that it will have such a limit forever. We believe 64 bit length limits will be sufficient for sizes an individual program works with for the foreseeable future."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-integer-files",
+    "category": "Integer sizes",
+    "text": "DO Represent file sizes with int64_t, even on 32 bit platforms."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-integer-memory-buffers",
+    "category": "Integer sizes",
+    "text": "DO Represent memory buffer sizes with size_t or ptrdiff_t as appropriate for the environment. Between the two, choose the type likely to need the fewest conversions in application. For example, we would prefer signed ptrdiff_t in most cases because signed integers behave like programmers expect more consistently, but the SDK will need to transact with malloc, std::vector, and/or std::string which all speak unsigned size_t."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-integer-service-values",
+    "category": "Integer sizes",
+    "text": "DO Represent any other integral quantity passed over the wire to a service using int64_t, even if the service uses a 32 bit constant internally today."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-integer-not-int",
+    "category": "Integer sizes",
+    "text": "DO NOT Use int under any circumstances, including for loop indexes. Those should usually use ptrdiff_t or size_t under the buffer size rule above."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-integer-otherwise",
+    "category": "Integer sizes",
+    "text": "YOU MAY Use any integer type in the intN_t or uintN_t family as appropriate for quantities not enumerated above, such as calculated values internal to the SDK such as retry counts."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-no-ms-secure-functions",
+    "category": "Secure functions",
+    "text": "YOU SHOULD NOT use Microsoft security enhanced versions of CRT functions (https://docs.microsoft.com/cpp/c-runtime-library/security-enhanced-versions-of-crt-functions) to implement APIs that need to be portable across many platforms. Such code is not portable and is not compatible with either the C or C++ Standards. See arguments against (http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1967.htm) \n\nTODO: Verify with the security team, and what are the alternatives?"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-client-enumerations-no-enums",
+    "category": "Enumerations",
+    "text": "DO use enum or enum class for values shared \"over the wire\" with a service, to support future compatibility with the service where additional values are added. Such values should be persisted as strings in client data structures instead."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-logical-client-enumerations-enumish-pattern",
+    "category": "Enumerations",
+    "text": "YOU MAY provide an 'extensible enum' pattern for storing service enumerations which provides reasonable constant values. This pattern stores the value as a string but provides public static member fields with the individual values for customer consumption. For example:\n\n{% highlight cpp %}\n#include <azure/core/strings.hpp> // for Azure::Core::Strings::LocaleInvariantCaseInsensitiveEqual\n#include  // for std::move\nnamespace Azure { namespace Group { namespace Service {\n\n// an \"Extensible Enum\" type\nclass KeyType {\nstd::string m_value;\npublic:\n// Provide explicit conversion from string or types convertible to string:\nexplicit KeyType(const std::string& value) : m_value(value) { }\nexplicit KeyType(std::string&& value) : m_value(std::move(value)) { }\nexplicit KeyType(const char* value) : m_value(value) { }\n\n<code>// Provide an equality comparison. If the service treats the enumeration case insensitively,\n// use LocaleInvariantCaseInsensitiveEqual to prevent differing locale settings from affecting\n// the SDK's behavior:\nbool operator==(const KeyType&amp; other) const noexcept {\n    return Azure::Core::Strings::LocaleInvariantCaseInsensitiveEqual(m_value, other.m_value);\n}\n\nbool operator!=(const KeyType&amp; other) const noexcept { return !(*this == other); }\n\n// Provide a \"Get\" accessor\nconst std::string&amp; Get() const noexcept { return m_value; }\n\n// Provide your example values as static const members\nconst static KeyType Ec;\nconst static KeyType EcHsm;\nconst static KeyType Rsa;\nconst static KeyType RsaHsm;\nconst static KeyType Oct;\n</code>\n\n};\n}}} // namespace Azure::Group::Service\n\n// in a .cpp file:\nnamespace Azure { namespace Group { namespace Service {\nconst KeyType KeyType::Ec{\"EC\"};\nconst KeyType KeyType::EcHsm{\"EC-HSM\"};\nconst KeyType KeyType::Rsa{\"RSA\"};\nconst KeyType KeyType::RsaHsm{\"RSA-HSM\"};\nconst KeyType KeyType::Oct{\"OCT\"};\n}}} // namespace Azure::Group::Service\n{% endhighlight %}\n\nTODO: Move this to implementation or move the headers discussion from implementation here"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-physical-include-quotes",
+    "category": "Physical Design",
+    "text": "YOU SHOULD include files using quotes (\") for files within the same git repository, and angle brackets (<>) for external dependencies."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-physical-unnamed-namespace",
+    "category": "Physical Design",
+    "text": "YOU SHOULD declare all types that are only used within the same .cpp file in an unnamed namespace. For example:\n\n{% highlight cpp %}\nnamespace {\nstruct HashComputation {\nint InternalBookkeeping;\n};\n} // unnamed namespace\n{% endhighlight %}\n\nThroughout this section, class types includes types with class-key struct or class-key union, consistent with the C++ Standard (http://eel.is/c++draft/class#pre-4) "
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-classes",
+    "category": "Class Types (including unions and structs)",
+    "text": "DO name class types with PascalCase."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-classes-public-protected-variables",
+    "category": "Class Types (including unions and structs)",
+    "text": "DO name public and protected member variables with PascalCase."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-classes-public-variables",
+    "category": "Class Types (including unions and structs)",
+    "text": "DO name private member variables with an m_ prefix, followed by a camelCase name. For example, m_timeoutMs."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-classes-functions",
+    "category": "Class Types (including unions and structs)",
+    "text": "DO name member functions with PascalCase, except where the C++ Standard forbids this. For example, UploadBlob, or operator[]."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-classes-no-struct-keyword",
+    "category": "Class Types (including unions and structs)",
+    "text": "YOU SHOULD declare classes with only public members using class-key struct.\n{% highlight cpp %}\n// Good\nstruct OnlyPublicMembers {\nint Member;\n};\n\n// Bad\nclass OnlyPublicMembers {\npublic:\nint Member;\n};\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-design-naming-classes-typedefs",
+    "category": "Class Types (including unions and structs)",
+    "text": "YOU SHOULD define class types without using typedefs. For example:\n\n{% highlight cpp %}\n// Good: Uses C++ style class declaration:\nstruct IotClient {\nchar* ApiVersion;\nIotClientCredentials* Credentials;\nint RetryTimeout;\n};\n\n// Bad: Uses C-style typedef:\ntypedef struct IotClient {\nchar* ApiVersion;\nIotClientCredentials* Credentials;\nint RetryTimeout;\n} AzIotClient;\n{% endhighlight %}\n\nWe use a common build and test pipeline to provide for automatic distribution of client libraries.  To support this, we need common tooling."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-tooling-cmake",
+    "category": "Tooling",
+    "text": "DO use CMake (https://CMake.org/) v3.7 for your project build system.\n\nVersion 3.7 is the minimum version installed on the Azure Pipelines Microsoft hosted agents\n(https://docs.microsoft.com/azure/devops/pipelines/agents/hosted)"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-tooling-cmake-targets",
+    "category": "Tooling",
+    "text": "DO include the following standard targets:\nbuild to build the library\ntest to run the unit test suite\ndocs to generate reference documentation\nall to run all three targets\n\nInclude other targets as they appear useful during the development process."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-tooling-cmake-settings1",
+    "category": "Tooling",
+    "text": "DO use hidden visibility when building dynamic libraries. For CMake:\n\n{% highlight cmake %}\nset(CMAKE_C_VISIBILITY_PRESET hidden)\nset(CMAKE_VISIBILITY_INLINES_HIDDEN ON)\n{% endhighlight %}\n\nThis allows you to use an export macro to export symbols. For example:\n\n{% highlight cpp %}\n#ifndef APPCONF_EXPORT_H\n#define APPCONF_EXPORT_H\n\n#ifdef APPCONF_STATIC_DEFINE\n\n#else\n\n<code>    /* We are building this library */\n</code>\n\n<code>    /* We are using this library */\n</code>\n\n#endif\n\n#ifndef APPCONF_DEPRECATED\n\n#endif\n\n#ifndef APPCONF_DEPRECATED_EXPORT\n\n#endif\n\n#ifndef APPCONF_DEPRECATED_NO_EXPORT\n\n#endif\n\n#if 0 /* DEFINE_NO_DEPRECATED */\n\n#endif\n\n#endif /* APPCONF_EXPORT_H */\n{% endhighlight %}\n\nCMake will automatically generate an appropriate export header:\n\n{% highlight cmake %}\ninclude(GenerateExportHeader)\ngenerate_export_header(speech\nEXPORT_FILE_NAME azure/speech_export.hpp)\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-tooling-cpp-format",
+    "category": "endif",
+    "text": "DO use clang-format (https://clang.llvm.org/docs/ClangFormat.html) for formatting, with the following command-line options:\n\n{% highlight bash %}\ncpp-format -style=file -i  ...\n{% endhighlight %}\n\nUsing -i does an in-place edit of the files for style.  There is a Visual Studio extension (https://marketplace.visualstudio.com/items?itemName=LLVMExtensions.llvm-toolchain) that binds Ctrl-R Ctrl-F to this operation. Visual Studio 2019 includes this functionality by default."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-tooling-cmake-docs",
+    "category": "endif",
+    "text": "DO generate API documentation with doxygen.\nFor example in CMake:\n\n{% highlight cmake %}\nfind_package(Doxygen REQUIRED doxygen)\nset(DOXYGEN_GENERATE_HTML YES)\nset(DOXYGEN_GENERATE_XML YES)\nset(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)\nset(DOXYGEN_EXTRACT_PACKAGE YES)\nset(DOXYGEN_SIMPLE_STRUCTS YES)\nset(DOXYGEN_TYPEDEF_HIDES_STRUCT NO)\n\ndoxygen_add_docs(doxygen\n${PROJECT_SOURCE_DIR}/inc\n${PROJECT_SOURCE_DIR}/src\n${PROJECT_SOURCE_DIR}/doc\nCOMMENT \"generate docs\")\n{% endhighlight %}\n\nNotice that:\nWe use find_package() to find doxygen\nWe use the DOXYGEN_<PREF> CMake variables instead of writing your own doxyfile.\nWe set OPTIMIZE_OUTPUT_FOR_C in order to get more C appropriate output.\nWe use doxygen_add_docs to add the target, this will generate a doxyfile for you."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-tooling-cmake-samples",
+    "category": "endif",
+    "text": "DO provide a CMake option of the form <SDK_NAME>_BUILD_SAMPLES that includes all samples in the build.  For example:\n\n{% highlight cmake %}\nif(AZURE_APPCONF_BUILD_SAMPLES)\nadd_subdirectory(samples)\nendif()\n{% endhighlight %}"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-tooling-cmake-no-samples-by-default",
+    "category": "endif",
+    "text": "DO NOT install samples by default."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-platform-min",
+    "category": "Supported platforms",
+    "text": "DO support the following platforms and associated compilers when implementing your client library.\n\n| Operating System     | Version       | Architectures | Compiler Version                        | Notes\n|----------------------|---------------|---------------|-----------------------------------------|------\n| Windows Client       | 7 SP1+, 8.1   | x64, x86      | MSVC 14.16.x, MSVC 14.20x               |\n| Windows 10 Client    | Version 1607+ | x64, x86, ARM | MSVC 14.16.x, MSVC 14.20x               |\n| Windows 10 Client    | Version 1909+ | ARM64         | MSVC 14.20x                             |\n| Nano Server          | Version 1803+ | x64, ARM32    | MSVC 14.16.x, MSVC 14.20x               |\n| Windows Server       | 2012 R2+      | x64, x86      | MSVC 14.16.x, MSVC 14.20x               |\n\n| Operating System                | Version       | Architectures | Compiler Version                        | Notes\n|---------------------------------|---------------|---------------|-----------------------------------------|------\n| macOS                           | 10.13+        | x64           | XCode 9.4.1                             |\n\n| Operating System                | Version       | Architectures | Compiler Version                        | Notes\n|---------------------------------|---------------|---------------|-----------------------------------------|------\n| Red Hat Enterprise Linux  CentOS  Oracle Linux        | 7+            | x64           | gcc-4.8                                 | Red Hat lifecycle (https://access.redhat.com/support/policy/updates/errata/)  CentOS lifecycle (https://wiki.centos.org/FAQ/General#head-fe8a0be91ee3e7dea812e8694491e1dde5b75e6d)  Oracle Linux lifecycle (http://www.oracle.com/us/support/library/elsp-lifetime-069338.pdf) | Debian                          | 9+            | x64           | gcc-6.3                                 | Debian lifecycle (https://wiki.debian.org/DebianReleases) | Ubuntu                          | 18.04, 16.04  | x64           | gcc-7.3                                 | Ubuntu lifecycle (https://wiki.ubuntu.com/Releases) | Linux Mint                      | 18+           | x64           | gcc-7.3                                 | Linux Mint lifecycle (https://www.linuxmint.com/download_all.php) | openSUSE                        | 15+           | x64           | gcc-7.5                                 | OpenSUSE lifecycle (https://www.suse.com/lifecycle/) (https://en.opensuse.org/Lifetime) | SUSE Enterprise Linux (SLES)    | 12 SP2+       | x64           | gcc-4.8                                 | SUSE lifecycle"
+  },
+  {
+    "id": "cpp_implementation.html#cpp-platform",
+    "category": "Linux",
+    "text": "YOU SHOULD support the following additional platforms and associated compilers when implementing your client library."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-cpp-extensions",
+    "category": "Linux",
+    "text": "YOU SHOULD NOT use compiler extensions.  Examples of extensions to avoid include:\nMSVC compiler extensions (https://docs.microsoft.com/cpp/build/reference/microsoft-extensions-to-c-and-cpp) \nclang language extensions (https://clang.llvm.org/docs/LanguageExtensions.html) \nGNU C compiler extensions (https://gcc.gnu.org/extensions.html) \n\nUse the appropriate options for each compiler to prevent the use of such extensions."
+  },
+  {
+    "id": "cpp_implementation.html#cpp-cpp-options",
+    "category": "Linux",
+    "text": "DO use compiler flags to identify warnings:\n\n| Compiler                 | Compiler Flags   |\n|:-------------------------|------------------|\n| gcc                      | -Wall -Wextra  |\n| cpp and XCode            | -Wall -Wextra  |\n| MSVC                     | /W4            |"
+  }
+]

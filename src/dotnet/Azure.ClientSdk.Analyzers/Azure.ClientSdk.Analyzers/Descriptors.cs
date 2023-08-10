@@ -111,6 +111,13 @@ namespace Azure.ClientSdk.Analyzers
             "All parts of ServiceVersion members' names must begin with a number or uppercase letter and cannot have consecutive underscores.",
             "Usage",
             DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0020 = new DiagnosticDescriptor(
+            nameof(AZC0020),
+            "Avoid using banned types in public APIs",
+            "The Azure.Core internal shared source types {0} should not be used outside of the Azure.Core library.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
         #endregion
 
         #region General

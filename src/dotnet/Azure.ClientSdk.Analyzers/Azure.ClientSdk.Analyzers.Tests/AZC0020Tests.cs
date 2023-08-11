@@ -65,20 +65,15 @@ namespace LibraryNamespace
         public async Task AZC0020ProducedForMutableJsonDocumentUsage2()
         {
             string code = @"
-using System;
 using Azure.Core.Json;
 
 namespace LibraryNamespace
 {
     public class Model
     {
-        private MutableJsonDocument {|AZC0020:_document|};
-        internal MutableJsonDocument {|AZC0020:Document|} => {| AZC0020:_document |};
-        internal event EventHandler<MutableJsonDocument> {|AZC0020:_docEvent|};
-
         internal MutableJsonDocument {|AZC0020:GetDocument|}(MutableJsonDocument {|AZC0020:value|})
         {
-            MutableJsonDocument {|AZC0020:mdoc|} = new MutableJsonDocument();
+            {|AZC0020:MutableJsonDocument mdoc = new MutableJsonDocument();|}
             return mdoc;
         }
     }

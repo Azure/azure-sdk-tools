@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Azure.ClientSdk.Analyzers
@@ -24,13 +25,13 @@ namespace Azure.ClientSdk.Analyzers
 
         public override SymbolKind[] SymbolKinds { get; } = new[]
         {
-            SymbolKind.Method,
-            SymbolKind.Field,
-            SymbolKind.Property,
-            SymbolKind.Parameter,
             SymbolKind.Event,
-            SymbolKind.NamedType,
+            SymbolKind.Field,
             SymbolKind.Local,
+            SymbolKind.Method,
+            SymbolKind.NamedType,
+            SymbolKind.Parameter,
+            SymbolKind.Property,
         };
 
         public override void Analyze(ISymbolAnalysisContext context)
@@ -49,6 +50,8 @@ namespace Azure.ClientSdk.Analyzers
                     break;
                 case IMethodSymbol methodSymbol:
                     CheckType(context, methodSymbol.ReturnType, methodSymbol);
+
+                    //foreach (var typeSymbol in methodSymbol.)
                     break;
                 case IEventSymbol eventSymbol:
                     CheckType(context, eventSymbol.Type, eventSymbol);
@@ -72,6 +75,31 @@ namespace Azure.ClientSdk.Analyzers
             }
 
             Debug.WriteLine($"done");
+        }
+
+        public override void AnalyzeNode(SyntaxNodeAnalysisContext context)
+        {
+            Debug.WriteLine($"{context.Node}");
+
+            if (IsAzureCore(context.ContainingSymbol.ContainingAssembly))
+            {
+                return;
+            }
+
+            LocalDeclarationStatementSyntax declaration = context.Node as LocalDeclarationStatementSyntax;
+
+            TypeInfo info = context.SemanticModel.GetTypeInfo(declaration.Declaration.Type);
+
+            ISymbol symbol = info.Type;
+            ITypeSymbol type = info.Type;
+
+            if (type is INamedTypeSymbol namedTypeSymbol)
+            {
+                if (IsBannedType(namedTypeSymbol))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0020, context.Node.GetLocation(), BannedTypesMessageArgs));
+                }
+            }
         }
 
         private static void CheckType(ISymbolAnalysisContext context, ITypeSymbol type, ISymbol symbol)
@@ -100,7 +128,9 @@ namespace Azure.ClientSdk.Analyzers
 
         private static bool IsAzureCore(IAssemblySymbol assembly)
         {
-            return assembly.Name.Equals("Azure.Core");
+            return
+                assembly.Name.Equals("Azure.Core") ||
+                assembly.Name.Equals("Azure.Core.Experimental");
         }
     }
 }

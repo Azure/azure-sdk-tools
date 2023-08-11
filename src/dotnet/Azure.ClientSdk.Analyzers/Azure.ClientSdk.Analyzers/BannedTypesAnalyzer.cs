@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -49,8 +48,6 @@ namespace Azure.ClientSdk.Analyzers
 
         public override void Analyze(ISymbolAnalysisContext context)
         {
-            Debug.WriteLine($"{context.Symbol}");
-
             if (IsAzureCore(context.Symbol.ContainingAssembly))
             {
                 return;
@@ -86,14 +83,10 @@ namespace Azure.ClientSdk.Analyzers
                     }
                     break;
             }
-
-            Debug.WriteLine($"done");
         }
 
         public void AnalyzeNode(SyntaxNodeAnalysisContext context)
         {
-            Debug.WriteLine($"{context.Node}");
-
             if (IsAzureCore(context.ContainingSymbol.ContainingAssembly))
             {
                 return;

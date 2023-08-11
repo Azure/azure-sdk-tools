@@ -14,8 +14,6 @@ namespace Azure.ClientSdk.Analyzers
         public abstract SymbolKind[] SymbolKinds { get; }
         public abstract void Analyze(ISymbolAnalysisContext context);
 
-        public virtual void AnalyzeNode(SyntaxNodeAnalysisContext context) { }
-
         protected INamedTypeSymbol ClientOptionsType { get; private set; }
 
         public override void Initialize(AnalysisContext context)
@@ -51,9 +49,9 @@ namespace Azure.ClientSdk.Analyzers
             {
                 return false;
             }
-            
+
             ITypeSymbol baseType = typeSymbol.BaseType;
-            while (baseType != null) 
+            while (baseType != null)
             {
                 if (SymbolEqualityComparer.Default.Equals(baseType, ClientOptionsType))
                 {

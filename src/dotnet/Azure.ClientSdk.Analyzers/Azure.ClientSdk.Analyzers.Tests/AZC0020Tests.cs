@@ -28,7 +28,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
             ("MutableJsonElement.cs", @"
                 namespace Azure.Core.Json
                 {
-                    internal sealed partial class MutableJsonElement
+                    internal partial struct MutableJsonElement
                     {
                     }
                 }
@@ -53,26 +53,6 @@ namespace LibraryNamespace
 
         internal MutableJsonDocument {|AZC0020:GetDocument|}(MutableJsonDocument {|AZC0020:value|})
         {
-            MutableJsonDocument mdoc = new MutableJsonDocument();
-            return mdoc;
-        }
-    }
-}";
-            await Verifier.VerifyAnalyzerAsync(code, _sharedSourceFiles);
-        }
-
-        [Fact]
-        public async Task AZC0020ProducedForMutableJsonDocumentUsage2()
-        {
-            string code = @"
-using Azure.Core.Json;
-
-namespace LibraryNamespace
-{
-    public class Model
-    {
-        internal MutableJsonDocument {|AZC0020:GetDocument|}(MutableJsonDocument {|AZC0020:value|})
-        {
             {|AZC0020:MutableJsonDocument mdoc = new MutableJsonDocument();|}
             return mdoc;
         }
@@ -91,7 +71,14 @@ namespace LibraryNamespace
 {
     public class Model
     {
-        MutableJsonElement {|AZC0020:_element|};
+        private MutableJsonElement {|AZC0020:_element|};
+        internal MutableJsonElement {|AZC0020:Element|} => {|AZC0020:_element|};
+
+        internal MutableJsonElement {|AZC0020:GetDocument|}(MutableJsonElement {|AZC0020:value|})
+        {
+            {|AZC0020:MutableJsonElement element = new MutableJsonElement();|}
+            return element;
+        }
     }
 }";
             await Verifier.VerifyAnalyzerAsync(code, _sharedSourceFiles);
@@ -114,7 +101,7 @@ namespace LibraryNamespace
         }
 
         [Fact]
-        public async Task AZC0020NotProducedForTypeWithBannedNameButAllowedNamespace()
+        public async Task AZC0020NotProducedForTypeWithBannedNameInAllowedNamespace()
         {
             string code = @"
 namespace LibraryNamespace

@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -33,6 +34,13 @@ namespace Azure.ClientSdk.Analyzers
             SymbolKind.Parameter,
             SymbolKind.Property,
         };
+
+        public override void Initialize(AnalysisContext context)
+        {
+            base.Initialize(context);
+
+            context.RegisterSyntaxNodeAction(c => AnalyzeNode(c), SyntaxKind.LocalDeclarationStatement);
+        }
 
         public override void Analyze(ISymbolAnalysisContext context)
         {
@@ -86,18 +94,16 @@ namespace Azure.ClientSdk.Analyzers
                 return;
             }
 
-            LocalDeclarationStatementSyntax declaration = context.Node as LocalDeclarationStatementSyntax;
-
-            TypeInfo info = context.SemanticModel.GetTypeInfo(declaration.Declaration.Type);
-
-            ISymbol symbol = info.Type;
-            ITypeSymbol type = info.Type;
-
-            if (type is INamedTypeSymbol namedTypeSymbol)
+            if (context.Node is LocalDeclarationStatementSyntax declaration)
             {
-                if (IsBannedType(namedTypeSymbol))
+                ITypeSymbol type = context.SemanticModel.GetTypeInfo(declaration.Declaration.Type).Type;
+
+                if (type is INamedTypeSymbol namedTypeSymbol)
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0020, context.Node.GetLocation(), BannedTypesMessageArgs));
+                    if (IsBannedType(namedTypeSymbol))
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0020, context.Node.GetLocation(), BannedTypesMessageArgs));
+                    }
                 }
             }
         }

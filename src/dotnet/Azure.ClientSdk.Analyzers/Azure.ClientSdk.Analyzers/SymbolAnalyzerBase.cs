@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Azure.ClientSdk.Analyzers
@@ -19,13 +18,12 @@ namespace Azure.ClientSdk.Analyzers
 
         protected INamedTypeSymbol ClientOptionsType { get; private set; }
 
-        public sealed override void Initialize(AnalysisContext context)
+        public override void Initialize(AnalysisContext context)
         {
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
-            //context.EnableConcurrentExecution();
+            context.EnableConcurrentExecution();
             context.RegisterCompilationStartAction(CompilationStart);
             context.RegisterSymbolAction(c => Analyze(new RoslynSymbolAnalysisContext(c)), SymbolKinds);
-            context.RegisterSyntaxNodeAction(c => AnalyzeNode(c), SyntaxKind.LocalDeclarationStatement);
         }
 
 #pragma warning disable RS1012 // Start action has no registered actions.

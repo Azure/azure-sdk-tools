@@ -16,7 +16,7 @@ namespace Azure.ClientSdk.Analyzers
 
         protected INamedTypeSymbol ClientOptionsType { get; private set; }
 
-        public override void Initialize(AnalysisContext context)
+        public sealed override void Initialize(AnalysisContext context)
         {
             context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.Analyze | GeneratedCodeAnalysisFlags.ReportDiagnostics);
             context.EnableConcurrentExecution();
@@ -49,9 +49,9 @@ namespace Azure.ClientSdk.Analyzers
             {
                 return false;
             }
-
+            
             ITypeSymbol baseType = typeSymbol.BaseType;
-            while (baseType != null)
+            while (baseType != null) 
             {
                 if (SymbolEqualityComparer.Default.Equals(baseType, ClientOptionsType))
                 {

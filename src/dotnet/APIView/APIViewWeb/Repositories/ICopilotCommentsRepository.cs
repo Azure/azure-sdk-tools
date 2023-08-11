@@ -12,7 +12,7 @@ namespace APIViewWeb.Repositories
             FilterDefinition<CopilotCommentModel> filter,
             UpdateDefinition<CopilotCommentModel> update);
 
-        public Task<UpdateResult> DeleteDocumentAsync(
+        public Task DeleteDocumentAsync(
             FilterDefinition<CopilotCommentModel> filter,
             UpdateDefinition<CopilotCommentModel> update);
 

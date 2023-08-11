@@ -33,17 +33,19 @@ namespace APIViewWeb.Managers
 
         public async Task<string> CreateDocumentAsync(string user, string badCode, string goodCode, string language, string comment, string[] guidelineIds)
         {
-            var embedding = await GetEmbeddingsAsync(badCode); 
+            var embedding = await GetEmbeddingsAsync(badCode);
 
-            var document = new CopilotCommentModel();
-            document.BadCode = badCode;
-            document.GoodCode = goodCode;
-            document.Embedding = embedding;
-            document.Language = language;
-            document.Comment = comment;
-            document.GuidelineIds = guidelineIds;
-            document.ModifiedOn = DateTime.UtcNow;
-            document.ModifiedBy = user;
+            var document = new CopilotCommentModel()
+            {
+                BadCode = badCode,
+                GoodCode = goodCode,
+                Embedding = embedding,
+                Language = language,
+                Comment = comment,
+                GuidelineIds = guidelineIds,
+                ModifiedOn = DateTime.UtcNow,
+                ModifiedBy = user
+            };
 
             return await _copilotCommentsRepository.InsertDocumentAsync(document);
         }
@@ -88,7 +90,7 @@ namespace APIViewWeb.Managers
             return await _copilotCommentsRepository.UpdateDocumentAsync(filter, update);
         }
 
-        public async Task<UpdateResult> DeleteDocumentAsync(string user, string id)
+        public Task DeleteDocumentAsync(string user, string id)
         {
             var filter = GetIdFilter(id);
 
@@ -98,7 +100,7 @@ namespace APIViewWeb.Managers
                 .Set("ModifiedOn", DateTime.UtcNow)
                 .Set("ModifiedBy", user);
 
-            return await _copilotCommentsRepository.DeleteDocumentAsync(filter, update); 
+            return _copilotCommentsRepository.DeleteDocumentAsync(filter, update); 
         }
 
         public async Task<string> GetDocumentAsync(string id)
@@ -119,31 +121,36 @@ namespace APIViewWeb.Managers
 
         private async Task<float[]> GetEmbeddingsAsync(string badCode)
         {
-            // structure of Embeddings object 
-            //{
-            //    { "Data", 
-            //        [
-            //            { "EmbeddingsItem", 
-            //                {
-            //                    { "Embedding", [ "float1", "float2" ]},
-            //                    { "Index", "1"}
-            //                }
-            //            }
-            //        ]
-            //    },
-            //    { "Usage", 
-            //        {
-            //            { "PromptTokens", "1"},
-            //            { "TotalTokens", "2"}
-            //        }
-            //    }
-            //}
+        /*
+         * Structure of Embeddings object
+         *  {
+         *      {
+         *          "Data", 
+         *          [
+         *              {
+         *                  "EmbeddingsItem", 
+         *                  {
+         *                      { "Embedding", [ "float1", "float2" ]},
+         *                      { "Index", "1"}
+         *                  }
+         *              }
+         *          ]
+         *      },
+         *      {
+         *          "Usage", 
+         *          {
+         *              { "PromptTokens", "1"},
+         *              { "TotalTokens", "2"}
+         *          }
+         *      }
+         *  }
+         */
 
             var options = new EmbeddingsOptions(badCode);
             var response = await _openAIClient.GetEmbeddingsAsync(_configuration["OpenAI:Model"], options);
             var embeddings = response.Value;
 
-            float[] embedding = embeddings.Data[0].Embedding.ToArray();
+            var embedding = embeddings.Data[0].Embedding.ToArray();
 
             return embedding;
         }
@@ -152,7 +159,7 @@ namespace APIViewWeb.Managers
         {
             var data = embedding.Data;
 
-            BsonDocument embeddingUsageBson = new BsonDocument
+            var embeddingUsageBson = new BsonDocument
             {
                 { "promptTokens", embedding.Usage.PromptTokens },
                 { "TotalTokens", embedding.Usage.TotalTokens }

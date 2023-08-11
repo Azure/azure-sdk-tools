@@ -85,7 +85,7 @@ namespace Azure.ClientSdk.Analyzers
             Debug.WriteLine($"done");
         }
 
-        public override void AnalyzeNode(SyntaxNodeAnalysisContext context)
+        public void AnalyzeNode(SyntaxNodeAnalysisContext context)
         {
             Debug.WriteLine($"{context.Node}");
 

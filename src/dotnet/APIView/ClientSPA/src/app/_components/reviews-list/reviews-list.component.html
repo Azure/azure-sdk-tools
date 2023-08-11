@@ -1,0 +1,50 @@
+
+<div class="container-fluid">
+    <div class="row mx-5 py-2">
+
+        <p-table
+            [value]="fetchedReviews"
+            dataKey="id"
+            [scrollable]="true"
+            scrollHeight="75vh"
+            [resizableColumns]="true"
+            responsiveLayout="stack"
+            [paginator]="true"
+            [rows]="rows"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="{first} to {last} of {{totalNumberOfReviews}}"
+            [showPageLinks]="false"
+            [showFirstLastIcon]="false"
+            [rowsPerPageOptions]="[25, 50, 100, 200]"
+            styleClass="p-datatable-gridlines p-datatable-striped p-datatable-sm">
+            <ng-template pTemplate="caption">
+                <div class="flex">
+                    <span class="p-input-icon-left ml-auto">
+                        <i class="pi pi-search"></i>
+                        <input pInputText type="text" placeholder="Search Reviews..." />
+                    </span>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pResizableColumn>Language</th>
+                    <th pResizableColumn>Name</th>
+                    <th pResizableColumn>Author</th>
+                    <th pResizableColumn>Last Updated</th>
+                    <th pResizableColumn>Revisions</th>
+                    <th pResizableColumn>State</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-review>
+                <tr>
+                    <td>{{ review.language }}</td>
+                    <td>{{ review.name }}</td>
+                    <td>{{ review.author }}</td>
+                    <td>{{ review.lastUpdated }}</td>
+                    <td>{{ review.noOfRevisions }}</td>
+                    <td>{{ review.isClosed }}</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>

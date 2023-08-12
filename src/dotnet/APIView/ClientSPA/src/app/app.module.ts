@@ -14,6 +14,7 @@ import { ReviewsListComponent } from './_components/reviews-list/reviews-list.co
 import { InputTextModule } from 'primeng/inputtext';
 import { PaginatorModule } from 'primeng/paginator';
 import { DropdownModule } from 'primeng/dropdown';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 @NgModule({
   declarations: [
@@ -31,6 +32,7 @@ import { DropdownModule } from 'primeng/dropdown';
     HttpClientModule,
     InputTextModule,
     MenubarModule,
+    MultiSelectModule,
     PaginatorModule,
     TableModule
   ],

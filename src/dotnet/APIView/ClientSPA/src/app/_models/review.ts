@@ -1,6 +1,6 @@
 export interface ReviewList {
-    totalNumberOfReviews: number
-    reviews: Review[]
+    TotalNumberOfReviews: number
+    Reviews: Review[]
 }
 
 export interface Review {

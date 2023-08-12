@@ -3,26 +3,34 @@
     <div class="row mx-5 py-2">
 
         <p-table
-            [value]="fetchedReviews"
+            [value]="reviews"
             dataKey="id"
             [scrollable]="true"
             scrollHeight="75vh"
             [resizableColumns]="true"
             responsiveLayout="stack"
             [paginator]="true"
-            [rows]="rows"
+            [rows]="pageSize"
             [showCurrentPageReport]="true"
-            currentPageReportTemplate="{first} to {last} of {{totalNumberOfReviews}}"
-            [showPageLinks]="false"
             [showFirstLastIcon]="false"
-            [rowsPerPageOptions]="[25, 50, 100, 200]"
+            [showPageLinks]="false"
+            currentPageReportTemplate="{first} to {last} of {{totalNumberOfReviews}}"
+            (onPage)="onPage($event)"
             styleClass="p-datatable-gridlines p-datatable-striped p-datatable-sm">
             <ng-template pTemplate="caption">
-                <div class="flex">
+                <div class="d-flex justify-content-center">
                     <span class="p-input-icon-left ml-auto">
                         <i class="pi pi-search"></i>
                         <input pInputText type="text" placeholder="Search Reviews..." />
                     </span>
+                    <p-multiSelect [options]="reviewFilters" [group]="true" [(ngModel)]="selectedFilters" defaultLabel="Select a City" scrollHeight="250px" display="chip">
+                        <ng-template let-group pTemplate="group">
+                            <div class="flex align-items-center">
+                                <img src="https://primefaces.org/cdn/primeng/images/demo/flag/flag_placeholder.png" [class]="'mr-2 flag flag-' + group.value" style="width: 20px" />
+                                <span>{{ group.label }}</span>
+                            </div>
+                        </ng-template>
+                    </p-multiSelect>
                 </div>
             </ng-template>
             <ng-template pTemplate="header">

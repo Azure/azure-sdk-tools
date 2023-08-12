@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
+using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
@@ -275,7 +277,55 @@ namespace APIViewWeb
             return result;
         }
 
-        public async Task<IEnumerable<ReviewModel>> GetApprovedForFirstReleaseReviews(string language, string packageName)
+        /// <summary>
+        /// Retrieve Reviews from the Reviews container in CosmosDb after applying filter to the query
+        /// Used for ClientSPA
+        /// </summary>
+        /// <param name="pageParams"></param> Contains paginationinfo
+        /// <returns></returns>
+        public async Task<PagedList<ReviewsListItemModel>> GetReviewsAsync(PageParams pageParams)
+        {
+            var queryStringBuilder = new StringBuilder(@"
+SELECT VALUE {
+    Id: r.id,
+    Name: r.Name,
+    Author: r.Author,
+    NoOfRevisions: ARRAY_LENGTH(r.Revisions),
+    Language: r.Revisions[0].Files[0].Language,
+    IsClosed: r.IsClosed,
+    Subscribers: r.Subscribers,
+    IsAutomatic: r.IsAutomatic,
+    FilterType: r.FilterType,
+    ServiceName: r.ServiceName,
+    PackageDisplayName: r.PackageDisplayName,
+    LastUpdated: r.LastUpdated
+} FROM Reviews r");
+
+            int count = 0;
+            var countQuery = $"SELECT VALUE COUNT(1) FROM({queryStringBuilder.ToString()})";
+            QueryDefinition countQueryDefinition = new QueryDefinition(countQuery);
+            using FeedIterator<int> countFeedIterator = _reviewsContainer.GetItemQueryIterator<int>(countQueryDefinition);
+            while (countFeedIterator.HasMoreResults)
+            {
+                count = (await countFeedIterator.ReadNextAsync()).SingleOrDefault();
+            }
+
+            queryStringBuilder.Append(" OFFSET @offset LIMIT @limit");
+            var reviews = new List<ReviewsListItemModel>();
+            QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@offset", (pageParams.PageNumber -1) * pageParams.PageSize)
+                .WithParameter("@limit", pageParams.PageSize);
+
+            using FeedIterator<ReviewsListItemModel> feedIterator = _reviewsContainer.GetItemQueryIterator<ReviewsListItemModel>(queryDefinition);
+            while (feedIterator.HasMoreResults)
+            {
+                FeedResponse<ReviewsListItemModel> response = await feedIterator.ReadNextAsync();
+                reviews.AddRange(response);
+            }
+            return new PagedList<ReviewsListItemModel>((IEnumerable<ReviewsListItemModel>)reviews, count, pageParams.PageNumber, pageParams.PageSize);
+        }
+
+    public async Task<IEnumerable<ReviewModel>> GetApprovedForFirstReleaseReviews(string language, string packageName)
         {
             var query = $"SELECT * FROM Reviews r WHERE r.IsClosed = false AND IS_DEFINED(r.IsApprovedForFirstRelease) AND r.IsApprovedForFirstRelease = true AND " +
                         $"EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";

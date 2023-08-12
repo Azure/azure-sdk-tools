@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
+using APIViewWeb.Models;
 
 namespace APIViewWeb.Repositories
 {
@@ -17,5 +19,13 @@ namespace APIViewWeb.Repositories
             IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, IEnumerable<int> filterTypes, bool? isApproved, int offset, int limit, string orderBy);
         public Task<IEnumerable<ReviewModel>> GetApprovedForFirstReleaseReviews(string language, string packageName);
         public Task<IEnumerable<ReviewModel>> GetApprovedReviews(string language, string packageName);
+
+        /// <summary>
+        /// Retrieve Reviews from the Reviews container in CosmosDb after applying filter to the query
+        /// Used for ClientSPA
+        /// </summary>
+        /// <param name="pageParams"></param> Contains paginationinfo
+        /// <returns>PagedList<ReviewsListItemModel></returns>
+        public Task<PagedList<ReviewsListItemModel>> GetReviewsAsync(PageParams userParams);
     }
 }

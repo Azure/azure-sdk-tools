@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable, debounceTime, distinct, filter, fromEvent,
 import { Review, ReviewList } from 'src/app/_models/review';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { Pagination } from 'src/app/_models/pagination';
-import { TablePageEvent } from 'primeng/table';
+import { TableLazyLoadEvent, TablePageEvent } from 'primeng/table';
 
 
 interface SelectedFilters {
@@ -33,6 +33,7 @@ export class ReviewsListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadReviews(this.pageNumber, this.pageSize * 2);
+    this.createFilters();
   }
 
   /**
@@ -65,6 +66,15 @@ export class ReviewsListComponent implements OnInit {
           items: [
             {label: 'C', value: 'c'},
             {label: 'C#', value: 'C#'},
+            {label: 'C++', value: 'C++'},
+            {label: 'Go', value: 'Go'},
+            {label: 'Java', value: 'Java'},
+            {label: 'JavaScript', value: 'JavaScript'},
+            {label: 'Json', value: 'Json'},
+            {label: 'Kotlin', value: 'Kotlin'},
+            {label: 'Python', value: 'Python'},
+            {label: 'Swagger', value: 'Swagger'},
+            {label: 'Swift', value: 'Swift'},
           ]
         }
     ]
@@ -79,4 +89,6 @@ export class ReviewsListComponent implements OnInit {
       this.loadReviews(this.pagination?.currentPage! + 1, this.pagination?.itemsPerPage!, true);
     }
   }
+
+  onLazyLoad(event: TableLazyLoadEvent) {}
 }

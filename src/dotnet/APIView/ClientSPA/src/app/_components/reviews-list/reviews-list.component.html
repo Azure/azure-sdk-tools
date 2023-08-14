@@ -6,7 +6,7 @@
             [value]="reviews"
             dataKey="id"
             [scrollable]="true"
-            scrollHeight="75vh"
+            scrollHeight="calc(100vh - 200px)"
             [resizableColumns]="true"
             responsiveLayout="stack"
             [paginator]="true"
@@ -18,12 +18,12 @@
             (onPage)="onPage($event)"
             styleClass="p-datatable-gridlines p-datatable-striped p-datatable-sm">
             <ng-template pTemplate="caption">
-                <div class="d-flex justify-content-center">
+                <div class="d-flex justify-content-between">
                     <span class="p-input-icon-left ml-auto">
                         <i class="pi pi-search"></i>
-                        <input pInputText type="text" placeholder="Search Reviews..." />
+                        <input pInputText type="text" id="reviews-search" placeholder="Search Reviews..." />
                     </span>
-                    <p-multiSelect [options]="reviewFilters" [group]="true" [(ngModel)]="selectedFilters" defaultLabel="Select a City" scrollHeight="250px" display="chip">
+                    <p-multiSelect [options]="reviewFilters" [group]="true" [style]="{'width':'40dvw'}" [(ngModel)]="selectedFilters" defaultLabel="Filter Reviews" display="chip">
                         <ng-template let-group pTemplate="group">
                             <div class="flex align-items-center">
                                 <img src="https://primefaces.org/cdn/primeng/images/demo/flag/flag_placeholder.png" [class]="'mr-2 flag flag-' + group.value" style="width: 20px" />

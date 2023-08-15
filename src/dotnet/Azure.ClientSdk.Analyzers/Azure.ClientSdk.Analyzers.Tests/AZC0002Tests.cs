@@ -229,31 +229,9 @@ namespace RandomNamespace
         {
             return null;
         }
-
-        public virtual Task<Response> Get2Async(CancellationToken cancellationToken = default)
-        {
-            return null;
-        }
-
-        public virtual Response Get2(CancellationToken cancellationToken = default)
-        {
-            return null;
-        }
-
-        public virtual Task<Response> Get2Async(RequestContext context)
-        {
-            return null;
-        }
-
-        public virtual Response Get2(RequestContext context)
-        {
-            return null;
-        }
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0018")
-                .WithDisabledDiagnostics("AD0001")
                 .RunAsync();
         }
 
@@ -269,16 +247,6 @@ namespace RandomNamespace
 {
     public class SomeClient
     {
-        public virtual Task<Response> GetAsync(RequestContext context = default)
-        {
-            return null;
-        }
-
-        public virtual Response Get(RequestContext context = default)
-        {
-            return null;
-        }
-
         public virtual Task<Response> Get2Async(RequestContext context)
         {
             return null;

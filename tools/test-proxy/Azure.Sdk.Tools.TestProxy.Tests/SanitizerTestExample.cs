@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,6 +13,23 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xunit;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Primitives;
+using Xunit;
+using Azure.Core;
+using System.Runtime.InteropServices;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Store;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -25,6 +43,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     /// </summary>
     public class SanitizerTestExample
     {
+
+        public static JsonSerializerOptions SerializerOptions = new JsonSerializerOptions
+        {
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+        };
         
         [Fact]
         public async Task ThisShouldWork()

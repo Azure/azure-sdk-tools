@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public void TestSetRecordingOptionsValidTlsCert()
         {
-            var certValue = "-----BEGIN CERTIFICATE-----\nMIIBgTCCASegAwIBAgIRAP8o8bVU8taW6SIlq68ooFAwCgYIKoZIzj0EAwIwFjEU\nMBIGA1UEAwwLQ0NGIE5ldHdvcmswHhcNMjMwNzE5MTQzNTM4WhcNMjMxMDE3MTQz\nNTM3WjAWMRQwEgYDVQQDDAtDQ0YgTmV0d29yazBZMBMGByqGSM49AgEGCCqGSM49\nAwEHA0IABD4ujJba2GkR0bAD+AS+dbUBenPAC6iqXJbM2q+JJWCN1O/GdUfmVZag\nan5OQxn417cKp4dGiExyVpEdeg0/LyKjVjBUMBIGA1UdEwEB/wQIMAYBAf8CAQAw\nHQYDVR0OBBYEFBHQ0lGEDifiYVaYfZkjOCLf2maTMB8GA1UdIwQYMBaAFBHQ0lGE\nDifiYVaYfZkjOCLf2maTMAoGCCqGSM49BAMCA0gAMEUCIDyeyrpYZLGrklG9Z1jy\naKX0U/P5CBmL2jE+1boYEFeyAiEA/hPrtNfhdYX9JrVz8MDWzlojkCClSGwbjn1H\nZMW/wNY=\n-----END CERTIFICATE-----";
+            var certValue = "-----BEGIN CERTIFICATE-----MIIBgTCCASegAwIBAgIRAP8o8bVU8taW6SIlq68ooFAwCgYIKoZIzj0EAwIwFjEUMBIGA1UEAwwLQ0NGIE5ldHdvcmswHhcNMjMwNzE5MTQzNTM4WhcNMjMxMDE3MTQzNTM3WjAWMRQwEgYDVQQDDAtDQ0YgTmV0d29yazBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD4ujJba2GkR0bAD+AS+dbUBenPAC6iqXJbM2q+JJWCN1O/GdUfmVZagan5OQxn417cKp4dGiExyVpEdeg0/LyKjVjBUMBIGA1UdEwEB/wQIMAYBAf8CAQAwHQYDVR0OBBYEFBHQ0lGEDifiYVaYfZkjOCLf2maTMB8GA1UdIwQYMBaAFBHQ0lGEDifiYVaYfZkjOCLf2maTMAoGCCqGSM49BAMCA0gAMEUCIDyeyrpYZLGrklG9Z1jyaKX0U/P5CBmL2jE+1boYEFeyAiEA/hPrtNfhdYX9JrVz8MDWzlojkCClSGwbjn1HZMW/wNY=-----END CERTIFICATE-----";
             var inputObj = string.Format("{{\"Transport\": {{\"TLSValidationCert\": \"{0}\"}}}}", certValue);
             var testRecordingHandler = new RecordingHandler(Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString()));
             var inputBody = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(inputObj, SerializerOptions);

@@ -3,6 +3,7 @@
 
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -28,23 +29,23 @@ namespace Azure.ClientSdk.Analyzers
             Descriptors.AZC0015
         });
 
+        private static bool IsRequestContext(IParameterSymbol parameterSymbol)
+        {
+            return parameterSymbol.Name == "context" && parameterSymbol.Type.Name == "RequestContext";
+        }
+
+        private static bool IsCancellationToken(IParameterSymbol parameterSymbol)
+        {
+            return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken";
+        }
+
+        private static bool IsCancellationOrRequestContext(IParameterSymbol parameterSymbol)
+        {
+            return IsCancellationToken(parameterSymbol) || IsRequestContext(parameterSymbol);
+        }
+
         private static void CheckCancellationTokenOrRequestContext(ISymbolAnalysisContext context, IMethodSymbol member)
         {
-            static bool IsRequestContext(IParameterSymbol parameterSymbol)
-            {
-                return parameterSymbol.Name == "context" && parameterSymbol.Type.Name == "RequestContext";
-            }
-
-            static bool IsCancellationToken(IParameterSymbol parameterSymbol)
-            {
-                return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken";
-            }
-
-            static bool IsCancellationOrRequestContext(IParameterSymbol parameterSymbol)
-            {
-                return IsCancellationToken(parameterSymbol) || IsRequestContext(parameterSymbol);
-            }
-
             var lastArgument = member.Parameters.LastOrDefault();
             var isCancellationOrRequestContext = lastArgument != null && IsCancellationOrRequestContext(lastArgument);
 
@@ -136,6 +137,23 @@ namespace Azure.ClientSdk.Analyzers
             return false;
         }
 
+        private static IMethodSymbol FindSyncPeer(INamedTypeSymbol type, IMethodSymbol method)
+        {
+            IMethodSymbol syncMember = null;
+            var syncMemberName = method.Name.Substring(0, method.Name.Length - AsyncSuffix.Length);
+            syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), method.TypeParameters, method.Parameters);
+            if (syncMember == null)
+            {
+                var lastArgument = method.Parameters.LastOrDefault();
+                if (lastArgument != null && IsCancellationToken(lastArgument))
+                {
+                    syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), method.TypeParameters, method.Parameters.RemoveAt(method.Parameters.Length - 1), p => IsCancellationToken(p));
+                }
+            }
+
+            return syncMember;
+        }
+
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
             INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
@@ -151,10 +169,7 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     CheckClientMethod(context, methodSymbol);
 
-                    var syncMemberName = member.Name.Substring(0, member.Name.Length - AsyncSuffix.Length);
-
-                    var syncMember = FindMethod(type.GetMembers(syncMemberName).OfType<IMethodSymbol>(), methodSymbol.TypeParameters, methodSymbol.Parameters);
-
+                    var syncMember = FindSyncPeer(type, methodSymbol);
                     if (syncMember == null)
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0004, member.Locations.First()), member);

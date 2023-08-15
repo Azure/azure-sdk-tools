@@ -142,7 +142,7 @@ namespace Azure.ClientSdk.Analyzers
             foreach (var member in type.GetMembers())
             {
                 var methodSymbol = member as IMethodSymbol;
-                if (methodSymbol.DeclaredAccessibility != Accessibility.Public)
+                if (methodSymbol == null || methodSymbol.DeclaredAccessibility != Accessibility.Public)
                 {
                     continue;
                 }

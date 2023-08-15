@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
-using Microsoft.Azure.Cosmos;
 
 namespace APIViewWeb.Repositories
 {
@@ -9,11 +8,11 @@ namespace APIViewWeb.Repositories
     {
         public Task InsertDocumentAsync(CopilotCommentModel document);
 
-        public Task<CopilotCommentModel> UpdateDocumentAsync(string id, string language, IEnumerable<PatchOperation> updates);
+        public Task UpdateDocumentAsync(CopilotCommentModel document);
 
-        public Task DeleteDocumentAsync(string id, string language, IEnumerable<PatchOperation> updates);
+        public Task DeleteDocumentAsync(string id, string language, string user);
 
         public Task<CopilotCommentModel> GetDocumentAsync(string id, string language);
-        public IEnumerable<CopilotCommentModel> SearchLanguage(string language);
+        public Task<IEnumerable<CopilotCommentModel>> SearchLanguage(string language);
     }
 }

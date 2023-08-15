@@ -1,12 +1,9 @@
 using System.Threading.Tasks;
-using APIViewWeb.Models;
 using Microsoft.Extensions.Configuration;
-using MongoDB.Driver;
-using MongoDB.Driver.Linq;
-using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Azure.Cosmos;
-using System.Text.Json;
+using APIViewWeb.Models;
+using System;
 
 namespace APIViewWeb.Repositories
 {
@@ -28,34 +25,38 @@ namespace APIViewWeb.Repositories
             await _container.CreateItemAsync<CopilotCommentModel>(item: document, partitionKey: new PartitionKey(document.Language));
         }
 
-        public async Task<CopilotCommentModel> UpdateDocumentAsync(string id, string language, IEnumerable<PatchOperation> updates)
+        public async Task UpdateDocumentAsync(CopilotCommentModel document)
         {
-            var readResponse = await _container.PatchItemAsync<CopilotCommentModel>(
-                id: id,
-                partitionKey: new PartitionKey(language),
-                patchOperations: updates.ToList());
-            return readResponse.Resource;
+            await _container.ReplaceItemAsync<CopilotCommentModel>(document, document.Id, new PartitionKey(document.Language));
         }
 
-        public Task DeleteDocumentAsync(string id, string language, IEnumerable<PatchOperation> updates)
+        // Delete is a soft delete operation - it sets the is_deleted flag to true.
+        public async Task DeleteDocumentAsync(string id, string language, string user)
         {
-            return _container.PatchItemAsync<CopilotCommentModel>(
-                id: id,
-                partitionKey: new PartitionKey(language),
-                patchOperations: updates.ToList());
+            var document = await GetDocumentAsync(id, language);
+            document.IsDeleted = true;
+            document.ModifiedOn = DateTime.UtcNow;
+            document.ModifiedBy = user;
+            await UpdateDocumentAsync(document);
         }
 
         public async Task<CopilotCommentModel> GetDocumentAsync(string id, string language)
         {
-            var readResponse = await _container.ReadItemAsync<CopilotCommentModel>(id, partitionKey: new PartitionKey(language));
-            return readResponse.Resource;
+            var response = await _container.ReadItemAsync<CopilotCommentModel>(id, new PartitionKey(language));
+            return response.Resource;
         }
 
-        public IEnumerable<CopilotCommentModel> SearchLanguage(string language)
+        public async Task<IEnumerable<CopilotCommentModel>> SearchLanguage(string language)
         {
-            var queryable = _container.GetItemLinqQueryable<CopilotCommentModel>(allowSynchronousQueryExecution: true);
-            var matches = queryable.Where(p => p.Language == language);
-            return matches.ToList();
+            var matches = new List<CopilotCommentModel>();
+            var query = $"SELECT * FROM CopilotComments c WHERE c.language = '{language}'";
+            var itemQueryIterator = _container.GetItemQueryIterator<CopilotCommentModel>(query);
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                matches.AddRange(result.Resource);
+            }
+            return matches;
         }
     }
 }

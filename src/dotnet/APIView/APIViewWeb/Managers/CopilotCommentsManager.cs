@@ -1,15 +1,13 @@
 using System;
 using System.Threading.Tasks;
-using APIViewWeb.Models;
-using APIViewWeb.Repositories;
+using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
+using System.Linq;
 using Azure;
 using Azure.AI.OpenAI;
-using MongoDB.Bson;
-using System.Linq;
-using Newtonsoft.Json;
-using System.Collections.Generic;
-using Microsoft.Azure.Cosmos;
+using APIViewWeb.Models;
+using APIViewWeb.Repositories;
+using System.Text.Json;
 
 namespace APIViewWeb.Managers
 {
@@ -32,89 +30,77 @@ namespace APIViewWeb.Managers
                 new AzureKeyCredential(_configuration["OpenAI:Key"]));
         }
 
-        public async Task<string> CreateDocumentAsync(string language, string badCode, string goodCode, string comment, string[] guidelineIds, string user)
+        public async Task<string> CreateDocumentAsync(string language, string badCode, string goodCode, string comment, string guidelineIds, string user)
         {
-            var embedding = await GetEmbeddingsAsync(badCode);
-
             var document = new CopilotCommentModel()
             {
                 Language = language,
                 BadCode = badCode,
                 GoodCode = goodCode,
-                Embedding = embedding,
+                Embedding = await GetEmbeddingsAsync(badCode),
                 Comment = comment,
-                GuidelineIds = guidelineIds,
+                GuidelineIds = SplitGuidelineIds(guidelineIds),
                 ModifiedOn = DateTime.UtcNow,
                 ModifiedBy = user
             };
 
             await _copilotCommentsRepository.InsertDocumentAsync(document);
-
-            document.Embedding = null;
-            return document.ToJson();
+            return GetDocumentJsonWithoutEmbedding(document);
         }
 
-        public async Task<CopilotCommentModel> UpdateDocumentAsync(string id, string language, string badCode, string goodCode, string comment, string[] guidelineIds, string user)
+        public async Task<string> UpdateDocumentAsync(string id, string language, string badCode, string goodCode, string comment, string guidelineIds, string user)
         {
-            var updates = new List<PatchOperation>
-            {
-                PatchOperation.Set("/modified_on", DateTime.UtcNow),
-                PatchOperation.Set("/modified_by", user),
-            };
+            var document = await _copilotCommentsRepository.GetDocumentAsync(id, language);
+
+            document.ModifiedOn = DateTime.UtcNow;
+            document.ModifiedBy = user;
 
             if (language != null)
             {
-                updates.Add(PatchOperation.Set("/language", language));
+                document.Language = language;
             }
 
             if (badCode != null)
             {
                 var embedding = await GetEmbeddingsAsync(badCode);
-                updates.Add(PatchOperation.Set("/bad_code", badCode));
-                updates.Add(PatchOperation.Set("/embedding", embedding));
+                document.BadCode = badCode;
+                document.Embedding = embedding;
             }
 
             if (goodCode != null)
             {
-                updates.Add(PatchOperation.Set("/good_code", goodCode));
+                document.GoodCode = goodCode;
             }
 
             if (comment != null)
             {
-                updates.Add(PatchOperation.Set("/comment", comment));
+                document.Comment = comment;
             }
 
             if (guidelineIds != null)
             {
-                updates.Add(PatchOperation.Set("/guideline_ids", guidelineIds));
+                document.GuidelineIds = SplitGuidelineIds(guidelineIds);
             }
 
-            return await _copilotCommentsRepository.UpdateDocumentAsync(id, language, updates);
+            await _copilotCommentsRepository.UpdateDocumentAsync(document);
+            return GetDocumentJsonWithoutEmbedding(document);
         }
 
         public Task DeleteDocumentAsync(string id, string language, string user)
         {
-            var updates = new List<PatchOperation>
-            {
-                PatchOperation.Set("/is_deleted", true),
-                PatchOperation.Set("/modified_on", DateTime.UtcNow),
-                PatchOperation.Set("/modified_by", user),
-            };
-
-            return _copilotCommentsRepository.DeleteDocumentAsync(id, language, updates); 
+            return _copilotCommentsRepository.DeleteDocumentAsync(id, language, user); 
         }
 
         public async Task<string> GetDocumentAsync(string id, string language)
         {
             var document = await _copilotCommentsRepository.GetDocumentAsync(id, language);
-            var documentJson = JsonConvert.SerializeObject(document);
-            return documentJson;
+            return GetDocumentJsonWithoutEmbedding(document);
         }
 
         public async Task<string> SearchDocumentsAsync(string language, string badCode, float threshold, int limit)
         {
             var embeddings = await GetEmbeddingsAsync(badCode);
-            var documents = _copilotCommentsRepository.SearchLanguage(language);
+            var documents = await _copilotCommentsRepository.SearchLanguage(language);
 
             var searchResults = new List<CopilotSearchModel>();
             foreach (var document in documents)
@@ -126,7 +112,7 @@ namespace APIViewWeb.Managers
             }
 
             var topResults = searchResults.OrderByDescending(item => item.similarity).Take(limit);
-            return JsonConvert.SerializeObject(topResults);
+            return JsonSerializer.Serialize(topResults);
         }
 
         public static float CosineSimilarity(float[] vec1, float[] vec2)
@@ -151,38 +137,24 @@ namespace APIViewWeb.Managers
 
         private async Task<float[]> GetEmbeddingsAsync(string badCode)
         {
-        /*
-         * Structure of Embeddings object
-         *  {
-         *      {
-         *          "Data", 
-         *          [
-         *              {
-         *                  "EmbeddingsItem", 
-         *                  {
-         *                      { "Embedding", [ "float1", "float2" ]},
-         *                      { "Index", "1"}
-         *                  }
-         *              }
-         *          ]
-         *      },
-         *      {
-         *          "Usage", 
-         *          {
-         *              { "PromptTokens", "1"},
-         *              { "TotalTokens", "2"}
-         *          }
-         *      }
-         *  }
-         */
-
             var options = new EmbeddingsOptions(badCode);
             var response = await _openAIClient.GetEmbeddingsAsync(_configuration["OpenAI:Model"], options);
-            var embeddings = response.Value;
+            return response.Value.Data[0].Embedding.ToArray();
+        }
 
-            var embedding = embeddings.Data[0].Embedding.ToArray();
-
-            return embedding;
+        private string GetDocumentJsonWithoutEmbedding(CopilotCommentModel document)
+        {
+            document.Embedding = null;
+            return JsonSerializer.Serialize(document);
+        }
+        
+        private IEnumerable<string> SplitGuidelineIds(string guidelineIds)
+        {
+            if (guidelineIds != null)
+            {
+                return guidelineIds.Split(',').Select(id => id.Trim());
+            }
+            return new List<string>();
         }
     }
 }

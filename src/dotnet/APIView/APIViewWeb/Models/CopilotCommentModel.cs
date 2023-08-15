@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 
 namespace APIViewWeb.Models
@@ -18,7 +19,7 @@ namespace APIViewWeb.Models
         [JsonProperty("comment")]
         public string Comment { get; set; } = null;
         [JsonProperty("guideline_ids")]
-        public string[] GuidelineIds { get; set; } = null;
+        public IEnumerable<string> GuidelineIds { get; set; }
         [JsonProperty("modified_on")]
         public DateTime ModifiedOn { get; set; }
         [JsonProperty("modified_by")]

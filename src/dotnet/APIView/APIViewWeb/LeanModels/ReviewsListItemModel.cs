@@ -18,6 +18,8 @@ namespace APIViewWeb.LeanModels
         [JsonProperty("id")]
         public string Id { get; set; }
         public string Name { get; set; }
+        public string LastRevisionName { get; set; }
+        public string Label { get; set; }
         public string Author { get; set; }
         public string Language { get; set; }
         public int NoOfRevisions { get; set; }
@@ -46,6 +48,16 @@ namespace APIViewWeb.LeanModels
         }
 
         public bool IsAutomatic { get; set; }
+
+        public string DisplayName
+        {
+            get
+            {
+                var name = LastRevisionName ?? Name;
+                return Label != null && !IsAutomatic ?
+                    $"{name} - {Label}" : name;
+            }
+        }
 
         public ReviewType FilterType { get; set; }
         public string ServiceName { get; set; }

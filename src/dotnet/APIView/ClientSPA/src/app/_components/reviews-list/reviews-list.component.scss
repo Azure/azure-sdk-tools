@@ -6,20 +6,13 @@
         width: 38px;
     };
 
-    p-badge {
-        .Pending {
-            background-color: orange;
-        }
-        .Approved {
-            background-color: green;
-        }
-
-        .Closed {
-            background-color: red;
-        }
-
-        .Open {
-            background-color: blue;
+    .author-table-data {
+        vertical-align: middle;
+        font-size: 0.9rem;
+        font-weight: 400;
+        img {
+            border-radius: 50%;
+            margin-right: 5px;
         }
     }
 }

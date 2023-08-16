@@ -21,17 +21,21 @@ import { TimeagoModule } from "ngx-timeago";
 import { ChipModule } from 'primeng/chip';
 import { BadgeModule } from 'primeng/badge';
 import { ImageModule } from 'primeng/image';
+import { LanguageNamesPipe } from './_pipes/language-names.pipe';
+import { AvatarModule } from 'primeng/avatar';
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    NavBarComponent,
     IndexPageComponent,
+    LanguageNamesPipe,
+    NavBarComponent,
     ReviewsListComponent
   ],
   imports: [
     AppRoutingModule,
+    AvatarModule,
     BadgeModule,
     BrowserModule,
     BrowserAnimationsModule,

@@ -2,8 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { Review } from 'src/app/_models/review';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { Pagination } from 'src/app/_models/pagination';
-import { TableFilterEvent, TableLazyLoadEvent, TablePageEvent } from 'primeng/table';
-import { ScrollerOptions, TreeNode } from 'primeng/api';
+import { TableLazyLoadEvent } from 'primeng/table';
 
 @Component({
   selector: 'app-reviews-list',
@@ -24,18 +23,27 @@ export class ReviewsListComponent implements OnInit {
   // Filters
   languages: any[] = [];
   selectedLanguages: any[] = [];
-  state: any[] = [];
-  selectedState: any[] = [];
-  type: any[] = [];
-  selectedType: any[] = [];
-  status: any[] = [];
-  selectedStatus: any[] = [];
+  details: any[] = [];
+  selectedDetails: any[] = [];
+
+  badgeClass : Map<string, string> = new Map<string, string>();
+
 
   constructor(private reviewsService: ReviewsService) { }
 
   ngOnInit(): void {
     this.loadReviews(0, this.pageSize * 2); // Load row 1 - 40 for starts
     this.createFilters();
+
+    // Set Badge Class for details Icons
+    this.badgeClass.set("Pending", "");
+    this.badgeClass.set("Approved", "fa-solid fa-check-double");
+    this.badgeClass.set("1stRelease", "fa-solid fa-check");
+    this.badgeClass.set("Closed", "fa-regular fa-circle-xmark");
+    this.badgeClass.set("Open", "");
+    this.badgeClass.set("Manual", "fa-solid fa-arrow-up-from-bracket");
+    this.badgeClass.set("PullRequest", "fa-solid fa-code-pull-request");
+    this.badgeClass.set("Automatic", "fa-solid fa-robot");
   }
 
   /**
@@ -78,32 +86,40 @@ export class ReviewsListComponent implements OnInit {
         { label: "TypeSpec", data: "TypeSpec" },
         { label: "Xml", data: "Xml" }
     ];
-    this.state = [
-      { label: "Open", data: "open" },
-      { label: "Closed", data: "closed" }
-    ];
-    this.status = [
-      { label: "Approved", data: "true" },
-      { label: "Pending", data: "false" },
-    ];
-    this.type = [
-      { label: "Automatic", data: "0" },
-      { label: "Manual", data: "1" },
-      { label: "Pull Request", data: "2" }
+    this.details = [
+      {
+        label: 'State',
+        value: 'All',
+        items: [
+          { label: "Open", value: "open" },
+          { label: "Closed", value: "closed" }
+        ]
+      },
+      {
+        label: 'Status',
+        value: 'All',
+        items: [
+          { label: "Approved", value: "true" },
+          { label: "Pending", value: "false" },
+        ]
+      },
+      {
+        label: 'Type',
+        value: 'All',
+        items: [
+          { label: "Automatic", value: "0" },
+          { label: "Manual", value: "1" },
+          { label: "Pull Request", value: "2" }
+        ]
+      }
     ];
   }
 
 
   /**
-   * Callback to invoke on pagination values change
-   * @param event the page event
-  // */
-  //onPage(event: TablePageEvent) {
-  //  if ((event.first > (this.reviews.length / 2) - 1) && this.pagination?.currentPage! < this.pagination?.totalPages!) {
-  //    this.loadReviews(this.pagination?.currentPage! + 1, this.pagination?.itemsPerPage!);
-  //  }
-  //}
-
+   * Callback to invoke on scroll /lazy load.
+   * @param event the lazyload event
+   */
   onLazyLoad(event: TableLazyLoadEvent) {
     console.log("Lazy load event %o", event);
     if (event.last! > (this.insertIndex - this.pageSize))

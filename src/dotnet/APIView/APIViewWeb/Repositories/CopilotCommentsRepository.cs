@@ -49,8 +49,9 @@ namespace APIViewWeb.Repositories
         public async Task<IEnumerable<CopilotCommentModel>> SearchLanguage(string language)
         {
             var matches = new List<CopilotCommentModel>();
-            var query = $"SELECT * FROM CopilotComments c WHERE c.language = '{language}'";
-            var itemQueryIterator = _container.GetItemQueryIterator<CopilotCommentModel>(query);
+            var itemQueryIterator = _container.GetItemQueryIterator<CopilotCommentModel>(
+                "SELECT * FROM CopilotComments c WHERE c.is_deleted = false",
+                requestOptions: new QueryRequestOptions() { PartitionKey = new PartitionKey(language) });
             while (itemQueryIterator.HasMoreResults)
             {
                 var result = await itemQueryIterator.ReadNextAsync();

@@ -125,7 +125,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> SearchDocument(string language, string code, float threshold, int limit = -1)
+        public async Task<ActionResult> SemanticCodeSearch(string language, string code, float threshold, int limit = -1)
         {
             if (language == null || code == null)
             {
@@ -135,8 +135,8 @@ namespace APIViewWeb.Controllers
 
             try
             {
-                var document = await _copilotManager.SearchDocumentsAsync(language, code, threshold, limit);
-                return Ok(document);
+                var topResults = await _copilotManager.SearchDocumentsAsync(language, code, threshold, limit);
+                return Ok(topResults);
             }
             catch (Exception err)
             {

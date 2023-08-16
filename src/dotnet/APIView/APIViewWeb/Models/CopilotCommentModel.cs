@@ -27,4 +27,17 @@ namespace APIViewWeb.Models
         [JsonProperty("is_deleted")]
         public bool IsDeleted { get; set; } = false;
     }
+    
+    public enum CopilotLanguagesEnum
+    {
+        dotnet,
+        java,
+        javascript,
+        python,
+        cpp,
+        go,
+        mobile,
+        azd,
+        typespec
+    }
 }

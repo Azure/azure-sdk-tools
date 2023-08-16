@@ -2,3 +2,4 @@ python-dotenv
 openai
 langchain
 pydantic
+flask

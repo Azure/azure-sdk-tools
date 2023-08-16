@@ -8,9 +8,9 @@ namespace APIViewWeb.Helpers
 {
     public class PageParams
     {
-        private const int MaxPageSize = 200;
-        public int PageNumber { get; set; } = 1;
-        private int _pageSize = 25;
+        private const int MaxPageSize = 50;
+        public int NoOfItemsRead { get; set; } = 0;
+        private int _pageSize = 5;
 
         public int PageSize { 
             get => _pageSize; 
@@ -20,16 +20,14 @@ namespace APIViewWeb.Helpers
 
     public class PagedList<T> : List<T>
     {
-        public PagedList(IEnumerable<T> items, int count, int pageNumber, int pageSize)
+        public PagedList(IEnumerable<T> items, int noOfItemsRead, int totalCount,  int pageSize)
         {
-            CurrentPage = pageNumber;
-            TotalPages = (int) Math.Ceiling(count / (double) pageSize);
+            NoOfItemsRead = noOfItemsRead;
+            TotalCount = totalCount;
             PageSize = pageSize;
-            TotalCount = count;
             AddRange(items);
         }
-        public int CurrentPage { get; set; }
-        public int TotalPages { get; set; }
+        public int NoOfItemsRead { get; set; }
         public int PageSize { get; set; }
         public int TotalCount { get; set; }
 

@@ -15,6 +15,13 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PaginatorModule } from 'primeng/paginator';
 import { DropdownModule } from 'primeng/dropdown';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { TreeSelectModule } from 'primeng/treeselect';
+import { SidebarModule } from 'primeng/sidebar';
+import { TimeagoModule } from "ngx-timeago";
+import { ChipModule } from 'primeng/chip';
+import { BadgeModule } from 'primeng/badge';
+import { ImageModule } from 'primeng/image';
+
 
 @NgModule({
   declarations: [
@@ -25,16 +32,22 @@ import { MultiSelectModule } from 'primeng/multiselect';
   ],
   imports: [
     AppRoutingModule,
+    BadgeModule,
     BrowserModule,
     BrowserAnimationsModule,
     ButtonModule,
+    ChipModule,
     DropdownModule ,
     HttpClientModule,
+    ImageModule,
     InputTextModule,
     MenubarModule,
     MultiSelectModule,
     PaginatorModule,
-    TableModule
+    SidebarModule,
+    TableModule,
+    TimeagoModule.forRoot(),
+    TreeSelectModule
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -1,7 +1,7 @@
 using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
-using APIViewWeb.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Linq;
@@ -30,7 +30,7 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<PagedList<ReviewsListItemModel>>> GetReviewsAsync([FromQuery] PageParams pageParams)
         {
             var result = await _reviewManager.GetReviewsAsync(pageParams);
-            Response.AddPaginationHeader(new PaginationHeader(result.CurrentPage, result.PageSize, result.TotalCount, result.TotalPages));
+            Response.AddPaginationHeader(new PaginationHeader(result.NoOfItemsRead, result.PageSize, result.TotalCount));
             return new LeanJsonResult(result);
         }
     }

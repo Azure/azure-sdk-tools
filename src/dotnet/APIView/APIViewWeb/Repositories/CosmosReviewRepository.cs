@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
-using APIViewWeb.Models;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
@@ -293,27 +293,28 @@ SELECT VALUE {
     NoOfRevisions: ARRAY_LENGTH(r.Revisions),
     Language: r.Revisions[0].Files[0].Language,
     IsClosed: r.IsClosed,
-    Subscribers: r.Subscribers,
     IsAutomatic: r.IsAutomatic,
     FilterType: r.FilterType,
+    IsApproved: ARRAY_SLICE(r.Revisions, -1)[0].IsApproved,
+    IsApprovedForFirstRelease: r.IsApprovedForFirstRelease,
     ServiceName: r.ServiceName,
     PackageDisplayName: r.PackageDisplayName,
     LastUpdated: r.LastUpdated
 } FROM Reviews r");
 
-            int count = 0;
+            int totalCount = 0;
             var countQuery = $"SELECT VALUE COUNT(1) FROM({queryStringBuilder.ToString()})";
             QueryDefinition countQueryDefinition = new QueryDefinition(countQuery);
             using FeedIterator<int> countFeedIterator = _reviewsContainer.GetItemQueryIterator<int>(countQueryDefinition);
             while (countFeedIterator.HasMoreResults)
             {
-                count = (await countFeedIterator.ReadNextAsync()).SingleOrDefault();
+                totalCount = (await countFeedIterator.ReadNextAsync()).SingleOrDefault();
             }
 
             queryStringBuilder.Append(" OFFSET @offset LIMIT @limit");
             var reviews = new List<ReviewsListItemModel>();
             QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
-                .WithParameter("@offset", (pageParams.PageNumber -1) * pageParams.PageSize)
+                .WithParameter("@offset", pageParams.NoOfItemsRead)
                 .WithParameter("@limit", pageParams.PageSize);
 
             using FeedIterator<ReviewsListItemModel> feedIterator = _reviewsContainer.GetItemQueryIterator<ReviewsListItemModel>(queryDefinition);
@@ -322,7 +323,8 @@ SELECT VALUE {
                 FeedResponse<ReviewsListItemModel> response = await feedIterator.ReadNextAsync();
                 reviews.AddRange(response);
             }
-            return new PagedList<ReviewsListItemModel>((IEnumerable<ReviewsListItemModel>)reviews, count, pageParams.PageNumber, pageParams.PageSize);
+            var noOfItemsRead = pageParams.NoOfItemsRead + reviews.Count();
+            return new PagedList<ReviewsListItemModel>((IEnumerable<ReviewsListItemModel>)reviews, noOfItemsRead, totalCount, pageParams.PageSize);
         }
 
     public async Task<IEnumerable<ReviewModel>> GetApprovedForFirstReleaseReviews(string language, string packageName)

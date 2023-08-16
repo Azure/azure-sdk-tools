@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 
 import { Observable, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/_models/pagination';
-import { Review, ReviewList } from 'src/app/_models/review';
+import { Review } from 'src/app/_models/review';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -15,14 +15,12 @@ export class ReviewsService {
 
   constructor(private http: HttpClient) { }
 
-  getReviews(page: number, itemsPerPage: number): Observable<PaginatedResult<Review[]>> {
+  getReviews(noOfItemsRead: number, pageSize: number): Observable<PaginatedResult<Review[]>> {
     let params = new HttpParams();
-    if (page && itemsPerPage) {
-      params = params.append('pageNumber', page);
-      params = params.append('pageSize', itemsPerPage);
-    }
-
-    return this.http.get<ReviewList>(this.baseUrl,
+    params = params.append('noOfItemsRead', noOfItemsRead);
+    params = params.append('pageSize', pageSize);
+    
+    return this.http.get<Review[]>(this.baseUrl,
       { 
         params: params,
         observe: 'response', 

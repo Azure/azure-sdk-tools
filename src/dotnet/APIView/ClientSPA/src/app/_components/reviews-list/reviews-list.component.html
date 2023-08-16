@@ -1,56 +1,154 @@
-
 <div class="container-fluid">
-    <div class="row mx-5 py-2">
-
+    <!--<p-sidebar [(visible)]="rightSideBarVisible" position="right" styleClass="right-side-bar">
+        <div class="pt-4">
+            <div class="mb-4">
+                <span class="p-float-label">
+                    <p-multiSelect [options]="languages" [(ngModel)]="selectedLanguages" defaultLabel="Filter Language.." [filter]="true" optionLabel="label" display="chip"></p-multiSelect>
+                    <label for="ms-languages">Filter Language</label>
+                </span>
+            </div>
+            <div class="mb-4">
+                <span class="p-float-label">
+                    <p-multiSelect [options]="state" [(ngModel)]="selectedState" defaultLabel="Filter State.." optionLabel="label" [filter]="false" display="chip"></p-multiSelect>
+                    <label for="ms-state">Filter State</label>
+                </span>
+            </div>
+            <div class="mb-4">
+                <span class="p-float-label">
+                    <p-multiSelect [options]="status" [(ngModel)]="selectedStatus" defaultLabel="Filter Status.." optionLabel="label" [filter]="false" display="chip"></p-multiSelect>
+                    <label for="ms-status">Filter Status</label>
+                </span>
+            </div>
+            <div class="mb-4">
+                <span class="p-float-label">
+                    <p-multiSelect [options]="type" [(ngModel)]="selectedType" defaultLabel="Filter Type.." optionLabel="label" [filter]="false" display="chip"></p-multiSelect>
+                    <label for="ms-type">Filter Type</label>
+                </span>
+            </div>
+        </div>
+    </p-sidebar> -->
+    <div class="row">
         <p-table
             [value]="reviews"
             dataKey="id"
             [scrollable]="true"
-            scrollHeight="calc(100vh - 200px)"
-            [resizableColumns]="true"
+            scrollHeight="calc(100vh - 140px)"
             responsiveLayout="stack"
-            [paginator]="true"
-            [rows]="pageSize"
-            [showCurrentPageReport]="true"
-            [showFirstLastIcon]="false"
-            [showPageLinks]="false"
-            currentPageReportTemplate="{first} to {last} of {{totalNumberOfReviews}}"
-            (onPage)="onPage($event)"
+            [lazy]="true"
+            [lazyLoadOnInit]="false"
+            [virtualScroll]="true"
+            [virtualScrollDelay]="0"
+            [virtualScrollItemSize]="49"
+            (onLazyLoad)="onLazyLoad($event)"
+            [tableStyle]="{ 'min-width': '50rem' }"
             styleClass="p-datatable-gridlines p-datatable-striped p-datatable-sm">
-            <ng-template pTemplate="caption">
+            <!--<ng-template pTemplate="caption">
                 <div class="d-flex justify-content-between">
-                    <span class="p-input-icon-left ml-auto">
+                    <p-button label="Create Reviews" icon="pi pi-plus"></p-button>
+                    <span class="p-input-icon-left me-2">
                         <i class="pi pi-search"></i>
                         <input pInputText type="text" id="reviews-search" placeholder="Search Reviews..." />
                     </span>
-                    <p-multiSelect [options]="reviewFilters" [group]="true" [style]="{'width':'40dvw'}" [(ngModel)]="selectedFilters" defaultLabel="Filter Reviews" display="chip">
-                        <ng-template let-group pTemplate="group">
-                            <div class="flex align-items-center">
-                                <img src="https://primefaces.org/cdn/primeng/images/demo/flag/flag_placeholder.png" [class]="'mr-2 flag flag-' + group.value" style="width: 20px" />
-                                <span>{{ group.label }}</span>
-                            </div>
-                        </ng-template>
-                    </p-multiSelect>
+                    <p-button label="Filter Reviews" (click)="rightSideBarVisible = true" icon="pi pi-filter"></p-button>
                 </div>
-            </ng-template>
+            </ng-template>-->
             <ng-template pTemplate="header">
                 <tr>
-                    <th pResizableColumn>Language</th>
-                    <th pResizableColumn>Name</th>
-                    <th pResizableColumn>Author</th>
-                    <th pResizableColumn>Last Updated</th>
-                    <th pResizableColumn>Revisions</th>
-                    <th pResizableColumn>State</th>
+                    <th style="width:3%">Lanuage</th>
+                    <th style="width:auto">Name<p-sortIcon class="ms-2" field="name"></p-sortIcon></th>
+                    <th style="width:12%">Author</th>
+                    <th style="width:12%">Last Updated<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
+                    <th style="width:3%">Type</th>
+                    <th style="width:3%">Status</th>
+                    <th style="width:3%">State</th>
+                    <th style="width:4%">Revs<p-sortIcon class="ms-2" field="noOfRevisions"></p-sortIcon></th>
+                </tr>
+                <tr>
+                    <th>
+                        <p-columnFilter id="langauge-filter" field="languages" matchMode="in" [showMenu]="false">
+                            <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                <p-multiSelect [ngModel]="value" [options]="languages" [filter]="false" (onChange)="filter($event.value)" optionLabel="label">
+                                    <ng-template let-option pTemplate="item">
+                                        <div class="inline-block vertical-align-middle">
+                                            <span class="ml-1 mt-1">{{ option.label }}</span>
+                                        </div>
+                                    </ng-template>
+                                </p-multiSelect>
+                            </ng-template>
+                        </p-columnFilter>
+                    </th>
+                    <th>
+                        <p-columnFilter type="text" field="name" [showMenu]="false"></p-columnFilter>
+                    </th>
+                    <th>
+                        <p-columnFilter type="text" field="author" [showMenu]="false"></p-columnFilter>
+                    </th>
+                    <th>
+                        <p-columnFilter type="text" field="lastUpdated" [showMenu]="false"></p-columnFilter>
+                    </th>
+                    <th>
+                        <p-columnFilter id="type-filter" field="type" matchMode="in" [showMenu]="false">
+                            <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                <p-multiSelect [ngModel]="value" [options]="type" [filter]="false" (onChange)="filter($event.value)" optionLabel="label">
+                                    <ng-template let-option pTemplate="item">
+                                        <div class="inline-block vertical-align-middle">
+                                            <span class="ml-1 mt-1">{{ option.label }}</span>
+                                        </div>
+                                    </ng-template>
+                                </p-multiSelect>
+                            </ng-template>
+                        </p-columnFilter>
+                    </th>
+                    <th>
+                        <p-columnFilter id="status-filter" field="status" matchMode="in" [showMenu]="false">
+                            <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                <p-multiSelect [ngModel]="value" [options]="status" [filter]="false" (onChange)="filter($event.value)" optionLabel="label">
+                                    <ng-template let-option pTemplate="item">
+                                        <div class="inline-block vertical-align-middle">
+                                            <span class="ml-1 mt-1">{{ option.label }}</span>
+                                        </div>
+                                    </ng-template>
+                                </p-multiSelect>
+                            </ng-template>
+                        </p-columnFilter>
+                    </th>
+                    <th>
+                        <p-columnFilter id="state-filter" field="state" matchMode="in" [showMenu]="false">
+                            <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                                <p-multiSelect [ngModel]="value" [options]="state" [filter]="false" (onChange)="filter($event.value)" optionLabel="label">
+                                    <ng-template let-option pTemplate="item">
+                                        <div class="inline-block vertical-align-middle">
+                                            <span class="ml-1 mt-1">{{ option.label }}</span>
+                                        </div>
+                                    </ng-template>
+                                </p-multiSelect>
+                            </ng-template>
+                        </p-columnFilter>
+                    </th>
+                    <th>
+                    </th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-review>
                 <tr>
-                    <td>{{ review.language }}</td>
+                    <td>
+                        <img src="assets/images/{{review.language | lowercase}}-original.svg" alt="{{review.language}}" width="30">
+                    </td>
                     <td>{{ review.name }}</td>
-                    <td>{{ review.author }}</td>
-                    <td>{{ review.lastUpdated }}</td>
+                    <td>
+                        <p-chip label="{{review.author}}" image="https://github.com/{{review.author}}.png?size=40"></p-chip>
+                    </td>
+                    <td>{{ review.lastUpdated | timeago }}</td>
+                    <td>
+                        <p-badge [value]="review.status" styleClass="{{review.status}}"></p-badge>
+                    </td>
+                    <td>
+                        <p-badge [value]="review.state" styleClass="{{review.state}}"></p-badge>
+                    </td>
+                    <td>
+                        <p-badge [value]="review.type" styleClass="{{review.type}}"></p-badge>
+                    </td>
                     <td>{{ review.noOfRevisions }}</td>
-                    <td>{{ review.isClosed }}</td>
                 </tr>
             </ng-template>
         </p-table>

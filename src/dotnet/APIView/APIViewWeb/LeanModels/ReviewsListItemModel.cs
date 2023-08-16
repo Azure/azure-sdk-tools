@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using System;
 using Newtonsoft.Json;
+using MongoDB.Bson.Serialization.Serializers;
+using Azure.AI.OpenAI;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace APIViewWeb.Models
+namespace APIViewWeb.LeanModels
 {
     public class ReviewsListModel
     {
@@ -19,11 +22,34 @@ namespace APIViewWeb.Models
         public string Language { get; set; }
         public int NoOfRevisions { get; set; }
         public bool IsClosed { get; set; }
+        public string State
+        {
+            get => (this.IsClosed) ? "Closed" : "Open";
+        }
+        
+        public string Type
+        {
+            get => (this.IsAutomatic) ? "Approved" : this.FilterType.ToString();
+        }
+        public bool IsApproved { get; set; }
+        public bool IsApprovedForFirstRelease { get; set; }
+        public string Status
+        {
+            get {
+                if (this.IsApproved)
+                    return "Approved";
+                else if (this.IsApprovedForFirstRelease)
+                    return "1stRelease";
+                else
+                    return "Pending";
+                }
+        }
+
         public bool IsAutomatic { get; set; }
+
         public ReviewType FilterType { get; set; }
         public string ServiceName { get; set; }
         public string PackageDisplayName { get; set; }
-        public HashSet<string> Subscribers { get; set; } = new HashSet<string>();
         public DateTime LastUpdated { get; set; }
     }
 

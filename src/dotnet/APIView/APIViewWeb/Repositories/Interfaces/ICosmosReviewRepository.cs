@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
-using APIViewWeb.Models;
+using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.Repositories
 {

@@ -1,3 +1,25 @@
-#reviews-search {
-    width: 40dvw;
+:host ::ng-deep {
+    #langauge-filter p-columnfilterformelement,
+    #state-filter p-columnfilterformelement,
+    #status-filter p-columnfilterformelement,
+    #type-filter p-columnfilterformelement{
+        width: 38px;
+    };
+
+    p-badge {
+        .Pending {
+            background-color: orange;
+        }
+        .Approved {
+            background-color: green;
+        }
+
+        .Closed {
+            background-color: red;
+        }
+
+        .Open {
+            background-color: blue;
+        }
+    }
 }

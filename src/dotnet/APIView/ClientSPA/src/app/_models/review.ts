@@ -1,17 +1,12 @@
-export interface ReviewList {
-    TotalNumberOfReviews: number
-    Reviews: Review[]
-}
-
 export interface Review {
     id: string
     name: string
     author: string
     language: string
     noOfRevisions: number
-    isClosed: boolean
-    isAutomatic: boolean
-    filterType: number
+    status: string;
+    type: string;
+    state: string;
     serviceName: string
     packageDisplayName: string
     subscribers: string[]

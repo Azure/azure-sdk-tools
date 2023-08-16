@@ -6,6 +6,7 @@ using ApiView;
 using APIView.DIff;
 using APIView.Model;
 using APIViewWeb.Helpers;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 
 namespace APIViewWeb.Managers

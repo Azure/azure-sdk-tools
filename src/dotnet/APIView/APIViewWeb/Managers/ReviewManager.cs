@@ -14,6 +14,7 @@ using APIView.DIff;
 using APIView.Model;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;

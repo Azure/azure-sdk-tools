@@ -58,7 +58,7 @@ namespace APIViewWeb.Controllers
                 var result = await _copilotManager.UpdateDocumentAsync(id, language, badCode, goodCode, comment, guidelineIds, User.GetGitHubLogin());
                 return Ok(result);
             }
-            catch (CosmosException ce)
+            catch (CosmosException)
             {
                 _logger.LogInformation("Could not find a match for the given id and language combination.");
                 return StatusCode(statusCode: StatusCodes.Status404NotFound);
@@ -85,7 +85,7 @@ namespace APIViewWeb.Controllers
                 var result = await _copilotManager.GetDocumentAsync(id, language);
                 return Ok(result);
             }
-            catch (CosmosException ce)
+            catch (CosmosException)
             {
                 _logger.LogInformation("Could not find a match for this id and language combination exists in the database.");
                 return StatusCode(statusCode: StatusCodes.Status404NotFound);
@@ -112,7 +112,7 @@ namespace APIViewWeb.Controllers
                 await _copilotManager.DeleteDocumentAsync(id, language, User.GetGitHubLogin());
                 return StatusCode(statusCode: StatusCodes.Status204NoContent);
             }
-            catch (CosmosException ce)
+            catch (CosmosException)
             {
                 _logger.LogInformation("Could not find a match for this id and language combination exists in the database.");
                 return StatusCode(statusCode: StatusCodes.Status404NotFound);

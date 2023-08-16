@@ -125,7 +125,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> SearchDocument(string language, string code, float threshold, int limit)
+        public async Task<ActionResult> SearchDocument(string language, string code, float threshold, int limit = -1)
         {
             if (language == null || code == null)
             {

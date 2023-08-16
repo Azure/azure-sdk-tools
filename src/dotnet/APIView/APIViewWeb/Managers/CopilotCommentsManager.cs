@@ -16,6 +16,7 @@ namespace APIViewWeb.Managers
         private readonly ICopilotCommentsRepository _copilotCommentsRepository;
         private readonly IConfiguration _configuration;
         private readonly OpenAIClient _openAIClient;
+        private int defaultLimit = 5;
 
         public CopilotCommentsManager(
             ICopilotCommentsRepository copilotCommentsRepository,
@@ -109,6 +110,11 @@ namespace APIViewWeb.Managers
                 if (similarity < threshold)
                     continue;
                 searchResults.Add(new CopilotSearchModel(similarity, document));
+            }
+
+            if (limit < 0)
+            {
+                limit = defaultLimit;
             }
 
             var topResults = searchResults.OrderByDescending(item => item.similarity).Take(limit);

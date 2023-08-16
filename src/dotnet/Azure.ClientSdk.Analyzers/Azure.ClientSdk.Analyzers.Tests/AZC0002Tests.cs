@@ -259,7 +259,6 @@ namespace RandomNamespace
     }
 }";
             await Verifier.CreateAnalyzer(code)
-                .WithDisabledDiagnostics("AZC0018")
                 .RunAsync();
         }
 

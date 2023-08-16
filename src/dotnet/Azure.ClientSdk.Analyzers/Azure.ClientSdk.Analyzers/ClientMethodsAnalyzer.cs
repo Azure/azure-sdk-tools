@@ -28,27 +28,27 @@ namespace Azure.ClientSdk.Analyzers
             Descriptors.AZC0015
         });
 
-        private static void CheckCancellationTokenOrRequestContext(ISymbolAnalysisContext context, IMethodSymbol member)
+        private static bool IsRequestContext(IParameterSymbol parameterSymbol)
         {
-            static bool IsRequestContext(IParameterSymbol parameterSymbol)
-            {
-                return parameterSymbol.Name == "context" && parameterSymbol.Type.Name == "RequestContext";
-            }
+            return parameterSymbol.Name == "context" && parameterSymbol.Type.Name == "RequestContext";
+        }
 
-            static bool IsCancellationToken(IParameterSymbol parameterSymbol)
-            {
-                return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken";
-            }
+        private static bool IsCancellationToken(IParameterSymbol parameterSymbol)
+        {
+            return parameterSymbol.Name == "cancellationToken" && parameterSymbol.Type.Name == "CancellationToken";
+        }
 
-            static bool IsCancellationOrRequestContext(IParameterSymbol parameterSymbol)
-            {
-                return IsCancellationToken(parameterSymbol) || IsRequestContext(parameterSymbol);
-            }
+        private static bool IsCancellationOrRequestContext(IParameterSymbol parameterSymbol)
+        {
+            return IsCancellationToken(parameterSymbol) || IsRequestContext(parameterSymbol);
+        }
 
+        private static void CheckIsLastArgumentCancellationTokenOrRequestContext(ISymbolAnalysisContext context, IMethodSymbol member)
+        {
             var lastArgument = member.Parameters.LastOrDefault();
-            var isCancellationOrRequestContext = lastArgument != null && IsCancellationOrRequestContext(lastArgument);
+            var isLastArgumentCancellationOrRequestContext = lastArgument != null && IsCancellationOrRequestContext(lastArgument);
 
-            if (!isCancellationOrRequestContext)
+            if (!isLastArgumentCancellationOrRequestContext)
             {
                 var overloadSupportsCancellations = FindMethod(
                     member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
@@ -61,19 +61,16 @@ namespace Azure.ClientSdk.Analyzers
                     context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
                 }
             }
-            else if (IsCancellationToken(lastArgument))
+            else if (IsCancellationToken(lastArgument) && !lastArgument.IsOptional)
             {
-                if (!lastArgument.IsOptional)
-                {
-                    var overloadWithCancellationToken = FindMethod(
-                        member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
-                        member.TypeParameters,
-                        member.Parameters.RemoveAt(member.Parameters.Length - 1));
+                var overloadWithCancellationToken = FindMethod(
+                    member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
+                    member.TypeParameters,
+                    member.Parameters.RemoveAt(member.Parameters.Length - 1));
 
-                    if (overloadWithCancellationToken == null)
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
-                    }
+                if (overloadWithCancellationToken == null)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
                 }
             }
         }
@@ -167,7 +164,7 @@ namespace Azure.ClientSdk.Analyzers
 
                 if (IsClientMethodReturnType(context, methodSymbol, false))
                 {
-                    CheckCancellationTokenOrRequestContext(context, methodSymbol);
+                    CheckIsLastArgumentCancellationTokenOrRequestContext(context, methodSymbol);
                 }
             }
         }

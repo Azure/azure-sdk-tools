@@ -727,9 +727,9 @@ namespace APIViewWeb.Managers
                 reviewText.Append("\\n");
             }
 
-            var url = "https://apiviewcopilot.azurewebsites.net/python";
+            var url = "https://apiview-gpt.azurewebsites.net/python";
             var client = new HttpClient();
-            client.Timeout = TimeSpan.FromMinutes(5);
+            client.Timeout = TimeSpan.FromMinutes(20);
             var payload = new
             {
                 content = reviewText.ToString()
@@ -737,12 +737,14 @@ namespace APIViewWeb.Managers
 
             var result = new AIReviewModel();
             try {
-                var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")).Result.Content.ReadAsStringAsync();
-                var responseSanitized = JsonSerializer.Deserialize<string>(response);
+                var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+                response.EnsureSuccessStatusCode();
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseSanitized = JsonSerializer.Deserialize<string>(responseString);
                 result = JsonSerializer.Deserialize<AIReviewModel>(responseSanitized);
             }
             catch (Exception e ) {
-                throw new Exception($"Call to APIView Copilot Failed: {e.Message}");
+                throw new Exception($"Copilot Failed: {e.Message}");
             }
            
             // Write back result as comments to APIView

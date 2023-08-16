@@ -56,7 +56,7 @@ namespace APIViewWeb.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error generating AI review");
-                await SendAIReviewGenerationStatus(review, reviewId, revisionId, AIReviewGenerationStatus.Error);
+                await SendAIReviewGenerationStatus(review, reviewId, revisionId, AIReviewGenerationStatus.Error, errorMessage: ex.Message);
             }
         }
 
@@ -67,7 +67,9 @@ namespace APIViewWeb.Controllers
             return RedirectToPage("/Assemblies/Review",  new { id = id });
         }
 
-        private async Task SendAIReviewGenerationStatus(ReviewModel review, string reviewId, string revisionId, AIReviewGenerationStatus status, int? noOfCommentsGenerated = null)
+        private async Task SendAIReviewGenerationStatus(ReviewModel review, string reviewId,
+            string revisionId, AIReviewGenerationStatus status, int? noOfCommentsGenerated = null,
+            string errorMessage = null)
         {
             var notification = new AIReviewGenerationNotificationModel
             {
@@ -88,7 +90,7 @@ namespace APIViewWeb.Controllers
                     notification.Level = NotificatonLevel.Info;
                     break;
                 case AIReviewGenerationStatus.Error:
-                    notification.Message = "Failed.";
+                    notification.Message = $"{errorMessage}";
                     notification.Level = NotificatonLevel.Error;
                     break;
             }

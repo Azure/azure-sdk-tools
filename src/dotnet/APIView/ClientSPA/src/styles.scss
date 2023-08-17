@@ -4,3 +4,8 @@
 @import "primeng/resources/themes/bootstrap4-light-blue/theme.css";
 @import "primeng/resources/primeng.css";
 @import "primeicons/primeicons.css";
+
+
+.main-container {
+    height: calc(100vh - 70px);
+}

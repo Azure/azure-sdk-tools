@@ -24,6 +24,7 @@ import { BadgeModule } from 'primeng/badge';
 import { ImageModule } from 'primeng/image';
 import { LanguageNamesPipe } from './_pipes/language-names.pipe';
 import { AvatarModule } from 'primeng/avatar';
+import { ContextMenuModule } from 'primeng/contextmenu';
 
 
 
@@ -44,6 +45,7 @@ import { AvatarModule } from 'primeng/avatar';
     BrowserAnimationsModule,
     ButtonModule,
     ChipModule,
+    ContextMenuModule,
     DropdownModule ,
     HttpClientModule,
     ImageModule,

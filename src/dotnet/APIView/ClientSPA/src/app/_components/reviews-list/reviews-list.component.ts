@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { Review } from 'src/app/_models/review';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { Pagination } from 'src/app/_models/pagination';
-import { TableLazyLoadEvent } from 'primeng/table';
+import { TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
+import { MenuItem, SortEvent } from 'primeng/api';
 
 @Component({
   selector: 'app-reviews-list',
@@ -26,6 +27,11 @@ export class ReviewsListComponent implements OnInit {
   details: any[] = [];
   selectedDetails: any[] = [];
 
+  contextMenuItems! : MenuItem[];
+  selectedReview!: Review;
+  selectedReviews!: Review[];
+  showSelectionAction : boolean = false;
+
   badgeClass : Map<string, string> = new Map<string, string>();
 
 
@@ -34,16 +40,8 @@ export class ReviewsListComponent implements OnInit {
   ngOnInit(): void {
     this.loadReviews(0, this.pageSize * 2); // Load row 1 - 40 for starts
     this.createFilters();
-
-    // Set Badge Class for details Icons
-    this.badgeClass.set("Pending", "");
-    this.badgeClass.set("Approved", "fa-solid fa-check-double");
-    this.badgeClass.set("1stRelease", "fa-solid fa-check");
-    this.badgeClass.set("Closed", "fa-regular fa-circle-xmark");
-    this.badgeClass.set("Open", "");
-    this.badgeClass.set("Manual", "fa-solid fa-arrow-up-from-bracket");
-    this.badgeClass.set("PullRequest", "fa-solid fa-code-pull-request");
-    this.badgeClass.set("Automatic", "fa-solid fa-robot");
+    this.createContextMenuItems();
+    this.setDetailsIcons();
   }
 
   /**
@@ -67,6 +65,13 @@ export class ReviewsListComponent implements OnInit {
     });
   }
 
+  createContextMenuItems() {
+    this.contextMenuItems = [
+      { label: 'View', icon: 'pi pi-fw pi-search', command: () => this.viewReview(this.selectedReview) },
+      { label: 'Delete', icon: 'pi pi-fw pi-times', command: () => this.deleteReview(this.selectedReview) }
+    ];
+  }
+
   createFilters() {
     this.languages = [
         { label: "C", data: "C" },
@@ -86,38 +91,60 @@ export class ReviewsListComponent implements OnInit {
     this.details = [
       {
         label: 'State',
-        value: 'All',
+        data: 'All',
         items: [
-          { label: "Open", value: "open" },
-          { label: "Closed", value: "closed" }
+          { label: "Open", data: "open" },
+          { label: "Closed", data: "closed" }
         ]
       },
       {
         label: 'Status',
-        value: 'All',
+        data: 'All',
         items: [
-          { label: "Approved", value: "true" },
-          { label: "Pending", value: "false" },
+          { label: "Approved", data: "true" },
+          { label: "Pending", data: "false" },
         ]
       },
       {
         label: 'Type',
-        value: 'All',
+        data: 'All',
         items: [
-          { label: "Automatic", value: "0" },
-          { label: "Manual", value: "1" },
-          { label: "Pull Request", value: "2" }
+          { label: "Automatic", data: "Automatic" },
+          { label: "Manual", data: "Manual" },
+          { label: "Pull Request", data: "PullRequest" }
         ]
       }
     ];
   }
 
+  setDetailsIcons(){
+    // Set Badge Class for details Icons
+    this.badgeClass.set("Pending", "");
+    this.badgeClass.set("Approved", "fa-solid fa-check-double");
+    this.badgeClass.set("1stRelease", "fa-solid fa-check");
+    this.badgeClass.set("Closed", "fa-regular fa-circle-xmark");
+    this.badgeClass.set("Open", "");
+    this.badgeClass.set("Manual", "fa-solid fa-arrow-up-from-bracket");
+    this.badgeClass.set("PullRequest", "fa-solid fa-code-pull-request");
+    this.badgeClass.set("Automatic", "fa-solid fa-robot");
+  }
+
+  viewReview(product: Review) {
+      
+  }
+
+  deleteReview(product: Review) {
+      
+  }
 
   /**
    * Callback to invoke on scroll /lazy load.
    * @param event the lazyload event
    */
   onLazyLoad(event: TableLazyLoadEvent) {
+    console.log("On Lazy Event Emitted %o", event);
+    this.first = event.first!;
+    this.last = event.last!;
     if (event.last! > (this.insertIndex - this.pageSize))
     {
       if (this.pagination)
@@ -127,4 +154,29 @@ export class ReviewsListComponent implements OnInit {
     }
     event.forceUpdate!();
   }
+
+    /**
+   * Callback to invoke on table filter.
+   * @param event the Filter event
+   */
+  onFilter(event: TableFilterEvent) {
+    console.log("On Filter Event Emitted %o", event);
+  }
+
+  /**
+   * Callback to invoke on table selection.
+   * @param event the Filter event
+   */
+  onSelectionChange(value = []) {
+    console.log("On Selection Event Emitted %o", value);
+    this.showSelectionAction = (value.length > 0) ? true : false;
+  }
+
+    /**
+   * Callback to invoke on column sort.
+   * @param event the Filter event
+   */
+    onSort(event: SortEvent) {
+      console.log("Sort Event Emitted %o", event);
+    }
 }

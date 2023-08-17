@@ -15,7 +15,6 @@ export class FooterComponent  implements OnInit {
   constructor(private authService: AuthService) { }
 
   ngOnInit(): void {
-    console.log(`Inside FooterComponent ngOnInit`);
     this.getAppVersion();
   }
 

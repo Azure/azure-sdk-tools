@@ -1,9 +1,10 @@
 :host ::ng-deep {
     #langauge-filter p-columnfilterformelement,
-    #state-filter p-columnfilterformelement,
-    #status-filter p-columnfilterformelement,
-    #type-filter p-columnfilterformelement{
+    #details-filter p-columnfilterformelement{
         width: 38px;
+        .p-multiselect-label {
+            visibility: hidden;
+        }
     };
 
     .author-table-data {
@@ -13,6 +14,32 @@
         img {
             border-radius: 50%;
             margin-right: 5px;
+        }
+    }
+
+    .reviews-table-info {
+        min-height: 30px;
+        max-height: 30px;
+        .p-chip {
+            font-weight: bold;
+            font-size: x-small;
+            border-radius: 10px;
+            padding: 0 0.5rem;
+            margin-right: 1px;
+        }
+        .p-multiselect-label {
+            display : hidden;
+        }
+    }
+
+    .p-datatable-footer{
+        text-align: center;
+    }
+
+    p-sortIcon {
+        .p-icon {
+            width: 0.7rem;
+            height: 0.7rem;
         }
     }
 }

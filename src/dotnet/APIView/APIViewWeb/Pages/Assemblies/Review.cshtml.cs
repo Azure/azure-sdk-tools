@@ -295,9 +295,22 @@ namespace APIViewWeb.Pages.Assemblies
             Review = await _manager.GetReviewAsync(User, id);
             TaggableUsers = _commentsManager.GetTaggableUsers();
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Revision = revisionId != null ?
-                Review.Revisions.Single(r => r.RevisionId == revisionId) :
-                Review.Revisions.Last();
+            Revision = Review.Revisions.Last();
+            if (revisionId != null) 
+            {
+                var revision = Review.Revisions.Where(r => r.RevisionId == revisionId);
+                if (revision.Count() == 1)
+                {
+                    Revision = revision.Single();
+                }
+                else 
+                {
+                    var notifcation = new NotificationModel() { Message = $"A revision with ID {revisionId} does not exist for this review.", Level = NotificatonLevel.Warning };
+                    await _signalRHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveNotification", notifcation);
+                }
+
+            }
+                
             PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
             DiffRevisionId = (DiffRevisionId == null) ? diffRevisionId : DiffRevisionId;
             ShowDiffOnly = (ShowDiffOnly == false) ? diffOnly : ShowDiffOnly;

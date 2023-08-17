@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Review } from 'src/app/_models/review';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { Pagination } from 'src/app/_models/pagination';
@@ -51,16 +51,13 @@ export class ReviewsListComponent implements OnInit {
    *  * @param append wheather to add to or replace existing list
    */
   loadReviews(noOfItemsRead : number, pageSize: number) {
-    console.log(`NoOfItemsRead: ${noOfItemsRead} , pageSize: ${pageSize}`)
     this.reviewsService.getReviews(noOfItemsRead, pageSize).subscribe({
       next: response => {
         if (response.result && response.pagination) {
           if (this.reviews.length == 0)
           {
             this.reviews = Array.from({ length: response.pagination!.totalCount });
-            console.log(`Array Size Set to:  ${this.reviews.length}`)
           }
-          console.log(`Array of length:  ${response.result.length} loaded`)
           this.reviews.splice(this.insertIndex, this.insertIndex + response.result.length, ...response.result);
           this.insertIndex = this.insertIndex + response.result.length;
           this.pagination = response.pagination;
@@ -121,10 +118,12 @@ export class ReviewsListComponent implements OnInit {
    * @param event the lazyload event
    */
   onLazyLoad(event: TableLazyLoadEvent) {
-    console.log("Lazy load event %o", event);
     if (event.last! > (this.insertIndex - this.pageSize))
     {
-      this.loadReviews(this.pagination!.noOfItemsRead, this.pageSize);
+      if (this.pagination)
+      {
+        this.loadReviews(this.pagination!.noOfItemsRead, this.pageSize);
+      }
     }
     event.forceUpdate!();
   }

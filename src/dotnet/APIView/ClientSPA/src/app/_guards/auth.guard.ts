@@ -2,22 +2,23 @@ import { inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivateFn, RouterStateSnapshot } from '@angular/router';
 
 import { AuthService } from '../_services/auth/auth.service';
+import { firstValueFrom } from 'rxjs';
 
 export const AuthGuard: CanActivateFn = async (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
   const authService = inject(AuthService);
   let isLoggedIn : any = false;
   try {
-    isLoggedIn = await authService.isLoggedIn().toPromise();
+    isLoggedIn = await firstValueFrom(authService.isLoggedIn());
+
     if (isLoggedIn != true)
     {
+      console.log(`Inside AuthGuard isLoggedIn ${isLoggedIn}`);
       window.location.href = "http://localhost:5000/login";
     }
   }
   catch (error){
-    console.log(error);
     isLoggedIn = false;
     window.location.href = "http://localhost:5000/login";
   }
-
   return isLoggedIn;
 };

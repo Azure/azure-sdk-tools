@@ -1,4 +1,6 @@
+using APIViewWeb.Helpers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.LeanControllers
@@ -15,7 +17,22 @@ namespace APIViewWeb.LeanControllers
         [HttpGet]
         public ActionResult IsLogged()
         {
-            return Ok(true);
+            var result = new
+            {
+                IsLoggedIn = true
+            };
+            return new LeanJsonResult(result);
+        }
+
+        [HttpGet]
+        [Route("AppVersion")]
+        public ActionResult AppVersion()
+        {
+            var result = new
+            {
+                Hash = Startup.VersionHash
+            };
+            return new LeanJsonResult(result);
         }
     }
 }

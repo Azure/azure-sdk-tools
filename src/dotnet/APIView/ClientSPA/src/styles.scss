@@ -5,6 +5,8 @@
 @import "primeng/resources/primeng.css";
 @import "primeicons/primeicons.css";
 
+@import "../../../APIView/APIViewWeb/Client/css/shared/theme-colors.scss";
+@import "../../../APIView/APIViewWeb/Client/css/shared/bootstraps-overrides.scss";
 
 .main-container {
     height: calc(100vh - 70px);

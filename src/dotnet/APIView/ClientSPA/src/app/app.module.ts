@@ -25,6 +25,8 @@ import { ImageModule } from 'primeng/image';
 import { LanguageNamesPipe } from './_pipes/language-names.pipe';
 import { AvatarModule } from 'primeng/avatar';
 import { ContextMenuModule } from 'primeng/contextmenu';
+import { FileUploadModule } from 'primeng/fileupload';
+
 
 
 
@@ -46,7 +48,8 @@ import { ContextMenuModule } from 'primeng/contextmenu';
     ButtonModule,
     ChipModule,
     ContextMenuModule,
-    DropdownModule ,
+    DropdownModule,
+    FileUploadModule,
     HttpClientModule,
     ImageModule,
     InputTextModule,

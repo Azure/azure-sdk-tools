@@ -21,16 +21,23 @@ export class ReviewsListComponent implements OnInit {
   first: number = 0;
   last: number  = 0;
 
+  sidebarVisible : boolean = false;
+
   // Filters
   languages: any[] = [];
   selectedLanguages: any[] = [];
   details: any[] = [];
   selectedDetails: any[] = [];
 
+  // Context Menu
   contextMenuItems! : MenuItem[];
   selectedReview!: Review;
   selectedReviews!: Review[];
   showSelectionAction : boolean = false;
+
+  // Create Review Selections
+  crLanguages: any[] = [];
+  selectedCRLanguages: any[] = [];
 
   badgeClass : Map<string, string> = new Map<string, string>();
 
@@ -73,7 +80,7 @@ export class ReviewsListComponent implements OnInit {
   }
 
   createFilters() {
-    this.languages = [
+    this.languages = this.crLanguages = [
         { label: "C", data: "C" },
         { label: "C#", data: "C#" },
         { label: "C++", data: "C++" },
@@ -88,6 +95,7 @@ export class ReviewsListComponent implements OnInit {
         { label: "TypeSpec", data: "TypeSpec" },
         { label: "Xml", data: "Xml" }
     ];
+    
     this.details = [
       {
         label: 'State',

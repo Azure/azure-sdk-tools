@@ -113,4 +113,15 @@
             </ng-template>
         </p-table>
     </div>
+    <button type="button" (click)="sidebarVisible = true" class="btn btn-primary" id="create-review-button"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
+    <p-sidebar [(visible)]="sidebarVisible" position="right">
+        <h3>Create Review</h3>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. 
+            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        </p>
+        <p-dropdown [options]="languages" [(ngModel)]="selectedCRLanguages" optionLabel="label"></p-dropdown>
+        <p-fileUpload mode="basic" chooseLabel="Select Review File" name="demo[]" url="https://www.primefaces.org/cdn/api/upload.php" accept="image/*"></p-fileUpload>
+
+    </p-sidebar>
 </div>

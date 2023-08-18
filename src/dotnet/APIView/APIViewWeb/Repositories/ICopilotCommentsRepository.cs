@@ -13,6 +13,6 @@ namespace APIViewWeb.Repositories
         public Task DeleteDocumentAsync(string id, string language, string user);
 
         public Task<CopilotCommentModel> GetDocumentAsync(string id, string language);
-        public Task<IEnumerable<CopilotCommentModel>> SearchLanguage(string language);
+        public Task<IEnumerable<CopilotSearchModel>> SimilaritySearchAsync(string language, float[] embedding, float threshold, int limit);
     }
 }

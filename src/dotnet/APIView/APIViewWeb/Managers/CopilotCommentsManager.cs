@@ -101,44 +101,9 @@ namespace APIViewWeb.Managers
         public async Task<string> SearchDocumentsAsync(string language, string badCode, float threshold, int limit)
         {
             var embeddings = await GetEmbeddingsAsync(badCode);
-            var documents = await _copilotCommentsRepository.SearchLanguage(language);
-
-            var searchResults = new List<CopilotSearchModel>();
-            foreach (var document in documents)
-            {
-                var similarity = CosineSimilarity(document.Embedding, embeddings);
-                if (similarity < threshold)
-                    continue;
-                searchResults.Add(new CopilotSearchModel(similarity, document));
-            }
-
-            if (limit < 0)
-            {
-                limit = defaultLimit;
-            }
-
-            var topResults = searchResults.OrderByDescending(item => item.similarity).Take(limit);
+            var searchResults = await _copilotCommentsRepository.SimilaritySearchAsync(language, embeddings, threshold, limit);
+            var topResults = searchResults.Where(x => x.similarity >= threshold).AsEnumerable();
             return JsonSerializer.Serialize(topResults);
-        }
-
-        public static float CosineSimilarity(float[] vec1, float[] vec2)
-        {
-            if (vec1.Length != vec2.Length)
-                throw new ArgumentException("Vectors must have the same dimension");
-
-            var dotProduct = 0.0;
-            var norm1 = 0.0;
-            var norm2 = 0.0;
-
-            for (int i = 0; i < vec1.Length; i++)
-            {
-                dotProduct += vec1[i] * vec2[i];
-                norm1 += Math.Pow(vec1[i], 2);
-                norm2 += Math.Pow(vec2[i], 2);
-            }
-
-            var resultDouble = dotProduct / (Math.Sqrt(norm1) * Math.Sqrt(norm2));
-            return ((float)resultDouble);
         }
 
         private async Task<float[]> GetEmbeddingsAsync(string badCode)

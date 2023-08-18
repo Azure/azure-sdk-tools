@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 
 namespace APIViewWeb.Models
@@ -27,17 +28,14 @@ namespace APIViewWeb.Models
         [JsonProperty("is_deleted")]
         public bool IsDeleted { get; set; } = false;
     }
-    
-    public enum CopilotLanguagesEnum
+
+    class SearchEmbedding
     {
-        dotnet,
-        java,
-        javascript,
-        python,
-        cpp,
-        go,
-        mobile,
-        azd,
-        typespec
+        [JsonPropertyName("id")]
+        public string Id { get; set; }
+        [JsonPropertyName("embedding")]
+        public IReadOnlyList<float> Embedding { get; set; }
+        [JsonPropertyName("language")]
+        public string Language { get; set; }
     }
 }

@@ -9,7 +9,7 @@ using APIViewWeb.Filters;
 
 namespace APIViewWeb.Controllers
 {
-    //[TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
+    [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
 
     public class CopilotCommentsController : Controller
     {

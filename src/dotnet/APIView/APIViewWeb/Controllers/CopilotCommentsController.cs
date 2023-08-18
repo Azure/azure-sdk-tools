@@ -9,7 +9,7 @@ using APIViewWeb.Filters;
 
 namespace APIViewWeb.Controllers
 {
-    [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
+    //[TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
 
     public class CopilotCommentsController : Controller
     {
@@ -125,7 +125,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> SemanticCodeSearch(string language, string code, float threshold, int limit = -1)
+        public async Task<ActionResult> SearchDocument(string language, string code, float threshold, int? limit = null)
         {
             if (language == null || code == null)
             {
@@ -135,7 +135,7 @@ namespace APIViewWeb.Controllers
 
             try
             {
-                var topResults = await _copilotManager.SearchDocumentsAsync(language, code, threshold, limit);
+                var topResults = await _copilotManager.SearchDocumentsAsync(language, code, threshold, limit ?? 5);
                 return Ok(topResults);
             }
             catch (Exception err)

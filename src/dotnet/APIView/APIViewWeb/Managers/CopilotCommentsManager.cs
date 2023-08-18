@@ -16,7 +16,6 @@ namespace APIViewWeb.Managers
         private readonly ICopilotCommentsRepository _copilotCommentsRepository;
         private readonly IConfiguration _configuration;
         private readonly OpenAIClient _openAIClient;
-        private int defaultLimit = 5;
 
         public CopilotCommentsManager(
             ICopilotCommentsRepository copilotCommentsRepository,
@@ -102,7 +101,7 @@ namespace APIViewWeb.Managers
         {
             var embeddings = await GetEmbeddingsAsync(badCode);
             var searchResults = await _copilotCommentsRepository.SimilaritySearchAsync(language, embeddings, threshold, limit);
-            var topResults = searchResults.Where(x => x.similarity >= threshold).AsEnumerable();
+            var topResults = searchResults.Where(x => x.similarity >= threshold);
             return JsonSerializer.Serialize(topResults);
         }
 

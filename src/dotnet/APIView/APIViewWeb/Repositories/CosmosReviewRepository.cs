@@ -29,7 +29,8 @@ namespace APIViewWeb
 
         public async Task DeleteReviewAsync(ReviewModel reviewModel)
         {
-            await _reviewsContainer.DeleteItemAsync<ReviewModel>(reviewModel.ReviewId, new PartitionKey(reviewModel.ReviewId));
+            reviewModel.IsDeleted = true;
+            await _reviewsContainer.UpsertItemAsync(reviewModel, new PartitionKey(reviewModel.ReviewId));
         }
 
         public async Task<ReviewModel> GetReviewAsync(string reviewId)
@@ -46,6 +47,7 @@ namespace APIViewWeb
         public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, ReviewType? filterType = null, bool fetchAllPages = false)
         {
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE (IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed ");
+            queryStringBuilder.Append("AND(IS_DEFINED(c.IsDeleted) ? c.IsDeleted : false) = false ");
 
             //Add filter if looking for automatic, manual or PR reviews
             if (filterType != null && filterType != ReviewType.All)
@@ -70,7 +72,6 @@ namespace APIViewWeb
             {
                 queryStringBuilder.Append("OFFSET 0 LIMIT 50");
             }
-            
 
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())

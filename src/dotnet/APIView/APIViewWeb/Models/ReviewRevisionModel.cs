@@ -74,5 +74,6 @@ namespace APIViewWeb
         public HashSet<string> Approvers { get; set; } = new HashSet<string>();
 
         public bool IsApproved => Approvers.Count() > 0;
+        public bool IsDeleted { get; set; }
     }
 }

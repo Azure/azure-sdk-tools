@@ -29,9 +29,10 @@ namespace APIViewWeb
             return await GetUsageSamplesFromQueryAsync($"SELECT * FROM UsageSamples c WHERE c.ReviewId = '{reviewId}'");
         }
         
-        public async Task DeleteUsageSampleAsync(UsageSampleModel Sample)
+        public async Task DeleteUsageSampleAsync(UsageSampleModel sample)
         {
-            await _samplesContainer.DeleteItemAsync<UsageSampleModel>(Sample.SampleId, new PartitionKey(Sample.ReviewId));
+            sample.IsDeleted = true;
+            await _samplesContainer.UpsertItemAsync(sample, new PartitionKey(sample.ReviewId));
         }
         
         public async Task UpsertUsageSampleAsync(UsageSampleModel sampleModel)

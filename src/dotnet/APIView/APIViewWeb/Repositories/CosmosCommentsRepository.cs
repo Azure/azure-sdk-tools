@@ -21,7 +21,7 @@ namespace APIViewWeb
 
         public async Task<IEnumerable<CommentModel>> GetCommentsAsync(string reviewId)
         {
-            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}'");
+            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}' AND (IS_DEFINED(c.IsDeleted) ? c.IsDeleted : false) = false");
         }
 
         public async Task UpsertCommentAsync(CommentModel commentModel)
@@ -31,7 +31,8 @@ namespace APIViewWeb
 
         public async Task DeleteCommentAsync(CommentModel commentModel)
         {
-            await _commentsContainer.DeleteItemAsync<CommentModel>(commentModel.CommentId, new PartitionKey(commentModel.ReviewId));
+            commentModel.IsDeleted = true;
+            await _commentsContainer.UpsertItemAsync(commentModel, new PartitionKey(commentModel.ReviewId));
         }
 
         public async Task DeleteCommentsAsync(string reviewId)
@@ -49,7 +50,7 @@ namespace APIViewWeb
 
         public async Task<IEnumerable<CommentModel>> GetCommentsAsync(string reviewId, string lineId)
         {
-            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}' AND c.ElementId = '{lineId}'");
+            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}' AND c.ElementId = '{lineId}' AND (IS_DEFINED(c.IsDeleted) ? c.IsDeleted : false) = false");
         }
 
         private async Task<IEnumerable<CommentModel>> GetCommentsFromQueryAsync(string query)

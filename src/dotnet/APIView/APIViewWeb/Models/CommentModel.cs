@@ -24,5 +24,6 @@ namespace APIViewWeb.Models
         public HashSet<string> TaggedUsers { get; set; } = new HashSet<string>();
         public bool IsUsageSampleComment { get; set; } = false;
         public bool ResolutionLocked { get; set; } = false;
+        public bool IsDeleted { get; set; }
     }
 }

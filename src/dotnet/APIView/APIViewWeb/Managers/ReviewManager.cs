@@ -123,19 +123,6 @@ namespace APIViewWeb.Managers
 
             await _reviewsRepository.DeleteReviewAsync(reviewModel);
 
-            foreach (var revision in reviewModel.Revisions)
-            {
-                foreach (var file in revision.Files)
-                {
-                    if (file.HasOriginal)
-                    {
-                        await _originalsRepository.DeleteOriginalAsync(file.ReviewFileId);
-                    }
-
-                    await _codeFileRepository.DeleteCodeFileAsync(revision.RevisionId, file.ReviewFileId);
-                }
-            }
-
             await _commentsRepository.DeleteCommentsAsync(id);
         }
 
@@ -262,15 +249,15 @@ namespace APIViewWeb.Managers
         public async Task DeleteRevisionAsync(ClaimsPrincipal user, string id, string revisionId)
         {
             var review = await GetReviewAsync(user, id);
-            AssertReviewDeletion(review);
-            var revision = review.Revisions.Single(r => r.RevisionId == revisionId);
-            await AssertRevisionOwner(user, revision);
-
             if (review.Revisions.Count < 2)
             {
                 return;
             }
-            review.Revisions.Remove(revision);
+
+            AssertReviewDeletion(review);
+            var revision = review.Revisions.Single(r => r.RevisionId == revisionId);
+            await AssertRevisionOwner(user, revision);
+            review.Revisions.Single(r => r.RevisionId == revisionId).IsDeleted = true;
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 

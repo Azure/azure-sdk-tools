@@ -16,6 +16,7 @@ namespace APIViewWeb
         {
             ReviewId = reviewId;
         }
+        public bool IsDeleted { get; set; }
 
     }
 }

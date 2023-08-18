@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public void Reset()
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
             _recordingHandler.SetDefaultExtensions(recordingId);
@@ -39,14 +39,14 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpGet]
         public void IsAlive()
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
             Response.StatusCode = 200;
         }
 
         [HttpPost]
         public async Task AddTransform()
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
@@ -65,7 +65,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task AddSanitizer()
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
@@ -84,7 +84,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task SetMatcher()
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
@@ -104,7 +104,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [AllowEmptyBody]
         public void SetRecordingOptions([FromBody()] IDictionary<string, object> options = null)
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
 
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 

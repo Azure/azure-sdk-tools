@@ -1,11 +1,11 @@
-﻿using System.IO;
+using System;
+using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -117,7 +117,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 "Request Body Content{\"key\":\"Location\",\"value\":\"https://fakeazsdktestaccount.table.core.windows.net/Tables\"}",
                 logger.Logs[2].ToString());
             Assert.Equal("URI: [ https://fakeazsdktestaccount.table.core.windows.net/Tables]" +
-                         "\r\nHeaders: [{\"Accept\":[\"application/json;odata=minimalmetadata\"],\"Accept-Encoding\":[\"gzip, deflate\"],\"Authorization\":[\"Sanitized\"],\"Connection\":[\"keep-alive\"]," +
+                         Environment.NewLine + "Headers: [{\"Accept\":[\"application/json;odata=minimalmetadata\"],\"Accept-Encoding\":[\"gzip, deflate\"],\"Authorization\":[\"Sanitized\"],\"Connection\":[\"keep-alive\"]," +
                          "\"Content-Length\":[\"12\"],\"Content-Type\":[\"application/octet-stream\"],\"DataServiceVersion\":[\"3.0\"],\"Date\":[\"Tue, 18 May 2021 23:27:42 GMT\"]," +
                          "\"User-Agent\":[\"azsdk-python-data-tables/12.0.0b7 Python/3.8.6 (Windows-10-10.0.19041-SP0)\"],\"x-ms-client-request-id\":[\"a4c24b7a-b830-11eb-a05e-10e7c6392c5a\"]," +
                          "\"x-ms-date\":[\"Tue, 18 May 2021 23:27:42 GMT\"],\"x-ms-version\":[\"2019-02-02\"]}]\r\n",

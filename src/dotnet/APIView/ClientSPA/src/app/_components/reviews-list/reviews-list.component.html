@@ -5,7 +5,7 @@
             [value]="reviews"
             dataKey="id"
             [scrollable]="true"
-            scrollHeight="calc(100vh - 159px)"
+            scrollHeight="calc(100vh - 169px)"
             responsiveLayout="stack"
             [lazy]="true"
             [lazyLoadOnInit]="false"
@@ -42,7 +42,7 @@
                     <th style="width:2%">Lanuage</th>
                     <th pSortableColumn="name" style="width:auto">Name<p-sortIcon class="ms-2" field="name"></p-sortIcon></th>
                     <th style="width:13%">Author</th>
-                    <th pSortableColumn="lastUpdated" style="width:9%">Last Updated<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
+                    <th pSortableColumn="lastUpdated" style="width:9%">Updated<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
                     <th style="width:9%">Details</th>
                     <th pSortableColumn="noOfRevisions" style="width:5%">Revs<p-sortIcon class="ms-2" field="noOfRevisions"></p-sortIcon></th>
                 </tr>
@@ -92,10 +92,10 @@
                         <p-tableCheckbox [value]="review"></p-tableCheckbox>
                         <img class="float-end" src="assets/images/{{ review.language | languageNames }}-original.svg" alt="{{review.language}}" width="30">
                     </td>
-                    <td>{{ review.displayName }}</td>
+                    <td><a href="{{reviewPageWebAppUrl}}{{review.id}}">{{ review.displayName }}</a></td>
                     <td class="author-table-data">
                         <img [alt]="review.author" src="https://github.com/{{review.author}}.png?size=40" width="32" />
-                        <span>{{ review.author }}</span>
+                        <span><a href="{{profilePageWebAppUrl}}{{review.author}}">{{ review.author }}</a></span>
                     </td>
                     <td>{{ review.lastUpdated | timeago }}</td>
                     <td>

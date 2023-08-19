@@ -4,6 +4,7 @@ import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { Pagination } from 'src/app/_models/pagination';
 import { TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
 import { MenuItem, SortEvent } from 'primeng/api';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-reviews-list',
@@ -12,6 +13,8 @@ import { MenuItem, SortEvent } from 'primeng/api';
 })
 
 export class ReviewsListComponent implements OnInit {
+  reviewPageWebAppUrl : string = environment.webAppUrl + "Assemblies/review/";
+  profilePageWebAppUrl : string = environment.webAppUrl + "Assemblies/profile/";
   reviews : Review[] = [];
   totalNumberOfReviews = 0;
   pagination: Pagination | undefined;
@@ -109,8 +112,8 @@ export class ReviewsListComponent implements OnInit {
         label: 'Status',
         data: 'All',
         items: [
-          { label: "Approved", data: "true" },
-          { label: "Pending", data: "false" },
+          { label: "Approved", data: "Approved" },
+          { label: "Pending", data: "Pending" },
         ]
       },
       {

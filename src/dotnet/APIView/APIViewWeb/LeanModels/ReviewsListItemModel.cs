@@ -31,7 +31,7 @@ namespace APIViewWeb.LeanModels
         
         public string Type
         {
-            get => (this.IsAutomatic) ? "Approved" : this.FilterType.ToString();
+            get => (this.IsAutomatic) ? "Automatic" : this.FilterType.ToString();
         }
         public bool IsApproved { get; set; }
         public bool IsApprovedForFirstRelease { get; set; }

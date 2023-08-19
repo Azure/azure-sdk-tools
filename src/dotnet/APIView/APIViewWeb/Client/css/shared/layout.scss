@@ -1,7 +1,7 @@
 @import "../shared/mixins.scss";
 
 #apiview-logo {
-    width: 30px;
+    @include apiview-logo;
 }
 
 #notification-container {
@@ -31,27 +31,7 @@ body {
     color: var(--base-text-color);
 }
 
-p {
-    color: var(--base-text-color);
-}
-
-a:link {
-    color: var(--link-color);
-    text-decoration: none;
-}
-
-a:active {
-    color: var(--link-active);
-}
-
-a:hover {
-    color: var(--link-active);
-    text-decoration: underline;
-}
-
-a:visited {
-    color: var(--link-visited);
-}
+@include base-tags;
 
 button.accept-policy {
     font-size: 1rem;
@@ -62,10 +42,6 @@ form.comment {
     padding: 12px;
 }
 
-html {
-    font-size: 14px;
-}
-
 @media (min-width: 768px) {
     html {
         font-size: 16px;
@@ -73,14 +49,7 @@ html {
 }
 
 .footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    white-space: nowrap;
-    height: 40px;
-    line-height: 40px;
-    z-index: 3;
-    background: var(--base-bg-color);
+    @include app-footer;
 }
 
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
@@ -142,23 +111,7 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 .main-nav-cst-theme {
-    background-color: var(--navbar-bg);
-    color: var(--navbar-text);
-
-    a:hover {
-        text-decoration: none;
-    }
-
-    a:link, a:visited {
-        color: var(--navbar-text);
-    }
-
-    a:hover, a:active {
-        color: var(--navbar-link-active);
-    }
-
-    border-bottom: 1px solid var(--border-color);
-    z-index: 2;
+    @include main-nav-cst-theme;
 }
 
 /* PopOver
@@ -211,28 +164,7 @@ input[type="search"]::-webkit-search-cancel-button {
 
 /* Scroll Bar
 ------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-::-webkit-scrollbar {
-    width: 10px;
-}
-
-::-webkit-scrollbar:horizontal {
-    height: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-    border: solid 3px var(--base-bg-color);
-    background-color: var(--text-muted-color);
-    border-radius: 6px;
-}
-
-::-webkit-scrollbar-track-piece {
-    background: transparent;
-    background-color: var(--base-fg-color)
-}
-
-::-webkit-scrollbar-corner {
-    background-color: var(--base-fg-color)
-}
+@include webkit-scrollbar;
 
 /* File Select/Upload Input
 ------------------------------------------------------------------------------------------------------------------------------------------------------------*/

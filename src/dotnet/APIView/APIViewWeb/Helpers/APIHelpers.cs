@@ -16,6 +16,46 @@ namespace APIViewWeb.Helpers
         public LeanJsonResult(object value, int statusCode) : base(value)
         {
             _statusCode = statusCode;
+{
+    public class PageParams
+    {
+        private const int MaxPageSize = 50;
+        public int NoOfItemsRead { get; set; } = 0;
+        private int _pageSize = 5;
+
+        public int PageSize { 
+            get => _pageSize; 
+            set => _pageSize = (value > MaxPageSize) ? MaxPageSize : value;
+        }
+    }
+
+    public class ReviewFilterParams
+    {
+        public string Name { get; set; }
+        public string Author { get; set; }
+        public IEnumerable<string> Languages { get; set; }
+        public IEnumerable<string> Details { get; set; }
+    }
+
+    public class PagedList<T> : List<T>
+    {
+        public PagedList(IEnumerable<T> items, int noOfItemsRead, int totalCount,  int pageSize)
+        {
+            NoOfItemsRead = noOfItemsRead;
+            TotalCount = totalCount;
+            PageSize = pageSize;
+            AddRange(items);
+        }
+        public int NoOfItemsRead { get; set; }
+        public int PageSize { get; set; }
+        public int TotalCount { get; set; }
+
+    }
+
+    public class LeanJsonResult : JsonResult
+    {
+        public LeanJsonResult(object value) : base(value)
+        {
         }
 
         public override async Task ExecuteResultAsync(ActionContext context)
@@ -38,5 +78,18 @@ namespace APIViewWeb.Helpers
 
             await JsonSerializer.SerializeAsync(response.Body, Value, options);
         }
+    }
+    public class PaginationHeader
+    { 
+        public PaginationHeader(int noOfItemsRead, int pageSize, int totalCount)
+        {
+            this.NoOfItemsRead = noOfItemsRead;
+            this.PageSize = pageSize;
+            this.TotalCount = totalCount;
+        }
+
+        public int NoOfItemsRead { get; set; }
+        public int PageSize { get; set; }
+        public int TotalCount { get; set; }
     }
 }

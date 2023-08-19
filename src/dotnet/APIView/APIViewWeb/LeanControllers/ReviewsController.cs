@@ -26,8 +26,8 @@ namespace APIViewWeb.LeanControllers
         /// <param name="pageNumber"></param>
         /// <param name="pageSize"></param>
         /// <returns></returns>
-        [HttpGet(Name = "GetReviews")]
-        public async Task<ActionResult<PagedList<ReviewsListItemModel>>> GetReviewsAsync([FromQuery] PageParams pageParams)
+        [HttpPost(Name = "GetReviews")]
+        public async Task<ActionResult<PagedList<ReviewsListItemModel>>> GetReviewsAsync([FromQuery] PageParams pageParams, [FromBody] ReviewFilterParams filterParams)
         {
             var result = await _reviewManager.GetReviewsAsync(pageParams);
             Response.AddPaginationHeader(new PaginationHeader(result.NoOfItemsRead, result.PageSize, result.TotalCount));

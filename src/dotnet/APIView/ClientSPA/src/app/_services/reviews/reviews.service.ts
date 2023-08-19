@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { Observable, map } from 'rxjs';
@@ -15,13 +15,30 @@ export class ReviewsService {
 
   constructor(private http: HttpClient) { }
 
-  getReviews(noOfItemsRead: number, pageSize: number): Observable<PaginatedResult<Review[]>> {
+  getReviews(noOfItemsRead: number, pageSize: number,
+    name: string, author: string, languages: string [], details: string []
+    ): Observable<PaginatedResult<Review[]>> {
     let params = new HttpParams();
     params = params.append('noOfItemsRead', noOfItemsRead);
     params = params.append('pageSize', pageSize);
+
+    const data = {
+      name: name,
+      author: author,
+      languages: languages,
+      details: details
+    };
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    })
+   
+
+    console.log("getReviews: " + JSON.stringify(data));
     
-    return this.http.get<Review[]>(this.baseUrl,
+    return this.http.post<Review[]>(this.baseUrl, data,
       { 
+        headers:headers,
         params: params,
         observe: 'response', 
         withCredentials: true 

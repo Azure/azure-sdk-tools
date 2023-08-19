@@ -58,8 +58,20 @@ export class ReviewsListComponent implements OnInit {
    * Load reviews from API
    *  * @param append wheather to add to or replace existing list
    */
-  loadReviews(noOfItemsRead : number, pageSize: number) {
-    this.reviewsService.getReviews(noOfItemsRead, pageSize).subscribe({
+  loadReviews(noOfItemsRead : number, pageSize: number, filters: any = null) {
+    let name : string = "";
+    let author : string = "";
+    let languages : string [] = [];
+    let details : string [] = [];
+    if (filters)
+    {
+      name = filters.name.value ?? name;
+      author = filters.author.value ?? author;
+      languages = (filters.languages.value != null)? filters.languages.value.map((item: any) => item.data) : languages;
+      details = (filters.details.value != null) ? filters.details.value.map((item: any) => item.data): details;
+    }
+
+    this.reviewsService.getReviews(noOfItemsRead, pageSize, name, author, languages, details).subscribe({
       next: response => {
         if (response.result && response.pagination) {
           if (this.reviews.length == 0)
@@ -160,7 +172,7 @@ export class ReviewsListComponent implements OnInit {
     {
       if (this.pagination)
       {
-        this.loadReviews(this.pagination!.noOfItemsRead, this.pageSize);
+        this.loadReviews(this.pagination!.noOfItemsRead, this.pageSize, event.filters);
       }
     }
     event.forceUpdate!();

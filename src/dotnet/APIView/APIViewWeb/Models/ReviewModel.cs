@@ -134,6 +134,7 @@ namespace APIViewWeb
         public bool IsApprovedForFirstRelease { get; set; }
         public string ApprovedForFirstReleaseBy { get; set; }
         public DateTime ApprovedForFirstReleaseOn { get; set; }
+        public List<ReviewChangeHistory> ChangeHistory { get; set; } = new List<ReviewChangeHistory>();
         public bool IsDeleted { get; set; }
     }
 }

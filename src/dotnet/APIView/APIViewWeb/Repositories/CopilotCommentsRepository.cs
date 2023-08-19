@@ -1,48 +1,81 @@
 using System.Threading.Tasks;
-using APIViewWeb.Models;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Extensions.Configuration;
-using MongoDB.Driver;
-using MongoDB.Driver.Linq;
+using System.Collections.Generic;
+using Microsoft.Azure.Cosmos;
+using APIViewWeb.Models;
+using System;
+using Azure.Search.Documents;
+using Azure;
+using Azure.Search.Documents.Models;
 
 namespace APIViewWeb.Repositories
 {
     public class CopilotCommentsRepository : ICopilotCommentsRepository
     {
-        private readonly MongoClient _mongoClient;
-        private readonly IMongoDatabase _database;
-        private readonly IMongoCollection<CopilotCommentModel> _collection;
+        private readonly IConfiguration _configuration;
+        private readonly CosmosClient _cosmosClient;
+        private readonly Database _database;
+        private readonly Microsoft.Azure.Cosmos.Container _container;
+        private readonly Azure.Search.Documents.SearchClient _searchClient;
 
         public CopilotCommentsRepository(IConfiguration configuration)
         {
-            _mongoClient = new MongoClient(configuration["CosmosMongoDB:ConnectionString"]);
-            _database = _mongoClient.GetDatabase(configuration["CosmosMongoDB:DatabaseName"]);
-            _collection = _database.GetCollection<CopilotCommentModel>(configuration["CosmosMongoDB:CollectionName"]);
+            _configuration = configuration;
+            _cosmosClient = new CosmosClient(configuration["CosmosUITest:ConnectionString"]);
+            _database = _cosmosClient.GetDatabase(configuration["CosmosUITest:DatabaseName"]);
+            _container = _database.GetContainer(configuration["CosmosUITest:ContainerName"]);
+            _searchClient = new Azure.Search.Documents.SearchClient(new Uri(configuration["CognitiveSearch:Endpoint"]), "embedding-search-index", new AzureKeyCredential(configuration["CognitiveSearch:Key"]));
         }
 
-        public async Task<string> InsertDocumentAsync(CopilotCommentModel document)
+        public async Task InsertDocumentAsync(CopilotCommentModel document)
         {
-            await _collection.InsertOneAsync(document);
-            return document.Id.ToString();
+            var embedding = new SearchEmbedding { Id = document.Id, Embedding = document.Embedding, Language = document.Language };
+            await _searchClient.MergeOrUploadDocumentsAsync(new[] { embedding });
+            await _container.CreateItemAsync(item: document, partitionKey: new PartitionKey(document.Language));
         }
 
-        public async Task<UpdateResult> UpdateDocumentAsync(
-            FilterDefinition<CopilotCommentModel> filter,
-            UpdateDefinition<CopilotCommentModel> update)
+        public async Task UpdateDocumentAsync(CopilotCommentModel document)
         {
-            return await _collection.UpdateOneAsync(filter, update);
+            var embedding = new SearchEmbedding { Id = document.Id, Embedding = document.Embedding, Language = document.Language };
+            await _searchClient.MergeOrUploadDocumentsAsync(new[] { embedding });
+            await _container.ReplaceItemAsync<CopilotCommentModel>(document, document.Id, new PartitionKey(document.Language));
         }
 
-        public Task DeleteDocumentAsync(
-            FilterDefinition<CopilotCommentModel> filter,
-            UpdateDefinition<CopilotCommentModel> update)
+        /* 
+         * Delete is a soft delete operation for CosmosDB - it sets the is_deleted flag to true.
+         * It is a hard delete for Cognitive Search to omit it from search.
+         */ 
+        public async Task DeleteDocumentAsync(string id, string language, string user)
         {
-            return _collection.UpdateOneAsync(filter, update);
+            await _searchClient.DeleteDocumentsAsync("id", new[] { id });
+            var document = await GetDocumentAsync(id, language);
+            document.IsDeleted = true;
+            document.ModifiedOn = DateTime.UtcNow;
+            document.ModifiedBy = user;
         }
 
-        public Task<CopilotCommentModel> GetDocumentAsync(FilterDefinition<CopilotCommentModel> filter)
+        public async Task<CopilotCommentModel> GetDocumentAsync(string id, string language)
         {
-            return _collection.Find(filter).FirstOrDefaultAsync();
+            var response = await _container.ReadItemAsync<CopilotCommentModel>(id, new PartitionKey(language));
+            return response.Resource;
+        }
+
+        public async Task<IEnumerable<CopilotSearchModel>> SimilaritySearchAsync(string language, float[] embedding, float threshold, int limit)
+        {
+            var searchOptions = new SearchOptions()
+            {
+                Filter = SearchFilter.Create($"language eq {language}"),
+                Vectors = { new() { Value = embedding, KNearestNeighborsCount = limit, Fields = { "embedding" } } }
+            };
+            Azure.Response<SearchResults<SearchEmbedding>> response = await _searchClient.SearchAsync<SearchEmbedding>(searchText: null, searchOptions);
+            List<CopilotSearchModel> results = new List<CopilotSearchModel>();
+
+            await foreach (SearchResult<SearchEmbedding> result in response.Value.GetResultsAsync())
+            {
+                SearchEmbedding doc = result.Document;
+                results.Add(new CopilotSearchModel((float)result.Score, await GetDocumentAsync(doc.Id, language)));
+            }
+            return results;
         }
     }
 }

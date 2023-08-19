@@ -1,13 +1,13 @@
 using System.Threading.Tasks;
-using MongoDB.Driver;
 
 namespace APIViewWeb.Managers
 {
     public interface ICopilotCommentsManager
     {
-        public Task<string> CreateDocumentAsync(string user, string badCode, string goodCode, string language, string comment, string[] guidelineIds);
-        public Task<UpdateResult> UpdateDocumentAsync(string user, string id, string badCode, string goodCode, string language, string comment, string[] guidelineIds);
-        public Task<string> GetDocumentAsync(string id);
-        public Task DeleteDocumentAsync(string user, string id);
+        public Task<string> CreateDocumentAsync(string language, string badCode, string goodCode, string comment, string guidelineIds, string user);
+        public Task<string> UpdateDocumentAsync(string id, string language, string badCode, string goodCode, string comment, string guidelineIds, string user);
+        public Task<string> GetDocumentAsync(string id, string language);
+        public Task DeleteDocumentAsync(string id, string language, string user);
+        public Task<string> SearchDocumentsAsync(string language, string badCode, float threshold, int limit);
     }
 }

@@ -1,21 +1,18 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
-using MongoDB.Driver;
 
 namespace APIViewWeb.Repositories
 {
     public interface ICopilotCommentsRepository
     {
-        public Task<string> InsertDocumentAsync(CopilotCommentModel document);
+        public Task InsertDocumentAsync(CopilotCommentModel document);
 
-        public Task<UpdateResult> UpdateDocumentAsync(
-            FilterDefinition<CopilotCommentModel> filter,
-            UpdateDefinition<CopilotCommentModel> update);
+        public Task UpdateDocumentAsync(CopilotCommentModel document);
 
-        public Task DeleteDocumentAsync(
-            FilterDefinition<CopilotCommentModel> filter,
-            UpdateDefinition<CopilotCommentModel> update);
+        public Task DeleteDocumentAsync(string id, string language, string user);
 
-        public Task<CopilotCommentModel> GetDocumentAsync(FilterDefinition<CopilotCommentModel> filter);
+        public Task<CopilotCommentModel> GetDocumentAsync(string id, string language);
+        public Task<IEnumerable<CopilotSearchModel>> SimilaritySearchAsync(string language, float[] embedding, float threshold, int limit);
     }
 }

@@ -5,6 +5,11 @@ using APIViewWeb.Managers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Linq;
+using APIViewWeb.LeanModels;
+using APIViewWeb.Managers;
+using APIViewWeb.Repositories;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
 namespace APIViewWeb.LeanControllers
@@ -13,11 +18,16 @@ namespace APIViewWeb.LeanControllers
     {
         private readonly ILogger<ReviewsController> _logger;
         private readonly IReviewManager _reviewManager;
-
-        public ReviewsController(ILogger<ReviewsController> logger, IReviewManager reviewManager)
+        private readonly IRevisionManager _revisionsManager;
+        private readonly IBlobCodeFileRepository _codeFileRepository;
+        
+        public ReviewsController(ILogger<ReviewsController> logger,
+            IRevisionManager revisionsManager, IReviewManager reviewManager, IBlobCodeFileRepository codeFileRepository)
         {
             _logger = logger;
+            _revisionsManager = revisionsManager;
             _reviewManager = reviewManager;
+            _codeFileRepository = codeFileRepository;
         }
 
         /// <summary>
@@ -32,6 +42,14 @@ namespace APIViewWeb.LeanControllers
             var result = await _reviewManager.GetReviewsAsync(pageParams, filterAndSortParams);
             Response.AddPaginationHeader(new PaginationHeader(result.NoOfItemsRead, result.PageSize, result.TotalCount));
             return new LeanJsonResult(result);
+        }
+
+
+        [HttpGet(Name = "GetReviewPage")]
+        public async Task<ActionResult<ReviewPageModel>> GetReviewPageAsync(string reviewId, string revisionId= null)
+        {
+            var revision = (string.IsNullOrEmpty(revisionId)) ? 
+                await _revisionsManager.GetLatestRevisionsAsync(reviewId) : await _revisionsManager.GetRevisionsAsync(reviewId, revisionId);
         }
     }
 }

@@ -287,10 +287,11 @@ namespace APIViewWeb.Pages.Assemblies
             Review = await _manager.GetReviewAsync(User, id);
             TaggableUsers = _commentsManager.GetTaggableUsers();
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Revision = Review.Revisions.Last();
+            var unDeletedRevisions = Review.Revisions.Where(r => r.IsDeleted != false); // Exclude Deleted Revisions
+            Revision = unDeletedRevisions.Last();
             if (revisionId != null) 
             {
-                var revision = Review.Revisions.Where(r => r.RevisionId == revisionId);
+                var revision = unDeletedRevisions.Where(r => r.RevisionId == revisionId);
                 if (revision.Count() == 1)
                 {
                     Revision = revision.Single();
@@ -303,7 +304,7 @@ namespace APIViewWeb.Pages.Assemblies
 
             }
                 
-            PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
+            PreviousRevisions = unDeletedRevisions.TakeWhile(r => r != Revision).ToArray();
             DiffRevisionId = (DiffRevisionId == null) ? diffRevisionId : DiffRevisionId;
             ShowDiffOnly = (ShowDiffOnly == false) ? diffOnly : ShowDiffOnly;
             DiffRevision = DiffRevisionId != null ?

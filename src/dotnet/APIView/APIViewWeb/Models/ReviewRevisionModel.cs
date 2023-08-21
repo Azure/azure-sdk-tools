@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using APIViewWeb.Models;
 using Newtonsoft.Json;
 
 namespace APIViewWeb
@@ -74,6 +75,7 @@ namespace APIViewWeb
         public HashSet<string> Approvers { get; set; } = new HashSet<string>();
 
         public bool IsApproved => Approvers.Count() > 0;
+        public List<RevisionChangeHistoryModel> ChangeHistory { get; set; } = new List<RevisionChangeHistoryModel>();
         public bool IsDeleted { get; set; }
     }
 }

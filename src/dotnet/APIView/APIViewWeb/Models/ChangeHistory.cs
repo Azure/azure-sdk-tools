@@ -4,21 +4,34 @@ namespace APIViewWeb.Models
 {
     public enum ReviewChangeAction
     {
-        Approved = 0,
-        RevertedApproval,
-        ApprovedForFirstRelease,
-        RevertedFirstReleaseApproval,
         Subscribed,
         UnSubScribed,
+        ApprovedForFirstRelease,
+        RevertedFirstReleaseApproval,
         Closed,
-        Opened,
+        ReOpened,
         Deleted,
         Undeleted
     }
 
-    public class ReviewChangeHistory
+    public enum RevisionChangeAction
+    {
+        Approved = 0,
+        RevertedApproval,
+        Deleted,
+        Undeleted
+    }
+
+    public class ReviewChangeHistoryModel
     {
         public ReviewChangeAction ChangeAction { get; set; }
+        public string User { get; set; }
+        public DateTime ChangeDateTime { get; set; }
+    }
+
+    public class RevisionChangeHistoryModel
+    {
+        public RevisionChangeAction ChangeAction { get; set; }
         public string User { get; set; }
         public DateTime ChangeDateTime { get; set; }
     }

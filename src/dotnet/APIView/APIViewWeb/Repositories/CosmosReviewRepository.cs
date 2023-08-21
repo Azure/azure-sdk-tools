@@ -47,7 +47,7 @@ namespace APIViewWeb
         public async Task<IEnumerable<ReviewModel>> GetReviewsAsync(bool isClosed, string language, string packageName = null, ReviewType? filterType = null, bool fetchAllPages = false)
         {
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE (IS_DEFINED(r.IsClosed) ? r.IsClosed : false) = @isClosed ");
-            queryStringBuilder.Append("AND(IS_DEFINED(c.IsDeleted) ? c.IsDeleted : false) = false ");
+            queryStringBuilder.Append("AND(IS_DEFINED(r.IsDeleted) ? r.IsDeleted : false) = false ");
 
             //Add filter if looking for automatic, manual or PR reviews
             if (filterType != null && filterType != ReviewType.All)
@@ -118,7 +118,7 @@ namespace APIViewWeb
 
         public async Task<IEnumerable<ReviewModel>> GetRequestedReviews(string userName)
         {
-            var query = $"SELECT * FROM Reviews r WHERE IS_DEFINED(r.RequestedReviewers) AND ARRAY_CONTAINS(r.RequestedReviewers, @userName)";
+            var query = $"SELECT * FROM Reviews r WHERE IS_DEFINED(r.RequestedReviewers) AND ARRAY_CONTAINS(r.RequestedReviewers, @userName) AND(IS_DEFINED(r.IsDeleted) ? r.IsDeleted : false) = false";
             var allReviews = new List<ReviewModel>();
             var queryDefinition = new QueryDefinition(query).WithParameter("@userName", userName);
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewModel>(queryDefinition);
@@ -154,7 +154,7 @@ namespace APIViewWeb
 
             // Build up Query
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r");
-            queryStringBuilder.Append(" WHERE IS_DEFINED(r.id)"); // Allows for appending the other query parts as AND's in any order
+            queryStringBuilder.Append(" WHERE (IS_DEFINED(r.IsDeleted) ? r.IsDeleted : false) = false");
 
             if (search != null && search.Any())
             {

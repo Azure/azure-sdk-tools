@@ -103,6 +103,12 @@ namespace APIViewWeb.Managers
             if (email != null && !review.Subscribers.Contains(email))
             {
                 review.Subscribers.Add(email);
+                review.ChangeHistory.Add(new ReviewChangeHistoryModel
+                {
+                    User = user.GetGitHubLogin(),
+                    ChangeDateTime = DateTime.UtcNow,
+                    ChangeAction = ReviewChangeAction.Subscribed
+                });
                 await _reviewRepository.UpsertReviewAsync(review);
             }
         }
@@ -113,6 +119,12 @@ namespace APIViewWeb.Managers
             if (email != null && review.Subscribers.Contains(email))
             {
                 review.Subscribers.Remove(email);
+                review.ChangeHistory.Add(new ReviewChangeHistoryModel
+                {
+                    User = user.GetGitHubLogin(),
+                    ChangeDateTime = DateTime.UtcNow,
+                    ChangeAction = ReviewChangeAction.UnSubScribed
+                });
                 await _reviewRepository.UpsertReviewAsync(review);
             }
         }

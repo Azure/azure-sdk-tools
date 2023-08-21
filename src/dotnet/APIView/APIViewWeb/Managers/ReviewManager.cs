@@ -120,9 +120,14 @@ namespace APIViewWeb.Managers
             var reviewModel = await _reviewsRepository.GetReviewAsync(id);
             await AssertReviewOwnerAsync(user, reviewModel);
             AssertReviewDeletion(reviewModel);
+            reviewModel.ChangeHistory.Add(new ReviewChangeHistoryModel()
+            {
+                ChangeDateTime = DateTime.UtcNow,
+                User = user.GetGitHubLogin(),
+                ChangeAction = ReviewChangeAction.Deleted
+            });
 
             await _reviewsRepository.DeleteReviewAsync(reviewModel);
-
             await _commentsRepository.DeleteCommentsAsync(id);
         }
 
@@ -258,6 +263,12 @@ namespace APIViewWeb.Managers
             var revision = review.Revisions.Single(r => r.RevisionId == revisionId);
             await AssertRevisionOwner(user, revision);
             review.Revisions.Single(r => r.RevisionId == revisionId).IsDeleted = true;
+            review.Revisions.Single(r => r.RevisionId == revisionId).ChangeHistory.Add(new RevisionChangeHistoryModel()
+            {
+                ChangeAction = RevisionChangeAction.Deleted,
+                User = user.GetGitHubLogin(),
+                ChangeDateTime = DateTime.Now
+            });
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
@@ -274,6 +285,12 @@ namespace APIViewWeb.Managers
         {
             var review = await GetReviewAsync(user, id);
             review.IsClosed = !review.IsClosed;
+            review.ChangeHistory.Add(new ReviewChangeHistoryModel()
+            {
+                ChangeAction = (review.IsClosed) ? ReviewChangeAction.Closed : ReviewChangeAction.ReOpened,
+                User = user.GetGitHubLogin(),
+                ChangeDateTime = DateTime.Now
+            });
             if (review.FilterType == ReviewType.Automatic)
             {
                 throw new AuthorizationFailedException();
@@ -288,11 +305,17 @@ namespace APIViewWeb.Managers
             await AssertApprover(user, revision);
             var userId = user.GetGitHubLogin();
             bool approvalStatus;
+            var changeHistory = new RevisionChangeHistoryModel()
+            {
+                User = userId,
+                ChangeDateTime = DateTime.Now
+            };
             if (revision.Approvers.Contains(userId))
             {
                 //Revert approval
                 revision.Approvers.Remove(userId);
                 approvalStatus = false;
+                changeHistory.ChangeAction = RevisionChangeAction.RevertedApproval;
             }
             else
             {
@@ -300,9 +323,12 @@ namespace APIViewWeb.Managers
                 revision.Approvers.Add(userId);
                 review.ApprovalDate = DateTime.Now;
                 approvalStatus = true;
+                changeHistory.ChangeAction = RevisionChangeAction.Approved;
             }
             await _signalRHubContext.Clients.Group(user.Identity.Name).SendAsync("ReceiveApprovalSelf", review.ReviewId, revisionId, approvalStatus);
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", review.ReviewId, revisionId, userId, approvalStatus);
+
+            revision.ChangeHistory.Add(changeHistory);
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 
@@ -313,6 +339,12 @@ namespace APIViewWeb.Managers
             review.ApprovedForFirstReleaseBy = user.GetGitHubLogin();
             review.ApprovedForFirstReleaseOn = DateTime.Now;
             review.IsApprovedForFirstRelease = true;
+            review.ChangeHistory.Add(new ReviewChangeHistoryModel()
+            {
+                ChangeAction = ReviewChangeAction.ApprovedForFirstRelease,
+                User = user.GetGitHubLogin(),
+                ChangeDateTime = DateTime.Now
+            });
             await _reviewsRepository.UpsertReviewAsync(review);
         }
 

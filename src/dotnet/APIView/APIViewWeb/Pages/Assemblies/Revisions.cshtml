@@ -87,7 +87,7 @@
     <div class="row mx-0 px-0 py-2">
         <div class="col-lg-12 mx-0 px-0">
             <ul class="list-group">
-                @foreach (var revision in Model.Review.Revisions.Reverse())
+                @foreach (var revision in Model.Review.Revisions.Where(r => r.IsDeleted != true).Reverse())
                 {
                     <li class="list-group-item">
                         <form class="form-inline revision-rename-form float-left" asp-page-handler="Rename" method="post">

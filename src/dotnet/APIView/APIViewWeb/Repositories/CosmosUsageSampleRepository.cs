@@ -26,7 +26,7 @@ namespace APIViewWeb
 
         public async Task<List<UsageSampleModel>> GetUsageSampleAsync(string reviewId)
         {
-            return await GetUsageSamplesFromQueryAsync($"SELECT * FROM UsageSamples c WHERE c.ReviewId = '{reviewId}'");
+            return await GetUsageSamplesFromQueryAsync($"SELECT * FROM UsageSamples c WHERE c.ReviewId = '{reviewId}' AND(IS_DEFINED(c.IsDeleted) ? c.IsDeleted : false) = false");
         }
         
         public async Task DeleteUsageSampleAsync(UsageSampleModel sample)

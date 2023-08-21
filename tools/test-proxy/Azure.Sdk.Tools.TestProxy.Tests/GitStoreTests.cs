@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Linq;
 using System.ComponentModel;
 using Azure.Sdk.tools.TestProxy.Common;
+using System.Collections.Generic;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -584,7 +585,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         [EnvironmentConditionalSkipFact]
         [Trait("Category", "Integration")]
-        public async Task BreadcrumbContainsMultipleAssetRefs()
+        public async Task BreadCrumbMaintainsMultipleBreadCrumbs()
         {
             var inputJson = @"{
               ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
@@ -611,7 +612,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             try
             {
                 var assetStore = (await _defaultStore.ParseConfigurationFile(Path.Join(testFolder, target1))).ResolveAssetsStoreLocation();
-                var breadCrumbFile = Path.Join(assetStore.ToString(), ".breadcrumb");
+
+                var breadCrumbs = new List<string>();
 
                 // run 3 restore operations
                 foreach (var assetsJson in folderStructure)
@@ -619,14 +621,22 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                     var jsonFileLocation = Path.Join(testFolder, assetsJson);
                     var parsedJson = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
 
-                    await _defaultStore.Restore(jsonFileLocation);
+                    var breadCrumbFile = Path.Join(assetStore.ToString(), "breadcrumb", $"{parsedJson.AssetRepoShortHash}.breadcrumb");
 
+                    breadCrumbs.Add(breadCrumbFile);
+
+                    await _defaultStore.Restore(jsonFileLocation);
                     TestHelpers.CheckBreadcrumbAgainstAssetsConfig(parsedJson);
                 }
 
-                var crumbs = File.ReadAllLines(breadCrumbFile).Select(x => new BreadcrumbLine(x));
+                // double verify they are where we expect
+                foreach(var crumbFile in breadCrumbs)
+                {
+                    Assert.True(File.Exists(crumbFile));
+                }
+
                 // we have already validated that each tag contains what we expect, just confirm we aren't eliminating lines now.
-                Assert.Equal(3, crumbs.Count());
+                Assert.Equal(3, breadCrumbs.Count());
             }
             finally
             {

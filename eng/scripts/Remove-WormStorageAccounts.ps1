@@ -6,6 +6,8 @@ param(
     [string]$GroupPrefix
 )
 
+$ErrorActionPreference = 'Stop'
+
 # Be a little defensive so we don't delete non-live test groups via naming convention
 if (!$groupPrefix -or !$GroupPrefix.StartsWith('rg-')) {
     Write-Error "The -GroupPrefix parameter must start with 'rg-'"
@@ -25,6 +27,20 @@ foreach ($group in $groups) {
                 Write-Host "Removing $($account.StorageAccountName) in $($account.ResourceGroupName)"
             }
             $ctx = New-AzStorageContext -StorageAccountName $account.StorageAccountName
+            $immutableBlobs = $ctx `
+                                | Get-AzStorageContainer `
+                                | Where-Object { $_.BlobContainerProperties.HasImmutableStorageWithVersioning } `
+                                | Get-AzStorageBlob
+            try {
+                foreach ($blob in $immutableBlobs) {
+                    Write-Host "Removing legal hold - blob: $($blob.Name), account: $($account.StorageAccountName), group: $($group.ResourceGroupName)"
+                    $blob | Set-AzStorageBlobLegalHold -DisableLegalHold | Out-Null
+                }
+            } catch {
+                Write-Warning "User must have 'Storage Blob Data Owner' RBAC permission on subscription or resource group"
+                Write-Error $_
+                throw
+            }
             $ctx | Get-AzStorageContainer | Get-AzStorageBlob | Remove-AzStorageBlob -Force
             # Use AzRm cmdlet as deletion will only work through ARM with the immutability policies defined on the blobs
             $ctx | Get-AzStorageContainer | % { Remove-AzRmStorageContainer -Name $_.Name -StorageAccountName $ctx.StorageAccountName -ResourceGroupName $group.ResourceGroupName -Force }

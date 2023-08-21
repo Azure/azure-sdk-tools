@@ -2,6 +2,18 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "2.6.1",
+      "tag": "@autorest/testmodeler_v2.6.1",
+      "date": "Fri, 21 Jul 2023 08:36:29 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Support DataFactoryKeyVaultSecretReference of DataFactoryElement"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.6.0",
       "tag": "@autorest/testmodeler_v2.6.0",
       "date": "Mon, 19 Jun 2023 08:50:04 GMT",

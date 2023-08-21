@@ -39,7 +39,7 @@ function NpmInstallForProject([string]$workingDirectory) {
         #default to root/eng/emitter-package.json but you can override by writing
         #Get-${Language}-EmitterPackageJsonPath in your Language-Settings.ps1
         $emitterPackageJson = Join-Path $RepoRoot "eng/emitter-package.json"
-        
+
         if (Test-Path "Function:$GetEmitterPackageJsonPathFn") {
           $emitterPackageJson = &$GetEmitterPackageJsonPathFn
         }
@@ -60,7 +60,6 @@ function NpmInstallForProject([string]$workingDirectory) {
           Copy-Item -Path $emitterPackageLock -Destination "package-lock.json" -Force
         }
 
-        Write-Host "Creating .npmrc using public/azure-sdk-for-js-test-autorest feed."
         $useAlphaNpmRegistry = (Get-Content $emitterPackageJson -Raw).Contains("-alpha.")
 
         if ($useAlphaNpmRegistry) {
@@ -71,7 +70,7 @@ function NpmInstallForProject([string]$workingDirectory) {
 
         npm install | Tee-Object -Variable npmInstallOutput
 
-        if ($LASTEXITCODE) { 
+        if ($LASTEXITCODE) {
           if ($npmInstallOutput -contains "code E401") {
             Write-Host ""
             Write-Host "npm install failed with code E401. This is likely due to missing or stale credentials."

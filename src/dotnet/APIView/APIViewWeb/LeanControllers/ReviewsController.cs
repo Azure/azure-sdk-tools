@@ -1,10 +1,4 @@
-using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
-using APIViewWeb.LeanModels;
-using APIViewWeb.Managers;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.Linq;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Repositories;
@@ -46,10 +40,20 @@ namespace APIViewWeb.LeanControllers
 
 
         [HttpGet(Name = "GetReviewPage")]
+        [Route("{reviewId}")]
         public async Task<ActionResult<ReviewPageModel>> GetReviewPageAsync(string reviewId, string revisionId= null)
         {
             var revision = (string.IsNullOrEmpty(revisionId)) ? 
                 await _revisionsManager.GetLatestRevisionsAsync(reviewId) : await _revisionsManager.GetRevisionsAsync(reviewId, revisionId);
+            var reviewCodeFie = await _codeFileRepository.GetCodeFileAsync(revision.Id, revision.Files[0].ReviewFileId);
+            reviewCodeFie.RenderText(showDocumentation: true);
+
+            var pageModel = new ReviewPageModel
+            {
+                Navigation = reviewCodeFie.CodeFile.Navigation,
+                codeLines = reviewCodeFie.RenderResultText.CodeLines
+            };
+            return new LeanJsonResult(pageModel);
         }
     }
 }

@@ -479,7 +479,8 @@ SELECT VALUE {
 SELECT VALUE { 
     Id : rv.id,
     Name : rv.Name,
-    CreationDate : rv.CreationDate
+    CreationDate : rv.CreationDate,
+    Files : rv.Files
 }
 FROM r
 JOIN rv IN r.Revisions

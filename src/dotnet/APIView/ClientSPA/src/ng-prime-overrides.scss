@@ -1,5 +1,5 @@
 .p-datatable .p-datatable-header {
-    background: var(--base-bg-color);
+    background: var(--base-fg-color);
     color: var(--base-text-color);
     border: 0px solid var(--border-color);
 }
@@ -15,7 +15,7 @@
 .p-datatable .p-datatable-thead > tr > th {
     border: 0px solid var(--border-color);
     color: var(--base-text-color);
-    background: var(--base-bg-color);
+    background: var(--base-fg-color);
 }
 
 .p-datatable .p-datatable-tbody > tr {

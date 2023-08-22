@@ -29,12 +29,14 @@ namespace APIViewWeb.Helpers
         }
     }
 
-    public class ReviewFilterParams
+    public class ReviewFilterAndSortParams
     {
         public string Name { get; set; }
         public string Author { get; set; }
         public IEnumerable<string> Languages { get; set; }
         public IEnumerable<string> Details { get; set; }
+        public string SortField { get; set; }
+        public int sortorder { get; set; }
     }
 
     public class PagedList<T> : List<T>

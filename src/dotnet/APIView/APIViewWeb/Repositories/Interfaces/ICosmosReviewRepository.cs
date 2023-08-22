@@ -25,7 +25,8 @@ namespace APIViewWeb.Repositories
         /// Used for ClientSPA
         /// </summary>
         /// <param name="pageParams"></param> Contains paginationinfo
+        /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns>PagedList<ReviewsListItemModel></returns>
-        public Task<PagedList<ReviewsListItemModel>> GetReviewsAsync(PageParams userParams);
+        public Task<PagedList<ReviewsListItemModel>> GetReviewsAsync(PageParams userParams, ReviewFilterAndSortParams filterAndSortParams);
     }
 }

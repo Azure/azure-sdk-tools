@@ -16,7 +16,8 @@ export class ReviewsService {
   constructor(private http: HttpClient) { }
 
   getReviews(noOfItemsRead: number, pageSize: number,
-    name: string, author: string, languages: string [], details: string []
+    name: string, author: string, languages: string [], details: string [],
+    sortField: string, sortOrder: number
     ): Observable<PaginatedResult<Review[]>> {
     let params = new HttpParams();
     params = params.append('noOfItemsRead', noOfItemsRead);
@@ -26,7 +27,9 @@ export class ReviewsService {
       name: name,
       author: author,
       languages: languages,
-      details: details
+      details: details,
+      sortField: sortField,
+      sortOrder: sortOrder
     };
 
     const headers = new HttpHeaders({

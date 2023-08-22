@@ -122,10 +122,11 @@ namespace APIViewWeb.Managers
         /// Uses lean reviewListModels to reduce the size of the response. Used for ClientSPA
         /// </summary>
         /// <param name="pageParams"></param> Contains paginationinfo
+        /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns>PagedList<ReviewsListItemModel></returns>
-        public async Task<PagedList<ReviewsListItemModel>> GetReviewsAsync(PageParams pageParams)
+        public async Task<PagedList<ReviewsListItemModel>> GetReviewsAsync(PageParams pageParams, ReviewFilterAndSortParams filterAndSortParams)
         {
-            return await _reviewsRepository.GetReviewsAsync(pageParams);
+            return await _reviewsRepository.GetReviewsAsync(pageParams, filterAndSortParams);
         }
 
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)

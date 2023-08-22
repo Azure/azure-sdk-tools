@@ -18,7 +18,7 @@ export class ReviewsListComponent implements OnInit {
   reviews : Review[] = [];
   totalNumberOfReviews = 0;
   pagination: Pagination | undefined;
-  insertIndex = 0;
+  insertIndex : number = 0;
 
   pageSize = 20;
   first: number = 0;
@@ -48,7 +48,7 @@ export class ReviewsListComponent implements OnInit {
   constructor(private reviewsService: ReviewsService) { }
 
   ngOnInit(): void {
-    this.loadReviews(0, this.pageSize * 2); // Load row 1 - 40 for starts
+    this.loadReviews(0, this.pageSize * 2, true); // Load row 1 - 40 for starts
     this.createFilters();
     this.createContextMenuItems();
     this.setDetailsIcons();
@@ -58,7 +58,7 @@ export class ReviewsListComponent implements OnInit {
    * Load reviews from API
    *  * @param append wheather to add to or replace existing list
    */
-  loadReviews(noOfItemsRead : number, pageSize: number, filters: any = null) {
+  loadReviews(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string ="lastUpdated",  sortOrder: number = 1) {
     let name : string = "";
     let author : string = "";
     let languages : string [] = [];
@@ -71,12 +71,13 @@ export class ReviewsListComponent implements OnInit {
       details = (filters.details.value != null) ? filters.details.value.map((item: any) => item.data): details;
     }
 
-    this.reviewsService.getReviews(noOfItemsRead, pageSize, name, author, languages, details).subscribe({
+    this.reviewsService.getReviews(noOfItemsRead, pageSize, name, author, languages, details, sortField, sortOrder).subscribe({
       next: response => {
         if (response.result && response.pagination) {
-          if (this.reviews.length == 0)
+          if (resetReviews)
           {
             this.reviews = Array.from({ length: response.pagination!.totalCount });
+            this.insertIndex = 0;
           }
           this.reviews.splice(this.insertIndex, this.insertIndex + response.result.length, ...response.result);
           this.insertIndex = this.insertIndex + response.result.length;
@@ -172,7 +173,9 @@ export class ReviewsListComponent implements OnInit {
     {
       if (this.pagination)
       {
-        this.loadReviews(this.pagination!.noOfItemsRead, this.pageSize, event.filters);
+        const sortFeild : string = event.sortField as string ?? "lastUpdated";
+        const sortOrder : number = event.sortOrder as number ?? 1;
+        this.loadReviews(this.pagination!.noOfItemsRead, this.pageSize, false, event.filters, sortFeild, sortOrder);
       }
     }
     event.forceUpdate!();
@@ -184,6 +187,7 @@ export class ReviewsListComponent implements OnInit {
    */
   onFilter(event: TableFilterEvent) {
     console.log("On Filter Event Emitted %o", event);
+    this.loadReviews(0, this.pageSize, true, event.filters);
   }
 
   /**
@@ -201,5 +205,6 @@ export class ReviewsListComponent implements OnInit {
    */
     onSort(event: SortEvent) {
       console.log("Sort Event Emitted %o", event);
+      this.loadReviews(0, this.pageSize, true, null, event.field, event.order);
     }
 }

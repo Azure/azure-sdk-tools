@@ -282,8 +282,9 @@ namespace APIViewWeb
         /// Used for ClientSPA
         /// </summary>
         /// <param name="pageParams"></param> Contains paginationinfo
+        /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
-        public async Task<PagedList<ReviewsListItemModel>> GetReviewsAsync(PageParams pageParams)
+        public async Task<PagedList<ReviewsListItemModel>> GetReviewsAsync(PageParams pageParams, ReviewFilterAndSortParams filterAndSortParams)
         {
             var queryStringBuilder = new StringBuilder(@"
 SELECT VALUE {
@@ -301,9 +302,23 @@ SELECT VALUE {
     Label: ARRAY_SLICE(r.Revisions, -1)[0].Label,
     LastUpdated: r.LastUpdated
 } FROM Reviews r");
+            queryStringBuilder.Append(" AND (IS_DEFINED(c.IsDeleted) ? c.IsDeleted : false) = false");
+
+            if (!string.IsNullOrEmpty(filterAndSortParams.Name)){ }
+            
+            if (!string.IsNullOrEmpty(filterAndSortParams.Author)){ }
+
+            if (filterAndSortParams.Languages.Count() > 0) { }
+
+            if (filterAndSortParams.Details.Count() > 0){ }
+
+            if (!string.IsNullOrEmpty(filterAndSortParams.SortField))
+            {
+                
+            }
 
             int totalCount = 0;
-            var countQuery = $"SELECT VALUE COUNT(1) FROM({queryStringBuilder.ToString()})";
+            var countQuery = $"SELECT VALUE COUNT(1) FROM({queryStringBuilder})";
             QueryDefinition countQueryDefinition = new QueryDefinition(countQuery);
             using FeedIterator<int> countFeedIterator = _reviewsContainer.GetItemQueryIterator<int>(countQueryDefinition);
             while (countFeedIterator.HasMoreResults)

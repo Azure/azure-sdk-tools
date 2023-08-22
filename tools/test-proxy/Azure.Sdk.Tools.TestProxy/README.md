@@ -1,11 +1,11 @@
 # Azure SDK Tools Test Proxy
 
-**To users writing SDK tests:** This document is not intended to be a test preperation reference. You should instead refer
+**To users writing SDK tests:** This document is not intended to be a test preparation reference. You should instead refer
 to documentation in your specific language repository in order to configure recorded tests.
 
 #### Test documentation by language:
 
-- [Java](https://github.com/Azure/azure-sdk-for-java/blob/main/CONTRIBUTING.md)
+- [Java](https://github.com/Azure/azure-sdk-for-java/blob/main/sdk/core/azure-core-test/README.md)
 - [JavaScript](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on-how-to-write-tests.md)
 - [.NET](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core.TestFramework/README.md)
 - [Python](https://github.com/Azure/azure-sdk-for-python/blob/main/doc/dev/tests.md)

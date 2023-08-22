@@ -125,17 +125,17 @@ export class ReviewsListComponent implements OnInit {
         label: 'Status',
         data: 'All',
         items: [
-          { label: "Approved", data: "Approved" },
-          { label: "Pending", data: "Pending" },
+          { label: "Approved", data: "approved" },
+          { label: "Pending", data: "pending" },
         ]
       },
       {
         label: 'Type',
         data: 'All',
         items: [
-          { label: "Automatic", data: "Automatic" },
-          { label: "Manual", data: "Manual" },
-          { label: "Pull Request", data: "PullRequest" }
+          { label: "Automatic", data: "automatic" },
+          { label: "Manual", data: "manual" },
+          { label: "Pull Request", data: "pullrequest" }
         ]
       }
     ];
@@ -173,9 +173,9 @@ export class ReviewsListComponent implements OnInit {
     {
       if (this.pagination)
       {
-        const sortFeild : string = event.sortField as string ?? "lastUpdated";
+        const sortField : string = event.sortField as string ?? "lastUpdated";
         const sortOrder : number = event.sortOrder as number ?? 1;
-        this.loadReviews(this.pagination!.noOfItemsRead, this.pageSize, false, event.filters, sortFeild, sortOrder);
+        this.loadReviews(this.pagination!.noOfItemsRead, this.pageSize, false, event.filters, sortField, sortOrder);
       }
     }
     event.forceUpdate!();

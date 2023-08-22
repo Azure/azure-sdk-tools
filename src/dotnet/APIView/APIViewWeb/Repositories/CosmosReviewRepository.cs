@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Repositories;
+using ColorCode;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 
@@ -302,19 +303,94 @@ SELECT VALUE {
     Label: ARRAY_SLICE(r.Revisions, -1)[0].Label,
     LastUpdated: r.LastUpdated
 } FROM Reviews r");
-            queryStringBuilder.Append(" AND (IS_DEFINED(c.IsDeleted) ? c.IsDeleted : false) = false");
+            queryStringBuilder.Append(" WHERE (IS_DEFINED(r.IsDeleted) ? r.IsDeleted : false) = false");
 
-            if (!string.IsNullOrEmpty(filterAndSortParams.Name)){ }
+            if (!string.IsNullOrEmpty(filterAndSortParams.Name)){
+                var hasExactMatchQuery = filterAndSortParams.Name.StartsWith("package:") ||
+                    filterAndSortParams.Name.StartsWith("pr:") ||
+                    filterAndSortParams.Name.StartsWith("service:") ||
+                    filterAndSortParams.Name.StartsWith("name:");
+
+                if (hasExactMatchQuery)
+                {
+                    if (filterAndSortParams.Name.StartsWith("package:"))
+                    {
+                        var query = '"' + $"{filterAndSortParams.Name.Replace("package:", "")}" + '"';
+                        queryStringBuilder.Append($" AND STRINGEQUALS(ARRAY_SLICE(r.Revisions, -1)[0].Files[0].PackageName, {query}, true)");
+                    }
+                    else if (filterAndSortParams.Name.StartsWith("service:"))
+                    {
+                        var query = '"' + $"{filterAndSortParams.Name.Replace("service:", "")}" + '"';
+                        queryStringBuilder.Append($" AND STRINGEQUALS(r.ServiceName, {query}, true)");
+                    }
+                    else if (filterAndSortParams.Name.StartsWith("pr:"))
+                    {
+                        var query = '"' + $"{filterAndSortParams.Name.Replace("pr:", "")}" + '"';
+                        queryStringBuilder.Append($" AND ENDSWITH(ARRAY_SLICE(r.Revisions, -1)[0].Label, {query}, true)");
+                    }
+                    else if (filterAndSortParams.Name.StartsWith("name:"))
+                    {
+                        var query = '"' + $"{filterAndSortParams.Name.Replace("name:", "")}" + '"';
+                        queryStringBuilder.Append($" AND CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
+                    }
+                    else
+                    {
+                        var query = '"' + $"{filterAndSortParams.Name}" + '"';
+                        queryStringBuilder.Append($" AND CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
+                    }
+                }
+                else
+                {
+                    var query = '"' + $"{filterAndSortParams.Name}" + '"';
+                    queryStringBuilder.Append($" AND (CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
+                    queryStringBuilder.Append($" OR CONTAINS(r.Name, {query}, true)");
+                    queryStringBuilder.Append($" OR CONTAINS(r.ServiceName, {query}, true)");
+                    queryStringBuilder.Append($" OR CONTAINS(r.PackageDisplayName, {query}, true)");
+                    queryStringBuilder.Append($" OR CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Label, {query}, true)");
+                    queryStringBuilder.Append($")");
+                }
+            }
             
-            if (!string.IsNullOrEmpty(filterAndSortParams.Author)){ }
-
-            if (filterAndSortParams.Languages.Count() > 0) { }
-
-            if (filterAndSortParams.Details.Count() > 0){ }
-
-            if (!string.IsNullOrEmpty(filterAndSortParams.SortField))
+            if (!string.IsNullOrEmpty(filterAndSortParams.Author))
             {
-                
+                queryStringBuilder.Append($" AND STRINGEQUALS(r.Author, '{filterAndSortParams.Author}')");
+            }
+
+            if (filterAndSortParams.Languages != null && filterAndSortParams.Languages.Count() > 0) 
+            {
+                var languagesAsQueryStr = ArrayToQueryString<string>(filterAndSortParams.Languages);
+                queryStringBuilder.Append($" AND r.Revisions[0].Files[0].Language IN {languagesAsQueryStr}");
+            }
+
+            if (filterAndSortParams.Details.Count() > 0)
+            {
+                foreach (var item in filterAndSortParams.Details)
+                {
+                    switch (item)
+                    {
+                        case "open":
+                                queryStringBuilder.Append($" AND r.IsClosed = false");
+                            break;
+                        case "closed":
+                                queryStringBuilder.Append($" AND r.IsClosed = true");
+                            break;
+                        case "approved":
+                            queryStringBuilder.Append($" AND ARRAY_SLICE(r.Revisions, -1)[0].IsApproved = true");
+                            break;
+                        case "pending":
+                            queryStringBuilder.Append($" AND ARRAY_SLICE(r.Revisions, -1)[0].IsApproved = false");
+                            break;
+                        case "manual":
+                            queryStringBuilder.Append($" AND r.FilterType = 0");
+                            break;
+                        case "automatic":
+                            queryStringBuilder.Append($" AND r.FilterType = 1");
+                            break;
+                        case "pullrequest":
+                            queryStringBuilder.Append($" AND r.FilterType = 2");
+                            break;
+                    }
+                }
             }
 
             int totalCount = 0;
@@ -326,11 +402,31 @@ SELECT VALUE {
                 totalCount = (await countFeedIterator.ReadNextAsync()).SingleOrDefault();
             }
 
+            switch (filterAndSortParams.SortField)
+            {
+                case "name":
+                    queryStringBuilder.Append($" ORDER BY r.Name");
+                    break;
+                default:
+                    queryStringBuilder.Append($" ORDER BY r.LastUpdated");
+                    break;
+            }
+
+            if(filterAndSortParams.SortOrder == 1)
+            {
+                queryStringBuilder.Append(" DESC");
+            }
+            else 
+            {
+                queryStringBuilder.Append(" ASC");
+            }
+
             queryStringBuilder.Append(" OFFSET @offset LIMIT @limit");
             var reviews = new List<ReviewsListItemModel>();
             QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@offset", pageParams.NoOfItemsRead)
-                .WithParameter("@limit", pageParams.PageSize);
+                .WithParameter("@limit", pageParams.PageSize)
+                .WithParameter("@sortField", filterAndSortParams.SortField);
 
             using FeedIterator<ReviewsListItemModel> feedIterator = _reviewsContainer.GetItemQueryIterator<ReviewsListItemModel>(queryDefinition);
             while (feedIterator.HasMoreResults)
@@ -342,7 +438,7 @@ SELECT VALUE {
             return new PagedList<ReviewsListItemModel>((IEnumerable<ReviewsListItemModel>)reviews, noOfItemsRead, totalCount, pageParams.PageSize);
         }
 
-    public async Task<IEnumerable<ReviewModel>> GetApprovedForFirstReleaseReviews(string language, string packageName)
+        public async Task<IEnumerable<ReviewModel>> GetApprovedForFirstReleaseReviews(string language, string packageName)
         {
             var query = $"SELECT * FROM Reviews r WHERE r.IsClosed = false AND IS_DEFINED(r.IsApprovedForFirstRelease) AND r.IsApprovedForFirstRelease = true AND " +
                         $"EXISTS (SELECT VALUE revision FROM revision in r.Revisions WHERE EXISTS (SELECT VALUE files from files in revision.Files WHERE files.Language = @language AND files.PackageName = @packageName))";

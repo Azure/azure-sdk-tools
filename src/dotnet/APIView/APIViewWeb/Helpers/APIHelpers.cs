@@ -35,8 +35,8 @@ namespace APIViewWeb.Helpers
         public string Author { get; set; }
         public IEnumerable<string> Languages { get; set; }
         public IEnumerable<string> Details { get; set; }
-        public string SortField { get; set; }
-        public int sortorder { get; set; }
+        public string SortField { get; set; } = "LastUpdated";
+        public int SortOrder { get; set; } = 1;
     }
 
     public class PagedList<T> : List<T>

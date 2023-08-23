@@ -26,6 +26,7 @@ import { LanguageNamesPipe } from './_pipes/language-names.pipe';
 import { AvatarModule } from 'primeng/avatar';
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { FileUploadModule } from 'primeng/fileupload';
+import { TooltipModule } from 'primeng/tooltip';
 
 
 
@@ -59,6 +60,7 @@ import { FileUploadModule } from 'primeng/fileupload';
     SidebarModule,
     TableModule,
     TimeagoModule.forRoot(),
+    TooltipModule,
     TreeSelectModule
   ],
   providers: [],

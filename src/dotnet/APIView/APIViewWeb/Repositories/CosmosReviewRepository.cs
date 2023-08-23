@@ -293,7 +293,7 @@ SELECT VALUE {
     LastRevisionName: ARRAY_SLICE(r.Revisions, -1)[0].Name,
     Name: r.Name,
     Author: r.Author,
-    NoOfRevisions: ARRAY_LENGTH(r.Revisions),
+    NoOfRevisions: r.cp_NumberOfRevisions,
     Language: r.Revisions[0].Files[0].Language,
     IsClosed: r.IsClosed,
     IsAutomatic: r.IsAutomatic,
@@ -362,7 +362,7 @@ SELECT VALUE {
                 queryStringBuilder.Append($" AND r.Revisions[0].Files[0].Language IN {languagesAsQueryStr}");
             }
 
-            if (filterAndSortParams.Details.Count() > 0)
+            if (filterAndSortParams.Details != null && filterAndSortParams.Details.Count() > 0)
             {
                 foreach (var item in filterAndSortParams.Details)
                 {
@@ -406,6 +406,9 @@ SELECT VALUE {
             {
                 case "name":
                     queryStringBuilder.Append($" ORDER BY r.Name");
+                    break;
+                case "noOfRevisions":
+                    queryStringBuilder.Append($" ORDER BY r.cp_NumberOfRevisions");
                     break;
                 default:
                     queryStringBuilder.Append($" ORDER BY r.LastUpdated");

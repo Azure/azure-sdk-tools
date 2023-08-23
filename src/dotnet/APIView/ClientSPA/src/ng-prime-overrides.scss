@@ -173,3 +173,9 @@
 .p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon {
     color: var(--link-active);
 }
+
+.p-tooltip .p-tooltip-text {
+    background-color: var(--primary-color) !important;
+    color: var(--primary-btn-color) !important;
+    border-color: var(--primary-color) !important;
+}

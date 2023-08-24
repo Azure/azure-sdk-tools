@@ -1,5 +1,5 @@
 using System;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 namespace APIViewWeb.LeanModels
@@ -14,6 +14,7 @@ namespace APIViewWeb.LeanModels
 
     public class AICommentChangeHistoryModel
     {
+        [JsonConverter(typeof(StringEnumConverter))]
         public AICommentChangeAction ChangeAction { get; set; }
         public string User { get; set; }
         public DateTime ChangeDateTime { get; set; }

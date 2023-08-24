@@ -14,19 +14,18 @@ namespace APIViewWeb.Repositories
     public class AICommentsRepository : IAICommentsRepository
     {
         private readonly Container _aiCommentContainer;
-        private readonly Azure.Search.Documents.SearchClient _searchClient;
+        private readonly SearchClient _searchClient;
 
-        public AICommentsRepository(IConfiguration configuration)
+        public AICommentsRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
-            var cosmosClient = new CosmosClient(configuration["Cosmos:ConnectionString"]);
-            _aiCommentContainer = cosmosClient.GetContainer("APIView", "CopilotComments");
+            _aiCommentContainer = cosmosClient.GetContainer("APIView", "AIComments");
             _searchClient = new SearchClient(new Uri(configuration["CognitiveSearch:Endpoint"]), "ai-comments-search-index", new AzureKeyCredential(configuration["CognitiveSearch:Key"]));
         }
 
         public async Task UpsertAICommentAsync(AICommentModel aiCommentModel)
         {
-            var embedding = new SearchEmbedding { Id = aiCommentModel.Id, Embedding = aiCommentModel.Embedding, Language = aiCommentModel.Language };
-            await _searchClient.MergeOrUploadDocumentsAsync(new[] { embedding });
+            var Embedding = new SearchEmbedding { Id = aiCommentModel.Id, Embedding = aiCommentModel.Embedding, Language = aiCommentModel.Language };
+            await _searchClient.MergeOrUploadDocumentsAsync(new[] { Embedding });
             await _aiCommentContainer.UpsertItemAsync(item: aiCommentModel, partitionKey: new PartitionKey(aiCommentModel.Id));
         }
 
@@ -52,12 +51,12 @@ namespace APIViewWeb.Repositories
             return await _aiCommentContainer.ReadItemAsync<AICommentModel>(id, new PartitionKey(id));
         }
 
-        public async Task<IEnumerable<AICommentModelForSearch>> SimilaritySearchAsync(AICommentDTOForSearch aiCommentDTOForSearch)
+        public async Task<IEnumerable<AICommentModelForSearch>> SimilaritySearchAsync(AICommentDTOForSearch aiCommentDTOForSearch, float[] embedding)
         {
             var searchOptions = new SearchOptions()
             {
                 Filter = SearchFilter.Create($"language eq {aiCommentDTOForSearch.Language}"),
-                Vectors = { new() { Value = aiCommentDTOForSearch.Embedding, KNearestNeighborsCount = aiCommentDTOForSearch.Limit, Fields = { "embedding" } } }
+                Vectors = { new() { Value = embedding, KNearestNeighborsCount = aiCommentDTOForSearch.Limit, Fields = { "embedding" } } }
             };
             var response = await _searchClient.SearchAsync<SearchEmbedding>(searchText: null, searchOptions);
             List<AICommentModelForSearch> results = new List<AICommentModelForSearch>();

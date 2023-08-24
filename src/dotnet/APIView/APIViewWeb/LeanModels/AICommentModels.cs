@@ -22,8 +22,8 @@ namespace APIViewWeb.LeanModels
 
     public class AICommentDTO
     {
-        public string Language { get; set; }
-        public string BadCode { get; set; }
+        public virtual string Language { get; set; }
+        public virtual string BadCode { get; set; }
         public string GoodCode { get; set; } = null;
         public string Comment { get; set; } = null;
         public List<string> GuidelineIds { get; set; } = new List<string>();
@@ -32,16 +32,19 @@ namespace APIViewWeb.LeanModels
     public class AICommentDTOForCreate : AICommentDTO
     {
         [Required]
-        public new string Language { get; set; }
+        public override string Language { get; set; }
         [Required]
-        public new string BadCode { get; set; }
+        public override string BadCode { get; set; }
     }
 
-    public class AICommentDTOForSearch : AICommentDTOForCreate
+    public class AICommentDTOForSearch
     {
+        [Required]
+        public string Language { get; set; }
+        [Required]
+        public string BadCode { get; set; }
         public float Threshold { get; set; }
         public int Limit { get; set; } = 5;
-        public float[] Embedding { get; set; }
     }
 
     class SearchEmbedding

@@ -8,6 +8,8 @@ using Microsoft.Azure.Cosmos;
 using APIViewWeb.Filters;
 using APIViewWeb.LeanModels;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using APIViewWeb.Helpers;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -34,7 +36,7 @@ namespace APIViewWeb.LeanControllers
             {
                 var result = await _aiCommentsManager.CreateAICommentAsync(aiCommentDTOForCreate, User.GetGitHubLogin());
                 _logger.LogInformation("New comment added to database");
-                return StatusCode(statusCode: StatusCodes.Status201Created, result);
+                return new LeanJsonResult(result, StatusCodes.Status201Created);
             }
             catch (Exception err)
             {
@@ -55,7 +57,7 @@ namespace APIViewWeb.LeanControllers
             try
             {
                 var result = await _aiCommentsManager.UpdateAICommentAsync(id, aiCommentDto, User.GetGitHubLogin());
-                return Ok(result);
+                return new LeanJsonResult(result, StatusCodes.Status200OK);
             }
             catch (Exception err)
             {
@@ -75,7 +77,7 @@ namespace APIViewWeb.LeanControllers
             try
             {
                 var result = await _aiCommentsManager.GetAICommentAsync(id);
-                return Ok(result);
+                return new LeanJsonResult(result, StatusCodes.Status200OK);
             }
             catch (Exception err)
             {
@@ -107,18 +109,18 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
-        /// search AI Comments
+        /// Search AI Comments
         /// </summary>
         /// <param name="aiCommentDTOForSearch"></param>
         /// <returns></returns>
         [HttpGet]
         [Route("search")]
-        public async Task<ActionResult> SearchAICommentAsync(AICommentDTOForSearch aiCommentDTOForSearch)
+        public async Task<ActionResult> SearchAICommentAsync([FromQuery]AICommentDTOForSearch aiCommentDTOForSearch)
         {
             try
             {
                 var topResults = await _aiCommentsManager.SearchAICommentAsync(aiCommentDTOForSearch);
-                return Ok(topResults);
+                return new LeanJsonResult(topResults, StatusCodes.Status200OK);
             }
             catch (Exception err)
             {

@@ -33,6 +33,11 @@ using APIViewWeb.LeanControllers;
 using APIViewWeb.MiddleWare;
 using Microsoft.OpenApi.Models;
 using System.IO;
+using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using APIViewWeb.Helpers;
 
 namespace APIViewWeb
 {
@@ -228,6 +233,11 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, UsageSampleOwnerRequirementHandler>();
+            services.AddSingleton<CosmosClient>(x =>
+            {
+                return new CosmosClient(Configuration["Cosmos:ConnectionString"]);
+            });
+
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());

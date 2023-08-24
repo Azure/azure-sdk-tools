@@ -19,10 +19,9 @@ namespace APIViewWeb
     {
         private readonly Container _samplesContainer;
 
-        public CosmosUsageSampleRepository(IConfiguration configuration)
+        public CosmosUsageSampleRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
-            var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
-            _samplesContainer = client.GetContainer("APIView", "UsageSamples");
+            _samplesContainer = cosmosClient.GetContainer("APIView", "UsageSamples");
         }
 
         public async Task<List<UsageSampleModel>> GetUsageSampleAsync(string reviewId)

@@ -22,7 +22,11 @@ namespace APIViewWeb.LeanControllers
             _aiCommentsManager = aiCommentsManager;
             _logger = logger;
         }
-
+        /// <summary>
+        /// Create AI Comment
+        /// </summary>
+        /// <param name="aiCommentDTOForCreate"></param>
+        /// <returns></returns>
         [HttpPost]
         public async Task<ActionResult> CreateAICommentAsync(AICommentDTOForCreate aiCommentDTOForCreate)
         {
@@ -38,7 +42,12 @@ namespace APIViewWeb.LeanControllers
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
         }
-
+        /// <summary>
+        /// Update AI Comment with specific Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="aiCommentDto"></param>
+        /// <returns></returns>
         [HttpPost]
         [Route("{id}")]
         public async Task<ActionResult> UpdateAICommentAsync(string id, AICommentDTO aiCommentDto)
@@ -54,7 +63,11 @@ namespace APIViewWeb.LeanControllers
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
         }
-
+        /// <summary>
+        /// Get AI Comment with specific Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("{id}")]
         public async Task<ActionResult> GetAICommentAsync(string id)
@@ -72,6 +85,11 @@ namespace APIViewWeb.LeanControllers
 
         }
 
+        /// <summary>
+        /// Delete AI Comment with specific Id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete]
         [Route("{id}")]
         public async Task<ActionResult> DeleteAICommentAsync(string id)
@@ -88,6 +106,11 @@ namespace APIViewWeb.LeanControllers
             }
         }
 
+        /// <summary>
+        /// search AI Comments
+        /// </summary>
+        /// <param name="aiCommentDTOForSearch"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("search")]
         public async Task<ActionResult> SearchAICommentAsync(AICommentDTOForSearch aiCommentDTOForSearch)

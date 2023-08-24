@@ -20,7 +20,7 @@ namespace APIViewWeb.Repositories
         {
             var cosmosClient = new CosmosClient(configuration["Cosmos:ConnectionString"]);
             _aiCommentContainer = cosmosClient.GetContainer("APIView", "CopilotComments");
-            _searchClient = new SearchClient(new Uri(configuration["CognitiveSearch:Endpoint"]), "embedding-search-index", new AzureKeyCredential(configuration["CognitiveSearch:Key"]));
+            _searchClient = new SearchClient(new Uri(configuration["CognitiveSearch:Endpoint"]), "ai-comments-search-index", new AzureKeyCredential(configuration["CognitiveSearch:Key"]));
         }
 
         public async Task UpsertAICommentAsync(AICommentModel aiCommentModel)

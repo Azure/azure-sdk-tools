@@ -31,6 +31,8 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using APIViewWeb.LeanControllers;
 using APIViewWeb.MiddleWare;
+using Microsoft.OpenApi.Models;
+using System.IO;
 
 namespace APIViewWeb
 {
@@ -236,7 +238,22 @@ namespace APIViewWeb
                 options.EnableDetailedErrors = true;
                 options.MaximumReceiveMessageSize =  1024 * 1024;
             });
-            services.AddSwaggerGen();
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "APIView API",
+                    Description = "API Endpoints for consuming APIView application",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Azure SDK Engineering Systems",
+                        Url = new Uri("https://teams.microsoft.com/l/channel/19%3a3adeba4aa1164f1c889e148b1b3e3ddd%40thread.skype/APIView?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47")
+                    }
+                });
+                var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+            });
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)

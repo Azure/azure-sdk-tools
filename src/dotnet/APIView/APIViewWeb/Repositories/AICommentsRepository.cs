@@ -38,9 +38,12 @@ namespace APIViewWeb.Repositories
         {
             await _searchClient.DeleteDocumentsAsync("id", new[] { id });
             var aiCommentModel = await GetAICommentAsync(id);
-            aiCommentModel.IsDeleted = true;
-            aiCommentModel.ModifiedOn = DateTime.UtcNow;
-            aiCommentModel.ModifiedBy = user;
+            aiCommentModel.ChangeHistory.Add(new AICommentChangeHistoryModel()
+            {
+                ChangeAction = AICommentChangeAction.Deleted,
+                User = user,
+                ChangeDateTime = DateTime.UtcNow
+            });
             await _aiCommentContainer.UpsertItemAsync(item: aiCommentModel, partitionKey: new PartitionKey(aiCommentModel.Id));
         }
 

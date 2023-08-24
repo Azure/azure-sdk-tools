@@ -39,8 +39,15 @@ namespace APIViewWeb.Managers
                 Embedding = await GetEmbeddingsAsync(aiCommentDto.BadCode),
                 Comment = aiCommentDto.Comment,
                 GuidelineIds = aiCommentDto.GuidelineIds,
-                ModifiedOn = DateTime.UtcNow,
-                ModifiedBy = user
+                ChangeHistory = new List<AICommentChangeHistoryModel>()
+                {
+                    new AICommentChangeHistoryModel()
+                    {
+                        ChangeAction = AICommentChangeAction.Created,
+                        User = user,
+                        ChangeDateTime = DateTime.UtcNow
+                    }
+                }
             };
 
             await _aiCommentsRepository.UpsertAICommentAsync(commentModel);
@@ -50,41 +57,45 @@ namespace APIViewWeb.Managers
 
         public async Task<AICommentModel> UpdateAICommentAsync(string id, AICommentDTO aiCommentDto, string user)
         {
-            var commentModel = await _aiCommentsRepository.GetAICommentAsync(id);
-
-            commentModel.ModifiedOn = DateTime.UtcNow;
-            commentModel.ModifiedBy = user;
+            var aiCommentModel = await _aiCommentsRepository.GetAICommentAsync(id);
 
             if (aiCommentDto.Language != null)
             {
-                commentModel.Language = aiCommentDto.Language;
+                aiCommentModel.Language = aiCommentDto.Language;
             }
 
             if (aiCommentDto.BadCode != null)
             {
                 var embedding = await GetEmbeddingsAsync(aiCommentDto.BadCode);
-                commentModel.BadCode = aiCommentDto.BadCode;
-                commentModel.Embedding = embedding;
+                aiCommentModel.BadCode = aiCommentDto.BadCode;
+                aiCommentModel.Embedding = embedding;
             }
 
             if (aiCommentDto.GoodCode != null)
             {
-                commentModel.GoodCode = aiCommentDto.GoodCode;
+                aiCommentModel.GoodCode = aiCommentDto.GoodCode;
             }
 
             if (aiCommentDto.Comment != null)
             {
-                commentModel.Comment = aiCommentDto.Comment;
+                aiCommentModel.Comment = aiCommentDto.Comment;
             }
 
             if (aiCommentDto.GuidelineIds != null && aiCommentDto.GuidelineIds.Any())
             {
-                commentModel.GuidelineIds = aiCommentDto.GuidelineIds;
+                aiCommentModel.GuidelineIds = aiCommentDto.GuidelineIds;
             }
 
-            await _aiCommentsRepository.UpsertAICommentAsync(commentModel);
-            commentModel.Embedding = null;
-            return commentModel;
+            aiCommentModel.ChangeHistory.Add(new AICommentChangeHistoryModel()
+            {
+                ChangeAction = AICommentChangeAction.Modified,
+                User = user,
+                ChangeDateTime = DateTime.UtcNow
+            });
+
+            await _aiCommentsRepository.UpsertAICommentAsync(aiCommentModel);
+            aiCommentModel.Embedding = null;
+            return aiCommentModel;
         }
 
         public async Task DeleteAICommentAsync(string id, string user)

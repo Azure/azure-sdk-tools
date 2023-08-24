@@ -1,5 +1,4 @@
 import os
-import dotenv
 import json
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
@@ -11,7 +10,10 @@ from typing import List, Union
 from ._sectioned_document import SectionedDocument, Section
 from ._models import GuidelinesResult, Violation
 
-dotenv.load_dotenv()
+if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
+    # running on dev machine, loadenv
+    import dotenv
+    dotenv.load_dotenv()
 
 openai.api_type = "azure"
 openai.api_base = os.getenv("OPENAI_API_BASE")

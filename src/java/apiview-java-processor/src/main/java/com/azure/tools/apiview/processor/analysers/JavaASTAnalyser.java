@@ -150,10 +150,10 @@ public class JavaASTAnalyser implements Analyser {
 
     private boolean filterFilePaths(Path filePath) {
         String fileName = filePath.toString();
-        // Skip paths that are directories, in implementation, or are files contained within META-INF
+        // Skip paths that are directories, in implementation, or are not pom.xml files contained within META-INF
         if (Files.isDirectory(filePath)
                 || fileName.contains("implementation")
-                || fileName.contains("META-INF")) {
+                || (!fileName.endsWith("pom.xml") && fileName.contains("META-INF"))) {
             return false;
         } else {
             // Only include Java files.

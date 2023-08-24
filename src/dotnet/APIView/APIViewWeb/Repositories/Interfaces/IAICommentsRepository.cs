@@ -10,6 +10,6 @@ namespace APIViewWeb.Repositories
         public Task UpsertAICommentAsync(AICommentModel document);
         public Task DeleteAICommentAsync(string id, string user);
         public Task<AICommentModel> GetAICommentAsync(string id);
-        public Task<IEnumerable<AICommentModelForSearch>> SimilaritySearchAsync(AICommentDTOForSearch aiCommentDTOForSearch);
+        public Task<IEnumerable<AICommentModelForSearch>> SimilaritySearchAsync(AICommentDTOForSearch aiCommentDTOForSearch, float[] embedding);
     }
 }

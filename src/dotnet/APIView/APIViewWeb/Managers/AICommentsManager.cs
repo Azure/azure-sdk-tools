@@ -112,10 +112,8 @@ namespace APIViewWeb.Managers
 
         public async Task<IEnumerable<AICommentModelForSearch>> SearchAICommentAsync(AICommentDTOForSearch aiCommentDTOForSearch)
         {
-            var embeddings = (aiCommentDTOForSearch.Embedding == null || !aiCommentDTOForSearch.Embedding.Any()) ?
-                await GetEmbeddingsAsync(aiCommentDTOForSearch.BadCode): aiCommentDTOForSearch.Embedding;
-            
-            var searchResults = await _aiCommentsRepository.SimilaritySearchAsync(aiCommentDTOForSearch);
+            var embedding = await GetEmbeddingsAsync(aiCommentDTOForSearch.BadCode);
+            var searchResults = await _aiCommentsRepository.SimilaritySearchAsync(aiCommentDTOForSearch, embedding);
             var topResults = searchResults.Where(x => x.Similarity >= aiCommentDTOForSearch.Threshold);
             return topResults;
         }

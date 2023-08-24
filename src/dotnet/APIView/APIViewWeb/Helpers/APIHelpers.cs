@@ -12,8 +12,10 @@ namespace APIViewWeb.Helpers
 { 
     public class LeanJsonResult : JsonResult
     {
-        public LeanJsonResult(object value) : base(value)
+        private readonly int _statusCode;
+        public LeanJsonResult(object value, int statusCode) : base(value)
         {
+            _statusCode = statusCode;
         }
 
         public override async Task ExecuteResultAsync(ActionContext context)
@@ -26,6 +28,7 @@ namespace APIViewWeb.Helpers
             var response = context.HttpContext.Response;
 
             response.ContentType = !string.IsNullOrEmpty(ContentType) ? ContentType : "application/json";
+            response.StatusCode = _statusCode;
 
             var options = new JsonSerializerOptions
             {

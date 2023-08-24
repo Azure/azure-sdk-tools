@@ -28,6 +28,9 @@ using APIViewWeb.Managers;
 using APIViewWeb.Hubs;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using APIViewWeb.LeanControllers;
+using APIViewWeb.MiddleWare;
 
 namespace APIViewWeb
 {
@@ -93,7 +96,7 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosUsageSampleRepository, CosmosUsageSampleRepository>();
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
-            services.AddSingleton<ICopilotCommentsRepository, CopilotCommentsRepository>();
+            services.AddSingleton<IAICommentsRepository, AICommentsRepository>();
 
             services.AddSingleton<IReviewManager, ReviewManager>();
             services.AddSingleton<ICommentsManager, CommentsManager>();
@@ -103,7 +106,7 @@ namespace APIViewWeb
             services.AddSingleton<IUsageSampleManager, UsageSampleManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
             services.AddSingleton<IOpenSourceRequestManager, OpenSourceRequestManager>();
-            services.AddSingleton<ICopilotCommentsManager, CopilotCommentsManager>();
+            services.AddSingleton<IAICommentsManager, AICommentsManager>();
             services.AddSingleton<UserPreferenceCache>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
@@ -226,11 +229,14 @@ namespace APIViewWeb
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
-            services.AddControllersWithViews().AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
+            services.AddControllersWithViews()
+                .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
+                .PartManager.ApplicationParts.Add(new AssemblyPart(typeof(BaseApiController).Assembly));
             services.AddSignalR(options => {
                 options.EnableDetailedErrors = true;
                 options.MaximumReceiveMessageSize =  1024 * 1024;
             });
+            services.AddSwaggerGen();
         }
 
         private static async Task<string> GetMicrosoftEmailAsync(OAuthCreatingTicketContext context)
@@ -286,6 +292,9 @@ namespace APIViewWeb
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseMiddleware<SwaggerAuthMiddleware>();
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();

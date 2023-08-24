@@ -10,23 +10,13 @@ namespace APIViewWeb.LeanModels
     {
         [JsonProperty("id")]
         public string Id { get; set; } = IdHelper.GenerateId();
-        [JsonProperty("language")]
         public string Language { get; set; }
-        [JsonProperty("bad_code")]
         public string BadCode { get; set; }
-        [JsonProperty("good_code")]
         public string GoodCode { get; set; } = null;
-        [JsonProperty("embedding")]
         public float[] Embedding { get; set; }
-        [JsonProperty("comment")]
         public string Comment { get; set; } = null;
-        [JsonProperty("guideline_ids")]
-        public IEnumerable<string> GuidelineIds { get; set; } = new List<string>();
-        [JsonProperty("modified_on")]
-        public DateTime ModifiedOn { get; set; }
-        [JsonProperty("modified_by")]
-        public string ModifiedBy { get; set; }
-        [JsonProperty("is_deleted")]
+        public List<string> GuidelineIds { get; set; } = new List<string>();
+        public List<AICommentChangeHistoryModel> ChangeHistory { get; set; } = new List<AICommentChangeHistoryModel>();
         public bool IsDeleted { get; set; } = false;
     }
 
@@ -36,7 +26,7 @@ namespace APIViewWeb.LeanModels
         public string BadCode { get; set; }
         public string GoodCode { get; set; } = null;
         public string Comment { get; set; } = null;
-        public IEnumerable<string> GuidelineIds { get; set; } = new List<string>();
+        public List<string> GuidelineIds { get; set; } = new List<string>();
     }
 
     public class AICommentDTOForCreate : AICommentDTO
@@ -86,8 +76,7 @@ namespace APIViewWeb.LeanModels
                 Language = commentModel.Language,
                 Comment = commentModel.Comment,
                 GuidelineIds = commentModel.GuidelineIds,
-                ModifiedOn = commentModel.ModifiedOn,
-                ModifiedBy = commentModel.ModifiedBy,
+                ChangeHistory = commentModel.ChangeHistory,
                 IsDeleted = commentModel.IsDeleted
             };
         }

@@ -47,7 +47,7 @@ stages:
         condition: succeededOrFailed()
 
       - pwsh: |
-          dotnet run -rUri2 "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)" -rlFile "$(RepoListFile)"
+          dotnet run -rUri "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)" -rlFile "$(RepoListFile)"
         displayName: 'Fetch and store team/user data'
         workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
         env:

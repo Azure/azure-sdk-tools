@@ -38,6 +38,7 @@ namespace APIViewWeb.Controllers
             return Ok();
         }
 
+        [NonAction]
         [HttpPost]
         public async Task GenerateAIReview(
             [FromQuery] string reviewId, [FromQuery]string revisionId = null)

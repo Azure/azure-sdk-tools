@@ -3,6 +3,7 @@
 
 using APIView.Identity;
 using APIViewWeb.Models;
+using APIViewWeb.LeanModels;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;

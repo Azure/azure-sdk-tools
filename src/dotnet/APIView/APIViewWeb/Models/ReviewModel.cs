@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Claims;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
+using APIViewWeb.LeanModels;
 using Newtonsoft.Json;
 
 namespace APIViewWeb

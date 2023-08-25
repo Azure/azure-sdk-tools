@@ -25,3 +25,5 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/secret-management
+    # Sodium.Core dependency is not strong name signed. Skip validation in order to sign secret cli.
+    RequireStrongNames: false

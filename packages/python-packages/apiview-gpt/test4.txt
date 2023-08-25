@@ -1,0 +1,5 @@
+class Widget
+    name: str
+    age: int
+
+    def __init__(self, name: str, age: int)

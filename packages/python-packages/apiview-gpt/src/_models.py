@@ -14,15 +14,12 @@ class GuidelinesResult(BaseModel):
     violations: List[Violation] = Field(description="list of violations if any")
 
 class VectorDocument(BaseModel):
-    id: str = Field(description="unique ID of the document")
+    id: Optional[str] = Field(description="unique ID of the document")
     language: str = Field(description="programming language of the document")
-    bad_code: str = Field(description="the bad coding pattern")
-    good_code: Optional[str] = Field(description="the suggested fix for the bad code")
+    bad_code: str = Field(description="the bad coding pattern", alias="badCode")
+    good_code: Optional[str] = Field(description="the suggested fix for the bad code", alias="goodCode")
     comment: Optional[str] = Field(description="a comment about the violation")
-    guideline_ids: Optional[List[str]] = Field(description="list of guideline IDs that apply to this document")
-    modified_on: Optional[datetime] = Field(description="the last modified date of the document")
-    modified_by: str = Field(description="the user who last modified the document")
-    is_deleted: bool = Field(description="whether the document is deleted")
+    guideline_ids: Optional[List[str]] = Field(description="list of guideline IDs that apply to this document", alias="guidelineIds")
 
 class VectorSearchResult(BaseModel):
     confidence: float = Field(description="confidence score of the match")

@@ -1,0 +1,23 @@
+class WidgetManager:
+    
+    def __init__(self, connection_string: str) -> None
+
+    def get_widget(name: str) -> Widget
+
+    def list_widgets() -> List[Widget]
+
+    def create_widget(name: str, description: str) -> Widget
+
+    def delete_widget(name: str)
+
+class WidgetManagerAsync:
+
+    async def __init__(self, connection_string: str) -> None
+
+    async def get_widget(name: str) -> Widget
+
+    async def list_widgets() -> List[Widget]
+
+    async def create_widget(name: str, description: str) -> Widget
+
+    async def delete_widget(name: str)

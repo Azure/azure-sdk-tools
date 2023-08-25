@@ -71,14 +71,11 @@ namespace GitHubTeamUserStore
             bool success = false;
             // The team/user list needs to be generated before the user/org data. The reason being is that the User/Org
             // visibility data is generated for the azure-sdk-write team users.
-            if (await TeamUserGenerator.GenerateAndStoreTeamUserList(gitHubEventClient, teamUserBlobStorageUri))
+            if (await TeamUserGenerator.GenerateAndStoreTeamUserAndOrgData(gitHubEventClient, teamUserBlobStorageUri, userOrgVisibilityBlobStorageUri))
             {
-                if (await TeamUserGenerator.GenerateAndStoreUserOrgData(gitHubEventClient, userOrgVisibilityBlobStorageUri))
+                if (await RepositoryLabelGenerator.GenerateAndStoreRepositoryLabels(gitHubEventClient, repoLabelBlobStorageUri, repositoryListFile))
                 {
-                    if (await RepositoryLabelGenerator.GenerateAndStoreRepositoryLabels(gitHubEventClient, repoLabelBlobStorageUri, repositoryListFile))
-                    {
-                        success = true;
-                    }
+                    success = true;
                 }
             }
 

@@ -16,8 +16,8 @@ using System.Security.Claims;
 using Azure.Storage.Blobs.Models;
 using APIView.Identity;
 using APIViewWeb.Managers;
-using Microsoft.AspNetCore.SignalR;
 using APIViewWeb.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewIntegrationTests
 {
@@ -69,9 +69,9 @@ namespace APIViewIntegrationTests
             _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id");
             _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId");
             _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Profiles", "/id");
-            ReviewRepository = new CosmosReviewRepository(config);
-            CommentRepository = new CosmosCommentsRepository(config);
-            var cosmosUserProfileRepository = new CosmosUserProfileRepository(config);
+            ReviewRepository = new CosmosReviewRepository(config, _cosmosClient);
+            CommentRepository = new CosmosCommentsRepository(config, _cosmosClient);
+            var cosmosUserProfileRepository = new CosmosUserProfileRepository(config, _cosmosClient);
 
             _blobCodeFileContainerClient = new BlobContainerClient(config["Blob:ConnectionString"], "codefiles");
             _blobOriginalContainerClient = new BlobContainerClient(config["Blob:ConnectionString"], "originals");

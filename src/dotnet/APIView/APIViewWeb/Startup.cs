@@ -28,6 +28,16 @@ using APIViewWeb.Managers;
 using APIViewWeb.Hubs;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using APIViewWeb.LeanControllers;
+using APIViewWeb.MiddleWare;
+using Microsoft.OpenApi.Models;
+using System.IO;
+using Microsoft.Azure.Cosmos;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json;
+using System.Collections.Generic;
+using APIViewWeb.Helpers;
 
 namespace APIViewWeb
 {
@@ -93,7 +103,7 @@ namespace APIViewWeb
             services.AddSingleton<ICosmosUsageSampleRepository, CosmosUsageSampleRepository>();
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
-            services.AddSingleton<ICopilotCommentsRepository, CopilotCommentsRepository>();
+            services.AddSingleton<IAICommentsRepository, AICommentsRepository>();
 
             services.AddSingleton<IReviewManager, ReviewManager>();
             services.AddSingleton<ICommentsManager, CommentsManager>();
@@ -103,7 +113,7 @@ namespace APIViewWeb
             services.AddSingleton<IUsageSampleManager, UsageSampleManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
             services.AddSingleton<IOpenSourceRequestManager, OpenSourceRequestManager>();
-            services.AddSingleton<ICopilotCommentsManager, CopilotCommentsManager>();
+            services.AddSingleton<IAICommentsManager, AICommentsManager>();
             services.AddSingleton<UserPreferenceCache>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
@@ -223,13 +233,36 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, UsageSampleOwnerRequirementHandler>();
+            services.AddSingleton<CosmosClient>(x =>
+            {
+                return new CosmosClient(Configuration["Cosmos:ConnectionString"]);
+            });
+
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
-            services.AddControllersWithViews().AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
+            services.AddControllersWithViews()
+                .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
+                .PartManager.ApplicationParts.Add(new AssemblyPart(typeof(BaseApiController).Assembly));
             services.AddSignalR(options => {
                 options.EnableDetailedErrors = true;
                 options.MaximumReceiveMessageSize =  1024 * 1024;
+            });
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Version = "v1",
+                    Title = "APIView API",
+                    Description = "API Endpoints for consuming APIView application",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "Azure SDK Engineering Systems",
+                        Url = new Uri("https://teams.microsoft.com/l/channel/19%3a3adeba4aa1164f1c889e148b1b3e3ddd%40thread.skype/APIView?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47")
+                    }
+                });
+                var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
             });
         }
 
@@ -286,6 +319,9 @@ namespace APIViewWeb
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseMiddleware<SwaggerAuthMiddleware>();
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();

@@ -159,7 +159,7 @@ namespace APIViewWeb.Models
         }
 
         /// <summary>
-        /// Compute diff CodeLines from rootNode of <InlineDiffLine<CodeLine>
+        /// Compute diff CodeLines from rootNode of InlineDiffLine
         /// </summary>
         public InlineDiffLine<CodeLine>[] GetDiffCodeLineSection(TreeNode<InlineDiffLine<CodeLine>> sectionNode, bool skipDiff = false)
         {

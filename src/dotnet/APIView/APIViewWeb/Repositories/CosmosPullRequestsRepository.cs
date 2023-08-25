@@ -16,10 +16,9 @@ namespace APIViewWeb
         private readonly Container _pullRequestsContainer;
         private ICosmosReviewRepository _reviewsRepository;
 
-        public CosmosPullRequestsRepository(IConfiguration configuration, ICosmosReviewRepository reviewsRepository)
+        public CosmosPullRequestsRepository(IConfiguration configuration, ICosmosReviewRepository reviewsRepository, CosmosClient cosmosClient)
         {
-            var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
-            _pullRequestsContainer = client.GetContainer("APIView", "PullRequests");
+            _pullRequestsContainer = cosmosClient.GetContainer("APIView", "PullRequests");
             _reviewsRepository = reviewsRepository;
         }
 

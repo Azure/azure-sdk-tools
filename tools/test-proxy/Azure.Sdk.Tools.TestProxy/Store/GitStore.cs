@@ -127,7 +127,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     GitHandler.Run($"branch {branchGuid}", config);
                     GitHandler.Run($"checkout {branchGuid}", config);
                     GitHandler.Run($"add -A .", config);
-                    GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit -m \"Automatic asset update from test-proxy.\"", config);
+                    GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit --no-gpg-sign -m \"Automatic asset update from test-proxy.\"", config);
                     // Get the first 10 digits of the commit SHA. The generatedTagName will be the
                     // config.TagPrefix_<SHA>
                     if (GitHandler.TryRun("rev-parse --short=10 HEAD", config.AssetsRepoLocation.ToString(), out CommandResult SHAResult))

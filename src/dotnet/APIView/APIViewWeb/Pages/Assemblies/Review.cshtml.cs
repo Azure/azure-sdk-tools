@@ -126,7 +126,7 @@ namespace APIViewWeb.Pages.Assemblies
                 if (Lines.Length == 0)
                 {
                     var notifcation = new NotificationModel() { Message = "There is no diff between the two revisions.", Level = NotificatonLevel.Info };
-                    await _signalRHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveNotification", notifcation);
+                    await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
                     return Redirect(Request.Headers["referer"]);
                 }
             }
@@ -298,7 +298,7 @@ namespace APIViewWeb.Pages.Assemblies
                 else 
                 {
                     var notifcation = new NotificationModel() { Message = $"A revision with ID {revisionId} does not exist for this review.", Level = NotificatonLevel.Warning };
-                    await _signalRHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveNotification", notifcation);
+                    await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
                 }
 
             }

@@ -314,7 +314,7 @@ namespace APIViewWeb.Managers
                 review.ApprovalDate = DateTime.Now;
                 approvalStatus = true;
             }
-            await _signalRHubContext.Clients.Group(user.Identity.Name).SendAsync("ReceiveApprovalSelf", review.ReviewId, revisionId, approvalStatus);
+            await _signalRHubContext.Clients.Group(user.GetGitHubLogin()).SendAsync("ReceiveApprovalSelf", review.ReviewId, revisionId, approvalStatus);
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", review.ReviewId, revisionId, userId, approvalStatus);
             await _reviewsRepository.UpsertReviewAsync(review);
         }

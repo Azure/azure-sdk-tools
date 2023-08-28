@@ -31,7 +31,7 @@ namespace APIViewWeb.Controllers
             if (string.IsNullOrEmpty(commentText))
             {
                 var notifcation = new NotificationModel() { Message = "Comment Text cannot be empty. Please type your comment entry and try again.", Level = NotificatonLevel.Error };
-                await _signalRHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveNotification", notifcation);
+                await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
                 return new BadRequestResult();
             }
 

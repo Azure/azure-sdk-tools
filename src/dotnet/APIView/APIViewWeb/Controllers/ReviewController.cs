@@ -95,7 +95,7 @@ namespace APIViewWeb.Controllers
                     notification.Level = NotificatonLevel.Error;
                     break;
             }
-            await _signalRHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveAIReviewGenerationStatus", notification);
+            await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveAIReviewGenerationStatus", notification);
         }
     }
 }

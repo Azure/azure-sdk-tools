@@ -1,8 +1,6 @@
 using System.Threading.Tasks;
-using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Hubs
@@ -17,7 +15,7 @@ namespace APIViewWeb.Hubs
 
         public override Task OnConnectedAsync()
         {
-            string name = Context.User.Identity.Name;
+            string name = Context.User.GetGitHubLogin();
             if (!string.IsNullOrEmpty(name))
             {
                 Groups.AddToGroupAsync(Context.ConnectionId, name);

@@ -55,11 +55,9 @@ class VectorDB:
         response.raise_for_status()
         return
 
-    def search_documents(self, language: str, path: str, threshold: float = 0.5, limit: int = 10) -> List[VectorSearchResult]:
+    def search_documents(self, language: str, code: str, threshold: float = 0.5, limit: int = 10) -> List[VectorSearchResult]:
         url = f"{_BASE_URL}/search"
         headers = self._get_headers()
-        with open(path, "r") as f:
-            code = f.read()
         params = {
             "Language": language,
             "BadCode": code,

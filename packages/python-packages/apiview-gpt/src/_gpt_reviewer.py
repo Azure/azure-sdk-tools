@@ -9,6 +9,7 @@ from typing import List, Union
 
 from ._sectioned_document import SectionedDocument, Section
 from ._models import GuidelinesResult, Violation
+from ._vector_db import VectorDB
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
     # running on dev machine, loadenv
@@ -49,29 +50,29 @@ class GptReviewer:
         apiview = self.unescape(apiview)
         all_guidelines = self.retrieve_guidelines(language)
 
-        # TODO: Make this not hard-coded!
-        guidelines = self.select_guidelines(all_guidelines, [
-            "python_design.html#python-client-naming",
-            "python_design.html#python-client-options-naming",
-            "python_design.html#python-models-async",
-            "python_design.html#python-models-dict-result",
-            "python_design.html#python-models-enum-string",
-            "python_design.html#python-models-enum-name-uppercase",
-            "python_design.html#python-client-sync-async",
-            "python_design.html#python-client-async-keywords",
-            "python_design.html#python-client-separate-sync-async",
-            "python_design.html#python-client-same-name-sync-async",
-            "python_design.html#python-client-namespace-sync",
-        ])
-
-        for i, g in enumerate(guidelines):
-            g["number"] = i
-
         chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=True)
 
         final_results = GuidelinesResult(status="Success", violations=[])
         for chunk in chunked_apiview.sections:
             if self.should_evaluate(chunk):
+                # retrieve the most similar comments to identify guidelines to check
+                semantic_matches = VectorDB().search_documents(language, chunk)
+                
+                guidelines_to_check = []
+                extra_comments = []
+
+                # extract the unique guidelines to include in the prompt grounding.
+                # documents not included in the prompt grounding will be treated as extra comments.
+                for match in semantic_matches:
+                    guideline_ids = match["aiCommentModel"]["guidelineIds"]
+                    if guideline_ids:
+                        guidelines_to_check.extend(guideline_ids)
+                    else:
+                        extra_comments.append(match["aiCommentModel"])
+                guidelines_to_check = list(set(guidelines_to_check))
+                guidelines = self.select_guidelines(all_guidelines, guidelines_to_check)
+                # TODO: Wire up extra comments to the prompt grounding
+
                 results = self.chain.run(apiview=str(chunk), guidelines=guidelines, language=language)
                 output = self.output_parser.parse(results)
                 final_results.violations.extend(self.process_violations(output.violations, chunk))

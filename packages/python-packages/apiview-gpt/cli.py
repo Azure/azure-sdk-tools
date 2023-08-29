@@ -48,7 +48,9 @@ def search_documents(language: str, path: str):
     Search for documents
     """
     de = VectorDB()
-    results = de.search_documents(language, path)
+    with open(path, "r") as f:
+        code = f.read()
+    results = de.search_documents(language, code)
     with open('results.json', 'w') as f:
         json.dump(results, f, indent=4)
     pprint(results)

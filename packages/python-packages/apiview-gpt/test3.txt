@@ -1,3 +1,12 @@
+class Widget:
+
+    ivar name: str
+    ivar price: float
+    ivar year_introduced: int
+
+    def __init__(self, *args, **kwargs)
+
+
 class WidgetManager:
     
     def __init__(self, connection_string: str) -> None

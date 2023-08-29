@@ -1,4 +1,5 @@
 using APIViewWeb.Helpers;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Extensions.Logging;
@@ -21,7 +22,7 @@ namespace APIViewWeb.LeanControllers
             {
                 IsLoggedIn = true
             };
-            return new LeanJsonResult(result);
+            return new LeanJsonResult(result, StatusCodes.Status200OK);
         }
 
         [HttpGet]
@@ -32,7 +33,7 @@ namespace APIViewWeb.LeanControllers
             {
                 Hash = Startup.VersionHash
             };
-            return new LeanJsonResult(result);
+            return new LeanJsonResult(result, StatusCodes.Status200OK);
         }
     }
 }

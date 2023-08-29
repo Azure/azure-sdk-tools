@@ -1,6 +1,7 @@
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
+using APIViewWeb.Extensions;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -28,17 +29,23 @@ namespace APIViewWeb.LeanControllers
         /// <summary>
         /// Endpoint used by Client SPA for listing reviews. Uses a lean model that does not include full revision details
         /// </summary>
-        /// <param name="pageNumber"></param>
-        /// <param name="pageSize"></param>
+        /// <param name="pageParams"></param>
+        /// <param name="filterAndSortParams"></param>
         /// <returns></returns>
         [HttpPost(Name = "GetReviews")]
         public async Task<ActionResult<PagedList<ReviewsListItemModel>>> GetReviewsAsync([FromQuery] PageParams pageParams, [FromBody] ReviewFilterAndSortParams filterAndSortParams)
         {
             var result = await _reviewManager.GetReviewsAsync(pageParams, filterAndSortParams);
             Response.AddPaginationHeader(new PaginationHeader(result.NoOfItemsRead, result.PageSize, result.TotalCount));
-            return new LeanJsonResult(result);
+            return new LeanJsonResult(result, StatusCodes.Status200OK);
         }
 
+        /// <summary>
+        /// Retrieve the Content (codeLines and Navigation) of a review
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="revisionId"></param>
+        /// <returns></returns>
         [HttpGet]
         [Route("{reviewId}/content")]
         public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, string revisionId= null)
@@ -53,7 +60,7 @@ namespace APIViewWeb.LeanControllers
                 Navigation = reviewCodeFie.CodeFile.Navigation,
                 codeLines = reviewCodeFie.RenderResultText.CodeLines
             };
-            return new LeanJsonResult(pageModel, StatusCodes.Status201Created);
+            return new LeanJsonResult(pageModel, StatusCodes.Status200OK);
         }
     }
 }

@@ -24,9 +24,9 @@ namespace APIViewWeb.Repositories
         /// Retrieve Reviews from the Reviews container in CosmosDb after applying filter to the query
         /// Used for ClientSPA
         /// </summary>
-        /// <param name="pageParams"></param> Contains paginationinfo
+        /// <param name="userParams"></param> Contains paginationinfo
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
-        /// <returns>PagedList<ReviewsListItemModel></returns>
+        /// <returns></returns>
         public Task<PagedList<ReviewsListItemModel>> GetReviewsAsync(PageParams userParams, ReviewFilterAndSortParams filterAndSortParams);
         public Task<IEnumerable<RevisionListItemModel>> GetRevisionsAsync(string reviewId);
     }

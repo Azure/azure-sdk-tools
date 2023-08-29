@@ -3,17 +3,10 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-
+using System.Collections.Generic;
 
 namespace APIViewWeb.Helpers
 { 
-    public class LeanJsonResult : JsonResult
-    {
-        private readonly int _statusCode;
-        public LeanJsonResult(object value, int statusCode) : base(value)
-        {
-            _statusCode = statusCode;
-{
     public class PageParams
     {
         private const int MaxPageSize = 50;
@@ -53,8 +46,10 @@ namespace APIViewWeb.Helpers
 
     public class LeanJsonResult : JsonResult
     {
-        public LeanJsonResult(object value) : base(value)
+        private readonly int _statusCode;
+        public LeanJsonResult(object value, int statusCode) : base(value)
         {
+            _statusCode = statusCode;
         }
 
         public override async Task ExecuteResultAsync(ActionContext context)

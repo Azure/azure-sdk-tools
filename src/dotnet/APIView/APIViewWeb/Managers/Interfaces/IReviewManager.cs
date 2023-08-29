@@ -51,7 +51,7 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="pageParams"></param> Contains paginationinfo
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
-        /// <returns>PagedList<ReviewsListItemModel></returns>
+        /// <returns></returns>
         public Task<PagedList<ReviewsListItemModel>> GetReviewsAsync(PageParams pageParams, ReviewFilterAndSortParams filterAndSortParams);
     }
 }

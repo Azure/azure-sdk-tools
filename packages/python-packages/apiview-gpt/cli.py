@@ -49,6 +49,8 @@ def search_documents(language: str, path: str):
     """
     de = VectorDB()
     results = de.search_documents(language, path)
+    with open('results.json', 'w') as f:
+        json.dump(results, f, indent=4)
     pprint(results)
 
 class VectorCommandsLoader(CLICommandsLoader):

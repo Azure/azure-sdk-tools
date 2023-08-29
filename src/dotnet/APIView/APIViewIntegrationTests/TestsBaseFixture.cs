@@ -66,9 +66,9 @@ namespace APIViewIntegrationTests
 
             _cosmosClient = new CosmosClient(config["Cosmos:ConnectionString"]);
             var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync("APIView").Result;
-            _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id");
-            _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId");
-            _ = dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Profiles", "/id");
+            dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id").Wait();
+            dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId").Wait();
+            dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Profiles", "/id").Wait();
             ReviewRepository = new CosmosReviewRepository(config, _cosmosClient);
             CommentRepository = new CosmosCommentsRepository(config, _cosmosClient);
             var cosmosUserProfileRepository = new CosmosUserProfileRepository(config, _cosmosClient);

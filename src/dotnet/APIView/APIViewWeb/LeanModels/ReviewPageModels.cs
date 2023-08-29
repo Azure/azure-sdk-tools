@@ -4,7 +4,7 @@ using APIView;
 
 namespace APIViewWeb.LeanModels
 {
-    public class ReviewPageModel
+    public class ReviewContentModel
     {
         public NavigationItem[] Navigation { get; set; }
         public CodeLine[] codeLines { get; set; }

@@ -504,35 +504,6 @@ namespace APIViewWeb.Managers
             return await CreateMasterReviewAsync(user, codeFile, originalFileName, label, memoryStream, compareAllRevisions);
         }
 
-        public async Task<List<ServiceGroupModel>> GetReviewsByServicesAsync(ReviewType filterType)
-        {
-            SortedDictionary<string, ServiceGroupModel> response = new();
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: filterType);
-            foreach (var review in reviews)
-            {
-                var packageDisplayName = review.PackageDisplayName ?? "Other";
-                var serviceName = review.ServiceName ?? "Other";
-                if (!response.ContainsKey(serviceName))
-                {
-                    response[serviceName] = new ServiceGroupModel()
-                    {
-                        ServiceName = serviceName
-                    };
-                }
-
-                var packageDict = response[serviceName].packages;
-                if (!packageDict.ContainsKey(packageDisplayName))
-                {
-                    packageDict[packageDisplayName] = new PackageGroupModel()
-                    {
-                        PackageDisplayName = packageDisplayName
-                    };
-                }
-                packageDict[packageDisplayName].reviews.Add(new ReviewDisplayModel(review));
-            }
-            return response.Values.ToList();
-        }
-
         public async Task AutoArchiveReviews(int archiveAfterMonths)
         {
             var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual, fetchAllPages: true);

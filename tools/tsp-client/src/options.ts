@@ -36,6 +36,10 @@ export async function getOptions(): Promise<Options> {
         type: "string",
         short: "m",
       },
+      outputDir: {
+        type: "string",
+        short: "o",
+      },
       ["no-cleanup"]: {
         type: "boolean",
       },
@@ -78,11 +82,10 @@ export async function getOptions(): Promise<Options> {
 
   // By default, assume that the command is run from the output directory
   var outputDir = ".";
-  if (positionals[1] !== undefined) {
-    outputDir = path.resolve(path.normalize(positionals[1]));
-  } else {
-    outputDir = path.resolve(path.normalize(outputDir));
+  if (values.outputDir) {
+    outputDir = values.outputDir;
   }
+  outputDir = path.resolve(path.normalize(outputDir));
 
   return {
     debug: values.debug ?? false,

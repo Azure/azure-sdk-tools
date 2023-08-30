@@ -2,12 +2,17 @@
     {
         "language": "python",
         "badCode": "class azure.contoso.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    def close(self) -> None\n\n    @distributed_trace\n\n    def get_widget(self, *args, **kwargs)",
-        "comment": "This is a synchronous client class!"
+        "comment": "This is a synchronous client class. It must not have 'Sync' in the name."
     },
     {
         "language": "python",
         "badCode": "class azure.contoso.aio.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
-        "comment": "This is an asynchronous client class!"
+        "comment": "This is an asynchronous client class. It must not have 'Async' in the name and it must have '.aio' in the namespace."
+    },
+    {
+        "language": "python",
+        "badCode": "class azure.contoso.Widget\n    ivar prop1\n    ivar prop2\n    def __init__(*args, **kwargs)",
+        "comment": "This is a data model class. It is not a client and shouldn't have a 'Client' suffix."
     },
     {
         "language": "python",
@@ -23,7 +28,7 @@
     },
     {
         "language": "python",
-        "badCode": "class ExampleClient(connection_string: str, **kwargs)",
+        "badCode": "class ExampleClient(connection_string: Optional[str], **kwargs)",
         "goodCode": "class ExampleClient:\n\n   @classmethod\n\n    def _parse_connection_string(cls, connection_string): ...\n\n   @classmethod\n\n    def from_connection_string(cls, connection_string, **kwargs):\n\n       endpoint, credential = cls._parse_connection_string(connection_string)\n\n      return cls(endpoint, credential, **kwargs)",
         "guidelineIds": ["python_design.html#python-client-connection-string"]
     },
@@ -62,5 +67,11 @@
         "badCode": "# In module azure.example\nclass ExampleClient: # Don't mix'n match with different method names\n    def some_service_operation(self, name, size) ...\n    async def some_service_operation_async(self, name, size) ...",
         "goodCode": "# In module azure.example\nclass ExampleClient:\n    def some_service_operation(self, name, size) ...\n\n# In module azure.example.aio\nclass ExampleClient:\n    # Same method name as sync, different client\n    async def some_service_operation(self, name, size) ...",
         "guidelineIds": ["python_design.html#python-client-separate-sync-async"]
+    },
+    {
+        "language": "python",
+        "badCode": "class CatProperties:",
+        "goodCode": "class Cat:",
+        "comment": "The suffix 'Properties' is not helpful. Favor the simpler term 'Cat' instead."
     }
 ]

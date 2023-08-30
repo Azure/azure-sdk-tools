@@ -83,8 +83,9 @@ class GptReviewer:
                     else:
                         extra_comments.append(match["aiCommentModel"])
                 guidelines_to_check = list(set(guidelines_to_check))
+                if not guidelines_to_check:
+                    continue
                 guidelines = self.select_guidelines(all_guidelines, guidelines_to_check)
-                # TODO: Wire up extra comments to the prompt grounding
 
                 params = {
                     "apiview": str(chunk),

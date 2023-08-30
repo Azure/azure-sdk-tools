@@ -73,5 +73,11 @@
         "badCode": "class CatProperties:",
         "goodCode": "class Cat:",
         "comment": "The suffix 'Properties' is not helpful. Favor the simpler term 'Cat' instead."
-    }
+    },
+    {
+        "language": "python",
+        "badCode": "def dump(self, dest: Union[str, PathLike, IO[AnyStr]], *, kwargs: dict = ..., **kwargs) -> None",
+        "comment": "Don't use kwargs and **kwargs in the same signature. All individual kwarg values should be listed (except for private/internal ones)"
+
+    }       
 ]

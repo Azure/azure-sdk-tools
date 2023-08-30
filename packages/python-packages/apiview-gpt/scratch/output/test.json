@@ -9,7 +9,7 @@
             "line_no": 19,
             "bad_code": "class azure.contoso.NoodleAsyncManager:",
             "suggestion": "class azure.contoso.aio.NoodleAsyncClient:",
-            "comment": "The class name should end with a 'Client' suffix. The namespace of the class should have an '.aio' suffix for async clients."
+            "comment": "The class name should end with a 'Client' suffix. The class should be in a namespace with an '.aio' suffix."
         },
         {
             "rule_ids": [
@@ -17,8 +17,8 @@
             ],
             "line_no": 20,
             "bad_code": "async def __init__(self, endpoint, credential, options: dict)",
-            "suggestion": "async def __init__(self, endpoint, credential, options: dict, max_retries=18, timeout=2)",
-            "comment": "The constructor should accept optional parameters like 'max_retries' and 'timeout'."
+            "suggestion": "async def __init__(self, endpoint, credential, **kwargs)",
+            "comment": "The class should accept optional default request options as keyword arguments and pass them along to its pipeline policies."
         },
         {
             "rule_ids": [
@@ -34,9 +34,9 @@
                 "python_design.html#python-client-connection-string"
             ],
             "line_no": 38,
-            "bad_code": "connection_string: Optional[str]",
+            "bad_code": "connection_string: Optional[str],",
             "suggestion": "Implement a separate factory classmethod from_connection_string to create a client from a connection string.",
-            "comment": "The constructor should not accept a connection string as an argument."
+            "comment": "The constructor (__init__ method) should not take a connection string as an argument."
         }
     ]
 }

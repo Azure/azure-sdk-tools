@@ -65,5 +65,7 @@ class VectorDB:
             "Limit": limit
         }
         response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 404:
+            return []
         response.raise_for_status()
         return response.json()

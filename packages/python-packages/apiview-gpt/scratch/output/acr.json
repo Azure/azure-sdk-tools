@@ -1,0 +1,12 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [],
+            "line_no": 269,
+            "bad_code": "class azure.containerregistry.RepositoryProperties:",
+            "suggestion": "class azure.containerregistry.Repository:",
+            "comment": "The suffix 'Properties' is not helpful. Favor the simpler term 'Repository' instead."
+        }
+    ]
+}

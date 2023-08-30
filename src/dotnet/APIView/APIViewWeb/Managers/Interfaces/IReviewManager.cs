@@ -35,7 +35,6 @@ namespace APIViewWeb.Managers
             MemoryStream originalFileStream, string baselineCodeFileName = "", MemoryStream baselineStream = null, string project = "public");
         public Task<ReviewRevisionModel> CreateApiReview(ClaimsPrincipal user, string buildId, string artifactName, string originalFileName, string label,
             string repoName, string packageName, string codeFileName, bool compareAllRevisions, string project);
-        public Task<List<ServiceGroupModel>> GetReviewsByServicesAsync(ReviewType filterType);
         public Task AutoArchiveReviews(int archiveAfterMonths);
         public Task UpdateReviewCodeFiles(string repoName, string buildId, string artifact, string project);
         public Task RequestApproversAsync(ClaimsPrincipal User, string ReviewId, HashSet<string> reviewers);

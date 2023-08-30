@@ -5,7 +5,8 @@ import { knownLanguages, languageAliases } from "./languageSettings.js";
 
 export interface Options {
   debug: boolean;
-  emitter: string;
+  command: string;
+  emitter: string | undefined;
   mainFile?: string;
   outputDir: string;
   noCleanup: boolean;
@@ -50,32 +51,42 @@ export async function getOptions(): Promise<Options> {
     process.exit(0);
   }
 
-  if (!values.emitter) {
-    Logger.error("Option --emitter/-e is required");
+  if (values.emitter) {
+    let emitter = values.emitter.toLowerCase();
+    if (emitter in languageAliases) {
+      emitter = languageAliases[emitter]!;
+    }
+    if (!(knownLanguages as readonly string[]).includes(emitter)) {
+      Logger.error(`Unknown language ${values.emitter}`);
+      Logger.error(`Valid languages are: ${knownLanguages.join(", ")}`);
+      printUsage();
+      process.exit(1);
+    }
+  }
+
+  if (positionals.length === 0) {
+    Logger.error("Command is required");
     printUsage();
     process.exit(1);
   }
 
-  let emitter = values.emitter.toLowerCase();
-  if (emitter in languageAliases) {
-    emitter = languageAliases[emitter]!;
-  }
-  if (!(knownLanguages as readonly string[]).includes(emitter)) {
-    Logger.error(`Unknown language ${values.emitter}`);
-    Logger.error(`Valid languages are: ${knownLanguages.join(", ")}`);
+  if (positionals[0] !== "sync" && positionals[0] !== "generate" && positionals[0] !== "update") {
+    Logger.error(`Unknown command ${positionals[0]}`);
     printUsage();
     process.exit(1);
   }
 
-  if (positionals.length === 0 || !positionals[0]) {
-    Logger.error("Output directory is required");
-    printUsage();
-    process.exit(1);
+  // By default, assume that the command is run from the output directory
+  var outputDir = ".";
+  if (positionals[1] !== undefined) {
+    outputDir = path.resolve(path.normalize(positionals[1]));
+  } else {
+    outputDir = path.resolve(path.normalize(outputDir));
   }
-  const outputDir = path.resolve(path.normalize(positionals[0]));
 
   return {
     debug: values.debug ?? false,
+    command: positionals[0],
     emitter: values.emitter,
     mainFile: values.mainFile,
     noCleanup: values["no-cleanup"] ?? false,

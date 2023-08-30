@@ -8,8 +8,8 @@
       ],
       "line_no": 2,
       "bad_code": "class azure.contoso.ContosoAsyncManager:",
-      "suggestion": "class azure.contoso.aio.ContosoManagerClient:",
-      "comment": "The class name should end with 'Client' and the namespace for async clients should have '.aio' suffix."
+      "suggestion": "class azure.contoso.aio.ContosoAsyncClient:",
+      "comment": "The class name should end with a Client suffix. The class should use an .aio suffix added to the namespace of the sync client for async clients."
     },
     {
       "rule_ids": [
@@ -17,37 +17,26 @@
       ],
       "line_no": 3,
       "bad_code": "async def __init__(self, endpoint, credential, options: dict)",
-      "suggestion": "def __init__(self, endpoint, credential, **kwargs)",
-      "comment": "The constructor should accept optional default request options as keyword arguments and pass them along to its pipeline policies."
+      "suggestion": "async def __init__(self, endpoint, credential, **options)",
+      "comment": "The constructor should accept optional default request options as keyword arguments."
     },
     {
       "rule_ids": [
-        "python_design.html#python-client-naming",
-        "python_design.html#python-client-separate-sync-async"
+        "python_design.html#python-client-naming"
       ],
       "line_no": 13,
       "bad_code": "class azure.contoso.ContosoManager:",
-      "suggestion": "class azure.contoso.ContosoClient:\n...\nclass azure.contoso.aio.ContosoClient:",
-      "comment": "The class name should end with a 'Client' suffix. The class should provide separate classes for synchronous and asynchronous operations."
+      "suggestion": "Rename the class to 'ContosoClient' to follow the naming convention.",
+      "comment": "The class name should end with a 'Client' suffix."
     },
     {
       "rule_ids": [
         "python_design.html#python-client-constructor-policy-arguments"
       ],
       "line_no": 14,
-      "bad_code": "def __init__(\nself,\nendpoint,\ncredential,\noptions: dict\n)",
-      "suggestion": "def __init__(\nself,\nendpoint,\ncredential,\n**kwargs\n)",
-      "comment": "The class should accept optional default request options as keyword arguments and pass them along to its pipeline policies."
-    },
-    {
-      "rule_ids": [
-        "python_design.html#python-client-naming",
-        "python_design.html#python-client-separate-sync-async"
-      ],
-      "line_no": 30,
-      "bad_code": "class azure.contoso.WidgetResult:",
-      "suggestion": "Provide two separate client classes for synchronous and asynchronous operations.",
-      "comment": "Service client types should be named with a Client suffix. Do not combine async and sync operations in the same class."
+      "bad_code": "def __init__(self, endpoint, credential, options: dict)",
+      "suggestion": "Add optional default request options as keyword arguments in the constructor and pass them along to its pipeline policies.",
+      "comment": "The constructor should accept optional default request options as keyword arguments."
     }
   ]
 }

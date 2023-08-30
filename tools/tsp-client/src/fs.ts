@@ -1,9 +1,9 @@
-import { mkdir, rm, writeFile, mkdtemp, stat, readFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, rm, writeFile, stat, readFile } from "node:fs/promises";
 import { FileTreeResult } from "./fileTree.js";
 import * as path from "node:path";
 import { Logger } from "./log.js";
 import { parse as parseYaml } from "yaml";
+import { existsSync } from "node:fs";
 
 export async function ensureDirectory(path: string) {
   await mkdir(path, { recursive: true });
@@ -13,8 +13,9 @@ export async function removeDirectory(path: string) {
   await rm(path, { recursive: true, force: true });
 }
 
-export async function createTempDirectory(): Promise<string> {
-  const tempRoot = await mkdtemp(path.join(tmpdir(), "tsp-client-"));
+export async function createTempDirectory(outputDir: string): Promise<string> {
+  const tempRoot = path.join(outputDir, "TempTypeSpecFiles");
+  await mkdir(tempRoot, { recursive: true });
   Logger.debug(`Created temporary working directory ${tempRoot}`);
   return tempRoot;
 }
@@ -46,4 +47,45 @@ export async function tryReadTspLocation(rootDir: string): Promise<string | unde
     Logger.error(`Error reading tsp-location.yaml: ${e}`);
   }
   return undefined;
+}
+
+export async function readTspLocation(rootDir: string): Promise<[string, string, string]> {
+  try {
+    const yamlPath = path.resolve(rootDir, "tsp-location.yaml");
+    const fileStat = await stat(yamlPath);
+    if (fileStat.isFile()) {
+      const fileContents = await readFile(yamlPath, "utf8");
+      const locationYaml = parseYaml(fileContents);
+      const { directory, commit, repo } = locationYaml;
+      if (!directory || !commit || !repo) {
+        throw new Error("Invalid tsp-location.yaml");
+      }
+      return [directory, commit, repo];
+    }
+  } catch (e) {
+    Logger.error(`Error reading tsp-location.yaml: ${e}`);
+  }
+  throw new Error("Could not find tsp-location.yaml");
+}
+
+
+export async function findEmitterPackage(emitterPath: string): Promise<string | undefined> {
+  if (existsSync(emitterPath)) {
+    const emitter = await readFile(emitterPath, 'utf8').then(data => {
+      const obj = JSON.parse(data);
+      if (!obj || !obj.dependencies) {
+        throw new Error("Invalid emitter-package.json");
+      }
+      var languages: string[] = ["@azure-tools/typespec-csharp", "@azure-tools/typespec-java", "@azure-tools/typespec-ts", "@azure-tools/typespec-python", "@typespec/openapi3"];
+      for (var lang in languages) {
+        if (obj.dependencies[languages[lang]!]) {
+          Logger.info(`Found emitter package ${languages[lang]}`);
+          return languages[lang];
+        }
+      }
+      throw new Error("Could not find emitter package");
+    });
+    return emitter;
+  }
+  throw new Error("Could not find emitter package");
 }

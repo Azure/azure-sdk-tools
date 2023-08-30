@@ -20,6 +20,7 @@
     "@angular/router": "^16.1.0",
     "bootstrap": "^5.3.1",
     "bootstrap-icons": "^1.10.5",
+    "monaco-editor": "^0.41.0",
     "ngx-timeago": "^3.0.0",
     "primeicons": "^6.0.1",
     "primeng": "^16.1.0",

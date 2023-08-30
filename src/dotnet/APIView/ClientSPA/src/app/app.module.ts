@@ -27,9 +27,10 @@ import { AvatarModule } from 'primeng/avatar';
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { FileUploadModule } from 'primeng/fileupload';
 import { TooltipModule } from 'primeng/tooltip';
-
-
-
+import { ReviewPageComponent } from './_components/review-page/review-page.component';
+import { SplitterModule } from 'primeng/splitter';
+import { CodePanelComponent } from './_components/code-panel/code-panel.component';
+import { VirtualScrollerModule } from 'primeng/virtualscroller';
 
 @NgModule({
   declarations: [
@@ -38,7 +39,9 @@ import { TooltipModule } from 'primeng/tooltip';
     LanguageNamesPipe,
     NavBarComponent,
     ReviewsListComponent,
-    FooterComponent
+    FooterComponent,
+    ReviewPageComponent,
+    CodePanelComponent
   ],
   imports: [
     AppRoutingModule,
@@ -58,10 +61,12 @@ import { TooltipModule } from 'primeng/tooltip';
     MultiSelectModule,
     PaginatorModule,
     SidebarModule,
+    SplitterModule,
     TableModule,
     TimeagoModule.forRoot(),
     TooltipModule,
-    TreeSelectModule
+    TreeSelectModule,
+    VirtualScrollerModule
   ],
   providers: [],
   bootstrap: [AppComponent]

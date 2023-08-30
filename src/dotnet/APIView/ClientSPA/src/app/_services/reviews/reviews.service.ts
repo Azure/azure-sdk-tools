@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 
 import { Observable, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/_models/pagination';
-import { Review } from 'src/app/_models/review';
+import { Review, ReviewContent } from 'src/app/_models/review';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -58,5 +58,12 @@ export class ReviewsService {
           }
         )
       );
+  }
+
+  getReviewContent(reviewId: string, revisionId: string = "") : Observable<ReviewContent>{
+    let params = new HttpParams();
+    params = params.append('revisionId', revisionId);
+
+    return this.http.get<ReviewContent>(this.baseUrl + `/${reviewId}/content`);
   }
 }

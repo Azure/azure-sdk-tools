@@ -179,3 +179,18 @@
     color: var(--primary-btn-color) !important;
     border-color: var(--primary-color) !important;
 }
+
+.p-splitter {
+    border: 1px solid var(--border-color);
+    background: var(--base-fg-color);
+    border-radius: 0px;
+    color: var(--base-text-color);
+}
+
+.p-splitter .p-splitter-gutter {
+    transition: box-shadow 0.15s;
+    background: var(--base-bg-color);
+}
+.p-splitter .p-splitter-gutter .p-splitter-gutter-handle {
+    background: var(--border-color);
+}

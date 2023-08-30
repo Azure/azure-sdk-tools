@@ -1,0 +1,19 @@
+<app-nav-bar></app-nav-bar>
+<div class="container-fluid main-container">
+    <p-splitter 
+        [panelSizes]="[15, 70, 15]" 
+        [style]="{ height: 'calc(100vh - 100px)' }">
+        <ng-template pTemplate>
+            <div class="col flex align-items-center justify-content-center">Panel 1</div>
+        </ng-template>
+        <ng-template pTemplate>
+            <div class="col flex align-items-center justify-content-center">
+                <app-code-panel [codeLines]="codeLines"></app-code-panel>
+            </div>
+        </ng-template>
+        <ng-template pTemplate>
+            <div class="col flex align-items-center justify-content-center">Panel 3</div>
+        </ng-template>
+    </p-splitter>
+</div>
+<app-footer></app-footer>

@@ -22,3 +22,7 @@ OPENAI_API_KEY="" # The OpenAI API key
 ```
 3. Run `python generate_review.py`. Right now it will just use `text.txt` as the input.
 4. Output will be stored in `output.json`.
+
+## Documentation
+
+https://apiviewuat.azurewebsites.net/swagger/index.html

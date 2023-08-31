@@ -53,12 +53,12 @@ namespace APIViewWeb.LeanControllers
             var revision = (string.IsNullOrEmpty(revisionId)) ? 
                 await _revisionsManager.GetLatestRevisionsAsync(reviewId) : await _revisionsManager.GetRevisionsAsync(reviewId, revisionId);
             var reviewCodeFie = await _codeFileRepository.GetCodeFileAsync(revision.Id, revision.Files[0].ReviewFileId);
-            reviewCodeFie.RenderText(showDocumentation: true);
+            reviewCodeFie.Render(showDocumentation: true);
 
             var pageModel = new ReviewContentModel
             {
                 Navigation = reviewCodeFie.CodeFile.Navigation,
-                codeLines = reviewCodeFie.RenderResultText.CodeLines
+                codeLines = reviewCodeFie.RenderResult.CodeLines
             };
             return new LeanJsonResult(pageModel, StatusCodes.Status200OK);
         }

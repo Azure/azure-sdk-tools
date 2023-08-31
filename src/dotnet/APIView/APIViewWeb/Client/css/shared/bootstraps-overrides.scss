@@ -215,6 +215,16 @@ select {
     padding: 0.2rem 1rem;
 }
 
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+    background-color: var(--link-color);
+    color: var(--primary-btn-color);
+}
+
+.nav-link:hover, .nav-link:focus {
+    text-decoration: none;
+    color: var(--link-active);
+}
+
 .modal-content {
     color: var(--base-text-color);
     background-color: var(--base-bg-color);

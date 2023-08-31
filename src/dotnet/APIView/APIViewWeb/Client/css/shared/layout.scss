@@ -52,16 +52,6 @@ form.comment {
     @include app-footer;
 }
 
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-    background-color: var(--link-color);
-    color: var(--primary-btn-color);
-}
-
-.nav-link:hover, .nav-link:focus {
-    text-decoration: none;
-    color: var(--link-active);
-}
-
 .rounded-1 {
     border-radius: 3px !important;
 }

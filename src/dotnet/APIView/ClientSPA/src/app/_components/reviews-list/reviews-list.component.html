@@ -1,11 +1,11 @@
-<div class="container-fluid">
-    <div class="row">
+<div class="container-fluid py-2">
+    <div class="border p-0 rounded overflow-hidden">
         <p-contextMenu #cm [model]="contextMenuItems"></p-contextMenu>
         <p-table
             [value]="reviews"
             dataKey="id"
             [scrollable]="true"
-            scrollHeight="calc(100vh - 169px)"
+            scrollHeight="calc(100vh - 179px)"
             responsiveLayout="stack"
             [lazy]="true"
             [lazyLoadOnInit]="false"

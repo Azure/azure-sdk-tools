@@ -31,6 +31,8 @@ import { ReviewPageComponent } from './_components/review-page/review-page.compo
 import { SplitterModule } from 'primeng/splitter';
 import { CodePanelComponent } from './_components/code-panel/code-panel.component';
 import { VirtualScrollerModule } from 'primeng/virtualscroller';
+import { ReviewInfoComponent } from './_components/review-info/review-info.component';
+import { ReviewNavComponent } from './_components/review-nav/review-nav.component';
 
 @NgModule({
   declarations: [
@@ -41,7 +43,9 @@ import { VirtualScrollerModule } from 'primeng/virtualscroller';
     ReviewsListComponent,
     FooterComponent,
     ReviewPageComponent,
-    CodePanelComponent
+    CodePanelComponent,
+    ReviewInfoComponent,
+    ReviewNavComponent
   ],
   imports: [
     AppRoutingModule,

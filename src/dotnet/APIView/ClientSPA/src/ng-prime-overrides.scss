@@ -1,7 +1,9 @@
 .p-datatable .p-datatable-header {
     background: var(--base-fg-color);
     color: var(--base-text-color);
-    border: 0px solid var(--border-color);
+    border-width: 0px 0px 1px 0px;
+    border-style: solid;
+    border-color: var(--border-color);
 }
 
 .p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-thead, 
@@ -31,7 +33,13 @@
 .p-datatable .p-datatable-footer {
     background: var(--base-bg-color);
     color: var(--base-text-color);
-    border: 1px solid var(--border-color);
+    border-width: 1px 0px 0px 0px;
+    border-style: solid;
+    border-color: var(--border-color);
+}
+
+.p-datatable.p-datatable-sm .p-datatable-footer {
+    padding: 0.2rem 0.2rem;
 }
 
 .p-datatable .p-sortable-column:not(.p-highlight):hover {
@@ -183,7 +191,7 @@
 .p-splitter {
     border: 1px solid var(--border-color);
     background: var(--base-fg-color);
-    border-radius: 0px;
+    border-radius: 5px;
     color: var(--base-text-color);
 }
 
@@ -193,4 +201,11 @@
 }
 .p-splitter .p-splitter-gutter .p-splitter-gutter-handle {
     background: var(--border-color);
+}
+
+.p-virtualscroller .p-virtualscroller-content {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    padding-top: 2px;
+    padding-bottom: 2px;
 }

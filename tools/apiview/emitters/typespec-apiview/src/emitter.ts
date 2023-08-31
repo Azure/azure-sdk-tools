@@ -22,6 +22,7 @@ export interface ResolvedApiViewEmitterOptions {
   service?: string;
   version?: string;
   includeGlobalNamespace: boolean;
+  mappingPath?: string;
 }
 
 export async function $onEmit(context: EmitContext<ApiViewEmitterOptions>) {
@@ -38,7 +39,8 @@ export function resolveOptions(context: EmitContext<ApiViewEmitterOptions>): Res
     outputFile: resolvedOptions["output-file"],
     service: resolvedOptions["service"],
     version: resolvedOptions["version"],
-    includeGlobalNamespace: resolvedOptions["include-global-namespace"] ?? false
+    includeGlobalNamespace: resolvedOptions["include-global-namespace"] ?? false,
+    mappingPath: resolvedOptions["mapping-path"],
   };
 }
 
@@ -141,6 +143,26 @@ function applyServiceFilter(program: Program, services: Service[], options: Reso
   return filtered;
 }
 
+async function loadMappingFile(program: Program, mappingPath?: string): Promise<any | undefined> {
+  if (mappingPath === undefined) {
+    return undefined;
+  }
+  const resolvedPath = resolvePath(mappingPath);
+  try {
+    const mappingFile = await program.host.readFile(resolvedPath);
+    return mappingFile;
+  } catch (error) {
+    reportDiagnostic(program, {
+      code: "mapping-file-not-found",
+      target: NoTarget,
+      format: {
+        value: mappingPath
+      }
+    });
+    return undefined;
+  }
+}
+
 function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterOptions) {
   return { emitApiView };
 
@@ -180,6 +202,8 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
         }  
       }      
       const resolvedProgram = resolveProgramForVersion(program, service.type, versionString);
+      const mapping = await loadMappingFile(program, options.mappingPath);
+  
       const apiview = new ApiView(serviceTitle, namespaceString, versionString, options.includeGlobalNamespace);
       apiview.emit(resolvedProgram);
       apiview.resolveMissingTypeReferences();

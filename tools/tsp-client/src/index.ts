@@ -3,7 +3,7 @@ import * as path from "node:path";
 import { installDependencies } from "./npm.js";
 import { createTempDirectory, removeDirectory,readTspLocation, findEmitterPackage } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
-import { compileTsp } from "./typespec.js";
+import { runTspCompile } from "./typespec.js";
 import { getOptions } from "./options.js";
 import { mkdir, readdir } from "node:fs/promises";
 import { cp, existsSync } from "node:fs";
@@ -26,6 +26,11 @@ import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } 
 //   throw new Error(`No main.tsp or client.tsp found for base url ${tspUrl}`);
 // }
 
+async function getEmitterOptions(rootUrl: string, emitter: string): Promise<string> {
+  // TODO: Add a way to specify emitter options like Language-Settings.ps1, could be a languageSettings.ts file
+  // Method signature should just include the rootUrl. Everything else should be included in the language-settings.yaml file
+  return `--options ${emitter}.emitter-output-dir=${rootUrl}`;
+}
 
 async function discoverMainFile(srcDir: string): Promise<string> {
   Logger.debug(`Discovering entry file in ${srcDir}`)
@@ -65,13 +70,14 @@ async function syncTspFiles(outputDir: string) {
   mkdir(srcDir, { recursive: true });
 
   const repoRoot = getRepoRoot();
+  Logger.debug(`Repo root is ${repoRoot}`);
   if (repoRoot === undefined) {
     throw new Error("Could not find repo root");
   }
 
   const cloneDir = path.join(repoRoot, "..", "sparse-spec");
   Logger.debug(`Cloning repo to ${cloneDir}`);
-  const [directory, commit, repo ] = await readTspLocation(outputDir);
+  const [ directory, commit, repo, additionalDirectories ] = await readTspLocation(outputDir);
 
   if (existsSync(cloneDir)) {
     Logger.debug(`Removing existing sparse-checkout directory ${cloneDir}`);
@@ -79,7 +85,11 @@ async function syncTspFiles(outputDir: string) {
   }
   await cloneRepo(tempRoot, cloneDir, `https://github.com/${repo}.git`);
   await sparseCheckout(cloneDir);
-  await addSpecFiles(cloneDir, directory);
+  await addSpecFiles(cloneDir, directory)
+  Logger.info(`Processing additional directories: ${additionalDirectories}`)
+  for (const dir of additionalDirectories) {
+    await addSpecFiles(cloneDir, dir);
+  }
   await checkoutCommit(cloneDir, commit);
   
   cp(path.join(cloneDir, directory), srcDir, { recursive: true }, (err) => {
@@ -93,6 +103,13 @@ async function syncTspFiles(outputDir: string) {
       throw new Error(`Error copying files to the src directory: ${err}`)
     }
   });
+  for (const dir of additionalDirectories) {
+    cp(path.join(cloneDir, dir), srcDir, { recursive: true }, (err) => {
+      if (err) {
+        throw new Error(`Error copying files to the src directory: ${err}`)
+      }
+    });
+  }
   const emitterPackage = await findEmitterPackage(emitterPath);
   if (!emitterPackage) {
     throw new Error("emitterPackage is undefined");
@@ -123,8 +140,6 @@ async function generate({
   if (!emitter) {
     throw new Error("emitter is undefined");
   }
-  const emitterOutputPath = rootUrl;
-
   Logger.info("Installing dependencies from npm...");
   await installDependencies(srcDir);
 
@@ -132,13 +147,8 @@ async function generate({
   const resolvedMainFilePath = path.join(srcDir, mainFilePath);
   // todo: allow extra emitter options for debugging
   Logger.info(`Compiling tsp using ${emitter}...`);
-  await compileTsp({
-    language: emitter,
-    emitterPackage: emitter,
-    resolvedMainFilePath,
-    tempRoot,
-    emitterOutputPath,
-  });
+  const emitterOptions = await getEmitterOptions(rootUrl, emitter);
+  await runTspCompile({tempDir: rootUrl, mainFilePath: resolvedMainFilePath, emitter, emitterOptions});
 
   if (noCleanup) {
     Logger.debug(`Skipping cleanup of temp directory: ${tempRoot}`);

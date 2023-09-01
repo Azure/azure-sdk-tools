@@ -56,11 +56,14 @@ export async function readTspLocation(rootDir: string): Promise<[string, string,
     if (fileStat.isFile()) {
       const fileContents = await readFile(yamlPath, "utf8");
       const locationYaml = parseYaml(fileContents);
-      const { directory, commit, repo, additionalDirectories } = locationYaml;
+      var { directory, commit, repo, additionalDirectories } = locationYaml;
       if (!directory || !commit || !repo) {
         throw new Error("Invalid tsp-location.yaml");
       }
       Logger.info(`Additional directories: ${additionalDirectories}`)
+      if (!additionalDirectories) {
+        additionalDirectories = [];
+      }
       return [ directory, commit, repo, additionalDirectories ];
     }
   } catch (e) {

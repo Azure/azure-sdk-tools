@@ -1,0 +1,45 @@
+# Package is parsed using apiview-stub-generator(version:0.3.7), Python version: 3.10.12
+
+class azure.contoso.NoodleColor(Enum):
+
+    blue = "blue"
+    green = "green"
+    red = "red"
+
+class azure.contoso.NoodleResult:
+
+    ivar name: str
+    ivar color: NoodleColor
+
+    def __init__(
+            self, 
+            name: str, 
+            color: NoodleColor
+        )
+
+class azure.contoso.NoodleAsyncManager:
+
+    async def __init__(
+            self, 
+            endpoint, 
+            credential, 
+            options: dict
+        )
+
+    async def get_noodle_async(self, options: dict) -> NoodleResult
+
+    async def get_noodles_async(self, options: dict) -> List[NoodleResult]
+
+class azure.contoso.NoodleManager:
+
+    def __init__(
+            self, 
+            endpoint, 
+            credential,
+            connection_string: Optional[str],
+            options: dict
+        )
+
+    def get_noodle(self, options: dict) -> NoodleResult
+
+    def list_noodles(self, options: dict) -> List[NoodleResult]

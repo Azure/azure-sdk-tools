@@ -5,10 +5,12 @@ from langchain.prompts import PromptTemplate
 from langchain.chat_models import AzureChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 import openai
+import re
 from typing import List, Union
 
 from ._sectioned_document import SectionedDocument, Section
 from ._models import GuidelinesResult, Violation
+from ._vector_db import VectorDB
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
     # running on dev machine, loadenv
@@ -29,17 +31,27 @@ class GptReviewer:
     def __init__(self):
         self.llm = AzureChatOpenAI(client=openai.ChatCompletion, deployment_name="gpt-4", openai_api_version=OPENAI_API_VERSION, temperature=0)
         self.output_parser = PydanticOutputParser(pydantic_object=GuidelinesResult)
+
+
         self.prompt_template = PromptTemplate(
-            input_variables=["apiview", "guidelines", "language"],
+            input_variables=["apiview", "guidelines", "language", "extra_comments", "class_list"],
             partial_variables={"format_instructions": self.output_parser.get_format_instructions()},
             template="""
-                Given the following {language} Azure SDK Guidelines:
-                  {guidelines}
-                Verify whether the following code satisfies the guidelines:
-                ```
-                  {apiview}
-                ```
+                You are trying to analyze an API for {language} to determine whether it meets the SDK guidelines. We only provide one class at a time right now, but if you need it, here's a list of all the classes in this API:
+                {class_list}
                 
+                Here is the code for a single class:
+                ```
+                {apiview}
+                ```
+
+                Identify any violations of the following guidelines:
+                {guidelines}
+                
+                Consider the following comments as well:
+                {extra_comments}
+
+                Format the output according to the following:
                 {format_instructions}
             """
         )
@@ -47,32 +59,42 @@ class GptReviewer:
 
     def get_response(self, apiview, language):
         apiview = self.unescape(apiview)
+        class_list = self.get_class_list(apiview)
+
         all_guidelines = self.retrieve_guidelines(language)
-
-        # TODO: Make this not hard-coded!
-        guidelines = self.select_guidelines(all_guidelines, [
-            "python_design.html#python-client-naming",
-            "python_design.html#python-client-options-naming",
-            "python_design.html#python-models-async",
-            "python_design.html#python-models-dict-result",
-            "python_design.html#python-models-enum-string",
-            "python_design.html#python-models-enum-name-uppercase",
-            "python_design.html#python-client-sync-async",
-            "python_design.html#python-client-async-keywords",
-            "python_design.html#python-client-separate-sync-async",
-            "python_design.html#python-client-same-name-sync-async",
-            "python_design.html#python-client-namespace-sync",
-        ])
-
-        for i, g in enumerate(guidelines):
-            g["number"] = i
 
         chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=True)
 
         final_results = GuidelinesResult(status="Success", violations=[])
         for chunk in chunked_apiview.sections:
             if self.should_evaluate(chunk):
-                results = self.chain.run(apiview=str(chunk), guidelines=guidelines, language=language)
+                # retrieve the most similar comments to identify guidelines to check
+                semantic_matches = VectorDB().search_documents(language, chunk)
+                
+                guidelines_to_check = []
+                extra_comments = []
+
+                # extract the unique guidelines to include in the prompt grounding.
+                # documents not included in the prompt grounding will be treated as extra comments.
+                for match in semantic_matches:
+                    guideline_ids = match["aiCommentModel"]["guidelineIds"]
+                    if guideline_ids:
+                        guidelines_to_check.extend(guideline_ids)
+                    else:
+                        extra_comments.append(match["aiCommentModel"])
+                guidelines_to_check = list(set(guidelines_to_check))
+                if not guidelines_to_check:
+                    continue
+                guidelines = self.select_guidelines(all_guidelines, guidelines_to_check)
+
+                params = {
+                    "apiview": str(chunk),
+                    "guidelines": guidelines,
+                    "language": language,
+                    "class_list": class_list,
+                    "extra_comments": extra_comments
+                }
+                results = self.chain.run(**params)
                 output = self.output_parser.parse(results)
                 final_results.violations.extend(self.process_violations(output.violations, chunk))
                 # FIXME see: https://github.com/Azure/azure-sdk-tools/issues/6571
@@ -187,3 +209,6 @@ class GptReviewer:
                 items = json.loads(f.read())
                 language_guidelines.extend(items)
         return general_guidelines + language_guidelines
+
+    def get_class_list(self, apiview) -> List[str]:
+        return re.findall(r'class ([\w\.]+)', apiview)

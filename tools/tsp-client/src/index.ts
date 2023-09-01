@@ -117,8 +117,6 @@ async function sdkInit(
 
 async function syncTspFiles(outputDir: string) {
   const tempRoot = await createTempDirectory(outputDir);
-  const srcDir = path.join(tempRoot, "src");
-  mkdir(srcDir, { recursive: true });
 
   const repoRoot = getRepoRoot();
   Logger.debug(`Repo root is ${repoRoot}`);
@@ -129,7 +127,14 @@ async function syncTspFiles(outputDir: string) {
   const cloneDir = path.join(repoRoot, "..", "sparse-spec");
   Logger.debug(`Cloning repo to ${cloneDir}`);
   const [ directory, commit, repo, additionalDirectories ] = await readTspLocation(outputDir);
-
+  const dirSplit = directory.split("/");
+  var projectName = dirSplit[dirSplit.length - 1];
+  Logger.debug(`Using project name: ${projectName}`)
+  if (projectName === undefined) {
+    projectName = "src";
+  }
+  const srcDir = path.join(tempRoot, projectName);
+  mkdir(srcDir, { recursive: true });
   if (existsSync(cloneDir)) {
     Logger.debug(`Removing existing sparse-checkout directory ${cloneDir}`);
     await removeDirectory(cloneDir);
@@ -170,23 +175,24 @@ async function syncTspFiles(outputDir: string) {
   //   Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
   //   await removeDirectory(cloneDir);
   // }
-
-  return {
-    srcDir: srcDir,
-  };
 }
 
 
 async function generate({
   rootUrl,
-  srcDir,
   noCleanup,
 }: {
   rootUrl: string;
-  srcDir: string;
   noCleanup: boolean;
 }) {
   const tempRoot = path.join(rootUrl, "TempTypeSpecFiles");
+  const tspLocation = await readTspLocation(rootUrl);
+  const dirSplit = tspLocation[0].split("/");
+  var projectName = dirSplit[dirSplit.length - 1];
+  if (projectName === undefined) {
+    projectName = "src";
+  }
+  const srcDir = path.join(tempRoot, projectName);
   const emitter = await findEmitterPackage(path.join(getRepoRoot(), "eng", "emitter-package.json"));
   if (!emitter) {
     throw new Error("emitter is undefined");
@@ -216,8 +222,8 @@ async function syncAndCompile({
   outputDir: string;
   noCleanup: boolean;
 }) {
-  syncTspFiles(outputDir).then((result) => {
-    generate({ rootUrl: outputDir, srcDir: result.srcDir, noCleanup});
+  syncTspFiles(outputDir).then(() => {
+    generate({ rootUrl: outputDir, noCleanup});
   });
 }
 
@@ -250,7 +256,7 @@ async function main() {
         syncTspFiles(rootUrl);
         break;
       case "generate":
-        generate({ rootUrl, srcDir: path.join(rootUrl, "TempTypeSpecFiles", "src"), noCleanup: options.noCleanup});
+        generate({ rootUrl, noCleanup: options.noCleanup});
         break;
       case "update":
         syncAndCompile({outputDir: rootUrl, noCleanup: options.noCleanup});

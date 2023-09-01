@@ -160,7 +160,13 @@ async function syncTspFiles(outputDir: string) {
     }
   });
   for (const dir of additionalDirectories) {
-    cp(path.join(cloneDir, dir), srcDir, { recursive: true }, (err) => {
+    const dirSplit = dir.split("/");
+    var projectName = dirSplit[dirSplit.length - 1];
+    if (projectName === undefined) {
+      projectName = "src";
+    }
+    const dirName = path.join(tempRoot, projectName);
+    cp(path.join(cloneDir, dir), dirName, { recursive: true }, (err) => {
       if (err) {
         throw new Error(`Error copying files to the src directory: ${err}`)
       }

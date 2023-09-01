@@ -49,18 +49,19 @@ export async function tryReadTspLocation(rootDir: string): Promise<string | unde
   return undefined;
 }
 
-export async function readTspLocation(rootDir: string): Promise<[string, string, string]> {
+export async function readTspLocation(rootDir: string): Promise<[string, string, string, string[]]> {
   try {
     const yamlPath = path.resolve(rootDir, "tsp-location.yaml");
     const fileStat = await stat(yamlPath);
     if (fileStat.isFile()) {
       const fileContents = await readFile(yamlPath, "utf8");
       const locationYaml = parseYaml(fileContents);
-      const { directory, commit, repo } = locationYaml;
+      const { directory, commit, repo, additionalDirectories } = locationYaml;
       if (!directory || !commit || !repo) {
         throw new Error("Invalid tsp-location.yaml");
       }
-      return [directory, commit, repo];
+      Logger.info(`Additional directories: ${additionalDirectories}`)
+      return [ directory, commit, repo, additionalDirectories ];
     }
   } catch (e) {
     Logger.error(`Error reading tsp-location.yaml: ${e}`);

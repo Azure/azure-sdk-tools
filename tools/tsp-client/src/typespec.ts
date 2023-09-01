@@ -3,6 +3,7 @@ import { parse, isImportStatement } from "@typespec/compiler";
 import * as path from "node:path";
 import { Logger } from "./log.js";
 import { getEmitterOutputPath } from "./languageSettings.js";
+import { spawn } from "node:child_process";
 
 export async function resolveImports(file: string): Promise<string[]> {
   const imports: string[] = [];
@@ -52,4 +53,35 @@ export async function compileTsp({
   } else {
     Logger.success("generation complete");
   }
+}
+
+// TODO add emitter options
+export async function runTspCompile({
+  tempDir,
+  mainFilePath,
+  emitter,
+  emitterOptions,
+}: {
+  tempDir: string;
+  mainFilePath: string;
+  emitter: string;
+  emitterOptions: string;
+}): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const git = spawn("tsp", ["compile", mainFilePath, `--emit=${emitter}`, emitterOptions], {
+      cwd: tempDir,
+      stdio: "inherit",
+      shell: true,
+    });
+    git.once("exit", (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`tsp compile failed exited with code ${code}`));
+      }
+    });
+    git.once("error", (err) => {
+      reject(new Error(`tsp compile failed with error: ${err}`));
+    });
+  });
 }

@@ -6,10 +6,12 @@ import { knownLanguages, languageAliases } from "./languageSettings.js";
 export interface Options {
   debug: boolean;
   command: string;
+  tspConfig?: string;
   emitter: string | undefined;
   mainFile?: string;
   outputDir: string;
   noCleanup: boolean;
+  skipSyncAndGenerate?: boolean;
 }
 
 export async function getOptions(): Promise<Options> {
@@ -40,9 +42,16 @@ export async function getOptions(): Promise<Options> {
         type: "string",
         short: "o",
       },
+      tspConfig: {
+        type: "string",
+        short: "c",
+      },
       ["no-cleanup"]: {
         type: "boolean",
       },
+      skipSyncAndGenerate: {
+        type: "boolean",
+      }
     },
   });
   if (values.help) {
@@ -74,12 +83,19 @@ export async function getOptions(): Promise<Options> {
     process.exit(1);
   }
 
-  if (positionals[0] !== "sync" && positionals[0] !== "generate" && positionals[0] !== "update") {
+  if (positionals[0] !== "sync" && positionals[0] !== "generate" && positionals[0] !== "update" && positionals[0] !== "init") {
     Logger.error(`Unknown command ${positionals[0]}`);
     printUsage();
     process.exit(1);
   }
 
+  if (positionals[0] === "init") {
+    if (!values.tspConfig) {
+      Logger.error("tspConfig is required");
+      printUsage();
+      process.exit(1);
+    }
+  }
   // By default, assume that the command is run from the output directory
   var outputDir = ".";
   if (values.outputDir) {
@@ -90,9 +106,11 @@ export async function getOptions(): Promise<Options> {
   return {
     debug: values.debug ?? false,
     command: positionals[0],
+    tspConfig: values.tspConfig,
     emitter: values.emitter,
     mainFile: values.mainFile,
     noCleanup: values["no-cleanup"] ?? false,
+    skipSyncAndGenerate: values.skipSyncAndGenerate ?? false,
     outputDir: outputDir,
   };
 }

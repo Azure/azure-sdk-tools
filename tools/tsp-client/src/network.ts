@@ -5,7 +5,7 @@ import { Logger } from "./log.js";
 
 const httpClient = createDefaultHttpClient();
 
-async function fetch(url: string, method: "GET" | "HEAD" = "GET"): Promise<string> {
+export async function fetch(url: string, method: "GET" | "HEAD" = "GET"): Promise<string> {
   const result = await httpClient.sendRequest(createPipelineRequest({ url, method }));
   if (result.status !== 200) {
     throw new Error(`failed to fetch ${url}: ${result.status}`);

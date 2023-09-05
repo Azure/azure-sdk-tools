@@ -204,13 +204,13 @@ describe("apiview: tests", () => {
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         @doc(T)
-        scalar Unreal<T extends string>;
+        scalar Unreal<T extends valueof string>;
       }
       `;
       const expect = `
       namespace Azure.Test {
         @doc(T)
-        scalar Unreal<T extends string>
+        scalar Unreal<T extends valueof string>
       }
       `;
       const apiview = await apiViewFor(input, {});

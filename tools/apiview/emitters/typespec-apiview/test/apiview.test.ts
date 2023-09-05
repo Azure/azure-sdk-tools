@@ -277,8 +277,6 @@ describe("apiview: tests", () => {
     });  
   });
 
-
-
   describe("enums", () => {
     it("literal labels", async () => {
       const input = `
@@ -373,7 +371,7 @@ describe("apiview: tests", () => {
   });
 
   describe("unions", () => {
-    it("descriminated union", async () =>{
+    it("discriminated union", async () =>{
       const input = `
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
@@ -423,6 +421,53 @@ describe("apiview: tests", () => {
       compare(expect, actual, 9);
       validateDefinitionIds(apiview);
     });  
+
+    it("unnamed union", async () =>{
+      const input = `
+      @TypeSpec.service( { title: "Test", version: "1" } )
+      namespace Azure.Test {
+        union Animals { Cat, Dog, Snake };
+  
+        model Cat {
+          name: string;
+        }
+  
+        model Dog {
+          name: string;
+        }
+  
+        model Snake {
+          name: string;
+          length: int16;
+        }
+      }`;
+      const expect = `
+      namespace Azure.Test {
+        union Animals {
+          Cat,
+          Dog,
+          Snake
+        }
+
+        model Cat {
+          name: string;
+        }
+  
+        model Dog {
+          name: string;
+        }
+    
+        model Snake {
+          name: string;
+          length: int16;
+        }
+      }
+      `;
+      const apiview = await apiViewFor(input, {});
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
+      validateDefinitionIds(apiview);
+    });
   });
 
   describe("operations", () => {

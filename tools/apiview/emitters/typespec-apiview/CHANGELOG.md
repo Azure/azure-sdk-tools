@@ -1,5 +1,9 @@
 # Release History
 
+## Version 0.4.5 (09-05-2023)
+Support unnamed unions.
+Support cross-language definition IDs.
+
 ## Version 0.4.4 (04-18-2023)
 Support future beta releases of TypeSpec.
 

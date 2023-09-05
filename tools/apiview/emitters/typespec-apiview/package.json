@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/typespec-apiview",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "author": "Microsoft Corporation",
   "description": "Library for emitting APIView token files from TypeSpec",
   "homepage": "https://github.com/Azure/azure-sdk-tools",
@@ -58,8 +58,13 @@
     "@typespec/versioning": ">=0.43 <1.0"
   },
   "devDependencies": {
-    "@azure-tools/typespec-azure-core": "~0.33",
-    "@changesets/cli": "^2.24.4",
+    "@azure-tools/typespec-azure-core": ">=0.29 <1.0",
+    "@typespec/http": ">=0.43 <1.0",
+    "@typespec/rest": ">=0.43 <1.0",
+    "@typespec/eslint-plugin": ">=0.40 <1.0",
+    "@typespec/library-linter": ">=0.40 <1.0",
+    "@typespec/prettier-plugin-typespec": ">=0.40 <1.0",
+    "@typespec/eslint-config-typespec": ">=0.6 <1.0",
     "@types/mocha": "~9.1.0",
     "@types/node": "~16.0.3",
     "@typespec/eslint-config-typespec": ">=0.6.0 <1.0",
@@ -73,6 +78,9 @@
     "eslint": "^8.23.1",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-unicorn": "^43.0.2",
+    "prettier": "^2.7.1",
+    "rimraf": "^3.0.2",
+    "typescript": "^5.0.0",
     "mocha": "~9.2.0",
     "mocha-junit-reporter": "~2.0.2",
     "mocha-multi-reporters": "~1.5.1",

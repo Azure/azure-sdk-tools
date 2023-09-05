@@ -708,9 +708,11 @@ export class ApiView {
 
   private tokenizeUnionVariant(node: UnionVariantNode) {
     this.tokenizeDecorators(node.decorators, false);
-    this.tokenizeIdentifier(node.id, "member");
+    if (node.id !== undefined) {
+      this.tokenizeIdentifier(node.id, "member");
+      this.punctuation(":", false, true);
+    }
     this.lineMarker();
-    this.punctuation(":", false, true);
     this.tokenize(node.value);
   }
 

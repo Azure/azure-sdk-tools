@@ -7,7 +7,7 @@ import { runTspCompile } from "./typespec.js";
 import { getOptions } from "./options.js";
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { cp, existsSync } from "node:fs";
-import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./gh.js";
+import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist, fetch } from "./network.js";
 import { parse as parseYaml } from "yaml";
 

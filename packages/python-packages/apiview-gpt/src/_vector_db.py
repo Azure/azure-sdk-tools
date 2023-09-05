@@ -1,6 +1,4 @@
 import os
-import dotenv
-import json
 import json
 import requests
 from typing import List, Union
@@ -8,7 +6,11 @@ from typing import List, Union
 from ._sectioned_document import SectionedDocument, Section
 from ._models import VectorDocument, VectorSearchResult
 
-dotenv.load_dotenv()
+
+if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
+    # running on dev machine, loadenv
+    import dotenv
+    dotenv.load_dotenv()
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 _BASE_URL = "https://apiviewuat.azurewebsites.net/api/AIComments"

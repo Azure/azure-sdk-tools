@@ -79,13 +79,12 @@ async function sdkInit(
   }): Promise<string> {
   if (await doesFileExist(config)) {
     // URL scenario
-    const tspConfigUrl = new URL(config).toString();
-    const matchRes = tspConfigUrl.match('^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)/tspconfig.yaml$')
+    const matchRes = config.match('^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)/tspconfig.yaml$')
     if (matchRes) {
       if (matchRes.groups) {
-        var resolvedConfigUrl = tspConfigUrl;
+        var resolvedConfigUrl = config;
         if (matchRes.groups["urlRoot"]! === "github") {
-          resolvedConfigUrl = tspConfigUrl.replace("github.com", "raw.githubusercontent.com");
+          resolvedConfigUrl = config.replace("github.com", "raw.githubusercontent.com");
           resolvedConfigUrl = resolvedConfigUrl.replace("/blob/", "/");
         }
         Logger.debug(`Resolved config url: ${resolvedConfigUrl}`)

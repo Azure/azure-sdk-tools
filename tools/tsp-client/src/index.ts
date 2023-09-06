@@ -16,6 +16,30 @@ async function getEmitterOptions(rootUrl: string, emitter: string): Promise<stri
   return `--options ${emitter}.emitter-output-dir=${rootUrl}`;
 }
 
+async function resolveTspConfigUrl(configUrl: string): Promise<{
+  resolvedUrl: string;
+  commit: string;
+  repo: string;
+  path: string;
+}> {
+  let resolvedConfigUrl = configUrl;
+
+  const res = configUrl.match('^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)/tspconfig.yaml$')
+  if (res && res.groups) {
+    if (res.groups["urlRoot"]! === "github") {
+      resolvedConfigUrl = configUrl.replace("github.com", "raw.githubusercontent.com");
+      resolvedConfigUrl = resolvedConfigUrl.replace("/blob/", "/");
+    }
+    return {
+      resolvedUrl: resolvedConfigUrl,
+      commit: res.groups!["commit"]!,
+      repo: res.groups!["repo"]!,
+      path: res.groups!["path"]!,
+    }
+  } else {
+    throw new Error(`Invalid tspconfig.yaml url: ${configUrl}`);
+  }
+}
 async function discoverMainFile(srcDir: string): Promise<string> {
   Logger.debug(`Discovering entry file in ${srcDir}`)
   let entryTsp = "";
@@ -44,33 +68,24 @@ async function sdkInit(
   }): Promise<string> {
   if (await doesFileExist(config)) {
     // URL scenario
-    const matchRes = config.match('^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)/tspconfig.yaml$')
-    if (matchRes) {
-      if (matchRes.groups) {
-        let resolvedConfigUrl = config;
-        if (matchRes.groups["urlRoot"]! === "github") {
-          resolvedConfigUrl = config.replace("github.com", "raw.githubusercontent.com");
-          resolvedConfigUrl = resolvedConfigUrl.replace("/blob/", "/");
-        }
-        Logger.debug(`Resolved config url: ${resolvedConfigUrl}`)
-        const tspConfig = await fetch(resolvedConfigUrl);
-        const configYaml = parseYaml(tspConfig);
-        if (configYaml["parameters"] && configYaml["parameters"]["service-dir"]){
-          const serviceDir = configYaml["parameters"]["service-dir"]["default"];
-          Logger.debug(`Service directory: ${serviceDir}`)
-          let additionalDirs: string[] = [];
-          if (configYaml["parameters"]["dependencies"] && configYaml["parameters"]["dependencies"]["additionalDirectories"]) {
-            additionalDirs = configYaml["parameters"]["dependencies"]["additionalDirectories"];
-          }
-          await mkdir(path.join(outputDir, serviceDir), { recursive: true });
-          await writeFile(
-            path.join(path.join(outputDir, serviceDir), "tsp-location.yaml"),
-          `directory: ${matchRes.groups!["path"]!}\ncommit: ${matchRes.groups!["commit"]!}\nrepo: ${matchRes.groups!["repo"]!}\nadditionalDirectories: ${additionalDirs}`);
-          return path.join(outputDir, serviceDir);
-        } else {
-          Logger.error("Missing service-dir in parameters section of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.")
-        }
+    const resolvedConfigUrl = await resolveTspConfigUrl(config);
+    Logger.debug(`Resolved config url: ${resolvedConfigUrl.resolvedUrl}`)
+    const tspConfig = await fetch(resolvedConfigUrl.resolvedUrl);
+    const configYaml = parseYaml(tspConfig);
+    if (configYaml["parameters"] && configYaml["parameters"]["service-dir"]){
+      const serviceDir = configYaml["parameters"]["service-dir"]["default"];
+      Logger.debug(`Service directory: ${serviceDir}`)
+      let additionalDirs: string[] = [];
+      if (configYaml["parameters"]["dependencies"] && configYaml["parameters"]["dependencies"]["additionalDirectories"]) {
+        additionalDirs = configYaml["parameters"]["dependencies"]["additionalDirectories"];
       }
+      await mkdir(path.join(outputDir, serviceDir), { recursive: true });
+      await writeFile(
+        path.join(path.join(outputDir, serviceDir), "tsp-location.yaml"),
+      `directory: ${resolvedConfigUrl.path}\ncommit: ${resolvedConfigUrl.commit}\nrepo: ${resolvedConfigUrl.repo}\nadditionalDirectories: ${additionalDirs}`);
+      return path.join(outputDir, serviceDir);
+    } else {
+      Logger.error("Missing service-dir in parameters section of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.")
     }
   } else {
     // File scenario

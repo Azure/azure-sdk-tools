@@ -49,7 +49,7 @@ export async function getOptions(): Promise<Options> {
       ["no-cleanup"]: {
         type: "boolean",
       },
-      skipSyncAndGenerate: {
+      ["skip-sync-and-generate"]: {
         type: "boolean",
       }
     },
@@ -110,7 +110,7 @@ export async function getOptions(): Promise<Options> {
     emitter: values.emitter,
     mainFile: values.mainFile,
     noCleanup: values["no-cleanup"] ?? false,
-    skipSyncAndGenerate: values.skipSyncAndGenerate ?? false,
+    skipSyncAndGenerate: values["skip-sync-and-generate"] ?? false,
     outputDir: outputDir,
   };
 }

@@ -166,7 +166,7 @@ async function generate({
   }
 }
 
-async function syncAndCompile({
+async function syncAndGenerate({
   outputDir,
   noCleanup,
 }: {
@@ -199,7 +199,7 @@ async function main() {
         await sdkInit({config: options.tspConfig, outputDir: rootUrl}).then((result) => {
           Logger.info(`SDK initialized in ${result}`);
           if (!options.skipSyncAndGenerate) {
-            syncAndCompile({outputDir: result, noCleanup: options.noCleanup})
+            syncAndGenerate({outputDir: result, noCleanup: options.noCleanup})
           }
         });
         break;
@@ -210,7 +210,7 @@ async function main() {
         generate({ rootUrl, noCleanup: options.noCleanup});
         break;
       case "update":
-        syncAndCompile({outputDir: rootUrl, noCleanup: options.noCleanup});
+        syncAndGenerate({outputDir: rootUrl, noCleanup: options.noCleanup});
         break;
       default:
         Logger.error(`Unknown command: ${options.command}`);

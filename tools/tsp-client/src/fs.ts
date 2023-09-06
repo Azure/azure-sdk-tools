@@ -74,19 +74,17 @@ export async function readTspLocation(rootDir: string): Promise<[string, string,
 
 export async function findEmitterPackage(emitterPath: string): Promise<string | undefined> {
   await access(emitterPath);
-  const emitter = await readFile(emitterPath, 'utf8').then(data => {
-    const obj = JSON.parse(data);
-    if (!obj || !obj.dependencies) {
-      throw new Error("Invalid emitter-package.json");
+  const data = await readFile(emitterPath, 'utf8');
+  const obj = JSON.parse(data);
+  if (!obj || !obj.dependencies) {
+    throw new Error("Invalid emitter-package.json");
+  }
+  var languages: string[] = ["@azure-tools/typespec-csharp", "@azure-tools/typespec-java", "@azure-tools/typespec-ts", "@azure-tools/typespec-python", "@typespec/openapi3"];
+  for (var lang in languages) {
+    if (obj.dependencies[languages[lang]!]) {
+      Logger.info(`Found emitter package ${languages[lang]}`);
+      return languages[lang];
     }
-    var languages: string[] = ["@azure-tools/typespec-csharp", "@azure-tools/typespec-java", "@azure-tools/typespec-ts", "@azure-tools/typespec-python", "@typespec/openapi3"];
-    for (var lang in languages) {
-      if (obj.dependencies[languages[lang]!]) {
-        Logger.info(`Found emitter package ${languages[lang]}`);
-        return languages[lang];
-      }
-    }
-    throw new Error("Could not find emitter package");
-  });
-  return emitter;
+  }
+  throw new Error("Could not find emitter package");
 }

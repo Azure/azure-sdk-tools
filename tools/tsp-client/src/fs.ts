@@ -80,10 +80,10 @@ export async function findEmitterPackage(emitterPath: string): Promise<string | 
     throw new Error("Invalid emitter-package.json");
   }
   const languages: string[] = ["@azure-tools/typespec-csharp", "@azure-tools/typespec-java", "@azure-tools/typespec-ts", "@azure-tools/typespec-python", "@typespec/openapi3"];
-  for (const lang in languages) {
-    if (obj.dependencies[languages[lang]!]) {
-      Logger.info(`Found emitter package ${languages[lang]}`);
-      return languages[lang];
+  for (const lang of languages) {
+    if (obj.dependencies[lang!]) {
+      Logger.info(`Found emitter package ${lang}`);
+      return lang;
     }
   }
   throw new Error("Could not find emitter package");

@@ -5,8 +5,8 @@ import { createTempDirectory, removeDirectory,readTspLocation, findEmitterPackag
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { runTspCompile } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, readdir, writeFile } from "node:fs/promises";
-import { cp, existsSync } from "node:fs";
+import { mkdir, readdir, writeFile, cp } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist, fetch } from "./network.js";
 import { parse as parseYaml } from "yaml";
@@ -150,17 +150,9 @@ async function syncTspFiles(outputDir: string) {
   }
   await checkoutCommit(cloneDir, commit);
   
-  cp(path.join(cloneDir, directory), srcDir, { recursive: true }, (err) => {
-    if (err) {
-      throw new Error(`Error copying files to the src directory: ${err}`)
-    }
-  });
+  await cp(path.join(cloneDir, directory), srcDir, { recursive: true });
   const emitterPath = path.join(repoRoot, "eng", "emitter-package.json");
-  cp(emitterPath, path.join(srcDir, "package.json"), { recursive: true }, (err) => {
-    if (err) {
-      throw new Error(`Error copying files to the src directory: ${err}`)
-    }
-  });
+  await cp(emitterPath, path.join(srcDir, "package.json"), { recursive: true });
   for (const dir of additionalDirectories) {
     const dirSplit = dir.split("/");
     var projectName = dirSplit[dirSplit.length - 1];
@@ -168,11 +160,7 @@ async function syncTspFiles(outputDir: string) {
       projectName = "src";
     }
     const dirName = path.join(tempRoot, projectName);
-    cp(path.join(cloneDir, dir), dirName, { recursive: true }, (err) => {
-      if (err) {
-        throw new Error(`Error copying files to the src directory: ${err}`)
-      }
-    });
+    await cp(path.join(cloneDir, dir), dirName, { recursive: true });
   }
   const emitterPackage = await findEmitterPackage(emitterPath);
   if (!emitterPackage) {

@@ -34,6 +34,7 @@ import {
   UnionExpressionNode,
   UnionStatementNode,
   UnionVariantNode,
+  ValueOfExpressionNode,
 } from "@typespec/compiler";
 import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
 import { ApiViewNavigation } from "./navigation.js";
@@ -599,6 +600,10 @@ export class ApiView {
         break;
       case SyntaxKind.UsingStatement:
         throw new Error(`Case "UsingStatement" not implemented`);
+      case SyntaxKind.ValueOfExpression:
+        this.keyword("valueof", true, true);
+        this.tokenize((node as ValueOfExpressionNode).target);
+        break;
       case SyntaxKind.VoidKeyword:
         this.keyword("void", true, true);
         break;

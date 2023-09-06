@@ -8,7 +8,7 @@
 import json
 import os
 
-MAPPING_FILE_NAME = "apiview_mapping.json"
+MAPPING_FILE_NAME = "apiview_mapping_python.json"
 
 """
 Loads metadata from the mapping file for use

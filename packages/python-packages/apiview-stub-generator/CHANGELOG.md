@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.9 (TBD)
+Improve support for "CrossLanguageDefinitionId".
+
 ## Version 0.3.8 (2023-07-06)
 Display `--source-url` as an actual clickable link.
 Fix issue with line ids in diffs so that the entire signature doesn't turn red if something is changed. 

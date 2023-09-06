@@ -319,9 +319,9 @@ class ClassNode(NodeEntityBase):
             apiview.add_newline()
 
         apiview.add_whitespace()
-        apiview.add_line_marker(self.namespace_id)
+        apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
         apiview.add_keyword("class", False, True)
-        apiview.add_text(self.full_name, definition_id=self.namespace_id, add_cross_language_id=True)
+        apiview.add_text(self.full_name, definition_id=self.namespace_id)
         for err in self.pylint_errors:
             err.generate_tokens(apiview, self.namespace_id)
 

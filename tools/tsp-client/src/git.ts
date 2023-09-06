@@ -19,7 +19,6 @@ export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string)
       const git = spawn("git", ["clone", "--no-checkout", "--filter=tree:0", repo, cloneDir], {
         cwd: rootUrl,
         stdio: "inherit",
-        shell: true,
       });
       git.once("exit", (code) => {
         if (code === 0) {
@@ -40,7 +39,6 @@ export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string)
       const git = spawn("git", ["sparse-checkout", "init"], {
         cwd: cloneDir,
         stdio: "inherit",
-        shell: true,
       });
       git.once("exit", (code) => {
         if (code === 0) {
@@ -60,7 +58,6 @@ export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string)
       const git = spawn("git", ["sparse-checkout", "add", subDir], {
         cwd: cloneDir,
         stdio: "inherit",
-        shell: true,
       });
       git.once("exit", (code) => {
         if (code === 0) {
@@ -80,7 +77,6 @@ export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string)
       const git = spawn("git", ["checkout", commit], {
         cwd: cloneDir,
         stdio: "inherit",
-        shell: true,
       });
       git.once("exit", (code) => {
         if (code === 0) {

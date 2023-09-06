@@ -10,23 +10,6 @@ import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } 
 import { doesFileExist, fetch } from "./network.js";
 import { parse as parseYaml } from "yaml";
 
-// async function discoverMainFileUrl(outputDir: string): Promise<string> {
-//   const tspUrl = await tryReadTspLocation(outputDir);
-//   if (!tspUrl) {
-//     throw new Error("No tsp-location.yaml found, and no main file specified");
-//   }
-//   Logger.debug(`Using base url from  tsp-location.yaml: ${tspUrl}`);
-//   for (const mainFile of ["client.tsp", "main.tsp"]) {
-//     let url = new URL(mainFile, tspUrl).toString();
-//     Logger.debug(`Checking for file: ${url}`);
-//     if (await doesFileExist(url)) {
-//       Logger.debug(`Found main file: ${url}`);
-//       return url;
-//     }
-//   }
-//   throw new Error(`No main.tsp or client.tsp found for base url ${tspUrl}`);
-// }
-
 async function getEmitterOptions(rootUrl: string, emitter: string): Promise<string> {
   // TODO: Add a way to specify emitter options like Language-Settings.ps1, could be a languageSettings.ts file
   // Method signature should just include the rootUrl. Everything else should be included in the languageSettings.ts file
@@ -46,24 +29,6 @@ async function discoverMainFile(srcDir: string): Promise<string> {
   };
   throw new Error(`No main.tsp or client.tsp found`);
 }
-
-// async function downloadTspFiles(rootUrl: string, emitter: string, outputDir: string) {
-//   const { moduleImports, fileTree } = await downloadTsp(rootUrl);
-//   const { mainFilePath, files } = await fileTree.createTree();
-//   const tempRoot = await createTempDirectory(outputDir);
-//   const srcDir = path.join(tempRoot, "src");
-//   await writeFileTree(srcDir, files);
-
-//   const emitterPackage = getEmitterPackage(emitter);
-//   moduleImports.add(emitterPackage);
-//   await createPackageJson(tempRoot, moduleImports);
-//   return {
-//     tempRoot: tempRoot,
-//     srcDir: srcDir,
-//     mainFilePath: mainFilePath,
-//     emitterPackage: emitterPackage
-//   };
-// }
 
 async function sdkInit(
   {

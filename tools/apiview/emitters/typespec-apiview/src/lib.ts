@@ -49,12 +49,6 @@ export const $lib = createTypeSpecLibrary({
         default: paramMessage`Version "${"version"}" not found for service "${"serviceName"}". Allowed values: ${"allowed"}.`,
       }
     },
-    "mapping-file-not-found": {
-      severity: "error",
-      messages: {
-        default: paramMessage`Mapping file "${"mappingPath"}" not found.`,
-      }
-    },
   },
   emitter: {
     options: ApiViewEmitterOptionsSchema,

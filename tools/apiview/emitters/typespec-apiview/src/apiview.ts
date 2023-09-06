@@ -222,19 +222,20 @@ export class ApiView {
     }
   }
 
-  lineMarker() {
-    this.tokens.push({
+  lineMarker(addCrossLanguageId: boolean = false) {
+    const token = {
       Kind: ApiViewTokenKind.LineIdMarker,
       DefinitionId: this.namespaceStack.value(),
-    });
+      CrossLanguageDefinitionId: addCrossLanguageId ? this.namespaceStack.value() : undefined,
+    };
+    this.tokens.push(token);
   }
 
-  text(text: string, addCrossLanguageId: boolean = false) {
+  text(text: string) {
     const token = {
       Kind: ApiViewTokenKind.Text,
       Value: text,
     };
-    // TODO: Cross-language definition ID
     this.tokens.push(token);
   }
 
@@ -251,7 +252,7 @@ export class ApiView {
     }
   }
 
-  typeDeclaration(typeName: string, typeId: string | undefined) {
+  typeDeclaration(typeName: string, typeId: string | undefined, addCrossLanguageId: boolean) {
     if (typeId) {
       if (this.typeDeclarations.has(typeId)) {
         throw new Error(`Duplication ID "${typeId}" for declaration will result in bugs.`);
@@ -262,6 +263,7 @@ export class ApiView {
       Kind: ApiViewTokenKind.TypeName,
       DefinitionId: typeId,
       Value: typeName,
+      CrossLanguageDefinitionId: addCrossLanguageId ? typeId : undefined,
     });
   }
 
@@ -373,7 +375,7 @@ export class ApiView {
         obj = node as AliasStatementNode;
         this.namespaceStack.push(obj.id.sv);
         this.keyword("alias", false, true);
-        this.typeDeclaration(obj.id.sv, this.namespaceStack.value());
+        this.typeDeclaration(obj.id.sv, this.namespaceStack.value(), true);
         this.punctuation("=", true, true);
         this.tokenize(obj.value);
         this.namespaceStack.pop();
@@ -442,7 +444,7 @@ export class ApiView {
         obj = node as EnumMemberNode;
         this.tokenizeDecorators(obj.decorators, false);
         this.tokenizeIdentifier(obj.id, "member");
-        this.lineMarker();
+        this.lineMarker(true);
         if (obj.value) {
           this.punctuation(":", false, true);
           this.tokenize(obj.value);
@@ -712,7 +714,7 @@ export class ApiView {
       this.tokenizeIdentifier(node.id, "member");
       this.punctuation(":", false, true);
     }
-    this.lineMarker();
+    this.lineMarker(true);
     this.tokenize(node.value);
   }
 
@@ -831,7 +833,7 @@ export class ApiView {
     this.namespaceStack.push(model.name);
     this.tokenizeDecorators(model.node.decorators, false);
     this.keyword("namespace", false, true);
-    this.typeDeclaration(model.name, this.namespaceStack.value());
+    this.typeDeclaration(model.name, this.namespaceStack.value(), true);
     this.beginGroup();
     for (const node of model.augmentDecorators) {
       this.tokenize(node);
@@ -941,7 +943,7 @@ export class ApiView {
       case SyntaxKind.Identifier:
         switch (style) {
           case "declaration":
-            this.typeDeclaration(node.sv, this.namespaceStack.value());
+            this.typeDeclaration(node.sv, this.namespaceStack.value(), true);
             break;
           case "reference":
             const defId = this.definitionIdFor(node.sv, this.packageName);

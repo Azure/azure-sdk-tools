@@ -62,11 +62,10 @@ async function sdkInit(
           if (configYaml["parameters"]["dependencies"] && configYaml["parameters"]["dependencies"]["additionalDirectories"]) {
             additionalDirs = configYaml["parameters"]["dependencies"]["additionalDirectories"];
           }
-          mkdir(path.join(outputDir, serviceDir), { recursive: true }).then(() => {
-              writeFile(
-                path.join(path.join(outputDir, serviceDir), "tsp-location.yaml"),
-              `directory: ${matchRes.groups!["path"]!}\ncommit: ${matchRes.groups!["commit"]!}\nrepo: ${matchRes.groups!["repo"]!}\nadditionalDirectories: ${additionalDirs}`);
-          });
+          await mkdir(path.join(outputDir, serviceDir), { recursive: true });
+          await writeFile(
+            path.join(path.join(outputDir, serviceDir), "tsp-location.yaml"),
+          `directory: ${matchRes.groups!["path"]!}\ncommit: ${matchRes.groups!["commit"]!}\nrepo: ${matchRes.groups!["repo"]!}\nadditionalDirectories: ${additionalDirs}`);
           return path.join(outputDir, serviceDir);
         } else {
           Logger.error("Missing service-dir in parameters section of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.")
@@ -173,9 +172,8 @@ async function syncAndGenerate({
   outputDir: string;
   noCleanup: boolean;
 }) {
-  syncTspFiles(outputDir).then(() => {
-    generate({ rootUrl: outputDir, noCleanup});
-  });
+  await syncTspFiles(outputDir);
+  await generate({ rootUrl: outputDir, noCleanup});
 }
 
 async function main() {
@@ -196,12 +194,11 @@ async function main() {
         if (options.tspConfig === undefined) {
           throw new Error("tspConfig is undefined");
         }
-        await sdkInit({config: options.tspConfig, outputDir: rootUrl}).then((result) => {
-          Logger.info(`SDK initialized in ${result}`);
-          if (!options.skipSyncAndGenerate) {
-            syncAndGenerate({outputDir: result, noCleanup: options.noCleanup})
-          }
-        });
+        const outputDir = await sdkInit({config: options.tspConfig, outputDir: rootUrl});
+        Logger.info(`SDK initialized in ${outputDir}`);
+        if (!options.skipSyncAndGenerate) {
+          await syncAndGenerate({outputDir, noCleanup: options.noCleanup})
+        }
         break;
       case "sync":
         syncTspFiles(rootUrl);

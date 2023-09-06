@@ -55,7 +55,7 @@ export async function readTspLocation(rootDir: string): Promise<[string, string,
     if (fileStat.isFile()) {
       const fileContents = await readFile(yamlPath, "utf8");
       const locationYaml = parseYaml(fileContents);
-      var { directory, commit, repo, additionalDirectories } = locationYaml;
+      let { directory, commit, repo, additionalDirectories } = locationYaml;
       if (!directory || !commit || !repo) {
         throw new Error("Invalid tsp-location.yaml");
       }
@@ -79,8 +79,8 @@ export async function findEmitterPackage(emitterPath: string): Promise<string | 
   if (!obj || !obj.dependencies) {
     throw new Error("Invalid emitter-package.json");
   }
-  var languages: string[] = ["@azure-tools/typespec-csharp", "@azure-tools/typespec-java", "@azure-tools/typespec-ts", "@azure-tools/typespec-python", "@typespec/openapi3"];
-  for (var lang in languages) {
+  const languages: string[] = ["@azure-tools/typespec-csharp", "@azure-tools/typespec-java", "@azure-tools/typespec-ts", "@azure-tools/typespec-python", "@typespec/openapi3"];
+  for (const lang in languages) {
     if (obj.dependencies[languages[lang]!]) {
       Logger.info(`Found emitter package ${languages[lang]}`);
       return languages[lang];

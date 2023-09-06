@@ -18,7 +18,7 @@ async function getEmitterOptions(rootUrl: string, emitter: string): Promise<stri
 
 async function discoverMainFile(srcDir: string): Promise<string> {
   Logger.debug(`Discovering entry file in ${srcDir}`)
-  var entryTsp = "";
+  let entryTsp = "";
   const files = await readdir(srcDir, {recursive: true });
   for (const file of files) {
     if (file.includes("client.tsp") || file.includes("main.tsp")) {
@@ -47,7 +47,7 @@ async function sdkInit(
     const matchRes = config.match('^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)/tspconfig.yaml$')
     if (matchRes) {
       if (matchRes.groups) {
-        var resolvedConfigUrl = config;
+        let resolvedConfigUrl = config;
         if (matchRes.groups["urlRoot"]! === "github") {
           resolvedConfigUrl = config.replace("github.com", "raw.githubusercontent.com");
           resolvedConfigUrl = resolvedConfigUrl.replace("/blob/", "/");
@@ -58,7 +58,7 @@ async function sdkInit(
         if (configYaml["parameters"] && configYaml["parameters"]["service-dir"]){
           const serviceDir = configYaml["parameters"]["service-dir"]["default"];
           Logger.debug(`Service directory: ${serviceDir}`)
-          var additionalDirs: string[] = [];
+          let additionalDirs: string[] = [];
           if (configYaml["parameters"]["dependencies"] && configYaml["parameters"]["dependencies"]["additionalDirectories"]) {
             additionalDirs = configYaml["parameters"]["dependencies"]["additionalDirectories"];
           }
@@ -92,7 +92,7 @@ async function syncTspFiles(outputDir: string) {
   Logger.debug(`Cloning repo to ${cloneDir}`);
   const [ directory, commit, repo, additionalDirectories ] = await readTspLocation(outputDir);
   const dirSplit = directory.split("/");
-  var projectName = dirSplit[dirSplit.length - 1];
+  let projectName = dirSplit[dirSplit.length - 1];
   Logger.debug(`Using project name: ${projectName}`)
   if (projectName === undefined) {
     projectName = "src";
@@ -113,7 +113,7 @@ async function syncTspFiles(outputDir: string) {
   await cp(emitterPath, path.join(srcDir, "package.json"), { recursive: true });
   for (const dir of additionalDirectories) {
     const dirSplit = dir.split("/");
-    var projectName = dirSplit[dirSplit.length - 1];
+    let projectName = dirSplit[dirSplit.length - 1];
     if (projectName === undefined) {
       projectName = "src";
     }
@@ -139,7 +139,7 @@ async function generate({
   const tempRoot = path.join(rootUrl, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(rootUrl);
   const dirSplit = tspLocation[0].split("/");
-  var projectName = dirSplit[dirSplit.length - 1];
+  let projectName = dirSplit[dirSplit.length - 1];
   if (projectName === undefined) {
     projectName = "src";
   }
@@ -184,7 +184,7 @@ async function main() {
   printBanner();
   await printVersion();
 
-  var rootUrl = path.resolve(".");
+  let rootUrl = path.resolve(".");
   if (options.outputDir) {
     rootUrl = path.resolve(options.outputDir);
   }
@@ -207,6 +207,7 @@ async function main() {
         generate({ rootUrl, noCleanup: options.noCleanup});
         break;
       case "update":
+        // TODO update tsp-location.yaml
         syncAndGenerate({outputDir: rootUrl, noCleanup: options.noCleanup});
         break;
       default:

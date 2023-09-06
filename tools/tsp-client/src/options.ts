@@ -97,7 +97,7 @@ export async function getOptions(): Promise<Options> {
     }
   }
   // By default, assume that the command is run from the output directory
-  var outputDir = ".";
+  let outputDir = ".";
   if (values.outputDir) {
     outputDir = values.outputDir;
   }

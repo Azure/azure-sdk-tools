@@ -6,7 +6,6 @@ import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { runTspCompile } from "./typespec.js";
 import { getOptions } from "./options.js";
 import { mkdir, readdir, writeFile, cp } from "node:fs/promises";
-import { existsSync } from "node:fs";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist, fetch } from "./network.js";
 import { parse as parseYaml } from "yaml";
@@ -137,10 +136,6 @@ async function syncTspFiles(outputDir: string) {
   }
   const srcDir = path.join(tempRoot, projectName);
   mkdir(srcDir, { recursive: true });
-  if (existsSync(cloneDir)) {
-    Logger.debug(`Removing existing sparse-checkout directory ${cloneDir}`);
-    await removeDirectory(cloneDir);
-  }
   await cloneRepo(tempRoot, cloneDir, `https://github.com/${repo}.git`);
   await sparseCheckout(cloneDir);
   await addSpecFiles(cloneDir, directory)
@@ -166,11 +161,8 @@ async function syncTspFiles(outputDir: string) {
   if (!emitterPackage) {
     throw new Error("emitterPackage is undefined");
   }
-
-  // if (existsSync(cloneDir)) {
-  //   Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
-  //   await removeDirectory(cloneDir);
-  // }
+  Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
+  await removeDirectory(cloneDir);
 }
 
 

@@ -1,6 +1,6 @@
 from ._gpt_reviewer import GptReviewer
 
-def review_go(code):
+def review_android(code):
   reviewer = GptReviewer()
-  result = reviewer.get_response(code, "go")
+  result = reviewer.get_response(code, "android")
   return result.json()

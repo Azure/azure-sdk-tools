@@ -1,6 +1,6 @@
 from ._gpt_reviewer import GptReviewer
 
-def review_swift(code):
+def review_typescript(code):
   reviewer = GptReviewer()
-  result = reviewer.get_response(code, "swift")
+  result = reviewer.get_response(code, "typescript")
   return result.json()

@@ -1,5 +1,16 @@
 from flask import Flask, request, jsonify
-from src import review_python, review_java, review_cpp, review_go, review_js, review_net, review_c, review_swift, review_typespec
+from src import (
+    review_python,
+    review_java,
+    review_cpp,
+    review_golang,
+    review_typescript,
+    review_dotnet,
+    review_clang,
+    review_ios,
+    review_rest,
+    review_android,
+)
 
 app = Flask(__name__)
 
@@ -17,18 +28,18 @@ def java_api_reviewer():
     result = review_java(content)
     return jsonify(result)
 
-@app.route('/js', methods=['POST'])
-def js_api_reviewer():
+@app.route('/typescript', methods=['POST'])
+def typescript_api_reviewer():
     data = request.get_json()
     content = data['content']
-    result = review_js(content)
+    result = review_typescript(content)
     return jsonify(result)
 
-@app.route('/net', methods=['POST'])
-def net_api_reviewer():
+@app.route('/dotnet', methods=['POST'])
+def dotnet_api_reviewer():
     data = request.get_json()
     content = data['content']
-    result = review_net(content)
+    result = review_dotnet(content)
     return jsonify(result)
 
 @app.route('/cpp', methods=['POST'])
@@ -38,30 +49,37 @@ def cpp_api_reviewer():
     result = review_cpp(content)
     return jsonify(result)
 
-@app.route('/go', methods=['POST'])
-def go_api_reviewer():
+@app.route('/golang', methods=['POST'])
+def golang_api_reviewer():
     data = request.get_json()
     content = data['content']
-    result = review_go(content)
+    result = review_golang(content)
     return jsonify(result)
 
-@app.route('/c', methods=['POST'])
-def c_api_reviewer():
+@app.route('/clang', methods=['POST'])
+def clang_api_reviewer():
     data = request.get_json()
     content = data['content']
-    result = review_c(content)
+    result = review_clang(content)
     return jsonify(result)
 
-@app.route('/swift', methods=['POST'])
-def swift_api_reviewer():
+@app.route('/ios', methods=['POST'])
+def ios_api_reviewer():
     data = request.get_json()
     content = data['content']
-    result = review_swift(content)
+    result = review_ios(content)
     return jsonify(result)
 
-@app.route('/typespec', methods=['POST'])
-def typespec_api_reviewer():
+@app.route('/rest', methods=['POST'])
+def rest_api_reviewer():
     data = request.get_json()
     content = data['content']
-    result = review_typespec(content)
+    result = review_rest(content)
+    return jsonify(result)
+
+@app.route('/android', methods=['POST'])
+def android_api_reviewer():
+    data = request.get_json()
+    content = data['content']
+    result = review_android(content)
     return jsonify(result)

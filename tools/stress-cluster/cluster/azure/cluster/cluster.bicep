@@ -53,7 +53,7 @@ var agentPools = [
     defaultAgentPool
 ]
 
-resource newCluster 'Microsoft.ContainerService/managedClusters@2022-09-02-preview' = if (!updateNodes) {
+resource newCluster 'Microsoft.ContainerService/managedClusters@2023-02-02-preview' = if (!updateNodes) {
   name: clusterName
   location: location
   tags: tags
@@ -75,6 +75,10 @@ resource newCluster 'Microsoft.ContainerService/managedClusters@2022-09-02-previ
         enabled: true
       }
     }
+    autoUpgradeProfile: {
+      nodeOSUpgradeChannel: 'SecurityPatch'
+      upgradeChannel: null
+    }
     kubernetesVersion: kubernetesVersion
     enableRBAC: true
     dnsPrefix: dnsPrefix
@@ -86,7 +90,26 @@ resource newCluster 'Microsoft.ContainerService/managedClusters@2022-09-02-previ
   }
 }
 
-resource existingCluster 'Microsoft.ContainerService/managedClusters@2022-09-02-preview' existing = if (updateNodes) {
+resource maintenanceConfig 'Microsoft.ContainerService/managedClusters/maintenanceConfigurations@2023-05-02-preview' = if (!updateNodes) {
+  name: 'aksManagedNodeOSUpgradeSchedule'
+  parent: newCluster
+  properties: {
+    maintenanceWindow: {
+      durationHours: 4
+      utcOffset: '-08:00'
+      startTime: '02:00'
+      schedule: {
+        weekly: {
+          dayOfWeek: 'Monday'
+          intervalWeeks: 1
+        }
+      }
+    }
+  }
+}
+
+
+resource existingCluster 'Microsoft.ContainerService/managedClusters@2023-02-02-preview' existing = if (updateNodes) {
   name: clusterName
 }
 

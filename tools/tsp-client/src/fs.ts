@@ -72,7 +72,7 @@ export async function readTspLocation(rootDir: string): Promise<[string, string,
 }
 
 
-export async function findEmitterPackage(emitterPath: string): Promise<string | undefined> {
+export async function getEmitterFromRepoConfig(emitterPath: string): Promise<string | undefined> {
   await access(emitterPath);
   const data = await readFile(emitterPath, 'utf8');
   const obj = JSON.parse(data);

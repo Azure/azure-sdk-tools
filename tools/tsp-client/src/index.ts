@@ -1,7 +1,7 @@
 import * as path from "node:path";
 
 import { installDependencies } from "./npm.js";
-import { createTempDirectory, removeDirectory,readTspLocation, findEmitterPackage } from "./fs.js";
+import { createTempDirectory, removeDirectory,readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { compileTsp } from "./typespec.js";
 import { getOptions } from "./options.js";
@@ -155,7 +155,7 @@ async function syncTspFiles(outputDir: string) {
     const dirName = path.join(tempRoot, projectName);
     await cp(path.join(cloneDir, dir), dirName, { recursive: true });
   }
-  const emitterPackage = await findEmitterPackage(emitterPath);
+  const emitterPackage = await getEmitterFromRepoConfig(emitterPath);
   if (!emitterPackage) {
     throw new Error("emitterPackage is undefined");
   }
@@ -179,7 +179,7 @@ async function generate({
     throw new Error("cannot find project name");
   }
   const srcDir = path.join(tempRoot, projectName);
-  const emitter = await findEmitterPackage(path.join(getRepoRoot(), "eng", "emitter-package.json"));
+  const emitter = await getEmitterFromRepoConfig(path.join(getRepoRoot(), "eng", "emitter-package.json"));
   if (!emitter) {
     throw new Error("emitter is undefined");
   }

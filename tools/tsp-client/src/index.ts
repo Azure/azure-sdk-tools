@@ -3,17 +3,37 @@ import * as path from "node:path";
 import { installDependencies } from "./npm.js";
 import { createTempDirectory, removeDirectory,readTspLocation, findEmitterPackage } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
-import { runTspCompile } from "./typespec.js";
+import { compileTsp } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, readdir, writeFile, cp } from "node:fs/promises";
+import { mkdir, readdir, writeFile, cp, readFile } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist, fetch } from "./network.js";
 import { parse as parseYaml } from "yaml";
 
-async function getEmitterOptions(rootUrl: string, emitter: string): Promise<string> {
+async function getEmitterOptions(rootUrl: string, tempRoot: string, emitter: string): Promise<Record<string, Record<string, unknown>>> {
   // TODO: Add a way to specify emitter options like Language-Settings.ps1, could be a languageSettings.ts file
   // Method signature should just include the rootUrl. Everything else should be included in the languageSettings.ts file
-  return `--options ${emitter}.emitter-output-dir=${rootUrl}`;
+  const configData = await readFile(path.join(tempRoot, "tspconfig.yaml"), "utf8");
+  const configYaml = parseYaml(configData);
+  let emitterOptions: Record<string, Record<string, unknown>> = {};
+  if (configYaml["options"] && configYaml["options"][emitter]){
+    emitterOptions[emitter] = configYaml["options"][emitter];
+    emitterOptions[emitter]!["emitter-output-dir"] = rootUrl;
+    for (const key in emitterOptions[emitter]!) {
+      Object.keys(emitterOptions![emitter]!).forEach(
+        (k) => {
+          if (`{${k}}` === emitterOptions[emitter]![key]) {
+            emitterOptions[emitter]![key] = emitterOptions[emitter]![k];
+          }
+        });
+    }
+  } else {
+    emitterOptions[emitter] = {
+      "emitter-output-dir": rootUrl,
+    };
+  }
+  Logger.debug(`Using emitter options: ${JSON.stringify(emitterOptions)}`);
+  return emitterOptions;
 }
 
 async function resolveTspConfigUrl(configUrl: string): Promise<{
@@ -156,21 +176,22 @@ async function generate({
   const dirSplit = tspLocation[0].split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   if (projectName === undefined) {
-    projectName = "src";
+    throw new Error("cannot find project name");
   }
   const srcDir = path.join(tempRoot, projectName);
   const emitter = await findEmitterPackage(path.join(getRepoRoot(), "eng", "emitter-package.json"));
   if (!emitter) {
     throw new Error("emitter is undefined");
   }
-  Logger.info("Installing dependencies from npm...");
-  await installDependencies(srcDir);
-
   const mainFilePath = await discoverMainFile(srcDir);
   const resolvedMainFilePath = path.join(srcDir, mainFilePath);
   Logger.info(`Compiling tsp using ${emitter}...`);
-  const emitterOptions = await getEmitterOptions(rootUrl, emitter);
-  await runTspCompile({tempDir: rootUrl, mainFilePath: resolvedMainFilePath, emitter, emitterOptions});
+  const emitterOptions = await getEmitterOptions(rootUrl, srcDir, emitter);
+
+  Logger.info("Installing dependencies from npm...");
+  await installDependencies(srcDir);
+
+  await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, options: emitterOptions });
 
   if (noCleanup) {
     Logger.debug(`Skipping cleanup of temp directory: ${tempRoot}`);

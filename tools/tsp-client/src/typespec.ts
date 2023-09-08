@@ -1,8 +1,6 @@
 import { NodeHost, compile, getSourceLocation } from "@typespec/compiler";
 import { parse, isImportStatement } from "@typespec/compiler";
-import * as path from "node:path";
 import { Logger } from "./log.js";
-import { getEmitterOutputPath } from "./languageSettings.js";
 import { spawn } from "node:child_process";
 
 export async function resolveImports(file: string): Promise<string[]> {
@@ -17,29 +15,22 @@ export async function resolveImports(file: string): Promise<string[]> {
 }
 
 export async function compileTsp({
-  language,
   emitterPackage,
-  emitterOutputPath,
+  outputPath,
   resolvedMainFilePath,
-  tempRoot,
+  options,
 }: {
-  language: string;
   emitterPackage: string;
-  emitterOutputPath: string;
+  outputPath: string;
   resolvedMainFilePath: string;
-  tempRoot: string;
+  options: Record<string, Record<string, unknown>>;
 }) {
-  const emitterOutputDir = getEmitterOutputPath(language, emitterOutputPath);
-  Logger.debug(`Using emitter output dir: ${emitterOutputDir}`);
+  Logger.debug(`Using emitter output dir: ${outputPath}`);
   // compile the local copy of the root file
   const program = await compile(NodeHost, resolvedMainFilePath, {
-    outputDir: path.join(tempRoot, "output"),
+    outputDir: outputPath,
     emit: [emitterPackage],
-    options: {
-      [emitterPackage]: {
-        "emitter-output-dir": emitterOutputDir,
-      },
-    },
+    options: options,
   });
 
   if (program.diagnostics.length > 0) {
@@ -53,35 +44,4 @@ export async function compileTsp({
   } else {
     Logger.success("generation complete");
   }
-}
-
-// TODO add emitter options
-export async function runTspCompile({
-  tempDir,
-  mainFilePath,
-  emitter,
-  emitterOptions,
-}: {
-  tempDir: string;
-  mainFilePath: string;
-  emitter: string;
-  emitterOptions: string;
-}): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const git = spawn("tsp", ["compile", mainFilePath, `--emit=${emitter}`, emitterOptions], {
-      cwd: tempDir,
-      stdio: "inherit",
-      shell: true,
-    });
-    git.once("exit", (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`tsp compile failed exited with code ${code}`));
-      }
-    });
-    git.once("error", (err) => {
-      reject(new Error(`tsp compile failed with error: ${err}`));
-    });
-  });
 }

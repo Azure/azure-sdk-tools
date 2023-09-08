@@ -2,7 +2,7 @@
 
 Within this folder are all the components that make up the the tool `Azure.Sdk.Tools.TestProxy`, henceforth referred to as the `test-proxy`.
 
-This product is currently developed on Visual Studio 2022, but CLI build/test also work fine. Currently, this project only supports `.net 6`, though `.net 7` support is coming.
+This product is currently developed on Visual Studio 2022, but CLI build/test also work fine. Currently, this project only supports .NET 6.0, though .NET 7.0 support is coming.
 
 To contribute a change:
 

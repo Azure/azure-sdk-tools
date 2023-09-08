@@ -160,7 +160,7 @@ async function sdkInit(
   throw new Error("Invalid tspconfig.yaml");  
 }
 
-async function syncTspFiles(outputDir: string) {
+async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
   const tempRoot = await createTempDirectory(outputDir);
 
   const repoRoot = getRepoRoot();
@@ -168,9 +168,6 @@ async function syncTspFiles(outputDir: string) {
   if (repoRoot === undefined) {
     throw new Error("Could not find repo root");
   }
-
-  const cloneDir = path.join(repoRoot, "..", "sparse-spec");
-  Logger.debug(`Cloning repo to ${cloneDir}`);
   const [ directory, commit, repo, additionalDirectories ] = await readTspLocation(outputDir);
   const dirSplit = directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
@@ -179,16 +176,34 @@ async function syncTspFiles(outputDir: string) {
     projectName = "src";
   }
   const srcDir = path.join(tempRoot, projectName);
-  mkdir(srcDir, { recursive: true });
-  await cloneRepo(tempRoot, cloneDir, `https://github.com/${repo}.git`);
-  await sparseCheckout(cloneDir);
-  await addSpecFiles(cloneDir, directory)
-  Logger.info(`Processing additional directories: ${additionalDirectories}`)
-  for (const dir of additionalDirectories) {
-    await addSpecFiles(cloneDir, dir);
-  }
-  await checkoutCommit(cloneDir, commit);
+  await mkdir(srcDir, { recursive: true });
+  const cloneDir = path.join(repoRoot, "..", "sparse-spec");
+  await mkdir(cloneDir, { recursive: true });
+  Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
   
+  function filter(src: string, dest: string): boolean {
+    if (src.includes("node_modules") || dest.includes("node_modules")) {
+      return false;
+    }
+    return true;
+  }
+
+  if (localSpecRepo) {
+    // FIXME: We shouldn't copy the entire repo, just the directories we need
+    Logger.debug(`Using local spec directory: ${localSpecRepo}`);
+    await cp(localSpecRepo, cloneDir, { recursive: true, filter: filter });
+  } else {
+    Logger.debug(`Cloning repo to ${cloneDir}`);
+    await cloneRepo(tempRoot, cloneDir, `https://github.com/${repo}.git`);
+    await sparseCheckout(cloneDir);
+    await addSpecFiles(cloneDir, directory)
+    Logger.info(`Processing additional directories: ${additionalDirectories}`)
+    for (const dir of additionalDirectories) {
+      await addSpecFiles(cloneDir, dir);
+    }
+    await checkoutCommit(cloneDir, commit);  
+  }
+
   await cp(path.join(cloneDir, directory), srcDir, { recursive: true });
   const emitterPath = path.join(repoRoot, "eng", "emitter-package.json");
   await cp(emitterPath, path.join(srcDir, "package.json"), { recursive: true });
@@ -200,10 +215,6 @@ async function syncTspFiles(outputDir: string) {
     }
     const dirName = path.join(tempRoot, projectName);
     await cp(path.join(cloneDir, dir), dirName, { recursive: true });
-  }
-  const emitterPackage = await getEmitterFromRepoConfig(emitterPath);
-  if (!emitterPackage) {
-    throw new Error("emitterPackage is undefined");
   }
   Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
   await removeDirectory(cloneDir);
@@ -284,7 +295,7 @@ async function main() {
         }
         break;
       case "sync":
-        syncTspFiles(rootUrl);
+        syncTspFiles(rootUrl, options.localSpecRepo);
         break;
       case "generate":
         generate({ rootUrl, noCleanup: options.noCleanup});

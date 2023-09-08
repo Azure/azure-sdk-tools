@@ -1,20 +1,10 @@
 import { execSync, spawn } from "child_process";
-import { doesFileExist } from "./network.js";
-import { removeDirectory } from "./fs.js";
-import { mkdir } from "fs/promises";
-import { Logger } from "./log.js";
 
 export function getRepoRoot(): string {
     return execSync('git rev-parse --show-toplevel').toString().trim();
 }
   
 export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string): Promise<void> {
-    if (await doesFileExist(cloneDir)) {
-      Logger.debug(`Removing existing sparse-checkout directory ${cloneDir}`);
-      await removeDirectory(cloneDir);
-    }
-    await mkdir(cloneDir, { recursive: true });
-    Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
     return new Promise((resolve, reject) => {
       const git = spawn("git", ["clone", "--no-checkout", "--filter=tree:0", repo, cloneDir], {
         cwd: rootUrl,
@@ -90,4 +80,3 @@ export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string)
       });
     });
   }
-  

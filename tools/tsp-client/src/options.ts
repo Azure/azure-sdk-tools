@@ -16,6 +16,7 @@ export interface Options {
   commit?: string;
   repo?: string;
   isUrl: boolean;
+  localSpecRepo?: string;
 }
 
 export async function getOptions(): Promise<Options> {
@@ -57,6 +58,9 @@ export async function getOptions(): Promise<Options> {
       repo: {
         type: "string",
         short: "R",
+      },
+      ["local-spec-repo"]: {
+        type: "string",
       },
       ["save-inputs"]: {
         type: "boolean",
@@ -138,5 +142,6 @@ export async function getOptions(): Promise<Options> {
     commit: values.commit,
     repo: values.repo,
     isUrl: isUrl,
+    localSpecRepo: values["local-spec-repo"],
   };
 }

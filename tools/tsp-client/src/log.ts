@@ -55,14 +55,15 @@ export function printBanner() {
 }
 
 const usageText = `
-Usage: tsp-client [options] <outputDir>
+Usage: tsp-client [options]
 
 Generate from a tsp file using --mainFile or use tsp-location.yaml inside 
 the outputDir.
 
 Positionals:
-  sync        Sync tsp files using tsp-location.yaml
-  generate    Generate from a tsp project
+  init        Initialize the SDK project folder from a tspconfig.yaml   [string]
+  sync        Sync tsp files using tsp-location.yaml                    [string]
+  generate    Generate from a tsp project                               [string]
   update      Sync and generate from a tsp project                      [string]
 
 Options:

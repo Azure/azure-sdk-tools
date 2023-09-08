@@ -1,0 +1,65 @@
+.create-or-alter function with (
+    folder='users/kojamroz', 
+    docstring="Build logs for specific ADO job in the specs pipelines builds. See source for details."
+    )
+    SpecsPipelinesBuildsJobLogs(
+        jobName:string, 
+        start:datetime, 
+        end:datetime, 
+        buildId:string = "*")
+{
+// ABOUT THIS FUNCTION
+//
+// This function returns build logs for the 
+// Azure.azure-rest-api-specs-pipeline [1] 
+// and Azure.azure-rest-api-specs-pipeline-staging [2] builds,
+// for job named 'jobName', e.g. "BreakingChange" or "LintDiff".
+//
+// The logs are from time period between 'start' and 'end'.
+//
+// Optionally, you can pass 'buildId'. By default it is any build, denoted as "*".
+// 
+// If you pass specific 'buildId', consider narrowing down 'start' and 'end' 
+// to the time period the build generated logs, to keep the function call performant.
+//
+// Run this function against cluster Azsdkengsys, database Pipelines.
+//
+// [1] 1736: Azure.azure-rest-api-specs-pipeline
+// https://dev.azure.com/azure-sdk/internal/_build?definitionId=1736
+//
+// [2] 3268: Azure.azure-rest-api-specs-pipeline-staging
+// https://dev.azure.com/azure-sdk/internal/_build?definitionId=3268
+//
+// ---------------------------------------------------------------
+//
+let filteredJobFirstMessage = strcat("##[section]Starting: ", jobName);
+let allPipelineLogs = 
+cluster('azsdkengsys.westus2.kusto.windows.net').database('Pipelines').BuildLogLine
+    | where Timestamp between (start..end)
+    | where BuildDefinitionId in ("1736", "3268")
+    | where buildId == "*" or BuildId == buildId
+;
+let logIds =
+allPipelineLogs
+    | where Message == filteredJobFirstMessage
+    | distinct BuildId, LogId
+    // Here we ensure only one LogId is taken from each BuildId. This is necessary as given LogId can appear twice: 
+    // once with log line offset for given job, and once with offset for given job.
+    // Alternatively, the rows could be deduplicated by appropriate join to the BuildTimelineRecord table.
+    | summarize arg_min(LogId, *) by BuildId
+;
+let filteredLogs =
+logIds 
+    | join kind=inner allPipelineLogs on BuildId, LogId
+    | project-away BuildId1, LogId1
+    | extend 
+        PacificTime = datetime_utc_to_local(Timestamp, 'US/Pacific'), 
+        buildUrl = strcat("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=", BuildId, "&view=results")
+    | project-reorder Timestamp, PacificTime, buildUrl, BuildDefinitionId, BuildId, LineNumber, Message
+    // Get rid of duplicate logs. This is a known issue with no known proper fix - see the comment in the 
+    // definition of "logIds" above.
+    | distinct *
+    | order by Timestamp desc
+;
+filteredLogs
+}

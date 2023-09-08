@@ -2,6 +2,7 @@ import { parseArgs } from "node:util";
 import { Logger, printUsage, printVersion } from "./log.js";
 import * as path from "node:path";
 import { knownLanguages, languageAliases } from "./languageSettings.js";
+import { doesFileExist } from "./network.js";
 
 export interface Options {
   debug: boolean;
@@ -11,7 +12,10 @@ export interface Options {
   mainFile?: string;
   outputDir: string;
   noCleanup: boolean;
-  skipSyncAndGenerate?: boolean;
+  skipSyncAndGenerate: boolean;
+  commit?: string;
+  repo?: string;
+  isUrl: boolean;
 }
 
 export async function getOptions(): Promise<Options> {
@@ -46,7 +50,15 @@ export async function getOptions(): Promise<Options> {
         type: "string",
         short: "c",
       },
-      ["no-cleanup"]: {
+      commit: {
+        type: "string",
+        short: "C",
+      },
+      repo: {
+        type: "string",
+        short: "R",
+      },
+      ["save-inputs"]: {
         type: "boolean",
       },
       ["skip-sync-and-generate"]: {
@@ -89,11 +101,22 @@ export async function getOptions(): Promise<Options> {
     process.exit(1);
   }
 
+  let isUrl = false;
   if (positionals[0] === "init") {
     if (!values.tspConfig) {
       Logger.error("tspConfig is required");
       printUsage();
       process.exit(1);
+    }
+    if (await doesFileExist(values.tspConfig)) {
+      isUrl = true;
+    }
+    if (!isUrl) {
+      if (values.commit === undefined || values.repo === undefined) {
+        Logger.error("The commit and repo options are required when tspConfig is a local directory");
+        printUsage();
+        process.exit(1);
+      }
     }
   }
   // By default, assume that the command is run from the output directory
@@ -109,8 +132,11 @@ export async function getOptions(): Promise<Options> {
     tspConfig: values.tspConfig,
     emitter: values.emitter,
     mainFile: values.mainFile,
-    noCleanup: values["no-cleanup"] ?? false,
+    noCleanup: values["save-inputs"] ?? false,
     skipSyncAndGenerate: values["skip-sync-and-generate"] ?? false,
     outputDir: outputDir,
+    commit: values.commit,
+    repo: values.repo,
+    isUrl: isUrl,
   };
 }

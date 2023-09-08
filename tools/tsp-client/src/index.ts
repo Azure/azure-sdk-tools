@@ -7,10 +7,10 @@ import { compileTsp } from "./typespec.js";
 import { getOptions } from "./options.js";
 import { mkdir, readdir, writeFile, cp, readFile } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
-import { doesFileExist, fetch } from "./network.js";
+import { fetch } from "./network.js";
 import { parse as parseYaml } from "yaml";
 
-async function getEmitterOptions(rootUrl: string, tempRoot: string, emitter: string): Promise<Record<string, Record<string, unknown>>> {
+async function getEmitterOptions(rootUrl: string, tempRoot: string, emitter: string, saveInputs: boolean): Promise<Record<string, Record<string, unknown>>> {
   // TODO: Add a way to specify emitter options like Language-Settings.ps1, could be a languageSettings.ts file
   // Method signature should just include the rootUrl. Everything else should be included in the languageSettings.ts file
   const configData = await readFile(path.join(tempRoot, "tspconfig.yaml"), "utf8");
@@ -31,6 +31,9 @@ async function getEmitterOptions(rootUrl: string, tempRoot: string, emitter: str
     emitterOptions[emitter] = {
       "emitter-output-dir": rootUrl,
     };
+  }
+  if (saveInputs) {
+    emitterOptions[emitter]!["save-inputs"] = true;
   }
   Logger.debug(`Using emitter options: ${JSON.stringify(emitterOptions)}`);
   return emitterOptions;
@@ -78,15 +81,19 @@ async function sdkInit(
   {
     config,
     outputDir,
-    // commit, //TODO
-    // repoUrl, // TODO
+    emitter,
+    commit,
+    repo,
+    isUrl,
   }: {
     config: string;
     outputDir: string;
-    // commit: string;
-    // repoUrl: string;
+    emitter: string;
+    commit: string | undefined;
+    repo: string | undefined;
+    isUrl: boolean;
   }): Promise<string> {
-  if (await doesFileExist(config)) {
+  if (isUrl) {
     // URL scenario
     const resolvedConfigUrl = await resolveTspConfigUrl(config);
     Logger.debug(`Resolved config url: ${resolvedConfigUrl.resolvedUrl}`)
@@ -99,17 +106,56 @@ async function sdkInit(
       if (configYaml["parameters"]["dependencies"] && configYaml["parameters"]["dependencies"]["additionalDirectories"]) {
         additionalDirs = configYaml["parameters"]["dependencies"]["additionalDirectories"];
       }
-      await mkdir(path.join(outputDir, serviceDir), { recursive: true });
+      let packageDir: string | undefined = undefined;
+      if (configYaml["options"][emitter] && configYaml["options"][emitter]["package-dir"]) {
+        packageDir = configYaml["options"][emitter]["package-dir"];
+      }
+      if (packageDir === undefined) {
+        throw new Error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
+      }
+      const newPackageDir = path.join(outputDir, serviceDir, packageDir)
+      await mkdir(newPackageDir, { recursive: true });
       await writeFile(
-        path.join(path.join(outputDir, serviceDir), "tsp-location.yaml"),
+        path.join(newPackageDir, "tsp-location.yaml"),
       `directory: ${resolvedConfigUrl.path}\ncommit: ${resolvedConfigUrl.commit}\nrepo: ${resolvedConfigUrl.repo}\nadditionalDirectories: ${additionalDirs}`);
-      return path.join(outputDir, serviceDir);
+      return newPackageDir;
     } else {
       Logger.error("Missing service-dir in parameters section of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.")
     }
   } else {
-    // File scenario
-    throw new Error("File scenario not implemented yet")
+    // Local directory scenario
+    let configFile = path.join(config, "tspconfig.yaml")
+    const data = await readFile(configFile, "utf8");
+    const configYaml = parseYaml(data);
+    if (configYaml["parameters"] && configYaml["parameters"]["service-dir"]) {
+      const serviceDir = configYaml["parameters"]["service-dir"]["default"];
+      var additionalDirs: string[] = [];
+      if (configYaml["parameters"]["dependencies"] && configYaml["parameters"]["dependencies"]["additionalDirectories"]) {
+        additionalDirs = configYaml["parameters"]["dependencies"]["additionalDirectories"];
+      }
+      Logger.info(`Additional directories: ${additionalDirs}`)
+      let packageDir: string | undefined = undefined;
+      if (configYaml["options"][emitter] && configYaml["options"][emitter]["package-dir"]) {
+        packageDir = configYaml["options"][emitter]["package-dir"];
+      }
+      if (packageDir === undefined) {
+        throw new Error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
+      }
+      const newPackageDir = path.join(outputDir, serviceDir, packageDir)
+      await mkdir(newPackageDir, { recursive: true });
+      configFile = configFile.replaceAll("\\", "/");
+      const matchRes = configFile.match('.*/(?<path>specification/.*)/tspconfig.yaml$')
+      var directory = "";
+      if (matchRes) {
+        if (matchRes.groups) {
+          directory = matchRes.groups!["path"]!;
+        }
+      }
+      writeFile(path.join(newPackageDir, "tsp-location.yaml"),
+            `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirs}`);
+      return newPackageDir;
+    }
+    throw new Error("Missing service-dir in parameters section of tspconfig.yaml. Please refer to  https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.")
   }
   throw new Error("Invalid tspconfig.yaml");  
 }
@@ -186,7 +232,7 @@ async function generate({
   const mainFilePath = await discoverMainFile(srcDir);
   const resolvedMainFilePath = path.join(srcDir, mainFilePath);
   Logger.info(`Compiling tsp using ${emitter}...`);
-  const emitterOptions = await getEmitterOptions(rootUrl, srcDir, emitter);
+  const emitterOptions = await getEmitterOptions(rootUrl, srcDir, emitter, noCleanup);
 
   Logger.info("Installing dependencies from npm...");
   await installDependencies(srcDir);
@@ -227,10 +273,11 @@ async function main() {
 
   switch (options.command) {
       case "init":
-        if (options.tspConfig === undefined) {
-          throw new Error("tspConfig is undefined");
+        const emitter = await getEmitterFromRepoConfig(path.join(getRepoRoot(), "eng", "emitter-package.json"));
+        if (!emitter) {
+          throw new Error("Couldn't find emitter-package.json in the repo");
         }
-        const outputDir = await sdkInit({config: options.tspConfig, outputDir: rootUrl});
+        const outputDir = await sdkInit({config: options.tspConfig!, outputDir: rootUrl, emitter, commit: options.commit, repo: options.repo, isUrl: options.isUrl});
         Logger.info(`SDK initialized in ${outputDir}`);
         if (!options.skipSyncAndGenerate) {
           await syncAndGenerate({outputDir, noCleanup: options.noCleanup})

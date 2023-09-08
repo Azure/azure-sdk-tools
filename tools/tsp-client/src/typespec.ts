@@ -1,7 +1,6 @@
 import { NodeHost, compile, getSourceLocation } from "@typespec/compiler";
 import { parse, isImportStatement } from "@typespec/compiler";
 import { Logger } from "./log.js";
-import { spawn } from "node:child_process";
 
 export async function resolveImports(file: string): Promise<string[]> {
   const imports: string[] = [];

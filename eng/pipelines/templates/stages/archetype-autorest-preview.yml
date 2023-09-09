@@ -251,7 +251,7 @@ stages:
       artifact: matrix_artifacts
       displayName: Publish matrix artifacts
 
-  - job: Regenerate
+  - job: Generate
     dependsOn: Initialize
     strategy:
       matrix: $[dependencies.Initialize.outputs['generate_matrix.matrix']]
@@ -302,7 +302,7 @@ stages:
   - job: Create_PR
     displayName: Create PR
     dependsOn: 
-    - Regenerate
+    - Generate
     condition: succeededOrFailed()
     steps:
     - checkout: self

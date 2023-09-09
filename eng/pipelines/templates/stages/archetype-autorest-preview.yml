@@ -1,0 +1,336 @@
+parameters:
+- name: BuildAlphaVersion
+  type: boolean
+- name: UseTypeSpecNext
+  type: boolean
+- name: PublishDependsOn
+  type: object
+  default: ["Build"]
+- name: PublishTarget
+  type: string
+- name: EmitterPackageJsonPath
+  type: string
+- name: BuildSteps
+  type: stepList
+  default: []
+- name: SdkInitializationSteps
+  type: stepList
+  default: []
+- name: Packages
+  type: object
+  default: []
+- name: RegenerationJobCount
+  type: number
+  default: 10
+
+stages:
+- stage: Build
+  variables:
+    autorestRepositoryPath: $(Build.SourcesDirectory)/autorest
+    toolsRepositoryPath: $(Build.SourcesDirectory)/azure-sdk-tools
+    sdkRepositoryPath: $(Build.SourcesDirectory)/azure-sdk
+  jobs:
+  - job: Build
+    steps:
+    - template: ../steps/emit-pipeline-repositories.yml
+      parameters:
+        name: repositories
+        displayName: 'Get repository details'
+
+    - checkout: self
+      path: s/autorest
+      
+    - checkout: azure-sdk-tools
+
+    - script: >
+        npm run ci-init -- --useTypeSpecNext ${{ parameters.UseTypeSpecNext }}
+      displayName: 'Run init script'
+      workingDirectory: $(autorestRepositoryPath)
+    
+    # the build script should produce the folder `$(autorestRepositoryPath)/artifacts/ci-build` with contents:
+    #   packages/
+    #     autorest-csharp-2.0.0-alpha.4.tgz
+    #     Microsoft.Azure.AutoRest.CSharp.2.0.0-alpha.4.nupkg
+    #     typespec-csharp-1.2.3-alpha.4.tgz
+    - script: >
+        npm run ci-build --
+        --buildAlphaVersion ${{ parameters.BuildAlphaVersion }}
+        --buildNumber $(Build.BuildNumber)
+        --output $(Build.ArtifactStagingDirectory)
+      displayName: 'Run build script'
+      name: build_script
+      workingDirectory: $(autorestRepositoryPath)
+
+    - task: PowerShell@2
+      displayName: Create emitter-package.json
+      inputs:
+        pwsh: true
+        filePath: $(toolsRepositoryPath)/eng/scripts/autorest/New-EmitterPackageJson.ps1
+        arguments: >
+          -PackageJsonPath '${{ parameters.EmitterPackageJsonPath }}'
+          -OutputDirectory '$(Build.ArtifactStagingDirectory)'
+        workingDirectory: $(autorestRepositoryPath)
+
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: build_artifacts
+      displayName: Publish artifacts directory
+
+    - pwsh: |
+        $branchName = 'autorest-failed-build-$(Build.BuildId)'
+        $repositoryName = '$(repositories.self.name)'
+
+        . $(toolsRepositoryPath)/eng/common/scripts/git-branch-push.ps1 `
+          -PRBranchName $branchName `
+          -CommitMsg 'Update repo on failing build`n`nBuild url: $(System.CollectionUri)_build/results?buildId=$(Build.BuildId)' `
+          -GitUrl "https://$(azuresdk-github-pat)@github.com/azure-sdk/$repositoryName.git"
+
+        Write-Host ""
+        Write-Host @"
+          ##vso[task.logissue type=error]Created branch $branchName for build failure repro
+
+          To clone the repo:
+            git clone https://github.com/azure-sdk/$repositoryName
+            
+          To add the remote to an existing clone:
+            git remote add azure-sdk https://github.com/azure-sdk/$repositoryName
+            git fetch azure-sdk
+
+          To checkout the branch:
+            git checkout $branchName
+        "@
+
+      displayName: If failed, push changes
+      condition: failed()
+      workingDirectory: $(autorestRepositoryPath)
+
+- stage: Publish
+  dependsOn: ${{ parameters.PublishDependsOn }}
+  variables:
+    autorestRepositoryPath: $(Build.SourcesDirectory)/autorest
+    toolsRepositoryPath: $(Build.SourcesDirectory)/azure-sdk-tools
+    sdkRepositoryPath: $(Build.SourcesDirectory)/azure-sdk
+    buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
+  jobs:
+  - job: Publish
+    steps:
+    - checkout: self
+      path: s/autorest
+    - checkout: azure-sdk-tools
+
+    - download: current
+      artifact: build_artifacts
+      displayName: Download build artifacts
+
+    # Create authenticated .npmrc file for publishing
+    - ${{ if eq(parameters.PublishTarget, 'internal') }}:
+      - template: ../steps/create-authenticated-npmrc.yml
+        parameters:
+          npmrcPath: $(buildArtifactsPath)/packages/.npmrc
+          registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js-test-autorest/npm/registry/
+    - ${{ else }}:
+      - pwsh: |
+          "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" | Out-File '.npmrc'
+        displayName: Authenticate .npmrc for npmjs.org
+        workingDirectory: $(buildArtifactsPath)/packages
+
+    # per package, publishing using appropriate tool
+    - ${{ each package in parameters.Packages }}:
+      - ${{ if eq(package.type, 'npm') }}:
+        - pwsh: |
+            $file = Resolve-Path "${{ package.file }}"
+            Write-Host "npm publish $file --access public"
+            npm publish $file --access public
+          displayName: Publish ${{ package.name }}
+          workingDirectory: $(buildArtifactsPath)/packages
+      - ${{ elseif eq(package.type, 'nuget') }}:
+        # Nuget packages are always published to the same internal feed. PublishTarget doesn't affect this.
+        - task: NuGetCommand@2
+          displayName: Publish ${{ package.name }}
+          inputs:
+            command: 'push'
+            packagesToPush: $(buildArtifactsPath)/packages/${{ package.file }}
+            nuGetFeedType: 'internal'
+            # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
+            publishVstsFeed: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+      - ${{ else }}:
+        - script: |
+            echo "Package ${{ package.name }} has unsupported type: ${{ package.type }}"
+            exit 1
+          displayName: 'Unsupported package type'
+
+    - task: PowerShell@2
+      displayName: Create emitter-package-lock.json
+      inputs:
+        pwsh: true
+        filePath: $(toolsRepositoryPath)/eng/scripts/autorest/New-EmitterPackageLock.ps1
+        ${{ if eq(parameters.PublishTarget, 'internal') }}:
+          arguments: >
+            -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
+            -OutputDirectory "$(Build.ArtifactStagingDirectory)"
+            -NpmrcPath "$(buildArtifactsPath)/packages/.npmrc"
+        ${{ else }}:
+          arguments: >
+            -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
+            -OutputDirectory "$(Build.ArtifactStagingDirectory)"
+
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: publish_artifacts
+      displayName: Publish artifacts directory
+
+- stage: Regenerate
+  dependsOn:
+  - Build
+  - Publish
+  variables:
+    autorestRepositoryPath: $(Build.SourcesDirectory)/autorest
+    toolsRepositoryPath: $(Build.SourcesDirectory)/azure-sdk-tools
+    sdkRepositoryPath: $(Build.SourcesDirectory)/azure-sdk
+    sdkRepositoryName: $[stageDependencies.Build.Build.outputs['repositories.sdk-repository.name']]
+    pullRequestTargetBranch: $[coalesce(stageDependencies.Build.Build.outputs['repositories.sdk-repository.branch'], 'main')]
+    sdkRepositoryCommitSha: $[stageDependencies.Build.Build.outputs['repositories.sdk-repository.version']]
+    buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
+    publishArtifactsPath: $(Pipeline.Workspace)/publish_artifacts
+    branchName: auto-update-typespec-emitter-alpha-$(Build.BuildNumber)
+  jobs:
+  - job: Initialize
+    steps:
+    - template: ../../../common/pipelines/templates/steps/sparse-checkout.yml
+      parameters:
+        Paths:
+        - "/*"
+        - "!SessionRecords"
+        Repositories:
+        - Name: Azure/$(sdkRepositoryName)
+          WorkingDirectory: $(sdkRepositoryPath)
+          Commitish: $(sdkRepositoryCommitSha)
+        SkipCheckoutNone: true
+    - checkout: self
+      path: s/autorest
+    - checkout: azure-sdk-tools
+
+    - download: current
+      artifact: build_artifacts
+      displayName: Download build artifacts
+
+    - download: current
+      artifact: publish_artifacts
+      displayName: Download pubish artifacts
+
+    - pwsh: |
+        Write-Host "Copying emitter-package.json to $(sdkRepositoryPath)/eng"
+        Copy-Item $(buildArtifactsPath)/emitter-package.json $(sdkRepositoryPath)/eng -Force
+
+        Write-Host "Copying emitter-package-lock.json to $(sdkRepositoryPath)/eng"
+        Copy-Item $(publishArtifactsPath)/emitter-package-lock.json $(sdkRepositoryPath)/eng -Force
+      displayName: Copy emitter-package json files
+
+    - ${{ parameters.SdkInitializationSteps }}
+
+    - template: /eng/common/pipelines/templates/steps/git-push-changes.yml
+      parameters:
+        BaseRepoOwner: azure-sdk
+        TargetRepoName: $(sdkRepositoryName)
+        BaseRepoBranch: $(branchName)
+        CommitMsg: Initialize repository for emitter build $(Build.BuildNumber)
+        WorkingDirectory: $(sdkRepositoryPath)
+        ScriptDirectory: $(toolsRepositoryPath)/eng/common/scripts
+
+    - task: PowerShell@2
+      displayName: Get generation job matrix
+      name: generate_matrix
+      inputs:
+        pwsh: true
+        workingDirectory: $(sdkRepositoryPath)
+        filePath: $(sdkRepositoryPath)/eng/common/scripts/New-RegenerateMatrix.ps1
+        arguments: >
+          -OutputDirectory "$(Build.ArtifactStagingDirectory)"
+          -OutputVariableName matrix
+          -JobCount ${{ parameters.RegenerationJobCount }}
+
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: matrix_artifacts
+      displayName: Publish matrix artifacts
+
+  - job: Regenerate
+    dependsOn: Initialize
+    strategy:
+      matrix: $[dependencies.Initialize.outputs['generate_matrix.matrix']]
+    variables:
+      matrixArtifactsPath: $(Pipeline.Workspace)/matrix_artifacts
+    steps:
+    - checkout: self
+    - checkout: azure-sdk-tools
+    - template: ../../../common/pipelines/templates/steps/sparse-checkout.yml
+      parameters:
+        Paths:
+        - "/*"
+        - "!SessionRecords"
+        Repositories:
+        - Name: azure-sdk/$(sdkRepositoryName)
+          WorkingDirectory: $(sdkRepositoryPath)
+          Commitish: $(branchName)
+        SkipCheckoutNone: true
+
+    - download: current
+      artifact: build_artifacts
+      displayName: Download build artifacts
+    - download: current
+      artifact: publish_artifacts
+      displayName: Download pubish artifacts
+    - download: current
+      artifact: matrix_artifacts
+      displayName: Download matrix artifacts
+
+    - task: PowerShell@2
+      displayName: Call regeneration script
+      inputs:
+        pwsh: true
+        workingDirectory: $(sdkRepositoryPath)
+        filePath: $(sdkRepositoryPath)/eng/common/scripts/Update-GeneratedSdks.ps1
+        arguments: >
+          -PackageFoldersFile "$(matrixArtifactsPath)/$(FolderList)"
+
+    - template: /eng/common/pipelines/templates/steps/git-push-changes.yml
+      parameters:
+        BaseRepoOwner: azure-sdk
+        TargetRepoName: $(sdkRepositoryName)
+        BaseRepoBranch: $(branchName)
+        CommitMsg: Update SDK codes $(JobKey)
+        WorkingDirectory: $(sdkRepositoryPath)
+        ScriptDirectory: $(toolsRepositoryPath)/eng/common/scripts
+
+  - job: Create_PR
+    displayName: Create PR
+    dependsOn: 
+    - Regenerate
+    condition: succeededOrFailed()
+    steps:
+    - checkout: self
+    - checkout: azure-sdk-tools
+
+    - task: PowerShell@2
+      displayName: Get source pr url
+      inputs:
+        pwsh: true
+        filePath: $(toolsRepositoryPath)/eng/common/scripts/Get-PullRequestUrl.ps1
+        arguments: >
+          -RepositoryName '$(Build.Repository.Name)'
+          -SourceBranch '$(Build.SourceBranch)'
+          -Variable 'PRUrl'
+
+    - task: PowerShell@2
+      displayName: Create pull request
+      inputs:
+        pwsh: true
+        filePath: $(toolsRepositoryPath)/eng/common/scripts/Submit-PullRequest.ps1
+        arguments: >
+          -RepoOwner 'Azure'
+          -RepoName '$(sdkRepositoryName)'
+          -BaseBranch '$(pullRequestTargetBranch)'
+          -PROwner 'azure-sdk'
+          -PRBranch '$(branchName)'
+          -AuthToken '$(azuresdk-github-pat)'
+          -PRTitle 'Autorest Regen Preview alpha-$(Build.BuildNumber) by $(Build.QueuedBy) from $(Build.SourceBranch)'
+          -PRBody 'Triggered from $(PRUrl)'
+          -OpenAsDraft $true
+          -PRLabels 'Do Not Merge'

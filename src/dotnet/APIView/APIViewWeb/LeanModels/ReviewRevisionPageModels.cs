@@ -30,5 +30,6 @@ namespace APIViewWeb.LeanModels
         public bool PageHasLoadableSections { get; set; }
         public string NotificationMessage { get; set; }
         public ReviewContentModelDirective Directive { get; set; }
+        public Dictionary<string, ReviewContentModel> CrossLanguageViewContent { get; set; } = new Dictionary<string, ReviewContentModel>();
     }
 }

@@ -2,6 +2,7 @@ import { rightOffCanvasNavToggle } from "../shared/off-canvas";
 
 import * as rvM from "./review.module"
 import * as hp from "../shared/helpers";
+import * as cm from "../shared/comments.module";
 
 $(() => {  
   const SHOW_DOC_CHECKBOX = ".show-documentation-checkbox";
@@ -36,6 +37,9 @@ $(() => {
         rvM.findTargetAnchorWithinSections(targetAnchorId);
       }
     }
+
+    // Enable cross Language Comments Indicator
+    cm.crossLanguageViewCommentIndicator();
   });
 
   /* ADD FUNCTIONS TO LEFT NAVIGATION
@@ -117,19 +121,20 @@ $(() => {
       var leftContainer = $("#review-left");
       var rightContainer = $("#review-right");
       var gutter = $(".gutter-horizontal");
-
-      if (leftContainer.hasClass("d-none")) {
-        leftContainer.removeClass("d-none");
-        rightContainer.removeClass("col-12");
-        rightContainer.addClass("col-10");
-        rvM.splitReviewPageContent();
-      }
-      else {
-        leftContainer.addClass("d-none");
-        rightContainer.css("flex-basis", "100%");
-        gutter.remove();
-        rightContainer.removeClass("col-10");
-        rightContainer.addClass("col-12");
+      if (leftContainer.length && rightContainer.length) {
+        if (leftContainer.hasClass("d-none")) {
+          leftContainer.removeClass("d-none");
+          rightContainer.removeClass("col-12");
+          rightContainer.addClass("col-10");
+          rvM.splitReviewPageContent();
+        }
+        else {
+          leftContainer.addClass("d-none");
+          rightContainer.css("flex-basis", "100%");
+          gutter.remove();
+          rightContainer.removeClass("col-10");
+          rightContainer.addClass("col-12");
+        }
       }
     });
   });
@@ -215,7 +220,7 @@ $(() => {
 
   // Manage Expand / Collapse State of options
   [$("#approveCollapse"), $("#requestReviewersCollapse"), $("#reviewOptionsCollapse"), $("#pageSettingsCollapse"),
-    $("#associatedPRCollapse"), $("#associatedReviewsCollapse"), $("#generateAIReviewCollapse")].forEach(function (value, index) {
+    $("#associatedPRCollapse"), $("#associatedReviewsCollapse"), $("#generateAIReviewCollapse"), $("#crossLangReviewCollapse")].forEach(function (value, index) {
     const id = value.attr("id");
     value.on('hidden.bs.collapse', function () {
       document.cookie = `${id}=hidden; max-age=${7 * 24 * 60 * 60}`;
@@ -245,5 +250,86 @@ $(() => {
       type: "POST",
       url: uri
     });
+  });
+
+
+  /* CROSS LANGUAGE VIEW
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  $("#load-cross-language-view").on("click", function (e: JQuery.ClickEvent) {
+    const crossLangusges = $(".cross-lang-view-switch");
+    const uri = new URL(window.location.href);
+    const urlParams = new URLSearchParams(uri.search);
+    urlParams.delete("crossLanguage");
+    crossLangusges.each(function (index, value) {
+      const language = value.querySelector("label")?.textContent;
+      const isChecked = value.querySelector("input")?.checked;
+      if (isChecked) {
+        urlParams.append("crossLanguage", encodeURIComponent(language!));
+      }
+    });
+    uri.search = urlParams.toString();
+    window.location.href = uri.toString()
+  })
+
+  // Load Cross Language Panel
+  $(".cl-line-no").on("click", function (e: JQuery.ClickEvent) {
+    e.preventDefault();
+    const codeLine = $(this).closest(".code-line");
+    const crossLangId = codeLine.data("cross-lang-id");
+    const crossLangTables = $("#cross-language-code-lines > table");
+    const crossLangCodeLines = new Map()
+    const crossLangPanel = $("#cross-language-view-template > tbody").children().clone();
+    const rowSibling = codeLine.next();
+    let showPanel = false;
+
+    crossLangTables.each(function (index, value) {
+      const langId = $(value).attr("data-language");
+      const dataReviewId = $(value).attr("data-review-id");
+      const dataRevisionId = $(value).attr("data-revision-id");
+      const codeLines = $(value).find(`[data-cross-lang-id='${crossLangId}']`).clone();
+      crossLangPanel.find(".cross-language-pills-tab-content").attr("data-review-id", dataReviewId!);
+      crossLangPanel.find(".cross-language-pills-tab-content").attr("data-revision-id", dataRevisionId!);
+      crossLangCodeLines.set(langId, codeLines);
+    });
+
+    if (rowSibling.hasClass("cross-language-panel")) {
+      rowSibling.toggleClass("d-none");
+    } else {
+      const clTabs = crossLangPanel.find('[id^="cross-lang-pills-tab"]');
+      const clPills = crossLangPanel.find('[id^="cross-lang-pills-content-"]');
+      const randomizer = Date.now().toString(36);
+
+      clTabs.each(function (index, value) {
+        const tbId = $(value).attr("id") + randomizer;
+        const tbTarget = $(value).attr("data-bs-target") + randomizer;
+        const tbAria = $(value).attr("aria-controls") + randomizer;
+        $(value).attr("id", tbId);
+        $(value).attr("data-bs-target", tbTarget);
+        $(value).attr("aria-controls", tbAria);
+      });
+
+      clPills.each(function (index, value) {
+        const pillId = $(value).attr("id");
+        const pillIdParts = pillId?.split('-');
+        const pillLang = pillIdParts![pillIdParts!.length - 1];
+        const pillLabel = $(value).attr("aria-labelledby") + randomizer;
+        const crossLangContent = crossLangCodeLines.get(pillLang);
+        $(value).attr("id", (pillId + randomizer));
+        $(value).attr("aria-labelledby", pillLabel);
+        if (crossLangContent && crossLangContent.length > 0) {
+          showPanel = true;
+          $(value).html(crossLangContent);
+          const comments = crossLangContent.find(".review-comment");
+          if (comments.length > 0) {
+            crossLangPanel.find(`#cross-lang-pills-tab-${pillLang}${randomizer}`)[0].innerHTML += `<span class="badge rounded-pill text-bg-danger">${comments.length}</span>`;
+          }
+        }
+      });
+
+      if (showPanel) {
+        codeLine.after(crossLangPanel);
+        rvM.addCrossLaguageCloseBtnHandler();
+      }
+    }
   });
 });

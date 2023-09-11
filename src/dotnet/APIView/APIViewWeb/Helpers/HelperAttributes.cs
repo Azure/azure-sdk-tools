@@ -1,13 +1,8 @@
 using System;
-using System.Globalization;
 using System.ComponentModel.DataAnnotations;
-using System.Reflection;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text;
 using APIViewWeb.Pages.Assemblies;
 
 namespace APIViewWeb.Helpers

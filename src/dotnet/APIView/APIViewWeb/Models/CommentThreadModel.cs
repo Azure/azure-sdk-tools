@@ -12,6 +12,7 @@ namespace APIViewWeb.Models
         {
             ReviewId = reviewId;
             LineId = lineId;
+            CrossLanguageId = comments.FirstOrDefault().CrossLanguageId;
             LineClass = comments.FirstOrDefault().SectionClass;
             Comments = comments;
             var resolveComment = comments.FirstOrDefault(c => c.IsResolved);
@@ -22,6 +23,7 @@ namespace APIViewWeb.Models
         public string ReviewId { get; set; }
         public IEnumerable<CommentItemModel> Comments { get; set; }
         public string LineId { get; set; }
+        public string CrossLanguageId { get; set; }
         public string LineClass { get; set; }
         public bool IsResolved { get; set; }
         public string ResolvedBy { get; set; }

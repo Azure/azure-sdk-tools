@@ -228,6 +228,11 @@
     background: url(/icons/swagger-original.svg) center/contain no-repeat;
 }
 
+.icon-typespec {
+    @extend .icon-language;
+    background: url(/icons/typespec-original.svg) center center no-repeat;
+}
+
 .icon-comments {
     cursor: pointer;
     position: absolute;

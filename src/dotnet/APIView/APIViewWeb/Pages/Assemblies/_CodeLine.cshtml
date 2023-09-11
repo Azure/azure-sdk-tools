@@ -62,6 +62,7 @@
     }
 
     var userPreference = TempData["UserPreference"] as UserPreferenceModel ?? new UserPreferenceModel();
+    var crossLanguageView = TempData["CrossLanguageEntries"] as IEnumerable<string>;
 
     // Always show hidden APIs if we are in Diff mode and there are changes.
     if (Model.CodeLine.IsHiddenApi && Model.Kind == DiffLineKind.Unchanged)
@@ -80,6 +81,7 @@
         lineClass += " code-delta";
         isHeadingWithDelta = true;
     }
+
     var rowClass = RemoveMultipleSpaces($"code-line {headingClass} {codeLineClass} {lineClass} {codeLineDisplay} {documentationRow} {hiddenApiRow}");
     var cellContent = String.Empty;
     for (int i = 0; i < Model.CodeLine.Indent; i++)
@@ -100,7 +102,7 @@
     cellContent += Model.CodeLine.DisplayString;
 }
 
-<tr class="@rowClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+<tr class="@rowClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)" data-cross-lang-id="@(isRemoved ? string.Empty : Model.CodeLine.CrossLanguageDefinitionId)">
     <td class="line-details @lineClass">
         <table>
             <tr>
@@ -111,7 +113,11 @@
                 }
                 else
                 {
-                    var lineNumberClass = RemoveMultipleSpaces($"line-number");
+                    var lineNumberClass = $"line-number";
+                    @if (crossLanguageView.Any() && !String.IsNullOrEmpty(Model.CodeLine.CrossLanguageDefinitionId) && PageModelHelpers.IsAPIStubHeader(Model.CodeLine.DisplayString))
+                    {
+                        lineNumberClass = $"{lineNumberClass} cl-line-no";                     }
+
                     if (Model.CodeLine.IsDocumentation)
                     {
                         <td class="@lineNumberClass"><span class="invisible"></span></td>

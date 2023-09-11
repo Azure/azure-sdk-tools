@@ -1,5 +1,7 @@
 # tox-monorepo
 
+**Note** This plugin doesn't work with tox 4. However, tox 4 has good monorepo support out of the box with the [--root](https://tox.wiki/en/stable/cli_interface.html#tox---root) command line argument.
+
 This plugin changes {toxinidir} to be the directory that executes the tox command, rather than where the tox.ini actually lives on disk. This allows a monorepo to easily share a single tox.ini file rather than have to keep copies up to date.
 
 Features

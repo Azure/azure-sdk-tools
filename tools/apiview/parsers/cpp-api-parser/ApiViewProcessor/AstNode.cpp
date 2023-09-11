@@ -573,8 +573,8 @@ class AstDeclRefExpr : public AstExpr {
 
 public:
   AstDeclRefExpr(DeclRefExpr const* expression, ASTContext& context)
-      : AstExpr(expression, context), m_referencedName{
-                                          expression->getFoundDecl()->getQualifiedNameAsString()}
+      : AstExpr(expression, context),
+        m_referencedName{expression->getFoundDecl()->getQualifiedNameAsString()}
   {
   }
   virtual void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
@@ -1106,9 +1106,9 @@ AstNamedNode::AstNamedNode(
     NamedDecl const* namedDecl,
     AzureClassesDatabase* const database,
     std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-    : AstNode(namedDecl),
-      m_namespace{AstNode::GetNamespaceForDecl(namedDecl)}, m_name{namedDecl->getNameAsString()},
-      m_classDatabase(database), m_navigationId{namedDecl->getQualifiedNameAsString()},
+    : AstNode(namedDecl), m_namespace{AstNode::GetNamespaceForDecl(namedDecl)},
+      m_name{namedDecl->getNameAsString()}, m_classDatabase(database),
+      m_navigationId{namedDecl->getQualifiedNameAsString()},
       m_nodeDocumentation{AstNode::GetCommentForNode(namedDecl->getASTContext(), namedDecl)},
       m_nodeAccess{namedDecl->getAccess()}
 {
@@ -1472,8 +1472,8 @@ public:
       AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(templateParam, database, parentNode),
-        m_paramName{templateParam->getNameAsString()}, m_isParameterPack{
-                                                           templateParam->isParameterPack()}
+        m_paramName{templateParam->getNameAsString()},
+        m_isParameterPack{templateParam->isParameterPack()}
   {
     for (auto attr : templateParam->attrs())
     {
@@ -1487,7 +1487,7 @@ public:
 
     if (templateParam->hasDefaultArgument())
     {
-      auto defaultArg = templateParam->getDefaultArgument().getArgument();
+      auto const& defaultArg = templateParam->getDefaultArgument().getArgument();
       switch (defaultArg.getKind())
       {
 
@@ -1813,9 +1813,13 @@ public:
 
 class AstMethod : public AstFunction {
 protected:
-  bool m_isVirtual;
-  bool m_isConst;
-  bool m_isPure;
+  bool m_isVirtual{};
+  bool m_isConst{};
+  bool m_isPure{};
+  bool m_isOverride{};
+  bool m_isImplicitOverride{};
+  bool m_isFinal{};
+  bool m_isImplicitFinal{};
   RefQualifierKind m_refQualifier;
 
 public:
@@ -1826,6 +1830,60 @@ public:
       : AstFunction(method, database, parentNode), m_isVirtual(method->isVirtual()),
         m_isPure(method->isPure()), m_isConst(method->isConst())
   {
+    // We assume that this is an implicit override if there are overriden methods. If we later find
+    // an override attribute, we know it's not an implicit override.
+    //
+    // Note that we don't do this for destructors, because they typically won't have an override
+    // attribute.
+    //
+    // Also note that if size_overriden_methods is non-zero, it means that the base class method is
+    // already virtual.
+    //
+    if (method->getKind() == Decl::Kind::CXXMethod)
+    {
+      if (method->size_overridden_methods() > 0)
+      {
+        m_isOverride = true;
+        m_isImplicitOverride = true;
+      }
+    }
+
+    for (auto& attr : method->attrs())
+    {
+      auto location{attr->getLocation()};
+      switch (attr->getKind())
+      {
+        case attr::Override:
+          m_isImplicitOverride = false;
+          break;
+        case attr::Final:
+          if (attr->isImplicit())
+          {
+            method->dump(llvm::outs());
+            //            database->CreateApiViewMessage(ApiViewMessages::ImplicitOverride,
+            //            m_navigationId);
+
+            m_isImplicitFinal = true;
+          }
+          else
+          {
+            m_isFinal = true;
+          }
+          break;
+        case attr::Deprecated:
+          break;
+        default:
+          llvm::outs() << "Unknown Method Attribute: ";
+          attr->printPretty(llvm::outs(), LangOptions());
+          llvm::outs() << "\n";
+          break;
+      }
+    }
+    if (m_isOverride && m_isImplicitOverride)
+    {
+      database->CreateApiViewMessage(ApiViewMessages::ImplicitOverride, m_navigationId);
+    }
+
     auto typePtr = method->getType().getTypePtr()->castAs<FunctionProtoType>();
     m_refQualifier = typePtr->getRefQualifier();
     m_parentClass = method->getParent()->getNameAsString();
@@ -1875,6 +1933,16 @@ public:
       dumper->InsertPunctuation('=');
       dumper->InsertWhitespace();
       dumper->InsertLiteral("0");
+    }
+    if (m_isOverride)
+    {
+      dumper->InsertWhitespace();
+      dumper->InsertKeyword("override");
+    }
+    if (m_isFinal)
+    {
+      dumper->InsertWhitespace();
+      dumper->InsertKeyword("final");
     }
     if (dumpOptions.NeedsTrailingSemi)
     {
@@ -1963,6 +2031,7 @@ class AstDestructor : public AstMethod {
   bool m_isDefault{false};
   bool m_isDeleted{false};
   bool m_isExplicitlyDefaulted{false};
+  bool m_isVirtual{false};
 
 public:
   AstDestructor(
@@ -1970,8 +2039,37 @@ public:
       AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstMethod(dtor, database, parentNode), m_isDefault{dtor->isDefaulted()},
-        m_isDeleted{dtor->isDeleted()}, m_isExplicitlyDefaulted{dtor->isExplicitlyDefaulted()}
+        m_isDeleted{dtor->isDeleted()}, m_isExplicitlyDefaulted{dtor->isExplicitlyDefaulted()},
+        m_isVirtual{dtor->isVirtual()}
   {
+    bool isBaseClassDtor{true};
+    // If this destructor overrides a base class destructor, it's not a base class destructor.
+    if (dtor->size_overridden_methods() != 0)
+    {
+      isBaseClassDtor = false;
+    }
+    if (dtor->getAccess() == AS_protected)
+    {
+      if (dtor->isVirtual())
+      {
+        database->CreateApiViewMessage(ApiViewMessages::NonVirtualDestructor, m_navigationId);
+      }
+    }
+    else if (dtor->getAccess() == AS_public)
+    {
+      if (!dtor->isVirtual())
+      {
+        auto parentClass = dtor->getParent();
+        if (!parentClass->isEffectivelyFinal())
+        {
+          database->CreateApiViewMessage(ApiViewMessages::NonVirtualDestructor, m_navigationId);
+        }
+      }
+    }
+    else
+    {
+      database->CreateApiViewMessage(ApiViewMessages::NonVirtualDestructor, m_navigationId);
+    }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
@@ -2380,9 +2478,9 @@ public:
       AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(fieldDecl, azureClassesDatabase, parentNode),
-        m_fieldType{fieldDecl->getType()}, m_initializer{AstExpr::Create(
-                                               fieldDecl->getInClassInitializer(),
-                                               fieldDecl->getASTContext())},
+        m_fieldType{fieldDecl->getType()},
+        m_initializer{
+            AstExpr::Create(fieldDecl->getInClassInitializer(), fieldDecl->getASTContext())},
         m_classInitializerStyle{fieldDecl->getInClassInitStyle()},
         m_hasDefaultMemberInitializer{fieldDecl->hasInClassInitializer()},
         m_isMutable{fieldDecl->isMutable()}, m_isConst{fieldDecl->getType().isConstQualified()}
@@ -2453,8 +2551,9 @@ public:
       UsingDirectiveDecl const* usingDirective,
       AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNode(usingDirective), m_namedNamespace{usingDirective->getNominatedNamespaceAsWritten()
-                                                      ->getQualifiedNameAsString()}
+      : AstNode(usingDirective),
+        m_namedNamespace{
+            usingDirective->getNominatedNamespaceAsWritten()->getQualifiedNameAsString()}
   {
     azureClassesDatabase->CreateApiViewMessage(
         ApiViewMessages::UsingDirectiveFound, m_namedNamespace);
@@ -2572,8 +2671,8 @@ public:
       : AstNamedNode(enumDecl, azureClassesDatabase, parentNode),
         m_underlyingType{enumDecl->getIntegerType().getAsString()},
         m_isScoped{enumDecl->isScoped()}, m_isScopedWithClass{enumDecl->isScopedUsingClassTag()},
-        m_isFixed{enumDecl->isFixed()}, m_isForwardDeclaration{
-                                            enumDecl != enumDecl->getDefinition()}
+        m_isFixed{enumDecl->isFixed()},
+        m_isForwardDeclaration{enumDecl != enumDecl->getDefinition()}
   {
     if (!m_isScoped)
     {

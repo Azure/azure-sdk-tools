@@ -116,25 +116,25 @@ protected:
 };
 
 class FinalClassWithPrivateDestructor final {
-    int* member{};
-    ~FinalClassWithPrivateDestructor()
+  int* member{};
+  ~FinalClassWithPrivateDestructor()
+  {
+    if (member)
     {
-        if (member)
-        {
-        delete member;
-      }
-    };
+      delete member;
+    }
+  };
 };
 
 class ClassWithPrivateDestructor {
-    int* member{};
-    ~ClassWithPrivateDestructor()
+  int* member{};
+  ~ClassWithPrivateDestructor()
+  {
+    if (member)
     {
-      if (member)
-      {
-        delete member;
-      }
-    };
+      delete member;
+    }
+  };
 };
 
 } // namespace Test

@@ -71,7 +71,7 @@ void AzureClassesDatabase::CreateApiViewMessage(
       newMessage.DiagnosticId = "CPA0009";
       newMessage.DiagnosticText = "Implicit override of virtual method. Consider using the "
                                   "'override' keyword to make the override semantics explicit.";
-      newMessage.Level = ApiViewMessage::MessageLevel::Error;
+      newMessage.Level = ApiViewMessage::MessageLevel::Info;
       newMessage.HelpLinkUri = "https://isocpp.github.io/CppCoreGuidelines/"
                                "CppCoreGuidelines#c128-virtual-functions-should-specify-exactly-"
                                "one-of-virtual-override-or-final";

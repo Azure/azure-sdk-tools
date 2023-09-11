@@ -1487,7 +1487,7 @@ public:
 
     if (templateParam->hasDefaultArgument())
     {
-      auto const&defaultArg = templateParam->getDefaultArgument().getArgument();
+      auto const& defaultArg = templateParam->getDefaultArgument().getArgument();
       switch (defaultArg.getKind())
       {
 
@@ -1833,7 +1833,12 @@ public:
     // We assume that this is an implicit override if there are overriden methods. If we later find
     // an override attribute, we know it's not an implicit override.
     //
-    // Note that we don't do this for destructors, because they don't have an override attribute.
+    // Note that we don't do this for destructors, because they typically won't have an override
+    // attribute.
+    //
+    // Also note that if size_overriden_methods is non-zero, it means that the base class method is
+    // already virtual.
+    //
     if (method->getKind() == Decl::Kind::CXXMethod)
     {
       if (method->size_overridden_methods() > 0)

@@ -763,6 +763,11 @@ try {
         }
         Log $msg
 
+        # Validate the deployment
+        Test-AzResourceGroupDeployment -ResourceGroupName $resourceGroup.ResourceGroupName `
+        -TemplateFile $templateFile.jsonFilePath `
+        -TemplateParameterObject $templateFileParameters
+
         $deployment = Retry {
             New-AzResourceGroupDeployment `
                     -Name $BaseName `

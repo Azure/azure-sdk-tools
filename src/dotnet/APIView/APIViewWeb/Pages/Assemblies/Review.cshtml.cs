@@ -328,7 +328,7 @@ namespace APIViewWeb.Pages.Assemblies
                         // Add sepearator to show skipping lines. for e.g. .....
                         if (filteredLines.Count > 0)
                         {
-                            filteredLines.Add(new InlineDiffLine<CodeLine>(new CodeLine(DIFF_CONTEXT_SEPERATOR, null, null), DiffLineKind.Unchanged));
+                            filteredLines.Add(new InlineDiffLine<CodeLine>(new CodeLine(DIFF_CONTEXT_SEPERATOR, null, null, null), DiffLineKind.Unchanged));
                         }
 
                         while (preContextIndx < i)

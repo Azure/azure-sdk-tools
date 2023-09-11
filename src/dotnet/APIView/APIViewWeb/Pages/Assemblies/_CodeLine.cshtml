@@ -100,7 +100,7 @@
     cellContent += Model.CodeLine.DisplayString;
 }
 
-<tr class="@rowClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+<tr class="@rowClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)" data-cross-lang-id="@(isRemoved ? string.Empty : Model.CodeLine.CrossLanguageDefinitionId)">
     <td class="line-details @lineClass">
         <table>
             <tr>

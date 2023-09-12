@@ -524,7 +524,7 @@ Add a more expansive Header sanitizer that uses a target group instead of filter
 
 ```jsonc
 // POST to URI <proxyURL>/Admin/AddSanitizer
-// dictionary dictionary
+// headers
 {
     "x-abstraction-identifier": "HeaderRegexSanitizer"
 }
@@ -548,6 +548,36 @@ Each sanitizer is optionally prefaced with the **specific part** of the request/
 - `Body`
 
 A sanitizer that does _not_ include this prefix is something different, and probably applies at the session level instead on an individual request/response pair.
+
+#### Passing sanitizers in bulk
+
+In some cases, users need to register a lot (10+) of sanitizers. In this case, going back and forth with the proxy server individually is not very efficient. To ameliorate this, the proxy honors multiple sanitizers in the same request if the user utilizes `/Admin/AddSanitizers`.
+
+```jsonc
+// POST to URI <proxyURL>/Admin/AddSanitizers
+// note the request body is simply an array of objects
+[
+    {
+        "Name": "GeneralRegexSanitizer",
+        "Body": { 
+            "regex": "[a-zA-Z]?",
+            "value": "hello_there",
+            "condition": {
+                "UriRegex": ".+/Tables"
+            }
+        }
+    },
+    {
+        "Name": "HeaderRegexSanitizer",
+        "Body": { // <-- the contents of this property mirror what would be passed in the request body for individual AddSanitizer()
+            "key": "Location",
+            "value": "fakeaccount",
+            "regex": "https\\:\\/\\/(?<account>[a-z]+)\\.(?:table|blob|queue)\\.core\\.windows\\.net",
+            "groupForReplace": "account"
+        }
+    }
+]
+```
 
 ### For Sanitizers, Matchers, or Transforms in general
 

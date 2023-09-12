@@ -237,7 +237,15 @@ async function main() {
         generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
         break;
       case "update":
-        // TODO update tsp-location.yaml
+        if (options.repo && !options.commit) {
+            throw new Error("Commit SHA is required when specifying `--repo`, please specify a commit using `--commit`");
+        }
+        if (options.commit) {
+          let [ directory, commit, repo, additionalDirectories ] = await readTspLocation(rootUrl);
+          commit = options.commit ?? commit;
+          repo = options.repo ?? repo;
+          await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${options.commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);
+        }
         syncAndGenerate({outputDir: rootUrl, noCleanup: options.noCleanup});
         break;
       default:

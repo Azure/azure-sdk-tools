@@ -172,7 +172,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task<string> Restore(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
 
-            var restoreQueue = InitTasks.GetOrAdd("restore", new TaskQueue());
+            var restoreQueue = InitTasks.GetOrAdd(config.AssetsJsonRelativeLocation, new TaskQueue());
+
             await restoreQueue.EnqueueAsync(async () =>
             {
                 var initialized = IsAssetsRepoInitialized(config);

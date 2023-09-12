@@ -25,7 +25,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             messageFormat, DiagnosticCategory.Naming, DiagnosticSeverity.Warning, isEnabledByDefault: true,
             description: Description);
 
-        // Avoid to use suffixes "Request", "Parameter", "Otpion", "Response", "Collection"
+        // Avoid to use suffixes "Request(s)", "Parameter(s)", "Option(s)", "Response(s)", "Collection"
         private static readonly Regex generalSuffixRegex = new Regex(".+(?<Suffix>(Requests?)|(Responses?)|(Parameters?)|(Options?)|(Collection))$");
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(AZC0030); } }

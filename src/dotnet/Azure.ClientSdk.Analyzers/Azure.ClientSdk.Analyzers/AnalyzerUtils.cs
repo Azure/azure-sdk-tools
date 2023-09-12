@@ -4,6 +4,8 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Azure.ClientSdk.Analyzers
 {
@@ -54,7 +56,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private static string GetNamespace(SyntaxNode node)
         {
-            var ns = string.Empty;
+            var namespaces = new List<string>();
 
             var parent = node.Parent;
 
@@ -67,7 +69,7 @@ namespace Azure.ClientSdk.Analyzers
 
             if (parent is BaseNamespaceDeclarationSyntax namespaceParent)
             {
-                ns = namespaceParent.Name.ToString();
+                namespaces.Add(namespaceParent.Name.ToString());
 
                 while (true)
                 {
@@ -76,12 +78,13 @@ namespace Azure.ClientSdk.Analyzers
                         break;
                     }
 
-                    ns = $"{namespaceParent.Name}.{ns}";
+                    namespaces.Add(namespaceParent.Name.ToString());
                     namespaceParent = parentNamespace;
                 }
             }
 
-            return ns;
+
+            return string.Join(".", namespaces.Reverse<string>());
         }
     }
 }

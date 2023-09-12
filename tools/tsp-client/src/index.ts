@@ -3,85 +3,13 @@ import * as path from "node:path";
 import { installDependencies } from "./npm.js";
 import { createTempDirectory, removeDirectory,readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
-import { compileTsp, resolveCliOptions } from "./typespec.js";
+import { compileTsp, discoverMainFile, getEmitterOptions, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, readdir, writeFile, cp, readFile } from "node:fs/promises";
+import { mkdir, writeFile, cp, readFile } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { fetch } from "./network.js";
 import { parse as parseYaml } from "yaml";
 
-async function getEmitterOptions(rootUrl: string, tempRoot: string, emitter: string, saveInputs: boolean, additionalOptions?: string): Promise<Record<string, any>> {
-  // TODO: Add a way to specify emitter options like Language-Settings.ps1, could be a languageSettings.ts file
-  let emitterOptions: Record<string, Record<string, unknown>> = {};
-  emitterOptions[emitter] = {};
-  if (additionalOptions) {
-    emitterOptions = resolveCliOptions(additionalOptions.split(","));
-  } else {
-    const configData = await readFile(path.join(tempRoot, "tspconfig.yaml"), "utf8");
-    const configYaml = parseYaml(configData);
-  
-    if (configYaml["options"] && configYaml["options"][emitter]){
-      emitterOptions[emitter] = configYaml["options"][emitter];
-      for (const key in emitterOptions[emitter]!) {
-        Object.keys(emitterOptions![emitter]!).forEach(
-          (k) => {
-            if (`{${k}}` === emitterOptions[emitter]![key]) {
-              emitterOptions[emitter]![key] = emitterOptions[emitter]![k];
-            }
-          });
-      }
-    }
-  }
-  if (emitterOptions[emitter] && !emitterOptions[emitter]!["emitter-output-dir"]) {
-    emitterOptions[emitter]!["emitter-output-dir"] = rootUrl;
-  }
-  if (saveInputs) {
-    if (emitterOptions[emitter] === undefined) {
-      emitterOptions[emitter] = {};
-    }
-    emitterOptions[emitter]!["save-inputs"] = true;
-  }
-  Logger.debug(`Using emitter options: ${JSON.stringify(emitterOptions)}`);
-  return emitterOptions;
-}
-
-async function resolveTspConfigUrl(configUrl: string): Promise<{
-  resolvedUrl: string;
-  commit: string;
-  repo: string;
-  path: string;
-}> {
-  let resolvedConfigUrl = configUrl;
-
-  const res = configUrl.match('^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)/tspconfig.yaml$')
-  if (res && res.groups) {
-    if (res.groups["urlRoot"]! === "github") {
-      resolvedConfigUrl = configUrl.replace("github.com", "raw.githubusercontent.com");
-      resolvedConfigUrl = resolvedConfigUrl.replace("/blob/", "/");
-    }
-    return {
-      resolvedUrl: resolvedConfigUrl,
-      commit: res.groups!["commit"]!,
-      repo: res.groups!["repo"]!,
-      path: res.groups!["path"]!,
-    }
-  } else {
-    throw new Error(`Invalid tspconfig.yaml url: ${configUrl}`);
-  }
-}
-async function discoverMainFile(srcDir: string): Promise<string> {
-  Logger.debug(`Discovering entry file in ${srcDir}`)
-  let entryTsp = "";
-  const files = await readdir(srcDir, {recursive: true });
-  for (const file of files) {
-    if (file.includes("client.tsp") || file.includes("main.tsp")) {
-      entryTsp = file;
-      Logger.debug(`Found entry file: ${entryTsp}`);
-      return entryTsp;
-    }
-  };
-  throw new Error(`No main.tsp or client.tsp found`);
-}
 
 async function sdkInit(
   {

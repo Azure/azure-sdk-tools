@@ -611,7 +611,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             try
             {
-                var assetStore = (await _defaultStore.ParseConfigurationFile(Path.Join(testFolder, target1))).ResolveAssetsStoreLocation();
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(Path.Join(testFolder, target1));
+                var assetStore = parsedConfiguration.ResolveAssetsStoreLocation(parsedConfiguration.RepoRoot);
 
                 var breadCrumbs = new List<string>();
 

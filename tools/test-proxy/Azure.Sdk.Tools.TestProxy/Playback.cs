@@ -37,7 +37,10 @@ namespace Azure.Sdk.Tools.TestProxy
                 HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true),
                 _recordingHandler.ContextDirectory);
 
-            _logger.LogInformation($"recording: {recordingId ?? "null"}\nbody: {body.ToString()}");
+
+            var logBody = body == null ? "" : body.ToString();
+
+            _logger.LogInformation($"recording: {recordingId ?? "null"}\nbody: {logBody}");
 
             if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))
             {

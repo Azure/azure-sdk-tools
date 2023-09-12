@@ -309,7 +309,12 @@ function HasDoNotDeleteTag([object]$ResourceGroup) {
   return $doNotDelete -ne $null
 }
 
-function HasDeleteLock() {
+function HasDeleteLock([object]$ResourceGroup) {
+  $lock = Get-AzResourceLock -ResourceGroupName $ResourceGroup.ResourceGroupName
+  if ($lock) {
+    Write-Host " Skipping locked resource group '$($ResourceGroup.ResourceGroupName)'"
+    return $true
+  }
   return $false
 }
 
@@ -347,7 +352,10 @@ function DeleteOrUpdateResourceGroups() {
     if (HasValidAliasInName $rg) {
       continue
     }
-    if (HasValidOwnerTag $rg -or HasDeleteLock $rg) {
+    if (HasValidOwnerTag $rg) {
+      continue
+    }
+    if (HasDeleteLock $rg) {
       continue
     }
     $toUpdate += $rg

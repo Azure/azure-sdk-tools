@@ -244,7 +244,14 @@ async function main() {
           let [ directory, commit, repo, additionalDirectories ] = await readTspLocation(rootUrl);
           commit = options.commit ?? commit;
           repo = options.repo ?? repo;
-          await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${options.commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);
+          await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);
+        }
+        if (options.tspConfig) {
+          let [ directory, commit, repo, additionalDirectories ] = await readTspLocation(rootUrl);
+          let tspConfig = await resolveTspConfigUrl(options.tspConfig);
+          commit = tspConfig.commit ?? commit;
+          repo = tspConfig.repo ?? repo;
+          await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);
         }
         syncAndGenerate({outputDir: rootUrl, noCleanup: options.noCleanup});
         break;

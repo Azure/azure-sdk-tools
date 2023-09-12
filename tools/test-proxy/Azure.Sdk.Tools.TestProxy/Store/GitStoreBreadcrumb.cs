@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
         public string GetBreadCrumbLocation(GitAssetsConfiguration configuration)
         {
-            var breadCrumbFolder = Path.Combine(configuration.ResolveAssetsStoreLocation().ToString(), "breadcrumb");
+            var breadCrumbFolder = Path.Combine(configuration.ResolveAssetsStoreLocation(configuration.RepoRoot).ToString(), "breadcrumb");
 
             if (!Directory.Exists(breadCrumbFolder))
             {

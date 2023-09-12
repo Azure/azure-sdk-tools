@@ -325,6 +325,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             // we are already on a targeted tag and as such don't want to discard our recordings
             if (Assets.TryGetValue(config.AssetsJsonRelativeLocation.ToString(), out var value) && value == config.Tag)
             {
+                _consoleWrapper.WriteLine($"Found cached tag {config.Tag}, returning.");
                 return;
             }
             // if we are NOT on our targeted tag, before we attempt to switch we need to reset without asking for permission
@@ -334,6 +335,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             var checkoutPaths = ResolveCheckoutPaths(config);
+
+            _consoleWrapper.WriteLine($"Getting stack trace before checkout");
+            _consoleWrapper.WriteLine(Environment.StackTrace);
 
             try
             {

@@ -37,6 +37,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true),
                 _recordingHandler.ContextDirectory);
 
+            _logger.LogInformation($"recording: {recordingId ?? "null"}\nbody: {body.ToString()}");
+
             if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))
             {
                 await _recordingHandler.StartPlaybackAsync(recordingId, Response, RecordingType.InMemory, assetsJson);
@@ -63,8 +65,6 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task Reset([FromBody()] IDictionary<string, object> options = null)
         {
-            DebugLogger.LogAdminRequestDetails(_logger, Request);
-
             var pathToAssets = RecordingHandler.GetAssetsJsonLocation(StoreResolver.ParseAssetsJsonBody(options), _recordingHandler.ContextDirectory);
 
             await _recordingHandler.Store.Reset(pathToAssets);

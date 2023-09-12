@@ -90,9 +90,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Used to resolve the location of the "assets" store location. This is the folder CONTAINING other cloned repos. No git data will be restored or staged directly within this folder.
         /// </summary>
         /// <returns></returns>
-        public NormalizedString ResolveAssetsStoreLocation()
+        public NormalizedString ResolveAssetsStoreLocation(string repoRoot)
         {
-            var location = Environment.GetEnvironmentVariable("PROXY_ASSETS_FOLDER") ?? Path.Join(RepoRoot.ToString(), ".assets");
+            var location = Environment.GetEnvironmentVariable("PROXY_ASSETS_FOLDER") ?? Path.Join(repoRoot.ToString(), ".assets");
             if (!Directory.Exists(location))
             {
                 Directory.CreateDirectory(location);
@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public NormalizedString ResolveAssetRepoLocation()
         {
-            var assetsStore = ResolveAssetsStoreLocation();
+            var assetsStore = ResolveAssetsStoreLocation(RepoRoot);
 
             var location = Path.Join(assetsStore.ToString(), AssetRepoShortHash);
             if (!Directory.Exists(location))

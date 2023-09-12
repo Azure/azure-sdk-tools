@@ -172,15 +172,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task<string> Restore(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
 
-            var initialized = IsAssetsRepoInitialized(config);
-
-            if (!initialized)
+            var restoreQueue = InitTasks.GetOrAdd("restore", new TaskQueue());
+            await restoreQueue.EnqueueAsync(async () =>
             {
-                InitializeAssetsRepo(config);
-            }
+                var initialized = IsAssetsRepoInitialized(config);
 
-            CheckoutRepoAtConfig(config, cleanEnabled: true);
-            await BreadCrumb.Update(config);
+                if (!initialized)
+                {
+                    InitializeAssetsRepo(config);
+                }
+
+                CheckoutRepoAtConfig(config, cleanEnabled: true);
+                await BreadCrumb.Update(config);
+            });
 
             return config.AssetsRepoLocation.ToString();
         }

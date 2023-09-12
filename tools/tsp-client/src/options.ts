@@ -8,7 +8,7 @@ export interface Options {
   debug: boolean;
   command: string;
   tspConfig?: string;
-  emitter: string | undefined;
+  emitter?: string;
   mainFile?: string;
   outputDir: string;
   noCleanup: boolean;
@@ -17,6 +17,7 @@ export interface Options {
   repo?: string;
   isUrl: boolean;
   localSpecRepo?: string;
+  emitterOptions?: string;
 }
 
 export async function getOptions(): Promise<Options> {
@@ -58,6 +59,9 @@ export async function getOptions(): Promise<Options> {
       repo: {
         type: "string",
         short: "R",
+      },
+      ["emitter-options"]: {
+        type: "string",
       },
       ["local-spec-repo"]: {
         type: "string",
@@ -143,5 +147,6 @@ export async function getOptions(): Promise<Options> {
     repo: values.repo,
     isUrl: isUrl,
     localSpecRepo: values["local-spec-repo"],
+    emitterOptions: values["emitter-options"],
   };
 }

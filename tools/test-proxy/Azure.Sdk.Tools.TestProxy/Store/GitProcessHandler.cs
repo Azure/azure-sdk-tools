@@ -115,6 +115,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             ProcessStartInfo processStartInfo = CreateGitProcessInfo(workingDirectory);
+
             processStartInfo.Arguments = arguments;
 
             CommandResult result = new CommandResult()
@@ -131,7 +132,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     int attempts = 1;
                     while (attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
                     {
-                        DebugLogger.LogInformation($"git {arguments}");
+                        DebugLogger.LogInformation($"git {arguments} in {workingDirectory}");
 
                         var output = new List<string>();
                         var error = new List<string>();
@@ -284,7 +285,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     bool continueToAttempt = true;
                     while (continueToAttempt && attempts <= RETRY_INTERMITTENT_FAILURE_COUNT)
                     {
-                        DebugLogger.LogInformation($"git {arguments}");
+                        DebugLogger.LogInformation($"git {arguments} in {workingDirectory}");
                         var output = new List<string>();
                         var error = new List<string>();
 

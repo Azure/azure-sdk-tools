@@ -39,7 +39,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
 
             var logBody = body == null ? "" : body.ToString();
-
             _logger.LogInformation($"recording: {recordingId ?? "null"}\nbody: {logBody}");
 
             if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))

@@ -34,15 +34,22 @@ namespace Azure.ClientSdk.Analyzers
 
         private static bool IsSdkNamespace(string ns)
         {
-            var namespaces = ns.Split('.');
-            // skip Azure or Azure.Core
-            if (namespaces.Length >= 2)
-            {
-                return namespaces[0] == "Azure" &&
-                    namespaces[1] != "Core";
-            }
+            var namespaces = ns.AsSpan();
+            // if the namespace contains only one level, it's not SDK namespace
+            var indexOfFirstDot = namespaces.IndexOf('.');
+            if (indexOfFirstDot == -1)
+                return false;
 
-            return false;
+            // first namespace must be `Azure`
+            var firstNamespace = namespaces.Slice(0, indexOfFirstDot);
+            if (!firstNamespace.Equals("Azure".AsSpan(), StringComparison.Ordinal))
+                return false;
+
+            // second namespace must not be `Core`
+            var remainingNamespace = namespaces.Slice(indexOfFirstDot + 1);
+            var indexOfSecondDot = remainingNamespace.IndexOf('.');
+            var seondNamespace = (indexOfSecondDot == -1 ? remainingNamespace : remainingNamespace.Slice(0, indexOfSecondDot));
+            return !seondNamespace.Equals("Core".AsSpan(), StringComparison.Ordinal);
         }
 
         private static string GetNamespace(SyntaxNode node)

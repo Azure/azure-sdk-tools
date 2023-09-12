@@ -42,9 +42,9 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             }
         }
 
-        protected virtual bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context) => false;
-        protected virtual Regex SuffixRegex => throw new NotImplementedException();
-        protected virtual Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context) => throw new NotImplementedException();
+        protected abstract bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context);
+        protected abstract Regex SuffixRegex { get; }
+        protected abstract Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context);
 
         // check if a given symbol is the sub-type of the given type
         protected bool IsTypeOf(INamedTypeSymbol typeSymbol, string namespaceName, string typeName)

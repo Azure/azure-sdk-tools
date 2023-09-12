@@ -71,7 +71,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         {
             for (var namespaceSymbol = typeSymbol.ContainingNamespace; namespaceSymbol != null; namespaceSymbol = namespaceSymbol.ContainingNamespace)
             {
-                if (namespaceSymbol.Name.Split('.').Any(name => name == "Models"))
+                if (namespaceSymbol.Name == "Models")
                     return true;
             }
             return false;

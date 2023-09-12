@@ -26,13 +26,13 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             description: Description);
 
         // Avoid to use suffixes "Request(s)", "Parameter(s)", "Option(s)", "Response(s)", "Collection"
-        private static readonly Regex generalSuffixRegex = new Regex(".+(?<Suffix>(Requests?)|(Responses?)|(Parameters?)|(Options?)|(Collection))$");
+        private static readonly string[] generalSuffixes = new string[] { "Request", "Requests", "Response", "Responses", "Parameter", "Parameters", "Option", "Options", "Collection"};
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(AZC0030); } }
 
         protected override bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context) => reservedNames.Contains(symbol.Name);
 
-        protected override Regex SuffixRegex => generalSuffixRegex;
+        protected override string[] SuffixesToCatch => generalSuffixes;
         protected override Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context)
         {
             var name = typeSymbol.Name;

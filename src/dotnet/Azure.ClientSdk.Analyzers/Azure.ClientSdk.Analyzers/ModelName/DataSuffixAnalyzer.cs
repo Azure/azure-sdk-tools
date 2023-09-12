@@ -22,7 +22,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             GeneralRenamingMessageFormat, DiagnosticCategory.Naming, DiagnosticSeverity.Warning, isEnabledByDefault: true,
             description: Description);
 
-        private static readonly Regex DataSuffixRegex = new Regex(".+(?<Suffix>(Data))$");
+        private static readonly string[] dataSuffix = new string[] { "Data" };
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(AZC0032); } }
 
@@ -30,7 +30,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         protected override bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context) => IsTypeOf(symbol, "Azure.ResourceManager.Models", "ResourceData") ||
             IsTypeOf(symbol, "Azure.ResourceManager.Models", "TrackedResourceData");
 
-        protected override Regex SuffixRegex => DataSuffixRegex;
+        protected override string[] SuffixesToCatch => dataSuffix;
 
         protected override Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context)
         {

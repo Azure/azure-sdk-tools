@@ -22,7 +22,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             GeneralRenamingMessageFormat, DiagnosticCategory.Naming, DiagnosticSeverity.Warning, isEnabledByDefault: true,
             description: Description);
 
-        private static readonly Regex conditionSuffixRegex = new Regex(".+(?<Suffix>(Definition?))$");
+        private static readonly string[] definitionSuffix = new string[] { "Definition" };
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(AZC0031); } }
 
@@ -37,7 +37,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             return context.Compilation.GetTypeByMetadataName($"{symbol.ContainingNamespace.GetFullNamespaceName()}.{suggestedName}") is not null;
         }
 
-        protected override Regex SuffixRegex => conditionSuffixRegex;
+        protected override string[] SuffixesToCatch => definitionSuffix;
 
         protected override Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context)
         {

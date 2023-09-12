@@ -22,14 +22,14 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             messageFormat, DiagnosticCategory.Naming, DiagnosticSeverity.Warning, isEnabledByDefault: true,
             description: Description);
 
-        private static readonly Regex operationSuffixRegex = new Regex(".+(?<Suffix>(Operation))$");
+        private static readonly string[] operationSuffix = new string[] { "Operation" };
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(AZC0033); } }
 
         // Unless the model derivew from Operation
         protected override bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context) => IsTypeOf(symbol, "Azure", "Operation");
 
-        protected override Regex SuffixRegex => operationSuffixRegex;
+        protected override string[] SuffixesToCatch => operationSuffix;
         protected override Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context)
         {
             var name = typeSymbol.Name;

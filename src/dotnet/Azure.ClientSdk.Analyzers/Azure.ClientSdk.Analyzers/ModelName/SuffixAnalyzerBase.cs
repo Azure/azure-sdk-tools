@@ -31,19 +31,21 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         private void AnalyzeSymbol(SymbolAnalysisContext context)
         {
             var typeSymbol = (INamedTypeSymbol)context.Symbol;
-            if (!IsClassUnderModelsNamespace(typeSymbol) || AnalyzerUtils.IsNotSdkCode(typeSymbol))
+            if (!IsClassUnderModelsNamespace(typeSymbol) || AnalyzerUtils.IsNotSdkCode(typeSymbol) || ShouldSkip(typeSymbol, context))
                 return;
 
-            var match = SuffixRegex.Match(typeSymbol.Name);
-            if (match.Success && !ShouldSkip(typeSymbol, context))
+            foreach (var suffix in SuffixesToCatch)
             {
-                var suffix = match.Groups["Suffix"].Value;
-                context.ReportDiagnostic(GetDiagnostic(typeSymbol, suffix, context));
+                if (typeSymbol.Name.EndsWith(suffix))
+                {
+                    context.ReportDiagnostic(GetDiagnostic(typeSymbol, suffix, context));
+                    return;
+                }
             }
         }
 
         protected abstract bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context);
-        protected abstract Regex SuffixRegex { get; }
+        protected abstract string[] SuffixesToCatch { get; }
         protected abstract Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context);
 
         // check if a given symbol is the sub-type of the given type

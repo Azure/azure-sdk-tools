@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.CodeOwnersParser.Constants;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
@@ -133,7 +134,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         /// calling tool malformed.
         /// </summary>
         private static bool IsCommentedOutPath(string codeownersPathExpression)
-            => codeownersPathExpression.Trim().StartsWith("#");
+            => codeownersPathExpression.Trim().StartsWith(SeparatorConstants.Comment);
 
         /// <summary>
         /// See the comment on unsupportedChars.

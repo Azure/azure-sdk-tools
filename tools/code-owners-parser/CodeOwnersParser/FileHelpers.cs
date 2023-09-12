@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -19,6 +20,27 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             throw new ArgumentException(
                 "The path provided is neither local path nor https link. " +
                 $"Please check your path: '{fileOrUrl}' resolved to '{fullPath}'.");
+        }
+
+        /// <summary>
+        /// Load the CODEOWNERS file from the repository into an List&lt;string&gt;. 
+        /// Q) Why is this necessary?
+        /// A) There are some pieces of metadata that require looking forward to ensure correctness.
+        /// </summary>
+        /// <param name="fileOrUrl">The file path or URL of the CODEOWNERS file</param>
+        /// <returns>A List&lt;string&gt; representing the CODEOWNERS file</returns>
+        public static List<string> LoadCodeownersFileAsStringList(string fileOrUrl)
+        {
+            List<string> codeownersFileAsList = new List<string>();
+            // GetFileOrUrlContents will throw
+            string content = GetFileOrUrlContents(fileOrUrl);
+            using StringReader sr = new StringReader(content);
+            while (sr.ReadLine() is { } line)
+            {
+                codeownersFileAsList.Add(line);
+            }
+
+            return codeownersFileAsList;
         }
 
         private static string GetUrlContents(string url)

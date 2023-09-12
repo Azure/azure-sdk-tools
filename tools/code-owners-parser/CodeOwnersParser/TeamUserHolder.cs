@@ -5,14 +5,14 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.CodeOwnersParser.Constants;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
     public class TeamUserHolder
     {
-        private string TeamUserStorageURI { get; set; } = DefaultStorageConstants.DefaultStorageURI;
+        private string TeamUserStorageURI { get; set; } = DefaultStorageConstants.TeamUserBlobUri;
         private Dictionary<string, List<string>>? _teamUserDict = null;
-
         public Dictionary<string, List<string>> TeamUserDict
         {
             get
@@ -45,7 +45,11 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 var list = JsonSerializer.Deserialize<List<KeyValuePair<string, List<string>>>>(rawJson);
                 if (null != list)
                 {
-                    return list.ToDictionary((keyItem) => keyItem.Key, (valueItem) => valueItem.Value);
+                    // The StringComparer needs to be set in order to do an case insensitive lookup. GitHub's teams
+                    // and users are case insensitive but case preserving. This means that a team can be @Azure/SomeTeam
+                    // but, in a CODEOWNERS file, it can be @azure/someteam and queries to get users for the team need to
+                    // succeed regardless of casing.
+                    return list.ToDictionary((keyItem) => keyItem.Key, (valueItem) => valueItem.Value, StringComparer.InvariantCultureIgnoreCase);
                 }
                 Console.WriteLine($"Error! Unable to deserialize json team/user data from {TeamUserStorageURI}. rawJson={rawJson}");
                 return new Dictionary<string, List<string>>();
@@ -58,11 +62,11 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // The teamName in the codeowners file should be in the form <org>/<team>.
             // The dictionary's team names do not contain the org so the org needs to
             // be stripped off. Handle the case where the teamName passed in does and
-            // does not being with @org/
+            // does not begin with @org/
             string teamWithoutOrg = teamName.Trim();
-            if (teamWithoutOrg.Contains('/'))
+            if (teamWithoutOrg.Contains(SeparatorConstants.Team))
             {
-                teamWithoutOrg = teamWithoutOrg.Split("/")[1];
+                teamWithoutOrg = teamWithoutOrg.Split(SeparatorConstants.Team, StringSplitOptions.TrimEntries)[1];
             }
             if (TeamUserDict != null)
             {

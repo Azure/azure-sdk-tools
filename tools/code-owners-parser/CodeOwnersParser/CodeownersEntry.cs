@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.CodeOwnersParser.Constants;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
@@ -19,12 +20,6 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
     /// </summary>
     public class CodeownersEntry
     {
-        const char LabelSeparator = '%';
-        const char OwnerSeparator = '@';
-        public const string PRLabelMoniker = "PRLabel";
-        public const string ServiceLabelMoniker = "ServiceLabel";
-        public const string MissingFolder = "#/<NotInRepo>/";
-       
         public string PathExpression { get; set; } = "";
 
         public bool ContainsWildcard => PathExpression.Contains('*');
@@ -57,14 +52,14 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
 
         public bool ProcessLabelsOnLine(string line)
         {
-            if (line.Contains(PRLabelMoniker, StringComparison.OrdinalIgnoreCase))
+            if (line.Contains(MonikerConstants.PRLabel, StringComparison.OrdinalIgnoreCase))
             {
-                PRLabels.AddRange(ParseLabels(line, PRLabelMoniker));
+                PRLabels.AddRange(ParseLabels(line, MonikerConstants.PRLabel));
                 return true;
             }
-            else if (line.Contains(ServiceLabelMoniker, StringComparison.OrdinalIgnoreCase))
+            else if (line.Contains(MonikerConstants.ServiceLabel, StringComparison.OrdinalIgnoreCase))
             {
-                ServiceLabels.AddRange(ParseLabels(line, ServiceLabelMoniker));
+                ServiceLabels.AddRange(ParseLabels(line, MonikerConstants.ServiceLabel));
                 return true;
             }
             return false;
@@ -79,14 +74,14 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             }
 
             // If we don't have a ':', nothing to do
-            int colonPosition = line.IndexOf(':');
+            int colonPosition = line.IndexOf(SeparatorConstants.Colon);
             if (colonPosition == -1)
             {
                 yield break;
             }
 
             line = line[(colonPosition + 1)..].Trim();
-            foreach (string label in SplitLine(line, LabelSeparator).ToList())
+            foreach (string label in SplitLine(line, SeparatorConstants.Label).ToList())
             {
                 yield return label;
             }
@@ -98,7 +93,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
                 string.IsNullOrEmpty(line)
                 || (IsComment(line)
                     && !line.Contains(
-                        CodeownersEntry.MissingFolder, StringComparison.OrdinalIgnoreCase)))
+                        MonikerConstants.MissingFolder, StringComparison.OrdinalIgnoreCase)))
             {
                 return;
             }
@@ -110,9 +105,9 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // won't work. For example, the following line would end up causing "/sdk/communication" to
             // be added as an owner when one is not listed
             // /sdk/communication/
-            if (line.Contains(OwnerSeparator))
+            if (line.Contains(SeparatorConstants.Owner))
             {
-                foreach (string author in SplitLine(line, OwnerSeparator).ToList())
+                foreach (string author in SplitLine(line, SeparatorConstants.Owner).ToList())
                 {
                     // If the author is a team, get the user list and add that to the Owners
                     if (!IsGitHubUserAlias(author))
@@ -146,13 +141,13 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         }
 
         private static bool IsComment(string line)
-            => line.StartsWith("#");
+            => line.StartsWith(SeparatorConstants.Comment);
 
         private static string RemoveCommentIfAny(string line)
         {
             // this is the case when we have something like @user #comment
 
-            int commentIndex = line.IndexOf("#", StringComparison.OrdinalIgnoreCase);
+            int commentIndex = line.IndexOf(SeparatorConstants.Comment, StringComparison.OrdinalIgnoreCase);
 
             if (commentIndex >= 0)
                 line = line[..commentIndex].Trim();
@@ -163,7 +158,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         private string ParsePath(string line)
         {
             // Get the start of the owner in the string
-            int ownerStartPosition = line.IndexOf('@');
+            int ownerStartPosition = line.IndexOf(SeparatorConstants.Owner);
             if (ownerStartPosition == -1)
             {
                 return line;
@@ -194,7 +189,7 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
             // due to rate limiting. So instead we are approximating the check
             // by check for a slash in the name if there is one then we will consider
             // it to be a team instead of a users. 
-            if (alias.Contains('/'))
+            if (alias.Contains(SeparatorConstants.Team))
             {
                 return false;
             }

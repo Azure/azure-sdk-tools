@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using Azure.Sdk.Tools.CodeOwnersParser.Constants;
 
 namespace Azure.Sdk.Tools.CodeOwnersParser
 {
@@ -113,10 +114,10 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         }
 
         private static bool IsPlaceholderEntry(string line)
-            => line.Contains(CodeownersEntry.MissingFolder, StringComparison.OrdinalIgnoreCase);
+            => line.Contains(MonikerConstants.MissingFolder, StringComparison.OrdinalIgnoreCase);
 
         private static bool IsCommentLine(string line)
-            => line.StartsWith("#");
+            => line.StartsWith(SeparatorConstants.Comment);
 
         private static string NormalizeLine(string line)
             => !string.IsNullOrEmpty(line)

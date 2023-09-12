@@ -1,20 +1,29 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 
 namespace Azure.ClientSdk.Analyzers
 {
     public static class INamespaceSymbolExtensions
     {
-        public static string GetFullNamespaceName(this INamespaceSymbol namespaceSymbo)
+        public static string GetFullNamespaceName(this INamespaceSymbol namespaceSymbol)
         {
-            if (namespaceSymbo is { ContainingNamespace: not null and { IsGlobalNamespace: false} })
+            return string.Join(".", GetAllNamespaces(namespaceSymbol));
+        }
+
+        private static IList<string> GetAllNamespaces(INamespaceSymbol namespaceSymbol)
+        {
+            if (namespaceSymbol is { ContainingNamespace: not null and { IsGlobalNamespace: false } })
             {
-                return $"{namespaceSymbo.ContainingNamespace.GetFullNamespaceName()}.{namespaceSymbo.Name}";
+                var namespaces = GetAllNamespaces(namespaceSymbol.ContainingNamespace);
+                namespaces.Add(namespaceSymbol.Name);
+                return namespaces;
             }
 
-            return namespaceSymbo.Name;
+            return new List<string> { namespaceSymbol.Name };
+
         }
     }
 }

@@ -29,17 +29,17 @@ _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
 class GptReviewer:
 
-    def __init__(self, log_prompt: bool = False):
+    def __init__(self, s: bool = False):
         self.llm = AzureChatOpenAI(client=openai.ChatCompletion, deployment_name="gpt-4", openai_api_version=OPENAI_API_VERSION, temperature=0)
         self.output_parser = PydanticOutputParser(pydantic_object=GuidelinesResult)
-        if log_prompt:
+        if log_prompts:
             # remove the folder if it exists
             base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
             if os.path.exists(base_path):
                 import shutil
                 shutil.rmtree(base_path)
             os.makedirs(base_path)
-            os.environ["APIVIEW_LOG_PROMPT"] = str(log_prompt)
+            os.environ["APIVIEW_LOG_PROMPT"] = str(log_prompts)
             os.environ["APIVIEW_PROMPT_INDEX"] = "0"
 
         self.prompt_template = PromptTemplate(
@@ -231,8 +231,8 @@ def _custom_generate(
 ) -> "LLMResult":
     """Generate LLM result from inputs."""
     prompts, stop = self.prep_prompts(input_list, run_manager=run_manager)
-    log_prompt = os.getenv("APIVIEW_LOG_PROMPT", "False").lower() == "true"
-    if log_prompt:
+    log_prompts = os.getenv("APIVIEW_LOG_PROMPT", "False").lower() == "true"
+    if log_prompts:
         base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
         for prompt in prompts:
             request_no = os.environ.get("APIVIEW_PROMPT_INDEX", 0)

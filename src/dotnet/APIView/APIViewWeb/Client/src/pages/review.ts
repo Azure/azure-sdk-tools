@@ -32,7 +32,6 @@ $(() => {
 
     // Scroll ids into view for Ids hidden in collapsed sections
     const uriHash = location.hash;
-    console.log(`Initial uriHash: ${uriHash}`);
     if (uriHash) {
       let targetAnchorId = uriHash.replace('#', '');
       targetAnchorId = decodeURIComponent(targetAnchorId);
@@ -264,4 +263,18 @@ $(() => {
       url: uri
     });
   });
+
+
+  /* LINE DETAILS CONTEXT MENU
+  --------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  // Hide Menu on click outside
+  $(document).on("click", function () {
+    rvM.toggleLineContextMenu(rvM.ContextMenuAction.hide);
+  })
+
+  // Show context Menu
+  $(".line-number").on("contextmenu", function (e: JQuery.ContextMenuEvent) {
+    e.preventDefault();
+    rvM.toggleLineContextMenu(rvM.ContextMenuAction.show, e);
+  })
 });

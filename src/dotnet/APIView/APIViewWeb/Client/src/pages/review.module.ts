@@ -39,6 +39,7 @@ export function splitReviewPageContent() {
 //-------------------------------------------------------------------------------------------------
 
 export enum CodeLineSectionState { shown, hidden }
+export enum ContextMenuAction { show, hide }
 
 /**
 * Get the section row that was clicked
@@ -735,3 +736,26 @@ export function addApprover(lowerTextSpan: HTMLElement, approvedByText: string, 
       }
     }
   }
+
+
+/**
+* Toggle line-context-menu
+*/
+export function toggleLineContextMenu(action: ContextMenuAction, e: any = undefined) {
+
+  const contextMenu = $("#line-context-menu");
+
+  if (action == ContextMenuAction.hide && contextMenu.css("display") == "block") {
+    console.log("Context Menu Trigger Hide")
+    contextMenu.css("display", "none");
+  }
+  else if (action == ContextMenuAction.show) {
+    console.log("Context Menu Trigger Open")
+    $("#line-context-menu").css("display", "block");
+
+    if (e) {
+      $("#line-context-menu").css("left", `${e.pageX}px`);
+      $("#line-context-menu").css("top", `${e.pageY}px`);
+    }
+  }
+}

@@ -62,7 +62,7 @@ stages:
       name: build_script
       workingDirectory: $(autorestRepositoryPath)
 
-    - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}
+    - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
       - task: PowerShell@2
         displayName: Create emitter-package.json
         inputs:
@@ -160,7 +160,7 @@ stages:
             exit 1
           displayName: 'Unsupported package type'
 
-    - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}
+    - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
       - task: PowerShell@2
         displayName: Create emitter-package-lock.json
         inputs:
@@ -219,7 +219,7 @@ stages:
       artifact: publish_artifacts
       displayName: Download pubish artifacts
 
-    - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}
+    - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
       - pwsh: |
           Write-Host "Copying emitter-package.json to $(sdkRepositoryPath)/eng"
           Copy-Item $(buildArtifactsPath)/emitter-package.json $(sdkRepositoryPath)/eng -Force

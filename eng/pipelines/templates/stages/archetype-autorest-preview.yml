@@ -10,6 +10,7 @@ parameters:
   type: string
 - name: EmitterPackageJsonPath
   type: string
+  default: 'not-specified'
 - name: BuildSteps
   type: stepList
   default: []
@@ -61,15 +62,16 @@ stages:
       name: build_script
       workingDirectory: $(autorestRepositoryPath)
 
-    - task: PowerShell@2
-      displayName: Create emitter-package.json
-      inputs:
-        pwsh: true
-        filePath: $(toolsRepositoryPath)/eng/scripts/autorest/New-EmitterPackageJson.ps1
-        arguments: >
-          -PackageJsonPath '${{ parameters.EmitterPackageJsonPath }}'
-          -OutputDirectory '$(Build.ArtifactStagingDirectory)'
-        workingDirectory: $(autorestRepositoryPath)
+    - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}
+      - task: PowerShell@2
+        displayName: Create emitter-package.json
+        inputs:
+          pwsh: true
+          filePath: $(toolsRepositoryPath)/eng/scripts/autorest/New-EmitterPackageJson.ps1
+          arguments: >
+            -PackageJsonPath '${{ parameters.EmitterPackageJsonPath }}'
+            -OutputDirectory '$(Build.ArtifactStagingDirectory)'
+          workingDirectory: $(autorestRepositoryPath)
 
     - publish: $(Build.ArtifactStagingDirectory)
       artifact: build_artifacts
@@ -158,20 +160,21 @@ stages:
             exit 1
           displayName: 'Unsupported package type'
 
-    - task: PowerShell@2
-      displayName: Create emitter-package-lock.json
-      inputs:
-        pwsh: true
-        filePath: $(toolsRepositoryPath)/eng/scripts/autorest/New-EmitterPackageLock.ps1
-        ${{ if eq(parameters.PublishTarget, 'internal') }}:
-          arguments: >
-            -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
-            -OutputDirectory "$(Build.ArtifactStagingDirectory)"
-            -NpmrcPath "$(buildArtifactsPath)/packages/.npmrc"
-        ${{ else }}:
-          arguments: >
-            -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
-            -OutputDirectory "$(Build.ArtifactStagingDirectory)"
+    - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}
+      - task: PowerShell@2
+        displayName: Create emitter-package-lock.json
+        inputs:
+          pwsh: true
+          filePath: $(toolsRepositoryPath)/eng/scripts/autorest/New-EmitterPackageLock.ps1
+          ${{ if eq(parameters.PublishTarget, 'internal') }}:
+            arguments: >
+              -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
+              -OutputDirectory "$(Build.ArtifactStagingDirectory)"
+              -NpmrcPath "$(buildArtifactsPath)/packages/.npmrc"
+          ${{ else }}:
+            arguments: >
+              -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
+              -OutputDirectory "$(Build.ArtifactStagingDirectory)"
 
     - publish: $(Build.ArtifactStagingDirectory)
       artifact: publish_artifacts
@@ -190,7 +193,7 @@ stages:
     sdkRepositoryCommitSha: $[stageDependencies.Build.Build.outputs['repositories.sdk-repository.version']]
     buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
     publishArtifactsPath: $(Pipeline.Workspace)/publish_artifacts
-    branchName: auto-update-typespec-emitter-alpha-$(Build.BuildNumber)
+    branchName: auto-update-autorest-alpha-$(Build.BuildNumber)
   jobs:
   - job: Initialize
     steps:
@@ -216,13 +219,14 @@ stages:
       artifact: publish_artifacts
       displayName: Download pubish artifacts
 
-    - pwsh: |
-        Write-Host "Copying emitter-package.json to $(sdkRepositoryPath)/eng"
-        Copy-Item $(buildArtifactsPath)/emitter-package.json $(sdkRepositoryPath)/eng -Force
+    - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}
+      - pwsh: |
+          Write-Host "Copying emitter-package.json to $(sdkRepositoryPath)/eng"
+          Copy-Item $(buildArtifactsPath)/emitter-package.json $(sdkRepositoryPath)/eng -Force
 
-        Write-Host "Copying emitter-package-lock.json to $(sdkRepositoryPath)/eng"
-        Copy-Item $(publishArtifactsPath)/emitter-package-lock.json $(sdkRepositoryPath)/eng -Force
-      displayName: Copy emitter-package json files
+          Write-Host "Copying emitter-package-lock.json to $(sdkRepositoryPath)/eng"
+          Copy-Item $(publishArtifactsPath)/emitter-package-lock.json $(sdkRepositoryPath)/eng -Force
+        displayName: Copy emitter-package json files
 
     - ${{ parameters.SdkInitializationSteps }}
 
@@ -231,7 +235,7 @@ stages:
         BaseRepoOwner: azure-sdk
         TargetRepoName: $(sdkRepositoryName)
         BaseRepoBranch: $(branchName)
-        CommitMsg: Initialize repository for emitter build $(Build.BuildNumber)
+        CommitMsg: Initialize repository for autorest build $(Build.BuildNumber)
         WorkingDirectory: $(sdkRepositoryPath)
         ScriptDirectory: $(toolsRepositoryPath)/eng/common/scripts
 

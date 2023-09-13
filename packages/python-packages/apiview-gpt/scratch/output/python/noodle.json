@@ -1,0 +1,44 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming",
+                "python_design.html#python-namespaces-async",
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 30,
+            "bad_code": "class azure.contoso.NoodleAsyncManager:",
+            "suggestion": "Separate client classes for synchronous and asynchronous operations.",
+            "comment": "Service client types should be named with a Client suffix. Use an .aio suffix added to the namespace of the sync client for async clients. Do not combine async and sync operations in the same class."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-constructor-policy-arguments"
+            ],
+            "line_no": 31,
+            "bad_code": "async def __init__(self, endpoint, credential, options: dict)",
+            "suggestion": "async def __init__(self, endpoint, credential, **kwargs)",
+            "comment": "Accept optional default request options as keyword arguments and pass them along to its pipeline policies."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming",
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 43,
+            "bad_code": "class azure.contoso.NoodleManager:",
+            "suggestion": "Provide two separate client classes for synchronous and asynchronous operations.",
+            "comment": "The class name should have a 'Client' suffix. Do not combine async and sync operations in the same class."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-connection-string"
+            ],
+            "line_no": 49,
+            "bad_code": "connection_string: Optional[str],",
+            "suggestion": "Remove the connection_string parameter from the constructor and create a separate factory classmethod from_connection_string to create a client from a connection string.",
+            "comment": "The constructor (__init__ method) must not take a connection string."
+        }
+    ]
+}

@@ -627,5 +627,10 @@
             </div>
         </div>
     </form>
-    <partial name="_CommentFormPartial" model="@Model.TaggableUsers" /> 
+    <partial name="_CommentFormPartial" model="@Model.TaggableUsers" />
+
+    <div id="line-context-menu" class="line-context-menu list-group" style="display: none">
+        <a href="#" class="list-group-item list-group-item-action" aria-current="true"><i class="far fa-comment-alt"></i> Add Comment</a>
+        <a href="#" class="list-group-item list-group-item-action" aria-current="true"><i class="fa-solid fa-table-columns"></i> View Cross Language</a>
+    </div>
 </div>

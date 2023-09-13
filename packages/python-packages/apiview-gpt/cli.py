@@ -82,7 +82,10 @@ def generate_review(language: str, path: str):
     with open(path, "r") as f:
         apiview = f.read()
     review = rg.get_response(apiview, language)
-    with open(os.path.join('scratch', 'output', f'{filename}.json'), 'w') as f:
+    output_path = os.path.join('scratch', 'output', language)
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    with open(os.path.join(output_path, f'{filename}.json'), 'w') as f:
         f.write(review.json(indent=4))
     pprint(review)
 

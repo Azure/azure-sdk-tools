@@ -13,10 +13,12 @@ class azure.containerregistry.ArtifactArchitecture(str, Enum):
     RISCV64 = "riscv64"
     S390X = "s390x"
     WASM = "wasm"
+
 class azure.containerregistry.ArtifactManifestOrder(str, Enum):
     LAST_UPDATED_ON_ASCENDING = "timeasc"
     LAST_UPDATED_ON_DESCENDING = "timedesc"
     NONE = "none"
+
 class azure.containerregistry.ArtifactManifestProperties:
     property architecture: ArtifactArchitecture    # Read-only
     property created_on: datetime    # Read-only
@@ -40,6 +42,7 @@ class azure.containerregistry.ArtifactManifestProperties:
     ivar size_in_bytes: str
     ivar tags: List[str]
     def __init__(self, **kwargs)
+
 class azure.containerregistry.ArtifactOperatingSystem(str, Enum):
     AIX = "aix"
     ANDROID = "android"
@@ -55,10 +58,12 @@ class azure.containerregistry.ArtifactOperatingSystem(str, Enum):
     PLAN9 = "plan9"
     SOLARIS = "solaris"
     WINDOWS = "windows"
+
 class azure.containerregistry.ArtifactTagOrder(str, Enum):
     LAST_UPDATED_ON_ASCENDING = "timeasc"
     LAST_UPDATED_ON_DESCENDING = "timedesc"
     NONE = "none"
+
 class azure.containerregistry.ArtifactTagProperties:
     property created_on: datetime    # Read-only
     property digest: str    # Read-only
@@ -75,7 +80,9 @@ class azure.containerregistry.ArtifactTagProperties:
     ivar name: str
     ivar repository: str
     def __init__(self, **kwargs)
+
 class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClient): implements ContextManager
+
     def __init__(
             self, 
             endpoint: str, 
@@ -85,7 +92,9 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             audience: str = ..., 
             **kwargs
         ) -> None
+
     def close(self) -> None
+
     @distributed_trace
     def delete_blob(
             self, 
@@ -93,6 +102,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             tag_or_digest: str, 
             **kwargs
         ) -> None
+
     @distributed_trace
     def delete_manifest(
             self, 
@@ -100,12 +110,14 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             tag_or_digest: str, 
             **kwargs
         ) -> None
+
     @distributed_trace
     def delete_repository(
             self, 
             repository: str, 
             **kwargs
         ) -> None
+
     @distributed_trace
     def delete_tag(
             self, 
@@ -113,6 +125,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             tag: str, 
             **kwargs
         ) -> None
+
     @distributed_trace
     def download_blob(
             self, 
@@ -120,6 +133,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             digest: str, 
             **kwargs
         ) -> DownloadBlobResult | None
+
     @distributed_trace
     def download_manifest(
             self, 
@@ -127,6 +141,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             tag_or_digest: str, 
             **kwargs
         ) -> DownloadManifestResult
+
     @distributed_trace
     def get_manifest_properties(
             self, 
@@ -134,12 +149,14 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             tag_or_digest: str, 
             **kwargs
         ) -> ArtifactManifestProperties
+
     @distributed_trace
     def get_repository_properties(
             self, 
             repository: str, 
             **kwargs
         ) -> RepositoryProperties
+
     @distributed_trace
     def get_tag_properties(
             self, 
@@ -147,6 +164,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             tag: str, 
             **kwargs
         ) -> ArtifactTagProperties
+
     @distributed_trace
     def list_manifest_properties(
             self, 
@@ -156,6 +174,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             results_per_page: int = ..., 
             **kwargs
         ) -> ItemPaged[ArtifactManifestProperties]
+
     @distributed_trace
     def list_repository_names(
             self, 
@@ -163,6 +182,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             results_per_page: int = ..., 
             **kwargs
         ) -> ItemPaged[str]
+
     @distributed_trace
     def list_tag_properties(
             self, 
@@ -172,6 +192,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             results_per_page: int = ..., 
             **kwargs
         ) -> ItemPaged[ArtifactTagProperties]
+
     @overload
     def update_manifest_properties(
             self, 
@@ -180,6 +201,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             properties, 
             **kwargs
         ) -> ArtifactManifestProperties
+
     @overload
     def update_manifest_properties(
             self, 
@@ -187,6 +209,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             tag_or_digest, 
             **kwargs
         ) -> ArtifactManifestProperties
+
     @distributed_trace
     def update_manifest_properties(
             self, 
@@ -198,6 +221,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             can_write: Optional[bool] = ..., 
             **kwargs
         ) -> ArtifactManifestProperties
+
     @overload
     def update_repository_properties(
             self, 
@@ -205,12 +229,14 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             properties, 
             **kwargs
         ) -> RepositoryProperties
+ 
     @overload
     def update_repository_properties(
             self, 
             repository, 
             **kwargs
         ) -> RepositoryProperties
+
     @distributed_trace
     def update_repository_properties(
             self, 
@@ -222,6 +248,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             can_write: Optional[bool] = ..., 
             **kwargs
         ) -> RepositoryProperties
+ 
     @overload
     def update_tag_properties(
             self, 
@@ -230,6 +257,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             properties, 
             **kwargs
         ) -> ArtifactTagProperties
+ 
     @overload
     def update_tag_properties(
             self, 
@@ -237,6 +265,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             tag, 
             **kwargs
         ) -> ArtifactTagProperties
+  
     @distributed_trace
     def update_tag_properties(
             self, 
@@ -249,6 +278,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             **kwargs
         ) -> ArtifactTagProperties
 
+  
     @distributed_trace
     def upload_blob(
             self, 
@@ -256,6 +286,7 @@ class azure.containerregistry.ContainerRegistryClient(ContainerRegistryBaseClien
             data: IO, 
             **kwargs
         ) -> str
+
 
     @distributed_trace
     def upload_manifest(

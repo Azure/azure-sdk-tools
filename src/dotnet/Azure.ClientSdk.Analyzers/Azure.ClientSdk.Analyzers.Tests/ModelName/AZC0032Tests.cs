@@ -10,26 +10,17 @@ namespace Azure.ClientSdk.Analyzers.Tests.ModelName
     public class AZC0032Tests
     {
         [Fact]
-        public async Task ClassUnderNonModelsNamespaceIsNotChecked()
-        {
-            var test = @"
-namespace Azure.ResourceManager.Network.Temp
-{
-    public partial class AadAuthenticationData
-    {
-    }
-}";
-            await VerifyCS.VerifyAnalyzerAsync(test);
-        }
-
-        [Fact]
         public async Task ModelClassWithDataSuffix()
         {
-            var test = @"
+            var test = @"using System.Text.Json;
 namespace Azure.ResourceManager.Network.Models
 {
     public partial class AadAuthenticationData
     {
+        public static AadAuthenticationData DeserializeAadAuthenticationData(JsonElement element)
+        {
+            return null;
+        }
     }
 }";
             var expected = VerifyCS.Diagnostic(DataSuffixAnalyzer.DiagnosticId).WithSpan(4, 26, 4, 47).WithArguments("AadAuthenticationData", "Data");
@@ -39,7 +30,7 @@ namespace Azure.ResourceManager.Network.Models
         [Fact]
         public async Task ResourceDataClassesAreNotChecked()
         {
-            var test = @"
+            var test = @"using System.Text.Json;
 using Azure.ResourceManager.Models;
 namespace Azure.ResourceManager.Models
 {
@@ -50,6 +41,10 @@ namespace Azure.ResourceManager.Network.Models
 {
     public partial class AadAuthenticationData: ResourceData
     {
+        public static AadAuthenticationData DeserializeAadAuthenticationData(JsonElement element)
+        {
+            return null;
+        }
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
@@ -58,7 +53,7 @@ namespace Azure.ResourceManager.Network.Models
         [Fact]
         public async Task TrackedResourceDataClassesAreNotChecked()
         {
-            var test = @"
+            var test = @"using System.Text.Json;
 using Azure.ResourceManager.Models;
 namespace Azure.ResourceManager.Models
 {
@@ -69,6 +64,10 @@ namespace Azure.ResourceManager.Network.Models
 {
     public partial class AadAuthenticationData: TrackedResourceData
     {
+        public static AadAuthenticationData DeserializeAadAuthenticationData(JsonElement element)
+        {
+            return null;
+        }
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);

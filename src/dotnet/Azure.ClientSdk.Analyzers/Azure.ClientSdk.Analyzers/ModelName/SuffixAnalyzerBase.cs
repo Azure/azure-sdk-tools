@@ -31,12 +31,13 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         private void AnalyzeSymbol(SymbolAnalysisContext context)
         {
             var typeSymbol = (INamedTypeSymbol)context.Symbol;
-            if (!IsClassUnderModelsNamespace(typeSymbol) || AnalyzerUtils.IsNotSdkCode(typeSymbol) || ShouldSkip(typeSymbol, context))
+            if (typeSymbol.DeclaredAccessibility != Accessibility.Public || !IsModelClass(typeSymbol) || AnalyzerUtils.IsNotSdkCode(typeSymbol) || ShouldSkip(typeSymbol, context))
                 return;
 
+            var nameSpan = typeSymbol.Name.AsSpan();
             foreach (var suffix in SuffixesToCatch)
             {
-                if (MemoryExtensions.EndsWith(typeSymbol.Name.AsSpan(), suffix.AsSpan()))
+                if (MemoryExtensions.EndsWith(nameSpan, suffix.AsSpan()))
                 {
                     context.ReportDiagnostic(GetDiagnostic(typeSymbol, suffix, context));
                     return;
@@ -65,15 +66,19 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             return typeSymbol.AllInterfaces.Any(i => i.Name == typeName && i.ContainingNamespace.Name == namespaceName);
         }
 
-        private bool IsClassUnderModelsNamespace(ITypeSymbol symbol) => symbol is { TypeKind: TypeKind.Class } && HasModelsNamespace(symbol);
+        private bool IsModelClass(ITypeSymbol symbol){
+            if (symbol is not ({ TypeKind: TypeKind.Class }))
+                return false;
 
-        private bool HasModelsNamespace(ITypeSymbol typeSymbol)
-        {
-            for (var namespaceSymbol = typeSymbol.ContainingNamespace; namespaceSymbol != null; namespaceSymbol = namespaceSymbol.ContainingNamespace)
-            {
-                if (namespaceSymbol.Name == "Models")
-                    return true;
-            }
+            // check serialize interface, TODO: include public serializer interface
+            if (symbol.Interfaces.Any(i => i.Name == "IUtf8JsonSerializable"))
+                return true;
+
+            // check if deserialize method exists, e.g. internal static Foo DeserializeFoo(JsonElement element)
+            if (symbol.GetMembers($"Deserialize{symbol.Name}").Any(m => m is IMethodSymbol method && method is { IsStatic: true } &&
+                    method.ReturnType == symbol && method.Parameters.Length == 1 && method.Parameters[0] is { Type.Name: "JsonElement" }))
+                return true;
+
             return false;
         }
     }

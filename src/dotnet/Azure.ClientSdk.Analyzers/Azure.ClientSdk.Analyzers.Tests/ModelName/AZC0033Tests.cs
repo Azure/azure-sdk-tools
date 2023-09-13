@@ -6,14 +6,15 @@ using Xunit;
 using VerifyCS = Azure.ClientSdk.Analyzers.Tests.AzureAnalyzerVerifier<
     Azure.ClientSdk.Analyzers.ModelName.OperationSuffixAnalyzer>;
 
-namespace Azure.ClientSdk.Analyzers.Test.ModelName
+namespace Azure.ClientSdk.Analyzers.Tests.ModelName
 {
     public class AZC0033Tests
     {
         [Fact]
         public async Task OperationClassIsNotChecked()
         {
-            var test = @"
+            var test = @"using System.Text.Json;
+
 using Azure;
 using Azure.ResourceManager;
 namespace Azure
@@ -36,17 +37,33 @@ namespace Azure.ResourceManager
 }
 namespace Azure.ResourceManager.Network.Models
 {
-    internal class DnsOperation : Operation 
+    public class DnsOperation : Operation 
     {
+        public static DnsOperation DeserializeDnsOperation(JsonElement element)
+        {
+            return null;
+        }
     }
-    internal class DnsArmOperation : ArmOperation 
+    public class DnsArmOperation : ArmOperation 
     {
+        public static DnsArmOperation DeserializeDnsArmOperation(JsonElement element)
+        {
+            return null;
+        }
     }
-    internal class DnsOperation<T> : Operation<T> 
+    public class DnsOperation<T> : Operation<T> 
     {
+        public static DnsOperation<T> DeserializeDnsOperation(JsonElement element)
+        {
+            return null;
+        }
     }
-    internal class DnsArmOperation<T> : ArmOperation<T> 
+    public class DnsArmOperation<T> : ArmOperation<T> 
     {
+        public static DnsArmOperation<T> DeserializeDnsOperation(JsonElement element)
+        {
+            return null;
+        }
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
@@ -55,19 +72,27 @@ namespace Azure.ResourceManager.Network.Models
         [Fact]
         public async Task OperationSuffix()
         {
-            var test = @"
+            var test = @"using System.Text.Json;
 namespace Azure.ResourceManager.Network.Models
 {
     public class DnsOperation
     {
+        public static DnsOperation DeserializeDnsOperation(JsonElement element)
+        {
+            return null;
+        }
     }
     public class DnsArmOperation<T>
     {
+        public static DnsArmOperation<T> DeserializeDnsArmOperation(JsonElement element)
+        {
+            return null;
+        }
     }
 }";
             DiagnosticResult[] expected = {
                 VerifyCS.Diagnostic(OperationSuffixAnalyzer.DiagnosticId).WithSpan(4, 18, 4, 30).WithArguments("DnsOperation", "Operation", "DnsData", "DnsInfo"),
-                VerifyCS.Diagnostic(OperationSuffixAnalyzer.DiagnosticId).WithSpan(7, 18, 7, 33).WithArguments("DnsArmOperation", "Operation", "DnsArmData", "DnsArmInfo")
+                VerifyCS.Diagnostic(OperationSuffixAnalyzer.DiagnosticId).WithSpan(11, 18, 11, 33).WithArguments("DnsArmOperation", "Operation", "DnsArmData", "DnsArmInfo")
             };
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }

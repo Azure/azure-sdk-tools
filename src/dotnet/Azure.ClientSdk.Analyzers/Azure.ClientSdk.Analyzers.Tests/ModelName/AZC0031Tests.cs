@@ -12,11 +12,15 @@ namespace Azure.ClientSdk.Analyzers.Tests.ModelName
         [Fact]
         public async Task ModelWithDefinitionSuffix()
         {
-            var test = @"
+            var test = @"using System.Text.Json;
 namespace Azure.ResourceManager.Network.Models
 {
     public partial class AadAuthenticationDefinition
     {
+        public static AadAuthenticationDefinition DeserializeAadAuthenticationDefinition(JsonElement element)
+        {
+            return null;
+        }
     }
 }";
             var expected = VerifyCS.Diagnostic(DefinitionSuffixAnalyzer.DiagnosticId).WithSpan(4, 26, 4, 53).WithArguments("AadAuthenticationDefinition", "Definition");
@@ -26,7 +30,7 @@ namespace Azure.ResourceManager.Network.Models
         [Fact]
         public async Task ArmResourceIsNotChecked()
         {
-            var test = @"
+            var test = @"using System.Text.Json;
 using Azure.ResourceManager;
 namespace Azure.ResourceManager
 {
@@ -37,6 +41,10 @@ namespace Azure.ResourceManager.Network.Models
 {
     public partial class AadAuthenticationDefinition: ArmResource
     {
+        public static AadAuthenticationDefinition DeserializeAadAuthenticationDefinition(JsonElement element)
+        {
+            return null;
+        }
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
@@ -45,7 +53,7 @@ namespace Azure.ResourceManager.Network.Models
         [Fact]
         public async Task NotCheckIfRemovingSuffixIsAnotherType()
         {
-            var test = @"
+            var test = @"using System.Text.Json;
 using Azure.ResourceManager;
 namespace Azure.ResourceManager.Network.Models
 {
@@ -54,6 +62,10 @@ namespace Azure.ResourceManager.Network.Models
 
     public partial class AadAuthenticationDefinition
     {
+        public static AadAuthenticationDefinition DeserializeAadAuthenticationDefinition(JsonElement element)
+        {
+            return null;
+        }
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);

@@ -1,9 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Text.RegularExpressions;
+using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -33,8 +34,12 @@ namespace Azure.ClientSdk.Analyzers.ModelName
                 return true;
 
             var name = symbol.Name;
-            var suggestedName = name.Substring(0, name.Length - "Definition".Length);
-            return context.Compilation.GetTypeByMetadataName($"{symbol.ContainingNamespace.GetFullNamespaceName()}.{suggestedName}") is not null;
+            var suggestedName = name.AsSpan().Slice(0, name.Length - "Definition".Length);
+
+            var strBuilder = new StringBuilder(symbol.ContainingNamespace.GetFullNamespaceName());
+            strBuilder.Append('.').Append(suggestedName.ToArray());
+
+            return context.Compilation.GetTypeByMetadataName(strBuilder.ToString()) is not null;
         }
 
         protected override string[] SuffixesToCatch => definitionSuffix;

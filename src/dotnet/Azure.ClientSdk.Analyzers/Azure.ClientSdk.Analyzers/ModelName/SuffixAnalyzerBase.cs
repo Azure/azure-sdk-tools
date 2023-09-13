@@ -36,7 +36,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
 
             foreach (var suffix in SuffixesToCatch)
             {
-                if (typeSymbol.Name.EndsWith(suffix))
+                if (MemoryExtensions.EndsWith(typeSymbol.Name.AsSpan(), suffix.AsSpan()))
                 {
                     context.ReportDiagnostic(GetDiagnostic(typeSymbol, suffix, context));
                     return;

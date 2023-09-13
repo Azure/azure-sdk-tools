@@ -6,7 +6,7 @@ from langchain.chat_models import AzureChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 import openai
 import re
-from typing import List, Union
+from typing import List, Union, Dict, Any, Optional
 
 from ._sectioned_document import SectionedDocument, Section
 from ._models import GuidelinesResult, Violation
@@ -28,10 +28,19 @@ _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
 
 class GptReviewer:
-    def __init__(self):
+
+    def __init__(self, log_prompt: bool = False):
         self.llm = AzureChatOpenAI(client=openai.ChatCompletion, deployment_name="gpt-4", openai_api_version=OPENAI_API_VERSION, temperature=0)
         self.output_parser = PydanticOutputParser(pydantic_object=GuidelinesResult)
-
+        if log_prompt:
+            # remove the folder if it exists
+            base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
+            if os.path.exists(base_path):
+                import shutil
+                shutil.rmtree(base_path)
+            os.makedirs(base_path)
+            os.environ["APIVIEW_LOG_PROMPT"] = str(log_prompt)
+            os.environ["APIVIEW_PROMPT_INDEX"] = "0"
 
         self.prompt_template = PromptTemplate(
             input_variables=["apiview", "guidelines", "language", "extra_comments", "class_list"],
@@ -212,3 +221,29 @@ class GptReviewer:
 
     def get_class_list(self, apiview) -> List[str]:
         return re.findall(r'class ([\w\.]+)', apiview)
+
+
+# custom monkey patch to save the prompts
+def _custom_generate(
+    self,
+    input_list: List[Dict[str, Any]],
+    run_manager: Optional["CallbackManagerForChainRun"] = None,
+) -> "LLMResult":
+    """Generate LLM result from inputs."""
+    prompts, stop = self.prep_prompts(input_list, run_manager=run_manager)
+    log_prompt = os.getenv("APIVIEW_LOG_PROMPT", "False").lower() == "true"
+    if log_prompt:
+        base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
+        for prompt in prompts:
+            request_no = os.environ.get("APIVIEW_PROMPT_INDEX", 0)
+            filepath = os.path.join(base_path, f"prompt_{request_no}.txt")
+            with open(filepath, "w") as f:
+                f.write(prompt.text)
+            os.environ["APIVIEW_PROMPT_INDEX"] = str(int(request_no) + 1)
+    return self.llm.generate_prompt(
+        prompts,
+        stop,
+        callbacks=run_manager.get_child() if run_manager else None,
+        **self.llm_kwargs,
+    )
+LLMChain.generate = _custom_generate

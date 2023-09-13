@@ -59,7 +59,7 @@ def delete_document(document_id: str):
     db.delete_document(document_id)
     print(f"Deleted document {document_id}")
 
-def search_documents(language: str, path: str):
+def search_documents(language: str, path: str, log_result: bool = False):
     """
     Search for vector documents by similarity
     """
@@ -67,16 +67,17 @@ def search_documents(language: str, path: str):
     with open(path, "r") as f:
         code = f.read()
     results = de.search_documents(language, code)
-    with open('results.json', 'w') as f:
-        json.dump(results, f, indent=4)
+    if log_result:
+        with open('search_result_dump.json', 'w') as f:
+            json.dump(results, f, indent=4)
     pprint(results)
 
-def generate_review(language: str, path: str):
+def generate_review(language: str, path: str, log_prompt: bool = False):
     """
     Generate a review for an APIView
     """
     from src import GptReviewer
-    rg = GptReviewer()
+    rg = GptReviewer(log_prompt=log_prompt)
     filename = os.path.splitext(os.path.basename(path))[0]
 
     with open(path, "r") as f:
@@ -116,13 +117,16 @@ class CliCommandsLoader(CLICommandsLoader):
         return OrderedDict(self.command_table)
     
     def load_arguments(self, command):
+        with ArgumentsContext(self, "") as ac:
+            ac.argument("language", type=str, help="The language of the APIView file", options_list=("--language", "-l"))
         with ArgumentsContext(self, "vector") as ac:
             ac.argument("document_id", type=str, help="The ID of the document to retrieve", options_list=("--id"))
+            ac.argument("log_result", action="store_true", help="Log the search results to a file called 'search_result_dump.json'")
         with ArgumentsContext(self, "guidelines") as ac:
             ac.argument("path", type, help="The path to the guidelines")
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
-            ac.argument("language", type=str, help="The language of the APIView file")
+            ac.argument("log_prompt", action="store_true", help="Log the prompt to a file called 'prompt.json'")
         super(CliCommandsLoader, self).load_arguments(command)
 
 

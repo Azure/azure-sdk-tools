@@ -78,6 +78,23 @@
         "language": "python",
         "badCode": "def dump(self, dest: Union[str, PathLike, IO[AnyStr]], *, kwargs: dict = ..., **kwargs) -> None",
         "comment": "Don't use kwargs and **kwargs in the same signature. All individual kwarg values should be listed (except for private/internal ones)"
-
-    }       
+    },
+    {
+        "language": "python",
+        "badCode": "def get_cats(self, **kwargs) -> List[Cat]",
+        "goodCode": "def list_cats(self, **kwargs) -> List[Cat]",
+        "comment": "The 'get_' prefix is for a single item. Use 'list_' for a collection."
+    },
+    {
+        "language": "python",
+        "badCode": "def get_cat(self, **kwargs) -> GetCatResponse",
+        "goodCode": "def get_cat(self, **kwargs) -> Cat",
+        "comment": "Avoid using terms like 'Request' and 'Response' in models. These are HTTP-specific. Use 'GetCatResult' or, better yet, just 'Cat' instead."
+    },
+    {
+        "language": "python",
+        "badCode": "def create_cat(self, cat: CreateCatRequest, **kwargs) -> Cat",
+        "goodCode": "def create_cat(self, cat: Cat, **kwargs) -> Cat",
+        "comment": "Avoid using terms like 'Request' and 'Response' in models. These are HTTP-specific. Use 'Cat' instead."
+    }
 ]

@@ -1,0 +1,38 @@
+[
+    {
+        "language": "typescript",
+        "badCode": "class ExampleClient { \n constructor (connectionString: string, options: ExampleClientOptions); \n constructor (url: string, options: ExampleClientOptions); \n  constructor (urlOrCS: string, options: ExampleClientOptions) { \n} \n}",
+        "goodCode": "class ExampleClient { \n constructor (url: string, options: ExampleClientOptions) { \n } \n static fromConnectionString(connectionString: string, options: ExampleClientOptions) { \n} \n}",
+        "guidelineIds": ["typescript_design.html#ts-use-overloads-over-unions"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "function getItems(name: string, options?: itemsOptions): Promise<Items>;\n interface itemsOptions { extensions?: configuration[];  }",
+        "goodCode": "function getItems(name: string, options?: getItemsOptions): Promise<Items>;\n interface getItemsOptions { extensions?: configuration[];  }",
+        "guidelineIds": ["typescript_design.html#ts-naming-options"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "containerClient.deleteContainer();",
+        "goodCode": "containerClient.delete();",
+        "guidelineIds": ["typescript_design.html#ts-approved-verbs"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "containerClient.createOrUpdate();",
+        "goodCode": "containerClient.upsert();",
+        "guidelineIds": ["typescript_design.html#ts-approved-verbs"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "function listItems() {\n return {\n nextItem() { /*...*/ } \n  }\n  }",
+        "goodCode": "async function* listItems() {\n for (const item of items) { \n yield item;\n  }\n }",
+        "guidelineIds": ["typescript_design.html#ts-use-async-functions"]
+    },
+    {
+        "language": "typescript",
+        "badCode": "async function getItems(): PagedAsyncIterableIterator<Item, Page>{}",
+        "goodCode": "async function listItems(): PagedAsyncIterableIterator<Item, Page>{}",
+        "guidelineIds": ["typescript_design.html#ts-pagination-provide-list"]
+    }
+]

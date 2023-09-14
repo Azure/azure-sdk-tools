@@ -24,15 +24,22 @@ class MonitorParameter
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
         }
-        [Fact]
-        public async Task ClassWithoutSerliaizationMethodsIsNotChecked()
-        {
-            var test = @"namespace Azure.Test.Models;
+
+        [Theory]
+        [InlineData(@"namespace Azure.Test.Models;
 
 public class MonitorParameter
 {
-}";
-            await VerifyCS.VerifyAnalyzerAsync(test);
+}")]
+        [InlineData(@"namespace Azure.Models.Test;
+
+public class MonitorParameter
+{
+}")]
+        public async Task ClassWithoutSerliaizationMethodsButInModelsNamespaceIsChecked(string test)
+        {
+            var expected = VerifyCS.Diagnostic(GeneralSuffixAnalyzer.DiagnosticId).WithSpan(3, 14, 3, 30).WithArguments("MonitorParameter", "Parameter", "'MonitorContent' or 'MonitorPatch'");
+            await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 
         [Fact]

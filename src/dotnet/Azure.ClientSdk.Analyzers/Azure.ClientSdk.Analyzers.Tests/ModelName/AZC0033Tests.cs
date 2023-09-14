@@ -39,31 +39,15 @@ namespace Azure.ResourceManager.Network.Models
 {
     public class DnsOperation : Operation 
     {
-        public static DnsOperation DeserializeDnsOperation(JsonElement element)
-        {
-            return null;
-        }
     }
     public class DnsArmOperation : ArmOperation 
     {
-        public static DnsArmOperation DeserializeDnsArmOperation(JsonElement element)
-        {
-            return null;
-        }
     }
     public class DnsOperation<T> : Operation<T> 
     {
-        public static DnsOperation<T> DeserializeDnsOperation(JsonElement element)
-        {
-            return null;
-        }
     }
     public class DnsArmOperation<T> : ArmOperation<T> 
     {
-        public static DnsArmOperation<T> DeserializeDnsOperation(JsonElement element)
-        {
-            return null;
-        }
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
@@ -73,7 +57,7 @@ namespace Azure.ResourceManager.Network.Models
         public async Task OperationSuffix()
         {
             var test = @"using System.Text.Json;
-namespace Azure.ResourceManager.Network.Models
+namespace Azure.ResourceManager.Network
 {
     public class DnsOperation
     {

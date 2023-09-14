@@ -37,14 +37,10 @@ namespace Azure.ResourceManager.Models
     public class ResourceData {
     }
 }
-namespace Azure.ResourceManager.Network.Models
+namespace Azure.ResourceManager.Models.Network
 {
     public partial class AadAuthenticationData: ResourceData
     {
-        public static AadAuthenticationData DeserializeAadAuthenticationData(JsonElement element)
-        {
-            return null;
-        }
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
@@ -64,10 +60,6 @@ namespace Azure.ResourceManager.Network.Models
 {
     public partial class AadAuthenticationData: TrackedResourceData
     {
-        public static AadAuthenticationData DeserializeAadAuthenticationData(JsonElement element)
-        {
-            return null;
-        }
     }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);

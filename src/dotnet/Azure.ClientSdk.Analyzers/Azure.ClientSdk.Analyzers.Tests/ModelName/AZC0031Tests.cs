@@ -17,10 +17,6 @@ namespace Azure.ResourceManager.Network.Models
 {
     public partial class AadAuthenticationDefinition
     {
-        public static AadAuthenticationDefinition DeserializeAadAuthenticationDefinition(JsonElement element)
-        {
-            return null;
-        }
     }
 }";
             var expected = VerifyCS.Diagnostic(DefinitionSuffixAnalyzer.DiagnosticId).WithSpan(4, 26, 4, 53).WithArguments("AadAuthenticationDefinition", "Definition");

@@ -17,10 +17,6 @@ namespace Azure.ResourceManager.Models;
 
 public class MonitorContent
 {
-    public static MonitorContent DeserializeMonitorContent(JsonElement element)
-    {
-        return null;
-    }
 }";
             await VerifyCS.VerifyAnalyzerAsync(test);
         }
@@ -71,10 +67,6 @@ namespace Azure.ResourceManager.Models
     {
         public class DiskOption
         {
-            public static DiskOption DeserializeDiskOption(JsonElement element)
-            {
-                return null;
-            }
         }
     }
 }";

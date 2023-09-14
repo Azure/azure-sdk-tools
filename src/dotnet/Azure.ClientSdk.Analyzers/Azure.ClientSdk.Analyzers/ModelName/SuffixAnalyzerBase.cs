@@ -70,6 +70,11 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             if (symbol is not ({ TypeKind: TypeKind.Class }))
                 return false;
 
+            // some SDKs could have models without any serialization method but under `Models` namespace
+            // like alertsmanagement\Azure.ResourceManager.AlertsManagement\src\Generated\Models\SmartGroupCollectionGetAllOptions.cs
+            if (HasModelsNamespace(symbol))
+                return true;
+
             // check serialize interface, TODO: include public serializer interface
             if (symbol.Interfaces.Any(i => i.Name == "IUtf8JsonSerializable"))
                 return true;
@@ -79,6 +84,16 @@ namespace Azure.ClientSdk.Analyzers.ModelName
                     method.ReturnType == symbol && method.Parameters.Length == 1 && method.Parameters[0] is { Type.Name: "JsonElement" }))
                 return true;
 
+            return false;
+        }
+
+        private bool HasModelsNamespace(ITypeSymbol typeSymbol)
+        {
+            for (var namespaceSymbol = typeSymbol.ContainingNamespace; namespaceSymbol != null; namespaceSymbol = namespaceSymbol.ContainingNamespace)
+            {
+                if (namespaceSymbol.Name == "Models")
+                    return true;
+            }
             return false;
         }
     }

@@ -1,7 +1,7 @@
 import os
 import json
 from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
+from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.chat_models import AzureChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 import openai
@@ -42,29 +42,24 @@ class GptReviewer:
             os.environ["APIVIEW_LOG_PROMPT"] = str(log_prompts)
             os.environ["APIVIEW_PROMPT_INDEX"] = "0"
 
-        self.prompt_template = PromptTemplate(
-            input_variables=["apiview", "guidelines", "language", "extra_comments", "class_list"],
-            partial_variables={"format_instructions": self.output_parser.get_format_instructions()},
-            template="""
-                You are trying to analyze an API for {language} to determine whether it meets the SDK guidelines. We only provide one class at a time right now, but if you need it, here's a list of all the classes in this API:
-                {class_list}
-                
-                Here is the code for a single class:
-                ```
-                {apiview}
-                ```
+        system_prompt = SystemMessagePromptTemplate.from_template("""
+You are trying to analyze an API for {language} to determine whether it meets the SDK guidelines.
+We only provide one class at a time right now, but if you need it, here's a list of all the classes in this API:
+{class_list}
+""")
+        human_prompt = HumanMessagePromptTemplate.from_template("""
+Given the following guidelines:
+{guidelines}
 
-                Identify any violations of the following guidelines:
-                {guidelines}
-                
-                Consider the following comments as well:
-                {extra_comments}
-
-                Format the output according to the following:
-                {format_instructions}
-            """
-        )
-        self.chain = LLMChain(llm=self.llm, prompt=self.prompt_template)
+Evaluate the following class for any violations:
+```
+{apiview}
+```
+                                                                
+{format_instructions}
+""")
+        prompt_template = ChatPromptTemplate.from_messages([system_prompt, human_prompt])
+        self.chain = LLMChain(llm=self.llm, prompt=prompt_template)
 
     def _hash(self, obj) -> str:
         return str(hash(json.dumps(obj)))
@@ -123,12 +118,15 @@ class GptReviewer:
                     continue
                 guidelines = self.select_guidelines(all_guidelines, guidelines_to_check)
 
+                # append the extra comments to the list of guidelines to treat them equally.
+                guidelines.extend(list(extra_comments.values()))
+
                 params = {
                     "apiview": str(chunk),
                     "guidelines": guidelines,
                     "language": language,
                     "class_list": class_list,
-                    "extra_comments": list(extra_comments.values())
+                    "format_instructions": self.output_parser.get_format_instructions()
                 }
                 results = self.chain.run(**params)
                 output = self.output_parser.parse(results)
@@ -265,7 +263,8 @@ def _custom_generate(
             request_no = os.environ.get("APIVIEW_PROMPT_INDEX", 0)
             filepath = os.path.join(base_path, f"prompt_{request_no}.txt")
             with open(filepath, "w") as f:
-                f.write(prompt.text)
+                for message in prompt.messages:
+                    f.write(message.content + "\n")
             os.environ["APIVIEW_PROMPT_INDEX"] = str(int(request_no) + 1)
     return self.llm.generate_prompt(
         prompts,

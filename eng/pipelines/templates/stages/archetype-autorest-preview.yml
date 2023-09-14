@@ -299,7 +299,7 @@ stages:
         BaseRepoOwner: azure-sdk
         TargetRepoName: $(sdkRepositoryName)
         BaseRepoBranch: $(branchName)
-        CommitMsg: Update SDK codes $(JobKey)
+        CommitMsg: Update SDK code $(JobKey)
         WorkingDirectory: $(sdkRepositoryPath)
         ScriptDirectory: $(toolsRepositoryPath)/eng/common/scripts
 
@@ -313,14 +313,12 @@ stages:
     - checkout: azure-sdk-tools
 
     - task: PowerShell@2
-      displayName: Get source pr url
+      displayName: Get source description
       inputs:
         pwsh: true
-        filePath: $(toolsRepositoryPath)/eng/common/scripts/Get-PullRequestUrl.ps1
+        filePath: $(toolsRepositoryPath)/eng/common/scripts/Get-BuildSourceDescription.ps1
         arguments: >
-          -RepositoryName '$(Build.Repository.Name)'
-          -SourceBranch '$(Build.SourceBranch)'
-          -Variable 'PRUrl'
+          -Variable 'BuildSourceDescription'
 
     - task: PowerShell@2
       displayName: Create pull request
@@ -334,7 +332,7 @@ stages:
           -PROwner 'azure-sdk'
           -PRBranch '$(branchName)'
           -AuthToken '$(azuresdk-github-pat)'
-          -PRTitle 'Autorest Regen Preview alpha-$(Build.BuildNumber) by $(Build.QueuedBy) from $(Build.SourceBranch)'
-          -PRBody 'Triggered from $(PRUrl)'
+          -PRTitle 'Autorest Regen Preview alpha-$(Build.BuildNumber) by $(Build.QueuedBy)'
+          -PRBody 'Triggered from $(BuildSourceDescription)'
           -OpenAsDraft $true
           -PRLabels 'Do Not Merge'

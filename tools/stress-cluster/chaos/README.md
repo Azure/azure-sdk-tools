@@ -378,19 +378,19 @@ spec:
 #### Run multiple pods in parallel within a test job
 
 In some cases it may be necessary to run multiple instances of the same process/container in parallel as part of a test,
-for example an eventhub test that needs to run 5 consumers, each in their own container. This can be achieved using
+for example an eventhub test that needs to run 3 consumers, each in their own container. This can be achieved using
 the `stress-test-addons.parallel-deploy-job-template.from-pod` template. The parallel feature leverages the
 [job completion mode](https://kubernetes.io/docs/concepts/workloads/controllers/job/#completion-mode) feature. Test
 commands in the container can read the `JOB_COMPLETION_INDEX` environment variable to make decisions. For example,
 a messaging test that needs to run a single producer and multiple consumers can have logic that runs the producer when
 `JOB_COMPLETION_INDEX` is 0, and a consumer when it is not 0.
 
-See the below example to enable parallel pods. Note the `(list . "stress.parallel-pod-example 5)` segment. The final argument (shown as `5` in the example) sets how many parallel pods should be run.
+See the below example to enable parallel pods. Note the `(list . "stress.parallel-pod-example 3)` segment. The final argument (shown as `3` in the example) sets how many parallel pods should be run.
 
 See a full working example of parallel pods [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/parallel-pod-example).
 
 ```
-{{- include "stress-test-addons.parallel-deploy-job-template.from-pod" (list . "stress.parallel-pod-example" 5) -}}
+{{- include "stress-test-addons.parallel-deploy-job-template.from-pod" (list . "stress.parallel-pod-example" 3) -}}
 {{- define "stress.parallel-pod-example" -}}
 metadata:
   labels:

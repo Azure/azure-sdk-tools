@@ -5,7 +5,7 @@ param (
     [Parameter(Position=0)]
     [ValidateNotNullOrEmpty()]
     [string] $ProjectDirectory,
-    [string] $TypespecAdditionalOptions = $null, ## addtional typespec emitter options, separated by semicolon if more than one, e.g. option1=value1;option2=value2
+    [string] $TypespecAdditionalOptions = $null, ## addtional typespec emitter options, separated by escaped semicolon %3B if more than one, e.g. option1=value1%3Boption2=value2
     [switch] $SaveInputs = $false ## saves the temporary files during execution, default false
 )
 

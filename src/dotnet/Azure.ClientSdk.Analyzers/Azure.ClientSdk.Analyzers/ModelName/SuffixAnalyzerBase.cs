@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -31,13 +30,13 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         private void AnalyzeSymbol(SymbolAnalysisContext context)
         {
             var typeSymbol = (INamedTypeSymbol)context.Symbol;
-            if (typeSymbol.DeclaredAccessibility != Accessibility.Public || !IsModelClass(typeSymbol) || AnalyzerUtils.IsNotSdkCode(typeSymbol) || ShouldSkip(typeSymbol, context))
+            if (typeSymbol.DeclaredAccessibility != Accessibility.Public || !IsModelClass(typeSymbol) || AnalyzerUtils.IsNotSdkCode(typeSymbol))
                 return;
 
             var nameSpan = typeSymbol.Name.AsSpan();
             foreach (var suffix in SuffixesToCatch)
             {
-                if (MemoryExtensions.EndsWith(nameSpan, suffix.AsSpan()))
+                if (MemoryExtensions.EndsWith(nameSpan, suffix.AsSpan()) && !ShouldSkip(typeSymbol, context))
                 {
                     context.ReportDiagnostic(GetDiagnostic(typeSymbol, suffix, context));
                     return;

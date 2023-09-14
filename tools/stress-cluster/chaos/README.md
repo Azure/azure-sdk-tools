@@ -17,6 +17,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
         * [Customize Docker Build](#customize-docker-build)
      * [Manifest Special Fields](#manifest-special-fields)
      * [Job Manifest](#job-manifest)
+        * [Run multiple pods in parallel within a test job](#run-multiple-pods-in-parallel-within-a-test-job)
         * [Built-In Labels](#built-in-labels)
      * [Chaos Manifest](#chaos-manifest)
      * [Scenarios and scenarios-matrix.yaml](#scenarios-and-scenarios-matrixyaml)
@@ -373,6 +374,44 @@ spec:
       {{- include "stress-test-addons.container-env" . | nindent 6 }}
 {{- end -}}
 ```
+
+#### Run multiple pods in parallel within a test job
+
+In some cases it may be necessary to run multiple instances of the same process/container in parallel as part of a test,
+for example an eventhub test that needs to run 3 consumers, each in their own container. This can be achieved using
+the `stress-test-addons.parallel-deploy-job-template.from-pod` template. The parallel feature leverages the
+[job completion mode](https://kubernetes.io/docs/concepts/workloads/controllers/job/#completion-mode) feature. Test
+commands in the container can read the `JOB_COMPLETION_INDEX` environment variable to make decisions. For example,
+a messaging test that needs to run a single producer and multiple consumers can have logic that runs the producer when
+`JOB_COMPLETION_INDEX` is 0, and a consumer when it is not 0.
+
+See the below example to enable parallel pods. Note the `(list . "stress.parallel-pod-example 3)` segment. The final argument (shown as `3` in the example) sets how many parallel pods should be run.
+
+See a full working example of parallel pods [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/parallel-pod-example).
+
+```
+{{- include "stress-test-addons.parallel-deploy-job-template.from-pod" (list . "stress.parallel-pod-example" 3) -}}
+{{- define "stress.parallel-pod-example" -}}
+metadata:
+  labels:
+    testName: "parallel-pod-example"
+spec:
+  containers:
+    - name: parallel-pod-example
+      image: busybox
+      command: ['bash', '-c']
+      args:
+        - |
+            echo "Completed pod instance $JOB_COMPLETION_INDEX"
+      {{- include "stress-test-addons.container-env" . | nindent 6 }}
+{{- end -}}
+```
+
+NOTE: when multiple pods are run, each pod will invoke its own azure deployment init container. When many of these containers
+are run, it can cause race conditions with the arm/bicep deployment. There is logic in the deploy container to 
+run the full deployment in pod 0 only, and to wait on deployment completion for pods > 0. After the deployment completes,
+pods > 0 start their bicep deployment, which ends up being a no-op. As a result, the main container of pod 0 will start
+a little bit earlier than pods > 0.
 
 #### Built-In Labels
 

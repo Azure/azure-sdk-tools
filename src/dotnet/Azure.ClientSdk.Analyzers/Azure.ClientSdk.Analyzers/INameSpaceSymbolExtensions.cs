@@ -10,20 +10,19 @@ namespace Azure.ClientSdk.Analyzers
     {
         public static string GetFullNamespaceName(this INamespaceSymbol namespaceSymbol)
         {
-            return string.Join(".", GetAllNamespaces(namespaceSymbol));
+            return string.Join(".", namespaceSymbol.GetAllNamespaces());
         }
 
-        private static IList<string> GetAllNamespaces(INamespaceSymbol namespaceSymbol)
+        internal static IReadOnlyList<string> GetAllNamespaces(this INamespaceSymbol namespaceSymbol)
         {
-            if (namespaceSymbol is { ContainingNamespace: not null and { IsGlobalNamespace: false } })
+            var namespaces = new List<string>();
+            while (namespaceSymbol is { IsGlobalNamespace: false })
             {
-                var namespaces = GetAllNamespaces(namespaceSymbol.ContainingNamespace);
                 namespaces.Add(namespaceSymbol.Name);
-                return namespaces;
+                namespaceSymbol = namespaceSymbol.ContainingNamespace;
             }
-
-            return new List<string> { namespaceSymbol.Name };
-
+            namespaces.Reverse();
+            return namespaces;
         }
     }
 }

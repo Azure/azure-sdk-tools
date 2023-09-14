@@ -1,11 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Azure.ClientSdk.Analyzers
 {
@@ -15,9 +13,9 @@ namespace Azure.ClientSdk.Analyzers
 
         internal static bool IsSdkCode(ISymbol symbol)
         {
-            var ns = symbol.ContainingNamespace.GetFullNamespaceName();
+            var namespaces = symbol.ContainingNamespace.GetAllNamespaces();
 
-            return IsSdkNamespace(ns);
+            return IsSdkNamespace(namespaces);
         }
 
         internal static bool IsNotSdkCode(SyntaxNode node, SemanticModel model) => !IsSdkCode(node, model);
@@ -30,31 +28,13 @@ namespace Azure.ClientSdk.Analyzers
                 return IsSdkCode(symbol);
             }
 
-            var ns = GetNamespace(node);
-            return IsSdkNamespace(ns);
+            var namespaces = GetNamespace(node);
+            return IsSdkNamespace(namespaces);
         }
 
-        private static bool IsSdkNamespace(string ns)
-        {
-            var namespaces = ns.AsSpan();
-            // if the namespace contains only one level, it's not SDK namespace
-            var indexOfFirstDot = namespaces.IndexOf('.');
-            if (indexOfFirstDot == -1)
-                return false;
+        private static bool IsSdkNamespace(IReadOnlyList<string> namespaces) => namespaces.Count >= 2 && namespaces[0] == "Azure" && namespaces[1] != "Core";
 
-            // first namespace must be `Azure`
-            var firstNamespace = namespaces.Slice(0, indexOfFirstDot);
-            if (!firstNamespace.Equals("Azure".AsSpan(), StringComparison.Ordinal))
-                return false;
-
-            // second namespace must not be `Core`
-            var remainingNamespace = namespaces.Slice(indexOfFirstDot + 1);
-            var indexOfSecondDot = remainingNamespace.IndexOf('.');
-            var seondNamespace = (indexOfSecondDot == -1 ? remainingNamespace : remainingNamespace.Slice(0, indexOfSecondDot));
-            return !seondNamespace.Equals("Core".AsSpan(), StringComparison.Ordinal);
-        }
-
-        private static string GetNamespace(SyntaxNode node)
+        private static IReadOnlyList<string> GetNamespace(SyntaxNode node)
         {
             var namespaces = new List<string>();
 
@@ -83,8 +63,7 @@ namespace Azure.ClientSdk.Analyzers
                 }
             }
 
-
-            return string.Join(".", namespaces.Reverse<string>());
+            return namespaces;
         }
     }
 }

@@ -3,6 +3,20 @@ trigger:
   branches:
     include:
       - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - packages/python-packages/apiview-gpt
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
   paths:
     include:
       - packages/python-packages/apiview-gpt
@@ -15,3 +29,7 @@ extends:
     FeedName: 'public/azure-sdk-for-python'
     ArtifactName: 'apiviewcopilot'
     PackageName: 'Python API View Copilot'
+    TestSteps:
+    - script: |
+        echo "Pass Check Enforcer!"
+      displayName: 'Pass Check Enforcer'

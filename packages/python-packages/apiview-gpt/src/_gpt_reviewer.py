@@ -97,7 +97,6 @@ Evaluate the following class for any violations:
                         guidelines_to_check.extend(guideline_ids)
 
                     # remove unnecessary or empty fields to conserve tokens and not confuse the AI
-                    del comment_model["id"]
                     del comment_model["language"]
                     del comment_model["embedding"]
                     del comment_model["guidelineIds"]
@@ -264,6 +263,7 @@ def _custom_generate(
             filepath = os.path.join(base_path, f"prompt_{request_no}.txt")
             with open(filepath, "w") as f:
                 for message in prompt.messages:
+                    f.write(f"==={message.type.upper()}===\n")
                     f.write(message.content + "\n")
             os.environ["APIVIEW_PROMPT_INDEX"] = str(int(request_no) + 1)
     return self.llm.generate_prompt(

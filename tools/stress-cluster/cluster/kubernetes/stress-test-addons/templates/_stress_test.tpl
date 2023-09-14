@@ -4,6 +4,15 @@ spec:
     {{- include (index . 1) (index . 0) | nindent 4 -}}
 {{- end -}}
 
+{{- define "stress-test-addons.parallel-job-wrapper.tpl" -}}
+spec:
+  completions: {{ index . 2 }}
+  parallelism: {{ index . 2 }}
+  completionMode: Indexed
+  template:
+    {{- include (index . 1) (index . 0) | nindent 4 -}}
+{{- end -}}
+
 {{- define "stress-test-addons.deploy-job-template.tpl" -}}
 apiVersion: batch/v1
 kind: Job
@@ -52,6 +61,22 @@ spec:
 ---
 {{ $jobCtx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list $global . )) }}
 {{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $jobCtx $podDefinition)) -}}
+{{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $jobCtx) -}}
+{{- toYaml (merge $jobOverride $tpl) -}}
+{{- end }}
+{{- include "stress-test-addons.static-secrets" $global }}
+{{- end -}}
+
+{{- define "stress-test-addons.parallel-deploy-job-template.from-pod" -}}
+{{- $global := index . 0 -}}
+{{- $podDefinition := index . 1 -}}
+{{- $parallel := index . 2 -}}
+# Configmap template that adds the stress test ARM template for mounting
+{{- include "stress-test-addons.deploy-configmap" $global }}
+{{- range (default (list "stress") $global.Values.scenarios) }}
+---
+{{ $jobCtx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list $global . )) }}
+{{- $jobOverride := fromYaml (include "stress-test-addons.parallel-job-wrapper.tpl" (list $jobCtx $podDefinition $parallel)) -}}
 {{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $jobCtx) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}

@@ -1,0 +1,33 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-use-overloads-over-unions"
+            ],
+            "line_no": 17,
+            "bad_code": "constructor(name: string, sauceType?: SauceType, pastaType?: pastaType, ingredients?: string[], cheeseTypes?: string[]);",
+            "suggestion": "constructor(name: string);\nconstructor(name: string, sauceType: SauceType, pastaType: pastaType, ingredients: string[], cheeseTypes: string[]);",
+            "comment": "The constructor of the Pasta class should be overloaded properly to handle multiple correlated parameters."
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-naming-options",
+                "typescript_design.html#ts-approved-verbs"
+            ],
+            "line_no": 27,
+            "bad_code": "function retrieveAllPastas(options?: pastaOptions): PagedAsyncIterableIterator<Pasta, PastaListResponse>;",
+            "suggestion": "function listAllPastas(options?: listAllPastasOptions): PagedAsyncIterableIterator<Pasta, PastaListResponse>;",
+            "comment": "The options parameter in the method should be named as <method name>Options. The method name should start with 'list' when it returns a PagedAsyncIterableIterator."
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-naming-options"
+            ],
+            "line_no": 30,
+            "bad_code": "export interface pastaOptions {\n    pastaType?: pastaType;\n    sauceType?: sauceType;\n}",
+            "suggestion": "export interface PastaOptions {\n    pastaType?: pastaType;\n    sauceType?: sauceType;\n}",
+            "comment": "The type of the options bag should be named as <class name>Options. In this case, it should be 'PastaOptions' instead of 'pastaOptions'."
+        }
+    ]
+}

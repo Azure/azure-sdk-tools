@@ -140,8 +140,8 @@ stages:
       - ${{ if eq(package.type, 'npm') }}:
         - pwsh: |
             $file = Resolve-Path "${{ package.file }}"
-            Write-Host "npm publish $file --access public"
-            npm publish $file --access public
+            Write-Host "npm publish $file --verbose --access public"
+            npm publish $file --verbose --access public
           displayName: Publish ${{ package.name }}
           workingDirectory: $(buildArtifactsPath)/packages
       - ${{ elseif eq(package.type, 'nuget') }}:

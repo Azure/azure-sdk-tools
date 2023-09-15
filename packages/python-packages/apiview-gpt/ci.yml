@@ -21,15 +21,13 @@ pr:
     include:
       - packages/python-packages/apiview-gpt
 
-extends:
-  template: /eng/pipelines/templates/stages/archetype-sdk-tool-python.yml
-  parameters:
-    PythonVersion: '3.10'
-    PackagePath: 'packages/python-packages/apiview-gpt'
-    FeedName: 'public/azure-sdk-for-python'
-    ArtifactName: 'apiviewcopilot'
-    PackageName: 'Python API View Copilot'
-    TestSteps:
-    - script: |
-        echo "Pass Check Enforcer!"
-      displayName: 'Pass Check Enforcer'
+steps:
+  - script: |
+      zip -r app.zip .
+    displayName: 'Package app into a zip file'
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: 'app.zip'
+      artifactName: 'drop'
+      publishLocation: 'Container'

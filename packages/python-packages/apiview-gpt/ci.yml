@@ -23,6 +23,6 @@ steps:
 
   - task: PublishBuildArtifacts@1
     inputs:
-      pathToPublish: 'app.zip'
+      pathToPublish: 'packages/python-packages/apiview-gpt/app.zip'
       artifactName: 'drop'
       publishLocation: 'Container'

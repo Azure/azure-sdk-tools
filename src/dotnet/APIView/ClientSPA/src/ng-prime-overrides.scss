@@ -185,7 +185,10 @@
 .p-tooltip .p-tooltip-text {
     background-color: var(--primary-color) !important;
     color: var(--primary-btn-color) !important;
-    border-color: var(--primary-color) !important;
+}
+
+.p-tooltip .p-tooltip-arrow {
+    border-top-color: var(--primary-color) !important;
 }
 
 .p-splitter {

@@ -97,11 +97,11 @@
                         <img [alt]="review.author" src="https://github.com/{{review.author}}.png?size=40" width="32" />
                         <span><a href="{{profilePageWebAppUrl}}{{review.author}}">{{ review.author }}</a></span>
                     </td>
-                    <td pTooltip="{{ review.lastUpdated | date }}" tooltipPosition="top">{{ review.lastUpdated | timeago }}</td>
+                    <td pTooltip="{{ review.lastUpdated | date }}" appendTo="target" tooltipPosition="top" [positionTop]=-190 [positionLeft]=-35>{{ review.lastUpdated | timeago }}</td>
                     <td>
-                        <i pTooltip="{{ review.status }}" tooltipPosition="top" class="{{ badgeClass.get(review.status) }} me-2"></i>
-                        <i pTooltip="{{ review.state }}" tooltipPosition="top" class="{{ badgeClass.get(review.state) }} me-2"></i>
-                        <i pTooltip="{{ review.type }}" tooltipPosition="top" class="{{ badgeClass.get(review.type) }}"></i>
+                        <i pTooltip="{{ review.status }}" appendTo="target" tooltipPosition="top" [positionTop]=-200 [positionLeft]=-25 class="{{ badgeClass.get(review.status) }} me-2"></i>
+                        <i pTooltip="{{ review.state }}" appendTo="target" tooltipPosition="top" [positionTop]=-200 [positionLeft]=-25 class="{{ badgeClass.get(review.state) }} me-2"></i>
+                        <i pTooltip="{{ review.type }}" appendTo="target" tooltipPosition="top" [positionTop]=-200 [positionLeft]=-25 class="{{ badgeClass.get(review.type) }}"></i>
                     </td>
                     <td>{{ review.noOfRevisions }}</td>
                 </tr>

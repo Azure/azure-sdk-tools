@@ -9,26 +9,27 @@
             ],
             "line_no": 30,
             "bad_code": "class azure.contoso.NoodleAsyncManager:",
-            "suggestion": "Separate classes for sync and async operations.",
-            "comment": "The class name should end with 'Client' and be in a namespace with '.aio' suffix. The class should be in a namespace with '.aio' suffix. Do not combine async and sync operations in the same class."
+            "suggestion": "class azure.contoso.aio.NoodleAsyncClient:",
+            "comment": "The class name should end with 'Client' and be in a namespace with '.aio' suffix. The class should be in a namespace with '.aio' suffix. There should be two separate classes for sync and async operations."
         },
         {
             "rule_ids": [
-                "python_design.html#python-client-separate-sync-async"
+                "python_design.html#python-client-constructor-policy-arguments"
             ],
-            "line_no": 41,
-            "bad_code": "async def get_noodles_async(self, options: dict) -> List[NoodleResponse]",
-            "suggestion": "async def list_noodles_async(self, options: dict) -> List[NoodleResponse]",
-            "comment": "Use 'list_' prefix for a collection."
+            "line_no": 31,
+            "bad_code": "async def __init__(self, endpoint, credential, options: dict)",
+            "suggestion": "async def __init__(self, endpoint, credential, **kwargs)",
+            "comment": "The constructor should accept optional default request options as keyword arguments."
         },
         {
             "rule_ids": [
-                "python_design.html#python-client-naming"
+                "python_design.html#python-client-naming",
+                "python_design.html#python-client-separate-sync-async"
             ],
             "line_no": 43,
             "bad_code": "class azure.contoso.NoodleManager:",
-            "suggestion": "class azure.contoso.NoodleClient:",
-            "comment": "The class name should end with 'Client'."
+            "suggestion": "Provide two separate client classes for synchronous and asynchronous operations.",
+            "comment": "The class name should end with 'Client'. The class should not combine async and sync operations."
         },
         {
             "rule_ids": [
@@ -36,8 +37,8 @@
             ],
             "line_no": 49,
             "bad_code": "connection_string: Optional[str]",
-            "suggestion": "Implement a separate factory method 'from_connection_string' to parse the connection string.",
-            "comment": "The constructor should not accept a connection string as a parameter."
+            "suggestion": "Implement a separate factory classmethod from_connection_string to create a client from a connection string.",
+            "comment": "The constructor should not accept a connection string directly."
         },
         {
             "rule_ids": [],

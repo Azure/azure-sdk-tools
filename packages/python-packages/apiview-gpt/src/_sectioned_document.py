@@ -27,7 +27,7 @@ class SectionedDocument:
                 indent = len(line) - len(line.lstrip())
                 line_data.append(LineData(i, indent, line))
 
-            top_level_lines = [x for x in line_data if x.indent == 0 and x.line != ""]
+            top_level_lines = [x for x in line_data if x.indent == 0 and x.line != "" and x.line != "}"]
             for i in range(len(top_level_lines)):
                 line1 = top_level_lines[i]
                 try:

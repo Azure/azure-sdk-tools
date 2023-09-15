@@ -15,8 +15,12 @@ mkdir /azure
 Copy-Item "/scripts/stress-test/test-resources-post.ps1" -Destination "/azure/"
 Copy-Item "/mnt/testresources/*" -Destination "/azure/"
 
-while (kubectl get pods -n $env:namespace $env:BASE_NAME -o jsonpath='{.items[?(@.metadata.annotations.batch\.kubernetes\.io/job-completion-index=="0")].metadata.name}' -nq "Complete") {
-    sleep 10
+if ($env:JOB_COMPLETION_INDEX) {
+    while (kubectl get pods -n $env:namespace -l job-name=$env:JOB_NAME -o jsonpath='{.items[?(@.metadata.annotations.batch\.kubernetes\.io/job-completion-index=="0")].metadata.name}' -ne "Complete") {
+        # try catch, error code 1
+        Write-Host "Waiting for pod index 0 deployment to complete."
+        Start-Sleep 10
+    }
 }
 
 # Capture output so we don't print environment variable secrets

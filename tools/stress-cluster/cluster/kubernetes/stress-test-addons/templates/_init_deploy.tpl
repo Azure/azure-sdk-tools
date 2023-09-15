@@ -2,7 +2,7 @@
 - name: init-azure-deployer
   # Please use 'testing' for the image repo name when testing
   # e.g. azsdkengsys.azurecr.io/testing/deploy-test-resources
-  image: azsdkengsys.azurecr.io/stress/deploy-test-resources
+  image: azsdkengsys.azurecr.io/testing/deploy-test-resources
   imagePullPolicy: Always
   command:
     - 'pwsh'
@@ -18,6 +18,8 @@
       value: {{ .Stress.ResourceGroupName }}
     - name: BASE_NAME
       value: {{ .Stress.BaseName }}
+    - name: JOB_NAME
+      value:  "{{ lower .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}"
   volumeMounts:
     - name: "{{ .Release.Name }}-{{ .Release.Revision }}-test-resources"
       mountPath: /mnt/testresources

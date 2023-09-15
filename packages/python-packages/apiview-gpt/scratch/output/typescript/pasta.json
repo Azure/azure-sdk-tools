@@ -8,17 +8,17 @@
             "line_no": 17,
             "bad_code": "constructor(name: string, sauceType?: SauceType, pastaType?: pastaType, ingredients?: string[], cheeseTypes?: string[]);",
             "suggestion": "constructor(name: string);\nconstructor(name: string, sauceType: SauceType, pastaType: pastaType, ingredients: string[], cheeseTypes: string[]);",
-            "comment": "The constructor of the Pasta class should use overloads instead of union types for correlated parameters."
+            "comment": "The constructor of the Pasta class should be overloaded properly to handle multiple correlated parameters."
         },
         {
             "rule_ids": [
                 "typescript_design.html#ts-naming-options",
-                "typescript_design.html#ts-pagination-provide-list"
+                "typescript_design.html#ts-approved-verbs"
             ],
             "line_no": 27,
-            "bad_code": "function retrieveAllPastas(options?: pastaOptions): PagedAsyncIterableIterator<Pasta, PastaListResponse>",
-            "suggestion": "function listPastas(options?: listPastasOptions): PagedAsyncIterableIterator<Pasta, PastaListResponse>",
-            "comment": "The options parameter in the retrieveAllPastas method should be named <method name>Options, in this case retrieveAllPastasOptions instead of pastaOptions. The retrieveAllPastas method should be named listPastas to follow the naming convention for methods that return a list of items. The retrieveAllPastas method should be named listPastas to follow the naming convention for methods that return a list of items."
+            "bad_code": "function retrieveAllPastas(options?: pastaOptions): PagedAsyncIterableIterator<Pasta, PastaListResponse>;",
+            "suggestion": "function listAllPastas(options?: listAllPastasOptions): PagedAsyncIterableIterator<Pasta, PastaListResponse>;",
+            "comment": "The options parameter in the method should be named as <method name>Options. The method name should start with 'list' when it returns a PagedAsyncIterableIterator."
         },
         {
             "rule_ids": [

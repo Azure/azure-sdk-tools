@@ -67,11 +67,29 @@ void AzureClassesDatabase::CreateApiViewMessage(
       newMessage.Level = ApiViewMessage::MessageLevel::Info;
       break;
     }
-    case ApiViewMessages::UsingDirectiveFound: {
+    case ApiViewMessages::ImplicitOverride: {
       newMessage.DiagnosticId = "CPA0009";
+      newMessage.DiagnosticText = "Implicit override of virtual method. Consider using the "
+                                  "'override' keyword to make the override semantics explicit.";
+      newMessage.Level = ApiViewMessage::MessageLevel::Info;
+      newMessage.HelpLinkUri = "https://isocpp.github.io/CppCoreGuidelines/"
+                               "CppCoreGuidelines#c128-virtual-functions-should-specify-exactly-"
+                               "one-of-virtual-override-or-final";
+      break;
+    }
+    case ApiViewMessages::UsingDirectiveFound: {
+      newMessage.DiagnosticId = "CPA000A";
       newMessage.DiagnosticText = "Using Namespace directive found in header file. ";
       newMessage.HelpLinkUri
           = "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#Rs-using-directive";
+      newMessage.Level = ApiViewMessage::MessageLevel::Error;
+      break;
+    }
+    case ApiViewMessages::NonVirtualDestructor: {
+      newMessage.DiagnosticId = "CPA000B";
+      newMessage.DiagnosticText = "Base class destructors should be public and virtual or protected and non-virtual. ";
+      newMessage.HelpLinkUri
+          = "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c35-a-base-class-destructor-should-be-either-public-and-virtual-or-protected-and-non-virtual";
       newMessage.Level = ApiViewMessage::MessageLevel::Error;
       break;
     }

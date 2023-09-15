@@ -169,6 +169,50 @@ stages:
           env:
             PROXY_MANUAL_START: "true"
 
+    - job: Test_Net_Core
+
+      displayName: Invoke .NET Azure.Core.Testframework CI Tests
+
+      strategy:
+        matrix:
+          Windows:
+            Pool: 'azsdk-pool-mms-win-2022-general'
+            OS: 'Windows'
+          Linux:
+            Pool: azsdk-pool-mms-ubuntu-2204-general
+            OS: 'Linux'
+          Mac:
+            Pool: 'Azure Pipelines'
+            OS: 'Mac'
+
+      pool:
+        name: $(Pool)
+
+      variables:
+        REPO: "Azure/azure-sdk-for-net"
+        CLONE_LOCATION: "$(Agent.BuildDirectory)/net_repo"
+
+      steps:
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+        - pwsh: |
+            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
+          displayName: Clone Repo
+
+        - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+          parameters:
+            runProxy: true
+            rootFolder: $(CLONE_LOCATION)
+
+        - pwsh: |
+            dotnet test
+          displayName: 'Invoke Tests'
+          workingDirectory: $(CLONE_LOCATION)/sdk/core/Azure.Core.TestFramework
+          env:
+            PROXY_MANUAL_START: "true"
+            PROXY_DEBUG_MODE: "true"
+
+
     - job: Test_Python_Tables
 
       displayName: Run Python Tables CI Tests

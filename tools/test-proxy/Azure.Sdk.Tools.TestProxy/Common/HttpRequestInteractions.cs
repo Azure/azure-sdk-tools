@@ -4,6 +4,7 @@
 using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
@@ -59,6 +60,32 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
 
             return value;
+        }
+
+        public async static Task<T> GetBody<T>(HttpRequest req)
+        {
+            if (req.ContentLength > 0)
+            {
+                try
+                {
+                    using (var jsonDocument = await JsonDocument.ParseAsync(req.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true }))
+                    {
+                        return JsonSerializer.Deserialize<T>(jsonDocument.RootElement.GetRawText(), new JsonSerializerOptions() { });
+                    }
+
+                }
+                catch (Exception e)
+                {
+                    req.Body.Position = 0;
+                    using (StreamReader readstream = new StreamReader(req.Body, Encoding.UTF8))
+                    {
+                        string bodyContent = readstream.ReadToEnd();
+                        throw new HttpException(HttpStatusCode.BadRequest, $"The body of this request is invalid JSON. Content: {bodyContent}. Exception detail: {e.Message}");
+                    }
+                }
+            }
+
+            return default(T);
         }
 
         public async static Task<JsonDocument> GetBody(HttpRequest req)

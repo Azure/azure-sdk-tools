@@ -85,7 +85,7 @@ namespace APIViewWeb.Pages.Assemblies
                     }
                 }
                 var notifcation = new NotificationModel() { Message = errors.ToString(), Level = NotificatonLevel.Error };
-                await _notificationHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveNotification", notifcation);
+                await _notificationHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
                 return new NoContentResult();
             }
 

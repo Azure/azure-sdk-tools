@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -30,7 +31,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public void Reset()
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
             _recordingHandler.SetDefaultExtensions(recordingId);
@@ -39,14 +40,14 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpGet]
         public void IsAlive()
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
             Response.StatusCode = 200;
         }
 
         [HttpPost]
         public async Task AddTransform()
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
             var tName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
@@ -65,7 +66,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task AddSanitizer()
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
             var sName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
@@ -82,9 +83,39 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
+        public async Task AddSanitizers()
+        {
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+
+            // parse all of them first, any exceptions should pop here
+            var workload = (await HttpRequestInteractions.GetBody<List<SanitizerBody>>(Request)).Select(s => (RecordedTestSanitizer)GetSanitizer(s.Name, s.Body)).ToList();
+
+            if (workload.Count == 0)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "When bulk adding sanitizers, ensure there is at least one sanitizer added in each batch. Received 0 work items.");
+            }
+
+            // register them all
+            foreach(var sanitizer in workload)
+            {
+                if (recordingId != null)
+                {
+                    _recordingHandler.AddSanitizerToRecording(recordingId, sanitizer);
+                }
+                else
+                {
+                    _recordingHandler.Sanitizers.Add(sanitizer);
+                }
+            }
+
+        }
+
+
+        [HttpPost]
         public async Task SetMatcher()
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
             var mName = RecordingHandler.GetHeader(Request, "x-abstraction-identifier");
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
@@ -104,7 +135,7 @@ namespace Azure.Sdk.Tools.TestProxy
         [AllowEmptyBody]
         public void SetRecordingOptions([FromBody()] IDictionary<string, object> options = null)
         {
-            DebugLogger.LogRequestDetails(_logger, Request);
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
 
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 

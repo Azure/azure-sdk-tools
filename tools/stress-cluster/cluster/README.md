@@ -67,7 +67,7 @@ Cluster buildout and deployment involves three main steps which are automated in
 First, update the `./azure/parameters/dev.json` parameters file with the values marked `// add me`, then run:
 
 ```
-./provision.ps1 -env dev
+./provision.ps1 -env dev -LocalAddonsPath `pwd`/kubernetes/stress-test-addons
 ```
 
 To deploy stress test packages to the dev environment

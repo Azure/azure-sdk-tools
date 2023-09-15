@@ -1,17 +1,21 @@
 import os
-import dotenv
 import json
 from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
+from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.chat_models import AzureChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 import openai
-from typing import List, Union
+import re
+from typing import List, Union, Dict, Any, Optional
 
 from ._sectioned_document import SectionedDocument, Section
 from ._models import GuidelinesResult, Violation
+from ._vector_db import VectorDB
 
-dotenv.load_dotenv()
+if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
+    # running on dev machine, loadenv
+    import dotenv
+    dotenv.load_dotenv()
 
 openai.api_type = "azure"
 openai.api_base = os.getenv("OPENAI_API_BASE")
@@ -24,59 +28,150 @@ _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
 
 class GptReviewer:
-    def __init__(self):
+
+    def __init__(self, log_prompts: bool = False):
         self.llm = AzureChatOpenAI(client=openai.ChatCompletion, deployment_name="gpt-4", openai_api_version=OPENAI_API_VERSION, temperature=0)
         self.output_parser = PydanticOutputParser(pydantic_object=GuidelinesResult)
-        self.prompt_template = PromptTemplate(
-            input_variables=["apiview", "guidelines", "language"],
-            partial_variables={"format_instructions": self.output_parser.get_format_instructions()},
-            template="""
-                Given the following {language} Azure SDK Guidelines:
-                  {guidelines}
-                Verify whether the following code satisfies the guidelines:
-                ```
-                  {apiview}
-                ```
-                
-                {format_instructions}
-            """
-        )
-        self.chain = LLMChain(llm=self.llm, prompt=self.prompt_template)
+        if log_prompts:
+            # remove the folder if it exists
+            base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
+            if os.path.exists(base_path):
+                import shutil
+                shutil.rmtree(base_path)
+            os.makedirs(base_path)
+            os.environ["APIVIEW_LOG_PROMPT"] = str(log_prompts)
+            os.environ["APIVIEW_PROMPT_INDEX"] = "0"
+
+        system_prompt = SystemMessagePromptTemplate.from_template("""
+You are trying to analyze an API for {language} to determine whether it meets the SDK guidelines.
+We only provide one class at a time right now, but if you need it, here's a list of all the classes in this API:
+{class_list}
+""")
+        human_prompt = HumanMessagePromptTemplate.from_template("""
+Given the following guidelines:
+{guidelines}
+
+Evaluate the following class for any violations:
+```
+{apiview}
+```
+                                                                
+{format_instructions}
+""")
+        prompt_template = ChatPromptTemplate.from_messages([system_prompt, human_prompt])
+        self.chain = LLMChain(llm=self.llm, prompt=prompt_template)
+
+    def _hash(self, obj) -> str:
+        return str(hash(json.dumps(obj)))
 
     def get_response(self, apiview, language):
-        general_guidelines, language_guidelines = self.retrieve_guidelines(language)
-        all_guidelines = general_guidelines + language_guidelines
+        apiview = self.unescape(apiview)
+        class_list = self.get_class_list(apiview)
 
-        # TODO: Make this not hard-coded!
-        guidelines = self.select_guidelines(all_guidelines, [
-            "python_design.html#python-client-naming",
-            "python_design.html#python-client-options-naming",
-            "python_design.html#python-models-async",
-            "python_design.html#python-models-dict-result",
-            "python_design.html#python-models-enum-string",
-            "python_design.html#python-models-enum-name-uppercase",
-            "python_design.html#python-client-sync-async",
-            "python_design.html#python-client-async-keywords",
-            "python_design.html#python-client-separate-sync-async",
-            "python_design.html#python-client-same-name-sync-async",
-            "python_design.html#python-client-namespace-sync",
-        ])
-
-        for i, g in enumerate(guidelines):
-            g["number"] = i
+        all_guidelines = self.retrieve_guidelines(language)
 
         chunked_apiview = SectionedDocument(apiview.splitlines(), chunk=True)
 
         final_results = GuidelinesResult(status="Success", violations=[])
         for chunk in chunked_apiview.sections:
             if self.should_evaluate(chunk):
-                results = self.chain.run(apiview=str(chunk), guidelines=guidelines, language=language)
+                # retrieve the most similar comments to identify guidelines to check
+                semantic_matches = VectorDB().search_documents(language, chunk)
+                
+                guidelines_to_check = []
+                extra_comments = {}
+
+                # extract the unique guidelines to include in the prompt grounding.
+                # documents not included in the prompt grounding will be treated as extra comments.
+                for match in semantic_matches:
+
+                    comment_model = match["aiCommentModel"]
+                    if comment_model["isDeleted"] == True:
+                        continue
+
+                    guideline_ids = comment_model["guidelineIds"]
+                    goodCode = comment_model["goodCode"]
+                    comment = comment_model["comment"]
+
+                    if guideline_ids:
+                        guidelines_to_check.extend(guideline_ids)
+
+                    # remove unnecessary or empty fields to conserve tokens and not confuse the AI
+                    del comment_model["language"]
+                    del comment_model["embedding"]
+                    del comment_model["guidelineIds"]
+                    del comment_model["changeHistory"]
+                    del comment_model["isDeleted"]
+                    if not comment_model["goodCode"]:
+                        del comment_model["goodCode"]
+                    if not comment_model["comment"]:
+                        del comment_model["comment"]
+
+                    if goodCode or comment:
+                        extra_comments[self._hash(comment_model)] = comment_model
+                    if not goodCode and not comment and not guideline_ids:
+                        comment_model["comment"] = "Please have an architect look at this."
+                        extra_comments[self._hash(comment_model)] = comment_model
+                guidelines_to_check = list(set(guidelines_to_check))
+                if not guidelines_to_check:
+                    continue
+                guidelines = self.select_guidelines(all_guidelines, guidelines_to_check)
+
+                # append the extra comments to the list of guidelines to treat them equally.
+                guidelines.extend(list(extra_comments.values()))
+
+                params = {
+                    "apiview": str(chunk),
+                    "guidelines": guidelines,
+                    "language": language,
+                    "class_list": class_list,
+                    "format_instructions": self.output_parser.get_format_instructions()
+                }
+                results = self.chain.run(**params)
                 output = self.output_parser.parse(results)
                 final_results.violations.extend(self.process_violations(output.violations, chunk))
                 # FIXME see: https://github.com/Azure/azure-sdk-tools/issues/6571
                 if len(output.violations) > 0:
                     final_results.status = "Error"
+        self.process_rule_ids(final_results, all_guidelines)
         return final_results
+
+    """ Ensure that each rule ID matches with an actual guideline ID. 
+        This ensures that the links that appear in APIView should never be broken (404).
+    """
+    def process_rule_ids(self, results, guidelines):
+        # create an index for easy lookup
+        index = { x["id"]: x for x in guidelines }
+        for violation in results.violations:
+            to_remove = []
+            to_add = []
+            for rule_id in violation.rule_ids:
+                try:
+                    index[rule_id]
+                    continue
+                except KeyError:
+                    # see if any guideline ID ends with the rule_id. If so, update it and preserve in the index
+                    matched = False
+                    for guideline in guidelines:
+                        if guideline["id"].endswith(rule_id):
+                            to_remove.append(rule_id)
+                            to_add.append(guideline["id"])
+                            index[rule_id] = guideline["id"]
+                            matched = True
+                            break
+                    if matched:
+                        continue
+                    # no match or partial match found, so remove the rule_id
+                    to_remove.append(rule_id)
+                    print(f"WARNING: Rule ID {rule_id} not found. Possible hallucination.")
+            # update the rule_ids arrays with the new values. Don't modify the array while iterating over it!
+            for rule_id in to_remove:
+                violation.rule_ids.remove(rule_id)
+            for rule_id in to_add:
+                violation.rule_ids.append(rule_id)
+
+    def unescape(self, text: str) -> str:
+        return str(bytes(text, "utf-8").decode("unicode_escape"))
 
     def process_violations(self, violations: List[Violation], section: Section) -> List[Violation]:
         if not violations:
@@ -146,4 +241,35 @@ class GptReviewer:
             with open(os.path.join(language_guidelines_path, filename), "r") as f:
                 items = json.loads(f.read())
                 language_guidelines.extend(items)
-        return general_guidelines, language_guidelines
+        return general_guidelines + language_guidelines
+
+    def get_class_list(self, apiview) -> List[str]:
+        return re.findall(r'class ([\w\.]+)', apiview)
+
+
+# custom monkey patch to save the prompts
+def _custom_generate(
+    self,
+    input_list: List[Dict[str, Any]],
+    run_manager: Optional["CallbackManagerForChainRun"] = None,
+) -> "LLMResult":
+    """Generate LLM result from inputs."""
+    prompts, stop = self.prep_prompts(input_list, run_manager=run_manager)
+    log_prompts = os.getenv("APIVIEW_LOG_PROMPT", "False").lower() == "true"
+    if log_prompts:
+        base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
+        for prompt in prompts:
+            request_no = os.environ.get("APIVIEW_PROMPT_INDEX", 0)
+            filepath = os.path.join(base_path, f"prompt_{request_no}.txt")
+            with open(filepath, "w") as f:
+                for message in prompt.messages:
+                    f.write(f"==={message.type.upper()}===\n")
+                    f.write(message.content + "\n")
+            os.environ["APIVIEW_PROMPT_INDEX"] = str(int(request_no) + 1)
+    return self.llm.generate_prompt(
+        prompts,
+        stop,
+        callbacks=run_manager.get_child() if run_manager else None,
+        **self.llm_kwargs,
+    )
+LLMChain.generate = _custom_generate

@@ -16,12 +16,10 @@ namespace APIViewWeb
     public class CosmosReviewRepository : ICosmosReviewRepository
     {
         private readonly Container _reviewsContainer;
-        private readonly CosmosClient _cosmosClient;
 
-        public CosmosReviewRepository(IConfiguration configuration)
+        public CosmosReviewRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
-            _cosmosClient = new CosmosClient(configuration["Cosmos:ConnectionString"]);
-            _reviewsContainer = _cosmosClient.GetContainer("APIView", "Reviews");
+            _reviewsContainer = cosmosClient.GetContainer("APIView", "Reviews");
         }
 
         public async Task UpsertReviewAsync(ReviewModel reviewModel)

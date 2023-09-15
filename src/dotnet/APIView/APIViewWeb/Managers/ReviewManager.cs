@@ -7,7 +7,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Claims;
-using System.Text.Json;
+using System.Text;
 using System.Threading.Tasks;
 using ApiView;
 using APIView.DIff;
@@ -20,6 +20,10 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
+using System.Net.Http;
+using System.Text.Json;
+using System.Data;
 
 namespace APIViewWeb.Managers
 {
@@ -27,23 +31,14 @@ namespace APIViewWeb.Managers
     {
 
         private readonly IAuthorizationService _authorizationService;
-
         private readonly ICosmosReviewRepository _reviewsRepository;
-
         private readonly IBlobCodeFileRepository _codeFileRepository;
-
         private readonly IBlobOriginalsRepository _originalsRepository;
-
         private readonly ICosmosCommentsRepository _commentsRepository;
-
         private readonly IEnumerable<LanguageService> _languageServices;
-
         private readonly INotificationManager _notificationManager;
-
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
-
         private readonly IPackageNameManager _packageNameManager;
-
         private readonly IHubContext<SignalRHub> _signalRHubContext;
 
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
@@ -54,6 +49,7 @@ namespace APIViewWeb.Managers
             ICosmosCommentsRepository commentsRepository, IEnumerable<LanguageService> languageServices,
             INotificationManager notificationManager, IDevopsArtifactRepository devopsClient,
             IPackageNameManager packageNameManager, IHubContext<SignalRHub> signalRHubContext)
+
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -318,7 +314,7 @@ namespace APIViewWeb.Managers
                 review.ApprovalDate = DateTime.Now;
                 approvalStatus = true;
             }
-            await _signalRHubContext.Clients.Group(user.Identity.Name).SendAsync("ReceiveApprovalSelf", review.ReviewId, revisionId, approvalStatus);
+            await _signalRHubContext.Clients.Group(user.GetGitHubLogin()).SendAsync("ReceiveApprovalSelf", review.ReviewId, revisionId, approvalStatus);
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", review.ReviewId, revisionId, userId, approvalStatus);
             await _reviewsRepository.UpsertReviewAsync(review);
         }
@@ -508,35 +504,6 @@ namespace APIViewWeb.Managers
             return await CreateMasterReviewAsync(user, codeFile, originalFileName, label, memoryStream, compareAllRevisions);
         }
 
-        public async Task<List<ServiceGroupModel>> GetReviewsByServicesAsync(ReviewType filterType)
-        {
-            SortedDictionary<string, ServiceGroupModel> response = new();
-            var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: filterType);
-            foreach (var review in reviews)
-            {
-                var packageDisplayName = review.PackageDisplayName ?? "Other";
-                var serviceName = review.ServiceName ?? "Other";
-                if (!response.ContainsKey(serviceName))
-                {
-                    response[serviceName] = new ServiceGroupModel()
-                    {
-                        ServiceName = serviceName
-                    };
-                }
-
-                var packageDict = response[serviceName].packages;
-                if (!packageDict.ContainsKey(packageDisplayName))
-                {
-                    packageDict[packageDisplayName] = new PackageGroupModel()
-                    {
-                        PackageDisplayName = packageDisplayName
-                    };
-                }
-                packageDict[packageDisplayName].reviews.Add(new ReviewDisplayModel(review));
-            }
-            return response.Values.ToList();
-        }
-
         public async Task AutoArchiveReviews(int archiveAfterMonths)
         {
             var reviews = await _reviewsRepository.GetReviewsAsync(false, "All", filterType: ReviewType.Manual, fetchAllPages: true);
@@ -714,6 +681,71 @@ namespace APIViewWeb.Managers
             return reviews.Any();
         }
 
+        /// <summary>
+        /// Sends info to AI service for generating initial review on APIReview file
+        /// </summary>
+        public async Task<int> GenerateAIReview(string reviewId, string revisionId)
+        {
+            var review = await _reviewsRepository.GetReviewAsync(reviewId);
+            var revision = review.Revisions.Where(r => r.RevisionId == revisionId).FirstOrDefault();
+            var codeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
+            var codeLines = codeFile.RenderText(false);
+
+            var reviewText = new StringBuilder();
+            foreach (var codeLine in codeLines)
+            {
+                reviewText.Append(codeLine.DisplayString);
+                reviewText.Append("\\n");
+            }
+
+            var url = "https://apiview-gpt.azurewebsites.net/python";
+            var client = new HttpClient();
+            client.Timeout = TimeSpan.FromMinutes(20);
+            var payload = new
+            {
+                content = reviewText.ToString()
+            };
+
+            var result = new AIReviewModel();
+            try {
+                var response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+                response.EnsureSuccessStatusCode();
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseSanitized = JsonSerializer.Deserialize<string>(responseString);
+                result = JsonSerializer.Deserialize<AIReviewModel>(responseSanitized);
+            }
+            catch (Exception e ) {
+                throw new Exception($"Copilot Failed: {e.Message}");
+            }
+           
+            // Write back result as comments to APIView
+            foreach (var violation in result.Violations)
+            {
+                var codeLine = codeLines[violation.LineNo];
+                var comment = new CommentModel();
+                comment.TimeStamp = DateTime.UtcNow;
+                comment.ReviewId = reviewId;
+                comment.RevisionId = revisionId;
+                comment.ElementId = codeLine.ElementId;
+                //comment.SectionClass = sectionClass; // This will be needed for swagger
+
+                var commentText = new StringBuilder();
+                commentText.AppendLine($"Suggestion: `{violation.Suggestion}`");
+                commentText.AppendLine();
+                commentText.AppendLine(violation.Comment);
+                foreach (var id in violation.RuleIds)
+                {
+                    commentText.AppendLine($"See: https://guidelinescollab.github.io/azure-sdk/{id}");
+                }
+                comment.ResolutionLocked = false;
+                comment.Username = "azure-sdk";
+                comment.Comment = commentText.ToString();
+
+                await _commentsRepository.UpsertCommentAsync(comment);
+            }
+            return result.Violations.Count;
+        }
+
 
         private async Task UpdateReviewAsync(ReviewModel review, LanguageService languageService)
         {
@@ -808,6 +840,7 @@ namespace APIViewWeb.Managers
                     _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.ReviewId, revision));
                 }
             }
+            //await GenerateAIReview(review, revision);
         }
 
         private async Task<ReviewCodeFileModel> CreateFileAsync(

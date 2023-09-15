@@ -1,0 +1,208 @@
+[
+    {
+        "similarity": 0.876406,
+        "aiCommentModel": {
+            "id": "7b84e47455ec48648abc830955cbf541",
+            "language": "python",
+            "badCode": "class azure.contoso.WidgetManager:\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
+            "goodCode": "class azure.contoso.WidgetClient:\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
+            "embedding": null,
+            "comment": null,
+            "guidelineIds": [
+                "python_design.html#python-client-naming"
+            ],
+            "changeHistory": [
+                {
+                    "changeAction": 0,
+                    "user": "azure-sdk",
+                    "changeDateTime": "2023-08-25T18:11:00.8511497Z"
+                }
+            ],
+            "isDeleted": false
+        }
+    },
+    {
+        "similarity": 0.85862935,
+        "aiCommentModel": {
+            "id": "699c3701b58749b897fbfab98361cb66",
+            "language": "python",
+            "badCode": "class azure.contoso.aio.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
+            "goodCode": null,
+            "embedding": null,
+            "comment": "This is an asynchronous client class!",
+            "guidelineIds": [],
+            "changeHistory": [
+                {
+                    "changeAction": 0,
+                    "user": "azure-sdk",
+                    "changeDateTime": "2023-08-29T20:15:52.2058196Z"
+                }
+            ],
+            "isDeleted": false
+        }
+    },
+    {
+        "similarity": 0.85862935,
+        "aiCommentModel": {
+            "id": "e4bce59e18844c6a9a571a188feff6ec",
+            "language": "python",
+            "badCode": "class azure.contoso.aio.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
+            "goodCode": null,
+            "embedding": null,
+            "comment": "This is an asynchronous client class!",
+            "guidelineIds": [],
+            "changeHistory": [
+                {
+                    "changeAction": 0,
+                    "user": "azure-sdk",
+                    "changeDateTime": "2023-08-24T21:36:56.091906Z"
+                }
+            ],
+            "isDeleted": false
+        }
+    },
+    {
+        "similarity": 0.85862935,
+        "aiCommentModel": {
+            "id": "602de030727a4029b933611b93a1cb8e",
+            "language": "python",
+            "badCode": "class azure.contoso.aio.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
+            "goodCode": null,
+            "embedding": null,
+            "comment": "This is an asynchronous client class!",
+            "guidelineIds": [],
+            "changeHistory": [
+                {
+                    "changeAction": 0,
+                    "user": "azure-sdk",
+                    "changeDateTime": "2023-08-25T18:11:00.5762949Z"
+                }
+            ],
+            "isDeleted": false
+        }
+    },
+    {
+        "similarity": 0.8550783,
+        "aiCommentModel": {
+            "id": "66496dbd32744a5ea907e1d172108bc4",
+            "language": "python",
+            "badCode": "class azure.contoso.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    def close(self) -> None\n\n    @distributed_trace\n\n    def get_widget(self, *args, **kwargs)",
+            "goodCode": null,
+            "embedding": null,
+            "comment": "This is a synchronous client class!",
+            "guidelineIds": [],
+            "changeHistory": [
+                {
+                    "changeAction": 0,
+                    "user": "azure-sdk",
+                    "changeDateTime": "2023-08-29T20:15:51.6639382Z"
+                }
+            ],
+            "isDeleted": false
+        }
+    },
+    {
+        "similarity": 0.8550783,
+        "aiCommentModel": {
+            "id": "b752a4e5339d4f4d8f09fe670dd3cf2e",
+            "language": "python",
+            "badCode": "class azure.contoso.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    def close(self) -> None\n\n    @distributed_trace\n\n    def get_widget(self, *args, **kwargs)",
+            "goodCode": null,
+            "embedding": null,
+            "comment": "This is a synchronous client class!",
+            "guidelineIds": [],
+            "changeHistory": [
+                {
+                    "changeAction": 0,
+                    "user": "azure-sdk",
+                    "changeDateTime": "2023-08-24T21:36:35.447728Z"
+                }
+            ],
+            "isDeleted": false
+        }
+    },
+    {
+        "similarity": 0.8550783,
+        "aiCommentModel": {
+            "id": "52f4a06e9c5f47d6a5c11783614ef5b0",
+            "language": "python",
+            "badCode": "class azure.contoso.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    def close(self) -> None\n\n    @distributed_trace\n\n    def get_widget(self, *args, **kwargs)",
+            "goodCode": null,
+            "embedding": null,
+            "comment": "This is a synchronous client class!",
+            "guidelineIds": [],
+            "changeHistory": [
+                {
+                    "changeAction": 0,
+                    "user": "azure-sdk",
+                    "changeDateTime": "2023-08-25T18:10:55.0091534Z"
+                }
+            ],
+            "isDeleted": false
+        }
+    },
+    {
+        "similarity": 0.8550783,
+        "aiCommentModel": {
+            "id": "e1fe2ba66a6247e599ea9d3d43c9fa17",
+            "language": "python",
+            "badCode": "class azure.contoso.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    def close(self) -> None\n\n    @distributed_trace\n\n    def get_widget(self, *args, **kwargs)",
+            "goodCode": null,
+            "embedding": null,
+            "comment": "This is a synchronous client class!",
+            "guidelineIds": [],
+            "changeHistory": [
+                {
+                    "changeAction": 0,
+                    "user": "azure-sdk",
+                    "changeDateTime": "2023-08-24T21:36:14.7651694Z"
+                }
+            ],
+            "isDeleted": false
+        }
+    },
+    {
+        "similarity": 0.81908387,
+        "aiCommentModel": {
+            "id": "12ef1b22237e4fc4a28cd303dd853fb4",
+            "language": "python",
+            "badCode": "class ExampleClient(connection_string: str, **kwargs)",
+            "goodCode": "class ExampleClient:\n\n   @classmethod\n\n    def _parse_connection_string(cls, connection_string): ...\n\n   @classmethod\n\n    def from_connection_string(cls, connection_string, **kwargs):\n\n       endpoint, credential = cls._parse_connection_string(connection_string)\n\n      return cls(endpoint, credential, **kwargs)",
+            "embedding": null,
+            "comment": null,
+            "guidelineIds": [
+                "python_design.html#python-client-connection-string"
+            ],
+            "changeHistory": [
+                {
+                    "changeAction": 0,
+                    "user": "azure-sdk",
+                    "changeDateTime": "2023-08-25T18:11:01.4076498Z"
+                }
+            ],
+            "isDeleted": false
+        }
+    },
+    {
+        "similarity": 0.8012371,
+        "aiCommentModel": {
+            "id": "9f8ef9bce6474937bd9e6d0c4f764246",
+            "language": "python",
+            "badCode": "# In module azure.example\nclass ExampleClient: # Don't mix'n match with different method names\n    def some_service_operation(self, name, size) ...\n    async def some_service_operation_async(self, name, size) ...",
+            "goodCode": "# In module azure.example\nclass ExampleClient:\n    def some_service_operation(self, name, size) ...\n\n# In module azure.example.aio\nclass ExampleClient:\n    # Same method name as sync, different client\n    async def some_service_operation(self, name, size) ...",
+            "embedding": null,
+            "comment": null,
+            "guidelineIds": [
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "changeHistory": [
+                {
+                    "changeAction": 0,
+                    "user": "azure-sdk",
+                    "changeDateTime": "2023-08-25T18:11:02.7468303Z"
+                }
+            ],
+            "isDeleted": false
+        }
+    }
+]

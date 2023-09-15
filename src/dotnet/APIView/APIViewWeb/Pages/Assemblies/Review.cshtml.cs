@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
@@ -24,21 +25,13 @@ namespace APIViewWeb.Pages.Assemblies
     {
         private static int REVIEW_DIFF_CONTEXT_SIZE = 3;
         private const string DIFF_CONTEXT_SEPERATOR = "<br><span>.....</span><br>";
-
         private readonly IReviewManager _manager;
-
         private readonly IPullRequestManager _pullRequestManager;
-
         private readonly IBlobCodeFileRepository _codeFileRepository;
-
         private readonly ICommentsManager _commentsManager;
-
         private readonly INotificationManager _notificationManager;
-
         public readonly UserPreferenceCache _preferenceCache;
-
         private readonly ICosmosUserProfileRepository _userProfileRepository;
-
         private readonly IConfiguration _configuration;
 
         private readonly IHubContext<SignalRHub> _signalRHubContext;
@@ -63,7 +56,6 @@ namespace APIViewWeb.Pages.Assemblies
             _userProfileRepository = userProfileRepository;
             _configuration = configuration;
             _signalRHubContext = signalRHub;
-
         }
 
         public ReviewModel Review { get; set; }
@@ -134,7 +126,7 @@ namespace APIViewWeb.Pages.Assemblies
                 if (Lines.Length == 0)
                 {
                     var notifcation = new NotificationModel() { Message = "There is no diff between the two revisions.", Level = NotificatonLevel.Info };
-                    await _signalRHubContext.Clients.Group(User.Identity.Name).SendAsync("RecieveNotification", notifcation);
+                    await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
                     return Redirect(Request.Headers["referer"]);
                 }
             }
@@ -295,9 +287,22 @@ namespace APIViewWeb.Pages.Assemblies
             Review = await _manager.GetReviewAsync(User, id);
             TaggableUsers = _commentsManager.GetTaggableUsers();
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Revision = revisionId != null ?
-                Review.Revisions.Single(r => r.RevisionId == revisionId) :
-                Review.Revisions.Last();
+            Revision = Review.Revisions.Last();
+            if (revisionId != null) 
+            {
+                var revision = Review.Revisions.Where(r => r.RevisionId == revisionId);
+                if (revision.Count() == 1)
+                {
+                    Revision = revision.Single();
+                }
+                else 
+                {
+                    var notifcation = new NotificationModel() { Message = $"A revision with ID {revisionId} does not exist for this review.", Level = NotificatonLevel.Warning };
+                    await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
+                }
+
+            }
+                
             PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
             DiffRevisionId = (DiffRevisionId == null) ? diffRevisionId : DiffRevisionId;
             ShowDiffOnly = (ShowDiffOnly == false) ? diffOnly : ShowDiffOnly;

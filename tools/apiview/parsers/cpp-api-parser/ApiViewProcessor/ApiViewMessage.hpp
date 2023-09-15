@@ -34,4 +34,6 @@ enum class ApiViewMessages
   InternalTypesInNonCorePackage, // Internal types in a non-core package
   ImplicitConstructor, // Constructor for a type is not marked "explicit".
   UsingDirectiveFound, // "using namespace" directive found.
+  ImplicitOverride, // Implicit override of virtual method.
+  NonVirtualDestructor, // Destructor of non-final class is not virtual.
 };

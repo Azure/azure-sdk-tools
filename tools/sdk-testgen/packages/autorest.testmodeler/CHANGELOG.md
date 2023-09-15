@@ -1,6 +1,13 @@
 # Change Log - @autorest/testmodeler
 
-This log was last generated on Mon, 19 Jun 2023 08:50:04 GMT and should not be manually modified.
+This log was last generated on Fri, 21 Jul 2023 08:36:29 GMT and should not be manually modified.
+
+## 2.6.1
+Fri, 21 Jul 2023 08:36:29 GMT
+
+### Patches
+
+- Support DataFactoryKeyVaultSecretReference of DataFactoryElement
 
 ## 2.6.0
 Mon, 19 Jun 2023 08:50:04 GMT

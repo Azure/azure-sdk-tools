@@ -156,11 +156,25 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
           "Configuration element `filterNamespace` is neither a string or an array of strings.");
     }
   }
-  if (configurationJson.contains("additionalCompilerSwitches")
-      && configurationJson["additionalIncludeDirectories"].is_array()
-      && configurationJson["additionalIncludeDirectories"].size() != 0)
+  if (configurationJson.contains("additionalCompilerSwitches"))
   {
-    m_additionalCompilerArguments = configurationJson["additionalCompilerSwitches"];
+    if (configurationJson["additionalCompilerSwitches"].is_array())
+    {
+      if (configurationJson["additionalCompilerSwitches"].size() != 0)
+      {
+        m_additionalCompilerArguments = configurationJson["additionalCompilerSwitches"];
+      }
+    }
+    else if (configurationJson["additionalCompilerSwitches"].is_string())
+    {
+      m_additionalCompilerArguments.push_back(
+          configurationJson["additionalCompilerSwitches"].get<std::string>());
+    }
+    else if (!configurationJson["additionalCompilerSwitches"].is_null())
+    {
+      throw std::runtime_error(
+          "Configuration element `additionalCompilerSwitches` is not an array or is empty.");
+    }
   }
   if (configurationJson.contains("additionalIncludeDirectories")
       && configurationJson["additionalIncludeDirectories"].is_array())
@@ -323,7 +337,10 @@ class ApiViewCompilationDatabase : public CompilationDatabase {
       "-c",
       "-std=c++14",
       "-Wall",
-      "-Werror"};
+      "-Werror",
+      // Work around Microsoft STL requiring clang 16.0.0 or later.
+      "-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH",
+  };
 
 public:
   ApiViewCompilationDatabase(
@@ -331,8 +348,8 @@ public:
       std::filesystem::path const& sourceLocation,
       std::vector<std::filesystem::path> const& additionalIncludePaths,
       std::vector<std::string> const& additionalArguments)
-      : CompilationDatabase(), m_filesToCompile(filesToCompile),
-        m_sourceLocation(sourceLocation), m_additionalIncludePaths{additionalIncludePaths}
+      : CompilationDatabase(), m_filesToCompile(filesToCompile), m_sourceLocation(sourceLocation),
+        m_additionalIncludePaths{additionalIncludePaths}
   {
     for (auto const& arg : additionalArguments)
     {
@@ -363,6 +380,7 @@ public:
         {
           commandLine.push_back(arg);
         }
+
         commandLine.push_back(std::string(stringFromU8string(file.u8string())));
 
         std::vector<CompileCommand> rv;
@@ -417,8 +435,6 @@ int ApiViewProcessorImpl::ProcessApiView()
   }
 
   // Create a compilation database consisting of the source root and source file.
-  auto absTemp = m_currentSourceRoot;
-
   ApiViewCompilationDatabase compileDb(
       {std::filesystem::absolute(tempFile)},
       m_currentSourceRoot,

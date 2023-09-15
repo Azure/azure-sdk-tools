@@ -1,6 +1,6 @@
+using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 using AutoMapper;
-using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace APIViewWeb.Helpers
 {
@@ -22,7 +22,6 @@ namespace APIViewWeb.Helpers
                 .ForMember(dest => dest.HideIndexPageOptions, opt => opt.MapFrom((src, dest) => src._hideIndexPageOptions != null ? src._hideIndexPageOptions : dest._hideIndexPageOptions))
                 .ForMember(dest => dest.ShowComments, opt => opt.MapFrom((src, dest) => src._showComments != null ? src._showComments : dest._showComments))
                 .ForMember(dest => dest.ShowSystemComments, opt => opt.MapFrom((src, dest) => src._showSystemComments != null ? src._showSystemComments : dest._showSystemComments));
-
         }
     }
 }

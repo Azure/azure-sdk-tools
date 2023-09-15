@@ -127,7 +127,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     GitHandler.Run($"branch {branchGuid}", config);
                     GitHandler.Run($"checkout {branchGuid}", config);
                     GitHandler.Run($"add -A .", config);
-                    GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit -m \"Automatic asset update from test-proxy.\"", config);
+                    GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit --no-gpg-sign -m \"Automatic asset update from test-proxy.\"", config);
                     // Get the first 10 digits of the commit SHA. The generatedTagName will be the
                     // config.TagPrefix_<SHA>
                     if (GitHandler.TryRun("rev-parse --short=10 HEAD", config.AssetsRepoLocation.ToString(), out CommandResult SHAResult))
@@ -172,15 +172,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task<string> Restore(string pathToAssetsJson) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
 
-            var initialized = IsAssetsRepoInitialized(config);
+            var restoreQueue = InitTasks.GetOrAdd(config.AssetsJsonRelativeLocation, new TaskQueue());
 
-            if (!initialized)
+            await restoreQueue.EnqueueAsync(async () =>
             {
-                InitializeAssetsRepo(config);
-            }
+                var initialized = IsAssetsRepoInitialized(config);
 
-            CheckoutRepoAtConfig(config, cleanEnabled: true);
-            await BreadCrumb.Update(config);
+                if (!initialized)
+                {
+                    InitializeAssetsRepo(config);
+                }
+
+                CheckoutRepoAtConfig(config, cleanEnabled: true);
+                await BreadCrumb.Update(config);
+            });
 
             return config.AssetsRepoLocation.ToString();
         }

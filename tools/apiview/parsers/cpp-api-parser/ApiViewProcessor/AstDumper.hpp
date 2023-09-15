@@ -38,11 +38,12 @@ public:
   virtual void InsertText(std::string_view const& text) = 0;
   virtual void InsertPunctuation(char punctuation) = 0;
   virtual void InsertLineIdMarker() = 0;
+  virtual void InsertIdentifier(std::string_view const& identifier) = 0;
   virtual void InsertTypeName(
       std::string_view const& type,
       std::string_view const& typeNavigationId)
       = 0;
-  virtual void InsertMemberName(std::string_view const& member) = 0;
+  virtual void InsertMemberName(std::string_view const& member, std::string_view const& memberFullName) = 0;
   virtual void InsertStringLiteral(std::string_view const& str) = 0;
   virtual void InsertLiteral(std::string_view const& str) = 0;
   virtual void InsertComment(std::string_view const& comment) = 0;

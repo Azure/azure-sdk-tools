@@ -24,4 +24,29 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Logs.Add(state);
         }
     }
+
+    public class TestLoggingFactory : ILoggerFactory
+    {
+        private readonly TestLogger _logger;
+
+        public TestLoggingFactory(TestLogger logger)
+        {
+            _logger = logger;
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddProvider(ILoggerProvider provider)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ILogger CreateLogger(string categoryName)
+        {
+            return _logger;
+        }
+    }
 }

@@ -119,6 +119,22 @@ $(() => {
     }
   })
 
+  connection.on("RecieveAIReviewGenerationStatus", (notification) => {
+    const ids = hp.getReviewAndRevisionIdFromUrl(location.href);
+    const reviewId = ids["reviewId"];
+    const revisionId = ids["revisionId"];
+
+    if (revisionId) {
+      if (reviewId === notification.reviewId && revisionId === notification.revisionId) {
+        hp.updateAIReviewGenerationStatus(notification);
+      }
+    }
+    else if (notification.isLatestRevision) {
+      if (reviewId === notification.reviewId) {
+        hp.updateAIReviewGenerationStatus(notification);
+      }
+    }
+  });
   // Start the connection.
   start();
 });

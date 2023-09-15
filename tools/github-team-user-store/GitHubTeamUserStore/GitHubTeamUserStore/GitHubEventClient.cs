@@ -20,13 +20,9 @@ namespace GitHubTeamUserStore
         private int _numRetries = 5;
         private int _delayTimeInMs = 1000;
 
-        private BlobUriBuilder AzureBlobUriBuilder { get; set; } = null;
-        public GitHubEventClient(string productHeaderName, string azureBlobStorageURI)
+        public GitHubEventClient(string productHeaderName)
         {
             _gitHubClient = CreateClientWithGitHubEnvToken(productHeaderName);
-            Uri blobStorageUri = new Uri(azureBlobStorageURI);
-            BlobUriBuilder blobUriBuilder = new BlobUriBuilder(blobStorageUri);
-            AzureBlobUriBuilder = blobUriBuilder;
         }
 
         /// <summary>
@@ -160,35 +156,69 @@ namespace GitHubTeamUserStore
         }
 
         /// <summary>
-        /// Store the team/user blob in Azure blob storage.
+        /// Upload the data to blob storage. Uses the BlobUriBuilder to get the blob information to created the
+        /// Blob clients and upload the data.
         /// </summary>
-        /// <param name="rawJson">The json string, representing the team/user information, that will be uploaded to blob storage.</param>
+        /// <param name="rawJson">The json string, representing the information that will be uploaded to blob storage.</param>
+        /// <param name="blobUriBuilder">BlobUriBuilder which contains the blob storage information.</param>
         /// <returns></returns>
         /// <exception cref="ApplicationException">If there is no AZURE_SDK_TEAM_USER_STORE_SAS in the environment</exception>
-        public async Task UploadToBlobStorage(string rawJson)
+        public async Task UploadDataToBlobStorage(string rawJson, BlobUriBuilder blobUriBuilder)
         {
-            BlobServiceClient blobServiceClient = new BlobServiceClient(AzureBlobUriBuilder.ToUri());
-            BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient(AzureBlobUriBuilder.BlobContainerName);
-            BlobClient blobClient = blobContainerClient.GetBlobClient(AzureBlobUriBuilder.BlobName);
+            BlobServiceClient blobServiceClient = new BlobServiceClient(blobUriBuilder.ToUri());
+            BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient(blobUriBuilder.BlobContainerName);
+            BlobClient blobClient = blobContainerClient.GetBlobClient(blobUriBuilder.BlobName);
             await blobClient.UploadAsync(BinaryData.FromString(rawJson), overwrite: true);
         }
 
         /// <summary>
-        /// Fetch the team/user blob date from Azure Blob storage.
+        /// Fetch the blob data from storage.
         /// </summary>
+        /// <param name="blobUriBuilder">BlobUriBuilder which contains the blob storage information.</param>
         /// <returns>The raw json string blob.</returns>
         /// <exception cref="ApplicationException">Thrown if the HttpResponseMessage does not contain a success status code.</exception>
-        public async Task<string> GetTeamUserBlobFromStorage()
+        public async Task<string> GetBlobDataFromStorage(BlobUriBuilder blobUriBuilder)
         {
             HttpClient client = new HttpClient();
-            string blobUri = $"https://{AzureBlobUriBuilder.Host}/{AzureBlobUriBuilder.BlobContainerName}/{AzureBlobUriBuilder.BlobName}";
+            string blobUri = $"https://{blobUriBuilder.Host}/{blobUriBuilder.BlobContainerName}/{blobUriBuilder.BlobName}";
             HttpResponseMessage response = await client.GetAsync(blobUri);
             if (response.IsSuccessStatusCode)
             {
                 string rawJson = await response.Content.ReadAsStringAsync();
                 return rawJson;
             }
-            throw new ApplicationException($"Unable to retrieve team user data from blob storage. Status code: {response.StatusCode}, Reason {response.ReasonPhrase}");
+            throw new ApplicationException($"Unable to retrieve data from blob storage. Uri: {blobUri}, Status code: {response.StatusCode}, Reason {response.ReasonPhrase}");
+        }
+
+        /// <summary>
+        /// Check to see if the user is a member of the given Org
+        /// </summary>
+        /// <param name="orgName">Organization name. Chances are this will only ever be "Azure"</param>
+        /// <param name="user">The User.Login for the event object from the action payload</param>
+        /// <returns>bool, true if the user is a member of the org, false otherwise</returns>
+        public async Task<bool> IsUserPublicMemberOfOrg(string orgName, string user)
+        {
+            // Chances are the orgname is only going to be "Azure"
+            return await _gitHubClient.Organization.Member.CheckMemberPublic(orgName, user);
+        }
+
+        public async Task<HashSet<string>> GetRepositoryLabels(string repository)
+        {
+            try
+            {
+                var labels = await _gitHubClient.Issue.Labels.GetAllForRepository(ProductAndTeamConstants.Azure, repository, _apiOptions);
+                Console.WriteLine($"number of labels in {repository}={labels.Count}");
+                // The label list is a IReadOnlyList<Octokit.Label> which is more than what's needed for verification.
+                // Convert the label list into a HashSet<string> using just the label's name. The reason for this is
+                // lookup time, O(n) for the HashSet vs O(n^2) for the list.
+                HashSet<string> labelNameHash = new HashSet<string>(labels.Select(x => x.Name).ToList());
+                return labelNameHash;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw;
+            }
         }
     }
 }

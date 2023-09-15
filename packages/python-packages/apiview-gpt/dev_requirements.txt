@@ -1,4 +1,6 @@
-python-dotenv
-openai
+flask
+knack
 langchain
+openai
 pydantic
+python-dotenv

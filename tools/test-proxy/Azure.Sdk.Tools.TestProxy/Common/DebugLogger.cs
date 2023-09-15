@@ -4,6 +4,7 @@ using System.Text;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http.Extensions;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -147,11 +148,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="loggerInstance">Usually will be the DI-ed individual ILogger instance from a controller. However any valid ILogger instance is fine here.</param>
         /// <param name="req">The http request which needs to be detailed.</param>
         /// <returns></returns>
-        public static void LogRequestDetails(ILogger loggerInstance, HttpRequest req)
+        public static void LogAdminRequestDetails(ILogger loggerInstance, HttpRequest req)
         {
             if(CheckLogLevel(LogLevel.Debug))
             {
-                loggerInstance.LogDebug(_generateLogLine(req, null));
+                var headers = Encoding.UTF8.GetString(JsonSerializer.SerializeToUtf8Bytes(req.Headers));
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("URI: [ " + req.GetDisplayUrl() + "]");
+                sb.AppendLine("Headers: [" + headers + "]");
+                loggerInstance.LogDebug(sb.ToString());
             }
         }
 

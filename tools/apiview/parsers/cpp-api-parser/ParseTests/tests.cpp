@@ -108,7 +108,7 @@ private:
       }
     }
     std::vector<std::string>
-        defaultCommandLine{"clang++.exe", "-DAZ_RTTI", "-fcxx-exceptions", "-c", "-std=c++14"};
+        defaultCommandLine{"clang++.exe", "-DAZ_RTTI", "-fcxx-exceptions", "-c", "-std=c++14", "-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"};
     // Inherited via CompilationDatabase
     virtual std::vector<CompileCommand> getCompileCommands(llvm::StringRef FilePath) const override
     {
@@ -252,7 +252,8 @@ struct NsDumper : AstDumper
       std::string_view const& typeNavigationId) override
   {
   }
-  virtual void InsertMemberName(std::string_view const& member) override {}
+  virtual void InsertMemberName(std::string_view const& member, std::string_view const&) override {}
+  virtual void InsertIdentifier(std::string_view const& identifier) override {}
   virtual void InsertStringLiteral(std::string_view const& str) override {}
   virtual void InsertLiteral(std::string_view const& str) override {}
   virtual void InsertComment(std::string_view const& comment) override {}
@@ -304,7 +305,7 @@ TEST_F(TestParser, NamespaceFilter1)
   EXPECT_EQ("CPA0003", dumper.Messages[0].DiagnosticId);
   EXPECT_EQ("GlobalFunction4", dumper.Messages[0].FailingId);
   EXPECT_EQ("CPA0002", dumper.Messages[1].DiagnosticId);
-  EXPECT_EQ("GlobalFunction4", dumper.Messages[1].FailingId);
+  EXPECT_EQ("char *GlobalFunction4(int character)", dumper.Messages[1].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[2].DiagnosticId);
   EXPECT_EQ("A::AB::ABC::FunctionABC", dumper.Messages[2].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[3].DiagnosticId);
@@ -344,7 +345,7 @@ TEST_F(TestParser, NamespaceFilter2)
   EXPECT_EQ("CPA0003", dumper.Messages[2].DiagnosticId);
   EXPECT_EQ("GlobalFunction4", dumper.Messages[2].FailingId);
   EXPECT_EQ("CPA0002", dumper.Messages[3].DiagnosticId);
-  EXPECT_EQ("GlobalFunction4", dumper.Messages[3].FailingId);
+  EXPECT_EQ("char *GlobalFunction4(int character)", dumper.Messages[3].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[4].DiagnosticId);
   EXPECT_EQ("A::AB::ABC::FunctionABC", dumper.Messages[4].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[5].DiagnosticId);
@@ -386,7 +387,7 @@ TEST_F(TestParser, NamespaceFilter3)
   EXPECT_EQ("CPA0003", dumper.Messages[3].DiagnosticId);
   EXPECT_EQ("GlobalFunction4", dumper.Messages[3].FailingId);
   EXPECT_EQ("CPA0002", dumper.Messages[4].DiagnosticId);
-  EXPECT_EQ("GlobalFunction4", dumper.Messages[4].FailingId);
+  EXPECT_EQ("char *GlobalFunction4(int character)", dumper.Messages[4].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[5].DiagnosticId);
   EXPECT_EQ("A::AB::ABC::FunctionABC", dumper.Messages[5].FailingId);
   EXPECT_EQ("CPA0003", dumper.Messages[6].DiagnosticId);
@@ -427,7 +428,7 @@ TEST_F(TestParser, NamespaceFilter4)
   EXPECT_EQ("CPA0003", dumper.Messages[2].DiagnosticId);
   EXPECT_EQ("GlobalFunction4", dumper.Messages[2].FailingId);
   EXPECT_EQ("CPA0002", dumper.Messages[3].DiagnosticId);
-  EXPECT_EQ("GlobalFunction4", dumper.Messages[3].FailingId);
+  EXPECT_EQ("char *GlobalFunction4(int character)", dumper.Messages[3].FailingId);
 
   EXPECT_TRUE(SyntaxCheckClassDb(db, "SimpleTestGenerated4.cpp"));
 }
@@ -453,7 +454,7 @@ TEST_F(TestParser, Class1)
 
   NsDumper dumper;
   db->DumpClassDatabase(&dumper);
-  EXPECT_EQ(31ul, dumper.Messages.size());
+  EXPECT_EQ(44ul, dumper.Messages.size());
 
   size_t internalTypes = 0;
   for (const auto& msg : dumper.Messages)
@@ -558,13 +559,49 @@ TEST_F(TestParser, UsingNamespace)
   size_t usingNamespaces = 0;
   for (const auto& msg : dumper.Messages)
   {
-    if (msg.DiagnosticId == "CPA0009")
+    if (msg.DiagnosticId == "CPA000A")
     {
       usingNamespaces += 1;
     }
   }
   EXPECT_EQ(usingNamespaces, 1ul);
 }
+
+TEST_F(TestParser, TestDtors)
+{
+  ApiViewProcessor processor("tests", R"({
+  "sourceFilesToProcess": [
+    "DestructorTests.cpp"
+  ],
+  "additionalIncludeDirectories": [],
+  "additionalCompilerSwitches": null,
+  "allowInternal": false,
+  "includeDetail": false,
+  "includePrivate": false,
+  "filterNamespace": null
+}
+)"_json);
+
+  EXPECT_EQ(processor.ProcessApiView(), 0);
+
+  auto& db = processor.GetClassesDatabase();
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "DestructorTests1.cpp"));
+
+  NsDumper dumper;
+  db->DumpClassDatabase(&dumper);
+  EXPECT_EQ(2ul, dumper.Messages.size());
+
+  size_t nonVirtualDestructor= 0;
+  for (const auto& msg : dumper.Messages)
+  {
+    if (msg.DiagnosticId == "CPA000B")
+    {
+      nonVirtualDestructor+= 1;
+    }
+  }
+  EXPECT_EQ(nonVirtualDestructor, 2ul);
+}
+
 
 #if 0
 TEST_F(TestParser, AzureCore1)

@@ -21,6 +21,11 @@ stages:
       Project: internal
       DotNetDevOpsFeed: "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"
       OutputPath: '$(Agent.BuildDirectory)/pipelineOwners.json'
+      RepoLabelUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/repository-labels-blob?$(azuresdkartifacts-azure-sdk-write-teams-sas)"
+      TeamUserUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob?$(azuresdkartifacts-azure-sdk-write-teams-sas)"
+      UserOrgUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/user-org-visibility-blob?$(azuresdkartifacts-azure-sdk-write-teams-sas)"
+      RepoListFile: "$(Build.SourcesDirectory)/tools/github/data/repositories.txt"
+
     steps:
       - task: DotNetCoreCLI@2
         displayName: 'Install Pipeline Owners Extractor'
@@ -42,7 +47,7 @@ stages:
         condition: succeededOrFailed()
 
       - pwsh: |
-          dotnet run --blobStorageURI "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob?$(azuresdkartifacts-azure-sdk-write-teams-sas)"
+          dotnet run -rUri "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)" -rlFile "$(RepoListFile)"
         displayName: 'Fetch and store team/user data'
         workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
         env:

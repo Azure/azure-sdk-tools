@@ -1,0 +1,100 @@
+[
+    {
+        "language": "python",
+        "badCode": "class azure.contoso.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    def close(self) -> None\n\n    @distributed_trace\n\n    def get_widget(self, *args, **kwargs)",
+        "comment": "This is a synchronous client class. It must not have 'Sync' in the name."
+    },
+    {
+        "language": "python",
+        "badCode": "class azure.contoso.aio.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
+        "comment": "This is an asynchronous client class. It must not have 'Async' in the name and it must have '.aio' in the namespace."
+    },
+    {
+        "language": "python",
+        "badCode": "class azure.contoso.Widget\n    ivar prop1\n    ivar prop2\n    def __init__(*args, **kwargs)",
+        "comment": "This is a data model class. It is not a client and shouldn't have a 'Client' suffix."
+    },
+    {
+        "language": "python",
+        "badCode": "class azure.contoso.WidgetManager:\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
+        "goodCode": "class azure.contoso.WidgetClient:\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
+        "guidelineIds": ["python_design.html#python-client-naming"]
+    },
+    {
+        "language": "python",
+        "badCode": "options = ExampleClientOptions('https://contoso.com/xmpl', DefaultAzureCredential(), max_retries=18, timeout=2)\nclient = ExampleClient(options=options)",
+        "goodCode": "client = ExampleClient('https://contoso.com/xmpl', DefaultAzureCredential(), max_retries=18, timeout=2)",
+        "guidelineIds": ["python_design.html#python-client-constructor-policy-arguments"]
+    },
+    {
+        "language": "python",
+        "badCode": "class ExampleClient(connection_string: Optional[str], **kwargs)",
+        "goodCode": "class ExampleClient:\n\n   @classmethod\n\n    def _parse_connection_string(cls, connection_string): ...\n\n   @classmethod\n\n    def from_connection_string(cls, connection_string, **kwargs):\n\n       endpoint, credential = cls._parse_connection_string(connection_string)\n\n      return cls(endpoint, credential, **kwargs)",
+        "guidelineIds": ["python_design.html#python-client-connection-string"]
+    },
+    {
+        "language": "python",
+        "badCode": "resource = client.create_resource(name):\nif not resource:\n    print('Failed - we need to fix this!')",
+        "goodCode": "try:\n resource = client.create_resource(name)\nexcept azure.core.errors.ResourceExistsException:\n    print('Failed - we need to fix this!')",
+        "guidelineIds": ["python_design.html#python-response-exception-on-failure"]
+    },
+    {
+        "language": "python",
+        "badCode": "try:\n    client.resource_exists(name)\nexcept azure.core.errors.ResourceNotFoundException:\n    print('The resource doesn't exist... but that shouldn't be an exceptional case for an 'exists' method')",
+        "goodCode": "try:\n    exists = client.resource_exists(name):\n    if not exists:\n        print('The resource doesn't exist...')\nexcept azure.core.errors.ServiceRequestError:\n    print('We don't know if the resource exists - so it was appropriate to throw an exception!')",
+        "guidelineIds": ["python_design.html#python-errors-normal-responses"]
+    },
+    {
+        "language": "python",
+        "badCode": "def get_thing(name: str) -> str:\n    url = f'https://<host>/things/{name}'\n    return requests.get(url).json()\n\ntry:\n    thing = get_thing('') # Ooops - we will end up calling '/things/' which usually lists 'things'. We wanted a specific 'thing'.\nexcept ValueError:\n    print('We called with some invalid parameters. We should fix that.')",
+        "goodCode": "def get_thing(name: str) -> str:\n    if not name:\n        raise ValueError('name must be a non-empty string')\n    url = f'https://<host>/things/{name}'    return requests.get(url).json()\n\ntry:\n    thing = get_thing('')\nexcept ValueError:\n    print('We called with some invalid parameters. We should fix that.')",
+        "guidelineIds": ["python_design.html#python-params-client-validation"]
+    },
+    {
+        "language": "python",
+        "badCode": "from azure.exampleservice import AsyncExampleServiceClient",
+        "goodCode": "from azure.exampleservice.aio import ExampleServiceClient",
+        "guidelineIds": ["python_design.html#python-namespaces-async"]
+    },
+    {
+        "language": "python",
+        "badCode": "# In module azure.example\nclass ExampleClient:\n    def some_service_operation(self, name, size) ...\n\nclass AsyncExampleClient: # No async/async pre/postfix.\n    async def some_service_operation(self, name, size) ...",
+        "goodCode": "# In module azure.example\nclass ExampleClient:\n    def some_service_operation(self, name, size) ...\n\n# In module azure.example.aio\nclass ExampleClient:\n    # Same method name as sync, different client\n    async def some_service_operation(self, name, size) ...",
+        "guidelineIds": ["python_design.html#python-client-separate-sync-async"]
+    },
+    {
+        "language": "python",
+        "badCode": "# In module azure.example\nclass ExampleClient: # Don't mix'n match with different method names\n    def some_service_operation(self, name, size) ...\n    async def some_service_operation_async(self, name, size) ...",
+        "goodCode": "# In module azure.example\nclass ExampleClient:\n    def some_service_operation(self, name, size) ...\n\n# In module azure.example.aio\nclass ExampleClient:\n    # Same method name as sync, different client\n    async def some_service_operation(self, name, size) ...",
+        "guidelineIds": ["python_design.html#python-client-separate-sync-async"]
+    },
+    {
+        "language": "python",
+        "badCode": "class CatProperties:",
+        "goodCode": "class Cat:",
+        "comment": "The suffix 'Properties' is not helpful. Favor the simpler term 'Cat' instead."
+    },
+    {
+        "language": "python",
+        "badCode": "def dump(self, dest: Union[str, PathLike, IO[AnyStr]], *, kwargs: dict = ..., **kwargs) -> None",
+        "comment": "Don't use kwargs and **kwargs in the same signature. All individual kwarg values should be listed (except for private/internal ones)"
+    },
+    {
+        "language": "python",
+        "badCode": "def get_cats(self, **kwargs) -> List[Cat]",
+        "goodCode": "def list_cats(self, **kwargs) -> List[Cat]",
+        "comment": "The 'get_' prefix is for a single item. Use 'list_' for a collection."
+    },
+    {
+        "language": "python",
+        "badCode": "def get_cat(self, **kwargs) -> GetCatResponse",
+        "goodCode": "def get_cat(self, **kwargs) -> Cat",
+        "comment": "Avoid using terms like 'Request' and 'Response' in models. These are HTTP-specific. Use 'GetCatResult' or, better yet, just 'Cat' instead."
+    },
+    {
+        "language": "python",
+        "badCode": "def create_cat(self, cat: CreateCatRequest, **kwargs) -> Cat",
+        "goodCode": "def create_cat(self, cat: Cat, **kwargs) -> Cat",
+        "comment": "Avoid using terms like 'Request' and 'Response' in models. These are HTTP-specific. Use 'Cat' instead."
+    }
+]

@@ -21,9 +21,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.CommandLine;
 using Azure.Sdk.Tools.TestProxy.CommandOptions;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using System.Text.Json;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Options;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -147,9 +147,12 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         loggingBuilder.ClearProviders();
                         loggingBuilder.AddConfiguration(hostBuilder.Configuration.GetSection("Logging"));
-                        loggingBuilder.AddSimpleConsole(formatterOptions =>
+                        loggingBuilder.AddConsole(options =>
                         {
-                            formatterOptions.TimestampFormat = "[HH:mm:ss] ";
+                            options.LogToStandardErrorThreshold = LogLevel.Error;
+                        }).AddSimpleConsole(options =>
+                        {
+                            options.TimestampFormat = "[HH:mm:ss] ";
                         });
                         loggingBuilder.AddDebug();
                         loggingBuilder.AddEventSourceLogger();
@@ -157,6 +160,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     .ConfigureKestrel(kestrelServerOptions =>
                     {
                         kestrelServerOptions.ConfigureEndpointDefaults(lo => lo.Protocols = HttpProtocols.Http1);
+                        // default minimum rate is 240 bytes per second with 5 second grace period. Bumping to 50bps with a graceperiod of 20 seconds.
+                        kestrelServerOptions.Limits.MinRequestBodyDataRate = new MinDataRate(bytesPerSecond: 50, gracePeriod: TimeSpan.FromSeconds(20));
                     })
                 );
 

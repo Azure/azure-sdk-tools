@@ -18,6 +18,7 @@ pr:
 steps:
   - script: |
       zip -r app.zip .
+    workingDirectory: packages/python-packages/apiview-gpt
     displayName: 'Package app into a zip file'
 
   - task: PublishBuildArtifacts@1

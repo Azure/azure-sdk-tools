@@ -49,8 +49,6 @@ github-event-processor ${{ github.event_name }} payload.json <TaskToRun>
 
 ### Rules Configuration
 
-
-
 The [rules configuration file](./YmlAndConfigFiles/event-processor.config) is simply a Json file which defines which rules are active for the repository and they're loaded up every time the GitHubEventProcessor runs. The full set rules is in the [RulesConstants](./Azure.Sdk.Tools.GitHubEventProcessor/Constants/RulesConstants.cs) file and their state is either **On** or **Off**. *Note: AzureSdk language repositories should have all rules enabled but non-language repositories, like azure-sdk-tools, have a reduced set of rules. For example:
 
 ```json

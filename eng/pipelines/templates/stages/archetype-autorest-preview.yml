@@ -43,16 +43,11 @@ stages:
         [Environment]::CurrentDirectory | Out-Host
         Write-Host ''
         
-        Write-Host '> ls -la'
-        ls -la | Out-Host
-        Write-Host ''
+        Write-Host "cat .npmrc"
+        cat .npmrc
 
         Write-Host '> npm --version'
         npm --version | Out-Host
-        Write-Host ''
-
-        Write-Host '> npm config ls'
-        npm config ls | Out-Host
         Write-Host ''
 
         Write-Host '> npm config ls --project --ddd --logs-dir $(Build.ArtifactStagingDirectory)'
@@ -166,6 +161,25 @@ stages:
     # per package, publishing using appropriate tool
     - ${{ each package in parameters.Packages }}:
       - ${{ if eq(package.type, 'npm') }}:
+        - pwsh: |
+            Write-Host '> [Environment]::CurrentDirectory'
+            [Environment]::CurrentDirectory | Out-Host
+            Write-Host ''
+            
+            Write-Host '> ls -la'
+            ls -la | Out-Host
+            Write-Host ''
+
+            Write-Host '> npm --version'
+            npm --version | Out-Host
+            Write-Host ''
+
+            Write-Host '> npm config ls --project --ddd --logs-dir $(Build.ArtifactStagingDirectory)'
+            npm config ls --project --ddd --logs-dir $(Build.ArtifactStagingDirectory) | Out-Host
+            Write-Host ''
+          displayName: Check NPM
+          workingDirectory: $(buildArtifactsPath)/packages
+
         - pwsh: |
             $file = Resolve-Path "${{ package.file }}"
             Write-Host "npm publish $file --verbose --access public"

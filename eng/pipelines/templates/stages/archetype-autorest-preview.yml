@@ -33,6 +33,34 @@ stages:
   jobs:
   - job: Build
     steps:
+    - template: ../steps/create-authenticated-npmrc.yml
+      parameters:
+        npmrcPath: $(Build.SourcesDirectory)/packages/.npmrc
+        registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js-test-autorest/npm/registry/
+
+    - pwsh: |
+        Write-Host '> [Environment]::CurrentDirectory'
+        [Environment]::CurrentDirectory | Out-Host
+        Write-Host ''
+        
+        Write-Host '> ls -la'
+        ls -la | Out-Host
+        Write-Host ''
+
+        Write-Host '> npm --version'
+        npm --version | Out-Host
+        Write-Host ''
+
+        Write-Host '> npm config ls'
+        npm config ls | Out-Host
+        Write-Host ''
+
+        Write-Host '> npm config ls --project --ddd --logs-dir $(Build.ArtifactStagingDirectory)'
+        npm config ls --project --ddd --logs-dir $(Build.ArtifactStagingDirectory) | Out-Host
+        Write-Host ''
+      displayName: Check NPM
+      workingDirectory: $(Build.SourcesDirectory)/packages
+
     - template: ../steps/emit-pipeline-repositories.yml
       parameters:
         name: repositories
@@ -141,7 +169,7 @@ stages:
         - pwsh: |
             $file = Resolve-Path "${{ package.file }}"
             Write-Host "npm publish $file --verbose --access public"
-            npm publish $file --verbose --access public
+            npm publish $file --verbose --access public --logs-dir=$(Build.ArtifactStagingDirectory)
           displayName: Publish ${{ package.name }}
           workingDirectory: $(buildArtifactsPath)/packages
       - ${{ elseif eq(package.type, 'nuget') }}:
@@ -179,6 +207,7 @@ stages:
     - publish: $(Build.ArtifactStagingDirectory)
       artifact: publish_artifacts
       displayName: Publish artifacts directory
+      condition: succeededOrFailed()
 
 - stage: Regenerate
   dependsOn:

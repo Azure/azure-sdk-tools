@@ -23,13 +23,13 @@ namespace Azure.Sdk.Tools.CodeOwnersParser
         }
 
         /// <summary>
-        /// Load the CODEOWNERS file from the repository into an List&lt;string&gt;. 
+        /// Load a file from the repository into an List&lt;string&gt;. 
         /// Q) Why is this necessary?
         /// A) There are some pieces of metadata that require looking forward to ensure correctness.
         /// </summary>
-        /// <param name="fileOrUrl">The file path or URL of the CODEOWNERS file</param>
-        /// <returns>A List&lt;string&gt; representing the CODEOWNERS file</returns>
-        public static List<string> LoadCodeownersFileAsStringList(string fileOrUrl)
+        /// <param name="fileOrUrl">The file path or URL of the file</param>
+        /// <returns>A List&lt;string&gt; representing the file</returns>
+        public static List<string> LoadFileAsStringList(string fileOrUrl)
         {
             List<string> codeownersFileAsList = new List<string>();
             // GetFileOrUrlContents will throw

@@ -2,4 +2,4 @@
 # AzureSdkOwners: @TestOwner2
 # PRLabel: %TestLabel1
 # ServiceLabel: TestLabel3
-/sdk/someFakPath @TestOwner0
+/sdk/someFakePath @TestOwner0

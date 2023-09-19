@@ -3,17 +3,17 @@
 # Duplicate PRLabel
 # PRLabel: %TestLabel1
 # PRLabel: %TestLabelBad
-/sdk/someFakPath @TestOwner2
+/sdk/someFakePath @TestOwner2
 
 # Duplicate AzureSdkOwners
 # AzureSdkOwners: @TestUser0
 # AzureSdkOwners: @TestUserBad  @TestUser1
-/sdk/someFakPath @TestOwner2
+/sdk/someFakePath @TestOwner2
 
 # Duplicate ServiceLabel ending in source path
 # ServiceLabel: %TestLabel1
 # ServiceLabel: %TestLabelBad
-/sdk/someFakPath @TestOwner2
+/sdk/someFakePath @TestOwner2
 
 # Duplicate ServiceLabel ending /<NotInRepo>/
 # ServiceLabel: %TestLabel1

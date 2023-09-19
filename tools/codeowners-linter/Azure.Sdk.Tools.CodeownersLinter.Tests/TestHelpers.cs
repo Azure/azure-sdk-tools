@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 using Azure.Sdk.Tools.CodeownersLinter.Constants;
+using Azure.Sdk.Tools.CodeownersLinter.Errors;
 using Azure.Sdk.Tools.CodeownersLinter.Holders;
 using Azure.Sdk.Tools.CodeownersLinter.Utils;
 using Azure.Sdk.Tools.CodeOwnersParser;
@@ -116,6 +115,22 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Tests
             // If the list lengths are equal and all the expected labels exist in the actual labels
             // list then everything is good. 
             return true;
+        }
+
+        /// <summary>
+        /// Given a list of BaseError, create a string with embedded newlines, that can be used in reporting
+        /// in test failures.
+        /// </summary>
+        /// <param name="errors">List&lt;BaseError&gt; that need to be formatted.</param>
+        /// <returns>string, formatted list of errors</returns>
+        public static string FormatErrorMessageFromErrorList(List<BaseError> errors)
+        {
+            string errorString = "";
+            foreach (BaseError error in errors)
+            {
+                errorString += error + Environment.NewLine;
+            }
+            return errorString;
         }
     }
 }

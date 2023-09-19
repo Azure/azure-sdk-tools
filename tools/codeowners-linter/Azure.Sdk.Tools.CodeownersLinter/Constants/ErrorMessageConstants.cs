@@ -43,18 +43,12 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Constants
 
         // Block formatting errors. These errors are specifically around validation blocks. For example, the AzureSdkOwner moniker needs
         // to part of a block that ends in a source path/owners line so it's known what they own.
-        // TODO:
-        // The commented ServiceLabelNeedsOwners and ServiceLabelHasTooManyOwners errors below needs to replace the uncommented errors
-        // when CODEOWNERS parser is updated. The ServiceLabelHasTooManyOwnerMonikers error is fine uncommented as it happen until the
-        // parser is updated.
-        // public const string ServiceLabelNeedsOwners = $"{MonikerConstants.ServiceLabel} needs to be followed by, {MonikerConstants.MissingFolder} or {MonikerConstants.ServiceOwners} with owners, or a source path/owner line.";
-        // public const string ServiceLabelHasTooManyOwners = $"{MonikerConstants.ServiceLabel} cannot be part of a block with, {MonikerConstants.MissingFolder} or {MonikerConstants.ServiceOwners}, and a source path/owner line.";
-        public const string ServiceLabelNeedsOwners = $"{MonikerConstants.ServiceLabel} needs to be followed by {MonikerConstants.MissingFolder} or a source path/owner line.";
-        public const string ServiceLabelHasTooManyOwners = $"{MonikerConstants.ServiceLabel} cannot be part of a block with {MonikerConstants.MissingFolder} and a source path/owner line.";
+        public const string ServiceLabelNeedsOwners = $"{MonikerConstants.ServiceLabel} needs to be followed by, {MonikerConstants.MissingFolder} or {MonikerConstants.ServiceOwners} with owners, or a source path/owner line.";
+        public const string ServiceLabelHasTooManyOwners = $"{MonikerConstants.ServiceLabel} cannot be part of a block with, {MonikerConstants.MissingFolder} or {MonikerConstants.ServiceOwners}, and a source path/owner line.";
         public const string ServiceLabelHasTooManyOwnerMonikers = $"{MonikerConstants.ServiceLabel} cannot be part of a block with both {MonikerConstants.ServiceOwners} and {MonikerConstants.MissingFolder}.";
         public const string MissingServiceLabelPartial = $" needs to be part of a block with a {MonikerConstants.ServiceLabel} entry.";
         public const string NeedsToEndWithSourceOwnerPartial = " needs to be part of a block that ends in a source path/owner line.";
         // Duplicate Moniker error
-        public const string DuplicateMonikerInBlockPartial = " already exists in in the block. A moniker cannot exist more than once in a block.";
+        public const string DuplicateMonikerInBlockPartial = " already exists in the block. A moniker cannot exist more than once in a block.";
     }
 }

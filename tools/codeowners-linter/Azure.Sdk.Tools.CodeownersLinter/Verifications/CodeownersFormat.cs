@@ -21,14 +21,14 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Verifications
         /// <param name="repoLabelData">Repository label data used for label verification.</param>
         /// <param name="codeownersFileFullPath">Codeowners file with full path</param>
         /// <returns></returns>
-        public static List<BaseError> ProcessCodeownersFile(DirectoryUtils directoryUtils,
-                                                            OwnerDataUtils ownerData,
-                                                            RepoLabelDataUtils repoLabelData,
-                                                            string codeownersFileFullPath)
+        public static List<BaseError> LintCodeownersFile(DirectoryUtils directoryUtils,
+                                                         OwnerDataUtils ownerData,
+                                                         RepoLabelDataUtils repoLabelData,
+                                                         string codeownersFileFullPath)
         {
             List<BaseError> errors = new List<BaseError>();
             // Load the codeowners file and process it a block at a time 
-            List<string> codeownersFile = FileHelpers.LoadCodeownersFileAsStringList(codeownersFileFullPath);
+            List<string> codeownersFile = FileHelpers.LoadFileAsStringList(codeownersFileFullPath);
 
             // Start parsing the codeowners file, a block at a time.
             // A block can be one of the following:

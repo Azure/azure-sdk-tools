@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,14 +22,14 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Utils
         }
         public BaselineUtils(string baselineFile)
         {
-            _baselineFile = baselineFile;
+            _baselineFile = Path.GetFullPath(baselineFile);
         }
 
-        // Given a list of errors for the repository generate the baseline.
         /// <summary>
-        /// Given the list of errors
+        /// Given a list of errors for the repository, generate the baseline file.
         /// </summary>
-        /// <param name="errors"></param>
+        /// <param name="errors">The list of errors</param>
+        /// <returns>HashSet&lt;string&gt; containing the unique errors. Used in testing for verification.</returns>
         public void GenerateBaseline(List<BaseError> errors)
         {
             HashSet<string> uniqueErrors = new HashSet<string>();
@@ -45,8 +46,9 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Utils
             }
 
             // The HashSet will contain the unique list of errors and those
-            // will be written out to the baseline file.
-            using (var sw = new System.IO.StreamWriter(_baselineFile))
+            // will be written out to the baseline file. If there are no errors
+            // then this will cause an empty file to be written out. 
+            using (var sw = new StreamWriter(_baselineFile))
             {
                 foreach (string errorString in uniqueErrors)
                 {
@@ -63,19 +65,23 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Utils
         /// <returns>List&lt;BaseError&gt; representing the list of errors not in the baseline.</returns>
         public List<BaseError> FilterErrorsUsingBaseline(List<BaseError> errors)
         {
-            List<BaseError> remainingErrors = new List<BaseError> ();
+            List<BaseError> remainingErrors = new List<BaseError>();
             HashSet<string> uniqueErrors = new HashSet<string>();
-            using (var sr = new System.IO.StreamReader(_baselineFile))
+            using (var sr = new StreamReader(_baselineFile))
             {
                 while (sr.ReadLine() is { } line)
                 {
-                    uniqueErrors.Add(line);
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        uniqueErrors.Add(line);
+                    }
                 }
             }
 
             // For each error look at the error strings and see if they're already in
-            // the list of errors, if so remove them.
-            foreach (var error in errors)
+            // the list of errors, if so remove them. The reason why ToList is being
+            // used here is to ensure that the original list of errors isn't modified.
+            foreach (var error in errors.ToList())
             {
                 // This might look odd, to use ToList on something that's already a
                 // list but doing this causes the compiler to create a copy of the list

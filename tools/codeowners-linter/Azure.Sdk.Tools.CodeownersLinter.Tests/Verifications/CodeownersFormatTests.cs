@@ -73,11 +73,11 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Tests.Verifications
             // If the line is expected to be a source path/owner line but the function says it isn't
             if (expectSourcePathOwnerLine) 
             {
-                Assert.True(isSourcePathOwnerLine, $"line '{line}' should have verified as a source path/owner line");
+                Assert.That(isSourcePathOwnerLine, Is.True, $"line '{line}' should have verified as a source path/owner line");
             }
             else
             {
-                Assert.False(isSourcePathOwnerLine, $"line '{line}' should not have verified as a source path/owner line");
+                Assert.That(isSourcePathOwnerLine, Is.False, $"line '{line}' should not have verified as a source path/owner line");
             }
         }
 
@@ -104,7 +104,7 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Tests.Verifications
         [TestCase("CodeownersTestFiles/FindBlockEnd/AllMonikersEndsWithSourcePath", 1, 5)]
         public void TestFindBlockEnd(string testCodeownerFile, int startBlockLineNumber, int expectedEndBlockLineNumber)
         {
-            List<string> codeownersFile = FileHelpers.LoadCodeownersFileAsStringList(testCodeownerFile);
+            List<string> codeownersFile = FileHelpers.LoadFileAsStringList(testCodeownerFile);
             int actualEndBlockLineNumber = CodeownersFormat.FindBlockEnd(startBlockLineNumber, codeownersFile);
             Assert.That(actualEndBlockLineNumber, Is.EqualTo(expectedEndBlockLineNumber), $"The expected end line number for {testCodeownerFile} was {expectedEndBlockLineNumber} but the actual end line number was {actualEndBlockLineNumber}");
         }
@@ -330,6 +330,14 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Tests.Verifications
                   $"{MonikerConstants.MissingFolder}{ErrorMessageConstants.DuplicateMonikerInBlockPartial}")]
         [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 33, 35,
                   $"{MonikerConstants.ServiceOwners}{ErrorMessageConstants.DuplicateMonikerInBlockPartial}")]
+        // ServiceLabel ends in source path/owner line with ServiceOwners or MissingPath, /<NotInRepo>/, in the same block
+        [TestCase("CodeownersTestFiles/VerifyBlock/ServiceLabelTooManyOwnersAndMonikers", 2, 4,
+                  ErrorMessageConstants.ServiceLabelHasTooManyOwners)]
+        [TestCase("CodeownersTestFiles/VerifyBlock/ServiceLabelTooManyOwnersAndMonikers", 8, 10,
+                  ErrorMessageConstants.ServiceLabelHasTooManyOwners)]
+        // ServiceLabel is part of a block that has both ServiceOwners and MissingPath, /<NotInRepo>/.
+        [TestCase("CodeownersTestFiles/VerifyBlock/ServiceLabelTooManyOwnersAndMonikers", 13, 15,
+                  ErrorMessageConstants.ServiceLabelHasTooManyOwnerMonikers)]
         public void TestVerifyBlock(string testCodeownerFile, 
                                     int startBlockLineNumber, 
                                     int endBlockLineNumber, 
@@ -338,7 +346,7 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Tests.Verifications
             // Convert the array to List
             var expectedErrorMessagesList = expectedErrorMessages.ToList();
             // Load the codeowners file
-            List<string> codeownersFile = FileHelpers.LoadCodeownersFileAsStringList(testCodeownerFile);
+            List<string> codeownersFile = FileHelpers.LoadFileAsStringList(testCodeownerFile);
             List<BaseError> returnedErrors = new List<BaseError>();
             CodeownersFormat.VerifyBlock(_directoryUtilsMock,
                                          _ownerDataUtils,
@@ -382,6 +390,58 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Tests.Verifications
                         string expectedErrorsString = string.Join(Environment.NewLine, expectedErrorMessagesList);
                         string actualErrorsString = string.Join(Environment.NewLine, blockFormattingErrors[0].Errors);
                         Assert.Fail($"VerifyBlock for {testCodeownerFile}, start/end lines {startBlockLineNumber}/{endBlockLineNumber}, should have had the following errors\n{expectedErrorsString}\nbut instead had\n{actualErrorsString}");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// End to end tests. All the individual pieces parts have all been tested, these
+        /// are just the end to end pieces. The test(s) with errors are going to use an
+        /// existing baseline file for verification if errors are expected. Additionally,
+        /// they'll also generate a baseline file re-verify with that.
+        /// </summary>
+        /// <param name="testCodeownerFile">The file that contains the CODEOWNERS data for a given scenario.</param>
+        /// <param name="testBaselineFile">The file that contains the expected baseline errors for a given scenario.</param>
+        [TestCase("CodeownersTestFiles/EndToEnd/NoErrors", null)]
+        [TestCase("CodeownersTestFiles/EndToEnd/WithErrors", "CodeownersTestFiles/EndToEnd/WithErrors_baseline.txt")]
+        public void TestLintCodeownersFile(string testCodeownerFile,
+                                           string testBaselineFile)
+        {
+            List<BaseError> actualErrors = CodeownersFormat.LintCodeownersFile(_directoryUtilsMock,
+                                                                               _ownerDataUtils,
+                                                                               _repoLabelDataUtils,
+                                                                               testCodeownerFile);
+            // If errors weren't expected...
+            if (testBaselineFile == null)
+            {
+                // ...but were produced
+                if (actualErrors.Count > 0)
+                {
+                    string errorString = TestHelpers.FormatErrorMessageFromErrorList(actualErrors);
+                    Assert.Fail($"LintCodeownersFile for {testCodeownerFile} should not have produced any errors but had {actualErrors.Count} errors.\nErrors:\n{errorString}");
+                }
+            }
+            // If errors are expected...
+            else
+            {
+                // ...but none were produced
+                if (actualErrors.Count == 0)
+                {
+                    Assert.Fail($"LintCodeownersFile for {testCodeownerFile} expected errors, testBaselineFile={testBaselineFile}, but did not produce any.");
+                }
+                else
+                {
+                    // Last but not least, make sure the errors produced match what is expected. To do this, the baseline file
+                    // and filtering will be used.
+                    BaselineUtils baselineUtils = new BaselineUtils(testBaselineFile);
+                    var filteredErrors = baselineUtils.FilterErrorsUsingBaseline(actualErrors);
+                    // The filter file contains all of the expected errors. After filtering, the list of filtered
+                    // errors should be empty.
+                    if (filteredErrors.Count > 0)
+                    {
+                        string errorString = TestHelpers.FormatErrorMessageFromErrorList(filteredErrors);
+                        Assert.Fail($"LintCodeownersFile for {testCodeownerFile} expected errors, testBaselineFile={testBaselineFile} which should have filtered all expected errors but filtering returned {filteredErrors.Count} errors.\nUnfiltered Errors:\n{errorString}.");
                     }
                 }
             }

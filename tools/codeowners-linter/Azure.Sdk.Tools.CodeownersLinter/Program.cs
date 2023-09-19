@@ -180,7 +180,7 @@ namespace Azure.Sdk.Tools.CodeownersLinter
             DirectoryUtils directoryUtils = new DirectoryUtils(repoRoot);
             OwnerDataUtils ownerData = new OwnerDataUtils(teamUserBlobStorageUri, userOrgVisibilityBlobStorageUri);
 
-            List<BaseError> errors = CodeownersFormat.ProcessCodeownersFile(directoryUtils, 
+            List<BaseError> errors = CodeownersFormat.LintCodeownersFile(directoryUtils, 
                                                                            ownerData, 
                                                                            repoLabelData,
                                                                            codeownersFileFullPath);

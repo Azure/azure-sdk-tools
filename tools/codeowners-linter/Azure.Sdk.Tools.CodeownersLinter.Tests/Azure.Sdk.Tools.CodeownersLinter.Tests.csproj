@@ -27,4 +27,10 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="CodeownersTestFiles\VerifyBlock\ServiceLabelTooManyOwnersAndMonikers">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

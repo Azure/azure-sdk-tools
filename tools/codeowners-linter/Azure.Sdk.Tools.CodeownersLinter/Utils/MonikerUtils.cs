@@ -29,11 +29,17 @@ namespace Azure.Sdk.Tools.CodeownersLinter.Utils
                               .Select(field => field.GetValue(null) as string);
                 foreach (string tempMoniker in monikers)
                 {
-                    // In theory, the line start with "<Moniker>:" but /<NotInRepo>/ has no colon
-                    if (strippedLine.StartsWith($"{tempMoniker}"))
+                    // Line starts with "<Moniker>:", unfortunately /<NotInRepo>/ has no colon and needs
+                    // to be checked separately
+                    if (strippedLine.StartsWith($"{tempMoniker}{SeparatorConstants.Colon}"))
                     {
                         return tempMoniker;
                     }
+                }
+                // Special case for the /<NotInRepo>/ moniker which has no colon
+                if (strippedLine.StartsWith($"{MonikerConstants.MissingFolder}"))
+                {
+                    return MonikerConstants.MissingFolder;
                 }
             }
             // Anything that doesn't match an existing moniker is treated as a comment

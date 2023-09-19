@@ -22,11 +22,16 @@ namespace APIViewWeb.Helpers
     public class ReviewFilterAndSortParams
     {
         public string Name { get; set; }
-        public string Author { get; set; }
         public IEnumerable<string> Languages { get; set; }
         public IEnumerable<string> Details { get; set; }
-        public string SortField { get; set; } = "LastUpdated";
+        public string SortField { get; set; } = "PackageName";
         public int SortOrder { get; set; } = 1;
+    }
+
+    public class ReviewRevisionsFilterAndSortParams : ReviewFilterAndSortParams
+    {
+        public string Author { get; set; }
+        public string ReviewId { get; set; }
     }
 
     public class PagedList<T> : List<T>
@@ -67,7 +72,8 @@ namespace APIViewWeb.Helpers
             var options = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                ReferenceHandler = ReferenceHandler.IgnoreCycles
+                ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                Converters = { new JsonStringEnumConverter() }
             };
 
             await JsonSerializer.SerializeAsync(response.Body, Value, options);

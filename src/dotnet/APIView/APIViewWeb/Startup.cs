@@ -106,7 +106,7 @@ namespace APIViewWeb
             services.AddSingleton<IAICommentsRepository, AICommentsRepository>();
 
             services.AddSingleton<IReviewManager, ReviewManager>();
-            services.AddSingleton<IRevisionManager, RevisionManager>();
+            services.AddSingleton<IReviewRevisionsManager, ReviewRevisionsManager>();
             services.AddSingleton<ICommentsManager, CommentsManager>();
             services.AddSingleton<INotificationManager, NotificationManager>();
             services.AddSingleton<IPullRequestManager, PullRequestManager>();

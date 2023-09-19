@@ -19,10 +19,12 @@ namespace APIViewWeb
     public class CosmosReviewRepository : ICosmosReviewRepository
     {
         private readonly Container _reviewsContainer;
+        private readonly Container _reviewContainerNew;
 
         public CosmosReviewRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
             _reviewsContainer = cosmosClient.GetContainer("APIView", "Reviews");
+            _reviewContainerNew = cosmosClient.GetContainer("APIViewV2", "Reviews");
         }
 
         public async Task UpsertReviewAsync(ReviewModel reviewModel)
@@ -285,81 +287,60 @@ namespace APIViewWeb
         /// <param name="pageParams"></param> Contains paginationinfo
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
-        public async Task<PagedList<ReviewsListItemModel>> GetReviewsAsync(PageParams pageParams, ReviewFilterAndSortParams filterAndSortParams)
+        public async Task<PagedList<ReviewListItemModel>> GetReviewsAsync(PageParams pageParams, ReviewFilterAndSortParams filterAndSortParams)
         {
             var queryStringBuilder = new StringBuilder(@"
 SELECT VALUE {
-    Id: r.id,
-    LastRevisionName: ARRAY_SLICE(r.Revisions, -1)[0].Name,
-    Name: r.Name,
-    Author: r.Author,
-    NoOfRevisions: r.cp_NumberOfRevisions,
-    Language: r.Revisions[0].Files[0].Language,
-    IsClosed: r.IsClosed,
-    IsAutomatic: r.IsAutomatic,
-    FilterType: r.FilterType,
-    IsApproved: ARRAY_SLICE(r.Revisions, -1)[0].IsApproved,
-    IsApprovedForFirstRelease: r.IsApprovedForFirstRelease,
-    Label: ARRAY_SLICE(r.Revisions, -1)[0].Label,
-    LastUpdated: r.LastUpdated
-} FROM Reviews r");
-            queryStringBuilder.Append(" WHERE (IS_DEFINED(r.IsDeleted) ? r.IsDeleted : false) = false");
+    Id: c.id,
+    PackageName: c.PackageName,
+    PackageDisplayName: c.PackageDisplayName,
+    ServiceName: c.ServiceName,
+    Language: c.Language,
+    ReviewRevisions: c.ReviewRevisions,
+    Subscribers: c.Subscribers,
+    ChangeHistory: c.ChangeHistory,
+    State: c.State,
+    Status: c.Status,
+    IsDeleted: c.IsDeleted
+} FROM Reviews c");
+            queryStringBuilder.Append(" WHERE c.IsDeleted = false");
 
             if (!string.IsNullOrEmpty(filterAndSortParams.Name)){
                 var hasExactMatchQuery = filterAndSortParams.Name.StartsWith("package:") ||
-                    filterAndSortParams.Name.StartsWith("pr:") ||
-                    filterAndSortParams.Name.StartsWith("service:") ||
-                    filterAndSortParams.Name.StartsWith("name:");
+                    filterAndSortParams.Name.StartsWith("service:");
 
                 if (hasExactMatchQuery)
                 {
                     if (filterAndSortParams.Name.StartsWith("package:"))
                     {
                         var query = '"' + $"{filterAndSortParams.Name.Replace("package:", "")}" + '"';
-                        queryStringBuilder.Append($" AND STRINGEQUALS(ARRAY_SLICE(r.Revisions, -1)[0].Files[0].PackageName, {query}, true)");
+                        queryStringBuilder.Append($" AND STRINGEQUALS(c.PackageName, {query}, true)");
                     }
                     else if (filterAndSortParams.Name.StartsWith("service:"))
                     {
                         var query = '"' + $"{filterAndSortParams.Name.Replace("service:", "")}" + '"';
-                        queryStringBuilder.Append($" AND STRINGEQUALS(r.ServiceName, {query}, true)");
-                    }
-                    else if (filterAndSortParams.Name.StartsWith("pr:"))
-                    {
-                        var query = '"' + $"{filterAndSortParams.Name.Replace("pr:", "")}" + '"';
-                        queryStringBuilder.Append($" AND ENDSWITH(ARRAY_SLICE(r.Revisions, -1)[0].Label, {query}, true)");
-                    }
-                    else if (filterAndSortParams.Name.StartsWith("name:"))
-                    {
-                        var query = '"' + $"{filterAndSortParams.Name.Replace("name:", "")}" + '"';
-                        queryStringBuilder.Append($" AND CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
+                        queryStringBuilder.Append($" AND STRINGEQUALS(c.ServiceName, {query}, true)");
                     }
                     else
                     {
                         var query = '"' + $"{filterAndSortParams.Name}" + '"';
-                        queryStringBuilder.Append($" AND CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
+                        queryStringBuilder.Append($" AND CONTAINS(c.PackageName, {query}, true)");
                     }
                 }
                 else
                 {
                     var query = '"' + $"{filterAndSortParams.Name}" + '"';
-                    queryStringBuilder.Append($" AND (CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
-                    queryStringBuilder.Append($" OR CONTAINS(r.Name, {query}, true)");
-                    queryStringBuilder.Append($" OR CONTAINS(r.ServiceName, {query}, true)");
-                    queryStringBuilder.Append($" OR CONTAINS(r.PackageDisplayName, {query}, true)");
-                    queryStringBuilder.Append($" OR CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Label, {query}, true)");
+                    queryStringBuilder.Append($" AND (CONTAINS(c.PackageName, {query}, true)");
+                    queryStringBuilder.Append($" OR CONTAINS(c.PackageDisplayName, {query}, true)");
+                    queryStringBuilder.Append($" OR CONTAINS(c.ServiceName, {query}, true)");
                     queryStringBuilder.Append($")");
                 }
-            }
-            
-            if (!string.IsNullOrEmpty(filterAndSortParams.Author))
-            {
-                queryStringBuilder.Append($" AND STRINGEQUALS(r.Author, '{filterAndSortParams.Author}')");
             }
 
             if (filterAndSortParams.Languages != null && filterAndSortParams.Languages.Count() > 0) 
             {
                 var languagesAsQueryStr = ArrayToQueryString<string>(filterAndSortParams.Languages);
-                queryStringBuilder.Append($" AND r.Revisions[0].Files[0].Language IN {languagesAsQueryStr}");
+                queryStringBuilder.Append($" AND c.Language IN {languagesAsQueryStr}");
             }
 
             if (filterAndSortParams.Details != null && filterAndSortParams.Details.Count() > 0)
@@ -368,26 +349,17 @@ SELECT VALUE {
                 {
                     switch (item)
                     {
-                        case "open":
-                                queryStringBuilder.Append($" AND r.IsClosed = false");
+                        case "Open":
+                                queryStringBuilder.Append($" AND c.State = Open");
                             break;
-                        case "closed":
-                                queryStringBuilder.Append($" AND r.IsClosed = true");
+                        case "Closed":
+                                queryStringBuilder.Append($" AND c.State = Closed");
                             break;
-                        case "approved":
-                            queryStringBuilder.Append($" AND ARRAY_SLICE(r.Revisions, -1)[0].IsApproved = true");
+                        case "Pending":
+                            queryStringBuilder.Append($" AND c.Status = Pending");
                             break;
-                        case "pending":
-                            queryStringBuilder.Append($" AND ARRAY_SLICE(r.Revisions, -1)[0].IsApproved = false");
-                            break;
-                        case "manual":
-                            queryStringBuilder.Append($" AND r.FilterType = 0");
-                            break;
-                        case "automatic":
-                            queryStringBuilder.Append($" AND r.FilterType = 1");
-                            break;
-                        case "pullrequest":
-                            queryStringBuilder.Append($" AND r.FilterType = 2");
+                        case "Approved":
+                            queryStringBuilder.Append($" AND c.Status = Approved");
                             break;
                     }
                 }
@@ -396,7 +368,7 @@ SELECT VALUE {
             int totalCount = 0;
             var countQuery = $"SELECT VALUE COUNT(1) FROM({queryStringBuilder})";
             QueryDefinition countQueryDefinition = new QueryDefinition(countQuery);
-            using FeedIterator<int> countFeedIterator = _reviewsContainer.GetItemQueryIterator<int>(countQueryDefinition);
+            using FeedIterator<int> countFeedIterator = _reviewContainerNew.GetItemQueryIterator<int>(countQueryDefinition);
             while (countFeedIterator.HasMoreResults)
             {
                 totalCount = (await countFeedIterator.ReadNextAsync()).SingleOrDefault();
@@ -405,13 +377,13 @@ SELECT VALUE {
             switch (filterAndSortParams.SortField)
             {
                 case "name":
-                    queryStringBuilder.Append($" ORDER BY r.Name");
+                    queryStringBuilder.Append($" ORDER BY c.PackageName");
                     break;
                 case "noOfRevisions":
-                    queryStringBuilder.Append($" ORDER BY r.cp_NumberOfRevisions");
+                    queryStringBuilder.Append($" ORDER BY c.cp_NumberOfReviewRevisions");
                     break;
                 default:
-                    queryStringBuilder.Append($" ORDER BY r.LastUpdated");
+                    queryStringBuilder.Append($" ORDER BY c.PackageName");
                     break;
             }
 
@@ -425,20 +397,20 @@ SELECT VALUE {
             }
 
             queryStringBuilder.Append(" OFFSET @offset LIMIT @limit");
-            var reviews = new List<ReviewsListItemModel>();
+            var reviews = new List<ReviewListItemModel>();
             QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@offset", pageParams.NoOfItemsRead)
                 .WithParameter("@limit", pageParams.PageSize)
                 .WithParameter("@sortField", filterAndSortParams.SortField);
 
-            using FeedIterator<ReviewsListItemModel> feedIterator = _reviewsContainer.GetItemQueryIterator<ReviewsListItemModel>(queryDefinition);
+            using FeedIterator<ReviewListItemModel> feedIterator = _reviewContainerNew.GetItemQueryIterator<ReviewListItemModel>(queryDefinition);
             while (feedIterator.HasMoreResults)
             {
-                FeedResponse<ReviewsListItemModel> response = await feedIterator.ReadNextAsync();
+                FeedResponse<ReviewListItemModel> response = await feedIterator.ReadNextAsync();
                 reviews.AddRange(response);
             }
             var noOfItemsRead = pageParams.NoOfItemsRead + reviews.Count();
-            return new PagedList<ReviewsListItemModel>((IEnumerable<ReviewsListItemModel>)reviews, noOfItemsRead, totalCount, pageParams.PageSize);
+            return new PagedList<ReviewListItemModel>((IEnumerable<ReviewListItemModel>)reviews, noOfItemsRead, totalCount, pageParams.PageSize);
         }
 
         public async Task<IEnumerable<ReviewModel>> GetApprovedForFirstReleaseReviews(string language, string packageName)

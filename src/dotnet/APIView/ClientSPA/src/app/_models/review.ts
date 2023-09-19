@@ -1,15 +1,23 @@
 export interface Review {
-    id: string
-    author: string
-    language: string
-    noOfRevisions: number
-    status: string;
-    type: string;
-    state: string;
-    displayName: string
-    lastUpdated: Date
+  id: string
+  packageName: string
+  packageDisplayName: any
+  serviceName: any
+  language: string
+  reviewRevisions: string[]
+  subscribers: any[]
+  changeHistory: ChangeHistory[]
+  state: string
+  status: string
+  isDeleted: boolean
 }
 
+export interface ChangeHistory {
+  changeAction: string
+  user: string
+  changeDateTime: string
+  notes: any
+}
 
 export interface ReviewContent {
     navigation: NavigationItem[]

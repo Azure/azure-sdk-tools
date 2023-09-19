@@ -45,11 +45,11 @@ github-event-processor ${{ github.event_name }} payload.json <TaskToRun>
 
 **payload.json** is the toJson of the github.event redirected into file. The action that triggered the event is part of this payload.
 
-**TaskToRun** is specific to Scheduled event processing and defines what rule to run. This string matches the rule name constant defined in the [RulesConstants](./Constants/RulesConstants.cs) file. The reason this was done this way is that it prevents the code from needing knowledge of which cron schedule string belongs to which rule.
+**TaskToRun** is specific to Scheduled event processing and defines what rule to run. This string matches the rule name constant defined in the [RulesConstants](./Azure.Sdk.Tools.GitHubEventProcessor/Constants/RulesConstants.cs) file. The reason this was done this way is that it prevents the code from needing knowledge of which cron schedule string belongs to which rule.
 
 ### Rules Configuration
 
-The [rules configuration file](../yml-files/event-processor.config) is simply a Json file which defines which rules are active for the repository and they're loaded up every time the GitHubEventProcessor runs. The full set rules is in the [RulesConstants](./Constants/RulesConstants.cs) file and their state is either **On** or **Off**. *Note: AzureSdk language repositories should have all rules enabled but non-language repositories, like azure-sdk-tools, have a reduced set of rules. For example:
+The [rules configuration file](./YmlAndConfigFiles/event-processor.config) is simply a Json file which defines which rules are active for the repository and they're loaded up every time the GitHubEventProcessor runs. The full set rules is in the [RulesConstants](./Azure.Sdk.Tools.GitHubEventProcessor/Constants/RulesConstants.cs) file and their state is either **On** or **Off**. *Note: AzureSdk language repositories should have all rules enabled but non-language repositories, like azure-sdk-tools, have a reduced set of rules. For example:
 
 ```json
   "InitialIssueTriage": "On",

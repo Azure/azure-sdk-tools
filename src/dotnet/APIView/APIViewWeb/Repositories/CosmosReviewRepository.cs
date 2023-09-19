@@ -102,7 +102,7 @@ namespace APIViewWeb
             if (filterTypes != null && filterTypes.Count() > 0)
             {
                 var filterTypesAsInts = filterTypes.Cast<int>().ToList();
-                var filterTypeAsQueryStr = ArrayToQueryString<int>(filterTypesAsInts);
+                var filterTypeAsQueryStr = CosmosQueryHelpers.ArrayToQueryString<int>(filterTypesAsInts);
                 queryStringBuilder.Append($" AND r.FilterType IN {filterTypeAsQueryStr} ");
             }
 
@@ -162,7 +162,7 @@ namespace APIViewWeb
 
             if (search != null && search.Any())
             {
-                var searchAsQueryStr = ArrayToQueryString<string>(search);
+                var searchAsQueryStr = CosmosQueryHelpers.ArrayToQueryString<string>(search);
                 var searchAsSingleString = '"' + String.Join(' ', search) + '"';
 
                 var hasExactMatchQuery = search.Any(
@@ -228,7 +228,7 @@ namespace APIViewWeb
 
             if (languages != null && languages.Any())
             {
-                var languagesAsQueryStr = ArrayToQueryString<string>(languages);
+                var languagesAsQueryStr = CosmosQueryHelpers.ArrayToQueryString<string>(languages);
                 queryStringBuilder.Append($" AND r.Revisions[0].Files[0].Language IN {languagesAsQueryStr}");
             }
 
@@ -239,7 +239,7 @@ namespace APIViewWeb
 
             if (filterTypes != null && filterTypes.Any())
             {
-                var filterTypeAsQueryStr = ArrayToQueryString<int>(filterTypes);
+                var filterTypeAsQueryStr = CosmosQueryHelpers.ArrayToQueryString<int>(filterTypes);
                 queryStringBuilder.Append($" AND r.FilterType IN {filterTypeAsQueryStr}");
             }
 
@@ -339,7 +339,7 @@ SELECT VALUE {
 
             if (filterAndSortParams.Languages != null && filterAndSortParams.Languages.Count() > 0) 
             {
-                var languagesAsQueryStr = ArrayToQueryString<string>(filterAndSortParams.Languages);
+                var languagesAsQueryStr = CosmosQueryHelpers.ArrayToQueryString<string>(filterAndSortParams.Languages);
                 queryStringBuilder.Append($" AND c.Language IN {languagesAsQueryStr}");
             }
 
@@ -466,27 +466,6 @@ WHERE r.id = @reviewId";
                 revisions.AddRange(response);
             }
             return revisions;
-        }
-
-        private static string ArrayToQueryString<T>(IEnumerable<T> items)
-        {
-            var result = new StringBuilder();
-            result.Append("(");
-            foreach (var item in items)
-            {
-                if (item is int)
-                {
-                    result.Append($"{item},");
-                }
-                else
-                {
-                    result.Append($"\"{item}\",");
-                }
-
-            }
-            result.Remove(result.Length - 1, 1);
-            result.Append(")");
-            return result.ToString();
         }
     }
 }

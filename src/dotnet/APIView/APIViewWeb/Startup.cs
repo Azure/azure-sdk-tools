@@ -98,6 +98,7 @@ namespace APIViewWeb
             services.AddSingleton<IBlobOriginalsRepository, BlobOriginalsRepository>();
             services.AddSingleton<IBlobUsageSampleRepository, BlobUsageSampleRepository>();
             services.AddSingleton<ICosmosReviewRepository,CosmosReviewRepository>();
+            services.AddSingleton<ICosmosReviewRevisionsRepository, CosmosReviewRevisionsRepository>();
             services.AddSingleton<ICosmosCommentsRepository, CosmosCommentsRepository>();
             services.AddSingleton<ICosmosPullRequestsRepository, CosmosPullRequestsRepository>();
             services.AddSingleton<ICosmosUsageSampleRepository, CosmosUsageSampleRepository>();

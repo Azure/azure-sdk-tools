@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 
 namespace APIViewWeb.LeanControllers
 {
-    public class ReviewsRevisionsController : BaseApiController
+    public class ReviewRevisionsController : BaseApiController
     {
-        private readonly ILogger<ReviewsRevisionsController> _logger;
+        private readonly ILogger<ReviewRevisionsController> _logger;
         private readonly IReviewRevisionsManager _reviewRevisionsManager;
         
-        public ReviewsRevisionsController(ILogger<ReviewsRevisionsController> logger,
+        public ReviewRevisionsController(ILogger<ReviewRevisionsController> logger,
             IReviewRevisionsManager reviewRevisionsManager)
         {
             _logger = logger;

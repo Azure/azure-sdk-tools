@@ -1,28 +1,50 @@
 parameters:
+# Whether to build alpha versions of the packages. This is passed as a flag to the build script.
 - name: BuildAlphaVersion
   type: boolean
+
+# Whether to use the `next` version of TypeSpec. This is passed as a flag to the init script.
 - name: UseTypeSpecNext
   type: boolean
-- name: PublishDependsOn
-  type: object
-  default: ["Build"]
+
+# The target to publish packages to. Currently supported values are 'internal' and 'public'.
 - name: PublishTarget
   type: string
+
+# Path to the emitter package's package.json file. If specified, it will be used to generate emitter-package.json in the artifact `build_artifacts`.
 - name: EmitterPackageJsonPath
   type: string
   default: 'not-specified'
+
+# Custom steps to run after the autorest repository is cloned. If custom build steps are specified, the default init and build scripts will not be run.
+# The build steps should produce the folder `/artifacts` with contents:
+#   packages/
+#     autorest-csharp-2.0.0-alpha.4.tgz
+#     Microsoft.Azure.AutoRest.CSharp.2.0.0-alpha.4.nupkg
+#     typespec-csharp-1.2.3-alpha.4.tgz
 - name: BuildSteps
   type: stepList
   default: []
+
+# Custom steps to run after the sdk repository is cloned but before the generation matrix is created.
 - name: SdkInitializationSteps
   type: stepList
   default: []
+
+# List of packages to publish. Each package is an object with the following properties:
+#   name: The name of the package. This is used to determine the name of the file to publish.
+#   type: The type of package. Currently supported values are 'npm' and 'nuget'.
+#   file: The path to the file to publish. This is relative to the packages folder in the build artifacts directory.
 - name: Packages
   type: object
   default: []
+
+# Number of jobs to generate. This is the maximum number of jobs that will be generated. The actual number of jobs will be reduced if it would result in fewer than MinimumPerJob packages per job.
 - name: RegenerationJobCount
   type: number
   default: 10
+
+# Minimum number of packages to generate per job.
 - name: MinimumPerJob
   type: number
   default: 10
@@ -41,29 +63,43 @@ stages:
         name: repositories
         displayName: 'Get repository details'
 
+    # Validate parameters and fail early if invalid
+    - ${{ if notIn(parameters.PublishTarget, 'internal', 'public') }}:
+      - script: |
+          echo "Publish target ${{ parameters.PublishTarget }} is not supported"
+          exit 1
+        displayName: 'Unsupported PublishTarget'
+        condition: always()
+
+    - ${{ each package in parameters.Packages }}:
+      - ${{ if notIn(package.type, 'npm', 'nuget') }}:
+        - script: |
+            echo "Package ${{ package.name }} has unsupported type: ${{ package.type }}"
+            exit 1
+          displayName: 'Unsupported package type'
+          condition: always()
+
     - checkout: self
       path: s/autorest
       
     - checkout: azure-sdk-tools
 
-    - script: >
-        npm run ci-init -- --useTypeSpecNext ${{ parameters.UseTypeSpecNext }}
-      displayName: 'Run init script'
-      workingDirectory: $(autorestRepositoryPath)
-    
-    # the build script should produce the folder `$(autorestRepositoryPath)/artifacts/ci-build` with contents:
-    #   packages/
-    #     autorest-csharp-2.0.0-alpha.4.tgz
-    #     Microsoft.Azure.AutoRest.CSharp.2.0.0-alpha.4.nupkg
-    #     typespec-csharp-1.2.3-alpha.4.tgz
-    - script: >
-        npm run ci-build --
-        --buildAlphaVersion ${{ parameters.BuildAlphaVersion }}
-        --buildNumber $(Build.BuildNumber)
-        --output $(Build.ArtifactStagingDirectory)
-      displayName: 'Run build script'
-      name: build_script
-      workingDirectory: $(autorestRepositoryPath)
+    - ${{ parameters.BuildSteps }}
+
+    - ${{ if eq(length(parameters.BuildSteps), 0) }}:
+      - script: >
+          npm run ci-init -- --useTypeSpecNext ${{ parameters.UseTypeSpecNext }}
+        displayName: 'Run init script'
+        workingDirectory: $(autorestRepositoryPath)
+      
+      - script: >
+          npm run ci-build --
+          --buildAlphaVersion ${{ parameters.BuildAlphaVersion }}
+          --buildNumber $(Build.BuildNumber)
+          --output $(Build.ArtifactStagingDirectory)
+        displayName: 'Run build script'
+        name: build_script
+        workingDirectory: $(autorestRepositoryPath)
 
     - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
       - task: PowerShell@2
@@ -109,7 +145,7 @@ stages:
       workingDirectory: $(autorestRepositoryPath)
 
 - stage: Publish
-  dependsOn: ${{ parameters.PublishDependsOn }}
+  dependsOn: Build
   variables:
     autorestRepositoryPath: $(Build.SourcesDirectory)/autorest
     toolsRepositoryPath: $(Build.SourcesDirectory)/azure-sdk-tools
@@ -132,7 +168,7 @@ stages:
         parameters:
           npmrcPath: $(buildArtifactsPath)/packages/.npmrc
           registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js-test-autorest/npm/registry/
-    - ${{ else }}:
+    - ${{ elseif eq(parameters.PublishTarget, 'public') }}:
       - pwsh: |
           "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" | Out-File '.npmrc'
         displayName: Authenticate .npmrc for npmjs.org
@@ -148,20 +184,15 @@ stages:
           displayName: Publish ${{ package.name }}
           workingDirectory: $(buildArtifactsPath)/packages
       - ${{ elseif eq(package.type, 'nuget') }}:
-        # Nuget packages are always published to the same internal feed. PublishTarget doesn't affect this.
         - task: NuGetCommand@2
           displayName: Publish ${{ package.name }}
           inputs:
             command: 'push'
             packagesToPush: $(buildArtifactsPath)/packages/${{ package.file }}
+            # Nuget packages are always published to the same internal feed. PublishTarget doesn't affect this.
             nuGetFeedType: 'internal'
             # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
             publishVstsFeed: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
-      - ${{ else }}:
-        - script: |
-            echo "Package ${{ package.name }} has unsupported type: ${{ package.type }}"
-            exit 1
-          displayName: 'Unsupported package type'
 
     - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
       - task: PowerShell@2
@@ -174,7 +205,7 @@ stages:
               -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
               -OutputDirectory "$(Build.ArtifactStagingDirectory)"
               -NpmrcPath "$(buildArtifactsPath)/packages/.npmrc"
-          ${{ else }}:
+          ${{ elseif eq(parameters.PublishTarget, 'public') }}:
             arguments: >
               -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
               -OutputDirectory "$(Build.ArtifactStagingDirectory)"

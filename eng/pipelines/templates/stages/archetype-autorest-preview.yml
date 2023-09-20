@@ -293,6 +293,7 @@ stages:
         filePath: $(sdkRepositoryPath)/eng/common/scripts/Update-GeneratedSdks.ps1
         arguments: >
           -PackageFoldersFile "$(matrixArtifactsPath)/$(FolderList)"
+      continueOnError: true
 
     - template: /eng/common/pipelines/templates/steps/git-push-changes.yml
       parameters:
@@ -307,7 +308,6 @@ stages:
     displayName: Create PR
     dependsOn: 
     - Generate
-    condition: succeededOrFailed()
     steps:
     - checkout: self
     - checkout: azure-sdk-tools

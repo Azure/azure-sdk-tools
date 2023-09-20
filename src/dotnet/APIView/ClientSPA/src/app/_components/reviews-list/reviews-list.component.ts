@@ -13,8 +13,6 @@ import { environment } from 'src/environments/environment';
 })
 
 export class ReviewsListComponent implements OnInit {
-  reviewPageWebAppUrl : string = environment.webAppUrl + "Assemblies/review/";
-  profilePageWebAppUrl : string = environment.webAppUrl + "Assemblies/profile/";
   reviews : Review[] = [];
   totalNumberOfReviews = 0;
   pagination: Pagination | undefined;
@@ -60,18 +58,16 @@ export class ReviewsListComponent implements OnInit {
    */
   loadReviews(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string ="lastUpdated",  sortOrder: number = 1) {
     let name : string = "";
-    let author : string = "";
     let languages : string [] = [];
     let details : string [] = [];
     if (filters)
     {
       name = filters.name.value ?? name;
-      author = filters.author.value ?? author;
       languages = (filters.languages.value != null)? filters.languages.value.map((item: any) => item.data) : languages;
       details = (filters.details.value != null) ? filters.details.value.map((item: any) => item.data): details;
     }
 
-    this.reviewsService.getReviews(noOfItemsRead, pageSize, name, author, languages, details, sortField, sortOrder).subscribe({
+    this.reviewsService.getReviews(noOfItemsRead, pageSize, name, languages, details, sortField, sortOrder).subscribe({
       next: response => {
         if (response.result && response.pagination) {
           if (resetReviews)
@@ -128,15 +124,6 @@ export class ReviewsListComponent implements OnInit {
           { label: "Approved", data: "approved" },
           { label: "Pending", data: "pending" },
         ]
-      },
-      {
-        label: 'Type',
-        data: 'All',
-        items: [
-          { label: "Automatic", data: "automatic" },
-          { label: "Manual", data: "manual" },
-          { label: "Pull Request", data: "pullrequest" }
-        ]
       }
     ];
   }
@@ -145,12 +132,8 @@ export class ReviewsListComponent implements OnInit {
     // Set Badge Class for details Icons
     this.badgeClass.set("Pending", "");
     this.badgeClass.set("Approved", "fa-solid fa-check-double");
-    this.badgeClass.set("1stRelease", "fa-solid fa-check");
     this.badgeClass.set("Closed", "fa-regular fa-circle-xmark");
     this.badgeClass.set("Open", "");
-    this.badgeClass.set("Manual", "fa-solid fa-arrow-up-from-bracket");
-    this.badgeClass.set("PullRequest", "fa-solid fa-code-pull-request");
-    this.badgeClass.set("Automatic", "fa-solid fa-robot");
   }
 
   viewReview(product: Review) {

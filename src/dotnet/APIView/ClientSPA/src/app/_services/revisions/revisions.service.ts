@@ -1,24 +1,26 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-
 import { Observable, map } from 'rxjs';
+
+
 import { PaginatedResult } from 'src/app/_models/pagination';
-import { Review, ReviewContent } from 'src/app/_models/review';
+import { Revision } from 'src/app/_models/revision';
 import { environment } from 'src/environments/environment';
+
 
 @Injectable({
   providedIn: 'root'
 })
-export class ReviewsService {
-  baseUrl : string = environment.apiUrl + "reviews";
-  paginatedResult: PaginatedResult<Review[]> = new PaginatedResult<Review[]>
-
+export class RevisionsService {
+  baseUrl : string = environment.apiUrl + "reviewrevisions";
+  paginatedResult: PaginatedResult<Revision[]> = new PaginatedResult<Revision[]>
+  
   constructor(private http: HttpClient) { }
 
-  getReviews(noOfItemsRead: number, pageSize: number,
+  getRevisions(noOfItemsRead: number, pageSize: number,
     name: string, languages: string [], details: string [],
     sortField: string, sortOrder: number
-    ): Observable<PaginatedResult<Review[]>> {
+    ): Observable<PaginatedResult<Revision[]>> {
     let params = new HttpParams();
     params = params.append('noOfItemsRead', noOfItemsRead);
     params = params.append('pageSize', pageSize);
@@ -36,9 +38,9 @@ export class ReviewsService {
     })
    
 
-    console.log("getReviews: " + JSON.stringify(data));
+    console.log("getRevisions: " + JSON.stringify(data));
     
-    return this.http.post<Review[]>(this.baseUrl, data,
+    return this.http.post<Revision[]>(this.baseUrl, data,
       { 
         headers:headers,
         params: params,
@@ -57,12 +59,5 @@ export class ReviewsService {
           }
         )
       );
-  }
-
-  getReviewContent(reviewId: string, revisionId: string = "") : Observable<ReviewContent>{
-    let params = new HttpParams();
-    params = params.append('revisionId', revisionId);
-
-    return this.http.get<ReviewContent>(this.baseUrl + `/${reviewId}/content`);
   }
 }

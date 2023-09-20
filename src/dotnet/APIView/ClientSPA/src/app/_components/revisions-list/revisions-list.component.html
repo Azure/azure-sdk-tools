@@ -1,0 +1,93 @@
+<p-contextMenu #cm [model]="contextMenuItems"></p-contextMenu>
+<p-table
+    [value]="revisions"
+    dataKey="id"
+    [scrollable]="true"
+    scrollHeight="calc(100vh - 179px)"
+    responsiveLayout="stack"
+    [lazy]="true"
+    [lazyLoadOnInit]="false"
+    [virtualScroll]="true"
+    [virtualScrollDelay]="0"
+    [virtualScrollItemSize]="49"
+    [selection]="selectedRevisions"
+    (selectionChange)="onSelectionChange($event)"
+    [(contextMenuSelection)]="selectedRevision"
+    [contextMenu]="cm"
+    [customSort]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    (onSort)="onSort($event)"
+    (onFilter)="onFilter($event)"
+    [tableStyle]="{ 'min-width': '60rem' }"
+    styleClass="p-datatable-striped p-datatable-sm">
+    <ng-template pTemplate="caption">
+        <div class="d-flex justify-content-between reviews-table-info">
+            <div>
+                <p-chip *ngFor="let dts of selectedDetails" label="{{ dts.data }}"></p-chip>
+            </div>
+            <div>
+                <button *ngIf="showSelectionAction" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Close</button>
+                <button *ngIf="showSelectionAction" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Subscribe</button>
+                <button *ngIf="showSelectionAction" type="button" class="btn btn-sm btn-outline-danger me-1"><i class="bi bi-x-octagon-fill me-1"></i>Delete</button>
+                <button *ngIf="showSelectionAction" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Selection</button>
+                <button type="button" class="btn btn-sm btn-outline-primary"><i class="bi bi-x-circle me-1"></i>Filters</button>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+        <tr>
+            <th style="width:45%">Revision</th>
+            <th style="width:19%">Author</th>
+            <th pSortableColumn="created" style="width:12%">Created<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
+            <th pSortableColumn="lastUpdated" style="width:12%">Updated<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
+            <th style="width:12%">Details</th>
+        </tr>
+        <tr>
+            <th>
+                <p-columnFilter type="text" field="label" [showMenu]="false"></p-columnFilter>
+            </th>
+            <th>
+                <p-columnFilter type="text" field="author" [showMenu]="false"></p-columnFilter>
+            </th>
+            <th>
+            </th>
+            <th>
+            </th>
+            <th>
+                <p-columnFilter id="details-filter" field="details" matchMode="in" [showMenu]="false">
+                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                        <p-multiSelect [ngModel]="value" [options]="details" [group]="true" [filter]="false" [(ngModel)]="selectedDetails" (onChange)="filter($event.value)" optionLabel="label" scrollHeight="500px">
+                            <ng-template let-group pTemplate="group">
+                                <div class="inline-block vertical-align-middle">
+                                    <span class="ml-1 mt-1">{{ group.label }}</span>
+                                </div>
+                            </ng-template>
+                        </p-multiSelect>
+                    </ng-template>
+                </p-columnFilter>
+            </th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-revision>
+        <tr [pContextMenuRow]="revision">
+            <td><a href="{{reviewPageWebAppUrl}}{{revision.reviewId}}/{{revision.Id}}">{{ revision.label }}</a></td>
+
+            <td class="author-table-data">
+                <img [alt]="revision.changeHistory[0].user" src="https://github.com/{{ revision.changeHistory[0].user }}.png?size=40" width="32" />
+                <span><a href="{{profilePageWebAppUrl}}{{ revision.changeHistory[0].user }}">{{ revision.changeHistory[0].user }}</a></span>
+            </td>
+            <td pTooltip="{{ revision.changeHistory[0].changeDateTime | date }}" appendTo="target" tooltipPosition="top" [positionTop]=-190 [positionLeft]=-35>{{ revision.changeHistory[0].changeDateTime | timeago }}</td>
+            <td pTooltip="{{ revision.changeHistory[revision.changeHistory.length - 1].changeDateTime | date }}" appendTo="target" tooltipPosition="top" [positionTop]=-190 [positionLeft]=-35>{{ revision.changeHistory[revision.changeHistory.length - 1].changeDateTime | timeago }}</td>
+            <td>
+                <i pTooltip="{{ revision.status }}" appendTo="target" tooltipPosition="top" [positionTop]=-200 [positionLeft]=-25 class="{{ badgeClass.get(revision.status) }} me-2"></i>
+                <i pTooltip="{{ revision.reviewRevisionType }}" appendTo="target" tooltipPosition="top" [positionTop]=-200 [positionLeft]=-25 class="{{ badgeClass.get(revision.reviewRevisionType) }} me-2"></i>
+            </td>
+
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="summary">
+        <div class="flex align-items-center justify-content-center">
+            {{first }} - {{last}} of {{totalNumberOfRevisions}}
+        </div>
+    </ng-template>
+</p-table>

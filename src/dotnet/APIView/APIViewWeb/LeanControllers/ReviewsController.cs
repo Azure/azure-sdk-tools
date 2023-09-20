@@ -27,7 +27,7 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
-        /// Endpoint used by Client SPA for listing reviews. Uses a lean model that does not include full revision details
+        /// Endpoint used by Client SPA for listing reviews.
         /// </summary>
         /// <param name="pageParams"></param>
         /// <param name="filterAndSortParams"></param>

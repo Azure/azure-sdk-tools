@@ -1,5 +1,18 @@
 <app-nav-bar></app-nav-bar>
-<div class="container-fluid main-container">
-    <app-reviews-list></app-reviews-list>
+<div class="container-fluid py-2 main-container">
+    <p-splitter 
+        [panelSizes]="[40, 60]" 
+        [style]="{ height: 'calc(100vh - 100px)' }">
+        <ng-template pTemplate>
+            <div class="col flex align-items-center justify-content-center">
+                <app-reviews-list></app-reviews-list>
+            </div>
+        </ng-template>
+        <ng-template pTemplate>
+            <div class="col flex align-items-center justify-content-center">
+                <app-revisions-list></app-revisions-list>
+            </div>
+        </ng-template>
+    </p-splitter>
 </div>
 <app-footer></app-footer>

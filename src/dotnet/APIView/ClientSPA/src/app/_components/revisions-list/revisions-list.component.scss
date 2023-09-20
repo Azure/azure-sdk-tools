@@ -1,0 +1,18 @@
+:host ::ng-deep {
+    #details-filter p-columnfilterformelement{
+        width: 38px;
+        .p-multiselect-label {
+            visibility: hidden;
+        }
+    };
+
+    .author-table-data {
+        vertical-align: middle;
+        font-size: 0.9rem;
+        font-weight: 400;
+        img {
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+    }
+}

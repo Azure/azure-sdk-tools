@@ -33,6 +33,7 @@ import { CodePanelComponent } from './_components/code-panel/code-panel.componen
 import { VirtualScrollerModule } from 'primeng/virtualscroller';
 import { ReviewInfoComponent } from './_components/review-info/review-info.component';
 import { ReviewNavComponent } from './_components/review-nav/review-nav.component';
+import { RevisionsListComponent } from './_components/revisions-list/revisions-list.component';
 
 @NgModule({
   declarations: [
@@ -45,7 +46,8 @@ import { ReviewNavComponent } from './_components/review-nav/review-nav.componen
     ReviewPageComponent,
     CodePanelComponent,
     ReviewInfoComponent,
-    ReviewNavComponent
+    ReviewNavComponent,
+    RevisionsListComponent
   ],
   imports: [
     AppRoutingModule,

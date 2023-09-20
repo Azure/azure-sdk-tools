@@ -10,24 +10,24 @@ param (
     [string]$PackageJsonFileName = "emitter-package.json"
 )
 
-$packageJson = Get-Content $PackageJsonPath | ConvertFrom-Json
-
 $knownPackages = @(
-    "@typespec/compiler"
-    "@typespec/rest"
-    "@typespec/http"
-    "@typespec/versioning"
-    "@azure-tools/typespec-client-generator-core"
     "@azure-tools/typespec-azure-core"
+    "@azure-tools/typespec-client-generator-core"
+    "@typespec/compiler"
     "@typespec/eslint-config-typespec"
+    "@typespec/http"
+    "@typespec/rest"
+    "@typespec/versioning"
 )
+
+$packageJson = Get-Content $PackageJsonPath | ConvertFrom-Json
 
 $devDependencies = @{}
 
 foreach ($package in $knownPackages) {
-    $pinnedVersion = $packageJson.dependencies.$package ?? $packageJson.devDependencies.$package ?? $packageJson.peerDependencies.$package;
+    $pinnedVersion = $packageJson.devDependencies.$package
     if ($pinnedVersion) {
-        $devDependencies[$package] = $pinnedVersion;
+        $devDependencies[$package] = $pinnedVersion
     }
 }
 
@@ -36,7 +36,10 @@ $emitterPackageJson = [ordered]@{
     "dependencies" = @{
         $packageJson.name = $packageJson.version
     }
-    "devDependencies" = $devDependencies
+}
+
+if($devDependencies.Keys.Count -gt 0) {
+    $emitterPackageJson["devDependencies"] = $devDependencies
 }
 
 New-Item $OutputDirectory -ItemType Directory -ErrorAction SilentlyContinue | Out-Null

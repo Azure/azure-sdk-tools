@@ -23,6 +23,9 @@ parameters:
 - name: RegenerationJobCount
   type: number
   default: 10
+- name: MinimumPerJob
+  type: number
+  default: 10
 
 stages:
 - stage: Build
@@ -250,6 +253,7 @@ stages:
           -OutputDirectory "$(Build.ArtifactStagingDirectory)"
           -OutputVariableName matrix
           -JobCount ${{ parameters.RegenerationJobCount }}
+          -MinimumPerJob ${{ parameters.MinimumPerJob }}
 
     - publish: $(Build.ArtifactStagingDirectory)
       artifact: matrix_artifacts

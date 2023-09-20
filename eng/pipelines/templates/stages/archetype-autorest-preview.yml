@@ -285,6 +285,7 @@ stages:
           -OutputVariableName matrix
           -JobCount ${{ parameters.RegenerationJobCount }}
           -MinimumPerJob ${{ parameters.MinimumPerJob }}
+          -OnlyTypespec ${{ parameters.UseTypeSpecNext }}
 
     - publish: $(Build.ArtifactStagingDirectory)
       artifact: matrix_artifacts

@@ -17,10 +17,10 @@
     (onLazyLoad)="onLazyLoad($event)"
     (onSort)="onSort($event)"
     (onFilter)="onFilter($event)"
-    [tableStyle]="{ 'min-width': '40rem' }"
-    styleClass="p-datatable-striped p-datatable-sm">
+    [tableStyle]="{ 'min-width': '10rem' }"
+    styleClass="p-datatable-sm">
     <ng-template pTemplate="caption">
-        <div class="d-flex justify-content-between reviews-table-info">
+        <div class="d-flex justify-content-between index-table-info">
             <div>
                 <p-chip *ngFor="let lang of selectedLanguages" label="{{ lang.data }}"></p-chip>
                 <p-chip *ngFor="let dts of selectedDetails" label="{{ dts.data }}"></p-chip>
@@ -37,8 +37,8 @@
     <ng-template pTemplate="header">
         <tr>
             <th style="width:2%">Lanuage</th>
-            <th pSortableColumn="name" style="width:78%">Review<p-sortIcon class="ms-2" field="name"></p-sortIcon></th>
-            <th style="width:20%">Details</th>
+            <th pSortableColumn="name" style="width:60%">Review<p-sortIcon class="ms-2" field="name"></p-sortIcon></th>
+            <th style="width:auto">Details</th>
         </tr>
         <tr>
             <th>
@@ -61,7 +61,10 @@
             <th>
                 <p-columnFilter id="details-filter" field="details" matchMode="in" [showMenu]="false">
                     <ng-template pTemplate="filter" let-value let-filter="filterCallback">
-                        <p-multiSelect [ngModel]="value" [options]="details" [group]="true" [filter]="false" [(ngModel)]="selectedDetails" (onChange)="filter($event.value)" optionLabel="label" scrollHeight="500px">
+                        <p-multiSelect [ngModel]="value" 
+                        [options]="details" [group]="true" [filter]="false" 
+                        [(ngModel)]="selectedDetails" (onChange)="filter($event.value)" 
+                        optionLabel="label" scrollHeight="500px">
                             <ng-template let-group pTemplate="group">
                                 <div class="inline-block vertical-align-middle">
                                     <span class="ml-1 mt-1">{{ group.label }}</span>
@@ -76,9 +79,10 @@
     <ng-template pTemplate="body" let-review>
         <tr [pContextMenuRow]="review">
             <td>
+                <p-button icon="pi pi-folder-open" styleClass="p-button-rounded p-button-text p-button-secondary"></p-button>
                 <img class="float-end" src="assets/images/{{ review.language | languageNames }}-original.svg" alt="{{review.language}}" width="30">
             </td>
-            <td>{{ review.packageName }}</td>
+            <td style="word-wrap: break-word; max-width: 10ch">{{ review.packageName }}</td>
             <td>
                 <i pTooltip="{{ review.status }}" appendTo="target" tooltipPosition="top" [positionTop]=-200 [positionLeft]=-25 class="{{ badgeClass.get(review.status) }} me-2"></i>
                 <i pTooltip="{{ review.state }}" appendTo="target" tooltipPosition="top" [positionTop]=-200 [positionLeft]=-25 class="{{ badgeClass.get(review.state) }} me-2"></i>

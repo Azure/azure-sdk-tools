@@ -2,14 +2,14 @@
 <div class="container-fluid py-2 main-container">
     <p-splitter 
         [panelSizes]="[40, 60]" 
-        [style]="{ height: 'calc(100vh - 100px)' }">
+        [style]="{ height: 'calc(100vh - 100px)', border: '0px'}">
         <ng-template pTemplate>
-            <div class="col flex align-items-center justify-content-center">
+            <div class="col flex align-items-center justify-content-center border">
                 <app-reviews-list></app-reviews-list>
             </div>
         </ng-template>
         <ng-template pTemplate>
-            <div class="col flex align-items-center justify-content-center">
+            <div class="col flex align-items-center justify-content-center border">
                 <app-revisions-list></app-revisions-list>
             </div>
         </ng-template>

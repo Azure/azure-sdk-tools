@@ -3,7 +3,7 @@
     [value]="revisions"
     dataKey="id"
     [scrollable]="true"
-    scrollHeight="calc(100vh - 179px)"
+    scrollHeight="calc(100vh - 180px)"
     responsiveLayout="stack"
     [lazy]="true"
     [lazyLoadOnInit]="false"
@@ -18,7 +18,7 @@
     (onLazyLoad)="onLazyLoad($event)"
     (onSort)="onSort($event)"
     (onFilter)="onFilter($event)"
-    [tableStyle]="{ 'min-width': '60rem' }"
+    [tableStyle]="{ 'min-width': '20rem'}"
     styleClass="p-datatable-striped p-datatable-sm">
     <ng-template pTemplate="caption">
         <div class="d-flex justify-content-between reviews-table-info">

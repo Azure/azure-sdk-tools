@@ -17,6 +17,7 @@ Copy-Item "/mnt/testresources/*" -Destination "/azure/"
 
 Write-Host "Job completion index $($env:JOB_COMPLETION_INDEX)"
 
+# Avoiding ARM deployment racing condition for multiple pods running in parallel
 if ($env:JOB_COMPLETION_INDEX -and ($env:JOB_COMPLETION_INDEX -ne "0")) {
     $cmd = "kubectl get pods -n $($env:NAMESPACE) -l job-name=$($env:JOB_NAME) -o jsonpath='{.items[?(@.metadata.annotations.batch\.kubernetes\.io/job-completion-index==`"0`")]..status.initContainerStatuses[?(@.name==`"init-azure-deployer`")].state.terminated.reason}'"
     Write-Host $cmd

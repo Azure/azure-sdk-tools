@@ -1,5 +1,15 @@
 # Release History
 
+## 0.2.2 (2023-09-21)
+
+### Features Added
+
+Added role binding for all pods. Allowing pods to have read access to information of other pods under the same namespace.
+
+### Bugs Fixed
+
+Fixed racing condition for ARM deployment when multiple pods run in parallel.
+
 ## 0.2.1 (2023-09-14)
 
 ### Features Added

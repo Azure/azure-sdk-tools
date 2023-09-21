@@ -17,7 +17,7 @@ parameters:
   default: 'not-specified'
 
 # Custom steps to run after the autorest repository is cloned. If custom build steps are specified, the default init and build scripts will not be run.
-# The build steps should produce the folder `/artifacts` with contents:
+# The build steps should produce the directory `/artifacts` with contents:
 #   packages/
 #     autorest-csharp-2.0.0-alpha.4.tgz
 #     Microsoft.Azure.AutoRest.CSharp.2.0.0-alpha.4.nupkg
@@ -34,7 +34,7 @@ parameters:
 # List of packages to publish. Each package is an object with the following properties:
 #   name: The name of the package. This is used to determine the name of the file to publish.
 #   type: The type of package. Currently supported values are 'npm' and 'nuget'.
-#   file: The path to the file to publish. This is relative to the packages folder in the build artifacts directory.
+#   file: The path to the file to publish. This is relative to the packages directory in the build artifacts directory.
 - name: Packages
   type: object
   default: []
@@ -328,7 +328,7 @@ stages:
         workingDirectory: $(sdkRepositoryPath)
         filePath: $(sdkRepositoryPath)/eng/common/scripts/Update-GeneratedSdks.ps1
         arguments: >
-          -PackageFoldersFile "$(matrixArtifactsPath)/$(FolderList)"
+          -PackageDirectoriesFile "$(matrixArtifactsPath)/$(DirectoryList)"
       continueOnError: true
 
     - template: /eng/common/pipelines/templates/steps/git-push-changes.yml

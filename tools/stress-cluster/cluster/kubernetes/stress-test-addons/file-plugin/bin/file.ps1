@@ -8,5 +8,5 @@ param(
     [string]$url
 )
 
-$path = $url -replace "file:///"
+$path = $url -replace "file://"
 Get-Content "$path" -Raw

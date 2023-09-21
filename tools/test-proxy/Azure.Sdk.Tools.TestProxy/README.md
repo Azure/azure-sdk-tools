@@ -246,6 +246,9 @@ By default, the server will listen on the following port mappings:
 | http | 5000 |
 | https | 5001 |
 
+> [!WARNING]  
+> **MacOS** users should be aware that `airplay` by default utilizes port 5000. Ensure the port is free or use a non-default port as described below.
+
 #### Environment Variable
 
 Set `ASPNETCORE_URLS` to define a custom port for either http or https (or both). Here are some examples:

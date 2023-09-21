@@ -18,6 +18,10 @@
       value: {{ .Stress.ResourceGroupName }}
     - name: BASE_NAME
       value: {{ .Stress.BaseName }}
+    - name: NAMESPACE
+      value: {{ .Release.Namespace }}
+    - name: JOB_NAME
+      value:  "{{ lower .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}"
   volumeMounts:
     - name: "{{ .Release.Name }}-{{ .Release.Revision }}-test-resources"
       mountPath: /mnt/testresources

@@ -350,16 +350,16 @@ SELECT VALUE {
                     switch (item)
                     {
                         case "Open":
-                                queryStringBuilder.Append($" AND c.State = Open");
+                                queryStringBuilder.Append($" AND c.State = 'Open'");
                             break;
                         case "Closed":
-                                queryStringBuilder.Append($" AND c.State = Closed");
+                                queryStringBuilder.Append($" AND c.State = 'Closed'");
                             break;
                         case "Pending":
-                            queryStringBuilder.Append($" AND c.Status = Pending");
+                            queryStringBuilder.Append($" AND c.Status = 'Pending'");
                             break;
                         case "Approved":
-                            queryStringBuilder.Append($" AND c.Status = Approved");
+                            queryStringBuilder.Append($" AND c.Status = 'Approved'");
                             break;
                     }
                 }

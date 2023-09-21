@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { Review } from 'src/app/_models/review';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { Pagination } from 'src/app/_models/pagination';
-import { TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
+import { TableFilterEvent, TableLazyLoadEvent, TableRowSelectEvent } from 'primeng/table';
 import { MenuItem, SortEvent } from 'primeng/api';
 import { environment } from 'src/environments/environment';
 
@@ -13,6 +13,8 @@ import { environment } from 'src/environments/environment';
 })
 
 export class ReviewsListComponent implements OnInit {
+  @Output() reviewIdEmitter : EventEmitter<string> = new EventEmitter<string>();
+
   reviews : Review[] = [];
   totalNumberOfReviews = 0;
   pagination: Pagination | undefined;
@@ -56,7 +58,7 @@ export class ReviewsListComponent implements OnInit {
    * Load reviews from API
    *  * @param append wheather to add to or replace existing list
    */
-  loadReviews(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string ="lastUpdated",  sortOrder: number = 1) {
+  loadReviews(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string ="packageName",  sortOrder: number = 1) {
     let name : string = "";
     let languages : string [] = [];
     let details : string [] = [];
@@ -113,16 +115,16 @@ export class ReviewsListComponent implements OnInit {
         label: 'State',
         data: 'All',
         items: [
-          { label: "Open", data: "open" },
-          { label: "Closed", data: "closed" }
+          { label: "Open", data: "Open" },
+          { label: "Closed", data: "Closed" }
         ]
       },
       {
         label: 'Status',
         data: 'All',
         items: [
-          { label: "Approved", data: "approved" },
-          { label: "Pending", data: "pending" },
+          { label: "Approved", data: "Approved" },
+          { label: "Pending", data: "Pending" },
         ]
       }
     ];
@@ -130,8 +132,8 @@ export class ReviewsListComponent implements OnInit {
 
   setDetailsIcons(){
     // Set Badge Class for details Icons
-    this.badgeClass.set("Pending", "");
-    this.badgeClass.set("Approved", "fa-solid fa-check-double");
+    this.badgeClass.set("Pending", "fa-solid fa-circle-minus text-warning");
+    this.badgeClass.set("Approved", "fas fa-check-circle text-success");
     this.badgeClass.set("Closed", "fa-regular fa-circle-xmark");
     this.badgeClass.set("Open", "");
   }
@@ -156,7 +158,7 @@ export class ReviewsListComponent implements OnInit {
     {
       if (this.pagination)
       {
-        const sortField : string = event.sortField as string ?? "lastUpdated";
+        const sortField : string = event.sortField as string ?? "packageName";
         const sortOrder : number = event.sortOrder as number ?? 1;
         this.loadReviews(this.pagination!.noOfItemsRead, this.pageSize, false, event.filters, sortField, sortOrder);
       }
@@ -174,12 +176,12 @@ export class ReviewsListComponent implements OnInit {
   }
 
   /**
-   * Callback to invoke on table selection.
+   * Callback to invoke on row selection.
    * @param event the Filter event
    */
-  onSelectionChange(value = []) {
-    console.log("On Selection Event Emitted %o", value);
-    this.showSelectionAction = (value.length > 0) ? true : false;
+  onRowSelect(event: TableRowSelectEvent) {
+    console.log("On Row Select Event Emitted %o", event);
+    this.reviewIdEmitter.emit(event.data.id);
   }
 
     /**

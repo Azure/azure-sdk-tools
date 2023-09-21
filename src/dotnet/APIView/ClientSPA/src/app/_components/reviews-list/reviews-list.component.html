@@ -17,6 +17,9 @@
     (onLazyLoad)="onLazyLoad($event)"
     (onSort)="onSort($event)"
     (onFilter)="onFilter($event)"
+    selectionMode="single"
+    [(selection)]="selectedReview"
+    (onRowSelect)="onRowSelect($event)"
     [tableStyle]="{ 'min-width': '10rem' }"
     styleClass="p-datatable-sm">
     <ng-template pTemplate="caption">
@@ -26,10 +29,6 @@
                 <p-chip *ngFor="let dts of selectedDetails" label="{{ dts.data }}"></p-chip>
             </div>
             <div>
-                <button *ngIf="showSelectionAction" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Close</button>
-                <button *ngIf="showSelectionAction" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Subscribe</button>
-                <button *ngIf="showSelectionAction" type="button" class="btn btn-sm btn-outline-danger me-1"><i class="bi bi-x-octagon-fill me-1"></i>Delete</button>
-                <button *ngIf="showSelectionAction" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Selection</button>
                 <button type="button" class="btn btn-sm btn-outline-primary"><i class="bi bi-x-circle me-1"></i>Filters</button>
             </div>
         </div>
@@ -77,7 +76,7 @@
         </tr>
     </ng-template>
     <ng-template pTemplate="body" let-review>
-        <tr [pContextMenuRow]="review">
+        <tr [pContextMenuRow]="review" [pSelectableRow]="review">
             <td>
                 <p-button icon="pi pi-folder-open" styleClass="p-button-rounded p-button-text p-button-secondary"></p-button>
                 <img class="float-end" src="assets/images/{{ review.language | languageNames }}-original.svg" alt="{{review.language}}" width="30">

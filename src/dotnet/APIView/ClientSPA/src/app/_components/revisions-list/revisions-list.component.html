@@ -21,7 +21,7 @@
     [tableStyle]="{ 'min-width': '20rem'}"
     styleClass="p-datatable-striped p-datatable-sm">
     <ng-template pTemplate="caption">
-        <div class="d-flex justify-content-between reviews-table-info">
+        <div class="d-flex justify-content-between index-table-info">
             <div>
                 <p-chip *ngFor="let dts of selectedDetails" label="{{ dts.data }}"></p-chip>
             </div>
@@ -36,22 +36,22 @@
     </ng-template>
     <ng-template pTemplate="header">
         <tr>
-            <th style="width:45%">Revision</th>
-            <th style="width:19%">Author</th>
-            <th pSortableColumn="created" style="width:12%">Created<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
-            <th pSortableColumn="lastUpdated" style="width:12%">Updated<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
-            <th style="width:12%">Details</th>
+            <th></th>
+            <th style="width:30%">Revision</th>
+            <th style="width:20%">Author</th>
+            <th style="width:20%">Details</th>
+            <th pSortableColumn="created" style="width:15%">Created<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
+            <th pSortableColumn="lastUpdated" style="width:15%">Updated<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
+            
         </tr>
         <tr>
+            <th>
+            </th>
             <th>
                 <p-columnFilter type="text" field="label" [showMenu]="false"></p-columnFilter>
             </th>
             <th>
                 <p-columnFilter type="text" field="author" [showMenu]="false"></p-columnFilter>
-            </th>
-            <th>
-            </th>
-            <th>
             </th>
             <th>
                 <p-columnFilter id="details-filter" field="details" matchMode="in" [showMenu]="false">
@@ -66,23 +66,28 @@
                     </ng-template>
                 </p-columnFilter>
             </th>
+            <th>
+            </th>
+            <th>
+            </th>
         </tr>
     </ng-template>
     <ng-template pTemplate="body" let-revision>
         <tr [pContextMenuRow]="revision">
-            <td><a href="{{reviewPageWebAppUrl}}{{revision.reviewId}}/{{revision.Id}}">{{ revision.label }}</a></td>
-
+            <td><p-tableCheckbox [value]="revision"></p-tableCheckbox></td>
+            <td>
+                <a href="{{reviewPageWebAppUrl}}{{revision.reviewId}}/{{revision.Id}}">{{ revision.label }}</a>
+            </td>
             <td class="author-table-data">
                 <img [alt]="revision.changeHistory[0].user" src="https://github.com/{{ revision.changeHistory[0].user }}.png?size=40" width="32" />
                 <span><a href="{{profilePageWebAppUrl}}{{ revision.changeHistory[0].user }}">{{ revision.changeHistory[0].user }}</a></span>
             </td>
-            <td pTooltip="{{ revision.changeHistory[0].changeDateTime | date }}" appendTo="target" tooltipPosition="top" [positionTop]=-190 [positionLeft]=-35>{{ revision.changeHistory[0].changeDateTime | timeago }}</td>
-            <td pTooltip="{{ revision.changeHistory[revision.changeHistory.length - 1].changeDateTime | date }}" appendTo="target" tooltipPosition="top" [positionTop]=-190 [positionLeft]=-35>{{ revision.changeHistory[revision.changeHistory.length - 1].changeDateTime | timeago }}</td>
             <td>
                 <i pTooltip="{{ revision.status }}" appendTo="target" tooltipPosition="top" [positionTop]=-200 [positionLeft]=-25 class="{{ badgeClass.get(revision.status) }} me-2"></i>
                 <i pTooltip="{{ revision.reviewRevisionType }}" appendTo="target" tooltipPosition="top" [positionTop]=-200 [positionLeft]=-25 class="{{ badgeClass.get(revision.reviewRevisionType) }} me-2"></i>
             </td>
-
+            <td pTooltip="{{ revision.changeHistory[0].changeDateTime | date }}" appendTo="target" tooltipPosition="top" [positionTop]=-190 [positionLeft]=-35>{{ revision.changeHistory[0].changeDateTime | timeago }}</td>
+            <td pTooltip="{{ revision.changeHistory[revision.changeHistory.length - 1].changeDateTime | date }}" appendTo="target" tooltipPosition="top" [positionTop]=-190 [positionLeft]=-35>{{ revision.changeHistory[revision.changeHistory.length - 1].changeDateTime | timeago }}</td>
         </tr>
     </ng-template>
     <ng-template pTemplate="summary">

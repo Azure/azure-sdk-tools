@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input, SimpleChanges } from '@angular/core';
 import { MenuItem, SortEvent } from 'primeng/api';
 import { TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
 import { Pagination } from 'src/app/_models/pagination';
@@ -12,6 +12,7 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./revisions-list.component.scss']
 })
 export class RevisionsListComponent {
+  @Input() reviewId : string | null = null;
   reviewPageWebAppUrl : string = environment.webAppUrl + "Assemblies/review/";
   profilePageWebAppUrl : string = environment.webAppUrl + "Assemblies/profile/";
   revisions : Revision[] = [];
@@ -44,12 +45,18 @@ export class RevisionsListComponent {
     this.setDetailsIcons();
   }
 
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['reviewId'].previousValue != changes['reviewId'].currentValue){
+      this.loadRevisions(0, this.pageSize * 2, true);
+    }
+  }
 
   /**
    * Load revision from API
    *  * @param append wheather to add to or replace existing list
    */
   loadRevisions(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string ="lastUpdated",  sortOrder: number = 1) {
+    console.log("Review Id %o", this.reviewId);
     let label : string = "";
     let languages : string [] = [];
     let details : string [] = [];
@@ -89,17 +96,17 @@ export class RevisionsListComponent {
         label: 'Status',
         data: 'All',
         items: [
-          { label: "Approved", data: "approved" },
-          { label: "Pending", data: "pending" },
+          { label: "Approved", data: "Approved" },
+          { label: "Pending", data: "Pending" },
         ]
       },
       {
         label: 'Type',
         data: 'All',
         items: [
-          { label: "Automatic", data: "automatic" },
-          { label: "Manual", data: "manual" },
-          { label: "Pull Request", data: "pullrequest" }
+          { label: "Automatic", data: "Automatic" },
+          { label: "Manual", data: "Manual" },
+          { label: "Pull Request", data: "Pullrequest" }
         ]
       }
     ];
@@ -107,8 +114,8 @@ export class RevisionsListComponent {
 
   setDetailsIcons(){
     // Set Badge Class for details Icons
-    this.badgeClass.set("Pending", "");
-    this.badgeClass.set("Approved", "fa-solid fa-check-double");
+    this.badgeClass.set("Pending", "fa-solid fa-circle-minus text-warning");
+    this.badgeClass.set("Approved", "fas fa-check-circle text-success");
     this.badgeClass.set("Manual", "fa-solid fa-arrow-up-from-bracket");
     this.badgeClass.set("PullRequest", "fa-solid fa-code-pull-request");
     this.badgeClass.set("Automatic", "fa-solid fa-robot");

@@ -6,5 +6,14 @@ import { Component } from '@angular/core';
   styleUrls: ['./index-page.component.scss']
 })
 export class IndexPageComponent {
+  reviewId : string = "";
+
+  /**
+   * Pass ReviewId to revision component to load revisions
+   *  * @param reviewId
+   */
+  getRevisions(reviewId: string) {
+    this.reviewId = reviewId;
+  }
 
 }

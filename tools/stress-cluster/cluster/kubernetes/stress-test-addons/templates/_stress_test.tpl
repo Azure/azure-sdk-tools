@@ -31,6 +31,10 @@ spec:
       labels:
         release: {{ .Release.Name }}
         scenario: {{ .Stress.Scenario }}
+      {{- if .Values.PodDisruptionBudgetExpiry }}
+      annotations:
+        deletionLockExpiry: {{ .Values.PodDisruptionBudgetExpiry }}
+      {{- end }}
     spec:
       # In cases where a stress test has higher resource requirements or needs a dedicated node,
       # a new nodepool can be provisioned and labeled to allow custom scheduling.
@@ -65,6 +69,9 @@ spec:
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
 {{- include "stress-test-addons.static-secrets" $global }}
+{{- if $global.Values.PodDisruptionBudgetExpiry }}
+{{- include "stress-test-addons.pod-disruption-budget" $global }}
+{{- end }}
 {{- end -}}
 
 {{- define "stress-test-addons.parallel-deploy-job-template.from-pod" -}}
@@ -81,6 +88,9 @@ spec:
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
 {{- include "stress-test-addons.static-secrets" $global }}
+{{- if $global.Values.PodDisruptionBudgetExpiry }}
+{{- include "stress-test-addons.pod-disruption-budget" $global }}
+{{- end }}
 {{- end -}}
 
 {{- define "stress-test-addons.env-job-template.tpl" -}}
@@ -101,6 +111,10 @@ spec:
       labels:
         release: {{ .Release.Name }}
         scenario: {{ .Stress.Scenario }}
+      {{- if .Values.PodDisruptionBudgetExpiry }}
+      annotations:
+        deletionLockExpiry: {{ .Values.PodDisruptionBudgetExpiry }}
+      {{- end }}
     spec:
       nodeSelector:
         sku: 'default'
@@ -128,4 +142,7 @@ spec:
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
 {{- include "stress-test-addons.static-secrets" $global }}
+{{- if $global.Values.PodDisruptionBudgetExpiry }}
+{{- include "stress-test-addons.pod-disruption-budget" $global }}
+{{- end }}
 {{- end -}}

@@ -15,11 +15,20 @@ mkdir /azure
 Copy-Item "/scripts/stress-test/test-resources-post.ps1" -Destination "/azure/"
 Copy-Item "/mnt/testresources/*" -Destination "/azure/"
 
-if ($env:JOB_COMPLETION_INDEX) {
-    while (kubectl get pods -n $env:namespace -l job-name=$env:JOB_NAME -o jsonpath='{.items[?(@.metadata.annotations.batch\.kubernetes\.io/job-completion-index=="0")].metadata.name}' -ne "Complete") {
-        # try catch, error code 1
+Write-Host "Job completion index $($env:JOB_COMPLETION_INDEX)"
+
+if ($env:JOB_COMPLETION_INDEX -and ($env:JOB_COMPLETION_INDEX -ne "0")) {
+    $cmd = "kubectl get pods -n $($env:NAMESPACE) -l job-name=$($env:JOB_NAME) -o jsonpath='{.items[?(@.metadata.annotations.batch\.kubernetes\.io/job-completion-index==`"0`")]..status.initContainerStatuses[?(@.name==`"init-azure-deployer`")].state.terminated.reason}'"
+    Write-Host $cmd
+    $result = ""
+    while ($result -ne "Completed") {
         Write-Host "Waiting for pod index 0 deployment to complete."
         Start-Sleep 10
+        $result = Invoke-Expression $cmd
+        if ($LASTEXITCODE) {
+            Write-Host $result
+            throw "Failure getting pods"
+        }
     }
 }
 

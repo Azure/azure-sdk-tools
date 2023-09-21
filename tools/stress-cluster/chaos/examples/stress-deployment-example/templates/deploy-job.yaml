@@ -1,38 +1,20 @@
-{{- include "stress.deploy-job-template.from-job" (list . "stress.deploy-example") -}}
+{{- include "stress-test-addons.deploy-job-template.from-pod" (list . "stress.deploy-example") -}}
 {{- define "stress.deploy-example" -}}
+metadata:
+  labels:
+    testName: "deploy-example"
+    # Add this label to keep test resources around after test completion until their DeleteAfter tag expiry
+    # Skip.RemoveTestResources: "true"
 spec:
-  completions: 10
-  parallelism: 10
-  completionMode: Indexed
-  template:
-    metadata:
-      labels:
-        testName: "deploy-example"
-        # Add this label to keep test resources around after test completion until their DeleteAfter tag expiry
-        # Skip.RemoveTestResources: "true"
-    spec:
-      containers:
-        - name: deployment-example
-          image: mcr.microsoft.com/azure-cli
-          command: ['bash', '-c']
-          args:
-            - |
-                source $ENV_FILE &&
-                az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
-                az account set -s $AZURE_SUBSCRIPTION_ID &&
-                az appconfig show -n $APP_CONFIG_NAME -g $RESOURCE_GROUP -o json
-          {{- include "stress-test-addons.container-env" . | nindent 6 }}
-{{- end -}}
-{{- define "stress.deploy-job-template.from-job" -}}
-{{- $global := index . 0 -}}
-{{- $jobOverrideDefinition := index . 1 -}}
-# Configmap template that adds the stress test ARM template for mounting
-{{- include "stress-test-addons.deploy-configmap" $global }}
-{{- range (default (list "stress") $global.Values.scenarios) }}
----
-{{ $jobCtx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list $global . )) }}
-{{- $jobOverride := fromYaml (include $jobOverrideDefinition $jobCtx) -}}
-{{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $jobCtx) -}}
-{{- toYaml (merge $jobOverride $tpl) -}}
-{{- end }}
+  containers:
+    - name: deployment-example
+      image: mcr.microsoft.com/azure-cli
+      command: ['bash', '-c']
+      args:
+        - |
+            source $ENV_FILE &&
+            az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
+            az account set -s $AZURE_SUBSCRIPTION_ID &&
+            az appconfig show -n $APP_CONFIG_NAME -g $RESOURCE_GROUP -o json
+      {{- include "stress-test-addons.container-env" . | nindent 6 }}
 {{- end -}}

@@ -1,7 +1,4 @@
-{{- /*
-  The 3rd argument to this template (set as `3` below) is what determines the parallel pod count.
-*/}}
-{{- include "stress-test-addons.parallel-deploy-job-template.from-pod" (list . "stress.parallel-pod-example" 3) -}}
+{{- include "stress-test-addons.deploy-job-template.from-pod" (list . "stress.parallel-pod-example") -}}
 {{- define "stress.parallel-pod-example" -}}
 metadata:
   labels:

@@ -1,5 +1,17 @@
 # Release History
 
+## 0.3.0 (2023-09-22)
+
+### Breaking Changes
+
+Move parallel job configuration into special matrix field `parallel` so that
+parallelism can be set per scenario. Remove parallel-deploy-job-template way
+of setting parallelism added in the 0.2.1 release.
+
+### Features Added
+
+Adds support for pod disruption budgets when helm values PodDisruptionBudgetExpiry and PodDisruptionBudgetExpiryCron are set. When the expiry is set, a pdb will be created matching all pods in a release, and a cron job will be created to clean up the pdb on a specified date. This allows users to mark a test as non-interruptable so that kubernetes will not shut down the node for upgrades, rebalancing, etc.
+
 ## 0.2.2 (2023-09-21)
 
 ### Features Added

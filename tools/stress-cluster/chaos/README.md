@@ -6,6 +6,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
 
   * [Installation](#installation)
   * [Deploying a Stress Test](#deploying-a-stress-test)
+     * [Locking a test to run for a minimum number of days](#locking-a-test-to-run-for-a-minimum-number-of-days)
   * [Creating a Stress Test](#creating-a-stress-test)
      * [Layout](#layout)
      * [Stress Test Metadata](#stress-test-metadata)
@@ -113,6 +114,27 @@ you can quick check the local logs:
 kubectl logs -n <stress test namespace> <stress test pod name>
 ```
 
+### Locking a test to run for a minimum number of days
+
+Occasionally the Kubernetes cluster can cause disruptions to long running tests. This will show up as a test pod
+disappearing in the cluster (though all logs and other telemetry will still be available in app insights). This can
+happen when nodes are auto-upgraded or scaled down to reduce resource usage.
+
+If a test must be run for a long time, it can be disruptive when a node reboot/shutdown happens. This can be prevented
+by setting the `-LockDeletionForDays` parameter. When this parameter is set, the test pods will be deployed alongside a
+[PodDisruptionBudget](https://kubernetes.io/docs/tasks/run-application/configure-pdb/) that prevents nodes hosting the
+pods from being removed. After the set number of days, this pod disruption budget will be deleted and the test will be
+interruptable again. The test will not automatically shut down after this time, but it will no longer be locked.
+
+```
+<repo root>/eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -LockDeletionForDays 7
+```
+
+To see when a pod's deletion lock will expire:
+
+```
+kubectl get pod -n <namespace> <pod name> -o jsonpath='{.metadata.annotations.deletionLockExpiry}'
+```
 
 ## Creating a Stress Test
 
@@ -378,33 +400,31 @@ spec:
 #### Run multiple pods in parallel within a test job
 
 In some cases it may be necessary to run multiple instances of the same process/container in parallel as part of a test,
-for example an eventhub test that needs to run 3 consumers, each in their own container. This can be achieved using
-the `stress-test-addons.parallel-deploy-job-template.from-pod` template. The parallel feature leverages the
+for example an eventhub test that needs to run 3 consumers, each in their own container. This can be achieved by adding
+a `parallel` field in the matrix config. The parallel feature leverages the
 [job completion mode](https://kubernetes.io/docs/concepts/workloads/controllers/job/#completion-mode) feature. Test
 commands in the container can read the `JOB_COMPLETION_INDEX` environment variable to make decisions. For example,
 a messaging test that needs to run a single producer and multiple consumers can have logic that runs the producer when
 `JOB_COMPLETION_INDEX` is 0, and a consumer when it is not 0.
 
-See the below example to enable parallel pods. Note the `(list . "stress.parallel-pod-example 3)` segment. The final argument (shown as `3` in the example) sets how many parallel pods should be run.
-
 See a full working example of parallel pods [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/stress-cluster/chaos/examples/parallel-pod-example).
 
+See the below example to enable parallel pods via the matrix config (`scenarios-matrix.yaml`):
+
 ```
-{{- include "stress-test-addons.parallel-deploy-job-template.from-pod" (list . "stress.parallel-pod-example" 3) -}}
-{{- define "stress.parallel-pod-example" -}}
-metadata:
-  labels:
-    testName: "parallel-pod-example"
-spec:
-  containers:
-    - name: parallel-pod-example
-      image: busybox
-      command: ['bash', '-c']
-      args:
-        - |
-            echo "Completed pod instance $JOB_COMPLETION_INDEX"
-      {{- include "stress-test-addons.container-env" . | nindent 6 }}
-{{- end -}}
+# scenarios-matrix.yaml
+matrix:
+  scenarios:
+    parallel-example-a:
+      description: "Example for running multiple test containers in parallel"
+      # Adding this field into a matrix entry determines
+      # how many pods will run in parallel
+      parallel: 3
+    parallel-example-b:
+      description: "Example for running multiple test containers in parallel"
+      parallel: 2
+    non-parallel-example:
+      description: "This scenario is not run multiple pods in parallel"
 ```
 
 NOTE: when multiple pods are run, each pod will invoke its own azure deployment init container. When many of these containers

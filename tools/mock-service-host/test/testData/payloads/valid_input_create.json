@@ -11,9 +11,10 @@
       "If-Match": "dddd"
     },
     "method": "PUT",
-    "url": "/subscriptions/randomSub/resourceGroups/randomRG/providers/Microsoft.ApiManagement/service/randomService/users/randomUsers?api-version=2018-01-01",
+    "url": "/subscriptions/randomSub/resourceGroups/randomRG/providers/Microsoft.ApiManagement/service/randomService/users/randomUsers?api-version=2018-01-01&test=2",
     "query": {
-      "api-version": "2018-01-01"
+      "api-version": "2018-01-01",
+      "test": "2"
     },
     "body": {
       "properties": {

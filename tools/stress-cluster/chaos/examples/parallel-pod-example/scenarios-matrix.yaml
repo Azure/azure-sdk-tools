@@ -1,0 +1,4 @@
+matrix:
+  scenarios:
+    parallel:
+      description: "Example for running multiple test containers in parallel"

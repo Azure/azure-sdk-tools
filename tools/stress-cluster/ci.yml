@@ -1,0 +1,41 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/stress-cluster
+      - eng/common/scripts/stress-testing
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/stress-cluster
+      - eng/common/scripts/stress-testing
+
+jobs:
+  - job: Analyze
+    pool:
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
+    steps:
+      - template: /eng/common/pipelines/templates/steps/verify-links.yml
+        parameters:
+          Directory: tools/stress-cluster
+      - template: /eng/common/pipelines/templates/steps/verify-links.yml
+        parameters:
+          Directory: eng/common/scripts/stress-testing
+
+
+  - template: /eng/pipelines/templates/jobs/stress-test-release.yml
+    parameters:
+      Environment: pg
+      TestRepository: examples
+      DeployFromBranchOrCommit: $(Build.SourceVersion)
+  - template: /eng/pipelines/templates/jobs/stress-cluster-provision.yml
+    parameters:
+      Environment: pg
+      WhatIf: true

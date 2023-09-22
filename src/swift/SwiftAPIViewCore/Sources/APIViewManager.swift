@@ -24,11 +24,10 @@
 //
 // --------------------------------------------------------------------------
 
-import AST
 import Foundation
 import OrderedCollections
-import Parser
-import Source
+import SwiftSyntax
+import SwiftSyntaxParser
 import SourceKittenFramework
 
 
@@ -59,18 +58,21 @@ public class APIViewConfiguration {
 }
 
 /// Handles the generation of APIView JSON files.
-public class APIViewManager {
+public class APIViewManager: SyntaxVisitor {
 
     // MARK: Properties
 
-    public var config = APIViewConfiguration()
+    var config = APIViewConfiguration()
 
     var mode: APIViewManagerMode
+
+    var statements = OrderedDictionary<Int, CodeBlockItemSyntax.Item>()
 
     // MARK: Initializer
 
     public init(mode: APIViewManagerMode = .commandLine) {
         self.mode = mode
+        super.init(viewMode: .all)
     }
 
     // MARK: Methods
@@ -82,19 +84,19 @@ public class APIViewManager {
         guard let sourceUrl = URL(string: config.sourcePath) else {
             SharedLogger.fail("usage error: source path was invalid.")
         }
-        let tokenFile = try buildTokenFile(from: sourceUrl)
+        let apiView = try createApiView(from: sourceUrl)
 
         switch mode {
         case .commandLine:
-            save(tokenFile: tokenFile)
+            save(apiView: apiView)
             return ""
         case .testing:
-            return tokenFile.text
+            return apiView.text
         }
     }
 
     /// Persist the token file to disk
-    func save(tokenFile: TokenFile) {
+    func save(apiView: APIViewModel) {
         let destUrl: URL
         if let destPath = config.destPath {
             destUrl = URL(fileURLWithPath: destPath)
@@ -108,7 +110,7 @@ public class APIViewManager {
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
-            let tokenData = try encoder.encode(tokenFile)
+            let tokenData = try encoder.encode(apiView)
             try tokenData.write(to: destUrl)
         } catch {
             SharedLogger.fail(error.localizedDescription)
@@ -116,9 +118,9 @@ public class APIViewManager {
     }
 
     /// Handles automatic processing of swiftinterface file, if supplied
-    func process(filePath: String) throws -> SourceFile {
+    func process(filePath: String) throws -> String {
         if filePath.hasSuffix("swift") || filePath.hasSuffix("swifttxt") || filePath.hasSuffix("swiftinterface") {
-            return try SourceReader.read(at: filePath)
+            return try String(contentsOfFile: filePath)
         }
         if filePath.hasSuffix("h") {
             let args = [String]()
@@ -136,7 +138,7 @@ public class APIViewManager {
                 let tempUrl = sourceDir.appendingPathComponent(tempFilename)
                 try sourceCode.write(to: tempUrl, atomically: true, encoding: .utf8)
                 defer { try! FileManager.default.removeItem(at: tempUrl) }
-                return try SourceReader.read(at: tempUrl.path)
+                return try String(contentsOfFile: tempUrl.path)
             }
         }
         throw ToolError.client("Unsupported file type: \(filePath)")
@@ -187,7 +189,7 @@ public class APIViewManager {
         return filePaths
     }
 
-    func buildTokenFile(from sourceUrl: URL) throws -> TokenFile {
+    func createApiView(from sourceUrl: URL) throws -> APIViewModel {
         SharedLogger.debug("URL: \(sourceUrl.absoluteString)")
         var packageName: String?
         var packageVersion: String?
@@ -197,7 +199,6 @@ public class APIViewManager {
             SharedLogger.fail("\(sourceUrl.path) does not exist.")
         }
 
-        var statements = OrderedDictionary<Int, Statement>()
         var filePaths = [String]()
         if isDir.boolValue {
             packageName = config.packageName ?? extractPackageName(from: sourceUrl)
@@ -210,15 +211,11 @@ public class APIViewManager {
         }
         for filePath in filePaths {
             do {
-                let sourceFile = try process(filePath: filePath)
-                let topLevelDecl = try Parser(source: sourceFile).parse()
-
-                // hash top-level statement text to eliminate duplicates
-                topLevelDecl.statements.forEach { statement in
-                    statements[statement.description.hash] = statement
-                }
+                let source = try process(filePath: filePath)
+                let rootNode = try SyntaxParser.parse(source: source);
+                self.walk(rootNode)
             } catch let error {
-                SharedLogger.warn(error.localizedDescription)
+                SharedLogger.warn("\(error)")
             }
         }
         // Ensure that package name and version can be resolved
@@ -236,8 +233,18 @@ public class APIViewManager {
         config.packageName = packageName!
         config.packageVersion = packageVersion!
         let apiViewName = "\(packageName!) (version \(packageVersion!))"
-        let tokenFile = TokenFile(name: apiViewName, packageName: packageName!, versionString: packageVersion!)
-        tokenFile.process(statements: Array(statements.values))
-        return tokenFile
+        let apiView = APIViewModel(name: apiViewName, packageName: packageName!, versionString: packageVersion!, statements: Array(statements.values))
+        return apiView
+    }
+
+    // MARK: SyntaxVisitor
+    
+    public override func visit(_ node: SourceFileSyntax) -> SyntaxVisitorContinueKind {
+        for statement in node.statements {
+            let tokens = Array(statement.item.tokens(viewMode: .all))
+            statements[tokens.hashValue] = statement.item
+        }
+        return .skipChildren
     }
 }
+

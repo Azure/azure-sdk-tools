@@ -1,0 +1,244 @@
+.icon-language {
+    min-height: 34px;
+    width: 34px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.java-variant {
+    &.icon-assembly {
+        background: url(/icons/java/common/assembly.svg) center left no-repeat !important;
+    }
+
+    &.icon-gradle {
+        background: url(/icons/java/common/gradle.svg) center left no-repeat !important;
+    }
+
+    &.icon-maven {
+        background: url(/icons/java/common/maven.svg) center left no-repeat !important;
+    }
+
+    &.icon-namespace {
+        background: url(/icons/java/common/namespace.svg) center left no-repeat !important;
+    }
+
+    &.icon-spring {
+        background: url(/icons/java/common/spring.svg) center left no-repeat !important;
+    }
+
+    &.icon-unknown {
+        background: url(/icons/java/common/unknown.svg) center left no-repeat !important;
+    }
+
+    &.icon-android {
+        background: url(/icons/java/common/android.svg) center left no-repeat !important;
+    }
+
+    &.icon-annotation {
+        background: url(/icons/java/java/annotation.svg) center left no-repeat !important;
+    }
+
+    &.icon-class {
+        background: url(/icons/java/java/class.svg) center left no-repeat !important;
+    }
+
+    &.icon-enum {
+        background: url(/icons/java/java/enum.svg) center left no-repeat !important;
+    }
+
+    &.icon-interface {
+        background: url(/icons/java/java/interface.svg) center left no-repeat !important;
+    }
+
+    &.icon-module {
+        background: url(/icons/java/common/module.svg) center left no-repeat !important;
+    }
+}
+
+.kotlin-variant {
+    &.icon-assembly {
+        background: url(/icons/java/common/assembly.svg) center left no-repeat !important;
+    }
+
+    &.icon-gradle {
+        background: url(/icons/java/common/gradle.svg) center left no-repeat !important;
+    }
+
+    &.icon-maven {
+        background: url(/icons/java/common/maven.svg) center left no-repeat !important;
+    }
+
+    &.icon-namespace {
+        background: url(/icons/java/common/namespace.svg) center left no-repeat !important;
+    }
+
+    &.icon-spring {
+        background: url(/icons/java/common/spring.svg) center left no-repeat !important;
+    }
+
+    &.icon-unknown {
+        background: url(/icons/java/common/unknown.svg) center left no-repeat !important;
+    }
+
+    &.icon-android {
+        background: url(/icons/java/common/android.svg) center left no-repeat !important;
+    }
+
+    &.icon-annotation {
+        background: url(/icons/java/kotlin/annotation.svg) center left no-repeat !important;
+    }
+
+    &.icon-class {
+        background: url(/icons/java/kotlin/class.svg) center left no-repeat !important;
+    }
+
+    &.icon-enum {
+        background: url(/icons/java/kotlin/enum.svg) center left no-repeat !important;
+    }
+
+    &.icon-interface {
+        background: url(/icons/java/kotlin/interface.svg) center left no-repeat !important;
+    }
+
+    &.icon-function {
+        background: url(/icons/java/kotlin/function.svg) center left no-repeat !important;
+    }
+
+    &.icon-kotlinLanguage {
+        background: url(/icons/java/kotlin/kotlinLanguage.svg) center left no-repeat !important;
+    }
+
+    &.icon-object {
+        background: url(/icons/java/kotlin/object.svg) center left no-repeat !important;
+    }
+
+    &.icon-property {
+        background: url(/icons/java/kotlin/property.svg) center left no-repeat !important;
+    }
+
+    &.icon-module {
+        background: url(/icons/java/common/module.svg) center left no-repeat !important;
+    }
+}
+
+.c-variant, .cplusplus-variant, .csharp-variant, .go-variant, .javascript-variant, .json-variant, .python-variant, .swagger-variant, .swift-variant, .xml-variant {
+    &.icon-class {
+        background: url(/icons/class.png) center left no-repeat;
+    }
+
+    &.icon-interface {
+        background: url(/icons/interface.png) center left no-repeat;
+    }
+
+    &.icon-struct {
+        background: url(/icons/struct.png) center left no-repeat;
+    }
+
+    &.icon-enum {
+        background: url(/icons/enum.png) center left no-repeat;
+    }
+
+    &.icon-delegate {
+        background: url(/icons/delegate.png) center left no-repeat;
+    }
+
+    &.icon-unknown {
+        background: url(/icons/type.png) center left no-repeat;
+    }
+
+    &.icon-assembly {
+        background: url(/icons/assembly.png) center left no-repeat;
+    }
+
+    &.icon-namespace {
+        background: url(/icons/namespace.png) center left no-repeat;
+    }
+
+    &.icon-package {
+        background: url(/icons/package.png) center left no-repeat;
+    }
+
+    &.icon-method {
+        background: url(/icons/method.png) center left no-repeat;
+    }
+}
+
+.icon-csharp {
+    @extend .icon-language;
+    background: url(/icons/csharp-original.svg) center center no-repeat;
+}
+
+.icon-javascript {
+    @extend .icon-language;
+    background: url(/icons/javascript-original.svg) center center no-repeat;
+}
+
+.icon-python {
+    @extend .icon-language;
+    background: url(/icons/python-original.svg) center center no-repeat;
+}
+
+.icon-c {
+    @extend .icon-language;
+    background: url(/icons/c-original.svg) center center no-repeat;
+}
+
+.icon-cplusplus {
+    @extend .icon-language;
+    background: url(/icons/cplusplus-original.svg) center center no-repeat;
+}
+
+.icon-go {
+    @extend .icon-language;
+    background: url(/icons/go-original.svg) center center no-repeat;
+}
+
+.icon-java {
+    @extend .icon-language;
+    background: url(/icons/java-original.svg) center center no-repeat;
+}
+
+.icon-java-spring {
+    @extend .icon-language;
+    background: url(/icons/java-spring-original.svg) center center no-repeat;
+}
+
+.icon-java-android {
+    @extend .icon-language;
+    background: url(/icons/java-android-original.svg) center center no-repeat;
+}
+
+.icon-swift {
+    @extend .icon-language;
+    background: url(/icons/swift-original.svg) center center no-repeat;
+}
+
+.icon-kotlin {
+    @extend .icon-language;
+    background: url(/icons/kotlin-original.svg) center center no-repeat;
+}
+
+.icon-json {
+    @extend .icon-language;
+    background: url(/icons/json-original.svg) center center no-repeat;
+}
+
+.icon-swagger {
+    @extend .icon-language;
+    background: url(/icons/swagger-original.svg) center center no-repeat;
+}
+
+.icon-comments {
+    cursor: pointer;
+    position: absolute;
+    right: -17px;
+    top: 3px;
+}
+
+.icon-chevron-right {
+    background: url(/icons/chevron-right.svg) center center no-repeat;
+}
+
+.icon-chevron-up {
+    background: url(/icons/chevron-up.svg) center center no-repeat;
+}

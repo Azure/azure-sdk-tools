@@ -1,0 +1,32 @@
+steps:
+
+  # We aim to keep .NET SDK coming from global.json to bethe newest, to enable us to use the latest & greatest,
+  # and allow us to gradually migrate our .NET sources to such version.
+  # About global.json: https://learn.microsoft.com/en-us/dotnet/core/tools/global-json
+  - task: UseDotNet@2 # About UseDotNet@2 task: https://learn.microsoft.com/azure/devops/pipelines/tasks/reference/use-dotnet-v2?view=azure-pipelines
+    displayName: "Use .NET SDK from global.json"
+    retryCountOnTaskFailure: 3
+    inputs:
+      useGlobalJson: true
+
+  # We install .NET 6.0.x SDK in addition to .NET coming from global.json because most of our tools target 6.0.x.
+  # Once we migrate all tools to a newer .NET version, we should update this to install that version instead.
+  - task: UseDotNet@2
+    displayName: "Use .NET SDK 6.0.x"
+    retryCountOnTaskFailure: 3
+    inputs:
+      # We must install sdk, not just runtime, as it is required by some of our tools, like test-proxy.
+      # Specifically, test-proxy requires asp.net core runtime, which is installed only when sdk option
+      # is selected, per: https://github.com/microsoft/azure-pipelines-tasks/issues/14405
+      #
+      # For additional context, see:
+      # https://github.com/Azure/azure-sdk-tools/pull/5405#discussion_r1105006774
+      # https://github.com/Azure/azure-sdk-tools/pull/5405
+      packageType: sdk
+      version: 6.0.x
+      # performMultiLevelLookup comes into play when given .NET executable target runtime is different
+      # than the installed .NET SDK. Without this, such runtime would not be found.
+      performMultiLevelLookup: true
+
+# Future work: add NuGet packages caching. See:
+# https://github.com/Azure/azure-sdk-tools/issues/5086  

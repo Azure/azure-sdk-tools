@@ -1,0 +1,27 @@
+[
+  {
+    "id": "typescript_introduction.html#ts-follow-general-guidelines",
+    "category": "General Guidelines",
+    "text": "DO follow the [General Azure SDK Guidelines]."
+  },
+  {
+    "id": "typescript_introduction.html#ts-repository-location",
+    "category": "General Guidelines",
+    "text": "DO locate all source code in the [azure/azure-sdk-for-js] GitHub repository."
+  },
+  {
+    "id": "typescript_introduction.html#ts-engineering-systems",
+    "category": "General Guidelines",
+    "text": "DO follow Azure SDK engineering systems guidelines for working in the [azure/azure-sdk-for-js] GitHub repository."
+  },
+  {
+    "id": "typescript_introduction.html#ts-azure-scope",
+    "category": "General Guidelines",
+    "text": "DO follow these guidelines if you publish your client library under the @azure scope in npm."
+  },
+  {
+    "id": "typescript_introduction.html#ts-azure-scope-for-others",
+    "category": "General Guidelines",
+    "text": "YOU SHOULD follow these guidelines even if you're not publishing an Azure library under the @azure scope.\n\nAMD Module\n: A module format often used in the browser, for example as implemented by [RequireJS].\n\n[CommonJS][cjs] (CJS)\n: The module format of Node.js (require, module.exports).\n\n[ECMAScript Module][esm] (ES Module or ESM)\n: The standard import/export syntax defined in ECMAScript 6.\n\n[RequireJS]: https://requirejs.org/\n\n[azure/azure-sdk-for-js]: https://github.com/azure/azure-sdk-for-js\n[TypeScript client library template]: https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/template/template\n[cjs]: https://nodejs.org/api/modules.html\n[esm]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import\n[namespace guidelines]: typescript_design.html#ts-namespaces"
+  }
+]

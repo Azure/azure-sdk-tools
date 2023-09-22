@@ -25,4 +25,3 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/version-guard
-    SkipDotNetInstall: true

@@ -17,6 +17,7 @@ describe('TestModeler functions', () => {
             getValue: jest.fn().mockResolvedValue({
                 testmodeler: {
                     'export-codemodel': true,
+                    'export-explicit-type': true,
                 },
             }),
         });
@@ -25,7 +26,7 @@ describe('TestModeler functions', () => {
 
         expect(spyGenMockTests).toHaveBeenCalledTimes(1);
         expect(Helper.outputToModelerfour).toHaveBeenCalledTimes(1);
-        expect(Helper.addCodeModelDump).toHaveBeenCalledTimes(2);
+        expect(Helper.addCodeModelDump).toHaveBeenCalledTimes(3);
         expect(Helper.dump).toHaveBeenCalledTimes(1);
     });
 

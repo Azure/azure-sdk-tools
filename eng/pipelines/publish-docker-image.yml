@@ -1,0 +1,141 @@
+# Additional sample inputs can be found in `eng/containers/ci.yml`, but here is an example.
+# - name: test_proxy_linux
+#   pool: azsdk-pool-mms-ubuntu-2204-general
+#   vmImage: ubuntu-22.04
+#   dockerRepo: 'engsys/testproxy-lin'
+#   additionalDockerArgs: ''
+#   prepareScript: tools/test-proxy/docker/prepare.ps1
+#   excludeFromManifest: true/false
+#   dockerFile: 'tools/test-proxy/docker/dockerfile'
+#   stableTags:
+#   - 'latest'
+
+# A "ManifestDeployment" is a secondary deployment that can be used to map multiple docker tags to a single platform-sensitive one. It waits until
+# all previous tag deployments are created, then triggers a manifest upload that bundles all tags configured in DockerDeployments. To exclude an item from the
+# manifest upload, set deployment config property excludeFromManifest to true.
+# - name: test_proxy_manifest
+#   dockerRepo: 'engsys/testproxy'
+#   stableTags:
+#   - 'latest'
+parameters:
+  - name: DockerDeployments
+    type: object
+    default: []
+  - name: ManifestDeployment
+    type: object
+    default: []
+  - name: ImageTag
+    type: string
+  - name: ContainerRegistry
+    type: string
+    default: 'azsdkengsys'
+  - name: Publish
+    type: boolean
+    default: true
+
+jobs:
+  - ${{ each config in parameters.DockerDeployments }}:
+    - job: container_build_${{ config.name }}
+      displayName: Build ${{ config.name }} Image
+      pool:
+        name: ${{ config.pool }}
+        vmImage: ${{ config.vmImage }}
+      steps:
+        - ${{ if config.prepareScript }}:
+          - pwsh: |
+              ./${{ config.prepareScript }}
+            displayName: "Run prep script"
+        - task: Docker@2
+          displayName: Build ${{ config.name }}:${{ parameters.ImageTag }}
+          inputs:
+            command: build
+            Dockerfile: ${{ config.dockerFile }}
+            tags: ${{ parameters.ImageTag }}
+            arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }} ${{ config.AdditionalDockerArgs }}'
+
+        - ${{ if parameters.Publish }}:
+          - task: Docker@2
+            displayName: Push ${{ config.name }}:${{ parameters.ImageTag }}
+            condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+            inputs:
+              containerRegistry: ${{ parameters.ContainerRegistry }}
+              repository: ${{ config.dockerRepo }}
+              command: push
+              tags: ${{ parameters.ImageTag }}
+
+          - ${{ if config.stableTags }}:
+            - ${{ each stableTag in config.stableTags }}:
+              - task: Docker@2
+                displayName: Build ${{ config.name }}:${{ stableTag }}
+                condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+                inputs:
+                  command: build
+                  Dockerfile: ${{ config.dockerFile }}
+                  tags: ${{ stableTag }}
+                  arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ stableTag }} ${{ config.exclude }}'
+
+              - task: Docker@2
+                displayName: Push ${{ config.name }}:${{ stableTag }}
+                condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+                inputs:
+                  containerRegistry: ${{ parameters.ContainerRegistry }}
+                  repository: ${{ config.dockerRepo }}
+                  command: push
+                  tags: ${{ stableTag }}
+
+  - ${{ if and(parameters.ManifestDeployment, parameters.Publish) }}:
+    - ${{ each deployment in parameters.ManifestDeployment }}:
+      - job: container_build_${{ deployment.name }}
+        displayName: Build ${{ deployment.name }} Manifest
+        ${{ if gt(length(parameters.DockerDeployments), 0) }}:
+          dependsOn:
+            - ${{ each config in parameters.DockerDeployments }}:
+              - container_build_${{ config.name }}
+        pool:
+          name: azsdk-pool-mms-ubuntu-2204-general
+          vmImage: ubuntu-22.04
+
+        steps:
+          - task: Docker@2
+            displayName: Login to ACR
+            inputs:
+              command: login
+              containerRegistry: ${{ parameters.ContainerRegistry }}
+
+          - pwsh: |
+              $configurations = '${{ convertToJson(parameters.DockerDeployments) }}' -replace '\\', '/'
+              $assembledDependentTags = $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/get-docker-manifest-input.ps1 `
+                -DockerDeploymentJson $configurations `
+                -ContainerRegistry "${{ parameters.ContainerRegistry }}" `
+                -ImageTag "${{ parameters.ImageTag }}" `
+
+              Write-Host "##vso[task.setvariable variable=ManifestVariable]$assembledDependentTags"
+            displayName: Generate Manifest Variable
+
+          - pwsh: |
+              docker manifest create ${{ parameters.ContainerRegistry }}.azurecr.io/${{ deployment.dockerRepo }}:${{ parameters.ImageTag }} $(ManifestVariable)
+            displayName: Generate Manifest
+
+          - pwsh: |
+              docker manifest push ${{ parameters.ContainerRegistry }}.azurecr.io/${{ deployment.dockerRepo }}:${{ parameters.ImageTag }}
+            displayName: Upload Manifest
+
+          - ${{ if deployment.stableTags }}:
+            - ${{ each stableTag in deployment.stableTags }}:
+              - pwsh: |
+                  $configurations = '${{ convertToJson(parameters.DockerDeployments) }}' -replace '\\', '/'
+                  $assembledDependentTags = $(Build.SourcesDirectory)/eng/pipelines/templates/scripts/get-docker-manifest-input.ps1 `
+                    -DockerDeploymentJson $configurations `
+                    -ContainerRegistry "${{ parameters.ContainerRegistry }}" `
+                    -ImageTag "${{ stableTag }}" `
+
+                  Write-Host "##vso[task.setvariable variable=ManifestVariable]$assembledDependentTags"
+                displayName: Generate Manifest Variable
+
+              - pwsh: |
+                  docker manifest create ${{ parameters.ContainerRegistry }}.azurecr.io/${{ deployment.dockerRepo }}:${{ stableTag }} $(ManifestVariable)
+                displayName: Generate Manifest
+
+              - pwsh: |
+                  docker manifest push ${{ parameters.ContainerRegistry }}.azurecr.io/${{ deployment.dockerRepo }}:${{ stableTag }}
+                displayName: Upload Manifest

@@ -1,0 +1,252 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/sdk-generation-pipeline
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/sdk-generation-pipeline
+
+variables:
+  - template: ../../eng/pipelines/templates/variables/globals.yml
+  - name: NodeVersion
+    value: '14.x'
+  - name: VAR_ARTIFACT_NAME
+    value: 'packages'
+  - name: VAR_DOCKER_IMAGE_ARTIFACT_NAME
+    value: 'dockerImages'
+  - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
+    value: $(Build.ArtifactStagingDirectory)
+
+pool:
+  name: "azsdk-pool-mms-ubuntu-2004-general"
+  vmImage: "ubuntu-20.04"
+  
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+        steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '$(NodeVersion)'
+          displayName: 'Install Node.js'
+
+        - bash: |
+            npm install -g @microsoft/rush
+            npm install -g typescript@4.6.2
+          displayName: 'Install dependencies'
+
+        - script: |
+            rush update
+          displayName: 'rush update'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+        - script: |
+            rushx lint
+          displayName: 'Lint @azure-tools/sdk-generation-lib'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
+
+        - script: |
+            rushx lint
+          displayName: 'Lint @azure-tools/sdk-generation-cli'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
+
+        - script: |
+            rush build
+          displayName: 'rush build'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+        - script: |
+            rushx pack
+          displayName: 'Pack @azure-tools/sdk-generation-lib'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
+
+        - script: |
+            rushx pack
+          displayName: 'Pack @azure-tools/sdk-generation-cli'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
+
+        - script: |
+            mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages
+            cp azure-tools-sdk-generation-lib-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages/
+          displayName: 'Copy @azure-tools/sdk-generation-lib to staging dir'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
+
+        - task: PublishBuildArtifacts@1
+          displayName: 'Publish packages'
+          inputs:
+            PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages'
+            ArtifactName: '$(VAR_ARTIFACT_NAME)'
+            publishLocation: 'Container'
+
+        - script: 'docker build -t sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) .'
+          displayName: 'Build docker image'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+        - script: |
+            mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images
+            docker image save sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) -o $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images/image.tar
+          displayName: 'Save docker image'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+        - task: PublishBuildArtifacts@1
+          displayName: 'Publish docker image'
+          inputs:
+            PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images'
+            ArtifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
+            publishLocation: 'Container'
+
+  - stage: Test
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: UnitTestForCli
+        displayName: Unit Test For Cli Package
+        condition: always()
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '$(NodeVersion)'
+            displayName: 'Install Node.js'
+
+          - bash: |
+              npm install -g @microsoft/rush
+              npm install -g typescript@4.6.2
+            displayName: 'Install dependencies'
+
+          - script: |
+              rush update
+            displayName: 'rush update'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+          - script: |
+              rush build
+            displayName: 'rush build'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+            
+          - script: |
+              npm i -g autorest
+              rushx test:unit
+            displayName: 'Test @azure-tools/sdk-generation-cli'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
+
+      - job: IntegrationTest
+        condition: always()
+        displayName: Integration Test for
+        strategy:
+          matrix:
+            JS:
+              sdkRepo: 'azure-sdk-for-js'
+            JAVA:
+              sdkRepo: 'azure-sdk-for-java'
+            PYTHON:
+              sdkRepo: 'azure-sdk-for-python'
+            Net:
+              sdkRepo: 'azure-sdk-for-net'
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '$(NodeVersion)'
+            displayName: 'Install Node.js'
+
+          - bash: |
+              npm install -g @microsoft/rush
+              npm install -g typescript@4.6.2
+            displayName: 'Install dependencies'
+
+          - script: |
+              rush update
+            displayName: 'rush update'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+          - script: |
+              rush build
+            displayName: 'rush build'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
+              downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+            displayName: 'Download image'
+
+          - bash: |
+              docker load --input $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)/image.tar
+            displayName: 'Docker Load'
+
+          - bash: |
+              set -e
+              rushx test:integration --docker-image="sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId)" --sdk-repo=$(sdkRepo)
+            displayName: 'Run integration test'
+            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
+
+  - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
+    - stage: Release
+      dependsOn: Test
+      condition: succeededOrFailed()
+      jobs:
+      - job: approve
+        pool: server
+        steps:
+        - task: ManualValidation@0
+          inputs:
+            notifyUsers: 'Click to approve if it''s an expected public release.'
+
+      - job: release
+        dependsOn: approve
+        condition: and(succeeded(), ne(variables['USER_SKIP_PUBLIC_RELEASE'], 'true'))
+        steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '$(NodeVersion)'
+          displayName: 'Install Node.js'
+
+        - task: DownloadBuildArtifacts@0
+          inputs:
+            buildType: 'current'
+            downloadType: 'single'
+            artifactName: '$(VAR_ARTIFACT_NAME)'
+            downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+
+        - script: |
+            echo -e "\e[32m[$(date -u)] LOG: Ensure npm is installed"
+            sudo npm install -g npm@6.14.16 || { echo 'npm install failed' ; exit 1; }
+            sudo npm install -g pnpm || { echo 'pnpm install failed' ; exit 1; }
+
+            echo -e "\e[32m[$(date -u)] LOG: publish the package"
+            echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc
+            for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARTIFACT_NAME)/*.tgz
+            do
+              echo -e "\e[32m[$(date -u)] LOG: File: $file"
+              npm publish $file --access public || { echo 'publish $file failed' ; }
+            done
+            rm ~/.npmrc || { echo 'rm ~/.npmrc failed' ; exit 1; }
+          displayName: Publish
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+

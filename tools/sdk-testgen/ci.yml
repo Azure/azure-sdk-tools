@@ -26,17 +26,18 @@ pr:
       - tools/sdk-testgen
 
 pool:
-  vmImage: "ubuntu-latest"
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
 
 variables:
-  NugetSecurityAnalysisWarningLevel: 'none'
+  NugetSecurityAnalysisWarningLevel: "none"
 
 stages:
   - stage: build
     displayName: "Build, Lint and Test"
     jobs:
-      - job: build
-        displayName: "Build"
+      - job: MonoRepo
+        displayName: "MonoRepo"
         steps:
           - template: ../../eng/common/pipelines/templates/steps/verify-path-length.yml
             parameters:

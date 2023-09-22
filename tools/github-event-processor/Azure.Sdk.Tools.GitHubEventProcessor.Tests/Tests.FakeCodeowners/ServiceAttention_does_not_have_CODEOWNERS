@@ -1,0 +1,24 @@
+################
+# FAKE Codeownrs file for testing purposes
+################
+
+# ServiceLabel: %FakeLabel0 %Service Attention
+/files/filePath0/           @FakeUser0
+# PRLabel: %FakeLabel1
+/files/filePath1/           @FakeUser1 @FakeUser11
+# ServiceLabel: %FakeLabel2 %Service Attention
+/files/filePath2/           @FakeUser2 @FakeUser12
+# ServiceLabel: %FakeLabel3 %Service Attention
+/files/filePath3/           @FakeUser3
+# PRLabel: %FakeLabel4
+/files/filePath4/           @FakeUser4 @FakeUser14 @FakeUser24
+# ServiceLabel: %FakeLabel5 %Service Attention
+/files/filePath5/           @FakeUser5
+# ServiceLabel: %FakeLabel6 %Service Attention
+/files/filePath6/           @FakeUser6
+# ServiceLabel: %FakeLabel7 %Service Attention
+/files/filePath7/           @FakeUser7 @FakeUser17
+# ServiceLabel: %FakeLabel8 %Service Attention
+/files/filePath8/           @FakeUser8
+# PRLabel: %FakeLabel9
+/files/filePath9/           @FakeUser9

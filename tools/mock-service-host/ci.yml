@@ -31,7 +31,7 @@ pr:
       - tools/mock-service-host
 
 variables:
-  NodeVersion: '14.x'
+  NodeVersion: '16.x'
   VAR_ARIFACT_NAME: "drop"
   VAR_BUILD_ARTIFACT_STAGING_DIRECTORY: $(Build.ArtifactStagingDirectory)
   NugetSecurityAnalysisWarningLevel: 'none'
@@ -43,7 +43,7 @@ stages:
         strategy:
           matrix:
             linux:
-              imageName: 'ubuntu-latest'
+              imageName: ubuntu-22.04
             mac:
               imageName: 'macos-latest'
             windows:
@@ -57,8 +57,8 @@ stages:
           displayName: 'Install Node.js'
 
         - script: |
-            npm install
-          displayName: 'npm install'
+            npm ci
+          displayName: 'npm ci'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/mock-service-host
 
         - script: |

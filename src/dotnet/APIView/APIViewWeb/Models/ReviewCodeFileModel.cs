@@ -14,7 +14,6 @@ namespace APIViewWeb
         // This is field is more of a display name. It is set to name value returned by parser which has package name and version in following format
         // Package name ( Version )
         public string Name { get; set; }
-
         public string Language
         {
             get => _language ?? (Name.EndsWith(".json", StringComparison.OrdinalIgnoreCase) ? "Json" : "C#");
@@ -22,6 +21,8 @@ namespace APIViewWeb
         }
 
         public string VersionString { get; set; }
+
+        public string LanguageVariant { get; set; }
 
         public bool HasOriginal { get; set; }
 

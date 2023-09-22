@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -12,12 +12,18 @@ namespace APIView.DIff
         {
             List<InlineDiffLine<TR>> diffs = new List<InlineDiffLine<TR>>();
             int currentLine = 0;
+            int beforeIndex = 0;
 
             void CatchUpTo(int line)
             {
-                for (; currentLine < line; currentLine++)
+                for (; currentLine < line; currentLine++, beforeIndex++)
                 {
-                    diffs.Add(new InlineDiffLine<TR>(afterResults[currentLine], DiffLineKind.Unchanged));
+                    TR beforeLine = default(TR);
+                    if (beforeIndex < beforeResults.Length)
+                    {
+                        beforeLine = beforeResults[beforeIndex];
+                    }
+                    diffs.Add(new InlineDiffLine<TR>(afterResults[currentLine], beforeLine, DiffLineKind.Unchanged));
                 }
             }
 
@@ -32,6 +38,7 @@ namespace APIView.DIff
 
                 foreach (var line in beforeResults.AsSpan(hunk.RemoveStart, hunk.Removed))
                 {
+                    beforeIndex++;
                     diffs.Add(new InlineDiffLine<TR>(line, DiffLineKind.Removed));
                 }
 
@@ -41,7 +48,6 @@ namespace APIView.DIff
                     diffs.Add(new InlineDiffLine<TR>(line, DiffLineKind.Added));
                 }
             }
-
 
             CatchUpTo(after.Length);
             return diffs.ToArray();

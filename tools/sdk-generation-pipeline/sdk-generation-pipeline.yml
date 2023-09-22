@@ -1,0 +1,123 @@
+trigger: none
+
+variables:
+  - template: ../../eng/pipelines/templates/variables/globals.yml
+
+  - name: codegenRepo
+    value: https://github.com/Azure/azure-sdk-tools.git
+
+  - name: sdkRepoBaseBranch
+    value: main
+
+  - name: sdkRepoType
+    value: github
+
+parameters:
+  - name: sdkToGenerate
+    type: string
+    values:
+      - js
+      - java
+      - go
+      - net
+      - python
+
+  - name: service
+    type: string
+
+  - name: relativeReadmeFilePath
+    type: string
+    default: "''"
+
+  - name: relativeTypeSpecProjectPath
+    type: string
+    default: "''"
+
+  - name: tag
+    type: string
+    default: "''"
+
+  - name: serviceType
+    type: string
+    values:
+      - resource-manager
+      - data-plane
+
+  - name: swagger
+    type: object
+    default:
+      "type": "github"
+      "path": "https://github.com/azure/azure-rest-api-specs"
+      "baseBranch": "main"
+      "branch": "main"
+      "commit": ""
+      "pullRequest": ""
+      "title": ""
+
+  - name: clientAgent
+    type: string
+
+  - name: sdkGenerationName
+    type: string
+
+  - name: triggerType
+    type: string
+    values:
+      - release
+      - ad-hoc
+      - ci
+
+  - name: sdkConfig
+    type: string
+    default: "''"
+
+  - name: sdkPR
+    type: object
+    default:
+      "prLink": "''"
+      "prNumber": "''"
+
+stages:
+  - stage: SdkGeneration
+    jobs:
+      - job: SdkGeneration
+        pool:
+          name: azsdk-pool-mms-ubuntu-2004-general
+          vmImage: ubuntu-20.04
+        timeoutInMinutes: 180
+        displayName: ${{ parameters.sdkToGenerate }}-${{ parameters.serviceType }}-${{ parameters.service }}
+        steps:
+          - template: ./pipelines/steps/precheck.yml
+            parameters:
+              swagger: ${{ parameters.swagger }}
+              sdk: ${{ parameters.sdkToGenerate }}
+              service: ${{ parameters.service }}
+              sdkRepoBaseBranch: ${{ variables.sdkRepoBaseBranch }}
+
+          - template: ./pipelines/steps/pipeline-setup.yml
+            parameters:
+              sdk: ${{ parameters.sdkToGenerate }}
+              trigger: ${{ parameters.clientAgent }}
+              swagger: ${{ parameters.swagger }}
+              triggerType: ${{ parameters.triggerType }}
+
+          - template: ./pipelines/steps/generate-sdk.yml
+            parameters:
+              readmeFile: ${{ parameters.relativeReadmeFilePath }}
+              typespecProject: ${{ parameters.relativeTypeSpecProjectPath }}
+              trigger: ${{ parameters.clientAgent }}
+              triggerType: ${{ parameters.triggerType }}
+              serviceType: ${{ parameters.serviceType }}
+              sdk: ${{ parameters.sdkToGenerate }}
+              sdkConfig: ${{ parameters.sdkConfig }}
+
+          - template: ./pipelines/steps/parse-and-publish-result.yml
+            parameters:
+              sdk: ${{ parameters.sdkToGenerate }}
+              service: ${{ parameters.service }}
+              serviceType: ${{ parameters.serviceType }}
+              trigger: ${{ parameters.clientAgent }}
+              sdkGenerationName: ${{ parameters.sdkGenerationName }}
+              triggerType: ${{ parameters.triggerType }}
+              sdkPR: ${{ parameters.sdkPR }}
+              swagger: ${{ parameters.swagger }}

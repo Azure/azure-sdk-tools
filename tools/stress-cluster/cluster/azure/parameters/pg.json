@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscriptionId": {
+      "value": "faa080af-c1d8-40ad-9cce-e1a450ca5b57"
+    },
+    "groupSuffix": {
+      "value": "pg"
+    },
+    "clusterName": {
+      "value": "stress-pg"
+    },
+    "clusterLocation": {
+      "value": "westus3"
+    },
+    "staticTestKeyvaultName": {
+      "value": "stress-secrets-pg"
+    },
+    "staticTestKeyvaultGroup": {
+      "value": "rg-stress-secrets-pg"
+    },
+    "defaultAgentPoolMinNodes": {
+      "value": 6
+    },
+    "defaultAgentPoolMaxNodes": {
+      "value": 20
+    },
+    "tags": {
+      "value": {
+        "environment": "pg",
+        "owners": "bebroder, albertcheng",
+        "DoNotDelete": ""
+      }
+    }
+  }
+}

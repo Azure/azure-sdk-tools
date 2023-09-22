@@ -25,4 +25,48 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/test-proxy
-    DotNetCoreVersion: "6.x"
+    DockerTagPrefix: '1.0.0-dev.'
+    DockerDeployments:
+    - name: test_proxy_linux
+      pool: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
+      dockerRepo: 'engsys/testproxy-lin'
+      prepareScript: tools/test-proxy/docker/prepare.ps1
+      dockerFile: 'tools/test-proxy/docker/dockerfile'
+      stableTags:
+      - 'latest'
+    - name: test_proxy_linux_arm64
+      pool: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
+      dockerRepo: 'engsys/testproxy-lin-arm64'
+      prepareScript: 'tools/test-proxy/docker/prepare.ps1 -qemu'
+      additionalDockerArgs: '--build-arg ARCH=-arm64v8 --platform linux/arm64'
+      dockerFile: 'tools/test-proxy/docker/dockerfile'
+      stableTags:
+      - 'latest'
+    ManifestDeployment:
+    - name: 'test_proxy_multiarch'
+      dockerRepo: 'engsys/test-proxy'
+      stableTags:
+      - 'latest'
+    ReleaseBinaries: true
+    StandaloneExeMatrix:
+    - rid: osx-x64
+      framework: net6.0
+      assembly: Azure.Sdk.Tools.TestProxy
+    - rid: osx-arm64
+      framework: net6.0
+      assembly: Azure.Sdk.Tools.TestProxy
+    - rid: win-x64
+      framework: net6.0
+      assembly: Azure.Sdk.Tools.TestProxy
+    - rid: linux-x64
+      framework: net6.0
+      assembly: Azure.Sdk.Tools.TestProxy
+    - rid: linux-arm64
+      framework: net6.0
+      assembly: Azure.Sdk.Tools.TestProxy
+    TestPreSteps:
+      - pwsh: |
+          #vso[task.setvariable variable=COMPlus_Pkcs12UnspecifiedPasswordIterationLimit]-1
+        displayName: Override Acceptable Password Iteration Count

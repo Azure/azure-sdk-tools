@@ -28,6 +28,14 @@ export function bumpMinorVersion(version: string, usedVersions: string[] | undef
     return newVersion;
 }
 
+export function bumpPatchVersion(version: string, usedVersions: string[] | undefined) {
+    let newVersion = semverInc(version, 'patch', 'beta');
+    while (usedVersions && usedVersions.includes(newVersion)) {
+        newVersion = semverInc(newVersion, 'patch', 'beta');
+    }
+    return newVersion;
+}
+
 export function bumpPreviewVersion(version: string, usedVersions: string[] | undefined) {
     let newVersion = semverInc(version, 'pre', 'beta');
     if (newVersion.endsWith('beta.0')) {

@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.SymbolDisplay;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
@@ -49,7 +50,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "22";
+        public const string CurrentVersion = "23";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -88,12 +89,12 @@ namespace ApiView
                 {
                     foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()))
                     {
-                        BuildType(builder, namedTypeSymbol, navigationItems);
+                        BuildType(builder, namedTypeSymbol, navigationItems, false);
                     }
                 }
                 else
                 {
-                    Build(builder, namespaceSymbol, navigationItems);
+                    BuildNamespace(builder, namespaceSymbol, navigationItems);
                 }
             }
 
@@ -143,8 +144,14 @@ namespace ApiView
             }
         }
 
-        private void Build(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol, List<NavigationItem> navigationItems)
+        private void BuildNamespace(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol, List<NavigationItem> navigationItems)
         {
+            bool isHidden = HasOnlyHiddenTypes(namespaceSymbol);
+
+            if (isHidden)
+            {
+                builder.Append(null, CodeFileTokenKind.HiddenApiRangeStart);
+            }
             builder.Keyword(SyntaxKind.NamespaceKeyword);
             builder.Space();
             BuildNamespaceName(builder, namespaceSymbol);
@@ -157,7 +164,7 @@ namespace ApiView
             List<NavigationItem> namespaceItems = new List<NavigationItem>();
             foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namespaceSymbol.GetTypeMembers()))
             {
-                BuildType(builder, namedTypeSymbol, namespaceItems);
+                BuildType(builder, namedTypeSymbol, namespaceItems, isHidden);
             }
 
             CloseBrace(builder);
@@ -167,9 +174,14 @@ namespace ApiView
                 NavigationId = namespaceSymbol.GetId(),
                 Text = namespaceSymbol.ToDisplayString(),
                 ChildItems = namespaceItems.ToArray(),
-                Tags = { { "TypeKind", "namespace" } }
+                Tags = { { "TypeKind", "namespace" } },
+                IsHiddenApi = isHidden
             };
             navigationItems.Add(namespaceItem);
+            if (isHidden)
+            {
+                builder.Append(null, CodeFileTokenKind.HiddenApiRangeEnd);
+            }
         }
 
         private void BuildNamespaceName(CodeFileTokensBuilder builder, INamespaceSymbol namespaceSymbol)
@@ -184,23 +196,35 @@ namespace ApiView
 
         private bool HasAnyPublicTypes(INamespaceSymbol subNamespaceSymbol)
         {
-            return subNamespaceSymbol.GetTypeMembers().Any(t => IsAccessible(t));
+            return subNamespaceSymbol.GetTypeMembers().Any(IsAccessible);
         }
 
-        private void BuildType(CodeFileTokensBuilder builder, INamedTypeSymbol namedType, List<NavigationItem> navigationBuilder)
+        private bool HasOnlyHiddenTypes(INamespaceSymbol namespaceSymbol)
+        {
+            return namespaceSymbol.GetTypeMembers().All(t=> IsHiddenFromIntellisense(t) || !IsAccessible(t));
+        }
+
+        private void BuildType(CodeFileTokensBuilder builder, INamedTypeSymbol namedType, List<NavigationItem> navigationBuilder, bool inHiddenScope)
         {
             if (!IsAccessible(namedType))
             {
                 return;
             }
 
+            bool isHidden = IsHiddenFromIntellisense(namedType);
             var navigationItem = new NavigationItem()
             {
                 NavigationId = namedType.GetId(),
                 Text = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat),
+                IsHiddenApi = isHidden
             };
             navigationBuilder.Add(navigationItem);
             navigationItem.Tags.Add("TypeKind", namedType.TypeKind.ToString().ToLowerInvariant());
+
+            if (isHidden && !inHiddenScope)
+            {
+                builder.Append(null, CodeFileTokenKind.HiddenApiRangeStart);
+            }
 
             BuildDocumentation(builder, namedType);
             BuildAttributes(builder, namedType.GetAttributes());
@@ -255,7 +279,7 @@ namespace ApiView
 
             foreach (var namedTypeSymbol in SymbolOrderProvider.OrderTypes(namedType.GetTypeMembers()))
             {
-                BuildType(builder, namedTypeSymbol, navigationBuilder);
+                BuildType(builder, namedTypeSymbol, navigationBuilder, inHiddenScope || isHidden);
             }
 
             foreach (var member in SymbolOrderProvider.OrderMembers(namedType.GetMembers()))
@@ -272,10 +296,16 @@ namespace ApiView
                         continue;
                     }
                 }
-                BuildMember(builder, member);
+
+                BuildMember(builder, member, inHiddenScope);
             }
 
             CloseBrace(builder);
+
+            if (isHidden && !inHiddenScope)
+            {
+                builder.Append(null, CodeFileTokenKind.HiddenApiRangeEnd);
+            }
         }
 
         private void BuildDocumentation(CodeFileTokensBuilder builder, ISymbol symbol)
@@ -363,8 +393,15 @@ namespace ApiView
             builder.NewLine();
         }
 
-        private void BuildMember(CodeFileTokensBuilder builder, ISymbol member)
+        private void BuildMember(CodeFileTokensBuilder builder, ISymbol member, bool inHiddenScope)
         {
+            bool isHidden = IsHiddenFromIntellisense(member);
+
+            if (isHidden && !inHiddenScope)
+            {
+                builder.Append(null, CodeFileTokenKind.HiddenApiRangeStart);
+            }
+
             BuildDocumentation(builder, member);
             BuildAttributes(builder, member.GetAttributes());
 
@@ -381,6 +418,10 @@ namespace ApiView
             }
 
             builder.NewLine();
+            if (isHidden && !inHiddenScope)
+            {
+                builder.Append(null, CodeFileTokenKind.HiddenApiRangeEnd);
+            }
         }
 
         private void BuildAttributes(CodeFileTokensBuilder builder, ImmutableArray<AttributeData> attributes)
@@ -453,11 +494,16 @@ namespace ApiView
                 case "IteratorStateMachineAttribute":
                 case "DefaultMemberAttribute":
                 case "AsyncIteratorStateMachineAttribute":
+                case "EditorBrowsableAttribute":
                     return true;
                 default:
                     return false;
             }
         }
+
+        private bool IsHiddenFromIntellisense(ISymbol member) =>
+            member.GetAttributes().Any(d => d.AttributeClass?.Name == "EditorBrowsableAttribute"
+                                            && (EditorBrowsableState) d.ConstructorArguments[0].Value == EditorBrowsableState.Never);
 
         private void BuildTypedConstant(CodeFileTokensBuilder builder, TypedConstant typedConstant)
         {

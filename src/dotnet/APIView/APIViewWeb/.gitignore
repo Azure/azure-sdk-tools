@@ -1,5 +1,12 @@
-site.js
-site.js.map
+#css output
+wwwroot/*.css
+wwwroot/*.css.map
 
-site.css
-site.css.map
+# Typescript output
+wwwroot/*.js
+wwwroot/*.js.map
+
+# PlayWright Tests Results
+Client/test-results/
+Client/playwright-report/
+Client/playwright/.cache/

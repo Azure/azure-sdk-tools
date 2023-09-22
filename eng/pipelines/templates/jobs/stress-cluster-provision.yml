@@ -1,0 +1,28 @@
+parameters:
+  - name: Environment
+    type: string
+  - name: WhatIf
+    type: boolean
+    default: true
+
+jobs:
+  - job:
+    variables:
+      - template: /eng/pipelines/templates/variables/globals.yml
+    ${{ if eq(parameters.WhatIf, true) }}:
+      displayName: 'Validate Provision'
+    ${{ else }}:
+      displayName: 'Provision'
+    pool:
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
+    steps:
+      - pwsh: |
+          $subscriptionConfiguration = @'
+            $(sub-config-azure-cloud-test-resources)
+          '@ | ConvertFrom-Json -AsHashtable;
+
+          tools/stress-cluster/cluster/provision.ps1 `
+            -WhatIf:$${{ parameters.WhatIf }} `
+            -Environment ${{ parameters.Environment }} `
+            @subscriptionConfiguration

@@ -24,8 +24,8 @@ Core of the APIView tool is the web app developed using ASP.Net and TypeScript. 
 | C                             | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Languages/CLanguageService.cs                  |
 | C++                           | https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/Languages/CppLanguageService.cs                |
 | Java                          | https://github.com/Azure/azure-sdk-tools/tree/main/src/java/apiview-java-processor                                              |
-| JS/TS                         | https://github.com/Azure/azure-sdk-tools/tree/main/src/ts/ts-genapi                                                             |
-| Python                        | https://github.com/Azure/azure-sdk-tools/tree/main/packages/python-packages/api-stub-generator                                  |
+| JS/TS                         | https://github.com/Azure/azure-sdk-tools/tree/main/tools/apiview/parsers/js-api-parser                                          |
+| Python                        | https://github.com/Azure/azure-sdk-tools/tree/main/packages/python-packages/apiview-stub-generator                              |
 | Go                            | https://github.com/Azure/azure-sdk-tools/tree/main/src/go                                                                       |
 | Swift                         | https://github.com/Azure/azure-sdk-tools/tree/main/src/swift                                                                    |
 
@@ -59,7 +59,7 @@ Create following Azure resources in your Azure subscription.
 #### Azure storage account
 
  - Create a storage account in Azure. [Azure storage account](https://docs.microsoft.com/en-us/azure/storage/common/storage-account-create?tabs=azure-portal)
- - Create two blob storage containers with names as follows within the storage account created in previous step: `originals` and `codefiles`
+ - Create three blob storage containers with names as follows within the storage account created in previous step: `originals`, `codefiles`, and `usagesamples`
 
 #### Azure Cosmos DB
  - Create a Cosmos DB account in Azure and then create a database with name `APIView` in this account. Once database is created successfully then create three containers in `APIView` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
@@ -69,6 +69,9 @@ Create following Azure resources in your Azure subscription.
    | Reviews             | /id                |
    | Comments            | /ReviewId          |
    | PullRequests        | /PullRequestNumber |
+   | UsageSamples        | /ReviewId          |
+   | UserPreference      | /UserName          |
+   | Profiles            | /id                |
    
 
 
@@ -180,10 +183,10 @@ Happy coding!!!!
  - Start Visual Studio debug run and create a new review as per the instructions in [APIView README.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md)
 
  #### JS/TS
-  - Got to <azure-sdk-tools repo root>/src/ts/ts-genapi
+  - Got to <azure-sdk-tools repo root>/tools/apiview/parsers/js-api-parser           
   - run `npm install`
   - run `npm run-script build`
-  - Copy compiled `index.js` to following location within local code repo <azure-sdk-tools root directory>/artifacts/bin/APIVIewWeb/Debug/<.NetVersion>/
+  - Copy compiled `export.js` to following location within local code repo <azure-sdk-tools root directory>/artifacts/bin/APIVIewWeb/Debug/<.NetVersion>/
   - Start Visual Studio debug run and create a new review as per the instructions in [APIView README.md](https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md)
 
 

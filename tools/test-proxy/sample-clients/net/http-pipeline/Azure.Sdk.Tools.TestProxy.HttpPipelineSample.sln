@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31025.194
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.TestProxy.HttpPipelineSample", "Azure.Sdk.Tools.TestProxy.HttpPipelineSample.csproj", "{9DE41BED-3F9D-4FA2-ADF6-5879E35735A9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.Sdk.Tools.TestProxy.HttpPipelineSample", "Azure.Sdk.Tools.TestProxy.HttpPipelineSample\Azure.Sdk.Tools.TestProxy.HttpPipelineSample.csproj", "{9DE41BED-3F9D-4FA2-ADF6-5879E35735A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.TestProxy.HttpPipelineTestsExample", "Azure.Sdk.Tools.TestProxy.HttpPipelineTestsExample\Azure.Sdk.Tools.TestProxy.HttpPipelineTestsExample.csproj", "{086648C6-E5B6-4240-8227-FAEDBD09ED1D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{9DE41BED-3F9D-4FA2-ADF6-5879E35735A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9DE41BED-3F9D-4FA2-ADF6-5879E35735A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9DE41BED-3F9D-4FA2-ADF6-5879E35735A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{086648C6-E5B6-4240-8227-FAEDBD09ED1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{086648C6-E5B6-4240-8227-FAEDBD09ED1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{086648C6-E5B6-4240-8227-FAEDBD09ED1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{086648C6-E5B6-4240-8227-FAEDBD09ED1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

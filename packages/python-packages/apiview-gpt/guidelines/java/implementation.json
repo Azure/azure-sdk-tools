@@ -1,0 +1,102 @@
+[
+  {
+    "id": "java_implementation.html#java-namespaces-implementation",
+    "category": "API Implementation",
+    "text": "DO NOT allow implementation code (that is, code that doesn't form part of the public API) to be mistaken as public API. There are two valid arrangements for implementation code, which in order of preference are the following:\nImplementation classes can be made package-private and placed within the same package as the consuming class.\nImplementation classes can be placed within a subpackage named implementation.\n\nCheckStyle checks ensure that classes within an implementation package aren't exposed through public API, but it is better that the API not be public in the first place, so preferring to have package-private is the better approach where practicable."
+  },
+  {
+    "id": "java_implementation.html#java-async-blocking",
+    "category": "Async Service Client",
+    "text": "DO NOT include blocking calls inside async client library code. Use [BlockHound] to detect blocking calls in async APIs.\n\nInclude the following annotations on the service client class.  For example, this code sample shows a sample class demonstrating the use of these two annotations:\n\n```java\n@ServiceClient(builder = ConfigurationAsyncClientBuilder.class, isAsync = true, service = ConfigurationService.class)\npublic final class ConfigurationAsyncClient {\n\n    @ServiceMethod(returns = ReturnType.COLLECTION)\n    public Mono&lt;Response&lt;ConfigurationSetting&gt;&gt; addSetting(String key, String value) {\n        ...\n    }\n}\n\n```\n\n| Annotation | Location | Description |\n|:-----------|:---------|:------------|\n| @ServiceClient | Service Client | Specifies the builder responsible for instantiating the service client, whether the API is asynchronous, and a reference back to the service interface (the interface annotated with @ServiceInterface). |\n| @ServiceMethod | Service Method | Placed on all methods that do network operations, regardless of whether it is a client class or not. |\n\nThe @ServiceClientBuilder annotation should be placed on any class that is responsible for instantiating service clients (that is, instantiating classes annotated with @ServiceClient). For example:\n\n```java\n@ServiceClientBuilder(serviceClients = {ConfigurationClient.class, ConfigurationAsyncClient.class})\npublic final class ConfigurationClientBuilder { ... }\n\n```\n\nThis builder states that it can build instances of ConfigurationClient and ConfigurationAsyncClient.\n\nThere are two annotations of note that should be applied on model classes, when applicable:\nThe @Fluent annotation is applied to all model classes that are expected to provide a fluent API to end users.\nThe @Immutable annotation is applied to all immutable classes.\n\nClient libraries must make use of the robust logging mechanisms in azure core, so that the consumers can adequately diagnose issues with method calls and quickly determine whether the issue is in the consumer code, client library code, or service."
+  },
+  {
+    "id": "java_implementation.html#java-logging-clientlogger",
+    "category": "Logging",
+    "text": "DO use the ClientLogger API provided within Azure Core as the sole logging API throughout all client libraries. Internally, ClientLogger wraps [SLF4J], so all external configuration that is offered through SLF4J is valid.  We encourage you to expose the SLF4J configuration to end users. For more information, see the [SLF4J user manual]."
+  },
+  {
+    "id": "java_implementation.html#java-logging-new-clientlogger",
+    "category": "Logging",
+    "text": "DO create a new instance of a ClientLogger per instance of all relevant classes, except in situations where performance is critical, the instances are short-lived (and therefore the cost of unique loggers is excessive), or in static-only classes (where there is no instantiation of the class allowed). In these cases, it is acceptable to have a shared (or static) logger instance. For example, the code below will create a ClientLogger instance for the ConfigurationAsyncClient:\n\n```java\npublic final class ConfigurationAsyncClient {\n    private final ClientLogger logger = new ClientLogger(ConfigurationAsyncClient.class);\n\n    // example async call to a service that uses the Project Reactor APIs to log request, success, and error\n    // information out to the service logger instance\n    public Mono&lt;Response&lt;ConfigurationSetting&gt;&gt; setSetting(ConfigurationSetting setting) {\n        return service.setKey(serviceEndpoint, setting.key(), setting.label(), setting, getETagValue(setting.etag()), null)\n            .doOnRequest(ignoredValue -&gt; logger.info(\"Setting ConfigurationSetting - {}\", setting))\n            .doOnSuccess(response -&gt; logger.info(\"Set ConfigurationSetting - {}\", response.value()))\n            .doOnError(error -&gt; logger.warning(\"Failed to set ConfigurationSetting - {}\", setting, error));\n    }\n}\n\n```\n\nNote that static loggers are shared among all client library instances running in a JVM instance. Static loggers should be used carefully and in short-lived cases only."
+  },
+  {
+    "id": "java_implementation.html#java-logging-levels",
+    "category": "Logging",
+    "text": "DO use one of the following log levels when emitting logs: Verbose (details), Informational (things happened), Warning (might be a problem or not), and Error."
+  },
+  {
+    "id": "java_implementation.html#java-logging-errors",
+    "category": "Logging",
+    "text": "DO use the Error logging level for failures that the application is unlikely to recover from (out of memory, etc.)."
+  },
+  {
+    "id": "java_implementation.html#java-logging-warn",
+    "category": "Logging",
+    "text": "DO use the Warning logging level when a function fails to perform its intended task. This generally means that the function will raise an exception.  Do not include occurrences of self-healing events (for example, when a request will be automatically retried)."
+  },
+  {
+    "id": "java_implementation.html#java-logging-slowlinks",
+    "category": "Logging",
+    "text": "YOU MAY log the request and response (see below) at the Warning logging level when a request/response cycle (to the start of the response body) exceeds a service-defined threshold.  The threshold should be chosen to minimize false-positives and identify service issues."
+  },
+  {
+    "id": "java_implementation.html#java-logging-info",
+    "category": "Logging",
+    "text": "DO use the Informational logging level when a function operates normally."
+  },
+  {
+    "id": "java_implementation.html#java-logging-verbose",
+    "category": "Logging",
+    "text": "DO use the Verbose logging level for detailed troubleshooting scenarios. This is primarily intended for developers or system administrators to diagnose specific failures."
+  },
+  {
+    "id": "java_implementation.html#java-logging-no-sensitive-info",
+    "category": "Logging",
+    "text": "DO only log headers and query parameters that are in a service-provided \"allow-list\" of approved headers and query parameters.  All other headers and query parameters must have their values redacted."
+  },
+  {
+    "id": "java_implementation.html#java-logging-requests",
+    "category": "Logging",
+    "text": "DO log request line and headers as an Informational message. The log should include the following information:\nThe HTTP method.\nThe URL.\nThe query parameters (redacted if not in the allow-list).\nThe request headers (redacted if not in the allow-list).\nAn SDK provided request ID for correlation purposes.\nThe number of times this request has been attempted.\n\nThis happens within azure-core by default, but users can configure this through the builder httpLogOptions configuration setting."
+  },
+  {
+    "id": "java_implementation.html#java-logging-responses",
+    "category": "Logging",
+    "text": "DO log response line and headers as an Informational message.  The format of the log should be the following:\nThe SDK provided request ID (see above).\nThe status code.\nAny message provided with the status code.\nThe response headers (redacted if not in the allow-list).\nThe time period between the first attempt of the request and the first byte of the body."
+  },
+  {
+    "id": "java_implementation.html#java-logging-cancellations",
+    "category": "Logging",
+    "text": "DO log an Informational message if a service call is cancelled.  The log should include:\nThe SDK provided request ID (see above).\nThe reason for the cancellation (if available)."
+  },
+  {
+    "id": "java_implementation.html#java-logging-exceptions",
+    "category": "Logging",
+    "text": "DO log exceptions thrown as a Warning level message. If the log level set to Verbose, append stack trace information to the message."
+  },
+  {
+    "id": "java_implementation.html#java-logging-log-and-throw",
+    "category": "Logging",
+    "text": "DO throw all exceptions created within the client library code through one of the logger APIs - ClientLogger.logThrowableAsError(), ClientLogger.logThrowableAsWarning(), ClientLogger.logExceptionAsError() or ClientLogger.logExceptionAsWarning().\n\nFor example:\n\n```java\n// NO!!!!\nif (priority != null &amp;&amp; priority &lt; 0) {\n    throw new IllegalArgumentException(\"'priority' cannot be a negative value. Please specify a zero or positive long value.\");\n}\n\n// Good\n\n// Log any Throwable as error and throw the exception\nif (!file.exists()) {\n    throw logger.logThrowableAsError(new IOException(\"File does not exist \" + file.getName()));\n}\n\n// Log any Throwable as warning and throw the exception\nif (!file.exists()) {\n    throw logger.logThrowableAsWarning(new IOException(\"File does not exist \" + file.getName()));\n}\n\n// Log a RuntimeException as error and throw the exception\nif (priority != null &amp;&amp; priority &lt; 0) {\n    throw logger.logExceptionAsError(new IllegalArgumentException(\"'priority' cannot be a negative value. Please specify a zero or positive long value.\"));\n}\n\n// Log a RuntimeException as warning and throw the exception\nif (numberOfAttempts &lt; retryPolicy.getMaxRetryCount()) {\n    throw logger.logExceptionAsWarning(new RetryableException(\"A transient error occurred. Another attempt will be made after \" + retryPolicy.getDelay()));\n}\n\n```\n\nDistributed tracing mechanisms allow the consumer to trace their code from frontend to backend.  Distributed tracing libraries creates spans - units of unique work.  Each span is in a parent-child relationship.  As you go deeper into the hierarchy of code, you create more spans.  These spans can then be exported to a suitable receiver as needed.  To keep track of the spans, a distributed tracing context (called a context in the remainder of this section) is passed into each successive layer.  For more information on this topic, visit the [OpenTelemetry] topic on tracing.\n\nThe Azure core library provides a service provider interface (SPI) for adding pipeline policies at runtime. The pipeline policy is used to enable tracing on consumer deployments. Pluggable pipeline policies must be supported in all client libraries to enable distributed tracing. Additional metadata can be specified on a per-service-method basis to provide a richer tracing experience for consumers."
+  },
+  {
+    "id": "java_implementation.html#java-tracing-pluggable",
+    "category": "Distributed tracing",
+    "text": "DO support pluggable pipeline policies as part of the HTTP pipeline instantiation. This enables developers to include a tracing plugin and have its pipeline policy automatically injected into all client libraries that they are using.\n\nReview the code sample below, in which a service client builder creates an HttpPipeline from its set of policies.  At the same time, the builder allows plugins to add 'before retry' and 'after retry' policies with the lines HttpPolicyProviders.addBeforeRetryPolicies(policies) and HttpPolicyProviders.addAfterRetryPolicies(policies):\n\n```java\npublic ConfigurationAsyncClient build() {\n    ...\n\n    // Closest to API goes first, closest to wire goes last.\n    final List&lt;HttpPipelinePolicy&gt; policies = new ArrayList&lt;&gt;();\n    policies.add(new UserAgentPolicy(AzureConfiguration.NAME, AzureConfiguration.VERSION, buildConfiguration));\n    policies.add(new RequestIdPolicy());\n    policies.add(new AddHeadersPolicy(headers));\n    policies.add(new AddDatePolicy());\n    policies.add(new ConfigurationCredentialsPolicy(buildCredentials));\n    HttpPolicyProviders.addBeforeRetryPolicies(policies);\n    policies.add(retryPolicy);\n    policies.addAll(this.policies);\n    HttpPolicyProviders.addAfterRetryPolicies(policies);\n    policies.add(new HttpLoggingPolicy(httpLogDetailLevel));\n\n    ...\n}\n\n```"
+  },
+  {
+    "id": "java_implementation.html#java-tracing-tracerproxy",
+    "category": "Distributed tracing",
+    "text": "{%include requirement/MUST id=\"java-tracing-tracerproxy\" %} use the Azure core TracerProxy API to set additional metadata that should be supplied along with the tracing span. In particular, use the setAttribute(String key, String value, Context context) method to set a new key/value pair on the tracing context."
+  },
+  {
+    "id": "java_implementation.html#java-tracing-tracing-context",
+    "category": "Distributed tracing",
+    "text": "{%include requirement/MUST id=\"java-tracing-tracing-context\" %} pass all Context objects received as service method arguments through to the generated service interface methods in all cases."
+  },
+  {
+    "id": "java_implementation.html#java-testing-params",
+    "category": "Testing",
+    "text": "DO parameterize all applicable unit tests to make use of all available HTTP clients and service versions. Parameterized runs of all tests must occur as part of live tests. Shorter runs, consisting of just Netty and the latest service version, can be run whenever PR validation occurs.\n\nTODO refer to cases where this is done in Java today\n\n<!-- Project Links -->\n<!-- Example Links -->\n<!-- Intra-document references -->\n"
+  }
+]

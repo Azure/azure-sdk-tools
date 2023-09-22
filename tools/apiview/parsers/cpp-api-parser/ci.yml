@@ -1,0 +1,125 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/apiview/parsers/cpp-api-parser
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/apiview/parsers/cpp-api-parser
+
+variables:
+  ArtifactName: 'apiview'
+  VcpkgRelease: '2023.06.20'
+
+stages:
+  - stage: 'Build'
+    jobs:
+      - job: 'Build'
+        timeoutInMinutes: 300
+        pool:
+          name: azsdk-pool-mms-win-2022-general
+          vmImage: windows-2022
+
+        steps:
+          - pwsh: |
+              Write-Host "git clone https://github.com/Microsoft/vcpkg"
+              git clone https://github.com/Microsoft/vcpkg
+              if ($LASTEXITCODE -ne 0) {
+                Write-Error "Unable to check out vcpkg fork repo"
+                exit $LASTEXITCODE
+              }
+              cd ./vcpkg
+              git fetch --tags
+              git checkout $(VcpkgRelease)
+            displayName: Clone vcpkg 
+            workingDirectory: '$(Build.SourcesDirectory)'
+          - pwsh: |
+                ./vcpkg/bootstrap-vcpkg
+            displayName: Bootstrap vcpkg.
+            condition: succeeded()
+            workingDirectory: '$(Build.SourcesDirectory)'
+          - pwsh: |
+              $vcpkgRoot = Resolve-Path "./vcpkg"
+              Write-Host "Set VCPKG_ROOT: $vcpkgRoot"
+              Write-Host "##vso[task.setvariable variable=VCPKG_ROOT]$vcpkgRoot"
+            displayName: Set VCPKG_ROOT
+            condition: succeeded()
+          - pwsh: mkdir build
+            displayName: Create cmake build directory.
+            workingDirectory: '$(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser'
+            condition: succeeded()
+          - task: PowerShell@2
+            inputs:
+              pwsh: true
+              targetType: filePath
+              filePath: eng/scripts/Set-VcpkgWriteModeCache.ps1
+              arguments: -StorageAccountKey '$(cpp-vcpkg-cache-storage-key)'
+            displayName: Set Vcpkg Write-mode Cache
+          - pwsh: |
+              cmake.exe -G "Visual Studio 17 2022" -DCMAKE_CXX_STANDARD:STRING="20" -DCMAKE_TOOLCHAIN_FILE:STRING=${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -DVCPKG_BUILD_TYPE:STRING="release" -DVCPKG_OVERLAY_TRIPLETS:STRING="../vcpkg-triplets" -DMSVC_RUNTIME_LIBRARY:STRING="MultiThreadedDebug" -DVCPKG_TARGET_TRIPLET:STRING="x64-windows-static-release" ..
+            displayName: Cmake Generate.
+            workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
+            condition: succeeded()
+            env:
+              VCPKG_BINARY_SOURCES: $(VCPKG_BINARY_SOURCES_SECRET)
+          - pwsh: |
+              cmake.exe --build . --parallel 8 --target ParseAzureSdkCpp --config RelWithDebInfo
+            workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
+            displayName: Build ApiView Parser.
+          - pwsh: |
+              cmake.exe --build . --parallel 8 --target parseTests --config RelWithDebInfo
+            workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build
+            displayName: Build ApiView Tests.
+          - pwsh: |
+              RelWithDebInfo/parseTests
+            workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/parseTests
+            displayName: Run ApiView Tests.
+          - pwsh: Get-ChildItem -Recurse
+            workingDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/ParseAzureSdkCpp
+          - task: PublishPipelineArtifact@1
+            inputs:
+              artifactName: release-artifacts
+              path: $(Build.SourcesDirectory)/tools/apiview/parsers/cpp-api-parser/build/ParseAzureSdkCpp
+
+
+  - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
+    - stage: 'Release'
+      dependsOn: Build
+      jobs:
+        - deployment: Release
+          # Use GitHub environment as it's used for other C++ releases
+          environment: github
+          pool:
+            name: azsdk-pool-mms-win-2022-general
+            vmImage: windows-2022
+          
+          strategy: 
+            runOnce: 
+              deploy:
+                steps: 
+                  - checkout: none
+                  - download: current
+                    artifact: release-artifacts
+                  - task: UniversalPackages@0
+                    displayName: Publish ApiView Parser.
+                    inputs:
+                      command: publish
+                      publishDirectory: $(Pipeline.Workspace)/release-artifacts
+                      vstsFeedPublish: 'internal/AzureSDKForCpp'
+                      vstsFeedPackagePublish: 'parseazuresdkcpp'
+                      versionOption: minor
+                      packagePublishDescription: 'Azure C++ SDK API View Parser.'

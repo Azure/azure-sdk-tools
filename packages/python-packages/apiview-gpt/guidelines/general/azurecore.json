@@ -1,0 +1,287 @@
+[
+  {
+    "id": "general_azurecore.html#azurecore-http-telemetry-useragent",
+    "category": "Telemetry policy",
+    "text": "DO send telemetry information in the User-Agent header (https://tools.ietf.org/html/rfc7231#section-5.5.3) "
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-telemetry-useragent-stacking",
+    "category": "Telemetry policy",
+    "text": "DO extend the user agent to list all client wrapping dependencies, sorting them from outermost to innermost. For example, Azure Storage Datalake depends on Azure Storage Blobs client library. It uses Azure Blobs client internally to perform operations, this is a client wrapping dependency.\n\nIn the example above the user agent will display them in this order Azure Datalake -> Azure Blobs -> Azure Core"
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-telemetry-useragent-stacking-core",
+    "category": "Telemetry policy",
+    "text": "YOU SHOULD include Azure Core library information in the user agent.\n\n<code>[&lt;application_id&gt; ]{azsdk-&lt;sdk_language&gt;-&lt;package_name&gt;/&lt;package_version&gt; }+&lt;platform_info&gt;\n</code>\n<application_id>: optional application-specific string. May contain a slash, but must not contain a space. The string is supplied by the user of the client library, e.g. \"AzCopy/10.0.4-Preview\"\n<sdk_language>: SDK's language name (all lowercase): \"net\", \"python\", \"java\", or \"js\"\n<package_name>: client library package name as it appears to the developer, replacing slashes with dashes and removing the Azure indicator.  For example, \"Security.KeyVault\" (.NET), \"security.keyvault\" (Java), \"keyvault\" (JavaScript & Python)\n<package_version>: the version of the package. Note: this is not the version of the service\n<platform_info>: information about the currently executing language runtime and OS, e.g. \"(NODE-VERSION v4.5.0; Windows_NT 10.0.14393)\"\n\nFor example, if we re-wrote AzCopy in each language using the Azure Datalake client library (which depends on Azure Blob client library), we may end up with the following user-agent strings:\n(.NET) AzCopy/10.0.4-Preview azsdk-net-Storage.DataLake/12.0.0  azsdk-net-Storage.Blobs/12.0.0 azsdk-net-Core/11.0.0 (.NET Standard 2.0; Windows_NT 10.0.14393)\n(JavaScript) AzCopy/10.0.4-Preview azsdk-js-storage-datalake/12.0.0 azsdk-js-storage-blob/12.0.0 azsdk-js-core-client/1.0.0 azsdk-js-core-rest-pipeline/11.0.0 (Node 18.12.1; Ubuntu; Linux x86_64; rv:34.0)\n(Java) AzCopy/10.0.4-Preview azsdk-java-storage-datalake/12.0.0 azsdk-java-storage-blobs/12.0.0 azsdk-java-core/11.0.0 (Java/1.8.0_45; Macintosh; Intel Mac OS X 10_10; rv:33.0)\n(Python) AzCopy/10.0.4-Preview azsdk-python-storage-datalake/12.0.0 azsdk-python-storage-blob/12.0.0 Python/3.7.3 (Ubuntu; Linux x86_64; rv:34.0)"
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-telemetry-appid",
+    "category": "User Agent Format",
+    "text": "DO allow the consumer of the library to set the application ID.  This allows the consumer to obtain cross-service telemetry for their app.  The application ID should be settable in the relevant ClientOptions object."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-telemetry-appid-length",
+    "category": "User Agent Format",
+    "text": "DO enforce that the application ID is no more than 24 characters in length.  Shorter application IDs allows service teams to include diagnostic information in the \"platform information\" section of the user agent, while still allowing the consumer to obtain telemetry information for their own application."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-telemetry-x-ms-useragent",
+    "category": "User Agent Format",
+    "text": "YOU SHOULD send telemetry information that is normally sent in the User-Agent header in the X-MS-UserAgent header when the platform does not support changing the User-Agent header.  Note that services will need to configure log gathering to capture the X-MS-UserAgent header in such a way that it can be queried through normal analytics systems."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-telemetry-dynamic",
+    "category": "User Agent Format",
+    "text": "YOU SHOULD send additional (dynamic) telemetry information as a semi-colon separated set of key-value types in the X-MS-AZSDK-Telemetry header.  For example:\n\n```http\nX-MS-AZSDK-Telemetry: class=BlobClient;method=DownloadFile;blobType=Block\n\n```\n\nThe content of the header is a semi-colon key=value list.  The following keys have specific meaning:\nclass is the name of the type within the client library that the consumer called to trigger the network operation.\nmethod is the name of the method within the client library type that the consumer called to trigger the network operation.\n\nAny other keys that are used should be common across all client libraries for a specific service.  DO NOT include personally identifiable information (even encoded) in this header.  Services need to configure log gathering to capture the X-MS-SDK-Telemetry header in such a way that it can be queried through normal analytics systems.\n\nTODO Add Unique Request ID Policy Requirements\n\nThere are many reasons why failure can occur when a client application attempts to send a network request to a service. Some examples are timeout, network infrastructure failures, service rejecting the request due to throttle/busy, service instance terminating due to service scale-down, service instance going down to be replaced with another version, service crashing due to an unhandled exception, etc. By offering a built-in retry mechanism (with a default configuration the consumer can override), our SDKs and the consumer's application become resilient to these kinds of failures. Note that some services charge real money for each try and so consumers should be able to disable retries entirely if they prefer to save money over resiliency.\n\nFor more information, see Transient fault handling (https://docs.microsoft.com/azure/architecture/best-practices/transient-faults) \n\nThe HTTP Pipeline provides this functionality."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-options",
+    "category": "Retry policy",
+    "text": "DO offer the following configuration settings:\nRetry policy type (exponential or fixed)\nMaximum number of retries\nDelay between retries (timespan/duration; this is the delay for fixed policy, the delay is increased exponentially by this amount for the exponential policy)\nMaximum retry delay (timespan/duration)\nList of HTTP status codes that would cause a retry (default is \"all service errors that are retryable\")"
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-mechanisms",
+    "category": "Retry policy",
+    "text": "YOU MAY offer additional retry mechanisms if supported by the service.  For example, the Azure Storage Blob service supports retrying read operations against a secondary datacenter, or recommends the use of a per-try timeout for resilience."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-reset-data-stream",
+    "category": "Retry policy",
+    "text": "DO reset (or seek back to position 0) any request data stream before retrying a request"
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-honor-cancellation",
+    "category": "Retry policy",
+    "text": "DO honor any cancellation mechanism passed in to the caller which can terminate the request before retries have been attempted."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-update-queryparams",
+    "category": "Retry policy",
+    "text": "DO update any query parameter or request header that gets sent to the service telling it how much time the service has to process the individual request attempt."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-hardware-failure",
+    "category": "Retry policy",
+    "text": "DO retry in the case of a hardware network failure as it may self-correct."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-service-not-found",
+    "category": "Retry policy",
+    "text": "DO retry in the case of a \"service not found\" error. The service may be coming back online or a load balancer may be reconfiguring itself."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-throttling",
+    "category": "Retry policy",
+    "text": "DO retry if the service successfully responds indicating that it is throttling requests (for example, with an \"x-ms-delay-until\" header or similar metadata)."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-after",
+    "category": "Retry policy",
+    "text": "DO NOT retry if the service responds with a 400-level response code unless a retry-after header is also returned."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-requestid",
+    "category": "Retry policy",
+    "text": "DO NOT change any client-side generated request-id when retrying the request. Th request ID represents the logical operation and should be the same across all physical retries of this operation.  When looking at server logs, multiple entries with the same client request ID show each retry"
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-defaults",
+    "category": "Retry policy",
+    "text": "YOU SHOULD implement a default retry policy of 3 retries with a 0.8s exponential (plus jitter) delay between attempts with a maximum delay of 60s between attempts."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-defaults-overrides",
+    "category": "Retry policy",
+    "text": "DO allow the customer to override the default retry policy delay and timeouts."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-retry-defaults-options",
+    "category": "Retry policy",
+    "text": "YOU SHOULD allow the customer to cancel the operation either via explicit cancellation or by setting an overall maximum operation time.\n\nServices across Azure use a variety of different authentication schemes to authenticate clients. Conceptually there are two entities responsible for authenticating service client requests, a credential and an authentication policy.  Credentials provide confidential authentication data needed to authenticate requests.  Authentication policies use the data provided by a credential to authenticate requests to the service. It is essential that credential data can be updated as needed across the lifetime of a client, and authentication policies must always use the most current credential data."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-auth-bearer-token",
+    "category": "Authentication policy",
+    "text": "DO implement Bearer authorization policy (which accepts a token credential and\nscope).\n\nThe response downloader is required for most (but not all) operations to change whatever is returned by the service into a model that the consumer code can use.  An example of a method that does not deserialize the response payload is a method that downloads a raw blob within the Blob Storage client library.  In this case, the raw data bytes are required.  For most operations, the body must be downloaded in totality before deserialization. This pipeline policy must implement the following requirements:"
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-response-body",
+    "category": "Response downloader policy",
+    "text": "DO download the entire response body and pass the complete downloaded body up to the operation method for methods that deserialize the response payload.  If a network connection fails while reading the body, the retry policy must automatically retry the operation.\n\nDistributed tracing allows the consumer to trace their code from frontend to backend.  The distributed tracing library creates spans (units of unique work) to facilitate tracing.  Each span is in a parent-child relationship.  As you go deeper into the hierarchy of code, you create more spans.  These spans can then be exported to a suitable receiver as needed.   To keep track of the spans, a distributed tracing context (called a context within the rest of this section) is passed into each successive layer.  For more information on this topic, visit the OpenTelemetry (https://opentelemetry.io/) topic on tracing.\n\nThe Distributed Tracing policy is responsible for:\nCreating a SPAN per REST call.\nPassing the context to the backend service.\n\nThere is also a distributed tracing topic for implementing a client library."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-tracing-opentelemetry",
+    "category": "Distributed tracing policy",
+    "text": "DO support OpenTelemetry (https://opentelemetry.io/) for distributed tracing."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-tracing-accept-context",
+    "category": "Distributed tracing policy",
+    "text": "DO accept a context from calling code to establish a parent span."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-tracing-pass-context",
+    "category": "Distributed tracing policy",
+    "text": "DO pass the context to the backend service through the appropriate headers (traceparent and tracestate per W3C Trace-Context (https://www.w3.org/TR/trace-context/) standard) to support Azure Monitor (https://azure.microsoft.com/services/monitor/) "
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-tracing-create-span",
+    "category": "Distributed tracing policy",
+    "text": "DO create a new span (which must be a child of the per-method span) for each REST call that the client library makes."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-tracing-opentelemetry-conventions",
+    "category": "Distributed tracing policy",
+    "text": "DO populate span properties according to [Tracing Conventions].\n\nMany logging requirements within Azure Core mirror the same requirements for logging within the client library."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-logging-handlers",
+    "category": "Logging policy",
+    "text": "DO allow the client library to set the log handler and log settings."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-logging-levels",
+    "category": "Logging policy",
+    "text": "DO use one of the following log levels when emitting logs: Verbose (details), Informational (things happened), Warning (might be a problem or not), and Error."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-logging-error",
+    "category": "Logging policy",
+    "text": "DO use the Error logging level for failures that the application is unlikely to recover from (out of memory, etc.)."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-logging-warning",
+    "category": "Logging policy",
+    "text": "DO use the Warning logging level when a function fails to perform its intended task. This generally means that the function will raise an exception. Don't include occurrences of self-healing events (for example, when a request will be automatically retried)."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-logging-info",
+    "category": "Logging policy",
+    "text": "DO use the Informational logging level when a function operates normally."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-logging-verbose",
+    "category": "Logging policy",
+    "text": "DO use the Verbose logging level for detailed troubleshooting scenarios. This is primarily intended for developers or system administrators to diagnose specific failures."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-logging-sensitive-info",
+    "category": "Logging policy",
+    "text": "DO NOT send sensitive information in log levels other than Verbose. For example, remove account keys when logging headers."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-logging-request-line",
+    "category": "Logging policy",
+    "text": "DO log request line, response line, and headers as an Informational message."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-logging-cancellation",
+    "category": "Logging policy",
+    "text": "DO log an Informational message if a service call is cancelled."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-logging-exceptions",
+    "category": "Logging policy",
+    "text": "DO log exceptions thrown as a Warning level message. If the log level set to Verbose, append stack trace information to the message."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-logging-configuration",
+    "category": "Logging policy",
+    "text": "DO include information about relevant configuration when the HTTP pipeline throws an error if there is a relevant configuration setting that would alleviate the problem.  Not all errors can be fixed with a configuration change.\n\nApps that integrate the Azure SDK need to operate in common enterprises.  It is a common practice to implement HTTP proxies for control and caching purposes.  Proxies are generally configured at the machine level and, as such, are part of the environment.  However, there are reasons to adjust proxies (for example, testing may use a proxy to rewrite URLs to a test environment instead of a production environment).  The Azure SDK and all client libraries should operate in those environments.\n\nThere are a number of common methods for proxy configuration.  However, they fall into four groups:\nInline, no authentication (filtering only)\nInline, with authentication\nOut-of-band, no authentication\nOut of band, with authentication\n\nFor inline/no-auth proxy, nothing needs to be done.  The Azure SDK will work without any proxy configuration.  For inline/auth proxy, the connection may receive a 407 Proxy Authentication Required status code.  This will include a scheme, realm, and potentially other information (such as a nonce for digest authentication).  The client library must resubmit the request with a Proxy-Authorization header that provides authentication information suitably encoded for the scheme.  The most common schemes are Basic, Digest, and NTLM.\n\nFor an out-of-band/no-auth proxy, the client will send the entire request URL to the proxy instead of the service.  For example, if the client is communicating to https://foo.blob.storage.azure.net/path/to/blob, it will connect to the HTTPS_PROXY and send a GET https://foo.blob.storage.azure.net/path/to/blob HTTP/1.1.   For an out-of-band/auth proxy, the client will send the entire request URL just as in the out-of-band/no-auth proxy version, but it may send back a 407 Proxy Authentication Required status code (as with the inline/auth proxy).\n\nWebSockets can normally be tunneled through an HTTP proxy, in which case the proxy authentication happens during the CONNECT call.  This is the preferred mechanism for tunneling non-HTTP traffic to the Azure service.  However, there are other types of proxies.  The most notable is the SOCKS proxy used for non-HTTP traffic (such as AMQP or MQTT).  We make no recommendation (for or against) support of SOCKS.  It is explicitly not a requirement to support SOCKS proxy within the client library.\n\nMost proxy configuration will be done by adopting the HTTP pipeline that is common to all Azure service client libraries."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-proxy-global-config",
+    "category": "Proxy policy",
+    "text": "DO support proxy configuration via common global configuration directives configured on a platform or runtime basis.\nLinux and macOS generally use the HTTPS_PROXY (and associated) environment variables to configure proxies.\nWindows environments generally use the WinHTTP proxy configuration to configure proxies.\nOther options (such as loading from configuration files) may exist on a platform and runtime basis."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-proxy-azure-sdk-config",
+    "category": "Proxy policy",
+    "text": "DO support Azure SDK-wide configuration directives for proxy configuration, including disabling the proxy functionality."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-proxy-client-config",
+    "category": "Proxy policy",
+    "text": "DO support client library-specific configuration directives for proxy configuration, including disabling the proxy functionality."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-proxy-logging",
+    "category": "Proxy policy",
+    "text": "DO log 407 Proxy Authentication Required requests and responses."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-proxy-always-log",
+    "category": "Proxy policy",
+    "text": "DO indicate in logging if the request is being sent to the service via a proxy, even if proxy authentication is not required."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-proxy-support",
+    "category": "Proxy policy",
+    "text": "DO support Basic and Digest authentication schemes."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-http-proxy-ntlm-support",
+    "category": "Proxy policy",
+    "text": "YOU SHOULD support the NTLM authentication scheme.\n\nThere is no requirement to support SOCKS at this time.  We recommend services adopt a WebSocket connectivity option (for example, AMQP or MQTT over WebSockets) to ensure compatibility with proxies.\n\nThe Azure SDK can be configured by a variety of sources, some of which are necessarily language-dependent.  This will generally be codified in the Azure Core library.  The configuration sources include:\nSystem settings\nEnvironment variables\nGlobal configuration store (code)\nRuntime parameters"
+  },
+  {
+    "id": "general_azurecore.html#azurecore-config-ordering",
+    "category": "Global configuration",
+    "text": "DO apply configuration in the order above by default, such that subsequent items in the list override settings from previous items in the list."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-config-opt-in",
+    "category": "Global configuration",
+    "text": "YOU MAY support configuration systems that users opt in to that do not follow the above ordering."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-config-consistent-naming",
+    "category": "Global configuration",
+    "text": "DO be consistent with naming between environment variables and configuration keys."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-config-log-config-settings",
+    "category": "Global configuration",
+    "text": "DO log when a configuration setting is found somewhere in the environment or global configuration store."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-config-ignore-irrelevant-config",
+    "category": "Global configuration",
+    "text": "YOU MAY ignore configuration settings that are irrelevant for your client library."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-config-respect-the-system",
+    "category": "System settings",
+    "text": "YOU SHOULD respect system settings for proxies.\n\nEnvironment variables are a well-known method for IT administrators to configure basic settings when running code in the cloud."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-config-envvars-system-list",
+    "category": "Environment variables",
+    "text": "DO  load relevant configuration settings from the environment variables listed in the table below:\n\n| Environment Variable          | Purpose                                                                                    |\n|-------------------------------|--------------------------------------------------------------------------------------------|\n| **Proxy Settings**            |                                                                                            |\n| HTTP_PROXY                    | Proxy for HTTP connections                                                                 |\n| HTTPS_PROXY                   | Proxy for HTTPS connections                                                                |\n| NO_PROXY                      | Hosts which must not use a proxy                                                           |\n| ALL_PROXY                     | Proxy for HTTP and/or HTTPS connections in case HTTP_PROXY and/or HTTPS_PROXY are not defined |\n| **Identity**                  |                                                                                            |\n| MSI_ENDPOINT                  | Azure AD MSI Credentials                                                                   |\n| MSI_SECRET                    | Azure AD MSI Credentials                                                                   |\n| AZURE_USERNAME                | Azure username for U/P Auth                                                                |\n| AZURE_PASSWORD                | Azure password for U/P Auth                                                                |\n| AZURE_CLIENT_CERTIFICATE_PATH | Azure Active Directory                                                                     |\n| AZURE_CLIENT_ID               | Azure Active Directory                                                                     |\n| AZURE_CLIENT_SECRET           | Azure Active Directory                                                                     |\n| AZURE_TENANT_ID               | Azure Active Directory                                                                     |\n| AZURE_AUTHORITY_HOST          | Azure Active Directory                                                                     |\n| **Pipeline Configuration**    |                                                                                            |\n| AZURE_TELEMETRY_DISABLED      | Disables telemetry                                                                         |\n| AZURE_LOG_LEVEL               | Enable logging by setting a log level.                                                     |\n| AZURE_TRACING_DISABLED        | Disables tracing                                                                           |\n| **General SDK Configuration** |                                                                                            |\n| AZURE_CLOUD                   | Name of the sovereign cloud                                                                |\n| AZURE_SUBSCRIPTION_ID         | Azure subscription                                                                         |\n| AZURE_RESOURCE_GROUP          | Azure Resource Group                                                                       |\n"
+  },
+  {
+    "id": "general_azurecore.html#azurecore-config-envvars-azure-prefix",
+    "category": "Environment variables",
+    "text": "DO prefix Azure-specific environment variables with AZURE_.\n\nGlobal configuration refers to configuration settings that are applied to all applicable client constructors in some manner."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-config-shared-pipeline-policies",
+    "category": "Global configuration",
+    "text": "DO support global configuration of shared pipeline policies including:\nLogging: Log level, swapping out logger implementation\nHTTP: Proxy settings, max retries, timeout, swapping out transport implementation\nTelemetry: enabled/disabled\nTracing: enabled/disabled"
+  },
+  {
+    "id": "general_azurecore.html#azurecore-config-override-global-config",
+    "category": "Global configuration",
+    "text": "DO provide configuration keys for setting or overriding every configuration setting inherited from the system or environment variables."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-config-opt-out",
+    "category": "Global configuration",
+    "text": "DO provide a method of opting out from importing system settings and environment variables into the configuration.\n\nOAuth token authentication, obtained via Managed Identities or Azure Identity, is the preferred mechanism for authenticating service requests, and the only authentication credentials supported by the Azure Core library."
+  },
+  {
+    "id": "general_azurecore.html#azurecore-auth-token-credential",
+    "category": "Authentication and credentials",
+    "text": "DO provide a token credential type that can fetch an OAuth-compatible token needed to authenticate a request to the service in a non-blocking atomic manner.\n\n[Architecture Board]: https://github.com/azure/azure-sdk/issues\n\n[General Azure SDK Guidelines]: {{ site.baseurl }}{% link docs/general/introduction.md %}\n[Azure SDK Contributors Guide]: https://review.docs.microsoft.com/help/contribute-ref/contribute-ref-how-to-document-sdk\n[Microsoft Writing Style Guide]: https://styleguides.azurewebsites.net/StyleGuide/Read?id=2700\n[Microsoft Cloud Style Guide]: https://styleguides.azurewebsites.net/Styleguide/Read?id=2696\n[Acrolinx VS Code extension]: https://aka.ms/azsdk/acrolinx-vscode\n[rest-lro]: https://github.com/microsoft/api-guidelines/blob/vNext/Guidelines.md#13-long-running-operations\n\n[general-guidelines]: {{ site.baseurl }}{% link docs/general/introduction.md %}\n[android-guidelines]: {{ site.baseurl }}{% link docs/android/design.md %}\n[clang-guidelines]: {{ site.baseurl }}{% link docs/clang/design.md %}\n[cpp-guidelines]: {{ site.baseurl }}{% link docs/cpp/introduction.md %}\n[dotnet-guidelines]: {{ site.baseurl }}{% link docs/dotnet/introduction.md %}\n[golang-guidelines]: {{ site.baseurl }}{% link docs/golang/introduction.md %}\n[ios-guidelines]: {{ site.baseurl }}{% link docs/ios/introduction.md %}\n[java-guidelines]: {{ site.baseurl }}{% link docs/java/introduction.md %}\n[python-guidelines]: {{ site.baseurl }}{% link docs/python/design.md %}\n[typescript-guidelines]: {{ site.baseurl }}{% link docs/typescript/introduction.md %}\n\n[android-latest-releases]: {{ site.baseurl }}{% link releases/latest/android.md %}\n[dotnet-latest-releases]: {{ site.baseurl }}{% link releases/latest/dotnet.md %}\n[go-latest-releases]: {{ site.baseurl }}{% link releases/latest/go.md %}\n[ios-latest-releases]: {{ site.baseurl }}{% link releases/latest/ios.md %}\n[java-latest-releases]: {{ site.baseurl }}{% link releases/latest/java.md %}\n[js-latest-releases]: {{ site.baseurl }}{% link releases/latest/js.md %}\n[python-latest-releases]: {{ site.baseurl }}{% link releases/latest/python.md %}\n[cpp-latest-releases]: {{ site.baseurl }}{% link releases/latest/cpp.md %}\n[c-latest-releases]: {{ site.baseurl }}{% link releases/latest/c.md %}\n\n[README-EXAMPLE]: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-EXAMPLE.md\n[README-TEMPLATE]: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md\n\n\n[Tracing Conventions]: {{ site.baseurl }}{% link docs/tracing/distributed-tracing-conventions.md %}"
+  }
+]

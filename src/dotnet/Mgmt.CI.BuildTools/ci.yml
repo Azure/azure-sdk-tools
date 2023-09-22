@@ -8,7 +8,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20211215.1
+      ref: refs/tags/azure-sdk-build-tools_20230829.1
 
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
@@ -23,14 +23,10 @@ stages:
       - job: 'Build'
 
         pool:
-          vmImage: 'vs2017-win2016'
+          vmImage: 'windows-2022'
 
         steps:
-          - task: UseDotNet@2
-            displayName: 'Use .NET Core sdk $(DotNetCoreVersion)'
-            inputs:
-              packageType: sdk
-              version: $(DotNetCoreVersion)
+          - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
           - script: 'dotnet pack $(ProjectFile) -o $(Build.ArtifactStagingDirectory) -warnaserror $(VersioningProps)'
             displayName: 'Build and Package'

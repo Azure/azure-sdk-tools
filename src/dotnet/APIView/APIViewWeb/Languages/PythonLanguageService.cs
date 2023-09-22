@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -16,30 +16,31 @@ namespace APIViewWeb
     public class PythonLanguageService : LanguageProcessor
     {
         public override string Name { get; } = "Python";
-        public override string Extension { get; } = ".whl";
-        public override string VersionString { get; } = "0.2.8";
+        public override string[] Extensions { get; } = { ".whl" };
+        public override string VersionString { get; } = "0.3.8";
 
         private readonly string _pythonExecutablePath;
         public override string ProcessName => _pythonExecutablePath;
-        private readonly string _apiScriptPath;
-
-        static TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
 
         public PythonLanguageService(IConfiguration configuration)
         {
             _pythonExecutablePath = configuration["PYTHONEXECUTABLEPATH"] ?? "python";
-            _apiScriptPath = Path.Combine(Path.GetDirectoryName(typeof(PythonLanguageService).Assembly.Location), "api-stub-generator", "apistubgen.py");
+
+            // Check if sandboxing is disabled for python
+            bool.TryParse(configuration["ReviewGenByPipelineDisabledForPython"], out bool _isDisabledForPython);
+            // Enable sandboxing when it's not disabled for python
+            IsReviewGenByPipeline = ! _isDisabledForPython;
         }
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {
-            return $"{_apiScriptPath} --pkg-path {originalName} --temp-path {tempDirectory}" +
-                $" --out-path {jsonPath} --hide-report";
+            return $" -m apistub --pkg-path {originalName} --temp-path {tempDirectory}" +
+                $" --out-path {jsonPath}";
         }
 
         private string GetPythonVirtualEnv(string tempDirectory)
         {
             // Create virtual instance
-            RunProcess(tempDirectory, ProcessName, $" -m virtualenv {tempDirectory} --system-site-packages");
+            RunProcess(tempDirectory, ProcessName, $" -m virtualenv {tempDirectory} --system-site-packages --seeder app-data --symlink-app-data");
             return Path.Combine(tempDirectory, "Scripts", "python.exe");
         }
 
@@ -59,9 +60,9 @@ namespace APIViewWeb
             }
             try
             {
-                var apiStubGenPath = GetPythonVirtualEnv(tempDirectory);
+                var pythonVenvPath = GetPythonVirtualEnv(tempDirectory);
                 var arguments = GetProcessorArguments(originalName, tempDirectory, jsonFilePath);
-                RunProcess(tempDirectory, apiStubGenPath, arguments);
+                RunProcess(tempDirectory, pythonVenvPath, arguments);
                 _telemetryClient.TrackEvent("Completed Python process run to parse " + originalName);
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
@@ -74,7 +75,7 @@ namespace APIViewWeb
             catch(Exception ex)
             {
                 _telemetryClient.TrackException(ex);
-                throw ex;
+                throw;
             }
             finally
             {

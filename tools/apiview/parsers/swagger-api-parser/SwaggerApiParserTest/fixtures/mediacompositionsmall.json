@@ -1,0 +1,811 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Azure Communication Media Composition Service",
+    "description": "Azure Communication Media Composition Service",
+    "version": "2022-07-16-preview"
+  },
+  "paths": {
+    "/mediaCompositions/{mediaCompositionId}": {
+      "get": {
+        "tags": [
+          "MediaComposition"
+        ],
+        "description": "Gets a media composition",
+        "operationId": "MediaComposition_Get",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mediaCompositionId",
+            "description": "The media composition id",
+            "required": true,
+            "type": "string",
+            "pattern": "^[0-9a-zA-Z-]+$",
+            "maxLength": 256
+          },
+          {
+            "in": "query",
+            "name": "api-version",
+            "required": true,
+            "type": "string",
+            "description": "The api version"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/MediaCompositionBody"
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/CommunicationErrorResponse"
+            },
+            "headers": {
+              "x-ms-error-code": {
+                "type": "string",
+                "description": "The error code."
+              }
+            },
+            "x-ms-error-response": true
+          }
+        },
+        "x-ms-examples": {
+          "Get Media Composition": {
+            "$ref": "./examples/MediaComposition_GetMediaComposition.json"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "MediaComposition"
+        ],
+        "description": "Creates a new media composition",
+        "operationId": "MediaComposition_Create",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "mediaCompositionId",
+            "description": "The media composition id",
+            "required": true,
+            "type": "string",
+            "pattern": "^[0-9a-zA-Z-]+$",
+            "maxLength": 256
+          },
+          {
+            "in": "query",
+            "name": "api-version",
+            "required": true,
+            "type": "string",
+            "description": "The api version"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "The media composition being created",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MediaCompositionBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/MediaCompositionBody"
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "schema": {
+              "$ref": "#/definitions/CommunicationErrorResponse"
+            },
+            "headers": {
+              "x-ms-error-code": {
+                "type": "string",
+                "description": "The error code."
+              }
+            },
+            "x-ms-error-response": true
+          }
+        },
+        "x-ms-examples": {
+          "Create new Media Composition": {
+            "$ref": "./examples/MediaComposition_CreateMediaComposition.json"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AudiencePosition": {
+      "description": "Position of the audience streams",
+      "enum": [
+        "top",
+        "right",
+        "bottom",
+        "left"
+      ],
+      "type": "string",
+      "x-ms-enum": {
+        "name": "AudiencePosition",
+        "modelAsString": true
+      }
+    },
+    "AutoGridLayoutOptions": {
+      "description": "Configure the autogrid layout",
+      "required": [
+        "inputIds"
+      ],
+      "type": "object",
+      "properties": {
+        "inputIds": {
+          "description": "Input ids to be included in the layout",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "highlightDominantSpeaker": {
+          "description": "Toggle dominant speaker highlighting",
+          "type": "boolean"
+        }
+      }
+    },
+    "CommunicationCallIdentifierModel": {
+      "description": "Identifies a teams meeting or group call defined in inputs",
+      "required": [
+        "call"
+      ],
+      "type": "object",
+      "properties": {
+        "call": {
+          "description": "The id of the teams meeting or call",
+          "type": "string"
+        }
+      }
+    },
+    "CommunicationError": {
+      "description": "The Communication Services error.",
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "The error code."
+        },
+        "message": {
+          "type": "string",
+          "description": "The error message."
+        },
+        "target": {
+          "type": "string",
+          "readOnly": true,
+          "description": "The error target."
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CommunicationError"
+          },
+          "readOnly": true,
+          "description": "Further details about specific errors that led to this error."
+        },
+        "innererror": {
+          "x-ms-client-name": "innerError",
+          "readOnly": true,
+          "$ref": "#/definitions/CommunicationError",
+          "description": "The inner error if any."
+        }
+      }
+    },
+    "CommunicationErrorResponse": {
+      "description": "The Communication Services error.",
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "properties": {
+        "error": {
+          "description": "The Communication Services error.",
+          "$ref": "#/definitions/CommunicationError"
+        }
+      }
+    },
+    "CommunicationIdentifierModel": {
+      "description": "Identifies a participant in Azure Communication services. A participant is, for example, a phone number or an Azure communication user.",
+      "type": "object",
+      "properties": {
+        "communicationUser": {
+          "$ref": "#/definitions/CommunicationUserIdentifierModel"
+        },
+        "microsoftTeamsUser": {
+          "$ref": "#/definitions/MicrosoftTeamsUserIdentifierModel"
+        }
+      }
+    },
+    "CommunicationUserIdentifierModel": {
+      "description": "A user that got created with an Azure Communication Services resource.",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The Id of the communication user."
+        }
+      }
+    },
+    "CompositionStreamState": {
+      "description": "State of the composition stream",
+      "enum": [
+        "notStarted",
+        "running",
+        "stopped"
+      ],
+      "type": "string",
+      "x-ms-enum": {
+        "name": "CompositionStreamState",
+        "modelAsString": true
+      }
+    },
+    "CustomLayoutOptions": {
+      "description": "Configure custom layout",
+      "required": [
+        "inputGroups"
+      ],
+      "type": "object",
+      "properties": {
+        "layers": {
+          "description": "Configure layer to control the z-position of input groups",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Layer"
+          }
+        },
+        "inputGroups": {
+          "description": "Configure input groups of the layout",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/InputGroup"
+          }
+        }
+      }
+    },
+    "GridLayoutOptions": {
+      "description": "Configure the grid layout",
+      "required": [
+        "columns",
+        "rows"
+      ],
+      "type": "object",
+      "properties": {
+        "rows": {
+          "format": "int32",
+          "description": "Number of rows",
+          "type": "integer"
+        },
+        "columns": {
+          "format": "int32",
+          "description": "Number of columns",
+          "type": "integer"
+        },
+        "inputIds": {
+          "description": "Input ids to be included in the layout.",
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "GroupCall": {
+      "description": "Group call to be used as an input or output",
+      "required": [
+        "id"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Group call identifier",
+          "type": "string"
+        }
+      }
+    },
+    "Image": {
+      "description": "An image input",
+      "required": [
+        "uri"
+      ],
+      "type": "object",
+      "properties": {
+        "uri": {
+          "description": "Url of the image file",
+          "type": "string"
+        }
+      }
+    },
+    "InputGroup": {
+      "description": "Configure input group to be used in custom layouts",
+      "type": "object",
+      "properties": {
+        "inputIds": {
+          "description": "Input ids to be included in the layout.",
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "position": {
+          "$ref": "#/definitions/Position"
+        },
+        "width": {
+          "description": "The width of the input group container. Can be a pixel or percentage string",
+          "type": "string"
+        },
+        "height": {
+          "description": "The height of the input group container. Can be a pixel or percentage string",
+          "type": "string"
+        },
+        "rows": {
+          "format": "int32",
+          "description": "Number of rows",
+          "type": "integer"
+        },
+        "columns": {
+          "format": "int32",
+          "description": "Number of columns",
+          "type": "integer"
+        },
+        "layer": {
+          "description": "The layer this input group should appear on",
+          "type": "string"
+        }
+      }
+    },
+    "Layer": {
+      "description": "Configure layer to control the z-position of input groups",
+      "required": [
+        "zIndex"
+      ],
+      "type": "object",
+      "properties": {
+        "zIndex": {
+          "format": "int32",
+          "description": "The z position of the layer",
+          "type": "integer"
+        },
+        "visibility": {
+          "$ref": "#/definitions/LayerVisibility"
+        }
+      }
+    },
+    "LayerVisibility": {
+      "description": "The visibility of the layer",
+      "enum": [
+        "visible",
+        "hidden"
+      ],
+      "type": "string",
+      "x-ms-enum": {
+        "name": "LayerVisibility",
+        "modelAsString": true
+      }
+    },
+    "Layout": {
+      "description": "Configure a layout",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/LayoutType"
+        },
+        "resolution": {
+          "$ref": "#/definitions/Resolution"
+        },
+        "grid": {
+          "$ref": "#/definitions/GridLayoutOptions"
+        },
+        "autoGrid": {
+          "$ref": "#/definitions/AutoGridLayoutOptions"
+        },
+        "presenter": {
+          "$ref": "#/definitions/PresenterLayoutOptions"
+        },
+        "presentation": {
+          "$ref": "#/definitions/PresentationLayoutOptions"
+        },
+        "custom": {
+          "$ref": "#/definitions/CustomLayoutOptions"
+        },
+        "placeholderImageUri": {
+          "description": "Set global placeholder image",
+          "type": "string"
+        }
+      }
+    },
+    "LayoutType": {
+      "description": "Kind of layout",
+      "enum": [
+        "custom",
+        "grid",
+        "autoGrid",
+        "presentation",
+        "presenter"
+      ],
+      "type": "string",
+      "x-ms-enum": {
+        "name": "LayoutType",
+        "modelAsString": true
+      }
+    },
+    "MediaCompositionBody": {
+      "description": "Body of a media composition",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Id of the media composition",
+          "type": "string"
+        },
+        "layout": {
+          "$ref": "#/definitions/Layout"
+        },
+        "inputs": {
+          "description": "Inputs used in the composition",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/MediaInput"
+          }
+        },
+        "outputs": {
+          "description": "Outputs used in the composition",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/MediaOutput"
+          }
+        },
+        "streamState": {
+          "$ref": "#/definitions/CompositionStreamState"
+        }
+      }
+    },
+    "MediaInput": {
+      "description": "Media input to be used in the composition",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/MediaInputType"
+        },
+        "groupCall": {
+          "$ref": "#/definitions/GroupCall"
+        },
+        "room": {
+          "$ref": "#/definitions/GroupCall"
+        },
+        "teamsMeeting": {
+          "$ref": "#/definitions/TeamsMeeting"
+        },
+        "rtmp": {
+          "$ref": "#/definitions/RtmpStream"
+        },
+        "srt": {
+          "$ref": "#/definitions/SrtStream"
+        },
+        "participant": {
+          "$ref": "#/definitions/Participant"
+        },
+        "activePresenter": {
+          "$ref": "#/definitions/CommunicationCallIdentifierModel"
+        },
+        "dominantSpeaker": {
+          "$ref": "#/definitions/CommunicationCallIdentifierModel"
+        },
+        "screenShare": {
+          "$ref": "#/definitions/CommunicationCallIdentifierModel"
+        },
+        "image": {
+          "$ref": "#/definitions/Image"
+        }
+      }
+    },
+    "MediaInputType": {
+      "description": "Kind of media input",
+      "enum": [
+        "groupCall",
+        "room",
+        "teamsMeeting",
+        "srt",
+        "rtmp",
+        "participant",
+        "screenShare",
+        "dominantSpeaker",
+        "activePresenter",
+        "image"
+      ],
+      "type": "string",
+      "x-ms-enum": {
+        "name": "MediaInputType",
+        "modelAsString": true
+      }
+    },
+    "MediaOutput": {
+      "description": "Media output to be used by the composition",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/definitions/MediaOutputType"
+        },
+        "groupCall": {
+          "$ref": "#/definitions/GroupCall"
+        },
+        "room": {
+          "$ref": "#/definitions/GroupCall"
+        },
+        "teamsMeeting": {
+          "$ref": "#/definitions/TeamsMeeting"
+        },
+        "rtmp": {
+          "$ref": "#/definitions/RtmpStream"
+        },
+        "srt": {
+          "$ref": "#/definitions/SrtStream"
+        }
+      }
+    },
+    "MediaOutputType": {
+      "description": "Kind of media output",
+      "enum": [
+        "groupCall",
+        "room",
+        "teamsMeeting",
+        "srt",
+        "rtmp"
+      ],
+      "type": "string",
+      "x-ms-enum": {
+        "name": "MediaOutputType",
+        "modelAsString": true
+      }
+    },
+    "MicrosoftTeamsUserIdentifierModel": {
+      "description": "\"A Microsoft Teams user.",
+      "required": [
+        "userId"
+      ],
+      "type": "object",
+      "properties": {
+        "userId": {
+          "description": "The Id of the Microsoft Teams user",
+          "type": "string"
+        }
+      }
+    },
+    "Participant": {
+      "description": "A meeting or group call participant",
+      "required": [
+        "call",
+        "id"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/CommunicationIdentifierModel"
+        },
+        "placeholderImageUri": {
+          "description": "Image url to be used if participant has no video stream",
+          "type": "string"
+        },
+        "call": {
+          "description": "The id of the teams meeting or call",
+          "type": "string"
+        }
+      }
+    },
+    "Position": {
+      "description": "The (x,y) position on scene or input group",
+      "required": [
+        "x",
+        "y"
+      ],
+      "type": "object",
+      "properties": {
+        "x": {
+          "format": "int32",
+          "description": "The x-position",
+          "type": "integer"
+        },
+        "y": {
+          "format": "int32",
+          "description": "The y-position",
+          "type": "integer"
+        }
+      }
+    },
+    "PresentationLayoutOptions": {
+      "description": "Configure the presentation layout",
+      "required": [
+        "audienceIds",
+        "presenterId"
+      ],
+      "type": "object",
+      "properties": {
+        "presenterId": {
+          "description": "Id of the presenter input",
+          "type": "string"
+        },
+        "audienceIds": {
+          "description": "Input ids to be included in the audience of layout",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "audiencePosition": {
+          "$ref": "#/definitions/AudiencePosition"
+        }
+      }
+    },
+    "PresenterLayoutOptions": {
+      "description": "Configure the presenter layout",
+      "required": [
+        "presenterId",
+        "supportId"
+      ],
+      "type": "object",
+      "properties": {
+        "presenterId": {
+          "description": "Id of the presenter input",
+          "type": "string"
+        },
+        "supportId": {
+          "description": "Id of the support input",
+          "type": "string"
+        },
+        "supportPosition": {
+          "$ref": "#/definitions/SupportPosition"
+        },
+        "supportAspectRatio": {
+          "format": "double",
+          "description": "Aspect ratio of the support stream.",
+          "type": "number"
+        }
+      }
+    },
+    "Resolution": {
+      "description": "The dimensions of the scene or objects in the scene",
+      "required": [
+        "height",
+        "width"
+      ],
+      "type": "object",
+      "properties": {
+        "width": {
+          "format": "int32",
+          "description": "Width of the object",
+          "type": "integer"
+        },
+        "height": {
+          "format": "int32",
+          "description": "Height of the object",
+          "type": "integer"
+        }
+      }
+    },
+    "RtmpMode": {
+      "description": "Rtmp mode",
+      "enum": [
+        "push",
+        "pull"
+      ],
+      "type": "string",
+      "x-ms-enum": {
+        "name": "RtmpMode",
+        "modelAsString": true
+      }
+    },
+    "RtmpStream": {
+      "description": "Rtmp stream to be used as an input or output",
+      "required": [
+        "resolution",
+        "streamKey",
+        "streamUrl"
+      ],
+      "type": "object",
+      "properties": {
+        "streamKey": {
+          "description": "Stream key of the stream",
+          "type": "string"
+        },
+        "resolution": {
+          "$ref": "#/definitions/Resolution"
+        },
+        "streamUrl": {
+          "description": "The url of the stream",
+          "type": "string"
+        },
+        "mode": {
+          "$ref": "#/definitions/RtmpMode"
+        }
+      }
+    },
+    "SrtStream": {
+      "description": "Srt stream to be used as an input or output",
+      "required": [
+        "resolution",
+        "streamUrl"
+      ],
+      "type": "object",
+      "properties": {
+        "resolution": {
+          "$ref": "#/definitions/Resolution"
+        },
+        "streamUrl": {
+          "description": "The url of the stream",
+          "type": "string"
+        }
+      }
+    },
+    "SupportPosition": {
+      "description": "Position of the support stream",
+      "enum": [
+        "topLeft",
+        "topRight",
+        "bottomLeft",
+        "bottomRight"
+      ],
+      "type": "string",
+      "x-ms-enum": {
+        "name": "SupportPosition",
+        "modelAsString": true
+      }
+    },
+    "TeamsMeeting": {
+      "description": "A Teams meeting to be used as an input or output",
+      "required": [
+        "teamsJoinUrl"
+      ],
+      "type": "object",
+      "properties": {
+        "teamsJoinUrl": {
+          "format": "uri",
+          "description": "The url from Teams to join the meeting",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "Authorization": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "An ACS (Azure Communication Services) user access token."
+    }
+  },
+  "security": [
+    {
+      "Authorization": []
+    }
+  ]
+}

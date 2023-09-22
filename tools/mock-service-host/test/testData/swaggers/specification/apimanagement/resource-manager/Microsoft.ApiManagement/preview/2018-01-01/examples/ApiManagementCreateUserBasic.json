@@ -1,5 +1,6 @@
 {
   "parameters": {
+    "test": 2,
     "api-version": "2018-01-01",
     "resourceGroupName": "randomRG",
     "serviceName": "randomService",

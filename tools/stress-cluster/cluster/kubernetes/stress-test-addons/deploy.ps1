@@ -30,13 +30,14 @@ RunOrExitOnFailure helm repo index --url https://stresstestcharts.blob.core.wind
 $files = (Get-Item *.tgz).Name
 $confirmation = Read-Host "Do you want to update the helm repository to add ${files}? [y/n]"
 if ( $confirmation -match "[yY]" ) { 
-    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name helm --file index.yaml --name index.yaml
+    RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name helm --file index.yaml --name index.yaml --overwrite
     RunOrExitOnFailure az storage blob upload --subscription $subscriptionId --container-name helm --file $files --name $files
 
     # index.yaml must be kept up to date, otherwise when helm generates the file, it will not
     # merge it with previous entries, and those packages will become inaccessible as they are no
     # longer index.
-    echo "COMMIT CHANGES MADE TO 'index.yaml'"
+    Write-Host "UPDATE CHANGELOG.md"
+    Write-Host "COMMIT CHANGES MADE TO 'index.yaml' and 'CHANGELOG.md'"
 } else {
-    echo "Abort uploading files $files."
+    Write-Host "Abort uploading files $files."
 }

@@ -21,6 +21,10 @@ import java.util.List;
 public class Pom implements MavenGAV {
     private Gav gav;
     private Gav parent;
+
+    private String name;
+    private String description;
+
     private List<Dependency> dependencies;
 
     private Float jacocoMinLineCoverage;
@@ -28,11 +32,14 @@ public class Pom implements MavenGAV {
 
     private String checkstyleExcludes;
 
+    private boolean fileExists;
+
     // These are the dependencies specifies in the maven-enforcer that are allowed
     private List<String> allowedDependencies;
 
-    public Pom(final String groupId, final String artifactId, final String version) {
+    public Pom(final String groupId, final String artifactId, final String version, boolean fileExists) {
         this.gav = new Gav(groupId, artifactId, version);
+        this.fileExists = fileExists;
     }
 
     public Pom(InputStream pomFileStream) throws IOException {
@@ -68,6 +75,14 @@ public class Pom implements MavenGAV {
             // checkstyle excludes
             n = (Node) xPath.evaluate("/project/build/plugins/plugin/artifactId[text()='maven-checkstyle-plugin']/../configuration/excludes", xmlDocument, XPathConstants.NODE);
             this.checkstyleExcludes = n == null ? null : n.getTextContent();
+
+            // Maven name
+            n = (Node) xPath.evaluate("/project/name", xmlDocument, XPathConstants.NODE);
+            this.name = (n == null) ? null : n.getTextContent();
+
+            // Maven description
+            n = (Node) xPath.evaluate("/project/description", xmlDocument, XPathConstants.NODE);
+            this.description = (n == null) ? null : n.getTextContent();
 
             // actual dependencies
             final String dependencyExpression = "/project/dependencies/dependency";
@@ -108,6 +123,14 @@ public class Pom implements MavenGAV {
         return parent;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
     public List<Dependency> getDependencies() {
         return dependencies;
     }
@@ -128,10 +151,17 @@ public class Pom implements MavenGAV {
         return allowedDependencies;
     }
 
+    /**
+     * Sometimes we can't find a pom file, so we fake it with the info we do have.
+     */
+    public boolean isPomFileReal() {
+        return fileExists;
+    }
+
     private Gav createGav(final XPath xPath, final Document xmlDocument, final String root) throws XPathExpressionException {
         final String groupIdExpression = root + "/groupId";
         final Node groupIdNode = (Node) xPath.evaluate(groupIdExpression, xmlDocument, XPathConstants.NODE);
-        final String groupId = groupIdNode == null ? "" : groupIdNode.getTextContent();
+        String groupId = groupIdNode == null ? "" : groupIdNode.getTextContent();
 
         final String artifactIdExpression = root + "/artifactId";
         final Node artifactIdNode = (Node) xPath.evaluate(artifactIdExpression, xmlDocument, XPathConstants.NODE);
@@ -139,7 +169,20 @@ public class Pom implements MavenGAV {
 
         final String versionExpression = root + "/version";
         final Node versionNode = (Node) xPath.evaluate(versionExpression, xmlDocument, XPathConstants.NODE);
-        final String version = versionNode == null ? "" : versionNode.getTextContent();
+        String version = versionNode == null ? "" : versionNode.getTextContent();
+
+        // it is possible to inherit the groupId and version from the parent, so if group ID or version is empty here,
+        // lets go up to the parent to get it from there
+        if (groupId.isEmpty()) {
+            final String parentGroupIdExpression = root + "/parent/groupId";
+            final Node parentGroupIdNode = (Node) xPath.evaluate(parentGroupIdExpression, xmlDocument, XPathConstants.NODE);
+            groupId = parentGroupIdNode == null ? "" : parentGroupIdNode.getTextContent();
+        }
+        if (version.isEmpty()) {
+            final String parentVersionExpression = root + "/parent/version";
+            final Node parentVersionNode = (Node) xPath.evaluate(parentVersionExpression, xmlDocument, XPathConstants.NODE);
+            version = parentVersionNode == null ? "" : parentVersionNode.getTextContent();
+        }
 
         return new Gav(groupId, artifactId, version);
     }

@@ -1,0 +1,6 @@
+.create-or-alter function LatestBuild(sourceBranchFilter:string)
+{ 
+    Build
+    | where SourceBranch matches regex sourceBranchFilter
+    | summarize arg_max(FinishTime, *) by DefinitionId
+}

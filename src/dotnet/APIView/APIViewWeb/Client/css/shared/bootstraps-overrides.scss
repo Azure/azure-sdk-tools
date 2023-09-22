@@ -1,0 +1,248 @@
+.text-success {
+    color: var(--success-color) !important;
+}
+
+.btn-primary {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+    color: var(--primary-btn-color);
+}
+
+.btn-primary:hover, .btn-primary:active {
+    background-color: var(--link-active);
+    border-color: var(--link-active);
+    color: var(--primary-btn-color);
+}
+
+.btn-primary:disabled, .btn-primary.disabled {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+    color: var(--primary-btn-color);
+}
+
+.btn-check:focus + .btn-primary, .btn-primary:focus {
+    background-color: var(--link-active);
+    border-color: var(--link-active);
+    color: var(--primary-btn-color);
+}
+
+.btn-outline-primary {
+    color: var(--link-color);
+    border-color: var(--link-color);
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:active {
+    background-color: var(--link-active);
+    border-color: var(--link-active);
+    color: var(--primary-btn-color);
+}
+
+.btn-outline-primary.disabled, .btn-outline-primary:disabled {
+    color: var(--link-color);
+}
+
+.btn-link {
+    color: var(--link-color);
+}
+
+.btn-link:hover {
+    color: var(--link-active);
+}
+
+.btn-check:checked + .btn-outline-primary:focus, .btn-check:active + .btn-outline-primary:focus, .btn-outline-primary:active:focus, .btn-outline-primary.active:focus, .btn-outline-primary.dropdown-toggle.show:focus {
+    box-shadow: 0 0 0 0.25rem var(--outer-glow);
+}
+
+
+.btn-check:checked + .btn-outline-primary, .btn-check:active + .btn-outline-primary, .btn-outline-primary:active, .btn-outline-primary.active, .btn-outline-primary.dropdown-toggle.show {
+    background-color: var(--link-active);
+    border-color: var(--link-active);
+    color: var(--primary-btn-color);
+}
+
+.btn-check:focus + .btn-outline-primary, .btn-outline-primary:focus {
+    box-shadow: var(--box-shadow-link);
+}
+
+.page-link {
+    background-color: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    color: var(--link-color);
+}
+
+.page-link:hover {
+    background-color: var(--base-bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--link-color);
+}
+
+.page-item.active .page-link {
+    background-color: var(--link-color);
+    border: 1px solid var(--border-color);
+}
+
+.page-item.disabled .page-link {
+    background-color: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    color: var(--link-color);
+}
+
+.border {
+    border: 1px solid var(--border-color) !important;
+}
+
+.border-top {
+    border-top: 1px solid var(--border-color) !important;
+}
+
+.border-bottom {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.list-group-item {
+    color: var(--base-text-color);
+    background-color: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    word-wrap: break-word;
+}
+
+.form-control {
+    color: var(--base-text-color);
+    background-color: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+}
+
+.form-control::before {
+    color: var(--base-text-color);
+    background-color: var(--base-bg-color);
+    border-color: var(--border-color);
+}
+
+.form-control:focus {
+    color: var(--base-text-color);
+    background-color: var(--base-fg-color);
+    border-color: var(--border-color);
+    box-shadow: 0 0 0 0.25rem var(--outer-glow);
+}
+
+.form-control:disabled, .form-control[readonly] {
+    background-color: var(--base-fg-color);
+}
+
+.form-check-input {
+    background-color: var(--base-bg-color);
+    border: 1px solid var(--border-color);
+}
+
+.form-check-input:checked {
+    background-color: var(--link-color);
+    border-color: var(--link-color);
+}
+
+.form-check-input:focus {
+    border-color: var(--link-color);
+    box-shadow: var(--box-shadow-link);
+}
+
+.form-switch .form-check-input {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='grey'/%3e%3c/svg%3e");
+}
+
+.form-switch .form-check-input:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='grey'/%3e%3c/svg%3e");
+}
+
+.form-check-input:checked[type=checkbox] {
+    background-image: var(--svg-check-box);
+}
+
+.form-switch .form-check-input:checked {
+    background-image: var(--svg-switch);
+}
+
+.badge {
+    color: var(--base-text-color);
+    background-color: var(--base-fg-color);
+    border-color: var(--border-color);
+    border-radius: 0.25rem;
+}
+
+.input-group-text {
+    color: var(--base-text-color);
+    background-color: var(--base-fg-color);
+    border-color: var(--border-color);
+}
+
+select {
+    color: var(--base-text-color);
+    background-color: var(--base-fg-color);
+    border-color: var(--border-color);
+}
+
+.dropdown-menu {
+    color: var(--base-text-color);
+    background-color: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+}
+
+.dropdown-header {
+    color: var(--base-text-color);
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+    color: var(--base-text-color);
+    background-color: var(--base-bg-color);
+}
+
+.table {
+    color: var(--base-text-color);
+}
+
+.toast {
+    background-color: var(--base-bg-color);
+    background-clip: padding-box;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-color);
+}
+
+.toast-header {
+    background-color: var(--base-fg-color);
+    color: var(--base-text-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.nav-link {
+    padding: 0.2rem 1rem;
+}
+
+.modal-content {
+    color: var(--base-text-color);
+    background-color: var(--base-bg-color);
+    border: 1px solid var(--border-color);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border-color);
+}
+
+.card {
+    color: var(--base-text-color);
+    background-color: var(--base-bg-color);
+    border: 1px solid var(--border-color);
+}
+
+.btn-close {
+    background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='grey'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+}
+
+.text-muted {
+    color: var(--text-muted-color) !important;
+}
+
+pre {
+    color: var(--base-text-color);
+}

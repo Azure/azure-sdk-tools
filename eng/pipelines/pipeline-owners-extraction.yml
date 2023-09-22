@@ -1,0 +1,54 @@
+# Configure notifications in Azure DevOps
+trigger: none
+
+pr: none
+
+stages:
+- stage: Run
+
+  variables:
+  - template: ./templates/variables/globals.yml
+
+  jobs:
+  - job: Run
+    timeoutInMinutes: 120
+    pool:
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
+
+    variables:
+      Organization: azure-sdk
+      Project: internal
+      DotNetDevOpsFeed: "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"
+      OutputPath: '$(Agent.BuildDirectory)/pipelineOwners.json'
+      RepoLabelUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/repository-labels-blob?$(azuresdkartifacts-azure-sdk-write-teams-sas)"
+      TeamUserUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob?$(azuresdkartifacts-azure-sdk-write-teams-sas)"
+      UserOrgUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/user-org-visibility-blob?$(azuresdkartifacts-azure-sdk-write-teams-sas)"
+      RepoListFile: "$(Build.SourcesDirectory)/tools/github/data/repositories.txt"
+
+    steps:
+      - task: DotNetCoreCLI@2
+        displayName: 'Install Pipeline Owners Extractor'
+        inputs:
+          command: custom
+          custom: 'tool'
+          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(PipelineOwnersExtractorVersion)" "Azure.Sdk.Tools.PipelineOwnersExtractor"'
+          workingDirectory: '$(Agent.BuildDirectory)'
+      - task: AzureCLI@2
+        displayName: Run Pipeline Owners Extractor
+        inputs:
+          azureSubscription: 'Azure SDK Engineering System'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: pipeline-owners-extractor --output "$(OutputPath)"
+      - publish: $(OutputPath)
+        displayName: Publish pipelineOwners artifact
+        artifact: pipelineOwners
+        condition: succeededOrFailed()
+
+      - pwsh: |
+          dotnet run -rUri "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)" -rlFile "$(RepoListFile)"
+        displayName: 'Fetch and store team/user data'
+        workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
+        env:
+          GITHUB_TOKEN: $(azuresdkartifacts-azure-sdk-write-teams-github-pat)

@@ -1,0 +1,14 @@
+{
+  "name": "azure-sdk-tools-apiview-parser",
+  "version": "1.0.0",
+  "dependencies": [
+    {
+      "name": "llvm"
+    },
+    {
+      "name": "nlohmann-json"
+    },
+    { "name": "gtest" },
+    { "name": "tclap" }
+  ]
+  }

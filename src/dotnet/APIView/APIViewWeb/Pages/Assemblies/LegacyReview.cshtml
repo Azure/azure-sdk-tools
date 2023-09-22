@@ -1,8 +1,10 @@
-﻿@page
-
+@page
 @model APIViewWeb.Pages.Assemblies.LegacyReview
+@using APIViewWeb.Helpers
+@using APIViewWeb.Models
 @{
     ViewData["Title"] = "Legacy Review";
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
 }
 
 <h2>This review can not be viewed anymore but here are the comments:</h2>

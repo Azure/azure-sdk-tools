@@ -1,0 +1,67 @@
+{
+  "name": "@azure-tools/sdk-generation-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "prepack": "npm run build",
+    "pack": "npm pack 2>&1",
+    "test:unit-prepare-environment": "ts-node test/unit/utils/prepareEnvironment.ts",
+    "test:unit": "npm run test:unit-prepare-environment && jest",
+    "test:integration": "ts-node test/integration/integrationTest.ts",
+    "test": "npm run test:unit && npm run test:integration",
+    "lint": "eslint . -c ../../.eslintrc.json --ignore-path ../../.eslintignore --ext .ts",
+    "lint:fix": "eslint . -c ../../.eslintrc.json --ignore-path ../../.eslintignore --ext .ts --fix"
+  },
+  "author": "Microsoft",
+  "license": "MIT",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.json",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "dist/**/*.handlebars",
+    "LICENSE",
+    "README.md"
+  ],
+  "bin": {
+    "getRepoName": "dist/cli/pipelineCli/getRepoNameCli.js",
+    "generateResult": "dist/cli/pipelineCli/generateResultCli.js",
+    "publishResult": "dist/cli/pipelineCli/publishResultCli.js",
+    "uploadArtifact": "dist/cli/pipelineCli/uploadArtifactCli.js",
+    "prepareArtifactFiles": "dist/cli/pipelineCli/prepareArtifactFilesCli.js",
+    "docker-cli": "dist/cli/dockerCli/dockerCli.js",
+    "run-mock-host": "dist/cli/dockerCli/runMockHostCli.js"
+  },
+  "dependencies": {
+    "@azure/storage-blob": "^12.8.0",
+    "ajv": "^6.12.6",
+    "convict": "^6.2.3",
+    "@azure-tools/sdk-generation-lib": "^1.0.5",
+    "axios": "^0.24.0",
+    "dotenv": "^16.0.0",
+    "winston": "3.7.2",
+    "command-line-args": "~5.2.1",
+    "simple-git": "~3.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "rimraf": "^3.0.2",
+    "jest": "~26.6.3",
+    "ts-jest": "~26.5.4",
+    "@types/jest": "^25.2.1",
+    "typescript": "~4.6.3",
+    "ts-node": "~10.7.0",
+    "eslint": "^8.16.0",
+    "@typescript-eslint/eslint-plugin": "^5.25.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-n": "^15.0.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "@typescript-eslint/parser": "^5.25.0",
+    "eslint-plugin-simple-import-sort": "^7.0.0"
+  }
+}

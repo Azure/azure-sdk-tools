@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "properties": {
+    "specFolder": {
+      // Path to local spec folder. path to the parent of service folders. e.g. azure-rest-api-specs/specifications
+      "type": "string"
+    },
+    "headSha": {
+      // Git head sha.
+      // If spec folder is not git repo, it will be empty string.
+      "type": "string"
+    },
+    "headRef": {
+      // Git head ref.
+      // Format will be "refs/pull/<number>/merge" or "refs/heads/<branch>".
+      "type": "string"
+    },
+    "repoHttpsUrl": {
+      // Spec repo url in https without auth.
+      "type": "string"
+    },
+    "relatedReadmeMdFile": {
+      // Related readme.md files that pending generation.
+      "type": "string"
+    },
+    "relatedTypeSpecProjectFolder": {
+      // Related typespec project folder that pending generation.
+      "type": "string"
+    },
+    "serviceType": {
+      // The type of related swagger: resource-manager or data-plane
+      "type": "string",
+      "enum": ["resource-manager", "data-plane"]
+    },
+    "autorestConfig": {
+      // The autorest config got from /autorest.md, which is mounted by user
+      "type": "string"
+    },
+    "skipGeneration": {
+      // Whether skip generation
+      "type": "boolean"
+    }
+  },
+  "required": ["specFolder", "headSha", "headRef", "repoHttpsUrl"]
+}

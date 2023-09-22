@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.TeamFoundation.Build.WebApi;
 
 #nullable disable
 
@@ -12,13 +13,14 @@ namespace Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines
         {
         }
 
-        public Failure(string scope, string classification)
+        public Failure(TimelineRecord record, string classification)
         {
-            this.Scope = scope;
+            this.Record = record;
             this.Classification = classification;
         }
 
-        public string Scope { get; set; }
+        public TimelineRecord Record { get; set; }
         public string Classification { get; set; }
     }
 }
+

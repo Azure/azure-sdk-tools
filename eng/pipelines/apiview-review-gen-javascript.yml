@@ -1,0 +1,55 @@
+pr: none
+
+trigger: none
+
+pool:
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
+
+parameters:
+  - name: Reviews
+    type: string
+    default: '[{"ReviewID":"<reviewid>","RevisionID":"<revisionId>","FileID":"<fileid>","FileName":"<fileName>"}]'
+  - name: APIViewURL
+    type: string
+    default: 'https://apiview.dev' 
+  - name: StorageContainerUrl
+    type: string
+    default: ''
+variables:
+  TypeScriptGeneratorDirectory: 'src/ts/ts-genapi'
+  NodeVersion: '16.x'
+
+jobs:
+- job: CreateJSReviewCodeFile
+  displayName: 'Create JavaScript API review token file'
+
+  variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: $(NodeVersion)
+    displayName: "Use Node $(NodeVersion)"
+
+  - script: |
+      npm install -g npm@8.16.0
+    displayName: "Install npm 8.16.0"
+
+  - script: |
+      npm install
+    workingDirectory: $(TypeScriptGeneratorDirectory)
+    displayName: "Install npm packages typescript generator"
+
+  - script: |
+      npm run-script build
+    workingDirectory: $(TypeScriptGeneratorDirectory)
+    displayName: "Build typescript generator"
+
+  - template: /eng/pipelines/templates/steps/apiview-review-gen.yml
+    parameters:
+      Reviews: $(Reviews)
+      APIViewURL: $(APIViewURL)
+      StorageContainerUrl: $(StorageContainerUrl)
+      ApiviewGenScript: './Create-Apiview-Token-Javascript.ps1'

@@ -1,0 +1,8 @@
+.create-or-alter function ManagedDefinitionBuild(sourceBranchFilter:string)
+{ 
+    ManagedDefinitionFunc()
+    | join kind=inner LatestBuild(sourceBranchFilter) on $left.BuildDefinitionId == $right.DefinitionId
+    | join kind=inner LatestOwners() on BuildDefinitionId
+    | project-away OrganizationName1, OrganizationName2, BuildDefinitionId1, Tags1, ProjectId1, ProjectState1, QueueName1, RepositoryType1, RepositoryCheckoutSubmodules1, QueuePoolName1, ProjectName1, QueueId1, RepositoryId1
+    | project-rename DefinitionUri = Uri, BuildUri = Uri1, DefinitionData = Data, BuildData = Data1, Trigger = Reason
+}

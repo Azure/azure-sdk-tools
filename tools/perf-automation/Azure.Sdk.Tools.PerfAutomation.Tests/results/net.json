@@ -1,0 +1,1934 @@
+[
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T07:05:38.9285954+00:00",
+    "End": "2022-07-30T07:06:56.932969+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "DownloadBlob",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 13081,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 13882,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 14236,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 14115,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 14210,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 13081,
+    "OperationsPerSecondMean": 13904.8,
+    "OperationsPerSecondMedian": 14115,
+    "OperationsPerSecondMax": 14236
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T07:06:56.933124+00:00",
+    "End": "2022-07-30T07:08:15.0191023+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "DownloadBlob",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 166.8,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 169,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 168.6,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 166,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 166.6,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 166,
+    "OperationsPerSecondMean": 167.4,
+    "OperationsPerSecondMedian": 166.8,
+    "OperationsPerSecondMax": 169
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T07:08:15.0191206+00:00",
+    "End": "2022-07-30T07:09:33.7290583+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "DownloadBlob",
+    "Arguments": "--size 10485760 --parallel 32 --sync",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 182.7,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 180.3,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 176.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 180.3,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 182.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 176.4,
+    "OperationsPerSecondMean": 180.42000000000002,
+    "OperationsPerSecondMedian": 180.3,
+    "OperationsPerSecondMax": 182.7
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T07:09:33.729071+00:00",
+    "End": "2022-07-30T07:19:50.8609034+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "DownloadBlob",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.1609,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.1516,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.141,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.1493,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.194,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.141,
+    "OperationsPerSecondMean": 0.15936,
+    "OperationsPerSecondMedian": 0.1516,
+    "OperationsPerSecondMax": 0.194
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T07:19:50.8609137+00:00",
+    "End": "2022-07-30T07:30:08.0200529+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "DownloadBlob",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.9603,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.8789,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.9217,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.9722,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.9555,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.8789,
+    "OperationsPerSecondMean": 0.93772,
+    "OperationsPerSecondMedian": 0.9555,
+    "OperationsPerSecondMax": 0.9722
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T07:30:08.0201077+00:00",
+    "End": "2022-07-30T07:31:25.3955676+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "UploadBlob",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 9580,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 12063,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 12161,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 11917,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 12010,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 9580,
+    "OperationsPerSecondMean": 11546.2,
+    "OperationsPerSecondMedian": 12010,
+    "OperationsPerSecondMax": 12161
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T07:31:25.3955813+00:00",
+    "End": "2022-07-30T07:32:42.813137+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "UploadBlob",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 142.6,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 142.6,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 142.8,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 127.2,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 142.8,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 127.2,
+    "OperationsPerSecondMean": 139.6,
+    "OperationsPerSecondMedian": 142.6,
+    "OperationsPerSecondMax": 142.8
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T07:32:42.8131462+00:00",
+    "End": "2022-07-30T07:34:00.2472101+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "UploadBlob",
+    "Arguments": "--size 10485760 --parallel 32 --sync",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 142.9,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 142.8,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 142.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 142.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 142.9,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 142.4,
+    "OperationsPerSecondMean": 142.7,
+    "OperationsPerSecondMedian": 142.8,
+    "OperationsPerSecondMax": 142.9
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T07:34:00.2472213+00:00",
+    "End": "2022-07-30T07:44:02.5171402+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "UploadBlob",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.3441,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.3552,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.3534,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.3522,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 0.3482,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.3441,
+    "OperationsPerSecondMean": 0.35062000000000004,
+    "OperationsPerSecondMedian": 0.3522,
+    "OperationsPerSecondMax": 0.3552
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T07:44:02.5171486+00:00",
+    "End": "2022-07-30T07:54:04.8808603+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "UploadBlob",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 1.394,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 1.395,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 1.394,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 1.394,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 1.395,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 1.394,
+    "OperationsPerSecondMean": 1.3943999999999999,
+    "OperationsPerSecondMedian": 1.394,
+    "OperationsPerSecondMax": 1.395
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T07:54:04.881384+00:00",
+    "End": "2022-07-30T07:55:22.4511004+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "GetBlobs",
+    "Arguments": "--count 5 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 11505,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 11518,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 11325,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 11092,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 11478,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 11092,
+    "OperationsPerSecondMean": 11383.6,
+    "OperationsPerSecondMedian": 11478,
+    "OperationsPerSecondMax": 11518
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T07:55:22.451109+00:00",
+    "End": "2022-07-30T07:56:41.1156334+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "GetBlobs",
+    "Arguments": "--count 500 --parallel 32",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 273.6,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 275.2,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 273.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 274,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 280.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 273.5,
+    "OperationsPerSecondMean": 275.34,
+    "OperationsPerSecondMedian": 274,
+    "OperationsPerSecondMax": 280.4
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T07:56:41.1156429+00:00",
+    "End": "2022-07-30T07:57:33.3363229+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "GetBlobs",
+    "Arguments": "--count 500 --parallel 32 --sync",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": ""
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. System.Xml.XmlException: Unexpected end of file while parsing Name has occurred. Line 1, position 272348.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ParseQName(Boolean isQName, Int32 startOffset, Int32& colonPos)\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r, LoadOptions o)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.Xml.XmlException: Unexpected end of file while parsing Name has occurred. Line 1, position 272348.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ParseQName(Boolean isQName, Int32 startOffset, Int32& colonPos)\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r, LoadOptions o)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\n",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": ""
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "Unhandled exception. Unhandled exception. System.Xml.XmlException: Unexpected end of file while parsing Name has occurred. Line 1, position 130751.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ParseQName(Boolean isQName, Int32 startOffset, Int32& colonPos)\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r, LoadOptions o)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()System.Xml.XmlException: Unexpected end of file while parsing Name has occurred. Line 1, position 272348.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ParseQName(Boolean isQName, Int32 startOffset, Int32& colonPos)\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r, LoadOptions o)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\n\n",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": ""
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "Unhandled exception. System.Xml.XmlException: Root element is missing.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.ParseDocumentContent()\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\n",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": ""
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. System.NotSupportedException:  The ReadAsync method cannot be called when another read operation is pending.\n   at System.Net.Security.SslStream.ReadAsyncInternal[TReadAdapter](TReadAdapter adapter, Memory`1 buffer)\n   at System.Net.Security.SslStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at System.Net.Http.HttpConnection.Fill()\n   at System.Net.Http.HttpConnection.ChunkedEncodingReadStream.Read(Span`1 buffer)\n   at System.Net.Http.HttpBaseStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.CopyTo(Stream source, Stream destination, CancellationTokenSource cancellationTokenSource)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.LoggingPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.RedirectPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RedirectPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RetryPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipeline.Send(HttpMessage message, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.NotSupportedException:  The ReadAsync method cannot be called when another read operation is pending.\n   at System.Net.Security.SslStream.ReadAsyncInternal[TReadAdapter](TReadAdapter adapter, Memory`1 buffer)\n   at System.Net.Security.SslStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at System.Net.Http.HttpConnection.Fill()\n   at System.Net.Http.HttpConnection.ChunkedEncodingReadStream.Read(Span`1 buffer)\n   at System.Net.Http.HttpBaseStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.CopyTo(Stream source, Stream destination, CancellationTokenSource cancellationTokenSource)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.LoggingPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.RedirectPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RedirectPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RetryPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipeline.Send(HttpMessage message, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.NotSupportedException:  The ReadAsync method cannot be called when another read operation is pending.\n   at System.Net.Security.SslStream.ReadAsyncInternal[TReadAdapter](TReadAdapter adapter, Memory`1 buffer)\n   at System.Net.Security.SslStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at System.IO.Stream.Read(Span`1 buffer)\n   at System.Net.Http.HttpConnection.Read(Span`1 destination)\n   at System.Net.Http.HttpConnection.ChunkedEncodingReadStream.Read(Span`1 buffer)\n   at System.Net.Http.HttpBaseStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.CopyTo(Stream source, Stream destination, CancellationTokenSource cancellationTokenSource)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.LoggingPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.RedirectPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RedirectPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RetryPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipeline.Send(HttpMessage message, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.NotSupportedException:  The ReadAsync method cannot be called when another read operation is pending.\n   at System.Net.Security.SslStream.ReadAsyncInternal[TReadAdapter](TReadAdapter adapter, Memory`1 buffer)\n   at System.Net.Security.SslStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at System.Net.Http.HttpConnection.Fill()\n   at System.Net.Http.HttpConnection.ChunkedEncodingReadStream.Read(Span`1 buffer)\n   at System.Net.Http.HttpBaseStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.CopyTo(Stream source, Stream destination, CancellationTokenSource cancellationTokenSource)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.LoggingPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.RedirectPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RedirectPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async)\n   at Azure.Core.Pipeline.RetryPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline)\n   at Azure.Core.Pipeline.HttpPipeline.Send(HttpMessage message, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\n",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": ""
+        },
+        "OperationsPerSecond": 244.2,
+        "StandardOutput": "",
+        "StandardError": "Unhandled exception. Unhandled exception.Unhandled exception.  Unhandled exception.Unhandled exception. Unhandled exception.  Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. System.Xml.XmlException: Unexpected end of file has occurred. The following elements are not closed: Properties, Blob, Blobs, EnumerationResults. Line 1, position 65215.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ThrowUnclosedElements()\n   at System.Xml.XmlTextReaderImpl.ParseAttributes()\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.Xml.XmlException: Unexpected end of file has occurred. The following elements are not closed: Properties, Blob, Blobs, EnumerationResults. Line 1, position 65215.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ThrowUnclosedElements()\n   at System.Xml.XmlTextReaderImpl.ParseAttributes()\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.Xml.XmlException: Unexpected end of file has occurred. The following elements are not closed: Properties, Blob, Blobs, EnumerationResults. Line 1, position 65215.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ThrowUnclosedElements()\n   at System.Xml.XmlTextReaderImpl.ParseAttributes()\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.Xml.XmlException: Unexpected end of file has occurred. The following elements are not closed: Last-Modified, Properties, Blob, Blobs, EnumerationResults. Line 1, position 243676.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ThrowUnclosedElements()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.Xml.XmlException: Unexpected end of file while parsing Name has occurred. Line 1, position 130751.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ParseQName(Boolean isQName, Int32 startOffset, Int32& colonPos)\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.Xml.XmlException: Unexpected end of file has occurred. The following elements are not closed: Properties, Blob, Blobs, EnumerationResults. Line 1, position 65215.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ThrowUnclosedElements()\n   at System.Xml.XmlTextReaderImpl.ParseAttributes()\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.Xml.XmlException: Unexpected end of file has occurred. The following elements are not closed: Properties, Blob, Blobs, EnumerationResults. Line 1, position 65215.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ThrowUnclosedElements()\n   at System.Xml.XmlTextReaderImpl.ParseAttributes()\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken)\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task)\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext()\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()\n",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": -1,
+    "OperationsPerSecondMean": 48.04,
+    "OperationsPerSecondMedian": -1,
+    "OperationsPerSecondMax": 244.2
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T07:57:33.3363357+00:00",
+    "End": "2022-07-30T08:08:15.0850789+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "GetBlobs",
+    "Arguments": "--count 50000 --parallel 32 --warmup 60 --duration 60",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "12.13.0"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 2.676,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 2.719,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 2.677,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 2.704,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.13.0+dd17f33e411562517144e4b6b16f5ea910e5c5ae"
+        },
+        "OperationsPerSecond": 2.702,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 2.676,
+    "OperationsPerSecondMean": 2.6955999999999998,
+    "OperationsPerSecondMedian": 2.702,
+    "OperationsPerSecondMax": 2.719
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T08:08:55.3009833+00:00",
+    "End": "2022-07-30T08:10:13.1236882+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "DownloadBlob",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 14199,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 13944,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 14294,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 14513,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 14512,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 13944,
+    "OperationsPerSecondMean": 14292.4,
+    "OperationsPerSecondMedian": 14294,
+    "OperationsPerSecondMax": 14513
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T08:10:13.1236984+00:00",
+    "End": "2022-07-30T08:11:31.0886966+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "DownloadBlob",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 166.2,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 171,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 171.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 172.1,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 168.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 166.2,
+    "OperationsPerSecondMean": 169.82,
+    "OperationsPerSecondMedian": 171,
+    "OperationsPerSecondMax": 172.1
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T08:11:31.0887048+00:00",
+    "End": "2022-07-30T08:12:49.6981314+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "DownloadBlob",
+    "Arguments": "--size 10485760 --parallel 32 --sync",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 183.2,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 182.4,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 182.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 182.6,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 184.6,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 182.4,
+    "OperationsPerSecondMean": 183.06,
+    "OperationsPerSecondMedian": 182.6,
+    "OperationsPerSecondMax": 184.6
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T08:12:49.6981426+00:00",
+    "End": "2022-07-30T08:23:06.9668547+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "DownloadBlob",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.1694,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.1532,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.1571,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.2635,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.1525,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.1525,
+    "OperationsPerSecondMean": 0.17914000000000002,
+    "OperationsPerSecondMedian": 0.1571,
+    "OperationsPerSecondMax": 0.2635
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "download",
+    "Start": "2022-07-30T08:23:06.9668638+00:00",
+    "End": "2022-07-30T08:33:24.1286556+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "DownloadBlob",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.9882,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.9775,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.9257,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.8306,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.9473,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.8306,
+    "OperationsPerSecondMean": 0.9338599999999999,
+    "OperationsPerSecondMedian": 0.9473,
+    "OperationsPerSecondMax": 0.9882
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T08:33:24.1288415+00:00",
+    "End": "2022-07-30T08:34:43.5602591+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "UploadBlob",
+    "Arguments": "--size 10240 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 11898,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 11834,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 9394,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 11791,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 12229,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 9394,
+    "OperationsPerSecondMean": 11429.2,
+    "OperationsPerSecondMedian": 11834,
+    "OperationsPerSecondMax": 12229
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T08:34:43.5602756+00:00",
+    "End": "2022-07-30T08:36:01.027808+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "UploadBlob",
+    "Arguments": "--size 10485760 --parallel 32",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 142.9,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 142.7,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 142.9,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 142.9,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 142.8,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 142.7,
+    "OperationsPerSecondMean": 142.84,
+    "OperationsPerSecondMedian": 142.9,
+    "OperationsPerSecondMax": 142.9
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T08:36:01.0278152+00:00",
+    "End": "2022-07-30T08:37:18.4934161+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "UploadBlob",
+    "Arguments": "--size 10485760 --parallel 32 --sync",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 142.9,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 143.3,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 142.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 143,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 143,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 142.5,
+    "OperationsPerSecondMean": 142.94,
+    "OperationsPerSecondMedian": 143,
+    "OperationsPerSecondMax": 143.3
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T08:37:18.4934268+00:00",
+    "End": "2022-07-30T08:47:20.707908+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "UploadBlob",
+    "Arguments": "--size 1073741824 --parallel 1 --warmup 60 --duration 60",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.3452,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.3507,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.3492,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.3516,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 0.3515,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 0.3452,
+    "OperationsPerSecondMean": 0.34964,
+    "OperationsPerSecondMedian": 0.3507,
+    "OperationsPerSecondMax": 0.3516
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "upload",
+    "Start": "2022-07-30T08:47:20.707916+00:00",
+    "End": "2022-07-30T08:57:23.1228342+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "UploadBlob",
+    "Arguments": "--size 1073741824 --parallel 8 --warmup 60 --duration 60",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 1.394,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 1.394,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 1.394,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 1.394,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 1.394,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 1.394,
+    "OperationsPerSecondMean": 1.394,
+    "OperationsPerSecondMedian": 1.394,
+    "OperationsPerSecondMax": 1.394
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T08:57:23.1233276+00:00",
+    "End": "2022-07-30T08:58:40.6932952+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "GetBlobs",
+    "Arguments": "--count 5 --parallel 64",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 11426,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 11485,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 11449,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 11448,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 11527,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 11426,
+    "OperationsPerSecondMean": 11467,
+    "OperationsPerSecondMedian": 11449,
+    "OperationsPerSecondMax": 11527
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T08:58:40.6933026+00:00",
+    "End": "2022-07-30T08:59:59.6777127+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "GetBlobs",
+    "Arguments": "--count 500 --parallel 32",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 275.7,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 271.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 276,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 275.5,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 272.8,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 271.5,
+    "OperationsPerSecondMean": 274.3,
+    "OperationsPerSecondMedian": 275.5,
+    "OperationsPerSecondMax": 276
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T08:59:59.677721+00:00",
+    "End": "2022-07-30T09:00:30.554258+00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "GetBlobs",
+    "Arguments": "--count 500 --parallel 32 --sync",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": ""
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "Unhandled exception. Unhandled exception. Unhandled exception. System.Xml.XmlException: Unexpected end of file has occurred. The following elements are not closed: Properties, Blob, Blobs, EnumerationResults. Line 1, position 65215.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ThrowUnclosedElements()\n   at System.Xml.XmlTextReaderImpl.ParseAttributes()\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Generated/ContainerRestClient.cs:line 1309\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/BlobContainerClient.cs:line 2599\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Models/GetBlobsAsyncCollection.cs:line 71\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task) in /_/sdk/core/Azure.Core/src/Shared/TaskExtensions.cs:line 53\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext() in /_/sdk/storage/Azure.Storage.Common/src/Shared/StorageCollectionEnumerator.cs:line 103\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()System.Xml.XmlException: Unexpected end of file has occurred. The following elements are not closed: Properties, Blob, Blobs, EnumerationResults. Line 1, position 65215.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ThrowUnclosedElements()\n   at System.Xml.XmlTextReaderImpl.ParseAttributes()\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Generated/ContainerRestClient.cs:line 1309\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/BlobContainerClient.cs:line 2599\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Models/GetBlobsAsyncCollection.cs:line 71\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task) in /_/sdk/core/Azure.Core/src/Shared/TaskExtensions.cs:line 53\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext() in /_/sdk/storage/Azure.Storage.Common/src/Shared/StorageCollectionEnumerator.cs:line 103\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()\n\n",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": ""
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "Unhandled exception. System.Xml.XmlException: Root element is missing.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.ParseDocumentContent()\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Generated/ContainerRestClient.cs:line 1309\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/BlobContainerClient.cs:line 2599\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Models/GetBlobsAsyncCollection.cs:line 71\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task) in /_/sdk/core/Azure.Core/src/Shared/TaskExtensions.cs:line 53\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext() in /_/sdk/storage/Azure.Storage.Common/src/Shared/StorageCollectionEnumerator.cs:line 103\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\n",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": ""
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. System.Xml.XmlException: Root element is missing.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.ParseDocumentContent()\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Generated/ContainerRestClient.cs:line 1309\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/BlobContainerClient.cs:line 2599\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Models/GetBlobsAsyncCollection.cs:line 71\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task) in /_/sdk/core/Azure.Core/src/Shared/TaskExtensions.cs:line 53\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext() in /_/sdk/storage/Azure.Storage.Common/src/Shared/StorageCollectionEnumerator.cs:line 103\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.NotSupportedException:  The ReadAsync method cannot be called when another read operation is pending.\n   at System.Net.Security.SslStream.ReadAsyncInternal[TReadAdapter](TReadAdapter adapter, Memory`1 buffer)\n   at System.Net.Security.SslStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at System.Net.Http.HttpConnection.Fill()\n   at System.Net.Http.HttpConnection.ChunkedEncodingReadStream.Read(Span`1 buffer)\n   at System.Net.Http.HttpBaseStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.CopyTo(Stream source, Stream destination, CancellationTokenSource cancellationTokenSource) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 151\n   at Azure.Core.Pipeline.ResponseBodyPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 121\n   at Azure.Core.Pipeline.ResponseBodyPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 32\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.LoggingPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/LoggingPolicy.cs:line 44\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.RedirectPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RedirectPolicy.cs:line 33\n   at Azure.Core.Pipeline.RedirectPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RedirectPolicy.cs:line 175\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 61\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 94\n   at Azure.Core.Pipeline.RetryPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 38\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipeline.Send(HttpMessage message, CancellationToken cancellationToken) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipeline.cs:line 189\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Generated/ContainerRestClient.cs:line 1309\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/BlobContainerClient.cs:line 2599\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Models/GetBlobsAsyncCollection.cs:line 71\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task) in /_/sdk/core/Azure.Core/src/Shared/TaskExtensions.cs:line 53\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext() in /_/sdk/storage/Azure.Storage.Common/src/Shared/StorageCollectionEnumerator.cs:line 103\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()System.NotSupportedException:  The ReadAsync method cannot be called when another read operation is pending.\n   at System.Net.Security.SslStream.ReadAsyncInternal[TReadAdapter](TReadAdapter adapter, Memory`1 buffer)\n   at System.Net.Security.SslStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at System.Net.Http.HttpConnection.Fill()\n   at System.Net.Http.HttpConnection.ChunkedEncodingReadStream.Read(Span`1 buffer)\n   at System.Net.Http.HttpBaseStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.CopyTo(Stream source, Stream destination, CancellationTokenSource cancellationTokenSource) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 151\n   at Azure.Core.Pipeline.ResponseBodyPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 121\n   at Azure.Core.Pipeline.ResponseBodyPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 32\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.LoggingPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/LoggingPolicy.cs:line 44\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.RedirectPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RedirectPolicy.cs:line 33\n   at Azure.Core.Pipeline.RedirectPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RedirectPolicy.cs:line 175\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 61\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 94\n   at Azure.Core.Pipeline.RetryPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 38\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipeline.Send(HttpMessage message, CancellationToken cancellationToken) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipeline.cs:line 189\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Generated/ContainerRestClient.cs:line 1309\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/BlobContainerClient.cs:line 2599\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Models/GetBlobsAsyncCollection.cs:line 71\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task) in /_/sdk/core/Azure.Core/src/Shared/TaskExtensions.cs:line 53\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext() in /_/sdk/storage/Azure.Storage.Common/src/Shared/StorageCollectionEnumerator.cs:line 103\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\n\nSystem.NotSupportedException:  The ReadAsync method cannot be called when another read operation is pending.\n   at System.Net.Security.SslStream.ReadAsyncInternal[TReadAdapter](TReadAdapter adapter, Memory`1 buffer)\n   at System.Net.Security.SslStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at System.Net.Http.HttpConnection.Fill()\n   at System.Net.Http.HttpConnection.ChunkedEncodingReadStream.Read(Span`1 buffer)\n   at System.Net.Http.HttpBaseStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.CopyTo(Stream source, Stream destination, CancellationTokenSource cancellationTokenSource) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 151\n   at Azure.Core.Pipeline.ResponseBodyPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 121\n   at Azure.Core.Pipeline.ResponseBodyPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 32\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.LoggingPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/LoggingPolicy.cs:line 44\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.RedirectPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RedirectPolicy.cs:line 33\n   at Azure.Core.Pipeline.RedirectPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RedirectPolicy.cs:line 175\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 61\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 94\n   at Azure.Core.Pipeline.RetryPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 38\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipeline.Send(HttpMessage message, CancellationToken cancellationToken) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipeline.cs:line 189\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Generated/ContainerRestClient.cs:line 1309\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/BlobContainerClient.cs:line 2599\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Models/GetBlobsAsyncCollection.cs:line 71\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task) in /_/sdk/core/Azure.Core/src/Shared/TaskExtensions.cs:line 53\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext() in /_/sdk/storage/Azure.Storage.Common/src/Shared/StorageCollectionEnumerator.cs:line 103\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\n",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": ""
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "Unhandled exception. System.NotSupportedException:  The ReadAsync method cannot be called when another read operation is pending.\n   at System.Net.Security.SslStream.ReadAsyncInternal[TReadAdapter](TReadAdapter adapter, Memory`1 buffer)\n   at System.Net.Security.SslStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at System.Net.Http.HttpConnection.Fill()\n   at System.Net.Http.HttpConnection.ChunkedEncodingReadStream.Read(Span`1 buffer)\n   at System.Net.Http.HttpBaseStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.CopyTo(Stream source, Stream destination, CancellationTokenSource cancellationTokenSource) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 151\n   at Azure.Core.Pipeline.ResponseBodyPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 121\n   at Azure.Core.Pipeline.ResponseBodyPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 32\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.LoggingPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/LoggingPolicy.cs:line 44\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.RedirectPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RedirectPolicy.cs:line 33\n   at Azure.Core.Pipeline.RedirectPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RedirectPolicy.cs:line 175\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 61\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 94\n   at Azure.Core.Pipeline.RetryPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 38\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipeline.Send(HttpMessage message, CancellationToken cancellationToken) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipeline.cs:line 189\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Generated/ContainerRestClient.cs:line 1309\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/BlobContainerClient.cs:line 2599\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Models/GetBlobsAsyncCollection.cs:line 71\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task) in /_/sdk/core/Azure.Core/src/Shared/TaskExtensions.cs:line 53\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext() in /_/sdk/storage/Azure.Storage.Common/src/Shared/StorageCollectionEnumerator.cs:line 103\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n   at System.Threading.ThreadHelper.ThreadStart()\n",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": ""
+        },
+        "OperationsPerSecond": -1,
+        "StandardOutput": "",
+        "StandardError": "Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. Unhandled exception. System.NotSupportedException:  The ReadAsync method cannot be called when another read operation is pending.\n   at System.Net.Security.SslStream.ReadAsyncInternal[TReadAdapter](TReadAdapter adapter, Memory`1 buffer)\n   at System.Net.Security.SslStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at System.Net.Http.HttpConnection.Fill()\n   at System.Net.Http.HttpConnection.ChunkedEncodingReadStream.Read(Span`1 buffer)\n   at System.Net.Http.HttpBaseStream.Read(Byte[] buffer, Int32 offset, Int32 count)\n   at Azure.Core.Pipeline.ResponseBodyPolicy.CopyTo(Stream source, Stream destination, CancellationTokenSource cancellationTokenSource) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 151\n   at Azure.Core.Pipeline.ResponseBodyPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 121\n   at Azure.Core.Pipeline.ResponseBodyPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/ResponseBodyPolicy.cs:line 32\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.LoggingPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/LoggingPolicy.cs:line 44\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.RedirectPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RedirectPolicy.cs:line 33\n   at Azure.Core.Pipeline.RedirectPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RedirectPolicy.cs:line 175\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 61\n   at Azure.Core.Pipeline.RetryPolicy.ProcessAsync(HttpMessage message, ReadOnlyMemory`1 pipeline, Boolean async) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 94\n   at Azure.Core.Pipeline.RetryPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/Internal/RetryPolicy.cs:line 38\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipelinePolicy.ProcessNext(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelinePolicy.cs:line 49\n   at Azure.Core.Pipeline.HttpPipelineSynchronousPolicy.Process(HttpMessage message, ReadOnlyMemory`1 pipeline) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipelineSynchronousPolicy.cs:line 37\n   at Azure.Core.Pipeline.HttpPipeline.Send(HttpMessage message, CancellationToken cancellationToken) in /_/sdk/core/Azure.Core/src/Pipeline/HttpPipeline.cs:line 189\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Generated/ContainerRestClient.cs:line 1309\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/BlobContainerClient.cs:line 2599\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Models/GetBlobsAsyncCollection.cs:line 71\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task) in /_/sdk/core/Azure.Core/src/Shared/TaskExtensions.cs:line 53\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext() in /_/sdk/storage/Azure.Storage.Common/src/Shared/StorageCollectionEnumerator.cs:line 103\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.Xml.XmlException: Unexpected end of file while parsing Name has occurred. Line 1, position 32447.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ParseQName(Boolean isQName, Int32 startOffset, Int32& colonPos)\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Generated/ContainerRestClient.cs:line 1309\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/BlobContainerClient.cs:line 2599\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Models/GetBlobsAsyncCollection.cs:line 71\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task) in /_/sdk/core/Azure.Core/src/Shared/TaskExtensions.cs:line 53\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext() in /_/sdk/storage/Azure.Storage.Common/src/Shared/StorageCollectionEnumerator.cs:line 103\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()\nSystem.Xml.XmlException: Unexpected end of file while parsing Name has occurred. Line 1, position 16063.\n   at System.Xml.XmlTextReaderImpl.Throw(Exception e)\n   at System.Xml.XmlTextReaderImpl.Throw(String res, String arg)\n   at System.Xml.XmlTextReaderImpl.ParseQName(Boolean isQName, Int32 startOffset, Int32& colonPos)\n   at System.Xml.XmlTextReaderImpl.ParseElement()\n   at System.Xml.XmlTextReaderImpl.ParseElementContent()\n   at System.Xml.Linq.XContainer.ReadContentFrom(XmlReader r)\n   at System.Xml.Linq.XDocument.Load(XmlReader reader, LoadOptions options)\n   at System.Xml.Linq.XDocument.Load(Stream stream, LoadOptions options)\n   at Azure.Storage.Blobs.ContainerRestClient.ListBlobFlatSegment(String prefix, String marker, Nullable`1 maxresults, IEnumerable`1 include, Nullable`1 timeout, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Generated/ContainerRestClient.cs:line 1309\n   at Azure.Storage.Blobs.BlobContainerClient.GetBlobsInternal(String marker, BlobTraits traits, BlobStates states, String prefix, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/BlobContainerClient.cs:line 2599\n   at Azure.Storage.Blobs.Models.GetBlobsAsyncCollection.GetNextPageAsync(String continuationToken, Nullable`1 pageSizeHint, Boolean async, CancellationToken cancellationToken) in /_/sdk/storage/Azure.Storage.Blobs/src/Models/GetBlobsAsyncCollection.cs:line 71\n   at Azure.Core.Pipeline.TaskExtensions.EnsureCompleted[T](ValueTask`1 task) in /_/sdk/core/Azure.Core/src/Shared/TaskExtensions.cs:line 53\n   at Azure.Storage.StorageCollectionEnumerator`1.StoragePageable.GetEnumerator()+MoveNext() in /_/sdk/storage/Azure.Storage.Common/src/Shared/StorageCollectionEnumerator.cs:line 103\n   at Azure.Storage.Blobs.Perf.Scenarios.GetBlobs.Run(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Scenarios/GetBlobs.cs:line 38\n   at Azure.Test.Perf.PerfTest`1.RunBatch(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfTest.cs:line 18\n   at Azure.Test.Perf.BatchPerfTest`1.RunAll(CancellationToken cancellationToken) in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/BatchPerfTest.cs:line 165\n   at Azure.Test.Perf.PerfProgram.<>c__DisplayClass20_1.<RunTestsAsync>b__2() in /mnt/vss/_work/1/s/common/Perf/Azure.Test.Perf/PerfProgram.cs:line 377\n   at System.Threading.ThreadHelper.ThreadStart_Context(Object state)\n   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)\n--- End of stack trace from previous location where exception was thrown ---\n   at System.Threading.ThreadHelper.ThreadStart()\n",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": -1,
+    "OperationsPerSecondMean": -1,
+    "OperationsPerSecondMedian": -1,
+    "OperationsPerSecondMax": -1
+  },
+  {
+    "Service": "storage-blob",
+    "Test": "list-blobs",
+    "Start": "2022-07-30T09:00:30.5542653+00:00",
+    "End": "0001-01-01T00:00:00",
+    "Language": "net",
+    "LanguageVersion": "netcoreapp3.1",
+    "Project": "sdk/storage/Azure.Storage.Blobs/perf/Azure.Storage.Blobs.Perf/Azure.Storage.Blobs.Perf.csproj",
+    "LanguageTestName": "GetBlobs",
+    "Arguments": "--count 50000 --parallel 32 --warmup 60 --duration 60",
+    "PrimaryPackage": "Azure.Storage.Blobs",
+    "PackageVersions": {
+      "Azure.Storage.Blobs": "source"
+    },
+    "SetupStandardOutput": "",
+    "SetupStandardError": "",
+    "SetupException": null,
+    "Iterations": [
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 2.708,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 2.746,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 2.706,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 2.705,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      },
+      {
+        "PackageVersions": {
+          "Azure.Storage.Blobs": "12.14.0-alpha.20220730.1+ca51366a7e39fd256da50f7553518504d7c72b22"
+        },
+        "OperationsPerSecond": 2.705,
+        "StandardOutput": "",
+        "StandardError": "",
+        "Exception": null
+      }
+    ],
+    "OperationsPerSecondMin": 2.705,
+    "OperationsPerSecondMean": 2.714,
+    "OperationsPerSecondMedian": 2.706,
+    "OperationsPerSecondMax": 2.746
+  }
+]

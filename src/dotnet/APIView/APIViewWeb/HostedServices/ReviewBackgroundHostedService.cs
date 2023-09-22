@@ -1,44 +1,90 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using APIViewWeb.Respositories;
+using APIViewWeb.Managers;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
 namespace APIViewWeb.HostedServices
 {
-    public class ReviewBackgroundHostedService : IHostedService, IDisposable
+    public class ReviewBackgroundHostedService : BackgroundService
     {
-        private bool _isDisabled = false;
-        private ReviewManager _reviewManager;
+        private readonly bool _isDisabled;
+        private readonly IReviewManager _reviewManager;
+        private readonly int _autoArchiveInactiveGracePeriodMonths; // This is inactive duration in months
+        private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
+        private readonly int _backgroundBatchProcessCount;
 
-        public ReviewBackgroundHostedService(ReviewManager reviewManager, IConfiguration configuration)
+        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
+
+        public ReviewBackgroundHostedService(IReviewManager reviewManager, IConfiguration configuration)
         {
             _reviewManager = reviewManager;
             // We can disable background task using app settings if required
-            var taskDisabled = configuration["BackgroundTaskDisabled"];
-            if (!String.IsNullOrEmpty(taskDisabled) && taskDisabled == "true")
+            if (bool.TryParse(configuration["BackgroundTaskDisabled"], out bool taskDisabled))
             {
-                _isDisabled = true;
+                _isDisabled = taskDisabled;
+            }
+
+            var gracePeriod = configuration["ArchiveReviewGracePeriodInMonths"];
+            if (String.IsNullOrEmpty(gracePeriod) || !int.TryParse(gracePeriod, out _autoArchiveInactiveGracePeriodMonths))
+            {
+                _autoArchiveInactiveGracePeriodMonths = 4;
+            }
+            var backgroundTaskDisabledLangs = configuration["ReviewUpdateDisabledLanguages"];
+            if(!string.IsNullOrEmpty(backgroundTaskDisabledLangs))
+            {
+                _upgradeDisabledLangs.UnionWith(backgroundTaskDisabledLangs.Split(','));
+            }
+
+            // Number of review revisions to be passed to pipeline when updating review with a new parser version
+            var batchCount = configuration["ReviewUpdateBatchCount"];
+            if (String.IsNullOrEmpty(batchCount) || !int.TryParse(batchCount, out _backgroundBatchProcessCount))
+            {
+                _backgroundBatchProcessCount = 20;
             }
         }
 
-        public Task StartAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             if (!_isDisabled)
             {
-                _reviewManager.UpdateReviewBackground();
+                try
+                {
+                    await _reviewManager.UpdateReviewBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount);
+                    await ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                }
+                catch (Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+                }
             }
-            return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken stoppingToken)
+        private async Task ArchiveInactiveReviews(CancellationToken stoppingToken, int archiveAfter)
         {
-            return Task.CompletedTask;
+            do
+            {
+                try
+                {
+                    await _reviewManager.AutoArchiveReviews(archiveAfter);
+                }
+                catch(Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+                }
+                finally
+                {
+                    // Wait 6 hours before running archive task again
+                    await Task.Delay(6 * 60 * 60000, stoppingToken);
+                }                
+            }
+            while (!stoppingToken.IsCancellationRequested);
         }
-
-        public void Dispose(){}
     }
 }

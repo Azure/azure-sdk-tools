@@ -1,6 +1,7 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using APIViewWeb.Managers;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,12 +13,12 @@ namespace APIViewWeb.Controllers
 {
     public class PullRequestController : Controller
     {
-        private readonly PullRequestManager _pullRequestManager;
+        private readonly IPullRequestManager _pullRequestManager;
         private readonly ILogger _logger;
 
-        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nupkg", "-sources.jar" };
+        string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nupkg", "-sources.jar", ".gosource" };
 
-        public PullRequestController(PullRequestManager pullRequestManager, ILogger<AutoReviewController> logger)
+        public PullRequestController(IPullRequestManager pullRequestManager, ILogger<AutoReviewController> logger)
         {
             _pullRequestManager = pullRequestManager;
             _logger = logger;
@@ -25,41 +26,34 @@ namespace APIViewWeb.Controllers
                 
         [HttpGet]
         public async Task<ActionResult> DetectApiChanges(
-            string buildId, 
-            string artifactName, 
-            string filePath, 
-            int pullRequestNumber, 
-            string commitSha,
-            string repoName,
-            string packageName)
-        {
-            if (!ValidateInputParams())
-            {
-                return StatusCode(StatusCodes.Status400BadRequest);
-            }
-
-            await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber);
-            return Ok();
-        }
-
-        [HttpGet]
-        public async Task<ActionResult> CreateApiReview(
             string buildId,
             string artifactName,
-            string originalFilePath,
-            string reviewFilePath,
+            string filePath,
             string commitSha,
             string repoName,
             string packageName,
-            int pullRequestNumber = 0)
+            int pullRequestNumber = 0,
+            string codeFile = null,
+            string baselineCodeFile = null,
+            bool commentOnPR = true,
+            string language = null)
         {
             if (!ValidateInputParams())
             {
                 return StatusCode(StatusCodes.Status400BadRequest);
             }
 
-            await _pullRequestManager.DetectApiChanges(buildId, artifactName, originalFilePath, commitSha, repoName, packageName, pullRequestNumber, reviewFilePath);
-            return Ok();
+            //Handle only authorization exception and send 401 as status code.
+            //All other exception should not be handled so we will have required info in app insights.
+            try
+            {
+                var reviewUrl = await _pullRequestManager.DetectApiChanges(buildId, artifactName, filePath, commitSha, repoName, packageName, pullRequestNumber, this.Request.Host.ToUriComponent(), codeFileName: codeFile, baselineCodeFileName: baselineCodeFile, commentOnPR: commentOnPR, language: language);
+                return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
+            }
+            catch (AuthorizationFailedException)
+            {
+                return StatusCode(StatusCodes.Status401Unauthorized);
+            }
         }
 
         private bool ValidateInputParams()

@@ -5,6 +5,12 @@ We allow to create tools in any language suitable for the tools.
 For every newly developing tool, create a new folder with brief description on its name. 
 Do not add third party tools directly in your folder, use it as dependencies.
 
+## Coding Guidelines
+
+See language specific guidelines:
+
+- [PowerShell](https://github.com/Azure/azure-sdk-tools/blob/main/doc/development/powershell.md)
+
 ## Codeowners
 
 Add code owner in [CODEOWNERS](https://github.com/Azure/azure-sdk-tools/blob/main/.github/CODEOWNERS) with following format:

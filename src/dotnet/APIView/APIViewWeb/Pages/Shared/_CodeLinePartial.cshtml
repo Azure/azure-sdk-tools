@@ -1,0 +1,41 @@
+@using ApiView
+@using System.Collections
+@using System.Text
+@using APIViewWeb.Models
+@model int
+@{
+    var codeLineSection = TempData["CodeLineSection"] as CodeLineModel [];
+    var contentClass = $"code-line-section-content-{Model}";
+    var userPreference = TempData["UserPreference"] as UserPreferenceModel ?? new UserPreferenceModel();
+
+    @if (codeLineSection == null)
+    {
+        <tr class="code-line @contentClass d-none">
+             <td class="line-details">
+                <table>
+                    <tr>
+                        <td class="line-number"><span></span></td>
+                        <td class="line-details-button-cell">
+                            <a class="line-comment-button" style="visibility: hidden;">+</a> <!-- Added for visual consistency -->
+                        </td>
+                        <td class="line-details-button-cell">
+                            <span class="row-fold-caret" style="visibility: hidden;"><i class="fa-solid fa-angle-right"></i></span>
+                        </td>
+                    </tr>
+                </table>
+             </td>
+        </tr>
+    }
+    else
+    {
+        foreach (var codeLineModel in codeLineSection)
+        {
+            var codeLine = codeLineModel.CodeLine;
+            var lineClass = (codeLine.LineClass == null) ? contentClass : $"{contentClass} section-loaded {codeLine.LineClass.Trim()}";
+            var updatedCodeLine = new CodeLine(codeLine, lineClass: lineClass, indent: codeLine.Indent);
+            var updatedCodeLineModel = new CodeLineModel(codeLineModel : codeLineModel, codeLine : updatedCodeLine);
+
+            <partial name="_CodeLine" model="@updatedCodeLineModel" />
+        }
+    }
+}

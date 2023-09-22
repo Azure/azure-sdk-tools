@@ -12,11 +12,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Reflection;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Microsoft.Extensions.Logging;
+using System.Reflection;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Azure.Sdk.Tools.TestProxy.Store;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using System.CommandLine;
+using Azure.Sdk.Tools.TestProxy.CommandOptions;
+using System.Text.Json;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Options;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
+    [ExcludeFromCodeCoverage]
     public sealed class Startup
     {
         internal static int RequestsRecorded;
@@ -28,51 +39,148 @@ namespace Azure.Sdk.Tools.TestProxy
         public Startup(IConfiguration configuration) { }
 
         public static string TargetLocation;
+        public static StoreResolver Resolver;
+        public static IAssetsStore DefaultStore;
+        public static string[] storedArgs;
 
         private static string resolveRepoLocation(string storageLocation = null)
         {
             var envValue = Environment.GetEnvironmentVariable("TEST_PROXY_FOLDER");
-
-            // TODO: absolute the paths first two paths if relative
             return storageLocation ?? envValue ?? Directory.GetCurrentDirectory();
         }
 
         /// <summary>
         /// test-proxy
         /// </summary>
-        /// <param name="insecure">Allow untrusted SSL certs from upstream server</param>
-        /// <param name="storageLocation">The path to the target local git repo. If not provided as an argument, Environment variable TEST_PROXY_FOLDER will be consumed. Lacking both, the current working directory will be utilized.</param>
-        /// <param name="version">Flag. Invoke to get the version of the tool.</param>
-        public static void Main(bool insecure = false, string storageLocation = null, bool version = false)
+        /// <param name="args">CommandLineParser arguments. In server mode use double dash '--' and everything after that becomes additional arguments to Host.CreateDefaultBuilder. Ex. -- arg1 value1 arg2 value2 </param>
+        public static async Task Main(string[] args = null)
         {
-            if (version)
+            storedArgs = args;
+            var rootCommand = OptionsGenerator.GenerateCommandLineOptions(Run);
+            var resultCode = await rootCommand.InvokeAsync(args);
+
+            Environment.Exit(resultCode);
+        }
+
+        private static async Task Run(object commandObj)
+        {
+            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            System.Console.WriteLine($"Running proxy version is Azure.Sdk.Tools.TestProxy {semanticVersion}");
+
+            new GitProcessHandler().VerifyGitMinVersion();
+            DefaultOptions defaultOptions = (DefaultOptions)commandObj;
+
+            TargetLocation = resolveRepoLocation(defaultOptions.StorageLocation);
+            Resolver = new StoreResolver();
+            DefaultStore = Resolver.ResolveStore(defaultOptions.StoragePlugin ?? "GitStore");
+            var assetsJson = string.Empty;
+
+            switch (commandObj)
             {
-                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                var nameVersion = assembly.GetName().Version;
-
-                Console.WriteLine(nameVersion);
-
-                Environment.Exit(0);
+                case ConfigLocateOptions configOptions:
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
+                    System.Console.WriteLine(await DefaultStore.GetPath(assetsJson));
+                    break;
+                case ConfigShowOptions configOptions:
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
+                    using(var f = File.OpenRead(assetsJson))
+                    {
+                        using var json = JsonDocument.Parse(f);
+                        System.Console.WriteLine(JsonSerializer.Serialize(json, new JsonSerializerOptions { WriteIndented = true }));
+                    }
+                    break;
+                case ConfigCreateOptions configOptions:
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(configOptions.AssetsJsonPath, TargetLocation);
+                    throw new NotImplementedException("Interactive creation of assets.json feature is not yet implemented.");
+                case ConfigOptions configOptions:
+                    System.Console.WriteLine("Config verb requires a subcommand after the \"config\" verb.\n\nCorrect Usage: \"Azure.Sdk.Tools.TestProxy config locate|show|create -a path/to/assets.json\"");
+                    break;
+                case StartOptions startOptions:
+                    StartServer(startOptions);
+                    break;
+                case PushOptions pushOptions:
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(pushOptions.AssetsJsonPath, TargetLocation);
+                    await DefaultStore.Push(assetsJson);
+                    break;
+                case ResetOptions resetOptions:
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(resetOptions.AssetsJsonPath, TargetLocation);
+                    await DefaultStore.Reset(assetsJson);
+                    break;
+                case RestoreOptions restoreOptions:
+                    assetsJson = RecordingHandler.GetAssetsJsonLocation(restoreOptions.AssetsJsonPath, TargetLocation);
+                    await DefaultStore.Restore(assetsJson);
+                    break;
+                case DefaultOptions defaultOpts:
+                    StartServer(new StartOptions()
+                    {
+                        AdditionalArgs = new string[] { },
+                        StorageLocation = defaultOpts.StorageLocation,
+                        StoragePlugin = defaultOpts.StoragePlugin,
+                        Insecure = false,
+                        Dump = false
+                    });
+                    break;
+                default:
+                    throw new ArgumentException($"Unable to parse the argument set: {string.Join(" ", storedArgs)}");
             }
+        }
 
-            _insecure = insecure;
-
+        private static void StartServer(StartOptions startOptions)
+        {
+            _insecure = startOptions.Insecure;
             Regex.CacheSize = 0;
 
             var statusThreadCts = new CancellationTokenSource();
 
-            TargetLocation = resolveRepoLocation(storageLocation);
-
             var statusThread = PrintStatus(
-                () => $"[{DateTime.Now.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
+                () => $"[{DateTime.UtcNow.ToString("HH:mm:ss")}] Recorded: {RequestsRecorded}\tPlayed Back: {RequestsPlayedBack}",
                 newLine: true, statusThreadCts.Token);
 
-            var host = Host.CreateDefaultBuilder();
+            var host = Host.CreateDefaultBuilder((startOptions.AdditionalArgs??new string[] { }).ToArray());
 
             host.ConfigureWebHostDefaults(
-                builder => builder.UseStartup<Startup>());
+                builder =>
+                    builder.UseStartup<Startup>()
+                    // ripped directly from implementation of ConfigureWebDefaults@https://github.dev/dotnet/aspnetcore/blob/a779227cc2694a50b074a097889ed9e80d15cd77/src/DefaultBuilder/src/WebHost.cs#L176
+                    .ConfigureLogging((hostBuilder, loggingBuilder) =>
+                    {
+                        loggingBuilder.ClearProviders();
+                        loggingBuilder.AddConfiguration(hostBuilder.Configuration.GetSection("Logging"));
+                        loggingBuilder.AddConsole(options =>
+                        {
+                            options.LogToStandardErrorThreshold = LogLevel.Error;
+                        }).AddSimpleConsole(options =>
+                        {
+                            options.TimestampFormat = "[HH:mm:ss] ";
+                        });
+                        loggingBuilder.AddDebug();
+                        loggingBuilder.AddEventSourceLogger();
+                    })
+                    .ConfigureKestrel(kestrelServerOptions =>
+                    {
+                        kestrelServerOptions.ConfigureEndpointDefaults(lo => lo.Protocols = HttpProtocols.Http1);
+                        // default minimum rate is 240 bytes per second with 5 second grace period. Bumping to 50bps with a graceperiod of 20 seconds.
+                        kestrelServerOptions.Limits.MinRequestBodyDataRate = new MinDataRate(bytesPerSecond: 50, gracePeriod: TimeSpan.FromSeconds(20));
+                    })
+                );
 
-            host.Build().Run();
+            var app = host.Build();
+
+            if (startOptions.Dump)
+            {
+                var config = app.Services?.GetService<IConfiguration>();
+                System.Console.WriteLine("Dumping Resolved Configuration Values:");
+                if (config != null)
+                {
+                    foreach (var c in config.AsEnumerable())
+                    {
+                        System.Console.WriteLine(c.Key + " = " + c.Value);
+                    }
+                }
+            }
+
+            app.Run();
 
             statusThreadCts.Cancel();
             statusThread.Join();
@@ -98,10 +206,17 @@ namespace Azure.Sdk.Tools.TestProxy
             });
             services.AddControllersWithViews();
             services.AddRazorPages();
-            services.AddSingleton<RecordingHandler>(new RecordingHandler(TargetLocation));
+
+            var singletonRecordingHandler = new RecordingHandler(
+                TargetLocation,
+                store: DefaultStore,
+                storeResolver: Resolver
+            );
+
+            services.AddSingleton<RecordingHandler>(singletonRecordingHandler);
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
@@ -109,6 +224,8 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             app.UseCors("DefaultPolicy");
             app.UseMiddleware<HttpExceptionMiddleware>();
+
+            DebugLogger.ConfigureLogger(loggerFactory);
 
             MapRecording(app);
             app.UseRouting();
@@ -168,21 +285,21 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     if (newLine)
                     {
-                        Console.WriteLine(obj);
+                        System.Console.WriteLine(obj);
                     }
                     else
                     {
-                        Console.Write(obj);
+                        System.Console.Write(obj);
                         needsExtraNewline = true;
                     }
                 }
 
                 if (needsExtraNewline)
                 {
-                    Console.WriteLine();
+                    System.Console.WriteLine();
                 }
 
-                Console.WriteLine();
+                System.Console.WriteLine();
             });
 
             thread.Start();

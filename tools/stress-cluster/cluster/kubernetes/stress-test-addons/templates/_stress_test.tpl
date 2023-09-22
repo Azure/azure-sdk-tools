@@ -4,22 +4,33 @@ spec:
     {{- include (index . 1) (index . 0) | nindent 4 -}}
 {{- end -}}
 
+{{- define "stress-test-addons.parallel-job-wrapper.tpl" -}}
+spec:
+  completions: {{ index . 2 }}
+  parallelism: {{ index . 2 }}
+  completionMode: Indexed
+  template:
+    {{- include (index . 1) (index . 0) | nindent 4 -}}
+{{- end -}}
+
 {{- define "stress-test-addons.deploy-job-template.tpl" -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}"
+  name: "{{ lower .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}"
   namespace: {{ .Release.Namespace }}
   labels:
     release: {{ .Release.Name }}
-    scenario: {{ .Scenario }}
+    scenario: {{ .Stress.Scenario }}
+    resourceGroupName: {{ .Stress.ResourceGroupName }}
+    baseName: {{ .Stress.BaseName }}
 spec:
   backoffLimit: 0
   template:
     metadata:
       labels:
         release: {{ .Release.Name }}
-        scenario: {{ .Scenario }}
+        scenario: {{ .Stress.Scenario }}
     spec:
       # In cases where a stress test has higher resource requirements or needs a dedicated node,
       # a new nodepool can be provisioned and labeled to allow custom scheduling.
@@ -48,30 +59,48 @@ spec:
 {{- include "stress-test-addons.deploy-configmap" $global }}
 {{- range (default (list "stress") $global.Values.scenarios) }}
 ---
-{{- /* Copy scenario name into top level key of global context */}}
-{{ $instance := deepCopy $global | merge (dict "Scenario" . ) -}}
-{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $instance $podDefinition)) -}}
-{{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $instance) -}}
+{{ $jobCtx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list $global . )) }}
+{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $jobCtx $podDefinition)) -}}
+{{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $jobCtx) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
+{{- include "stress-test-addons.static-secrets" $global }}
+{{- end -}}
+
+{{- define "stress-test-addons.parallel-deploy-job-template.from-pod" -}}
+{{- $global := index . 0 -}}
+{{- $podDefinition := index . 1 -}}
+{{- $parallel := index . 2 -}}
+# Configmap template that adds the stress test ARM template for mounting
+{{- include "stress-test-addons.deploy-configmap" $global }}
+{{- range (default (list "stress") $global.Values.scenarios) }}
+---
+{{ $jobCtx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list $global . )) }}
+{{- $jobOverride := fromYaml (include "stress-test-addons.parallel-job-wrapper.tpl" (list $jobCtx $podDefinition $parallel)) -}}
+{{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $jobCtx) -}}
+{{- toYaml (merge $jobOverride $tpl) -}}
+{{- end }}
+{{- include "stress-test-addons.static-secrets" $global }}
 {{- end -}}
 
 {{- define "stress-test-addons.env-job-template.tpl" -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}"
+  name: "{{ .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}"
   namespace: {{ .Release.Namespace }}
   labels:
     release: {{ .Release.Name }}
-    scenario: {{ .Scenario }}
+    scenario: {{ .Stress.Scenario }}
+    resourceGroupName: {{ .Stress.ResourceGroupName }}
+    baseName: {{ .Stress.BaseName }}
 spec:
   backoffLimit: 0
   template:
     metadata:
       labels:
         release: {{ .Release.Name }}
-        scenario: {{ .Scenario }}
+        scenario: {{ .Stress.Scenario }}
     spec:
       nodeSelector:
         sku: 'default'
@@ -93,9 +122,10 @@ spec:
 {{- range (default (list "stress") $global.Values.scenarios) }}
 ---
 {{- /* Copy scenario name into top level key of global context */}}
-{{ $instance := deepCopy $global | merge (dict "Scenario" . ) -}}
-{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $instance $podDefinition)) -}}
-{{- $tpl := fromYaml (include "stress-test-addons.env-job-template.tpl" $instance) -}}
+{{ $jobCtx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list $global . )) }}
+{{- $jobOverride := fromYaml (include "stress-test-addons.job-wrapper.tpl" (list $jobCtx $podDefinition)) -}}
+{{- $tpl := fromYaml (include "stress-test-addons.env-job-template.tpl" $jobCtx) -}}
 {{- toYaml (merge $jobOverride $tpl) -}}
 {{- end }}
+{{- include "stress-test-addons.static-secrets" $global }}
 {{- end -}}

@@ -18,11 +18,16 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
             Condition = condition;
         }
 
-        public override void ApplyTransform(RecordEntry entry)
+        /// <summary>
+        /// Transform that updates a matched playback response with the x-ms-client-id header value pulled from the request.
+        /// </summary>
+        /// <param name="request">The request from which transformations will be pulled.</param>
+        /// <param name="match">The matched playback entry that can be transformed with an incoming client id.</param>
+        public override void ApplyTransform(HttpRequest request, RecordEntry match)
         {
-            if (entry.Request.Headers.TryGetValue("x-ms-client-id", out var clientId))
+            if (request.Headers.TryGetValue("x-ms-client-id", out var clientId))
             {
-                entry.Response.Headers.Add("x-ms-client-id", clientId);
+                match.Response.Headers["x-ms-client-id"] = clientId;
             }
         }
     }

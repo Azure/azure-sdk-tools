@@ -9,7 +9,6 @@ using Serilog;
 using Serilog.Context;
 using Serilog.Sinks.SystemConsole.Themes;
 using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
 
 namespace Stress.Watcher
 {
@@ -78,7 +77,9 @@ namespace Stress.Watcher
             {
                 try
                 {
-                    var listTask = Client.ListPodForAllNamespacesWithHttpMessagesAsync(
+                    Logger.Information("Starting pod watch");
+
+                    var listTask = Client.CoreV1.ListPodForAllNamespacesWithHttpMessagesAsync(
                         allowWatchBookmarks: true,
                         watch: true,
                         resourceVersion: resourceVersion,
@@ -133,13 +134,6 @@ namespace Stress.Watcher
                         Logger.Error(t.Exception, "Error handling pod event.");
                     }
                 });
-                DeleteResources(pod).ContinueWith(t =>
-                {
-                    if (t.Exception != null)
-                    {
-                        Logger.Error(t.Exception, "Error deleting resources.");
-                    }
-                });
             }
         }
 
@@ -164,10 +158,17 @@ namespace Stress.Watcher
                         .Where(cr => ShouldStartChaos(cr, pod))
                         .Select(async cr =>
                         {
-                            await Client.PatchNamespacedCustomObjectWithHttpMessagesAsync(
-                                    PodChaosResumePatchBody, ChaosClient.Group, ChaosClient.Version,
-                                    pod.Namespace(), cr.Kind.ToLower(), cr.Metadata.Name);
+                            string plural = "";
+                            foreach (string pluralName in Enum.GetNames(typeof(GenericChaosClient.ChaosResourcePlurals))) {
+                                if (pluralName.Contains(cr.Kind.ToLower())) {
+                                    plural = pluralName;
+                                    break;
+                                }
+                            }
 
+                            await Client.PatchNamespacedCustomObjectAsync(
+                                    PodChaosResumePatchBody, ChaosClient.Group, ChaosClient.Version,
+                                    pod.Namespace(), plural, cr.Metadata.Name);
                             using (LogContext.PushProperty("chaosResource", $"{cr.Kind}/{cr.Metadata.Name}"))
                             {
                                 Logger.Information($"Started chaos for pod.");
@@ -179,11 +180,10 @@ namespace Stress.Watcher
 
         public bool ShouldStartChaos(GenericChaosResource chaos, V1Pod pod)
         {
-            if (chaos.Spec.Selector.LabelSelectors?.TestInstance != pod.TestInstance())
+            if (chaos.Spec.GetTestInstance() != pod.TestInstance())
             {
                 return false;
             }
-
             return chaos.IsPaused();
         }
 
@@ -207,7 +207,7 @@ namespace Stress.Watcher
                 return false;
             }
 
-            if (!pod.Metadata.Labels.TryGetValue("chaos", out var chaos) || chaos != "true")
+            if (pod.Metadata.Labels?.TryGetValue("chaos", out var chaos) != true || chaos != "true")
             {
                 return false;
             }
@@ -227,78 +227,6 @@ namespace Stress.Watcher
             }
 
             return true;
-        }
-
-        public async Task DeleteResources(V1Pod pod)
-        {
-            if (!ShouldDeleteResources(pod))
-            {
-                Logger.Debug($"Skipping resource deletion.");
-                return;
-            }
-
-            var rgName = GetResourceGroupName(pod);
-
-            if (string.IsNullOrEmpty(rgName))
-            {
-                return;
-            }
-
-            Subscription subscription = ARMClient.DefaultSubscription;
-
-            ResourceGroup resourceGroup;
-            try {
-                resourceGroup = await subscription.GetResourceGroups().GetAsync(rgName);
-            } catch (Exception e){
-                Logger.Error($"Failed to get resource group '{rgName}' using subsription id '{subscription.Id}'");
-                throw e;
-            }
-
-            await resourceGroup.DeleteAsync();
-            Logger.Information($"Deleted resources {rgName}");
-        }
-
-        public bool ShouldDeleteResources(V1Pod pod)
-        {
-            if (!string.IsNullOrEmpty(Namespace) && Namespace != pod.Namespace())
-            {
-                return false;
-            }
-
-            var initContainers = pod.Spec?.InitContainers;
-            if (initContainers == null || initContainers.Count() == 0) {
-                return false;
-            }
-
-            var deployContainers = initContainers.Where(c => c.Name == "init-azure-deployer");
-            if (deployContainers.Count() == 0)
-            {
-                return false;
-            }
-
-            return (pod.Status.Phase == "Succeeded") || (pod.Status.Phase == "Failed");
-        }
-
-        public string GetResourceGroupName(V1Pod pod)
-        {
-            var deployContainers = pod.Spec.InitContainers?.Where(c => c.Name == "init-azure-deployer");
-            var envVars = deployContainers?.First().Env;
-            if (envVars == null) {
-                return "";
-            }
-
-            var rgName = envVars.Where(e => e.Name == "RESOURCE_GROUP_NAME").Select(e => e.Value);
-            if (rgName.Count() == 0)
-            {
-                Logger.Error("Cannot find the env variable 'RESOURCE_GROUP_NAME' on the init container 'init-azure-deployer' spec.");
-                return "";
-            }
-            if (rgName.First() == null) {
-                Logger.Error("Env variable RESOURCE_GROUP_NAME does not have a value.");
-                return "";
-            }
-
-            return rgName.First().ToString();
         }
     }
 }

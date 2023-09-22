@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Http.Features
+@using Microsoft.AspNetCore.Http.Features
 
 @{
     var consentFeature = Context.Features.Get<ITrackingConsentFeature>();
@@ -10,7 +10,7 @@
 {
     <div id="cookieConsent" class="alert alert-info alert-dismissible fade show" role="alert">
         Use this space to summarize your privacy and cookie use policy. <a asp-page="/Privacy">Learn More</a>.
-        <button type="button" class="accept-policy close" data-dismiss="alert" aria-label="Close" data-cookie-string="@cookieString">
+        <button type="button" class="accept-policy" data-dismiss="alert" aria-label="Close" data-cookie-string="@cookieString">
             <span aria-hidden="true">Accept</span>
         </button>
     </div>

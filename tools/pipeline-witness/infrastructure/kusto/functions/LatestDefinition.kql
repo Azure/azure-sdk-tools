@@ -1,0 +1,5 @@
+.create-or-alter function LatestDefinition()
+{ 
+    BuildDefinition
+    | summarize arg_max(BuildDefinitionRevision, *) by BuildDefinitionId, ProjectId
+}

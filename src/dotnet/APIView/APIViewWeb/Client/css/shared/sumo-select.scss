@@ -1,0 +1,63 @@
+.SumoSelect .select-all {
+    height: 40px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--base-fg-color);
+}
+
+.SumoSelect .select-all.partial > span i, .SumoSelect .select-all.selected > span i, .SumoSelect > .optWrapper.multiple > .options li.opt.selected span i {
+    background-color: var(--primary-color);
+    background-image: var(--svg-check-box);
+}
+
+.SumoSelect > .CaptionCont {
+    border: 1px solid var(--border-color);
+    background-color: var(--base-fg-color);
+}
+
+
+.SumoSelect > .CaptionCont > label > i {
+    background-image: url(/icons/down.png);
+}
+
+.SumoSelect.open > .CaptionCont, .SumoSelect:focus > .CaptionCont, .SumoSelect:hover > .CaptionCont {
+    box-shadow: 0 0 2px var(--outer-glow);
+    border-color: var(--outer-glow);
+}
+
+.SumoSelect > .optWrapper {
+    background: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    box-shadow: 2px 3px 3px var(--shadow-color);
+}
+
+.SumoSelect > .optWrapper > .MultiControls {
+    border-top: 1px solid var(--border-color);
+    background-color: var(--base-fg-color);
+    box-shadow: 0 0 2px var(--shadow-color);
+}
+
+.SumoSelect > .optWrapper > .options li.opt {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.SumoSelect > .optWrapper > .options li.opt:hover {
+    background-color: var(--base-bg-color);
+}
+
+.SumoSelect.open .search-txt {
+    color: var(--base-text-color);
+    background-color: var(--base-fg-color);
+}
+
+.SumoSelect {
+    width: 100%;
+}
+
+.SumoSelect > .optWrapper > .options {
+    max-height: 180px;
+}
+
+.SumoSelect .select-all > span i, .SumoSelect > .optWrapper.multiple > .options li.opt span i {
+    border: 1px solid var(--border-color);
+    background-color: var(--base-bg-color);
+}

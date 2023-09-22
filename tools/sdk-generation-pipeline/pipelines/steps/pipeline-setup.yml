@@ -1,0 +1,92 @@
+parameters:
+  - name: sdk
+    type: string
+
+  - name: trigger
+    type: string
+
+  - name: swagger
+    type: object
+
+  - name: triggerType
+    type: string
+
+steps:
+  - task: NodeTool@0
+    displayName: Specify Node Version
+    inputs:
+      versionSpec: 14.x
+
+  - bash: |
+      #install tools
+      cd tools/sdk-generation-pipeline
+      npm install -g @microsoft/rush@5.92.0
+      rush update
+      rush build
+      cd packages/sdk-generation-cli
+      rushx pack
+      PACKAGE_TGZ=`ls azure-tools-sdk-generation-cli*.tgz`
+      npm install -g ${PACKAGE_TGZ}
+      npm install -g autorest
+
+      #mkdir for artifacts
+      cd $(System.ArtifactsDirectory)
+      echo "mkdir for docker output"
+      mkdir -p /tmp/output
+      echo "mkdir for pipeline artifact"
+      mkdir -p logs
+      cd $(Agent.BuildDirectory)
+      getRepoName SPEC_REPO ${{ parameters.swagger.path }}
+      getRepoName SDK_REPO $(sdkRepoUrl)
+      #mkdir for result artifact
+      mkdir -p $(System.ArtifactsDirectory)/in_progress/
+      mkdir -p $(System.ArtifactsDirectory)/completed/
+    displayName: Setup Pipeline Runtime Environment
+
+  - bash: |
+      publishResult \
+        --storageType=eventhub \
+        --pipelineStatus=queued \
+        --buildId="$(Build.BuildId)" \
+        --trigger='${{ parameters.trigger }}'
+      if [ $? -ne 0 ]; then
+          exit 1
+      fi
+    displayName: Publish status
+    env:
+      EVENTHUB_SAS_URL: $(EVENTHUB_SAS_URL)
+    condition: ne('${{ parameters.triggerType }}', 'release')
+
+  - bash: |
+      prepareArtifactFiles \
+        --pipelineStatus=in_progress \
+        --artifactDir="$(System.ArtifactsDirectory)" \
+        --buildId="$(Build.BuildId)" \
+        --trigger='${{ parameters.trigger }}'
+    displayName: Prepare in progress status
+    condition: always()
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish status artifact
+    inputs:
+      targetPath: $(System.ArtifactsDirectory)/in_progress/
+      artifactName: sdk-generation-in_progress-result
+    continueOnError: true
+
+  - bash: |
+      git clone ${{ parameters.swagger.path }}
+      downloadSdkRepoUrl=$(echo $(sdkRepoUrl) | sed "s#https://#https://$(REPO_OWNER):$(azuresdk-github-pat)@#")
+      git clone --depth 1 --branch $(sdkMainBranch) ${downloadSdkRepoUrl}
+      cd $(SPEC_REPO)
+      export GITHUB_TOKEN=$(azuresdk-github-pat)
+      if [ -n "${{ parameters.swagger.branch }}" ];then
+        git checkout ${{ parameters.swagger.branch }}
+      elif [ -n "${{ parameters.swagger.pullRequest }}" ];then
+        gh pr checkout ${{ parameters.swagger.pullRequest }}
+      else
+        echo "invalid swagger parameters"
+        exit 1
+      fi
+
+    displayName: Repo pull
+    workingDirectory: ../

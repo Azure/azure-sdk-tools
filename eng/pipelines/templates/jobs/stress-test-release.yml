@@ -1,0 +1,78 @@
+parameters:
+  - name: Environment
+    type: string
+    default: pg
+  - name: TestRepository
+    type: string
+    default: all
+  - name: DeployFromBranchOrCommit
+    type: string
+    default: main
+
+jobs:
+- job:
+  variables:
+    - template: /eng/pipelines/templates/variables/globals.yml
+  strategy:
+    matrix:
+      ${{ if or(eq(parameters.TestRepository, 'examples'), eq(parameters.TestRepository, 'all')) }}:
+        examples:
+          Repository: Azure/azure-sdk-tools
+          Filters: '@{ "example" = "true" }'
+      ${{ if or(eq(parameters.TestRepository, 'javascript'), eq(parameters.TestRepository, 'all')) }}:
+        javascript:
+          Repository: Azure/azure-sdk-for-js
+          Filters: '@{}'
+      ${{ if or(eq(parameters.TestRepository, 'java'), eq(parameters.TestRepository, 'all')) }}:
+        java:
+          Repository: Azure/azure-sdk-for-java
+          Filters: '@{}'
+      ${{ if or(eq(parameters.TestRepository, 'net'), eq(parameters.TestRepository, 'all')) }}:
+        net:
+          Repository: Azure/azure-sdk-for-net
+          Filters: '@{}'
+      ${{ if or(eq(parameters.TestRepository, 'python'), eq(parameters.TestRepository, 'all')) }}:
+        python:
+          Repository: Azure/azure-sdk-for-python
+          Filters: '@{}'
+      ${{ if or(eq(parameters.TestRepository, 'go'), eq(parameters.TestRepository, 'all')) }}:
+        go:
+          Repository: Azure/azure-sdk-for-go
+          Filters: '@{}'
+      ${{ if or(eq(parameters.TestRepository, 'cpp'), eq(parameters.TestRepository, 'all')) }}:
+        cpp:
+          Repository: Azure/azure-sdk-for-cpp
+          Filters: '@{}'
+  pool:
+    name: azsdk-pool-mms-ubuntu-2204-general
+    vmImage: ubuntu-22.04
+  steps:
+    - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+      parameters:
+        Repositories:
+          - Name: $(Repository)
+            Commitish: ${{ parameters.DeployFromBranchOrCommit }}
+            WorkingDirectory: $(System.DefaultWorkingDirectory)/$(Repository)
+        Paths:
+          - '/*'
+          - '!sdk/**/recordings/*'
+          - '!sdk/**/test-recordings/*'
+          - '!sdk/**/session-records/*'
+          - '!sdk/**/SessionRecords/*'
+
+    - task: AzureCLI@2
+      displayName: Build and Deploy Stress Tests
+      inputs:
+        ${{ if eq(parameters.Environment, 'prod') }}:
+          azureSubscription: Azure SDK Test Resources
+        ${{ if eq(parameters.Environment, 'pg') }}:
+          azureSubscription: Azure SDK Playground
+        scriptType: pscore
+        scriptPath: $(System.DefaultWorkingDirectory)/$(Repository)/eng/common/scripts/stress-testing/deploy-stress-tests.ps1
+        arguments:
+          -SearchDirectory '$(System.DefaultWorkingDirectory)/$(Repository)'
+          -Filters $(Filters)
+          -Environment '${{ parameters.Environment }}'
+          -Repository '$(Agent.JobName)'
+          -DeployId '$(Build.BuildNumber)'
+          -CI

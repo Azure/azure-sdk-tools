@@ -1,0 +1,118 @@
+@page "{UserName?}"
+@model APIViewWeb.Pages.Assemblies.ProfileModel
+@using APIViewWeb.Helpers
+@using APIViewWeb.Models
+@{
+    if(Model.User.GetGitHubLogin().Equals(Model.userProfile.UserName)) 
+    {
+        ViewData["Title"] = "Your profile";
+    }
+    else 
+    {
+        ViewData["Title"] = Model.userProfile.UserName;
+    }
+    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+
+    List<string> themes = new List<string>()
+    {
+        "light-theme",
+        "dark-theme",
+        "dark-solarized-theme"
+    };
+    string[] Languages = LanguageServiceHelpers.SupportedLanguages;
+    var userPreference = (TempData["UserPreference"] as UserPreferenceModel) ?? new UserPreferenceModel();
+    var theme = userPreference.Theme ?? "light-theme";
+}
+<div class="container py-2 mb-5">
+    @if(Model.userProfile == null) 
+    {
+        <h1> User profile does not exist. </h1>
+    }
+    else if (Model.userProfile.UserName.Equals(User.GetGitHubLogin()))
+    {
+        <div>
+            @if (Model.userProfile.Email == null)
+            {
+                    <h3>Setup Profile</h3>
+            }
+            else
+            {
+                    <h3>Edit Profile</h3>
+            }
+        </div>
+        <hr />
+        <div class="d-flex justify-content-center">
+            <div class="p-2 w-50">
+                <form data-post-update="userProfile" asp-controller="UserProfile" asp-action="Update" method="post">
+                    <div class="d-flex flex-column align-items-center">
+                        <img username="@User.GetGitHubLogin()" size="160" class="w-25 rounded-circle my-3" style="min-width:80px; max-width:160px" aria-label="GitHub User Avatar" />
+                        <h4 class="w-100 text-center"><a style="text-decoration: none;" class="text-dark" href="https://github.com/@(Model.userProfile.UserName)">@Model.userProfile.UserName</a></h4>
+                    </div>
+                    <hr />
+                    <div class="form-group form-row">
+                        <p class="text-muted">APIView can send emails to notify you about what is happening in reviews that you subscribe to, as well as when you are tagged or requested to review a library. The email address below is what is currently being used to notify you (and you can empty this field to not receive notifications)</p>
+                        <label for="Email" class="col-sm-2 font-weight-bold" style="line-height:48px"> Email </label>
+                        <input name="Email" class="form-control form-control-lg col-sm-10" type="email" value="@Model.userProfile.Email" /><br />
+                    </div>
+                    <div class="form-group form-row" asp-requirement="@ApproverRequirement.Instance" asp-resource="@Model">
+                        <p class="text-muted">Not everyone in APIView is allowed to approve reviews - but you are! To limit the number of people who can approve for a given language, we ask that all approvers self-identify the languages that they want approval abilities for. You can do this by selecting the appropriate languages in the dropdown list below.</p>
+                        <label for="Languages" class="font-weight-bold" style="line-height: 38px"> Review Languages </label>
+                        <div class="px-0">
+                            <select multiple name="Languages" id="approvable-language-select" aria-label="Approvable Language Select">
+                                @foreach (string language in Languages)
+                                {
+                                    <option value="@language" selected="@(Model.userProfile.Languages.Contains(language) ? true : false)">@language</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group form-row">
+                        <label for="Theme" class="font-weight-bold" style="line-height: 38px"> Theme </label>
+                        <div class="px-0">
+                            <select name="Theme" id="theme-selector" aria-label="Theme Selector">
+                                @foreach (var item in themes)
+                                {
+                                    var displayName = item.Replace("-theme", "");
+                                    if (item.Equals(theme))
+                                    {
+                                        <option value="@item" selected>@displayName</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@item">@displayName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <hr />
+                    <div class="d-flex justify-content-end align-items-center">
+                        <input class="btn btn-primary" type="submit" value="Save Changes" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div>
+            <h3>View Profile</h3>
+        </div>
+        <hr />
+        <div class="d-flex justify-content-center">
+            <div class="p-2 w-50">
+                <div class="d-flex flex-column align-items-center">
+                    <img username="@Model.userProfile.UserName" size="160" class="w-25 rounded-circle my-3" style="min-width:80px; max-width:160px" aria-label="GitHub User Avatar" />
+                    <h4 class="w-100 text-center"><a style="text-decoration: none;" href="https://github.com/@(Model.userProfile.UserName)">@Model.userProfile.UserName</a></h4>
+                </div>
+                <hr />
+
+                <div class="text-center">
+                    <a href="mailto:@Model.userProfile.Email" target="_blank">@Model.userProfile.Email </a> <br />
+                    <a href="https://github.com/@(Model.userProfile.UserName)" target="_blank">@Model.userProfile.UserName's GitHub Page </a>
+                </div>
+            </div>
+        </div>
+    }
+    
+</div>

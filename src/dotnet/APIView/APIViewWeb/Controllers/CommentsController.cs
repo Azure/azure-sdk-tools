@@ -1,40 +1,71 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
+using APIViewWeb.Hubs;
+using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb.Controllers
 {
     [Authorize("RequireOrganization")]
     public class CommentsController: Controller
     {
-        private readonly CommentsManager _commentsManager;
+        private readonly ICommentsManager _commentsManager;
+        private readonly IReviewManager _reviewManager;
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly INotificationManager _notificationManager;
 
-        public CommentsController(CommentsManager commentsManager)
+        public CommentsController(ICommentsManager commentsManager, IReviewManager reviewManager, INotificationManager notificationManager, IHubContext<SignalRHub> signalRHub)
         {
+            _signalRHubContext = signalRHub;
             _commentsManager = commentsManager;
+            _reviewManager = reviewManager;
+            _notificationManager = notificationManager;
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false)
         {
+            if (string.IsNullOrEmpty(commentText))
+            {
+                var notifcation = new NotificationModel() { Message = "Comment Text cannot be empty. Please type your comment entry and try again.", Level = NotificatonLevel.Error };
+                await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
+                return new BadRequestResult();
+            }
+
             var comment = new CommentModel();
             comment.TimeStamp = DateTime.UtcNow;
             comment.ReviewId = reviewId;
             comment.RevisionId = revisionId;
             comment.ElementId = elementId;
+            comment.SectionClass = sectionClass;
             comment.Comment = commentText;
+            comment.GroupNo = groupNo;
+            comment.IsUsageSampleComment = usageSampleComment;
+            comment.ResolutionLocked = !resolutionLock.Equals("on");
+            comment.Username = User.GetGitHubLogin();
+
+            foreach(string user in taggedUsers)
+            {
+                comment.TaggedUsers.Add(user);
+            }
 
             await _commentsManager.AddCommentAsync(User, comment);
-
-            return await CommentPartialAsync(reviewId, comment.ElementId);
+            var review = await _reviewManager.GetReviewAsync(User, reviewId);
+            if (review != null)
+            {
+                await _notificationManager.SubscribeAsync(review,User);
+            }
+            
+            return await CommentPartialAsync(reviewId, comment.ElementId); 
         }
 
         [HttpPost]
-        public async Task<ActionResult> Update(string reviewId, string commentId, string commentText)
+        public async Task<ActionResult> Update(string reviewId, string commentId, string commentText, string[] taggedUsers)
         {
-            var comment =  await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText);
+            var comment =  await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText, taggedUsers);
 
             return await CommentPartialAsync(reviewId, comment.ElementId);
         }

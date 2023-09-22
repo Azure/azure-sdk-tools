@@ -13,7 +13,7 @@ async function initKeys() {
   const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
     modulusLength: 2048,
     publicKeyEncoding: { type: "spki", format: "pem" },
-    privateKeyEncoding: { type: "pkcs8", format: "pem" }
+    privateKeyEncoding: { type: "pkcs8", format: "pem" },
   });
   const keystore = jose.JWK.createKeyStore();
 
@@ -22,7 +22,7 @@ async function initKeys() {
     signingKeyId: key.kid,
     privateKey,
     publicKey,
-    keyStore: keystore
+    keyStore: keystore,
   };
 }
 
@@ -32,7 +32,7 @@ function initApp({ keyStore, privateKey, signingKeyId }) {
 
   app.get("/.well-known/openid-configuration", (req, res) => {
     res.json({
-      jwks_uri: `${baseUrl(req)}/keys`
+      jwks_uri: `${baseUrl(req)}/keys`,
     });
   });
 
@@ -44,7 +44,7 @@ function initApp({ keyStore, privateKey, signingKeyId }) {
     // create a fake release key to wrap a token with.
     const releaseKey = await jose.JWK.createKey("RSA", 2048, {
       use: "enc",
-      kid: "fake-release-key"
+      kid: "fake-release-key",
     });
 
     // sdk-test will be the claim used for tests.
@@ -53,9 +53,8 @@ function initApp({ keyStore, privateKey, signingKeyId }) {
       "sdk-test": true,
       "x-ms-inittime": {},
       "x-ms-runtime": {
-        keys: [releaseKey.toJSON(false)]
+        keys: [releaseKey.toJSON(false)],
       },
-      "maa-ehd": "sdk-test"
     };
 
     const token = jwt.sign(tokenData, privateKey, {
@@ -63,8 +62,8 @@ function initApp({ keyStore, privateKey, signingKeyId }) {
       expiresIn: "7 days",
       header: {
         jku: `${baseUrl(req)}/keys`,
-        kid: signingKeyId
-      }
+        kid: signingKeyId,
+      },
     });
 
     res.json({ token });

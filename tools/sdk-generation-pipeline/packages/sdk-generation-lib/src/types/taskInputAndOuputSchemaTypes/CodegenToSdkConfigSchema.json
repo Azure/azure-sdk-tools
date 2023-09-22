@@ -1,0 +1,112 @@
+{
+  "type": "object",
+  "properties": {
+    "init": {
+      "$ref": "#/definitions/InitOptions"
+    },
+    "generateAndBuild": {
+      "$ref": "#/definitions/GenerateAndBuildOptions"
+    },
+    "mockTest": {
+      "$ref": "#/definitions/MockTestOptions"
+    },
+    "liveTest": {
+      "$ref": "#/definitions/LiveTestOptions"
+    }
+  },
+  "definitions": {
+    "InitOptions": {
+      // Init the environment. Install dependencies.
+      "type": "object",
+      "properties": {
+        "initScript": {
+          // Script to init dependencies.
+          // Param: <path_to_initOutput.json>
+          // initOutput.json: See #initOutput.
+          "$ref": "#/definitions/RunOptions"
+        }
+      },
+      "required": ["initScript"]
+    },
+    "GenerateAndBuildOptions": {
+      // Generate the SDK code and build generated code.
+      "type": "object",
+      "properties": {
+        "generateAndBuildScript": {
+          // Script to generate the SDK code.
+          // Param: <path_to_generateAndBuildInput.json> <path_to_generateAndBuildOutput.json>
+          "$ref": "#/definitions/RunOptions"
+        }
+      },
+      "required": ["generateAndBuildScript"]
+    },
+    "MockTestOptions": {
+      // Test the generated codes with mock server.
+      "type": "object",
+      "properties": {
+        "mockTestScript": {
+          // Script to run mock test.
+          // Param: <path_to_mockTestInput.json> <path_to_mockTestOutput.json>
+          "$ref": "#/definitions/RunOptions"
+        }
+      },
+      "required": ["mockTestScript"]
+    },
+    "LiveTestOptions": {
+      // Test the generated codes online.
+      "type": "object",
+      "properties": {
+        "liveTestScript": {
+          // Script to run mock test.
+          // Param: <path_to_mockTestInput.json> <path_to_mockTestOutput.json>
+          "$ref": "#/definitions/RunOptions"
+        }
+      },
+      "required": ["liveTestScript"]
+    },
+    "RunOptions": {
+      // Options to run a script and collect log.
+      "type": "object",
+      "properties": {
+        "path": {
+          // Script path related to repo root
+          "type": "string"
+        },
+        "envs": {
+          // Extra environment variable to be passed to the script (except initScript).
+          // By default the following envs will be passed:
+          // PWD (current directory)
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "logPrefix": {
+          // Prefix to be added to SDK Automation log. By default it would be filename of the script.
+          "type": "string"
+        },
+        "logFilter": {
+          // filter for error msg and warning msg.
+          "$ref": "#/definitions/LogFilter"
+        }
+      },
+      "required": ["path"]
+    },
+    "LogFilter": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string",
+          "format": "regex",
+          "default": "/(error|Error|ERROR|failed|Failed|FAILED|exception|Exception|EXCEPTION)/g"
+        },
+        "warning": {
+          "type": "string",
+          "format": "regex",
+          "default": "/warn/g"
+        }
+      }
+    }
+  }
+}

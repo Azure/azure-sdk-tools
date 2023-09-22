@@ -1,0 +1,20 @@
+pr: none
+
+trigger: none
+
+parameters:
+  - name: Environment
+    type: string
+    default: pg
+    values:
+    - prod
+    - pg
+  - name: WhatIf
+    type: boolean
+    default: false
+
+extends:
+  template: /eng/pipelines/templates/jobs/stress-cluster-provision.yml
+  parameters:
+    Environment: ${{ parameters.Environment }}
+    WhatIf: ${{ parameters.WhatIf }}

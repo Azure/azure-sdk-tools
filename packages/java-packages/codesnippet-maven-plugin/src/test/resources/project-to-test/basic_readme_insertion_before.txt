@@ -6,7 +6,7 @@ Once you have the value of the connection string you can create the configuratio
 ConfigurationClient configurationClient = new ConfigurationClientBuilder()
     .connectionString(connectionString)
     .buildClient();
-    Some other crap
+    Some other stuff
 ```
 
 or

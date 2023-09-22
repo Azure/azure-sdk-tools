@@ -1,4 +1,4 @@
-{{ $ctx := deepCopy . | merge (dict "Scenario" "watcher" ) -}}
+{{ $ctx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list . (dict "Scenario" "watcher") )) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,7 +18,7 @@ spec:
         app: stress-watcher
     spec:
       nodeSelector:
-        sku: 'default'
+        sku: 'system'
       initContainers:
         # Init container template for injecting secrets
         # (e.g. app insights instrumentation key, azure client credentials)

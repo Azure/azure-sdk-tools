@@ -1,0 +1,115 @@
+parameters:
+  - name: readmeFile
+    type: string
+
+  - name: typespecProject
+    type: string
+
+  - name: trigger
+    type: string
+
+  - name: triggerType
+    type: string
+
+  - name: serviceType
+    type: string
+
+  - name: sdk
+    type: string
+
+  - name: sdkConfig
+    type: string
+
+steps:
+  - bash: |
+      publishResult \
+        --storageType=eventhub \
+        --pipelineStatus=in_progress \
+        --buildId="$(Build.BuildId)" \
+        --trigger='${{ parameters.trigger }}'
+      if [ $? -ne 0 ]; then
+          exit 1
+      fi
+    displayName: Publish status
+    env:
+      EVENTHUB_SAS_URL: $(EVENTHUB_SAS_URL)
+    condition: ne('${{ parameters.triggerType }}', 'release')
+    
+  - bash: |
+      typespecProjectLen=`echo ${{ parameters.typespecProject }} | wc -L`
+      if [ 2 -lt ${typespecProjectLen} ]; then
+        docker run --privileged \
+          -v $(SPEC_REPO):/spec-repo \
+          -v $(SDK_REPO):/sdk-repo \
+          -v /tmp/output:/tmp/output \
+          $(DOCKER_IMAGE) \
+          --typespec-project=${{ parameters.typespecProject }} $(DOCKER_EX_CMD)
+      else
+        if [ "${{ parameters.serviceType }}" = "resource-manager" ];then
+          docker run --privileged \
+            -v $(SPEC_REPO):/spec-repo \
+            -v $(SDK_REPO):/sdk-repo \
+            -v /tmp/output:/tmp/output \
+            $(DOCKER_IMAGE) \
+            --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
+        else
+          echo '${{ parameters.sdkConfig }}' > /tmp/output/autorest.md
+          configLen=`cat /tmp/output/autorest.md | wc -L`
+          echo "configLen is :${configLen}"
+          #check if config is default ''
+          if [ 2 -ge ${configLen} ];then
+            docker run --privileged \
+              -v $(SPEC_REPO):/spec-repo \
+              -v $(SDK_REPO):/sdk-repo \
+              -v /tmp/output:/tmp/output \
+              $(DOCKER_IMAGE) \
+              --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
+          else
+            docker run --privileged \
+              -v $(SPEC_REPO):/spec-repo \
+              -v $(SDK_REPO):/sdk-repo \
+              -v /tmp/output/autorest.md:/autorest.md \
+              -v /tmp/output:/tmp/output \
+              $(DOCKER_IMAGE) \
+              --readme=${{ parameters.readmeFile }} $(DOCKER_EX_CMD)
+          fi
+        fi
+      fi
+    displayName: Generate sdk
+
+  - bash: |
+      echo "check output dir"
+      ls /tmp/output
+      echo "show docker.log"
+      head -n 30 /tmp/output/docker.log
+      echo "*****"
+      tail -n 30 /tmp/output/docker.log
+      echo "show generateAndBuild-task.log"
+      head -n 30 /tmp/output/generateAndBuild-task.log
+      echo "*****"
+      tail -n 30 /tmp/output/generateAndBuild-task.log
+      echo "show generateAndBuildInput.json"
+      cat /tmp/output/generateAndBuildInput.json
+      echo "show generateAndBuildOutputJson.json"
+      cat /tmp/output/generateAndBuildOutputJson.json
+      echo "show init-task.log"
+      head -n 30 /tmp/output/init-task.log
+      echo "*****"
+      tail -n 30 /tmp/output/init-task.log
+      echo "show taskResults.json"
+      cat /tmp/output/taskResults.json
+
+      echo "show mock-host.log"
+      head -n 30 /tmp/output/mock-host.log | echo "don't quite even failed"
+      echo "*****"
+      tail -n 30 /tmp/output/mock-host.log | echo "don't quite even failed"
+
+      echo "show mockTest-task.log"
+      head -n 30 /tmp/output/mockTest-task.log | echo "don't quite even failed"
+      echo "*****"
+      tail -n 30 /tmp/output/mockTest-task.log | echo "don't quite even failed"
+
+      echo "show mockTestOutput.json"
+      cat /tmp/output/mockTestOutput.json | echo "don't quite even failed"
+    displayName: Check output dir
+    condition: ne('$(DEBUGMODE)', 'true')

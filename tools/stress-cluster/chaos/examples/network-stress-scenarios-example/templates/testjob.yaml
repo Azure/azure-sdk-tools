@@ -1,0 +1,18 @@
+{{- include "stress-test-addons.env-job-template.from-pod" (list . "stress.network-example") -}}
+{{- define "stress.network-example" -}}
+metadata:
+  labels:
+    # .Stress.BaseName is a unique id that can be used for azure resource naming and correlation
+    testInstance: {{ .Stress.BaseName }}
+    testName: packet-loss
+    chaos: "true"
+spec:
+  nodeSelector:
+    sku: 'default'
+  containers:
+    - name: {{ .Stress.Scenario }}
+      command: ["bash", "poll.sh", "{{ .Stress.subdomain }}"]
+      imagePullPolicy: Always
+      image: {{ .Stress.imageTag }}
+      {{- include "stress-test-addons.container-env" . | nindent 6 }}
+{{- end -}}

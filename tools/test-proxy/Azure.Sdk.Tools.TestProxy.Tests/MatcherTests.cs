@@ -3,6 +3,7 @@ using Azure.Sdk.Tools.TestProxy.Matchers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -16,6 +17,21 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     {
         public BodilessMatcher BodilessMatcher = new BodilessMatcher();
         public HeaderlessMatcher HeaderlessMatcher = new HeaderlessMatcher();
+        public RecordMatcher RecordMatcher = new RecordMatcher();
+
+        [Theory]
+        [InlineData("Test.RecordEntries/response_with_xml_body.json", "Content-Type", "application/json;     odata=nometadata")]
+        [InlineData("Test.RecordEntries/response_with_xml_body.json", "Content-Type", "application/json;odata=nometadata")]
+        [InlineData("Test.RecordEntries/request_with_accept_commas.json", "Accept", "application/vnd.oci.image.manifest.v1\u002Bjson,    application/json")]
+        [InlineData("Test.RecordEntries/request_with_accept_commas.json", "Accept", "application/vnd.oci.image.manifest.v1\u002Bjson,application/json")]
+        public void MatchesBadlyNormalizedHeader(string file, string targetHeader, string overrideValue)
+        {
+            var sessionForRetrieval = TestHelpers.LoadRecordSession(file);
+            var identicalRequest = TestHelpers.LoadRecordSession(file).Session.Entries[0];
+            identicalRequest.Request.Headers[targetHeader][0] = overrideValue;
+
+            var expectedIdenticalMatch = sessionForRetrieval.Session.Lookup(identicalRequest, RecordMatcher, sanitizers: new List<RecordedTestSanitizer>(), remove: false);
+        }
 
         [Fact]
         public void BodilessMatcherMatchesIdenticalRequest()
@@ -245,7 +261,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             playbackContext.Request.ContentLength = body.Length;
            
-            var controller = new Playback(testRecordingHandler)
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
             {
                 ControllerContext = new ControllerContext()
                 {

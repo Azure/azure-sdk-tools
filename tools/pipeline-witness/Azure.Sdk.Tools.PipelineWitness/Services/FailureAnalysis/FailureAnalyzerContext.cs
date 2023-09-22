@@ -35,7 +35,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                 if (parent == null)
                 {
                     break;
-                } else
+                }
+                else
                 {
                     current = parent;
                 }
@@ -50,8 +51,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 
         public void AddFailure(TimelineRecord record, string classification)
         {
-            var scope = GetScope(record);
-            var failure = new Failure(scope, classification);
+            var failure = new Failure(record, classification);
             failures.Add(failure);
         }
     }

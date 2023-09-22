@@ -1,22 +1,22 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
+using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
-    public class CosmosCommentsRepository
+    public class CosmosCommentsRepository : ICosmosCommentsRepository
     {
         private readonly Container _commentsContainer;
 
-        public CosmosCommentsRepository(IConfiguration configuration)
+        public CosmosCommentsRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
-            var client = new CosmosClient(configuration["Cosmos:ConnectionString"]);
-            _commentsContainer = client.GetContainer("APIView", "Comments");
+            _commentsContainer = cosmosClient.GetContainer("APIView", "Comments");
         }
 
         public async Task<IEnumerable<CommentModel>> GetCommentsAsync(string reviewId)

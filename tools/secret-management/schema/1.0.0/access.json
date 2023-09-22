@@ -1,0 +1,99 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$id": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-management/schema/1.0.0/access.json",
+    "title": "AccessConfiguration",
+    "description": "An application access configuration",
+    "type": "object",
+    "required": [
+        "appDisplayName"
+    ],
+    "properties": {
+        "appDisplayName": {
+            "type": "string"
+        },
+        "properties": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "githubRepositorySecrets": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "repositories",
+                    "secrets"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "repositories": {
+                        "type": "array",
+                        "items": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "secrets": {
+                        "type": "object",
+                        "additionalProperties": true
+                    }
+                }
+            }
+        },
+        "roleBasedAccessControls": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "role",
+                    "scope"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "role": {
+                        "type": "string"
+                    },
+                    "scope": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "federatedIdentityCredentials": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "audiences",
+                    "description",
+                    "issuer",
+                    "name",
+                    "subject"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "audiences": {
+                        "type": "array",
+                        "items": [
+                            {
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "issuer": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "subject": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}

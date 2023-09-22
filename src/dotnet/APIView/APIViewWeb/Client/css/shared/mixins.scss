@@ -1,0 +1,51 @@
+@mixin bottom-right-floating {
+    position: fixed;
+    z-index: 10;
+    bottom: 10%;
+    right: 5%;
+}
+
+@mixin btn-circle {
+    width: 45px;
+    height: 45px;
+    line-height: 45px;
+    text-align: center;
+    padding: 0;
+    border-radius: 50%;
+}
+
+@mixin btn-circle-xl {
+    width: 100px;
+    height: 100px;
+    line-height: 1.2rem;
+    font-size: 1.0rem;
+    box-shadow: var(--box-shadow-sm);
+}
+
+@mixin fixed-page-heights {
+    height: calc(100vh - 190px);
+    overflow-y: auto;
+}
+
+@mixin main-content-container {
+    transition: margin-right .5s;
+    width: auto;
+}
+
+@mixin placeholder {
+    ::-webkit-input-placeholder {
+        @content;
+    }
+
+    ::-moz-placeholder {
+        @content;
+    }
+
+    ::-moz-placeholder {
+        @content;
+    }
+
+    ::-ms-input-placeholder {
+        @content;
+    }
+}

@@ -1,0 +1,434 @@
+{
+ "Language": "Go",
+ "Name": "test_struct",
+ "Tokens": [
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "package",
+   "Kind": 7
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "test_struct",
+   "NavigateToId": null,
+   "Value": "test_struct",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "type",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "test_struct.SomeStruct",
+   "NavigateToId": null,
+   "Value": "SomeStruct",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "struct",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "{",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "\t",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "Foo-test_struct.SomeStruct",
+   "NavigateToId": null,
+   "Value": "Foo",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "*",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "bool",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "\t",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "Resp-test_struct.SomeStruct",
+   "NavigateToId": null,
+   "Value": "Resp",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "*",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "http.Response",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "}",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "func",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "test_struct-NewSomeStruct",
+   "NavigateToId": null,
+   "Value": "NewSomeStruct",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "(",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ")",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "*",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": "test_struct.SomeStruct",
+   "Value": "SomeStruct",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "func",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "test_struct-NewStruct",
+   "NavigateToId": null,
+   "Value": "NewStruct",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "(",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ")",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "*",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": "test_struct.SomeStruct",
+   "Value": "SomeStruct",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "func",
+   "Kind": 6
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "(",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "s",
+   "Kind": 7
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "*",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "SomeStruct",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ")",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": "test_struct-(s *SomeStruct) Update",
+   "NavigateToId": null,
+   "Value": "Update",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "(",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "resp",
+   "Kind": 7
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "*",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "http.Response",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": ")",
+   "Kind": 3
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": " ",
+   "Kind": 2
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "error",
+   "Kind": 4
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  },
+  {
+   "DefinitionId": null,
+   "NavigateToId": null,
+   "Value": "",
+   "Kind": 1
+  }
+ ],
+ "Navigation": [
+  {
+   "Text": "test_struct",
+   "NavigationId": "test_struct",
+   "ChildItems": [
+    {
+     "Text": "SomeStruct",
+     "NavigationId": "test_struct.SomeStruct",
+     "ChildItems": [],
+     "Tags": {
+      "TypeKind": "class"
+     }
+    }
+   ],
+   "Tags": {
+    "TypeKind": "namespace"
+   }
+  }
+ ],
+ "PackageName": "test_struct"
+}

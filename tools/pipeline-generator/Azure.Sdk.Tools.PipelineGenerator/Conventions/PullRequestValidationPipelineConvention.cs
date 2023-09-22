@@ -14,12 +14,9 @@ namespace PipelineGenerator.Conventions
         {
         }
 
-        public override string GetDefinitionName(SdkComponent component)
-        {
-            return component.Variant == null ? $"{Context.Prefix} - {component.Name} - ci" : $"{Context.Prefix} - {component.Name} - ci.{component.Variant}";
-        }
-
         public override string SearchPattern => "ci.yml";
+        public override string PipelineNameSuffix => " - ci";
+        public override string PipelineCategory => "ci";
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {

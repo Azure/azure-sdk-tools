@@ -1,9 +1,13 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -13,22 +17,33 @@ namespace Azure.Sdk.Tools.TestProxy
     [Route("[controller]/[action]")]
     public sealed class Playback : ControllerBase
     {
+        private readonly ILogger _logger;
         private readonly RecordingHandler _recordingHandler;
-        public Playback(RecordingHandler recordingHandler) => _recordingHandler = recordingHandler;
+
+        public Playback(RecordingHandler recordingHandler, ILoggerFactory loggerFactory)
+        {
+            _recordingHandler = recordingHandler;
+            _logger = loggerFactory.CreateLogger<Playback>();
+        }
 
         [HttpPost]
         public async Task Start()
         {
-            string file = await HttpRequestInteractions.GetBodyKey(Request, "x-recording-file", true);
-            string recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", true);
+            var body = await HttpRequestInteractions.GetBody(Request);
+
+            string file = HttpRequestInteractions.GetBodyKey(body, "x-recording-file", allowNulls: true);
+            string recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+            var assetsJson = RecordingHandler.GetAssetsJsonLocation(
+                HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true),
+                _recordingHandler.ContextDirectory);
 
             if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))
             {
-                await _recordingHandler.StartPlayback(recordingId, Response, RecordingType.InMemory);
+                await _recordingHandler.StartPlaybackAsync(recordingId, Response, RecordingType.InMemory, assetsJson);
             }
             else if(!String.IsNullOrEmpty(file))
             {
-                await _recordingHandler.StartPlayback(file, Response, RecordingType.FilePersisted);
+                await _recordingHandler.StartPlaybackAsync(file, Response, RecordingType.FilePersisted, assetsJson);
             }
             else
             {
@@ -43,6 +58,26 @@ namespace Azure.Sdk.Tools.TestProxy
             bool.TryParse(RecordingHandler.GetHeader(Request, "x-purge-inmemory-recording", true), out var shouldPurgeRecording);
 
             _recordingHandler.StopPlayback(id, purgeMemoryStore: shouldPurgeRecording);
+        }
+
+        [HttpPost]
+        public async Task Reset([FromBody()] IDictionary<string, object> options = null)
+        {
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
+
+            var pathToAssets = RecordingHandler.GetAssetsJsonLocation(StoreResolver.ParseAssetsJsonBody(options), _recordingHandler.ContextDirectory);
+
+            await _recordingHandler.Store.Reset(pathToAssets);
+        }
+
+        [HttpPost]
+        public async Task Restore([FromBody()] IDictionary<string, object> options = null)
+        {
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
+
+            var pathToAssets = RecordingHandler.GetAssetsJsonLocation(StoreResolver.ParseAssetsJsonBody(options), _recordingHandler.ContextDirectory);
+
+            await _recordingHandler.Restore(pathToAssets);
         }
 
         public async Task HandleRequest()

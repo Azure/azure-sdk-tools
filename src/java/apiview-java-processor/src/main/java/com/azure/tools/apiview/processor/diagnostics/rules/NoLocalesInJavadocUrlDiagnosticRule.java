@@ -8,6 +8,9 @@ import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getClasses;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPublicOrProtectedConstructors;
@@ -16,15 +19,22 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPubli
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
 
+/**
+ * Diagnostic rule that verifies URL links don't contain locale specifiers.
+ * <p>
+ * When a URL contains a locale specifier it will almost always load to that locale's language instead of inferring it
+ * from a user's machine, which provides a better user experience.
+ */
 public class NoLocalesInJavadocUrlDiagnosticRule implements DiagnosticRule {
+    private static final Pattern LANGUAGE_PATTERN;
 
-    private final String[] languageTags;
+    static {
+        String pattern = Arrays.stream(Locale.getAvailableLocales())
+            .map(Locale::toLanguageTag)
+            .map(String::toLowerCase)
+            .collect(Collectors.joining("|", "/(", ")/"));
 
-    public NoLocalesInJavadocUrlDiagnosticRule() {
-        languageTags = Arrays.stream(Locale.getAvailableLocales())
-           .map(Locale::toLanguageTag)
-           .map(String::toLowerCase)
-           .toArray(String[]::new);
+        LANGUAGE_PATTERN = Pattern.compile(pattern);
     }
 
     @Override
@@ -40,18 +50,17 @@ public class NoLocalesInJavadocUrlDiagnosticRule implements DiagnosticRule {
         });
     }
 
-    private void checkJavaDoc(NodeWithJavadoc<?> n, String id, APIListing listing) {
+    void checkJavaDoc(NodeWithJavadoc<?> n, String id, APIListing listing) {
         n.getJavadocComment().ifPresent(javadoc -> {
             final String javadocString = javadoc.toString().toLowerCase();
 
-            Arrays.stream(languageTags).forEach(langTag -> {
-                if (javadocString.contains("/" + langTag + "/")) {
-                    listing.addDiagnostic(new Diagnostic(WARNING, id,
-                        "The JavaDoc string for this API contains what appears to be a locale ('/" + langTag + "/'). " +
-                            "Commonly, this indicates a URL in the JavaDoc is linking to a specific locale. If so, this " +
-                            "should be removed, so we do not assume about the users locale when accessing a URL."));
-                }
-            });
+            Matcher matcher = LANGUAGE_PATTERN.matcher(javadocString);
+            while (matcher.find()) {
+                listing.addDiagnostic(new Diagnostic(WARNING, id,
+                    "The JavaDoc string for this API contains what appears to be a locale ('/" + matcher.group(1) + "/'). " +
+                        "Commonly, this indicates a URL in the JavaDoc is linking to a specific locale. If so, this " +
+                        "should be removed, so we do not assume about the user's locale when accessing a URL."));
+            }
         });
     }
 }

@@ -1,14 +1,18 @@
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Matchers;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Transforms;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -25,6 +29,125 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
     /// </summary>
     public class AdminTests
     {
+        private NullLoggerFactory _nullLogger = new NullLoggerFactory();
+
+        [Fact]
+        public async void TestAddSanitizersThrowsOnEmptyArray()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            
+            string requestBody = @"[]";
+
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+            testRecordingHandler.Sanitizers.Clear();
+
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+                async () => await controller.AddSanitizers()
+            );
+
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
+        }
+
+        [Fact]
+
+        public async void TestAddSanitizersHandlesPopulatedArray()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            
+            string requestBody = @"[
+    {
+        ""Name"": ""GeneralRegexSanitizer"",
+        ""Body"": { 
+            ""regex"": ""[a-zA-Z]?"",
+            ""value"": ""hello_there"",
+            ""condition"": {
+                ""UriRegex"": "".+/Tables""
+            }
+        }
+    },
+    {
+        ""Name"": ""HeaderRegexSanitizer"",
+        ""Body"": { 
+            ""key"": ""Location"",
+            ""value"": ""https://fakeazsdktestaccount.table.core.windows.net/Tables""
+        }
+    }
+]";
+
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+            testRecordingHandler.Sanitizers.Clear();
+
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.AddSanitizers();
+
+
+            Assert.Equal(2, testRecordingHandler.Sanitizers.Count);
+
+            Assert.True(testRecordingHandler.Sanitizers[0] is GeneralRegexSanitizer);
+            Assert.True(testRecordingHandler.Sanitizers[1] is HeaderRegexSanitizer);
+        }
+
+        [Fact]
+        public async void TestAddSanitizersThrowsOnSingleBadInput()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            
+            string requestBody = @"[
+    {
+        ""Name"": ""GeneralRegexSanitizer"",
+        ""Body"": { 
+            ""regex"": ""[a-zA-Z]?"",
+            ""value"": ""hello_there"",
+            ""condition"": {
+                ""UriRegex"": "".+/Tables""
+            }
+        }
+    },
+    {
+        ""Name"": ""BadRegexIdentifier"",
+        ""Body"": { 
+            ""key"": ""Location"",
+            ""value"": ""https://fakeazsdktestaccount.table.core.windows.net/Tables""
+        }
+    }
+]";
+
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
+            httpContext.Request.ContentLength = httpContext.Request.Body.Length;
+            testRecordingHandler.Sanitizers.Clear();
+
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+                async () => await controller.AddSanitizers()
+            );
+
+            assertion.StatusCode.Equals(HttpStatusCode.BadRequest);
+        }
+
         [Fact]
         public async void TestAddSanitizerThrowsOnInvalidAbstractionId()
         {
@@ -32,7 +155,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-abstraction-identifier"] = "AnInvalidSanitizer";
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -53,7 +176,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -75,7 +198,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-abstraction-identifier"] = "AnInvalidTransform";
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -96,7 +219,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -118,7 +241,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-abstraction-identifier"] = "AnInvalidMatcher";
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -138,7 +261,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -160,7 +283,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers["x-abstraction-identifier"] = "BodilessMatcher";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{}");
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -180,12 +303,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-abstraction-identifier"] = "CustomDefaultMatcher";
-            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"excludedHeaders\": \"Content-Type,Content-Length\", \"ignoredHeaders\": \"Connection\", \"compareBodies\": false }");
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"excludedHeaders\": \"Content-Type,Content-Length\", \"ignoredHeaders\": \"Connection\", \"compareBodies\": false, \"ignoredQueryParameters\": \"api-version,location\" }");
             
             // content length must be set for the body to be parsed in SetMatcher
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -202,6 +325,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Contains("Content-Type", matcher.ExcludeHeaders);
             Assert.Contains("Content-Length", matcher.ExcludeHeaders);
             Assert.Contains("Connection", matcher.IgnoredHeaders);
+            Assert.Contains("api-version", matcher.IgnoredQueryParameters);
+            Assert.Contains("location", matcher.IgnoredQueryParameters);
         }
 
         [Fact]
@@ -215,7 +340,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             // content length must be set for the body to be parsed in SetMatcher
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -236,13 +361,13 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            await testRecordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"];
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers["x-abstraction-identifier"] = "BodilessMatcher";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{}");
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -264,7 +389,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers["x-abstraction-identifier"] = "BodilessMatcher";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{}");
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -288,7 +413,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
             httpContext.Request.ContentLength = 92;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -314,7 +439,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers["Content-Length"] = new string[] { "34" };
             httpContext.Request.Headers["Content-Type"] = new string[] { "application/json" };
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -337,7 +462,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
             httpContext.Request.ContentLength = 92;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -361,7 +486,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"\" }");
             httpContext.Request.ContentLength = 92;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -380,14 +505,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            await testRecordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"];
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
             httpContext.Request.ContentLength = 92;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -410,7 +535,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
             httpContext.Request.ContentLength = 92;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -434,7 +559,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{\"value\":\"replacementValue\",\"regex\":[\"a_regex_goes_here_but_this_test_is_after_another_error\"]}");
             httpContext.Request.ContentLength = 199;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -461,7 +586,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{\"value\":\"replacementValue\",\"regex\":\"[\"}");
             httpContext.Request.ContentLength = 25;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -489,7 +614,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers["x-api-version"] = apiVersion;
             httpContext.Request.Headers["x-abstraction-identifier"] = "ApiVersionTransform";
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -514,7 +639,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 "{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\", \"condition\": { \"uriRegex\": \".*/token\", \"responseHeader\": { \"key\": \"Location\", \"valueRegex\": \".*/value\" } }}");
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -547,7 +672,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -567,14 +692,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            await testRecordingHandler.StartPlayback("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"];
             var apiVersion = "2016-03-21";
             httpContext.Request.Headers["x-api-version"] = apiVersion;
             httpContext.Request.Headers["x-abstraction-identifier"] = "ApiVersionTransform";
             httpContext.Request.Headers["x-recording-id"] = recordingId;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -597,7 +722,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers["x-abstraction-identifier"] = "ApiVersionTransform";
             httpContext.Request.Headers["x-recording-id"] = "bad-recording-id";
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -624,7 +749,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -653,7 +778,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -685,7 +810,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -716,7 +841,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -734,7 +859,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async Task AddSanitizerThrowsOnMissingRequiredArgument()
+        public async Task TestAddSanitizerThrowsOnMissingRequiredArgument()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
@@ -742,7 +867,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{\"value\":\"replacementValue\"}");
             httpContext.Request.ContentLength = 33;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {
@@ -761,7 +886,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public async Task AddSanitizerContinuesWithTwoRequiredParams()
+        public async Task TestAddSanitizerContinuesWithTwoRequiredParams()
         {
             var targetKey = "Content-Type";
             var targetString = "application/javascript";
@@ -772,7 +897,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{\"target\":\"" + targetString + "\", \"key\":\"" + targetKey + "\"}");
             httpContext.Request.ContentLength = 79;
 
-            var controller = new Admin(testRecordingHandler)
+            var controller = new Admin(testRecordingHandler, _nullLogger)
             {
                 ControllerContext = new ControllerContext()
                 {

@@ -1,0 +1,69 @@
+trigger: none
+
+pr: none
+
+parameters:
+  - name: dockerImage
+    displayName: Docker Image
+    type: string
+    default: sdkgeneration.azurecr.io/sdk-generation:beta-1.0
+  - name: dockerContainerRegistry
+    displayName: Docker Container Registry
+    type: string
+    default: sdkgeneration.azurecr.io
+
+variables:
+  - template: ../../eng/pipelines/templates/variables/globals.yml
+  - name: NodeVersion
+    value: '16.x'
+  - name: VAR_ARTIFACT_NAME
+    value: 'packages'
+  - name: VAR_DOCKER_IMAGE_ARTIFACT_NAME
+    value: 'dockerImages'
+  - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
+    value: $(Build.ArtifactStagingDirectory)
+
+pool:
+  name: "azsdk-pool-mms-ubuntu-2004-general"
+  vmImage: "ubuntu-20.04"
+  
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+        steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '$(NodeVersion)'
+          displayName: 'Install Node.js'
+
+        - bash: |
+            npm install -g @microsoft/rush
+            npm install -g typescript@4.6.2
+          displayName: 'Install dependencies'
+
+        - script: |
+            rush update
+          displayName: 'rush update'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+        - script: |
+            rush build
+          displayName: 'rush build'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+        - script: |
+            rushx pack
+          displayName: 'Pack @azure-tools/sdk-generation-cli'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
+
+        - script: |
+            docker build -t ${{ parameters.dockerImage }} .
+          displayName: 'Build docker image'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+
+        - script: |
+            docker login -u $(DockerUserName) -p $(DockerPassword) ${{ parameters.dockerContainerRegistry }}
+            docker push ${{ parameters.dockerImage }}
+          displayName: 'Publish docker image'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline

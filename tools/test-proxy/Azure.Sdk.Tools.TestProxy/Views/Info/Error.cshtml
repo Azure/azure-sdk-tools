@@ -1,0 +1,29 @@
+@using Azure.Sdk.Tools.TestProxy.Models;
+@model ActiveMetadataModel
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>An error has occured.</title>
+
+    @await Html.PartialAsync("css.cshtml")
+</head>
+<body>
+    <h1>
+        Unable to locate @Model.RecordingId.
+    </h1>
+
+    <p>
+        Unfortunately, a recording id with value "@Model.RecordingId" can not be located in currently active Playback, Recording, or In-Memory sessions.
+    </p>
+
+    <p>
+        Please confirm that the recording-id in question has <b>NOT</b> been stopped yet. Once a record/playback session has ended, the customizations for that particular session can no longer be retrieved.
+    </p>
+</body>
+</html>

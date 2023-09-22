@@ -1,0 +1,20 @@
+# Exclude static resource groups automatically added to Microsoft owned subscriptions by policy
+
+cleanupservice
+NetworkWatcherRG
+AzSecPackAutoConfigRG
+
+# Exclude static groups used for testing. These groups should already be 
+# excluded via owners tags, but add a second exclusion just in case
+
+static-test-resources
+LiveTestSecrets
+
+# Exclude child resource groups created by Azure resources.
+# These often have locks/permissions that explicitly deny being able to be manually deleted.
+# The groups get cleaned up when their parent group is deleted.
+# For example, Azure Synapse (synapseworkspace-managedrg-adaed0ea-df22-4ec1-9280-5ac85cf2f87a) and Azure Purview (managed-rg-mypurviewaccount).
+
+*managed*
+# Azure Kubernetes Service node resource groups
+MC_*

@@ -1,4 +1,4 @@
-﻿@using Azure.Sdk.Tools.TestProxy.Models; 
+@using Azure.Sdk.Tools.TestProxy.Models;
 @model ActiveMetadataModel
 
 @{
@@ -14,12 +14,33 @@
     @await Html.PartialAsync("css.cshtml")
 </head>
 <body>
-    <h1>
-        Test-Proxy - Active Extensions
-    </h1>
-    <p>
-        The below extensions are currently configured.
-    </p>
+    @if (!string.IsNullOrWhiteSpace(Model.RecordingId))
+    {
+        <h1>
+            Active Extensions for @Model.RecordingId
+        </h1>
+    }
+    else
+    {
+        <h1>
+            Active Extensions for All Sessions
+        </h1>
+    }
+
+
+    @if (!string.IsNullOrWhiteSpace(Model.RecordingId))
+    {
+        <p>
+            The below extensions are configured for recording <b>@Model.RecordingId</b>.
+        </p>
+    }
+    else
+    {
+        <p>
+            The below extensions are currently configured for all sessions.
+        </p>
+    }
+
     <p>
         To observe ALL extensions (rather than just what is currently active), visit <a href="/Info/Available">/Info/Available</a>. For clarity, note that argument values below are surrounded in quotes. The actual value itself being utilized by
         the test-proxy does not contain these quotes.

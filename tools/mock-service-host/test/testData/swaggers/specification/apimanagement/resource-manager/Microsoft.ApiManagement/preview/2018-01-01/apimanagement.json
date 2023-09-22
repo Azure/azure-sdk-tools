@@ -419,6 +419,11 @@
           "x-ms-client-flatten": true,
           "$ref": "#/definitions/PolicyContractProperties",
           "description": "Properties of the Policy."
+        },
+        "test": {
+          "type": "string",
+          "description": "Test.",
+          "x-ms-secret": true
         }
       },
       "allOf": [

@@ -1,0 +1,7 @@
+name: file
+version: 0.1
+description: Enables file:// protocol for helm repositories
+downloaders:
+  - command: "bin/file.ps1"
+    protocols:
+      - "file"

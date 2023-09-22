@@ -1,0 +1,44 @@
+parameters:
+- name: 'containers'
+  type: object
+  default:
+  - originals
+  - codefiles
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+stages:
+  - stage: 'Main'
+    jobs:
+      - job: 'BlobCopy'
+        pool:
+          name: azsdk-pool-mms-win-2022-general
+          vmImage: windows-2022
+
+        steps:
+        - pwsh: |
+            Invoke-WebRequest -MaximumRetryCount 10 -Uri "https://aka.ms/downloadazcopy-v10-windows" -OutFile "azcopy.zip" | Wait-Process;
+            Expand-Archive -Path "azcopy.zip" -DestinationPath "$(Build.BinariesDirectory)/azcopy/"
+          workingDirectory: $(Build.BinariesDirectory)
+          displayName: Download and Extract azcopy Zip
+
+        - ${{ each c in parameters.containers }}:
+          - pwsh: |
+              $azcopy = $(Resolve-Path "$(Build.BinariesDirectory)/azcopy/azcopy_windows_amd64_*/azcopy.exe")[0]
+              $sourceUrl = "https://$(apiview-prod-storageaccount).blob.core.windows.net/${{c}}$(apiview-production-storage-sas)"
+              $destUrl = "https://$(apiview-staging-storageaccount).blob.core.windows.net/${{c}}$(apiview-staging-storage-sas)"
+              &($azcopy) sc $sourceUrl $destUrl --recursive=true
+            workingDirectory: $(Build.BinariesDirectory)
+            displayName: Copy Blobs in ${{c}}
+
+        - task: UsePythonVersion@0
+          displayName: 'Use Python 3.6'
+          inputs:
+            versionSpec: 3.6
+
+        - script: |
+            cd $(Build.SourcesDirectory)/eng/scripts/python/apiview-syncdb/
+            python -m pip install -r requirements.txt
+            python ./sync_cosmosdb.py --dest-url $(apiview-staging-cosmos-url) --dest-key $(apiview-staging-cosmos-key) --db-name $(apiview-cosmosdb-name) --backup-connection-string $(apiview-cosmos-backup-connection)
+          displayName: Sync CosmosDB

@@ -15,12 +15,12 @@ namespace Azure.Sdk.Tools.TestProxy.Transforms
             Condition = condition;
         }
 
-        public override void ApplyTransform(RecordEntry entry)
+        public override void ApplyTransform(HttpRequest request, RecordEntry match)
         {
             // Storage Blobs requires "x-ms-client-request-id" header in request and response to match
-            if (entry.Request.Headers.TryGetValue("x-ms-client-request-id", out var clientRequestId))
+            if (request.Headers.TryGetValue("x-ms-client-request-id", out var clientRequestId))
             {
-                entry.Response.Headers["x-ms-client-request-id"] = clientRequestId;
+                match.Response.Headers["x-ms-client-request-id"] = clientRequestId;
             }
         }
     }

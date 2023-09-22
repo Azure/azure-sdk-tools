@@ -16,8 +16,8 @@ namespace Azure.ClientSdk.Analyzers
 
         public static DiagnosticDescriptor AZC0002 = new DiagnosticDescriptor(
             nameof(AZC0002),
-            "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called cancellationToken.",
-            "Client method should have cancellationToken as the last optional parameter (both name and it being optional matters)",
+            "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called 'cancellationToken' or a RequestContext parameter called 'context'.",
+            "Client method should have an optional CancellationToken called cancellationToken (both name and it being optional matters) or a RequestContext called context as the last parameter.",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null,
             "https://azure.github.io/azure-sdk/dotnet_introduction.html#dotnet-service-methods-cancellation"
         );
@@ -109,6 +109,13 @@ namespace Azure.ClientSdk.Analyzers
             nameof(AZC0016),
             "Invalid ServiceVersion member name.",
             "All parts of ServiceVersion members' names must begin with a number or uppercase letter and cannot have consecutive underscores.",
+            "Usage",
+            DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0020 = new DiagnosticDescriptor(
+            nameof(AZC0020),
+            "Avoid using banned types in public APIs",
+            "The Azure.Core internal shared source types {0} should not be used outside of the Azure.Core library.",
             "Usage",
             DiagnosticSeverity.Warning, true);
         #endregion

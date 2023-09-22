@@ -1,95 +1,70 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Net.NetworkInformation;
-using System.Text;
 
-using Azure.Cosmos;
-using Azure.Sdk.Tools.PipelineWitness;
+using Azure.Core;
+using Azure.Identity;
+using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
+using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
-using Azure.Security.KeyVault.Secrets;
-using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
+
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.WebApi;
 using Microsoft.VisualStudio.Services.TestResults.WebApi;
-
-[assembly: FunctionsStartup(typeof(Startup))]
+using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Azure.Sdk.Tools.PipelineWitness
 {
-    public class Startup : FunctionsStartup
+    public static class Startup
     {
-        private string GetWebsiteResourceGroupEnvironmentVariable()
+        public static void Configure(WebApplicationBuilder builder)
         {
-            var websiteResourceGroupEnvironmentVariable = Environment.GetEnvironmentVariable("WEBSITE_RESOURCE_GROUP");
-            return websiteResourceGroupEnvironmentVariable;
-        }
+            var settings = new PipelineWitnessSettings();
+            var settingsSection = builder.Configuration.GetSection("PipelineWitness");
+            settingsSection.Bind(settings);
 
-        private string GetBuildBlobStorageEnvironmentVariable()
-        {
-            var environmentVariable = Environment.GetEnvironmentVariable("BUILD_BLOB_STORAGE_URI");
-            return environmentVariable;
-        }
-
-        public override void Configure(IFunctionsHostBuilder builder)
-        {
-            var websiteResourceGroupEnvironmentVariable = GetWebsiteResourceGroupEnvironmentVariable();
-            var buildBlobStorageUri = GetBuildBlobStorageEnvironmentVariable();
+            builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
+            builder.Services.AddApplicationInsightsTelemetryProcessor<BlobNotFoundTelemetryProcessor>();
+            builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
 
             builder.Services.AddAzureClients(builder =>
             {
-                var keyVaultUri = new Uri($"https://{websiteResourceGroupEnvironmentVariable}.vault.azure.net/");
-                builder.AddSecretClient(keyVaultUri);
+                builder.UseCredential(new DefaultAzureCredential());
+                builder.AddSecretClient(new Uri(settings.KeyVaultUri));
+                builder.AddBlobServiceClient(new Uri(settings.BlobStorageAccountUri));
+                builder.AddQueueServiceClient(new Uri(settings.QueueStorageAccountUri))
+                    .ConfigureOptions(o => o.MessageEncoding = Storage.Queues.QueueMessageEncoding.Base64);
 
-                builder.AddBlobServiceClient(new Uri(buildBlobStorageUri));
-            });
-
-            builder.Services.AddSingleton<CosmosClient>(provider =>
-            {
-                var secretClient = provider.GetService<SecretClient>();
-                KeyVaultSecret secret = secretClient.GetSecret("cosmosdb-primary-authorization-key");
-                var accountEndpoint = $"https://{websiteResourceGroupEnvironmentVariable}.documents.azure.com";
-
-                // Let's see how this goes. Been having trouble with Cosmos and
-                // and TCP connection limits in Azure Functions. If this persists
-                // after this refactoring then the next step is to either switch
-                // to gateway mode or limit the direct connections somehow.
-                var cosmosClient = new CosmosClient(
-                    accountEndpoint,
-                    secret.Value,
-                    new CosmosClientOptions()
-                    {
-                        Diagnostics = {
-                            IsLoggingEnabled = false // HACK: https://github.com/Azure/azure-cosmos-dotnet-v3/issues/1592 
-                                                     //       It should be safe to remove these options post 4.0.0-preview.3
-                        }
-                    }
-                    );
-
-                return cosmosClient;
+                builder.AddClient((CosmosClientOptions options, IServiceProvider provider) =>
+                {
+                    var resolvedSettings = provider.GetRequiredService<IOptions<PipelineWitnessSettings>>().Value;
+                    return new CosmosClient(settings.CosmosAccountUri, resolvedSettings.CosmosAuthorizationKey, options);
+                });
             });
 
             builder.Services.AddSingleton<VssConnection>(provider =>
             {
-                var secretClient = provider.GetService<SecretClient>();
-                KeyVaultSecret secret = secretClient.GetSecret("azure-devops-personal-access-token");
-                var credential = new VssBasicCredential("nobody", secret.Value);
-                var connection = new VssConnection(new Uri("https://dev.azure.com/azure-sdk"), credential);
-                return connection;
+                var resolvedSettings = provider.GetRequiredService<IOptions<PipelineWitnessSettings>>().Value;
+                var credential = new VssBasicCredential("nobody", resolvedSettings.DevopsAccessToken);
+                return new VssConnection(new Uri("https://dev.azure.com/azure-sdk"), credential);
             });
 
+            builder.Services.AddSingleton<IAsyncLockProvider>(provider => new CosmosAsyncLockProvider(provider.GetRequiredService<CosmosClient>(), settings.CosmosDatabase, settings.CosmosAsyncLockContainer));
             builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<ProjectHttpClient>());
-            builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<BuildHttpClient>());
+            builder.Services.AddSingleton<BuildHttpClient>(provider => provider.GetRequiredService<VssConnection>().GetClient<EnhancedBuildHttpClient>());
             builder.Services.AddSingleton(provider => provider.GetRequiredService<VssConnection>().GetClient<TestResultsHttpClient>());
 
             builder.Services.AddLogging();
             builder.Services.AddMemoryCache();
-            builder.Services.AddSingleton<RunProcessor>();
             builder.Services.AddSingleton<BlobUploadProcessor>();
             builder.Services.AddSingleton<BuildLogProvider>();
             builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
@@ -112,6 +87,23 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddSingleton<IFailureClassifier, AzureArtifactsServiceUnavailableClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
             builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
+
+            builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
+            builder.Services.AddSingleton<TokenCredential, DefaultAzureCredential>();
+            builder.Services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
+            builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureKeyVaultSettings<PipelineWitnessSettings>>();
+
+            builder.Services.AddHostedService<CosmosDatabaseInitializer>();
+            builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
+            builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
+        }
+
+        private static void AddHostedService<T>(this IServiceCollection services, int instanceCount) where T : class, IHostedService
+        {
+            for (var i = 0; i < instanceCount; i++)
+            {
+                services.AddSingleton<IHostedService, T>();
+            }
         }
     }
 }

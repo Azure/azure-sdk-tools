@@ -32,7 +32,11 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
-import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.MemberValuePair;
+import com.github.javaparser.ast.expr.Name;
+import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.modules.ModuleDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithType;
@@ -41,6 +45,7 @@ import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
@@ -60,15 +65,19 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptToFindJavadocComment;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPublicOrProtected;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.INDENT;
@@ -89,6 +98,8 @@ import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_START;
 import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
+import static com.azure.tools.apiview.processor.model.TokenKind.EXTERNAL_LINK_START;
+import static com.azure.tools.apiview.processor.model.TokenKind.EXTERNAL_LINK_END;
 
 public class JavaASTAnalyser implements Analyser {
     public static final String MAVEN_KEY = "Maven";
@@ -139,8 +150,10 @@ public class JavaASTAnalyser implements Analyser {
 
     private boolean filterFilePaths(Path filePath) {
         String fileName = filePath.toString();
-        // Skip paths that are directories or are in implementation.
-        if (Files.isDirectory(filePath) || fileName.contains("implementation")) {
+        // Skip paths that are directories, in implementation, or are not pom.xml files contained within META-INF
+        if (Files.isDirectory(filePath)
+                || fileName.contains("implementation")
+                || (!fileName.endsWith("pom.xml") && fileName.contains("META-INF"))) {
             return false;
         } else {
             // Only include Java files.
@@ -272,7 +285,7 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void tokeniseMavenPom(Pom mavenPom) {
-        apiListing.addChildItem(new ChildItem(MAVEN_KEY, MAVEN_KEY, TypeKind.ASSEMBLY));
+        apiListing.addChildItem(new ChildItem(MAVEN_KEY, MAVEN_KEY, TypeKind.MAVEN));
 
         addToken(makeWhitespace());
         addToken(new Token(KEYWORD, "maven", MAVEN_KEY), SPACE);
@@ -313,6 +326,12 @@ public class JavaASTAnalyser implements Analyser {
             unindent();
             addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
         }
+
+        // Maven name
+        tokeniseKeyValue("name", mavenPom.getName(), "");
+
+        // Maven description
+        tokeniseKeyValue("description", mavenPom.getDescription(), "");
 
         // dependencies
         addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
@@ -364,11 +383,18 @@ public class JavaASTAnalyser implements Analyser {
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
     }
 
+    /*
+     * Tokenizes a key-value pair.
+     *
+     * @param key Key of the token.
+     * @param value Value of the token.
+     * @param linkPrefix Link prefix.
+     */
     private void tokeniseKeyValue(String key, Object value, String linkPrefix) {
         addToken(makeWhitespace());
         addToken(new Token(KEYWORD, key));
         addToken(new Token(PUNCTUATION, ":"), SPACE);
-        addToken(new Token(TEXT, value == null ? "<default value>" : value.toString(), linkPrefix + "-" + key + "-" + value), NEWLINE);
+        addToken(MiscUtils.tokeniseKeyValue(key, value, linkPrefix), NEWLINE);
     }
 
     private class ClassOrInterfaceVisitor extends VoidVisitorAdapter<Void> {
@@ -403,7 +429,7 @@ public class JavaASTAnalyser implements Analyser {
             visitJavaDoc(typeDeclaration);
 
             // public custom annotation @interface's annotations
-            if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+            if (typeDeclaration.isAnnotationDeclaration() && isPublicOrProtected(typeDeclaration.getAccessSpecifier())) {
                 final AnnotationDeclaration annotationDeclaration = (AnnotationDeclaration) typeDeclaration;
 
                 // Annotations on top of AnnotationDeclaration class, for example
@@ -433,7 +459,7 @@ public class JavaASTAnalyser implements Analyser {
             boolean isInterfaceDeclaration = isInterfaceType(typeDeclaration);
 
             // public custom annotation @interface's members
-            if (typeDeclaration.isAnnotationDeclaration() && !isPrivateOrPackagePrivate(typeDeclaration.getAccessSpecifier())) {
+            if (typeDeclaration.isAnnotationDeclaration() && isPublicOrProtected(typeDeclaration.getAccessSpecifier())) {
                 final AnnotationDeclaration annotationDeclaration = (AnnotationDeclaration) typeDeclaration;
                 tokeniseAnnotationMember(annotationDeclaration);
             }
@@ -490,6 +516,10 @@ public class JavaASTAnalyser implements Analyser {
 
                 moduleDirective.ifModuleRequiresStmt(d -> {
                     addToken(new Token(KEYWORD, "requires"), SPACE);
+
+                    if (d.hasModifier(Modifier.Keyword.STATIC)) {
+                        addToken(new Token(KEYWORD, "static"), SPACE);
+                    }
 
                     if (d.isTransitive()) {
                         addToken(new Token(KEYWORD, "transitive"), SPACE);
@@ -584,10 +614,24 @@ public class JavaASTAnalyser implements Analyser {
 
                 addToken(makeWhitespace());
 
-                // create a unique id for enum constants
+                // annotations
+                getAnnotations(enumConstantDeclaration, false, false);
+
+                // create a unique id for enum constants by using the fully-qualified constant name
+                // (package, enum name, and enum constant name)
                 final String name = enumConstantDeclaration.getNameAsString();
-                final String definitionId = makeId(enumDeclaration.getFullyQualifiedName().get() + "." + counter);
+                final String definitionId = makeId(enumConstantDeclaration);
+                final boolean isDeprecated = enumConstantDeclaration.isAnnotationPresent("Deprecated");
+
+                if (isDeprecated) {
+                    addToken(new Token(DEPRECATED_RANGE_START));
+                }
+
                 addToken(new Token(MEMBER_NAME, name, definitionId));
+
+                if (isDeprecated) {
+                    addToken(new Token(DEPRECATED_RANGE_END));
+                }
 
                 enumConstantDeclaration.getArguments().forEach(expression -> {
                     addToken(new Token(PUNCTUATION, "("));
@@ -621,7 +665,7 @@ public class JavaASTAnalyser implements Analyser {
             } else if (typeDeclaration.isEnumDeclaration()) {
                 typeKind = TypeKind.ENUM;
             } else if (typeDeclaration.isAnnotationDeclaration()) {
-                typeKind = TypeKind.INTERFACE;
+                typeKind = TypeKind.ANNOTATION;
             } else {
                 typeKind = TypeKind.UNKNOWN;
             }
@@ -990,7 +1034,7 @@ public class JavaASTAnalyser implements Analyser {
                     addToken(makeWhitespace());
                 }
 
-                addToken(new Token(TYPE_NAME, "@" + annotation.getName().toString()));
+                addToken(new Token(TYPE_NAME, "@" + annotation.getName().toString(), makeId(annotation, nodeWithAnnotations)));
                 if (showAnnotationProperties) {
                     if (annotation instanceof NormalAnnotationExpr) {
                         addToken(new Token(PUNCTUATION, "("));
@@ -1022,8 +1066,11 @@ public class JavaASTAnalyser implements Analyser {
 
             nodeWithAnnotations.getAnnotations()
                 .stream()
-                .filter(annotationExpr -> !BLOCKED_ANNOTATIONS.contains(annotationExpr.getName().getIdentifier())
-                    && !annotationExpr.getName().getIdentifier().startsWith("Json"))
+                .filter(annotationExpr -> {
+                    String id = annotationExpr.getName().getIdentifier();
+                    return !BLOCKED_ANNOTATIONS.contains(id) && !id.startsWith("Json");
+                })
+                .sorted(Comparator.comparing(a -> a.getName().getIdentifier())) // we sort the annotations alphabetically
                 .forEach(consumer);
         }
 
@@ -1231,40 +1278,57 @@ public class JavaASTAnalyser implements Analyser {
              * node one = "Map", node two = "String", and node three = "Map<Integer, Double>"
              * node three, "Map<Integer, Double>", has two type arguments: Integer and Double.
              *
-             * But a type with full package name will be treated as two nodes and has no type arguments:
+             * But a type with full package name will be treated as two nodes:
              *
-             * E.x., "com.azure.example.TypeA", it has two node,
+             * E.x., "com.azure.example.TypeA", it has two nodes:
              * node one = "com.azure.example", node two = "TypeA"
              * Furthermore, node one has two children: "com.azure" and "example".
+             *
+             * A type with full package name and type arguments will have (2 + number of type arguments) nodes:
+             *
+             * E.x., "java.util.List<String>" has three nodes:
+             * node one = "java.util"
+             * node two = List
+             * node three = String
+             *
+             * "java.util.Map<String, Integer>" has four nodes:
+             * node one = java.util
+             * node two = Map
+             * node three = String
+             * node four = Integer
              */
-            for (int i = 0; i < childrenSize; i++) {
-                final Node childNode = nodes.get(i);
-                // Opening punctuation character:
-                // Second node, need to add a punctuation character right after first node such as 'Set<String>' where
-                // '<' is the punctuation character that is required.
-                if (i == 1) {
-                    // If a node has children, it implies it is a class or interface type. so it is safe to cast.
-                    Optional<NodeList<Type>> nodeList = ((ClassOrInterfaceType) node).getTypeArguments();
-                    if (nodeList.isPresent()) {
-                        // type arguments
-                        addToken(new Token(PUNCTUATION, "<"));
-                    } else {
-                        // full-package type name
+
+            Optional<NodeList<Type>> typeArguments = ((ClassOrInterfaceType) node).getTypeArguments();
+            List<Node> childNodes = node.getChildNodes();
+
+            if (typeArguments.isPresent()) {
+                NodeList<Type> types = typeArguments.get();
+                int genericTypeArgsCount = types.size();
+                for (int i = 0; i < childNodes.size() - genericTypeArgsCount; i++) {
+                    // for each child node that is not a type arg, use "." separator
+                    if (i > 0) {
                         addToken(new Token(PUNCTUATION, "."));
                     }
+                    getTypeDFS(childNodes.get(i));
                 }
-
-                // Recursion
-                getTypeDFS(childNode);
-
-                // Closing punctuation character
-                if (i == 0) {
-                    continue;
-                } else if (i == childrenSize - 1) {
-                    ((ClassOrInterfaceType) node).getTypeArguments().ifPresent(
-                        (NodeList<Type> values) -> addToken(new Token(PUNCTUATION, ">")));
-                } else {
-                    addToken(new Token(PUNCTUATION, ","), SPACE);
+                // Now, add "<" before adding the type arg nodes
+                addToken(new Token(PUNCTUATION, "<"));
+                for (int i = childNodes.size() - genericTypeArgsCount; i < childNodes.size(); i++) {
+                    if (i > childNodes.size() - genericTypeArgsCount) {
+                        // Add a "," separator if there are more two or more type args
+                        addToken(new Token(PUNCTUATION, ","), SPACE);
+                    }
+                    getTypeDFS(childNodes.get(i));
+                }
+                // Close the type args with ">"
+                addToken(new Token(PUNCTUATION, ">"));
+            } else {
+                // No type args, all child nodes are just part of the fully qualified class name
+                for (int i = 0; i < childNodes.size(); i++) {
+                    if (i > 0) {
+                        addToken(new Token(PUNCTUATION, "."));
+                    }
+                    getTypeDFS(childNodes.get(i));
                 }
             }
         }
@@ -1287,7 +1351,7 @@ public class JavaASTAnalyser implements Analyser {
         @Override
         public void visit(CompilationUnit compilationUnit, Map<String, String> arg) {
             compilationUnit.getModule().ifPresent(moduleDeclaration ->
-                apiListing.addChildItem(new ChildItem(MODULE_INFO_KEY, MODULE_INFO_KEY, TypeKind.CLASS)));
+                apiListing.addChildItem(new ChildItem(MODULE_INFO_KEY, MODULE_INFO_KEY, TypeKind.MODULE)));
 
             for (final TypeDeclaration<?> typeDeclaration : compilationUnit.getTypes()) {
                 buildTypeHierarchyForNavigation(typeDeclaration);
@@ -1335,19 +1399,51 @@ public class JavaASTAnalyser implements Analyser {
         attemptToFindJavadocComment(bodyDeclaration).ifPresent(this::visitJavaDoc);
     }
 
-    private void visitJavaDoc(JavadocComment jd) {
+    private void visitJavaDoc(JavadocComment javadoc) {
         if (!SHOW_JAVADOC) {
             return;
         }
 
         addToken(new Token(DOCUMENTATION_RANGE_START));
-        Arrays.stream(SPLIT_NEWLINE.split(jd.toString())).forEach(line -> {
+        // The default toString() implementation changed after version 3.16.1. Previous implementation
+        // always used a print configuration local to toString() method. The new implementation uses instance level
+        // configuration that can be mutated by other calls like getDeclarationAsString() called from 'makeId()'
+        // (ASTUtils).
+        // The updated configuration from getDeclarationAsString removes the comment option and hence the toString
+        // returns an empty string now. So, here we are using the toString overload that takes a PrintConfiguration
+        // to get the old behavior.
+        String javaDocText = javadoc.toString(new DefaultPrinterConfiguration());
+        Arrays.stream(SPLIT_NEWLINE.split(javaDocText)).forEach(line -> {
             // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
             final String wrappedString = MiscUtils.wrap(line, 120);
             Arrays.stream(SPLIT_NEWLINE.split(wrappedString)).forEach(line2 -> {
+                if (line2.contains("&")) {
+                    line2 = StringEscapeUtils.unescapeHtml(line2);
+                }
                 addToken(makeWhitespace());
 
-                addToken(new Token(COMMENT, line2));
+                // convert http/s links to external clickable links
+                Matcher urlMatch = MiscUtils.URL_MATCH.matcher(line2);
+                int currentIndex = 0;
+                while(urlMatch.find(currentIndex) == true) {
+                    int start = urlMatch.start();
+                    int end = urlMatch.end();
+
+                    // if the current search index != start of match, there was text between two hyperlinks
+                    if(currentIndex != start) {
+                        String betweenValue = line2.substring(currentIndex, start);
+                        addToken(new Token(COMMENT, betweenValue));
+                    }
+
+                    String matchedValue = line2.substring(start, end);
+                    addToken(new Token(EXTERNAL_LINK_START, matchedValue));
+                    addToken(new Token(COMMENT, matchedValue));
+                    addToken(new Token(EXTERNAL_LINK_END));
+                    currentIndex = end;
+                }
+                // end of line will be anything between the end of the last found link, and the end of the string
+                String finalValue = line2.substring(currentIndex);
+                addToken(new Token(COMMENT, finalValue));
                 addNewLine();
             });
         });

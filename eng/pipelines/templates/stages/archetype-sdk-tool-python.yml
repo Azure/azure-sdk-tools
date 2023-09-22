@@ -1,0 +1,105 @@
+parameters:
+- name: PythonVersion
+  type: string
+  default: '3.10'
+- name: PackagePath
+  type: string
+  default: ''
+- name: FeedName
+  type: string
+  default: ''
+- name: ArtifactName
+  type: string
+  default: ''
+- name: PackageName
+  type: string
+  default: ''
+- name: TestSteps
+  type: object
+  default: []
+
+variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+stages:
+  - stage: 'Build'
+    jobs:
+      - job: 'Build'
+
+        pool:
+          name: azsdk-pool-mms-ubuntu-2204-general
+          vmImage: ubuntu-22.04
+
+        steps:
+          - template: /eng/pipelines/templates/steps/use-python-version.yml
+            parameters:
+              versionSpec: '${{ parameters.PythonVersion }}'
+
+          - script: |
+              python --version
+              python -m pip install virtualenv aiohttp chardet trio setuptools wheel packaging
+            displayName: 'Setup Python Environment'
+
+          - pwsh: |
+              Write-Host "Bundling stable version of python apiview-stub-generator"
+              python setup.py bdist_wheel --universal --dist-dir $(Build.ArtifactStagingDirectory)
+            displayName: 'Build ${{ parameters.PackageName }}'
+            workingDirectory: $(Build.SourcesDirectory)/${{ parameters.PackagePath }}
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: ${{ parameters.ArtifactName }}
+              
+      - ${{ if not(eq(length(parameters.TestSteps), 0)) }}:
+        - job: 'Test'
+
+          dependsOn:
+            - 'Build'
+
+          pool:
+            name: azsdk-pool-mms-ubuntu-2204-general
+            vmImage: ubuntu-22.04
+
+          steps:
+            - template: /eng/pipelines/templates/steps/use-python-version.yml
+              parameters:
+                versionSpec: '${{ parameters.PythonVersion }}'
+
+            - ${{ parameters.TestSteps }}
+
+  - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
+    - stage: 'Release'
+      dependsOn: Build
+      condition: Succeeded()
+      jobs:
+      - job: PublishPackage
+        displayName: 'Publish ${{ parameters.PackageName }} package to devops feed'
+        pool:
+          name: azsdk-pool-mms-ubuntu-2204-general
+          vmImage: ubuntu-22.04
+        steps:
+        - checkout: none
+        - download: current
+        - task: UsePythonVersion@0
+
+        - script: |
+            set -e
+            python -m pip install twine
+          displayName: Install Twine
+
+        - task: TwineAuthenticate@0
+          displayName: 'Twine Authenticate to feed'
+          inputs:
+            artifactFeeds: ${{ parameters.FeedName }}
+
+        - task: PipAuthenticate@1
+          displayName: 'Pip Authenticate to feed'
+          inputs:
+            artifactFeeds: ${{ parameters.FeedName }}
+            onlyAddExtraIndex: false
+
+        - pwsh: |
+            twine upload --repository ${{ parameters.FeedName }} --config-file $(PYPIRC_PATH) $(Pipeline.Workspace)/${{ parameters.ArtifactName }}/*.whl
+            echo "Uploaded whl to devops feed ${{ parameters.FeedName }}"
+          displayName: 'Publish ${{ parameters.PackageName }} to DevOps feed'

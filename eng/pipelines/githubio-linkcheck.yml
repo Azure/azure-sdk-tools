@@ -2,7 +2,8 @@ trigger: none
 pr: none
 
 pool:
-  vmImage: 'ubuntu-18.04'
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
 
 variables:
   cachefile: verify-links-cache.txt
@@ -24,6 +25,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
+        -requestTimeoutSec 60 # For the nightly link checks increase timeout to handle some of the links that are redirects and can take longer
 
   - task: PowerShell@2
     displayName: 'azure-sdk link check with caching'
@@ -89,20 +91,20 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
-
+        
   - task: PowerShell@2
-    displayName: 'go link check'
+    displayName: 'tools link check'
     condition: succeededOrFailed()
     inputs:
       pwsh: true
       filePath: eng/common/scripts/Verify-Links.ps1
       arguments: >
-        -urls "https://raw.githubusercontent.com/Azure/azure-sdk-for-go/main/CHANGELOG.md"
+        -urls (Get-ChildItem -Path ./eng/common -Recurse -Include *.md)
+        -rootUrl "file://$(System.DefaultWorkingDirectory)"        
         -ignoreLinksFile "./eng/pipelines/githubio-linkcheck-ignore-links.txt"
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
-        -checkLinkGuidance: $true
 
   - publish: $(cachefile)
     artifact: verify-links-cache.txt

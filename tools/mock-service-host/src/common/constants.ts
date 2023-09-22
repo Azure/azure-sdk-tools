@@ -5,7 +5,8 @@ export const LRO_CALLBACK = 'lro-callback'
 export const mockedResourceType = 'Microsoft.Resources/mockResource'
 
 export enum Headers {
-    ExampleId = 'example-id'
+    ExampleId = 'example-id',
+    ContentType = 'Content-Type'
 }
 
 export enum ParameterType {

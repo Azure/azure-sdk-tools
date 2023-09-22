@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    // Test Result
+     "total": {
+       "type": "number"
+     },
+    "success": {
+      "type": "number"
+    },
+    "fail": {
+      "type": "number"
+    },
+    "apiCoverage": {
+      "type": "number"
+    },
+    "codeCoverage": {
+      "type": "number"
+    }
+  }
+}

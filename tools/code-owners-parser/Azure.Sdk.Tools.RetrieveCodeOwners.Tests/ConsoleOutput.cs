@@ -1,43 +1,58 @@
-﻿using System;
+using System;
 using System.IO;
 
 namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
 {
     /// <summary>
-    /// The class is to redirect console output to string writer.
+    /// The class is to redirect console STDOUT and STDERR to string writer.
     /// </summary>
     public class ConsoleOutput : IDisposable
     {
-        private StringWriter stringWriter;
-        private TextWriter originalOutput;
+        private readonly StringWriter stdoutWriter, stderrWriter;
+        private readonly TextWriter originalStdout, originalStderr;
 
         /// <summary>
         /// The constructor is where we take in the console output and output to string writer.
         /// </summary>
         public ConsoleOutput()
         {
-            this.stringWriter = new StringWriter();
-            this.originalOutput = Console.Out;
-            Console.SetOut(this.stringWriter);
+            this.stdoutWriter = new StringWriter();
+            this.stderrWriter = new StringWriter();
+            this.originalStdout = Console.Out;
+            this.originalStderr = Console.Error;
+            Console.SetOut(this.stdoutWriter);
+            Console.SetError(this.stderrWriter);
         }
 
         /// <summary>
         /// Writes the text representation of a string builder to the string.
         /// </summary>
         /// <returns>The string from console output.</returns>
-        public string GetOuput()
-        {
-            return this.stringWriter.ToString();
-        }
+        public string GetStdout()
+            => this.stdoutWriter.ToString();
+
+        public string[] GetStdoutLines()
+            => this.stdoutWriter.ToString().Split(Environment.NewLine);
+
+        public string GetStderr()
+            => this.stderrWriter.ToString();
+
+        public string[] GetStderrLines()
+            => this.stderrWriter.ToString().Split(Environment.NewLine);
 
         /// <summary>
         /// Releases all resources used by the originalOutput and stringWriter object.
         /// </summary>
         public void Dispose()
         {
-            Console.SetOut(this.originalOutput);
-            this.stringWriter.Dispose();
-            this.originalOutput.Dispose();
+            Console.SetOut(this.originalStdout);
+            Console.SetError(this.originalStderr);
+            this.stdoutWriter.Dispose();
+            this.stderrWriter.Dispose();
+            this.originalStdout.Dispose();
+            this.originalStderr.Dispose();
+            // https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1816
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
@@ -45,8 +60,10 @@ namespace Azure.Sdk.Tools.RetrieveCodeOwners.Tests
         /// </summary>
         public void Close()
         {
-            this.stringWriter.Close();
-            this.originalOutput.Close();
+            this.stdoutWriter.Close();
+            this.stderrWriter.Close();
+            this.originalStderr.Close();
+            this.originalStdout.Close();
         }
     }
     

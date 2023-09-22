@@ -1,21 +1,53 @@
+################
+# Misc
+################
+/*                                     @azure/azure-sdk-eng
+/.devcontainer/                        @azure/azure-sdk-eng
+/doc/                                  @azure/azure-sdk-eng
+# Note: directories below are scheduled to be reorganized.
+# For details, see: https://github.com/Azure/azure-sdk-tools/issues/5056
+/src/                                  @azure/azure-sdk-eng
+
+################
+# Automation
+################
+
+# Git Hub integration
+/.github/CODEOWNERS                    @azure/azure-sdk-eng
+
+# Repository tooling
+/tools/github                          @jsquire @ronniegeraghty
+/tools/github-issues                   @jsquire @ronniegeraghty
+
 ###########
 # Eng Sys
 ###########
-/eng/                            @azure/azure-sdk-eng
-/eng/common/                     @sima-zhu @weshaggard @benbp
-/eng/common/TestResources/       @benbp @weshaggard @heaths
+/eng/                                  @azure/azure-sdk-eng
+/eng/common/                           @konrad-jamrozik @weshaggard @benbp
+/eng/common/TestResources/             @benbp @weshaggard @heaths
 
 ###########
 # Eng Sys Tools
 ###########
-/tools/                          @azure/azure-sdk-eng
-/tools/check-enforcer/           @praveenkuttappan @weshaggard
-/tools/pipeline-witness/         @praveenkuttappan @weshaggard
-/tools/webhook-router/           @praveenkuttappan @weshaggard
-/tools/github-issues/            @praveenkuttappan @weshaggard @AlexGhiondea
-/tools/pipeline-generator/       @weshaggard @benbp
-/tools/test-proxy/               @scbedd @mikeharder
-/tools/stress-cluster/           @benbp @ckairen
-/tools/mock-service-host/        @changlong-liu @tadelesh
-/tools/sdk-testgen/              @changlong-liu @tadelesh
-/tools/js-sdk-release-tools/     @weidong @qiaozha
+/tools/                                @azure/azure-sdk-eng
+/tools/check-enforcer/                 @praveenkuttappan @weshaggard
+/tools/code-owners-parser/             @konrad-jamrozik @JimSuplizio
+/tools/github-issues/                  @praveenkuttappan @weshaggard
+/tools/github-event-processor/         @JimSuplizio @benbp 
+/tools/github-team-user-store/         @JimSuplizio @weshaggard
+/tools/js-sdk-release-tools/           @qiaozha @MaryGao
+/tools/mock-service-host/              @raych1 @tadelesh
+/tools/perf-automation/                @mikeharder @benbp
+/tools/pipeline-generator/             @weshaggard @benbp
+/tools/pipeline-witness/               @praveenkuttappan @weshaggard
+/tools/sdk-generation-pipeline/        @weshaggard @praveenkuttappan @maririos
+/tools/sdk-testgen/                    @raych1 @tadelesh
+/tools/stress-cluster/                 @benbp @ckairen
+/tools/test-proxy/                     @scbedd @mikeharder
+/tools/webhook-router/                 @praveenkuttappan @weshaggard
+
+###########
+# .NET Client Tools
+###########
+/src/dotnet/Azure.ClientSdk.Analyzers  @jsquire @pallavit @JoshLove-msft @christothes @annelo-msft @KrzysztofCwalina @tg-msft @heaths @m-nash
+/src/dotnet/APIView                    @chidozieononiwu

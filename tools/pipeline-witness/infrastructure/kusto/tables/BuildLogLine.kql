@@ -1,0 +1,29 @@
+.create-merge table BuildLogLine (
+    OrganizationName: string,
+    ProjectId: string,
+    ProjectName: string,
+    BuildDefinitionId: long,
+    BuildDefinitionName: string,
+    BuildId: long,
+    LogId: int,
+    LineNumber: int,
+    Length: long,
+    Timestamp: datetime,
+    Message: string,
+    EtlIngestDate: datetime
+)
+
+.alter table BuildLogLine ingestion json mapping 'BuildLogLine_mapping' ```[
+    { "column": "OrganizationName", "path": "$['organizationName']" },
+    { "column": "ProjectId", "path": "$['projectId']" },
+    { "column": "ProjectName", "path": "$['projectName']" },
+    { "column": "BuildDefinitionId", "path": "$['buildDefinitionId']" },
+    { "column": "BuildDefinitionName", "path": "$['buildDefinitionName']" },
+    { "column": "BuildId", "path": "$['buildId']" },
+    { "column": "LogId", "path": "$['logId']" },
+    { "column": "LineNumber", "path": "$['lineNumber']" },
+    { "column": "Length", "path": "$['length']" },
+    { "column": "Timestamp", "path": "$['timestamp']" },
+    { "column": "Message", "path": "$['message']" },
+    { "column": "EtlIngestDate", "path": "$['etlIngestDate']" }
+]```

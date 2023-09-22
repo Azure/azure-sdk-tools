@@ -1,0 +1,38 @@
+@using APIViewWeb;
+@using System
+@using System.Text.RegularExpressions;
+@model ReviewModel;
+@{
+    var packageName = Model.Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName;
+}
+@if (Model.Language != null)
+{
+    string iconClassName = "icon-" + Model.GetLanguageCssSafeName();
+    @if (!string.IsNullOrEmpty(Model.LanguageVariant) && Model.LanguageVariant.ToLower() != "default")
+    {
+        iconClassName += "-" + @Model.LanguageVariant.ToLower();
+    }
+    <span role="img" class="input-group-text icon-language @iconClassName" aria-label="@Model.Language @Model.LanguageVariant"></span>
+
+}
+@{
+    var packageFieldWidth = 3;
+    if (packageName != null)
+    {
+        packageFieldWidth += packageName.Length;
+    }
+}
+<input type="text" class="form-control fw-bold" style="max-width: @(packageFieldWidth)ch; font-family: monospace;" value="@(packageName ?? "")" aria-label="Package Name of Review" readonly>
+@if (packageName != null)
+{
+    @if (Model.IsApprovedForFirstRelease)
+    {
+        <span class="input-group-text" data-bs-toggle="tooltip" title="Approved for First Release">
+            <i class="fa-regular fa-circle-check text-success"></i>
+        </span>
+    }
+}
+
+
+
+

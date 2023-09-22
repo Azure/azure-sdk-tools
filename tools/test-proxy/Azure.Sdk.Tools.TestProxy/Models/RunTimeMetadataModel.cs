@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -76,32 +76,39 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             var arguments = new List<Tuple<string, string>>();
 
             var filteredFields = fields.Where(x => x.FieldType.Name == "String" || x.FieldType.Name == "ApplyCondition");
-            foreach (FieldInfo field in filteredFields)
-            {
-                var prop = field.GetValue(target);
-                string propValue;
-                if(prop == null)
-                {
-                    propValue = "This argument is unset or null.";
-                }
-                else
-                {
-                    if(field.FieldType.Name == "ApplyCondition")
-                    {
-                        propValue = prop.ToString();
 
-                        if(propValue == null)
-                        {
-                            continue;
-                        }
+            // we only want to crawl the fields if it is an inherited type. customizations are not offered
+            // when looking at a base RecordMatcher, ResponseTransform, or RecordedTestSanitizer
+            // These 3 will have a basetype of Object
+            if (tType.BaseType != typeof(Object))
+            {
+                foreach (FieldInfo field in filteredFields)
+                {
+                    var prop = field.GetValue(target);
+                    string propValue;
+                    if (prop == null)
+                    {
+                        propValue = "This argument is unset or null.";
                     }
                     else
                     {
-                        propValue = "\"" + prop.ToString() + "\"";
+                        if (field.FieldType.Name == "ApplyCondition")
+                        {
+                            propValue = prop.ToString();
+
+                            if (propValue == null)
+                            {
+                                continue;
+                            }
+                        }
+                        else
+                        {
+                            propValue = "\"" + prop.ToString() + "\"";
+                        }
                     }
+
+                    arguments.Add(new Tuple<string, string>(field.Name, propValue));
                 }
-                
-                arguments.Add(new Tuple<string, string>(field.Name, propValue));
             }
 
             return new CtorDescription()
@@ -129,8 +136,10 @@ namespace Azure.Sdk.Tools.TestProxy.Models
         // for this to work you need to have generatexmldoc activated and the generated comment xml MUST be alongside the assembly
         public XmlDocument GetDocCommentXML()
         {
-            var location = Assembly.Location;
-            using (var xmlReader = new StreamReader(Path.ChangeExtension(location, ".xml")))
+            var location = System.AppContext.BaseDirectory;
+
+            var name = Assembly.GetName().Name;
+            using (var xmlReader = new StreamReader(Path.Join(location, $"{name}.xml")))
             {
                 XmlDocument result = new XmlDocument();
                 result.Load(xmlReader);

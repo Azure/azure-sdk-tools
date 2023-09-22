@@ -1,0 +1,31 @@
+{
+    "$schema": "https://raw.githubusercontent.com/azure/azure-sdk-tools/main/tools/secret-management/schema/1.0.0/access.json",
+    "appDisplayName": "access-manager-github-only-test",
+    "properties": {
+      "subscriptionId": "00000000-0000-0000-0000-000000000000",
+      "tenantId": "00000000-0000-0000-0000-000000000000"
+    },
+    "githubRepositorySecrets": [
+        {
+            "repositories": [
+                "testfoobaraccessmanager/azure-sdk-test-foobar",
+                "testfoobaraccessmanager-fork/azure-sdk-test-foobar"
+            ],
+            "secrets": {
+                "AZURE_SUBSCRIPTION_ID": "{{ subscriptionId }}",
+                "AZURE_TENANT_ID": "{{ tenantId }}",
+                "AZURE_CLIENT_ID": "{{ applicationId }}"
+            }
+        },
+        {
+            "repositories": [
+                "microsoft-testfoobaraccessmanager/azure-sdk-test-baz"
+            ],
+            "secrets": {
+                "TEST_AZURE_SUBSCRIPTION_ID": "{{ subscriptionId }}",
+                "TEST_AZURE_TENANT_ID": "{{ tenantId }}",
+                "TEST_AZURE_CLIENT_ID": "{{ applicationId }}"
+            }
+        }
+    ]
+}

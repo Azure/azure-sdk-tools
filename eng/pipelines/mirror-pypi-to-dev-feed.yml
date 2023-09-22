@@ -1,0 +1,65 @@
+parameters:
+  - name: PackageSpecifiers
+    type: object
+    default: []
+  - name: PythonVersionOverride
+    type: string
+    default: "3.9"
+  - name: DevFeed
+    type: string
+    default: "public/azure-sdk-for-python"
+
+# this package takes a yaml list of target packages. This list should look something like
+#
+# - azure-storage-blob==12.2.0
+# - astroid==2.11.3
+#
+# other specifiers that aren't "==" are supported, but user beware, you won't get a deterministic result then!
+
+jobs:
+  - job: Mirror_From_PyPI
+    displayName: Mirror From PyPI
+
+    pool:
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
+
+    variables:
+      - template: /eng/pipelines/templates/variables/globals.yml
+
+    steps:
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: ${{ parameters.PythonVersionOverride }}
+
+      - script: |
+          set -e
+          python -m pip install -r $(Build.SourcesDirectory)/eng/scripts/download_targeted_packages_requirements.txt
+        displayName: Install Requirements
+
+      - pwsh: |
+          $configurations = '${{ convertToJson(parameters.PackageSpecifiers) }}' -replace '\\', '/' -replace '"', '`"'
+          python $(Build.SourcesDirectory)/eng/scripts/download_targeted_packages.py $configurations --dest-dir='$(Build.ArtifactStagingDirectory)'
+        displayName: 'Download Targeted Packages'
+
+      - task: TwineAuthenticate@0
+        displayName: 'Twine Authenticate to feed'
+        inputs:
+          artifactFeeds: ${{ parameters.DevFeed }}
+
+      - task: PipAuthenticate@1
+        displayName: 'Pip Authenticate to feed'
+        inputs:
+          artifactFeeds: ${{ parameters.DevFeed }}
+          onlyAddExtraIndex: false
+
+      - pwsh: |
+          $results = Get-ChildItem -Force -Path $(Build.ArtifactStagingDirectory)
+          foreach ($file in $results) {
+            Write-Host "Uploading $file"
+            
+            twine upload --repository "${{ parameters.DevFeed }}" --config-file $(PYPIRC_PATH) $($file.FullName)
+          }
+        displayName: 'Publish Packages to Dev Feed'
+        continueOnError: true
+

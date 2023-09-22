@@ -1,128 +1,118 @@
-﻿@*
+@*
     For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 *@
 @using APIViewWeb.Models
 @using System.Linq
 @model CommentThreadModel
+@{
+    var userPreference = TempData["UserPreference"] as UserPreferenceModel ?? new UserPreferenceModel(); ;
+}
 
 @if (Model != null && Model.Comments.Any())
 {
-    <tr class="comment-row" data-line-id="@Model.LineId">
+    var commentsDisplayState = (userPreference!.ShowComments == true || TempData["page"].Equals("conversation")) ? String.Empty : " d-none";
+    <tr class="comment-row @Model.LineClass@commentsDisplayState" data-line-id="@Model.LineId">
         <td class="comment-cell border-top border-bottom" colspan="3">
-            @if (Model.IsResolved)
+            <a class="comment-thread-anchor"></a>
+            @if (Model.IsResolved && Model.Comments.First().Username == User.GetGitHubLogin())
+            {
+                @:This thread is marked resolved by @Model.ResolvedBy <a href="#" class="toggle-comments">(show)</a>
+                <br />
+
+                <strong class="text-muted">You started this thread.</strong>
+            }
+            else if (Model.IsResolved)
             {
                 @:This thread is marked resolved by @Model.ResolvedBy <a href="#" class="toggle-comments">(show)</a>
             }
             <div class="border comment-holder rounded-1 @(Model.IsResolved ? "comments-resolved" : "")">
                 <div class="comment-thread-contents">
-                    @foreach (var comment in Model.Comments)
+                    @{
+                        var groupedComments = Model.Comments.Where(x => !String.IsNullOrEmpty(x.GroupNo));
+                        var unGroupedComments = Model.Comments.Where(x => String.IsNullOrEmpty(x.GroupNo));
+                    }
+                    @if (unGroupedComments.Any())
                     {
-                        <div id="@comment.CommentId" class="review-comment" data-comment-id="@comment.CommentId">
-                            <div class="comment-actions">
-                                <form data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
-                                    <input type="hidden" name="commentId" value="@comment.CommentId" />
-                                    <button type="submit" class="btn btn-light btn-sm btn-upvote" title="@string.Join(", ", comment.Upvotes)" active-if="@comment.Upvotes.Contains(User.GetGitHubLogin())">
-                                        @{
-                                            if (comment.Upvotes.Any())
-                                            {
-                                                @comment.Upvotes.Count
-                                            }
-                                            <span active-if="@comment.Upvotes.Any()">👍</span>
-                                        }
-                                    </button>
-                                </form>
-
-                                <div class="dropdown show">
-                                    <a class="btn btn-sm" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                        ...
-                                    </a>
-
-                                    <div class="dropdown-menu">
-                                        @if (comment.Username == User.GetGitHubLogin())
-                                        {
-                                            <form data-post-update="comments" asp-controller="Comments" asp-action="Delete" method="post" asp-route-reviewId="@Model.ReviewId">
-                                                <input type="hidden" name="commentId" value="@comment.CommentId" />
-                                                <button id="@comment.CommentId" type="submit" class="text-danger dropdown-item">Delete</button>
-                                            </form>
-                                            <a href="#" class="dropdown-item js-edit-comment">Edit</a>
-                                        }
-                                        <button type="button" class="btn dropdown-toggle dropdown-item" data-toggle="dropdown" aria-haspopup="true"
-                                                aria-expanded="false">
-                                            Create GitHub issue
-                                        </button>
-                                        <div class="dropdown-menu">
-                                            <table>
-                                                <tr>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-net" data-repo-language="c#">.NET</a>
-                                                    </td>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-java" data-repo-language="java">Java</a>
-                                                    </td>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-python" data-repo-language="python">Python</a>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-c" data-repo-language="c">C</a>
-                                                    </td>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-js" data-repo-language="javascript">JS</a>
-                                                    </td>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-go" data-repo-language="go">Go</a>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>
-                                                        <a href="#" class="btn btn-link js-github" data-repo="azure-sdk-for-cpp" data-repo-language="c++">C++</a>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="media">
-                                <a username="@comment.Username">
-                                    <img username="@comment.Username" class="comment-icon align-self-start mr-3" height="28" width="28" />
-                                </a>
-                                <div class="media-body comment-contents">
-                                    <div>
-                                        <a username="@comment.Username" class="font-weight-bolder text-dark mt-0 comment-header align-top">@comment.Username</a>
-                                        <a date="@comment.TimeStamp.ToLocalTime()" href="#@comment.CommentId" class="small float-right"></a>
-                                    </div>
-                                    <textarea class="js-comment-raw d-none">@comment.Comment</textarea>
-                                    @Html.FormatAsMarkdown(@comment.Comment)
-                                </div>
-                            </div>
-                        </div>
+                        @foreach (var comment in unGroupedComments)
+                        {
+                            <partial name="_CommentThreadInnerPartial" model="comment" />
+                        }
+                        <partial name="_CommentThreadReplyPartial" model="String.Empty" />
                     }
 
-                    <div class="review-thread-reply">
-                        <div class="reply-cell align-middle">
-                            <img avatar username="@User.GetGitHubLogin()" class="comment-icon" height="28" width="28" />
-                        </div>
-                        <div class="reply-cell col-12">
-                            <button type="button" class="review-thread-reply-button text-muted text-left form-control">Reply...</button>
-                        </div>
-                    </div>
+                    @if (groupedComments.Any())
+                    {
+                        var comments = groupedComments.OrderBy(x => Convert.ToInt16(x.GroupNo)).ToArray();
+                        for (int i = 0; i < comments.Length; i++) 
+                        {
+                            var comment = comments[i];
+                            var rowAnchor = $"{Model.LineId}-tr-{comment.GroupNo}";
 
-                    <div class="m-2">
+                            if (i == 0 || (Convert.ToInt16(comment.GroupNo) > Convert.ToInt16(comments[i - 1].GroupNo)))
+                            {
+                                <a class="ps-2 comment-group-anchor-link" href="#@rowAnchor">
+                                    <span class="badge badge-pill badge-light">
+                                        <small>ROW-@comment.GroupNo</small>
+                                    </span>
+                                </a>
+                            }
+                            <partial name="_CommentThreadInnerPartial" model="comment" />
+                            if (i == comments.Length - 1 || (Convert.ToInt16(comments[i + 1].GroupNo) > Convert.ToInt16(comment.GroupNo)))
+                            {
+                                <partial name="_CommentThreadReplyPartial" model="comment.GroupNo" />
+                            }
+                        }
+                    }
+
+                    <div class="m-2 d-flex justify-content-between">
                         @if (Model.IsResolved)
                         {
-                            <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
-                                <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Unresolve</button>
-                            </form>
+                            @if(Model.Comments.First().ResolutionLocked)
+                            {
+                                <span asp-resource="@Model" asp-requirement="@ResolverRequirement.Instance">
+                                    <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
+                                        <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Unresolve</button>
+                                    </form>
+                                </span>
+                                <p>
+                                    &nbsp;&nbsp;Please ask
+                                    <a username="@Model.Comments.First().Username" class="font-weight-bolder mt-0">@Model.Comments.First().Username</a>
+                                    (or an APIView approver) to unresolve this conversation.
+                                </p>
+                            } 
+                            else 
+                            {
+                                <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Unresolve" asp-route-reviewId="@Model.ReviewId">
+                                    <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Unresolve</button>
+                                </form>
+                            }
                         }
                         else
                         {
-                            <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve" asp-route-reviewId="@Model.ReviewId">
-                                <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
-                            </form>
+                            @if (Model.Comments.First().ResolutionLocked)
+                            {
+                                <span asp-resource="@Model" asp-requirement="@ResolverRequirement.Instance">
+                                    <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve" asp-route-reviewId="@Model.ReviewId">
+                                        <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
+                                    </form>
+                                </span>
+                                <p>
+                                    &nbsp;&nbsp;Please ask
+                                    <a username="@Model.Comments.First().Username" class="font-weight-bolder mt-0">@Model.Comments.First().Username</a>
+                                    (or an APIView approver) to resolve this conversation.
+                                </p>
+
+                            }
+                            else
+                            {
+                                <form data-post-update="comments" method="post" asp-controller="Comments" asp-action="Resolve" asp-route-reviewId="@Model.ReviewId">
+                                    <button type="submit" name="submit" value="Submit" class="btn btn-outline-secondary">Resolve</button>
+                                </form>
+                            }
                         }
+                        <div class="comment-navigation-buttons btn-group" role="group" aria-label="Navigation Between Comments">
+                            <!-- Navigation button are added via JavaScript-->
+                        </div>
                     </div>
                 </div>
             </div>

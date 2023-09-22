@@ -10,11 +10,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     {
         public ApplyCondition Condition = null;
 
-        public void Transform(RecordEntry entry)
+        public void Transform(HttpRequest request, RecordEntry match)
         {
-            if (Condition == null || Condition.IsApplicable(entry))
+            if (Condition == null || Condition.IsApplicable(match))
             {
-                ApplyTransform(entry);
+                ApplyTransform(request, match);
             }
         }
 
@@ -22,7 +22,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// Base class used to describe transforming a played back response with necessary 
         /// changes directly from a request.
         /// </summary>
-        /// <param name="entry">The entry to transform.</param>
-        public abstract void ApplyTransform(RecordEntry entry);
+        /// <param name="request">The request from which transformations will be pulled.</param>
+        /// <param name="match">The matched playback entry that can be transformed.</param>
+        public abstract void ApplyTransform(HttpRequest request, RecordEntry match);
     }
 }

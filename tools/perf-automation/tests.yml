@@ -1,0 +1,375 @@
+parameters:
+- name: IncludeNet
+  displayName: Include .NET
+  type: boolean
+  default: true
+- name: NetRepoCommitish
+  type: string
+  default: 'main'
+- name: NetLanguageVersion
+  displayName: NetLanguageVersion (6, 7)
+  type: string
+  default: '7'
+- name: NetServiceDirectory
+  type: string
+  default: 'storage/Azure.Storage.Blobs'
+- name: IncludeJava
+  displayName: Include Java
+  type: boolean
+  default: true
+- name: JavaRepoCommitish
+  type: string
+  default: 'main'
+- name: JavaLanguageVersion
+  displayName: JavaLanguageVersion (8, 11, 17)
+  type: string
+  default: '17'
+- name: JavaServiceDirectory
+  type: string
+  default: 'storage/azure-storage-blob'
+- name: IncludeJS
+  displayName: Include JS
+  type: boolean
+  default: true
+- name: JSRepoCommitish
+  type: string
+  default: 'main'
+- name: JSLanguageVersion
+  displayName: JSLanguageVersion (14, 16, 18)
+  type: string
+  default: '18'
+- name: JSServiceDirectory
+  type: string
+  default: 'storage/storage-blob'
+- name: IncludePython
+  displayName: Include Python
+  type: boolean
+  default: true
+- name: PythonRepoCommitish
+  type: string
+  default: 'main'
+- name: PythonLanguageVersion
+  displayName: PythonLanguageVersion (3.7, 3.8, 3.9, 3.10, 3.11)
+  type: string
+  default: '3.11'
+- name: PythonServiceDirectory
+  type: string
+  default: 'storage/azure-storage-blob'
+- name: IncludeCpp
+  displayName: Include Cpp
+  type: boolean
+  default: true
+- name: CppRepoCommitish
+  type: string
+  default: 'main'
+- name: CppServiceDirectory
+  type: string
+  default: 'storage/azure-storage-blobs'
+- name: PackageVersions
+  type: string
+  default: '12|source'
+- name: Tests
+  type: string
+  default: '^(download)$'
+- name: Arguments
+  type: string
+  default: '(10240)'
+- name: Iterations
+  type: number
+  default: 1
+- name: Profile
+  type: boolean
+  default: true
+- name: AdditionalArguments
+  displayName: AdditionalArguments (passed to PerfAutomation)
+  type: string
+  default: ' '
+- name: OperatingSystems
+  type: string
+  default: 'Linux'
+  # Use general pools instead of perf pools for faster startup due to more warm agents
+- name: LinuxPool
+  type: string
+  default: 'azsdk-pool-mms-ubuntu-2204-general'
+- name: LinuxVmImage
+  type: string
+  default: 'ubuntu-22.04'
+- name: WindowsPool
+  type: string
+  default: 'azsdk-pool-mms-win-2022-general'
+- name: WindowsVmImage
+  type: string
+  default: 'windows-2022'
+- name: TimeoutInMinutes
+  type: number
+  default: '360'
+
+resources:
+  repositories:
+  - repository: azure-sdk-for-net
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-net
+    ref: main
+  - repository: azure-sdk-for-java
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-java
+    ref: main
+  - repository: azure-sdk-for-js
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-js
+    ref: main
+  - repository: azure-sdk-for-python
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-python
+    ref: main
+  - repository: azure-sdk-for-cpp
+    type: github
+    endpoint: Azure
+    name: Azure/azure-sdk-for-cpp
+    ref: main
+
+variables:
+  ToolsRepoCommitish: $(Build.SourceVersion)
+
+stages:
+- stage: Test
+  displayName: Test
+  jobs:
+  - ${{ if parameters.IncludeNet }}:
+    - template: /eng/common/pipelines/templates/jobs/perf.yml
+      parameters:
+        JobName: 'Perf_Net'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
+        LinuxPool: ${{ parameters.LinuxPool }}
+        LinuxVmImage: ${{ parameters.LinuxVmImage }}
+        WindowsPool: ${{ parameters.WindowsPool }}
+        WindowsVmImage: ${{ parameters.WindowsVmImage }}
+        Language: 'Net'
+        LanguageVersion: ${{ parameters.NetLanguageVersion }}
+        LanguageRepoName: 'Azure/azure-sdk-for-net'
+        LanguageRepoCommitish: ${{ parameters.NetRepoCommitish }}
+        ToolsRepoCommitish: $(ToolsRepoCommitish)
+        Variables:
+        - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-net
+        OperatingSystems: ${{ parameters.OperatingSystems }}
+        InstallLanguageSteps:
+        - template: /eng/pipelines/templates/steps/install-dotnet.yml@azure-sdk-for-net
+          parameters:
+            EnableNuGetCache: false
+        - ${{ if parameters.Profile }}:
+          - task: PowerShell@2
+            displayName: 'Install dotnet-trace'
+            inputs:
+              targetType: 'inline'
+              script: 'dotnet tool install -g dotnet-trace'
+              workingDirectory: '$(Build.SourcesDirectory)/sdk'
+        ServiceDirectory: ${{ parameters.NetServiceDirectory }}
+        PackageVersions: ${{ parameters.PackageVersions }}
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
+        Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
+
+  - ${{ if parameters.IncludeJava }}:
+    - template: /eng/common/pipelines/templates/jobs/perf.yml
+      parameters:
+        JobName: 'Perf_Java'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
+        LinuxPool: ${{ parameters.LinuxPool }}
+        LinuxVmImage: ${{ parameters.LinuxVmImage }}
+        WindowsPool: ${{ parameters.WindowsPool }}
+        WindowsVmImage: ${{ parameters.WindowsVmImage }}
+        Language: 'Java'
+        LanguageVersion: ${{ parameters.JavaLanguageVersion }}
+        LanguageRepoName: 'Azure/azure-sdk-for-java'
+        LanguageRepoCommitish: ${{ parameters.JavaRepoCommitish }}
+        ToolsRepoCommitish: $(ToolsRepoCommitish)
+        Variables:
+        - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-java
+        OperatingSystems: ${{ parameters.OperatingSystems }}
+        InstallLanguageSteps:
+        - task: JavaToolInstaller@0
+          inputs:
+            versionSpec: ${{ parameters.JavaLanguageVersion }}
+            jdkArchitectureOption: 'x64'
+            jdkSourceOption: 'PreInstalled'
+          displayName: Install Java ${{ parameters.JavaLanguageVersion }}
+        - script: |
+            java -version
+            mvn --version
+          displayName: Print Java Versions
+        ServiceDirectory: ${{ parameters.JavaServiceDirectory }}
+        PackageVersions: ${{ parameters.PackageVersions }}
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
+        Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
+
+  - ${{ if parameters.IncludeJS }}:
+    - template: /eng/common/pipelines/templates/jobs/perf.yml
+      parameters:
+        JobName: 'Perf_JS'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
+        LinuxPool: ${{ parameters.LinuxPool }}
+        LinuxVmImage: ${{ parameters.LinuxVmImage }}
+        WindowsPool: ${{ parameters.WindowsPool }}
+        WindowsVmImage: ${{ parameters.WindowsVmImage }}
+        Language: 'JS'
+        LanguageVersion: ${{ parameters.JSLanguageVersion }}
+        LanguageRepoName: 'Azure/azure-sdk-for-js'
+        LanguageRepoCommitish: ${{ parameters.JSRepoCommitish }}
+        ToolsRepoCommitish: $(ToolsRepoCommitish)
+        Variables:
+        - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-js
+        OperatingSystems: ${{ parameters.OperatingSystems }}
+        InstallLanguageSteps:
+        - template: /eng/pipelines/templates/steps/use-node-version.yml@azure-sdk-for-js
+          parameters:
+            NodeVersion: ${{ parameters.JSLanguageVersion }}.x
+        ServiceDirectory: ${{ parameters.JSServiceDirectory }}
+        PackageVersions: ${{ parameters.PackageVersions }}
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
+        Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
+
+  - ${{ if parameters.IncludePython }}:
+    - template: /eng/common/pipelines/templates/jobs/perf.yml
+      parameters:
+        JobName: 'Perf_Python'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
+        LinuxPool: ${{ parameters.LinuxPool }}
+        LinuxVmImage: ${{ parameters.LinuxVmImage }}
+        WindowsPool: ${{ parameters.WindowsPool }}
+        WindowsVmImage: ${{ parameters.WindowsVmImage }}
+        Language: 'Python'
+        LanguageVersion: ${{ parameters.PythonLanguageVersion }}
+        LanguageRepoName: 'Azure/azure-sdk-for-python'
+        LanguageRepoCommitish: ${{ parameters.PythonRepoCommitish }}
+        ToolsRepoCommitish: $(ToolsRepoCommitish)
+        Variables:
+        - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-python
+        - name: PythonVersion
+          value: ${{ parameters.PythonLanguageVersion }}
+        OperatingSystems: ${{ parameters.OperatingSystems }}
+        InstallLanguageSteps:
+        - task: UsePythonVersion@0
+          displayName: "Use Python $(PythonVersion)"
+          inputs:
+            versionSpec: $(PythonVersion)
+        ServiceDirectory: ${{ parameters.PythonServiceDirectory }}
+        PackageVersions: ${{ parameters.PackageVersions }}
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
+        Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
+
+  - ${{ if parameters.IncludeCpp }}:
+    - template: /eng/common/pipelines/templates/jobs/perf.yml
+      parameters:
+        JobName: 'Perf_Cpp'
+        TimeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
+        LinuxPool: ${{ parameters.LinuxPool }}
+        LinuxVmImage: ${{ parameters.LinuxVmImage }}
+        WindowsPool: ${{ parameters.WindowsPool }}
+        WindowsVmImage: ${{ parameters.WindowsVmImage }}
+        Language: 'Cpp'
+        LanguageVersion: 'N/A'
+        LanguageRepoName: 'Azure/azure-sdk-for-cpp'
+        LanguageRepoCommitish: ${{ parameters.CppRepoCommitish }}
+        ToolsRepoCommitish: $(ToolsRepoCommitish)
+        Variables:
+        - template: /eng/pipelines/templates/variables/globals.yml@azure-sdk-for-cpp
+        OperatingSystems: ${{ parameters.OperatingSystems }}
+        InstallLanguageSteps:
+        - template: /eng/pipelines/templates/steps/vcpkg-clone.yml@azure-sdk-for-cpp
+          parameters:
+            RepoOwner: Microsoft
+        - ${{ if parameters.Profile }}:
+          - task: Bash@3
+            inputs:
+              targetType: 'inline'
+              script: sudo apt install valgrind -y
+              displayName: Install valgrind
+        ServiceDirectory: ${{ parameters.CppServiceDirectory }}
+        PackageVersions: ${{ parameters.PackageVersions }}
+        Tests: ${{ parameters.Tests }}
+        Arguments: ${{ parameters.Arguments }}
+        Iterations: ${{ parameters.Iterations }}
+        Profile: ${{ parameters.Profile }}
+        AdditionalArguments: ${{ parameters.AdditionalArguments }}
+
+- stage: Print_Results
+  displayName: Print Results
+  pool:
+    name: azsdk-pool-mms-ubuntu-2204-general
+  condition: succeededOrFailed()
+  variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+  jobs:
+  - job: Print_Results
+    displayName: Print Results
+    steps:
+    - checkout: none
+
+    - download: current
+      patterns: '**/results.txt'
+      displayName: Download Results
+
+    - pwsh: |
+        get-childitem . -recurse -filter results.txt | sort-object fullname | foreach-object {
+          write-host $_
+          get-content $_
+          write-host
+        }
+      workingDirectory: $(Pipeline.Workspace)
+      displayName: All
+      condition: succeededOrFailed()
+
+    - ${{ if parameters.IncludeNet }}:
+      - pwsh: |
+          write-host results-Net-Linux/results.txt
+          get-content results-Net-Linux/results.txt
+        workingDirectory: $(Pipeline.Workspace)
+        displayName: Net
+        condition: succeededOrFailed()
+
+    - ${{ if parameters.IncludeJava }}:
+      - pwsh: |
+          write-host results-Java-Linux/results.txt
+          get-content results-Java-Linux/results.txt
+        workingDirectory: $(Pipeline.Workspace)
+        displayName: Java
+        condition: succeededOrFailed()
+
+    - ${{ if parameters.IncludeJS }}:
+      - pwsh: |
+          write-host results-JS-Linux/results.txt
+          get-content results-JS-Linux/results.txt
+        workingDirectory: $(Pipeline.Workspace)
+        displayName: JS
+        condition: succeededOrFailed()
+
+    - ${{ if parameters.IncludePython }}:
+      - pwsh: |
+          write-host results-Python-Linux/results.txt
+          get-content results-Python-Linux/results.txt
+        workingDirectory: $(Pipeline.Workspace)
+        displayName: Python
+        condition: succeededOrFailed()
+
+    - ${{ if parameters.IncludeCpp }}:
+      - pwsh: |
+          write-host results-Cpp-Linux/results.txt
+          get-content results-Cpp-Linux/results.txt
+        workingDirectory: $(Pipeline.Workspace)
+        displayName: Cpp
+        condition: succeededOrFailed()

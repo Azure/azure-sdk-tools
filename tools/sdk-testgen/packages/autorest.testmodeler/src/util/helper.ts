@@ -1,19 +1,32 @@
 import * as child_process from 'child_process';
 import * as fs from 'fs';
-import * as jp from 'jsonpath';
 import * as path from 'path';
 import { AutorestExtensionHost, Session } from '@autorest/extension-base';
 import { ChoiceSchema, CodeModel, ComplexSchema, ObjectSchema, Operation, Parameter, Property, codeModelSchema, isVirtualParameter } from '@autorest/codemodel';
+import { JSONPath } from 'jsonpath-plus';
 import { comment, serialize } from '@azure-tools/codegen';
 
 export class Helper {
     static dumpBuf: Record<string, any> = {};
-    public static async outputToModelerfour(host: AutorestExtensionHost, session: Session<CodeModel>): Promise<void> {
+    public static async outputToModelerfour(
+        host: AutorestExtensionHost,
+        session: Session<CodeModel>,
+        exportExplicitTypes: boolean,
+        explicitTypes: string[] = undefined,
+    ): Promise<void> {
         // write the final result first which is hardcoded in the Session class to use to build the model..
         // overwrite the modelerfour which should be fine considering our change is backward compatible
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const modelerfourOptions = await session.getValue('modelerfour', {});
         if (modelerfourOptions['emit-yaml-tags'] !== false) {
+            if (exportExplicitTypes) {
+                codeModelSchema.explicit = codeModelSchema.explicit.concat(codeModelSchema.implicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)));
+                codeModelSchema.implicit = codeModelSchema.implicit.filter((t) => !Helper.isExplicitTypes(t.tag, explicitTypes));
+                codeModelSchema.compiledExplicit = codeModelSchema.compiledExplicit.concat(
+                    codeModelSchema.compiledImplicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)),
+                );
+                codeModelSchema.compiledImplicit = codeModelSchema.compiledImplicit.filter((t) => !Helper.isExplicitTypes(t.tag, explicitTypes));
+            }
             host.writeFile({
                 filename: 'code-model-v4.yaml',
                 content: serialize(session.model, { schema: codeModelSchema }),
@@ -29,8 +42,12 @@ export class Helper {
         }
     }
 
-    public static addCodeModelDump(session: Session<CodeModel>, fileName: string, debugOnly = true) {
-        this.dumpBuf[(debugOnly ? '__debug/' : '') + fileName] = serialize(session.model);
+    private static isExplicitTypes(tag: string, explicitTypes: string[] = undefined): boolean {
+        return tag && (explicitTypes || []).some((t) => tag.endsWith(t));
+    }
+
+    public static addCodeModelDump(session: Session<CodeModel>, fileName: string, withTags: boolean, debugOnly = true) {
+        this.dumpBuf[(debugOnly ? '__debug/' : '') + fileName] = withTags ? serialize(session.model, { schema: codeModelSchema }) : serialize(session.model);
     }
 
     public static async dump(host: AutorestExtensionHost): Promise<void> {
@@ -123,12 +140,7 @@ export class Helper {
                 return choiceValue;
             }
         }
-
-        if (schema.choices?.length > 0) {
-            console.warn(`${rawValue} is NOT a valid ${schema.language.default.name} value`);
-            return schema.choices[0];
-        }
-        throw new Error(`${schema.language.default.name} has no choices!`);
+        throw new Error(`${rawValue} is NOT a valid ${schema.language.default.name} value`);
     }
 
     public static execSync(command: string) {
@@ -190,7 +202,7 @@ export class Helper {
 
     public static queryByPath(obj: any, path: string[]): any[] {
         const jsonPath = '$' + path.map((x) => `['${x}']`).join('');
-        return jp.query(obj, jsonPath);
+        return JSONPath({ path: jsonPath, json: obj });
     }
 
     public static queryBodyParameter(obj: any, path: string[]): any[] {

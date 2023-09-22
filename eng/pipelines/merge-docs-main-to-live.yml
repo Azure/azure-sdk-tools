@@ -1,0 +1,101 @@
+parameters:
+- name: WhatIfPreference
+  type: boolean
+  default: false
+
+- name: DocsRepos
+  type: object
+  default:
+    - RepoName: azure-docs-sdk-dotnet
+      RepoOwner: Azure
+      AllowlistPath: docsms-allowlist/dotnet-allowlist.txt
+    - RepoName: azure-docs-sdk-java
+      RepoOwner: Azure
+      AllowlistPath: docsms-allowlist/java-allowlist.txt
+    - RepoName: azure-docs-sdk-python
+      RepoOwner: MicrosoftDocs
+      AllowlistPath: docsms-allowlist/python-allowlist.txt
+    - RepoName: azure-docs-sdk-node
+      RepoOwner: MicrosoftDocs
+      AllowlistPath: docsms-allowlist/js-allowlist.txt
+
+- name: TargetBranch
+  type: string
+  default: live
+
+jobs:
+- ${{ each repo in parameters.DocsRepos }}:
+  - job: 
+    displayName: 'ReleaseDocsMs: ${{repo.RepoName}}'
+    pool:
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
+    variables:
+      DocRepoLocation: $(Pipeline.Workspace)/docs
+    steps:
+      # Checkout tool repo
+      - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+      # Checkout docs repo
+      - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+        parameters:
+          SkipCheckoutNone: true
+          Repositories:
+          - Name: ${{ repo.RepoOwner }}/${{ repo.RepoName }}
+            WorkingDirectory: $(DocRepoLocation)
+          Paths:
+          - /*
+
+      - task: Powershell@2
+        inputs:
+          pwsh: true
+          filePath: eng/scripts/create-tag-for-current-branch.ps1
+          arguments: 
+            -ReleaseTag "live_release-$(Get-Date -Format 'yyyy-MM-dd').$(Build.BuildId)"
+            -GithubUrl "https://$(azuresdk-github-pat)@github.com/${{repo.RepoOwner}}/${{repo.RepoName}}.git" `
+            -WhatIf:$${{ parameters.WhatIfPreference }}
+          workingDirectory: $(DocRepoLocation)
+        displayName: Create tag for base branch
+
+      - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
+        parameters:
+          WorkingDirectory: $(DocRepoLocation)
+          DefaultBranchVariableName: '${{repo.RepoName}}-DefaultBranch'
+
+      - task: Powershell@2
+        inputs:
+          pwsh: true
+          filePath: eng/scripts/validate-changes-on-allowed-path.ps1
+          arguments: 
+            -TargetBranch ${{ parameters.TargetBranch }} `
+            -BaseBranch '$(${{repo.RepoName}}-DefaultBranch)' `
+            -AllowListPath "${{repo.AllowlistPath}}"
+          workingDirectory: $(DocRepoLocation)
+        displayName: Validate the changes within allowlist
+        condition: and(succeeded(), ne(variables['Skip.Validation'], 'true'))
+
+      - task: Powershell@2
+        inputs:
+          pwsh: true
+          filePath: eng/scripts/sync-base-branch-to-target.ps1
+          arguments: 
+            -TargetBranch ${{ parameters.TargetBranch }} `
+            -BaseBranch "$(${{repo.RepoName}}-DefaultBranch)" 
+          workingDirectory: $(DocRepoLocation)
+        displayName: Sync base branch to target
+
+      - pwsh: |
+          Write-Host "##vso[task.setvariable variable=HasChanges]$true"
+        workingDirectory: $(DocRepoLocation)
+        displayName: Set Var 'HasChanges' to push committed changes
+
+      - template: /eng/common/pipelines/templates/steps/git-push-changes.yml
+        parameters: 
+          BaseRepoBranch: ${{ parameters.TargetBranch }}
+          BaseRepoOwner: ${{ repo.RepoOwner }}
+          TargetRepoOwner: ${{ repo.RepoOwner }}
+          TargetRepoName: ${{ repo.RepoName }}
+          SkipCheckingForChanges: true
+          WorkingDirectory: $(DocRepoLocation)
+          WhatIfPreference: ${{ parameters.WhatIfPreference }}
+          CommitMsg: "Merge main to live $(Get-Date -Format 'yyyy-MM-dd')"
+          PushArgs: -f

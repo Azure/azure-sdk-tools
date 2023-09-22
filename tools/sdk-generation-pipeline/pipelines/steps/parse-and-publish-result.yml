@@ -1,0 +1,215 @@
+parameters:
+  - name: sdk
+    type: string
+
+  - name: service
+    type: string
+
+  - name: serviceType
+    type: string
+
+  - name: trigger
+    type: string
+
+  - name: sdkGenerationName
+    type: string
+
+  - name: triggerType
+    type: string
+
+  - name: sdkPR
+    type: object
+
+  - name: swagger
+    type: object
+steps:
+  - bash: |
+      echo "will parse task result"
+      LOG_Dir="/tmp/output/"
+      for TASK_NAME in "init" "generateAndBuild" "mockTest"
+      do
+        if [ ${TASK_NAME} = "mockTest" ]; then
+          TASK_OUTPUT_PATH="/tmp/output/mockTestOutput.json"
+        else
+          TASK_OUTPUT_PATH=""
+        fi
+
+        generateResult \
+          --buildId=$(Build.BuildId) \
+          --taskName=${TASK_NAME} \
+          --logfile="/tmp/output/${TASK_NAME}-task.log" \
+          --resultOutputPath="/tmp/output/${TASK_NAME}-task-result.json" \
+          --dockerResultFile="/tmp/output/taskResults.json" \
+          --taskOutputPath="${TASK_OUTPUT_PATH}"
+        if [ $? -ne 0 ]; then
+            #TODO: when all language support mock test, set exit 1 for parse task result failed
+            echo "wait all language support mock test"
+            #exit 1
+        fi
+      done
+    displayName: Parse task result
+    condition: always()
+
+  - bash: |
+      echo "will create PR"
+      git config --global user.email "$(GIT_USER_EMAIL)"
+      git config --global user.name "$(GIT_USER_NAME)"
+
+      #packages=`cat /tmp/output/generateAndBuildOutputJson.json| jq -c '.packages|.[]'`
+      package=`cat /tmp/output/generateAndBuildOutputJson.json| jq -c '.packages|.[]'`
+      #for package in ${packages}
+      #do
+        packageName=`echo ${package} | jq -r '.packageName'`
+        paths=`echo ${package} | jq -r '.path|.[]'`
+        for path in ${paths}
+        do
+            git add ${path}
+        done
+        git commit -m '[auto]create by sdk generation'
+        branchName=sdkGen/${{ parameters.sdkGenerationName }}/${{ parameters.service }}-${packageName}
+        git checkout -b ${branchName}
+        pushSdkRepoUrl=$(echo $(sdkRepoUrl) | sed "s#https://#https://$(REPO_OWNER):$(azuresdk-github-pat)@#")
+        pushSdkRepoUrl=$(echo ${pushSdkRepoUrl} | sed "s#$(SDK_OWNER)#$(SDK_PUSH_OWNER)#")
+        git push ${pushSdkRepoUrl} --force
+        echo "git push finished:$?"
+
+        prLinkParameter=${{ parameters.sdkPR.prLink }}
+        if [ 2 -lt ${#prLinkParameter} ];then
+          prNumber=${{ parameters.sdkPR.prNumber }}
+          prLink=${{ parameters.sdkPR.prLink }}
+        else
+          sdkRepoPullsApi=$(echo $(sdkRepoUrl) | sed "s#https://#https://api.#")
+          sdkRepoPullsApi=$(echo ${sdkRepoPullsApi} | sed "s#$(SDK_OWNER)#repos/$(SDK_PUSH_OWNER)#")
+          sdkRepoPullsApi=$(echo ${sdkRepoPullsApi} | sed "s#.git\$#/pulls#")
+          echo "will use api:${sdkRepoPullsApi}"
+          RESULT=$(curl \
+            -u "$(REPO_OWNER)":"$(azuresdk-github-pat)" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -X POST \
+            -d '{"title":"[AutoPR-${{ parameters.service }}]${{ parameters.swagger.title }}","draft":true,"body":"Create to sync ${{ parameters.swagger.path }}/pull/${{ parameters.swagger.pullRequest }}","base":"'$(sdkMainBranch)'", "head":"$(SDK_PUSH_OWNER):'${branchName}'"}' \
+            ${sdkRepoPullsApi})
+          echo "creat pr finished:$?"
+
+          prNumber=`echo ${RESULT} | jq -r '.number'`
+          prLink=`echo ${RESULT} | jq -r '.html_url'`
+          if [ 10 -gt ${#prLink} ];then
+            sdkRepoPullsList="${sdkRepoPullsApi}?state=open&head=$(SDK_PUSH_OWNER):${branchName}&base=$(sdkMainBranch)"
+            RESULT=$(curl \
+              -u "$(REPO_OWNER)":"$(azuresdk-github-pat)" \
+              -H "Accept: application/vnd.github.v3+json" \
+              -X GET \
+              ${sdkRepoPullsList})
+            if [[ `echo ${RESULT} | jq -r '. | length'` -gt 0 ]]; then
+              prNumber=`echo ${RESULT} | jq -r '.[0].number'`
+              prLink=`echo ${RESULT} | jq -r '.[0].html_url'`
+            fi
+          fi
+        fi
+
+        echo "##vso[task.setvariable variable=prNumber;]${prNumber}"
+        echo "##vso[task.setvariable variable=prLink;]${prLink}"
+        echo "##vso[task.setvariable variable=branchName;]${branchName}"
+        echo "##vso[task.setvariable variable=packageName;]${packageName}"
+        packageFolder=`echo ${package} | jq -r '.packageFolder'`
+        re="sdk/([^/]+)"
+        if [ "${{ parameters.sdk }}" = "go" ] && [ "${{ parameters.serviceType }}" = "resource-manager" ]; then
+          re="sdk/resourcemanager/([^/]+)"
+        fi
+        serviceDir=`if [[ ${packageFolder} =~ $re ]]; then echo ${BASH_REMATCH[1]}; fi`
+        if [ "${{ parameters.sdk }}" = "js" -o "${{ parameters.sdk }}" = "net" ] && [ "${{ parameters.serviceType }}" = "resource-manager" ];then
+          echo "##vso[task.setvariable variable=releasePipeline;]${{ parameters.sdk }} - ${serviceDir} - mgmt"
+        else
+          echo "##vso[task.setvariable variable=releasePipeline;]${{ parameters.sdk }} - ${serviceDir}"
+        fi
+
+        git reset HEAD~
+      #done
+    workingDirectory: $(SDK_REPO)
+    condition: always()
+    displayName: Submit Pull Request
+
+  - bash: |
+      cp /tmp/output/docker.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-full.log
+      cp /tmp/output/init-task.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-init.log
+      cp /tmp/output/init-task-result.json $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-init-result.json
+      cp /tmp/output/generateAndBuild-task.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-generateAndBuild.log
+      cp /tmp/output/generateAndBuild-task-result.json $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-generateAndBuild-result.json
+      cp /tmp/output/mockTest-task.log $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-mockTest.log | echo "wait all language support mock test"
+      cp /tmp/output/mockTest-task-result.json $(System.ArtifactsDirectory)/logs/${{ parameters.sdkGenerationName }}-mockTest-result.json | echo "wait all language support mock test"
+      prepareArtifactFiles \
+        --pipelineStatus=completed \
+        --artifactDir="$(System.ArtifactsDirectory)" \
+        --buildId="$(Build.BuildId)" \
+        --generateAndBuildOutputFile="/tmp/output/generateAndBuildOutputJson.json" \
+        --trigger='${{ parameters.trigger }}' \
+        --logPath="tmplogpath.com" \
+        --language="${{ parameters.sdk }}" \
+        --resultsPath='["/tmp/output/init-task-result.json",
+          "/tmp/output/generateAndBuild-task-result.json",
+          "/tmp/output/mockTest-task-result.json"]'
+
+      #check parse result and completion status
+      cat /tmp/output/generateAndBuild-task-result.json
+      cat $(System.ArtifactsDirectory)/completed/result.json
+
+      if [ -n "$(prLink)" ];then
+        newtaskresult=$(cat $(System.ArtifactsDirectory)/completed/result.json | \
+          jq --arg prNumber "$(prNumber)" --arg prLink "$(prLink)" --arg branchName "$(branchName)" \
+          --arg packageName "$(packageName)" --arg serviceType "${{ parameters.serviceType }}" \
+          --arg releasePipeline "$(releasePipeline)" \
+          '.result += {prNumber:$prNumber, prLink:$prLink, branchName:$branchName, serviceType:$serviceType, releasePipeline:$releasePipeline} |
+          .package += [{packageName:$packageName}]' )
+        echo ${newtaskresult} > $(System.ArtifactsDirectory)/completed/result.json
+      fi
+
+      #recheck jq result
+      cat $(System.ArtifactsDirectory)/completed/result.json
+    displayName: Prepare artifact
+    workingDirectory: $(SDK_REPO)
+    condition: always()
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish artifact
+    inputs:
+      targetPath: $(System.ArtifactsDirectory)/${{ parameters.sdk }}/artifact/
+      artifactName: sdk-generation-artifact
+    continueOnError: true
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish sourceCode
+    inputs:
+      targetPath: $(System.ArtifactsDirectory)/${{ parameters.sdk }}/sourceCode/
+      artifactName: sdk-generation-sourceCode
+    continueOnError: true
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish logs
+    inputs:
+      targetPath: $(System.ArtifactsDirectory)/logs/
+      artifactName: sdk-generation-logs
+    condition: always()
+
+  - bash: |
+      publishResult \
+        --storageType=eventhub \
+        --pipelineStatus=completed \
+        --buildId="$(Build.BuildId)" \
+        --trigger='${{ parameters.trigger }}' \
+        --logPath="www.demoLogUrl.com" \
+        --resultsPath='["/tmp/output/init-task-result.json",
+          "/tmp/output/generateAndBuild-task-result.json",
+          "/tmp/output/mockTest-task-result.json"]'
+      if [ $? -ne 0 ]; then
+          exit 1
+      fi
+    displayName: Publish status
+    env:
+      EVENTHUB_SAS_URL: $(EVENTHUB_SAS_URL)
+    condition: and(always(), ne('${{ parameters.triggerType }}', 'release'))
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish status artifact
+    inputs:
+      targetPath: $(System.ArtifactsDirectory)/completed/
+      artifactName: sdk-generation-completed-result
+    condition: always()

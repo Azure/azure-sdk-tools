@@ -1,21 +1,16 @@
 const path = require('path');
-
-const VueLoaderPlugin = require('vue-loader/lib/plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const { DuplicatesPlugin } = require("inspectpack/plugin");
 
 module.exports = {
   mode: "production",
   entry: [
     './src/main.ts',
-    './css/site.scss'
+    './css/main.scss'
   ],
   devtool: 'source-map',
   module: {
     rules: [
-      {
-        test: /\.vue$/,
-        loader: 'vue-loader'
-      },
       {
         test: /\.s[ac]ss$/i,
         use: [
@@ -44,16 +39,19 @@ module.exports = {
     ]
   },
   plugins: [
-    new VueLoaderPlugin(),
     new MiniCssExtractPlugin({
-      filename: 'site.css'
+      filename: 'main.css'
     }),
+    new DuplicatesPlugin({
+      emitErrors: false,
+      verbose: false
+    })
   ],
   resolve: {
     extensions: [ '.tsx', '.ts', '.js' ],
   },
   output: {
-    filename: 'site.js',
+    filename: 'main.js',
     path: path.resolve(__dirname, '../wwwroot'),
   },
 }

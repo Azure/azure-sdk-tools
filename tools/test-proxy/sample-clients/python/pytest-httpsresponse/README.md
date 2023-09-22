@@ -1,8 +1,10 @@
 # Python Record/Playback out of Proc
 
-Python does not have a universal methodology for submitting requests. There is indeed a `requests` builtin in py3+, but there is _no requirement_ that packages actually use it to fire their requests. As a result, the recommended methodology is create a decorator that will be added to each test function. This decorator should monkeypatch the appropriate 
+Python does not have a universal methodology for submitting requests. There is indeed a `requests` builtin in py3+, but there is _no requirement_ that packages actually use it to fire their requests. As a result, the recommended methodology is create a decorator that will be added to each test function. This decorator should monkeypatch the appropriate requests function that actually makes your REST requests.
 
-The example implementation in `test.py` highlights one such monkeypatching methodology. Adjust it fit the needs of your specific project.\
+Again, this sample highlights a monkeypatch of `requests` functionality. A similar monkeypatch for `trio` and `aiohttp` is present [here.](https://github.com/Azure/azure-sdk-for-python/blob/main/tools/azure-sdk-tools/devtools_testutils/aio/proxy_testcase_async.py)
+
+The example implementation in `test.py` highlights one such monkeypatching methodology. Adjust it fit the needs of your specific project.
 
 ## How to use
 
@@ -17,5 +19,5 @@ As with all python development, it is recommended that you create a virtual envi
 
 ## Suggestions for your implementation
 
-1. Leverage the `@RecordedByProxy` decorator on your test function. 
+1. Leverage the `@RecordedByProxy` decorator on your test function.
 2. Make it the _very last_ decorator that you apply to the test function. In playback mode all your outgoing requests will be intercepted!

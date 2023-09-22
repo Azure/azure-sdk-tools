@@ -1,0 +1,127 @@
+[
+  {
+    "id": "golang_implementation.html#golang-network-use-http-pipeline",
+    "category": "Using azcore.Pipeline",
+    "text": "DO use the HTTP pipeline component within azcore library for communicating to service REST endpoints.\n\nThe HTTP pipeline consists of a HTTP transport that is wrapped by multiple policies. Each policy is a control point during which the pipeline can modify either the request and/or response. We prescribe a default set of policies to standardize how client libraries interact with Azure services. The order in the list is the most sensible order for implementation."
+  },
+  {
+    "id": "golang_implementation.html#golang-network-policies",
+    "category": "Using azcore.Pipeline",
+    "text": "DO implement the following policies in the HTTP pipeline:\nTelemetry\nRetry\nAuthentication\nResponse downloader\nDistributed tracing\nLogging\nThe HTTP transport itself"
+  },
+  {
+    "id": "golang_implementation.html#golang-network-azure-core-policies",
+    "category": "Using azcore.Pipeline",
+    "text": "YOU SHOULD use the policy implementations in Azure Core whenever possible. Do not try to \"write your own\" policy unless it is doing something unique to your service. If you need another option to an existing policy, engage with the [Architecture Board] to add the option.\n\nTODO\n\nTODO\n\nTODO\n\nTODO\n\nTODO\n\nTODO"
+  },
+  {
+    "id": "golang_implementation.html#golang-enum-type",
+    "category": "Constants as Enumerations",
+    "text": "DO define the enumeration's type to match the type sent/received over-the-wire (string is the most common example)."
+  },
+  {
+    "id": "golang_implementation.html#golang-enum-value-naming",
+    "category": "Constants as Enumerations",
+    "text": "DO name all values with a prefix of the type's name."
+  },
+  {
+    "id": "golang_implementation.html#golang-enum-value-grouping",
+    "category": "Constants as Enumerations",
+    "text": "DO place all values for an enumerated type within their own const block, which is to immediately follow the type's declaration."
+  },
+  {
+    "id": "golang_implementation.html#golang-enum-type-values",
+    "category": "Constants as Enumerations",
+    "text": "DO define a function named <EnumTypeName>Values() that returns a slice containing all possible values for the enumeration.\n\n```go\n// WidgetColor specifies a Widget's color from the list of possible values.\ntype WidgetColor string\n\nconst (\n\tWidgetColorBlue  WidgetColor = \"blue\"\n\tWidgetColorGreen WidgetColor = \"green\"\n\tWidgetColorRed   WidgetColor = \"red\"\n)\n\n// PossibleWidgetColorValues returns a slice of possible values for WidgetColor.\nfunc PossibleWidgetColorValues() []WidgetColor {\n\t// ...\n}\n\n\n```\n\nTODO"
+  },
+  {
+    "id": "golang_implementation.html#golang-config-global",
+    "category": "Configuration",
+    "text": "DO use relevant global configuration settings either by default or when explicitly requested to by the user, for example by passing in a configuration object to a client constructor."
+  },
+  {
+    "id": "golang_implementation.html#golang-config-client",
+    "category": "Configuration",
+    "text": "DO allow different clients of the same type to use different configurations."
+  },
+  {
+    "id": "golang_implementation.html#golang-config-optout",
+    "category": "Configuration",
+    "text": "DO allow consumers of your service clients to opt out of all global configuration settings at once."
+  },
+  {
+    "id": "golang_implementation.html#golang-config-global-override",
+    "category": "Configuration",
+    "text": "DO allow all global configuration settings to be overridden by client-provided options. The names of these options should align with any user-facing global configuration keys."
+  },
+  {
+    "id": "golang_implementation.html#golang-config-behavior-changes",
+    "category": "Configuration",
+    "text": "DO NOT change behavior based on configuration changes that occur after the client is constructed. Hierarchies of clients inherit parent client configuration unless explicitly changed or overridden. Exceptions to this requirement are as follows:\nLog level, which must take effect immediately across the Azure SDK.\nTracing on/off, which must take effect immediately across the Azure SDK."
+  },
+  {
+    "id": "golang_implementation.html#golang-envvars-prefix",
+    "category": "Configuration via Environment Variables",
+    "text": "DO prefix Azure-specific environment variables with AZURE_."
+  },
+  {
+    "id": "golang_implementation.html#golang-envvars-client-prefix",
+    "category": "Configuration via Environment Variables",
+    "text": "YOU MAY use client library-specific environment variables for portal-configured settings which are provided as parameters to your client library. This generally includes credentials and connection details. For example, Service Bus could support the following environment variables:\nAZURE_SERVICEBUS_CONNECTION_STRING\nAZURE_SERVICEBUS_NAMESPACE\nAZURE_SERVICEBUS_ISSUER\nAZURE_SERVICEBUS_ACCESS_KEY\n\nStorage could support:\nAZURE_STORAGE_ACCOUNT\nAZURE_STORAGE_ACCESS_KEY\nAZURE_STORAGE_DNS_SUFFIX\nAZURE_STORAGE_CONNECTION_STRING"
+  },
+  {
+    "id": "golang_implementation.html#golang-envvars-approval",
+    "category": "Configuration via Environment Variables",
+    "text": "DO get approval from the [Architecture Board] for every new environment variable."
+  },
+  {
+    "id": "golang_implementation.html#golang-envvars-syntax",
+    "category": "Configuration via Environment Variables",
+    "text": "DO use this syntax for environment variables specific to a particular Azure service:\nAZURE_<ServiceName>_<ConfigurationKey>\n\nWhere ServiceName is the canonical shortname without spaces, and ConfigurationKey refers to an unnested configuration key for that client library."
+  },
+  {
+    "id": "golang_implementation.html#golang-envvars-posix-compliance",
+    "category": "Configuration via Environment Variables",
+    "text": "DO NOT use non-alpha-numeric characters in your environment variable names with the exception of underscore. This ensures broad interoperability.\n\nClient libraries must support robust logging mechanisms so that the consumer can adequately diagnose issues with the method calls and quickly determine whether the issue is in the consumer code, client library code, or service."
+  },
+  {
+    "id": "golang_implementation.html#golang-log-api",
+    "category": "Logging",
+    "text": "DO use the Logger API provided within azcore as the sole logging API throughout all client libraries."
+  },
+  {
+    "id": "golang_implementation.html#golang-log-classification",
+    "category": "Logging",
+    "text": "DO define constant classification strings using the azcore.LogClassification type, then log using these values."
+  },
+  {
+    "id": "golang_implementation.html#golang-log-inclue",
+    "category": "Logging",
+    "text": "DO log HTTP request line, response line, and all header/query parameter names."
+  },
+  {
+    "id": "golang_implementation.html#golang-log-exclude",
+    "category": "Logging",
+    "text": "DO NOT log payloads or HTTP header/query parameter values that aren't on the allow list.  For header/query parameters not on the allow list use the value <REDACTED> in place of the real value."
+  },
+  {
+    "id": "golang_implementation.html#golang-tracing-abstraction",
+    "category": "Distributed Tracing",
+    "text": "DO abstract the underlying tracing facility, allowing consumers to use the tracing implementation of their choice."
+  },
+  {
+    "id": "golang_implementation.html#golang-tracing-span-per-call",
+    "category": "Distributed Tracing",
+    "text": "DO create a new trace span for each API call.  New spans must be children of the context that was passed in."
+  },
+  {
+    "id": "golang_implementation.html#golang-tracing-span-name",
+    "category": "Distributed Tracing",
+    "text": "DO use <package name>.<type name>.<method name> as the name of the span."
+  },
+  {
+    "id": "golang_implementation.html#golang-tracing-propagate",
+    "category": "Distributed Tracing",
+    "text": "DO propagate tracing context on each outgoing service request through the appropriate headers to support a tracing service like Azure Monitor (https://azure.microsoft.com/services/monitor/) or ZipKin (https://zipkin.io/)   This is generally done with the HTTP pipeline.\n\nTODO\n\nTODO"
+  }
+]

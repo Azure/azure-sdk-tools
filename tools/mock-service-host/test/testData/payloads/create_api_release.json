@@ -1,0 +1,31 @@
+{
+    "liveRequest": {
+      "headers": {
+        "strict-Transport-Security": "max-age=31536000; includeSubDomains",
+        "x-ms-request-id": "8e3485b6-c8a7-45c2-a9f5-59b826e42880",
+        "x-ms-correlation-request-id": "8e3485b6-c8a7-45c2-a9f5-59b826e42880",
+        "date": "Tue, 11 Sep 2018 18:45:41 GMT",
+        "eTag": "\"AAAAAAAAjAIAAAAAAACL/A==\"",
+        "server": "Microsoft-HTTPAPI/2.0",
+        "Content-Type": "application/json",
+        "If-Match": "dddd",
+        "host": "localhost"
+      },
+      "method": "PUT",
+      "url": "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/apimService1/apis/a1/releases/testrev?api-version=2018-01-01",
+      "query": {
+        "api-version": "2018-01-01"
+      },
+      "body": {
+        "properties": {
+          "apiId": "/subscriptions/subid/resourceGroups/rg1/providers/Microsoft.ApiManagement/service/apimService1/apis/a1",
+          "notes": "yahooagain"
+        }
+      }
+    },
+    "liveResponse": {
+      "statusCode": "200",
+      "headers": {},
+      "body": {}
+    }
+  }

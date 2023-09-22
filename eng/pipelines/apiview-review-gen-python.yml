@@ -1,0 +1,47 @@
+pr: none
+
+trigger: none
+
+pool:
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
+
+parameters:
+  - name: Reviews
+    type: string
+    default: '[{"ReviewID":"<reviewid>","RevisionID":"<revisionId>","FileID":"<fileid>","FileName":"<fileName>"}]'
+  - name: APIViewURL
+    type: string
+    default: 'https://apiview.dev' 
+  - name: StorageContainerUrl
+    type: string
+    default: ''
+
+variables:
+  PythonIndexUrl: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/'
+  PythonVersion: '3.10'
+  ApiStubVersion: '0.3.8'
+
+jobs:
+- job: CreatePythonReviewCodeFile
+  displayName: 'Create Python API review token file'
+
+  variables:
+  - template: /eng/pipelines/templates/variables/globals.yml
+
+  steps:
+  - template: /eng/pipelines/templates/steps/use-python-version.yml
+    parameters:
+      versionSpec: '$(PythonVersion)'
+
+  - script: |
+      python -m pip install virtualenv aiohttp chardet trio
+      python -m pip install apiview-stub-generator==$(ApiStubVersion) --index-url $(PythonIndexUrl)
+    displayName: 'Install apiview-stub-generator'
+
+  - template: /eng/pipelines/templates/steps/apiview-review-gen.yml
+    parameters:
+      Reviews: $(Reviews)
+      APIViewURL: $(APIViewURL)
+      StorageContainerUrl: $(StorageContainerUrl)
+      ApiviewGenScript: './Create-Apiview-Token-Python.ps1'

@@ -1,0 +1,21 @@
+.create-or-alter function SuccessRateCalc(startTimeFrame:datetime, endTimeFrame:datetime, platformFilter:dynamic=dynamic(null), serviceFilter:dynamic=dynamic(null), buildTypeFilter:dynamic=dynamic(null))
+{
+    let ['language']=dynamic(null);
+    Build
+    | extend BuildDefinitionId = tolong(DefinitionId)
+    | join kind = inner ManagedDefinition on ProjectId, BuildDefinitionId
+    | extend Platform = tostring(Platform), Service = tostring(Feature), Category = tostring(Category)
+    | where FinishTime between (startTimeFrame .. endTimeFrame)
+    | where SourceBranch == "refs/heads/main"
+    | where  Platform in ('cpp', 'go', 'java', 'js', 'net', 'python', 'ios', 'android')
+    | where isempty(['language']) or Platform in (['language'])
+    | where Result in ("succeeded", "failed")
+    | where isnull(platformFilter) or Platform in (platformFilter)
+    | where isnull(serviceFilter) or Service in (serviceFilter)
+    | where isnull(buildTypeFilter) or Category in (buildTypeFilter)
+    | summarize Count = count(), Succeeded = countif(Result == "succeeded") by BuildDefinitionId, DefinitionName, Platform, Service, Category
+    | summarize
+        BuildCount = sum(Count),
+        Succeeded = sum(Succeeded),
+        SuccessRate = floor(sum(Succeeded) / todouble(sum(Count)), decimal(0.001)) * 100 by BuildDefinitionId, DefinitionName, Platform, Service, Category
+}

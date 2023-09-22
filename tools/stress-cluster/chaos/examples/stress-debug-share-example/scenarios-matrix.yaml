@@ -1,0 +1,4 @@
+matrix:
+  scenarios:
+    filesharedemo:
+      dataToBeWritten: "hello world"

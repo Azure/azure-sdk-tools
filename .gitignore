@@ -47,6 +47,7 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+testResult*.xml
 
 # Translations
 *.mo
@@ -292,6 +293,7 @@ PublishScripts/
 **/[Pp]ackages/*
 !packages/java-packages/
 !packages/python-packages/
+packages/python-packages/apistubgentest/_build/
 !tools/sdk-testgen/packages/*
 # except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/
@@ -411,6 +413,7 @@ paket-files/
 
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
+
 *.pyc
 
 # Cake - Uncomment if you are using it
@@ -482,18 +485,33 @@ local.settings.json
 # Java tooling
 *.iml
 
-# Typescript output
-src/dotnet/APIView/APIViewWeb/wwwroot/js/*.js*
-
 # npm
 *-lock.json
 
+.assets
+tools/asset-sync/.testruns
 
 # oav converter
 tools/oav-traffic-converter/input-example/
 tools/oav-traffic-converter/output-example/
 tools/oav-traffic-converter/build/
 
+# assets reporting
+tools/assets-automation/assets-reporting/generated/
+tools/assets-automation/assets-reporting/summary.md
+tools/assets-automation/assets-reporting/python.md
+tools/assets-automation/assets-reporting/java.md
+tools/assets-automation/assets-reporting/go.md
+tools/assets-automation/assets-reporting/js.md
+tools/assets-automation/assets-reporting/.net.md
+tools/assets-automation/assets-reporting/cpp.md
+
 # ios
 src/swift/*.xcworkspace/xcuserdata/
 src/swift/**/*.xcodeproj/xcuserdata/
+
+# TypeSpec APIView
+tools/apiview/emitters/cadl-apiview/cadl-output/
+tools/apiview/emitters/cadl-apiview/temp/
+tools/apiview/emitters/typespec-apiview/tsp-output/
+tools/apiview/emitters/typespec-apiview/temp/

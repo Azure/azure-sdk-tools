@@ -11,6 +11,10 @@ export enum Config {
     verifyResponse = 'testmodeler.mock.verify-response',
     scenarioCodeModelRestCallOnly = 'testmodeler.scenario.codemodel-restcall-only',
     useExampleModel = 'testmodeler.use-example-model',
+    addArmTemplatePayloadString = 'testmodeler.add-armtemplate-payload-string',
+    apiScenarioLoaderOption = 'testmodeler.api-scenario-loader-option',
+    exportExplicitType = 'testmodeler.export-explicit-type',
+    explicitTypes = 'testmodeler.explicit-types',
 }
 
 export const configDefaults = {
@@ -21,6 +25,9 @@ export const configDefaults = {
     [Config.verifyResponse]: true,
     [Config.scenarioCodeModelRestCallOnly]: true,
     [Config.useExampleModel]: true,
+    [Config.addArmTemplatePayloadString]: false,
+    [Config.exportExplicitType]: false,
+    [Config.explicitTypes]: ['bool', 'int', 'float', 'timestamp'],
 };
 
 export enum TestScenarioVariableNames {

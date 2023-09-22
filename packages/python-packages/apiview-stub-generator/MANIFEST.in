@@ -1,0 +1,3 @@
+include *.md
+include apistub/__init__.py
+include apistub/pylintrc

@@ -5,6 +5,7 @@
  */
 
 import * as colors from "colors";
+import * as os from 'os';
 
 export enum LoggingLevel {
     All = 0,
@@ -46,6 +47,13 @@ class Logger {
         this._capture(text);
     }
 
+    error(text?: string): void {
+        text = text || "";
+        console.error(text);
+        this._capture(text);
+    }
+
+
     clearCapturedText(): void {
         this._cache = [];
     }
@@ -71,12 +79,12 @@ class Logger {
     }
 
     logError(text: string): void {
-        this.log(text.red);
+        this.error(`${text.red?.split(os.EOL)?.map(e => `[ERROR] ${e}`)?.join(os.EOL)}`);
     }
 
     logWarn(text: string): void {
         if (this._loggingLevel <= LoggingLevel.Warn) {
-            this.log(text.bgYellow.black);
+            this.log(`${text.bgYellow.black?.split(os.EOL)?.map(e => `[WARN] ${e}`)?.join(os.EOL)}}`);
         }
     }
 

@@ -1,0 +1,24 @@
+################
+# FAKE Codeownrs file for testing purposes
+################
+
+# PRLabel: %FakeLabel0
+/files/filePath0/           @FakeUser0 @FakeUser10
+# PRLabel: %FakeLabel1
+/files/filePath1/           @FakeUser1
+# PRLabel: %FakeLabel2
+/files/filePath2/           @FakeUser2 @FakeUser12
+# PRLabel: %FakeLabel3
+/files/filePath3/           @FakeUser3
+# PRLabel: %FakeLabel4
+/files/filePath4/           @FakeUser4 @FakeUser14 @FakeUser24
+# PRLabel: %FakeLabel5
+/files/filePath5/           @FakeUser5
+# PRLabel: %FakeLabel6
+/files/filePath6/           @FakeUser6
+# PRLabel: %FakeLabel7
+/files/filePath7/           @FakeUser7 @FakeUser17
+# PRLabel: %FakeLabel8
+/files/filePath8/           @FakeUser8
+# PRLabel: %FakeLabel9
+/files/filePath9/           @FakeUser9

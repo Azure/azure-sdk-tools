@@ -13,9 +13,28 @@ import java.util.Map;
  */
 public final class SnippetDictionary {
     private final Map<String, List<String>> snippetDictionary = new HashMap<>();
+    private final List<String> missingBeginTag = new ArrayList<>();
 
     public boolean isActive() {
         return !snippetDictionary.isEmpty();
+    }
+
+    /**
+     * Gets all codesnippet aliases that are missing a corresponding end tag, aka all begin tags missing an end tag.
+     *
+     * @return All codesnippet aliases that are missing an end tag.
+     */
+    public List<String> getMissingEndTags() {
+        return new ArrayList<>(snippetDictionary.keySet());
+    }
+
+    /**
+     * Gets all codesnippet aliases that are missing a corresponding begin tag, aka all end tags missing a begin tag.
+     *
+     * @return All codesnippet aliases that are missing a begin tag.
+     */
+    public List<String> getMissingBeginTags() {
+        return missingBeginTag;
     }
 
     public void beginSnippet(String key) {
@@ -31,9 +50,18 @@ public final class SnippetDictionary {
     }
 
     public List<String> finalizeSnippet(String key) {
-        List<String> value = this.snippetDictionary.get(key);
-        this.snippetDictionary.remove(key);
+        List<String> value = null;
 
+        // Check the dictionary for containing the key.
+        if (snippetDictionary.containsKey(key)) {
+            // If it does contain the key return the codesnippet for the key.
+            value = snippetDictionary.remove(key);
+        } else {
+            // Otherwise add the codesnippet to the list of keys that have missing begin tags.
+            missingBeginTag.add(key);
+        }
+
+        // Return no matter what, if begin tags are missing an exception will be thrown later.
         return value;
     }
 }

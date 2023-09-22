@@ -1,0 +1,94 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/apiview/emitters/typespec-apiview
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/apiview/emitters/typespec-apiview
+
+variables:
+  NodeVersion: '16.x'
+  TypeSpecEmitterDirectory: 'tools/apiview/emitters/typespec-apiview'
+  ArtifactName: 'apiview'
+  FeedRegistry: 'https://registry.npmjs.org/'
+
+stages:
+  - stage: 'Build'
+    jobs:
+      - job: 'Build'
+
+        pool:
+          name: azsdk-pool-mms-ubuntu-2204-general
+          vmImage: ubuntu-22.04
+
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '$(NodeVersion)'
+            displayName: 'Use NodeJS $(NodeVersion)'
+
+          - script: |
+              npm install
+            workingDirectory: $(TypeSpecEmitterDirectory)
+            displayName: "Install npm packages for TypeSpec emiter"
+
+          - script: |
+              npm run-script build
+            workingDirectory: $(TypeSpecEmitterDirectory)
+            displayName: "Build TypeSpec emitter"
+
+          - script: |
+              npm run-script test
+            workingDirectory: $(TypeSpecEmitterDirectory)
+            displayName: "Test TypeSpec emitter"
+
+          - pwsh: |
+              npm pack $(TypeSpecEmitterDirectory)
+              Copy-Item ./*.tgz $(Build.ArtifactStagingDirectory)
+            displayName: "Pack TypeSpec Emitter"
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: $(ArtifactName)
+
+  - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'), ne(variables['Skip.PublishPackage'], 'true'))}}:
+    - stage: 'Release'
+      dependsOn: Build
+      condition: Succeeded()
+      jobs:
+      - job: PublishPackage
+        displayName: 'Publish typespec-apiview package to devops feed'
+        pool:
+          name: azsdk-pool-mms-ubuntu-2204-general
+          vmImage: ubuntu-22.04
+        steps:
+        - checkout: none
+        - download: current
+        
+        - pwsh: |
+            $detectedPackageName=Get-ChildItem $(Pipeline.Workspace)/$(ArtifactName)/*.tgz
+            Write-Host "Detected package name: $detectedPackageName"
+            $registry="$(FeedRegistry)"
+            $regAuth=$registry.replace("https:","")
+            $env:NPM_TOKEN="$(azure-sdk-npm-token)"
+            npm config set $regAuth`:_authToken=`$`{NPM_TOKEN`}
+            Write-Host "Publishing to $($regAuth)"
+            Write-Host "npm publish $detectedPackageName --registry=$registry --always-auth=true --access='public'"
+            npm publish $detectedPackageName --registry=$registry --always-auth=true --access="public"
+          displayName: Publish package

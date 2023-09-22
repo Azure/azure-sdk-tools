@@ -1,5 +1,5 @@
 {{ define "stress-test-addons.env-volumes" }}
-- name: test-env-{{ lower .Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
+- name: test-env-{{ lower .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
   emptyDir: {}
 - name: debug-file-share-config-{{ .Release.Name }}
   csi:
@@ -13,10 +13,10 @@
     readOnly: true
     volumeAttributes:
       secretProviderClass: stress-cluster-kv-{{ .Release.Name }}
-- name: static-secrets-{{ .Release.Name }}
+- name: static-secrets-{{ .Release.Name }}-{{ .Stress.SubscriptionConfig }}
   csi:
     driver: secrets-store.csi.k8s.io
     readOnly: true
     volumeAttributes:
-      secretProviderClass: stress-static-kv-{{ .Release.Name }}
+      secretProviderClass: stress-static-kv-{{ .Release.Name }}-{{ .Stress.SubscriptionConfig }}
 {{ end }}

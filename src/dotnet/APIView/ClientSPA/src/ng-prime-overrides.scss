@@ -47,6 +47,15 @@
     color: var(--base-text-color);
 }
 
+.p-datatable.p-datatable-hoverable-rows .p-datatable-tbody > tr:not(.p-highlight):hover {
+    background: var(--base-bg-color);
+    color: var(--base-text-color);
+}
+
+.p-datatable .p-datatable-tbody > tr.p-highlight {
+    background: var(--base-bg-color);
+    color: var(--base-text-color);
+}
 .p-sidebar {
     background: var(--base-fg-color);
     color: var(--base-text-color);
@@ -167,6 +176,14 @@
 .p-multiselect-panel .p-multiselect-items .p-multiselect-item-group {
     color: var(--base-text-color);
     background: var(--base-bg-color);
+}
+
+.p-multiselect:not(.p-disabled):hover {
+    border-color: var(--outer-glow);
+}
+
+.p-multiselect:not(.p-disabled).p-focus {
+    box-shadow: 0 0 0 0.2rem var(--outer-glow);
 }
 
 .p-datatable .p-sortable-column.p-highlight, .p-datatable .p-sortable-column.p-highlight:hover {

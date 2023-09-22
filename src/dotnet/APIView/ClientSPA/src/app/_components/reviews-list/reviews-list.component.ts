@@ -2,7 +2,7 @@ import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { Review } from 'src/app/_models/review';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { Pagination } from 'src/app/_models/pagination';
-import { TableFilterEvent, TableLazyLoadEvent, TableRowSelectEvent } from 'primeng/table';
+import { Table, TableFilterEvent, TableLazyLoadEvent, TableRowSelectEvent } from 'primeng/table';
 import { MenuItem, SortEvent } from 'primeng/api';
 import { environment } from 'src/environments/environment';
 
@@ -19,14 +19,18 @@ export class ReviewsListComponent implements OnInit {
   totalNumberOfReviews = 0;
   pagination: Pagination | undefined;
   insertIndex : number = 0;
+  resetReviews = false;
 
   pageSize = 20;
   first: number = 0;
   last: number  = 0;
+  sortField : string = "packageName";
+  sortOrder : number = 1;
+  filters: any = null;
 
   sidebarVisible : boolean = false;
 
-  // Filters
+  // Filter Options
   languages: any[] = [];
   selectedLanguages: any[] = [];
   details: any[] = [];
@@ -59,17 +63,26 @@ export class ReviewsListComponent implements OnInit {
    *  * @param append wheather to add to or replace existing list
    */
   loadReviews(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string ="packageName",  sortOrder: number = 1) {
-    let name : string = "";
+    // Reset Filter if necessary
+    if (this.filters && this.filters.languages.value == null){
+      this.selectedLanguages = [];
+    }
+
+    if (this.filters && this.filters.details.value == null){
+      this.selectedDetails = [];
+    }
+
+    let packageName : string = "";
     let languages : string [] = [];
     let details : string [] = [];
     if (filters)
     {
-      name = filters.name.value ?? name;
+      packageName = filters.packageName.value ?? packageName;
       languages = (filters.languages.value != null)? filters.languages.value.map((item: any) => item.data) : languages;
       details = (filters.details.value != null) ? filters.details.value.map((item: any) => item.data): details;
     }
 
-    this.reviewsService.getReviews(noOfItemsRead, pageSize, name, languages, details, sortField, sortOrder).subscribe({
+    this.reviewsService.getReviews(noOfItemsRead, pageSize, packageName, languages, details, sortField, sortOrder).subscribe({
       next: response => {
         if (response.result && response.pagination) {
           if (resetReviews)
@@ -147,6 +160,21 @@ export class ReviewsListComponent implements OnInit {
   }
 
   /**
+   * Return true if table has filters applied.
+   */
+  tableHasFilters() : boolean {
+    return (this.filters && (this.filters.packageName.value != null || this.filters.languages.value != null || this.filters.details.value != null));
+  }
+
+  /**
+   * Clear all filters in Table
+   */
+   clear(table: Table) {
+    table.clear();
+    this.loadReviews(0, this.pageSize, true, this.filters, this.sortField, this.sortOrder);
+  }
+
+  /**
    * Callback to invoke on scroll /lazy load.
    * @param event the lazyload event
    */
@@ -154,25 +182,27 @@ export class ReviewsListComponent implements OnInit {
     console.log("On Lazy Event Emitted %o", event);
     this.first = event.first!;
     this.last = event.last!;
+    this.sortField = event.sortField as string ?? "packageName";
+    this.sortOrder = event.sortOrder as number ?? 1;
+    this.filters = event.filters;
     if (event.last! > (this.insertIndex - this.pageSize))
     {
       if (this.pagination)
       {
-        const sortField : string = event.sortField as string ?? "packageName";
-        const sortOrder : number = event.sortOrder as number ?? 1;
-        this.loadReviews(this.pagination!.noOfItemsRead, this.pageSize, false, event.filters, sortField, sortOrder);
+        this.loadReviews(this.pagination!.noOfItemsRead, this.pageSize, this.resetReviews, this.filters, this.sortField, this.sortOrder);
       }
     }
     event.forceUpdate!();
   }
 
-    /**
+  /**
    * Callback to invoke on table filter.
    * @param event the Filter event
    */
   onFilter(event: TableFilterEvent) {
     console.log("On Filter Event Emitted %o", event);
-    this.loadReviews(0, this.pageSize, true, event.filters);
+    this.filters = event.filters;
+    this.loadReviews(0, this.pageSize, true, this.filters, this.sortField, this.sortOrder);
   }
 
   /**
@@ -184,12 +214,14 @@ export class ReviewsListComponent implements OnInit {
     this.reviewIdEmitter.emit(event.data.id);
   }
 
-    /**
+  /**
    * Callback to invoke on column sort.
    * @param event the Filter event
    */
-    onSort(event: SortEvent) {
-      console.log("Sort Event Emitted %o", event);
-      this.loadReviews(0, this.pageSize, true, null, event.field, event.order);
-    }
+  onSort(event: SortEvent) {
+    console.log("Sort Event Emitted %o", event);
+    this.sortField = event.field as string ?? "packageName";
+    this.sortOrder = event.order as number ?? 1;
+    this.loadReviews(0, this.pageSize, true, this.filters, this.sortField, this.sortOrder);
+  }
 }

@@ -215,7 +215,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         if (!acceptableEmptyArgs.Contains(param.Name))
                         {
-                            throw new HttpException(HttpStatusCode.BadRequest, $"Parameter {param.Name} was passed with no value. Please check the request body and try again.");
+                            throw new HttpException(HttpStatusCode.BadRequest, $"Parameter \"{param.Name}\" was passed with no value. Please check the request body and try again.");
                         }
                     }
                         
@@ -229,7 +229,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
                     else
                     {
-                        throw new HttpException(HttpStatusCode.BadRequest, $"Required parameter key {param} was not found in the request body.");
+                        throw new HttpException(HttpStatusCode.BadRequest, $"Required parameter key \"{param.Name}\" was not found in the request body.");
                     }
                 }
             }

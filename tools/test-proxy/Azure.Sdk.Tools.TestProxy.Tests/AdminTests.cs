@@ -882,7 +882,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             );
 
             Assert.True(assertion.StatusCode.Equals(HttpStatusCode.BadRequest));
-            Assert.Contains("Required parameter key System.String target was not found in the request body.", assertion.Message);
+            Assert.Contains("Required parameter key \"target\" was not found in the request body.", assertion.Message);
         }
 
         [Fact]

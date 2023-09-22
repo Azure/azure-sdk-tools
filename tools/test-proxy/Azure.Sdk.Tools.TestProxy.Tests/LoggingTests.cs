@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
         private static void AssertLogs(TestLogger logger)
         {
-            Assert.Equal(5, logger.Logs.Count);
+            Assert.Equal(4, logger.Logs.Count);
             Assert.Equal(
                 $"URI: [ http://127.0.0.1:5000/admin/addsanitizer]{Environment.NewLine}Headers: " +
                 "[{\"Host\":[\"127.0.0.1:5000\"],\"x-abstraction-identifier\":[\"HeaderRegexSanitizer\"]," +

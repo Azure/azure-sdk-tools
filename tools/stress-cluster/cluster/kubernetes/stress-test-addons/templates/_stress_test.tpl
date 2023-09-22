@@ -1,16 +1,9 @@
 {{- define "stress-test-addons.job-wrapper.tpl" -}}
+{{- $global := index . 0 -}}
+{{- $definition := index . 1 -}}
 spec:
   template:
-    {{- include (index . 1) (index . 0) | nindent 4 -}}
-{{- end -}}
-
-{{- define "stress-test-addons.parallel-job-wrapper.tpl" -}}
-spec:
-  completions: {{ index . 2 }}
-  parallelism: {{ index . 2 }}
-  completionMode: Indexed
-  template:
-    {{- include (index . 1) (index . 0) | nindent 4 -}}
+    {{- include $definition $global | nindent 4 -}}
 {{- end -}}
 
 {{- define "stress-test-addons.deploy-job-template.tpl" -}}
@@ -25,6 +18,11 @@ metadata:
     resourceGroupName: {{ .Stress.ResourceGroupName }}
     baseName: {{ .Stress.BaseName }}
 spec:
+  {{- if .Stress.parallel }}
+  completions: {{ .Stress.parallel }}
+  parallelism: {{ .Stress.parallel }}
+  completionMode: Indexed
+  {{- end }}
   backoffLimit: 0
   template:
     metadata:
@@ -74,25 +72,6 @@ spec:
 {{- end }}
 {{- end -}}
 
-{{- define "stress-test-addons.parallel-deploy-job-template.from-pod" -}}
-{{- $global := index . 0 -}}
-{{- $podDefinition := index . 1 -}}
-{{- $parallel := index . 2 -}}
-# Configmap template that adds the stress test ARM template for mounting
-{{- include "stress-test-addons.deploy-configmap" $global }}
-{{- range (default (list "stress") $global.Values.scenarios) }}
----
-{{ $jobCtx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list $global . )) }}
-{{- $jobOverride := fromYaml (include "stress-test-addons.parallel-job-wrapper.tpl" (list $jobCtx $podDefinition $parallel)) -}}
-{{- $tpl := fromYaml (include "stress-test-addons.deploy-job-template.tpl" $jobCtx) -}}
-{{- toYaml (merge $jobOverride $tpl) -}}
-{{- end }}
-{{- include "stress-test-addons.static-secrets" $global }}
-{{- if $global.Values.PodDisruptionBudgetExpiry }}
-{{- include "stress-test-addons.pod-disruption-budget" $global }}
-{{- end }}
-{{- end -}}
-
 {{- define "stress-test-addons.env-job-template.tpl" -}}
 apiVersion: batch/v1
 kind: Job
@@ -105,6 +84,11 @@ metadata:
     resourceGroupName: {{ .Stress.ResourceGroupName }}
     baseName: {{ .Stress.BaseName }}
 spec:
+  {{- if .Stress.parallel }}
+  completions: {{ .Stress.parallel }}
+  parallelism: {{ .Stress.parallel }}
+  completionMode: Indexed
+  {{- end }}
   backoffLimit: 0
   template:
     metadata:

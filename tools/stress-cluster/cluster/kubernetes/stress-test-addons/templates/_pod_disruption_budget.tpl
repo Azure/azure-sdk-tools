@@ -3,7 +3,7 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: disruption-budget-{{ .Release.Name }}
+  name: {{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
     release: {{ .Release.Name }}
@@ -19,13 +19,13 @@ spec:
 kind: ServiceAccount
 apiVersion: v1
 metadata:
-  name: pod-disruption-budget-expiry-{{ .Release.Name }}
+  name: pdb-read-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: pod-disruption-budget-expiry-{{ .Release.Name }}
+  name: pdb-read-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups: ["*"]
@@ -35,20 +35,20 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: pod-disruption-budget-expiry-{{ .Release.Name }}
+  name: pdb-read-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: pod-disruption-budget-expiry-{{ .Release.Name }}
+  name: pdb-read-{{ .Release.Name }}
 subjects:
   - kind: ServiceAccount
-    name: pod-disruption-budget-expiry-{{ .Release.Name }}
+    name: pdb-read-{{ .Release.Name }}
 ---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: pod-disruption-budget-expiry-{{ .Release.Name }}
+  name: pdb-del-{{ substr 0 39 .Release.Name }}-{{ lower (randAlphaNum 3) }}
   namespace: {{ .Release.Namespace }}
 spec:
   concurrencyPolicy: Forbid
@@ -59,7 +59,7 @@ spec:
       activeDeadlineSeconds: 600
       template:
         spec:
-          serviceAccountName: pod-disruption-budget-expiry-{{ .Release.Name }}
+          serviceAccountName: pdb-read-{{ .Release.Name }}
           restartPolicy: OnFailure
           containers:
             - name: kubectl

@@ -1348,6 +1348,7 @@ class CheckDocstringParameters(BaseChecker):
             for constructor in node.body:
                 if isinstance(constructor, astroid.FunctionDef) and constructor.name == "__init__":
                     arg_names = [arg.name for arg in constructor.args.args]
+                    keyword_only_args = [arg.name for arg in constructor.args.kwonlyargs]
                     vararg_name = node.args.vararg
                     break
 

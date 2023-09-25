@@ -1,7 +1,6 @@
 :host ::ng-deep {
     .p-datatable .p-datatable-footer {
-        position: fixed;
+        position: sticky;
         bottom: 50px;
-        width: 59.5rem;
     }
 }

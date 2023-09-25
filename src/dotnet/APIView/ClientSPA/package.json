@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --output-path=../APIViewWeb/wwwroot/spa --configuration production --base-href https://index.apiviewuat.azurewebsites.net/",
+    "build": "ng build --output-path=../APIViewWeb/wwwroot/spa --configuration production --base-href https://v2.apiviewuxtest.com/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

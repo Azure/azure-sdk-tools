@@ -3423,6 +3423,15 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         )
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
+                    msg_id='docstring-keyword-should-be-keyword-only',
+                    line=2,
+                    node=node,
+                    args='y, z',
+                    col_offset=0,
+                    end_line=2,
+                    end_col_offset=16
+                ),
+                pylint.testutils.MessageTest(
                     msg_id="docstring-missing-type",
                     line=2,
                     args='x',
@@ -3439,7 +3448,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                     col_offset=0, 
                     end_line=2, 
                     end_col_offset=16
-                )
+                ),
         ):
             self.checker.visit_functiondef(node)
 

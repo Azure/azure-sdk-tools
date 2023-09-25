@@ -1304,8 +1304,7 @@ class CheckDocstringParameters(BaseChecker):
         
         return keyword_args
 
-    def _find_param(self, line, docstring, idx):
-        docparams = {}
+    def _find_param(self, line, docstring, idx, docparams):
         # this param has its type on a separate line
         if line.startswith("param") and line.count(" ") == 1:
             param = line.split("param ")[1]
@@ -1374,7 +1373,7 @@ class CheckDocstringParameters(BaseChecker):
             keyword_args.update(self._find_keyword(line))
 
             # check for params in docstring
-            docparams.update(self._find_param(line, docstring, idx))
+            docparams.update(self._find_param(line, docstring, idx, docparams))
            
         # check that all params are documented
         missing_params = []

@@ -1,5 +1,4 @@
-import { mkdir, rm, writeFile, mkdtemp, stat, readFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { mkdir, rm, writeFile, stat, readFile, access } from "node:fs/promises";
 import { FileTreeResult } from "./fileTree.js";
 import * as path from "node:path";
 import { Logger } from "./log.js";
@@ -13,8 +12,9 @@ export async function removeDirectory(path: string) {
   await rm(path, { recursive: true, force: true });
 }
 
-export async function createTempDirectory(): Promise<string> {
-  const tempRoot = await mkdtemp(path.join(tmpdir(), "tsp-client-"));
+export async function createTempDirectory(outputDir: string): Promise<string> {
+  const tempRoot = path.join(outputDir, "TempTypeSpecFiles");
+  await mkdir(tempRoot, { recursive: true });
   Logger.debug(`Created temporary working directory ${tempRoot}`);
   return tempRoot;
 }
@@ -46,4 +46,44 @@ export async function tryReadTspLocation(rootDir: string): Promise<string | unde
     Logger.error(`Error reading tsp-location.yaml: ${e}`);
   }
   return undefined;
+}
+
+export async function readTspLocation(rootDir: string): Promise<[string, string, string, string[]]> {
+  try {
+    const yamlPath = path.resolve(rootDir, "tsp-location.yaml");
+    const fileStat = await stat(yamlPath);
+    if (fileStat.isFile()) {
+      const fileContents = await readFile(yamlPath, "utf8");
+      const locationYaml = parseYaml(fileContents);
+      let { directory, commit, repo, additionalDirectories } = locationYaml;
+      if (!directory || !commit || !repo) {
+        throw new Error("Invalid tsp-location.yaml");
+      }
+      Logger.info(`Additional directories: ${additionalDirectories}`)
+      if (!additionalDirectories) {
+        additionalDirectories = [];
+      }
+      return [ directory, commit, repo, additionalDirectories ];
+    }
+  } catch (e) {
+    Logger.error(`Error reading tsp-location.yaml: ${e}`);
+  }
+  throw new Error("Could not find tsp-location.yaml");
+}
+
+
+export async function getEmitterFromRepoConfig(emitterPath: string): Promise<string | undefined> {
+  await access(emitterPath);
+  const data = await readFile(emitterPath, 'utf8');
+  const obj = JSON.parse(data);
+  if (!obj || !obj.dependencies) {
+    throw new Error("Invalid emitter-package.json");
+  }
+  const languages: string[] = ["@azure-tools/typespec-", "@typespec/openapi3"];
+  for (const lang of languages) {
+    const emitter = Object.keys(obj.dependencies).find((dep: string) => dep.startsWith(lang));
+    Logger.info(`Found emitter package ${emitter}`);
+    return emitter;
+  }
+  throw new Error("Could not find emitter package");
 }

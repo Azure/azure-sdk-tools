@@ -55,13 +55,16 @@ export function printBanner() {
 }
 
 const usageText = `
-Usage: tsp-client [options] <outputDir>
+Usage: tsp-client [options]
 
 Generate from a tsp file using --mainFile or use tsp-location.yaml inside 
 the outputDir.
 
 Positionals:
-  outputDir  The output directory for the emitter                       [string]
+  init        Initialize the SDK project folder from a tspconfig.yaml   [string]
+  sync        Sync tsp files using tsp-location.yaml                    [string]
+  generate    Generate from a tsp project                               [string]
+  update      Sync and generate from a tsp project                      [string]
 
 Options:
   -d, --debug      Enable debug logging                                [boolean]
@@ -71,6 +74,7 @@ Options:
       --noCleanup  Don't clean up the temp directory after generation  [boolean]
   -h, --help       Show help                                           [boolean]
   -v, --version    Show version number                                 [boolean]
+  -o, --outputDir  The output directory for the emitter
 `;
 export function printUsage() {
   Logger(usageText);

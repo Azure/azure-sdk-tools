@@ -115,7 +115,7 @@ namespace Azure.ClientSdk.Analyzers
         public static DiagnosticDescriptor AZC0017 = new DiagnosticDescriptor(
             nameof(AZC0017),
             "Invalid convenience method signature.",
-            "Convenience method shouldn't have prameters with type RequestContent.",
+            "Convenience method shouldn't have parameters with type RequestContent.",
             "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null);
 
         public static DiagnosticDescriptor AZC0018 = new DiagnosticDescriptor(

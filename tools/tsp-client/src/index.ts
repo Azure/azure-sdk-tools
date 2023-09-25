@@ -35,17 +35,20 @@ async function sdkInit(
     const configYaml = parseYaml(tspConfig);
     if (configYaml["parameters"] && configYaml["parameters"]["service-dir"]){
       const serviceDir = configYaml["parameters"]["service-dir"]["default"];
+      if (serviceDir === undefined) {
+        Logger.error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
+      }
       Logger.debug(`Service directory: ${serviceDir}`)
       let additionalDirs: string[] = [];
       if (configYaml["parameters"]["dependencies"] && configYaml["parameters"]["dependencies"]["additionalDirectories"]) {
         additionalDirs = configYaml["parameters"]["dependencies"]["additionalDirectories"];
       }
-      let packageDir: string | undefined = undefined;
+      let packageDir;
       if (configYaml["options"][emitter] && configYaml["options"][emitter]["package-dir"]) {
         packageDir = configYaml["options"][emitter]["package-dir"];
       }
       if (packageDir === undefined) {
-        throw new Error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
+        Logger.error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
       }
       const newPackageDir = path.join(outputDir, serviceDir, packageDir)
       await mkdir(newPackageDir, { recursive: true });
@@ -115,17 +118,17 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
   await mkdir(cloneDir, { recursive: true });
   Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
   
-  function filter(src: string, dest: string): boolean {
-    if (src.includes("node_modules") || dest.includes("node_modules")) {
-      return false;
-    }
-    return true;
-  }
-
   if (localSpecRepo) {
     // FIXME: We shouldn't copy the entire repo, just the directories we need
     // Logger.debug(`Using local spec directory: ${localSpecRepo}`);
+    // function filter(src: string, dest: string): boolean {
+    //   if (src.includes("node_modules") || dest.includes("node_modules")) {
+    //     return false;
+    //   }
+    //   return true;
+    // }
     // await cp(localSpecRepo, cloneDir, { recursive: true, filter: filter });
+    Logger.error("Local spec repo is not supported yet")
   } else {
     Logger.debug(`Cloning repo to ${cloneDir}`);
     await cloneRepo(tempRoot, cloneDir, `https://github.com/${repo}.git`);

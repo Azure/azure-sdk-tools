@@ -504,7 +504,7 @@ Of course, feel free to check any of the [examples](https://github.com/Azure/azu
 
 The test-proxy is a record/playback solution. As a result, there a few concepts that devs will likely recognize from other record/playback solutions:
 
-- A `Aanitizer` is used to remove sensitive information prior to storage. When a request comes in during `playback` mode, `sanitizers` are applied to the request prior to matching to a recording.
+- A `Sanitizer` is used to remove sensitive information prior to storage. When a request comes in during `playback` mode, `sanitizers` are applied to the request prior to matching to a recording.
 - `Matchers` are used to retrieve a request/response pair from a previous recording. By default, it functions by comparing `URI`, `Headers`, and `Body`. As of now, only a single matcher can be used when retrieving an entry during playback.
 - A `Transform` is used when a user needs to "transform" a matched recording response with some value from the incoming request. This action is specific to `playback` mode. For instance, the test-proxy has two default `transforms`:
   - `x-ms-client-id` is copied from request and applied to response prior to return.

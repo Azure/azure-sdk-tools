@@ -3523,6 +3523,23 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
+    def test_docstring_keyword_only(self):
+        node = astroid.extract_node(
+            """
+            def function_foo(self, x, *, y=None, z):
+                '''
+                :param x: x
+                :type x: str
+                :keyword str y: y
+                :keyword str z: z
+                '''
+                print("hello")
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+
 class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed imports and allowing allowed imports."""
     CHECKER_CLASS = checker.DoNotImportLegacySix

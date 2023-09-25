@@ -91,7 +91,7 @@ async function sdkInit(
     }
     throw new Error("Missing service-dir in parameters section of tspconfig.yaml. Please refer to  https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.")
   }
-  throw new Error("Invalid tspconfig.yaml");  
+  throw new Error("Invalid tspconfig.yaml. Please refer to  https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.");  
 }
 
 async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
@@ -124,8 +124,8 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
 
   if (localSpecRepo) {
     // FIXME: We shouldn't copy the entire repo, just the directories we need
-    Logger.debug(`Using local spec directory: ${localSpecRepo}`);
-    await cp(localSpecRepo, cloneDir, { recursive: true, filter: filter });
+    // Logger.debug(`Using local spec directory: ${localSpecRepo}`);
+    // await cp(localSpecRepo, cloneDir, { recursive: true, filter: filter });
   } else {
     Logger.debug(`Cloning repo to ${cloneDir}`);
     await cloneRepo(tempRoot, cloneDir, `https://github.com/${repo}.git`);

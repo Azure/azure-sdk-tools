@@ -38,7 +38,7 @@
     "yaml": "^2.3.1"
   },
   "peerDependencies": {
-    "@typespec/compiler": "^0.47.1"
+    "@typespec/compiler": ">=0.47.1 <1.0.0"
   },
   "mocha": {
     "extension": [

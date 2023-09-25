@@ -3,6 +3,7 @@ import { Logger, printUsage, printVersion } from "./log.js";
 import * as path from "node:path";
 import { knownLanguages, languageAliases } from "./languageSettings.js";
 import { doesFileExist } from "./network.js";
+import PromptSync from "prompt-sync";
 
 export interface Options {
   debug: boolean;
@@ -133,6 +134,21 @@ export async function getOptions(): Promise<Options> {
     outputDir = values.outputDir;
   }
   outputDir = path.resolve(path.normalize(outputDir));
+
+  // Ask user is this is the correct output directory
+  const prompt = PromptSync();
+  let useOutputDir = prompt("Use output directory '" + outputDir + "'? (y/n) ", "y");
+
+  if (useOutputDir.toLowerCase() === "n") {
+    const newOutputDir = prompt("Enter output directory: ");
+    if (!newOutputDir) {
+      Logger.error("Output directory is required");
+      printUsage();
+      process.exit(1);
+    }
+    outputDir = path.resolve(path.normalize(newOutputDir));
+  }
+  Logger.info("Using output directory '" + outputDir + "'");
 
   return {
     debug: values.debug ?? false,

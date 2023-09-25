@@ -36,6 +36,11 @@ namespace APIViewWeb
             var queryStringBuilder = new StringBuilder(@"SELECT * FROM Revisions c");
             queryStringBuilder.Append(" WHERE c.IsDeleted = false");
 
+            if (!string.IsNullOrEmpty(filterAndSortParams.ReviewId))
+            {
+                queryStringBuilder.Append($" AND c.ReviewId = '{filterAndSortParams.ReviewId}'");
+            }   
+
             if (!string.IsNullOrEmpty(filterAndSortParams.Name))
             {
                 var hasExactMatchQuery = filterAndSortParams.Name.StartsWith("package:") ||

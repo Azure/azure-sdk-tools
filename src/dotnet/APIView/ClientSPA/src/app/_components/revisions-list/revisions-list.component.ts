@@ -2,6 +2,7 @@ import { Component, Input, SimpleChanges } from '@angular/core';
 import { MenuItem, SortEvent } from 'primeng/api';
 import { TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
 import { Pagination } from 'src/app/_models/pagination';
+import { Review } from 'src/app/_models/review';
 import { Revision } from 'src/app/_models/revision';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { environment } from 'src/environments/environment';
@@ -12,7 +13,7 @@ import { environment } from 'src/environments/environment';
   styleUrls: ['./revisions-list.component.scss']
 })
 export class RevisionsListComponent {
-  @Input() reviewId : string | null = null;
+  @Input() review : Review | null = null;
   reviewPageWebAppUrl : string = environment.webAppUrl + "Assemblies/review/";
   profilePageWebAppUrl : string = environment.webAppUrl + "Assemblies/profile/";
   revisions : Revision[] = [];
@@ -46,7 +47,7 @@ export class RevisionsListComponent {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['reviewId'].previousValue != changes['reviewId'].currentValue){
+    if (changes['review'].previousValue != changes['review'].currentValue){
       this.loadRevisions(0, this.pageSize * 2, true);
     }
   }
@@ -56,9 +57,9 @@ export class RevisionsListComponent {
    *  * @param append wheather to add to or replace existing list
    */
   loadRevisions(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string ="lastUpdated",  sortOrder: number = 1) {
-    console.log("Review Id %o", this.reviewId);
+    console.log("Review Id %o", this.review?.id);
     let label : string = "";
-    let languages : string [] = [];
+    let reviewId: string = this.review?.id ?? "";
     let details : string [] = [];
     if (filters)
     {
@@ -66,7 +67,7 @@ export class RevisionsListComponent {
       details = (filters.details.value != null) ? filters.details.value.map((item: any) => item.data): details;
     }
 
-    this.revisionsService.getRevisions(noOfItemsRead, pageSize, label, languages, details, sortField, sortOrder).subscribe({
+    this.revisionsService.getRevisions(noOfItemsRead, pageSize, label, reviewId, details, sortField, sortOrder).subscribe({
       next: response => {
         if (response.result && response.pagination) {
           if (resetReviews)

@@ -23,7 +23,7 @@
     <ng-template pTemplate="caption">
         <div class="d-flex justify-content-between index-table-info">
             <div>
-                <p-chip *ngFor="let dts of selectedDetails" label="{{ dts.data }}"></p-chip>
+                <p-chip label=""></p-chip>
             </div>
             <div>
                 <button *ngIf="showSelectionAction" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Close</button>
@@ -37,7 +37,7 @@
     <ng-template pTemplate="header">
         <tr>
             <th></th>
-            <th style="width:30%">Revision Label</th>
+            <th style="width:30%">{{ (review != null ) ? review.packageName + ' - ' : '' }}Revision</th>
             <th style="width:20%">Author</th>
             <th style="width:20%">Details</th>
             <th pSortableColumn="created" style="width:15%">Created<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
@@ -86,8 +86,8 @@
                 <i pTooltip="{{ revision.status }}" appendTo="target" tooltipPosition="top" [positionTop]=-200 [positionLeft]=-25 class="{{ badgeClass.get(revision.status) }} me-2"></i>
                 <i pTooltip="{{ revision.reviewRevisionType }}" appendTo="target" tooltipPosition="top" [positionTop]=-200 [positionLeft]=-25 class="{{ badgeClass.get(revision.reviewRevisionType) }} me-2"></i>
             </td>
-            <td pTooltip="{{ revision.changeHistory[0].changeDateTime | date }}" appendTo="target" tooltipPosition="top" [positionTop]=-190 [positionLeft]=-35>{{ revision.changeHistory[0].changeDateTime | timeago }}</td>
-            <td pTooltip="{{ revision.changeHistory[revision.changeHistory.length - 1].changeDateTime | date }}" appendTo="target" tooltipPosition="top" [positionTop]=-190 [positionLeft]=-35>{{ revision.changeHistory[revision.changeHistory.length - 1].changeDateTime | timeago }}</td>
+            <td pTooltip="{{ revision.changeHistory[0].changeDateTime | date }}" appendTo="target" tooltipPosition="top" [positionTop]=-190 [positionLeft]=-35>{{ (revision.changeHistory[0].changeDateTime !== null) ? (revision.changeHistory[0].changeDateTime | timeago) : "" }}</td>
+            <td pTooltip="{{ revision.changeHistory[revision.changeHistory.length - 1].changeDateTime | date }}" appendTo="target" tooltipPosition="top" [positionTop]=-190 [positionLeft]=-35>{{ (revision.changeHistory[revision.changeHistory.length - 1].changeDateTime !== null) ? (revision.changeHistory[revision.changeHistory.length - 1].changeDateTime | timeago) : "" }}</td>
         </tr>
     </ng-template>
     <ng-template pTemplate="summary">

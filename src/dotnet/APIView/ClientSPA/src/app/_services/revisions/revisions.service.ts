@@ -18,7 +18,7 @@ export class RevisionsService {
   constructor(private http: HttpClient) { }
 
   getRevisions(noOfItemsRead: number, pageSize: number,
-    name: string, languages: string [], details: string [],
+    name: string, reviewId : string, details: string [],
     sortField: string, sortOrder: number
     ): Observable<PaginatedResult<Revision[]>> {
     let params = new HttpParams();
@@ -27,7 +27,7 @@ export class RevisionsService {
 
     const data = {
       name: name,
-      languages: languages,
+      reviewId: reviewId,
       details: details,
       sortField: sortField,
       sortOrder: sortOrder

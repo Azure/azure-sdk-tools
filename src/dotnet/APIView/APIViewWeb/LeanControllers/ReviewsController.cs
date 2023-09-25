@@ -40,12 +40,12 @@ namespace APIViewWeb.LeanControllers
             return new LeanJsonResult(result, StatusCodes.Status200OK);
         }
 
-        /// <summary>
-        /// Retrieve the Content (codeLines and Navigation) of a review
-        /// </summary>
-        /// <param name="reviewId"></param>
-        /// <param name="revisionId"></param>
-        /// <returns></returns>
+        // <summary>
+        // Retrieve the Content (codeLines and Navigation) of a review
+        // </summary>
+        // <param name="reviewId"></param>
+        // <param name="revisionId"></param>
+        // <returns></returns>
         // [HttpGet]
         // [Route("{reviewId}/content")]
         // public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, string revisionId= null)

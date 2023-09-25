@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Review } from 'src/app/_models/review';
 
 @Component({
   selector: 'app-index-page',
@@ -6,14 +7,14 @@ import { Component } from '@angular/core';
   styleUrls: ['./index-page.component.scss']
 })
 export class IndexPageComponent {
-  reviewId : string = "";
+  review : Review | null = null;
 
   /**
    * Pass ReviewId to revision component to load revisions
    *  * @param reviewId
    */
-  getRevisions(reviewId: string) {
-    this.reviewId = reviewId;
+  getRevisions(review: Review) {
+    this.review = review;
   }
 
 }

@@ -1,0 +1,48 @@
+parameters:
+- name: name
+  type: string
+- name: displayName
+  type: string
+
+steps:
+- pwsh: |
+    function Set-RepositoryVariable($key, $name, $value) {
+      Write-Host "Setting output variable ${{ parameters.name }}.$key.$name to $value"
+      Write-Host "##vso[task.setvariable variable=$key.$name;isOutput=true]$value"
+    }
+
+    $accessToken = '$(System.AccessToken)'
+    $collectionUri = '$(System.CollectionUri)'.TrimEnd('/')
+    $project = '$(System.TeamProject)'
+    $buildDefinitionId = '$(System.DefinitionId)'
+    $buildId = '$(Build.BuildId)'
+    
+    $uri = "$collectionUri/$project/_apis/pipelines/$buildDefinitionId/runs/$buildId"
+    Write-Host "Getting pipeline run details from $uri"
+
+    $pipeline = Invoke-RestMethod -Method GET $uri -Authentication Bearer -Token (ConvertTo-SecureString $accessToken -AsPlainText -Force)
+    
+    foreach ($repository in $pipeline.resources.repositories.psobject.properties) {
+      $version = $repository.Value.version
+      $refName = $repository.Value.refName
+
+      if ($refName -match '^refs/heads/(.*)$') {
+        $branch = $Matches[1]
+      }
+
+      if ($repository.Value.repository.fullName -match '^([^/]+)/([^/]+)$') {
+        $owner = $Matches[1]
+        $name = $Matches[2]
+      }
+      else {
+        $name = $repository.Value.repository.fullName
+      }
+
+      Set-RepositoryVariable $repository.Name owner $owner
+      Set-RepositoryVariable $repository.Name name $name
+      Set-RepositoryVariable $repository.Name refName $refName
+      Set-RepositoryVariable $repository.Name branch $branch
+      Set-RepositoryVariable $repository.Name version $version
+    }
+  name: ${{ parameters.name }}
+  displayName:  ${{ parameters.displayName }}

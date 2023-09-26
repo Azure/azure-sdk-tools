@@ -15,6 +15,8 @@ to documentation in your specific language repository in order to configure reco
 ## Table of contents
 
 - [Azure SDK Tools Test Proxy](#azure-sdk-tools-test-proxy)
+      - [Test documentation by language:](#test-documentation-by-language)
+  - [Table of contents](#table-of-contents)
   - [Installation](#installation)
     - [Via Local Compile or .NET](#via-local-compile-or-net)
     - [Via Docker Image](#via-docker-image)
@@ -45,6 +47,10 @@ to documentation in your specific language repository in order to configure reco
   - [Session and Test Level Transforms, Sanitizers, and Matchers](#session-and-test-level-transforms-sanitizers-and-matchers)
     - [Add Sanitizer](#add-sanitizer)
       - [A note about where sanitizers apply](#a-note-about-where-sanitizers-apply)
+      - [Passing sanitizers in bulk](#passing-sanitizers-in-bulk)
+    - [Set a Matcher](#set-a-matcher)
+      - [The `Custom Default` Matcher](#the-custom-default-matcher)
+    - [Add a Transform](#add-a-transform)
     - [For Sanitizers, Matchers, or Transforms in general](#for-sanitizers-matchers-or-transforms-in-general)
     - [Viewing available/active Sanitizers, Matchers, and Transforms](#viewing-availableactive-sanitizers-matchers-and-transforms)
       - [To see customizations on a specific recording](#to-see-customizations-on-a-specific-recording)
@@ -496,9 +502,13 @@ Of course, feel free to check any of the [examples](https://github.com/Azure/azu
 
 ## Session and Test Level Transforms, Sanitizers, and Matchers
 
-A `sanitizer` is used to remove sensitive information prior to storage. When a request comes in during `playback` mode, the same set of `sanitizers` are applied prior to matching with the recordings.
+The test-proxy is a record/playback solution. As a result, there a few concepts that devs will likely recognize from other record/playback solutions:
 
-`Matchers` are used to retrieve a `RecordEntry` from a `RecordSession`. As of now, only a single matcher can be used when retrieving an entry during playback.
+- A `Sanitizer` is used to remove sensitive information prior to storage. When a request comes in during `playback` mode, `sanitizers` are applied to the request prior to matching to a recording.
+- `Matchers` are used to retrieve a request/response pair from a previous recording. By default, it functions by comparing `URI`, `Headers`, and `Body`. As of now, only a single matcher can be used when retrieving an entry during playback.
+- A `Transform` is used when a user needs to "transform" a matched recording response with some value from the incoming request. This action is specific to `playback` mode. For instance, the test-proxy has two default `transforms`:
+  - `x-ms-client-id` is copied from request and applied to response prior to return.
+  - `x-ms-client-request-id` is copied from request and applied to response prior to return.
 
 Default sets of `matcher`, `transforms`, and `sanitizers` are applied during recording and playback. These default settings are all set at the `session` level. Customization is allowed for these default sets by accessing the `Admin` controller.
 
@@ -582,12 +592,70 @@ In some cases, users need to register a lot (10+) of sanitizers. In this case, g
 ]
 ```
 
+### Set a Matcher
+
+Setting a matcher is just like adding a `sanitizer`. Set the `x-abstraction-identifier` value to the name of the matcher you want to instantiate, and provide the proper constructor arguments in the body! Check `Info/Available/` for available matchers.
+
+```jsonc
+// POST to URI <proxyURL>/Admin/SetMatcher
+// headers
+{
+    "x-abstraction-identifier": "BodilessMatcher"
+}
+// request body is just empty JSON for a BodilessMatcher
+{}
+```
+
+#### The `Custom Default` Matcher
+
+The default `matcher` for test-proxy is usable in _most_ situations. `Sanitizers` can be used to clear non-available information prior to saving to disk, and playback tests should ensure that they match the expected values in the recordings. Sanization can usually eliminate the need for custom matching, but in some circumstances this is just not feasible.
+
+If a dev must only change a _couple_ elements of the default matcher, the `CustomDefault` matcher is the way to go!
+
+```jsonc
+// POST to URI <proxyURL>/Admin/SetMatcher
+// headers
+{
+    "x-abstraction-identifier": "CustomDefaultMatcher"
+}
+// request body
+{
+    // Should the body value be compared during lookup operations?
+    "compareBodies": true,
+    // A comma separated list of additional headers that should be excluded during matching. "Excluded" headers are entirely ignored.
+    "excludedHeaders": "traceparent", 
+    // A comma separated list of additional headers that should be ignored during matching. Any headers that are "ignored" will not do value comparison when matching.
+    // The "presence" of the headers will still be checked however.
+    "ignoredHeaders": "User-Agent, Origin, Content-Length",
+    // By default, the test-proxy does not sort query params before matching. Setting true will sort query params alphabetically before comparing URI.
+    "ignoredQueryOrdering": false,
+    // A comma separated list of query parameterse that should be ignored during matching.
+    "ignoredQueryParameters" "token"
+}
+```
+
+### Add a Transform
+
+Just like `sanitizers` and `matchers`, select an abstraction-id in header, provide a json body with any arguments/details.
+
+```jsonc
+// POST to URI <proxyURL>/Admin/AddTransform
+// headers
+{
+    "x-abstraction-identifier": "ApiVersionTransform"
+}
+// empty request body for ApiVersionTransform
+{}
+```
+
+This will add a transform that copies `api-version` header from request onto the matched response during `playback`.
+
 ### For Sanitizers, Matchers, or Transforms in general
 
 When invoked as basic requests to the `Admin` controller, these settings will be applied to **all** further requests and responses. Both `Playback` and `Recording`. Where applicable.
 
-- `sanitizers` are applied before the recording is saved to disk AND when an incoming request is matched.
-- A custom `matcher` can be set for a session or individual recording and is applied when retrieving an entry from a loaded recording.
+- `sanitizers` are applied before the recording is saved to disk AND on an incoming request prior to the `match` operation.
+- A custom `matcher` can be set for a session or individual recording and is applied when retrieving an entry from a loaded recording. Only a single matcher can be honored when matching requests to recorded entries. Registering two matchers one after another will simply result in matching using the last matcher provided.
 - `transforms` are applied when returning a request during playback.
 
 Currently, the configured set of transforms/playback/sanitizers are NOT propogated onto disk alongside the recording.
@@ -596,7 +664,7 @@ Currently, the configured set of transforms/playback/sanitizers are NOT propogat
 
 Launch the test-proxy through your chosen method, then visit:
 
-- `<proxyUrl>/Info/Available` to see all available
+- `<proxyUrl>/Info/Available` to see all available.
 - `<proxyUrl>/Info/Active` to see all currently active for all sessions.
 
 Note that the `constructor arguments` that are documented must be present (where documented as such) in the body of the POST sent to the Admin Interface.

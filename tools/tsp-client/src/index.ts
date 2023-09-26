@@ -119,16 +119,23 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
   Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
   
   if (localSpecRepo) {
-    // FIXME: We shouldn't copy the entire repo, just the directories we need
-    // Logger.debug(`Using local spec directory: ${localSpecRepo}`);
-    // function filter(src: string, dest: string): boolean {
-    //   if (src.includes("node_modules") || dest.includes("node_modules")) {
-    //     return false;
-    //   }
-    //   return true;
+    Logger.debug(`Using local spec directory: ${localSpecRepo}`);
+    function filter(src: string, dest: string): boolean {
+      if (src.includes("node_modules") || dest.includes("node_modules")) {
+        return false;
+      }
+      return true;
+    }
+    const cpDir = path.join(cloneDir, directory);
+    await cp(localSpecRepo, cpDir, { recursive: true, filter: filter });
+    // TODO: additional directories not yet supported
+    // const localSpecRepoRoot = await getRepoRoot(localSpecRepo);
+    // if (localSpecRepoRoot === undefined) {
+    //   throw new Error("Could not find local spec repo root, please make sure the path is correct");
     // }
-    // await cp(localSpecRepo, cloneDir, { recursive: true, filter: filter });
-    Logger.error("Local spec repo is not supported yet")
+    // for (const dir of additionalDirectories) {
+    //   await cp(path.join(localSpecRepoRoot, dir), cpDir, { recursive: true, filter: filter });
+    // }
   } else {
     Logger.debug(`Cloning repo to ${cloneDir}`);
     await cloneRepo(tempRoot, cloneDir, `https://github.com/${repo}.git`);
@@ -144,14 +151,19 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
   await cp(path.join(cloneDir, directory), srcDir, { recursive: true });
   const emitterPath = path.join(repoRoot, "eng", "emitter-package.json");
   await cp(emitterPath, path.join(srcDir, "package.json"), { recursive: true });
-  for (const dir of additionalDirectories) {
-    const dirSplit = dir.split("/");
-    let projectName = dirSplit[dirSplit.length - 1];
-    if (projectName === undefined) {
-      projectName = "src";
+  // FIXME: remove conditional once full support for local spec repo is added
+  if (localSpecRepo) {
+    Logger.info("local spec repo does not yet support additional directories");
+  } else {
+    for (const dir of additionalDirectories) {
+      const dirSplit = dir.split("/");
+      let projectName = dirSplit[dirSplit.length - 1];
+      if (projectName === undefined) {
+        projectName = "src";
+      }
+      const dirName = path.join(tempRoot, projectName);
+      await cp(path.join(cloneDir, dir), dirName, { recursive: true });
     }
-    const dirName = path.join(tempRoot, projectName);
-    await cp(path.join(cloneDir, dir), dirName, { recursive: true });
   }
   Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
   await removeDirectory(cloneDir);

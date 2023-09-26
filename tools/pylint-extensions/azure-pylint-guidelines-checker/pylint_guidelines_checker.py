@@ -1341,20 +1341,20 @@ class CheckDocstringParameters(BaseChecker):
         :return: None
         """
         arg_names = []
-        keyword_only_args = []
+        method_keyword_only_args = []
         vararg_name = None
         # specific case for constructor where docstring found in class def
         if isinstance(node, astroid.ClassDef):
             for constructor in node.body:
                 if isinstance(constructor, astroid.FunctionDef) and constructor.name == "__init__":
                     arg_names = [arg.name for arg in constructor.args.args]
-                    keyword_only_args = [arg.name for arg in constructor.args.kwonlyargs]
+                    method_keyword_only_args = [arg.name for arg in constructor.args.kwonlyargs]
                     vararg_name = node.args.vararg
                     break
 
         if isinstance(node, astroid.FunctionDef):
             arg_names = [arg.name for arg in node.args.args]
-            keyword_only_args = [arg.name for arg in node.args.kwonlyargs]
+            method_keyword_only_args = [arg.name for arg in node.args.kwonlyargs]
             vararg_name = node.args.vararg
 
         try:
@@ -1368,10 +1368,10 @@ class CheckDocstringParameters(BaseChecker):
             arg_names.append(vararg_name)
 
         docparams = {}
-        keyword_args = {}
+        docstring_keyword_args = {}
         for idx, line in enumerate(docstring):
             # check for keyword args in docstring
-            keyword_args.update(self._find_keyword(line))
+            docstring_keyword_args.update(self._find_keyword(line))
 
             # check for params in docstring
             docparams.update(self._find_param(line, docstring, idx, docparams))
@@ -1385,10 +1385,7 @@ class CheckDocstringParameters(BaseChecker):
                 missing_params.append(param)
 
         # check that all keyword-only args are documented
-        missing_kwonly_args = []
-        for param in keyword_only_args:
-            if param not in keyword_args:
-                missing_kwonly_args.append(param)
+        missing_kwonly_args = list(set(docstring_keyword_args) ^ set(method_keyword_only_args))
 
         if missing_params:
             self.add_message(

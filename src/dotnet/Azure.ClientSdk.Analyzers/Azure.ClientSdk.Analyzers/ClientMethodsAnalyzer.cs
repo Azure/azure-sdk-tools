@@ -77,9 +77,9 @@ namespace Azure.ClientSdk.Analyzers
                 if (!lastArgument.IsOptional)
                 {
                     var overloadWithCancellationToken = FindMethod(
-                    member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
-                    member.TypeParameters,
-                    member.Parameters.RemoveAt(member.Parameters.Length - 1));
+                        member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
+                        member.TypeParameters,
+                        member.Parameters.RemoveAt(member.Parameters.Length - 1));
 
                     if (overloadWithCancellationToken == null)
                     {
@@ -149,11 +149,6 @@ namespace Azure.ClientSdk.Analyzers
         {
             bool IsValidPageable(ITypeSymbol typeSymbol)
             {
-                if ((!IsOrImplements(typeSymbol, PageableTypeName)) && (!IsOrImplements(typeSymbol, AsyncPageableTypeName)))
-                {
-                    return false;
-                }
-
                 var pageableTypeSymbol = typeSymbol as INamedTypeSymbol;
                 if (!pageableTypeSymbol.IsGenericType)
                 {

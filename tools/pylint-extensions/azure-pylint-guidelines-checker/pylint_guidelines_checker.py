@@ -1229,7 +1229,7 @@ class CheckDocstringParameters(BaseChecker):
             "Docstring should use keywords.",
         ),
         "C4758": (
-            '"%s" found as keyword in docstring, not in method signature. :keyword arguments should be keyword-only arguments in method signature. See details: '
+            '"%s" found as keyword in docstring, not in method signature. :keyword: arguments should be keyword-only arguments in method signature. See details: '
             'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
             "docstring-keyword-should-be-keyword-only",
             "Docstring keyword arguments should be keyword-only method arguments.",

@@ -3535,7 +3535,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
     def test_docstring_keyword_only(self):
         node = astroid.extract_node(
             """
-            def function_foo(self, x, *, y=None, z):
+            def function_foo(self, x, *, z, y=None):
                 '''
                 :param x: x
                 :type x: str

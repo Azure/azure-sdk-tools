@@ -9,6 +9,7 @@ param staticTestKeyvaultGroup string
 param monitoringLocation string = 'centralus'
 param defaultAgentPoolMinNodes int = 6
 param defaultAgentPoolMaxNodes int = 20
+param maintenanceWindowDay string = 'Monday'
 param tags object
 // AKS does not allow agentPool updates via existing managed cluster resources
 param updateNodes bool = false
@@ -79,6 +80,7 @@ module cluster 'cluster/cluster.bicep' = {
         clusterName: clusterName
         defaultAgentPoolMinNodes: defaultAgentPoolMinNodes
         defaultAgentPoolMaxNodes: defaultAgentPoolMaxNodes
+        maintenanceWindowDay: maintenanceWindowDay 
         tags: tags
         groupSuffix: groupSuffix
         workspaceId: logWorkspace.outputs.id

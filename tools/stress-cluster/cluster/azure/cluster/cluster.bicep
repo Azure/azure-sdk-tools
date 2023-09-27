@@ -6,6 +6,7 @@ param clusterName string
 param location string = resourceGroup().location
 param defaultAgentPoolMinNodes int = 6
 param defaultAgentPoolMaxNodes int = 20
+param maintenanceWindowDay string = 'Monday'
 // AKS does not allow agentPool updates via existing managed cluster resources
 param updateNodes bool = false
 
@@ -100,7 +101,7 @@ resource maintenanceConfig 'Microsoft.ContainerService/managedClusters/maintenan
       startTime: '02:00'
       schedule: {
         weekly: {
-          dayOfWeek: 'Monday'
+          dayOfWeek: maintenanceWindowDay
           intervalWeeks: 1
         }
       }

@@ -3423,7 +3423,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         )
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
-                    msg_id='docstring-keyword-should-be-keyword-only',
+                    msg_id='docstring-keyword-should-match-keyword-only',
                     line=2,
                     node=node,
                     args='y, z',

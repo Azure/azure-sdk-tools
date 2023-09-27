@@ -1229,10 +1229,10 @@ class CheckDocstringParameters(BaseChecker):
             "Docstring should use keywords.",
         ),
         "C4758": (
-            '"%s" found as keyword in docstring, not in method signature. :keyword: arguments should be keyword-only arguments in method signature. See details: '
+            '"%s" missing in docstring or in method signature. There should be a direct correlation between :keyword: arguments in the docstring and keyword-only arguments in method signature. See details: '
             'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
-            "docstring-keyword-should-be-keyword-only",
-            "Docstring keyword arguments should be keyword-only method arguments.",
+            "docstring-keyword-should-match-keyword-only",
+            "Docstring keyword arguments and keyword-only method arguments should match.",
         ),
     }
     options = (
@@ -1394,7 +1394,7 @@ class CheckDocstringParameters(BaseChecker):
 
         if missing_kwonly_args:
             self.add_message(
-                msgid="docstring-keyword-should-be-keyword-only", args=(", ".join(missing_kwonly_args)), node=node, confidence=None
+                msgid="docstring-keyword-should-match-keyword-only", args=(", ".join(missing_kwonly_args)), node=node, confidence=None
             )
 
         # check if we have a type for each param and check if documented params that should be keywords

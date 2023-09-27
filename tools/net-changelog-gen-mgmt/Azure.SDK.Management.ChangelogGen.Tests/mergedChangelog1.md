@@ -18,9 +18,12 @@
 - Removed property method 'Set' for 'String PropertyToChangeToGet' in type Azure.ResourceManager.AppService.TestProperty
 - Removed type 'Azure.ResourceManager.AppService.TypeToBeDeleted'
 
-### Other Changes
+### Features Added
 
 - spec upgraded
+
+### Other Changes
+
 - Azure Core upgraded
 - Azure RM upgraded
 - Obsoleted method 'Void StaticMethodToBeObsoleted()' in type Azure.ResourceManager.AppService.StaticTypeToBeObsoleted

@@ -137,11 +137,13 @@ namespace Azure.SDK.ChangelogGen.Report
             {
                 if (ReleaseNoteGroup.TryParseGroupTitle(lines[i], out ReleaseNoteGroup? newGroup))
                 {
+                    curGroup.NormalizeNotes();
                     curRelease.Groups.Add(curGroup);
                     curGroup = newGroup!;
                 }
                 else if (Release.TryParseReleaseTitle(lines[i], out Release? newRelease))
                 {
+                    curGroup.NormalizeNotes();
                     curRelease.Groups.Add(curGroup);
                     curGroup = new ReleaseNoteGroup("");
                     releases.Add(curRelease);
@@ -153,6 +155,7 @@ namespace Azure.SDK.ChangelogGen.Report
                     curGroup.Notes.Add(item);
                 }
             }
+            curGroup.NormalizeNotes();
             curRelease.Groups.Add(curGroup);
             releases.Add(curRelease);
             return releases;

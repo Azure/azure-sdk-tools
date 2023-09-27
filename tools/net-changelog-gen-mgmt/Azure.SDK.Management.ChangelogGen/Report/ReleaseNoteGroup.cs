@@ -33,6 +33,17 @@ namespace Azure.SDK.ChangelogGen.Report
             }
         }
 
+        public void NormalizeNotes()
+        {
+            for (int i = this.Notes.Count - 1; i >= 0; i--)
+            {
+                if (string.IsNullOrEmpty(this.Notes[i].Note))
+                    this.Notes.RemoveAt(i);
+                else
+                    break;
+            }
+        }
+
         public override string ToString()
         {
             if (string.IsNullOrWhiteSpace(this.Name))

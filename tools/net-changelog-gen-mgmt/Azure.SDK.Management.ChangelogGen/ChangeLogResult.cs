@@ -31,9 +31,13 @@ namespace Azure.SDK.ChangelogGen
                 Logger.Error("Breaking change detected which is not expected\n" + breakingGroup.ToString());
             }
 
-            ReleaseNoteGroup othersGroup = new ReleaseNoteGroup("Other Changes");
+            ReleaseNoteGroup featureAddedGroup = new ReleaseNoteGroup("Features Added");
             if (SpecVersionChange != null)
-                othersGroup.Notes.Add(new ReleaseNote(SpecVersionChange.Description, PREFIX));
+                featureAddedGroup.Notes.Add(new ReleaseNote(SpecVersionChange.Description, PREFIX));
+            if (featureAddedGroup.Notes.Count > 0)
+                report.Groups.Add(featureAddedGroup);
+
+            ReleaseNoteGroup othersGroup = new ReleaseNoteGroup("Other Changes");
             if (AzureCoreVersionChange != null)
                 othersGroup.Notes.Add(new ReleaseNote(AzureCoreVersionChange.Description, PREFIX));
             if (AzureResourceManagerVersionChange != null)

@@ -172,7 +172,7 @@ stages:
           - pwsh: |
               dotnet --list-runtimes
               dotnet --version
-            displayName: 'List .Net run times'
+            displayName: 'List .NET run times'
 
           - task: GoTool@0
             inputs:

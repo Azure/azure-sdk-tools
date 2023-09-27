@@ -14,7 +14,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ## Where to begin
 
-Core of the APIView tool is the web app developed using ASP.Net and TypeScript. This core module takes care of presenting reviews to users, storing review files and metadata in Azure Storage Account and Cosmos database and process requests from Azure Devops pipelines and respond. We also have language level parsers that converts each language specific artifact into a common json stub file that's known to core APIView web app. So, first step as a contributor is to understand the feature or bug fix you would like to submit and identify the area you would like to contribute to. Language parsers are either added as plugin modules developed in .Net or developed using corresponding language as command line tool to extract and generate stub file. If change is specific to a language in how langauge specific API details are extracted to stub tokens then change will be at parser level for that language. If change is applicable for all languages then change will most likely be in core APIView web app.
+Core of the APIView tool is the web app developed using ASP.NET and TypeScript. This core module takes care of presenting reviews to users, storing review files and metadata in Azure Storage Account and Cosmos database and process requests from Azure Devops pipelines and respond. We also have language level parsers that converts each language specific artifact into a common json stub file that's known to core APIView web app. So, first step as a contributor is to understand the feature or bug fix you would like to submit and identify the area you would like to contribute to. Language parsers are either added as plugin modules developed in .NET or developed using corresponding language as command line tool to extract and generate stub file. If change is specific to a language in how langauge specific API details are extracted to stub tokens then change will be at parser level for that language. If change is applicable for all languages then change will most likely be in core APIView web app.
 
 
 | Module                        | Source Path                                                                                                                     |
@@ -39,7 +39,7 @@ Following are tools required to develop and run test instance of APIView to veri
 
 - Git
 - Visual Studio
-- .Net
+- .NET
 - Any LTS version of Node.js [download](https://nodejs.org/en/download/)
 - Java (Optional: Only required if you want to generate Java review locally)
 - Python 3.9+ (Optional: Only required if you want to generate Python review locally)

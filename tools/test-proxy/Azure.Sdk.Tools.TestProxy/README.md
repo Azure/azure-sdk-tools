@@ -92,7 +92,7 @@ For a more detailed explanation of how the test proxy works, along with links to
 
 ### Via Local Compile or .NET
 
-1. [Install .Net 5.0 or 6.0](https://dotnet.microsoft.com/download)
+1. [Install .NET 5.0 or 6.0](https://dotnet.microsoft.com/download)
 2. Install test-proxy
 
 ```powershell

@@ -4,7 +4,7 @@
 `perf-automation` is a tool to run multiple perf tests in any languages and collect the results in a single JSON file.
 
 ## Walkthrough
-1. [Install .Net](https://dotnet.microsoft.com/download)
+1. [Install .NET](https://dotnet.microsoft.com/download)
 
 2. `git clone https://github.com/Azure/azure-sdk-tools`
 

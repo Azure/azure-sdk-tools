@@ -1408,20 +1408,22 @@ class CheckDocstringParameters(BaseChecker):
                 msgid="docstring-keyword-should-match-keyword-only", args=(", ".join(missing_kwonly_args)), node=node, confidence=None
             )
 
-        type_format = ":class"
+        type_format = [":class", "Union", "Optional", "Dict", "List", "Callable", "None", "Iterable", "Tuple", "Mapping", "Any"]
         # check that all types are formatted correctly
         for keyword, doc_type in docstring_keyword_args.items():
             if doc_type:
-                if len(re.findall(type_format, doc_type)) != 0:
-                    self.add_message(
-                        msgid="docstring-type-formatted-incorrectly", args=(keyword), node=node, confidence=None
-                    )
+                for format in type_format:
+                    if len(re.findall(format, doc_type)) != 0:
+                        self.add_message(
+                            msgid="docstring-type-formatted-incorrectly", args=(keyword), node=node, confidence=None
+                        )
         for param, doc_type in docparams.items():
             if doc_type:
-                if len(re.findall(type_format, doc_type)) != 0:
-                    self.add_message(
-                        msgid="docstring-type-formatted-incorrectly", args=(param), node=node, confidence=None
-                    )
+                for format in type_format:
+                    if len(re.findall(format, doc_type)) != 0:
+                        self.add_message(
+                            msgid="docstring-type-formatted-incorrectly", args=(param), node=node, confidence=None
+                        )
 
         # check if we have a type for each param and check if documented params that should be keywords
         missing_types = []
@@ -1470,7 +1472,7 @@ class CheckDocstringParameters(BaseChecker):
             return
 
         has_return, has_rtype = False, False
-        rtype_format = ":class"
+        type_format = [":class", "Union", "Optional", "Dict", "List", "Callable", "None", "Iterable", "Tuple", "Mapping", "Any"]
         for line in docstring:
             if line.startswith("return"):
                 has_return = True
@@ -1478,10 +1480,11 @@ class CheckDocstringParameters(BaseChecker):
                 has_rtype = True
                 try:
                     if line.split("rtype")[1]:
-                        if len(re.findall(rtype_format, line.split("rtype")[1])) != 0:
-                            self.add_message(
-                                msgid="docstring-type-formatted-incorrectly", args=(line.split("rtype")[1]), node=node, confidence=None
-                            )
+                        for format in type_format:
+                            if len(re.findall(format, line.split("rtype")[1])) != 0:
+                                self.add_message(
+                                    msgid="docstring-type-formatted-incorrectly", args=(line.split("rtype")[1]), node=node, confidence=None
+                                )
                 except:
                     pass
 

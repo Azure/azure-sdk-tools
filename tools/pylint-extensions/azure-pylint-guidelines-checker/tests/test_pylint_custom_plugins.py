@@ -3423,6 +3423,15 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         )
         with self.assertAddsMessages(
                 pylint.testutils.MessageTest(
+                    msg_id='docstring-keyword-should-match-keyword-only',
+                    line=2,
+                    node=node,
+                    args='z, y',
+                    col_offset=0,
+                    end_line=2,
+                    end_col_offset=16
+                ),
+                pylint.testutils.MessageTest(
                     msg_id="docstring-missing-type",
                     line=2,
                     args='x',
@@ -3439,7 +3448,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                     col_offset=0, 
                     end_line=2, 
                     end_col_offset=16
-                )
+                ),
         ):
             self.checker.visit_functiondef(node)
 
@@ -3522,6 +3531,23 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         )
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
+
+    def test_docstring_keyword_only(self):
+        node = astroid.extract_node(
+            """
+            def function_foo(self, x, *, z, y=None):
+                '''
+                :param x: x
+                :type x: str
+                :keyword str y: y
+                :keyword str z: z
+                '''
+                print("hello")
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
 
 class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed imports and allowing allowed imports."""

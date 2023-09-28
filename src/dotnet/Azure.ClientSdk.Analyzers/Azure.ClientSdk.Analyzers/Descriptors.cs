@@ -112,6 +112,24 @@ namespace Azure.ClientSdk.Analyzers
             "Usage",
             DiagnosticSeverity.Warning, true);
 
+        public static DiagnosticDescriptor AZC0017 = new DiagnosticDescriptor(
+            nameof(AZC0017),
+            "Invalid convenience method signature.",
+            "Convenience methods shouldn't have parameters with the RequestContent type.",
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null);
+
+        public static DiagnosticDescriptor AZC0018 = new DiagnosticDescriptor(
+            nameof(AZC0018),
+            "Invalid protocol method signature.",
+            "Protocol methods should take a RequestContext parameter called `context` and not use a model type in a parameter or return type.",
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null);
+
+        public static DiagnosticDescriptor AZC0019 = new DiagnosticDescriptor(
+            nameof(AZC0019),
+            "Potential ambiguous call exists.",
+            "There will be an ambiguous call error when the user calls with only the required parameters. All parameters of the protocol method should be required.",
+            "Usage", DiagnosticSeverity.Warning, isEnabledByDefault: true, description: null);
+
         public static DiagnosticDescriptor AZC0020 = new DiagnosticDescriptor(
             nameof(AZC0020),
             "Avoid using banned types in public APIs",

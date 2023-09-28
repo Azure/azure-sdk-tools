@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using APIViewWeb.Managers.Interfaces;
+using System.Linq;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -14,14 +16,14 @@ namespace APIViewWeb.LeanControllers
     {
         private readonly ILogger<ReviewsController> _logger;
         private readonly IReviewManager _reviewManager;
-        private readonly IReviewRevisionsManager _revisionsManager;
+        private readonly IReviewRevisionsManager _reviewRevisionsManager;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         
         public ReviewsController(ILogger<ReviewsController> logger,
-            IReviewRevisionsManager revisionsManager, IReviewManager reviewManager, IBlobCodeFileRepository codeFileRepository)
+            IReviewRevisionsManager reviewRevisionsManager, IReviewManager reviewManager, IBlobCodeFileRepository codeFileRepository)
         {
             _logger = logger;
-            _revisionsManager = revisionsManager;
+            _reviewRevisionsManager = reviewRevisionsManager;
             _reviewManager = reviewManager;
             _codeFileRepository = codeFileRepository;
         }
@@ -40,27 +42,32 @@ namespace APIViewWeb.LeanControllers
             return new LeanJsonResult(result, StatusCodes.Status200OK);
         }
 
-        // <summary>
-        // Retrieve the Content (codeLines and Navigation) of a review
-        // </summary>
-        // <param name="reviewId"></param>
-        // <param name="revisionId"></param>
-        // <returns></returns>
-        // [HttpGet]
-        // [Route("{reviewId}/content")]
-        // public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, string revisionId= null)
-        // {
-        //     var revision = (string.IsNullOrEmpty(revisionId)) ? 
-        //         await _revisionsManager.GetLatestRevisionsAsync(reviewId) : await _revisionsManager.GetRevisionsAsync(reviewId, revisionId);
-        //     var reviewCodeFie = await _codeFileRepository.GetCodeFileAsync(revision.Id, revision.Files[0].ReviewFileId);
-        //     reviewCodeFie.Render(showDocumentation: true);
-        // 
-        //     var pageModel = new ReviewContentModel
-        //     {
-        //         Navigation = reviewCodeFie.CodeFile.Navigation,
-        //         codeLines = reviewCodeFie.RenderResult.CodeLines
-        //     };
-        //     return new LeanJsonResult(pageModel, StatusCodes.Status200OK);
-        // }
+         ///<summary>
+         ///Retrieve the Content (codeLines and Navigation) of a review
+         ///</summary>
+         ///<param name="reviewId"></param>
+         ///<param name="revisionId"></param>
+         ///<returns></returns>
+         [HttpGet]
+         [Route("{reviewId}/content")]
+         public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, string revisionId= null)
+         {
+             var revisions = await _reviewRevisionsManager.GetReviewRevisionsAsync(reviewId);
+             var activeRevision = (string.IsNullOrEmpty(revisionId)) ? 
+                 await _reviewRevisionsManager.GetLatestReviewRevisionsAsync(reviewId, revisions) : await _reviewRevisionsManager.GetReviewRevisionAsync(revisionId);
+
+
+             var reviewCodeFie = await _codeFileRepository.GetCodeFileAsync(activeRevision.Id, activeRevision.Files[0].ReviewFileId);
+             reviewCodeFie.Render(showDocumentation: true);
+
+            var pageModel = new ReviewContentModel
+            {
+                Navigation = reviewCodeFie.CodeFile.Navigation,
+                codeLines = reviewCodeFie.RenderResult.CodeLines,
+                ReviewRevisions = revisions.GroupBy(r => r.ReviewRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList())
+            };
+
+            return new LeanJsonResult(pageModel, StatusCodes.Status200OK);
+         }
     }
 }

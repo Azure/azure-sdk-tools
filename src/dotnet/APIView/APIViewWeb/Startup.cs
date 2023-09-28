@@ -38,6 +38,7 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using APIViewWeb.Helpers;
+using APIViewWeb.Managers.Interfaces;
 
 namespace APIViewWeb
 {

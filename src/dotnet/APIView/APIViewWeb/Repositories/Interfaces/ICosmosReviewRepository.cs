@@ -28,6 +28,5 @@ namespace APIViewWeb.Repositories
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
         public Task<PagedList<ReviewListItemModel>> GetReviewsAsync(PageParams pageParams, ReviewFilterAndSortParams filterAndSortParams);
-        public Task<IEnumerable<RevisionListItemModel>> GetRevisionsAsync(string reviewId);
     }
 }

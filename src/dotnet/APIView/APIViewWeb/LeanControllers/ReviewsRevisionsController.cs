@@ -1,12 +1,12 @@
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
-using APIViewWeb.Managers;
 using APIViewWeb.Extensions;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using APIViewWeb.Managers.Interfaces;
 
 namespace APIViewWeb.LeanControllers
 {

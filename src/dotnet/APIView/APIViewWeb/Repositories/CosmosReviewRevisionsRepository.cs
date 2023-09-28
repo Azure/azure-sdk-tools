@@ -138,7 +138,7 @@ namespace APIViewWeb
             }
 
             queryStringBuilder.Append(" OFFSET @offset LIMIT @limit");
-            var reviews = new List<ReviewRevisionListItemModel>();
+            var revisions = new List<ReviewRevisionListItemModel>();
             QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@offset", pageParams.NoOfItemsRead)
                 .WithParameter("@limit", pageParams.PageSize)
@@ -148,10 +148,39 @@ namespace APIViewWeb
             while (feedIterator.HasMoreResults)
             {
                 FeedResponse<ReviewRevisionListItemModel> response = await feedIterator.ReadNextAsync();
-                reviews.AddRange(response);
+                revisions.AddRange(response);
             }
-            var noOfItemsRead = pageParams.NoOfItemsRead + reviews.Count();
-            return new PagedList<ReviewRevisionListItemModel>((IEnumerable<ReviewRevisionListItemModel>)reviews, noOfItemsRead, totalCount, pageParams.PageSize);
+            var noOfItemsRead = pageParams.NoOfItemsRead + revisions.Count();
+            return new PagedList<ReviewRevisionListItemModel>((IEnumerable<ReviewRevisionListItemModel>)revisions, noOfItemsRead, totalCount, pageParams.PageSize);
+        }
+
+        /// <summary>
+        /// Retrieve Revisions from the Revisions container in CosmosDb for a given reviewId
+        /// </summary>
+        /// <param name="reviewId"></param> The reviewId
+        /// <returns></returns>
+        public async Task<IEnumerable<ReviewRevisionListItemModel>> GetReviewRevisionsAsync(string reviewId)
+        {
+            var query = $"SELECT * FROM Revisions c WHERE c.IsDeleted = false AND c.ReviewId = '{reviewId}'";
+            var revisions = new List<ReviewRevisionListItemModel>();
+            QueryDefinition queryDefinition = new QueryDefinition(query);
+            using FeedIterator<ReviewRevisionListItemModel> feedIterator = _reviewRevisionContainer.GetItemQueryIterator<ReviewRevisionListItemModel>(queryDefinition);
+            while (feedIterator.HasMoreResults)
+            {
+                FeedResponse<ReviewRevisionListItemModel> response = await feedIterator.ReadNextAsync();
+                revisions.AddRange(response);
+            }
+            return revisions;
+        }
+
+        /// <summary>
+        /// Retrieve Revisions from the Revisions container in CosmosDb
+        /// </summary>
+        /// <param name="revisionId"></param> The revisionId
+        /// <returns></returns>
+        public async Task<ReviewRevisionListItemModel> GetReviewRevisionAsync(string revisionId)
+        {
+            return await _reviewRevisionContainer.ReadItemAsync<ReviewRevisionListItemModel>(revisionId, new PartitionKey(revisionId));
         }
     }
 }

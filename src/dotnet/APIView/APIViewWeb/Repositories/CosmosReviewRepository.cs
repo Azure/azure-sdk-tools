@@ -443,29 +443,5 @@ SELECT VALUE {
 
             return allReviews;
         }
-
-        public async Task<IEnumerable<RevisionListItemModel>> GetRevisionsAsync(string reviewId) 
-        {
-            var revisions = new List<RevisionListItemModel>();
-            var query = @"
-SELECT VALUE { 
-    Id : rv.id,
-    Name : rv.Name,
-    CreationDate : rv.CreationDate,
-    Files : rv.Files
-}
-FROM r
-JOIN rv IN r.Revisions
-WHERE r.id = @reviewId";
-            var queryDefinition = new QueryDefinition(query).WithParameter("@reviewId", reviewId);
-            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<RevisionListItemModel>(queryDefinition);
-            using FeedIterator<RevisionListItemModel> feedIterator = _reviewsContainer.GetItemQueryIterator<RevisionListItemModel>(queryDefinition);
-            while (feedIterator.HasMoreResults)
-            {
-                FeedResponse<RevisionListItemModel> response = await feedIterator.ReadNextAsync();
-                revisions.AddRange(response);
-            }
-            return revisions;
-        }
     }
 }

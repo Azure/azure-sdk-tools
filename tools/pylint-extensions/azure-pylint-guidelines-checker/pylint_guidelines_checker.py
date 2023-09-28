@@ -9,6 +9,7 @@ Pylint custom checkers for SDK guidelines: C4717 - C4758
 
 import logging
 import astroid
+import re
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 logger = logging.getLogger(__name__)
@@ -1234,6 +1235,12 @@ class CheckDocstringParameters(BaseChecker):
             "docstring-keyword-should-match-keyword-only",
             "Docstring keyword arguments and keyword-only method arguments should match.",
         ),
+        "C4759": (
+            '"%s" type formatted incorrectly. See details: '
+            'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
+            "docstring-type-formatted-incorrectly",
+            "Docstring type is formatted incorrectly.",
+        ),
     }
     options = (
         (
@@ -1286,7 +1293,7 @@ class CheckDocstringParameters(BaseChecker):
     def __init__(self, linter=None):
         super(CheckDocstringParameters, self).__init__(linter)
 
-    def _find_keyword(self, line):
+    def _find_keyword(self, line, docstring, idx, keyword_args):
         keyword_args = {}
         # this param has its type on a separate line
         if line.startswith("keyword") and line.count(" ") == 1:
@@ -1301,6 +1308,10 @@ class CheckDocstringParameters(BaseChecker):
             param = line.split(" ")[-1]
             param_type = ("").join(line.split(" ")[1:-1])
             keyword_args[param] = param_type
+        if line.startswith("paramtype"):
+            param = line.split("paramtype ")[1]
+            if param in keyword_args:
+                keyword_args[param] = docstring[idx+1]
         
         return keyword_args
 
@@ -1371,7 +1382,7 @@ class CheckDocstringParameters(BaseChecker):
         docstring_keyword_args = {}
         for idx, line in enumerate(docstring):
             # check for keyword args in docstring
-            docstring_keyword_args.update(self._find_keyword(line))
+            docstring_keyword_args.update(self._find_keyword(line, docstring, idx, docstring_keyword_args))
 
             # check for params in docstring
             docparams.update(self._find_param(line, docstring, idx, docparams))
@@ -1396,6 +1407,19 @@ class CheckDocstringParameters(BaseChecker):
             self.add_message(
                 msgid="docstring-keyword-should-match-keyword-only", args=(", ".join(missing_kwonly_args)), node=node, confidence=None
             )
+
+        type_format = "some regex"
+        # check that all types are formatted correctly
+        for keyword, doc_type in docstring_keyword_args.items():
+            if re.match(type_format, doc_type) is None:
+                self.add_message(
+                    msgid="docstring-type-formatted-incorrectly", args=(keyword), node=node, confidence=None
+                )
+        for param, doc_type in docparams.items():
+            if re.match(type_format, doc_type) is None:
+                self.add_message(
+                    msgid="docstring-type-formatted-incorrectly", args=(param), node=node, confidence=None
+                )
 
         # check if we have a type for each param and check if documented params that should be keywords
         missing_types = []
@@ -1444,11 +1468,16 @@ class CheckDocstringParameters(BaseChecker):
             return
 
         has_return, has_rtype = False, False
+        rtype_format = "some regex"
         for line in docstring:
             if line.startswith("return"):
                 has_return = True
             if line.startswith("rtype"):
                 has_rtype = True
+                if re.match(rtype_format, line.split("rtype")[1]) is None:
+                    self.add_message(
+                        msgid="docstring-type-formatted-incorrectly", args=(line.split("rtype")[1]), node=node, confidence=None
+                    )
 
         # If is an @property decorator, don't require :return: as it is repetitive
         if has_return is False and "builtins.property" not in function_decorators:

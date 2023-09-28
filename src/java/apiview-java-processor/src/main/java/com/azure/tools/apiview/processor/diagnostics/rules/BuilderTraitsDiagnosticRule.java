@@ -28,6 +28,9 @@ public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
 
     public BuilderTraitsDiagnosticRule() {
         traits = new HashMap<>();
+        traits.put("KeyCredentialTrait", new TraitClass(
+                new TraitMethod("credential", "KeyCredential")
+        ));
         traits.put("AzureKeyCredentialTrait", new TraitClass(
             new TraitMethod("credential", "AzureKeyCredential")
         ));

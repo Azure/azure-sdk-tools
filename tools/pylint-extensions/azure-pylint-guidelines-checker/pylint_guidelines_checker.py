@@ -1408,18 +1408,20 @@ class CheckDocstringParameters(BaseChecker):
                 msgid="docstring-keyword-should-match-keyword-only", args=(", ".join(missing_kwonly_args)), node=node, confidence=None
             )
 
-        type_format = "some regex"
+        type_format = ":class"
         # check that all types are formatted correctly
         for keyword, doc_type in docstring_keyword_args.items():
-            if re.match(type_format, doc_type) is None:
-                self.add_message(
-                    msgid="docstring-type-formatted-incorrectly", args=(keyword), node=node, confidence=None
-                )
+            if doc_type:
+                if len(re.findall(type_format, doc_type)) != 0:
+                    self.add_message(
+                        msgid="docstring-type-formatted-incorrectly", args=(keyword), node=node, confidence=None
+                    )
         for param, doc_type in docparams.items():
-            if re.match(type_format, doc_type) is None:
-                self.add_message(
-                    msgid="docstring-type-formatted-incorrectly", args=(param), node=node, confidence=None
-                )
+            if doc_type:
+                if len(re.findall(type_format, doc_type)) != 0:
+                    self.add_message(
+                        msgid="docstring-type-formatted-incorrectly", args=(param), node=node, confidence=None
+                    )
 
         # check if we have a type for each param and check if documented params that should be keywords
         missing_types = []
@@ -1468,16 +1470,20 @@ class CheckDocstringParameters(BaseChecker):
             return
 
         has_return, has_rtype = False, False
-        rtype_format = "some regex"
+        rtype_format = ":class"
         for line in docstring:
             if line.startswith("return"):
                 has_return = True
             if line.startswith("rtype"):
                 has_rtype = True
-                if re.match(rtype_format, line.split("rtype")[1]) is None:
-                    self.add_message(
-                        msgid="docstring-type-formatted-incorrectly", args=(line.split("rtype")[1]), node=node, confidence=None
-                    )
+                try:
+                    if line.split("rtype")[1]:
+                        if len(re.findall(rtype_format, line.split("rtype")[1])) != 0:
+                            self.add_message(
+                                msgid="docstring-type-formatted-incorrectly", args=(line.split("rtype")[1]), node=node, confidence=None
+                            )
+                except:
+                    pass
 
         # If is an @property decorator, don't require :return: as it is repetitive
         if has_return is False and "builtins.property" not in function_decorators:

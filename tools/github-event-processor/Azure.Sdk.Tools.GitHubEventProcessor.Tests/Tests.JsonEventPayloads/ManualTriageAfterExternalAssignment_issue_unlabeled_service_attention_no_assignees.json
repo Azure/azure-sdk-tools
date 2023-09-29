@@ -1,49 +1,9 @@
 {
-  "action": "labeled",
+  "action": "unlabeled",
   "issue": {
     "active_lock_reason": null,
-    "assignee": {
-      "avatar_url": "https://avatars.githubusercontent.com/u/13556087?v=4",
-      "events_url": "https://api.github.com/users/FakeUser1/events{/privacy}",
-      "followers_url": "https://api.github.com/users/FakeUser1/followers",
-      "following_url": "https://api.github.com/users/FakeUser1/following{/other_user}",
-      "gists_url": "https://api.github.com/users/FakeUser1/gists{/gist_id}",
-      "gravatar_id": "",
-      "html_url": "https://github.com/FakeUser1",
-      "id": 13556087,
-      "login": "FakeUser1",
-      "node_id": "MDQ6VXNlcjEzNTU2MDg3",
-      "organizations_url": "https://api.github.com/users/FakeUser1/orgs",
-      "received_events_url": "https://api.github.com/users/FakeUser1/received_events",
-      "repos_url": "https://api.github.com/users/FakeUser1/repos",
-      "site_admin": false,
-      "starred_url": "https://api.github.com/users/FakeUser1/starred{/owner}{/repo}",
-      "subscriptions_url": "https://api.github.com/users/FakeUser1/subscriptions",
-      "type": "User",
-      "url": "https://api.github.com/users/FakeUser1"
-    },
-    "assignees": [
-      {
-        "avatar_url": "https://avatars.githubusercontent.com/u/13556087?v=4",
-        "events_url": "https://api.github.com/users/FakeUser1/events{/privacy}",
-        "followers_url": "https://api.github.com/users/FakeUser1/followers",
-        "following_url": "https://api.github.com/users/FakeUser1/following{/other_user}",
-        "gists_url": "https://api.github.com/users/FakeUser1/gists{/gist_id}",
-        "gravatar_id": "",
-        "html_url": "https://github.com/FakeUser1",
-        "id": 13556087,
-        "login": "FakeUser1",
-        "node_id": "MDQ6VXNlcjEzNTU2MDg3",
-        "organizations_url": "https://api.github.com/users/FakeUser1/orgs",
-        "received_events_url": "https://api.github.com/users/FakeUser1/received_events",
-        "repos_url": "https://api.github.com/users/FakeUser1/repos",
-        "site_admin": false,
-        "starred_url": "https://api.github.com/users/FakeUser1/starred{/owner}{/repo}",
-        "subscriptions_url": "https://api.github.com/users/FakeUser1/subscriptions",
-        "type": "User",
-        "url": "https://api.github.com/users/FakeUser1"
-      }
-    ],
+    "assignee": null,
+    "assignees": [],
     "author_association": "OWNER",
     "body": null,
     "closed_at": null,
@@ -67,6 +27,15 @@
         "color": "ededed",
         "default": false,
         "description": null,
+        "id": 4976488245,
+        "name": "customer-reported",
+        "node_id": "LA_kwDOHkcrQs8AAAABKJ8vNQ",
+        "url": "https://api.github.com/repos/Azure/azure-sdk-fake/labels/customer-reported"
+      },
+      {
+        "color": "ededed",
+        "default": false,
+        "description": null,
         "id": 4704569627,
         "name": "needs-triage",
         "node_id": "LA_kwDOHkcrQs8AAAABGGoJGw",
@@ -80,24 +49,6 @@
         "name": "FakeLabel1",
         "node_id": "LA_kwDOHkcrQs8AAAABL7pm5w",
         "url": "https://api.github.com/repos/Azure/azure-sdk-fake/labels/FakeLabel1"
-      },
-      {
-        "color": "F75BB2",
-        "default": false,
-        "description": "",
-        "id": 5095715984,
-        "name": "Service Attention",
-        "node_id": "LA_kwDOHkcrQs8AAAABL7p0kA",
-        "url": "https://api.github.com/repos/Azure/azure-sdk-fake/labels/Service%20Attention"
-      },
-      {
-        "color": "FDEB99",
-        "default": false,
-        "description": "",
-        "id": 5095753141,
-        "name": "CXP Attention",
-        "node_id": "LA_kwDOHkcrQs8AAAABL7sFtQ",
-        "url": "https://api.github.com/repos/Azure/azure-sdk-fake/labels/CXP%20Attention"
       }
     ],
     "labels_url": "https://api.github.com/repos/Azure/azure-sdk-fake/issues/14/labels{/name}",
@@ -123,7 +74,7 @@
     "state_reason": null,
     "timeline_url": "https://api.github.com/repos/Azure/azure-sdk-fake/issues/14/timeline",
     "title": "New test issue to generate event payloads",
-    "updated_at": "2023-01-30T16:26:17Z",
+    "updated_at": "2023-01-30T16:37:38Z",
     "url": "https://api.github.com/repos/Azure/azure-sdk-fake/issues/14",
     "user": {
       "avatar_url": "https://avatars.githubusercontent.com/u/13556087?v=4",
@@ -147,13 +98,13 @@
     }
   },
   "label": {
-    "color": "FDEB99",
+    "color": "F75BB2",
     "default": false,
     "description": "",
-    "id": 5095753141,
-    "name": "CXP Attention",
-    "node_id": "LA_kwDOHkcrQs8AAAABL7sFtQ",
-    "url": "https://api.github.com/repos/Azure/azure-sdk-fake/labels/CXP%20Attention"
+    "id": 5095715984,
+    "name": "Service Attention",
+    "node_id": "LA_kwDOHkcrQs8AAAABL7p0kA",
+    "url": "https://api.github.com/repos/Azure/azure-sdk-fake/labels/Service%20Attention"
   },
   "repository": {
     "allow_forking": true,

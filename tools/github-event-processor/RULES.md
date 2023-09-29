@@ -25,7 +25,7 @@
 /sdk/eventgrid/                                                    @user1 @user2 @user3 @user4
 ```
 
-- **Azure SDK team owners**: Each package in our repository that is owned by our team will need to have an association tracking a service label to one or more GitHub handles.  This is an unofficial mapping that does not necessarily correlate to authoritative "Azure SDK Team" membership, such as that represented by our security groups or the "[azure-sdk-team](https://repos.opensource.microsoft.com/orgs/Azure/teams/azure-sdk-team)" GitHub team.  That said, using one of these groups to validate membership on top of the label association would be just fine. *Right now, this does not exist, this would require changes to CODEOWNERS which are still pending.* If it exists, the Service Label to user mapping is in the repository's CODEOWNERS file.
+- **Azure SDK team owners**: Each package in our repository that is owned by our team will need to have an association tracking a service label and category label pair to one or more GitHub handles.  This is an unofficial mapping that does not necessarily correlate to authoritative "Azure SDK Team" membership, such as that represented by our security groups or the "[azure-sdk-team](https://repos.opensource.microsoft.com/orgs/Azure/teams/azure-sdk-team)" GitHub team.  That said, using one of these groups to validate membership on top of the label association would be just fine. *Right now, this does not exist, this would require changes to CODEOWNERS which are still pending.* If it exists, the Service Label to user mapping is in the repository's CODEOWNERS file.
 
   Example:
 
@@ -137,7 +137,7 @@ This is a stand-alone service providing a REST API which requires a service key 
         - Assign returned labels to the issue
         - Add "needs-team-attention" label to the issue
 
-        IF service label is associated with an Azure SDK team member:
+        IF service and category labels are associated with an Azure SDK team member:
             IF a single team member:
                 - Assign team member to the issue
             ELSE
@@ -148,7 +148,7 @@ This is a stand-alone service providing a REST API which requires a service key 
             - Create the following comment
               "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
         ELSE
-            - Add "CXP Attention" label to the issue
+            - Add "Service Attention" label to the issue
             - Create the following comment
               - "Thank you for your feedback.  This has been routed to the support team for assistance."
     ELSE
@@ -190,24 +190,6 @@ This is a stand-alone service providing a REST API which requires a service key 
 - Create the following comment, mentioning the service team contacts
   - "Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc ${mentionees}."
 
-## CXP Attention
-
-### Trigger
-
-- Issue modified for:
-  - Label added
-
-### Criteria
-
-- Issue is open
-- Label added is "CXP Attention"
-- Issues does NOT have label "Service Attention"
-
-### Actions
-
-- Create the following comment
-  - "Thank you for your feedback.  This has been routed to the support team for assistance."
-
 ## Manual triage after external assignment
 
 ### Trigger
@@ -218,9 +200,9 @@ This is a stand-alone service providing a REST API which requires a service key 
 ### Criteria
 
 - Issue is open
+- Issue is not assigned
 - Issue has "customer-reported" label
-- Label removed is "Service Attention" OR "CXP Attention"
-- Issue does not have "Service Attention" OR "CXP Attention"
+- Label removed is "Service Attention"
 
 ### Actions
 
@@ -417,7 +399,6 @@ OR
   - "needs-team-attention"
   - "needs-author-feedback"
   - "Service Attention"
-  - "CXP Attention"
   - "needs-triage"
   - "needs-team-triage"
 

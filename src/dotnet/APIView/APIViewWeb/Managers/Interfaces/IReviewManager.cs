@@ -53,5 +53,12 @@ namespace APIViewWeb.Managers
         /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
         /// <returns></returns>
         public Task<PagedList<ReviewListItemModel>> GetReviewsAsync(PageParams pageParams, ReviewFilterAndSortParams filterAndSortParams);
+
+        /// <summary>
+        /// Retrieve Reviews from the Reviews container in CosmosDb using only reviewId
+        /// </summary>
+        /// <param name="reviewId"></param> Contains paginationinfo
+        /// <returns></returns>
+        public Task<ReviewListItemModel> GetReviewAsync(string reviewId);
     }
 }

@@ -1,6 +1,37 @@
-<div class="p-inputgroup py-2">
-    <span class="p-inputgroup-addon">
-        <i class="pi pi-user"></i>
+<div *ngIf="review" class="input-group input-group-sm py-2" id="review-info-bar">
+    <span role="img" class="input-group-text">
+        <img src="assets/images/{{ review!.language | languageNames }}-original.svg" alt="{{ review!.language}}" width="25">
     </span>
-    <input pInputText placeholder="Username" />
+    <span class="input-group-text">{{ review!.packageName }}</span>
+    <span *ngIf="review!.status == 'Approved'" class="input-group-text" data-bs-toggle="tooltip" title="Approved for First Release">
+        <i class="fa-regular fa-circle-check text-success"></i>
+    </span>
+    <span class="input-group-text">Revision :</span>
+    <p-dropdown [options]="revisionsTypeDropDown" [(ngModel)]="selectedRevisionsType" (onChange)="onRevisionTypeChange($event)" optionLabel="name">
+        <ng-template pTemplate="selectedItem">
+            <div class="flex align-items-center gap-2" *ngIf="selectedRevisionsType">
+                <div><i class="{{ badgeClass.get(selectedRevisionsType.value) }} me-2"></i>{{ selectedRevisionsType.name }}</div>
+            </div>
+        </ng-template>
+        <ng-template let-revisionsTypeDropDown pTemplate="item">
+            <div class="flex align-items-center gap-2">
+                <div><i class="{{ badgeClass.get(revisionsTypeDropDown.value) }} me-2"></i>{{ revisionsTypeDropDown.name }}</div>
+            </div>
+        </ng-template>
+    </p-dropdown>
+    <p-dropdown [options]="revisionsDropDown" [(ngModel)]="selectedRevisionsDropDown" optionLabel="name" [filter]="true" filterBy="name"></p-dropdown>
+
+    <p-dropdown [options]="diffRevisionsTypeDropDown" [(ngModel)]="selectedDiffRevisionsType" (onChange)="onDiffRevisionTypeChange($event)" optionLabel="name">
+        <ng-template pTemplate="selectedItem">
+            <div class="flex align-items-center gap-2" *ngIf="selectedDiffRevisionsType">
+                <div><i class="{{ badgeClass.get(selectedDiffRevisionsType.value) }} me-2"></i>{{ selectedDiffRevisionsType.name }}</div>
+            </div>
+        </ng-template>
+        <ng-template let-diffRevisionsTypeDropDown pTemplate="item">
+            <div class="flex align-items-center gap-2">
+                <div><i class="{{ badgeClass.get(diffRevisionsTypeDropDown.value) }} me-2"></i>{{ diffRevisionsTypeDropDown.name }}</div>
+            </div>
+        </ng-template>
+    </p-dropdown>
+    <p-dropdown [options]="diffRevisionsDropDown" [(ngModel)]="selecteddiffRevisionsDropDown" optionLabel="name" [filter]="true" filterBy="name"></p-dropdown>
 </div>

@@ -6,9 +6,11 @@ namespace APIViewWeb.LeanModels
 {
     public class ReviewContentModel
     {
+        public ReviewListItemModel Review { get; set; }
         public NavigationItem[] Navigation { get; set; }
         public CodeLine[] codeLines { get; set; }
         public Dictionary<string, List<ReviewRevisionListItemModel>> ReviewRevisions { get; set; }
+        public ReviewRevisionListItemModel ActiveRevision { get; set; }
     }
 
     public class CodeFileModel

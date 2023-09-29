@@ -52,6 +52,7 @@ namespace APIViewWeb.LeanControllers
          [Route("{reviewId}/content")]
          public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, string revisionId= null)
          {
+             var review = await _reviewManager.GetReviewAsync(reviewId);
              var revisions = await _reviewRevisionsManager.GetReviewRevisionsAsync(reviewId);
              var activeRevision = (string.IsNullOrEmpty(revisionId)) ? 
                  await _reviewRevisionsManager.GetLatestReviewRevisionsAsync(reviewId, revisions) : await _reviewRevisionsManager.GetReviewRevisionAsync(revisionId);
@@ -62,9 +63,11 @@ namespace APIViewWeb.LeanControllers
 
             var pageModel = new ReviewContentModel
             {
+                Review = review,
                 Navigation = reviewCodeFie.CodeFile.Navigation,
                 codeLines = reviewCodeFie.RenderResult.CodeLines,
-                ReviewRevisions = revisions.GroupBy(r => r.ReviewRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList())
+                ReviewRevisions = revisions.GroupBy(r => r.ReviewRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList()),
+                ActiveRevision = activeRevision
             };
 
             return new LeanJsonResult(pageModel, StatusCodes.Status200OK);

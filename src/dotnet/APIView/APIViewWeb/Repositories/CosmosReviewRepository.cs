@@ -12,7 +12,7 @@ using APIViewWeb.Repositories;
 using ColorCode;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
-
+using Microsoft.Identity.Client;
 
 namespace APIViewWeb
 {
@@ -411,6 +411,15 @@ SELECT VALUE {
             }
             var noOfItemsRead = pageParams.NoOfItemsRead + reviews.Count();
             return new PagedList<ReviewListItemModel>((IEnumerable<ReviewListItemModel>)reviews, noOfItemsRead, totalCount, pageParams.PageSize);
+        }
+
+        /// <summary>
+        /// Retrieve Reviews from the Reviews container in CosmosDb using only the revewId
+        /// </summary>
+        /// <param name="reviewId"></param> Contains paginationinfo
+        /// <returns></returns>
+        public async Task<ReviewListItemModel> GetReviewNewAsync(string reviewId) {
+            return await _reviewContainerNew.ReadItemAsync<ReviewListItemModel>(reviewId, new PartitionKey(reviewId));
         }
 
         public async Task<IEnumerable<ReviewModel>> GetApprovedForFirstReleaseReviews(string language, string packageName)

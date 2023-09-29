@@ -1,6 +1,6 @@
 <app-nav-bar></app-nav-bar>
 <div class="container-fluid main-container">
-    <app-review-info></app-review-info>
+    <app-review-info [review]="review" [reviewRevisions]="reviewRevisions"></app-review-info>
     <app-review-nav></app-review-nav>
     <p-splitter 
         [panelSizes]="[15, 70, 15]" 

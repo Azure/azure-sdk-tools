@@ -1,3 +1,5 @@
+import { Revision } from "./revision"
+
 export interface Review {
   id: string
   packageName: string
@@ -20,8 +22,11 @@ export interface ChangeHistory {
 }
 
 export interface ReviewContent {
+    review: Review
     navigation: NavigationItem[]
     codeLines: CodeLine[]
+    reviewRevisions: Map<string, Revision[]>
+    activeRevision: Revision
   }
   
   export interface NavigationItem {

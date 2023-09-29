@@ -1,7 +1,20 @@
 
 :host ::ng-deep {
     .p-inputtext {
-        padding: 0.2rem 0.75rem;
-        font-size: 0.8rem;
+        padding: 0.3rem 0.5rem;
+    }
+
+    .p-dropdown .p-dropdown-trigger {
+        border-top-right-radius: 0px;
+        border-bottom-right-radius: 0px;
+    }
+
+    .p-dropdown {
+        border-radius: 0px;
+    }
+
+    .p-dropdown-panel {
+        border-top-right-radius: 0px;
+        border-top-left-radius: 0px;
     }
 }

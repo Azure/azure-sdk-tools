@@ -129,6 +129,16 @@ namespace APIViewWeb.Managers
             return await _reviewsRepository.GetReviewsAsync(pageParams, filterAndSortParams);
         }
 
+        /// <summary>
+        /// Retrieve Reviews from the Reviews container in CosmosDb using the reviewId
+        /// </summary>
+        /// <param name="reviewId"></param> Contains paginationinfo
+        /// <returns></returns>
+        public async Task<ReviewListItemModel> GetReviewAsync(string reviewId)
+        {
+            return await _reviewsRepository.GetReviewNewAsync(reviewId);
+        }
+
         public async Task DeleteReviewAsync(ClaimsPrincipal user, string id)
         {
             var reviewModel = await _reviewsRepository.GetReviewAsync(id);

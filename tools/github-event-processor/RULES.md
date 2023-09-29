@@ -30,11 +30,8 @@
   Example:
 
 ```text
-# ServiceLabel: %Event Hubs %Client
+# ServiceLabel: %Event Hubs
 /sdk/eventhub/                                                     @user1 @user2 @user3
-
-# ServiceLabel: %Event Hubs %Mgmt
-/sdk/eventhub/                                                     @user4 @user5
 ```
 
 - **File paths**: A service label may have one or more file paths relative to the repository structure associated with it. If it exists, this information is in the repository's CODEOWNERS file today.

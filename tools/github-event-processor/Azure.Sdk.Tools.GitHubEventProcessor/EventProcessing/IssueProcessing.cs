@@ -194,8 +194,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///             Issue is unassigned
         ///             Has "customer-reported" label
         ///             Label removed is "Service Attention"
-        ///             (in other words if both labels are on the issue and one is removed, this
-        ///             shouldn't process)
         /// Resulting Action: Add "needs-team-triage" label
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>

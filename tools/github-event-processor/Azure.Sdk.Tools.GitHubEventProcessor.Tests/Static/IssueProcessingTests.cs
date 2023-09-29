@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// Conditions: Issue has no assignee
         ///             Issue has no labels
         /// Resulting Action:Query the AI Service
-        ///     If the AI Service 
+        ///     If the AI Service
         /// </summary>
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             }
             await IssueProcessing.InitialIssueTriage(mockGitHubEventClient, issueEventPayload);
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
-            // Verify the RuleCheck 
+            // Verify the RuleCheck
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
             if (RuleState.On == ruleState)
             {
@@ -101,8 +101,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         }
 
         /// <summary>
-        /// ManualIssueTriage requires 2 labeled event payloads to test. 
-        /// 1. Labeled payload needs needs to be one where needs-triage is being added which should cause no change. 
+        /// ManualIssueTriage requires 2 labeled event payloads to test.
+        /// 1. Labeled payload needs needs to be one where needs-triage is being added which should cause no change.
         /// 2. Needs-triage needs to be already on the issues when another label is added. This should cause an update
         ///    where the needs-triage label is removed. This is also the payload used to check when the rule is Off.
         /// Trigger: issues labeled
@@ -127,7 +127,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
             IssueProcessing.ManualIssueTriage(mockGitHubEventClient, issueEventPayload);
 
-            // Verify the RuleCheck 
+            // Verify the RuleCheck
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
 
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
@@ -191,7 +191,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             }
             IssueProcessing.ServiceAttention(mockGitHubEventClient, issueEventPayload);
 
-            // Verify the RuleCheck 
+            // Verify the RuleCheck
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
 
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
@@ -220,66 +220,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             }
         }
 
-
-        /// <summary>
-        /// Test CXPAttention rule enabled/disabled, with a payload that would cause updates when enabled.
-        /// Verify all the expected updates when enabled and no updates when disabled.
-        /// Trigger: issues labeled
-        /// Conditions: Issue is open
-        ///             Label being added is "CXP-Attention"
-        ///             Does not have "Service-Attention" label
-        /// Resulting Action: Add issues comment "Thank you for your feedback.  This has been routed to the support team for assistance."
-        /// </summary>
-        /// <param name="rule">String, RulesConstants for the rule being tested</param>
-        /// <param name="payloadFile">JSon payload file for the event being tested</param>
-        /// <param name="ruleState">Whether or not the rule is on/off</param>
-        /// <param name="hasServiceAttentionLabel">Where or not the payload has the Service Attention label</param>
-        [Category("static")]
-        [TestCase(RulesConstants.CXPAttention, "Tests.JsonEventPayloads/CXPAttention_issue_labeled.json", RuleState.Off, false)]
-        [TestCase(RulesConstants.CXPAttention, "Tests.JsonEventPayloads/CXPAttention_issue_labeled.json", RuleState.On, false)]
-        [TestCase(RulesConstants.CXPAttention, "Tests.JsonEventPayloads/CXPAttention_issue_labeled_has_service-attention.json", RuleState.Off, true)]
-
-        public async Task TestCXPAttention(string rule, string payloadFile, RuleState ruleState, bool hasServiceAttentionLabel)
-        {
-            var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
-            mockGitHubEventClient.RulesConfiguration.Rules[rule] = ruleState;
-            var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
-            var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
-            IssueProcessing.CXPAttention(mockGitHubEventClient, issueEventPayload);
-
-            // Verify the RuleCheck 
-            Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
-
-            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
-            if (RuleState.On == ruleState)
-            {
-                // If the issues has the ServiceAttention label then there should be no updates
-                if (hasServiceAttentionLabel)
-                {
-                    Assert.AreEqual(0, totalUpdates, $"Issue has {LabelConstants.ServiceAttention} and should not have produced any updates.");
-                }
-                else
-                {
-                    // There should be one comment created and no other updates
-                    Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
-                    // Verify that a single comment was created
-                    Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, $"{rule} should have produced a single comment.");
-                }
-            }
-            else
-            {
-                Assert.AreEqual(0, totalUpdates, $"{rule} is {ruleState} and should not have produced any updates.");
-            }
-        }
-
         /// <summary>
         /// Test ManualTriageAfterExternalAssignment rule enabled/disabled, with a payload that would cause updates when enabled.
         /// Verify all the expected updates when enabled and no updates when disabled.
         /// Trigger: issue unlabeled
         /// Conditions: Issue is open
         ///             Has "customer-reported" label
-        ///             Label removed is "Service Attention" OR "CXP Attention"
-        ///             Issue does not have "Service Attention" OR "CXP Attention"
+        ///             Issue is unassigned
+        ///             Label removed is "Service Attention"
         ///             (in other words if both labels are on the issue and one is removed, this
         ///             shouldn't process)
         /// Resulting Action: Add "needs-team-triage" label
@@ -289,12 +237,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         /// <param name="alreadyHasNeedsTeamTriage">Whether or not the payload already has the needs-team-triage label</param>
         [Category("static")]
-        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_CXP_attention.json", RuleState.Off, false, false)]
-        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_CXP_attention.json", RuleState.On, false, true)]
-        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_CXP_attention_has_service_attention.json", RuleState.On, false, false)]
         [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_service_attention.json", RuleState.Off, false, false)]
-        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_service_attention.json", RuleState.On, false, true)]
-        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_service_attention_has_CXP_attention.json", RuleState.On, false, false)]
+        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_service_attention.json", RuleState.On, false, false)]
+        [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_service_attention_no_assignees.json", RuleState.On, false, true)]
         [TestCase(RulesConstants.ManualTriageAfterExternalAssignment, "Tests.JsonEventPayloads/ManualTriageAfterExternalAssignment_issue_unlabeled_has_needs-team-triage.json", RuleState.On, true, false)]
         public async Task TestManualTriageAfterExternalAssignment(string rule, string payloadFile, RuleState ruleState, bool alreadyHasNeedsTeamTriage, bool shouldAddLabel)
         {
@@ -304,7 +249,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
             IssueProcessing.ManualTriageAfterExternalAssignment(mockGitHubEventClient, issueEventPayload);
 
-            // Verify the RuleCheck 
+            // Verify the RuleCheck
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
 
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
@@ -326,7 +271,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     }
                     else
                     {
-                        Assert.AreEqual(0, totalUpdates, $"The issue only 1 of {LabelConstants.CXPAttention} or {LabelConstants.ServiceAttention}. With the other still being on the issue there should have been no updates.");
+                        Assert.AreEqual(0, totalUpdates, $"The issue only 1 of {LabelConstants.ServiceAttention}. With the other still being on the issue there should have been no updates.");
                     }
                 }
             }
@@ -342,7 +287,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// Trigger: issue reopened/edited
         /// Conditions: Issue is open OR Issue is being reopened
         ///             Issue has "no-recent-activity" label
-        ///             User modifying the issue is NOT a known bot 
+        ///             User modifying the issue is NOT a known bot
         /// </summary>
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
@@ -360,7 +305,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
             IssueProcessing.ResetIssueActivity(mockGitHubEventClient, issueEventPayload);
 
-            // Verify the RuleCheck 
+            // Verify the RuleCheck
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
 
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
@@ -408,7 +353,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
             IssueProcessing.RequireAttentionForNonMilestone(mockGitHubEventClient, issueEventPayload);
 
-            // Verify the RuleCheck 
+            // Verify the RuleCheck
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
 
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
@@ -432,7 +377,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Label added is "needs-author-feedback"
-        /// Resulting Action: 
+        /// Resulting Action:
         ///             Remove "needs-triage" label
         ///             Remove "needs-team-triage" label
         ///             Remove "needs-team-attention" label
@@ -453,7 +398,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
             IssueProcessing.AuthorFeedbackNeeded(mockGitHubEventClient, issueEventPayload);
 
-            // Verify the RuleCheck 
+            // Verify the RuleCheck
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
 
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
@@ -492,7 +437,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Label added is "issue-addressed"
-        /// Resulting Action: 
+        /// Resulting Action:
         ///     Remove "needs-triage" label if it exists
         ///     Remove "needs-team-triage" label
         ///     Remove "needs-team-attention" label
@@ -516,7 +461,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
             IssueProcessing.IssueAddressed(mockGitHubEventClient, issueEventPayload);
 
-            // Verify the RuleCheck 
+            // Verify the RuleCheck
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
 
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
@@ -529,7 +474,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 }
                 else
                 {
-                    // There should be one comment and up to 5 labels removed, the no-recent-activity and all needs-* labels removed 
+                    // There should be one comment and up to 5 labels removed, the no-recent-activity and all needs-* labels removed
                     // (the test payload has them all but real events will only remove the ones that are there)
                     Assert.AreEqual(6, totalUpdates, $"The number of updates should have been 2 but was instead, {totalUpdates}");
 
@@ -563,18 +508,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         ///                 "needs-team-attention"
         ///                 "needs-author-feedback"
         ///                 "Service Attention"
-        ///                 "CXP Attention"
         ///                 "needs-triage"
         ///                 "needs-team-triage"
-        /// Resulting Action: 
+        /// Resulting Action:
         ///     Remove "issue-addressed" label
         /// </summary>
         /// <param name="rule">String, RulesConstants for the rule being tested</param>
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         [Category("static")]
-        [TestCase(RulesConstants.IssueAddressedReset, "Tests.JsonEventPayloads/IssueAddressedReset_issue_labeled_CXP_attention.json", RuleState.Off)]
-        [TestCase(RulesConstants.IssueAddressedReset, "Tests.JsonEventPayloads/IssueAddressedReset_issue_labeled_CXP_attention.json", RuleState.On)]
         [TestCase(RulesConstants.IssueAddressedReset, "Tests.JsonEventPayloads/IssueAddressedReset_issue_labeled_needs-author-feedack.json", RuleState.On)]
         [TestCase(RulesConstants.IssueAddressedReset, "Tests.JsonEventPayloads/IssueAddressedReset_issue_labeled_needs-team-attention.json", RuleState.On)]
         [TestCase(RulesConstants.IssueAddressedReset, "Tests.JsonEventPayloads/IssueAddressedReset_issue_labeled_needs-team-triage.json", RuleState.On)]
@@ -588,7 +530,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
             IssueProcessing.IssueAddressedReset(mockGitHubEventClient, issueEventPayload);
 
-            // Verify the RuleCheck 
+            // Verify the RuleCheck
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
 
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);

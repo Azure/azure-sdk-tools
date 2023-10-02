@@ -10,7 +10,7 @@
     "example": "npx ts-node src/index.ts -e openapi -m https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/cognitiveservices/OpenAI.Inference/main.tsp ./temp",
     "test": "mocha"
   },
-  "author": "Jeff Fisher <jeffish@microsoft.com>",
+  "author": "Microsoft Corporation",
   "license": "MIT",
   "type": "module",
   "engines": {

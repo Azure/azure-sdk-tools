@@ -82,8 +82,10 @@ export async function getEmitterFromRepoConfig(emitterPath: string): Promise<str
   const languages: string[] = ["@azure-tools/typespec-", "@typespec/openapi3"];
   for (const lang of languages) {
     const emitter = Object.keys(obj.dependencies).find((dep: string) => dep.startsWith(lang));
-    Logger.info(`Found emitter package ${emitter}`);
-    return emitter;
+    if (emitter) {
+      Logger.info(`Found emitter package ${emitter}`);
+      return emitter;
+    }
   }
   throw new Error("Could not find emitter package");
 }

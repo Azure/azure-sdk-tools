@@ -29,7 +29,7 @@ async function sdkInit(
   }): Promise<string> {
   if (isUrl) {
     // URL scenario
-    const resolvedConfigUrl = await resolveTspConfigUrl(config);
+    const resolvedConfigUrl = resolveTspConfigUrl(config);
     Logger.debug(`Resolved config url: ${resolvedConfigUrl.resolvedUrl}`)
     const tspConfig = await fetch(resolvedConfigUrl.resolvedUrl);
     const configYaml = parseYaml(tspConfig);
@@ -257,7 +257,7 @@ async function main() {
         }
         if (options.tspConfig) {
           let [ directory, commit, repo, additionalDirectories ] = await readTspLocation(rootUrl);
-          let tspConfig = await resolveTspConfigUrl(options.tspConfig);
+          let tspConfig = resolveTspConfigUrl(options.tspConfig);
           commit = tspConfig.commit ?? commit;
           repo = tspConfig.repo ?? repo;
           await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);

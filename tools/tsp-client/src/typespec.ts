@@ -70,12 +70,12 @@ export function resolveCliOptions(opts: string[]): Record<string, Record<string,
 }
 
 
-export async function resolveTspConfigUrl(configUrl: string): Promise<{
+export function resolveTspConfigUrl(configUrl: string): {
   resolvedUrl: string;
   commit: string;
   repo: string;
   path: string;
-}> {
+} {
   let resolvedConfigUrl = configUrl;
 
   const res = configUrl.match('^https://(?<urlRoot>github|raw.githubusercontent).com/(?<repo>[^/]*/azure-rest-api-specs(-pr)?)/(tree/|blob/)?(?<commit>[0-9a-f]{40})/(?<path>.*)/tspconfig.yaml$')

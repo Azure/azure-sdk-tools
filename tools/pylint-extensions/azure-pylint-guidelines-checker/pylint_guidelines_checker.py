@@ -1239,7 +1239,7 @@ class CheckDocstringParameters(BaseChecker):
             '"%s" type formatted incorrectly. See details: '
             'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
             "docstring-type-formatted-incorrectly",
-            "Docstring type is formatted incorrectly. Please following Sphinx formatting.",
+            "Docstring type is formatted incorrectly. Please follow Sphinx formatting.",
         ),
     }
     options = (

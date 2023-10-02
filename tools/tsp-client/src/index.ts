@@ -39,18 +39,12 @@ async function sdkInit(
         Logger.error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
       }
       Logger.debug(`Service directory: ${serviceDir}`)
-      let additionalDirs: string[] = [];
-      if (configYaml["parameters"]["dependencies"] && configYaml["parameters"]["dependencies"]["additionalDirectories"]) {
-        additionalDirs = configYaml["parameters"]["dependencies"]["additionalDirectories"];
-      }
-      let packageDir;
-      if (configYaml["options"][emitter] && configYaml["options"][emitter]["package-dir"]) {
-        packageDir = configYaml["options"][emitter]["package-dir"];
-      }
-      if (packageDir === undefined) {
+      const additionalDirs: string[] = configYaml?.parameters?.dependencies?.additionalDirectories ?? [];
+      const packageDir: string | undefined = configYaml?.options?.[emitter]?.["package-dir"];
+      if (!packageDir) {
         Logger.error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
       }
-      const newPackageDir = path.join(outputDir, serviceDir, packageDir)
+      const newPackageDir = path.join(outputDir, serviceDir, packageDir!)
       await mkdir(newPackageDir, { recursive: true });
       await writeFile(
         path.join(newPackageDir, "tsp-location.yaml"),

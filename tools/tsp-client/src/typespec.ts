@@ -15,20 +15,16 @@ export async function getEmitterOptions(rootUrl: string, tempRoot: string, emitt
   } else {
     const configData = await readFile(path.join(tempRoot, "tspconfig.yaml"), "utf8");
     const configYaml = parseYaml(configData);
-  
-    if (configYaml["options"] && configYaml["options"][emitter]){
-      emitterOptions[emitter] = configYaml["options"][emitter];
-      for (const key in emitterOptions[emitter]!) {
-        Object.keys(emitterOptions![emitter]!).forEach(
-          (k) => {
-            if (`{${k}}` === emitterOptions[emitter]![key]) {
-              emitterOptions[emitter]![key] = emitterOptions[emitter]![k];
-            }
-          });
+    emitterOptions[emitter] = configYaml?.options?.[emitter];
+    // TODO: This accounts for a very specific and common configuration in the tspconfig.yaml files,
+    // we should consider making this more generic.
+    Object.keys(emitterOptions[emitter]!).forEach((key) => {
+      if (emitterOptions![emitter]![key] === "{package-dir}") {
+        emitterOptions![emitter]![key] = emitterOptions![emitter]!["package-dir"];
       }
-    }
+    });
   }
-  if (emitterOptions[emitter] && !emitterOptions[emitter]!["emitter-output-dir"]) {
+  if (!emitterOptions?.[emitter]?.["emitter-output-dir"]) {
     emitterOptions[emitter]!["emitter-output-dir"] = rootUrl;
   }
   if (saveInputs) {

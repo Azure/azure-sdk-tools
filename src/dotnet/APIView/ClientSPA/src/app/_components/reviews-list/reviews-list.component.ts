@@ -13,7 +13,7 @@ import { environment } from 'src/environments/environment';
 })
 
 export class ReviewsListComponent implements OnInit {
-  @Output() reviewIdEmitter : EventEmitter<Review> = new EventEmitter<Review>();
+  @Output() reviewEmitter : EventEmitter<Review> = new EventEmitter<Review>();
 
   reviews : Review[] = [];
   totalNumberOfReviews = 0;
@@ -211,7 +211,7 @@ export class ReviewsListComponent implements OnInit {
    */
   onRowSelect(event: TableRowSelectEvent) {
     console.log("On Row Select Event Emitted %o", event);
-    this.reviewIdEmitter.emit(event.data);
+    this.reviewEmitter.emit(event.data);
   }
 
   /**

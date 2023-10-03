@@ -5,7 +5,7 @@
         [style]="{ height: 'calc(100vh - 100px)', border: '0px'}">
         <ng-template pTemplate>
             <div class="col flex align-items-center justify-content-center border">
-                <app-reviews-list (reviewIdEmitter)="getRevisions($event)"></app-reviews-list>
+                <app-reviews-list (reviewEmitter)="getRevisions($event)"></app-reviews-list>
             </div>
         </ng-template>
         <ng-template pTemplate>

@@ -1,10 +1,9 @@
 <app-nav-bar></app-nav-bar>
 <div class="container-fluid main-container">
-    <app-review-info [review]="review" [reviewRevisions]="reviewRevisions"></app-review-info>
-    <app-review-nav></app-review-nav>
+    <app-review-info [review]="review" [reviewRevisions]="reviewRevisions" (revisionsSidePanel)="showRevisionsPanel($event)"></app-review-info>
     <p-splitter 
         [panelSizes]="[15, 70, 15]" 
-        [style]="{ height: 'calc(100vh - 180px)' }">
+        [style]="{ height: 'calc(100vh - 145px)' }">
         <ng-template pTemplate>
             <div class="col flex align-items-center justify-content-center">Panel 1</div>
         </ng-template>
@@ -18,4 +17,7 @@
         </ng-template>
     </p-splitter>
 </div>
+<p-sidebar [(visible)]="revisionSidePanel!" position="right">
+    Revisions
+</p-sidebar>
 <app-footer></app-footer>

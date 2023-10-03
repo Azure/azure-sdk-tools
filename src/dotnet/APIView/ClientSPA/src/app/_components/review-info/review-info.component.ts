@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, SimpleChanges } from '@angular/core';
 import { DropdownChangeEvent } from 'primeng/dropdown';
 import { Review } from 'src/app/_models/review';
 import { Revision } from 'src/app/_models/revision';
@@ -11,6 +11,7 @@ import { Revision } from 'src/app/_models/revision';
 export class ReviewInfoComponent {
   @Input() review : Review | undefined = undefined;
   @Input() reviewRevisions : Map<string, Revision[]> = new Map<string, Revision[]>();
+  @Output() revisionsSidePanel : EventEmitter<boolean> = new EventEmitter<boolean>();
 
   revisionsTypeDropDown: any[] = [];
   selectedRevisionsType: any | undefined;
@@ -62,6 +63,10 @@ export class ReviewInfoComponent {
 
   onDiffRevisionTypeChange(event: DropdownChangeEvent) {
     this.diffRevisionsDropDown = this.getReviewRevisionsDropDown(this.selectedDiffRevisionsType);
+  }
+
+  showRevisionSidePanel() {
+    this.revisionsSidePanel.emit(true);
   }
 
   /**

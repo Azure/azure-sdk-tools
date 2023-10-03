@@ -14,6 +14,7 @@ import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { PaginatorModule } from 'primeng/paginator';
+import { TabMenuModule } from 'primeng/tabmenu';
 import { DropdownModule } from 'primeng/dropdown';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { TreeSelectModule } from 'primeng/treeselect';
@@ -58,6 +59,7 @@ import { RevisionsListComponent } from './_components/revisions-list/revisions-l
     ButtonModule,
     ChipModule,
     ContextMenuModule,
+    TabMenuModule,
     DropdownModule,
     FileUploadModule,
     HttpClientModule,

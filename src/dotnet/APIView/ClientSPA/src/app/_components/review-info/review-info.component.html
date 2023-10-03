@@ -1,3 +1,4 @@
+
 <div *ngIf="review" class="input-group input-group-sm py-2" id="review-info-bar">
     <span role="img" class="input-group-text">
         <img src="assets/images/{{ review!.language | languageNames }}-original.svg" alt="{{ review!.language}}" width="25">
@@ -6,7 +7,7 @@
     <span *ngIf="review!.status == 'Approved'" class="input-group-text" data-bs-toggle="tooltip" title="Approved for First Release">
         <i class="fa-regular fa-circle-check text-success"></i>
     </span>
-    <span class="input-group-text">Revision :</span>
+    <button class="btn btn-outline-primary" type="button" (click)="showRevisionSidePanel()">Revision :</button>
     <p-dropdown [options]="revisionsTypeDropDown" [(ngModel)]="selectedRevisionsType" (onChange)="onRevisionTypeChange($event)" optionLabel="name">
         <ng-template pTemplate="selectedItem">
             <div class="flex align-items-center gap-2" *ngIf="selectedRevisionsType">
@@ -34,4 +35,6 @@
         </ng-template>
     </p-dropdown>
     <p-dropdown [options]="diffRevisionsDropDown" [(ngModel)]="selecteddiffRevisionsDropDown" optionLabel="name" [filter]="true" filterBy="name"></p-dropdown>
+    <button class="btn btn-outline-primary" type="button">Conversations</button>
+    <button class="btn btn-outline-primary" type="button">Samples</button>
 </div>

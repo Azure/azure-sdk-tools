@@ -1,5 +1,5 @@
 <div>
-    <p-virtualScroller [value]="codeLines" class="border-1 surface-border border-round" [style]="{'width': 'auto'}" scrollHeight="calc(100vh - 192px)" [itemSize]="19">
+    <p-virtualScroller [value]="codeLines" class="border-1 surface-border border-round" [style]="{'width': 'auto'}" scrollHeight="calc(100vh - 150px)" [itemSize]="19">
         <ng-template pTemplate="item" let-item>
             <div class="flex align-items-center p-2 h-full" [ngClass]="{ 'surface-hover': item.index % 2 === 0 }">
                 {{ item.displayString }}

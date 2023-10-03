@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CodeLine, NavigationItem, Review, ReviewContent } from 'src/app/_models/review';
 import { Revision } from 'src/app/_models/revision';
@@ -15,13 +15,14 @@ export class ReviewPageComponent implements OnInit {
   codeLines: CodeLine [] = [];
   reviewRevisions : Map<string, Revision[]> = new Map<string, Revision[]>();
   activeRevision : Revision | undefined = undefined;
-  
+
+  revisionSidePanel : boolean | undefined = undefined;
 
   constructor(private route: ActivatedRoute, private reviewsService: ReviewsService) {}
 
   ngOnInit() {
     const reviewId = this.route.snapshot.paramMap.get('reviewId');
-    this.loadReviewContent(reviewId!) 
+    this.loadReviewContent(reviewId!);
   }
 
   loadReviewContent(reviewId: string) {
@@ -34,5 +35,13 @@ export class ReviewPageComponent implements OnInit {
           this.activeRevision = response.activeRevision;
         }
     });
+  }
+
+  showRevisionsPanel(showRevisionsPanel : any){
+    this.revisionSidePanel = showRevisionsPanel as boolean;
+  }
+
+  onRevisionSelect(revision: Revision) {
+    this.activeRevision = revision;
   }
 }

@@ -17,14 +17,14 @@ var kubernetesVersion = '1.26.6'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 
 var systemAgentPool = {
-  name: 'system'
+  name: 'systemal'
   count: 1
   minCount: 1
   maxCount: 4
   mode: 'System'
   vmSize: 'Standard_D4ds_v4'
   type: 'VirtualMachineScaleSets'
-  osType: 'Linux'
+  osType: 'AzureLinux'
   enableAutoScaling: true
   enableEncryptionAtHost: true
   nodeLabels: {
@@ -33,14 +33,14 @@ var systemAgentPool = {
 }
 
 var defaultAgentPool = {
-  name: 'default'
+  name: 'defaultal'
   count: defaultAgentPoolMinNodes
   minCount: defaultAgentPoolMinNodes
   maxCount: defaultAgentPoolMaxNodes
   mode: 'User'
   vmSize: 'Standard_D8a_v4'
   type: 'VirtualMachineScaleSets'
-  osType: 'Linux'
+  osType: 'AzureLinux'
   osDiskType: 'Ephemeral'
   enableAutoScaling: true
   enableEncryptionAtHost: true

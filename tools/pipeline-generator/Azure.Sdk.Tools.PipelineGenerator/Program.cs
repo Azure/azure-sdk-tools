@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PipelineGenerator.Conventions;
 using PipelineGenerator.CommandParserOptions;
+using Microsoft.TeamFoundation.Build.WebApi;
 
 namespace PipelineGenerator
 {
@@ -44,6 +45,7 @@ namespace PipelineGenerator
                         g.Prefix,
                         g.Path,
                         g.Patvar,
+                        g.ProductCatalogTokenEnvVar,
                         g.Endpoint,
                         g.Repository,
                         g.Branch,
@@ -128,6 +130,7 @@ namespace PipelineGenerator
             string prefix,
             string path,
             string patvar,
+            string productCatalogTokenEnvVar,
             string endpoint,
             string repository,
             string branch,
@@ -155,6 +158,7 @@ namespace PipelineGenerator
                     organization,
                     project,
                     patvar,
+                    productCatalogTokenEnvVar,
                     endpoint,
                     repository,
                     branch,
@@ -184,6 +188,8 @@ namespace PipelineGenerator
                     return ExitCondition.DuplicateComponentsFound;
                 }
 
+                var modifiedDefinitions = new List<BuildDefinition>();
+
                 foreach (var component in components)
                 {
                     logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
@@ -194,6 +200,7 @@ namespace PipelineGenerator
                     else
                     {
                         var definition = await pipelineConvention.CreateOrUpdateDefinitionAsync(component, cancellationToken);
+                        modifiedDefinitions.Add(definition);
 
                         if (open)
                         {
@@ -202,8 +209,15 @@ namespace PipelineGenerator
                     }
                 }
 
-                return ExitCondition.Success;
+                if (!string.IsNullOrEmpty(context.productCatalogTokenEnvVar))
+                {
+                    logger.LogInformation("Updating 1es pipeline classifications.");
+                    await pipelineConvention.UpdatePipelineClassifications(modifiedDefinitions);
+                } else {
+                    logger.LogInformation("No product catalog token environment variable specified, skipping 1es pipeline classification.");
+                }
 
+                return ExitCondition.Success;
             }
             catch (Exception ex)
             {

@@ -31,6 +31,7 @@ namespace PipelineGenerator
             string organization,
             string project,
             string patvar,
+            string productCatalogTokenEnvVar,
             string endpoint,
             string repository,
             string branch,
@@ -47,6 +48,7 @@ namespace PipelineGenerator
             this.organization = organization;
             this.project = project;
             this.patvar = patvar;
+            this.productCatalogTokenEnvVar = productCatalogTokenEnvVar;
             this.endpoint = endpoint;
             this.Repository = repository;
             this.Branch = branch;
@@ -69,6 +71,7 @@ namespace PipelineGenerator
         public bool SetManagedVariables { get; set; }
         public int[] VariableGroups => this.variableGroups;
         public string DevOpsPath => string.IsNullOrEmpty(this.devOpsPath) ? Prefix : this.devOpsPath;
+        public string productCatalogTokenEnvVar;
 
         private VssConnection cachedConnection;
 

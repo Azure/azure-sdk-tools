@@ -17,6 +17,7 @@ namespace PipelineGenerator.Conventions
         public override string SearchPattern => "ci.yml";
         public override string PipelineNameSuffix => "";
         public override string PipelineCategory => "unified";
+        public override PipelineClassifications Classification => PipelineClassifications.Production;
 
         protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {

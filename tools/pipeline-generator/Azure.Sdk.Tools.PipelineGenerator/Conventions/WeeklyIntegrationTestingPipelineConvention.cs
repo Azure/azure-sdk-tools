@@ -11,13 +11,14 @@ namespace PipelineGenerator.Conventions
 
         public override string PipelineNameSuffix => " - tests-weekly";
         public override string PipelineCategory => "tests-weekly";
+        public override PipelineClassifications Classification => PipelineClassifications.NonProduction;
 
         protected override Schedule CreateScheduleFromDefinition(BuildDefinition definition)
         {
             var bucket = definition.Id % TotalBuckets;
             var startHours = bucket / BucketsPerHour;
             var startMinutes = bucket % BucketsPerHour;
-            var daysToBuild = new ScheduleDays[]{ ScheduleDays.Saturday, ScheduleDays.Sunday };
+            var daysToBuild = new ScheduleDays[] { ScheduleDays.Saturday, ScheduleDays.Sunday };
             var dayBucket = definition.Id % daysToBuild.Length;
 
             var schedule = new Schedule

@@ -18,11 +18,11 @@ namespace Azure.ClientSdk.Analyzers.Tests
     {
         private static readonly ReferenceAssemblies DefaultReferenceAssemblies =
             ReferenceAssemblies.Default.AddPackages(ImmutableArray.Create(
-                new PackageIdentity("Azure.Core", "1.26.0"),
-                new PackageIdentity("Microsoft.Bcl.AsyncInterfaces", "1.1.0"),
+                new PackageIdentity("Azure.Core", "1.35.0"),
+                new PackageIdentity("Microsoft.Bcl.AsyncInterfaces", "1.1.1"),
                 new PackageIdentity("Newtonsoft.Json", "12.0.3"),
-                new PackageIdentity("System.Text.Json", "4.6.0"),
-                new PackageIdentity("System.Threading.Tasks.Extensions", "4.5.3")));
+                new PackageIdentity("System.Text.Json", "4.7.2"),
+                new PackageIdentity("System.Threading.Tasks.Extensions", "4.5.4")));
 
         public static CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> CreateAnalyzer(string source, LanguageVersion languageVersion = LanguageVersion.Latest)
             => new CSharpAnalyzerTest<TAnalyzer, XUnitVerifier>

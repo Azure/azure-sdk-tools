@@ -70,7 +70,6 @@ def search_documents(language: str, path: str, log_result: bool = False):
     if log_result:
         with open('search_result_dump.json', 'w') as f:
             json.dump(results, f, indent=4)
-    pprint(results)
 
 def generate_review(language: str, path: str, log_prompts: bool = False):
     """

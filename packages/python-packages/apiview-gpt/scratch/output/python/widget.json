@@ -1,0 +1,37 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming",
+                "python_design.html#python-client-connection-string",
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 1,
+            "bad_code": "class azure.contoso.widgetmanager.WidgetManagerClient(WidgetManagerClientOperationsMixin): implements ContextManager",
+            "suggestion": "Separate synchronous and asynchronous operations into two separate classes.",
+            "comment": "The class name should be 'WidgetClient' instead of 'WidgetManagerClient' to be more descriptive of the service it provides. The class does not have a separate factory classmethod 'from_connection_string' to create a client from a connection string. The class does not separate synchronous and asynchronous operations into two separate classes."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming",
+                "python_design.html#python-client-connection-string",
+                "python_design.html#python-namespaces-async",
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 99,
+            "bad_code": "class azure.contoso.widgetmanager.aio.WidgetManagerClient(WidgetManagerClientOperationsMixin): implements AsyncContextManager",
+            "suggestion": "Separate the async and sync operations into two different classes.",
+            "comment": "The class name should end with 'Client'. The class does not have a separate factory classmethod 'from_connection_string'. The class is an asynchronous client class but it does not have '.aio' in the namespace. The class is an asynchronous client class but it combines async and sync operations in the same class."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-constructor-policy-arguments"
+            ],
+            "line_no": 100,
+            "bad_code": "def __init__(self, credential: AsyncTokenCredential, api_version: str, *, endpoint: str, polling_interval: Optional[int] = ..., **kwargs: Any) -> None",
+            "suggestion": "Accept optional default request options as keyword arguments and pass them along to its pipeline policies.",
+            "comment": "The class does not accept optional default request options as keyword arguments."
+        }
+    ]
+}

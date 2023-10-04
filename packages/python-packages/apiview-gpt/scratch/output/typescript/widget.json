@@ -1,0 +1,45 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-model-types-use-good-name",
+                "typescript_design.html#ts-model-types-use-details",
+                "typescript_design.html#ts-model-types-partial-naming"
+            ],
+            "line_no": 14,
+            "bad_code": "export type CreateWidgetRequestResourceMergeAndPatch = Partial<CreateWidgetRequest>;",
+            "suggestion": "export type WidgetRequestPartial = Partial<CreateWidgetRequest>;",
+            "comment": "The type name 'CreateWidgetRequestResourceMergeAndPatch' does not follow the naming conventions. Consider renaming it to 'WidgetRequestPartial' or similar, following the guidelines for partial schemas."
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-naming-options"
+            ],
+            "line_no": 66,
+            "bad_code": "export interface GetWidgetDefaultHeaders {\n    \"x-ms-error-code\"?: string;\n}",
+            "suggestion": "export interface GetWidgetOptions {\n    \"x-ms-error-code\"?: string;\n}",
+            "comment": "The interface name should follow the <class name>Options or <method name>Options convention."
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-naming-options"
+            ],
+            "line_no": 96,
+            "bad_code": "export type GetWidgetParameters = GetWidgetQueryParam & RequestParameters;",
+            "suggestion": "export type GetWidgetOptions = GetWidgetQueryParam & RequestParameters;",
+            "comment": "The type of the options bag should be named as <class name>Options and <method name>Options for constructors and methods respectively."
+        },
+        {
+            "rule_ids": [
+                "typescript_design.html#ts-model-types-use-good-name",
+                "typescript_design.html#ts-model-types-use-details",
+                "typescript_design.html#ts-model-types-partial-naming"
+            ],
+            "line_no": 124,
+            "bad_code": "export interface NewWidgetBodyParam {\n    body: CreateWidgetRequestResourceMergeAndPatch;\n}",
+            "suggestion": "export interface Widget {\n    body: WidgetRequest;\n}",
+            "comment": "The interface name and the property type name should follow the naming conventions outlined in the guidelines."
+        }
+    ]
+}

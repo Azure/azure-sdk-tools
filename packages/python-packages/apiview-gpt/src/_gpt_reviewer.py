@@ -75,8 +75,9 @@ Evaluate the following class for any violations:
         final_results = GuidelinesResult(status="Success", violations=[])
         for chunk in chunked_apiview.sections:
             if self.should_evaluate(chunk):
+
                 # retrieve the most similar comments to identify guidelines to check
-                semantic_matches = VectorDB().search_documents(language, chunk)
+                semantic_matches = VectorDB().search_documents(language, str(chunk))
                 
                 guidelines_to_check = []
                 extra_comments = {}

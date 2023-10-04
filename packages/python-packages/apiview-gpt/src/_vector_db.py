@@ -57,6 +57,35 @@ class VectorDB:
         response.raise_for_status()
         return
 
+    """
+    Splits a class into sections to be queried individually. Will include the
+    class defintion, properties and method signatures.
+    """
+    def create_line_sections(self, section: Section) -> List[str]:
+        sectioned = []
+        current_section = []
+        for line in section.lines:
+            if line == "" and not current_section:
+                continue
+            elif line == "" and current_section:
+                sectioned.append("\n".join(current_section))
+                current_section = []
+            else:
+                current_section.append(line)
+        return sectioned
+
+    """
+    A heuristic that breaks a code block into constituent parts when similarity search fails to find a match.
+    """
+    def search_documents_by_line(self, language: str, code: str, threshold: float, limit: int) -> List[VectorSearchResult]:
+        section = SectionedDocument(code.splitlines(), chunk=True).sections[0]
+        line_sections = self.create_line_sections(section)
+
+        results = []
+        for section in line_sections:
+            results.extend(self.search_documents(language, section, threshold, limit))
+        return results
+
     def search_documents(self, language: str, code: str, threshold: float = 0.5, limit: int = 10) -> List[VectorSearchResult]:
         url = f"{_BASE_URL}/search"
         headers = self._get_headers()
@@ -68,6 +97,13 @@ class VectorDB:
         }
         response = requests.get(url, headers=headers, params=params)
         if response.status_code == 404:
-            return []
-        response.raise_for_status()
-        return response.json()
+            results = self.search_documents_by_line(language, code, threshold, limit)
+        else:
+            response.raise_for_status()
+            results = response.json()
+        
+        # eliminate duplicates with the same similarity and bad_code
+        seen = set()
+        results = [x for x in results if not (x["similarity"], x["aiCommentModel"]["badCode"]) in seen and not seen.add((x["similarity"], x["aiCommentModel"]["badCode"]))]
+        results.sort(key=lambda x: x["similarity"], reverse=True)
+        return results

@@ -1,0 +1,202 @@
+export type ContosoWidgetManagerClient = Client & {
+    path: Routes;
+};
+export default function createClient(endpoint: string, credentials: TokenCredential, options?: ClientOptions): ContosoWidgetManagerClient;
+export interface CreateWidgetRequest {
+    manufacturerId: string;
+    name: string;
+    sharedModel?: FakedSharedModel;
+}
+export interface CreateWidgetRequestOutput {
+    manufacturerId: string;
+    name: string;
+    sharedModel?: FakedSharedModelOutput;
+}
+export type CreateWidgetRequestResourceMergeAndPatch = Partial<CreateWidgetRequest>;
+export interface EraseWidget202Headers {
+    "operation-location": string;
+}
+export interface EraseWidget202Response extends HttpResponse {
+    body: OperationStatusOutput;
+    headers: RawHttpHeaders & EraseWidget202Headers;
+    status: "202";
+}
+export interface EraseWidgetDefaultHeaders {
+    "x-ms-error-code"?: string;
+}
+export interface EraseWidgetDefaultResponse extends HttpResponse {
+    body: ErrorResponse;
+    headers: RawHttpHeaders & EraseWidgetDefaultHeaders;
+    status: string;
+}
+export interface EraseWidgetLogicalResponse extends HttpResponse {
+    body: OperationStatusOutput;
+    status: "200";
+}
+export type EraseWidgetParameters = EraseWidgetQueryParam & RequestParameters;
+export interface EraseWidgetQueryParam {
+    queryParameters: EraseWidgetQueryParamProperties;
+}
+export interface EraseWidgetQueryParamProperties {
+    "api-version": string;
+}
+export interface FakedSharedModel {
+    createdAt: Date | string;
+    tag: string;
+}
+export interface FakedSharedModelOutput {
+    createdAt: string;
+    tag: string;
+}
+export type GetArrayType<T> = T extends Array<infer TData> ? TData : never;
+export declare function getLongRunningPoller<TResult extends NewWidgetLogicalResponse | NewWidgetDefaultResponse>(client: Client, initialResponse: NewWidget200Response | NewWidget201Response | NewWidgetDefaultResponse, options?: CreateHttpPollerOptions<TResult, OperationState<TResult>>): Promise<SimplePollerLike<OperationState<TResult>, TResult>>;
+export declare function getLongRunningPoller<TResult extends EraseWidgetLogicalResponse | EraseWidgetDefaultResponse>(client: Client, initialResponse: EraseWidget202Response | EraseWidgetDefaultResponse, options?: CreateHttpPollerOptions<TResult, OperationState<TResult>>): Promise<SimplePollerLike<OperationState<TResult>, TResult>>;
+export type GetPage<TPage> = (pageLink: string, maxPageSize?: number) => Promise<{
+    page: TPage;
+    nextPageLink?: string;
+}>;
+export interface GetWidget {
+    delete(options?: EraseWidgetParameters): StreamableMethod<EraseWidget202Response | EraseWidgetDefaultResponse>;
+    get(options?: GetWidgetParameters): StreamableMethod<GetWidget200Response | GetWidgetDefaultResponse>;
+    patch(options: NewWidgetParameters): StreamableMethod<NewWidget200Response | NewWidget201Response | NewWidgetDefaultResponse>;
+}
+export interface GetWidget200Response extends HttpResponse {
+    body: WidgetResponseOutput;
+    status: "200";
+}
+export interface GetWidgetDefaultHeaders {
+    "x-ms-error-code"?: string;
+}
+export interface GetWidgetDefaultResponse extends HttpResponse {
+    body: ErrorResponse;
+    headers: RawHttpHeaders & GetWidgetDefaultHeaders;
+    status: string;
+}
+export interface GetWidgetOperationStatus {
+    get(options?: GetWidgetOperationStatusParameters): StreamableMethod<GetWidgetOperationStatus200Response | GetWidgetOperationStatusDefaultResponse>;
+}
+export interface GetWidgetOperationStatus200Response extends HttpResponse {
+    body: ResourceOperationStatusOutput;
+    status: "200";
+}
+export interface GetWidgetOperationStatusDefaultHeaders {
+    "x-ms-error-code"?: string;
+}
+export interface GetWidgetOperationStatusDefaultResponse extends HttpResponse {
+    body: ErrorResponse;
+    headers: RawHttpHeaders & GetWidgetOperationStatusDefaultHeaders;
+    status: string;
+}
+export type GetWidgetOperationStatusParameters = GetWidgetOperationStatusQueryParam & RequestParameters;
+export interface GetWidgetOperationStatusQueryParam {
+    queryParameters: GetWidgetOperationStatusQueryParamProperties;
+}
+export interface GetWidgetOperationStatusQueryParamProperties {
+    "api-version": string;
+}
+export type GetWidgetParameters = GetWidgetQueryParam & RequestParameters;
+export interface GetWidgetQueryParam {
+    queryParameters: GetWidgetQueryParamProperties;
+}
+export interface GetWidgetQueryParamProperties {
+    "api-version": string;
+}
+export declare function isUnexpected(response: GetWidget200Response | GetWidgetDefaultResponse): response is GetWidgetDefaultResponse;
+export declare function isUnexpected(response: NewWidget200Response | NewWidget201Response | NewWidgetLogicalResponse | NewWidgetDefaultResponse): response is NewWidgetDefaultResponse;
+export declare function isUnexpected(response: EraseWidget202Response | EraseWidgetLogicalResponse | EraseWidgetDefaultResponse): response is EraseWidgetDefaultResponse;
+export declare function isUnexpected(response: GetWidgetOperationStatus200Response | GetWidgetOperationStatusDefaultResponse): response is GetWidgetOperationStatusDefaultResponse;
+export declare function isUnexpected(response: RetrieveAllWidgets200Response | RetrieveAllWidgetsDefaultResponse): response is RetrieveAllWidgetsDefaultResponse;
+export interface NewWidget200Headers {
+    "operation-location": string;
+}
+export interface NewWidget200Response extends HttpResponse {
+    body: CreateWidgetRequestOutput;
+    headers: RawHttpHeaders & NewWidget200Headers;
+    status: "200";
+}
+export interface NewWidget201Headers {
+    "operation-location": string;
+}
+export interface NewWidget201Response extends HttpResponse {
+    body: CreateWidgetRequestOutput;
+    headers: RawHttpHeaders & NewWidget201Headers;
+    status: "201";
+}
+export interface NewWidgetBodyParam {
+    body: CreateWidgetRequestResourceMergeAndPatch;
+}
+export interface NewWidgetDefaultHeaders {
+    "x-ms-error-code"?: string;
+}
+export interface NewWidgetDefaultResponse extends HttpResponse {
+    body: ErrorResponse;
+    headers: RawHttpHeaders & NewWidgetDefaultHeaders;
+    status: string;
+}
+export interface NewWidgetLogicalResponse extends HttpResponse {
+    body: CreateWidgetRequestOutput;
+    status: "200";
+}
+export interface NewWidgetMediaTypesParam {
+    contentType: "application/merge-patch+json";
+}
+export type NewWidgetParameters = NewWidgetQueryParam & NewWidgetMediaTypesParam & NewWidgetBodyParam & RequestParameters;
+export interface NewWidgetQueryParam {
+    queryParameters: NewWidgetQueryParamProperties;
+}
+export interface NewWidgetQueryParamProperties {
+    "api-version": string;
+}
+export interface OperationStatusOutput {
+    error?: ErrorModel;
+    id: string;
+    status: string;
+}
+export type PagedWidgetResponseOutput = Paged<WidgetResponseOutput>;
+export declare function paginate<TResponse extends PathUncheckedResponse>(client: Client, initialResponse: TResponse, options?: PagingOptions<TResponse>): PagedAsyncIterableIterator<PaginateReturn<TResponse>>;
+export type PaginateReturn<TResult> = TResult extends {
+    body: {
+        value?: infer TPage;
+    };
+} ? GetArrayType<TPage> : Array<unknown>;
+export interface PagingOptions<TResponse> {
+    customGetPage?: GetPage<PaginateReturn<TResponse>[]>;
+}
+export interface ResourceOperationStatusOutput {
+    error?: ErrorModel;
+    id: string;
+    result?: WidgetResponseOutput;
+    status: string;
+}
+export interface RetrieveAllWidgets {
+    get(options?: RetrieveAllWidgetsParameters): StreamableMethod<RetrieveAllWidgets200Response | RetrieveAllWidgetsDefaultResponse>;
+}
+export interface RetrieveAllWidgets200Response extends HttpResponse {
+    body: PagedWidgetResponseOutput;
+    status: "200";
+}
+export interface RetrieveAllWidgetsDefaultHeaders {
+    "x-ms-error-code"?: string;
+}
+export interface RetrieveAllWidgetsDefaultResponse extends HttpResponse {
+    body: ErrorResponse;
+    headers: RawHttpHeaders & RetrieveAllWidgetsDefaultHeaders;
+    status: string;
+}
+export type RetrieveAllWidgetsParameters = RetrieveAllWidgetsQueryParam & RequestParameters;
+export interface RetrieveAllWidgetsQueryParam {
+    queryParameters: RetrieveAllWidgetsQueryParamProperties;
+}
+export interface RetrieveAllWidgetsQueryParamProperties {
+    "api-version": string;
+}
+export interface Routes {
+    (path: "/widgets/{widgetName}", widgetName: string): GetWidget;
+    (path: "/widgets/{widgetName}/operations/{operationId}", widgetName: string, operationId: string): GetWidgetOperationStatus;
+    (path: "/widgets"): RetrieveAllWidgets;
+}
+export interface WidgetResponseOutput {
+    manufacturerId: string;
+    readonly name: string;
+    sharedModel?: FakedSharedModelOutput;
+}

@@ -1,0 +1,265 @@
+# Package is parsed using apiview-stub-generator(version:0.3.8), Python version: 3.10.13
+class azure.contoso.widgetmanager.WidgetManagerClient(WidgetManagerClientOperationsMixin): implements ContextManager
+
+    def __init__(
+            self, 
+            credential: TokenCredential, 
+            api_version: str, 
+            *, 
+            endpoint: str, 
+            polling_interval: Optional[int] = ..., 
+            **kwargs: Any
+        ) -> None
+
+    @distributed_trace
+    def begin_erase_widget(
+            self, 
+            widget_name: str, 
+            *, 
+            continuation_token: Optional[str] = ..., 
+            polling: Union[bool, PollingMethod] = ..., 
+            polling_interval: Optional[int] = ..., 
+            **kwargs: Any
+        ) -> LROPoller[WidgetResponse]
+
+    @overload
+    def begin_new_widget(
+            self, 
+            widget_name: str, 
+            resource: CreateWidgetRequest, 
+            *, 
+            content_type: str = "application/merge-patch+json", 
+            **kwargs: Any
+        ) -> LROPoller[WidgetResponse]
+
+    @overload
+    def begin_new_widget(
+            self, 
+            widget_name: str, 
+            resource: JSON, 
+            *, 
+            content_type: str = "application/merge-patch+json", 
+            **kwargs: Any
+        ) -> LROPoller[WidgetResponse]
+
+    @overload
+    def begin_new_widget(
+            self, 
+            widget_name: str, 
+            resource: IO, 
+            *, 
+            content_type: str = "application/merge-patch+json", 
+            **kwargs: Any
+        ) -> LROPoller[WidgetResponse]
+
+    @distributed_trace
+    def begin_new_widget(
+            self, 
+            widget_name: str, 
+            resource: Union[CreateWidgetRequest, JSON, IO], 
+            *, 
+            content_type: str = ..., 
+            continuation_token: Optional[str] = ..., 
+            polling: Union[bool, PollingMethod] = ..., 
+            polling_interval: Optional[int] = ..., 
+            **kwargs: Any
+        ) -> LROPoller[WidgetResponse]
+
+    def close(self) -> None
+
+    @distributed_trace
+    def get_widget(
+            self, 
+            widget_name: str, 
+            *, 
+            stream: Optional[bool] = ..., 
+            **kwargs: Any
+        ) -> WidgetResponse
+
+    @distributed_trace
+    def get_widget_operation_status(
+            self, 
+            widget_name: str, 
+            operation_id: str, 
+            *, 
+            stream: Optional[bool] = ..., 
+            **kwargs: Any
+        ) -> None
+
+    @distributed_trace
+    def retrieve_all_widgets(self, **kwargs: Any) -> Iterable[WidgetResponse]
+
+    def send_request(
+            self, 
+            request: HttpRequest, 
+            *, 
+            stream: Optional[bool] = ..., 
+            **kwargs: Any
+        ) -> HttpResponse
+
+class azure.contoso.widgetmanager.aio.WidgetManagerClient(WidgetManagerClientOperationsMixin): implements AsyncContextManager
+
+    def __init__(
+            self, 
+            credential: AsyncTokenCredential, 
+            api_version: str, 
+            *, 
+            endpoint: str, 
+            polling_interval: Optional[int] = ..., 
+            **kwargs: Any
+        ) -> None
+
+    @distributed_trace_async
+    async def begin_erase_widget(
+            self, 
+            widget_name: str, 
+            *, 
+            continuation_token: Optional[str] = ..., 
+            polling: Union[bool, AsyncPollingMethod] = ..., 
+            polling_interval: Optional[int] = ..., 
+            **kwargs: Any
+        ) -> AsyncLROPoller[WidgetResponse]
+
+    @overload
+    async def begin_new_widget(
+            self, 
+            widget_name: str, 
+            resource: CreateWidgetRequest, 
+            *, 
+            content_type: str = "application/merge-patch+json", 
+            **kwargs: Any
+        ) -> AsyncLROPoller[WidgetResponse]
+
+    @overload
+    async def begin_new_widget(
+            self, 
+            widget_name: str, 
+            resource: JSON, 
+            *, 
+            content_type: str = "application/merge-patch+json", 
+            **kwargs: Any
+        ) -> AsyncLROPoller[WidgetResponse]
+
+    @overload
+    async def begin_new_widget(
+            self, 
+            widget_name: str, 
+            resource: IO, 
+            *, 
+            content_type: str = "application/merge-patch+json", 
+            **kwargs: Any
+        ) -> AsyncLROPoller[WidgetResponse]
+
+    @distributed_trace_async
+    async def begin_new_widget(
+            self, 
+            widget_name: str, 
+            resource: Union[CreateWidgetRequest, JSON, IO], 
+            *, 
+            content_type: str = ..., 
+            continuation_token: Optional[str] = ..., 
+            polling: Union[bool, AsyncPollingMethod] = ..., 
+            polling_interval: Optional[int] = ..., 
+            **kwargs: Any
+        ) -> AsyncLROPoller[WidgetResponse]
+
+    async def close(self) -> None
+
+    @distributed_trace_async
+    async def get_widget(
+            self, 
+            widget_name: str, 
+            *, 
+            stream: Optional[bool] = ..., 
+            **kwargs: Any
+        ) -> WidgetResponse
+
+    @distributed_trace_async
+    async def get_widget_operation_status(
+            self, 
+            widget_name: str, 
+            operation_id: str, 
+            *, 
+            stream: Optional[bool] = ..., 
+            **kwargs: Any
+        ) -> None
+
+    @distributed_trace
+    def retrieve_all_widgets(self, **kwargs: Any) -> AsyncIterable[WidgetResponse]
+
+    def send_request(
+            self, 
+            request: HttpRequest, 
+            *, 
+            stream: Optional[bool] = ..., 
+            **kwargs: Any
+        ) -> Awaitable[AsyncHttpResponse]
+
+class azure.contoso.widgetmanager.models.CreateWidgetRequest(MutableMapping[str, Any]):
+
+    ivar manufacturer_id: str
+    ivar name: str
+    ivar shared_model: Optional[FakedSharedModel]
+
+    @overload
+    def __init__(
+            self, 
+            *, 
+            manufacturer_id: str, 
+            name: str, 
+            shared_model: Optional[FakedSharedModel] = ...
+        )
+
+    @overload
+    def __init__(self, mapping: Mapping[str, Any])
+
+    def __init__(
+            self, 
+            *args: Any, 
+            **kwargs: Any
+        ) -> None
+
+class azure.contoso.widgetmanager.models.FakedSharedModel(MutableMapping[str, Any]):
+
+    ivar created_at: datetime
+    ivar tag: str
+
+    @overload
+    def __init__(
+            self, 
+            *, 
+            created_at: datetime, 
+            tag: str
+        )
+
+    @overload
+    def __init__(self, mapping: Mapping[str, Any])
+
+    def __init__(
+            self, 
+            *args: Any, 
+            **kwargs: Any
+        ) -> None
+
+class azure.contoso.widgetmanager.models.WidgetResponse(MutableMapping[str, Any]):
+
+    ivar manufacturer_id: str
+    ivar name: str
+    ivar shared_model: Optional[FakedSharedModel]
+
+    @overload
+    def __init__(
+            self, 
+            *, 
+            manufacturer_id: str, 
+            shared_model: Optional[FakedSharedModel] = ...
+        )
+
+    @overload
+    def __init__(self, mapping: Mapping[str, Any])
+
+    def __init__(
+            self, 
+            *args: Any, 
+            **kwargs: Any
+        ) -> None

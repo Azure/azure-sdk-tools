@@ -1,12 +1,12 @@
 [
     {
         "language": "python",
-        "badCode": "class azure.contoso.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    def close(self) -> None\n\n    @distributed_trace\n\n    def get_widget(self, *args, **kwargs)",
+        "badCode": "class azure.contoso.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    def close(self) -> None\n\n    @distributed_trace\n\n    def get_widget(self, *args, **kwargs)\n\n    def send_request(self, request: HttpRequest, *, stream: Optional[bool] = ..., **kwargs: Any) -> HttpResponse",
         "comment": "This is a synchronous client class. It must not have 'Sync' in the name."
     },
     {
         "language": "python",
-        "badCode": "class azure.contoso.aio.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
+        "badCode": "class azure.contoso.aio.WidgetClient(WidgetBaseClient): implements ContextManager\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)\n\n    async def send_request(self, request: HttpRequest, *, stream: Optional[bool] = ..., **kwargs: Any) -> HttpResponse",
         "comment": "This is an asynchronous client class. It must not have 'Async' in the name and it must have '.aio' in the namespace."
     },
     {
@@ -16,8 +16,8 @@
     },
     {
         "language": "python",
-        "badCode": "class azure.contoso.WidgetManager:\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
-        "goodCode": "class azure.contoso.WidgetClient:\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)",
+        "badCode": "class azure.contoso.WidgetManager:\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)\n\n    def send_request(self, request: HttpRequest, *, stream: Optional[bool] = ..., **kwargs: Any) -> HttpResponse",
+        "goodCode": "class azure.contoso.WidgetClient:\n    def __init__(self) -> None\n\n    async def close(self) -> None\n\n    @distributed_trace_async\n\n    async def get_widget(self, *args, **kwargs)\n\n    def send_request(self, request: HttpRequest, *, stream: Optional[bool] = ..., **kwargs: Any) -> HttpResponse",
         "guidelineIds": ["python_design.html#python-client-naming"]
     },
     {

@@ -79,9 +79,10 @@ namespace PipelineGenerator.Conventions
             }
         }
 
-        public async Task<BuildDefinition> CreateOrUpdateDefinitionAsync(SdkComponent component, CancellationToken cancellationToken)
+        public async Task<(BuildDefinition, bool)> CreateOrUpdateDefinitionAsync(SdkComponent component, CancellationToken cancellationToken)
         {
             var definitionName = GetDefinitionName(component);
+            var modified = true;
 
             Logger.LogDebug("Checking to see if definition '{0}' exists prior to create/update.", definitionName);
             var definition = await GetExistingDefinitionAsync(definitionName, cancellationToken);
@@ -115,14 +116,15 @@ namespace PipelineGenerator.Conventions
             else
             {
                 Logger.LogDebug("No changes for definition '{0}'.", definitionName);
+                modified = false;
             }
 
-            return definition;
+            return (definition, modified);
         }
 
         public async Task UpdatePipelineClassifications(List<BuildDefinition> modifiedDefinitions)
         {
-            // Organiztion id for dev.azure.com/azure-sdk
+            // Organization id for dev.azure.com/azure-sdk
             // From https://ado-org-api.prod.space.microsoft.com/orgs/azure-sdk
             // See https://dev.azure.com/mseng/1ES/_wiki/wikis/SaCE%20Team%20Wiki/13937/How-to-obtain-Azure-DevOps-organization-ID-or-name
             var orgId = "0fb41ef4-5012-48a9-bf39-4ee3de03ee35";
@@ -141,7 +143,7 @@ namespace PipelineGenerator.Conventions
                     artifactId = artifactId,
                     artifactType = "Microsoft.AzureDevOps/BuildDefinition",
                     // accepted classifications are 'production' and 'nonproduction'
-                    tags = new List<string>{ this.Classification.ToString().ToLower() },
+                    tags = new List<string>{ this.Classification.ToString() },
                     autoClassificationSource = "azure-sdk-pipeline-generator"
                 };
                 bulkTagUpdate.saveTagRequests.Add(tagRequest);
@@ -150,14 +152,39 @@ namespace PipelineGenerator.Conventions
             using var client = new HttpClient();
 
             var token = Environment.GetEnvironmentVariable(Context.productCatalogTokenEnvVar);
-            var encodedToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", token)));
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", encodedToken);
+            // var encodedToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(token));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", token);
             var json = JsonSerializer.Serialize(bulkTagUpdate);
             var content = new StringContent(json, Encoding.UTF8, "application/json-patch+json");
+            Logger.LogInformation("-----------------------");
+            Logger.LogDebug(json);
+            Logger.LogInformation("-----------------------");
             var bulkTagUpdateUrl = "https://artifact-tags-api.prod.space.microsoft.com/tags/bulk";
 
             var response = await client.PutAsync(bulkTagUpdateUrl, content);
             response.EnsureSuccessStatusCode();
+            Logger.LogInformation(response.ToString());
+            if (response.Content != null)
+            {
+                Logger.LogInformation(await response.Content.ReadAsStringAsync());
+            }
+
+            /*
+            var projectId2 = modifiedDefinitions[0].Project.Id.ToString();
+            var definitionId2 = modifiedDefinitions[0].Id.ToString();
+            var tagUpdateUrl = $"https://artifact-tags-api.prod.space.microsoft.com/tags?artifactType=Microsoft.AzureDevOps/BuildDefinition&artifactId=vsts://{orgId}/{projectId2}/{definitionId2}";
+            var tagBody = new {
+                tags = new List<string>{ this.Classification.ToString() },
+            };
+            var json2 = JsonSerializer.Serialize(tagBody);
+            var content2 = new StringContent(json2, Encoding.UTF8, "application/json-patch+json");
+            Logger.LogInformation("-----------------------");
+            Logger.LogDebug(tagUpdateUrl);
+            Logger.LogDebug(json2);
+            Logger.LogInformation("-----------------------");
+            var response = await client.PutAsync(tagUpdateUrl, content2);
+            response.EnsureSuccessStatusCode();
+            */
 
             return;
         }

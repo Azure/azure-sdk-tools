@@ -199,8 +199,12 @@ namespace PipelineGenerator
                     }
                     else
                     {
-                        var definition = await pipelineConvention.CreateOrUpdateDefinitionAsync(component, cancellationToken);
-                        modifiedDefinitions.Add(definition);
+                        var (definition, modified) = await pipelineConvention.CreateOrUpdateDefinitionAsync(component, cancellationToken);
+                        // if (modified)
+                        if (true)
+                        {
+                            modifiedDefinitions.Add(definition);
+                        }
 
                         if (open)
                         {
@@ -209,12 +213,14 @@ namespace PipelineGenerator
                     }
                 }
 
-                if (!string.IsNullOrEmpty(context.productCatalogTokenEnvVar))
+                if (string.IsNullOrEmpty(context.productCatalogTokenEnvVar))
                 {
-                    logger.LogInformation("Updating 1es pipeline classifications.");
-                    await pipelineConvention.UpdatePipelineClassifications(modifiedDefinitions);
-                } else {
                     logger.LogInformation("No product catalog token environment variable specified, skipping 1es pipeline classification.");
+                }
+                else if (modifiedDefinitions.Count > 0)
+                {
+                    logger.LogInformation($"Updating 1es classifications for {modifiedDefinitions.Count} pipelines.");
+                    await pipelineConvention.UpdatePipelineClassifications(modifiedDefinitions);
                 }
 
                 return ExitCondition.Success;

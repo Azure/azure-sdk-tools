@@ -150,10 +150,8 @@ namespace PipelineGenerator.Conventions
             }
 
             using var client = new HttpClient();
-
             var token = Environment.GetEnvironmentVariable(Context.productCatalogTokenEnvVar);
-            // var encodedToken = Convert.ToBase64String(Encoding.ASCII.GetBytes(token));
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", token);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             var json = JsonSerializer.Serialize(bulkTagUpdate);
             var content = new StringContent(json, Encoding.UTF8, "application/json-patch+json");
             Logger.LogInformation("-----------------------");
@@ -168,23 +166,6 @@ namespace PipelineGenerator.Conventions
             {
                 Logger.LogInformation(await response.Content.ReadAsStringAsync());
             }
-
-            /*
-            var projectId2 = modifiedDefinitions[0].Project.Id.ToString();
-            var definitionId2 = modifiedDefinitions[0].Id.ToString();
-            var tagUpdateUrl = $"https://artifact-tags-api.prod.space.microsoft.com/tags?artifactType=Microsoft.AzureDevOps/BuildDefinition&artifactId=vsts://{orgId}/{projectId2}/{definitionId2}";
-            var tagBody = new {
-                tags = new List<string>{ this.Classification.ToString() },
-            };
-            var json2 = JsonSerializer.Serialize(tagBody);
-            var content2 = new StringContent(json2, Encoding.UTF8, "application/json-patch+json");
-            Logger.LogInformation("-----------------------");
-            Logger.LogDebug(tagUpdateUrl);
-            Logger.LogDebug(json2);
-            Logger.LogInformation("-----------------------");
-            var response = await client.PutAsync(tagUpdateUrl, content2);
-            response.EnsureSuccessStatusCode();
-            */
 
             return;
         }

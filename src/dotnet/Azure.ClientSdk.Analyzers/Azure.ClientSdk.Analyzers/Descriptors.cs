@@ -222,6 +222,13 @@ namespace Azure.ClientSdk.Analyzers
             "Asynchronous method with `async` parameter can be called from both synchronous and asynchronous scopes. 'EnsureCompleted' extension method can be safely used on in guaranteed synchronous scope (i.e. `if (!async) {...}`).",
             "Usage",
             DiagnosticSeverity.Warning, true);
+
+        public static DiagnosticDescriptor AZC0112 = new DiagnosticDescriptor(
+            "AZC1200",
+            "Misuse of internal type via InternalsVisibleTo.",
+            "{0} is defined in assembly {1} and is marked internal without a [Friend] attribute.",
+            "Naming",
+            DiagnosticSeverity.Warning, true);
         #endregion
     }
 }

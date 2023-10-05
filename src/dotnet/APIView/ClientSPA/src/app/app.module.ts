@@ -33,8 +33,8 @@ import { SplitterModule } from 'primeng/splitter';
 import { CodePanelComponent } from './_components/code-panel/code-panel.component';
 import { VirtualScrollerModule } from 'primeng/virtualscroller';
 import { ReviewInfoComponent } from './_components/review-info/review-info.component';
-import { ReviewNavComponent } from './_components/review-nav/review-nav.component';
 import { RevisionsListComponent } from './_components/revisions-list/revisions-list.component';
+import { ReviewNavComponent } from './_components/review-nav/review-nav.component';
 
 @NgModule({
   declarations: [
@@ -47,8 +47,8 @@ import { RevisionsListComponent } from './_components/revisions-list/revisions-l
     ReviewPageComponent,
     CodePanelComponent,
     ReviewInfoComponent,
-    ReviewNavComponent,
-    RevisionsListComponent
+    RevisionsListComponent,
+    ReviewNavComponent
   ],
   imports: [
     AppRoutingModule,

@@ -76,7 +76,7 @@ export class ReviewInfoComponent {
   getReviewRevisionsDropDown(selectedType : any) {
     const revisions : any[] = [];
     this.reviewRevisions.get(selectedType.value)?.forEach((revision: { label: any; id: any; }) => {
-      revisions.push({ name: revision.label, value: revision.id });
+      revisions.push({ name: revision.label ?? revision.id, value: revision.id });
     });
     return revisions;
   }

@@ -2,4 +2,9 @@
     .p-sidebar-right {
         width: 70dvw;
     }
+
+    .p-splitter-panel-nested {
+        display: block;
+        min-width: 0;
+    }
 }

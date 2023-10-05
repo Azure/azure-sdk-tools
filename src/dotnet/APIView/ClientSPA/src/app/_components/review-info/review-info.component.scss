@@ -17,4 +17,16 @@
         border-top-right-radius: 0px;
         border-top-left-radius: 0px;
     }
+
+    .btn-outline-primary  {
+        border-color: var(--border-color);
+    }
+    
+    .revision-drop-down {
+        max-width: 15vw;
+    }
+
+    .review-name {
+        max-width: 10vw;
+    }
 }

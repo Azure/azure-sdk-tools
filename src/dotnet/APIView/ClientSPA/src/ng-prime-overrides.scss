@@ -148,8 +148,8 @@
 
 .p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
 .p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
-    color: var(--primary-btn-color);
-    background: var(--link-active);
+    color: var(--base-text-color);
+    background: var(--base-bg-color);
 }
 
 .p-dropdown:not(.p-disabled):hover {
@@ -157,7 +157,7 @@
 }
 
 .p-dropdown:not(.p-disabled).p-focus {
-    box-shadow: 0 0 0 0.2rem var(--outer-glow);
+    box-shadow: var(--shadow-color-primary);
     border-color: var(--primary-btn-color);
 }
 
@@ -175,7 +175,7 @@
 }
 
 .p-inputtext:enabled:focus {
-    box-shadow: 0 0 0 0.2rem var(--outer-glow);
+    box-shadow: var(--shadow-color-primary);
     border-color: var(--primary-btn-color);
 }
 
@@ -215,7 +215,7 @@
 }
 
 .p-multiselect-panel .p-multiselect-items .p-multiselect-item:focus {
-    box-shadow: inset 0 0 0 0.15rem var(--outer-glow);
+    box-shadow: var(--shadow-color-primary);
 }
 
 .p-multiselect-panel .p-multiselect-items .p-multiselect-item-group {
@@ -228,7 +228,7 @@
 }
 
 .p-multiselect:not(.p-disabled).p-focus {
-    box-shadow: 0 0 0 0.2rem var(--outer-glow);
+    box-shadow: var(--shadow-color-primary);
     border-color: var(--primary-btn-color);
 }
 
@@ -238,7 +238,7 @@
 }
 
 .p-datatable .p-sortable-column:focus {
-    box-shadow: inset 0 0 0 0.15rem var(--outer-glow);
+    box-shadow: var(--shadow-color-primary);
 }
 
 .p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon {
@@ -274,4 +274,26 @@
     color: var(--base-text-color);
     padding-top: 2px;
     padding-bottom: 2px;
+}
+
+.p-tree {
+    border: 1px solid var(--border-color);
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+}
+
+.p-tree .p-tree-container .p-treenode .p-treenode-content .p-tree-toggler {
+    color: var(--base-text-color);
+}
+
+.p-tree .p-tree-container .p-treenode .p-treenode-content .p-tree-toggler:enabled:hover {
+    color: var(--base-text-color);
+}
+
+.p-tree .p-tree-container .p-treenode .p-treenode-content:focus {
+    box-shadow: inset var(--shadow-color-primary);
+}
+
+.p-tree .p-tree-container .p-treenode .p-treenode-content .p-tree-toggler:focus {
+    box-shadow: var(--shadow-color-primary);
 }

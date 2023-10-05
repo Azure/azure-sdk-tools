@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { MenuItem } from 'primeng/api';
+import { Component, Input, SimpleChanges } from '@angular/core';
+import { NavigationItem } from 'src/app/_models/review';
+import { TreeNode } from 'primeng/api'
 
 @Component({
   selector: 'app-review-nav',
@@ -7,37 +8,28 @@ import { MenuItem } from 'primeng/api';
   styleUrls: ['./review-nav.component.scss']
 })
 export class ReviewNavComponent {
-  menuItems : MenuItem[] | undefined = [];
-  activeItem: MenuItem | undefined;
+  @Input() navigation : NavigationItem[] | null = null;
+  navigationTree : TreeNode[] = [];
 
-  ngOnInit() {
-    this.menuItems = this.setDockItems();
-    this.activeItem = this.menuItems[0];
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['navigation'].previousValue){
+      this.navigation?.forEach(navigationItem => {
+        this.navigationTree.push(this.parseNavigationItemsToTreeNodes(navigationItem));
+      });
+    }
   }
 
-  setDockItems() {
-    return [
-      {
-        label: 'API',
-        icon: 'bi bi-braces',
-        expanded: false
-      },
-      {
-        label: 'Revisions',
-        icon: 'bi bi-clock-history',
-        expanded: true
-      },
-      {
-        label: 'Conversiation',
-        icon: 'fa-regular fa-message',
-        expanded: true
-      },
-      {
-        label: 'Samples',
-        icon: 'bi bi-puzzle',
-        expanded: true
-      },
-    ]
+  parseNavigationItemsToTreeNodes(navigationItem : NavigationItem) {
+    let treeNode : TreeNode = {
+      label: navigationItem.text,
+      data: navigationItem.navigationId,
+      expanded: true
+    }
+    let children : TreeNode[] = [];
+    navigationItem.childItems.forEach(child => {
+      children.push(this.parseNavigationItemsToTreeNodes(child));
+    });
+    treeNode.children = children;
+    return treeNode;
   }
-
 }

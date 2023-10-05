@@ -1238,8 +1238,8 @@ class CheckDocstringParameters(BaseChecker):
         "C4759": (
             '"%s" type formatted incorrectly. See details: '
             'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
-            "docstring-type-formatted-incorrectly",
-            "Docstring type is formatted incorrectly. Please follow Sphinx formatting.",
+            "docstring-type-do-not-use-class",
+            "Docstring type is formatted incorrectly. Do not use `:class` in docstring type.",
         ),
     }
     options = (
@@ -1289,8 +1289,6 @@ class CheckDocstringParameters(BaseChecker):
             },
         ),
     )
-
-    type_format = [":class", "Union", "Optional", "Dict", "List", "Callable", "None", "Iterable", "Tuple", "Mapping", "Any"]
 
 
     def __init__(self, linter=None):
@@ -1413,19 +1411,16 @@ class CheckDocstringParameters(BaseChecker):
 
         # check that all types are formatted correctly
         for keyword, doc_type in docstring_keyword_args.items():
-            if doc_type:
-                for format in self.type_format:
-                    if len(re.findall(format, doc_type)) != 0:
-                        self.add_message(
-                            msgid="docstring-type-formatted-incorrectly", args=(keyword), node=node, confidence=None
-                        )
+            if doc_type and ":class" in doc_type:
+                self.add_message(
+                    msgid="docstring-type-do-not-use-class", args=(keyword), node=node, confidence=None
+                )
+
         for param, doc_type in docparams.items():
-            if doc_type:
-                for format in self.type_format:
-                    if len(re.findall(format, doc_type)) != 0:
-                        self.add_message(
-                            msgid="docstring-type-formatted-incorrectly", args=(param), node=node, confidence=None
-                        )
+            if doc_type and ":class" in doc_type:
+                self.add_message(
+                    msgid="docstring-type-do-not-use-class", args=(param), node=node, confidence=None
+                )
 
         # check if we have a type for each param and check if documented params that should be keywords
         missing_types = []
@@ -1481,11 +1476,10 @@ class CheckDocstringParameters(BaseChecker):
                 has_rtype = True
                 try:
                     if line.split("rtype")[1]:
-                        for format in self.type_format:
-                            if len(re.findall(format, line.split("rtype")[1])) != 0:
-                                self.add_message(
-                                    msgid="docstring-type-formatted-incorrectly", args=(line.split("rtype")[1]), node=node, confidence=None
-                                )
+                        if ":class" in line.split("rtype")[1]:
+                            self.add_message(
+                                msgid="docstring-type-do-not-use-class", args=(line.split("rtype")[1]), node=node, confidence=None
+                            )
                 except:
                     pass
 

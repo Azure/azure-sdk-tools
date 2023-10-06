@@ -5,16 +5,16 @@ parameters:
 - name: Repos
   type: object
   default:
-    - Azure/azure-sdk
-    - Azure/azure-sdk-for-android
-    - Azure/azure-sdk-for-c
-    - Azure/azure-sdk-for-cpp
-    - Azure/azure-sdk-for-go
-    - Azure/azure-sdk-for-ios
-    - Azure/azure-sdk-for-java
-    - Azure/azure-sdk-for-js
-    - Azure/azure-sdk-for-net
-    - Azure/azure-sdk-for-python
+   # - Azure/azure-sdk
+   # - Azure/azure-sdk-for-android
+   # - Azure/azure-sdk-for-c
+   # - Azure/azure-sdk-for-cpp
+   # - Azure/azure-sdk-for-go
+   # - Azure/azure-sdk-for-ios
+   # - Azure/azure-sdk-for-java
+   # - Azure/azure-sdk-for-js
+   # - Azure/azure-sdk-for-net
+   # - Azure/azure-sdk-for-python
 
 - name: SDKPublic
   type: object
@@ -29,26 +29,26 @@ parameters:
 - name: SDKPrivate
   type: object
   default:
-    - Azure/azure-powershell-pr
-    - Azure/azure-sdk-for-go-pr
-    - Azure/azure-sdk-for-java-pr
-    - Azure/azure-sdk-for-js-pr
-    - Azure/azure-sdk-for-net-pr
-    - Azure/azure-sdk-for-python-pr
-    # - azure-sdk/azure-powershell
-    # - azure-sdk/azure-sdk-for-go
-    - azure-sdk/azure-sdk-for-java
-    # - azure-sdk/azure-sdk-for-js
-    # - azure-sdk/azure-sdk-for-net
-    # - azure-sdk/azure-sdk-for-python
+    # - Azure/azure-powershell-pr
+    # - Azure/azure-sdk-for-go-pr
+    # - Azure/azure-sdk-for-java-pr
+    # - Azure/azure-sdk-for-js-pr
+    # - Azure/azure-sdk-for-net-pr
+    # - Azure/azure-sdk-for-python-pr
+    # - azure-sdk/azure-powershell-pr
+    # - azure-sdk/azure-sdk-for-go-pr
+    - azure-sdk/azure-sdk-for-java-pr
+    # - azure-sdk/azure-sdk-for-js-pr
+    # - azure-sdk/azure-sdk-for-net-pr
+    # - azure-sdk/azure-sdk-for-python-pr
 
 - name: DailyBranchRepos
   type: object
   default:
-    - Azure/azure-docs-sdk-dotnet
-    - Azure/azure-docs-sdk-java
-    - MicrosoftDocs/azure-docs-sdk-node
-    - MicrosoftDocs/azure-docs-sdk-python
+    # - Azure/azure-docs-sdk-dotnet
+    # - Azure/azure-docs-sdk-java
+    # - MicrosoftDocs/azure-docs-sdk-node
+    # - MicrosoftDocs/azure-docs-sdk-python
 jobs:
   - job: CleanUp
     pool:

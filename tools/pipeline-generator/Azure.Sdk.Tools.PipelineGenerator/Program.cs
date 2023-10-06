@@ -58,6 +58,8 @@ namespace PipelineGenerator
                         g.Destroy,
                         g.NoSchedule,
                         g.SetManagedVariables,
+                        g.SetPipelineClassification,
+                        g.ForcePipelineClassification,
                         g.OverwriteTriggers,
                         cancellationTokenSource.Token
                     );
@@ -143,6 +145,8 @@ namespace PipelineGenerator
             bool destroy,
             bool noSchedule,
             bool setManagedVariables,
+            bool setPipelineClassification,
+            bool forcePipelineClassification,
             bool overwriteTriggers,
             CancellationToken cancellationToken)
         {
@@ -169,6 +173,8 @@ namespace PipelineGenerator
                     whatIf,
                     noSchedule,
                     setManagedVariables,
+                    setPipelineClassification,
+                    forcePipelineClassification,
                     overwriteTriggers
                     );
 
@@ -188,22 +194,21 @@ namespace PipelineGenerator
                     return ExitCondition.DuplicateComponentsFound;
                 }
 
-                var modifiedDefinitions = new List<BuildDefinition>();
+                var definitions = new List<BuildDefinition>();
 
                 foreach (var component in components)
                 {
-                    logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
+                    this.logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
                     if (destroy)
                     {
                         var definition = await pipelineConvention.DeleteDefinitionAsync(component, cancellationToken);
                     }
                     else
                     {
-                        var (definition, modified) = await pipelineConvention.CreateOrUpdateDefinitionAsync(component, cancellationToken);
-                        // if (modified)
-                        if (true)
+                        var definition = await pipelineConvention.CreateOrUpdateDefinitionAsync(component, cancellationToken);
+                        if (pipelineConvention.HasClassificationChanges(definition))
                         {
-                            modifiedDefinitions.Add(definition);
+                            definitions.Add(definition);
                         }
 
                         if (open)
@@ -213,21 +218,13 @@ namespace PipelineGenerator
                     }
                 }
 
-                if (string.IsNullOrEmpty(context.productCatalogTokenEnvVar))
-                {
-                    logger.LogInformation("No product catalog token environment variable specified, skipping 1es pipeline classification.");
-                }
-                else if (modifiedDefinitions.Count > 0)
-                {
-                    logger.LogInformation($"Updating 1es classifications for {modifiedDefinitions.Count} pipelines.");
-                    await pipelineConvention.UpdatePipelineClassifications(modifiedDefinitions);
-                }
+                await pipelineConvention.UpdatePipelineClassifications(definitions);
 
                 return ExitCondition.Success;
             }
             catch (Exception ex)
             {
-                logger.LogCritical(ex, "BOOM! Something went wrong, try running with --debug.");
+                logger.LogCritical(ex, "Something went wrong, try running with --debug.");
                 return ExitCondition.Exception;
             }
         }
@@ -280,7 +277,8 @@ namespace PipelineGenerator
                 }
             }
 
-            if (duplicates.Count > 0) {
+            if (duplicates.Count > 0)
+            {
                 logger.LogError("Found multiple pipeline definitions that will result in name collisions. This can happen when nested directory names are the same.");
                 logger.LogError("Suggested fix: add a 'variant' to the yaml filename, e.g. 'sdk/keyvault/internal/ci.yml' => 'sdk/keyvault/internal/ci.keyvault.yml'");
                 var paths = duplicates.Select(d => $"'{d.RelativeYamlPath}'");

@@ -42,13 +42,15 @@ namespace PipelineGenerator
             bool whatIf,
             bool noSchedule,
             bool setManagedVariables,
+            bool setPipelineClassification,
+            bool forcePipelineClassification,
             bool overwriteTriggers)
         {
             this.logger = logger;
             this.organization = organization;
             this.project = project;
             this.patvar = patvar;
-            this.productCatalogTokenEnvVar = productCatalogTokenEnvVar;
+            this.ProductCatalogTokenEnvVar = productCatalogTokenEnvVar;
             this.endpoint = endpoint;
             this.Repository = repository;
             this.Branch = branch;
@@ -59,6 +61,8 @@ namespace PipelineGenerator
             this.WhatIf = whatIf;
             this.NoSchedule = noSchedule;
             this.SetManagedVariables = setManagedVariables;
+            this.SetPipelineClassification = setPipelineClassification;
+            this.ForcePipelineClassification = forcePipelineClassification;
             this.OverwriteTriggers = overwriteTriggers;
         }
 
@@ -69,9 +73,11 @@ namespace PipelineGenerator
         public bool NoSchedule { get; }
         public bool OverwriteTriggers { get; }
         public bool SetManagedVariables { get; set; }
+        public bool SetPipelineClassification { get; set; }
+        public bool ForcePipelineClassification { get; set; }
         public int[] VariableGroups => this.variableGroups;
         public string DevOpsPath => string.IsNullOrEmpty(this.devOpsPath) ? Prefix : this.devOpsPath;
-        public string productCatalogTokenEnvVar;
+        public string ProductCatalogTokenEnvVar;
 
         private VssConnection cachedConnection;
 
@@ -159,7 +165,7 @@ namespace PipelineGenerator
 
                 var serviceEndpoints = await serviceEndpointClient.GetServiceEndpointsByNamesAsync(
                     projectReference.Id.ToString(),
-                    new [] { endpoint },
+                    new[] { endpoint },
                     cancellationToken: cancellationToken
                     );
 

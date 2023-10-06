@@ -16,20 +16,10 @@ namespace PipelineGenerator.Conventions
 {
     public abstract class PipelineConvention
     {
-        public class PipelineChanges {
-            public bool Definition;
-            public bool PipelineClassification;
-            public PipelineChanges(bool definition = false, bool pipelineClassification = false) {
-                this.Definition = definition;
-                this.PipelineClassification = pipelineClassification;
-            }
-        }
-
         public PipelineConvention(ILogger logger, PipelineGenerationContext context)
         {
             Logger = logger;
             Context = context;
-            Changes = new PipelineChanges();
         }
 
         // Organization id for dev.azure.com/azure-sdk
@@ -41,10 +31,11 @@ namespace PipelineGenerator.Conventions
         private const string ReportBuildStatusKey = "reportBuildStatus";
 
         private Dictionary<string, BuildDefinitionReference> pipelineReferences;
+        private readonly HashSet<string> definitions = new();
+        private readonly HashSet<string> pipelineClassifications = new();
 
         protected ILogger Logger { get; }
         protected PipelineGenerationContext Context { get; }
-        protected PipelineChanges Changes { get; }
         public abstract string SearchPattern { get; }
         public abstract string PipelineNameSuffix { get; }
         public abstract string PipelineCategory { get; }
@@ -59,6 +50,32 @@ namespace PipelineGenerator.Conventions
                             : $"{Context.Prefix} - {component.Name} - {component.Variant}";
             return baseName + PipelineNameSuffix;
         }
+
+        private string getChangesKey(BuildDefinition definition)
+        {
+            return $"{definition.Name}/{definition.Id}";
+        }
+
+        public bool HasDefinitionChanges(BuildDefinition definition)
+        {
+            return this.definitions.Contains(getChangesKey(definition));
+        }
+
+        public void RequireDefinitionChanges(BuildDefinition definition)
+        {
+            this.definitions.Add(getChangesKey(definition));
+        }
+
+        public bool HasClassificationChanges(BuildDefinition definition)
+        {
+            return this.pipelineClassifications.Contains(getChangesKey(definition));
+        }
+
+        public void RequireClassificationChanges(BuildDefinition definition)
+        {
+            this.pipelineClassifications.Add(getChangesKey(definition));
+        }
+
 
         public async Task<BuildDefinition> DeleteDefinitionAsync(SdkComponent component, CancellationToken cancellationToken)
         {
@@ -112,7 +129,7 @@ namespace PipelineGenerator.Conventions
             Logger.LogDebug("Applying convention to '{0}' definition.", definitionName);
             await ApplyConventionAsync(definition, component);
 
-            if (Changes.Definition || Context.OverwriteTriggers)
+            if (HasDefinitionChanges(definition) || Context.OverwriteTriggers)
             {
                 if (!Context.WhatIf)
                 {
@@ -137,30 +154,53 @@ namespace PipelineGenerator.Conventions
             return definition;
         }
 
-        public async Task UpdatePipelineClassifications(List<BuildDefinition> modifiedDefinitions)
+        public async Task UpdatePipelineClassifications(List<BuildDefinition> definitions)
         {
+            if (!Context.SetPipelineClassification)
+            {
+                Logger.LogInformation("Skipping 1es pipeline classification as --set-pipeline-classification was not set.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(Context.ProductCatalogTokenEnvVar))
+            {
+                Logger.LogInformation("No product catalog token environment variable specified, skipping 1es pipeline classification.");
+                return;
+            }
+            else if (definitions.Count > 0)
+            {
+                Logger.LogInformation($"Updating 1es classifications for {definitions.Count} pipelines.");
+            }
+
             // See https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/product-catalog/how-to/use-product-catalog-api
             // Schema - https://artifact-tags-api.prod.space.microsoft.com/swagger/index.html?url=/swagger/v1/swagger.json#/Tags/put_tags
-            var bulkTagUpdate = new {
+            var bulkTagUpdate = new
+            {
                 saveTagRequests = new List<object>()
             };
 
-            foreach (var definition in modifiedDefinitions)
+            foreach (var definition in definitions)
             {
+                if (!Context.ForcePipelineClassification || !HasClassificationChanges(definition))
+                {
+                    continue;
+                }
+
                 var projectId = definition.Project.Id.ToString();
                 var artifactId = $"vsts://{PipelineClassificationOrganizationId}/{projectId}/{definition.Id}";
-                var tagRequest = new {
+                var tagRequest = new
+                {
                     artifactId = artifactId,
                     artifactType = "Microsoft.AzureDevOps/BuildDefinition",
                     // Accepted classifications are 'Production' and 'NonProduction'
-                    tags = new List<string>{ this.Classification.ToString() },
+                    tags = new List<string> { this.Classification.ToString() },
                     autoClassificationSource = "azure-sdk-pipeline-generator"
                 };
                 bulkTagUpdate.saveTagRequests.Add(tagRequest);
             }
 
             using var client = new HttpClient();
-            var token = Environment.GetEnvironmentVariable(Context.productCatalogTokenEnvVar);
+            var token = Environment.GetEnvironmentVariable(Context.ProductCatalogTokenEnvVar);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             var json = JsonSerializer.Serialize(bulkTagUpdate);
             var content = new StringContent(json, Encoding.UTF8, "application/json-patch+json");
@@ -306,7 +346,7 @@ namespace PipelineGenerator.Conventions
                     {
                         Logger.LogInformation("Removing managed variable {Name}", key);
                         definition.Variables.Remove(key);
-                        Changes.Definition = true;
+                        RequireDefinitionChanges(definition);
                     }
 
                     // else: Nothing to do if an empty variable doesn't already exist.
@@ -323,14 +363,14 @@ namespace PipelineGenerator.Conventions
 
                     if (key == classificationKey && existingVariable.Value != this.Classification.ToString())
                     {
-                        Changes.PipelineClassification = true;
+                        RequireClassificationChanges(definition);
                     }
 
                     Logger.LogInformation("Overwriting managed variable {Name} from '{OriginalValue}' to '{NewValue}', not secret, not overridable", key, existingVariable.Value, value);
                 }
 
                 definition.Variables[key] = new BuildDefinitionVariable { Value = value, IsSecret = false, AllowOverride = false };
-                Changes.Definition = true;
+                RequireDefinitionChanges(definition);
             }
         }
 
@@ -345,7 +385,7 @@ namespace PipelineGenerator.Conventions
             var idsToAdd = parameterGroupSet.Except(definitionVariableGroupSet);
             if (idsToAdd.Any())
             {
-                Changes.Definition = true;
+                RequireDefinitionChanges(definition);
             }
             var groupsToAdd = idsToAdd.Select(id => new VariableGroup { Id = id });
 
@@ -359,13 +399,13 @@ namespace PipelineGenerator.Conventions
                 if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
                 {
                     definition.Repository.Properties[ReportBuildStatusKey] = "true";
-                    Changes.Definition = true;
+                    RequireDefinitionChanges(definition);
                 }
             }
             else
             {
                 definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
-                Changes.Definition = true;
+                RequireDefinitionChanges(definition);
             }
         }
 
@@ -410,7 +450,7 @@ namespace PipelineGenerator.Conventions
             if (definition.Path != Context.DevOpsPath)
             {
                 definition.Path = Context.DevOpsPath;
-                Changes.Definition = true;
+                RequireDefinitionChanges(definition);
             }
 
             if (definition.Repository.Properties.TryGetValue(ReportBuildStatusKey, out var reportBuildStatusString))
@@ -418,13 +458,13 @@ namespace PipelineGenerator.Conventions
                 if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
                 {
                     definition.Repository.Properties[ReportBuildStatusKey] = "true";
-                    Changes.Definition = true;
+                    RequireDefinitionChanges(definition);
                 }
             }
             else
             {
                 definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
-                Changes.Definition = true;
+                RequireDefinitionChanges(definition);
             }
         }
 
@@ -455,7 +495,7 @@ namespace PipelineGenerator.Conventions
                 newTrigger.IsCommentRequiredForPullRequest = securePipeline;
 
                 definition.Triggers.Add(newTrigger);
-                Changes.Definition = true;
+                RequireDefinitionChanges(definition);
             }
             else
             {
@@ -467,7 +507,7 @@ namespace PipelineGenerator.Conventions
                         if (trigger.SettingsSourceType != 1)
                         {
                             trigger.SettingsSourceType = 1;
-                            Changes.Definition = true;
+                            RequireDefinitionChanges(definition);
                         }
 
                         // If any branch filters exist then overwrite them to the most generous filter.
@@ -480,14 +520,14 @@ namespace PipelineGenerator.Conventions
                             Logger.LogInformation($"Overwriting branch filters ({String.Join(", ", filters)}) for PR trigger with '+*'");
                             trigger.BranchFilters.Clear();
                             trigger.BranchFilters.Add("+*");
-                            Changes.Definition = true;
+                            RequireDefinitionChanges(definition);
                         }
                     }
                     else if (trigger.SettingsSourceType != 2)
                     {
                         // Pull settings from yaml
                         trigger.SettingsSourceType = 2;
-                        Changes.Definition = true;
+                        RequireDefinitionChanges(definition);
                     }
                     if (trigger.RequireCommentsForNonTeamMembersOnly != false ||
                        trigger.Forks.AllowSecrets != securePipeline ||
@@ -500,7 +540,7 @@ namespace PipelineGenerator.Conventions
                         trigger.RequireCommentsForNonTeamMembersOnly = false;
                         trigger.IsCommentRequiredForPullRequest = securePipeline;
 
-                        Changes.Definition = true;
+                        RequireDefinitionChanges(definition);
                     }
                 }
             }
@@ -526,7 +566,7 @@ namespace PipelineGenerator.Conventions
                     Schedules = new List<Schedule> { computedSchedule }
                 });
 
-                Changes.Definition = true;
+                RequireDefinitionChanges(definition);
             }
         }
 
@@ -540,14 +580,14 @@ namespace PipelineGenerator.Conventions
                 {
                     SettingsSourceType = 2 // Get CI trigger data from yaml file
                 });
-                Changes.Definition = true;
+                RequireDefinitionChanges(definition);
             }
             else
             {
                 if (ciTrigger.SettingsSourceType != 2)
                 {
                     ciTrigger.SettingsSourceType = 2;
-                    Changes.Definition = true;
+                    RequireDefinitionChanges(definition);
                 }
             }
         }

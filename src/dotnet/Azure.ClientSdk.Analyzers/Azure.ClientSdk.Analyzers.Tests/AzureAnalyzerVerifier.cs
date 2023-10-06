@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
@@ -24,8 +25,9 @@ namespace Azure.ClientSdk.Analyzers.Tests
                 new PackageIdentity("System.Text.Json", "4.7.2"),
                 new PackageIdentity("System.Threading.Tasks.Extensions", "4.5.4")));
 
-        public static CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> CreateAnalyzer(string source, LanguageVersion languageVersion = LanguageVersion.Latest)
-            => new CSharpAnalyzerTest<TAnalyzer, XUnitVerifier>
+        public static CSharpAnalyzerTest<TAnalyzer, XUnitVerifier> CreateAnalyzer(string source, LanguageVersion languageVersion = LanguageVersion.Latest, Type[] additionalReferences = null)
+        {
+            var test = new CSharpAnalyzerTest<TAnalyzer, XUnitVerifier>
             {
                 ReferenceAssemblies = DefaultReferenceAssemblies,
                 SolutionTransforms = {(solution, projectId) =>
@@ -35,11 +37,20 @@ namespace Azure.ClientSdk.Analyzers.Tests
                     return solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(languageVersion));
                 }},
                 TestCode = source,
-                TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck
+                TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck,
             };
+            if (additionalReferences != null)
+            {
+                foreach (var reference in additionalReferences)
+                {
+                    test.TestState.AdditionalReferences.Add(reference.Assembly);
+                }
+            }
+            return test;
+        }
 
-        public static Task VerifyAnalyzerAsync(string source, LanguageVersion languageVersion = LanguageVersion.Latest)
-            => CreateAnalyzer(source, languageVersion).RunAsync(CancellationToken.None);
+        public static Task VerifyAnalyzerAsync(string source, LanguageVersion languageVersion = LanguageVersion.Latest, Type[] additionalReferences = null)
+            => CreateAnalyzer(source, languageVersion, additionalReferences).RunAsync(CancellationToken.None);
 
         public static Task VerifyAnalyzerAsync(string source, params DiagnosticResult[] diagnostics)
         {

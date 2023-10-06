@@ -224,7 +224,7 @@ namespace Azure.ClientSdk.Analyzers
             DiagnosticSeverity.Warning, true);
 
         public static DiagnosticDescriptor AZC0112 = new DiagnosticDescriptor(
-            "AZC1200",
+            "AZC0112",
             "Misuse of internal type via InternalsVisibleTo.",
             "{0} is defined in assembly {1} and is marked internal without a [Friend] attribute.",
             "Naming",

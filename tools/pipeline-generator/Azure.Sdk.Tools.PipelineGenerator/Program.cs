@@ -206,10 +206,7 @@ namespace PipelineGenerator
                     else
                     {
                         var definition = await pipelineConvention.CreateOrUpdateDefinitionAsync(component, cancellationToken);
-                        if (pipelineConvention.HasClassificationChanges(definition))
-                        {
-                            definitions.Add(definition);
-                        }
+                        definitions.Add(definition);
 
                         if (open)
                         {

@@ -156,7 +156,7 @@ namespace PipelineGenerator.Conventions
 
         public async Task UpdatePipelineClassifications(List<BuildDefinition> definitions)
         {
-            if (!Context.SetPipelineClassification)
+            if (!Context.ForcePipelineClassification && !Context.SetPipelineClassification)
             {
                 Logger.LogInformation("Skipping 1es pipeline classification as --set-pipeline-classification was not set.");
                 return;
@@ -167,9 +167,9 @@ namespace PipelineGenerator.Conventions
                 Logger.LogInformation("No product catalog token environment variable specified, skipping 1es pipeline classification.");
                 return;
             }
-            else if (definitions.Count > 0)
+            else if (definitions.Count == 0)
             {
-                Logger.LogInformation($"Updating 1es classifications for {definitions.Count} pipelines.");
+                return;
             }
 
             // See https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/product-catalog/how-to/use-product-catalog-api
@@ -181,7 +181,7 @@ namespace PipelineGenerator.Conventions
 
             foreach (var definition in definitions)
             {
-                if (!Context.ForcePipelineClassification || !HasClassificationChanges(definition))
+                if (!HasClassificationChanges(definition) && !Context.ForcePipelineClassification)
                 {
                     continue;
                 }
@@ -193,28 +193,34 @@ namespace PipelineGenerator.Conventions
                     artifactId = artifactId,
                     artifactType = "Microsoft.AzureDevOps/BuildDefinition",
                     // Accepted classifications are 'Production' and 'NonProduction'
-                    tags = new List<string> { this.Classification.ToString() },
+                    tags = new List<string>(),
                     autoClassificationSource = "azure-sdk-pipeline-generator"
                 };
+                if (this.Classification.ToString() != PipelineClassifications.Empty.ToString())
+                {
+                    tagRequest.tags.Add(this.Classification.ToString());
+                }
                 bulkTagUpdate.saveTagRequests.Add(tagRequest);
             }
+
+            if (bulkTagUpdate.saveTagRequests.Count == 0)
+            {
+                return;
+            }
+            Logger.LogInformation($"Updating {bulkTagUpdate.saveTagRequests.Count} pipeline classifications");
 
             using var client = new HttpClient();
             var token = Environment.GetEnvironmentVariable(Context.ProductCatalogTokenEnvVar);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             var json = JsonSerializer.Serialize(bulkTagUpdate);
             var content = new StringContent(json, Encoding.UTF8, "application/json-patch+json");
-            Logger.LogInformation("-----------------------");
-            Logger.LogDebug(json);
-            Logger.LogInformation("-----------------------");
 
-            Logger.LogInformation($"Updating {bulkTagUpdate.saveTagRequests.Count} pipeline classifications");
             var response = await client.PutAsync(PipelineClassificationBulkTagUpdateUrl, content);
             response.EnsureSuccessStatusCode();
-            Logger.LogInformation(response.ToString());
-            if (response.Content != null)
+            Logger.LogInformation(response.Content.Headers.ContentType.MediaType);
+            if (response.Content.Headers.ContentType.MediaType != "application/json")
             {
-                Logger.LogInformation(await response.Content.ReadAsStringAsync());
+                throw new Exception("Did not receive json response from 1es pipeline classification API. This is likely due to an invalid bearer token returning a login page for a browser.");
             }
 
             return;

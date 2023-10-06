@@ -27,6 +27,10 @@
     }
 
     .review-name {
+        display: block;
         max-width: 10vw;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
     }
 }

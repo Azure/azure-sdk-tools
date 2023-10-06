@@ -1,0 +1,16 @@
+:host ::ng-deep {
+    .p-scroller-content {
+        min-width: 200%;
+    }
+
+    .code-inner {
+        font-family: Consolas,monospace;
+        font-size: 14px;
+        line-height: 1.5;
+        line-height: 20px;
+        height: 100%;
+        word-wrap: normal;
+        white-space: pre;
+        width: 80%;
+    }
+}

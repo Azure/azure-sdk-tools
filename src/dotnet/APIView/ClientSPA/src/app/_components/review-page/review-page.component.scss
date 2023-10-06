@@ -7,4 +7,9 @@
         display: block;
         min-width: 0;
     }
+
+    .code-window-container {
+        max-width: 100%;
+        overflow: auto;
+    }
 }

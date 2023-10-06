@@ -16,7 +16,7 @@ namespace APIViewWeb
 
         public CosmosCommentsRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
-            _commentsContainer = cosmosClient.GetContainer("APIView", "Comments");
+            _commentsContainer = cosmosClient.GetContainer("APIViewV2", "Comments");
         }
 
         public async Task<IEnumerable<CommentModel>> GetCommentsAsync(string reviewId)

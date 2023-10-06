@@ -62,7 +62,6 @@ export class ReviewsService {
   getReviewContent(reviewId: string, revisionId: string = "") : Observable<ReviewContent>{
     let params = new HttpParams();
     params = params.append('revisionId', revisionId);
-
-    return this.http.get<ReviewContent>(this.baseUrl + `/${reviewId}/content`);
+    return this.http.get<ReviewContent>(this.baseUrl + `/${reviewId}/content`, { params: params });
   }
 }

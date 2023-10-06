@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ApiView;
 using APIView;
+using APIViewWeb.Models;
 
 namespace APIViewWeb.LeanModels
 {
@@ -8,7 +9,7 @@ namespace APIViewWeb.LeanModels
     {
         public ReviewListItemModel Review { get; set; }
         public NavigationItem[] Navigation { get; set; }
-        public CodeLine[] codeLines { get; set; }
+        public CodeLineModel[] codeLines { get; set; }
         public Dictionary<string, List<ReviewRevisionListItemModel>> ReviewRevisions { get; set; }
         public ReviewRevisionListItemModel ActiveRevision { get; set; }
     }

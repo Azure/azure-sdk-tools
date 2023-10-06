@@ -35,6 +35,7 @@ import { VirtualScrollerModule } from 'primeng/virtualscroller';
 import { ReviewInfoComponent } from './_components/review-info/review-info.component';
 import { RevisionsListComponent } from './_components/revisions-list/revisions-list.component';
 import { ReviewNavComponent } from './_components/review-nav/review-nav.component';
+import { SanitizeHtmlPipe } from './_pipes/sanitize-html.pipe';
 
 @NgModule({
   declarations: [
@@ -48,7 +49,8 @@ import { ReviewNavComponent } from './_components/review-nav/review-nav.componen
     CodePanelComponent,
     ReviewInfoComponent,
     RevisionsListComponent,
-    ReviewNavComponent
+    ReviewNavComponent,
+    SanitizeHtmlPipe
   ],
   imports: [
     AppRoutingModule,

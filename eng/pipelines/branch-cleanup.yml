@@ -16,6 +16,16 @@ parameters:
     - Azure/azure-sdk-for-net
     - Azure/azure-sdk-for-python
 
+- name: SDKPublic
+  type: object
+  default:
+    # - azure-sdk/azure-powershell
+    # - azure-sdk/azure-sdk-for-go
+    - azure-sdk/azure-sdk-for-java
+    # - azure-sdk/azure-sdk-for-js
+    # - azure-sdk/azure-sdk-for-net
+    # - azure-sdk/azure-sdk-for-python
+
 - name: SDKPrivate
   type: object
   default:
@@ -25,6 +35,12 @@ parameters:
     - Azure/azure-sdk-for-js-pr
     - Azure/azure-sdk-for-net-pr
     - Azure/azure-sdk-for-python-pr
+    # - azure-sdk/azure-powershell
+    # - azure-sdk/azure-sdk-for-go
+    - azure-sdk/azure-sdk-for-java
+    # - azure-sdk/azure-sdk-for-js
+    # - azure-sdk/azure-sdk-for-net
+    # - azure-sdk/azure-sdk-for-python
 
 - name: DailyBranchRepos
   type: object
@@ -67,6 +83,21 @@ jobs:
               -RepoId ${{ repo }}
               -CentralRepoId "Azure/azure-sdk-tools"
               -BranchRegex "^sync-.github/workflows.*-(?<PrNumber>\d+).*$"
+              -AuthToken $(azuresdk-github-pat)
+              -WhatIf:$${{parameters.WhatIfPreference}}
+      - ${{ each repo in parameters.SDKPublic }}:
+        - task: PowerShell@2
+          displayName: Clean Up ${{ repo }} swagger public SDK PR and branches
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            pwsh: true
+            workingDirectory: $(System.DefaultWorkingDirectory)
+            filePath: $(System.DefaultWorkingDirectory)/eng/common/scripts/Delete-RemoteBranches.ps1
+            arguments: >
+              -RepoId ${{ repo }}
+              -CentralRepoId "Azure/azure-rest-api-specs"
+              -BranchRegex "^sdkAuto/(?<PrNumber>\d+)/.*$"
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
       - ${{ each repo in parameters.SDKPrivate }}:

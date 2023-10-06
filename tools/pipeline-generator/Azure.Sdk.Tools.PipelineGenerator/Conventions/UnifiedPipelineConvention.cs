@@ -19,26 +19,12 @@ namespace PipelineGenerator.Conventions
         public override string PipelineCategory => "unified";
         public override PipelineClassifications Classification => PipelineClassifications.Production;
 
-        protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
+        protected override async Task ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
-            var hasChanges = await base.ApplyConventionAsync(definition, component);
-
-            if (EnsureDefaultPullRequestTrigger(definition, overrideYaml: true, securePipeline: true))
-            {
-                hasChanges = true;
-            }
-
-            if (EnsureDefaultCITrigger(definition))
-            {
-                hasChanges = true;
-            }
-
-            if (!Context.NoSchedule && EnsureDefaultScheduledTrigger(definition))
-            {
-                hasChanges = true;
-            }
-
-            return hasChanges;
+            await base.ApplyConventionAsync(definition, component);
+            EnsureDefaultPullRequestTrigger(definition, overrideYaml: true, securePipeline: true);
+            EnsureDefaultCITrigger(definition);
+            EnsureDefaultScheduledTrigger(definition);
         }
     }
 }

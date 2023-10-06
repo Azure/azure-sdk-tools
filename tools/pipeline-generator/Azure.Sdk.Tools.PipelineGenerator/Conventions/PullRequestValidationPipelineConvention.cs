@@ -19,21 +19,11 @@ namespace PipelineGenerator.Conventions
         public override string PipelineCategory => "ci";
         public override PipelineClassifications Classification => PipelineClassifications.NonProduction;
 
-        protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
+        protected override async Task ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
-            var hasChanges = await base.ApplyConventionAsync(definition, component);
-
-            if (EnsureDefaultPullRequestTrigger(definition, overrideYaml: false, securePipeline: false))
-            {
-                hasChanges = true;
-            }
-
-            if (EnsureDefaultCITrigger(definition))
-            {
-                hasChanges = true;
-            }
-
-            return hasChanges;
+            await base.ApplyConventionAsync(definition, component);
+            EnsureDefaultPullRequestTrigger(definition, overrideYaml: false, securePipeline: false);
+            EnsureDefaultCITrigger(definition);
         }
     }
 }

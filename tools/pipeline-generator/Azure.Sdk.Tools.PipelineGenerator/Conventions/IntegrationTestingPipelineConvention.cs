@@ -19,21 +19,11 @@ namespace PipelineGenerator.Conventions
         public override string PipelineCategory => "tests";
         public override PipelineClassifications Classification => PipelineClassifications.NonProduction;
 
-        protected override async Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
+        protected override async Task ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
-            var hasChanges = await base.ApplyConventionAsync(definition, component);
-
-            if (EnsureDefaultPullRequestTrigger(definition, overrideYaml: true, securePipeline: true))
-            {
-                hasChanges = true;
-            }
-
-            if (!Context.NoSchedule && EnsureDefaultScheduledTrigger(definition))
-            {
-                hasChanges = true;
-            }
-
-            return hasChanges;
+            await base.ApplyConventionAsync(definition, component);
+            EnsureDefaultPullRequestTrigger(definition, overrideYaml: true, securePipeline: true);
+            EnsureDefaultScheduledTrigger(definition);
         }
     }
 }

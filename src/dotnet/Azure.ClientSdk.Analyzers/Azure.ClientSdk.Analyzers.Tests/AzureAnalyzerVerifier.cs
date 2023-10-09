@@ -37,7 +37,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
                     return solution.WithProjectParseOptions(projectId, parseOptions.WithLanguageVersion(languageVersion));
                 }},
                 TestCode = source,
-                TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck,
+                TestBehaviors = TestBehaviors.SkipGeneratedCodeCheck
             };
             if (additionalReferences != null)
             {

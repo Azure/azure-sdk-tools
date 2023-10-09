@@ -152,10 +152,17 @@ stages:
               zipAfterPublish: true
 
           - task: PublishBuildArtifacts@1
+            workingDirectory: $(SPAClientProjectDirectory)
+            inputs:
+              PathtoPublish: 'dist/client-app'
+              ArtifactName: 'spa-app'
+            displayName: 'Publish SPA Artifacts'
+
+          - task: PublishBuildArtifacts@1
             inputs:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)'
               artifactName: 'APIView'
-              
+            displayName: 'Publish Web Artifacts'
 
       - job: 'Test'
 

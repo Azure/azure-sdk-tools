@@ -1,0 +1,6 @@
+{
+  "/api": {
+    "target": "https://apiviewstaging.azurewebsites.net",
+    "secure": true
+  }
+}

@@ -1,6 +1,8 @@
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Azure.ClientSdk.Analyzers
@@ -20,6 +22,7 @@ namespace Azure.ClientSdk.Analyzers
             context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.Property);
             context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.Field);
             context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.Parameter);
+            context.RegisterSyntaxNodeAction(AnalyzeMemberAccess, SyntaxKind.SimpleMemberAccessExpression);
         }
 
         private static void AnalyzeSymbol(SymbolAnalysisContext context)
@@ -50,7 +53,7 @@ namespace Azure.ClientSdk.Analyzers
         private static void AnalysisParameter(IParameterSymbol symbol, SymbolAnalysisContext context)
         {
             var parentSymbol = context.Symbol;
-            if (symbol.Type.IsVisibleInternalWithoutFriendAttribute(context))
+            if (symbol.Type.IsVisibleInternalWithoutFriendAttribute(context.Compilation))
             {
                 // Check if the symbol is decorated with an attribute named FooAttribute
                 var diagnostic = Diagnostic.Create(
@@ -66,7 +69,7 @@ namespace Azure.ClientSdk.Analyzers
         private static void AnalysisField(IFieldSymbol symbol, SymbolAnalysisContext context)
         {
             var parentSymbol = context.Symbol;
-            if (symbol.Type.IsVisibleInternalWithoutFriendAttribute(context))
+            if (symbol.Type.IsVisibleInternalWithoutFriendAttribute(context.Compilation))
             {
                 var diagnostic = Diagnostic.Create(
                     Descriptors.AZC0112,
@@ -81,7 +84,7 @@ namespace Azure.ClientSdk.Analyzers
         private static void AnalysisProperty(IPropertySymbol symbol, SymbolAnalysisContext context)
         {
             var parentSymbol = context.Symbol;
-            if (symbol.Type.IsVisibleInternalWithoutFriendAttribute(context))
+            if (symbol.Type.IsVisibleInternalWithoutFriendAttribute(context.Compilation))
             {
                 var diagnostic = Diagnostic.Create(
                     Descriptors.AZC0112,
@@ -96,7 +99,7 @@ namespace Azure.ClientSdk.Analyzers
         private static void AnalysisMethod(IMethodSymbol symbol, SymbolAnalysisContext context)
         {
             var parentSymbol = context.Symbol;
-            if (symbol.ReturnType.IsVisibleInternalWithoutFriendAttribute(context))
+            if (symbol.ReturnType.IsVisibleInternalWithoutFriendAttribute(context.Compilation))
             {
                 var diagnostic = Diagnostic.Create(
                     Descriptors.AZC0112,
@@ -115,7 +118,7 @@ namespace Azure.ClientSdk.Analyzers
             {
                 foreach (var interfaceSymbol in symbol.Interfaces)
                 {
-                    if (interfaceSymbol.IsVisibleInternalWithoutFriendAttribute(context))
+                    if (interfaceSymbol.IsVisibleInternalWithoutFriendAttribute(context.Compilation))
                     {
                         var diagnostic = Diagnostic.Create(
                             Descriptors.AZC0112,
@@ -128,9 +131,57 @@ namespace Azure.ClientSdk.Analyzers
             }
             if (symbol.BaseType != null)
             {
-                if (symbol.BaseType.IsVisibleInternalWithoutFriendAttribute(context))
+                if (symbol.BaseType.IsVisibleInternalWithoutFriendAttribute(context.Compilation))
                 {
-                    var diagnostic = Diagnostic.Create(Descriptors.AZC0112, parentSymbol.Locations[0], $"Type {parentSymbol.Name} derives from base type {symbol.BaseType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)} which", symbol.BaseType.ContainingAssembly.Identity.Name);
+                    var diagnostic = Diagnostic.Create(
+                        Descriptors.AZC0112,
+                        parentSymbol.Locations[0],
+                        $"Type {parentSymbol.Name} derives from base type {symbol.BaseType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)} which",
+                        symbol.BaseType.ContainingAssembly.Identity.Name);
+                    context.ReportDiagnostic(diagnostic);
+                }
+            }
+        }
+
+        private void AnalyzeInvocation(SyntaxNodeAnalysisContext context)
+        {
+            var invocation = (InvocationExpressionSyntax)context.Node;
+            var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation);
+
+            // Do something with the symbol info...
+        }
+
+        private void AnalyzeIdentifier(SyntaxNodeAnalysisContext context)
+        {
+            var identifier = (IdentifierNameSyntax)context.Node;
+            var symbolInfo = context.SemanticModel.GetSymbolInfo(identifier);
+            var t = symbolInfo.GetType();
+            // Do something with the symbol info...
+        }
+
+        private static void AnalyzeMemberAccess(SyntaxNodeAnalysisContext context)
+        {
+            var memberAccess = (MemberAccessExpressionSyntax)context.Node;
+
+            if (memberAccess.Expression is IdentifierNameSyntax identifierName && memberAccess.Name is IdentifierNameSyntax memberName)
+            {
+                var symbol = context.SemanticModel.GetSymbolInfo(memberName).Symbol;
+                if (symbol is IPropertySymbol propertySymbol && propertySymbol.IsVisibleInternalWithoutFriendAttribute(context.Compilation))
+                {
+                        var diagnostic = Diagnostic.Create(
+                            Descriptors.AZC0112,
+                            memberAccess.GetLocation(),
+                            $"Accessed property {propertySymbol.Name} has a type which",
+                            propertySymbol.Type.ContainingAssembly.Identity.Name);
+                        context.ReportDiagnostic(diagnostic);
+                }
+                else if(symbol is IMethodSymbol methodSymbol && methodSymbol.IsVisibleInternalWithoutFriendAttribute(context.Compilation))
+                {
+                    var diagnostic = Diagnostic.Create(
+                        Descriptors.AZC0112,
+                        memberAccess.GetLocation(),
+                        $"Accessed method {methodSymbol.Name} has a return type which",
+                        methodSymbol.ReturnType.ContainingAssembly.Identity.Name);
                     context.ReportDiagnostic(diagnostic);
                 }
             }
@@ -139,10 +190,10 @@ namespace Azure.ClientSdk.Analyzers
 
     public static class SymbolExtensions
     {
-        public static bool IsVisibleInternalWithoutFriendAttribute(this ISymbol symbol, SymbolAnalysisContext context) =>
+        public static bool IsVisibleInternalWithoutFriendAttribute(this ISymbol symbol, Compilation contextCompilation) =>
             symbol.DeclaredAccessibility == Accessibility.Internal &&
             symbol.ContainingAssembly != null &&
-            symbol.ContainingAssembly.Identity != context.Compilation.Assembly.Identity &&
+            symbol.ContainingAssembly.Identity != contextCompilation.Assembly.Identity &&
             !symbol.GetAttributes().Any(ad => ad.AttributeClass.Name == "FriendAttribute");
     }
 }

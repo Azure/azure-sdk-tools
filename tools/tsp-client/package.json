@@ -1,6 +1,7 @@
 {
   "name": "@azure-tools/tsp-client",
-  "version": "1.0.0",
+  "version": "0.0.1",
+  "private": "true",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
   "scripts": {
@@ -16,7 +17,9 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "bin": "cmd/tsp-client.js",
+  "bin": {
+    "tsp-client": "cmd/tsp-client.js"
+  },
   "files": [
     "dist",
     "cmd/tsp-client.js"

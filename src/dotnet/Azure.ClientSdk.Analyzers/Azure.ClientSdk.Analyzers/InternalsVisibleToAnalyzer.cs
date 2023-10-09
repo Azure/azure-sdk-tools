@@ -143,22 +143,6 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private void AnalyzeInvocation(SyntaxNodeAnalysisContext context)
-        {
-            var invocation = (InvocationExpressionSyntax)context.Node;
-            var symbolInfo = context.SemanticModel.GetSymbolInfo(invocation);
-
-            // Do something with the symbol info...
-        }
-
-        private void AnalyzeIdentifier(SyntaxNodeAnalysisContext context)
-        {
-            var identifier = (IdentifierNameSyntax)context.Node;
-            var symbolInfo = context.SemanticModel.GetSymbolInfo(identifier);
-            var t = symbolInfo.GetType();
-            // Do something with the symbol info...
-        }
-
         private static void AnalyzeMemberAccess(SyntaxNodeAnalysisContext context)
         {
             var memberAccess = (MemberAccessExpressionSyntax)context.Node;

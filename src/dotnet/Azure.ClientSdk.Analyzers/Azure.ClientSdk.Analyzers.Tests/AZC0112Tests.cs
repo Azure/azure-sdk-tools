@@ -10,8 +10,6 @@ namespace Azure.ClientSdk.Analyzers.Tests
 {
     public class AZC0112Tests
     {
-        private List<(string fileName, string source)> _sharedSourceFiles;
-
         [Fact]
         public async Task AZC0020WhenInheritingFromInternalInterface()
         {

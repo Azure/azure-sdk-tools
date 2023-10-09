@@ -1,0 +1,55 @@
+{
+  "name": "@azure-tools/tsp-client",
+  "version": "0.0.1",
+  "private": "true",
+  "description": "A tool to generate Azure SDKs from TypeSpec",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "npm run clean && npm run build:tsc",
+    "build:tsc": "tsc",
+    "clean": "rimraf ./dist ./types",
+    "example": "npx ts-node src/index.ts -e openapi -m https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/cognitiveservices/OpenAI.Inference/main.tsp ./temp",
+    "test": "mocha"
+  },
+  "author": "Microsoft Corporation",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "bin": {
+    "tsp-client": "cmd/tsp-client.js"
+  },
+  "files": [
+    "dist",
+    "cmd/tsp-client.js"
+  ],
+  "devDependencies": {
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.4.8",
+    "@types/prompt-sync": "^4.2.1",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "prettier": "^3.0.1",
+    "rimraf": "^5.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "@azure/core-rest-pipeline": "^1.12.0",
+    "chalk": "^5.3.0",
+    "prompt-sync": "^4.2.0",
+    "yaml": "^2.3.1"
+  },
+  "peerDependencies": {
+    "@typespec/compiler": ">=0.48.1 <1.0.0"
+  },
+  "mocha": {
+    "extension": [
+      "ts"
+    ],
+    "spec": "test/**/*.spec.ts",
+    "loader": "ts-node/esm"
+  }
+}

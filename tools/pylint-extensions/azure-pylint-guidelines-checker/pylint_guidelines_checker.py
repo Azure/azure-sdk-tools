@@ -1475,8 +1475,7 @@ class CheckDocstringParameters(BaseChecker):
             if line.startswith("rtype"):
                 has_rtype = True
                 try:
-                    if line.split("rtype")[1]:
-                        if ":class" in line.split("rtype")[1]:
+                    if line.split("rtype")[1] and ":class" in line.split("rtype")[1]:
                             self.add_message(
                                 msgid="docstring-type-do-not-use-class", args=(line.split("rtype")[1]), node=node, confidence=None
                             )

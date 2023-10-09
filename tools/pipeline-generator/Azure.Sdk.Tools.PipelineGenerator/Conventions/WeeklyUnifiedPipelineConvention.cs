@@ -17,6 +17,6 @@ namespace PipelineGenerator.Conventions
         public override string SearchPattern => "ci.yml";
         public override string PipelineNameSuffix => " - weekly";
         public override string PipelineCategory => "unified-weekly";
-        public override PipelineClassifications Classification => PipelineClassifications.NonProduction;
+        public override PipelineClassifications Classification => PipelineClassifications.Production;
     }
 }

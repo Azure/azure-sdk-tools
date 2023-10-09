@@ -17,7 +17,7 @@ namespace PipelineGenerator.Conventions
         public override string SearchPattern => "tests.yml";
         public override string PipelineNameSuffix => " - tests";
         public override string PipelineCategory => "tests";
-        public override PipelineClassifications Classification => PipelineClassifications.NonProduction;
+        public override PipelineClassifications Classification => PipelineClassifications.Production;
 
         protected override async Task ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {

@@ -65,14 +65,15 @@ export async function readTspLocation(rootDir: string): Promise<[string, string,
       }
       return [ directory, commit, repo, additionalDirectories ];
     }
+    throw new Error("Could not find tsp-location.yaml");
   } catch (e) {
     Logger.error(`Error reading tsp-location.yaml: ${e}`);
+    throw e;
   }
-  throw new Error("Could not find tsp-location.yaml");
 }
 
 
-export async function getEmitterFromRepoConfig(emitterPath: string): Promise<string | undefined> {
+export async function getEmitterFromRepoConfig(emitterPath: string): Promise<string> {
   await access(emitterPath);
   const data = await readFile(emitterPath, 'utf8');
   const obj = JSON.parse(data);

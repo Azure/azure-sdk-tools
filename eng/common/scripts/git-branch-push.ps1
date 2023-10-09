@@ -12,6 +12,8 @@ The message for this particular commit
 The GitHub repository URL
 .PARAMETER PushArgs
 Optional arguments to the push command
+.PARAMETER CommitOutputVariable
+The name of the devops variable to set with the commit id of the pushed commit
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
@@ -34,7 +36,10 @@ param(
     [boolean] $SkipCommit = $false,
 
     [Parameter(Mandatory = $false)]
-    [boolean] $AmendCommit = $false
+    [boolean] $AmendCommit = $false,
+
+    [Parameter(Mandatory = $false)]
+    [string] $CommitOutputVariable = $null
 )
 
 # Explicit set arg parsing to Legacy mode because some of the git calls in this script depend on empty strings being empty and not passing a "" git.
@@ -173,6 +178,12 @@ do
             {
                 Write-Error "Unable to commit LASTEXITCODE=$($LASTEXITCODE), see command output above."
                 continue
+            }
+
+            if ($CommitOutputVariable) {
+              $commitId = git rev-parse HEAD
+              Write-Host "Setting output variable $CommitOutputVariable to $commitId"
+              Write-Host "##vso[task.setvariable variable=$CommitOutputVariable;IsOutput=true]$commitId"
             }
         }
         finally

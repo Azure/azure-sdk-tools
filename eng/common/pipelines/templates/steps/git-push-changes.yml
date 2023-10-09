@@ -8,6 +8,7 @@ parameters:
   WorkingDirectory: $(System.DefaultWorkingDirectory)'
   ScriptDirectory: eng/common/scripts
   SkipCheckingForChanges: false
+  StepName: ''
 
 steps:
 - pwsh: |
@@ -40,6 +41,8 @@ steps:
   workingDirectory: ${{ parameters.WorkingDirectory }}
 
 - task: PowerShell@2
+  ${{ if ne(parameters.StepName, '') }}:
+    name: ${{ parameters.StepName }}
   displayName: Push changes
   condition: and(succeeded(), eq(variables['HasChanges'], 'true'))
   inputs:
@@ -52,3 +55,4 @@ steps:
       -GitUrl "https://$(azuresdk-github-pat)@github.com/${{ parameters.BaseRepoOwner }}/$(RepoNameWithoutOwner).git"
       -PushArgs "${{ parameters.PushArgs }}"
       -SkipCommit $${{ parameters.SkipCheckingForChanges }}
+      -CommitOutputVariable 'CommitId'

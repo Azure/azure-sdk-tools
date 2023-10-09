@@ -3426,7 +3426,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                     msg_id='docstring-keyword-should-match-keyword-only',
                     line=2,
                     node=node,
-                    args='z, y',
+                    args='y, z',
                     col_offset=0,
                     end_line=2,
                     end_col_offset=16

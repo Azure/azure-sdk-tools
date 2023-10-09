@@ -6,16 +6,18 @@
 """
 Pylint custom checkers for SDK guidelines: C4717 - C4758
 """
-
+from typing import TYPE_CHECKING
 import logging
 import astroid
 from pylint.checkers import BaseChecker
-from pylint.interfaces import IAstroidChecker
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from pylint.lint import PyLinter
 
 
 class ClientConstructorTakesCorrectParameters(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-constructor"
     priority = -1
@@ -84,7 +86,7 @@ class ClientConstructorTakesCorrectParameters(BaseChecker):
 
 
 class ClientHasKwargsInPoliciesForCreateConfigurationMethod(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "configuration-policies-kwargs"
     priority = -1
@@ -138,7 +140,7 @@ class ClientHasKwargsInPoliciesForCreateConfigurationMethod(BaseChecker):
 
 
 class ClientHasApprovedMethodNamePrefix(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-approved-method-name-prefix"
     priority = -1
@@ -198,7 +200,7 @@ class ClientHasApprovedMethodNamePrefix(BaseChecker):
 
 
 class ClientMethodsUseKwargsWithMultipleParameters(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-method-multiple-parameters"
     priority = -1
@@ -252,7 +254,7 @@ class ClientMethodsUseKwargsWithMultipleParameters(BaseChecker):
 
 
 class ClientMethodsHaveTypeAnnotations(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-method-type-annotations"
     priority = -1
@@ -318,7 +320,7 @@ class ClientMethodsHaveTypeAnnotations(BaseChecker):
 
 
 class ClientMethodsHaveTracingDecorators(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-method-has-tracing-decorator"
     priority = -1
@@ -420,7 +422,7 @@ class ClientMethodsHaveTracingDecorators(BaseChecker):
 
 
 class ClientsDoNotUseStaticMethods(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-does-not-use-static-methods"
     priority = -1
@@ -471,7 +473,7 @@ class ClientsDoNotUseStaticMethods(BaseChecker):
 
 
 class FileHasCopyrightHeader(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "file-has-copyright-header"
     priority = -1
@@ -518,7 +520,7 @@ class FileHasCopyrightHeader(BaseChecker):
 
 
 class ClientUsesCorrectNamingConventions(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-naming-conventions"
     priority = -1
@@ -588,7 +590,7 @@ class ClientUsesCorrectNamingConventions(BaseChecker):
 
 
 class ClientMethodsHaveKwargsParameter(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-methods-have-kwargs"
     priority = -1
@@ -644,7 +646,7 @@ class ClientMethodsHaveKwargsParameter(BaseChecker):
 
 
 class ClientMethodNamesDoNotUseDoubleUnderscorePrefix(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-methods-no-double-underscore"
     priority = -1
@@ -694,7 +696,7 @@ class ClientMethodNamesDoNotUseDoubleUnderscorePrefix(BaseChecker):
 
 
 class ClientDocstringUsesLiteralIncludeForCodeExample(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-docstring-literal-include"
     priority = -1
@@ -763,7 +765,7 @@ class ClientDocstringUsesLiteralIncludeForCodeExample(BaseChecker):
 
 
 class AsyncClientCorrectNaming(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "async-client-correct-naming"
     priority = -1
@@ -812,7 +814,7 @@ class AsyncClientCorrectNaming(BaseChecker):
 
 
 class SpecifyParameterNamesInCall(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "specify-parameter-names"
     priority = -1
@@ -863,7 +865,7 @@ class SpecifyParameterNamesInCall(BaseChecker):
 
 
 class ClientListMethodsUseCorePaging(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-paging-methods-use-list"
     priority = -1
@@ -924,7 +926,7 @@ class ClientListMethodsUseCorePaging(BaseChecker):
             pass
 
 class ClientLROMethodsUseCorePolling(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-lro-methods-use-polling"
     priority = -1
@@ -979,7 +981,7 @@ class ClientLROMethodsUseCorePolling(BaseChecker):
 
 
 class ClientLROMethodsUseCorrectNaming(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-lro-methods-use-correct-naming"
     priority = -1
@@ -1037,7 +1039,7 @@ class ClientLROMethodsUseCorrectNaming(BaseChecker):
 
 
 class ClientConstructorDoesNotHaveConnectionStringParam(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-conn-str-not-in-constructor"
     priority = -1
@@ -1088,7 +1090,7 @@ class ClientConstructorDoesNotHaveConnectionStringParam(BaseChecker):
 
 
 class PackageNameDoesNotUseUnderscoreOrPeriod(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "package-name-incorrect"
     priority = -1
@@ -1138,7 +1140,7 @@ class PackageNameDoesNotUseUnderscoreOrPeriod(BaseChecker):
 
 
 class ServiceClientUsesNameWithClientSuffix(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "client-name-incorrect"
     priority = -1
@@ -1193,7 +1195,7 @@ class ServiceClientUsesNameWithClientSuffix(BaseChecker):
 
 
 class CheckDocstringParameters(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "check-docstrings"
     priority = -1
@@ -1496,7 +1498,7 @@ class CheckDocstringParameters(BaseChecker):
 
 
 class CheckForPolicyUse(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "check-for-policies"
     priority = -1
@@ -1705,7 +1707,7 @@ class CheckForPolicyUse(BaseChecker):
 
 
 class CheckDocstringAdmonitionNewline(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "check-admonition"
     priority = -1
@@ -1790,7 +1792,7 @@ class CheckDocstringAdmonitionNewline(BaseChecker):
 
 
 class CheckEnum(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "check-enum"
     priority = -1
@@ -1875,7 +1877,7 @@ class CheckEnum(BaseChecker):
 
 
 class CheckAPIVersion(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "check-api-version-kwarg"
     priority = -1
@@ -1938,7 +1940,7 @@ class CheckAPIVersion(BaseChecker):
 
 
 class CheckNamingMismatchGeneratedCode(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     name = "check-naming-mismatch"
     priority = -1
@@ -2067,7 +2069,7 @@ class NonAbstractTransportImport(BaseChecker):
                     )
 
 class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     """Rule to check that we don't use raise_with_traceback from azure core."""
     name = "no-raise-with-traceback"
@@ -2110,7 +2112,7 @@ class NoAzureCoreTracebackUseRaiseFrom(BaseChecker):
             )
 
 class NameExceedsStandardCharacterLength(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     """Rule to check that the character length of type and property names are not over 40 characters."""
     name = "name-too-long"
@@ -2202,7 +2204,7 @@ class NameExceedsStandardCharacterLength(BaseChecker):
     visit_asyncfunctiondef = visit_functiondef    
 
 class DeleteOperationReturnStatement(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     """Rule to check that delete* or begin_delete* return None or LROPoller[None], respectively."""
     name = "delete-operation-wrong-return-type"
@@ -2241,7 +2243,7 @@ class DeleteOperationReturnStatement(BaseChecker):
             pass
 
 class DoNotImportLegacySix(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     """Rule to check that libraries do not import the six package."""
     name = "do-not-import-legacy-six"
@@ -2274,7 +2276,7 @@ class DoNotImportLegacySix(BaseChecker):
                 )
 
 class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
-    __implements__ = IAstroidChecker
+    
 
     """Rule to check that we aren't importing azure.core.pipeline.transport.HttpResponse outside of Azure Core."""
     name = "no-legacy-azure-core-http-response-import"

@@ -38,14 +38,19 @@ namespace APIViewUnitTests
         [MemberData(nameof(ExactFormattingFiles))]
         public async Task VerifyFormatted(string name)
         {
+            ExtractCodeAndFormat(name, out string code, out string formatted);
+            await AssertFormattingAsync(code, formatted);
+        }
+
+        private void ExtractCodeAndFormat(string name, out string code, out string formatted)
+        {
             var manifestResourceStream = typeof(CodeFileBuilderTests).Assembly.GetManifestResourceStream(name);
             var streamReader = new StreamReader(manifestResourceStream);
-            var code = streamReader.ReadToEnd();
+            code = streamReader.ReadToEnd();
             code = code.Trim(' ', '\t', '\r', '\n');
-            var formatted = _stripRegex.Replace(code, string.Empty);
+            formatted = _stripRegex.Replace(code, string.Empty);
             formatted = RemoveEmptyLines(formatted);
             formatted = formatted.Trim(' ', '\t', '\r', '\n');
-            await AssertFormattingAsync(code, formatted);
         }
 
         private async Task AssertFormattingAsync(string code, string formatted)
@@ -69,7 +74,7 @@ namespace APIViewUnitTests
         private string RemoveEmptyLines(string content)
         {
             var lines = content
-                .Split(Environment.NewLine)
+                .Split('\n')
                 .Where(s => !string.IsNullOrWhiteSpace(s))
                 .ToArray();
 

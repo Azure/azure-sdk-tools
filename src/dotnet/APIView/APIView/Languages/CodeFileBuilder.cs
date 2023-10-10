@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIView;
@@ -6,11 +6,9 @@ using APIView.Analysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 
 namespace ApiView
@@ -50,7 +48,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "23";
+        public const string CurrentVersion = "24";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -81,6 +79,7 @@ namespace ApiView
             var builder = new CodeFileTokensBuilder();
 
             BuildDependencies(builder, dependencies);
+            BuildInternalsVisibleToAttributes(builder, assemblySymbol);
 
             var navigationItems = new List<NavigationItem>();
             foreach (var namespaceSymbol in SymbolOrderProvider.OrderNamespaces(EnumerateNamespaces(assemblySymbol)))
@@ -117,6 +116,36 @@ namespace ApiView
             };
 
             return node;
+        }
+
+        public static void BuildInternalsVisibleToAttributes(CodeFileTokensBuilder builder, IAssemblySymbol assemblySymbol)
+        {
+            var assemblyAttributes = assemblySymbol.GetAttributes().Where(a => a.AttributeClass.Name == "InternalsVisibleToAttribute");
+            if (assemblyAttributes != null && assemblyAttributes.Any())
+            {
+                builder.NewLine();
+                builder.Append("InternalsVisibleTo attributes:", CodeFileTokenKind.Text);
+                builder.NewLine();
+                foreach (AttributeData attribute in assemblyAttributes)
+                {
+                    builder.Append($"{attribute.AttributeClass.Name}(\"", CodeFileTokenKind.Text);
+                    if (attribute.ConstructorArguments.Length > 0)
+                    {
+                        var param = attribute.ConstructorArguments[0].Value.ToString();
+                        var firstComma = param.IndexOf(',');
+                        param = firstComma > 0 ? param[..firstComma] : param;
+                        builder.Append(new CodeFileToken(param, CodeFileTokenKind.Text)
+                        {
+                            // allow assembly to be commentable
+                            DefinitionId = attribute.AttributeClass.Name
+                        });
+                    }
+                    builder.Append("\")", CodeFileTokenKind.Text);
+                    builder.NewLine();
+                }
+
+                builder.NewLine();
+            }
         }
 
         public static void BuildDependencies(CodeFileTokensBuilder builder, List<DependencyInfo> dependencies)
@@ -505,6 +534,9 @@ namespace ApiView
             member.GetAttributes().Any(d => d.AttributeClass?.Name == "EditorBrowsableAttribute"
                                             && (EditorBrowsableState) d.ConstructorArguments[0].Value == EditorBrowsableState.Never);
 
+        private bool IsDecoratedWithAttribute(ISymbol member, string attributeName) =>
+            member.GetAttributes().Any(d => d.AttributeClass?.Name == attributeName);
+
         private void BuildTypedConstant(CodeFileTokensBuilder builder, TypedConstant typedConstant)
         {
             if (typedConstant.IsNull)
@@ -692,6 +724,9 @@ namespace ApiView
                 case Accessibility.ProtectedOrInternal:
                 case Accessibility.Public:
                     return true;
+                case Accessibility.Internal:
+                    return s.GetAttributes().Any(a => a.AttributeClass.Name == "FriendAttribute") ||
+                        (s is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.BaseType?.Name == "Attribute" && namedTypeSymbol.Name == "FriendAttribute");
                 default:
                     return IsAccessibleExplicitInterfaceImplementation(s);
             }

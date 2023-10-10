@@ -179,12 +179,7 @@ namespace PipelineGenerator.Conventions
                 return;
             }
 
-            // See https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/product-catalog/how-to/use-product-catalog-api
-            // Schema - https://artifact-tags-api.prod.space.microsoft.com/swagger/index.html?url=/swagger/v1/swagger.json#/Tags/put_tags
-            var bulkTagUpdate = new
-            {
-                saveTagRequests = new List<object>()
-            };
+            var allTagRequests = new List<object>();
 
             foreach (var definition in definitions)
             {
@@ -207,37 +202,56 @@ namespace PipelineGenerator.Conventions
                 {
                     tagRequest.tags.Add(this.Classification.ToString());
                 }
-                bulkTagUpdate.saveTagRequests.Add(tagRequest);
+                allTagRequests.Add(tagRequest);
             }
 
-            if (bulkTagUpdate.saveTagRequests.Count == 0)
+            if (allTagRequests.Count == 0)
             {
                 return;
-            }
-
-            if (Context.WhatIf)
-            {
-                Logger.LogInformation($"[WHATIF] Updating {bulkTagUpdate.saveTagRequests.Count} pipeline classifications");
-                var pretty = JsonSerializer.Serialize(bulkTagUpdate, new JsonSerializerOptions { WriteIndented = true });
-                Logger.LogDebug($"[WHATIF] Updating pipeline classifications to {PipelineClassificationBulkTagUpdateUrl}:\n{pretty}");
-                return;
-            } else
-            {
-                Logger.LogInformation($"Updating {bulkTagUpdate.saveTagRequests.Count} pipeline classifications");
             }
 
             using var client = new HttpClient();
             var token = Environment.GetEnvironmentVariable(Context.ProductCatalogTokenEnvVar);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var json = JsonSerializer.Serialize(bulkTagUpdate);
-            var content = new StringContent(json, Encoding.UTF8, "application/json-patch+json");
 
-            var response = await client.PutAsync(PipelineClassificationBulkTagUpdateUrl, content);
-            response.EnsureSuccessStatusCode();
-            Logger.LogInformation(response.Content.Headers.ContentType.MediaType);
-            if (response.Content.Headers.ContentType.MediaType != "application/json")
+            Logger.LogInformation($"Updating {allTagRequests.Count} pipeline classifications at {PipelineClassificationBulkTagUpdateUrl}");
+
+            // The product classification bulk API times out at 100 sec if the tag update count is too large.
+            var batch = allTagRequests.Take(50);
+            while (batch.Any())
             {
-                throw new Exception("Did not receive json response from 1es pipeline classification API. This is likely due to an invalid bearer token returning a login page for a browser.");
+                // See https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/product-catalog/how-to/use-product-catalog-api
+                // Schema - https://artifact-tags-api.prod.space.microsoft.com/swagger/index.html?url=/swagger/v1/swagger.json#/Tags/put_tags
+                var json = JsonSerializer.Serialize(new {
+                    saveTagRequests = new List<object>()
+                });
+                var content = new StringContent(json, Encoding.UTF8, "application/json-patch+json");
+                if (Context.WhatIf)
+                {
+                    Logger.LogInformation("[WHATIF] Batching {Count} pipeline classifications", batch.Count());
+                    foreach (var entry in batch)
+                    {
+                        var pretty = JsonSerializer.Serialize(entry, new JsonSerializerOptions { WriteIndented = true });
+                        // Logger.LogDebug($"{pretty}");
+                    }
+                } else
+                {
+                    Logger.LogInformation("Batching {Count} pipeline classifications", batch.Count());
+                    var response = await client.PutAsync(PipelineClassificationBulkTagUpdateUrl, content);
+                    response.EnsureSuccessStatusCode();
+                    if (response.Content.Headers.ContentType.MediaType != "application/json")
+                    {
+                        throw new Exception("Did not receive json response from 1es pipeline classification API. " +
+                                            "This is likely due to an invalid bearer token returning a login page for a browser.");
+                    }
+                }
+
+                if (batch.Count() < 50)
+                {
+                    break;
+                }
+                allTagRequests = allTagRequests.GetRange(50, allTagRequests.Count - 50);
+                batch = allTagRequests.Take(50);
             }
 
             return;

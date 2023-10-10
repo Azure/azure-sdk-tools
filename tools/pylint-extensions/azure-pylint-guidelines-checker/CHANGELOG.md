@@ -3,6 +3,7 @@
 ## 0.2.0 (Unreleased)
 
 - Checker to enforce docstring keywords being keyword-only in method signature.
+- Fixed a bug in `no-legacy-azure-core-http-response-import` that was throwing warnings for azure-mgmt-core.
 
 ## 0.1.0 (2023-08-02)
 

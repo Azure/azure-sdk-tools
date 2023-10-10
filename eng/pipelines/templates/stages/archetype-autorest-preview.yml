@@ -1,6 +1,6 @@
 parameters:
 # Whether to build alpha versions of the packages. This is passed as a flag to the build script.
-- name: BuildAlphaVersion
+- name: BuildPrereleaseVersion
   type: boolean
 
 # Whether to use the `next` version of TypeSpec. This is passed as a flag to the init script.
@@ -94,7 +94,8 @@ stages:
       
       - script: >
           npm run ci-build --
-          --buildAlphaVersion ${{ parameters.BuildAlphaVersion }}
+          --publishTarget ${{ parameters.PublishTarget }}
+          --buildPrereleaseVersion ${{ parameters.BuildPrereleaseVersion }}
           --buildNumber $(Build.BuildNumber)
           --output $(Build.ArtifactStagingDirectory)
         displayName: 'Run build script'
@@ -109,6 +110,7 @@ stages:
           filePath: $(toolsRepositoryPath)/eng/scripts/autorest/New-EmitterPackageJson.ps1
           arguments: >
             -PackageJsonPath '${{ parameters.EmitterPackageJsonPath }}'
+            -OverridesPath $(Build.ArtifactStagingDirectory)/overrides.json
             -OutputDirectory '$(Build.ArtifactStagingDirectory)'
           workingDirectory: $(autorestRepositoryPath)
 
@@ -147,15 +149,11 @@ stages:
 - stage: Publish
   dependsOn: Build
   variables:
-    autorestRepositoryPath: $(Build.SourcesDirectory)/autorest
-    toolsRepositoryPath: $(Build.SourcesDirectory)/azure-sdk-tools
-    sdkRepositoryPath: $(Build.SourcesDirectory)/azure-sdk
+    toolsRepositoryPath: $(Build.SourcesDirectory)
     buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
   jobs:
   - job: Publish
     steps:
-    - checkout: self
-      path: s/autorest
     - checkout: azure-sdk-tools
 
     - download: current
@@ -189,9 +187,8 @@ stages:
           inputs:
             command: 'push'
             packagesToPush: $(buildArtifactsPath)/packages/${{ package.file }}
-            # Nuget packages are always published to the same internal feed. PublishTarget doesn't affect this.
+            # Nuget packages are always published to the same internal feed https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
             nuGetFeedType: 'internal'
-            # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
             publishVstsFeed: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
 
     - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
@@ -200,15 +197,9 @@ stages:
         inputs:
           pwsh: true
           filePath: $(toolsRepositoryPath)/eng/scripts/autorest/New-EmitterPackageLock.ps1
-          ${{ if eq(parameters.PublishTarget, 'internal') }}:
-            arguments: >
-              -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
-              -OutputDirectory "$(Build.ArtifactStagingDirectory)"
-              -NpmrcPath "$(buildArtifactsPath)/packages/.npmrc"
-          ${{ elseif eq(parameters.PublishTarget, 'public') }}:
-            arguments: >
-              -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
-              -OutputDirectory "$(Build.ArtifactStagingDirectory)"
+          arguments: >
+            -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
+            -OutputDirectory "$(Build.ArtifactStagingDirectory)"
 
     - publish: $(Build.ArtifactStagingDirectory)
       artifact: publish_artifacts

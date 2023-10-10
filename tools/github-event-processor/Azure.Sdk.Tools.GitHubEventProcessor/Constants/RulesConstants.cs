@@ -16,7 +16,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
         public const string InitialIssueTriage = "InitialIssueTriage";
         public const string ManualIssueTriage = "ManualIssueTriage";
         public const string ServiceAttention = "ServiceAttention";
-        public const string CXPAttention = "CXPAttention";
         public const string ManualTriageAfterExternalAssignment = "ManualTriageAfterExternalAssignment";
         public const string RequireAttentionForNonMilestone = "RequireAttentionForNonMilestone";
         public const string AuthorFeedbackNeeded = "AuthorFeedbackNeeded";

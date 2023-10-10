@@ -1,0 +1,6 @@
+
+# AzureSdkOwners: @Azure/TestTeam3
+# ServiceLabel: %TestLabel3
+# ServiceOwners: @TestOwner3
+# PRLabel: %TestLabel0
+/sdk/someFakePath @TestOwner1

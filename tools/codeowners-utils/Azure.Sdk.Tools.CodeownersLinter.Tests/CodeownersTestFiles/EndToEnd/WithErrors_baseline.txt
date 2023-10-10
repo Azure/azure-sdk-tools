@@ -1,0 +1,10 @@
+TestOwner1 is not a public member of Azure.
+TestOwner42 is an invalid user. Ensure the user exists, is public member of Azure and has write permissions.
+PRLabel already exists in in the block. A moniker cannot exist more than once in a block.
+'TestLabel987' is not a valid label for this repository.
+PRLabel needs to be part of a block that ends in a source path/owner line.
+ServiceLabel already exists in in the block. A moniker cannot exist more than once in a block.
+'TestLabel55' is not a valid label for this repository.
+TestOwner3 is not a public member of Azure.
+AzureSdkOwners already exists in the block. A moniker cannot exist more than once in a block.
+ServiceLabel cannot be part of a block with, /<NotInRepo>/ or ServiceOwners, and a source path/owner line.

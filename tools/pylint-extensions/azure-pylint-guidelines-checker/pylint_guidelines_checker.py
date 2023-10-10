@@ -2288,12 +2288,13 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
     }
 
     AZURE_CORE_NAME = "azure.core"
+    AZURE_MGMT_CORE = "azure.mgmt.core"
     AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
     RESPONSE_CLASSES = ["HttpResponse", "AsyncHttpResponse"]
 
     def visit_importfrom(self, node):
         """Check that we aren't importing from azure.core.pipeline.transport import HttpResponse."""
-        if node.root().name.startswith(self.AZURE_CORE_NAME): 
+        if node.root().name.startswith(self.AZURE_CORE_NAME) or node.root().name.startswith(self.AZURE_MGMT_CORE): 
             return
         if node.modname == self.AZURE_CORE_TRANSPORT_NAME: 
             for name, _ in node.names:

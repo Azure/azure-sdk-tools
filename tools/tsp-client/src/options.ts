@@ -34,21 +34,19 @@ export async function getOptions(): Promise<Options> {
         type: "boolean",
         short: "d",
       },
-      outputDir: {
+      ["output-dir"]: {
         type: "string",
         short: "o",
       },
-      tspConfig: {
+      ["tsp-config"]: {
         type: "string",
         short: "c",
       },
       commit: {
         type: "string",
-        short: "C",
       },
       repo: {
         type: "string",
-        short: "R",
       },
       ["emitter-options"]: {
         type: "string",

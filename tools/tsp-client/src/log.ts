@@ -55,23 +55,29 @@ export function printBanner() {
 }
 
 const usageText = `
-Usage: tsp-client [options]
+Usage: tsp-client <command> [options]
 
 Generate from a tsp file using --mainFile or use tsp-location.yaml inside 
 the outputDir.
 
-Positionals:
+Commands:
   init        Initialize the SDK project folder from a tspconfig.yaml   [string]
   sync        Sync TypeSpec project specified in tsp-location.yaml      [string]
   generate    Generate from a TypeSpec project                          [string]
   update      Sync and generate from a TypeSpec project                 [string]
 
 Options:
-  -d, --debug      Enable debug logging                                [boolean]
-  -h, --help       Show help                                           [boolean]
-  -o, --outputDir  The output directory for the generated files        [string]
-  -v, --version    Show version number                                 [boolean]
-  --noCleanup      Don't clean up the temp directory after generation  [boolean]
+  -c, --tsp-config          The tspconfig.yaml file to use                      [string]
+  --commit                  The commit to sync a project                        [string]
+  -d, --debug               Enable debug logging                                [boolean]
+  --emitter-options         The options to pass to the emitter                  [string]
+  -h, --help                Show help                                           [boolean]
+  --local-spec-repo         Path to local repository with the TypeSpec project  [string]
+  --save-inputs             Don't clean up the temp directory after generation  [boolean]
+  --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
+  -o, --output-dir          The output directory for the generated files        [string]
+  --repo                    The repository to use for project sync              [string]
+  -v, --version             Show version number                                 [boolean]
 `;
 export function printUsage() {
   Logger(usageText);

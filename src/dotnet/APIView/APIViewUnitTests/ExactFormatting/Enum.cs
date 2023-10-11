@@ -14,4 +14,7 @@ namespace A {
         C = 2,
         D = 7,
     }
+    /*-*/internal enum InternalEnum {/*-*/
+        /*-*/A = 1/*-*/
+    /*-*/}/*-*/
 }

@@ -22,23 +22,29 @@ namespace APIViewUnitTests
 
         private Regex _stripRegex = new Regex(@"/\*-\*/(.*?)/\*-\*/", RegexOptions.Singleline);
 
-        public static IEnumerable<object[]> ExactFormattingFiles
+        public static IEnumerable<object[]> FormattingFiles(string folder)
         {
-            get
-            {
                 var assembly = typeof(CodeFileBuilderTests).Assembly;
                 return assembly.GetManifestResourceNames()
-                    .Where(r => r.Contains("ExactFormatting"))
+                    .Where(r => r.Contains(folder))
                     .Select(r => new object[] { r })
                     .ToArray();
-            }
         }
 
         [Theory]
-        [MemberData(nameof(ExactFormattingFiles))]
+        [MemberData(nameof(FormattingFiles), new object[] { "ExactFormatting" })]
         public async Task VerifyFormatted(string name)
         {
             ExtractCodeAndFormat(name, out string code, out string formatted);
+            await AssertFormattingAsync(code, formatted);
+        }
+
+        [Theory]
+        [MemberData(nameof(FormattingFiles), new object[] { "InternalsVisibleTo" })]
+        public async Task VerifyFormattedWithInternalVisibleTo(string name)
+        {
+            ExtractCodeAndFormat(name, out string code, out string formatted);
+            formatted = $"{Environment.NewLine}Exposes internals to:{Environment.NewLine}Azure.Some.Client{Environment.NewLine}{Environment.NewLine}" + formatted;
             await AssertFormattingAsync(code, formatted);
         }
 
@@ -68,6 +74,12 @@ namespace APIViewUnitTests
             var formattedModel = new CodeFileRenderer().Render(codeModel).CodeLines;
             var formattedString = string.Join(Environment.NewLine, formattedModel.Select(l => l.DisplayString));
             _testOutputHelper.WriteLine(formattedString);
+            if(formatted != formattedString)
+            {
+                _testOutputHelper.WriteLine(String.Empty);
+                _testOutputHelper.WriteLine("Expected:");
+                _testOutputHelper.WriteLine(formatted);
+            }
             Assert.Equal(formatted, formattedString);
         }
 

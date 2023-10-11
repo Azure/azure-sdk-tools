@@ -9,5 +9,6 @@ namespace A {
         public void M3(string s, int m = 3)/*-*/{/*-*/;/*-*/}/*-*/
         public Class M3(string s, int m = 3, DateTime d = default)/*-*/{ return null/*-*/;/*-*/}/*-*/
         public void M4<T>()/*-*/{/*-*/;/*-*/}/*-*/
+        /*-*/internal void P() { }/*-*/
     }
 }

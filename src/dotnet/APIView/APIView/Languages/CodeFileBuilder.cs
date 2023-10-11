@@ -120,15 +120,17 @@ namespace ApiView
 
         public static void BuildInternalsVisibleToAttributes(CodeFileTokensBuilder builder, IAssemblySymbol assemblySymbol)
         {
-            var assemblyAttributes = assemblySymbol.GetAttributes().Where(a => a.AttributeClass.Name == "InternalsVisibleToAttribute");
+            var assemblyAttributes = assemblySymbol.GetAttributes()
+                .Where(a =>
+                    a.AttributeClass.Name == "InternalsVisibleToAttribute" &&
+                    !a.ConstructorArguments[0].Value.ToString().Contains(".Tests") &&
+                    !a.ConstructorArguments[0].Value.ToString().Contains("DynamicProxyGenAssembly2"));
             if (assemblyAttributes != null && assemblyAttributes.Any())
             {
-                builder.NewLine();
-                builder.Append("InternalsVisibleTo attributes:", CodeFileTokenKind.Text);
+                builder.Append("Exposes internals to:", CodeFileTokenKind.Text);
                 builder.NewLine();
                 foreach (AttributeData attribute in assemblyAttributes)
                 {
-                    builder.Append($"{attribute.AttributeClass.Name}(\"", CodeFileTokenKind.Text);
                     if (attribute.ConstructorArguments.Length > 0)
                     {
                         var param = attribute.ConstructorArguments[0].Value.ToString();
@@ -140,7 +142,6 @@ namespace ApiView
                             DefinitionId = attribute.AttributeClass.Name
                         });
                     }
-                    builder.Append("\")", CodeFileTokenKind.Text);
                     builder.NewLine();
                 }
 
@@ -616,9 +617,28 @@ namespace ApiView
                 builder.Keyword(SyntaxFacts.GetText(ToEffectiveAccessibility(symbol.DeclaredAccessibility)));
                 builder.Space();
             }
-            foreach (var symbolDisplayPart in symbol.ToDisplayParts(_defaultDisplayFormat))
+            if (symbol is IPropertySymbol propSymbol)
             {
-                builder.Append(MapToken(definedSymbol, symbolDisplayPart));
+                var parts = propSymbol.ToDisplayParts(_defaultDisplayFormat);
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    // Skip internal setters
+                    if (parts[i].Kind == SymbolDisplayPartKind.Keyword && parts[i].ToString() == "internal")
+                    {
+                        while (i < parts.Length && parts[i].ToString() != "}")
+                        {
+                            i++;
+                        }
+                    }
+                    builder.Append(MapToken(definedSymbol, parts[i]));
+                }
+            }
+            else
+            {
+                foreach (var symbolDisplayPart in symbol.ToDisplayParts(_defaultDisplayFormat))
+                {
+                    builder.Append(MapToken(definedSymbol, symbolDisplayPart));
+                }
             }
         }
 

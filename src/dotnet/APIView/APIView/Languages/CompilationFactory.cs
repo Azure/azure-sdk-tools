@@ -44,7 +44,7 @@ namespace ApiView
                 // MetadataReference.CreateFromStream closes the stream
                 reference = MetadataReference.CreateFromStream(memoryStream, documentation: documentation);
             }
-            var compilation = CSharpCompilation.Create(null, options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, metadataImportOptions: MetadataImportOptions.All)).AddReferences(reference);
+            var compilation = CSharpCompilation.Create(null, options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, metadataImportOptions: MetadataImportOptions.Internal)).AddReferences(reference);
             var corlibLocation = typeof(object).Assembly.Location;
 
             var runtimeFolder = Path.GetDirectoryName(corlibLocation);

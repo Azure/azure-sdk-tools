@@ -206,12 +206,14 @@ async function generate({
 async function syncAndGenerate({
   outputDir,
   noCleanup,
+  emitterOptions,
 }: {
   outputDir: string;
   noCleanup: boolean;
+  emitterOptions?: string;
 }) {
   await syncTspFiles(outputDir);
-  await generate({ rootUrl: outputDir, noCleanup});
+  await generate({ rootUrl: outputDir, noCleanup, additionalEmitterOptions: emitterOptions});
 }
 
 async function main() {
@@ -236,14 +238,14 @@ async function main() {
         const outputDir = await sdkInit({config: options.tspConfig!, outputDir: rootUrl, emitter, commit: options.commit, repo: options.repo, isUrl: options.isUrl});
         Logger.info(`SDK initialized in ${outputDir}`);
         if (!options.skipSyncAndGenerate) {
-          await syncAndGenerate({outputDir, noCleanup: options.noCleanup})
+          await syncAndGenerate({outputDir, noCleanup: options.noCleanup, emitterOptions: options.emitterOptions})
         }
         break;
       case "sync":
-        syncTspFiles(rootUrl, options.localSpecRepo);
+        await syncTspFiles(rootUrl, options.localSpecRepo);
         break;
       case "generate":
-        generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
+        await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
         break;
       case "update":
         if (options.repo && !options.commit) {
@@ -262,7 +264,7 @@ async function main() {
           repo = tspConfig.repo ?? repo;
           await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);
         }
-        syncAndGenerate({outputDir: rootUrl, noCleanup: options.noCleanup});
+        await syncAndGenerate({outputDir: rootUrl, noCleanup: options.noCleanup, emitterOptions: options.emitterOptions})
         break;
       default:
         Logger.error(`Unknown command: ${options.command}`);

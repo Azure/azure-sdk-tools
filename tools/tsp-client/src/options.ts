@@ -86,12 +86,12 @@ export async function getOptions(): Promise<Options> {
 
   let isUrl = false;
   if (positionals[0] === "init") {
-    if (!values.tspConfig) {
+    if (!values["tsp-config"]) {
       Logger.error("tspConfig is required");
       printUsage();
       process.exit(1);
     }
-    if (await doesFileExist(values.tspConfig)) {
+    if (await doesFileExist(values["tsp-config"])) {
       isUrl = true;
     }
     if (!isUrl) {
@@ -104,8 +104,8 @@ export async function getOptions(): Promise<Options> {
   }
   // By default, assume that the command is run from the output directory
   let outputDir = ".";
-  if (values.outputDir) {
-    outputDir = values.outputDir;
+  if (values["output-dir"]) {
+    outputDir = values["output-dir"];
   }
   outputDir = path.resolve(path.normalize(outputDir));
 
@@ -127,7 +127,7 @@ export async function getOptions(): Promise<Options> {
   return {
     debug: values.debug ?? false,
     command: positionals[0],
-    tspConfig: values.tspConfig,
+    tspConfig: values["tsp-config"],
     noCleanup: values["save-inputs"] ?? false,
     skipSyncAndGenerate: values["skip-sync-and-generate"] ?? false,
     outputDir: outputDir,

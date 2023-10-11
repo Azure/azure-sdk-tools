@@ -62,19 +62,16 @@ the outputDir.
 
 Positionals:
   init        Initialize the SDK project folder from a tspconfig.yaml   [string]
-  sync        Sync tsp files using tsp-location.yaml                    [string]
-  generate    Generate from a tsp project                               [string]
-  update      Sync and generate from a tsp project                      [string]
+  sync        Sync TypeSpec project specified in tsp-location.yaml      [string]
+  generate    Generate from a TypeSpec project                          [string]
+  update      Sync and generate from a TypeSpec project                 [string]
 
 Options:
   -d, --debug      Enable debug logging                                [boolean]
-  -e, --emitter    Which language emitter to use             [required] [string]
-                  [choices: "csharp", "java", "javascript", "python", "openapi"]
-  -m, --mainFile   The url of the main tsp file to generate from        [string]
-      --noCleanup  Don't clean up the temp directory after generation  [boolean]
   -h, --help       Show help                                           [boolean]
+  -o, --outputDir  The output directory for the generated files        [string]
   -v, --version    Show version number                                 [boolean]
-  -o, --outputDir  The output directory for the emitter
+  --noCleanup      Don't clean up the temp directory after generation  [boolean]
 `;
 export function printUsage() {
   Logger(usageText);

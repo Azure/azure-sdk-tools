@@ -49,6 +49,11 @@ parameters:
   type: number
   default: 10
 
+# Indicates if the npm script `ci-tests` should be run after `ci-build`
+- name: RunTests
+  type: boolean
+  default: true
+
 stages:
 - stage: Build
   variables:
@@ -100,6 +105,12 @@ stages:
           --output $(Build.ArtifactStagingDirectory)
         displayName: 'Run build script'
         name: build_script
+        workingDirectory: $(autorestRepositoryPath)
+
+    - ${{ if parameters.RunTests }}:
+      - script: >
+          npm run ci-test --if-present
+        displayName: 'Run test script'
         workingDirectory: $(autorestRepositoryPath)
 
     - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:

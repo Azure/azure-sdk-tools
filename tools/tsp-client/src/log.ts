@@ -68,7 +68,7 @@ Commands:
 
 Options:
   -c, --tsp-config          The tspconfig.yaml file to use                      [string]
-  --commit                  The commit to sync a project                        [string]
+  --commit                  Commit to be used for project init or update        [string]
   -d, --debug               Enable debug logging                                [boolean]
   --emitter-options         The options to pass to the emitter                  [string]
   -h, --help                Show help                                           [boolean]
@@ -76,7 +76,8 @@ Options:
   --save-inputs             Don't clean up the temp directory after generation  [boolean]
   --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
   -o, --output-dir          The output directory for the generated files        [string]
-  --repo                    The repository to use for project sync              [string]
+  --repo                    Repository where the project is defined for init 
+                            or update                                           [string]
   -v, --version             Show version number                                 [boolean]
 `;
 export function printUsage() {

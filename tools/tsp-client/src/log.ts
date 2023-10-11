@@ -57,8 +57,9 @@ export function printBanner() {
 const usageText = `
 Usage: tsp-client <command> [options]
 
-Generate from a tsp file using --mainFile or use tsp-location.yaml inside 
-the outputDir.
+Generate clients from a TypeSpec project. Use one of the supported commands to get started. 
+This tool will default to using your current working directory to look for relevant files
+and to generate clients in. To specify a different directory, use the -o or --output-dir option.
 
 Commands:
   init        Initialize the SDK project folder from a tspconfig.yaml   [string]

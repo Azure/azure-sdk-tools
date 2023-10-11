@@ -44,7 +44,7 @@ namespace APIViewUnitTests
         public async Task VerifyFormattedWithInternalVisibleTo(string name)
         {
             ExtractCodeAndFormat(name, out string code, out string formatted);
-            formatted = $"{Environment.NewLine}Exposes internals to:{Environment.NewLine}Azure.Some.Client{Environment.NewLine}{Environment.NewLine}" + formatted;
+            formatted = $"Exposes internals to:{Environment.NewLine}Azure.Some.Client{Environment.NewLine}{Environment.NewLine}" + formatted;
             await AssertFormattingAsync(code, formatted);
         }
 

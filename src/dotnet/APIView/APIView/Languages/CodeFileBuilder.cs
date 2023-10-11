@@ -459,7 +459,7 @@ namespace ApiView
             const string attributeSuffix = "Attribute";
             foreach (var attribute in attributes)
             {
-                if (!IsAccessible(attribute.AttributeClass) || IsSkippedAttribute(attribute.AttributeClass))
+                if ((!IsAccessible(attribute.AttributeClass) && attribute.AttributeClass.Name != "FriendAttribute" )|| IsSkippedAttribute(attribute.AttributeClass))
                 {
                     continue;
                 }
@@ -745,8 +745,8 @@ namespace ApiView
                 case Accessibility.Public:
                     return true;
                 case Accessibility.Internal:
-                    return s.GetAttributes().Any(a => a.AttributeClass.Name == "FriendAttribute") ||
-                        (s is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.BaseType?.Name == "Attribute" && namedTypeSymbol.Name == "FriendAttribute");
+                    return s.GetAttributes().Any(a => a.AttributeClass.Name == "FriendAttribute");
+                    //|| (s is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.BaseType?.Name == "Attribute" && namedTypeSymbol.Name == "FriendAttribute");
                 default:
                     return IsAccessibleExplicitInterfaceImplementation(s);
             }

@@ -3,6 +3,7 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -217,14 +218,13 @@ namespace PipelineGenerator.Conventions
             Logger.LogInformation($"Updating {allTagRequests.Count} pipeline classifications at {PipelineClassificationBulkTagUpdateUrl}");
 
             // The product classification bulk API times out at 100 sec if the tag update count is too large.
-            var batch = allTagRequests.Take(50);
+            var batchSize = 25;
+            var batch = allTagRequests.Take(batchSize);
             while (batch.Any())
             {
                 // See https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/product-catalog/how-to/use-product-catalog-api
                 // Schema - https://artifact-tags-api.prod.space.microsoft.com/swagger/index.html?url=/swagger/v1/swagger.json#/Tags/put_tags
-                var json = JsonSerializer.Serialize(new {
-                    saveTagRequests = new List<object>()
-                });
+                var json = JsonSerializer.Serialize(new { saveTagRequests = batch.ToList() });
                 var content = new StringContent(json, Encoding.UTF8, "application/json-patch+json");
                 if (Context.WhatIf)
                 {
@@ -232,13 +232,17 @@ namespace PipelineGenerator.Conventions
                     foreach (var entry in batch)
                     {
                         var pretty = JsonSerializer.Serialize(entry, new JsonSerializerOptions { WriteIndented = true });
-                        // Logger.LogDebug($"{pretty}");
+                        Logger.LogDebug($"{pretty}");
                     }
                 } else
                 {
                     Logger.LogInformation("Batching {Count} pipeline classifications", batch.Count());
+                    var sw = new Stopwatch();
+                    sw.Start();
                     var response = await client.PutAsync(PipelineClassificationBulkTagUpdateUrl, content);
                     response.EnsureSuccessStatusCode();
+                    sw.Stop();
+                    Logger.LogInformation($"Batched {batch.Count()} pipeline classifications in {sw.ElapsedMilliseconds / 1000}s");
                     if (response.Content.Headers.ContentType.MediaType != "application/json")
                     {
                         throw new Exception("Did not receive json response from 1es pipeline classification API. " +
@@ -246,12 +250,12 @@ namespace PipelineGenerator.Conventions
                     }
                 }
 
-                if (batch.Count() < 50)
+                if (batch.Count() < batchSize)
                 {
                     break;
                 }
-                allTagRequests = allTagRequests.GetRange(50, allTagRequests.Count - 50);
-                batch = allTagRequests.Take(50);
+                allTagRequests = allTagRequests.GetRange(batchSize, allTagRequests.Count - batchSize);
+                batch = allTagRequests.Take(batchSize);
             }
 
             return;

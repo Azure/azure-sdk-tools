@@ -33,6 +33,7 @@ pr:
 variables:
   PythonVersion: '3.10'
   WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
+  SPAClientProjectDirectory: 'src/dotnet/APIView/ClientSPA'
   WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
   NodeVersion: '18.x'
   BuildConfiguration: 'Release'
@@ -62,11 +63,16 @@ stages:
             inputs:
               versionSpec: '$(NodeVersion)'
             displayName: 'Use NodeJS $(NodeVersion)'
-
+  
           - task: GoTool@0
             inputs:
               version: '$(GoVersion)'
             displayName: "Use Go $(GoVersion)"
+          
+          - script: |
+              npm install -g @angular/cli@16.1.8
+            workingDirectory: $(SPAClientProjectDirectory)
+            displayName: "Install Angular CLI"
 
           - script: |
               npm install
@@ -77,6 +83,16 @@ stages:
               npm run-script build
             workingDirectory: $(WebClientProjectDirectory)
             displayName: "Build client assets"
+
+          - script: |
+              npm install
+            workingDirectory: $(SPAClientProjectDirectory)
+            displayName: "Install Client SPA Packages"
+
+          - script: |
+              npm run-script build
+            workingDirectory: $(SPAClientProjectDirectory)
+            displayName: "Build Client SPA assets"
 
           - script: |
               npm install
@@ -139,7 +155,7 @@ stages:
             inputs:
               pathtoPublish: '$(Build.ArtifactStagingDirectory)'
               artifactName: 'APIView'
-              
+            displayName: 'Publish APIView Artifacts'
 
       #- job: 'Test'
 #

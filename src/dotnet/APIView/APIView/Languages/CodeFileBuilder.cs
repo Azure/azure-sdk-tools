@@ -617,7 +617,7 @@ namespace ApiView
                 builder.Keyword(SyntaxFacts.GetText(ToEffectiveAccessibility(symbol.DeclaredAccessibility)));
                 builder.Space();
             }
-            if (symbol is IPropertySymbol propSymbol)
+            if (symbol is IPropertySymbol propSymbol && propSymbol.DeclaredAccessibility != Accessibility.Internal)
             {
                 var parts = propSymbol.ToDisplayParts(_defaultDisplayFormat);
                 for (int i = 0; i < parts.Length; i++)

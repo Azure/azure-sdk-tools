@@ -140,7 +140,7 @@
                 <ng-template pTemplate="content" let-changeHistory>
                     <div class="p-text-primary small">{{ changeHistory.changeAction | titlecase }}</div>
                     <div class="p-text-secondary small">{{ changeHistory.changedBy }}</div>
-                    <div class="p-text-secondary small">{{ (changeHistory.changedOn) ? (changeHistory.changedOn | timeago) : "" }}</div>
+                    <div class="p-text-secondary small">{{ changeHistory.changedOn | timeago }}</div>
                 </ng-template>
             </p-timeline>
         </li>

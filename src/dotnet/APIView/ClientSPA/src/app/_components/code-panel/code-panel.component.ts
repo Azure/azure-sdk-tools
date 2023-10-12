@@ -27,7 +27,6 @@ export class CodePanelComponent implements OnChanges{
   @Input() activeApiRevisionId: string | undefined;
   @Input() userProfile : UserProfile | undefined;
   @Input() showLineNumbers: boolean = true;
-  @Input() loadFailed : boolean = false;
 
   isLoading: boolean = true;
   codeWindowHeight: string | undefined = undefined;
@@ -55,10 +54,6 @@ export class CodePanelComponent implements OnChanges{
 
     if (changes['scrollToNodeIdHashed'] && changes['scrollToNodeIdHashed'].currentValue) {
       this.scrollToNode(this.scrollToNodeIdHashed!);
-    }
-
-    if (changes['loadFailed'] && changes['loadFailed'].currentValue) {
-      this.isLoading = false;
     }
   }
 
@@ -135,26 +130,22 @@ export class CodePanelComponent implements OnChanges{
 
   toggleNodeComments(target: Element) {
     const nodeIdHashed = target.closest('.code-line')!.getAttribute('data-node-id');
-    const rowPositionInGroup = parseInt(target.closest('.code-line')!.getAttribute('data-row-position-in-group')!, 10);
     const existingCommentThread = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.commentThread;
-    const exisitngCodeLine = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.codeLines[rowPositionInGroup];
+    const exisitngCodeLine = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.codeLines[0];
     
-    if (!existingCommentThread || !existingCommentThread[rowPositionInGroup]) {
+    if (!existingCommentThread || existingCommentThread.length === 0) {
       const commentThreadRow = new CodePanelRowData();
       commentThreadRow.type = CodePanelRowDatatype.CommentThread;
       commentThreadRow.nodeId = exisitngCodeLine?.nodeId!;
       commentThreadRow.nodeIdHashed = exisitngCodeLine?.nodeIdHashed!;
       commentThreadRow.rowClasses = new Set<string>(['user-comment-thread']);
       commentThreadRow.showReplyTextBox = true;
-      commentThreadRow.associatedRowPositionInGroup = rowPositionInGroup;
-      this.codePanelData!.nodeMetaData[nodeIdHashed!].commentThread = {};
-      this.codePanelData!.nodeMetaData[nodeIdHashed!].commentThread[rowPositionInGroup] = commentThreadRow;
-      this.insertItemsIntoScroller([commentThreadRow], nodeIdHashed!, rowPositionInGroup);
+      this.codePanelData!.nodeMetaData[nodeIdHashed!].commentThread = [commentThreadRow];
+      this.insertItemsIntoScroller([commentThreadRow], nodeIdHashed!, true);
     }
     else {
       for (let i = 0; i < this.codePanelRowData.length; i++) {
-        if (this.codePanelRowData[i].nodeIdHashed === nodeIdHashed && this.codePanelRowData[i].type === CodePanelRowDatatype.CommentThread &&
-            this.codePanelRowData[i].rowPositionInGroup === rowPositionInGroup) {
+        if (this.codePanelRowData[i].nodeIdHashed === nodeIdHashed && this.codePanelRowData[i].type === CodePanelRowDatatype.CommentThread) {
           this.codePanelRowData[i].showReplyTextBox = true;
           break;
         }
@@ -167,7 +158,7 @@ export class CodePanelComponent implements OnChanges{
 
     if (target.classList.contains('bi-arrow-up-square')) {
       const documentationData = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.documentation;
-      await this.insertItemsIntoScroller(documentationData!, nodeIdHashed!, -1, "toggleDocumentationClasses", "bi-arrow-up-square", "bi-arrow-down-square");
+      await this.insertItemsIntoScroller(documentationData!, nodeIdHashed!, false, "toggleDocumentationClasses", "bi-arrow-up-square", "bi-arrow-down-square");
       target.classList.remove('bi-arrow-up-square')
       target.classList.add('bi-arrow-down-square');
     } else if (target.classList.contains('bi-arrow-down-square')) {
@@ -197,8 +188,8 @@ export class CodePanelComponent implements OnChanges{
         switch (codePanelRowDatatype) {
           case CodePanelRowDatatype.CommentThread:
             updatedCodeLinesData.push(this.codePanelRowData[i]);
-            if (nodeData?.commentThread && nodeData?.commentThread.hasOwnProperty(this.codePanelRowData[i].rowPositionInGroup)) {
-              updatedCodeLinesData.push(nodeData?.commentThread[this.codePanelRowData[i].rowPositionInGroup]);
+            if (nodeData?.commentThread) {
+              updatedCodeLinesData.push(...nodeData?.commentThread);
             }
             break;
           case CodePanelRowDatatype.Diagnostics:
@@ -229,27 +220,23 @@ export class CodePanelComponent implements OnChanges{
     this.loadCodePanelViewPort();
   }
 
-  async insertItemsIntoScroller(itemsToInsert: CodePanelRowData[], nodeIdhashed: string, insertPosition : number, 
+  async insertItemsIntoScroller(itemsToInsert: CodePanelRowData[], nodeIdhashed: string, insertAfterNodeIdhashed : boolean = false, 
       propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
     await this.codePanelRowSource?.adapter?.relax();
 
     let preData = [];
     let nodeIndex = 0;
-    let insertPositionFound = false;    
+    let targetNodeIdHashed = null;
 
     while (nodeIndex < this.codePanelRowData.length) {
-      if (insertPositionFound) {
-        break;
-      }
-      
       if (this.codePanelRowData[nodeIndex].nodeIdHashed === nodeIdhashed) {
-        if (insertPosition === -1) {
+        targetNodeIdHashed = nodeIdhashed;
+        if (!insertAfterNodeIdhashed) {
           break;
         }
-
-        if (insertPosition == this.codePanelRowData[nodeIndex].rowPositionInGroup) {
-          insertPositionFound = true;
-        }
+      }
+      if (targetNodeIdHashed && insertAfterNodeIdhashed && this.codePanelRowData[nodeIndex].nodeIdHashed != targetNodeIdHashed) {
+        break;
       }
       preData.push(this.codePanelRowData[nodeIndex]);
       nodeIndex++;
@@ -296,22 +283,21 @@ export class CodePanelComponent implements OnChanges{
   }
 
   async removeItemsFromScroller(nodeIdHashed: string, codePanelRowDatatype:  CodePanelRowDatatype,
-    propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string, associatedRowPositionInGroup?: number) {
+    propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
     await this.codePanelRowSource?.adapter?.relax();
 
     const indexesToRemove : number[] = [];
     const filteredCodeLinesData : CodePanelRowData[] = [];
 
     for (let i = 0; i < this.codePanelRowData.length; i++) {
-      if (this.codePanelRowData[i].nodeIdHashed != nodeIdHashed || this.codePanelRowData[i].type != codePanelRowDatatype
-        || (associatedRowPositionInGroup && this.codePanelRowData[i].associatedRowPositionInGroup !== associatedRowPositionInGroup)) {
-          filteredCodeLinesData.push(this.codePanelRowData[i]);
-      }
-      else {
+      if (this.codePanelRowData[i].nodeIdHashed === nodeIdHashed && this.codePanelRowData[i].type === codePanelRowDatatype) {
         if (propertyToChange && iconClassToremove && iconClassToAdd) {
           this.codePanelRowData[i] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, this.codePanelRowData[i], propertyToChange);
         }
         indexesToRemove.push(i);
+      }
+      else {
+        filteredCodeLinesData.push(this.codePanelRowData[i]);
       }
     }
 
@@ -322,14 +308,9 @@ export class CodePanelComponent implements OnChanges{
   }
 
   async updateItemInScroller(updateData: CodePanelRowData) {
-    let filterdData = this.codePanelRowData.filter(row => row.nodeIdHashed === updateData.nodeIdHashed &&
-      row.type === updateData.type);
+    this.codePanelRowData.filter(row => row.nodeIdHashed === updateData.nodeIdHashed &&
+      row.type === updateData.type)[0] = updateData;
 
-    if (updateData.type === CodePanelRowDatatype.CommentThread) {
-      filterdData = filterdData.filter(row => row.associatedRowPositionInGroup === updateData.associatedRowPositionInGroup);
-    }
-    filterdData[0] = updateData;
-      
     await this.codePanelRowSource?.adapter?.relax();
     await this.codePanelRowSource?.adapter?.update({
       predicate: ({ $index, data, element}) => {
@@ -409,19 +390,16 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
-  handleCancelCommentActionEmitter(data: any) {
-    const commentsInNode = this.codePanelData?.nodeMetaData[data.nodeIdHashed]?.commentThread
-    if (commentsInNode && commentsInNode.hasOwnProperty(data.associatedRowPositionInGroup)) {
-      const commentThread = commentsInNode[data.associatedRowPositionInGroup];
-      if (!commentThread.comments || commentThread.comments.length === 0) {
-        this.removeItemsFromScroller(data.nodeIdHashed, CodePanelRowDatatype.CommentThread, undefined, undefined, undefined, data.associatedRowPositionInGroup);
-        this.codePanelData!.nodeMetaData[data.nodeIdHashed].commentThread = [];
+  handleCancelCommentActionEmitter(nodeIdHashed: string) {
+    const commentThread = this.codePanelData?.nodeMetaData[nodeIdHashed]?.commentThread
+    if (commentThread && commentThread.length > 0) {
+      if (!commentThread[0].comments || commentThread[0].comments.length === 0) {
+        this.removeItemsFromScroller(nodeIdHashed, CodePanelRowDatatype.CommentThread);
+        this.codePanelData!.nodeMetaData[nodeIdHashed].commentThread = [];
       }
       else {
         for (let i = 0; i < this.codePanelRowData.length; i++) {
-          if (this.codePanelRowData[i].nodeIdHashed === data.nodeIdHashed && this.codePanelRowData[i].type === CodePanelRowDatatype.CommentThread
-            && this.codePanelRowData[i].associatedRowPositionInGroup === data.associatedRowPositionInGroup
-          ) {
+          if (this.codePanelRowData[i].nodeIdHashed === nodeIdHashed && this.codePanelRowData[i].type === CodePanelRowDatatype.CommentThread) {
             this.codePanelRowData[i].showReplyTextBox = false;
             break;
           }
@@ -434,8 +412,8 @@ export class CodePanelComponent implements OnChanges{
     if (data.commentId) {
       this.commentsService.updateComment(this.reviewId!, data.commentId, data.commentText).pipe(take(1)).subscribe({
         next: () => {
-          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].comments.filter(c => c.id === data.commentId)[0].commentText = data.commentText;
-          this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup]);
+          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments.filter(c => c.id === data.commentId)[0].commentText = data.commentText;
+          this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]);
         }
       });
     }
@@ -443,10 +421,10 @@ export class CodePanelComponent implements OnChanges{
       this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, data.nodeId, data.commentText, CommentType.APIRevision, data.allowAnyOneToResolve)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
-              const comments = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].comments;
+              const comments = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments;
               comments.push(response);
-              this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].comments = [...comments]
-              this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup]);
+              this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments = [...comments]
+              this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]);
             }
           }
         );
@@ -456,14 +434,14 @@ export class CodePanelComponent implements OnChanges{
   handleDeleteCommentActionEmitter(data: any) {
     this.commentsService.deleteComment(this.reviewId!, data.commentId).pipe(take(1)).subscribe({
       next: () => {
-        const comments = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].comments;
-        this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].comments = comments.filter(c => c.id !== data.commentId);
+        const comments = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments;
+        this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments = comments.filter(c => c.id !== data.commentId);
 
-        if (this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].comments.length === 0) {
-          this.removeItemsFromScroller(data.nodeIdHashed!, CodePanelRowDatatype.CommentThread, undefined, undefined, undefined, data.associatedRowPositionInGroup);
-          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread = {};
+        if (this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments.length === 0) {
+          this.removeItemsFromScroller(data.nodeIdHashed!, CodePanelRowDatatype.CommentThread);
+          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread = [];
         } else {
-          this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup]);
+          this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]);
         }
       }
     });
@@ -473,18 +451,18 @@ export class CodePanelComponent implements OnChanges{
     if (data.action === "Resolve") {
       this.commentsService.resolveComments(this.reviewId!, data.elementId).pipe(take(1)).subscribe({
         next: () => {
-          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].isResolvedCommentThread = true;
-          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].commentThreadIsResolvedBy = this.userProfile?.userName!;
-          this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup]});
+          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].isResolvedCommentThread = true;
+          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].commentThreadIsResolvedBy = this.userProfile?.userName!;
+          this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]});
         }
       });
     }
     if (data.action === "Unresolve") {
       this.commentsService.unresolveComments(this.reviewId!, data.elementId).pipe(take(1)).subscribe({
         next: () => {
-          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].isResolvedCommentThread = false;
-          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].commentThreadIsResolvedBy = '';
-          this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup]});
+          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].isResolvedCommentThread = false;
+          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].commentThreadIsResolvedBy = '';
+          this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]});
         }
       });
     }
@@ -493,14 +471,14 @@ export class CodePanelComponent implements OnChanges{
   handleCommentUpvoteActionEmitter(data: any){
     this.commentsService.toggleCommentUpVote(this.reviewId!, data.commentId).pipe(take(1)).subscribe({
       next: () => {
-        const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup].comments.find(c => c.id === data.commentId);
+        const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments.find(c => c.id === data.commentId);
         if (comment) {
           if (comment.upvotes.includes(this.userProfile?.userName!)) {
             comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
           } else {
             comment.upvotes.push(this.userProfile?.userName!);
           }
-          this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup]);
+          this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]);
         }
       }
     });

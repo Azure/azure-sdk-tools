@@ -77,19 +77,17 @@ export interface APITreeNode {
 export class CodePanelRowData {
   type: string = '';
   lineNumber: number = 0;
-  rowOfTokens: StructuredToken[] = [];
+  @Type(() => StructuredToken) rowOfTokens: StructuredToken[] = [];
   nodeId: string = '';
   nodeIdHashed: string = '';
-  rowPositionInGroup: number = 0;
-  associatedRowPositionInGroup: number = 0;
   rowOfTokensPosition: string = '';
-  rowClasses: Set<string> = new Set<string>();
+  @Type(() => String) rowClasses: Set<string> = new Set<string>();
   indent: number = 0;
   diffKind: string = '';
   toggleDocumentationClasses: string = '';
   toggleCommentsClasses: string = '';
-  diagnostics: CodeDiagnostic = new CodeDiagnostic();
-  comments: CommentItemModel[] = [];
+  @Type(() => CodeDiagnostic) diagnostics: CodeDiagnostic = new CodeDiagnostic();
+  @Type(() => CommentItemModel) comments: CommentItemModel[] = [];
   showReplyTextBox: boolean = false;
   isResolvedCommentThread: boolean = false;
   commentThreadIsResolvedBy: string = '';
@@ -104,17 +102,17 @@ export class NavigationTreeNodeData {
 
 export class NavigationTreeNode {
   label: string = '';
-  data: NavigationTreeNodeData = new NavigationTreeNodeData();
+  @Type(() => NavigationTreeNodeData) data: NavigationTreeNodeData = new NavigationTreeNodeData();
   expanded: boolean = false;
-  children: NavigationTreeNode[] = [];
+  @Type(() => NavigationTreeNode) children: NavigationTreeNode[] = [];
 }
 
 export class CodePanelNodeMetaData {
-  documentation: CodePanelRowData[] = [];
-  diagnostics: CodePanelRowData[] = [];
-  codeLines: CodePanelRowData[] = [];
-  commentThread: { [key: number]: CodePanelRowData } = {};
-  navigationTreeNode: NavigationTreeNode = new NavigationTreeNode();
+  @Type(() => CodePanelRowData) documentation: CodePanelRowData[] = [];
+  @Type(() => CodePanelRowData) diagnostics: CodePanelRowData[] = [];
+  @Type(() => CodePanelRowData) codeLines: CodePanelRowData[] = [];
+  @Type(() => CodePanelRowData) commentThread: CodePanelRowData[] = [];
+  @Type(() => NavigationTreeNode) navigationTreeNode: NavigationTreeNode = new NavigationTreeNode();
   parentNodeIdHashed: string = '';
   childrenNodeIdsInOrder: { [key: number]: string } = {};
   isNodeWithDiff: boolean = false;

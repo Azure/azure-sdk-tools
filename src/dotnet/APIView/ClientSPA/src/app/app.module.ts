@@ -1,7 +1,7 @@
 import { NgModule, APP_INITIALIZER, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -27,7 +27,6 @@ import { Observable } from 'rxjs';
 import { ConfigService } from './_services/config/config.service';
 import { CookieService } from 'ngx-cookie-service';
 import { SharedAppModule } from './_modules/shared/shared-app.module';
-import { HttpErrorInterceptorService } from './_services/http-error-interceptor/http-error-interceptor.service';
 
 export function initializeApp(configService: ConfigService) {
   return (): Observable<any> => {
@@ -71,11 +70,6 @@ export function initializeApp(configService: ConfigService) {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
       deps: [ConfigService],
-      multi: true
-    },
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: HttpErrorInterceptorService,
       multi: true
     },
     CookieService

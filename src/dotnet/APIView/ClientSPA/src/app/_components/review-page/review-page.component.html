@@ -9,10 +9,10 @@
         (revisionsSidePanel)="showRevisionsPanel($event)"
         (pageOptionsEmitter)="handlePageOptionsEmitter($event)"></app-review-info>
     <div class="mt-2" style="display: flex;">
-        <!--<div>
+        <div>
             <p-menu [model]="sideMenu"></p-menu>
-        </div>-->
-        <div style="flex-grow: 1; min-width: 0;"> <!-- margin-left: 7px;"> -->
+        </div>
+        <div style="flex-grow: 1; min-width: 0; margin-left: 7px;">
             <p-splitter
                 [panelSizes]="panelSizes"
                 [minSizes]="minSizes"
@@ -21,7 +21,6 @@
                     <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
                         <app-review-nav
                             [reviewPageNavigation]="reviewPageNavigation"
-                            [loadFailed]="loadFailed"
                             (navTreeNodeIdEmitter)="handleNavTreeNodeEmmitter($event)"></app-review-nav>
                     </div>
                 </ng-template>
@@ -32,7 +31,6 @@
                             [isDiffView]="!!diffApiRevisionId"
                             [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
                             [userProfile]="userProfile"
-                            [loadFailed]="loadFailed"
                             [showLineNumbers]="showLineNumbers" [scrollToNodeIdHashed]="scrollToNodeIdHashed"
                             [scrollToNodeId]="scrollToNodeId"></app-code-panel>
                     </div>

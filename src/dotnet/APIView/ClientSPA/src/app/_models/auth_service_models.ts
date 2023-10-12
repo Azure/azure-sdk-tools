@@ -24,5 +24,4 @@ export interface UserPreferenceModel {
     showDocumentation: boolean
     showComments: boolean
     showSystemComments: boolean
-    useBetaIndexPage: boolean
 }

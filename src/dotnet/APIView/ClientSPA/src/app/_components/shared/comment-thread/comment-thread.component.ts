@@ -18,7 +18,7 @@ import { CodePanelRowData } from 'src/app/_models/revision';
 })
 export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
-  @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
+  @Output() cancelCommentActionEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentResolutionActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -172,10 +172,7 @@ export class CommentThreadComponent {
   deleteComment(event: MenuItemCommandEvent) {
     const target = (event.originalEvent?.target as Element).closest("a") as Element;
     const commentId = target.getAttribute("data-item-id");
-    this.deleteCommentActionEmitter.emit({ 
-      nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-      commentId: commentId,
-      associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup});
+    this.deleteCommentActionEmitter.emit({ nodeIdHashed: this.codePanelRowData!.nodeIdHashed, commentId: commentId });
   }
 
   showEditEditor = (event: MenuItemCommandEvent) => {
@@ -189,12 +186,7 @@ export class CommentThreadComponent {
     const replyEditorContainer = target.closest(".reply-editor-container") as Element;
     if (replyEditorContainer) {
       this.codePanelRowData!.showReplyTextBox = false;
-      this.cancelCommentActionEmitter.emit(
-        {
-          nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
-        }
-      );
+      this.cancelCommentActionEmitter.emit(this.codePanelRowData!.nodeIdHashed);
     } else {
       const panel = target.closest("p-panel") as Element;
       const commentId = panel.getAttribute("data-comment-id");
@@ -214,8 +206,7 @@ export class CommentThreadComponent {
           nodeId: this.codePanelRowData!.nodeId,
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           commentText: content,
-          allowAnyOneToResolve: this.allowAnyOneToResolve,
-          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+          allowAnyOneToResolve: this.allowAnyOneToResolve
         }
       );
       this.codePanelRowData!.showReplyTextBox = false;
@@ -229,8 +220,7 @@ export class CommentThreadComponent {
           nodeId: this.codePanelRowData!.nodeId,
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
           commentId: commentId,
-          commentText: content,
-          associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+          commentText: content
         }
       );
       this.codePanelRowData!.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
@@ -241,10 +231,8 @@ export class CommentThreadComponent {
     const target = (event.target as Element).closest("button") as Element;
     const commentId = target.getAttribute("data-btn-id");
     this.commentUpvoteActionEmitter.emit(
-      { 
-        nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-        commentId: commentId,
-        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+      { nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+        commentId: commentId 
       }
     );
   }
@@ -265,8 +253,7 @@ export class CommentThreadComponent {
       { 
         elementId: this.codePanelRowData!.comments[0].elementId,
         action: action,
-        nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
-        associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup
+        nodeIdHashed: this.codePanelRowData!.nodeIdHashed
       }
     );
   }

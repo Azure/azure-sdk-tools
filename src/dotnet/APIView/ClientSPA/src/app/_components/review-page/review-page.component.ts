@@ -44,13 +44,10 @@ export class ReviewPageComponent implements OnInit {
   conversiationInfo : any | undefined = undefined;
   hasFatalDiagnostics : boolean = false;
   hasHiddenAPIs : boolean = false;
-  loadFailed : boolean = false;
 
   showLeftNavigation : boolean = true;
   showPageOptions : boolean = true;
-  leftNavigationPanelSize = 14;
-  pageOptionsPanelSize = 16;
-  panelSizes = [this.leftNavigationPanelSize, 70, this.pageOptionsPanelSize];
+  panelSizes = [15, 70, 15];
   minSizes = [0.1, 1, 0.1];
 
   codePanelData: CodePanelData | null = null;
@@ -123,7 +120,6 @@ export class ReviewPageComponent implements OnInit {
     this.reviewPageNavigation = [];
     this.codePanelRowData = [];
     this.codePanelData = null;
-    this.loadFailed = false;
     this.changeDetectorRef.detectChanges();
     this.workerService.startWorker().then(() => {
       this.registerWorkerEventHandler();
@@ -172,9 +168,6 @@ export class ReviewPageComponent implements OnInit {
           };
           // Passing ArrayBufer to worker is way faster than passing object
           this.workerService.postToApiTreeBuilder(response, apiTreeBuilderData);
-        },
-        error: (error: any) => {
-          this.loadFailed = true;
         }
       });
   }
@@ -309,7 +302,7 @@ export class ReviewPageComponent implements OnInit {
       panelSize[0] = 0.1;
     } else {
       this.showLeftNavigation = true;
-      panelSize[0] = this.leftNavigationPanelSize;
+      panelSize[0] = 15;
     }
     panelSize[2] = this.panelSizes[2];
     panelSize[1] = 100 - (panelSize[0] + panelSize[2]);
@@ -323,7 +316,7 @@ export class ReviewPageComponent implements OnInit {
       panelSize[2] = 0.1;
     } else {
       this.showPageOptions = true;
-      panelSize[2] = this.pageOptionsPanelSize;
+      panelSize[2] = 15;
     }
     panelSize[0] = this.panelSizes[0];
     panelSize[1] = 100 - (panelSize[0] + panelSize[2]);

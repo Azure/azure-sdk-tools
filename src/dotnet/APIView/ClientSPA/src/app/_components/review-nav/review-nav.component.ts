@@ -9,7 +9,6 @@ import { environment } from 'src/environments/environment';
 })
 export class ReviewNavComponent implements OnChanges {
   @Input() reviewPageNavigation: TreeNode[] = [];
-  @Input() loadFailed: boolean = false;
 
   @Output() navTreeNodeIdEmitter : EventEmitter<string> = new EventEmitter<string>();
 
@@ -24,10 +23,6 @@ export class ReviewNavComponent implements OnChanges {
       } else {
         this.isLoading = true;
       }
-    }
-
-    if (changes['loadFailed'] && changes['loadFailed'].currentValue) {
-      this.isLoading = false;
     }
   }
 

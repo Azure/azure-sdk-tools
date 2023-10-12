@@ -110,9 +110,6 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   if (node.codeLines) {
     node.codeLines.forEach((codeLine, index) => {
       if (shouldAppendIfRowIsHiddenAPI(codeLine)) {
-        if (index === node.codeLines.length - 1 && node.diagnostics && node.diagnostics.length > 0) { // last row of toptoken codeLines
-          codeLine.toggleCommentsClasses = codeLine.toggleCommentsClasses.replace("can-show", "show").replace("hide", "show"); // show comment indicatior node has diagnostic comments
-        }
         codeLine.rowClasses = new Set<string>(codeLine.rowClasses); // Ensure that the rowClasses is a Set
         appendToggleDocumentationClass(node, codeLine, index);
         setLineNumber(codeLine);
@@ -137,14 +134,13 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   }
 
   if (buildNode && node.commentThread && apiTreeBuilderData?.showComments) {
-    Object.keys(node.commentThread).map(Number).forEach((key) => {
-      const comment: CodePanelRowData = node.commentThread[key];
+    node.commentThread.forEach((comment, index) => {
       if (shouldAppendIfRowIsHiddenAPI(comment)) {
         comment.rowClasses = new Set<string>(comment.rowClasses); // Ensure that the rowClasses is a Set
         codePanelRowData.push(comment);
       }
     });
-  }
+;  }
   
   if (buildChildren) {
     let orderIndex = 0;
@@ -163,7 +159,9 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     codePanelRowData.push(...diffBuffer);
     diffBuffer = [];
 
-    let bottomTokenNode = codePanelData?.nodeMetaData[node.bottomTokenNodeIdHash]!;
+    let bottomTokenRawNode = codePanelData?.nodeMetaData[node.bottomTokenNodeIdHash]!;
+    let bottomTokenNode = plainToClass(CodePanelNodeMetaData, bottomTokenRawNode);
+    codePanelData!.nodeMetaData[node.bottomTokenNodeIdHash] = bottomTokenNode;
 
     if (bottomTokenNode.codeLines) {
       bottomTokenNode.codeLines.forEach((codeLine, index) => {

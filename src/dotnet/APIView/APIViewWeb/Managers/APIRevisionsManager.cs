@@ -12,6 +12,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
+using Octokit;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -574,6 +575,30 @@ namespace APIViewWeb.Managers
 
         /// <summary>
         /// Restore APIRevisions
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <returns></returns>
+        public async Task RestoreAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string apiRevisionId)
+        {
+            var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
+            ManagerHelpers.AssertAPIRevisionDeletion(apiRevision);
+            await ManagerHelpers.AssertAPIRevisionOwner(user, apiRevision, _authorizationService);
+            if (apiRevision.IsDeleted)
+            {
+                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(
+                     changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.UnDeleted, user: user.GetGitHubLogin(), notes: "");
+
+                apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
+                apiRevision.IsDeleted = changeUpdate.ChangeStatus;
+
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            }
+        }
+
+        /// <summary>
+        /// Delete APIRevisions
         /// </summary>
         /// <param name="user"></param>
         /// <param name="reviewId"></param>

@@ -12,24 +12,12 @@ namespace APIViewUnitTests
         public static async Task BuildDllAsync(Stream stream, string code)
         {
             var project = DiagnosticProject.Create(typeof(CodeFileBuilderTests).Assembly, LanguageVersion.Latest, new[] { code })
-                .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, metadataImportOptions: MetadataImportOptions.All ));
+                .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, metadataImportOptions: MetadataImportOptions.Internal ));
 
             var compilation = await project.GetCompilationAsync();
             Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity > DiagnosticSeverity.Warning));
 
             compilation.Emit(stream);
         }
-
-        public static async Task BuildDllWithProjectDepAsync(Stream stream, string code, string dependentCode)
-        {
-            var project = DiagnosticProject.Create(typeof(CodeFileBuilderTests).Assembly, LanguageVersion.Latest, new[] { code }, new[] { dependentCode })
-                .WithCompilationOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-
-            var compilation = await project.GetCompilationAsync();
-            Assert.Empty(compilation.GetDiagnostics().Where(d => d.Severity > DiagnosticSeverity.Warning));
-
-            compilation.Emit(stream);
-        }
-
     }
 }

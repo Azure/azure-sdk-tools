@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIView;
@@ -124,6 +124,7 @@ namespace ApiView
                 .Where(a =>
                     a.AttributeClass.Name == "InternalsVisibleToAttribute" &&
                     !a.ConstructorArguments[0].Value.ToString().Contains(".Tests") &&
+                    !a.ConstructorArguments[0].Value.ToString().Contains(".Perf") &&
                     !a.ConstructorArguments[0].Value.ToString().Contains("DynamicProxyGenAssembly2"));
             if (assemblyAttributes != null && assemblyAttributes.Any())
             {
@@ -144,7 +145,6 @@ namespace ApiView
                     }
                     builder.NewLine();
                 }
-
                 builder.NewLine();
             }
         }
@@ -746,7 +746,6 @@ namespace ApiView
                     return true;
                 case Accessibility.Internal:
                     return s.GetAttributes().Any(a => a.AttributeClass.Name == "FriendAttribute");
-                    //|| (s is INamedTypeSymbol namedTypeSymbol && namedTypeSymbol.BaseType?.Name == "Attribute" && namedTypeSymbol.Name == "FriendAttribute");
                 default:
                     return IsAccessibleExplicitInterfaceImplementation(s);
             }

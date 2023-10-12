@@ -5,6 +5,7 @@ using B;
 
 [assembly: InternalsVisibleTo("Azure.Some.Client")]
 [assembly: InternalsVisibleTo("Azure.Some.Client.Tests")]
+[assembly: InternalsVisibleTo("Azure.Some.Client.Perf")]
 namespace B {
     internal class FriendAttribute : Attribute {
         public FriendAttribute(string friendAssemblyName) { }

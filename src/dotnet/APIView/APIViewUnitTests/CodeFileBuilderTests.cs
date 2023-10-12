@@ -86,7 +86,7 @@ namespace APIViewUnitTests
         private string RemoveEmptyLines(string content)
         {
             var lines = content
-                .Split('\n')
+                .Split(Environment.NewLine)
                 .Where(s => !string.IsNullOrWhiteSpace(s))
                 .ToArray();
 

@@ -1410,17 +1410,13 @@ class CheckDocstringParameters(BaseChecker):
             )
 
         # check that all types are formatted correctly
-        for keyword, doc_type in docstring_keyword_args.items():
-            if doc_type and ":class" in doc_type:
-                self.add_message(
-                    msgid="docstring-type-do-not-use-class", args=(keyword), node=node, confidence=None
-                )
+        add_keyword_type_warnings = [keyword for keyword, doc_type in docstring_keyword_args.items() if doc_type and ":class" in doc_type]
+        if len(add_keyword_type_warnings) > 0:
+            self.add_message(msgid="docstring-type-do-not-use-class", args=(", ".join(add_keyword_type_warnings)), node=node, confidence=None)
 
-        for param, doc_type in docparams.items():
-            if doc_type and ":class" in doc_type:
-                self.add_message(
-                    msgid="docstring-type-do-not-use-class", args=(param), node=node, confidence=None
-                )
+        add_docparams_type_warnings = [param for param, doc_type in docparams.items() if doc_type and ":class" in doc_type]
+        if len(add_docparams_type_warnings) > 0:
+            self.add_message(msgid="docstring-type-do-not-use-class", args=(", ".join(add_docparams_type_warnings)), node=node, confidence=None)
 
         # check if we have a type for each param and check if documented params that should be keywords
         missing_types = []

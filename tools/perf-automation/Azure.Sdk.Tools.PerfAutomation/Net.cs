@@ -27,8 +27,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             var projectFile = Path.Combine(WorkingDirectory, project);
 
-            await UpdatePackageVersions(CoreTestFrameworkProjectFile, packageVersions);
             await UpdatePackageVersions(projectFile, packageVersions);
+
+            // All perf projects reference Azure.Core.TestFramework.  Update it to ensure consistent versions.
+            await UpdatePackageVersions(CoreTestFrameworkProjectFile, packageVersions);
 
             Util.DeleteIfExists(PublishDirectory);
 
@@ -79,27 +81,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         existingReferencePattern = projectReferencePattern;
                     }
 
-                    var newPackageReference = @$"<PackageReference Include=""{packageName}"" VersionOverride=""{packageVersion}"" />";
-
                     if (existingReferencePattern != null)
                     {
                         // Replace existing reference
                         projectContents = Regex.Replace(
                             projectContents,
                             existingReferencePattern,
-                            newPackageReference,
+                            @$"<PackageReference Include=""{packageName}"" VersionOverride=""{packageVersion}"" />",
                             RegexOptions.IgnoreCase | RegexOptions.Singleline
                         );
-                    }
-                    else if (projectFile != CoreTestFrameworkProjectFile)
-                    {
-                        // Add new ItemGroup to end of Project, except for Core.TestFramework (which should only use replace).
-                        // Typically used to pin transitive deps (like Core) not specified in original csproj.
-                        projectContents = projectContents.Replace("</Project>",
-                            "  <ItemGroup>" + Environment.NewLine +
-                            "    " + newPackageReference + Environment.NewLine +
-                            "  </ItemGroup>" + Environment.NewLine +
-                            "</Project>");
                     }
                 }
             }
@@ -206,19 +196,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override Task CleanupAsync(string project)
         {
-            var projectFile = Path.Combine(WorkingDirectory, project);
-
             Util.DeleteIfExists(PublishDirectory);
-
-            RestoreBackup(projectFile);
             RestoreBackup(CoreTestFrameworkProjectFile);
-
+            RestoreBackup(Path.Combine(WorkingDirectory, project));
             return Task.CompletedTask;
         }
 
         private static void RestoreBackup(string projectFile)
         {
-            // Restore backup
             File.Move(projectFile + ".bak", projectFile, overwrite: true);
         }
     }

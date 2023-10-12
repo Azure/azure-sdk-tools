@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var additionalBuildArguments = "";
             if (packageVersions.Values.Contains(Program.PackageVersionSource))
             {
-                // Force all transitive dependencies to use project references, to ensure all packages are build from source.
+                // Force all transitive dependencies to use project references, to ensure all packages are built from source.
                 // The default is for transitive dependencies to use package references to the latest published version.
                 additionalBuildArguments += "-p:UseProjectReferenceToAzureClients=true";
             }

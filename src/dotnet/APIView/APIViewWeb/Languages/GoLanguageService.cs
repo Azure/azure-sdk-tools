@@ -7,6 +7,7 @@ using System.IO.Compression;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Helpers;
 
 namespace APIViewWeb
 {
@@ -62,7 +63,7 @@ namespace APIViewWeb
 
                 using (var codeFileStream = File.OpenRead(jsonFilePath))
                 {
-                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream);
+                    var codeFile = await CodeFile.DeserializeAsync(codeFileStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(this.Name));
                     codeFile.VersionString = VersionString;
                     codeFile.Language = Name;
                     return codeFile;

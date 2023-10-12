@@ -6,21 +6,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
+using System.Data;
+using System.Net.Http;
+using System.IO;
 using System.Threading.Tasks;
+using ApiView;
 using APIViewWeb.Hubs;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using APIViewWeb.Helpers;
+using APIViewWeb.Managers.Interfaces;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using System.Net.Http;
-using System.Text.Json;
-using System.Data;
-using APIViewWeb.LeanModels;
-using APIViewWeb.Helpers;
-using APIViewWeb.Managers.Interfaces;
 using Microsoft.ApplicationInsights.DataContracts;
-using System.IO;
+using Microsoft.AspNetCore.Http;
 
 namespace APIViewWeb.Managers
 {
@@ -36,13 +38,14 @@ namespace APIViewWeb.Managers
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly TelemetryClient _telemetryClient;
+        private readonly ICodeFileManager _codeFileManager;
 
         public ReviewManager (
             IAuthorizationService authorizationService, ICosmosReviewRepository reviewsRepository,
             IAPIRevisionsManager apiRevisionsManager, ICommentsManager commentManager,
             IBlobCodeFileRepository codeFileRepository, ICosmosCommentsRepository commentsRepository, 
             IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices,
-            TelemetryClient telemetryClient)
+            TelemetryClient telemetryClient, ICodeFileManager codeFileManager)
 
         {
             _authorizationService = authorizationService;
@@ -54,6 +57,7 @@ namespace APIViewWeb.Managers
             _signalRHubContext = signalRHubContext;
             _languageServices = languageServices;
             _telemetryClient = telemetryClient;
+            _codeFileManager = codeFileManager;
         }
 
         /// <summary>
@@ -109,6 +113,18 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Retrieve Reviews from the Reviews container in CosmosDb after applying filter to the query.
+        /// Uses lean reviewListModels to reduce the size of the response. Used for ClientSPA
+        /// </summary>
+        /// <param name="pageParams"></param> Contains paginationinfo
+        /// <param name="filterAndSortParams"></param> Contains filter and sort parameters
+        /// <returns></returns>
+        public async Task<PagedList<ReviewListItemModel>> GetReviewsAsync(PageParams pageParams, ReviewFilterAndSortParams filterAndSortParams)
+        {
+            return await _reviewsRepository.GetReviewsAsync(pageParams, filterAndSortParams);
+        }
+
+        /// <summary>
         /// Get Reviews
         /// </summary>
         /// <param name="user"></param>
@@ -156,6 +172,45 @@ namespace APIViewWeb.Managers
             }
 
             var review = await _reviewsRepository.GetLegacyReviewAsync(id);
+            return review;
+        }
+
+        /// <summary>
+        /// Get Review if it exist otherwise create it
+        /// </summary>
+        /// <param name="file"></param>
+        /// <param name="filePath"></param>
+        /// <param name="language"></param>
+        /// <param name="runAnalysis"></param>
+        /// <returns></returns>
+        public async Task<ReviewListItemModel> GetOrCreateReview(IFormFile file, string filePath, string language, bool runAnalysis = false)
+        {
+            CodeFile codeFile = null;
+            ReviewListItemModel review = null;
+
+            using var memoryStream = new MemoryStream();
+            if (file != null)
+            {
+                using (var openReadStream = file.OpenReadStream())
+                {
+                    codeFile = await _codeFileManager.CreateCodeFileAsync(
+                        originalName: file?.FileName, fileStream: openReadStream, runAnalysis: runAnalysis, memoryStream: memoryStream, language: language);
+                }
+            }
+            else if (!string.IsNullOrEmpty(filePath))
+            {
+                codeFile = await _codeFileManager.CreateCodeFileAsync(
+                    originalName: filePath, runAnalysis: runAnalysis, memoryStream: memoryStream, language: language);
+            }
+
+            if (codeFile != null)
+            {
+                review = await GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language);
+                if (review == null)
+                {
+                    review = await CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false);
+                }
+            }
             return review;
         }
 
@@ -245,13 +300,14 @@ namespace APIViewWeb.Managers
         /// <param name="revisionId"></param>
         /// <param name="notes"></param>
         /// <returns></returns>
-        public async Task ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="")
+        public async Task<ReviewListItemModel> ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="")
         {
             ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(id);
             var userId = user.GetGitHubLogin();
-            await ToggleReviewApproval(user, review, notes);
+            var updatedReview = await ToggleReviewApproval(user, review, notes);
             await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, revisionId, review.IsApproved);
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, revisionId, userId, review.IsApproved);
+            return updatedReview;
         }
 
         /// <summary>
@@ -396,7 +452,7 @@ namespace APIViewWeb.Managers
             }
         }
 
-        private async Task ToggleReviewApproval(ClaimsPrincipal user, ReviewListItemModel review, string notes)
+        private async Task<ReviewListItemModel> ToggleReviewApproval(ClaimsPrincipal user, ReviewListItemModel review, string notes)
         {
             await ManagerHelpers.AssertApprover<ReviewListItemModel>(user, review, _authorizationService);
             var userId = user.GetGitHubLogin();
@@ -405,6 +461,7 @@ namespace APIViewWeb.Managers
             review.ChangeHistory = changeUpdate.ChangeHistory;
             review.IsApproved = changeUpdate.ChangeStatus;
             await _reviewsRepository.UpsertReviewAsync(review);
+            return review;
         }
 
         /// <summary>

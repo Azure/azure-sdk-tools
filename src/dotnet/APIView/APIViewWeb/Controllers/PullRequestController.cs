@@ -144,7 +144,7 @@ namespace APIViewWeb.Controllers
                 if (baselineStream.Length > 0)
                 {
                     baselineStream.Position = 0;
-                    baseLineCodeFile = await CodeFile.DeserializeAsync(baselineStream);
+                    baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream, doTreeStyleParserDeserialization: LanguageServiceHelpers.UseTreeStyleParser(language));
                 }
                 if (codeFile != null)
                 {

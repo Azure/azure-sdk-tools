@@ -1,0 +1,43 @@
+:host ::ng-deep {
+    .review-panel{
+        height: calc(100vh - 130px);
+        &.approved {
+            border: solid 1px var(--success-color) !important;
+            box-shadow: var(--box-shadow-success);
+        }
+    }
+
+    .p-sidebar-right {
+        width: 70dvw;
+    }
+
+    .p-splitter-panel-nested {
+        display: block;
+        min-width: 0;
+    }
+    
+    .p-menu {
+        background: var(--base-fg-color);
+        color: var(--base-text-color);
+        padding: 0.5rem 0;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        width: 3.5rem;
+    }
+
+    .p-menu ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link {
+        color: var(--base-text-color);
+        padding: 0.75rem 1rem;
+    }
+
+    .p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon {
+        color: var(--base-text-color);;
+        font-size: x-large;
+    }
+}

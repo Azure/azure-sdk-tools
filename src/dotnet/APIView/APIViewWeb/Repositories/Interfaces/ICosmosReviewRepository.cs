@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.Repositories
 {
     public interface ICosmosReviewRepository
     {
+        public Task<PagedList<ReviewListItemModel>> GetReviewsAsync(PageParams pageParams, ReviewFilterAndSortParams filterAndSortParams);
         public Task UpsertReviewAsync(ReviewListItemModel reviewModel);
         public Task<ReviewListItemModel> GetReviewAsync(string reviewId);
         public Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(IEnumerable<string> reviewIds, bool? isClosed = null);

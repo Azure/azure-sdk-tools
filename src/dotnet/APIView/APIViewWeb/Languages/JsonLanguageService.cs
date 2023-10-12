@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 using ApiView;
 
@@ -11,7 +12,7 @@ namespace APIViewWeb
     public class JsonLanguageService : LanguageService
     {
         public override string Name { get; } = "Json";
-        public override string[] Extensions { get; } = { ".json" };
+        public override string[] Extensions { get; } = { ".json", ".json.tgz" };
 
         public override bool CanUpdate(string versionString) => false;
 
@@ -23,6 +24,10 @@ namespace APIViewWeb
 
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
+            if (originalName.EndsWith(".tgz", StringComparison.OrdinalIgnoreCase))
+            {
+                return await CodeFile.DeserializeAsync(stream, doTreeStyleParserDeserialization: true);
+            }
             return await CodeFile.DeserializeAsync(stream, true);
         }
     }

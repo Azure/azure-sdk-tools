@@ -92,6 +92,12 @@ namespace APIViewWeb.Pages.Assemblies
                 showDocumentation: (ShowDocumentation ?? false), showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                 diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
+            if (ReviewContent.Directive == ReviewContentModelDirective.RedirectToSPAUI)
+            {
+                var uri = $"https://spa.{Request.Host}/review/{id}?activeApiRevisionId={ReviewContent.ActiveAPIRevision.Id}";
+                return Redirect(uri);
+            }
+
             if (ReviewContent.Directive == ReviewContentModelDirective.TryGetlegacyReview)
             {
                 // Check if you can get review from legacy data
@@ -322,7 +328,7 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<IActionResult> OnPostToggleAPIRevisionApprovalAsync(string id, string revisionId)
         {
-            var updateReview = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, id, revisionId);
+            (var updateReview, var apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, id, revisionId);
             if (updateReview)
             {
                 await OnPostToggleReviewApprovalAsync(id, revisionId);

@@ -62,6 +62,7 @@ namespace APIViewWeb.Helpers
             }
             return false;
         }
+
         /// <summary>
         /// Create the CodelIneModel from Diffs
         /// </summary>
@@ -486,32 +487,35 @@ namespace APIViewWeb.Helpers
         /// Ensure unique label for Revisions
         /// </summary>
         /// <param name="apiRevision"></param>
-        /// <param name="addType"></param>
+        /// <param name="addAPIRevisionType"></param>
+        /// <param name="addCreatedBy"></param>
+        /// <param name="addCreatedOn"></param>
+        /// <param name="addPackageVersion"></param>
         /// <returns></returns>
-        public static string ResolveRevisionLabel(APIRevisionListItemModel apiRevision, bool addType = true)
+        public static string ResolveRevisionLabel(APIRevisionListItemModel apiRevision, 
+            bool addAPIRevisionType = true, bool addCreatedBy = true, bool addCreatedOn = true, bool addPackageVersion = true)
         {
-            var label = $"{apiRevision.CreatedOn.ToString()} | {apiRevision.CreatedBy}";
+            var label = String.Empty;
+            
+            if (addCreatedBy)
+                label = $"{apiRevision.CreatedBy}";
 
-            if (apiRevision.Files.Any() && !String.IsNullOrEmpty(apiRevision.Files[0].PackageVersion))
-            {
+            if (addCreatedOn)
+                label = $"{apiRevision.CreatedOn.ToString()} | {label}";
+
+            if (addPackageVersion && apiRevision.Files.Any() && !String.IsNullOrEmpty(apiRevision.Files[0].PackageVersion) && (String.IsNullOrEmpty(apiRevision.Label) || !apiRevision.Label.Contains(apiRevision.Files[0].PackageVersion)))
                 label = $"{apiRevision.Files[0].PackageVersion} | {label}";
-            }
 
             if (!String.IsNullOrWhiteSpace(apiRevision.Label))
-            { 
-                label = $"{label} | {apiRevision.Label}";
-            }
+                label = $"{apiRevision.Label} | {label}";
 
             if (apiRevision.APIRevisionType == APIRevisionType.PullRequest && apiRevision.PullRequestNo != null)
-            {
                 label = $"PR {apiRevision.PullRequestNo} | {label}";
-            }
 
-            if (addType)
-            {
+            if (addAPIRevisionType)
                 label = $"{apiRevision.APIRevisionType.ToString()} | {label}";
-            }
-            return label;
+
+            return label.Trim(' ', '|');
         }
 
         /// <summary>
@@ -554,6 +558,7 @@ namespace APIViewWeb.Helpers
         /// <param name="reviewDiffContextSize"></param>
         /// <param name="diffContextSeparator"></param>
         /// <returns></returns>
+
         private static InlineDiffLine<CodeLine>[] CreateDiffOnlyLines(InlineDiffLine<CodeLine>[] lines, int reviewDiffContextSize, string diffContextSeparator)
         {
             var filteredLines = new List<InlineDiffLine<CodeLine>>();

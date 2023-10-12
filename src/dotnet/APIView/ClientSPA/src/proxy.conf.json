@@ -1,0 +1,11 @@
+{
+  "/spa/api/*": {
+    "target": "https://apiviewuxtest.com",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug",
+    "pathRewrite": {
+      "^/spa/api" : "/api"
+    }
+  }
+}

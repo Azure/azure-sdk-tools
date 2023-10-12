@@ -42,6 +42,8 @@ extends:
             value: '3.10'
           - name: 'WebClientProjectDirectory'
             value: 'src/dotnet/APIView/APIViewWeb/Client'
+          - name: 'SPAClientProjectDirectory'
+            value: 'src/dotnet/APIView/ClientSPA'
           - name: WebProjectPath
             value: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
           - name: NodeVersion
@@ -83,6 +85,11 @@ extends:
                 inputs:
                   versionSpec: '$(NodeVersion)'
                 displayName: 'Use NodeJS $(NodeVersion)'
+          
+              - script: |
+                  npm install -g @angular/cli@16.1.8
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Angular CLI"
 
               - task: GoTool@0
                 inputs:
@@ -98,6 +105,16 @@ extends:
                   npm run-script build
                 workingDirectory: $(WebClientProjectDirectory)
                 displayName: "Build client assets"
+
+              - script: |
+                  npm install
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Client SPA Packages"
+
+              - script: |
+                  npm run-script build
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Build Client SPA assets"
 
               - script: |
                   npm install

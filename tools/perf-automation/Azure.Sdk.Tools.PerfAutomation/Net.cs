@@ -12,6 +12,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
     {
         protected override Language Language => Language.Net;
 
+        private string CoreTestFrameworkProjectFile =>
+            Path.Combine(WorkingDirectory, "sdk", "core", "Azure.Core.TestFramework", "src", "Azure.Core.TestFramework.csproj");
+
         // Azure.Core.TestFramework.TestEnvironment requires publishing under the "artifacts" folder to find the repository root.
         private string PublishDirectory => Path.Join(WorkingDirectory, "artifacts", "perf");
 
@@ -24,60 +27,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
         {
             var projectFile = Path.Combine(WorkingDirectory, project);
 
-            File.Copy(projectFile, projectFile + ".bak", overwrite: true);
-
-            var projectContents = File.ReadAllText(projectFile);
-            var additionalBuildArguments = String.Empty;
-
-            foreach (var v in packageVersions)
-            {
-                var packageName = v.Key;
-                var packageVersion = v.Value;
-
-                if (packageVersion == Program.PackageVersionSource)
-                {
-                    // Force all transitive dependencies to use project references, to ensure all packages are build from source.
-                    // The default is for transitive dependencies to use package references to the latest published version.
-                    additionalBuildArguments = "-p:UseProjectReferenceToAzureClients=true";
-                }
-                else
-                {
-                    // TODO: Use XmlDocument instead of Regex
-
-                    // Existing reference might be to package or project:
-                    // - <PackageReference Include="Microsoft.Azure.Storage.Blob" />
-                    // - <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\src\Azure.Storage.Blobs.csproj" />
-
-                    string pattern;
-                    var packageReferencePattern = $"<PackageReference [^>]*{packageName}[^<]*/>";
-                    var projectReferencePattern = $"<ProjectReference [^>]*{packageName}.csproj[^<]*/>";
-
-                    if (Regex.IsMatch(projectContents, packageReferencePattern))
-                    {
-                        pattern = packageReferencePattern;
-                    }
-                    else if (Regex.IsMatch(projectContents, projectReferencePattern))
-                    {
-                        pattern = projectReferencePattern;
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException(
-                            $"Project file {projectFile} does not contain existing package or project reference to {packageName}");
-                    }
-
-                    projectContents = Regex.Replace(
-                        projectContents,
-                        pattern,
-                        @$"<PackageReference Include=""{packageName}"" VersionOverride=""{packageVersion}"" />",
-                        RegexOptions.IgnoreCase | RegexOptions.Singleline
-                    );
-                }
-            }
-
-            File.WriteAllText(projectFile, projectContents);
+            await UpdatePackageVersions(CoreTestFrameworkProjectFile, packageVersions);
+            await UpdatePackageVersions(projectFile, packageVersions);
 
             Util.DeleteIfExists(PublishDirectory);
+
+            var additionalBuildArguments = "";
+            if (packageVersions.Values.Contains(Program.PackageVersionSource))
+            {
+                // Force all transitive dependencies to use project references, to ensure all packages are build from source.
+                // The default is for transitive dependencies to use package references to the latest published version.
+                additionalBuildArguments += "-p:UseProjectReferenceToAzureClients=true";
+            }
 
             // Disable source link, since it's not needed for perf runs, and also fails in sparse checkout repos
             var processArguments = $"publish -c release -f net{languageVersion}.0 -o {PublishDirectory} -p:EnableSourceLink=false {additionalBuildArguments} {project}";
@@ -85,6 +46,65 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var result = await Util.RunAsync("dotnet", processArguments, workingDirectory: WorkingDirectory);
 
             return (result.StandardOutput, result.StandardError, null);
+        }
+
+        private async Task UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions)
+        {
+            File.Copy(projectFile, projectFile + ".bak", overwrite: true);
+
+            var projectContents = File.ReadAllText(projectFile);
+
+            foreach (var v in packageVersions)
+            {
+                var packageName = v.Key;
+                var packageVersion = v.Value;
+
+                if (packageVersion != Program.PackageVersionSource) {
+                    // TODO: Use XmlDocument instead of Regex
+
+                    // Existing reference might be to package or project:
+                    // - <PackageReference Include="Microsoft.Azure.Storage.Blob" />
+                    // - <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\src\Azure.Storage.Blobs.csproj" />
+
+                    var packageReferencePattern = $"<PackageReference [^>]*{packageName}[^<]*/>";
+                    var projectReferencePattern = $"<ProjectReference [^>]*{packageName}.csproj[^<]*/>";
+
+                    string existingReferencePattern = null;
+                    if (Regex.IsMatch(projectContents, packageReferencePattern))
+                    {
+                        existingReferencePattern = packageReferencePattern;
+                    }
+                    else if (Regex.IsMatch(projectContents, projectReferencePattern))
+                    {
+                        existingReferencePattern = projectReferencePattern;
+                    }
+
+                    var newPackageReference = @$"<PackageReference Include=""{packageName}"" VersionOverride=""{packageVersion}"" />";
+
+                    if (existingReferencePattern != null)
+                    {
+                        // Replace existing reference
+                        projectContents = Regex.Replace(
+                            projectContents,
+                            existingReferencePattern,
+                            newPackageReference,
+                            RegexOptions.IgnoreCase | RegexOptions.Singleline
+                        );
+                    }
+                    else if (projectFile != CoreTestFrameworkProjectFile)
+                    {
+                        // Add new ItemGroup to end of Project, except for Core.TestFramework (which should only use replace).
+                        // Typically used to pin transitive deps (like Core) not specified in original csproj.
+                        projectContents = projectContents.Replace("</Project>",
+                            "  <ItemGroup>" + Environment.NewLine +
+                            "    " + newPackageReference + Environment.NewLine +
+                            "  </ItemGroup>" + Environment.NewLine +
+                            "</Project>");
+                    }
+                }
+            }
+
+            await File.WriteAllTextAsync(projectFile, projectContents);
         }
 
         public override async Task<IterationResult> RunAsync(
@@ -186,14 +206,20 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public override Task CleanupAsync(string project)
         {
-            Util.DeleteIfExists(PublishDirectory);
-
             var projectFile = Path.Combine(WorkingDirectory, project);
 
-            // Restore backup
-            File.Move(projectFile + ".bak", projectFile, overwrite: true);
+            Util.DeleteIfExists(PublishDirectory);
+
+            RestoreBackup(projectFile);
+            RestoreBackup(CoreTestFrameworkProjectFile);
 
             return Task.CompletedTask;
+        }
+
+        private static void RestoreBackup(string projectFile)
+        {
+            // Restore backup
+            File.Move(projectFile + ".bak", projectFile, overwrite: true);
         }
     }
 }

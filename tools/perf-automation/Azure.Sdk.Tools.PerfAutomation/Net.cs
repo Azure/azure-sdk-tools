@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return (result.StandardOutput, result.StandardError, null);
         }
 
-        private async Task UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions)
+        private static async Task UpdatePackageVersions(string projectFile, IDictionary<string, string> packageVersions)
         {
             File.Copy(projectFile, projectFile + ".bak", overwrite: true);
 

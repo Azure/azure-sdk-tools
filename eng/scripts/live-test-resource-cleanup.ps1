@@ -53,6 +53,9 @@ param (
   [switch] $DeleteNonCompliantGroups,
 
   [Parameter()]
+  [switch] $DeleteArmDeployments,
+
+  [Parameter()]
   [int] $DeleteAfterHours = 24,
 
   [Parameter()]
@@ -326,6 +329,11 @@ function HasDeleteLock([object]$ResourceGroup) {
   return $false
 }
 
+function DeleteArmDeployments([object]$ResourceGroup) {
+  Write-Host "Deleting ARM deployments for group $($ResourceGroup.ResourceGroupName) as they may contain secrets. Deployed resources will not be affected."
+  $null = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName | Remove-AzResourceGroupDeployment
+}
+
 function DeleteOrUpdateResourceGroups() {
   [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
   param()
@@ -338,6 +346,7 @@ function DeleteOrUpdateResourceGroups() {
   [Array]$allGroups = Retry { Get-AzResourceGroup }
   $toDelete = @()
   $toUpdate = @()
+  $toClean = @()
   Write-Host "Total Resource Groups: $($allGroups.Count)"
 
   foreach ($rg in $allGroups) {
@@ -351,29 +360,25 @@ function DeleteOrUpdateResourceGroups() {
       }
       continue
     }
-    if (!$DeleteNonCompliantGroups) {
+    if (!$DeleteNonCompliantGroups -or (IsChildResource $rg) -or (HasDeleteLock $rg)) {
       continue
     }
-    if (HasDoNotDeleteTag $rg) {
-      continue
-    }
-    if (IsChildResource $rg) {
-      continue
-    }
-    if (HasValidAliasInName $rg) {
-      continue
-    }
-    if (HasValidOwnerTag $rg) {
-      continue
-    }
-    if (HasDeleteLock $rg) {
+    if (HasDoNotDeleteTag $rg -or (HasValidAliasInName $rg) -or (HasValidOwnerTag $rg)) {
+      if ($DeleteArmDeployments) {
+        $toClean += $rg
+      }
       continue
     }
     $toUpdate += $rg
   }
 
+
   foreach ($rg in $toUpdate) {
     FindOrCreateDeleteAfterTag $rg
+  }
+
+  foreach ($rg in $toClean) {
+    DeleteArmDeployments $rg
   }
 
   # Get purgeable resources already in a deleted state.

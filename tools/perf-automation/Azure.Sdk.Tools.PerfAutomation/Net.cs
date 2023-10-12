@@ -68,25 +68,25 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     // - <PackageReference Include="Microsoft.Azure.Storage.Blob" />
                     // - <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\src\Azure.Storage.Blobs.csproj" />
 
+                    string pattern = null;
                     var packageReferencePattern = $"<PackageReference [^>]*{packageName}[^<]*/>";
                     var projectReferencePattern = $"<ProjectReference [^>]*{packageName}.csproj[^<]*/>";
 
-                    string existingReferencePattern = null;
                     if (Regex.IsMatch(projectContents, packageReferencePattern))
                     {
-                        existingReferencePattern = packageReferencePattern;
+                        pattern = packageReferencePattern;
                     }
                     else if (Regex.IsMatch(projectContents, projectReferencePattern))
                     {
-                        existingReferencePattern = projectReferencePattern;
+                        pattern = projectReferencePattern;
                     }
 
-                    if (existingReferencePattern != null)
+                    if (pattern != null)
                     {
                         // Replace existing reference
                         projectContents = Regex.Replace(
                             projectContents,
-                            existingReferencePattern,
+                            pattern,
                             @$"<PackageReference Include=""{packageName}"" VersionOverride=""{packageVersion}"" />",
                             RegexOptions.IgnoreCase | RegexOptions.Singleline
                         );

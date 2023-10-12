@@ -55,15 +55,20 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty(Name = "notificationMessage", SupportsGet = true)]
         public string NotificationMessage { get; set; }
 
-        public async Task OnGetAsync(
+        public async Task<IActionResult> OnGetAsync(
             IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
             IEnumerable<string> status, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
             await _userProfileManager.SetUserEmailIfNullOrEmpty(User);
+            var userPreference = await _preferenceCache.GetUserPreferences(User);
+            var spaUrl = "https://spa." + Request.Host.ToString();
+            if (userPreference.UseBetaIndexPage == true)
+            {
+                return Redirect(spaUrl);
+            }
 
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any())
             {
-                UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User);
                 languages = userPreference.Language;
                 state = userPreference.State;
                 status = userPreference.Status;
@@ -73,6 +78,7 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 await RunGetRequest(search, languages, state, status, pageNo, pageSize, sortField);
             }
+            return Page();
         }
 
         public async Task<PartialViewResult> OnGetReviewsPartialAsync(
@@ -101,59 +107,14 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             var file = Upload.Files?.SingleOrDefault();
-            var review = await GetOrCreateReview(file, Upload.FilePath);
+            var review = await _reviewManager.GetOrCreateReview(file: file, filePath: Upload.FilePath, language: Upload.Language);
 
             if (review != null)
             {
-                APIRevisionListItemModel apiRevision = null;
-
-                if (file != null)
-                {
-                    using (var openReadStream = file.OpenReadStream())
-                    {
-                        apiRevision = await _apiRevisionsManager.AddAPIRevisionAsync(user: User, review: review, apiRevisionType: APIRevisionType.Manual,
-                            name: file.FileName, label: Label, fileStream: openReadStream, language: Upload.Language);
-                    }
-                }
-                else if (!string.IsNullOrEmpty(Upload.FilePath))
-                {
-                    apiRevision = await _apiRevisionsManager.AddAPIRevisionAsync(user: User, review: review, apiRevisionType: APIRevisionType.Manual,
-                               name: file.FileName, label: Label, fileStream: null, language: Upload.Language);
-                }
+                APIRevisionListItemModel apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(user: User, review: review, file: file, filePath: Upload.FilePath, language: Upload.Language, label: Label);
                 return RedirectToPage("Review", new { id = review.Id, revisionId = apiRevision.Id });
             }
             return RedirectToPage();
-        }
-
-        private async Task<ReviewListItemModel> GetOrCreateReview(IFormFile file, string filePath)
-        {
-            CodeFile codeFile = null;
-            ReviewListItemModel review = null;
-
-            using var memoryStream = new MemoryStream();
-            if (file != null)
-            {
-                using (var openReadStream = file.OpenReadStream())
-                {
-                    codeFile = await _codeFileManager.CreateCodeFileAsync(
-                        originalName: file?.FileName, fileStream: openReadStream, runAnalysis: Upload.RunAnalysis, memoryStream: memoryStream, language: Upload.Language);
-                }
-            }
-            else if (!string.IsNullOrEmpty(filePath))
-            {
-                codeFile = await _codeFileManager.CreateCodeFileAsync(
-                    originalName: Upload.FilePath, runAnalysis: Upload.RunAnalysis, memoryStream: memoryStream, language: Upload.Language);
-            }
-
-            if (codeFile != null)
-            {
-                review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language);
-                if (review == null)
-                {
-                    review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false);
-                }
-            }
-            return review;
         }
 
         private async Task RunGetRequest(IEnumerable<string> search, IEnumerable<string> languages,

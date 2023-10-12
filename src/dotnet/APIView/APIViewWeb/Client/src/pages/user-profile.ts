@@ -9,8 +9,8 @@ $(() => {
 
   $(document).on("submit", "form[data-post-update='userProfile']", e => {
     const form = <HTMLFormElement><any>$(e.target);
-    
     let serializedForm = form.serializeArray();
+
     $(form).find("input[type='submit']").attr('disabled', 'disabled');
     $.ajax({
       type: "POST",

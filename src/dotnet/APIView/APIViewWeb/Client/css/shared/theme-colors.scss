@@ -148,6 +148,7 @@
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary-color, 80%)};
     --shadow-color: rgba(#{$gray-100}, .15);
+    --shadow-color-primary: 0 0 0 0.15rem #{rgba($primary-color, 0.5)};
     --box-shadow: 0 .5rem 1rem #{rgba($gray-100, .15)};
     --box-shadow-sm: 0 .125rem .25rem #{rgba($gray-100, .075)};
     --box-shadow-lg: 0 1rem 3rem #{rgba($gray-100, .175)};

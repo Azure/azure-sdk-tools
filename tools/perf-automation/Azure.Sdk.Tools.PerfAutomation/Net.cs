@@ -85,7 +85,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         continue;
                     }
 
-                    // Replace existing reference
                     projectContents = Regex.Replace(
                         projectContents,
                         pattern,

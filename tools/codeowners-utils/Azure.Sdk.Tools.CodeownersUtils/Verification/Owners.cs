@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Verification
                 // If the owner is a team then it needs to have write permission and needs to be
                 // one of the teams in the teamUser data. This is the same for metadata lines or
                 // path lines in the CODEOWNERS file
-                if (owner.StartsWith(OrgConstants.AzureOrgTeamConstant))
+                if (owner.StartsWith(OrgConstants.AzureOrgTeamConstant, StringComparison.OrdinalIgnoreCase))
                 {
                     // Ensure the team has write permission
                     if (!ownerData.IsWriteTeam(owner))

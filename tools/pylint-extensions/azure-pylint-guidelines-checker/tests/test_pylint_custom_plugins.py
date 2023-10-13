@@ -3548,6 +3548,23 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
+    def test_docstring_correct_rtype(self):
+        node = astroid.extract_node(
+            """
+            def function_foo(self, x, *, z, y=None) -> str:
+                '''
+                :param x: x
+                :type x: str
+                :keyword str y: y
+                :keyword str z: z
+                :rtype: str
+                '''
+                print("hello")
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
     def test_docstring_class_type(self):
         node = astroid.extract_node(
             """

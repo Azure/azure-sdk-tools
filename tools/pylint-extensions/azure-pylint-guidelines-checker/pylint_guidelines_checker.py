@@ -1453,7 +1453,7 @@ class CheckDocstringParameters(BaseChecker):
 
         try:
             # check for incorrect type :class to prevent splitting
-            docstring = node.doc.replace(":class:", "CLASS")
+            docstring = node.doc.replace(":class:", "CLASS ")
             # not every method will have a docstring so don't crash here, just return
             docstring = docstring.split(":")
         except AttributeError:

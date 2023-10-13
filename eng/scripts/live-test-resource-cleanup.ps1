@@ -272,7 +272,7 @@ function FindOrCreateDeleteAfterTag {
     [object]$ResourceGroup
   )
 
-  if (!$ResourceGroup) {
+  if (!$DeleteNonCompliantGroups -or !$ResourceGroup) {
       return
   }
 
@@ -330,6 +330,9 @@ function HasDeleteLock([object]$ResourceGroup) {
 }
 
 function DeleteArmDeployments([object]$ResourceGroup) {
+  if (!$DeleteArmDeployments) {
+      return
+  }
   Write-Host "Deleting ARM deployments for group $($ResourceGroup.ResourceGroupName) as they may contain secrets. Deployed resources will not be affected."
   $null = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName | Remove-AzResourceGroupDeployment
 }
@@ -360,13 +363,11 @@ function DeleteOrUpdateResourceGroups() {
       }
       continue
     }
-    if (!$DeleteNonCompliantGroups -or (IsChildResource $rg) -or (HasDeleteLock $rg)) {
+    if ((IsChildResource $rg) -or (HasDeleteLock $rg)) {
       continue
     }
-    if (HasDoNotDeleteTag $rg -or (HasValidAliasInName $rg) -or (HasValidOwnerTag $rg)) {
-      if ($DeleteArmDeployments) {
-        $toClean += $rg
-      }
+    if ((HasDoNotDeleteTag $rg) -or (HasValidAliasInName $rg) -or (HasValidOwnerTag $rg)) {
+      $toClean += $rg
       continue
     }
     $toUpdate += $rg

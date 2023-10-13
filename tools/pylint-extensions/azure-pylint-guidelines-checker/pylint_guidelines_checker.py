@@ -9,7 +9,6 @@ Pylint custom checkers for SDK guidelines: C4717 - C4758
 
 import logging
 import astroid
-import re
 from pylint.checkers import BaseChecker
 from pylint.interfaces import IAstroidChecker
 logger = logging.getLogger(__name__)

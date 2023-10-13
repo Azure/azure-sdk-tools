@@ -998,28 +998,29 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public async Task<string> GetRecordingPath(string file, string assetsPath = null)
         {
-            var normalizedFileName = file.Replace('\\', '/');
-
             if (String.IsNullOrWhiteSpace(file))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"Recording file value of {file} is invalid. Try again with a populated filename.");
             }
 
-            var path = file;
+
+            // a properly escaped windows path should be encoded in the json file as \\\\
+            // handle that possiblility here.
+            var path = file.Replace("\\\\", "/").Replace('\\', '/');
 
             // if an assets.json is provided, we have a bit of work to do here.
             if (!string.IsNullOrWhiteSpace(assetsPath))
             {
                 var contextDirectory = await Store.GetPath(assetsPath);
 
-                path = Path.Join(contextDirectory, file);
+                path = Path.Join(contextDirectory, path);
             }
             // otherwise, it's a basic restore like we're used to
             else
             {
                 if (!Path.IsPathFullyQualified(file))
                 {
-                    path = Path.Join(ContextDirectory, file);
+                    path = Path.Join(ContextDirectory, path);
                 }
             }
 

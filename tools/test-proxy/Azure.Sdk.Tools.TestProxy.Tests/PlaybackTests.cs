@@ -47,6 +47,37 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public async void TestStartPlaybackSimpleDeliberateCrossPlat()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            // in json cannot contain escape character aside from a couple specific ones. 
+            // `\` must become `\\`, and `\\` must become `\\\\`.
+            var path = "Test.RecordEntries\\\\requests_with_continuation.json";
+            var expectedPath = "Test.RecordEntries/requests_with_continuation.json";
+            var body = $"{{\"x-recording-file\":\"{path}\"}}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
+
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.Start();
+
+            var value = httpContext.Response.Headers["x-recording-id"].ToString();
+            var recordLocation = httpContext.Response.Headers["x-base64-recording-file-location"].ToString();
+            Assert.False(String.IsNullOrEmpty(value));
+            Assert.False(String.IsNullOrEmpty(recordLocation));
+            var decodedRecordLocation = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(recordLocation));
+            Assert.EndsWith(expectedPath, decodedRecordLocation, StringComparison.OrdinalIgnoreCase);
+            Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(value));
+        }
+
+        [Fact]
         public async void TestStartPlaybackInMemory()
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());

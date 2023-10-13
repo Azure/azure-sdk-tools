@@ -88,7 +88,6 @@ namespace Azure.Sdk.Tools.TestProxy
         public async Task HandleRequest()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
-            DebugLogger.LogAdminRequestDetails(_logger, Request);
 
             await _recordingHandler.HandlePlaybackRequest(id, Request, Response);
         }

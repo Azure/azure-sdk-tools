@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
 
             var id = Guid.NewGuid().ToString();
-            DebugLogger.LogInformation($"RECORD STOP BEGIN {id}.");
+            DebugLogger.LogTrace($"RECORD STOP BEGIN {id}.");
 
             if (!RecordingSessions.TryRemove(sessionId, out var recordingSession))
             {
@@ -154,7 +154,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
             }
 
-            DebugLogger.LogInformation($"RECORD STOP END {id}.");
+            DebugLogger.LogTrace($"RECORD STOP END {id}.");
         }
 
         /// <summary>
@@ -368,7 +368,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public async Task StartPlaybackAsync(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted, string assetsPath = null)
         {
             var id = Guid.NewGuid().ToString();
-            DebugLogger.LogInformation($"PLAYBACK START BEGIN {id}.");
+            DebugLogger.LogTrace($"PLAYBACK START BEGIN {id}.");
 
             ModifiableRecordSession session;
 
@@ -413,7 +413,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // Write to the response
             await outgoingResponse.WriteAsync(json);
 
-            DebugLogger.LogInformation($"PLAYBACK START END {id}.");
+            DebugLogger.LogTrace($"PLAYBACK START END {id}.");
         }
 
         public void StopPlayback(string recordingId, bool purgeMemoryStore = false)

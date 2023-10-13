@@ -2,11 +2,9 @@
   "profiles": {
     "Azure.Sdk.Tools.TestProxy": {
       "commandName": "Project",
-      "commandLineArgs": "--storage-location=\"C:/repo/azure-sdk-for-java\"",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "Logging__LogLevel__Microsoft": "Debug",
-        "Logging__LogLevel__Default": "Debug"
+        "Logging__LogLevel__Microsoft": "Information"
       },
       "applicationUrl": "https://localhost:5001;http://localhost:5000"
     }

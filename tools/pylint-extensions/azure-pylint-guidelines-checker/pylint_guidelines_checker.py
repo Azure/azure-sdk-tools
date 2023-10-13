@@ -1235,7 +1235,7 @@ class CheckDocstringParameters(BaseChecker):
             "Docstring keyword arguments and keyword-only method arguments should match.",
         ),
         "C4759": (
-            '"%s" type formatted incorrectly. See details: '
+            '"%s" type formatted incorrectly. Do not use `:class` in docstring type. See details: '
             'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
             "docstring-type-do-not-use-class",
             "Docstring type is formatted incorrectly. Do not use `:class` in docstring type.",
@@ -1369,8 +1369,10 @@ class CheckDocstringParameters(BaseChecker):
             vararg_name = node.args.vararg
 
         try:
+            # check for incorrect type :class to prevent splitting
+            docstring = node.doc.replace(":class:", "CLASS ")
             # not every method will have a docstring so don't crash here, just return
-            docstring = node.doc.split(":")
+            docstring = docstring.split(":")
         except AttributeError:
             return
         
@@ -1409,11 +1411,11 @@ class CheckDocstringParameters(BaseChecker):
             )
 
         # check that all types are formatted correctly
-        add_keyword_type_warnings = [keyword for keyword, doc_type in docstring_keyword_args.items() if doc_type and ":class" in doc_type]
+        add_keyword_type_warnings = [keyword for keyword, doc_type in docstring_keyword_args.items() if doc_type and "CLASS" in doc_type]
         if len(add_keyword_type_warnings) > 0:
             self.add_message(msgid="docstring-type-do-not-use-class", args=(", ".join(add_keyword_type_warnings)), node=node, confidence=None)
 
-        add_docparams_type_warnings = [param for param, doc_type in docparams.items() if doc_type and ":class" in doc_type]
+        add_docparams_type_warnings = [param for param, doc_type in docparams.items() if doc_type and "CLASS" in doc_type]
         if len(add_docparams_type_warnings) > 0:
             self.add_message(msgid="docstring-type-do-not-use-class", args=(", ".join(add_docparams_type_warnings)), node=node, confidence=None)
 
@@ -1446,6 +1448,40 @@ class CheckDocstringParameters(BaseChecker):
         :param node: ast.FunctionDef
         :return: None
         """
+
+        # Check docstring documented returns/raises
+
+        try:
+            # check for incorrect type :class to prevent splitting
+            docstring = node.doc.replace(":class:", "CLASS")
+            # not every method will have a docstring so don't crash here, just return
+            docstring = docstring.split(":")
+        except AttributeError:
+            return
+    
+        has_return, has_rtype = False, False
+        for line in docstring:
+            if line.startswith("return"):
+                has_return = True
+            if line.startswith("rtype"):
+                has_rtype = True
+                try:
+                    if "CLASS" in docstring[docstring.index("rtype") + 1]:
+                            self.add_message(
+                                msgid="docstring-type-do-not-use-class", args="rtype", node=node, confidence=None
+                            )
+                except:
+                    pass
+            if line.startswith("raises"):
+                has_rtype = True
+                try:
+                    if "CLASS" in docstring[docstring.index("raises") + 1]:
+                            self.add_message(
+                                msgid="docstring-type-do-not-use-class", args="raises", node=node, confidence=None
+                            )
+                except:
+                    pass
+
         # Get decorators on the function
         function_decorators = node.decoratornames()
         try:
@@ -1456,26 +1492,6 @@ class CheckDocstringParameters(BaseChecker):
         except (astroid.exceptions.InferenceError, AttributeError):
             # this function doesn't return anything, just return
             return
-
-        try:
-            # not every method will have a docstring so don't crash here, just return
-            docstring = node.doc.split(":")
-        except AttributeError:
-            return
-
-        has_return, has_rtype = False, False
-        for line in docstring:
-            if line.startswith("return"):
-                has_return = True
-            if line.startswith("rtype"):
-                has_rtype = True
-                try:
-                    if line.split("rtype")[1] and ":class" in line.split("rtype")[1]:
-                            self.add_message(
-                                msgid="docstring-type-do-not-use-class", args=(line.split("rtype")[1]), node=node, confidence=None
-                            )
-                except:
-                    pass
 
         # If is an @property decorator, don't require :return: as it is repetitive
         if has_return is False and "builtins.property" not in function_decorators:

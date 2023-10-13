@@ -3548,6 +3548,52 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
+    def test_docstring_class_type(self):
+        node = astroid.extract_node(
+            """
+            def function_foo(self, x, y):
+                '''
+                :param x: x
+                :type x: :class:`azure.core.credentials.AccessToken`
+                :param y: y
+                :type y: str
+                :rtype: :class:`azure.core.credentials.AccessToken`
+                :raises: :class:`azure.core.credentials.AccessToken`
+                '''
+                print("hello")
+            """
+        )
+        with self.assertAddsMessages(
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-type-do-not-use-class",
+                    line=2,
+                    args="x",
+                    node=node,
+                    col_offset=0, 
+                    end_line=3, 
+                    end_col_offset=16
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-type-do-not-use-class",
+                    line=2,
+                    args="rtype",
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=16
+                ),
+                pylint.testutils.MessageTest(
+                    msg_id="docstring-type-do-not-use-class",
+                    line=2,
+                    args="raises",
+                    node=node,
+                    col_offset=0, 
+                    end_line=2, 
+                    end_col_offset=16
+                ),
+        ):
+            self.checker.visit_functiondef(node)
+
 
 class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed imports and allowing allowed imports."""

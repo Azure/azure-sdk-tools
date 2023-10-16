@@ -10,6 +10,7 @@ using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
+#if false
 namespace APIViewWeb.HostedServices
 {
     public class ReviewBackgroundHostedService : BackgroundService
@@ -72,7 +73,7 @@ namespace APIViewWeb.HostedServices
             {
                 try
                 {
-                    await _reviewManager.AutoArchiveReviews(archiveAfter);
+                   //  await _reviewManager.AutoArchiveReviews(archiveAfter);
                 }
                 catch(Exception ex)
                 {
@@ -88,3 +89,4 @@ namespace APIViewWeb.HostedServices
         }
     }
 }
+#endif

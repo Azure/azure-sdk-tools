@@ -75,9 +75,4 @@
     <ProjectReference Include="..\APIView\APIView.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Managers\Interfaces\" />
-    <Folder Include="Repositories\Interfaces\" />
-  </ItemGroup>
-
 </Project>

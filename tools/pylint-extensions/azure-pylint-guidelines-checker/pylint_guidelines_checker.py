@@ -1472,15 +1472,6 @@ class CheckDocstringParameters(BaseChecker):
                             )
                 except:
                     pass
-            if line.startswith("raises"):
-                has_rtype = True
-                try:
-                    if "CLASS" in docstring[docstring.index("raises") + 1]:
-                            self.add_message(
-                                msgid="docstring-type-do-not-use-class", args="raises", node=node, confidence=None
-                            )
-                except:
-                    pass
 
         # Get decorators on the function
         function_decorators = node.decoratornames()

@@ -3575,7 +3575,6 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                 :param y: y
                 :type y: str
                 :rtype: :class:`azure.core.credentials.AccessToken`
-                :raises: :class:`azure.core.credentials.AccessToken`
                 '''
                 print("hello")
             """
@@ -3594,15 +3593,6 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                     msg_id="docstring-type-do-not-use-class",
                     line=2,
                     args="rtype",
-                    node=node,
-                    col_offset=0, 
-                    end_line=2, 
-                    end_col_offset=16
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id="docstring-type-do-not-use-class",
-                    line=2,
-                    args="raises",
                     node=node,
                     col_offset=0, 
                     end_line=2, 

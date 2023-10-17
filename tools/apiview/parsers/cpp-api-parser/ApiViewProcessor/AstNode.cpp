@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 #include "AstNode.hpp"
+#include "CommentExtractor.hpp"
 #include "ProcessorImpl.hpp"
-#include <clang/AST/ASTConsumer.h>
+#include "clang/AST/ASTConsumer.h"
 #include <clang/AST/Comment.h>
 #include <clang/AST/CommentVisitor.h>
 #include <clang/AST/Expr.h>
@@ -38,156 +39,33 @@ std::string AccessSpecifierToString(AccessSpecifier specifier)
       "Unknown access specifier: " + std::to_string(static_cast<int>(specifier)));
 }
 
-class MyCommentVisitor : public comments::ConstCommentVisitor<MyCommentVisitor, std::string> {
-public:
-  std::string visitComment(const comments::Comment* comment)
-  {
-    std::string rv;
-    for (auto child = comment->child_begin(); child != comment->child_end(); child++)
-    {
-      rv += visit(*child);
-    }
-    return rv;
-  };
-  std::string visitFullComment(const comments::FullComment* decl)
-  {
-    std::string val;
-    for (auto child = decl->child_begin(); child != decl->child_end(); child++)
-    {
-      val += visit(*child);
-    }
-    return val;
-  };
-  std::string visitBlockCommandComment(const comments::BlockCommandComment* bc)
-  {
-    //    llvm::outs() << "Block command: "
-    //                 << comments::CommandTraits::getBuiltinCommandInfo(bc->getCommandID())->Name
-    //                 << "\n";
-    std::string rv;
-    if (comments::CommandTraits::getBuiltinCommandInfo(bc->getCommandID())->IsBriefCommand)
-    {
-      for (auto child = bc->child_begin(); child != bc->child_end(); child++)
-      {
-        rv += visit(*child);
-      }
-    }
-    return rv;
-  };
-  std::string visitHTMLStartTagComment(const comments::HTMLStartTagComment* startTag)
-  {
-    std::string rv = "<" + std::string(startTag->getTagName()) + " ";
-    auto attributeCount = startTag->getNumAttrs();
-    for (auto i = 0ul; i < attributeCount; i += 1)
-    {
-      auto& attribute{startTag->getAttr(i)};
-      rv += std::string(attribute.Name);
-      rv += "=";
-      rv += "'" + std::string(attribute.Value) + "'";
-    }
-    rv += ">";
-
-    return rv;
-  }
-  std::string visitHTMLEndTagComment(const comments::HTMLEndTagComment* startTag)
-  {
-    std::string rv = "</" + std::string(startTag->getTagName()) + ">";
-    return rv;
-  }
-  std::string visitVerbatimBlockComment(const comments::VerbatimBlockComment* vbc)
-  {
-    std::string rv;
-    for (auto child = vbc->child_begin(); child != vbc->child_end(); child++)
-    {
-      rv += visit(*child);
-    }
-    return rv;
-  }
-  std::string visitVerbatimBlockLineComment(const comments::VerbatimBlockLineComment* vbc)
-  {
-    std::string rv = std::string(vbc->getText());
-
-    for (auto child = vbc->child_begin(); child != vbc->child_end(); child++)
-    {
-      rv += visit(*child);
-    }
-    return rv;
-  }
-  std::string visitParagraphComment(const comments::ParagraphComment* decl)
-  {
-    std::string rv;
-    for (auto child = decl->child_begin(); child != decl->child_end(); child++)
-    {
-      rv += visit(*child) + "\n";
-    }
-    rv += "\n";
-
-    return rv;
-  };
-
-  std::string visitTextComment(const comments::TextComment* tc)
-  {
-    return static_cast<std::string>(tc->getText());
-  };
-
-  std::string visitHTMLTagComment(const comments::HTMLTagComment* tag)
-  {
-    tag->dump();
-    return "***HTML Tag Comment***";
-  }
-  std::string visitInlineContentComment(const comments::InlineContentComment* tag)
-  {
-    tag->dump();
-    return "*** Inline Content Comment ***";
-  }
-  std::string visitInlineCommandComment(const comments::InlineCommandComment* tag)
-  {
-    tag->dump();
-    return "*** Inline Command Comment ***";
-  }
-  std::string visitParamCommandComment(const comments::ParamCommandComment* tag)
-  {
-    tag->dump();
-    return "*** Param Command Comment ***";
-  }
-  std::string visitTParamCommandComment(const comments::TParamCommandComment* tag)
-  {
-    tag->dump();
-    return "*** TParam Command Comment ***";
-  }
-  std::string visitVerbatimLineComment(const comments::VerbatimLineComment* tag)
-  {
-    tag->dump();
-    return "*** Verbatim Line Comment ***";
-  }
-};
-
-std::string AstNode::GetCommentForNode(ASTContext& context, Decl const* decl)
+std::unique_ptr<AstDocumentation> AstNode::GetCommentForNode(ASTContext& context, Decl const* decl)
 {
-  auto fullComment{context.getCommentForDecl(decl, nullptr)};
-  if (fullComment)
+  auto comment{context.getCommentForDecl(decl, nullptr)};
+  if (comment)
   {
-    MyCommentVisitor commentVisitor;
-    return commentVisitor.visit(fullComment);
+    CommentExtractor extractor(context);
+    return extractor.Extract(comment);
   }
-  return "";
+  return nullptr;
 }
 
-std::string AstNode::GetCommentForNode(ASTContext& context, Decl const& decl)
+std::unique_ptr<AstDocumentation> AstNode::GetCommentForNode(ASTContext& context, Decl const& decl)
 {
-  auto fullComment{context.getCommentForDecl(&decl, nullptr)};
-  if (fullComment)
+  auto comment{context.getCommentForDecl(&decl, nullptr)};
+  if (comment)
   {
-    MyCommentVisitor commentVisitor;
-    return commentVisitor.visit(fullComment);
+    CommentExtractor extractor{context};
+    return extractor.Extract(comment);
   }
-  return "";
+  return nullptr;
 }
 
-AstNode::AstNode(const Decl*) {}
+AstNode::AstNode() {}
 
 struct AstTerminalNode : public AstNode
 {
-  AstTerminalNode() : AstNode(nullptr) {}
+  AstTerminalNode() : AstNode() {}
 
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
@@ -256,7 +134,20 @@ public:
     PrintingPolicy pp{LangOptions{}};
     pp.adjustForCPlusPlus();
     m_internalTypeName = QualType::getAsString(type.split(), pp);
+    if (m_internalTypeName == "uint8_t")
+    {
+      type->dump();
+    }
+    if ((type->getTypeClass() != Type::TypeClass::Builtin)
+        && (m_internalTypeName.find(':') == std::string::npos))
+    {
+      if (type->getTypeClass() == Type::TypeClass::Typedef)
+      {
+        type->dump();
+      }
+    }
   }
+
   AstType(QualType type, const ASTContext& context)
       : m_isBuiltinType{type->isBuiltinType()}, m_isConstQualified{type.isLocalConstQualified()},
         m_isVolatile{type.isLocalVolatileQualified()}, m_hasQualifiers{type.hasLocalQualifiers()},
@@ -264,10 +155,22 @@ public:
         m_isRValueReference(type.getTypePtr()->isRValueReferenceType()),
         m_isPointer{type.getTypePtr()->isPointerType()}
   {
-
     PrintingPolicy pp{LangOptions{}};
     pp.adjustForCPlusPlus();
     m_internalTypeName = QualType::getAsString(type.split(), pp);
+    if (m_internalTypeName == "uint8_t")
+    {
+      type->dump();
+    }
+    if ((type->getTypeClass() != Type::TypeClass::Builtin)
+        && (m_internalTypeName.find(':') == std::string::npos))
+    {
+      if (type->getTypeClass() == Type::TypeClass::Typedef)
+      {
+        type->dump();
+      }
+    }
+
     // Walk the type looking for an inner type which appears to be a reasonable inner type.
     //    if (typePtr->getTypeClass() != Type::Elaborated && typePtr->getTypeClass() !=
     //    Type::Builtin)
@@ -963,7 +866,7 @@ std::unique_ptr<AstExpr> AstExpr::Create(Stmt const* statement, ASTContext& cont
 class AstAttribute : public AstNode {
 public:
   AstAttribute(clang::Attr const* attribute)
-      : AstNode(nullptr), m_syntax{attribute->getSyntax()}, m_attributeKind{attribute->getKind()},
+      : AstNode(), m_syntax{attribute->getSyntax()}, m_attributeKind{attribute->getKind()},
         m_attributeName{attribute->getSpelling()}
   {
     switch (m_attributeKind)
@@ -1106,7 +1009,7 @@ AstNamedNode::AstNamedNode(
     NamedDecl const* namedDecl,
     AzureClassesDatabase* const database,
     std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-    : AstNode(namedDecl), m_namespace{AstNode::GetNamespaceForDecl(namedDecl)},
+    : AstNode(), m_namespace{AstNode::GetNamespaceForDecl(namedDecl)},
       m_name{namedDecl->getNameAsString()}, m_classDatabase(database),
       m_navigationId{namedDecl->getQualifiedNameAsString()},
       m_nodeDocumentation{AstNode::GetCommentForNode(namedDecl->getASTContext(), namedDecl)},
@@ -1144,6 +1047,34 @@ void AstNamedNode::DumpAttributes(AstDumper* dumper, DumpNodeOptions const& opti
           node->DumpNode(dumper, innerOptions);
         },
         [](AstDumper* dumper, DumpNodeOptions const& options) { dumper->Newline(); });
+  }
+}
+void AstNamedNode::DumpDocumentation(AstDumper* dumper, DumpNodeOptions const& options) const
+{
+  if (m_nodeDocumentation)
+  {
+    dumper->AddDocumentRangeStart();
+    if (options.NeedsLeftAlign)
+    {
+      dumper->LeftAlign();
+    }
+    dumper->InsertComment("/**");
+    {
+      DumpNodeOptions innerOptions{options};
+      innerOptions.NeedsLeftAlign = true;
+      innerOptions.NeedsLeadingNewline = true;
+      innerOptions.NeedsTrailingNewline = false;
+      m_nodeDocumentation->DumpNode(dumper, innerOptions);
+    }
+    dumper->Newline(); // We need to insert a newline here to ensure that the comment is properly
+                       // closed.
+    dumper->LeftAlign();
+    dumper->InsertComment(" */");
+    if (options.NeedsTrailingNewline)
+    {
+      dumper->Newline();
+    }
+    dumper->AddDocumentRangeEnd();
   }
 }
 
@@ -1355,6 +1286,10 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
+    if (dumpOptions.NeedsDocumentation)
+    {
+      DumpDocumentation(dumper, dumpOptions);
+    }
     DumpAttributes(dumper, dumpOptions);
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -1736,6 +1671,10 @@ public:
     {
       dumper->SetNamespace(Namespace());
     }
+    if (dumpOptions.NeedsDocumentation)
+    {
+      DumpDocumentation(dumper, dumpOptions);
+    }
     if (dumpOptions.NeedsLeftAlign)
     {
       dumper->LeftAlign();
@@ -1890,6 +1829,10 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
+    if (dumpOptions.NeedsDocumentation)
+    {
+      DumpDocumentation(dumper, dumpOptions);
+    }
     if (dumpOptions.NeedsLeftAlign)
     {
       dumper->LeftAlign();
@@ -1905,6 +1848,8 @@ public:
       innerOptions.NeedsLeftAlign = false;
       innerOptions.NeedsTrailingNewline = false;
       innerOptions.NeedsTrailingSemi = false;
+      // We already dumped the documentation for this node, we don't need to do it again.
+      innerOptions.NeedsDocumentation = false;
       AstFunction::DumpNode(dumper, innerOptions);
     }
     if (m_isConst)
@@ -1985,6 +1930,10 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
+    if (dumpOptions.NeedsDocumentation)
+    {
+      DumpDocumentation(dumper, dumpOptions);
+    }
     if (dumpOptions.NeedsLeftAlign)
     {
       dumper->LeftAlign();
@@ -2000,6 +1949,7 @@ public:
       innerOptions.NeedsLeftAlign = false;
       innerOptions.NeedsTrailingNewline = false;
       innerOptions.NeedsTrailingSemi = false;
+      innerOptions.NeedsDocumentation = false;
       AstMethod::DumpNode(dumper, innerOptions);
     }
     if (m_isDefault)
@@ -2073,6 +2023,10 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
+    if (dumpOptions.NeedsDocumentation)
+    {
+      DumpDocumentation(dumper, dumpOptions);
+    }
     DumpAttributes(dumper, dumpOptions);
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -2084,6 +2038,7 @@ public:
       innerOptions.NeedsLeftAlign = false;
       innerOptions.NeedsTrailingNewline = false;
       innerOptions.NeedsTrailingSemi = false;
+      innerOptions.NeedsDocumentation = false;
       AstMethod::DumpNode(dumper, innerOptions);
     }
     if (m_isDefault)
@@ -2116,10 +2071,10 @@ class AstAccessSpec : public AstNode {
 
 public:
   AstAccessSpec(clang::AccessSpecDecl const* accessSpec, AzureClassesDatabase* const)
-      : AstNode(accessSpec), m_accessSpecifier{accessSpec->getAccess()}
+      : AstNode(), m_accessSpecifier{accessSpec->getAccess()}
   {
   }
-  AstAccessSpec(AccessSpecifier specifier) : AstNode(nullptr), m_accessSpecifier{specifier} {}
+  AstAccessSpec(AccessSpecifier specifier) : AstNode(), m_accessSpecifier{specifier} {}
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     // We want to left-indent the "public:", "private:" and "protected" items so they stick
@@ -2214,11 +2169,15 @@ public:
 
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
-    DumpAttributes(dumper, dumpOptions);
     if (!Namespace().empty())
     {
       dumper->SetNamespace(Namespace());
     }
+    if (dumpOptions.NeedsDocumentation)
+    {
+      DumpDocumentation(dumper, dumpOptions);
+    }
+    DumpAttributes(dumper, dumpOptions);
 
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -2272,7 +2231,6 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
-    DumpAttributes(dumper, dumpOptions);
     if (!Namespace().empty())
     {
       if (dumpOptions.NeedsNamespaceAdjustment)
@@ -2280,6 +2238,12 @@ public:
         dumper->SetNamespace(Namespace());
       }
     }
+
+    if (dumpOptions.NeedsDocumentation)
+    {
+      DumpDocumentation(dumper, dumpOptions);
+    }
+    DumpAttributes(dumper, dumpOptions);
 
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -2330,7 +2294,6 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
-    DumpAttributes(dumper, dumpOptions);
     if (!Namespace().empty())
     {
       if (dumpOptions.NeedsNamespaceAdjustment)
@@ -2338,6 +2301,12 @@ public:
         dumper->SetNamespace(Namespace());
       }
     }
+
+    if (dumpOptions.NeedsDocumentation)
+    {
+      DumpDocumentation(dumper, dumpOptions);
+    }
+    DumpAttributes(dumper, dumpOptions);
 
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -2498,7 +2467,7 @@ public:
       FriendDecl const* friendDecl,
       AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNode(friendDecl)
+      : AstNode()
   {
     if (friendDecl->getFriendType())
     {
@@ -2551,9 +2520,8 @@ public:
       UsingDirectiveDecl const* usingDirective,
       AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNode(usingDirective),
-        m_namedNamespace{
-            usingDirective->getNominatedNamespaceAsWritten()->getQualifiedNameAsString()}
+      : AstNode(), m_namedNamespace{
+                       usingDirective->getNominatedNamespaceAsWritten()->getQualifiedNameAsString()}
   {
     azureClassesDatabase->CreateApiViewMessage(
         ApiViewMessages::UsingDirectiveFound, m_namedNamespace);
@@ -2641,6 +2609,10 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
+    if (dumpOptions.NeedsDocumentation)
+    {
+      DumpDocumentation(dumper, dumpOptions);
+    }
     DumpAttributes(dumper, dumpOptions);
     dumper->LeftAlign();
     dumper->InsertMemberName(Name(), m_navigationId);
@@ -2937,7 +2909,6 @@ AstClassLike::AstClassLike(
 
 void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
 {
-  DumpAttributes(dumper, dumpOptions);
   if (!Namespace().empty())
   {
     if (dumpOptions.NeedsNamespaceAdjustment)
@@ -2945,6 +2916,11 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
       dumper->SetNamespace(Namespace());
     }
   }
+  if (dumpOptions.NeedsDocumentation)
+  {
+    DumpDocumentation(dumper, dumpOptions);
+  }
+  DumpAttributes(dumper, dumpOptions);
 
   // If we're a templated class, don't insert the extra newline before the class
   // definition.
@@ -3034,6 +3010,10 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) co
       dumper->SetNamespace(Namespace());
     }
   }
+  if (dumpOptions.NeedsDocumentation)
+  {
+    DumpDocumentation(dumper, dumpOptions);
+  }
   DumpAttributes(dumper, dumpOptions);
   if (dumpOptions.NeedsLeftAlign)
   {
@@ -3103,6 +3083,10 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) co
 
 void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
 {
+  if (dumpOptions.NeedsDocumentation)
+  {
+    DumpDocumentation(dumper, dumpOptions);
+  }
   DumpAttributes(dumper, dumpOptions);
   if (dumpOptions.NeedsLeftAlign)
   {

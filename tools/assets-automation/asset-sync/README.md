@@ -596,7 +596,7 @@ So to locally repro this experience:
 
 ### A note regarding cross-plat usage
 
-The test-proxy utilizes the the `git` of the system running it to retrieve recordings from the assets repository. This means that when loading a recording, the running file system **matters**. When passing a recording path to the test-proxy, ensure that from client side, capitalization is **consistent** across platforms. Let's work through an example.
+The test-proxy utilizes the `git` of the system running it to retrieve recordings from the assets repository. This means that when loading a recording, the running file system **matters**. When passing a recording path to the test-proxy, ensure that from client side, capitalization is **consistent** across platforms. Let's work through an example.
 
 A test is recorded on `windows`. It writes to relative recording path `a/path/to/recording.json`. On `windows` and `mac`, if a user attempts to start playback for `a/path/To/recording.json`, this would **succeed** at the attempt to load the recording from disk. This is due to the act that the OS is not case-sensitive. On a **linux** system, attempting to load `a/path/To/recording.json` will **fail**.
 

@@ -55,26 +55,32 @@ export function printBanner() {
 }
 
 const usageText = `
-Usage: tsp-client [options]
+Usage: tsp-client <command> [options]
 
-Generate from a tsp file using --mainFile or use tsp-location.yaml inside 
-the outputDir.
+Use one of the supported commands to get started generating clients from a TypeSpec project.
+This tool will default to using your current working directory to generate clients in and will
+use it to look for relevant configuration files. To specify a different directory, use
+the -o or --output-dir option.
 
-Positionals:
+Commands:
   init        Initialize the SDK project folder from a tspconfig.yaml   [string]
-  sync        Sync tsp files using tsp-location.yaml                    [string]
-  generate    Generate from a tsp project                               [string]
-  update      Sync and generate from a tsp project                      [string]
+  sync        Sync TypeSpec project specified in tsp-location.yaml      [string]
+  generate    Generate from a TypeSpec project                          [string]
+  update      Sync and generate from a TypeSpec project                 [string]
 
 Options:
-  -d, --debug      Enable debug logging                                [boolean]
-  -e, --emitter    Which language emitter to use             [required] [string]
-                  [choices: "csharp", "java", "javascript", "python", "openapi"]
-  -m, --mainFile   The url of the main tsp file to generate from        [string]
-      --noCleanup  Don't clean up the temp directory after generation  [boolean]
-  -h, --help       Show help                                           [boolean]
-  -v, --version    Show version number                                 [boolean]
-  -o, --outputDir  The output directory for the emitter
+  -c, --tsp-config          The tspconfig.yaml file to use                      [string]
+  --commit                  Commit to be used for project init or update        [string]
+  -d, --debug               Enable debug logging                                [boolean]
+  --emitter-options         The options to pass to the emitter                  [string]
+  -h, --help                Show help                                           [boolean]
+  --local-spec-repo         Path to local repository with the TypeSpec project  [string]
+  --save-inputs             Don't clean up the temp directory after generation  [boolean]
+  --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
+  -o, --output-dir          The output directory for the generated files        [string]
+  --repo                    Repository where the project is defined for init 
+                            or update                                           [string]
+  -v, --version             Show version number                                 [boolean]
 `;
 export function printUsage() {
   Logger(usageText);

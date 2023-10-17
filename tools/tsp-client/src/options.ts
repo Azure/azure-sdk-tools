@@ -1,7 +1,6 @@
 import { parseArgs } from "node:util";
 import { Logger, printUsage, printVersion } from "./log.js";
 import * as path from "node:path";
-import { knownLanguages, languageAliases } from "./languageSettings.js";
 import { doesFileExist } from "./network.js";
 import PromptSync from "prompt-sync";
 
@@ -9,8 +8,6 @@ export interface Options {
   debug: boolean;
   command: string;
   tspConfig?: string;
-  emitter?: string;
-  mainFile?: string;
   outputDir: string;
   noCleanup: boolean;
   skipSyncAndGenerate: boolean;
@@ -37,29 +34,19 @@ export async function getOptions(): Promise<Options> {
         type: "boolean",
         short: "d",
       },
-      emitter: {
-        type: "string",
-        short: "e",
-      },
-      mainFile: {
-        type: "string",
-        short: "m",
-      },
-      outputDir: {
+      ["output-dir"]: {
         type: "string",
         short: "o",
       },
-      tspConfig: {
+      ["tsp-config"]: {
         type: "string",
         short: "c",
       },
       commit: {
         type: "string",
-        short: "C",
       },
       repo: {
         type: "string",
-        short: "R",
       },
       ["emitter-options"]: {
         type: "string",
@@ -85,19 +72,6 @@ export async function getOptions(): Promise<Options> {
     process.exit(0);
   }
 
-  if (values.emitter) {
-    let emitter = values.emitter.toLowerCase();
-    if (emitter in languageAliases) {
-      emitter = languageAliases[emitter]!;
-    }
-    if (!(knownLanguages as readonly string[]).includes(emitter)) {
-      Logger.error(`Unknown language ${values.emitter}`);
-      Logger.error(`Valid languages are: ${knownLanguages.join(", ")}`);
-      printUsage();
-      process.exit(1);
-    }
-  }
-
   if (positionals.length === 0) {
     Logger.error("Command is required");
     printUsage();
@@ -112,12 +86,12 @@ export async function getOptions(): Promise<Options> {
 
   let isUrl = false;
   if (positionals[0] === "init") {
-    if (!values.tspConfig) {
+    if (!values["tsp-config"]) {
       Logger.error("tspConfig is required");
       printUsage();
       process.exit(1);
     }
-    if (await doesFileExist(values.tspConfig)) {
+    if (await doesFileExist(values["tsp-config"])) {
       isUrl = true;
     }
     if (!isUrl) {
@@ -130,8 +104,8 @@ export async function getOptions(): Promise<Options> {
   }
   // By default, assume that the command is run from the output directory
   let outputDir = ".";
-  if (values.outputDir) {
-    outputDir = values.outputDir;
+  if (values["output-dir"]) {
+    outputDir = values["output-dir"];
   }
   outputDir = path.resolve(path.normalize(outputDir));
 
@@ -153,9 +127,7 @@ export async function getOptions(): Promise<Options> {
   return {
     debug: values.debug ?? false,
     command: positionals[0],
-    tspConfig: values.tspConfig,
-    emitter: values.emitter,
-    mainFile: values.mainFile,
+    tspConfig: values["tsp-config"],
     noCleanup: values["save-inputs"] ?? false,
     skipSyncAndGenerate: values["skip-sync-and-generate"] ?? false,
     outputDir: outputDir,

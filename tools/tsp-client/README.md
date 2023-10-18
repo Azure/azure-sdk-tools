@@ -52,7 +52,7 @@ Initializing and generating a new client from a `tspconfig.yaml`:
 > NOTE: The `init` command must be run from the root of the repository.
 
 ```
-tsp-client init -c https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/cognitiveservices/OpenAI.Inference/tspconfig.yaml
+tsp-client init -c https://github.com/Azure/azure-rest-api-specs/blob/3bae4e510063fbd777b88ea5eee03c41644bc9da/specification/cognitiveservices/ContentSafety/tspconfig.yaml
 ```
 
 Generating in a directory that contains a `tsp-location.yaml`:

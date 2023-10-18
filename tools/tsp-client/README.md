@@ -11,7 +11,7 @@ tsp-client <command> [options]
 Use one of the supported commands to get started generating clients from a TypeSpec project.
 This tool will default to using your current working directory to generate clients in and will
 use it to look for relevant configuration files. To specify a different directory, use
-the `-o` or `--output-dir option`.
+the `-o` or `--output-dir` option.
 
 ### init
 Initialize the SDK project folder from a tspconfig.yaml. When using this command pass in a path to a local or remote tspconfig.yaml, using the `-c` or `--tsp-config` flag.

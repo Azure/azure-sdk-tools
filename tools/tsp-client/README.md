@@ -13,12 +13,23 @@ tsp-client <command> [options]
 ```
 
 ## Commands:
-  init        Initialize the SDK project folder from a tspconfig.yaml   [string]
-  sync        Sync TypeSpec project specified in tsp-location.yaml      [string]
-  generate    Generate from a TypeSpec project                          [string]
-  update      Sync and generate from a TypeSpec project                 [string]
+
+### init
+Initialize the SDK project folder from a tspconfig.yaml. When using this command pass in a path to a local or remote tspconfig.yaml, using the `-c` or `--tsp-config` flag.
+
+### sync
+Sync a TypeSpec project with the parameters specified in tsp-location.yaml.
+
+By default the `sync` command will look for a tsp-location.yaml to get the project details and sync them to a temporary directory called `TempTypeSpecFiles`. Alternately, you can pass in the `--local-spec-repo` flag with the path to your local TypeSpec project to pull those files into your temporary directory.
+
+### generate
+Generate a client library from a TypeSpec project. The `generate` command relies on an `emitter-package.json` file checked into your repository at the following path: `<repo root>/eng/emitter-package.json` to install project dependencies and get the appropriate emitter package.
+
+### update
+Sync and generate client libraries from a TypeSpec project. The `update` command will look for a `tsp-location.yaml` file in your current directory to sync a TypeSpec project and generate a client library.
 
 ## Options:
+```
   -c, --tsp-config          The tspconfig.yaml file to use                      [string]
   --commit                  Commit to be used for project init or update        [string]
   -d, --debug               Enable debug logging                                [boolean]
@@ -27,10 +38,12 @@ tsp-client <command> [options]
   --local-spec-repo         Path to local repository with the TypeSpec project  [string]
   --save-inputs             Don't clean up the temp directory after generation  [boolean]
   --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
-  -o, --output-dir          The output directory for the generated files        [string]
+  -o, --output-dir          Specify an alternate output directory for the 
+                            generated files. Default is your local directory.   [string]
   --repo                    Repository where the project is defined for init 
                             or update                                           [string]
   -v, --version             Show version number                                 [boolean]
+```
 
 ## Examples
 

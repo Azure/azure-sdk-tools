@@ -30,7 +30,7 @@ parameters:
       - DisplayName: AzureCloud Playground - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-playground)
-        AdditionalParameters: "-DeleteNonCompliantGroups"
+        AdditionalParameters: "-DeleteNonCompliantGroups -MaxLifespanDeleteAfterHours 720"
       - DisplayName: Dogfood Translation - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-translation-int-test-resources)

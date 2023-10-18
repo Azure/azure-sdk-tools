@@ -158,6 +158,9 @@ stages:
 - ${{ if ne(length(parameters.TestMatrix), 0) }}:
   - stage: Test
     dependsOn: Build
+    variables:
+      autorestRepositoryPath: $(Build.SourcesDirectory)/autorest
+      toolsRepositoryPath: $(Build.SourcesDirectory)/azure-sdk-tools
     jobs:
     - job: Test
       strategy:
@@ -168,6 +171,8 @@ stages:
       - checkout: self
         # Use a predictable path for the autorest repo
         path: s/autorest
+
+      - checkout: azure-sdk-tools
         
       - download: current
         artifact: build_artifacts

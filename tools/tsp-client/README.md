@@ -16,16 +16,16 @@ the `-o` or `--output-dir` option.
 ### init
 Initialize the SDK project folder from a tspconfig.yaml. When using this command pass in a path to a local or remote tspconfig.yaml, using the `-c` or `--tsp-config` flag.
 
+### update
+Sync and generate client libraries from a TypeSpec project. The `update` command will look for a `tsp-location.yaml` file in your current directory to sync a TypeSpec project and generate a client library.
+
 ### sync
 Sync a TypeSpec project with the parameters specified in tsp-location.yaml.
 
 By default the `sync` command will look for a tsp-location.yaml to get the project details and sync them to a temporary directory called `TempTypeSpecFiles`. Alternately, you can pass in the `--local-spec-repo` flag with the path to your local TypeSpec project to pull those files into your temporary directory.
 
 ### generate
-Generate a client library from a TypeSpec project. The `generate` command relies on an `emitter-package.json` file checked into your repository at the following path: `<repo root>/eng/emitter-package.json` to install project dependencies and get the appropriate emitter package.
-
-### update
-Sync and generate client libraries from a TypeSpec project. The `update` command will look for a `tsp-location.yaml` file in your current directory to sync a TypeSpec project and generate a client library.
+Generate a client library from a TypeSpec project. The `generate` command should be run after the `sync` command. `generate` relies on the existence of the `TempTypeSpecFiles` directory created by the `sync` command and on an `emitter-package.json` file checked into your repository at the following path: `<repo root>/eng/emitter-package.json`. The `emitter-package.json` file is used to install project dependencies and get the appropriate emitter package.
 
 ## Options:
 ```

@@ -337,8 +337,12 @@ function DeleteArmDeployments([object]$ResourceGroup) {
   if (!$DeleteArmDeployments) {
       return
   }
-  Write-Host "Deleting ARM deployments for group $($ResourceGroup.ResourceGroupName) as they may contain secrets. Deployed resources will not be affected."
-  $null = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName | Remove-AzResourceGroupDeployment
+  $toDelete = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName | Where-Object { $_.Outputs.Count }
+  if (!$toDelete.Count) {
+    return
+  }
+  Write-Host "Deleting $($toDelete.Count) ARM deployments for group $($ResourceGroup.ResourceGroupName) as they may contain output secrets. Deployed resources will not be affected."
+  $null = $toDelete | Remove-AzResourceGroupDeployment
 }
 
 function DeleteOrUpdateResourceGroups() {

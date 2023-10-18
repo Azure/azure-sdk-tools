@@ -2,6 +2,11 @@
 
 A simple command line tool for generating TypeSpec clients.
 
+### Installation
+```
+npm install @azure-tools/typespec-client-generator-cli
+```
+
 ### Usage
 ```
 tsp-client <command> [options]

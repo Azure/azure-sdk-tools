@@ -114,7 +114,7 @@ stages:
           --buildNumber "$(Build.BuildNumber)"
           --output "$(Build.ArtifactStagingDirectory)"
         displayName: 'Run build script'
-        name: build_script
+        name: ci_build
         workingDirectory: $(autorestRepositoryPath)
 
     - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
@@ -381,17 +381,47 @@ stages:
     displayName: Create PR
     dependsOn: 
     - Generate
+    variables:
+      generateJobResult: $[dependencies.Generate.result]
+      generatorVersion: $[stageDependencies.Build.Build.outputs['ci_build.generatorVersion']]
     steps:
     - checkout: self
     - checkout: azure-sdk-tools
 
-    - task: PowerShell@2
-      displayName: Get source description
-      inputs:
-        pwsh: true
-        filePath: $(toolsRepositoryPath)/eng/common/scripts/Get-BuildSourceDescription.ps1
-        arguments: >
-          -Variable 'BuildSourceDescription'
+    - pwsh: |
+        $generateJobResult = '$(generateJobResult)'
+        $generatorVersion = '$(generatorVersion)'
+        $repoUrl = '$(Build.Repository.Uri)'
+        $sourceBranch = '$(Build.SourceBranch)'
+        $buildNumber = '$(Build.SourceBranch)'
+        $queuedBy = '$(Build.SourceBranch)'
+        $preRelease = '${{ parameters.BuildPrereleaseVersion }}' -eq 'true'
+
+        $source = "[$sourceBranch]($repoUrl/tree/$sourceBranch)" 
+        if ($sourceBranch -match "^refs/heads/(.+)$") {
+            $source = "branch: [$($Matches[1])]($repoUrl/tree/$sourceBranch)"
+        } elseif ($sourceBranch -match "^refs/tags/(.+)$") {
+            $source = "tag: [$($Matches[1])]($repoUrl/tree/$sourceBranch)"
+        } elseif ($sourceBranch -match "^refs/pull/(\d+)/(head|merge)$") {
+            $source = "pull request: $repoUrl/pull/$($Matches[1])"
+        }
+
+        $prBody = "Triggered from $source"
+
+        $prTitle = $preRelease `
+          ? "Update autorest version to prerelease $generatorVersion" `
+          : "Update autorest version to $generatorVersion"
+
+        if ($generateJobResult -ne 'Succeeded') {
+          $prTitle = "Failed: $prTitle"
+        }
+
+        Write-Host "Setting variable 'PullRequestTitle' to '$prTitle'"
+        Write-Host "##vso[task.setvariable variable=PullRequestTitle]$prTitle"
+
+        Write-Host "Setting variable 'PullRequestBody' to '$prBody'"
+        Write-Host "##vso[task.setvariable variable=PullRequestBody]$prBody"
+      displayName: Get PR title and body
 
     - task: PowerShell@2
       displayName: Create pull request
@@ -405,7 +435,7 @@ stages:
           -PROwner 'azure-sdk'
           -PRBranch '$(branchName)'
           -AuthToken '$(azuresdk-github-pat)'
-          -PRTitle 'Autorest Regen Preview alpha-$(Build.BuildNumber) by $(Build.QueuedBy)'
-          -PRBody 'Triggered from $(BuildSourceDescription)'
+          -PRTitle '$(PullRequestTitle)'
+          -PRBody '$(PullRequestBody)'
           -OpenAsDraft $true
           -PRLabels 'Do Not Merge'

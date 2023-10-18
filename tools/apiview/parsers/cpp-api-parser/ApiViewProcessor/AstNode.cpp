@@ -75,6 +75,45 @@ struct AstTerminalNode : public AstNode
 
 class AstType {
 
+public:
+  AstType(QualType type)
+      : m_isBuiltinType{type->isBuiltinType()}, m_isConstQualified{type.isLocalConstQualified()},
+        m_isVolatile{type.isLocalVolatileQualified()}, m_hasQualifiers{type.hasLocalQualifiers()},
+        m_isReference{type.getTypePtr()->isReferenceType()},
+        m_isRValueReference(type.getTypePtr()->isRValueReferenceType()),
+        m_isPointer{type.getTypePtr()->isPointerType()}
+  {
+    PrintingPolicy pp{LangOptions{}};
+    pp.adjustForCPlusPlus();
+    m_internalTypeName = QualType::getAsString(type.split(), pp);
+    m_isInGlobalNamespace = IsTypeInGlobalNamespace(type.getTypePtr());
+  }
+
+  AstType(QualType type, const ASTContext& context)
+      : m_isBuiltinType{type->isBuiltinType()}, m_isConstQualified{type.isLocalConstQualified()},
+        m_isVolatile{type.isLocalVolatileQualified()}, m_hasQualifiers{type.hasLocalQualifiers()},
+        m_isReference{type.getTypePtr()->isReferenceType()},
+        m_isRValueReference(type.getTypePtr()->isRValueReferenceType()),
+        m_isPointer{type.getTypePtr()->isPointerType()}
+  {
+    PrintingPolicy pp{LangOptions{}};
+    pp.adjustForCPlusPlus();
+    m_internalTypeName = QualType::getAsString(type.split(), pp);
+    m_isInGlobalNamespace = IsTypeInGlobalNamespace(type.getTypePtr());
+
+    // Walk the type looking for an inner type which appears to be a reasonable inner type.
+    //    if (typePtr->getTypeClass() != Type::Elaborated && typePtr->getTypeClass() !=
+    //    Type::Builtin)
+    //    {
+    //      AstTypeVisitor visitTypes;
+    //      m_underlyingType = visitTypes.Visit(typePtr);
+    //    }
+  }
+  void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const;
+
+  bool IsTypeInGlobalNamespace() const { return m_isInGlobalNamespace; }
+
+private:
   struct AstTypeVisitor : public TypeVisitor<AstTypeVisitor, std::unique_ptr<AstType>>
   {
     std::unique_ptr<AstType> VisitQualType(QualType qt)
@@ -121,65 +160,129 @@ class AstType {
   bool m_isReference;
   bool m_isRValueReference;
   bool m_isPointer;
+  bool m_isInGlobalNamespace; /// True if the type references a typedef in the global namespace.
   std::unique_ptr<AstType> m_underlyingType;
 
-public:
-  AstType(QualType type)
-      : m_isBuiltinType{type->isBuiltinType()}, m_isConstQualified{type.isLocalConstQualified()},
-        m_isVolatile{type.isLocalVolatileQualified()}, m_hasQualifiers{type.hasLocalQualifiers()},
-        m_isReference{type.getTypePtr()->isReferenceType()},
-        m_isRValueReference(type.getTypePtr()->isRValueReferenceType()),
-        m_isPointer{type.getTypePtr()->isPointerType()}
+  static bool IsTypeInGlobalNamespace(Type const* typePtr)
   {
-    PrintingPolicy pp{LangOptions{}};
-    pp.adjustForCPlusPlus();
-    m_internalTypeName = QualType::getAsString(type.split(), pp);
-    if (m_internalTypeName == "uint8_t")
+    struct IsTypeInGlobalNamespaceVisitor : public TypeVisitor<IsTypeInGlobalNamespaceVisitor, bool>
     {
-      type->dump();
-    }
-    if ((type->getTypeClass() != Type::TypeClass::Builtin)
-        && (m_internalTypeName.find(':') == std::string::npos))
-    {
-      if (type->getTypeClass() == Type::TypeClass::Typedef)
+      IsTypeInGlobalNamespaceVisitor(){};
+      bool VisitTypedefType(TypedefType const* typeDef)
       {
-        type->dump();
-      }
-    }
-  }
+        clang::PrintingPolicy pp{LangOptions{}};
+        pp.adjustForCPlusPlus();
 
-  AstType(QualType type, const ASTContext& context)
-      : m_isBuiltinType{type->isBuiltinType()}, m_isConstQualified{type.isLocalConstQualified()},
-        m_isVolatile{type.isLocalVolatileQualified()}, m_hasQualifiers{type.hasLocalQualifiers()},
-        m_isReference{type.getTypePtr()->isReferenceType()},
-        m_isRValueReference(type.getTypePtr()->isRValueReferenceType()),
-        m_isPointer{type.getTypePtr()->isPointerType()}
-  {
-    PrintingPolicy pp{LangOptions{}};
-    pp.adjustForCPlusPlus();
-    m_internalTypeName = QualType::getAsString(type.split(), pp);
-    if (m_internalTypeName == "uint8_t")
-    {
-      type->dump();
-    }
-    if ((type->getTypeClass() != Type::TypeClass::Builtin)
-        && (m_internalTypeName.find(':') == std::string::npos))
-    {
-      if (type->getTypeClass() == Type::TypeClass::Typedef)
+        auto typeName{QualType::getAsString(QualType(typeDef, 0).split(), pp)};
+        if (typeName.find(':') == std::string::npos)
+        {
+          // size_t is valid in both the global namespace and std namespace.
+          if (typeName == "size_t")
+          {
+            return true;
+          }
+          return true;
+        }
+        return false;
+      }
+      bool VisitTemplateSpecializationType(TemplateSpecializationType const* tst)
       {
-        type->dump();
+        for (const auto& arg : tst->template_arguments())
+        {
+          // We only care about type arguments.
+          if (arg.getKind() == TemplateArgument::ArgKind::Type)
+          {
+            if (TypeVisitor::Visit(arg.getAsType().split().Ty))
+            {
+              return true;
+            }
+          }
+        }
+        return false;
       }
-    }
+      bool VisitTemplateArgumentType(TemplateArgument const* ta)
+      {
+        return TypeVisitor::Visit(ta->getAsType().split().Ty);
+      }
+      bool VisitElaboratedType(ElaboratedType const* et)
+      {
+        return TypeVisitor::Visit(et->getNamedType().split().Ty);
+      }
+      bool VisitLValueReferenceType(LValueReferenceType const* lrt)
+      {
+        return TypeVisitor::Visit(lrt->getPointeeType().split().Ty);
+      }
+      bool VisitRValueReferenceType(RValueReferenceType const* rrt)
+      {
+        return TypeVisitor::Visit(rrt->getPointeeType().split().Ty);
+      }
+      bool VisitPointerType(PointerType const* pt)
+      {
+        return TypeVisitor::Visit(pt->getPointeeType().split().Ty);
+      }
+      bool VisitPackExpansionType(PackExpansionType const* pe)
+      {
+        return TypeVisitor::Visit(pe->getPattern().split().Ty);
+      }
+      bool VisitIncompleteArrayType(IncompleteArrayType const* ia)
+      {
+        return TypeVisitor::Visit(ia->getArrayElementTypeNoTypeQual());
+      }
+      bool VisitConstantArrayType(ConstantArrayType const* ca)
+      {
+        return TypeVisitor::Visit(ca->getArrayElementTypeNoTypeQual());
+      }
+      bool VisitParenType(ParenType const* pt)
+      {
+        return TypeVisitor::Visit(pt->getInnerType().split().Ty);
+      }
+      bool VisitUsingType(UsingType const* ut)
+      {
+        return TypeVisitor::Visit(ut->getUnderlyingType().split().Ty);
+      }
 
-    // Walk the type looking for an inner type which appears to be a reasonable inner type.
-    //    if (typePtr->getTypeClass() != Type::Elaborated && typePtr->getTypeClass() !=
-    //    Type::Builtin)
-    //    {
-    //      AstTypeVisitor visitTypes;
-    //      m_underlyingType = visitTypes.Visit(typePtr);
-    //    }
+      bool VisitFunctionProtoType(FunctionProtoType const* fp)
+      {
+        for (const auto& arg : fp->param_types())
+        {
+          if (TypeVisitor::Visit(arg.split().Ty))
+          {
+            return true;
+          }
+        }
+        if (TypeVisitor::Visit(fp->getReturnType().split().Ty))
+        {
+          return true;
+        }
+        return false;
+      }
+
+      // Dependent names don't contain underlying types.
+      bool VisitDependentNameType(DependentNameType const* dn) { return false; }
+      // Template type params don't contain underlying types.
+      bool VisitTemplateTypeParmType(TemplateTypeParmType const* ttp) { return false; }
+      // An injected class name is a template name referenced without template parameters.
+      bool VisitInjectedClassNameType(InjectedClassNameType const* ic) { return false; }
+      // Record type params don't contain underlying types.
+      bool VisitRecordType(RecordType const* record) { return false; }
+      // Enum type params don't contain underlying types.
+      bool VisitEnumType(EnumType const* et) { return false; }
+      // Builtin type params don't contain underlying types.
+      bool VisitBuiltinType(BuiltinType const* bt) { return false; }
+
+      bool VisitType(const Type* t)
+      {
+        llvm::outs() << "Visit Type "
+                     << QualType::getAsString(QualType(t, 0).split(), LangOptions())
+                     << "Type class: " << t->getTypeClassName() << "\n";
+        t->dump();
+        return false;
+      }
+    };
+
+    IsTypeInGlobalNamespaceVisitor visitTypes;
+    return visitTypes.Visit(typePtr);
   }
-  void Dump(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const;
 };
 
 class AstStatement {
@@ -193,7 +296,7 @@ class AstExpr : public AstStatement {
 protected:
   AstType m_type;
   AstExpr(Expr const* expression, ASTContext& context)
-      : AstStatement(expression, context), m_type{expression->getType()}
+      : AstStatement(expression, context), m_type{expression->getType(), context}
   {
   }
 
@@ -290,7 +393,7 @@ class AstImplicitCastExpr : public AstExpr {
 
 public:
   AstImplicitCastExpr(ImplicitCastExpr const* expression, ASTContext& context)
-      : AstExpr(expression, context), m_underlyingType{expression->getType()},
+      : AstExpr(expression, context), m_underlyingType{expression->getType(), context},
         m_castValue{AstExpr::Create(*expression->child_begin(), context)}
   {
     // Assert that there is a single child of the ImplicitCastExprobject.
@@ -307,7 +410,7 @@ class AstCastExpr : public AstExpr {
 
 public:
   AstCastExpr(CastExpr const* expression, ASTContext& context)
-      : AstExpr(expression, context), m_underlyingType{expression->getType()},
+      : AstExpr(expression, context), m_underlyingType{expression->getType(), context},
         m_castValue{AstExpr::Create(*expression->child_begin(), context)}
   {
     // Assert that there is a single child of the ImplicitCastExprobject.
@@ -330,7 +433,7 @@ class AstCStyleCastExpr : public AstExpr {
 
 public:
   AstCStyleCastExpr(CStyleCastExpr const* expression, ASTContext& context)
-      : AstExpr(expression, context), m_underlyingType{expression->getType()},
+      : AstExpr(expression, context), m_underlyingType{expression->getType(), context},
         m_castValue{AstExpr::Create(*expression->child_begin(), context)}
   {
     // Assert that there is a single child of the ImplicitCastExprobject.
@@ -420,7 +523,7 @@ public:
       : AstExpr(expression, context)
   {
     // Reset the type to the type of the constructor.
-    m_type = AstType{expression->getType()};
+    m_type = AstType{expression->getType(), context};
     int argn = 0;
     for (auto const& arg : expression->arguments())
     {
@@ -693,7 +796,8 @@ class AstScalarValueInit : public AstExpr {
 
 public:
   AstScalarValueInit(CXXScalarValueInitExpr const* expression, ASTContext& context)
-      : AstExpr(expression, context), m_underlyingType{expression->getTypeSourceInfo()->getType()}
+      : AstExpr(expression, context),
+        m_underlyingType{expression->getTypeSourceInfo()->getType(), context}
 
   {
   }
@@ -712,7 +816,7 @@ class AstImplicitValueInit : public AstExpr {
 
 public:
   AstImplicitValueInit(ImplicitValueInitExpr const* expression, ASTContext& context)
-      : AstExpr(expression, context), m_underlyingType{expression->getType()}
+      : AstExpr(expression, context), m_underlyingType{expression->getType(), context}
 
   {
   }
@@ -1015,6 +1119,28 @@ AstNamedNode::AstNamedNode(
       m_nodeDocumentation{AstNode::GetCommentForNode(namedDecl->getASTContext(), namedDecl)},
       m_nodeAccess{namedDecl->getAccess()}
 {
+  {
+    auto location = namedDecl->getLocation();
+    auto const& sourceManager = namedDecl->getASTContext().getSourceManager();
+    auto const& presumedLocation = sourceManager.getPresumedLoc(location);
+    std::string typeLocation{presumedLocation.getFilename()};
+
+    // Remove the root directory from the location if the location is within the root directory.
+    if (typeLocation.find(database->GetProcessor()->RootDirectory()) == 0)
+    {
+      typeLocation.erase(0, database->GetProcessor()->RootDirectory().size() + 1);
+    }
+    if (!database->GetProcessor()->SourceRepository().empty())
+    {
+      m_typeUrl = database->GetProcessor()->SourceRepository();
+      m_typeUrl += "/" + typeLocation;
+      m_typeUrl += "#L" + std::to_string(presumedLocation.getLine());
+    }
+    m_typeLocation = typeLocation;
+    m_typeLocation += ":" + std::to_string(presumedLocation.getLine());
+    m_typeLocation += ":" + std::to_string(presumedLocation.getColumn());
+  }
+
   if (namedDecl->hasAttrs())
   {
     for (const auto& attr : namedDecl->attrs())
@@ -1078,6 +1204,33 @@ void AstNamedNode::DumpDocumentation(AstDumper* dumper, DumpNodeOptions const& o
   }
 }
 
+void AstNamedNode::DumpSourceComment(AstDumper* dumper, DumpNodeOptions const& options) const
+{
+  if (options.NeedsLeadingNewline)
+  {
+    dumper->Newline();
+  }
+  if (options.NeedsLeftAlign)
+  {
+    dumper->LeftAlign();
+  }
+  dumper->InsertComment("// ");
+  if (!m_typeUrl.empty())
+  {
+    dumper->AddExternalLinkStart(m_typeUrl);
+    dumper->InsertComment(m_typeLocation);
+    dumper->AddExternalLinkEnd();
+  }
+  else
+  {
+    dumper->InsertComment(m_typeLocation);
+  }
+  if (options.NeedsTrailingNewline)
+  {
+    dumper->Newline();
+  }
+}
+
 class AstBaseClass {
   AstType m_baseClass;
   AccessSpecifier m_access;
@@ -1086,18 +1239,16 @@ public:
   AstBaseClass(CXXBaseSpecifier const& base)
       : m_baseClass{base.getType()}, m_access{base.getAccessSpecifierAsWritten()} {};
 
-  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions);
-};
-
-void AstBaseClass::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
-{
-  if (m_access != AS_none)
+  void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions)
   {
-    dumper->InsertKeyword(AccessSpecifierToString(m_access));
-    dumper->InsertWhitespace();
+    if (m_access != AS_none)
+    {
+      dumper->InsertKeyword(AccessSpecifierToString(m_access));
+      dumper->InsertWhitespace();
+    }
+    m_baseClass.Dump(dumper, dumpOptions);
   }
-  m_baseClass.Dump(dumper, dumpOptions);
-}
+};
 
 // For functions, we want the navigation ID to be the full signature, including the return type
 // to handle overloads.
@@ -1170,6 +1321,12 @@ public:
 
   {
     m_navigationId = GetNavigationId(var);
+
+    // If the type of the parameter is in the global namespace, then flag it as an error.
+    if (m_type.IsTypeInGlobalNamespace())
+    {
+      database->CreateApiViewMessage(ApiViewMessages::TypedefInGlobalNamespace, m_navigationId);
+    }
 
     clang::PrintingPolicy pp{LangOptions{}};
     pp.adjustForCPlusPlus();
@@ -1261,6 +1418,12 @@ public:
         m_isStatic(var->isStaticDataMember()), m_isConstexpr(var->isConstexpr()),
         m_isConst(var->getType().isConstQualified())
   {
+    // If the type of the parameter is in the global namespace, then flag it as an error.
+    if (m_type.IsTypeInGlobalNamespace())
+    {
+      database->CreateApiViewMessage(ApiViewMessages::TypedefInGlobalNamespace, m_navigationId);
+    }
+
     clang::PrintingPolicy pp{LangOptions{}};
     pp.adjustForCPlusPlus();
     m_typeAsString = QualType::getAsString(var->getType().split(), pp);
@@ -1350,6 +1513,12 @@ public:
     {
       m_defaultValue
           = std::make_unique<AstType>(param->getDefaultArgument(), param->getASTContext());
+
+      // If the type of the parameter is in the global namespace, then flag it as an error.
+      if (m_defaultValue->IsTypeInGlobalNamespace())
+      {
+        database->CreateApiViewMessage(ApiViewMessages::TypedefInGlobalNamespace, m_navigationId);
+      }
     }
 
     for (auto attr : param->attrs())
@@ -1494,8 +1663,13 @@ public:
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(param, database, parentNode),
         m_defaultArgument(AstExpr::Create(param->getDefaultArgument(), param->getASTContext())),
-        m_templateType{param->getType()}
+        m_templateType{param->getType(), param->getASTContext()}
   {
+    // If the type of the parameter is in the global namespace, then flag it as an error.
+    if (m_templateType.IsTypeInGlobalNamespace())
+    {
+      database->CreateApiViewMessage(ApiViewMessages::TypedefInGlobalNamespace, m_navigationId);
+    }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
@@ -1528,9 +1702,15 @@ public:
       TypeAliasDecl const* alias,
       AzureClassesDatabase* const database,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
-      : AstNamedNode(alias, database, parentNode), m_aliasedType{alias->getUnderlyingType()}
+      : AstNamedNode(alias, database, parentNode),
+        m_aliasedType{alias->getUnderlyingType(), alias->getASTContext()}
 
   {
+    // If the type of the parameter is in the global namespace, then flag it as an error.
+    if (m_aliasedType.IsTypeInGlobalNamespace())
+    {
+      database->CreateApiViewMessage(ApiViewMessages::TypedefInGlobalNamespace, m_navigationId);
+    }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
@@ -1638,6 +1818,13 @@ public:
         m_exceptionSpecification{func->getExceptionSpecType()}
   {
     m_navigationId = GetNavigationId(func);
+
+    // If the type of the return value is in the global namespace, then flag it as an error.
+    if (m_returnValue.IsTypeInGlobalNamespace())
+    {
+      database->CreateApiViewMessage(ApiViewMessages::TypedefInGlobalNamespace, m_navigationId);
+    }
+
     if (m_exceptionSpecification == EST_DependentNoexcept)
     {
       auto typePtr = func->getType().getTypePtr();
@@ -2173,6 +2360,8 @@ public:
     {
       dumper->SetNamespace(Namespace());
     }
+
+    DumpSourceComment(dumper, dumpOptions);
     if (dumpOptions.NeedsDocumentation)
     {
       DumpDocumentation(dumper, dumpOptions);
@@ -2447,13 +2636,19 @@ public:
       AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNamedNode(fieldDecl, azureClassesDatabase, parentNode),
-        m_fieldType{fieldDecl->getType()},
+        m_fieldType{fieldDecl->getType(), fieldDecl->getASTContext()},
         m_initializer{
             AstExpr::Create(fieldDecl->getInClassInitializer(), fieldDecl->getASTContext())},
         m_classInitializerStyle{fieldDecl->getInClassInitStyle()},
         m_hasDefaultMemberInitializer{fieldDecl->hasInClassInitializer()},
         m_isMutable{fieldDecl->isMutable()}, m_isConst{fieldDecl->getType().isConstQualified()}
   {
+    // If the type of the parameter is in the global namespace, then flag it as an error.
+    if (m_fieldType.IsTypeInGlobalNamespace())
+    {
+      azureClassesDatabase->CreateApiViewMessage(
+          ApiViewMessages::TypedefInGlobalNamespace, m_navigationId);
+    }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override;
 };
@@ -2916,6 +3111,7 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
       dumper->SetNamespace(Namespace());
     }
   }
+  DumpSourceComment(dumper, dumpOptions);
   if (dumpOptions.NeedsDocumentation)
   {
     DumpDocumentation(dumper, dumpOptions);
@@ -3010,6 +3206,8 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) co
       dumper->SetNamespace(Namespace());
     }
   }
+
+  DumpSourceComment(dumper, dumpOptions);
   if (dumpOptions.NeedsDocumentation)
   {
     DumpDocumentation(dumper, dumpOptions);

@@ -87,11 +87,22 @@ void AzureClassesDatabase::CreateApiViewMessage(
     }
     case ApiViewMessages::NonVirtualDestructor: {
       newMessage.DiagnosticId = "CPA000B";
-      newMessage.DiagnosticText = "Base class destructors should be public and virtual or protected and non-virtual. ";
-      newMessage.HelpLinkUri
-          = "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c35-a-base-class-destructor-should-be-either-public-and-virtual-or-protected-and-non-virtual";
+      newMessage.DiagnosticText
+          = "Base class destructors should be public and virtual or protected and non-virtual. ";
+      newMessage.HelpLinkUri = "https://isocpp.github.io/CppCoreGuidelines/"
+                               "CppCoreGuidelines#c35-a-base-class-destructor-should-be-either-"
+                               "public-and-virtual-or-protected-and-non-virtual";
       newMessage.Level = ApiViewMessage::MessageLevel::Error;
       break;
+    }
+
+    case ApiViewMessages::TypedefInGlobalNamespace: {
+      newMessage.DiagnosticId = "CPA000C";
+      newMessage.DiagnosticText
+          = "Types in the global namespace which are not builtin types should be avoided. This "
+            "especially applies to the int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, "
+            "int64_t, uint64_t types, all of which should be in the std namespace.";
+      newMessage.Level = ApiViewMessage::MessageLevel::Warning;
     }
   }
   newMessage.TargetId = targetId;

@@ -59,6 +59,8 @@ public:
 class AstNamedNode : public AstNode {
   std::string m_namespace;
   std::string m_name;
+  std::string m_typeUrl;
+  std::string m_typeLocation;
   std::vector<std::unique_ptr<AstNode>> m_nodeAttributes;
 
 protected:
@@ -75,6 +77,7 @@ protected:
 public:
   void DumpAttributes(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const;
   void DumpDocumentation(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const;
+  void DumpSourceComment(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const;
   virtual void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
     assert(!"Pure virtual base - missing implementation of DumpNode in derived class.");

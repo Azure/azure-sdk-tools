@@ -49,9 +49,19 @@ parameters:
   type: number
   default: 10
 
-# Indicates if the npm script `ci-tests` should be run after `ci-build`
-- name: RunTests
+# Indicates if regenration matrix should only contain folders with typespec files
+- name: OnlyGenerateTypespec
   type: boolean
+  default: false
+
+# Indicates the build matrix to use for post-build autorest validation
+- name: TestMatrix
+  type: object
+  default: {}
+
+# Indicates the build matrix to use for post-build autorest validation
+- name: PublishDependsOnTest
+  type: bool
   default: true
 
 stages:
@@ -101,16 +111,10 @@ stages:
           npm run ci-build --
           --publishTarget ${{ parameters.PublishTarget }}
           --buildPrereleaseVersion ${{ parameters.BuildPrereleaseVersion }}
-          --buildNumber $(Build.BuildNumber)
-          --output $(Build.ArtifactStagingDirectory)
+          --buildNumber "$(Build.BuildNumber)"
+          --output "$(Build.ArtifactStagingDirectory)"
         displayName: 'Run build script'
         name: build_script
-        workingDirectory: $(autorestRepositoryPath)
-
-    - ${{ if parameters.RunTests }}:
-      - script: >
-          npm run ci-test --if-present
-        displayName: 'Run test script'
         workingDirectory: $(autorestRepositoryPath)
 
     - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
@@ -121,13 +125,14 @@ stages:
           filePath: $(toolsRepositoryPath)/eng/scripts/autorest/New-EmitterPackageJson.ps1
           arguments: >
             -PackageJsonPath '${{ parameters.EmitterPackageJsonPath }}'
-            -OverridesPath $(Build.ArtifactStagingDirectory)/overrides.json
+            -OverridesPath '$(Build.ArtifactStagingDirectory)/overrides.json'
             -OutputDirectory '$(Build.ArtifactStagingDirectory)'
           workingDirectory: $(autorestRepositoryPath)
 
-    - publish: $(Build.ArtifactStagingDirectory)
-      artifact: build_artifacts
-      displayName: Publish artifacts directory
+    - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+      parameters:
+        artifactName: build_artifacts
+        artifactPath: $(Build.ArtifactStagingDirectory)
 
     - pwsh: |
         $branchName = 'autorest-failed-build-$(Build.BuildId)'
@@ -157,8 +162,36 @@ stages:
       condition: failed()
       workingDirectory: $(autorestRepositoryPath)
 
+- ${{ if ne(length(parameters.AutorestTestMatrix), 0) }}:
+  - stage: Test
+    dependsOn: Build
+    jobs:
+    - job: Test
+      strategy:
+        matrix: ${{ parameters.AutorestTestMatrix }}
+      variables:
+        buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
+      steps:
+      - checkout: self
+      - download: current
+        artifact: build_artifacts
+        displayName: Download build artifacts
+      - script: npm run ci-init -- --buildArtifacts '$(buildArtifactsPath)'
+        displayName: 'Run test script'
+        workingDirectory: $(autorestRepositoryPath)
+      - script: npm run ci-test -- $(TestArgs)
+        displayName: 'Run test script'
+        workingDirectory: $(autorestRepositoryPath)
+      - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          artifactName: test_artifacts
+          artifactPath: $(Build.ArtifactStagingDirectory)
+
 - stage: Publish
-  dependsOn: Build
+  dependsOn:
+  - Build
+  - ${{ if and(parameters.PublishDependsOnTest, ne(length(parameters.AutorestTestMatrix), 0)) }}:
+    - Test
   variables:
     toolsRepositoryPath: $(Build.SourcesDirectory)
     buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
@@ -212,9 +245,10 @@ stages:
             -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
             -OutputDirectory "$(Build.ArtifactStagingDirectory)"
 
-    - publish: $(Build.ArtifactStagingDirectory)
-      artifact: publish_artifacts
-      displayName: Publish artifacts directory
+    - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+      parameters:
+        artifactName: publish_artifacts
+        artifactPath: $(Build.ArtifactStagingDirectory)
 
 - stage: Regenerate
   dependsOn:
@@ -287,11 +321,12 @@ stages:
           -OutputVariableName matrix
           -JobCount ${{ parameters.RegenerationJobCount }}
           -MinimumPerJob ${{ parameters.MinimumPerJob }}
-          -OnlyTypespec ${{ parameters.UseTypeSpecNext }}
+          -OnlyTypespec ${{ parameters.OnlyGenerateTypespec }}
 
-    - publish: $(Build.ArtifactStagingDirectory)
-      artifact: matrix_artifacts
-      displayName: Publish matrix artifacts
+  - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+    parameters:
+      artifactName: matrix_artifacts
+      artifactPath: $(Build.ArtifactStagingDirectory)
 
   - job: Generate
     dependsOn: Initialize

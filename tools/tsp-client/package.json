@@ -1,6 +1,6 @@
 {
-  "name": "@azure-tools/tsp-client",
-  "version": "0.0.1",
+  "name": "@azure-tools/typespec-client-generator-cli",
+  "version": "0.1.0",
   "private": "true",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
@@ -8,7 +8,7 @@
     "build": "npm run clean && npm run build:tsc",
     "build:tsc": "tsc",
     "clean": "rimraf ./dist ./types",
-    "example": "npx ts-node src/index.ts -e openapi -m https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/cognitiveservices/OpenAI.Inference/main.tsp ./temp",
+    "example": "npx ts-node src/index.ts update",
     "test": "mocha"
   },
   "author": "Microsoft Corporation",

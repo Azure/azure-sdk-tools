@@ -86,7 +86,7 @@ stages:
 
     - checkout: self
       path: s/autorest
-      
+
     - checkout: azure-sdk-tools
 
     - task: PowerShell@2
@@ -166,6 +166,9 @@ stages:
         buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
       steps:
       - checkout: self
+        # Use a predictable path for the autorest repo
+        path: s/autorest
+        
       - download: current
         artifact: build_artifacts
         displayName: Download build artifacts

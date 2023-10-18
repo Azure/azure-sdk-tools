@@ -3,7 +3,7 @@ parameters:
 - name: BuildPrereleaseVersion
   type: boolean
 
-# Whether to use the `next` version of TypeSpec. This is passed as a flag to the init script.
+# Whether to use the `next` version of TypeSpec. This is passed as a flag to the initialize script.
 - name: UseTypeSpecNext
   type: boolean
 
@@ -15,16 +15,6 @@ parameters:
 - name: EmitterPackageJsonPath
   type: string
   default: 'not-specified'
-
-# Custom steps to run after the autorest repository is cloned. If custom build steps are specified, the default init and build scripts will not be run.
-# The build steps should produce the directory `/artifacts` with contents:
-#   packages/
-#     autorest-csharp-2.0.0-alpha.4.tgz
-#     Microsoft.Azure.AutoRest.CSharp.2.0.0-alpha.4.nupkg
-#     typespec-csharp-1.2.3-alpha.4.tgz
-- name: BuildSteps
-  type: stepList
-  default: []
 
 # Custom steps to run after the sdk repository is cloned but before the generation matrix is created.
 - name: SdkInitializationSteps
@@ -61,7 +51,7 @@ parameters:
 
 # Indicates the build matrix to use for post-build autorest validation
 - name: PublishDependsOnTest
-  type: bool
+  type: boolean
   default: true
 
 stages:
@@ -99,22 +89,25 @@ stages:
       
     - checkout: azure-sdk-tools
 
-    - ${{ parameters.BuildSteps }}
-
-    - ${{ if eq(length(parameters.BuildSteps), 0) }}:
-      - script: >
-          npm run ci-init -- --useTypeSpecNext ${{ parameters.UseTypeSpecNext }}
-        displayName: 'Run init script'
+    - task: PowerShell@2
+      displayName: 'Run initialize script'
+      inputs:
+        pwsh: true
+        filePath: $(autorestRepositoryPath)/eng/scripts/initialize.ps1
+        arguments: -UseTypeSpecNext $${{ parameters.UseTypeSpecNext }}
         workingDirectory: $(autorestRepositoryPath)
-      
-      - script: >
-          npm run ci-build --
-          --publishTarget ${{ parameters.PublishTarget }}
-          --buildPrereleaseVersion ${{ parameters.BuildPrereleaseVersion }}
-          --buildNumber "$(Build.BuildNumber)"
-          --output "$(Build.ArtifactStagingDirectory)"
-        displayName: 'Run build script'
-        name: ci_build
+
+    - task: PowerShell@2
+      displayName: 'Run build script'
+      name: ci_build
+      inputs:
+        pwsh: true
+        filePath: $(autorestRepositoryPath)/eng/scripts/build.ps1
+        arguments: >
+          -PublishTarget ${{ parameters.PublishTarget }}
+          -BuildPrereleaseVersion ${{ parameters.BuildPrereleaseVersion }}
+          -BuildNumber "$(Build.BuildNumber)"
+          -Output "$(Build.ArtifactStagingDirectory)"
         workingDirectory: $(autorestRepositoryPath)
 
     - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
@@ -162,13 +155,13 @@ stages:
       condition: failed()
       workingDirectory: $(autorestRepositoryPath)
 
-- ${{ if ne(length(parameters.AutorestTestMatrix), 0) }}:
+- ${{ if ne(length(parameters.TestMatrix), 0) }}:
   - stage: Test
     dependsOn: Build
     jobs:
     - job: Test
       strategy:
-        matrix: ${{ parameters.AutorestTestMatrix }}
+        matrix: ${{ parameters.TestMatrix }}
       variables:
         buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
       steps:
@@ -176,21 +169,33 @@ stages:
       - download: current
         artifact: build_artifacts
         displayName: Download build artifacts
-      - script: npm run ci-init -- --buildArtifacts '$(buildArtifactsPath)'
+
+      - task: PowerShell@2
+        displayName: 'Run initialize script'
+        inputs:
+          pwsh: true
+          filePath: $(autorestRepositoryPath)/eng/scripts/initialize.ps1
+          arguments: -BuildArtifactsPath '$(buildArtifactsPath)'
+          workingDirectory: $(autorestRepositoryPath)
+
+      - task: PowerShell@2
         displayName: 'Run test script'
-        workingDirectory: $(autorestRepositoryPath)
-      - script: npm run ci-test -- $(TestArgs)
-        displayName: 'Run test script'
-        workingDirectory: $(autorestRepositoryPath)
+        name: ci_build
+        inputs:
+          pwsh: true
+          filePath: $(autorestRepositoryPath)/eng/scripts/test.ps1
+          arguments: $(TestArguments)
+          workingDirectory: $(autorestRepositoryPath)
+
       - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
         parameters:
-          artifactName: test_artifacts
+          artifactName: test_artifacts_$(System.JobName)
           artifactPath: $(Build.ArtifactStagingDirectory)
 
 - stage: Publish
   dependsOn:
   - Build
-  - ${{ if and(parameters.PublishDependsOnTest, ne(length(parameters.AutorestTestMatrix), 0)) }}:
+  - ${{ if and(parameters.PublishDependsOnTest, ne(length(parameters.TestMatrix), 0)) }}:
     - Test
   variables:
     toolsRepositoryPath: $(Build.SourcesDirectory)
@@ -323,10 +328,10 @@ stages:
           -MinimumPerJob ${{ parameters.MinimumPerJob }}
           -OnlyTypespec ${{ parameters.OnlyGenerateTypespec }}
 
-  - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
-    parameters:
-      artifactName: matrix_artifacts
-      artifactPath: $(Build.ArtifactStagingDirectory)
+    - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+      parameters:
+        artifactName: matrix_artifacts
+        artifactPath: $(Build.ArtifactStagingDirectory)
 
   - job: Generate
     dependsOn: Initialize

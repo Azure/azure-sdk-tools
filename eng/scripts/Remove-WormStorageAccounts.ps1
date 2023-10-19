@@ -10,8 +10,6 @@ $ErrorActionPreference = 'Stop'
 
 # Be a little defensive so we don't delete non-live test groups via naming convention
 if (!$groupPrefix -or !$GroupPrefix.StartsWith('rg-')) {
-    Write-Error "The -GroupPrefix parameter must start with 'rg-'"
-    exit 1
 }
 
 $groups = Get-AzResourceGroup | ? { $_.ResourceGroupName.StartsWith($GroupPrefix) } | ? { $_.ProvisioningState -ne 'Deleting' }

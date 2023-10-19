@@ -56,10 +56,10 @@ param (
   [switch] $DeleteArmDeployments,
 
   [Parameter()]
-  [int] $DeleteAfterHours = 24,
+  [Double] $DeleteAfterHours = 24,
 
   [Parameter()]
-  [int] $MaxLifespanDeleteAfterHours,
+  [Double] $MaxLifespanDeleteAfterHours,
 
   [Parameter()]
   [string] $AllowListPath = "$PSScriptRoot/cleanup-allowlist.txt",
@@ -273,7 +273,7 @@ function FindOrCreateDeleteAfterTag {
   [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
   param(
     [object]$ResourceGroup,
-    [int]$HoursToDelete
+    [Double]$HoursToDelete
   )
 
   if (!$DeleteNonCompliantGroups -or !$ResourceGroup) {
@@ -335,10 +335,10 @@ function HasDeleteLock([object]$ResourceGroup) {
 
 function DeleteArmDeployments([object]$ResourceGroup) {
   if (!$DeleteArmDeployments) {
-      return
+    return
   }
-  $toDelete = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName | Where-Object { $_.Outputs.Count }
-  if (!$toDelete.Count) {
+  $toDelete = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName | Where-Object { $_ -and $_.Outputs?.Count }
+  if (!$toDelete -or !$toDelete.Count) {
     return
   }
   Write-Host "Deleting $($toDelete.Count) ARM deployments for group $($ResourceGroup.ResourceGroupName) as they may contain output secrets. Deployed resources will not be affected."

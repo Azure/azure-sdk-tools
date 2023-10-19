@@ -67,7 +67,7 @@ stages:
             npm pack
           displayName: 'npm pack'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
-          condition: contains(variables['imageName'], 'ubuntu')
+          condition: contains(variables['OSVmImage'], 'ubuntu')
 
         - bash: 'cp azure-tools-tsp-client-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
           displayName: 'copy to staging dir'

@@ -1,0 +1,3 @@
+# A ServiceLabel block ending with a ServiceOwners should have no errors
+# ServiceLabel: %TestLabel4
+# ServiceOwners: @TestOwner2 @TestOwner4 @Azure/TestTeam4

@@ -1,0 +1,58 @@
+# CODEOWNERS with errors, for end to end tesing.
+# Note: For the generated owners, for testing, every odd owner isn't public
+
+# This block has line errors. Linting will find the errors but parsing should still parse the entry.
+# 1. TestOwner1 is non-public
+# 2. TestOwner42 doesn't exist
+# owner that doesn't exist
+/sdk/someFakePath1/ @TestOwner1  @TestOwner2 @TestOwner42
+
+# This block does not have errors.
+# PRLabel block ending in a source path/owner line
+# PRLabel: %TestLabel1
+/sdk/someFakePath2/ @TestOwner2
+
+# This block has block and line errors
+# 1. The label won't exist for the repository
+# 2. The PRLabel moniker needs to be in a block that ends in a source path/owner line
+# PRLabel: %TestLabel987
+
+# This block has no errors
+# ServiceLabel block with MissingFolder moniker for owners
+# ServiceLabel: %TestLabel2
+#/<NotInRepo>/      @TestOwner0     @TestOwner4
+
+# This block has line errors. Linting will find the errors but parsing should still parse the entry.
+# 1. TestLabel55 doesn't exist for the repository
+# 2. TestOwner3 isn't a public member of Azure
+# ServiceLabel block with ServiceOwners moniker
+# ServiceLabel: %TestLabel55
+# ServiceOwners:    @TestOwner0 @TestOwner3
+
+# This block has a block error
+# AzureSdkOwners must be part of a block with a ServiceLabel
+# AzureSdkOwners: @TestOwner0
+/sdk/someFakePath4/ @TestOwner2  @TestOwner4
+
+# This block has both block and line errors
+# 1. AzureSdkOwners exists twice in the same block
+# 2. TestOwner3 isn't a public member of Azure
+# AzureSdkOwners: @TestOwner2
+# AzureSdkOwners: @TestOwner3
+/sdk/someFakePath5/ @TestOwner2  @TestOwner4
+
+# This block has block and line errors
+# 1. ServiceLabel needs to be part of a block that has ServiceOwners or ends
+#    in a source path/owner line but not both
+# 2. The TestOwner1 isn't a public member of Azure 
+# AzureSdkOwners: @TestOwner0
+# PRLabel: %TestLabel2
+# ServiceLabel: %TestLabel4
+# ServiceOwners: @TestOwner1
+/sdk/someFakePath6/ @TestOwner2  @TestOwner4
+
+# This block does not have errors
+# AzureSdkOwners: @TestOwner0
+# PRLabel: %TestLabel2
+# ServiceLabel: %TestLabel4
+/sdk/someFakePath7/ @TestOwner2  @TestOwner4

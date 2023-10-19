@@ -58,18 +58,18 @@ stages:
             versionSpec: '$(NodeVersion)'
           displayName: 'Install Node.js'
 
-        - script: |
+        - bash: |
             npm install
           displayName: 'npm install'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
 
-        - script: |
+        - bash: |
             npm pack
           displayName: 'npm pack'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
           condition: contains(variables['imageName'], 'ubuntu')
 
-        - script: 'cp azure-tools-tsp-client-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+        - bash: 'cp azure-tools-tsp-client-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
           displayName: 'copy to staging dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
           condition: contains(variables['imageName'], 'ubuntu')
@@ -106,7 +106,7 @@ stages:
             downloadType: 'single'
             artifactName: '$(VAR_ARTIFACT_NAME)'
             downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
-        - script: |
+        - bash: |
             echo -e "\e[32m[$(date -u)] LOG: Ensure latest npm is installed"
             sudo npm install -g npm || { echo 'npm install failed' ; exit 1; }
             sudo npm install -g pnpm || { echo 'pnpm install failed' ; exit 1; }

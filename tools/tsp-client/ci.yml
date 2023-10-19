@@ -44,7 +44,7 @@ stages:
               OSVmImage: 'MMSUbuntu20.04'
               Pool: 'azsdk-pool-mms-ubuntu-2004-general'
             mac:
-              OSVmImage: 'macos-latest'
+              OSVmImage: 'macos-12'
               Pool: 'Azure Pipelines'
             windows:
               OSVmImage: 'MMS2022'

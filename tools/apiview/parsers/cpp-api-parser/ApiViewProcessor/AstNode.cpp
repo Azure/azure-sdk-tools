@@ -41,24 +41,7 @@ std::string AccessSpecifierToString(AccessSpecifier specifier)
 
 std::unique_ptr<AstDocumentation> AstNode::GetCommentForNode(ASTContext& context, Decl const* decl)
 {
-  auto comment{context.getCommentForDecl(decl, nullptr)};
-  if (comment)
-  {
-    CommentExtractor extractor(context);
-    return extractor.Extract(comment);
-  }
-  return nullptr;
-}
-
-std::unique_ptr<AstDocumentation> AstNode::GetCommentForNode(ASTContext& context, Decl const& decl)
-{
-  auto comment{context.getCommentForDecl(&decl, nullptr)};
-  if (comment)
-  {
-    CommentExtractor extractor{context};
-    return extractor.Extract(comment);
-  }
-  return nullptr;
+  return ExtractCommentForDeclaration(context, decl);
 }
 
 AstNode::AstNode() {}
@@ -1230,28 +1213,31 @@ void AstNamedNode::DumpDocumentation(AstDumper* dumper, DumpNodeOptions const& o
 // If the customer gave us a source URL for the ApiView, include a link to the type.
 void AstNamedNode::DumpSourceComment(AstDumper* dumper, DumpNodeOptions const& options) const
 {
-  if (options.NeedsLeadingNewline)
+  if (options.NeedsSourceComment)
   {
-    dumper->Newline();
-  }
-  if (options.NeedsLeftAlign)
-  {
-    dumper->LeftAlign();
-  }
-  dumper->InsertComment("// ");
-  if (!m_typeUrl.empty())
-  {
-    dumper->AddExternalLinkStart(m_typeUrl);
-    dumper->InsertComment(m_typeLocation);
-    dumper->AddExternalLinkEnd();
-  }
-  else
-  {
-    dumper->InsertComment(m_typeLocation);
-  }
-  if (options.NeedsTrailingNewline)
-  {
-    dumper->Newline();
+    if (options.NeedsLeadingNewline)
+    {
+      dumper->Newline();
+    }
+    if (options.NeedsLeftAlign)
+    {
+      dumper->LeftAlign();
+    }
+    dumper->InsertComment("// ");
+    if (!m_typeUrl.empty())
+    {
+      dumper->AddExternalLinkStart(m_typeUrl);
+      dumper->InsertComment(m_typeLocation);
+      dumper->AddExternalLinkEnd();
+    }
+    else
+    {
+      dumper->InsertComment(m_typeLocation);
+    }
+    if (options.NeedsTrailingNewline)
+    {
+      dumper->Newline();
+    }
   }
 }
 
@@ -2384,6 +2370,8 @@ public:
     {
       DumpNodeOptions innerOptions{dumpOptions};
       innerOptions.NeedsLeadingNewline = false;
+      innerOptions.NeedsSourceComment
+          = false; // We've already dumped the source comment for this node.
 
       DumpList(
           m_parameters.begin(),
@@ -2401,6 +2389,8 @@ public:
       DumpNodeOptions innerOptions{dumpOptions};
       innerOptions.NeedsLeftAlign = true;
       innerOptions.NeedsLeadingNewline = false;
+      innerOptions.NeedsSourceComment
+          = false; // We've already dumped the source comment for this node.
       m_templateBody->DumpNode(dumper, innerOptions);
     }
   }

@@ -24,6 +24,7 @@ struct DumpNodeOptions
 {
   bool DumpListInitializer{false};
   bool NeedsDocumentation{true};
+  bool NeedsSourceComment{true};
   bool NeedsLeftAlign{true};
   bool NeedsLeadingNewline{true};
   bool NeedsTrailingNewline{true};
@@ -47,7 +48,6 @@ public:
   virtual void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const = 0;
 
   static std::unique_ptr<AstDocumentation> GetCommentForNode(clang::ASTContext& context, clang::Decl const* decl);
-  static std::unique_ptr<AstDocumentation> GetCommentForNode(clang::ASTContext& context, clang::Decl const& decl);
   static std::unique_ptr<AstNode> Create(
       clang::Decl const* decl,
       AzureClassesDatabase* const azureClassesDatabase,

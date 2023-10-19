@@ -666,9 +666,8 @@ std::unique_ptr<AstDocumentation> AstDocumentation::Create(const comments::Comme
 class CommentVisitor
     : public clang::comments::CommentVisitor<CommentVisitor, std::unique_ptr<AstDocumentation>> {
 public:
-  CommentVisitor(const clang::ASTContext& context)
-      : clang::comments::CommentVisitor<CommentVisitor, std::unique_ptr<AstDocumentation>>(),
-        m_context{context}
+  CommentVisitor()
+      : clang::comments::CommentVisitor<CommentVisitor, std::unique_ptr<AstDocumentation>>()
   {
   }
 
@@ -739,17 +738,21 @@ public:
     std::unique_ptr<AstDocumentation> node{AstDocumentation::Create(tc)};
     return node;
   };
-
-private:
-  const clang::ASTContext& m_context;
 };
 
 // Use a commentVisitor to extract all the comments from a comment node.
-std::unique_ptr<AstDocumentation> CommentExtractor::Extract(clang::comments::Comment* comment)
+std::unique_ptr<AstDocumentation> ExtractCommentForDeclaration(
+    clang::ASTContext const& context,
+    clang::Decl const* decl)
 {
-  CommentVisitor visitor{m_context};
-  auto doc{visitor.visit(comment)};
-  return doc;
+  auto comment = context.getCommentForDecl(decl, nullptr);
+  if (comment != nullptr)
+  {
+    CommentVisitor visitor;
+    std::unique_ptr<AstDocumentation> doc{visitor.visit(comment)};
+    return doc;
+  }
+  return nullptr;
 }
 
 std::string_view AstDocumentation::GetCommandMarker(clang::comments::CommandMarkerKind marker)

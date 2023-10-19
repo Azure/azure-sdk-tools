@@ -65,12 +65,6 @@ protected:
  * This function iterates over a clang::comments::Comment
  * node and retrieves all the information in the comment in a way which can later be dumped.
  */
-class CommentExtractor {
-public:
-  CommentExtractor(const clang::ASTContext& context) : m_context{context} {}
-
-  std::unique_ptr<AstDocumentation> Extract(clang::comments::Comment* comment);
-
-private:
-  const clang::ASTContext& m_context;
-};
+std::unique_ptr<AstDocumentation> ExtractCommentForDeclaration(
+    clang::ASTContext const& context,
+    clang::Decl const* declaration);

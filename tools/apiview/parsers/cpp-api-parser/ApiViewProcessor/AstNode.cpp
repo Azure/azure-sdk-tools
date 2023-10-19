@@ -73,6 +73,9 @@ struct AstTerminalNode : public AstNode
   }
 };
 
+/** An AST Type represents a type in the C++ language.
+ * 
+ */
 class AstType {
 
 public:
@@ -163,8 +166,11 @@ private:
   bool m_isInGlobalNamespace; /// True if the type references a typedef in the global namespace.
   std::unique_ptr<AstType> m_underlyingType;
 
+  // Returns true if the type contains a reference to a type which is in the global namespace.
   static bool IsTypeInGlobalNamespace(Type const* typePtr)
   {
+    // clang TypeVisitor which will iterate over the type and return true if it finds a type which
+    // is a typedef in the global namespace.
     struct IsTypeInGlobalNamespaceVisitor : public TypeVisitor<IsTypeInGlobalNamespaceVisitor, bool>
     {
       IsTypeInGlobalNamespaceVisitor(){};
@@ -241,9 +247,9 @@ private:
       bool VisitUsingType(UsingType const* ut)
       {
         bool rv{TypeVisitor::Visit(ut->getUnderlyingType().split().Ty)};
-        // If the underlying type is in the global namespace, but has a shadow declaration (a declaration
-        // introduced by a using declaration), then we treat it as if it wasn't in the global
-        // namespace (because it's not).
+        // If the underlying type is in the global namespace, but has a shadow declaration (a
+        // declaration introduced by a using declaration), then we treat it as if it wasn't in the
+        // global namespace (because it's not).
         if (rv)
         {
           if (ut->getFoundDecl())
@@ -1190,33 +1196,38 @@ void AstNamedNode::DumpAttributes(AstDumper* dumper, DumpNodeOptions const& opti
 }
 void AstNamedNode::DumpDocumentation(AstDumper* dumper, DumpNodeOptions const& options) const
 {
-  if (m_nodeDocumentation)
+  if (options.NeedsDocumentation)
   {
-    dumper->AddDocumentRangeStart();
-    if (options.NeedsLeftAlign)
+    if (m_nodeDocumentation)
     {
+      dumper->AddDocumentRangeStart();
+      if (options.NeedsLeftAlign)
+      {
+        dumper->LeftAlign();
+      }
+      dumper->InsertComment("/**");
+      {
+        DumpNodeOptions innerOptions{options};
+        innerOptions.NeedsLeftAlign = true;
+        innerOptions.NeedsLeadingNewline = true;
+        innerOptions.NeedsTrailingNewline = false;
+        m_nodeDocumentation->DumpNode(dumper, innerOptions);
+      }
+      dumper->Newline(); // We need to insert a newline here to ensure that the comment is properly
+                         // closed.
       dumper->LeftAlign();
+      dumper->InsertComment(" */");
+      if (options.NeedsTrailingNewline)
+      {
+        dumper->Newline();
+      }
+      dumper->AddDocumentRangeEnd();
     }
-    dumper->InsertComment("/**");
-    {
-      DumpNodeOptions innerOptions{options};
-      innerOptions.NeedsLeftAlign = true;
-      innerOptions.NeedsLeadingNewline = true;
-      innerOptions.NeedsTrailingNewline = false;
-      m_nodeDocumentation->DumpNode(dumper, innerOptions);
-    }
-    dumper->Newline(); // We need to insert a newline here to ensure that the comment is properly
-                       // closed.
-    dumper->LeftAlign();
-    dumper->InsertComment(" */");
-    if (options.NeedsTrailingNewline)
-    {
-      dumper->Newline();
-    }
-    dumper->AddDocumentRangeEnd();
   }
 }
 
+// Dump a comment showing where the node is located within the source code.
+// If the customer gave us a source URL for the ApiView, include a link to the type.
 void AstNamedNode::DumpSourceComment(AstDumper* dumper, DumpNodeOptions const& options) const
 {
   if (options.NeedsLeadingNewline)
@@ -1462,10 +1473,7 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
-    if (dumpOptions.NeedsDocumentation)
-    {
-      DumpDocumentation(dumper, dumpOptions);
-    }
+    DumpDocumentation(dumper, dumpOptions);
     DumpAttributes(dumper, dumpOptions);
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -1871,10 +1879,7 @@ public:
     {
       dumper->SetNamespace(Namespace());
     }
-    if (dumpOptions.NeedsDocumentation)
-    {
-      DumpDocumentation(dumper, dumpOptions);
-    }
+    DumpDocumentation(dumper, dumpOptions);
     if (dumpOptions.NeedsLeftAlign)
     {
       dumper->LeftAlign();
@@ -2029,10 +2034,7 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
-    if (dumpOptions.NeedsDocumentation)
-    {
-      DumpDocumentation(dumper, dumpOptions);
-    }
+    DumpDocumentation(dumper, dumpOptions);
     if (dumpOptions.NeedsLeftAlign)
     {
       dumper->LeftAlign();
@@ -2130,10 +2132,7 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
-    if (dumpOptions.NeedsDocumentation)
-    {
-      DumpDocumentation(dumper, dumpOptions);
-    }
+    DumpDocumentation(dumper, dumpOptions);
     if (dumpOptions.NeedsLeftAlign)
     {
       dumper->LeftAlign();
@@ -2223,10 +2222,7 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
-    if (dumpOptions.NeedsDocumentation)
-    {
-      DumpDocumentation(dumper, dumpOptions);
-    }
+    DumpDocumentation(dumper, dumpOptions);
     DumpAttributes(dumper, dumpOptions);
     if (dumpOptions.NeedsLeftAlign)
     {
@@ -2375,10 +2371,7 @@ public:
     }
 
     DumpSourceComment(dumper, dumpOptions);
-    if (dumpOptions.NeedsDocumentation)
-    {
-      DumpDocumentation(dumper, dumpOptions);
-    }
+    DumpDocumentation(dumper, dumpOptions);
     DumpAttributes(dumper, dumpOptions);
 
     if (dumpOptions.NeedsLeftAlign)
@@ -2441,10 +2434,7 @@ public:
       }
     }
 
-    if (dumpOptions.NeedsDocumentation)
-    {
-      DumpDocumentation(dumper, dumpOptions);
-    }
+    DumpDocumentation(dumper, dumpOptions);
     DumpAttributes(dumper, dumpOptions);
 
     if (dumpOptions.NeedsLeftAlign)
@@ -2504,10 +2494,7 @@ public:
       }
     }
 
-    if (dumpOptions.NeedsDocumentation)
-    {
-      DumpDocumentation(dumper, dumpOptions);
-    }
+    DumpDocumentation(dumper, dumpOptions);
     DumpAttributes(dumper, dumpOptions);
 
     if (dumpOptions.NeedsLeftAlign)
@@ -2817,10 +2804,7 @@ public:
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
-    if (dumpOptions.NeedsDocumentation)
-    {
-      DumpDocumentation(dumper, dumpOptions);
-    }
+    DumpDocumentation(dumper, dumpOptions);
     DumpAttributes(dumper, dumpOptions);
     dumper->LeftAlign();
     dumper->InsertMemberName(Name(), m_navigationId);
@@ -3125,10 +3109,7 @@ void AstClassLike::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOption
     }
   }
   DumpSourceComment(dumper, dumpOptions);
-  if (dumpOptions.NeedsDocumentation)
-  {
-    DumpDocumentation(dumper, dumpOptions);
-  }
+  DumpDocumentation(dumper, dumpOptions);
   DumpAttributes(dumper, dumpOptions);
 
   // If we're a templated class, don't insert the extra newline before the class
@@ -3221,10 +3202,7 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) co
   }
 
   DumpSourceComment(dumper, dumpOptions);
-  if (dumpOptions.NeedsDocumentation)
-  {
-    DumpDocumentation(dumper, dumpOptions);
-  }
+  DumpDocumentation(dumper, dumpOptions);
   DumpAttributes(dumper, dumpOptions);
   if (dumpOptions.NeedsLeftAlign)
   {
@@ -3294,10 +3272,7 @@ void AstEnum::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) co
 
 void AstField::DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const
 {
-  if (dumpOptions.NeedsDocumentation)
-  {
-    DumpDocumentation(dumper, dumpOptions);
-  }
+  DumpDocumentation(dumper, dumpOptions);
   DumpAttributes(dumper, dumpOptions);
   if (dumpOptions.NeedsLeftAlign)
   {

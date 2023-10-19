@@ -10,16 +10,14 @@ namespace clang { namespace comments {
   enum CommandMarkerKind : int;
 }} // namespace clang::comments
 
+/** An AstDocumentation node represents a parsed comment. 
+ * It is a base class which will be
+ * specialized for different types of comments, loosely following the clang AST for comments.
+ */
 class AstDocumentation : public AstNode {
 public:
-  size_t GetChildCount() const { return m_children.size(); }
-  std::unique_ptr<AstDocumentation> const& GetChild(size_t index) const
-  {
-    return m_children[index];
-  }
-  std::string const& GetLine() const { return m_thisLine; }
-  void AddChild(std::unique_ptr<AstDocumentation>&& line) { m_children.push_back(std::move(line)); }
   virtual bool IsInlineComment() const = 0;
+  void AddChild(std::unique_ptr<AstDocumentation>&& line) { m_children.push_back(std::move(line)); }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& options) const override
   {
     if (options.NeedsLeadingNewline)
@@ -63,6 +61,10 @@ protected:
   std::string m_thisLine{};
 };
 
+/** Extract a comment from a comment node.
+ * This function iterates over a clang::comments::Comment
+ * node and retrieves all the information in the comment in a way which can later be dumped.
+ */
 class CommentExtractor {
 public:
   CommentExtractor(const clang::ASTContext& context) : m_context{context} {}

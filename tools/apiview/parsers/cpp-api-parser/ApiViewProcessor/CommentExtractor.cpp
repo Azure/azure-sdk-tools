@@ -657,6 +657,12 @@ std::unique_ptr<AstDocumentation> AstDocumentation::Create(const comments::Comme
   }
 }
 
+// clang visitor to extract comments from the AST.
+//
+// clang comment visitors look for methods named "visit<type>Comment". If the method is found, it is
+// called, otherwise the comment visitor tries the parent type of the comment. This allows us to
+// specialize the visitor for different types of comments but leaves processing for most comments
+// inside the visitComment method.
 class CommentVisitor
     : public clang::comments::CommentVisitor<CommentVisitor, std::unique_ptr<AstDocumentation>> {
 public:
@@ -666,6 +672,8 @@ public:
   {
   }
 
+  // Primary processor for comments. This method is called for all comments which do not have a
+  // specialized visitor.
   std::unique_ptr<AstDocumentation> visitComment(const clang::comments::Comment* comment)
   {
     std::unique_ptr<AstDocumentation> rv{AstDocumentation::Create(comment)};
@@ -680,6 +688,7 @@ public:
     return rv;
   };
 
+  // Process a full comment. This is the top level comment type.
   std::unique_ptr<AstDocumentation> visitFullComment(const clang::comments::FullComment* decl)
   {
     //    decl->dump(llvm::outs(), m_context);
@@ -694,103 +703,6 @@ public:
     }
     return rv;
   };
-
-  // std::unique_ptr<AstDocumentation> visitBlockCommandComment(
-  //     const clang::comments::BlockCommandComment* bc)
-  //{
-  //   auto rv{AstDocumentation::Create(bc)};
-  //   // Gather the text for the block command comment.
-  //   for (auto child = bc->child_begin(); child != bc->child_end(); child++)
-  //   {
-  //     rv->AddChild(visit(*child));
-  //   }
-  //   return rv;
-  // };
-
-  // std::unique_ptr<AstDocumentation> visitParamCommandComment(
-  //     const clang::comments::ParamCommandComment* paramComment)
-  //{
-  //   std::unique_ptr<AstDocumentation> rv{AstDocumentation::Create(paramComment)};
-  //   for (auto child = paramComment->child_begin(); child != paramComment->child_end(); child++)
-  //   {
-  //     rv->AddChild(visit(*child));
-  //   }
-  //   return rv;
-  // }
-  // std::unique_ptr<AstDocumentation> visitTParamCommandComment(
-  //     const clang::comments::TParamCommandComment* tparamComment)
-  //{
-  //   std::unique_ptr<AstDocumentation> rv{AstDocumentation::Create(tparamComment)};
-  //   for (auto child = tparamComment->child_begin(); child != tparamComment->child_end(); child++)
-  //   {
-  //     rv->AddChild(visit(*child));
-  //   }
-  //   return rv;
-  // }
-
-  // std::unique_ptr<AstDocumentation> visitInlineCommandComment(
-  //     const clang::comments::InlineCommandComment* inlineCommandComment)
-  //{
-  //   std::unique_ptr<AstDocumentation> rv{AstDocumentation::Create(inlineCommandComment)};
-  //   for (auto child = inlineCommandComment->child_begin();
-  //        child != inlineCommandComment->child_end();
-  //        child++)
-  //   {
-  //     rv->AddChild(visit(*child));
-  //   }
-  //   return rv;
-  // }
-  // std::unique_ptr<AstDocumentation> visitVerbatimBlockComment(
-  //     const clang::comments::VerbatimBlockComment* vbc)
-  //{
-  //   std::unique_ptr<AstDocumentation> rv{AstDocumentation::Create(vbc)};
-
-  //  for (auto child = vbc->child_begin(); child != vbc->child_end(); child++)
-  //  {
-  //    auto childNode = visit(*child);
-  //    rv->AddChild(std::move(childNode));
-  //  }
-  //  return rv;
-  //}
-
-  // std::unique_ptr<AstDocumentation> visitHTMLStartTagComment(
-  //     const clang::comments::HTMLStartTagComment* startTag)
-  //{
-  //   std::unique_ptr<AstDocumentation> node{AstDocumentation::Create(startTag)};
-  //   std::string rv = "<" + std::string(startTag->getTagName()) + " ";
-  //   auto attributeCount = startTag->getNumAttrs();
-  //   for (auto i = 0ul; i < attributeCount; i += 1)
-  //   {
-  //     auto& attribute{startTag->getAttr(i)};
-  //     rv += std::string(attribute.Name);
-  //     rv += "=";
-  //     rv += "'" + std::string(attribute.Value) + "'";
-  //   }
-  //   rv += ">";
-
-  //  //    node->SetLine(rv);
-
-  //  return node;
-  //}
-  // std::unique_ptr<AstDocumentation> visitHTMLEndTagComment(
-  //    const clang::comments::HTMLEndTagComment* endTag)
-  //{
-  //  std::unique_ptr<AstDocumentation> node{AstDocumentation::Create(endTag)};
-  //  std::string rv = "</" + std::string(endTag->getTagName()) + ">";
-  //  //    node->SetLine(rv);
-  //  return node;
-  //}
-  // std::unique_ptr<AstDocumentation> visitVerbatimBlockLineComment(
-  //    const clang::comments::VerbatimBlockLineComment* vbc)
-  //{
-  //  std::unique_ptr<AstDocumentation> node{AstDocumentation::Create(vbc)};
-
-  //  for (auto child = vbc->child_begin(); child != vbc->child_end(); child++)
-  //  {
-  //    node->AddChild(visit(*child));
-  //  }
-  //  return node;
-  //}
 
   // We want to ignore empty paragraph comments, so we need to specialize the visitor for paragraph
   // comments.
@@ -828,33 +740,11 @@ public:
     return node;
   };
 
-  // std::unique_ptr<AstDocumentation> visitHTMLTagComment(const clang::comments::HTMLTagComment*
-  // tag)
-  //{
-  //   std::unique_ptr<AstDocumentation> node{AstDocumentation::Create(tag)};
-  //   //    node->SetLine("***HTMLTag Comment***");
-  //   return node;
-  // }
-  // std::unique_ptr<AstDocumentation> visitInlineContentComment(
-  //     const clang::comments::InlineContentComment* tag)
-  //{
-  //   std::unique_ptr<AstDocumentation> node{AstDocumentation::Create(tag)};
-  //   // node->SetLine("***HTML Content Comment***");
-  //   return node;
-  // }
-
-  // std::unique_ptr<AstDocumentation> visitVerbatimLineComment(
-  //     const clang::comments::VerbatimLineComment* tag)
-  //{
-  //   std::unique_ptr<AstDocumentation> node{AstDocumentation::Create(tag)};
-  //   // node->SetLine("***Verbatim Line Content ***");
-  //   return node;
-  // }
-
 private:
   const clang::ASTContext& m_context;
 };
 
+// Use a commentVisitor to extract all the comments from a comment node.
 std::unique_ptr<AstDocumentation> CommentExtractor::Extract(clang::comments::Comment* comment)
 {
   CommentVisitor visitor{m_context};

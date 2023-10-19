@@ -454,7 +454,7 @@ TEST_F(TestParser, Class1)
 
   NsDumper dumper;
   db->DumpClassDatabase(&dumper);
-  EXPECT_EQ(44ul, dumper.Messages.size());
+  EXPECT_EQ(55ul, dumper.Messages.size());
 
   size_t internalTypes = 0;
   for (const auto& msg : dumper.Messages)

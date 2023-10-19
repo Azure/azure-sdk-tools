@@ -179,7 +179,7 @@ private:
           // size_t is valid in both the global namespace and std namespace.
           if (typeName == "size_t")
           {
-            return true;
+            return false;
           }
           return true;
         }
@@ -236,9 +236,22 @@ private:
       {
         return TypeVisitor::Visit(pt->getInnerType().split().Ty);
       }
+      // This type was declared with a "using" declaration.
+      //
       bool VisitUsingType(UsingType const* ut)
       {
-        return TypeVisitor::Visit(ut->getUnderlyingType().split().Ty);
+        bool rv{TypeVisitor::Visit(ut->getUnderlyingType().split().Ty)};
+        // If the underlying type is in the global namespace, but has a shadow declaration (a declaration
+        // introduced by a using declaration), then we treat it as if it wasn't in the global
+        // namespace (because it's not).
+        if (rv)
+        {
+          if (ut->getFoundDecl())
+          {
+            return false;
+          }
+        }
+        return rv;
       }
 
       bool VisitFunctionProtoType(FunctionProtoType const* fp)

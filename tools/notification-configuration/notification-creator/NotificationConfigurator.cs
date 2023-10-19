@@ -182,7 +182,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration
             using (logger.BeginScope("Team Name = {0}", team.Name))
             {
                 List<string> contacts =
-                    await new Contacts(gitHubService, logger).GetFromBuildDefinitionRepoCodeowners(buildDefinition);
+                    new Contacts(gitHubService, logger).GetFromBuildDefinitionRepoCodeowners(buildDefinition);
                 if (contacts == null)
                 {
                     // assert: the reason for why contacts is null has been already logged.

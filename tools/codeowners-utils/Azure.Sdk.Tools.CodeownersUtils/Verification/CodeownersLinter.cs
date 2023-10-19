@@ -216,12 +216,18 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Verification
                 return;
             }
 
-            // AzureSdkOwner moniker must be in a block that ends with a source path/owner line. This is so it's known
-            // what the AzureSdkOwners own
-            if (blockHasAzureSdkOwners && !endsWithSourceOwnerLine)
+            // AzureSdkOwners must be part of a block of that a ServiceLabel entry as the AzureSdkOwners are associated with
+            // that ServiceLabel
+            if (blockHasAzureSdkOwners && !blockHasServiceLabel)
             {
-                blockErrorStrings.Add($"{MonikerConstants.AzureSdkOwners}{ErrorMessageConstants.NeedsToEndWithSourceOwnerPartial}");
+                blockErrorStrings.Add(ErrorMessageConstants.AzureSdkOwnersMustBeWithServiceLabel);
             }
+
+            if (blockHasServiceOwners && !blockHasServiceLabel)
+            {
+                blockErrorStrings.Add(ErrorMessageConstants.ServiceOwnersMustBeWithServiceLabel);
+            }
+
             // PRLabel moniker must be in a block that ends with a source path/owner line
             if (blockHasPRLabel && !endsWithSourceOwnerLine)
             {

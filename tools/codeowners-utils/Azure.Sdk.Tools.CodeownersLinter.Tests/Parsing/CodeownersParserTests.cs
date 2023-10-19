@@ -46,10 +46,12 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Parsing
         /// <param name="codeownersFile">The test CODEOWNERS file to parse</param>
         /// <param name="jsonFileWithExpectedEntries">The json file with the expected Codeowners entries.</param>
         [TestCase("CodeownersTestFiles/EndToEnd/NoErrors", "CodeownersTestFiles/EndToEnd/NoErrorsExpectedEntries.json")]
-        [TestCase("CodeownersTestFiles/EndToEnd/WithErrors", "CodeownersTestFiles/EndToEnd/WithErrorsExpectedEntries.json")]
+        // This is to ensure that block entries with errors are not parsed
+        [TestCase("CodeownersTestFiles/EndToEnd/WithBlockErrors", "CodeownersTestFiles/EndToEnd/WithBlockErrorsExpectedEntries.json")]
         public void TestParseCodeownersFile(string codeownersFile, string jsonFileWithExpectedEntries)
         {
             List<CodeownersEntry> actualEntries = CodeownersParser.ParseCodeownersFile(codeownersFile);
+
             string expectedEntriesJson = FileHelpers.GetFileOrUrlContents(jsonFileWithExpectedEntries);
             List<CodeownersEntry> expectedEntries = JsonSerializer.Deserialize<List<CodeownersEntry>>(expectedEntriesJson);
             bool entiresAreEqual = TestHelpers.CodeownersEntryListsAreEqual(actualEntries, expectedEntries);

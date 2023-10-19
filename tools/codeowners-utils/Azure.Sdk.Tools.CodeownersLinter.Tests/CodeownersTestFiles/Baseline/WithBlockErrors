@@ -30,16 +30,23 @@
 # ServiceOwners:    @TestOwner0 @TestOwner3
 
 # This block has no errors
-# AzureSdkOwners must be part of a block with source path/owner line
+# AzureSdkOwners must be part of a block with a ServiceLabel entry
 # AzureSdkOwners: @TestOwner0
+# ServiceLabel: %TestLabel55
 /sdk/someFakePath4 @TestOwner2  @TestOwner4
+
+# This block has errors
+# AzureSdkOwners must be part of a block with a ServiceLabel entry and block
+# is missing the ServiceLabel entry
+# AzureSdkOwners: @TestOwner0
+# ServiceOwners: @TestOwner2
 
 # This block has errors
 # 1. AzureSdkOwners exists twice in the same block
 # 2. TestOwner3 isn't a public member of Azure
 # AzureSdkOwners: @TestOwner2
 # AzureSdkOwners: @TestOwner3
-/sdk/someFakePath4 @TestOwner2  @TestOwner4
+/sdk/someFakePath5 @TestOwner2  @TestOwner4
 
 # This block has errors
 # 1. ServiceLabel needs to be part of a block that has ServiceOwners or ends
@@ -49,10 +56,10 @@
 # PRLabel: %TestLabel2
 # ServiceLabel: %TestLabel4
 # ServiceOwners: @TestOwner1
-/sdk/someFakePath5 @TestOwner2  @TestOwner4
+/sdk/someFakePath6 @TestOwner2  @TestOwner4
 
 # This block does not have errors
 # AzureSdkOwners: @TestOwner0
 # PRLabel: %TestLabel2
 # ServiceLabel: %TestLabel4
-/sdk/someFakePath5 @TestOwner2  @TestOwner4
+/sdk/someFakePath7 @TestOwner2  @TestOwner4

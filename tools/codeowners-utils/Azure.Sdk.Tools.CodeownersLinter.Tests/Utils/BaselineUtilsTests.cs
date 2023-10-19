@@ -71,14 +71,15 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Utils
         }
 
         /// <summary>
-        /// Test the baseline generation
+        /// Test the baseline generation. Only line errors should be in the baseline, not block errors.
         /// </summary>
         /// <param name="testCodeownerFile">The CODEOWNERS file to generate the baseline for.</param>
         /// <param name="expectedBaselineFile">The baseline file that is known to be correct for the CODEOWNERS file.</param>
-        [TestCase("CodeownersTestFiles/Baseline/WithErrors", "CodeownersTestFiles/Baseline/WithErrors_FullBaseline.txt")]
-        [TestCase("CodeownersTestFiles/Baseline/NoErrors", "CodeownersTestFiles/Baseline/NoErrors_EmptyBaseline.txt")]
-        public void TestBaselineGeneration(string testCodeownerFile,
-                                           string expectedBaselineFile)
+        [TestCase("CodeownersTestFiles/Baseline/WithBlockErrors", "CodeownersTestFiles/Baseline/WithBlockErrors_FullBaseline.txt", 4)]
+        [TestCase("CodeownersTestFiles/Baseline/NoErrors", "CodeownersTestFiles/Baseline/NoErrors_EmptyBaseline.txt", 0)]
+        public void TestBaselineGenerationAndFiltering(string testCodeownerFile,
+                                                       string expectedBaselineFile,
+                                                       int expectedNumberOfBlockErrors)
         {
             List<BaseError> actualErrors = CodeownersLinter.LintCodeownersFile(_directoryUtilsMock,
                                                                                _ownerDataUtils,
@@ -88,21 +89,48 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Utils
             // Load the expected baseline file and, for sanity's sake, ensure that all errors are filtered
             BaselineUtils expectedBaselineUtils = new BaselineUtils(expectedBaselineFile);
             var filteredWithExpected = expectedBaselineUtils.FilterErrorsUsingBaseline(actualErrors);
-            // If this happens someone changed something and didn't update the test
-            if (filteredWithExpected.Count > 0)
+            
+            // This piece is for sanity, to verify that the the filter only filters out SingleLineErrors and leaves
+            // the BlockFormattingErrors.
+            if (expectedNumberOfBlockErrors > 0)
             {
-                string errorString = TestHelpers.FormatErrorMessageFromErrorList(filteredWithExpected);
-                Assert.Fail($"The expected baseline file {expectedBaselineFile} for test CODEOWNERS file {testCodeownerFile} should have filtered out all the errors but filtering return {filteredWithExpected.Count} errors. Unexpected baseline errors\n{errorString}");
+                if (filteredWithExpected.Count != expectedNumberOfBlockErrors)
+                {
+                    string errorString = TestHelpers.FormatErrorMessageFromErrorList(filteredWithExpected);
+                    Assert.Fail($"The expected baseline file {expectedBaselineFile} for test CODEOWNERS file {testCodeownerFile} should have had {expectedNumberOfBlockErrors} block errors but had {filteredWithExpected.Count}. Unexpected baseline errors\n{errorString}");
+                }
+            }
+            else
+            {
+                if (filteredWithExpected.Count > 0)
+                {
+                    string errorString = TestHelpers.FormatErrorMessageFromErrorList(filteredWithExpected);
+                    Assert.Fail($"The expected baseline file {expectedBaselineFile} for test CODEOWNERS file {testCodeownerFile} should have filtered out all the errors but filtering return {filteredWithExpected.Count} errors. Unexpected baseline errors\n{errorString}");
+                }
             }
 
+            // Since the filtering has been verified above, regenerate the filter file and ensure that the generation produces
+            // the same results. AKA only the SingleLineErrors are filtered out.
             string baselineTemp = GenerateTempFile();
             BaselineUtils generatedBaselineUtils = new BaselineUtils(baselineTemp);
             generatedBaselineUtils.GenerateBaseline(actualErrors);
             var filteredWithGenerated = generatedBaselineUtils.FilterErrorsUsingBaseline(actualErrors);
-            if (filteredWithGenerated.Count > 0)
+
+            if (expectedNumberOfBlockErrors > 0)
             {
-                string errorString = TestHelpers.FormatErrorMessageFromErrorList(filteredWithGenerated);
-                Assert.Fail($"The generated baseline for test CODEOWNERS file {testCodeownerFile} should have filtered out all the errors but filtering returned {filteredWithGenerated.Count} errors.\nUnfiltered Errors:\n{errorString}");
+                if (filteredWithGenerated.Count != expectedNumberOfBlockErrors)
+                {
+                    string errorString = TestHelpers.FormatErrorMessageFromErrorList(filteredWithGenerated);
+                    Assert.Fail($"The generated baseline file {expectedBaselineFile} for test CODEOWNERS file {testCodeownerFile} should have had {expectedNumberOfBlockErrors} block errors but had {filteredWithGenerated.Count}. Unexpected baseline errors\n{errorString}");
+                }
+            }
+            else
+            {
+                if (filteredWithGenerated.Count > 0)
+                {
+                    string errorString = TestHelpers.FormatErrorMessageFromErrorList(filteredWithGenerated);
+                    Assert.Fail($"The generated baseline file {expectedBaselineFile} for test CODEOWNERS file {testCodeownerFile} should have filtered out all the errors but filtering return {filteredWithGenerated.Count} errors. Unexpected baseline errors\n{errorString}");
+                }
             }
         }
 

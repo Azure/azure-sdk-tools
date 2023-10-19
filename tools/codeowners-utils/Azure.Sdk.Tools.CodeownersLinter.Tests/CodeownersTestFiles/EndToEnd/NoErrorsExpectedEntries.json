@@ -93,8 +93,13 @@
       "TestOwner4"
     ],
     "PRLabels": [],
-    "ServiceLabels": [],
-    "ServiceOwners": [],
+    "ServiceLabels": [
+      "TestLabel3"
+    ],
+    "ServiceOwners": [
+      "TestOwner2",
+      "TestOwner4"
+    ],
     "AzureSdkOwners": [
       "TestOwner0"
     ],

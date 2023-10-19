@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Azure.Sdk.Tools.CodeownersUtils.Holders;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using NUnit.Framework;
 
@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Utils
     [TestFixture]
     [Parallelizable(ParallelScope.Children)]
     /// <summary>
-    /// OwnerDataUtilsTests requires an OwnerDataUtils with both TeamUserHolder and UserOrgVisibilityHolder pre-populated
+    /// OwnerDataUtilsTests requires an OwnerDataUtils with both TeamUserCache and UserOrgVisibilityCache pre-populated
     /// with test data.
     /// </summary>
     public class OwnerDataUtilsTests

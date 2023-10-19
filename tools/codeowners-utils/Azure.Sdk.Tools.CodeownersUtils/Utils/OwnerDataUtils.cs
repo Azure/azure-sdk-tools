@@ -5,17 +5,17 @@ using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
-using Azure.Sdk.Tools.CodeownersUtils.Holders;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 
 namespace Azure.Sdk.Tools.CodeownersUtils.Utils
 {
     /// <summary>
-    /// The OwnerData contains the team/user and user org visibility data as well as methods used for owner (user or team) verification.
+    /// The OwnerData contains the team/user and user org visibility caches as well as methods used for owner (user or team) verification.
     /// </summary>
     public class OwnerDataUtils
     {
-        private TeamUserHolder _teamUserHolder = null;
-        private UserOrgVisibilityHolder _userOrgVisibilityHolder = null;
+        private TeamUserCache _teamUserCache = null;
+        private UserOrgVisibilityCache _userOrgVisibilityCache = null;
 
         public OwnerDataUtils()
         {
@@ -29,8 +29,8 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
         /// <param name="teamUserBlobStorageUri"></param>
         public OwnerDataUtils(string teamUserBlobStorageUri)
         {
-            _teamUserHolder = new TeamUserHolder(teamUserBlobStorageUri);
-            _userOrgVisibilityHolder = new UserOrgVisibilityHolder(null);
+            _teamUserCache = new TeamUserCache(teamUserBlobStorageUri);
+            _userOrgVisibilityCache = new UserOrgVisibilityCache(null);
         }
 
         /// <summary>
@@ -42,15 +42,15 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
         public OwnerDataUtils(string teamUserBlobStorageUri,
                               string userOrgVisibilityBlobStorageUri)
         {
-            _teamUserHolder = new TeamUserHolder(teamUserBlobStorageUri);
-            _userOrgVisibilityHolder = new UserOrgVisibilityHolder(userOrgVisibilityBlobStorageUri);
+            _teamUserCache = new TeamUserCache(teamUserBlobStorageUri);
+            _userOrgVisibilityCache = new UserOrgVisibilityCache(userOrgVisibilityBlobStorageUri);
         }
 
-        public OwnerDataUtils(TeamUserHolder teamUserHolder,
-                              UserOrgVisibilityHolder userOrgVisibilityHolder)
+        public OwnerDataUtils(TeamUserCache teamUserCache,
+                              UserOrgVisibilityCache userOrgVisibilityCache)
         {
-            _teamUserHolder = teamUserHolder;
-            _userOrgVisibilityHolder = userOrgVisibilityHolder;
+            _teamUserCache = teamUserCache;
+            _userOrgVisibilityCache = userOrgVisibilityCache;
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
         /// <returns>True if the owner has write permissions, false otherwise.</returns>
         public bool IsWriteOwner(string owner)
         {
-            return _userOrgVisibilityHolder.UserOrgVisibilityDict.ContainsKey(owner);
+            return _userOrgVisibilityCache.UserOrgVisibilityDict.ContainsKey(owner);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
             {
                 teamWithoutOrg = teamWithoutOrg.Split(SeparatorConstants.Team, StringSplitOptions.TrimEntries)[1];
             }
-            return _teamUserHolder.TeamUserDict.ContainsKey(teamWithoutOrg);
+            return _teamUserCache.TeamUserDict.ContainsKey(teamWithoutOrg);
         }
 
         /// <summary>
@@ -86,9 +86,9 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
         public bool IsPublicAzureMember(string login)
         {
             // If the user isn't in the dictionary then call to get it
-            if (_userOrgVisibilityHolder.UserOrgVisibilityDict.ContainsKey(login))
+            if (_userOrgVisibilityCache.UserOrgVisibilityDict.ContainsKey(login))
             {
-                return _userOrgVisibilityHolder.UserOrgVisibilityDict[login];
+                return _userOrgVisibilityCache.UserOrgVisibilityDict[login];
             }
             return false;
         }
@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
             }
             if (IsWriteTeam(teamWithoutOrg))
             {
-                return _teamUserHolder.TeamUserDict[teamWithoutOrg];
+                return _teamUserCache.TeamUserDict[teamWithoutOrg];
             }
             else
             {

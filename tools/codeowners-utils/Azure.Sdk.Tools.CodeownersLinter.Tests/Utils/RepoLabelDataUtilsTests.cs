@@ -10,7 +10,7 @@ using NUnit.Framework;
 namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Utils
 {
     /// <summary>
-    /// OwnerDataUtilsTests requires a RepoLabelDataUtils with populated RepoLabelHolder 
+    /// OwnerDataUtilsTests requires a RepoLabelDataUtils with populated RepoLabelCache 
     /// </summary>
     [TestFixture]
     [Parallelizable(ParallelScope.Children)]

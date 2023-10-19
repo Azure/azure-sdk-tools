@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
-namespace Azure.Sdk.Tools.CodeownersUtils.Holders
+namespace Azure.Sdk.Tools.CodeownersUtils.Caches
 {
     /// <summary>
     /// Holder for the repo label dictionary. Lazy init, it doesn't pull the data from the URI until first use.
@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Holders
     /// the same to GitHub and, let's face it, the CODEOWNERS files are all over the place with exact vs non-exact
     /// casing.
     /// </summary>
-    public class RepoLabelHolder
+    public class RepoLabelCache
     {
         private string RepoLabelBlobStorageURI { get; set; } = DefaultStorageConstants.RepoLabelBlobStorageURI;
         private Dictionary<string, HashSet<string>> _repoLabelDict = null;
@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Holders
             }
         }
 
-        public RepoLabelHolder(string repoLabelBlobStorageURI)
+        public RepoLabelCache(string repoLabelBlobStorageURI)
         {
             if (!string.IsNullOrWhiteSpace(repoLabelBlobStorageURI))
             {

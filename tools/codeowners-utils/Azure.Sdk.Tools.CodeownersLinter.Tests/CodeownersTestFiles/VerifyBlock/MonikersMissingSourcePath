@@ -7,16 +7,6 @@
 
 # PRLabel:
 
-# AzureSdkOwners, whether owners are declared or not, needs to be part of a block that ends in a
-# source path/owner line so it's known what they own
-# AzureSdkOwners: @TestOwner0
-
-# Same scenario as above but with invalid/missing owners that shouldn't prevent the block
-# formatting error from being reported
-# AzureSdkOwners: @TestOwnerBad
-
-# AzureSdkOwners:
-
 # ServiceLabel, whether a label is declared or whether the label is valid or not, needs to be
 # part of a block that ends in a source path/owner line, a ServiceOwner line or /<NotInRepo>/
 # ServiceLabel: TestLabel1

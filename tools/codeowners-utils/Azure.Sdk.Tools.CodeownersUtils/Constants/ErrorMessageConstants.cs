@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Constants
         // cannot do all of the necessary checks in sparsely checked out repositor)y.
         public const string PathOrFileNotExistInRepoPartial = " path or file does not exist in repository.";
 
-        // SourceOwners errors
+        // Owner errors
         public const string InvalidTeamPartial = " is an invalid team. Ensure the team exists and has write permissions.";
         public const string InvalidUserPartial = " is an invalid user. Ensure the user exists, is public member of Azure and has write permissions.";
         public const string MalformedTeamEntryPartial = " is a malformed team entry and should start with '@Azure/'.";
@@ -60,5 +60,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Constants
         public const string NeedsToEndWithSourceOwnerPartial = " needs to be part of a block that ends in a source path/owner line.";
         // Duplicate Moniker error
         public const string DuplicateMonikerInBlockPartial = " already exists in the block. A moniker cannot exist more than once in a block.";
+        public const string AzureSdkOwnersMustBeWithServiceLabel = $"{MonikerConstants.AzureSdkOwners} must be part of a block that contains a {MonikerConstants.ServiceLabel} entry.";
+        public const string ServiceOwnersMustBeWithServiceLabel = $"{MonikerConstants.ServiceOwners} must be part of a block that contains a {MonikerConstants.ServiceLabel} entry.";
     }
 }

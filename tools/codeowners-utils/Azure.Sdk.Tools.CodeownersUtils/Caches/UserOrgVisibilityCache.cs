@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
-namespace Azure.Sdk.Tools.CodeownersUtils.Holders
+namespace Azure.Sdk.Tools.CodeownersUtils.Caches
 {
     /// <summary>
     /// Holder for the user/org visibility data. The users are the all inclusive list of user under azure-sdk-write meaning
     /// that it's effectively a deduped list of users from azure-sdk-write team and its child teams. Owners are case
     /// insensitive but case preserving so this needs to be able to do case insensitive lookups.
     /// </summary>
-    public class UserOrgVisibilityHolder
+    public class UserOrgVisibilityCache
     {
         private string UserOrgVisibilityBlobStorageURI { get; set; } = DefaultStorageConstants.UserOrgVisibilityBlobStorageURI;
         private Dictionary<string, bool> _userOrgDict = null;
@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Holders
             }
         }
 
-        public UserOrgVisibilityHolder(string userOrgVisibilityBlobStorageUri)
+        public UserOrgVisibilityCache(string userOrgVisibilityBlobStorageUri)
         {
             if (!string.IsNullOrWhiteSpace(userOrgVisibilityBlobStorageUri))
             {

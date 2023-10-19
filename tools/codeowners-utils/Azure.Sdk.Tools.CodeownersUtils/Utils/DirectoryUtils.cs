@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.XPath;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
-using Azure.Sdk.Tools.CodeownersUtils.Holders;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace Azure.Sdk.Tools.CodeownersUtils.Utils

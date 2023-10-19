@@ -7,8 +7,9 @@
 
 # Duplicate AzureSdkOwners
 # AzureSdkOwners: @TestUser0
-# AzureSdkOwners: @TestUserBad  @TestUser1
-/sdk/someFakePath @TestOwner2
+# AzureSdkOwners: @TestUserBad  @TestOwner1
+# ServiceLabel: %TestLabel1
+# ServiceOwners: @TestOwner0  @TestOwner2
 
 # Duplicate ServiceLabel ending in source path
 # ServiceLabel: %TestLabel1

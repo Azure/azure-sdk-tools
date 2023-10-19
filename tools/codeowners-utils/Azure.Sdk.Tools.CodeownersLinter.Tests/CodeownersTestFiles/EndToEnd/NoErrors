@@ -22,8 +22,9 @@
 # ServiceLabel: TestLabel3
 # ServiceOwners:    @TestOwner0 @TestOwner2
 
-# AzureSdkOwners must be part of a block with source path/owner line
+# AzureSdkOwners must be part of a block with a ServiceLabel entry
 # AzureSdkOwners: @TestOwner0
+# ServiceLabel: %TestLabel3
 /sdk/someFakePath4/ @TestOwner2  @TestOwner4
 
 # Every moniker that can be grouped together and end in a source path/owner line.

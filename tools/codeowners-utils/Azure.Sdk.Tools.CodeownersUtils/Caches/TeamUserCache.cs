@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
-namespace Azure.Sdk.Tools.CodeownersUtils.Holders
+namespace Azure.Sdk.Tools.CodeownersUtils.Caches
 {
     /// <summary>
     /// Holds the team/user information which is used for both verification and team expansion during parsing. Note that
     /// Teams are case insensitive but case preserving which means the dictionary needs to be able to case insensitive lookups.
     /// </summary>
-    public class TeamUserHolder
+    public class TeamUserCache
     {
         private string TeamUserStorageURI { get; set; } = DefaultStorageConstants.TeamUserBlobUri;
         private Dictionary<string, List<string>> _teamUserDict = null;
@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Holders
             }
         }
 
-        public TeamUserHolder(string teamUserStorageURI)
+        public TeamUserCache(string teamUserStorageURI)
         {
             if (!string.IsNullOrWhiteSpace(teamUserStorageURI))
             {

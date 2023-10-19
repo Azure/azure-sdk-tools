@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
 using Azure.Sdk.Tools.CodeownersUtils.Errors;
-using Azure.Sdk.Tools.CodeownersUtils.Holders;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
@@ -32,9 +32,9 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests
         /// <returns>Populated OwnerDataUtils</returns>
         public static OwnerDataUtils SetupOwnerData()
         {
-            // OwnerDataUtils requires a TeamUserHolder and a UserOrgVisibilityHolder populated with their
+            // OwnerDataUtils requires a TeamUserCache and a UserOrgVisibilityCache populated with their
             // respective data. Live data really can't be used for this because it can change.
-            TeamUserHolder teamUserHolder = new TeamUserHolder(null);
+            TeamUserCache teamUserCache = new TeamUserCache(null);
             Dictionary<string, List<string>> teamUserDict = new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase);
 
             // Create 5 teams
@@ -53,9 +53,9 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests
                 }
                 teamUserDict.Add(team, users);
             }
-            teamUserHolder.TeamUserDict = teamUserDict;
+            teamUserCache.TeamUserDict = teamUserDict;
 
-            UserOrgVisibilityHolder userOrgVisibilityHolder = new UserOrgVisibilityHolder(null);
+            UserOrgVisibilityCache userOrgVisibilityCache = new UserOrgVisibilityCache(null);
             Dictionary<string, bool> userOrgVisDict = new Dictionary<string, bool>(StringComparer.InvariantCultureIgnoreCase);
             // Make every even user visible
             for (int i = 0;i < 5;i++)
@@ -70,8 +70,8 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests
                     userOrgVisDict.Add(user, false);
                 }
             }
-            userOrgVisibilityHolder.UserOrgVisibilityDict = userOrgVisDict;
-            return new OwnerDataUtils(teamUserHolder, userOrgVisibilityHolder);
+            userOrgVisibilityCache.UserOrgVisibilityDict = userOrgVisDict;
+            return new OwnerDataUtils(teamUserCache, userOrgVisibilityCache);
         }
 
         /// <summary>
@@ -90,9 +90,9 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests
             // Last but not least, add the Service Attention Label
             repoLabels.Add(LabelConstants.ServiceAttention);
             repoLabelDict.Add(TestRepositoryName, repoLabels);
-            RepoLabelHolder repoLabelHolder = new RepoLabelHolder(null);
-            repoLabelHolder.RepoLabelDict = repoLabelDict;
-            return new RepoLabelDataUtils(repoLabelHolder, TestRepositoryName);
+            RepoLabelCache repoLabelCache = new RepoLabelCache(null);
+            repoLabelCache.RepoLabelDict = repoLabelDict;
+            return new RepoLabelDataUtils(repoLabelCache, TestRepositoryName);
         }
 
         /// <summary>

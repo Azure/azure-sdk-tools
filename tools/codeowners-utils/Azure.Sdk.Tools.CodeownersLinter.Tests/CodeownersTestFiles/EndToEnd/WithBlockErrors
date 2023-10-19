@@ -12,10 +12,10 @@
 # PRLabel: %TestLabel1
 /sdk/someFakePath2/ @TestOwner2
 
-# This block has a line error
+# This block has block and line errors
 # 1. The label won't exist for the repository
+# 2. The PRLabel moniker needs to be in a block that ends in a source path/owner line
 # PRLabel: %TestLabel987
-/sdk/someFakePath3 @TestOwner4
 
 # This block has no errors
 # ServiceLabel block with MissingFolder moniker for owners
@@ -29,13 +29,8 @@
 # ServiceLabel: %TestLabel55
 # ServiceOwners:    @TestOwner0 @TestOwner3
 
-# This block has no errors
-# AzureSdkOwners: @TestOwner0
-# ServiceLabel: %TestLabel3
-# ServiceOwners: @TestOwner2 @TestOwner4
-
-# This block has errors
-# AzureSdkOwners must be part of a block that contains a ServiceLabel entry
+# This block has a block error
+# AzureSdkOwners must be part of a block with a ServiceLabel
 # AzureSdkOwners: @TestOwner0
 /sdk/someFakePath4/ @TestOwner2  @TestOwner4
 
@@ -44,7 +39,6 @@
 # 2. TestOwner3 isn't a public member of Azure
 # AzureSdkOwners: @TestOwner2
 # AzureSdkOwners: @TestOwner3
-# ServiceLabel: %TestLabel4
 /sdk/someFakePath5/ @TestOwner2  @TestOwner4
 
 # This block has block and line errors

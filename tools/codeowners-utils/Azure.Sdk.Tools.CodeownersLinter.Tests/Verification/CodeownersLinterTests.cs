@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Verification
     /// <summary>
     /// Tests for CodeownersLinter. These tests require the following:
     /// 1. OwnerDataUtils with populated team/user and user/org visibility data
-    /// 2. RepoLabelDataUtils with populated RepoLabelHolder
+    /// 2. RepoLabelDataUtils with populated RepoLabelCache
     /// 3. A mock DirectoryUtils that doesn't actually do directory verification.
     /// </summary>
     [TestFixture]
@@ -211,6 +211,13 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Verification
         [TestCase("CodeownersTestFiles/VerifyBlock/ServiceLabelAndMissingPath", 1, 2)]
         [TestCase("CodeownersTestFiles/VerifyBlock/ServiceLabelAndServiceOwners", 1, 2)]
         [TestCase("CodeownersTestFiles/VerifyBlock/MonikersEndsInSourcePath", 1, 4)]
+        // AzureSdkOwners needs to be part of a block that contains ServiceLabel
+        [TestCase("CodeownersTestFiles/VerifyBlock/AzureSdkOwnersAndServiceLabel", 3, 3,
+                  ErrorMessageConstants.AzureSdkOwnersMustBeWithServiceLabel)]
+        [TestCase("CodeownersTestFiles/VerifyBlock/AzureSdkOwnersAndServiceLabel", 7, 7,
+                  ErrorMessageConstants.AzureSdkOwnersMustBeWithServiceLabel)]
+        [TestCase("CodeownersTestFiles/VerifyBlock/AzureSdkOwnersAndServiceLabel", 9, 9,
+                  ErrorMessageConstants.AzureSdkOwnersMustBeWithServiceLabel)]
         // Monikers that need to be in a block that ends in a source/path
         [TestCase("CodeownersTestFiles/VerifyBlock/MonikersMissingSourcePath", 1, 1,
                   $"{MonikerConstants.PRLabel}{ErrorMessageConstants.NeedsToEndWithSourceOwnerPartial}")]
@@ -219,31 +226,25 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Verification
         [TestCase("CodeownersTestFiles/VerifyBlock/MonikersMissingSourcePath", 7, 7,
                   $"{MonikerConstants.PRLabel}{ErrorMessageConstants.NeedsToEndWithSourceOwnerPartial}")]
         [TestCase("CodeownersTestFiles/VerifyBlock/MonikersMissingSourcePath", 11, 11,
-                  $"{MonikerConstants.AzureSdkOwners}{ErrorMessageConstants.NeedsToEndWithSourceOwnerPartial}")]
+                  ErrorMessageConstants.ServiceLabelNeedsOwners)]
         [TestCase("CodeownersTestFiles/VerifyBlock/MonikersMissingSourcePath", 15, 15,
-                  $"{MonikerConstants.AzureSdkOwners}{ErrorMessageConstants.NeedsToEndWithSourceOwnerPartial}")]
+                  ErrorMessageConstants.ServiceLabelNeedsOwners)]
         [TestCase("CodeownersTestFiles/VerifyBlock/MonikersMissingSourcePath", 17, 17,
-                  $"{MonikerConstants.AzureSdkOwners}{ErrorMessageConstants.NeedsToEndWithSourceOwnerPartial}")]
-        [TestCase("CodeownersTestFiles/VerifyBlock/MonikersMissingSourcePath", 21, 21,
-                  ErrorMessageConstants.ServiceLabelNeedsOwners)]
-        [TestCase("CodeownersTestFiles/VerifyBlock/MonikersMissingSourcePath", 25, 25,
-                  ErrorMessageConstants.ServiceLabelNeedsOwners)]
-        [TestCase("CodeownersTestFiles/VerifyBlock/MonikersMissingSourcePath", 27, 27,
                   ErrorMessageConstants.ServiceLabelNeedsOwners)]
         // Duplicate Moniker Errors
         [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 3, 5,
                   $"{MonikerConstants.PRLabel}{ErrorMessageConstants.DuplicateMonikerInBlockPartial}")]
-        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 8, 10,
+        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 8, 11,
                   $"{MonikerConstants.AzureSdkOwners}{ErrorMessageConstants.DuplicateMonikerInBlockPartial}")]
-        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 13, 15,
+        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 14, 16,
                   $"{MonikerConstants.ServiceLabel}{ErrorMessageConstants.DuplicateMonikerInBlockPartial}")]
-        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 18, 20,
+        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 19, 21,
                   $"{MonikerConstants.ServiceLabel}{ErrorMessageConstants.DuplicateMonikerInBlockPartial}")]
-        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 23, 25,
+        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 24, 26,
                   $"{MonikerConstants.ServiceLabel}{ErrorMessageConstants.DuplicateMonikerInBlockPartial}")]
-        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 28, 30,
+        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 29, 31,
                   $"{MonikerConstants.MissingFolder}{ErrorMessageConstants.DuplicateMonikerInBlockPartial}")]
-        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 33, 35,
+        [TestCase("CodeownersTestFiles/VerifyBlock/DuplicateMonikers", 34, 36,
                   $"{MonikerConstants.ServiceOwners}{ErrorMessageConstants.DuplicateMonikerInBlockPartial}")]
         // ServiceLabel ends in source path/owner line with ServiceOwners or MissingPath, /<NotInRepo>/, in the same block
         [TestCase("CodeownersTestFiles/VerifyBlock/ServiceLabelTooManyOwnersAndMonikers", 2, 4,
@@ -318,10 +319,11 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Verification
         /// </summary>
         /// <param name="testCodeownerFile">The file that contains the CODEOWNERS data for a given scenario.</param>
         /// <param name="testBaselineFile">The file that contains the expected baseline errors for a given scenario.</param>
-        [TestCase("CodeownersTestFiles/EndToEnd/NoErrors", null)]
-        [TestCase("CodeownersTestFiles/EndToEnd/WithErrors", "CodeownersTestFiles/EndToEnd/WithErrors_baseline.txt")]
+        [TestCase("CodeownersTestFiles/EndToEnd/NoErrors", null, 0)]
+        [TestCase("CodeownersTestFiles/EndToEnd/WithBlockErrors", "CodeownersTestFiles/EndToEnd/WithBlockErrors_baseline.txt", 4)]
         public void TestLintCodeownersFile(string testCodeownerFile,
-                                           string testBaselineFile)
+                                           string testBaselineFile,
+                                           int expectedNumberOfBlockErrors)
         {
             List<BaseError> actualErrors = CodeownersLinter.LintCodeownersFile(_directoryUtilsMock,
                                                                                _ownerDataUtils,
@@ -347,16 +349,24 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Verification
                 }
                 else
                 {
-                    // Last but not least, make sure the errors produced match what is expected. To do this, the baseline file
+                    // Last but not least, make sure that any SingleLineErrors produced match what is expected. To do this, the baseline file
                     // and filtering will be used.
                     BaselineUtils baselineUtils = new BaselineUtils(testBaselineFile);
                     var filteredErrors = baselineUtils.FilterErrorsUsingBaseline(actualErrors);
-                    // The filter file contains all of the expected errors. After filtering, the list of filtered
-                    // errors should be empty.
-                    if (filteredErrors.Count > 0)
+                    // The filter file contains all of the expected SingleLineErrors errors. After filtering, the list of filtered
+                    // errors should only contain the expected number of BlockFormattingErrors.
+                    if (filteredErrors.Count != expectedNumberOfBlockErrors)
                     {
+                        string failureString = $"LintCodeownersFile for {testCodeownerFile} expected {expectedNumberOfBlockErrors} of block formatting errors but returned {filteredErrors.Count} errors.";
+                        // Are all of the errors block errors?
+                        var singleLineErrors = filteredErrors.OfType<SingleLineError>().ToList();
+                        if (singleLineErrors.Count > 0)
+                        {
+                            failureString += $"\nOf the failures, there were {singleLineErrors.Count} errors that should have been filtered.";
+                        }
+
                         string errorString = TestHelpers.FormatErrorMessageFromErrorList(filteredErrors);
-                        Assert.Fail($"LintCodeownersFile for {testCodeownerFile} expected errors, testBaselineFile={testBaselineFile} which should have filtered all expected errors but filtering returned {filteredErrors.Count} errors.\nUnfiltered Errors:\n{errorString}.");
+                        Assert.Fail($"{failureString}.\nFiltered Errors:\n{errorString}.");
                     }
                 }
             }

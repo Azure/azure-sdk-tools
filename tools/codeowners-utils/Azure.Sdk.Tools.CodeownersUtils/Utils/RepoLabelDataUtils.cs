@@ -5,17 +5,17 @@ using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
 using Azure.Sdk.Tools.CodeownersUtils;
-using Azure.Sdk.Tools.CodeownersUtils.Holders;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 
 namespace Azure.Sdk.Tools.CodeownersUtils.Utils
 {
     /// <summary>
-    /// The OwnerData contains the repository label data as well as methods used for repository label verification.
+    /// The RepoLabelData contains the repository label cache as well as methods used for repository label verification.
     /// </summary>
     public class RepoLabelDataUtils
     {
         private string _repository = null;
-        private RepoLabelHolder _repoLabelHolder = null;
+        private RepoLabelCache _repoLabelCache = null;
         public RepoLabelDataUtils()
         {
         }
@@ -24,20 +24,20 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
                                   string repository)
         {
             _repository = repository;
-            _repoLabelHolder = new RepoLabelHolder(repoLabelBlobStorageUri);
+            _repoLabelCache = new RepoLabelCache(repoLabelBlobStorageUri);
         }
 
         // This constructor is for testing purposes only.
-        public RepoLabelDataUtils(RepoLabelHolder repoLabelHolder,
+        public RepoLabelDataUtils(RepoLabelCache repoLabelCache,
                                   string repository)
         {
             _repository = repository;
-            _repoLabelHolder = repoLabelHolder;
+            _repoLabelCache = repoLabelCache;
         }
 
         public bool LabelInRepo(string label)
         {
-            return _repoLabelHolder.RepoLabelDict[_repository].Contains(label);
+            return _repoLabelCache.RepoLabelDict[_repository].Contains(label);
         }
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
         /// <returns>True if label data exists for the repository.</returns>
         public bool RepoLabelDataExists()
         {
-            return _repoLabelHolder.RepoLabelDict.ContainsKey(_repository);
+            return _repoLabelCache.RepoLabelDict.ContainsKey(_repository);
         }
     }
 }

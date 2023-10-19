@@ -58,21 +58,6 @@
     "IsValid": false
   },
   {
-    "PathExpression": "/sdk/someFakePath4/",
-    "ContainsWildcard": false,
-    "SourceOwners": [
-      "TestOwner2",
-      "TestOwner4"
-    ],
-    "PRLabels": [],
-    "ServiceLabels": [],
-    "ServiceOwners": [],
-    "AzureSdkOwners": [
-      "TestOwner0"
-    ],
-    "IsValid": true
-  },
-  {
     "PathExpression": "/sdk/someFakePath7/",
     "ContainsWildcard": false,
     "SourceOwners": [

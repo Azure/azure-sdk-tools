@@ -9,7 +9,7 @@ using NUnit.Framework;
 namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Verification
 {
     /// <summary>
-    /// Tests for label parsing and verification. LabelsTests requires a RepoLabelDataUtils with populated RepoLabelHolder 
+    /// Tests for label parsing and verification. LabelsTests requires a RepoLabelDataUtils with populated RepoLabelCache 
     /// </summary>
     [TestFixture]
     [Parallelizable(ParallelScope.Children)]

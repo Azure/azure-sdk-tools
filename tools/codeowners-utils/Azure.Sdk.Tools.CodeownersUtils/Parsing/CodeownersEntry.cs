@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
-using Azure.Sdk.Tools.CodeownersUtils.Holders;
+using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.CodeownersUtils.Parsing

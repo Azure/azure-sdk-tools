@@ -45,6 +45,8 @@ foreach ($group in $groups) {
             # and sometimes we must delete the blob if there's a legal hold.
             # Try to remove the blob, but keep running regardless.
             try {
+                Write-Host "Removing immutability policies and blobs - account: $($ctx.StorageAccountName), group: $($group.ResourceGroupName)"
+                $null = $ctx | Get-AzStorageContainer | Get-AzStorageBlob | Remove-AzStorageBlobImmutabilityPolicy
                 $ctx | Get-AzStorageContainer | Get-AzStorageBlob | Remove-AzStorageBlob -Force
             } catch {}
             # Use AzRm cmdlet as deletion will only work through ARM with the immutability policies defined on the blobs

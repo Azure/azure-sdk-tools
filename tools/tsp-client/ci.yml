@@ -79,7 +79,7 @@ stages:
             PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
             ArtifactName: '$(VAR_ARTIFACT_NAME)'
             publishLocation: 'Container'
-          condition: contains(variables['imageName'], 'ubuntu')
+          condition: contains(variables['OSVmImage'], 'ubuntu')
 
   - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
     - stage: Release

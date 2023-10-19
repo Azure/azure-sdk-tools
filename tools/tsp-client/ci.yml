@@ -107,10 +107,6 @@ stages:
             artifactName: '$(VAR_ARTIFACT_NAME)'
             downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
         - bash: |
-            echo -e "\e[32m[$(date -u)] LOG: Ensure latest npm is installed"
-            sudo npm install -g npm || { echo 'npm install failed' ; exit 1; }
-            sudo npm install -g pnpm || { echo 'pnpm install failed' ; exit 1; }
-
             echo -e "\e[32m[$(date -u)] LOG: publish the package"
             echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc
             for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARTIFACT_NAME)/*.tgz

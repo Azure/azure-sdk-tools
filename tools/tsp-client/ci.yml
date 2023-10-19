@@ -72,7 +72,7 @@ stages:
         - bash: 'cp azure-tools-tsp-client-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
           displayName: 'copy to staging dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
-          condition: contains(variables['imageName'], 'ubuntu')
+          condition: contains(variables['OSVmImage'], 'ubuntu')
 
         - task: PublishBuildArtifacts@1
           inputs:

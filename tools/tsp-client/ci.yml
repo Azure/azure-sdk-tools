@@ -41,13 +41,17 @@ stages:
         strategy:
           matrix:
             linux:
-              imageName: ubuntu-22.04
+              OSVmImage: 'MMSUbuntu20.04'
+              Pool: 'azsdk-pool-mms-ubuntu-2004-general'
             mac:
-              imageName: 'macos-latest'
+              OSVmImage: 'macos-latest'
+              Pool: 'Azure Pipelines'
             windows:
-              imageName: 'windows-latest'
+              OSVmImage: 'MMS2022'
+              Pool: 'azsdk-pool-mms-win-2022-general'
         pool:
-          vmImage: $(imageName)
+          name: $(Pool)
+          vmImage: $(OSVmImage)
         steps:
         - task: NodeTool@0
           inputs:

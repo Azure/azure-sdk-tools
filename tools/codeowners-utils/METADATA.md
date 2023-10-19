@@ -3,12 +3,12 @@
 Azure-sdk* repository CODEOWNERS files contain data beyond the normal source path/owner lines. This metadata is used by workflows for processing. The most notable consumer is [github-event-processor](https://github.com/Azure/azure-sdk-tools/tree/main/tools/github-event-processor) which uses these when processing certain GitHub Actions. The full set of action processing rules is documented [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/github-event-processor/RULES.md). The common definitions used in this document are as follows:
 
 - **Moniker** - Any of the existing tags we currently support. PRLabel or ServiceLabel would be examples of this.
-- **Metadata block** - A block containing one or more metadata tags and/or a source path/owner line. Blocks are  surrounded by blank lines. A block can contain comment lines.
-  - **Source path/owner line** - A single source path/owner line in CODEOWNERS is its own block. There are some metadata tags that must be part of a block that ends in source path/owner line and some tags that can be. These are defined below.
+- **Metadata block** - A block containing one or more metadata tags and/or a source path/owner line. A block ends with a blank line or _a single source path/owner line_. This means that one more monikers followed by multiple source path/owner lines will only apply the the metadata to the first source path/owner line. Each and every one source path/owner line requires its own metadata monikers.
+- **Source path/owner line** - A single source path/owner line in CODEOWNERS is its own block. There are some metadata tags that must be part of a block that ends in source path/owner line and some tags that can be. These are defined below.
 
 ## Metadata Monikers
 
-- **AzureSdkOwners:** - This moniker is used to denote Azure Sdk owners that have triage responsibility for a given source path where the people responsible for triage aren't the same people responsible for pull request reviews. This moniker must be part of a block that ends in a source path/owner line.
+- **AzureSdkOwners:** - This moniker is used to denote Azure Sdk owners that have triage responsibility for a given service label. This moniker must be part of a block containing a ServiceLabel entry.
 - **PRLabel:** - This moniker is used by workflows to determine what label(s) will get added to a pull request based upon the file paths of the files in the pull request. This moniker must be part of a block that ends in a source path/owner line.
 - **ServiceLabel:** - This moniker contains the service label that's used to figure out what users need to be @ mentioned in an issue when the Service Attention label is added. This moniker must be part of a block that either ends in a source path/owner line, the ServiceOwners moniker or the /&lt;NotInRepo&gt;/ moniker. If the ServiceLabel is part of a block that ends in the source path/owner line, the service owners are inferred from that.
 - **ServiceOwners:** - The moniker is used to identify the owners associated with a service label if the service label isn't part of a block ending in a source path/owner line. This moniker cannot be part of a source path/owner line.
@@ -27,15 +27,19 @@ This list of examples is exhaustive. If an example isn't in here then it won't w
 
 ```
 
-- `AzureSdkOwners` must be part of a block that ends in a source path/owner. If the moniker's owners are blank then they will be set to the same owners as the source owners. In the example below, AzureSdkOwners:, left empty would take @fakeUser1 @fakeUser2 @Azure/fakeTeam1 from the source owners.
+- `AzureSdkOwners` must be part of a block that contains a ServiceLabel entry. If that block ends in a source path/owner line, and the AzureSdkOwners entry is empty, it'll have the same owners that are only the source path/owner line. If it's part of block that contains a ServiceLabel/ServiceOwner combination, then it must have it's own owners defined.
 
 ```text
 
-# AzureSdkOwners: %fakeUser3 %fakeUser4
+# AzureSdkOwners: @fakeUser3 @fakeUser4
 /sdk/SomePath/  @fakeUser1 @fakeUser2 @Azure/fakeTeam1
 OR
 # AzureSdkOwners:
 /sdk/SomePath/  @fakeUser1 @fakeUser2 @Azure/fakeTeam1
+OR
+# AzureSdkOwners: @fakeUser3 @fakeUser4
+# ServiceLabel: %fakeLabel12
+# ServiceOwners: @fakeUser1 @fakeUser2
 
 ```
 
@@ -48,7 +52,7 @@ OR
 
 ```
 
-- If a `ServiceLabel` is part of a block that ends in a source path/owner line, the ServiceOwners will be the inferred to be the same as the source owners. _This is time that a moniker will have inferred data._
+- If a `ServiceLabel` is part of a block that ends in a source path/owner line, the ServiceOwners will be the inferred to be the same as the source owners. A ServiceLabel ending in a source path/owners block cannot have a ServiceOwners entry because the entire reason it's part of that block is because the service owners and source owners are the same. _This is only time that a moniker not explicitly in the block will have inferred data._
 
 ```text
 
@@ -69,13 +73,21 @@ OR
 
 ```
 
-- Everything that can be part of a source path/owners block. ServiceOwners will be inferred from the path owners. AzureSdkOwners, if empty, would do the same.
+- This might look complex but there are really only 2 types of blocks. The first ends with a source path/owner line and may have AzureSdkOwners, ServiceLabel PRLabel entries and the second is ServiceLabel/ServiceOwner block which may have AzureSdkOwners.
 
 ```text
 
-# AzureSdkOwners: %fakeUser3 %fakeUser4
-# ServiceLabel: %Label1 %Label2
-# PRLabel: %Label3
+# AzureSdkOwners: (optional)
+# ServiceLabel: (optional)
+# PRLabel: (optional)
 /sdk/SomePath/  @fakeUser1 @fakeUser2 @Azure/fakeTeam1
+
+```
+
+```text
+
+# AzureSdkOwners: (optional)
+# ServiceLabel: %Label1 %Label2
+# ServiceOwners: @fakeUser1 @Azure/fakeTeam1
 
 ```

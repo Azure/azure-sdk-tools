@@ -24,9 +24,7 @@ class AstDumper {
       std::vector<std::string>::iterator& current);
 
 protected:
-  void UpdateCursor(size_t cursorAdjustment) {
-      m_currentCursor += cursorAdjustment; 
-  }
+  void UpdateCursor(size_t cursorAdjustment) { m_currentCursor += cursorAdjustment; }
 
 public:
   // Note about the different functions.

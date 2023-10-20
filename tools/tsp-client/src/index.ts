@@ -94,7 +94,7 @@ async function sdkInit(
 async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
   const tempRoot = await createTempDirectory(outputDir);
 
-  const repoRoot = getRepoRoot();
+  const repoRoot = await getRepoRoot(outputDir);
   Logger.debug(`Repo root is ${repoRoot}`);
   if (repoRoot === undefined) {
     throw new Error("Could not find repo root");
@@ -108,29 +108,31 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
   }
   const srcDir = path.join(tempRoot, projectName);
   await mkdir(srcDir, { recursive: true });
-  const cloneDir = path.join(repoRoot, "..", "sparse-spec");
-  await mkdir(cloneDir, { recursive: true });
-  Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
-  
+
   if (localSpecRepo) {
     Logger.debug(`Using local spec directory: ${localSpecRepo}`);
-    function filter(src: string, dest: string): boolean {
-      if (src.includes("node_modules") || dest.includes("node_modules")) {
+    function filter(src: string): boolean {
+      if (src.includes("node_modules")) {
+        return false;
+      }
+      if (src.includes("tsp-output")) {
         return false;
       }
       return true;
     }
-    const cpDir = path.join(cloneDir, directory);
-    await cp(localSpecRepo, cpDir, { recursive: true, filter: filter });
-    // TODO: additional directories not yet supported
-    // const localSpecRepoRoot = await getRepoRoot(localSpecRepo);
-    // if (localSpecRepoRoot === undefined) {
-    //   throw new Error("Could not find local spec repo root, please make sure the path is correct");
-    // }
-    // for (const dir of additionalDirectories) {
-    //   await cp(path.join(localSpecRepoRoot, dir), cpDir, { recursive: true, filter: filter });
-    // }
+    await cp(localSpecRepo, srcDir, { recursive: true, filter: filter });
+    const localSpecRepoRoot = await getRepoRoot(localSpecRepo);
+    Logger.info(`Local spec repo root is ${localSpecRepoRoot}`)
+    if (localSpecRepoRoot === undefined) {
+      throw new Error("Could not find local spec repo root, please make sure the path is correct");
+    }
+    for (const dir of additionalDirectories) {
+      await cp(path.join(localSpecRepoRoot, dir), srcDir, { recursive: true, filter: filter });
+    }
   } else {
+    const cloneDir = path.join(repoRoot, "..", "sparse-spec");
+    await mkdir(cloneDir, { recursive: true });
+    Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
     Logger.debug(`Cloning repo to ${cloneDir}`);
     await cloneRepo(tempRoot, cloneDir, `https://github.com/${repo}.git`);
     await sparseCheckout(cloneDir);
@@ -139,28 +141,20 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     for (const dir of additionalDirectories) {
       await addSpecFiles(cloneDir, dir);
     }
-    await checkoutCommit(cloneDir, commit);  
-  }
-
-  await cp(path.join(cloneDir, directory), srcDir, { recursive: true });
-  const emitterPath = path.join(repoRoot, "eng", "emitter-package.json");
-  await cp(emitterPath, path.join(srcDir, "package.json"), { recursive: true });
-  // FIXME: remove conditional once full support for local spec repo is added
-  if (localSpecRepo) {
-    Logger.info("local spec repo does not yet support additional directories");
-  } else {
+    await checkoutCommit(cloneDir, commit);
+    await cp(path.join(cloneDir, directory), srcDir, { recursive: true });
     for (const dir of additionalDirectories) {
       const dirSplit = dir.split("/");
       let projectName = dirSplit[dirSplit.length - 1];
-      if (projectName === undefined) {
-        projectName = "src";
-      }
-      const dirName = path.join(tempRoot, projectName);
+      const dirName = path.join(tempRoot, projectName!);
       await cp(path.join(cloneDir, dir), dirName, { recursive: true });
     }
+    Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
+    await removeDirectory(cloneDir);
   }
-  Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
-  await removeDirectory(cloneDir);
+
+  const emitterPath = path.join(repoRoot, "eng", "emitter-package.json");
+  await cp(emitterPath, path.join(srcDir, "package.json"), { recursive: true });
 }
 
 
@@ -181,7 +175,7 @@ async function generate({
     throw new Error("cannot find project name");
   }
   const srcDir = path.join(tempRoot, projectName);
-  const emitter = await getEmitterFromRepoConfig(path.join(getRepoRoot(), "eng", "emitter-package.json"));
+  const emitter = await getEmitterFromRepoConfig(path.join(await getRepoRoot(rootUrl), "eng", "emitter-package.json"));
   if (!emitter) {
     throw new Error("emitter is undefined");
   }
@@ -218,7 +212,7 @@ async function main() {
 
   switch (options.command) {
       case "init":
-        const emitter = await getEmitterFromRepoConfig(path.join(getRepoRoot(), "eng", "emitter-package.json"));
+        const emitter = await getEmitterFromRepoConfig(path.join(await getRepoRoot(rootUrl), "eng", "emitter-package.json"));
         if (!emitter) {
           throw new Error("Couldn't find emitter-package.json in the repo");
         }

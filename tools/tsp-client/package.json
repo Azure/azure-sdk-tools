@@ -8,6 +8,7 @@
     "build:tsc": "tsc",
     "clean": "rimraf ./dist ./types",
     "example": "npx ts-node src/index.ts update",
+    "prepack": "npm run build",
     "test": "mocha"
   },
   "author": "Microsoft Corporation",

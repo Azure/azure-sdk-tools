@@ -7,9 +7,9 @@ parameters:
 - name: UseTypeSpecNext
   type: boolean
 
-# The target to publish packages to. Currently supported values are 'internal' and 'public'.
-- name: PublishTarget
-  type: string
+# Whether to publish to the internal feed.
+- name: PublishInternal
+  type: boolean
 
 # Path to the emitter package's package.json file. If specified, it will be used to generate emitter-package.json in the artifact `build_artifacts`.
 - name: EmitterPackageJsonPath
@@ -52,7 +52,7 @@ parameters:
 # Indicates the build matrix to use for post-build autorest validation
 - name: PublishDependsOnTest
   type: boolean
-  default: true
+  default: false
 
 stages:
 
@@ -77,13 +77,6 @@ stages:
         displayName: 'Get repository details'
 
     # Validate parameters and fail early if invalid
-    - ${{ if notIn(parameters.PublishTarget, 'internal', 'public') }}:
-      - script: |
-          echo "Publish target ${{ parameters.PublishTarget }} is not supported"
-          exit 1
-        displayName: 'Unsupported PublishTarget'
-        condition: always()
-
     - ${{ each package in parameters.Packages }}:
       - ${{ if notIn(package.type, 'npm', 'nuget') }}:
         - script: |
@@ -112,10 +105,10 @@ stages:
         pwsh: true
         filePath: $(autorestRepositoryPath)/eng/scripts/build.ps1
         arguments: >
-          -PublishTarget ${{ parameters.PublishTarget }}
-          -BuildPrereleaseVersion ${{ parameters.BuildPrereleaseVersion }}
           -BuildNumber "$(Build.BuildNumber)"
           -Output "$(Build.ArtifactStagingDirectory)"
+          -PublishInternal:$${{ parameters.PublishInternal }}
+          -Prerelease:$${{ parameters.BuildPrereleaseVersion }}
         workingDirectory: $(autorestRepositoryPath)
 
     - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
@@ -186,12 +179,12 @@ stages:
       displayName: Download build artifacts
 
     # Create authenticated .npmrc file for publishing
-    - ${{ if eq(parameters.PublishTarget, 'internal') }}:
+    - ${{ if eq(parameters.PublishInternal, 'true') }}:
       - template: ../steps/create-authenticated-npmrc.yml
         parameters:
           npmrcPath: $(buildArtifactsPath)/packages/.npmrc
           registryUrl: https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js-test-autorest/npm/registry/
-    - ${{ elseif eq(parameters.PublishTarget, 'public') }}:
+    - ${{ else }}:
       - pwsh: |
           "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" | Out-File '.npmrc'
         displayName: Authenticate .npmrc for npmjs.org
@@ -267,7 +260,6 @@ stages:
 
       - task: PowerShell@2
         displayName: 'Run test script'
-        name: ci_build
         inputs:
           pwsh: true
           filePath: $(autorestRepositoryPath)/eng/scripts/test.ps1
@@ -379,14 +371,7 @@ stages:
         SkipCheckoutNone: true
 
     - download: current
-      artifact: build_artifacts
-      displayName: Download build artifacts
-    - download: current
-      artifact: publish_artifacts
-      displayName: Download pubish artifacts
-    - download: current
-      artifact: matrix_artifacts
-      displayName: Download matrix artifacts
+      displayName: Download pipeline artifacts
 
     - task: PowerShell@2
       displayName: Call regeneration script

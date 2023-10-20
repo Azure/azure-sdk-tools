@@ -56,7 +56,10 @@ param (
   [switch] $DeleteArmDeployments,
 
   [Parameter()]
-  [int] $DeleteAfterHours = 24,
+  [Double] $DeleteAfterHours = 24,
+
+  [Parameter()]
+  [Double] $MaxLifespanDeleteAfterHours,
 
   [Parameter()]
   [string] $AllowListPath = "$PSScriptRoot/cleanup-allowlist.txt",
@@ -226,7 +229,7 @@ function HasValidOwnerTag([object]$ResourceGroup) {
     Write-Warning " Resource group '$($ResourceGroup.ResourceGroupName)' has invalid owner tags: $($invalidOwners -join ',')"
   }
   if ($hasValidOwner) {
-    Write-Host " Skipping tagged resource group '$($ResourceGroup.ResourceGroupName)' with owners '$owners'"
+    Write-Host " Found tagged resource group '$($ResourceGroup.ResourceGroupName)' with owners '$owners'"
     return $true
   }
   return $false
@@ -238,7 +241,7 @@ function HasValidAliasInName([object]$ResourceGroup) {
       -match '^(rg-)?(?<alias>(t-|a-|v-)?[a-z,A-Z]+)([-_].*)?$' `
       -and (IsValidAlias -Alias $matches['alias']))
     {
-      Write-Host " Skipping resource group '$($ResourceGroup.ResourceGroupName)' starting with valid alias '$($matches['alias'])'"
+      Write-Host " Found resource group '$($ResourceGroup.ResourceGroupName)' starting with valid alias '$($matches['alias'])'"
       return $true
     }
     return $false
@@ -269,7 +272,8 @@ function HasException([object]$ResourceGroup) {
 function FindOrCreateDeleteAfterTag {
   [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'Medium')]
   param(
-    [object]$ResourceGroup
+    [object]$ResourceGroup,
+    [Double]$HoursToDelete
   )
 
   if (!$DeleteNonCompliantGroups -or !$ResourceGroup) {
@@ -285,7 +289,7 @@ function FindOrCreateDeleteAfterTag {
 
   $deleteAfter = GetTag $ResourceGroup "DeleteAfter"
   if (!$deleteAfter -or !($deleteAfter -as [datetime])) {
-    $deleteAfter = [datetime]::UtcNow.AddHours($DeleteAfterHours)
+    $deleteAfter = [datetime]::UtcNow.AddHours($HoursToDelete)
     if ($Force -or $PSCmdlet.ShouldProcess("$($ResourceGroup.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Adding DeleteAfter Tag to Group")) {
       Write-Host "Adding DeleteAfter tag with value '$deleteAfter' to group '$($ResourceGroup.ResourceGroupName)'"
       $result = ($ResourceGroup | Update-AzTag -Operation Merge -Tag @{ DeleteAfter = $deleteAfter }) 2>&1
@@ -331,10 +335,14 @@ function HasDeleteLock([object]$ResourceGroup) {
 
 function DeleteArmDeployments([object]$ResourceGroup) {
   if (!$DeleteArmDeployments) {
-      return
+    return
   }
-  Write-Host "Deleting ARM deployments for group $($ResourceGroup.ResourceGroupName) as they may contain secrets. Deployed resources will not be affected."
-  $null = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName | Remove-AzResourceGroupDeployment
+  $toDelete = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName | Where-Object { $_ -and $_.Outputs?.Count }
+  if (!$toDelete -or !$toDelete.Count) {
+    return
+  }
+  Write-Host "Deleting $($toDelete.Count) ARM deployments for group $($ResourceGroup.ResourceGroupName) as they may contain output secrets. Deployed resources will not be affected."
+  $null = $toDelete | Remove-AzResourceGroupDeployment
 }
 
 function DeleteOrUpdateResourceGroups() {
@@ -348,8 +356,9 @@ function DeleteOrUpdateResourceGroups() {
   Write-Verbose "Fetching groups"
   [Array]$allGroups = Retry { Get-AzResourceGroup }
   $toDelete = @()
-  $toUpdate = @()
   $toClean = @()
+  $toDeleteSoon = @()
+  $toDeleteLater = @()
   Write-Host "Total Resource Groups: $($allGroups.Count)"
 
   foreach ($rg in $allGroups) {
@@ -366,22 +375,38 @@ function DeleteOrUpdateResourceGroups() {
     if ((IsChildResource $rg) -or (HasDeleteLock $rg)) {
       continue
     }
-    if ((HasDoNotDeleteTag $rg) -or (HasValidAliasInName $rg) -or (HasValidOwnerTag $rg)) {
+    if (HasDoNotDeleteTag $rg) {
       $toClean += $rg
       continue
     }
-    $toUpdate += $rg
+    if ((HasValidAliasInName $rg) -or (HasValidOwnerTag $rg)) {
+      $toClean += $rg
+      $toDeleteLater += $rg
+      continue
+    }
+
+    $toDeleteSoon += $rg
   }
 
 
-  foreach ($rg in $toUpdate) {
-    FindOrCreateDeleteAfterTag $rg
+  foreach ($rg in $toDeleteSoon) {
+    FindOrCreateDeleteAfterTag -ResourceGroup $rg -HoursToDelete $DeleteAfterHours
   }
+
+  if ($MaxLifeSpanDeleteAfterHours) {
+    foreach ($rg in $toDeleteLater) {
+      FindOrCreateDeleteAfterTag -ResourceGroup $rg -HoursToDelete $MaxLifespanDeleteAfterHours
+    }
+  }
+
+  DeleteAndPurgeGroups $toDelete
 
   foreach ($rg in $toClean) {
     DeleteArmDeployments $rg
   }
+}
 
+function DeleteAndPurgeGroups([array]$toDelete) {
   # Get purgeable resources already in a deleted state.
   $purgeableResources = @(Get-PurgeableResources)
 

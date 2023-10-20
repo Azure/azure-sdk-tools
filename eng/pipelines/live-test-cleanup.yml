@@ -11,10 +11,11 @@ parameters:
       - DisplayName: AzureCloud - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-test-resources)
-        AdditionalParameters: "-DeleteNonCompliantGroups"
+        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments"
       - DisplayName: AzureCloud-Preview - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-test-resources-preview)
+        AdditionalParameters: "-DeleteArmDeployments"
         # TODO: Enable strict resource cleanup after pre-existing static groups have been handled
         # AdditionalParameters: "-DeleteNonCompliantGroups"
       - DisplayName: AzureUSGovernment - Resource Cleanup
@@ -30,7 +31,7 @@ parameters:
       - DisplayName: AzureCloud Playground - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-playground)
-        AdditionalParameters: "-DeleteNonCompliantGroups"
+        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments -MaxLifespanDeleteAfterHours 720"
       - DisplayName: Dogfood Translation - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-translation-int-test-resources)

@@ -69,7 +69,7 @@ stages:
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
           condition: contains(variables['OSVmImage'], 'ubuntu')
 
-        - bash: 'cp azure-tools-tsp-client-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+        - bash: 'cp azure-tools-typespec-client-generator-cli-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
           displayName: 'copy to staging dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
           condition: contains(variables['OSVmImage'], 'ubuntu')

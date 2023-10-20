@@ -79,6 +79,7 @@ public:
   ~AzureClassesDatabase();
 
   TypeHierarchy* GetTypeHierarchy() { return &m_typeHierarchy; }
+  ApiViewProcessorImpl const* GetProcessor() { return m_processor; }
 
   void CreateApiViewMessage(ApiViewMessages diagnostic, std::string_view const& targetId);
   void CreateAstNode(clang::NamedDecl* namedNode);

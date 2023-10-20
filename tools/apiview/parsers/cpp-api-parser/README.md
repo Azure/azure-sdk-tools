@@ -80,6 +80,8 @@ An ApiViewSettings.json file contains the following options:
 - "filterNamespace" - if present and non-null, represents a set of
   namespace prefixes which are expected in the package.
   Types which do not match the filter will generate a warning.
+- "sourceRootUrl" - if present and non-null represents the root URL for the ApiView directory.
+  This URL is used to generate source links in the ApiView tool.
 
 ## Implementation Details
 

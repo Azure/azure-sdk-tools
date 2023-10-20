@@ -27,6 +27,8 @@ class ApiViewProcessorImpl {
   std::string m_reviewName;
   std::string m_serviceName;
   std::string m_packageName;
+  std::string m_repositoryRoot;
+  mutable std::string m_sourceRoot;
 
   bool m_allowInternal{false};
   bool m_includeDetail{false};
@@ -114,11 +116,20 @@ public:
 
   std::unique_ptr<AzureClassesDatabase> const& GetClassesDatabase() { return m_classDatabase; }
 
-  bool AllowInternal() { return m_allowInternal; }
-  bool IncludeDetail() { return m_includeDetail; }
-  bool IncludePrivate() { return m_includePrivate; }
-  std::string_view const ReviewName() { return m_reviewName; };
-  std::string_view const ServiceName() { return m_serviceName; };
-  std::string_view const PackageName() { return m_packageName; };
-  std::vector<std::string> const &FilterNamespaces() { return m_filterNamespaces; }
+  bool AllowInternal() const { return m_allowInternal; }
+  bool IncludeDetail() const { return m_includeDetail; }
+  bool IncludePrivate() const { return m_includePrivate; }
+  std::string_view const ReviewName() const { return m_reviewName; };
+  std::string_view const ServiceName() const { return m_serviceName; };
+  std::string_view const PackageName() const { return m_packageName; };
+  std::string_view const SourceRepository() const { return m_repositoryRoot; };
+  std::string_view const RootDirectory() const
+  {
+    if (m_sourceRoot.empty())
+    {
+      m_sourceRoot = m_currentSourceRoot.string();
+    }
+    return m_sourceRoot;
+  }
+  std::vector<std::string> const& FilterNamespaces() { return m_filterNamespaces; }
 };

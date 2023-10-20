@@ -26,7 +26,6 @@ class AstDumper {
 protected:
   void UpdateCursor(size_t cursorAdjustment) {
       m_currentCursor += cursorAdjustment; 
-      assert(m_currentCursor >= 0);
   }
 
 public:

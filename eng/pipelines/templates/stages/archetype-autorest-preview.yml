@@ -55,6 +55,14 @@ parameters:
   default: true
 
 stages:
+
+# Build stage
+# Responsible for building the autorest generator and typespec emitter packages
+# Produces the artifact `build_artifacts` which contains the following:
+#   emitter-package.json: Will be used to generate the emitter-package-lock.json file and placed in the `/eng` folder
+#                         of the sdk repository.
+#   overrides.json: Contains npm package version overrides for the emitter and generator
+#   packages/: Contains the packages to publish
 - stage: Build
   variables:
     autorestRepositoryPath: $(Build.SourcesDirectory)/autorest
@@ -155,51 +163,11 @@ stages:
       condition: failed()
       workingDirectory: $(autorestRepositoryPath)
 
-- ${{ if ne(length(parameters.TestMatrix), 0) }}:
-  - stage: Test
-    dependsOn: Build
-    variables:
-      autorestRepositoryPath: $(Build.SourcesDirectory)/autorest
-      toolsRepositoryPath: $(Build.SourcesDirectory)/azure-sdk-tools
-    jobs:
-    - job: Test
-      strategy:
-        matrix: ${{ parameters.TestMatrix }}
-      variables:
-        buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
-      steps:
-      - checkout: self
-        # Use a predictable path for the autorest repo
-        path: s/autorest
-
-      - checkout: azure-sdk-tools
-        
-      - download: current
-        artifact: build_artifacts
-        displayName: Download build artifacts
-
-      - task: PowerShell@2
-        displayName: 'Run initialize script'
-        inputs:
-          pwsh: true
-          filePath: $(autorestRepositoryPath)/eng/scripts/initialize.ps1
-          arguments: -BuildArtifactsPath '$(buildArtifactsPath)'
-          workingDirectory: $(autorestRepositoryPath)
-
-      - task: PowerShell@2
-        displayName: 'Run test script'
-        name: ci_build
-        inputs:
-          pwsh: true
-          filePath: $(autorestRepositoryPath)/eng/scripts/test.ps1
-          arguments: $(TestArguments)
-          workingDirectory: $(autorestRepositoryPath)
-
-      - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
-        parameters:
-          artifactName: test_artifacts_$(System.JobName)
-          artifactPath: $(Build.ArtifactStagingDirectory)
-
+# Publish stage
+# Responsible for publishing the packages in `build_artifacts/packages` and producing `emitter-package-lock.json`
+# Produces the artifact `publish_artifacts` which contains the following:
+#   emitter-package-lock.json: Created by calling `npm install` using `build_artifacts/emitter-package.json` and will
+#                              be placed in the `/eng` folder of the sdk repository.
 - stage: Publish
   dependsOn:
   - Build
@@ -262,6 +230,55 @@ stages:
       parameters:
         artifactName: publish_artifacts
         artifactPath: $(Build.ArtifactStagingDirectory)
+
+# Test stage
+# Responsible for running unit and functional tests using a matrix passed in as the parameter `TestMatrix`.
+# Will only run if the parameter `TestMatrix` is not empty.
+# The contents of the artficact `build_artifacts` are available under the path `$(buildArtifactsPath)`.
+- ${{ if ne(length(parameters.TestMatrix), 0) }}:
+  - stage: Test
+    dependsOn: Build
+    variables:
+      autorestRepositoryPath: $(Build.SourcesDirectory)/autorest
+      toolsRepositoryPath: $(Build.SourcesDirectory)/azure-sdk-tools
+    jobs:
+    - job: Test
+      strategy:
+        matrix: ${{ parameters.TestMatrix }}
+      variables:
+        buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
+      steps:
+      - checkout: self
+        path: s/autorest # Use a predictable path for the `self` repo
+
+      - checkout: azure-sdk-tools
+        
+      - download: current
+        artifact: build_artifacts
+        displayName: Download build artifacts
+
+      - task: PowerShell@2
+        displayName: 'Run initialize script'
+        inputs:
+          pwsh: true
+          filePath: $(autorestRepositoryPath)/eng/scripts/initialize.ps1
+          arguments: -BuildArtifactsPath '$(buildArtifactsPath)'
+          workingDirectory: $(autorestRepositoryPath)
+
+      - task: PowerShell@2
+        displayName: 'Run test script'
+        name: ci_build
+        inputs:
+          pwsh: true
+          filePath: $(autorestRepositoryPath)/eng/scripts/test.ps1
+          arguments: $(TestArguments)
+          workingDirectory: $(autorestRepositoryPath)
+
+      - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
+        parameters:
+          artifactName: test_artifacts_$(System.JobName)
+          artifactPath: $(Build.ArtifactStagingDirectory)
+
 
 - stage: Regenerate
   dependsOn:

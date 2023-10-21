@@ -413,7 +413,9 @@ def generate_java_report() -> ScanResult:
             result.packages_using_proxy.append(os.path.basename(os.path.dirname(pkg)))
             result.packages_using_external.append(os.path.basename(os.path.dirname(pkg)))
 
+    result.packages = sorted(set(result.packages))
     print("done.")
+
     return result
 
 

@@ -337,7 +337,7 @@ function DeleteArmDeployments([object]$ResourceGroup) {
   if (!$DeleteArmDeployments) {
     return
   }
-  $toDelete = Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName | Where-Object { $_ -and $_.Outputs?.Count }
+  $toDelete = @(Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName | Where-Object { $_ -and $_.Outputs?.Count })
   if (!$toDelete -or !$toDelete.Count) {
     return
   }
@@ -369,6 +369,8 @@ function DeleteOrUpdateResourceGroups() {
     if ($deleteAfter) {
       if (HasExpiredDeleteAfterTag $deleteAfter) {
         $toDelete += $rg
+      } else {
+        $toClean += $rg
       }
       continue
     }
@@ -410,7 +412,9 @@ function DeleteAndPurgeGroups([array]$toDelete) {
   # Get purgeable resources already in a deleted state.
   $purgeableResources = @(Get-PurgeableResources)
 
-  Write-Host "Total Resource Groups To Delete: $($toDelete.Count)"
+  if ($toDelete) {
+    Write-Host "Total Resource Groups To Delete: $($toDelete.Count)"
+  }
   foreach ($rg in $toDelete)
   {
     $deleteAfter = GetTag $rg "DeleteAfter"

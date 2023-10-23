@@ -21,6 +21,11 @@ parameters:
   type: stepList
   default: []
 
+# Custom steps to run in the Build and Test stages after the repositories are cloned.
+- name: AutorestInitializationSteps
+  type: stepList
+  default: []
+
 # List of packages to publish. Each package is an object with the following properties:
 #   name: The name of the package. This is used to determine the name of the file to publish.
 #   type: The type of package. Currently supported values are 'npm' and 'nuget'.
@@ -89,6 +94,8 @@ stages:
       path: s/autorest
 
     - checkout: azure-sdk-tools
+
+    - ${{ parameters.AutorestInitializationSteps }}
 
     - task: PowerShell@2
       displayName: 'Run initialize script'
@@ -249,6 +256,8 @@ stages:
       - download: current
         artifact: build_artifacts
         displayName: Download build artifacts
+
+      - ${{ parameters.AutorestInitializationSteps }}
 
       - task: PowerShell@2
         displayName: 'Run initialize script'

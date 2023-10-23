@@ -21,6 +21,8 @@ the `-o` or `--output-dir` option.
 ### init
 Initialize the SDK project folder from a tspconfig.yaml. When using this command pass in a path to a local or remote tspconfig.yaml, using the `-c` or `--tsp-config` flag.
 
+The command will generate the appropriate SDK folder in the repository, create a `tsp-location.yaml` file that will be used for future regeneration, and do an initial generation of the SDK. If you want to skip SDK generation, then pass the `--skip-sync-and-generate` flag.
+
 ### update
 Sync and generate client libraries from a TypeSpec project. The `update` command will look for a `tsp-location.yaml` file in your current directory to sync a TypeSpec project and generate a client library.
 

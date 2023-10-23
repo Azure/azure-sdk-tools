@@ -1,5 +1,5 @@
 variables:
   OfficialBuildId: $(Build.BuildNumber)
   skipComponentGovernanceDetection: true
-  NotificationsCreatorVersion: '1.0.0-dev.20230223.2'
-  PipelineOwnersExtractorVersion: '1.0.0-dev.20230211.1'
+  NotificationsCreatorVersion: '1.0.0-dev.20231023.2'
+  PipelineOwnersExtractorVersion: '1.0.0-dev.20231023.2'

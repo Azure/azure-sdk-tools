@@ -148,7 +148,7 @@ This is a stand-alone service providing a REST API which requires a service key 
             - Create the following comment
               "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
         ELSE
-            - Add "Service Attention" label to the issue
+            - Add "Service Attention" label to the issue and apply the logic from the "Service Attention" rule
             - Create the following comment
               - "Thank you for your feedback.  This has been routed to the support team for assistance."
     ELSE

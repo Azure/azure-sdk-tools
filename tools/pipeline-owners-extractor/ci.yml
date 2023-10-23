@@ -9,6 +9,8 @@ trigger:
   paths:
     include:
       - tools/pipeline-owners-extractor
+      - tools/codeowners-utils/Azure.Sdk.Tools.CodeownersUtils
+      - tools/identity-resolution
 
 pr:
   branches:
@@ -20,6 +22,8 @@ pr:
   paths:
     include:
       - tools/pipeline-owners-extractor
+      - tools/codeowners-utils/Azure.Sdk.Tools.CodeownersUtils
+      - tools/identity-resolution
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml

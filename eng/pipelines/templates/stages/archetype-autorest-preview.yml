@@ -382,6 +382,8 @@ stages:
     - download: current
       displayName: Download pipeline artifacts
 
+    - ${{ parameters.SdkInitializationSteps }}
+
     - task: PowerShell@2
       displayName: Call regeneration script
       inputs:

@@ -95,7 +95,7 @@ stages:
       inputs:
         pwsh: true
         filePath: $(autorestRepositoryPath)/eng/scripts/initialize.ps1
-        arguments: -UseTypeSpecNext $${{ parameters.UseTypeSpecNext }}
+        arguments: -UseTypeSpecNext:$${{ parameters.UseTypeSpecNext }}
         workingDirectory: $(autorestRepositoryPath)
 
     - task: PowerShell@2

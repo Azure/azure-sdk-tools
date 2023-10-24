@@ -35,9 +35,10 @@ parameters:
       - DisplayName: Dogfood Translation - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-translation-int-test-resources)
-      - DisplayName: Dogfood ACS - Resource Cleanup
-        SubscriptionConfigurations:
-          - $(sub-config-communication-int-test-resources-common)
+      # TODO: re-enable dogfood cleanup after resource deletion issues are solved, to avoid pipeline timeouts
+      # - DisplayName: Dogfood ACS - Resource Cleanup
+      #   SubscriptionConfigurations:
+      #     - $(sub-config-communication-int-test-resources-common)
       - DisplayName: AzureCloud ACS - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-test-resources)

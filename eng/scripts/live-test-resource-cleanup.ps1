@@ -337,7 +337,8 @@ function DeleteArmDeployments([object]$ResourceGroup) {
   if (!$DeleteArmDeployments) {
     return
   }
-  $toDelete = @(Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName | Where-Object { $_ -and $_.Outputs?.Count })
+  $toDelete = @(Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName `
+              | Where-Object { $_ -and ($_.Outputs?.Count -or $_.Parameters?.ContainsKey('testApplicationSecret')) })
   if (!$toDelete -or !$toDelete.Count) {
     return
   }

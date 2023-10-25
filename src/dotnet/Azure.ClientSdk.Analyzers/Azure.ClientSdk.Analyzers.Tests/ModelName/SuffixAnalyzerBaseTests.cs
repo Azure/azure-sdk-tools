@@ -9,6 +9,8 @@ namespace Azure.ClientSdk.Analyzers.Tests.ModelName
 {
     public class SuffixAnalyzerBaseTests
     {
+        private const string diagnosticId = "AZC0030";
+
         [Fact]
         public async Task NonPublicClassIsNotChecked()
         {
@@ -38,7 +40,7 @@ public class MonitorParameter
 }")]
         public async Task ClassWithoutSerliaizationMethodsButInModelsNamespaceIsChecked(string test)
         {
-            var expected = VerifyCS.Diagnostic(GeneralSuffixAnalyzer.DiagnosticId).WithSpan(3, 14, 3, 30).WithArguments("MonitorParameter", "Parameter", "'MonitorContent' or 'MonitorPatch'");
+            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(3, 14, 3, 30).WithArguments("MonitorParameter", "Parameter", "'MonitorContent' or 'MonitorPatch'");
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 
@@ -55,7 +57,7 @@ public class MonitorParameter
         return null;
     }
 }";
-            var expected = VerifyCS.Diagnostic(GeneralSuffixAnalyzer.DiagnosticId).WithSpan(4, 14, 4, 30).WithArguments("MonitorParameter", "Parameter", "'MonitorContent' or 'MonitorPatch'");
+            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(4, 14, 4, 30).WithArguments("MonitorParameter", "Parameter", "'MonitorContent' or 'MonitorPatch'");
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 
@@ -77,7 +79,7 @@ public class MonitorParameter : IUtf8JsonSerializable
         return;
     }
 }";
-            var expected = VerifyCS.Diagnostic(GeneralSuffixAnalyzer.DiagnosticId).WithSpan(9, 14, 9, 30).WithArguments("MonitorParameter", "Parameter", "'MonitorContent' or 'MonitorPatch'");
+            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(9, 14, 9, 30).WithArguments("MonitorParameter", "Parameter", "'MonitorContent' or 'MonitorPatch'");
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 

@@ -9,6 +9,8 @@ namespace Azure.ClientSdk.Analyzers.Tests.ModelName
 {
     public class AZC0032Tests
     {
+        private const string diagnosticId = "AZC0032";
+
         [Fact]
         public async Task ModelClassWithDataSuffix()
         {
@@ -23,7 +25,7 @@ namespace Azure.ResourceManager.Network.Models
         }
     }
 }";
-            var expected = VerifyCS.Diagnostic(DataSuffixAnalyzer.DiagnosticId).WithSpan(4, 26, 4, 47).WithArguments("AadAuthenticationData", "Data");
+            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(4, 26, 4, 47).WithArguments("AadAuthenticationData", "Data");
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 

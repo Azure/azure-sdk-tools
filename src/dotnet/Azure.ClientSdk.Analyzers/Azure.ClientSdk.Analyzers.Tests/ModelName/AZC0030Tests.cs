@@ -9,6 +9,8 @@ namespace Azure.ClientSdk.Analyzers.Tests.ModelName
 {
     public class AZC0030Tests
     {
+        private const string diagnosticId = "AZC0030";
+
         [Fact]
         public async Task GoodSuffix()
         {
@@ -35,7 +37,7 @@ namespace Azure.ResourceManager
         }
     }
 }";
-            var expected = VerifyCS.Diagnostic(GeneralSuffixAnalyzer.DiagnosticId).WithSpan(4, 18, 4, 36).WithArguments("ResponseParameters", "Parameters", "'ResponseContent' or 'ResponsePatch'");
+            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(4, 18, 4, 36).WithArguments("ResponseParameters", "Parameters", "'ResponseContent' or 'ResponsePatch'");
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 
@@ -53,7 +55,7 @@ namespace Azure.ResourceManager.Models
         }
     }
 }";
-            var expected = VerifyCS.Diagnostic(GeneralSuffixAnalyzer.DiagnosticId).WithSpan(4, 18, 4, 28).WithArguments("DiskOption", "Option", "'DiskConfig'");
+            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(4, 18, 4, 28).WithArguments("DiskOption", "Option", "'DiskConfig'");
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 
@@ -70,7 +72,7 @@ namespace Azure.ResourceManager.Models
         }
     }
 }";
-            var expected = VerifyCS.Diagnostic(GeneralSuffixAnalyzer.DiagnosticId).WithSpan(6, 22, 6, 32).WithArguments("DiskOption", "Option", "'DiskConfig'");
+            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(6, 22, 6, 32).WithArguments("DiskOption", "Option", "'DiskConfig'");
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
 
@@ -91,7 +93,7 @@ namespace Azure.ResourceManager.Models
         }
     }
 }";
-            var expected = VerifyCS.Diagnostic(GeneralSuffixAnalyzer.DiagnosticId).WithSpan(6, 22, 6, 39).WithArguments("CreationResponses", "Responses", "'CreationResults'");
+            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(6, 22, 6, 39).WithArguments("CreationResponses", "Responses", "'CreationResults'");
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
     }

@@ -136,6 +136,42 @@ namespace Azure.ClientSdk.Analyzers
             "The Azure.Core internal shared source types {0} should not be used outside of the Azure.Core library.",
             DiagnosticCategory.Usage,
             DiagnosticSeverity.Warning, true);
+
+        public static readonly DiagnosticDescriptor AZC0030 = new DiagnosticDescriptor(
+            nameof(AZC0030),
+            "Improper model name suffix",
+            "Model name '{0}' ends with '{1}'. Suggest to rename it to {2} or any other appropriate name.",
+            DiagnosticCategory.Naming,
+            DiagnosticSeverity.Warning,
+            true,
+            "Suffix is not recommended. Consider to remove or modify it.");
+
+        public static readonly DiagnosticDescriptor AZC0031 = new DiagnosticDescriptor(
+            nameof(AZC0031),
+            "Improper model name suffix",
+            "Model name '{0}' ends with '{1}'. Suggest to rename it to an appropriate name.",
+            DiagnosticCategory.Naming,
+            DiagnosticSeverity.Warning,
+            true,
+            "Suffix is not recommended. Consider to remove or modify it.");
+
+        public static readonly DiagnosticDescriptor AZC0032 = new DiagnosticDescriptor(
+            nameof(AZC0032),
+            "Improper model name suffix",
+            "Model name '{0}' ends with '{1}'. Suggest to rename it to an appropriate name.",
+            DiagnosticCategory.Naming,
+            DiagnosticSeverity.Warning,
+            true,
+            "Suffix is not recommended. Consider to remove or modify it.");
+
+        public static readonly DiagnosticDescriptor AZC0033 = new DiagnosticDescriptor(
+            nameof(AZC0033),
+            "Improper model name suffix",
+            "Model name '{0}' ends with '{1}'. Suggest to rename it to '{2}' or '{3}', if an appropriate name could not be found.",
+            DiagnosticCategory.Naming,
+            DiagnosticSeverity.Warning,
+            true,
+            "Suffix is not recommended. Consider to remove or modify it.");
         #endregion
 
         #region General

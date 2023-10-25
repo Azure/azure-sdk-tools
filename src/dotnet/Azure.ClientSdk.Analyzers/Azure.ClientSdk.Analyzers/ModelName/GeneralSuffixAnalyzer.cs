@@ -15,20 +15,12 @@ namespace Azure.ClientSdk.Analyzers.ModelName
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class GeneralSuffixAnalyzer : SuffixAnalyzerBase
     {
-        public const string DiagnosticId = nameof(AZC0030);
-
-        private static readonly string messageFormat = "Model name '{0}' ends with '{1}'. Suggest to rename it to {2} or any other appropriate name.";
-
         private static readonly ImmutableHashSet<string> reservedNames = ImmutableHashSet.Create("ErrorResponse");
-
-        private static readonly DiagnosticDescriptor AZC0030 = new DiagnosticDescriptor(DiagnosticId, Title,
-            messageFormat, DiagnosticCategory.Naming, DiagnosticSeverity.Warning, isEnabledByDefault: true,
-            description: Description);
 
         // Avoid to use suffixes "Request(s)", "Parameter(s)", "Option(s)", "Response(s)", "Collection"
         private static readonly string[] generalSuffixes = new string[] { "Request", "Requests", "Response", "Responses", "Parameter", "Parameters", "Option", "Options", "Collection"};
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(AZC0030); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Descriptors.AZC0030); } }
 
         protected override bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context) => reservedNames.Contains(symbol.Name);
 
@@ -37,7 +29,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         {
             var name = typeSymbol.Name;
             var suggestedName = GetSuggestedName(name, suffix);
-            return Diagnostic.Create(AZC0030, context.Symbol.Locations[0],
+            return Diagnostic.Create(Descriptors.AZC0030, context.Symbol.Locations[0],
                 new Dictionary<string, string> { { "SuggestedName", suggestedName } }.ToImmutableDictionary(), name, suffix, suggestedName);
         }
 

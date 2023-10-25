@@ -14,17 +14,9 @@ namespace Azure.ClientSdk.Analyzers.ModelName
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class OperationSuffixAnalyzer : SuffixAnalyzerBase
     {
-        public const string DiagnosticId = nameof(AZC0033);
-
-        private static readonly string messageFormat = "Model name '{0}' ends with '{1}'. Suggest to rename it to '{2}' or '{3}', if an appropriate name could not be found.";
-
-        private static readonly DiagnosticDescriptor AZC0033 = new DiagnosticDescriptor(DiagnosticId, Title,
-            messageFormat, DiagnosticCategory.Naming, DiagnosticSeverity.Warning, isEnabledByDefault: true,
-            description: Description);
-
         private static readonly string[] operationSuffix = new string[] { "Operation" };
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(AZC0033); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Descriptors.AZC0033); } }
 
         // Unless the model derivew from Operation
         protected override bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context) => IsTypeOf(symbol, "Azure", "Operation");
@@ -34,7 +26,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         {
             var name = typeSymbol.Name;
             var nameWithoutSuffix = name.Substring(0, name.Length - suffix.Length);
-            return Diagnostic.Create(AZC0033, context.Symbol.Locations[0],
+            return Diagnostic.Create(Descriptors.AZC0033, context.Symbol.Locations[0],
                 name, suffix, $"{nameWithoutSuffix}Data", $"{nameWithoutSuffix}Info");
         }
     }

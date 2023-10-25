@@ -10,6 +10,8 @@ namespace Azure.ClientSdk.Analyzers.Tests.ModelName
 {
     public class AZC0033Tests
     {
+        private const string diagnosticId = "AZC0033";
+
         [Fact]
         public async Task OperationClassIsNotChecked()
         {
@@ -75,8 +77,8 @@ namespace Azure.ResourceManager.Network
     }
 }";
             DiagnosticResult[] expected = {
-                VerifyCS.Diagnostic(OperationSuffixAnalyzer.DiagnosticId).WithSpan(4, 18, 4, 30).WithArguments("DnsOperation", "Operation", "DnsData", "DnsInfo"),
-                VerifyCS.Diagnostic(OperationSuffixAnalyzer.DiagnosticId).WithSpan(11, 18, 11, 33).WithArguments("DnsArmOperation", "Operation", "DnsArmData", "DnsArmInfo")
+                VerifyCS.Diagnostic(diagnosticId).WithSpan(4, 18, 4, 30).WithArguments("DnsOperation", "Operation", "DnsData", "DnsInfo"),
+                VerifyCS.Diagnostic(diagnosticId).WithSpan(11, 18, 11, 33).WithArguments("DnsArmOperation", "Operation", "DnsArmData", "DnsArmInfo")
             };
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }

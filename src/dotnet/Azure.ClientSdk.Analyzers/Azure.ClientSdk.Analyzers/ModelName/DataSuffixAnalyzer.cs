@@ -16,15 +16,9 @@ namespace Azure.ClientSdk.Analyzers.ModelName
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class DataSuffixAnalyzer : SuffixAnalyzerBase
     {
-        public const string DiagnosticId = nameof(AZC0032);
-
-        private static readonly DiagnosticDescriptor AZC0032 = new DiagnosticDescriptor(DiagnosticId, Title,
-            GeneralRenamingMessageFormat, DiagnosticCategory.Naming, DiagnosticSeverity.Warning, isEnabledByDefault: true,
-            description: Description);
-
         private static readonly string[] dataSuffix = new string[] { "Data" };
 
-        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(AZC0032); } }
+        public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Descriptors.AZC0032); } }
 
         // unless the model derives from ResourceData/TrackedResourceData
         protected override bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context) => IsTypeOf(symbol, "Azure.ResourceManager.Models", "ResourceData") ||
@@ -35,7 +29,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         protected override Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context)
         {
             var name = typeSymbol.Name;
-            return Diagnostic.Create(AZC0032, context.Symbol.Locations[0],
+            return Diagnostic.Create(Descriptors.AZC0032, context.Symbol.Locations[0],
                 new Dictionary<string, string> { { "SuggestedName", name.Substring(0, name.Length - suffix.Length) } }.ToImmutableDictionary(), name, suffix);
         }
     }

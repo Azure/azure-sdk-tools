@@ -174,7 +174,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public async Task StartRecordingAsync(string sessionId, HttpResponse outgoingResponse, string assetsJson = null)
         {
             var id = Guid.NewGuid().ToString();
-            DebugLogger.LogInformation($"RECORD START BEGIN {id}.");
+            DebugLogger.LogTrace($"RECORD START BEGIN {id}.");
 
             await RestoreAssetsJson(assetsJson, false);
 
@@ -189,7 +189,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new recording session under id {id}.");
             }
 
-            DebugLogger.LogInformation($"RECORD START END {id}.");
+            DebugLogger.LogTrace($"RECORD START END {id}.");
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
@@ -420,7 +420,7 @@ namespace Azure.Sdk.Tools.TestProxy
         {
 
             var id = Guid.NewGuid().ToString();
-            DebugLogger.LogInformation($"PLAYBACK STOP BEGIN {id}.");
+            DebugLogger.LogTrace($"PLAYBACK STOP BEGIN {id}.");
 
             if (!PlaybackSessions.TryRemove(recordingId, out var session))
             {
@@ -444,7 +444,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 GC.Collect();
             }
 
-            DebugLogger.LogInformation($"PLAYBACK STOP END {id}.");
+            DebugLogger.LogTrace($"PLAYBACK STOP END {id}.");
         }
 
         public async Task HandlePlaybackRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)

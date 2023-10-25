@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.TestProxy.Common;
 using Xunit;
 using System.Text.Json;
 using Azure.Sdk.Tools.TestProxy.Store;
+using System.Text;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -259,6 +260,41 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
         }
 
+
+        [Fact]
+        public async Task TestPlaybackWithGZippedContentPlaybackMismatch()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var body = "{\"x-recording-file\":\"Test.RecordEntries/request_response_with_gzipped_content.json\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
+
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.Start();
+
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+            Assert.False(String.IsNullOrEmpty(recordingId));
+            Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(recordingId));
+            var entry = testRecordingHandler.PlaybackSessions[recordingId].Session.Entries[0];
+            HttpRequest request = TestHelpers.CreateRequestFromEntry(entry);
+
+            var mismatchBodyBytes = Encoding.UTF8.GetBytes("{{\u0022TableNam\u0022:    \u0022listtable09bf2a3d\u0022}");
+
+            // compress the body to simulate what the request coming from the library will look like
+            request.Body = new MemoryStream(CompressionUtilities.CompressBody(mismatchBodyBytes, request.Headers));
+            HttpResponse response = new DefaultHttpContext().Response;
+
+            var assertion = await Assert.ThrowsAsync<TestRecordingMismatchException>(
+                async () => await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response)
+            );
+        }
 
         [Theory]
         [InlineData(

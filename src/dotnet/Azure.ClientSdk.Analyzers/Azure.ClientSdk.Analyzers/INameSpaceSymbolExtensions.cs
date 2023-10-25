@@ -2,15 +2,26 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Text;
 using Microsoft.CodeAnalysis;
 
 namespace Azure.ClientSdk.Analyzers
 {
     public static class INamespaceSymbolExtensions
     {
-        public static string GetFullNamespaceName(this INamespaceSymbol namespaceSymbol)
+        public static StringBuilder GetFullNamespaceName(this INamespaceSymbol namespaceSymbol)
         {
-            return string.Join(".", namespaceSymbol.GetAllNamespaces());
+            var namespaceName = new StringBuilder();
+            while (namespaceSymbol is { IsGlobalNamespace: false })
+            {
+                if (namespaceName.Length > 0)
+                {
+                    namespaceName.Insert(0, '.');
+                }
+                namespaceName.Insert(0, namespaceSymbol.Name);
+                namespaceSymbol = namespaceSymbol.ContainingNamespace;
+            }
+            return namespaceName;
         }
 
         internal static IReadOnlyList<string> GetAllNamespaces(this INamespaceSymbol namespaceSymbol)

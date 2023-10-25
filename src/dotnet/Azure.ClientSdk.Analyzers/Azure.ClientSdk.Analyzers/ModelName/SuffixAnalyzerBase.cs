@@ -57,7 +57,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             // check class hierachy
             for (var classType = typeSymbol; classType is not null; classType = classType.BaseType)
             {
-                if (classType.Name == typeName && classType.ContainingNamespace.GetFullNamespaceName() == namespaceName)
+                if (classType.Name == typeName && classType.ContainingNamespace.GetFullNamespaceName().ToString() == namespaceName)
                     return true;
             };
 

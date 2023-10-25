@@ -36,7 +36,7 @@ namespace Azure.ClientSdk.Analyzers.ModelName
             var name = symbol.Name;
             var suggestedName = name.AsSpan().Slice(0, name.Length - "Definition".Length);
 
-            var strBuilder = new StringBuilder(symbol.ContainingNamespace.GetFullNamespaceName());
+            var strBuilder = symbol.ContainingNamespace.GetFullNamespaceName();
             strBuilder.Append('.').Append(suggestedName.ToArray());
 
             return context.Compilation.GetTypeByMetadataName(strBuilder.ToString()) is not null;

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Azure.Core;
@@ -243,6 +243,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             builder.AppendLine("Body differences:");
 
             CompareBodies(request.Request.Body, bestScoreEntry.Request.Body, builder);
+
+            System.Console.WriteLine(builder.ToString());
 
             return builder.ToString();
         }

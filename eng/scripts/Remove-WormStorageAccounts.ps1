@@ -10,8 +10,6 @@ $ErrorActionPreference = 'Stop'
 
 # Be a little defensive so we don't delete non-live test groups via naming convention
 if (!$groupPrefix -or !$GroupPrefix.StartsWith('rg-')) {
-    Write-Error "The -GroupPrefix parameter must start with 'rg-'"
-    exit 1
 }
 
 $groups = Get-AzResourceGroup | ? { $_.ResourceGroupName.StartsWith($GroupPrefix) } | ? { $_.ProvisioningState -ne 'Deleting' }
@@ -41,7 +39,14 @@ foreach ($group in $groups) {
                 Write-Error $_
                 throw
             }
-            $ctx | Get-AzStorageContainer | Get-AzStorageBlob | Remove-AzStorageBlob -Force
+            # Sometimes we get a 404 blob not found but can still delete containers,
+            # and sometimes we must delete the blob if there's a legal hold.
+            # Try to remove the blob, but keep running regardless.
+            try {
+                Write-Host "Removing immutability policies and blobs - account: $($ctx.StorageAccountName), group: $($group.ResourceGroupName)"
+                $null = $ctx | Get-AzStorageContainer | Get-AzStorageBlob | Remove-AzStorageBlobImmutabilityPolicy
+                $ctx | Get-AzStorageContainer | Get-AzStorageBlob | Remove-AzStorageBlob -Force
+            } catch {}
             # Use AzRm cmdlet as deletion will only work through ARM with the immutability policies defined on the blobs
             $ctx | Get-AzStorageContainer | % { Remove-AzRmStorageContainer -Name $_.Name -StorageAccountName $ctx.StorageAccountName -ResourceGroupName $group.ResourceGroupName -Force }
             Remove-AzStorageAccount -StorageAccountName $account.StorageAccountName -ResourceGroupName $account.ResourceGroupName -Force

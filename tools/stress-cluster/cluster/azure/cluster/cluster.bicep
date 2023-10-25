@@ -6,6 +6,7 @@ param clusterName string
 param location string = resourceGroup().location
 param defaultAgentPoolMinNodes int = 6
 param defaultAgentPoolMaxNodes int = 20
+param maintenanceWindowDay string = 'Monday'
 // AKS does not allow agentPool updates via existing managed cluster resources
 param updateNodes bool = false
 
@@ -16,14 +17,14 @@ var kubernetesVersion = '1.26.6'
 var nodeResourceGroup = 'rg-nodes-${dnsPrefix}-${clusterName}-${groupSuffix}'
 
 var systemAgentPool = {
-  name: 'system'
+  name: 'systemal'
   count: 1
   minCount: 1
   maxCount: 4
   mode: 'System'
   vmSize: 'Standard_D4ds_v4'
   type: 'VirtualMachineScaleSets'
-  osType: 'Linux'
+  osType: 'AzureLinux'
   enableAutoScaling: true
   enableEncryptionAtHost: true
   nodeLabels: {
@@ -32,14 +33,14 @@ var systemAgentPool = {
 }
 
 var defaultAgentPool = {
-  name: 'default'
+  name: 'defaultal'
   count: defaultAgentPoolMinNodes
   minCount: defaultAgentPoolMinNodes
   maxCount: defaultAgentPoolMaxNodes
   mode: 'User'
   vmSize: 'Standard_D8a_v4'
   type: 'VirtualMachineScaleSets'
-  osType: 'Linux'
+  osType: 'AzureLinux'
   osDiskType: 'Ephemeral'
   enableAutoScaling: true
   enableEncryptionAtHost: true
@@ -53,7 +54,7 @@ var agentPools = [
     defaultAgentPool
 ]
 
-resource newCluster 'Microsoft.ContainerService/managedClusters@2022-09-02-preview' = if (!updateNodes) {
+resource newCluster 'Microsoft.ContainerService/managedClusters@2023-02-02-preview' = if (!updateNodes) {
   name: clusterName
   location: location
   tags: tags
@@ -75,6 +76,10 @@ resource newCluster 'Microsoft.ContainerService/managedClusters@2022-09-02-previ
         enabled: true
       }
     }
+    autoUpgradeProfile: {
+      nodeOSUpgradeChannel: 'SecurityPatch'
+      upgradeChannel: null
+    }
     kubernetesVersion: kubernetesVersion
     enableRBAC: true
     dnsPrefix: dnsPrefix
@@ -86,7 +91,26 @@ resource newCluster 'Microsoft.ContainerService/managedClusters@2022-09-02-previ
   }
 }
 
-resource existingCluster 'Microsoft.ContainerService/managedClusters@2022-09-02-preview' existing = if (updateNodes) {
+resource maintenanceConfig 'Microsoft.ContainerService/managedClusters/maintenanceConfigurations@2023-05-02-preview' = if (!updateNodes) {
+  name: 'aksManagedNodeOSUpgradeSchedule'
+  parent: newCluster
+  properties: {
+    maintenanceWindow: {
+      durationHours: 4
+      utcOffset: '-08:00'
+      startTime: '02:00'
+      schedule: {
+        weekly: {
+          dayOfWeek: maintenanceWindowDay
+          intervalWeeks: 1
+        }
+      }
+    }
+  }
+}
+
+
+resource existingCluster 'Microsoft.ContainerService/managedClusters@2023-02-02-preview' existing = if (updateNodes) {
   name: clusterName
 }
 

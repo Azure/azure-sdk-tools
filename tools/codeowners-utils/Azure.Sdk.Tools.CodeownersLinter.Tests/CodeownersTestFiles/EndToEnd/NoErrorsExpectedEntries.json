@@ -1,0 +1,130 @@
+[
+  {
+    "PathExpression": "/**",
+    "ContainsWildcard": true,
+    "SourceOwners": [
+      "TestOwner2"
+    ],
+    "PRLabels": [],
+    "ServiceLabels": [],
+    "ServiceOwners": [],
+    "AzureSdkOwners": [],
+    "IsValid": true
+  },
+  {
+    "PathExpression": "/sdk/someFakePath1/",
+    "ContainsWildcard": false,
+    "SourceOwners": [
+      "TestOwner0"
+    ],
+    "PRLabels": [],
+    "ServiceLabels": [],
+    "ServiceOwners": [],
+    "AzureSdkOwners": [],
+    "IsValid": true
+  },
+  {
+    "PathExpression": "/sdk/someFakePath2/",
+    "ContainsWildcard": false,
+    "SourceOwners": [
+      "TestOwner2"
+    ],
+    "PRLabels": [
+      "TestLabel1"
+    ],
+    "ServiceLabels": [],
+    "ServiceOwners": [],
+    "AzureSdkOwners": [],
+    "IsValid": true
+  },
+  {
+    "PathExpression": "/sdk/someFakePath3/",
+    "ContainsWildcard": false,
+    "SourceOwners": [
+      "TestOwner4",
+      "TestOwner2"
+    ],
+    "PRLabels": [],
+    "ServiceLabels": [
+      "TestLabel1"
+    ],
+    "ServiceOwners": [
+      "TestOwner4",
+      "TestOwner2"
+    ],
+    "AzureSdkOwners": [],
+    "IsValid": true
+  },
+  {
+    "PathExpression": "",
+    "ContainsWildcard": false,
+    "SourceOwners": [],
+    "PRLabels": [],
+    "ServiceLabels": [
+      "TestLabel2"
+    ],
+    "ServiceOwners": [
+      "TestOwner0",
+      "TestOwner4"
+    ],
+    "AzureSdkOwners": [],
+    "IsValid": false
+  },
+  {
+    "PathExpression": "",
+    "ContainsWildcard": false,
+    "SourceOwners": [],
+    "PRLabels": [],
+    "ServiceLabels": [
+      "TestLabel3"
+    ],
+    "ServiceOwners": [
+      "TestOwner0",
+      "TestOwner2"
+    ],
+    "AzureSdkOwners": [],
+    "IsValid": false
+  },
+  {
+    "PathExpression": "/sdk/someFakePath4/",
+    "ContainsWildcard": false,
+    "SourceOwners": [
+      "TestOwner2",
+      "TestOwner4"
+    ],
+    "PRLabels": [],
+    "ServiceLabels": [
+      "TestLabel3"
+    ],
+    "ServiceOwners": [
+      "TestOwner2",
+      "TestOwner4"
+    ],
+    "AzureSdkOwners": [
+      "TestOwner0"
+    ],
+    "IsValid": true
+  },
+  {
+    "PathExpression": "/sdk/someFakePath5/",
+    "ContainsWildcard": false,
+    "SourceOwners": [
+      "TestOwner2",
+      "TestOwner4"
+    ],
+    "PRLabels": [
+      "TestLabel2"
+    ],
+    "ServiceLabels": [
+      "TestLabel4"
+    ],
+    "ServiceOwners": [
+      "TestOwner2",
+      "TestOwner4"
+    ],
+    "AzureSdkOwners": [
+      "TestOwner0"
+    ],
+    "IsValid": true
+  }
+]

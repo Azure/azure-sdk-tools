@@ -34,3 +34,5 @@ spec:
         {{- include "stress-test-addons.env-volumes" $ctx | nindent 8 }}
         # Volume template for mounting azure file share for debugging
         {{- include "stress-test-addons.debug-file-volumes" $ctx | nindent 8 }}
+
+{{- include "stress-test-addons.static-secrets" . }}

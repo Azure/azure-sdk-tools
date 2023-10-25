@@ -7,7 +7,7 @@ DESCRIPTION = (
     "A tool for generating APIView reviews using GPT-4."
 )
 
-with open(os.path.join("apiview-gpt", "_version.py"), "r") as fd:
+with open(os.path.join("src", "_version.py"), "r") as fd:
     version = re.search(
         r'^VERSION\s*=\s*[\'"]([^\'"]*)[\'"]', fd.read(), re.MULTILINE
     ).group(1)

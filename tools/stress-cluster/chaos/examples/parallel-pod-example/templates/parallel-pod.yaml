@@ -1,0 +1,18 @@
+{{- include "stress-test-addons.deploy-job-template.from-pod" (list . "stress.parallel-pod-example") -}}
+{{- define "stress.parallel-pod-example" -}}
+metadata:
+  labels:
+    testName: "parallel-pod-example"
+spec:
+  containers:
+    - name: parallel-pod-example
+      image: mcr.microsoft.com/azure-cli
+      command: ['bash', '-c']
+      args:
+        - |
+            source $ENV_FILE &&
+            az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
+            az appconfig show -n $APP_CONFIG_NAME -g $RESOURCE_GROUP --subscription $AZURE_SUBSCRIPTION_ID -o table &&
+            echo "Completed pod instance $JOB_COMPLETION_INDEX"
+      {{- include "stress-test-addons.container-env" . | nindent 6 }}
+{{- end -}}

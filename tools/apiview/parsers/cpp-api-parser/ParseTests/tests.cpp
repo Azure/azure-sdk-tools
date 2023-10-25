@@ -108,7 +108,7 @@ private:
       }
     }
     std::vector<std::string>
-        defaultCommandLine{"clang++.exe", "-DAZ_RTTI", "-fcxx-exceptions", "-c", "-std=c++14"};
+        defaultCommandLine{"clang++.exe", "-DAZ_RTTI", "-fcxx-exceptions", "-c", "-std=c++14", "-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"};
     // Inherited via CompilationDatabase
     virtual std::vector<CompileCommand> getCompileCommands(llvm::StringRef FilePath) const override
     {
@@ -263,8 +263,8 @@ struct NsDumper : AstDumper
   virtual void AddDeprecatedRangeEnd() override {}
   virtual void AddDiffRangeStart() override {}
   virtual void AddDiffRangeEnd() override {}
-  virtual void AddInheritanceInfoStart() override {}
-  virtual void AddInheritanceInfoEnd() override {}
+  virtual void AddExternalLinkStart(std::string_view const& url) override {}
+  virtual void AddExternalLinkEnd() override {}
   virtual void DumpTypeHierarchyNode(
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node) override
   {
@@ -454,7 +454,7 @@ TEST_F(TestParser, Class1)
 
   NsDumper dumper;
   db->DumpClassDatabase(&dumper);
-  EXPECT_EQ(31ul, dumper.Messages.size());
+  EXPECT_EQ(55ul, dumper.Messages.size());
 
   size_t internalTypes = 0;
   for (const auto& msg : dumper.Messages)
@@ -559,13 +559,75 @@ TEST_F(TestParser, UsingNamespace)
   size_t usingNamespaces = 0;
   for (const auto& msg : dumper.Messages)
   {
-    if (msg.DiagnosticId == "CPA0009")
+    if (msg.DiagnosticId == "CPA000A")
     {
       usingNamespaces += 1;
     }
   }
   EXPECT_EQ(usingNamespaces, 1ul);
 }
+
+TEST_F(TestParser, TestDtors)
+{
+  ApiViewProcessor processor("tests", R"({
+  "sourceFilesToProcess": [
+    "DestructorTests.cpp"
+  ],
+  "additionalIncludeDirectories": [],
+  "additionalCompilerSwitches": null,
+  "allowInternal": false,
+  "includeDetail": false,
+  "includePrivate": false,
+  "filterNamespace": null
+}
+)"_json);
+
+  EXPECT_EQ(processor.ProcessApiView(), 0);
+
+  auto& db = processor.GetClassesDatabase();
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "DestructorTests1.cpp"));
+
+  NsDumper dumper;
+  db->DumpClassDatabase(&dumper);
+  EXPECT_EQ(2ul, dumper.Messages.size());
+
+  size_t nonVirtualDestructor= 0;
+  for (const auto& msg : dumper.Messages)
+  {
+    if (msg.DiagnosticId == "CPA000B")
+    {
+      nonVirtualDestructor+= 1;
+    }
+  }
+  EXPECT_EQ(nonVirtualDestructor, 2ul);
+}
+
+TEST_F(TestParser, TestDocuments)
+{
+  ApiViewProcessor processor("tests", R"({
+  "sourceFilesToProcess": [
+    "DocumentationTests.cpp"
+  ],
+  "additionalIncludeDirectories": [],
+  "additionalCompilerSwitches": null,
+  "allowInternal": false,
+  "includeDetail": false,
+  "includePrivate": false,
+  "filterNamespace": null
+}
+)"_json);
+
+
+  EXPECT_EQ(processor.ProcessApiView(), 0);
+
+  auto& db = processor.GetClassesDatabase();
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "DocumentationTests1.cpp"));
+
+  NsDumper dumper;
+  db->DumpClassDatabase(&dumper);
+}
+
+
 
 #if 0
 TEST_F(TestParser, AzureCore1)

@@ -1,12 +1,12 @@
 import os
 import json
 from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
+from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.chat_models import AzureChatOpenAI
 from langchain.output_parsers import PydanticOutputParser
 import openai
 import re
-from typing import List, Union
+from typing import List, Union, Dict, Any, Optional
 
 from ._sectioned_document import SectionedDocument, Section
 from ._models import GuidelinesResult, Violation
@@ -28,34 +28,41 @@ _GUIDELINES_FOLDER = os.path.join(_PACKAGE_ROOT, "guidelines")
 
 
 class GptReviewer:
-    def __init__(self):
+
+    def __init__(self, log_prompts: bool = False):
         self.llm = AzureChatOpenAI(client=openai.ChatCompletion, deployment_name="gpt-4", openai_api_version=OPENAI_API_VERSION, temperature=0)
         self.output_parser = PydanticOutputParser(pydantic_object=GuidelinesResult)
+        if log_prompts:
+            # remove the folder if it exists
+            base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
+            if os.path.exists(base_path):
+                import shutil
+                shutil.rmtree(base_path)
+            os.makedirs(base_path)
+            os.environ["APIVIEW_LOG_PROMPT"] = str(log_prompts)
+            os.environ["APIVIEW_PROMPT_INDEX"] = "0"
 
+        system_prompt = SystemMessagePromptTemplate.from_template("""
+You are trying to analyze an API for {language} to determine whether it meets the SDK guidelines.
+We only provide one class at a time right now, but if you need it, here's a list of all the classes in this API:
+{class_list}
+""")
+        human_prompt = HumanMessagePromptTemplate.from_template("""
+Given the following guidelines:
+{guidelines}
 
-        self.prompt_template = PromptTemplate(
-            input_variables=["apiview", "guidelines", "language", "extra_comments", "class_list"],
-            partial_variables={"format_instructions": self.output_parser.get_format_instructions()},
-            template="""
-                You are trying to analyze an API for {language} to determine whether it meets the SDK guidelines. We only provide one class at a time right now, but if you need it, here's a list of all the classes in this API:
-                {class_list}
-                
-                Here is the code for a single class:
-                ```
-                {apiview}
-                ```
+Evaluate the following class for any violations:
+```
+{apiview}
+```
+                                                                
+{format_instructions}
+""")
+        prompt_template = ChatPromptTemplate.from_messages([system_prompt, human_prompt])
+        self.chain = LLMChain(llm=self.llm, prompt=prompt_template)
 
-                Identify any violations of the following guidelines:
-                {guidelines}
-                
-                Consider the following comments as well:
-                {extra_comments}
-
-                Format the output according to the following:
-                {format_instructions}
-            """
-        )
-        self.chain = LLMChain(llm=self.llm, prompt=self.prompt_template)
+    def _hash(self, obj) -> str:
+        return str(hash(json.dumps(obj)))
 
     def get_response(self, apiview, language):
         apiview = self.unescape(apiview)
@@ -72,27 +79,53 @@ class GptReviewer:
                 semantic_matches = VectorDB().search_documents(language, chunk)
                 
                 guidelines_to_check = []
-                extra_comments = []
+                extra_comments = {}
 
                 # extract the unique guidelines to include in the prompt grounding.
                 # documents not included in the prompt grounding will be treated as extra comments.
                 for match in semantic_matches:
-                    guideline_ids = match["aiCommentModel"]["guidelineIds"]
+
+                    comment_model = match["aiCommentModel"]
+                    if comment_model["isDeleted"] == True:
+                        continue
+
+                    guideline_ids = comment_model["guidelineIds"]
+                    goodCode = comment_model["goodCode"]
+                    comment = comment_model["comment"]
+
                     if guideline_ids:
                         guidelines_to_check.extend(guideline_ids)
-                    else:
-                        extra_comments.append(match["aiCommentModel"])
+
+                    # remove unnecessary or empty fields to conserve tokens and not confuse the AI
+                    del comment_model["language"]
+                    del comment_model["embedding"]
+                    del comment_model["guidelineIds"]
+                    del comment_model["changeHistory"]
+                    del comment_model["isDeleted"]
+                    if not comment_model["goodCode"]:
+                        del comment_model["goodCode"]
+                    if not comment_model["comment"]:
+                        del comment_model["comment"]
+
+                    if goodCode or comment:
+                        extra_comments[self._hash(comment_model)] = comment_model
+                    if not goodCode and not comment and not guideline_ids:
+                        comment_model["comment"] = "Please have an architect look at this."
+                        extra_comments[self._hash(comment_model)] = comment_model
                 guidelines_to_check = list(set(guidelines_to_check))
                 if not guidelines_to_check:
                     continue
                 guidelines = self.select_guidelines(all_guidelines, guidelines_to_check)
+
+                # append the extra comments to the list of guidelines to treat them equally.
+                guidelines.extend(list(extra_comments.values()))
 
                 params = {
                     "apiview": str(chunk),
                     "guidelines": guidelines,
                     "language": language,
                     "class_list": class_list,
-                    "extra_comments": extra_comments
+                    "format_instructions": self.output_parser.get_format_instructions()
                 }
                 results = self.chain.run(**params)
                 output = self.output_parser.parse(results)
@@ -212,3 +245,31 @@ class GptReviewer:
 
     def get_class_list(self, apiview) -> List[str]:
         return re.findall(r'class ([\w\.]+)', apiview)
+
+
+# custom monkey patch to save the prompts
+def _custom_generate(
+    self,
+    input_list: List[Dict[str, Any]],
+    run_manager: Optional["CallbackManagerForChainRun"] = None,
+) -> "LLMResult":
+    """Generate LLM result from inputs."""
+    prompts, stop = self.prep_prompts(input_list, run_manager=run_manager)
+    log_prompts = os.getenv("APIVIEW_LOG_PROMPT", "False").lower() == "true"
+    if log_prompts:
+        base_path = os.path.join(_PACKAGE_ROOT, "scratch", "prompts")
+        for prompt in prompts:
+            request_no = os.environ.get("APIVIEW_PROMPT_INDEX", 0)
+            filepath = os.path.join(base_path, f"prompt_{request_no}.txt")
+            with open(filepath, "w") as f:
+                for message in prompt.messages:
+                    f.write(f"==={message.type.upper()}===\n")
+                    f.write(message.content + "\n")
+            os.environ["APIVIEW_PROMPT_INDEX"] = str(int(request_no) + 1)
+    return self.llm.generate_prompt(
+        prompts,
+        stop,
+        callbacks=run_manager.get_child() if run_manager else None,
+        **self.llm_kwargs,
+    )
+LLMChain.generate = _custom_generate

@@ -49,7 +49,7 @@ namespace Azure.SDK.ChangelogGen
         public string AzureCoreChangeLogGithubKey => "sdk/core/Azure.Core/CHANGELOG.md";
         public string AzureCoreChangeLogMdFile => Path.Combine(RepoRoot, AzureCoreChangeLogGithubKey);
 
-        public string AzureResourceManagerChangeLogGithubKey => "sdk/resourcemanager/Azure.ResourceManager/CHANGELOG.MD";
+        public string AzureResourceManagerChangeLogGithubKey => "sdk/resourcemanager/Azure.ResourceManager/CHANGELOG.md";
         public string AzureResourceManagerChangeLogMdFile => Path.Combine(RepoRoot, AzureResourceManagerChangeLogGithubKey);
 
         public bool IsPreview => Helper.IsPreviewRelease(this.ReleaseVersion);

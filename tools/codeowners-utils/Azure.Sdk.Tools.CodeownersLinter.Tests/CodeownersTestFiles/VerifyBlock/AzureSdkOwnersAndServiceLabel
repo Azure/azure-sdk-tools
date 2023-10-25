@@ -1,0 +1,11 @@
+# Test scenario for AzureSdkOwners that need to be part of a block that contains a ServiceLabel entry.
+
+# AzureSdkOwners, whether owners are declared or not, needs to be part of a block that contains a ServiceLabel entry
+# AzureSdkOwners: @TestOwner0
+
+# Same scenario as above but with invalid/missing owners that shouldn't prevent the block formatting error from
+# being reported
+# AzureSdkOwners: @TestOwnerBad
+
+# AzureSdkOwners:
+

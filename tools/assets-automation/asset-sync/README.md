@@ -45,6 +45,7 @@
     - [Sync Operation details - push](#sync-operation-details---push)
     - [Integrating the sync script w/ language frameworks](#integrating-the-sync-script-w-language-frameworks)
     - [Test Run](#test-run)
+    - [A note regarding cross-plat usage](#a-note-regarding-cross-plat-usage)
   - [Integration Checklist](#integration-checklist)
   - [Post-Asset-Move space optimizations](#post-asset-move-space-optimizations)
     - [Test-Proxy creates seeded body content at playback time](#test-proxy-creates-seeded-body-content-at-playback-time)
@@ -151,8 +152,8 @@ TODO: Read about this option.
 - The physical drive the enlistment is on seems to matter more when using LFS -  For example: two machines, both physically in Redmond  and on corpnet, one was a single spinning drive and the other was an array, the clone time difference was negligible (30 vs 22 seconds) but the checkout times were wildly variant (18 seconds vs 2 minutes and 58 seconds)
 - Distance matters – Fetching from Redmond produced very different numbers than fetching from Australia. On average clone times were double of what we’d see on corpnet and still around a minute, but the checkout times were horrendous. Non-LFS checkout had an average of 32 seconds where the LFS checkouts were taking an average of 8 minutes. Note: This was on an SSD, not a spinning disk.
 - Git LFS files are pulled individually - There’s no way to bulk pull everything. The files are pulled over https with a default concurrency of 3 and while this is something that could be tweaked in the lfs config it would potentially help checkout times on an SSD but make the times on a spinning disk worse.
-- The size on disk size, for us, would initially get worse and then eventually taper off – Because we wouldn’t be rewriting history we’re still going to have space in .git/objects from the previous versions of these files but with the way LFS works, you’re also going to have .git/lfs/objects. Unlike .git/objects, the .git/lfs/objects will only contain the version that’s been pulled local. If you checkout a version you don’t have, it’ll update the .git/lfs/object with that and the other version will simply be a file with pointer. In the case of the .net repo, which has 6029 recording json files taking up about 671MB, this means that the size on disk would grow by that amount. The reason for this bloat is that there’s no compression on the LFS folder.
-  
+- The size on disk size, for us, would initially get worse and then eventually taper off – Because we wouldn’t be rewriting history we’re still going to have space in .git/objects from the previous versions of these files but with the way LFS works, you’re also going to have .git/lfs/objects. Unlike .git/objects, the .git/lfs/objects will only contain the version that’s been pulled local. If you checkout a version you don’t have, it’ll update the .git/lfs/object with that and the other version will simply be a file with pointer. In the case of the .NET repo, which has 6029 recording json files taking up about 671MB, this means that the size on disk would grow by that amount. The reason for this bloat is that there’s no compression on the LFS folder.
+
 ### `External Git Repo`
 
 Current prototype visible [here.](./assets.ps1).
@@ -593,6 +594,21 @@ So to locally repro this experience:
 6. `pip install -r dev_requirements.txt`
 7. `pytest`
 
+### A note regarding cross-plat usage
+
+The test-proxy utilizes the `git` of the system running it to retrieve recordings from the assets repository. This means that when loading a recording, the running file system **matters**. When passing a recording path to the test-proxy, ensure that from client side, capitalization is **consistent** across platforms. Let's work through an example.
+
+A test is recorded on `windows`. It writes to relative recording path `a/path/to/recording.json`. On `windows` and `mac`, if a user attempts to start playback for `a/path/To/recording.json`, this would **succeed** at the attempt to load the recording from disk. This is due to the act that the OS is not case-sensitive. On a **linux** system, attempting to load `a/path/To/recording.json` will **fail**.
+
+This is extremely easy to overlook when diagnosing `File not found for playback` issues, as capitalization differences can be difficult to see in context.
+
+If a dev ends up with an asset tag in this situation, the process to resolve it is fairly straightforward.
+
+1. Delete the recording in local `.assets` directory.
+2. `push` the asset, getting a new tag _without_ the problematic tag being present.
+3. Run recordings, ensuring that the capitalization of the file is correct.
+4. `push`. Tests will pass in CI now.
+
 ## Integration Checklist
 
 What needs to be done on each of the repos to utilize this the sync script?
@@ -602,7 +618,7 @@ To utilize the _base_ version of the script, the necessary steps are fairly simp
 - [ ] Add base assets.json
 - [ ] Update test-proxy `shim`s to call asset-sync scripts to prepare the test directory prior to tests invoking.
 
-Where the difficulty _really_ lies is in the weird situations that folks will into.
+Where the difficulty _really_ lies is in the weird situations that folks will run into. To get further assistance beyond what is documented here, there are a couple options. Internal MS users, refer to the [teams channel](https://teams.microsoft.com/l/channel/19%3ab7c3eda7e0864d059721517174502bdb%40thread.skype/Test-Proxy%2520-%2520Questions%252C%2520Help%252C%2520and%2520Discussion?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47). For external users, file an issue against this repository and tag label `Asset-Sync`.
 
 ## Post-Asset-Move space optimizations
 

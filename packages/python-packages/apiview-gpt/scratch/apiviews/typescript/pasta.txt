@@ -1,0 +1,48 @@
+export interface pastaType {
+    lengthInCms: number;
+    widthInCms?: number;
+    flour: string;
+    NoodleType: string;
+    containsEgg?: boolean; 
+}
+
+export class Pasta {
+    name: string;
+    sauceType: SauceType;
+    pastaType: pastaType;
+    ingredients: string[];
+    cheeseTypes: string[];
+    glutenFree?: boolean;
+    vegan?: boolean;
+    constructor(name: string);
+    constructor(name: string, sauceType?: SauceType, pastaType?: pastaType, ingredients?: string[], cheeseTypes?: string[]);
+    constructor(name: string, sauceType: SauceType, pastaType: pastaType, ingredients: string[], cheeseTypes: string[]);   
+}
+
+export type SauceType: "alfredo" | "marinara" | "bolognese" | "amatriciana" | "arrabbiata" | "carbonara" | "pesto"
+
+export class PastaLaVista {
+    endpoint?: string;
+    tokenCredential: TokenCredential;
+    options?: CommonClientOptions;
+    function retrieveAllPastas(options?: pastaOptions): PagedAsyncIterableIterator<Pasta, PastaListResponse>;
+}
+
+export interface pastaOptions {
+    pastaType?: pastaType;
+    sauceType?: sauceType;
+}
+
+export type PastaListResponse = WithResponse<PastaListHeaders & ListPastasResponse, PastaListHeaders, ListPastasResponse>;
+
+export interface PastaListHeaders {
+    contentType?: string;
+    date?: Date;
+    errorCode?: string;
+    requestId?: string;
+    version?: string;
+}
+export interface ListPastasResponse {
+    continuationToken: string;
+    pastaList?: Pasta[];
+}

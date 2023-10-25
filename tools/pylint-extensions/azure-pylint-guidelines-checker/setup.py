@@ -6,7 +6,7 @@ with open('README.md', encoding='utf-8') as f:
 
 setup(
     name="azure-pylint-guidelines-checker",
-    version="0.1.0",
+    version="0.2.0",
     url='http://github.com/Azure/azure-sdk-for-python',
     license='MIT License',
     description="A pylint plugin which enforces azure sdk guidelines.",

@@ -70,7 +70,7 @@ namespace Azure.SDK.ChangelogGen.Report
 
         private void MergeByGrup(Release to)
         {
-            foreach(var fromGroup in this.Groups)
+            foreach (var fromGroup in this.Groups)
             {
                 var found = to.Groups.FirstOrDefault(g => g.Name == fromGroup.Name);
                 if (found != null)
@@ -81,21 +81,24 @@ namespace Azure.SDK.ChangelogGen.Report
 
         private void MergeByLine(Release to)
         {
-            foreach(var fromGroup in this.Groups)
+            foreach (var fromGroup in this.Groups)
             {
                 var toGroup = to.Groups.FirstOrDefault(g => string.Equals(g.Name, fromGroup.Name, StringComparison.OrdinalIgnoreCase));
-                if(toGroup == null)
+                if (toGroup == null)
                 {
                     to.Groups.Add(fromGroup);
                 }
                 else
                 {
-                    foreach(var fromItem in fromGroup.Notes)
+                    int indexToInsert = toGroup.Notes.FindLastIndex(n => !string.IsNullOrEmpty(n.Note)) + 1;
+                    int lastNonEmptyIndex = fromGroup.Notes.FindLastIndex(n => !string.IsNullOrEmpty(n.Note));
+                    for (int i = lastNonEmptyIndex; i >= 0; i--)
                     {
+                        var fromItem = fromGroup.Notes[i];
                         var toItem = toGroup.Notes.FirstOrDefault(t => string.Equals(fromItem.ToString(), t.ToString(), StringComparison.OrdinalIgnoreCase));
-                        if(toItem == null)
+                        if (toItem == null)
                         {
-                            toGroup.Notes.Add(fromItem);
+                            toGroup.Notes.Insert(indexToInsert, fromItem);
                         }
                         else
                         {
@@ -133,7 +136,7 @@ namespace Azure.SDK.ChangelogGen.Report
             Release curRelease = firstRelease!;
 
             ReleaseNoteGroup curGroup = new ReleaseNoteGroup("");
-            for(i = i+1; i < lines.Length; i++)
+            for (i = i + 1; i < lines.Length; i++)
             {
                 if (ReleaseNoteGroup.TryParseGroupTitle(lines[i], out ReleaseNoteGroup? newGroup))
                 {

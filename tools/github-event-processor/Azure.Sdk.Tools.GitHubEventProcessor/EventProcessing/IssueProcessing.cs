@@ -27,7 +27,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             await InitialIssueTriage(gitHubEventClient, issueEventPayload);
             ManualIssueTriage(gitHubEventClient, issueEventPayload);
             ServiceAttention(gitHubEventClient, issueEventPayload);
-            CXPAttention(gitHubEventClient, issueEventPayload);
             ManualTriageAfterExternalAssignment(gitHubEventClient, issueEventPayload);
             RequireAttentionForNonMilestone(gitHubEventClient, issueEventPayload);
             AuthorFeedbackNeeded(gitHubEventClient, issueEventPayload);
@@ -189,45 +188,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// CXP Attention
-        /// Trigger: issue labeled
-        /// Conditions: Issue is open
-        ///             Label being added is "CXP Attention"
-        ///             Does not have "Service-Attention" label
-        /// Resulting Action: Add issue comment "Thank you for your feedback.  This has been routed to the support team for assistance."
-        /// Note: The comment added for this rule seems odd, since there's not much of anything of consequence in the comment.
-        /// The CXP team has a dashboard and automation specifically tied to the CXP Attention label. The comment is necessary to count
-        ///  as an initial response for SLA metrics.
-        /// </summary>
-        /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
-        /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
-        public static void CXPAttention(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
-        {
-            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.CXPAttention))
-            {
-                if (issueEventPayload.Action == ActionConstants.Labeled)
-                {
-
-                    if (issueEventPayload.Issue.State == ItemState.Open &&
-                    issueEventPayload.Label.Name.Equals(LabelConstants.CXPAttention) &&
-                    !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.ServiceAttention))
-                    {
-                        string issueComment = "Thank you for your feedback.  This has been routed to the support team for assistance.";
-                        gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// Manual Triage After External Assignment
         /// Trigger: issue unlabeled
         /// Conditions: Issue is open
+        ///             Issue is unassigned
         ///             Has "customer-reported" label
-        ///             Label removed is "Service Attention" OR "CXP Attention"
-        ///             Issue does not have "Service Attention" OR "CXP Attention"
-        ///             (in other words if both labels are on the issue and one is removed, this
-        ///             shouldn't process)
+        ///             Label removed is "Service Attention"
         /// Resulting Action: Add "needs-team-triage" label
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
@@ -239,12 +205,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 if (issueEventPayload.Action == ActionConstants.Unlabeled)
                 {
                     if (issueEventPayload.Issue.State == ItemState.Open &&
+                        issueEventPayload.Issue.Assignee == null &&
+                        issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention) &&
                         LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.CustomerReported) &&
-                        (issueEventPayload.Label.Name.Equals(LabelConstants.CXPAttention) ||
-                         issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention)) &&
-                        !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage) &&
-                        !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.CXPAttention) &&
-                        !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.ServiceAttention))
+                        !LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.NeedsTeamTriage))
                     {
                         gitHubEventClient.AddLabel(LabelConstants.NeedsTeamTriage);
                     }
@@ -273,7 +237,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Trigger: issue reopened/edited, issue_comment created
         /// Conditions: Issue is open OR Issue is being reopened
         ///             Issue has "no-recent-activity" label
-        ///             User modifying the issue is NOT a known bot 
+        ///             User modifying the issue is NOT a known bot
         /// Resulting Action: Remove "no-recent-activity" label
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
@@ -335,13 +299,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Label added is "needs-author-feedback"
-        /// Resulting Action: 
+        /// Resulting Action:
         ///             Remove "needs-triage" label
         ///             Remove "needs-team-triage" label
         ///             Remove "needs-team-attention" label
         ///             Create the following comment
-        ///             "Hi @{issueAuthor}. Thank you for opening this issue and giving us the opportunity to assist. To help our 
-        ///             team better understand your issue and the details of your scenario please provide a response to the question 
+        ///             "Hi @{issueAuthor}. Thank you for opening this issue and giving us the opportunity to assist. To help our
+        ///             team better understand your issue and the details of your scenario please provide a response to the question
         ///             asked above or the information requested above. This will help us more accurately address your issue."
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
@@ -381,7 +345,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Trigger: issue labeled
         /// Conditions: Issue is open
         ///             Label added is "issue-addressed"
-        /// Resulting Action: 
+        /// Resulting Action:
         ///     Remove "needs-triage" label if it exists on the issue
         ///     Remove "needs-team-triage" label if it exists on the issue
         ///     Remove "needs-team-attention" label if it exists on the issue
@@ -440,7 +404,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///                 "CXP Attention"
         ///                 "needs-triage"
         ///                 "needs-team-triage"
-        /// Resulting Action: 
+        /// Resulting Action:
         ///     Remove "issue-addressed" label
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
@@ -457,7 +421,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         if (issueEventPayload.Label.Name == LabelConstants.NeedsTeamAttention ||
                             issueEventPayload.Label.Name == LabelConstants.NeedsAuthorFeedback ||
                             issueEventPayload.Label.Name == LabelConstants.ServiceAttention ||
-                            issueEventPayload.Label.Name == LabelConstants.CXPAttention ||
                             issueEventPayload.Label.Name == LabelConstants.NeedsTriage ||
                             issueEventPayload.Label.Name == LabelConstants.NeedsTeamTriage)
                         {

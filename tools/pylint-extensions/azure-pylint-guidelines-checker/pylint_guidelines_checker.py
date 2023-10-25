@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4749
+Pylint custom checkers for SDK guidelines: C4717 - C4758
 """
 
 import logging
@@ -1228,6 +1228,18 @@ class CheckDocstringParameters(BaseChecker):
             "docstring-should-be-keyword",
             "Docstring should use keywords.",
         ),
+        "C4758": (
+            '"%s" missing in docstring or in method signature. There should be a direct correlation between :keyword: arguments in the docstring and keyword-only arguments in method signature. See details: '
+            'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
+            "docstring-keyword-should-match-keyword-only",
+            "Docstring keyword arguments and keyword-only method arguments should match.",
+        ),
+        "C4759": (
+            '"%s" type formatted incorrectly. Do not use `:class` in docstring type. See details: '
+            'https://azure.github.io/azure-sdk/python_documentation.html#docstrings',
+            "docstring-type-do-not-use-class",
+            "Docstring type is formatted incorrectly. Do not use `:class` in docstring type.",
+        ),
     }
     options = (
         (
@@ -1277,8 +1289,52 @@ class CheckDocstringParameters(BaseChecker):
         ),
     )
 
+
     def __init__(self, linter=None):
         super(CheckDocstringParameters, self).__init__(linter)
+
+    def _find_keyword(self, line, docstring, idx, keyword_args):
+        keyword_args = {}
+        # this param has its type on a separate line
+        if line.startswith("keyword") and line.count(" ") == 1:
+            param = line.split("keyword ")[1]
+            keyword_args[param] = None
+        # this param has its type on the same line
+        if line.startswith("keyword") and line.count(" ") == 2:
+            _, param_type, param = line.split(" ")
+            keyword_args[param] = param_type
+        # if the param has its type on the same line with additional spaces
+        if line.startswith("keyword") and line.count(" ") > 2:
+            param = line.split(" ")[-1]
+            param_type = ("").join(line.split(" ")[1:-1])
+            keyword_args[param] = param_type
+        if line.startswith("paramtype"):
+            param = line.split("paramtype ")[1]
+            if param in keyword_args:
+                keyword_args[param] = docstring[idx+1]
+        
+        return keyword_args
+
+    def _find_param(self, line, docstring, idx, docparams):
+        # this param has its type on a separate line
+        if line.startswith("param") and line.count(" ") == 1:
+            param = line.split("param ")[1]
+            docparams[param] = None
+        # this param has its type on the same line
+        if line.startswith("param") and line.count(" ") == 2:
+            _, param_type, param = line.split(" ")
+            docparams[param] = param_type
+        # if the param has its type on the same line with additional spaces
+        if line.startswith("param") and line.count(" ") > 2:
+            param = line.split(" ")[-1]
+            param_type = ("").join(line.split(" ")[1:-1])
+            docparams[param] = param_type
+        if line.startswith("type"):
+            param = line.split("type ")[1]
+            if param in docparams:
+                docparams[param] = docstring[idx+1]
+        
+        return docparams
 
     def check_parameters(self, node):
         """Parse the docstring for any params and types
@@ -1290,27 +1346,33 @@ class CheckDocstringParameters(BaseChecker):
         3. Missing a return doc in the docstring when a function returns something.
         4. Missing an rtype in the docstring when a function returns something.
         5. Extra params in docstring that aren't function parameters. Change to keywords.
+        6. Docstring has a keyword that isn't a keyword-only argument in the function signature.
 
         :param node: ast.ClassDef or ast.FunctionDef
         :return: None
         """
         arg_names = []
+        method_keyword_only_args = []
         vararg_name = None
         # specific case for constructor where docstring found in class def
         if isinstance(node, astroid.ClassDef):
             for constructor in node.body:
                 if isinstance(constructor, astroid.FunctionDef) and constructor.name == "__init__":
                     arg_names = [arg.name for arg in constructor.args.args]
+                    method_keyword_only_args = [arg.name for arg in constructor.args.kwonlyargs]
                     vararg_name = node.args.vararg
                     break
 
         if isinstance(node, astroid.FunctionDef):
             arg_names = [arg.name for arg in node.args.args]
+            method_keyword_only_args = [arg.name for arg in node.args.kwonlyargs]
             vararg_name = node.args.vararg
 
         try:
+            # check for incorrect type :class to prevent splitting
+            docstring = node.doc.replace(":class:", "CLASS ")
             # not every method will have a docstring so don't crash here, just return
-            docstring = node.doc.split(":")
+            docstring = docstring.split(":")
         except AttributeError:
             return
         
@@ -1319,25 +1381,14 @@ class CheckDocstringParameters(BaseChecker):
             arg_names.append(vararg_name)
 
         docparams = {}
+        docstring_keyword_args = {}
         for idx, line in enumerate(docstring):
-            # this param has its type on a separate line
-            if line.startswith("param") and line.count(" ") == 1:
-                param = line.split("param ")[1]
-                docparams[param] = None
-            # this param has its type on the same line
-            if line.startswith("param") and line.count(" ") == 2:
-                _, param_type, param = line.split(" ")
-                docparams[param] = param_type
-            # if the param has its type on the same line with additional spaces
-            if line.startswith("param") and line.count(" ") > 2:
-                param = line.split(" ")[-1]
-                param_type = ("").join(line.split(" ")[1:-1])
-                docparams[param] = param_type
-            if line.startswith("type"):
-                param = line.split("type ")[1]
-                if param in docparams:
-                    docparams[param] = docstring[idx+1]
+            # check for keyword args in docstring
+            docstring_keyword_args.update(self._find_keyword(line, docstring, idx, docstring_keyword_args))
 
+            # check for params in docstring
+            docparams.update(self._find_param(line, docstring, idx, docparams))
+           
         # check that all params are documented
         missing_params = []
         for param in arg_names:
@@ -1346,10 +1397,27 @@ class CheckDocstringParameters(BaseChecker):
             if param not in docparams:
                 missing_params.append(param)
 
+        # check that all keyword-only args are documented
+        missing_kwonly_args = list(set(docstring_keyword_args) ^ set(method_keyword_only_args))
+
         if missing_params:
             self.add_message(
                 msgid="docstring-missing-param", args=(", ".join(missing_params)), node=node, confidence=None
             )
+
+        if missing_kwonly_args:
+            self.add_message(
+                msgid="docstring-keyword-should-match-keyword-only", args=(", ".join(missing_kwonly_args)), node=node, confidence=None
+            )
+
+        # check that all types are formatted correctly
+        add_keyword_type_warnings = [keyword for keyword, doc_type in docstring_keyword_args.items() if doc_type and "CLASS" in doc_type]
+        if len(add_keyword_type_warnings) > 0:
+            self.add_message(msgid="docstring-type-do-not-use-class", args=(", ".join(add_keyword_type_warnings)), node=node, confidence=None)
+
+        add_docparams_type_warnings = [param for param, doc_type in docparams.items() if doc_type and "CLASS" in doc_type]
+        if len(add_docparams_type_warnings) > 0:
+            self.add_message(msgid="docstring-type-do-not-use-class", args=(", ".join(add_docparams_type_warnings)), node=node, confidence=None)
 
         # check if we have a type for each param and check if documented params that should be keywords
         missing_types = []
@@ -1380,6 +1448,31 @@ class CheckDocstringParameters(BaseChecker):
         :param node: ast.FunctionDef
         :return: None
         """
+
+        # Check docstring documented returns/raises
+
+        try:
+            # check for incorrect type :class to prevent splitting
+            docstring = node.doc.replace(":class:", "CLASS ")
+            # not every method will have a docstring so don't crash here, just return
+            docstring = docstring.split(":")
+        except AttributeError:
+            return
+    
+        has_return, has_rtype = False, False
+        for line in docstring:
+            if line.startswith("return"):
+                has_return = True
+            if line.startswith("rtype"):
+                has_rtype = True
+                try:
+                    if "CLASS" in docstring[docstring.index("rtype") + 1]:
+                            self.add_message(
+                                msgid="docstring-type-do-not-use-class", args="rtype", node=node, confidence=None
+                            )
+                except:
+                    pass
+
         # Get decorators on the function
         function_decorators = node.decoratornames()
         try:
@@ -1390,19 +1483,6 @@ class CheckDocstringParameters(BaseChecker):
         except (astroid.exceptions.InferenceError, AttributeError):
             # this function doesn't return anything, just return
             return
-
-        try:
-            # not every method will have a docstring so don't crash here, just return
-            docstring = node.doc.split(":")
-        except AttributeError:
-            return
-
-        has_return, has_rtype = False, False
-        for line in docstring:
-            if line.startswith("return"):
-                has_return = True
-            if line.startswith("rtype"):
-                has_rtype = True
 
         # If is an @property decorator, don't require :return: as it is repetitive
         if has_return is False and "builtins.property" not in function_decorators:
@@ -2242,12 +2322,13 @@ class NoLegacyAzureCoreHttpResponseImport(BaseChecker):
     }
 
     AZURE_CORE_NAME = "azure.core"
+    AZURE_MGMT_CORE = "azure.mgmt.core"
     AZURE_CORE_TRANSPORT_NAME = "azure.core.pipeline.transport"
     RESPONSE_CLASSES = ["HttpResponse", "AsyncHttpResponse"]
 
     def visit_importfrom(self, node):
         """Check that we aren't importing from azure.core.pipeline.transport import HttpResponse."""
-        if node.root().name.startswith(self.AZURE_CORE_NAME): 
+        if node.root().name.startswith(self.AZURE_CORE_NAME) or node.root().name.startswith(self.AZURE_MGMT_CORE): 
             return
         if node.modname == self.AZURE_CORE_TRANSPORT_NAME: 
             for name, _ in node.names:

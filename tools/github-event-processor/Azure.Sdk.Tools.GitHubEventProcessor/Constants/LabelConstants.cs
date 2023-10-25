@@ -14,7 +14,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
     {
         public const string CommunityContribution = "Community Contribution";
         public const string CustomerReported = "customer-reported";
-        public const string CXPAttention = "CXP Attention";
         public const string IssueAddressed = "issue-addressed";
         public const string NeedsAuthorFeedback = "needs-author-feedback";
         public const string NeedsTeamAttention = "needs-team-attention";

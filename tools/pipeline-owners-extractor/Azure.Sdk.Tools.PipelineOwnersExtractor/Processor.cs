@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Azure.Sdk.Tools.CodeOwnersParser;
+using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.NotificationConfiguration;
 using Azure.Sdk.Tools.NotificationConfiguration.Helpers;
 using Azure.Sdk.Tools.NotificationConfiguration.Services;
@@ -120,16 +120,16 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
                 string buildDefPath = process.YamlFilename;
                 logger.LogInformation("Searching CODEOWNERS for patch matching {Path}", buildDefPath);
                 CodeownersEntry codeownersEntry =
-                    CodeownersFile.GetMatchingCodeownersEntry(buildDefPath, codeownersEntries);
+                    CodeownersParser.GetMatchingCodeownersEntry(buildDefPath, codeownersEntries);
                 codeownersEntry.ExcludeNonUserAliases();
 
                 logger.LogInformation(
                     "Matching Path = {Path}, Owner Count = {OwnerCount}",
                     buildDefPath,
-                    codeownersEntry.Owners.Count);
+                    codeownersEntry.SourceOwners.Count);
 
                 // Get set of team members in the CODEOWNERS file
-                string[] githubOwners = codeownersEntry.Owners.ToArray();
+                string[] githubOwners = codeownersEntry.SourceOwners.ToArray();
 
                 List<string> microsoftOwners = new List<string>();
 
@@ -161,10 +161,10 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor
         {
             IEnumerable<Task<(string RepositoryUrl, List<CodeownersEntry> Codeowners)>> tasks = repositoryUrls
                 .Select(SanitizeRepositoryUrl)
-                .Select(async url => (
+                .Select(url => Task.FromResult((
                     RepositoryUrl: url,
-                    Codeowners: await this.gitHubService.GetCodeownersFileEntries(new Uri(url))
-                ));
+                    Codeowners: this.gitHubService.GetCodeownersFileEntries(new Uri(url))
+                )));
 
             (string RepositoryUrl, List<CodeownersEntry> Codeowners)[] taskResults = await Task.WhenAll(tasks);
 

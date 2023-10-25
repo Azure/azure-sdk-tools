@@ -29,6 +29,9 @@
     "defaultAgentPoolMaxNodes": {
       "value": 10
     },
+    "maintenanceWindowDay": {
+      "value": "Friday"
+    },
     "tags": {
       "value": {
         "environment": "Prod",

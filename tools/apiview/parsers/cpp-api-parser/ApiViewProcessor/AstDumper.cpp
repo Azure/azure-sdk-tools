@@ -135,8 +135,16 @@ void AstDumper::SetNamespace(std::string_view const& newNamespace)
   }
 }
 
-void AstDumper::Newline() { InsertNewline(); }
+void AstDumper::Newline()
+{
+  InsertNewline();
+  m_currentCursor = 0;
+}
 
-void AstDumper::LeftAlign() { InsertWhitespace(m_indentationLevel); }
+void AstDumper::LeftAlign()
+{
+  InsertWhitespace(m_indentationLevel);
+  m_currentCursor = m_indentationLevel;
+}
 
 void AstDumper::AdjustIndent(int indentDelta) { m_indentationLevel += indentDelta; }

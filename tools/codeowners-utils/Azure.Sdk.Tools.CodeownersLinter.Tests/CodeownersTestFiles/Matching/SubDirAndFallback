@@ -1,0 +1,27 @@
+# CODEOWNERS with no errors, for match testing.
+# The purpose of this file is for end-to-end GetMatchingCodeownersEntry with targeted subdirectory and fallback.
+# The examples in here are real world. For example, many sdk service directories have azure resourcemanager 
+# library subdirectories and the following glob pattern, /sdk/**/azure-resourcemanager-*/, is used to get just
+# these directories while leaving the base sdk service directory ownership alone.
+
+# Fallback
+/** @TestTeam1
+
+# PRLabel: %TestLabel1
+/sdk/ServiceDirectory1/ @TestOwner2 @TestTeam1
+
+# PRLabel: %TestLabel2
+# ServiceLabel: %TestLabel3
+# AzureSdkOwners: @TestOwner4
+/sdk/ServiceDirectory2/ @TestOwner3 @TestTeam2
+
+# This entry needs to be after the previous entries otherwise, by github rules, they'll take
+# ownership. With this entry, anything in an azure-service1-* subdirectory of the previous two
+# service directory entires will belong to these owners and have these labels
+# PRLabel: %TestLabel4
+# ServiceLabel: %TestLabel2
+/sdk/**/azure-service1-*/ @TestTeam4 @TestOwner0
+
+# This owner owns everything log related in the repository
+# PRLabel: %TestLabel3
+/**/logs/* @TestOwner4

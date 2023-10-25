@@ -11,7 +11,7 @@ Please follow the following steps to connect your vscode to docker container.
 1. Press `F1` and select `Remote-Containers: Attach to Running Container`.
 2. Select your running docker image, and attach to it.
 3. After vscode connects to docker container, open folder `/work-dir/{sdk-repository}`. 
-   1. For .Net, you can only open the generated SDK namespace folder, such as `Azure.Verticals.AgriFood.Farming`.
+   1. For .NET, you can only open the generated SDK namespace folder, such as `Azure.Verticals.AgriFood.Farming`.
    2. For Java, you can only open the generated package, such as `azure-resourcemanager-agrifood`.
 
 Then you can write your codes in vscode.

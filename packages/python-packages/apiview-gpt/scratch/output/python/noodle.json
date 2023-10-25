@@ -1,0 +1,51 @@
+{
+    "status": "Error",
+    "violations": [
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming",
+                "python_design.html#python-namespaces-async",
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 30,
+            "bad_code": "class azure.contoso.NoodleAsyncManager:",
+            "suggestion": "class azure.contoso.aio.NoodleAsyncClient:",
+            "comment": "The class name should end with 'Client' and be in a namespace with '.aio' suffix. The class should be in a namespace with '.aio' suffix. There should be two separate classes for sync and async operations."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-constructor-policy-arguments"
+            ],
+            "line_no": 31,
+            "bad_code": "async def __init__(self, endpoint, credential, options: dict)",
+            "suggestion": "async def __init__(self, endpoint, credential, **kwargs)",
+            "comment": "The constructor should accept optional default request options as keyword arguments."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-naming",
+                "python_design.html#python-client-separate-sync-async"
+            ],
+            "line_no": 43,
+            "bad_code": "class azure.contoso.NoodleManager:",
+            "suggestion": "Provide two separate client classes for synchronous and asynchronous operations.",
+            "comment": "The class name should end with 'Client'. The class should not combine async and sync operations."
+        },
+        {
+            "rule_ids": [
+                "python_design.html#python-client-connection-string"
+            ],
+            "line_no": 49,
+            "bad_code": "connection_string: Optional[str]",
+            "suggestion": "Implement a separate factory classmethod from_connection_string to create a client from a connection string.",
+            "comment": "The constructor should not accept a connection string directly."
+        },
+        {
+            "rule_ids": [],
+            "line_no": 53,
+            "bad_code": "def create_noodle(self, body: NoodleCreateRequest, **kwargs) -> NoodleResponse",
+            "suggestion": "def create_noodle(self, body: Noodle, **kwargs) -> Noodle",
+            "comment": "Avoid using terms like 'Request' and 'Response' in models. These are HTTP-specific."
+        }
+    ]
+}

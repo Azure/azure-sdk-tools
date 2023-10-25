@@ -35,7 +35,7 @@ def get_document(document_id: str):
 
 def create_document(path: str):
     """
-    Create a new vector document
+    Add an array of vector documents to the database.
     """
     db = VectorDB()
     # resolve full path
@@ -59,7 +59,7 @@ def delete_document(document_id: str):
     db.delete_document(document_id)
     print(f"Deleted document {document_id}")
 
-def search_documents(language: str, path: str):
+def search_documents(language: str, path: str, log_result: bool = False):
     """
     Search for vector documents by similarity
     """
@@ -67,22 +67,26 @@ def search_documents(language: str, path: str):
     with open(path, "r") as f:
         code = f.read()
     results = de.search_documents(language, code)
-    with open('results.json', 'w') as f:
-        json.dump(results, f, indent=4)
+    if log_result:
+        with open('search_result_dump.json', 'w') as f:
+            json.dump(results, f, indent=4)
     pprint(results)
 
-def generate_review(language: str, path: str):
+def generate_review(language: str, path: str, log_prompts: bool = False):
     """
     Generate a review for an APIView
     """
     from src import GptReviewer
-    rg = GptReviewer()
+    rg = GptReviewer(log_prompts=log_prompts)
     filename = os.path.splitext(os.path.basename(path))[0]
 
     with open(path, "r") as f:
         apiview = f.read()
     review = rg.get_response(apiview, language)
-    with open(os.path.join('scratch', 'output', f'{filename}.json'), 'w') as f:
+    output_path = os.path.join('scratch', 'output', language)
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    with open(os.path.join(output_path, f'{filename}.json'), 'w') as f:
         f.write(review.json(indent=4))
     pprint(review)
 
@@ -113,13 +117,17 @@ class CliCommandsLoader(CLICommandsLoader):
         return OrderedDict(self.command_table)
     
     def load_arguments(self, command):
+        with ArgumentsContext(self, "") as ac:
+            ac.argument("language", type=str, help="The language of the APIView file", options_list=("--language", "-l"))
         with ArgumentsContext(self, "vector") as ac:
             ac.argument("document_id", type=str, help="The ID of the document to retrieve", options_list=("--id"))
+            ac.argument("log_result", action="store_true", help="Log the search results to a file called 'search_result_dump.json'")
+            ac.argument("path", type=str, help="The path to a JSON file containing an array of vector documents to add.")
         with ArgumentsContext(self, "guidelines") as ac:
             ac.argument("path", type, help="The path to the guidelines")
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
-            ac.argument("language", type=str, help="The language of the APIView file")
+            ac.argument("log_prompts", action="store_true", help="Log each prompt in ascending order in the `scratch/propmts` folder.")
         super(CliCommandsLoader, self).load_arguments(command)
 
 

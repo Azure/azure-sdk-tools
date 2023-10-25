@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
@@ -15,18 +16,28 @@ namespace Azure.ClientSdk.Analyzers
 
         private const string PageableTypeName = "Pageable";
         private const string AsyncPageableTypeName = "AsyncPageable";
+        private const string BinaryDataTypeName = "BinaryData";
         private const string ResponseTypeName = "Response";
         private const string NullableResponseTypeName = "NullableResponse";
         private const string OperationTypeName = "Operation";
         private const string TaskTypeName = "Task";
+        private const string BooleanTypeName = "Boolean";
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get; } = ImmutableArray.Create(new[]
         {
             Descriptors.AZC0002,
             Descriptors.AZC0003,
             Descriptors.AZC0004,
-            Descriptors.AZC0015
+            Descriptors.AZC0015,
+            Descriptors.AZC0017,
+            Descriptors.AZC0018,
+            Descriptors.AZC0019,
         });
+
+        private static bool IsRequestContent(IParameterSymbol parameterSymbol)
+        {
+            return parameterSymbol.Type.Name == "RequestContent";
+        }
 
         private static bool IsRequestContext(IParameterSymbol parameterSymbol)
         {
@@ -43,7 +54,7 @@ namespace Azure.ClientSdk.Analyzers
             return IsCancellationToken(parameterSymbol) || IsRequestContext(parameterSymbol);
         }
 
-        private static void CheckIsLastArgumentCancellationTokenOrRequestContext(ISymbolAnalysisContext context, IMethodSymbol member)
+        private static void CheckServiceMethod(ISymbolAnalysisContext context, IMethodSymbol member)
         {
             var lastArgument = member.Parameters.LastOrDefault();
             var isLastArgumentCancellationOrRequestContext = lastArgument != null && IsCancellationOrRequestContext(lastArgument);
@@ -61,18 +72,151 @@ namespace Azure.ClientSdk.Analyzers
                     context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
                 }
             }
-            else if (IsCancellationToken(lastArgument) && !lastArgument.IsOptional)
+            else if (IsCancellationToken(lastArgument))
             {
-                var overloadWithCancellationToken = FindMethod(
-                    member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
-                    member.TypeParameters,
-                    member.Parameters.RemoveAt(member.Parameters.Length - 1));
-
-                if (overloadWithCancellationToken == null)
+                if (!lastArgument.IsOptional)
                 {
-                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
+                    var overloadWithCancellationToken = FindMethod(
+                        member.ContainingType.GetMembers(member.Name).OfType<IMethodSymbol>(),
+                        member.TypeParameters,
+                        member.Parameters.RemoveAt(member.Parameters.Length - 1));
+
+                    if (overloadWithCancellationToken == null)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0002, member.Locations.FirstOrDefault()), member);
+                    }
+                }
+
+                if (member.Parameters.FirstOrDefault(IsRequestContent) != null)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0017, member.Locations.FirstOrDefault()), member);
                 }
             }
+            else if (IsRequestContext(lastArgument))
+            {
+                CheckProtocolMethodReturnType(context, member);
+                CheckProtocolMethodParameters(context, member);
+            }
+        }
+
+        private static string GetFullNamespaceName(IParameterSymbol parameter)
+        {
+            var currentNamespace = parameter.Type.ContainingNamespace;
+            string currentName = currentNamespace.Name;
+            string fullNamespace = "";
+            while (!string.IsNullOrEmpty(currentName))
+            {
+                fullNamespace = fullNamespace == "" ? currentName : $"{currentName}.{fullNamespace}";
+                currentNamespace = currentNamespace.ContainingNamespace;
+                currentName = currentNamespace.Name;
+            }
+            return fullNamespace;
+        }
+
+        // A protocol method should not have model as parameter. If it has ambiguity with convenience method, it should have required RequestContext.
+        // Ambiguity: doesn't have a RequestContent, but there is a method ending with CancellationToken has same type of parameters 
+        // No ambiguity: has RequestContent.
+        private static void CheckProtocolMethodParameters(ISymbolAnalysisContext context, IMethodSymbol method)
+        {
+            var containsModel = method.Parameters.Any(p =>
+            {
+                var fullNamespace = GetFullNamespaceName(p);
+                return !fullNamespace.StartsWith("System") && !fullNamespace.StartsWith("Azure");
+            });
+
+            if (containsModel)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
+                return;
+            }
+
+            var requestContent = method.Parameters.FirstOrDefault(IsRequestContent);
+            if (requestContent == null && method.Parameters.Last().IsOptional)
+            {
+                INamedTypeSymbol type = (INamedTypeSymbol)context.Symbol;
+                IEnumerable<IMethodSymbol> methodList = type.GetMembers(method.Name).OfType<IMethodSymbol>().Where(member => !SymbolEqualityComparer.Default.Equals(member, method));
+                ImmutableArray<IParameterSymbol> parametersWithoutLast = method.Parameters.RemoveAt(method.Parameters.Length - 1);
+                IMethodSymbol convenienceMethod = FindMethod(methodList, method.TypeParameters, parametersWithoutLast, symbol => IsCancellationToken(symbol));
+                if (convenienceMethod != null)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0019, method.Locations.FirstOrDefault()), method);
+                }
+            }
+        }
+
+        // A protocol method should not have model as type. Accepted return type: Response, Task<Response>, Response<bool>, Task<Response<bool>>, Pageable<BinaryData>, AsyncPageable<BinaryData>, Operation<BinaryData>, Task<Operation<BinaryData>>, Operation, Task<Operation>, Operation<Pageable<BinaryData>>, Task<Operation<AsyncPageable<BinaryData>>>
+        private static void CheckProtocolMethodReturnType(ISymbolAnalysisContext context, IMethodSymbol method)
+        {
+            bool IsValidPageable(ITypeSymbol typeSymbol)
+            {
+                var pageableTypeSymbol = typeSymbol as INamedTypeSymbol;
+                if (!pageableTypeSymbol.IsGenericType)
+                {
+                    return false;
+                }
+
+                var pageableReturn = pageableTypeSymbol.TypeArguments.Single();
+                if (!IsOrImplements(pageableReturn, BinaryDataTypeName))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            ITypeSymbol originalType = method.ReturnType;
+            ITypeSymbol unwrappedType = method.ReturnType;
+
+            if (method.ReturnType is INamedTypeSymbol namedTypeSymbol &&
+                namedTypeSymbol.IsGenericType &&
+                namedTypeSymbol.Name == TaskTypeName)
+            {
+                unwrappedType = namedTypeSymbol.TypeArguments.Single();
+            }
+
+            if (IsOrImplements(unwrappedType, ResponseTypeName))
+            {
+                if (unwrappedType is INamedTypeSymbol responseTypeSymbol && responseTypeSymbol.IsGenericType)
+                {
+                    var responseReturn = responseTypeSymbol.TypeArguments.Single();
+                    if (responseReturn.Name != BooleanTypeName)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
+                    }
+                }
+                return;
+            }
+            else if (IsOrImplements(unwrappedType, OperationTypeName))
+            {
+                if (unwrappedType is INamedTypeSymbol operationTypeSymbol && operationTypeSymbol.IsGenericType)
+                {
+                    var operationReturn = operationTypeSymbol.TypeArguments.Single();
+                    if (IsOrImplements(operationReturn, PageableTypeName) || IsOrImplements(operationReturn, AsyncPageableTypeName))
+                    {
+                        if (!IsValidPageable(operationReturn))
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
+                        }
+                        return;
+                    }
+
+                    if (!IsOrImplements(operationReturn, BinaryDataTypeName))
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
+                    }
+                }
+                return;
+            }
+            else if (IsOrImplements(originalType, PageableTypeName) || IsOrImplements(originalType, AsyncPageableTypeName))
+            {
+                if (!IsValidPageable(originalType))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
+                }
+                return;
+            }
+
+            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
         }
 
         private static void CheckClientMethod(ISymbolAnalysisContext context, IMethodSymbol member)
@@ -164,7 +308,7 @@ namespace Azure.ClientSdk.Analyzers
 
                 if (IsClientMethodReturnType(context, methodSymbol, false))
                 {
-                    CheckIsLastArgumentCancellationTokenOrRequestContext(context, methodSymbol);
+                    CheckServiceMethod(context, methodSymbol);
                 }
             }
         }

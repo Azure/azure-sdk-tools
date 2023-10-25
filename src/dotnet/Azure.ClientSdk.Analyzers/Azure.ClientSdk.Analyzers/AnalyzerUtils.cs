@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Collections.Generic;
+using System;
+using System.Buffers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -13,8 +14,7 @@ namespace Azure.ClientSdk.Analyzers
 
         internal static bool IsSdkCode(ISymbol symbol)
         {
-            var namespaces = symbol.ContainingNamespace.GetAllNamespaces();
-
+            using var namespaces = symbol.ContainingNamespace.GetAllNamespaces();
             return IsSdkNamespace(namespaces);
         }
 
@@ -28,15 +28,15 @@ namespace Azure.ClientSdk.Analyzers
                 return IsSdkCode(symbol);
             }
 
-            var namespaces = GetNamespace(node);
+            using var namespaces = GetNamespace(node);
             return IsSdkNamespace(namespaces);
         }
 
-        private static bool IsSdkNamespace(IReadOnlyList<string> namespaces) => namespaces.Count >= 2 && namespaces[0] == "Azure" && namespaces[1] != "Core";
+        private static bool IsSdkNamespace(Namespaces namespaces) => namespaces.Count >= 2 && namespaces[0] == "Azure" && namespaces[1] != "Core";
 
-        private static IReadOnlyList<string> GetNamespace(SyntaxNode node)
+        private static Namespaces GetNamespace(SyntaxNode node)
         {
-            var namespaces = new List<string>();
+            var namespaces = new Namespaces();
 
             var parent = node.Parent;
 
@@ -63,7 +63,37 @@ namespace Azure.ClientSdk.Analyzers
                 }
             }
 
+            namespaces.Reverse();
+
             return namespaces;
+        }
+
+        internal class Namespaces : IDisposable
+        {
+            private int count;
+            private readonly string[] namespaces = ArrayPool<string>.Shared.Rent(10);
+
+            public int Count => this.count;
+
+            public void Add(string name)
+            {
+                this.namespaces[this.count++] = name;
+            }
+
+            public string this[int i]
+            {
+                get => this.namespaces[i];
+            }
+
+            public void Reverse()
+            {
+                Array.Reverse(this.namespaces, 0, this.count);
+            }
+
+            public void Dispose()
+            {
+                ArrayPool<string>.Shared.Return(this.namespaces);
+            }
         }
     }
 }

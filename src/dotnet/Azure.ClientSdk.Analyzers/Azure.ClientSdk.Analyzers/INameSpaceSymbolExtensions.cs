@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Collections.Generic;
 using System.Text;
 using Microsoft.CodeAnalysis;
+using static Azure.ClientSdk.Analyzers.AnalyzerUtils;
 
 namespace Azure.ClientSdk.Analyzers
 {
@@ -24,9 +24,9 @@ namespace Azure.ClientSdk.Analyzers
             return namespaceName;
         }
 
-        internal static IReadOnlyList<string> GetAllNamespaces(this INamespaceSymbol namespaceSymbol)
+        internal static Namespaces GetAllNamespaces(this INamespaceSymbol namespaceSymbol)
         {
-            var namespaces = new List<string>();
+            var namespaces = new Namespaces();
             while (namespaceSymbol is { IsGlobalNamespace: false })
             {
                 namespaces.Add(namespaceSymbol.Name);

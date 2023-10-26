@@ -155,11 +155,21 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 catch(GitProcessException e)
                 {
                     HideOrigin(config);
+
+                    // the only executions that have a real chance of failing are
+                    // - ls-remote origin
+                    // - push
+                    // if we have a failure on either of these, we need to unstage our changes for an easy re-attempt at pushing.
+                    GitHandler.TryRun("git reset --soft HEAD^", config.AssetsRepoLocation.ToString(), out CommandResult ResetResult);
+
                     throw GenerateInvokeException(e.Result);
                 }
                 await UpdateAssetsJson(generatedTagName, config);
                 await BreadCrumb.Update(config);
             }
+            // can we detect that we have unpushed commits?
+            else if
+
 
             HideOrigin(config);
         }

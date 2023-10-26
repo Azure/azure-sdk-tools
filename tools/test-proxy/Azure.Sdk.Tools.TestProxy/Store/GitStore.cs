@@ -167,9 +167,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 await UpdateAssetsJson(generatedTagName, config);
                 await BreadCrumb.Update(config);
             }
-            // can we detect that we have unpushed commits?
-            else if
-
 
             HideOrigin(config);
         }

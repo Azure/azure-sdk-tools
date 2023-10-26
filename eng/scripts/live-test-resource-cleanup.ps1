@@ -427,9 +427,17 @@ function DeleteAndPurgeGroups([array]$toDelete) {
         $purgeableResources += $purgeableResourcesFromRG
         Write-Verbose "Found $($purgeableResourcesFromRG.Count) potentially purgeable resources in resource group $($rg.ResourceGroupName)"
       }
+
       Write-Verbose "Deleting group: $($rg.ResourceGroupName)"
       Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
-      Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
+
+      # For storage tests specifically, if they are aborted then blobs with immutability policies
+      # can be left around which prevent deletion.
+      if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
+        $PSScriptRoot/Remove-WormStorageAccounts.ps1 -GroupPrefix $rg.ResourceGroupName
+      } else {
+        Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
+      }
     }
   }
 

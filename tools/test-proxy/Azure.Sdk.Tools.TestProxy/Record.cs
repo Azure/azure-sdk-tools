@@ -34,6 +34,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (body == null)
             {
+                DebugLogger.LogAdminRequestDetails(_logger, Request);
                 await _recordingHandler.StartRecordingAsync(null, Response, null);
             }
             else
@@ -42,6 +43,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 var assetsJson = RecordingHandler.GetAssetsJsonLocation(
                     HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true),
                     _recordingHandler.ContextDirectory);
+
+                DebugLogger.LogAdminRequestDetails(_logger, Request);
+                _logger.LogDebug($"Attempting to start recording for {file} {assetsJson??string.Empty}");
 
                 if (string.IsNullOrWhiteSpace(file))
                 {
@@ -80,6 +84,8 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 save = false;
             }
+
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
 
             _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
         }

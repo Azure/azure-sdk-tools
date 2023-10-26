@@ -105,6 +105,10 @@ namespace Azure.Sdk.Tools.TestProxy
         #region recording functionality
         public void StopRecording(string sessionId, IDictionary<string, string> variables = null, bool saveRecording = true)
         {
+
+            var id = Guid.NewGuid().ToString();
+            DebugLogger.LogTrace($"RECORD STOP BEGIN {id}.");
+
             if (!RecordingSessions.TryRemove(sessionId, out var recordingSession))
             {
                 return;
@@ -149,6 +153,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     stream.Write(Encoding.UTF8.GetBytes(Environment.NewLine));
                 }
             }
+
+            DebugLogger.LogTrace($"RECORD STOP END {id}.");
         }
 
         /// <summary>
@@ -168,6 +174,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public async Task StartRecordingAsync(string sessionId, HttpResponse outgoingResponse, string assetsJson = null)
         {
             var id = Guid.NewGuid().ToString();
+            DebugLogger.LogTrace($"RECORD START BEGIN {id}.");
 
             await RestoreAssetsJson(assetsJson, false);
 
@@ -182,6 +189,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.InternalServerError, $"Unexpectedly failed to add new recording session under id {id}.");
             }
 
+            DebugLogger.LogTrace($"RECORD START END {id}.");
             outgoingResponse.Headers.Add("x-recording-id", id);
         }
 
@@ -360,6 +368,8 @@ namespace Azure.Sdk.Tools.TestProxy
         public async Task StartPlaybackAsync(string sessionId, HttpResponse outgoingResponse, RecordingType mode = RecordingType.FilePersisted, string assetsPath = null)
         {
             var id = Guid.NewGuid().ToString();
+            DebugLogger.LogTrace($"PLAYBACK START BEGIN {id}.");
+
             ModifiableRecordSession session;
 
             if (mode == RecordingType.InMemory)
@@ -402,10 +412,16 @@ namespace Azure.Sdk.Tools.TestProxy
 
             // Write to the response
             await outgoingResponse.WriteAsync(json);
+
+            DebugLogger.LogTrace($"PLAYBACK START END {id}.");
         }
 
         public void StopPlayback(string recordingId, bool purgeMemoryStore = false)
         {
+
+            var id = Guid.NewGuid().ToString();
+            DebugLogger.LogTrace($"PLAYBACK STOP BEGIN {id}.");
+
             if (!PlaybackSessions.TryRemove(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
@@ -427,6 +443,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 GC.Collect();
             }
+
+            DebugLogger.LogTrace($"PLAYBACK STOP END {id}.");
         }
 
         public async Task HandlePlaybackRequest(string recordingId, HttpRequest incomingRequest, HttpResponse outgoingResponse)

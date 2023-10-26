@@ -101,6 +101,7 @@ const std::vector<std::string_view> KnownSettings{
     "filterNamespace",
     "additionalCompilerSwitches",
     "additionalIncludeDirectories",
+    "sourceRootUrl",
     "reviewName",
     "serviceName",
     "packageName",
@@ -138,6 +139,10 @@ ApiViewProcessorImpl::ApiViewProcessorImpl(
   if (configurationJson.contains("includePrivate"))
   {
     m_includePrivate = configurationJson["includePrivate"];
+  }
+  if (configurationJson.contains("sourceRootUrl"))
+  {
+    m_repositoryRoot = configurationJson["sourceRootUrl"];
   }
   if (configurationJson.contains("filterNamespace")
       && !configurationJson["filterNamespace"].is_null())
@@ -430,7 +435,7 @@ int ApiViewProcessorImpl::ProcessApiView()
     assert(file.u8string().find(m_currentSourceRoot.u8string()) == 0);
     auto relativeFile = static_cast<std::string>(
         stringFromU8string(file.u8string().erase(0, m_currentSourceRoot.u8string().size() + 1)));
-    std::string quotedFile = replaceAll(relativeFile, "\\", "\\\\");
+    std::string quotedFile = replaceAll(relativeFile, "\\", "/");
     sourceFileAggregate << "#include \"" << quotedFile << "\"" << std::endl;
   }
 

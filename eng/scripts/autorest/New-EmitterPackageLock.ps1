@@ -42,8 +42,8 @@ try {
       exit $LASTEXITCODE
     }
 
-    Write-Host '##[group]npm list --all --package-lock-only'
-    npm list --all --package-lock-only
+    Write-Host '##[group]npm list --all'
+    npm list --all
     Write-Host '##[endgroup]'
 
     $dest = Join-Path $OutputDirectory $LockFileName

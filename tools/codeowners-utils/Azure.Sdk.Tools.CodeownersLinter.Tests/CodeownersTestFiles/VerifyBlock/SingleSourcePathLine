@@ -1,0 +1,2 @@
+# A single source path/owner line is its own block and should have no errors.
+/sdk/someFakePath @TestOwner0

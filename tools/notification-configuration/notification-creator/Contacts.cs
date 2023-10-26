@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Azure.Sdk.Tools.CodeOwnersParser;
+using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 
@@ -38,7 +38,7 @@ internal class Contacts
     /// <summary>
     /// See the class comment.
     /// </summary>
-    public async Task<List<string>> GetFromBuildDefinitionRepoCodeowners(BuildDefinition buildDefinition)
+    public List<string> GetFromBuildDefinitionRepoCodeowners(BuildDefinition buildDefinition)
     {
         if (buildDefinition.Process.Type != BuildDefinitionYamlProcessType)
         {
@@ -60,7 +60,7 @@ internal class Contacts
             return null;
         }
 
-        List<CodeownersEntry> codeownersEntries = await gitHubService.GetCodeownersFileEntries(repoUrl);
+        List<CodeownersEntry> codeownersEntries = gitHubService.GetCodeownersFileEntries(repoUrl);
         if (codeownersEntries == null)
         {
             this.log.LogInformation("CODEOWNERS file in '{repoUrl}' not found. Skipping sync.", repoUrl);
@@ -79,7 +79,7 @@ internal class Contacts
             yamlProcess,
             codeownersEntries,
             repoUrl.ToString());
-        List<string> contacts = matchingCodeownersEntry.Owners;
+        List<string> contacts = matchingCodeownersEntry.SourceOwners;
 
         this.log.LogInformation(
             "Found matching contacts (owners) in CODEOWNERS. " +
@@ -118,7 +118,7 @@ internal class Contacts
         string repoUrl)
     {
         CodeownersEntry matchingCodeownersEntry =
-            CodeownersFile.GetMatchingCodeownersEntry(
+            CodeownersParser.GetMatchingCodeownersEntry(
                 process.YamlFilename,
                 codeownersEntries);
 

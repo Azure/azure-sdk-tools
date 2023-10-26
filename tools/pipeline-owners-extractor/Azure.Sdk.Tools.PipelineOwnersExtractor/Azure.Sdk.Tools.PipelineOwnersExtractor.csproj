@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\codeowners-utils\Azure.Sdk.Tools.CodeownersUtils\Azure.Sdk.Tools.CodeownersUtils.csproj" />
     <ProjectReference Include="..\..\identity-resolution\identity-resolution.csproj" />
   </ItemGroup>
 

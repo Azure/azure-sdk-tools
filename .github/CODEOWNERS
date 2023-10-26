@@ -30,8 +30,8 @@
 # Eng Sys Tools
 ###########
 /tools/                                @azure/azure-sdk-eng
-/tools/check-enforcer/                 @praveenkuttappan @weshaggard
 /tools/code-owners-parser/             @konrad-jamrozik @JimSuplizio
+/tools/codeowners-utils/               @JimSuplizio
 /tools/github-issues/                  @praveenkuttappan @weshaggard
 /tools/github-event-processor/         @JimSuplizio @benbp 
 /tools/github-team-user-store/         @JimSuplizio @weshaggard

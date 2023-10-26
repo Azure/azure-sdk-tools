@@ -150,19 +150,9 @@ Mgmt-EngSys,Engineering System (Management Plane Specific),ffeb77
 Migrate,,e99695
 Mixed Reality,,e99695
 Mobile Engagement,,e99695
-Monitor,"Monitor, Operational Insights",e99695
-Monitor - ActionGroups,,e99695
-Monitor - ActivityLogs,,e99695
-Monitor - Alerts,,e99695
+Monitor,"Monitor, Monitor Ingestion, Monitor Query",e99695
 Monitor - ApplicationInsights,,e99695
-Monitor - Autoscale,,e99695
-Monitor - Diagnostic Settings,,e99695
 Monitor - Exporter,Monitor OpenTelemetry Exporter,e99695
-Monitor - Log,Monitor Log Analytics,e99695
-Monitor - Log Analytics,,e99695
-Monitor - Metrics,,e99695
-Monitor - Operational Insights,,e99695
-Monitor - Query,,e99695
 MySQL,,e99695
 Network,,e99695
 Network - Application Gateway,,e99695

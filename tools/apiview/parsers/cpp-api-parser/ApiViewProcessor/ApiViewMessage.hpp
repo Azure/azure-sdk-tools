@@ -36,4 +36,5 @@ enum class ApiViewMessages
   UsingDirectiveFound, // "using namespace" directive found.
   ImplicitOverride, // Implicit override of virtual method.
   NonVirtualDestructor, // Destructor of non-final class is not virtual.
+  TypedefInGlobalNamespace, // A type contains a non-builtin value in the global namespace.
 };

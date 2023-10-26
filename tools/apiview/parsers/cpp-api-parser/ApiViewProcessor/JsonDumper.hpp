@@ -34,8 +34,21 @@ class JsonDumper : public AstDumper {
     DeprecatedRangeEnd = 14,
     SkipDiffRangeStart = 15,
     SkipDiffRangeEnd = 16,
-    InheritanceInfoStart = 17,
-    InheritanceInfoEnd = 18
+    FoldableSectionHeading = 17,
+    FoldableSectionContentStart = 18,
+    FoldableSectionContentEnd = 19,
+    TableBegin = 20,
+    TableEnd = 21,
+    TableRowCount = 22,
+    TableColumnCount = 23,
+    TableColumnName = 24,
+    TableCellBegin = 25,
+    TableCellEnd = 26,
+    LeafSectionPlaceholder = 27,
+    ExternalLinkStart = 28,
+    ExternalLinkEnd = 29,
+    HiddenApiRangeStart = 30,
+    HiddenApiRangeEnd = 31
   };
 
   // Validate that the json we've created won't cause problems for ApiView.
@@ -105,6 +118,7 @@ public:
          {"NavigateToId", nullptr},
          {"Value", whiteSpace},
          {"Kind", TokenKinds::Whitespace}});
+    UpdateCursor(count);
   }
   virtual void InsertNewline() override
   {
@@ -121,6 +135,7 @@ public:
          {"NavigateToId", nullptr},
          {"Value", keyword},
          {"Kind", TokenKinds::Keyword}});
+    UpdateCursor(keyword.size());
   }
   virtual void InsertText(std::string_view const& text) override
   {
@@ -129,6 +144,7 @@ public:
          {"NavigateToId", nullptr},
          {"Value", text},
          {"Kind", TokenKinds::Text}});
+    UpdateCursor(text.size());
   }
   virtual void InsertPunctuation(const char punctuation) override
   {
@@ -138,6 +154,7 @@ public:
          {"NavigateToId", nullptr},
          {"Value", punctuationString},
          {"Kind", TokenKinds::Punctuation}});
+    UpdateCursor(1);
   }
   virtual void InsertLineIdMarker() override
   {
@@ -154,6 +171,7 @@ public:
          {"NavigateToId", nullptr},
          {"Value", id},
          {"Kind", TokenKinds::TypeName}});
+    UpdateCursor(id.size());
   }
   virtual void InsertTypeName(std::string_view const& type, std::string_view const& navigationId)
       override
@@ -163,6 +181,7 @@ public:
          {"NavigateToId", navigationId},
          {"Value", type},
          {"Kind", TokenKinds::TypeName}});
+    UpdateCursor(type.size());
   }
   virtual void InsertMemberName(
       std::string_view const& member,
@@ -181,6 +200,7 @@ public:
          {"NavigateToId", nullptr},
          {"Value", str},
          {"Kind", TokenKinds::StringLiteral}});
+    UpdateCursor(str.size());
   }
   virtual void InsertLiteral(std::string_view const& str) override
   {
@@ -189,6 +209,7 @@ public:
          {"NavigateToId", nullptr},
          {"Value", str},
          {"Kind", TokenKinds::Literal}});
+    UpdateCursor(str.size());
   }
   virtual void InsertComment(std::string_view const& comment) override
   {
@@ -197,6 +218,7 @@ public:
          {"NavigateToId", nullptr},
          {"Value", comment},
          {"Kind", TokenKinds::Comment}});
+    UpdateCursor(comment.size());
   }
   virtual void AddDocumentRangeStart() override
   {
@@ -213,6 +235,23 @@ public:
          {"NavigateToId", nullptr},
          {"Value", nullptr},
          {"Kind", TokenKinds::DocumentRangeEnd}});
+  }
+  virtual void AddExternalLinkStart(const std::string_view& url) override
+  {
+    m_json["Tokens"].push_back(
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", url},
+         {"Kind", TokenKinds::ExternalLinkEnd}});
+
+  }
+  virtual void AddExternalLinkEnd()
+  {
+    m_json["Tokens"].push_back(
+        {{"DefinitionId", nullptr},
+         {"NavigateToId", nullptr},
+         {"Value", nullptr},
+         {"Kind", TokenKinds::ExternalLinkStart}});
   }
   virtual void AddDeprecatedRangeStart() override
   {
@@ -245,22 +284,6 @@ public:
          {"NavigateToId", nullptr},
          {"Value", nullptr},
          {"Kind", TokenKinds::SkipDiffRangeEnd}});
-  }
-  virtual void AddInheritanceInfoStart() override
-  {
-    m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr},
-         {"NavigateToId", nullptr},
-         {"Value", nullptr},
-         {"Kind", TokenKinds::InheritanceInfoStart}});
-  }
-  virtual void AddInheritanceInfoEnd() override
-  {
-    m_json["Tokens"].push_back(
-        {{"DefinitionId", nullptr},
-         {"NavigateToId", nullptr},
-         {"Value", nullptr},
-         {"Kind", TokenKinds::InheritanceInfoEnd}});
   }
 
   nlohmann::json DoDumpTypeHierarchyNode(

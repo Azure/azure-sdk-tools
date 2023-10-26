@@ -6,7 +6,7 @@ export async function getRepoRoot(repoPath: string): Promise<string> {
 }
 
 export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string): Promise<void> {
-  await simpleGit(rootUrl).clone(repo, cloneDir, ["--no-checkout", "--filter=tree:0"], (err) => {
+  simpleGit(rootUrl).clone(repo, cloneDir, ["--no-checkout", "--filter=tree:0"], (err) => {
     if (err) {
       throw err;
     }

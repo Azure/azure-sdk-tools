@@ -8,4 +8,5 @@
         public S1(int a)/*-*/{ A = a/*-*/;/*-*/}/*-*/
         public int? A { get; }
     }
+    /*-*/internal struct S2 { }/*-*/
 }

@@ -10,4 +10,5 @@
     }
     public static class Class3 {
     }
+    /*-*/internal class InternalClass { }/*-*/
 }

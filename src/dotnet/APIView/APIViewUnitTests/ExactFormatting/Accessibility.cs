@@ -1,4 +1,4 @@
-﻿namespace A {
+namespace A {
     public class Class {
         public Class(int a)/*-*/{/*-*/;/*-*/}/*-*/
         protected Class()/*-*/{/*-*/;/*-*/}/*-*/
@@ -7,5 +7,6 @@
         protected/*-*/ internal/*-*/ int C { get; set; }
         /*-*/private protected int D { get; }/*-*/
         /*-*/private int E { get; }/*-*/
+        public int F { get;/*-*/internal set;/*-*/ }
     }
 }

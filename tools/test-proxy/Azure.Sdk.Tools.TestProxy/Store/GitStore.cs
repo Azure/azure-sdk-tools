@@ -160,7 +160,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     // - ls-remote origin
                     // - push
                     // if we have a failure on either of these, we need to unstage our changes for an easy re-attempt at pushing.
-                    GitHandler.TryRun("git reset --soft HEAD^", config.AssetsRepoLocation.ToString(), out CommandResult ResetResult);
+                    GitHandler.TryRun("reset --soft HEAD^", config.AssetsRepoLocation.ToString(), out CommandResult ResetResult);
 
                     throw GenerateInvokeException(e.Result);
                 }

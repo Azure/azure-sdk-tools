@@ -207,15 +207,13 @@ namespace APIViewWeb
                 }
                 else
                 {
-                    queryStringBuilder.Append($" AND (r.Author IN {searchAsQueryStr}");
+                    queryStringBuilder.Append($" AND (");
                     foreach (var item in search) 
                     {
                         var query = '"' + $"{item}" + '"';
-                        queryStringBuilder.Append($" OR CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Name, {query}, true)");
-                        queryStringBuilder.Append($" OR CONTAINS(r.Name, {query}, true)");
+                        queryStringBuilder.Append($" CONTAINS(r.Name, {query}, true)");
                         queryStringBuilder.Append($" OR CONTAINS(r.ServiceName, {query}, true)");
                         queryStringBuilder.Append($" OR CONTAINS(r.PackageDisplayName, {query}, true)");
-                        queryStringBuilder.Append($" OR CONTAINS(ARRAY_SLICE(r.Revisions, -1)[0].Label, {query}, true)");
                     }
                     queryStringBuilder.Append($")");
                 }

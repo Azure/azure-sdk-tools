@@ -1,19 +1,19 @@
 {
   "name": "@azure-tools/ts-genapi",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "",
   "main": "index.js",
   "publishConfig": {
     "registry": "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/"
   },
   "dependencies": {
-    "@microsoft/api-extractor-model": "^7.26.1",
-    "js-tokens": "^6.0.0"
+    "@microsoft/api-extractor-model": "^7.28.2",
+    "js-tokens": "^8.0.0"
   },
   "devDependencies": {
-    "@types/node": "^12.20.55",
+    "@types/node": "^18.0.0",
     "ts-node": "^10.0.0",
-    "typescript": "~4.8.0"
+    "typescript": "~5.2.0"
   },
   "scripts": {
     "build": "tsc -p ."

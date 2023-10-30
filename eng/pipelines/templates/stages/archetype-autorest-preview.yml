@@ -16,13 +16,13 @@ parameters:
   type: string
   default: 'not-specified'
 
-# Custom steps to run after the sdk repository is cloned but before the generation matrix is created.
-- name: SdkInitializationSteps
+# Custom steps to run in the Build and Test stages after the repositories are cloned.
+- name: AutorestInitializationSteps
   type: stepList
   default: []
 
-# Custom steps to run in the Build and Test stages after the repositories are cloned.
-- name: AutorestInitializationSteps
+# Custom steps to run after the sdk repository is cloned but before the generation matrix is created.
+- name: SdkInitializationSteps
   type: stepList
   default: []
 

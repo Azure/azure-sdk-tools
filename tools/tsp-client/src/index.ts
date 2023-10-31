@@ -27,14 +27,14 @@ async function sdkInit(
     repo: string | undefined;
     isUrl: boolean;
   }): Promise<string> {
-  if (isUrl) {
-    // URL scenario
-    const resolvedConfigUrl = resolveTspConfigUrl(config);
-    Logger.debug(`Resolved config url: ${resolvedConfigUrl.resolvedUrl}`)
-    const tspConfig = await fetch(resolvedConfigUrl.resolvedUrl);
-    const configYaml = parseYaml(tspConfig);
-    if (configYaml["parameters"] && configYaml["parameters"]["service-dir"]){
-      const serviceDir = configYaml["parameters"]["service-dir"]["default"];
+  try {
+    if (isUrl) {
+      // URL scenario
+      const resolvedConfigUrl = resolveTspConfigUrl(config);
+      Logger.debug(`Resolved config url: ${resolvedConfigUrl.resolvedUrl}`)
+      const tspConfig = await fetch(resolvedConfigUrl.resolvedUrl);
+      const configYaml = parseYaml(tspConfig);
+      const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
       if (!serviceDir) {
         Logger.error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
       }
@@ -51,24 +51,18 @@ async function sdkInit(
       `directory: ${resolvedConfigUrl.path}\ncommit: ${resolvedConfigUrl.commit}\nrepo: ${resolvedConfigUrl.repo}\nadditionalDirectories: ${additionalDirs}`);
       return newPackageDir;
     } else {
-      Logger.error("Missing service-dir in parameters section of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.")
-    }
-  } else {
-    // Local directory scenario
-    let configFile = path.join(config, "tspconfig.yaml")
-    const data = await readFile(configFile, "utf8");
-    const configYaml = parseYaml(data);
-    if (configYaml["parameters"] && configYaml["parameters"]["service-dir"]) {
-      const serviceDir = configYaml["parameters"]["service-dir"]["default"];
-      var additionalDirs: string[] = [];
-      if (configYaml["parameters"]["dependencies"] && configYaml["parameters"]["dependencies"]["additionalDirectories"]) {
-        additionalDirs = configYaml["parameters"]["dependencies"]["additionalDirectories"];
+      // Local directory scenario
+      let configFile = path.join(config, "tspconfig.yaml")
+      const data = await readFile(configFile, "utf8");
+      const configYaml = parseYaml(data);
+      const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
+      if (!serviceDir) {
+        Logger.error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
       }
+      Logger.debug(`Service directory: ${serviceDir}`)
+      const additionalDirs: string[] = configYaml?.parameters?.dependencies?.additionalDirectories ?? [];
       Logger.info(`Additional directories: ${additionalDirs}`)
-      let packageDir: string | undefined = undefined;
-      if (configYaml["options"][emitter] && configYaml["options"][emitter]["package-dir"]) {
-        packageDir = configYaml["options"][emitter]["package-dir"];
-      }
+      const packageDir = configYaml?.options?.[emitter]?.["package-dir"];
       if (!packageDir) {
         throw new Error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
       }
@@ -86,9 +80,10 @@ async function sdkInit(
             `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirs}`);
       return newPackageDir;
     }
-    throw new Error("Missing service-dir in parameters section of tspconfig.yaml. Please refer to  https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.")
-  }
-  throw new Error("Invalid tspconfig.yaml. Please refer to  https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.");  
+  } catch (err) {
+    Logger.error("Invalid tspconfig.yaml. Please refer to  https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.");
+    throw err;
+  } 
 }
 
 async function syncTspFiles(outputDir: string, localSpecRepo?: string) {

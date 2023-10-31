@@ -35,7 +35,7 @@ async function sdkInit(
     const configYaml = parseYaml(tspConfig);
     if (configYaml["parameters"] && configYaml["parameters"]["service-dir"]){
       const serviceDir = configYaml["parameters"]["service-dir"]["default"];
-      if (serviceDir === undefined) {
+      if (!serviceDir) {
         Logger.error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
       }
       Logger.debug(`Service directory: ${serviceDir}`)
@@ -69,7 +69,7 @@ async function sdkInit(
       if (configYaml["options"][emitter] && configYaml["options"][emitter]["package-dir"]) {
         packageDir = configYaml["options"][emitter]["package-dir"];
       }
-      if (packageDir === undefined) {
+      if (!packageDir) {
         throw new Error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
       }
       const newPackageDir = path.join(outputDir, serviceDir, packageDir)
@@ -96,14 +96,14 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
 
   const repoRoot = await getRepoRoot(outputDir);
   Logger.debug(`Repo root is ${repoRoot}`);
-  if (repoRoot === undefined) {
+  if (!repoRoot) {
     throw new Error("Could not find repo root");
   }
   const [ directory, commit, repo, additionalDirectories ] = await readTspLocation(outputDir);
   const dirSplit = directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   Logger.debug(`Using project name: ${projectName}`)
-  if (projectName === undefined) {
+  if (!projectName) {
     projectName = "src";
   }
   const srcDir = path.join(tempRoot, projectName);
@@ -123,7 +123,7 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     await cp(localSpecRepo, srcDir, { recursive: true, filter: filter });
     const localSpecRepoRoot = await getRepoRoot(localSpecRepo);
     Logger.info(`Local spec repo root is ${localSpecRepoRoot}`)
-    if (localSpecRepoRoot === undefined) {
+    if (!localSpecRepoRoot) {
       throw new Error("Could not find local spec repo root, please make sure the path is correct");
     }
     for (const dir of additionalDirectories) {
@@ -171,7 +171,7 @@ async function generate({
   const tspLocation = await readTspLocation(rootUrl);
   const dirSplit = tspLocation[0].split("/");
   let projectName = dirSplit[dirSplit.length - 1];
-  if (projectName === undefined) {
+  if (!projectName) {
     throw new Error("cannot find project name");
   }
   const srcDir = path.join(tempRoot, projectName);

@@ -28,7 +28,7 @@ export async function getEmitterOptions(rootUrl: string, tempRoot: string, emitt
     emitterOptions[emitter]!["emitter-output-dir"] = rootUrl;
   }
   if (saveInputs) {
-    if (emitterOptions[emitter] === undefined) {
+    if (!emitterOptions[emitter]) {
       emitterOptions[emitter] = {};
     }
     emitterOptions[emitter]!["save-inputs"] = true;

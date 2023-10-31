@@ -1,9 +1,9 @@
 import * as path from "node:path";
 
 import { installDependencies } from "./npm.js";
-import { createTempDirectory, removeDirectory,readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
+import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
-import { compileTsp, discoverMainFile, getEmitterOptions, resolveTspConfigUrl } from "./typespec.js";
+import { TspLocation, compileTsp, discoverMainFile, getEmitterOptions, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
 import { mkdir, writeFile, cp, readFile } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
@@ -94,8 +94,8 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
   if (!repoRoot) {
     throw new Error("Could not find repo root");
   }
-  const [ directory, commit, repo, additionalDirectories ] = await readTspLocation(outputDir);
-  const dirSplit = directory.split("/");
+  const tspLocation: TspLocation = await readTspLocation(outputDir);
+  const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   Logger.debug(`Using project name: ${projectName}`)
   if (!projectName) {
@@ -121,7 +121,7 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     if (!localSpecRepoRoot) {
       throw new Error("Could not find local spec repo root, please make sure the path is correct");
     }
-    for (const dir of additionalDirectories) {
+    for (const dir of tspLocation.additionalDirectories!) {
       await cp(path.join(localSpecRepoRoot, dir), srcDir, { recursive: true, filter: filter });
     }
   } else {
@@ -129,16 +129,16 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     await mkdir(cloneDir, { recursive: true });
     Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
     Logger.debug(`Cloning repo to ${cloneDir}`);
-    await cloneRepo(tempRoot, cloneDir, `https://github.com/${repo}.git`);
+    await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
     await sparseCheckout(cloneDir);
-    await addSpecFiles(cloneDir, directory)
-    Logger.info(`Processing additional directories: ${additionalDirectories}`)
-    for (const dir of additionalDirectories) {
+    await addSpecFiles(cloneDir, tspLocation.directory)
+    Logger.info(`Processing additional directories: ${tspLocation.additionalDirectories}`)
+    for (const dir of tspLocation.additionalDirectories!) {
       await addSpecFiles(cloneDir, dir);
     }
-    await checkoutCommit(cloneDir, commit);
-    await cp(path.join(cloneDir, directory), srcDir, { recursive: true });
-    for (const dir of additionalDirectories) {
+    await checkoutCommit(cloneDir, tspLocation.commit);
+    await cp(path.join(cloneDir, tspLocation.directory), srcDir, { recursive: true });
+    for (const dir of tspLocation.additionalDirectories!) {
       const dirSplit = dir.split("/");
       let projectName = dirSplit[dirSplit.length - 1];
       const dirName = path.join(tempRoot, projectName!);
@@ -164,7 +164,7 @@ async function generate({
 }) {
   const tempRoot = path.join(rootUrl, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(rootUrl);
-  const dirSplit = tspLocation[0].split("/");
+  const dirSplit = tspLocation.directory.split("/");
   let projectName = dirSplit[dirSplit.length - 1];
   if (!projectName) {
     throw new Error("cannot find project name");
@@ -229,17 +229,17 @@ async function main() {
             throw new Error("Commit SHA is required when specifying `--repo`, please specify a commit using `--commit`");
         }
         if (options.commit) {
-          let [ directory, commit, repo, additionalDirectories ] = await readTspLocation(rootUrl);
-          commit = options.commit ?? commit;
-          repo = options.repo ?? repo;
-          await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);
+          let tspLocation: TspLocation = await readTspLocation(rootUrl);
+          tspLocation.commit = options.commit ?? tspLocation.commit;
+          tspLocation.repo = options.repo ?? tspLocation.repo;
+          await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`);
         }
         if (options.tspConfig) {
-          let [ directory, commit, repo, additionalDirectories ] = await readTspLocation(rootUrl);
+          let tspLocation: TspLocation = await readTspLocation(rootUrl);
           let tspConfig = resolveTspConfigUrl(options.tspConfig);
-          commit = tspConfig.commit ?? commit;
-          repo = tspConfig.repo ?? repo;
-          await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);
+          tspLocation.commit = tspConfig.commit ?? tspLocation.commit;
+          tspLocation.repo = tspConfig.repo ?? tspLocation.repo;
+          await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`);
         }
         await syncTspFiles(rootUrl);
         await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});

@@ -26,17 +26,14 @@ steps:
 
     - pwsh: |
         Start-Process $(Build.BinariesDirectory)/test-proxy/test-proxy.exe `
-          -ArgumentList "--storage-location ${{ parameters.rootFolder }}" `
-          -NoNewWindow -PassThru -RedirectStandardOutput $(Build.SourcesDirectory)/test-proxy.log `
-          -RedirectStandardError $(Build.SourcesDirectory)/test-proxy-err.log
+          -ArgumentList "--storage-location ${{ parameters.rootFolder }} -U" `
+          -NoNewWindow -PassThru -RedirectStandardOutput $(Build.SourcesDirectory)/test-proxy.log
       displayName: 'Run the testproxy - windows'
       condition: and(succeeded(), eq(variables['Agent.OS'],'Windows_NT'))
 
     # nohup does NOT continue beyond the current session if you use it within powershell
     - bash: |
-        nohup $(Build.BinariesDirectory)/test-proxy/test-proxy \
-          > ${{ parameters.rootFolder }}/test-proxy.log \
-          2> ${{ parameters.rootFolder }}/test-proxy-err.log &
+        nohup $(Build.BinariesDirectory)/test-proxy/test-proxy >$(Build.SourcesDirectory)/test-proxy.log 2>&1 &
       displayName: "Run the testproxy - linux/mac"
       condition: and(succeeded(), ne(variables['Agent.OS'],'Windows_NT'))
       workingDirectory: "${{ parameters.rootFolder }}"
@@ -54,4 +51,3 @@ steps:
         Write-Error "Could not connect to test proxy."
         exit 1
       displayName: Test Proxy IsAlive
-

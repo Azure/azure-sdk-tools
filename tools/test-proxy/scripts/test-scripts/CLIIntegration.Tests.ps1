@@ -650,7 +650,7 @@ Describe "AssetsModuleTests" {
                 $original_value = $env:GIT_TOKEN
                 $env:GIT_TOKEN = "An Invalid Git Token"
 
-                # Push the changes
+                # Push the changes, this should fail due to currupted git token
                 $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
                 Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
                 $LASTEXITCODE | Should -Not -Be 0

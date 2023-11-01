@@ -212,8 +212,7 @@ namespace APIViewWeb
                     {
                         var query = '"' + $"{item}" + '"';
                         queryStringBuilder.Append($" CONTAINS(r.Name, {query}, true)");
-                        queryStringBuilder.Append($" OR CONTAINS(r.ServiceName, {query}, true)");
-                        queryStringBuilder.Append($" OR CONTAINS(r.PackageDisplayName, {query}, true)");
+                        queryStringBuilder.Append($" OR EXISTS(SELECT VALUE t FROM t IN r.Revisions WHERE CONTAINS(t.Name, {query}, true) or CONTAINS(t.PackageName, {query}, true))");
                     }
                     queryStringBuilder.Append($")");
                 }

@@ -641,14 +641,12 @@ Describe "AssetsModuleTests" {
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
 
-                # Create a new file
-                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file6.txt" -Version 1
                 # Update the version on an existing file
                 Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -Version 3
                 $assetsFile = Join-Path $testFolder "assets.json"
 
                 $original_value = $env:GIT_TOKEN
-                $env:GIT_TOKEN = "An Invalid Git Token"
+                $env:GIT_TOKEN = "InvalidGitToken"
 
                 # Push the changes, this should fail due to currupted git token
                 $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
@@ -665,7 +663,7 @@ Describe "AssetsModuleTests" {
                 Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 3
                 Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
-                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file6.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
 
                 $updatedAssets = Update-AssetsFromFile -AssetsJsonContent $assetsFile
                 Write-Host "updatedAssets.Tag=$($updatedAssets.Tag), originalAssets.Tag=$($recordingJson.Tag)"

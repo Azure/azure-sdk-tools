@@ -298,5 +298,24 @@ namespace RandomNamespace
             await Verifier.CreateAnalyzer(code)
                 .RunAsync();
         }
+
+        [Fact]
+        public async Task AZC0002NotProducedForGetSubClientMethods()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public class Operation {}
+        public virtual Operation GetOperationClient(string apiVersion = ""1.0.0"")
+        {
+            return new Operation();
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
     }
 }

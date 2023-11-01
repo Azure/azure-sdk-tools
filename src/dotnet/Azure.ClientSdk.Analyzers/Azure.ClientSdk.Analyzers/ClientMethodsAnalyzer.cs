@@ -15,6 +15,7 @@ namespace Azure.ClientSdk.Analyzers
         private const string AsyncSuffix = "Async";
 
         private const string AzureNamespace = "Azure";
+        private const string SystemNamespace = "System";
         private const string PageableTypeName = "Pageable";
         private const string AsyncPageableTypeName = "AsyncPageable";
         private const string BinaryDataTypeName = "BinaryData";
@@ -157,7 +158,7 @@ namespace Azure.ClientSdk.Analyzers
                 }
 
                 var pageableReturn = pageableTypeSymbol.TypeArguments.Single();
-                if (!IsOrImplements(pageableReturn, BinaryDataTypeName, AzureNamespace))
+                if (!IsOrImplements(pageableReturn, BinaryDataTypeName, SystemNamespace))
                 {
                     return false;
                 }
@@ -201,7 +202,7 @@ namespace Azure.ClientSdk.Analyzers
                         return;
                     }
 
-                    if (!IsOrImplements(operationReturn, BinaryDataTypeName, AzureNamespace))
+                    if (!IsOrImplements(operationReturn, BinaryDataTypeName, SystemNamespace))
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
                     }

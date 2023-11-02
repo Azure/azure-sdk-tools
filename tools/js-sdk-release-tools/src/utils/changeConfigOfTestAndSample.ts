@@ -31,15 +31,17 @@ export function changeConfigOfTestAndSample(packagePath: string, mode: ChangeMod
         tsConfig = JSON.parse(tsConfigFile);
         packageJson = JSON.parse(packageJsonFile);
         apiExtractor = JSON.parse(apiExtractorFile);
-
+        const isModular = packageJson["exports"] !== undefined && sdkType === SdkType.Rlc;
         tsConfig['include'] = ["./src/**/*.ts"];
-        packageJson['module'] = "./dist-esm/index.js";
-        if (sdkType === SdkType.Hlc) {
-            apiExtractor['mainEntryPointFilePath'] = "./dist-esm/index.d.ts";
-        } else {
-            apiExtractor['mainEntryPointFilePath'] = "./types/index.d.ts";
+        // Only update other files for HLC and pure RLC not Modular
+        if(!isModular) {
+            packageJson['module'] = "./dist-esm/index.js";
+            if (sdkType === SdkType.Hlc) {
+                apiExtractor['mainEntryPointFilePath'] = "./dist-esm/index.d.ts";
+            } else {
+                apiExtractor['mainEntryPointFilePath'] = "./types/index.d.ts";
+            }
         }
-
     }  else if (mode === ChangeModel.Revert) {
         tsConfig = oriTsConfig;
         packageJson = JSON.parse(packageJsonFile);

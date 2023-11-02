@@ -49,6 +49,7 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
         case ApiItemKind.Interface:
         case ApiItemKind.Class:
         case ApiItemKind.Namespace:
+        case ApiItemKind.Enum:
             typeKind = item.kind.toLowerCase();
             break
         case ApiItemKind.TypeAlias:
@@ -71,7 +72,8 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
 
     if (item.kind === ApiItemKind.Interface ||
         item.kind === ApiItemKind.Class ||
-        item.kind === ApiItemKind.Namespace)
+        item.kind === ApiItemKind.Namespace ||
+        item.kind === ApiItemKind.Enum)
     {
         if (item.members.length > 0)
         {
@@ -146,7 +148,7 @@ var apiViewFile: IApiViewFile = {
     Navigation: navigation,
     Tokens: builder.tokens,
     PackageName: apiModel.packages[0].name,
-    VersionString: "1.0.4",
+    VersionString: "1.0.5",
     Language: "JavaScript"
 }
 

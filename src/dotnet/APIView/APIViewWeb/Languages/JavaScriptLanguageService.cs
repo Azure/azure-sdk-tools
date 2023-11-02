@@ -11,7 +11,7 @@ namespace APIViewWeb
         public override string Name { get; } = "JavaScript";
         public override string[] Extensions { get; } = { ".api.json" };
         public override string ProcessName { get; } = "node";
-        public override string VersionString { get; } = "1";
+        public override string VersionString { get; } = "1.0.5";
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonFilePath)
         {

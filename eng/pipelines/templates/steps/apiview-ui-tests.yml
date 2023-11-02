@@ -54,16 +54,12 @@ steps:
     AZURE_CLIENT_SECRET: "$(apiview-appconfig-client-secret)"
     APIVIEW_APPROVERS: "azure-sdk"
 
-- task: Powershell@2
-  inputs:
-    filePath: $(Build.SourcesDirectory)/eng/common/scripts/copy-from-blobstorage.ps1
-    arguments: >
-      -SourceBlobPath '${{ parameters.TestingDataContainer }}'
-      -ApplicationId $(apiviewstorageaccess-application-id)
-      -DestinationDirectory $(Build.BinariesDirectory)
-    pwsh: true
+- pwsh: |
+    azcopy cp '${{ parameters.TestingDataContainer }}/*' '$(Build.BinariesDirectory)' --recursive=true
   displayName: 'Copy from Test Files From Blob'
   env:
+    AZCOPY_AUTO_LOGIN_TYPE: SPN
+    AZCOPY_SPA_APPLICATION_ID: $(apiviewstorageaccess-application-id)
     AZCOPY_SPA_CLIENT_SECRET: $(apiviewstorageaccess-service-principal-key)
 
 # Should remove Selenium Tests once converted to Playwright   

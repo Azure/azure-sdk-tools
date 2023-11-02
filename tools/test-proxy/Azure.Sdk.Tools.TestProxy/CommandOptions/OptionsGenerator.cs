@@ -49,6 +49,13 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
                 getDefaultValue: () => false);
             dumpOption.AddAlias("-d");
 
+            var universalOption = new Option<bool>(
+                name: "--universalOutput",
+                description: "Flag; Redirect all logs to stdout, including what would normally be showing up on stderr.",
+                getDefaultValue: () => false);
+            dumpOption.AddAlias("-u");
+
+
             var collectedArgs = new Argument<string[]>("args")
             {
                 Arity = ArgumentArity.ZeroOrMore,
@@ -77,8 +84,9 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             startCommand.AddOption(insecureOption);
             startCommand.AddOption(dumpOption);
             startCommand.AddArgument(collectedArgs);
+
             startCommand.SetHandler(async (startOpts) => await callback(startOpts),
-                new StartOptionsBinder(storageLocationOption, storagePluginOption, insecureOption, dumpOption, collectedArgs)
+                new StartOptionsBinder(storageLocationOption, storagePluginOption, insecureOption, dumpOption, universalOption, collectedArgs)
             );
             root.Add(startCommand);
 

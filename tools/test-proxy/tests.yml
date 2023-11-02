@@ -141,8 +141,8 @@ stages:
 
         - task: NodeTool@0
           inputs:
-            versionSpec: "16.x"
-          displayName: "Use Node 16.x"
+            versionSpec: "18.x"
+          displayName: "Use Node 18.x"
 
         - pwsh: |
             git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
@@ -154,7 +154,7 @@ stages:
             rootFolder: $(CLONE_LOCATION)
 
         - pwsh: |
-            npm install -g @microsoft/rush@5.48.0
+            npm install -g @microsoft/rush@5.109.2
             rush update
             rush build -t .
           displayName: 'Install Rush, build and install proxy tests project'

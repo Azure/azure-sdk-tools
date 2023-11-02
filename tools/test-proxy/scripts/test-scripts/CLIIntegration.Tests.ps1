@@ -608,6 +608,71 @@ Describe "AssetsModuleTests" {
                 Test-Path -Path (Join-Path $assetsFolder $file3) | Should -Be $false
             }
         }
+        It "Should restore, make a change, attempt a push with corrupted env key (to force error), then _successfully_ push after fixing the env key." {
+            if ($env:CLI_TEST_WITH_DOCKER) {
+                Set-ItResult -Skipped
+            }
+            else {
+                $recordingJson = [PSCustomObject]@{
+                    AssetsRepo           = "Azure/azure-sdk-assets-integration"
+                    AssetsRepoPrefixPath = "pull/scenarios"
+                    AssetsRepoId         = ""
+                    TagPrefix            = "language/tables"
+                    Tag                  = "language/tables_bb2223"
+                }
+
+                $files = @(
+                    "assets.json"
+                )
+                $originalTagPrefix = $recordingJson.TagPrefix
+                $testFolder = Describe-TestFolder -AssetsJsonContent $recordingJson -Files $files -IsPushTest $true
+                # Ensure that the TagPrefix was updated for testing
+                $originalTagPrefix | Should -not -Be $recordingJson.TagPrefix
+                $assetsFile = Join-Path $testFolder "assets.json"
+                $assetsJsonRelativePath = [System.IO.Path]::GetRelativePath($testFolder, $assetsFile)
+                $CommandArgs = "restore --assets-json-path $assetsJsonRelativePath"
+
+                # The initial restore/verification
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $LASTEXITCODE | Should -Be 0
+                $localAssetsFilePath = Get-AssetsFilePath -AssetsJsonContent $recordingJson -AssetsJsonFile $assetsFile
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 2
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
+
+                # Update the version on an existing file
+                Edit-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -Version 3
+                $assetsFile = Join-Path $testFolder "assets.json"
+
+                $original_value = $env:GIT_TOKEN
+                $env:GIT_TOKEN = "InvalidGitToken"
+
+                # Push the changes, this should fail due to currupted git token
+                $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $LASTEXITCODE | Should -Not -Be 0
+
+                # attempt to push the changes for real this time
+                $env:GIT_TOKEN = $original_value
+                $CommandArgs = "push --assets-json-path $assetsJsonRelativePath"
+                Invoke-ProxyCommand -TestProxyExe $TestProxyExe -CommandArgs $CommandArgs -MountDirectory $testFolder
+                $LASTEXITCODE | Should -Be 0
+
+                # Verify that after the push the directory still contains our updated files
+                Test-DirectoryFileCount -Directory $localAssetsFilePath -ExpectedNumberOfFiles 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file2.txt" -ExpectedVersion 3
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file4.txt" -ExpectedVersion 1
+                Test-FileVersion -FilePath $localAssetsFilePath -FileName "file5.txt" -ExpectedVersion 1
+
+                $updatedAssets = Update-AssetsFromFile -AssetsJsonContent $assetsFile
+                Write-Host "updatedAssets.Tag=$($updatedAssets.Tag), originalAssets.Tag=$($recordingJson.Tag)"
+                $updatedAssets.Tag | Should -not -Be $recordingJson.Tag
+
+                $exists = Test-TagExists -AssetsJsonContent $updatedAssets -WorkingDirectory $localAssetsFilePath
+                $exists | Should -Be $true
+            }
+        }
         AfterEach {
             Remove-Test-Folder $testFolder
             Remove-Integration-Tag $updatedAssets

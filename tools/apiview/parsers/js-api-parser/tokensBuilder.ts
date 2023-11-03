@@ -94,13 +94,13 @@ export class TokensBuilder
 
     incIndent(): TokensBuilder
     {
-        this.indentString = ' '.repeat(this.indentString.length + 4); 
+        this.indentString = ' '.repeat(this.indentString.length + 4);
         return this;
     }
 
     decIndent(): TokensBuilder
     {
-        this.indentString = ' '.repeat(this.indentString.length - 4); 
+        this.indentString = ' '.repeat(this.indentString.length - 4);
         return this;
     }
 
@@ -185,7 +185,7 @@ export class TokensBuilder
             }
 
             var tokens: any[] = Array.from(jsTokens(line));
-            tokens.forEach(token => 
+            tokens.forEach(token =>
             {
                 if (this.keywords.indexOf(token.value) > 0)
                 {
@@ -212,7 +212,7 @@ export class TokensBuilder
                     this.text(token.value);
                 }
             });
-            
+
             if (index < array.length - 1)
             {
                 this.newline();

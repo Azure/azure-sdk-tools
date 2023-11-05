@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Text;
-using Azure.Sdk.Tools.CodeOwnersParser;
+using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Octokit;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 {
@@ -49,7 +51,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
             {
                 string codeOwnersFilePath = GetCodeOwnersFilePath();
                 Console.WriteLine($"Loading codeowners file, {codeOwnersFilePath}");
-                _codeOwnerEntries = CodeownersFile.GetCodeownersEntriesFromFileOrUrl(codeOwnersFilePath);
+                _codeOwnerEntries = CodeownersParser.ParseCodeownersFile(codeOwnersFilePath);
             }
             return _codeOwnerEntries;
         }
@@ -71,12 +73,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 
 
         /// <summary>
-        /// Given a list of files from a pull request, return the list of PR labels that
+        /// Given a list of files from a pull request, return the list of PR serviceLabels that
         /// that need to get added to the PR.
         /// </summary>
-        /// <param name="prLabels">the list of labels on the PR</param>
+        /// <param name="prLabels">the list of serviceLabels on the PR</param>
         /// <param name="prFiles">the list of files in the PR</param>
-        /// <returns>String list of labels that need to get added to the PR</returns>
+        /// <returns>String list of serviceLabels that need to get added to the PR</returns>
         public static List<string> GetPRAutoLabelsForFilePaths(IReadOnlyList<Label> prLabels, IReadOnlyList<PullRequestFile> prFiles)
         {
             List<string> labelsToAdd = new List<string>();
@@ -84,11 +86,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 
             foreach (var prFile in prFiles)
             {
-                var codeOwnerEntry = CodeownersFile.GetMatchingCodeownersEntry(prFile.FileName, codeOwnerEntries);
+                var codeOwnerEntry = CodeownersParser.GetMatchingCodeownersEntry(prFile.FileName, codeOwnerEntries);
                 foreach (var prLabel in codeOwnerEntry.PRLabels)
                 {
                     // If PR doesn't already has the label and the label isn't already in the return list
-                    if (!LabelUtils.HasLabel(prLabels, prLabel) && !labelsToAdd.Contains(prLabel))
+                    if (!LabelUtils.HasLabel(prLabels, prLabel) && !labelsToAdd.Contains(prLabel, StringComparer.OrdinalIgnoreCase))
                     {
                         labelsToAdd.Add(prLabel);
                     }
@@ -98,65 +100,119 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         }
 
         /// <summary>
+        /// Overloaded function to convert the list of Octokit.Labels to a list of string
+        /// </summary>
+        /// <param name="labels">The list of Octokit.Label</param>
+        /// <returns>The string which contains a unique list of individuals/teams with the names formatted to @mention in github</returns>
+        public static List<string> GetServiceOwnersForServiceLabels(IReadOnlyList<Label> labels)
+        {
+            List<string> labelOnlyList = labels.Select(l => l.Name).ToList();
+            return GetServiceOwnersForServiceLabels(labelOnlyList);
+        }
+
+        /// <summary>
         /// When Service Attention is added to an issue, one or more individual teams will need to be
-        /// @mentioned based upon the labels in the issue. Given the list of labels on the issue,
+        /// @mentioned based upon the serviceLabels in the issue. Given the list of serviceLabels on the issue,
         /// retrieve the list of individuals or teams to @mention.
         /// </summary>
-        /// <param name="labels">the list of labels on the PR</param>
-        /// <returns>The string which contains a unique list of individuals/teams with the names formatted to @mention in github</returns>
-        public static string GetPartiesToMentionForServiceAttention(IReadOnlyList<Label> labels)
+        /// <param name="serviceLabels">The list of serviceLabels to get owners to @ mention</param>
+        /// <returns>A Distinct list containing the owners belonging to the labels or an empty list if there are none.</returns>
+        public static List<string> GetServiceOwnersForServiceLabels(List<string> serviceLabels)
         {
             List<string> partiesToMentionList = new List<string>();
             var codeOwnerEntries = GetCodeOwnerEntries();
-            foreach(var codeOwnerEntry in codeOwnerEntries)
+            foreach (string label in serviceLabels)
             {
-                foreach (var serviceLabel in codeOwnerEntry.ServiceLabels)
+                // This is just a safeguard considering that almost every existing CodeownersEntry with
+                // ServiceLabels has ServiceAttention in its list and accidentally mentioning half the
+                // repository should be avoided.
+                if (string.Equals(label, LabelConstants.ServiceAttention))
                 {
-                    // Skip the Service Attention label. It's the other labels, that
-                    // aren't Service Attention, that determine which people get added.
-                    if (serviceLabel == LabelConstants.ServiceAttention)
-                    {
-                        continue;
-                    }
-                    if (LabelUtils.HasLabel(labels, serviceLabel))
-                    {
-                        foreach (var owner in codeOwnerEntry.Owners)
-                        {
-                            if (!partiesToMentionList.Contains(owner))
-                            {
-                                partiesToMentionList.Add(owner);
-                            }
-                        }
-                        // At this point it doesn't matter if any of the other service labels for
-                        // this particular CodeOwnerEntry match, the list of owners is still the
-                        // same and we can move on to the next to the next CodeOwnerEntry.
-                        continue;
-                    }
+                    continue;
+                }
+                // Get the list of all entries that have this ServiceLabel
+                var matches = codeOwnerEntries.Where(entry => entry.ServiceLabels.Contains(label, StringComparer.OrdinalIgnoreCase));
+                foreach (var codeownersEntry in matches)
+                {
+                    partiesToMentionList.AddRange(codeownersEntry.ServiceOwners);
                 }
             }
-            string partiesToMention = null;
-            foreach (string party in partiesToMentionList)
+
+            // Return the distinct list performed with a case insensitive comparison. This needs to be done this way
+            // because GitHub is case insensitive but case preserving and an owner could appear in the same CODEOWNERS
+            // file with different casings. Eg. SomeUser or someuser
+            return partiesToMentionList.OrderBy(e => e).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        /// <summary>
+        /// Return a distinct list of AzureSdkOwners for a given list of ServiceLabels.
+        /// </summary>
+        /// <param name="serviceLabels">The list of serviceLabels to get owners to @ mention</param>
+        /// <returns>A Distinct list containing the owners belonging to the labels or an empty list if there are none.</returns>
+        public static List<string> GetAzureSdkOwnersForServiceLabels(List<string> serviceLabels)
+        {
+            List<string> azureSdkOwners = new List<string>();
+            var codeOwnerEntries = GetCodeOwnerEntries();
+            foreach (string label in serviceLabels)
             {
-                if (party.StartsWith("@"))
+                // This is just a safeguard considering that almost every existing CodeownersEntry with
+                // ServiceLabels has ServiceAttention in its list and accidentally mentioning half the
+                // repository should be avoided.
+                if (string.Equals(label, LabelConstants.ServiceAttention))
+                {
+                    continue;
+                }
+                // Get the list of all entries that have this ServiceLabel
+                var matches = codeOwnerEntries.Where(entry => entry.ServiceLabels.Contains(label, StringComparer.OrdinalIgnoreCase));
+                foreach (var codeownersEntry in matches)
+                {
+                    azureSdkOwners.AddRange(codeownersEntry.AzureSdkOwners);
+                }
+            }
+
+            // Normally ExcludeNonUserAliases would be run on the CodeownersEntry but that strips all team aliases
+            // from AzureSdkOwners, ServiceOwners and SourceOwners. Only AzureSdkOwners need to be stripped since,
+            // if this method is being called, it's going to be used for issue assignment which can't be assigned
+            // to a team. ServiceOwners can still have an unexpanded team which would be used for an @ mention.
+            azureSdkOwners.RemoveAll(r => ParsingUtils.IsGitHubTeam(r));
+
+            // Return the distinct list performed with a case insensitive comparison. This needs to be done this way
+            // because GitHub is case insensitive but case preserving and an owner could appear in the same CODEOWNERS
+            // file with different casings. Eg. SomeUser or someuser
+            return azureSdkOwners.OrderBy(e => e).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        /// <summary>
+        /// Common utility function to take a list of owners and format it into a string that
+        /// @ mentions all of them which can be added to a GitHub comment.
+        /// </summary>
+        /// <param name="ownerList">The list of owners</param>
+        /// <returns>The string which contains a unique list of individuals/teams with the names formatted to @mention in github or null if there aren't any.</returns>
+        public static string CreateAtMentionForOwnerList(List<string> ownerList)
+        {
+            string partiesToMention = null;
+            foreach (string owner in ownerList)
+            {
+                if (owner.StartsWith("@"))
                 {
                     if (null == partiesToMention)
                     {
-                        partiesToMention = party;
+                        partiesToMention = owner;
                     }
-                    else 
+                    else
                     {
-                        partiesToMention += " " + party;
+                        partiesToMention += " " + owner;
                     }
                 }
                 else
                 {
                     if (null == partiesToMention)
                     {
-                        partiesToMention = "@"+party;
+                        partiesToMention = "@" + owner;
                     }
                     else
                     {
-                        partiesToMention += " @" + party;
+                        partiesToMention += " @" + owner;
                     }
                 }
             }

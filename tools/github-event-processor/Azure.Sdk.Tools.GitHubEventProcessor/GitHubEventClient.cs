@@ -473,7 +473,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="labelToRemove">string, the label to remove from the issue</param>
         public void RemoveLabel(string labelToRemove)
         {
-            if (_labelsToRemove.Contains(labelToRemove, StringComparer.OrdinalIgnoreCase))
+            if (_labelsToAdd.Contains(labelToRemove, StringComparer.OrdinalIgnoreCase))
             {
                 Console.WriteLine($"Label to remove {labelToRemove} is currently on the add list and will not be added");
             }

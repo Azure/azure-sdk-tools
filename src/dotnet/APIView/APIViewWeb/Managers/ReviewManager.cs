@@ -864,6 +864,7 @@ namespace APIViewWeb.Managers
             file.VersionString = codeFile.VersionString;
             file.Name = codeFile.Name;
             file.PackageName = codeFile.PackageName;
+            file.PackageVersion = codeFile.PackageVersion;
         }
 
         private LanguageService GetLanguageService(string language)

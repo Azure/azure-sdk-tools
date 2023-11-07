@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
+    <PackAsTool>true</PackAsTool>
     <ToolCommandName>codeowners-linter</ToolCommandName>
   </PropertyGroup>
 

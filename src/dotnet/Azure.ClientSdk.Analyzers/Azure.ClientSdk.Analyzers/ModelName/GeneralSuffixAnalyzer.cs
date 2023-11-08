@@ -46,11 +46,6 @@ namespace Azure.ClientSdk.Analyzers.ModelName
                 methodSymbol.Parameters[0].Type.Name is "JsonElement"))
                 return true;
 
-            // if it has public serialization: IJsonModel<T>
-            if (symbol.Interfaces.Any(i => i is { Name: "IJsonModel", IsGenericType: true, TypeArguments.Length: 1 } &&
-                i.TypeArguments[0] == symbol))
-                return true;
-
             return false;
         }
 

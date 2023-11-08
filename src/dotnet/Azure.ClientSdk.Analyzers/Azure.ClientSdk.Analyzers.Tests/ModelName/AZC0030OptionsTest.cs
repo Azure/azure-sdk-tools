@@ -61,33 +61,5 @@ namespace Azure.ResourceManager.Models
             var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(9, 18, 9, 29).WithArguments("DiskOptions", "Options", "'DiskConfig'");
             await VerifyCS.VerifyAnalyzerAsync(test, expected);
         }
-
-        [Fact]
-        public async Task WithPublicSerialization()
-        {
-            var test = @"using System.Text.Json;
-namespace Azure.ResourceManager.Models
-{
-    public class ModelReaderWriterOptions
-    {
-        public string Foo;
-    }
-
-    public interface IJsonModel<out T>
-    {
-        void Write(Utf8JsonWriter writer, ModelReaderWriterOptions options);
-    };
-
-    namespace SubTest
-    {
-        public class DiskOptions: IJsonModel<DiskOptions>
-        {
-            void IJsonModel<DiskOptions>.Write(Utf8JsonWriter writer, ModelReaderWriterOptions options) {}
-        }
-    }
-}";
-            var expected = VerifyCS.Diagnostic(diagnosticId).WithSpan(16, 22, 16, 33).WithArguments("DiskOptions", "Options", "'DiskConfig'");
-            await VerifyCS.VerifyAnalyzerAsync(test, expected);
-        }
     }
 }

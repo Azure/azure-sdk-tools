@@ -456,9 +456,17 @@
 
                 <span class="input-group-text">Revision:</span>
                 <select id="revision-type-select" aria-label="Revision Type Select">
-                    <option value="Automatic">Automatic</option>
-                    <option value="PullRequest">Pull Request</option>
-                    <option value="Manual">Manual</option>
+                    @foreach (var apiRevisionType in Model.ReviewContent.APIRevisions.Keys)
+                    {
+                        if (apiRevisionType == Model.ReviewContent.ActiveRevision.APIRevisionType.ToString())
+                        {
+                            <option selected value="@apiRevisionType">@apiRevisionType</option>
+                        }
+                        else
+                        {
+                            <option value="@apiRevisionType">@apiRevisionType</option>
+                        }
+                    }
                 </select>
                 <select id="revision-select" aria-label="Revision Select">
                     @{
@@ -475,8 +483,9 @@
                     <partial name="Shared/_RevisionSelectPickerPartial" model="revisionSelectModel" />
                 </select>
 
-                @if (@Model.ReviewContent.APIRevisions.Where(x => x.Value.Any()).Any())
+                @if (@Model.ReviewContent.APIRevisions.SelectMany(kvp => kvp.Value).Count() > 1)
                 {
+                    var diffRevisionTypeFirst = (Model.ReviewContent.APIRevisions.ContainsKey("Automatic")) ? "Automatic" : Model.ReviewContent.APIRevisions.Keys.First();
                     @if (Model.DiffRevisionId != null)
                     {
                         var urlValue = @Url.ActionLink("Review", "Assemblies", new
@@ -491,7 +500,7 @@
                     }
                     else
                     {
-                        var diffRevisionForButton = (Model.ReviewContent.APIRevisions.ContainsKey("Automatic")) ? Model.ReviewContent.APIRevisions["Automatic"] : Model.ReviewContent.APIRevisions[Model.ReviewContent.APIRevisions.Keys.First()];
+                        var diffRevisionForButton = Model.ReviewContent.APIRevisions[diffRevisionTypeFirst];
                         var urlValue = @Url.ActionLink("Review", "Assemblies", new
                         {
                             id = @Model.ReviewContent.Review.Id,
@@ -503,9 +512,16 @@
                         <a class="input-group-text" href="@urlValue">Diff:</a>
                     }
                     <select id="diff-revision-type-select" aria-label="Revision Type Select">
-                        <option value="Automatic">Automatic</option>
-                        <option value="PullRequest">Pull Request</option>
-                        <option value="Manual">Manual</option>
+                        @foreach (var apiRevisionType in Model.ReviewContent.APIRevisions.Keys)
+                        {
+                            if (apiRevisionType == diffRevisionTypeFirst)
+                            {
+                                <option selected value="@apiRevisionType">@apiRevisionType</option>
+                            }
+                            else
+                            {
+                                <option value="@apiRevisionType">@apiRevisionType</option>
+                            }                        }
                     </select>
                     <select id="diff-select" aria-label="Diff Select">
                         @{

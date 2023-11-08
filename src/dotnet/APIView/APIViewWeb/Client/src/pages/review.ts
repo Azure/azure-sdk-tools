@@ -193,10 +193,11 @@ $(() => {
         select.parent().replaceWith(selectUpdate);
         (<any>$(`#${id}`)).SumoSelect({ placeholder: `Select ${text}...`, search: true, searchText: `Search ${text}...` })
 
-        // Update diff revision to automatic
+        // Disable Diff Revision Select until a revision is selected
         if (index == 0)
         {
-          (<any>$('#diff-revision-type-select')[0]).sumo.selectItem(0);
+          (<any>$('#diff-revision-type-select')[0]).sumo.disable();
+          (<any>$('#diff-select')[0]).sumo.disable();
         }
         rvM.addSelectEventToAPIRevisionSelect();
       });

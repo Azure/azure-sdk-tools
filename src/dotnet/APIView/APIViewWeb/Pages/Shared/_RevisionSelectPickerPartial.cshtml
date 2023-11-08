@@ -16,6 +16,11 @@
         selectedRevisionLabel = PageModelHelpers.ResolveRevisionLabel(@Model.diffRevision, false);
     }
 
+    if (String.IsNullOrEmpty(selectedRevisionLabel))
+    {
+        <option selected value=""></option>
+    }
+
     @foreach (var revision in @Model.revisions)
     {
         var optionClass = (revision.IsApproved) ? "option-approved" : "option-pending";
@@ -40,7 +45,7 @@
         }
 
         var revisionLabel = PageModelHelpers.ResolveRevisionLabel(@revision, false);
-        
+
         if (!String.IsNullOrEmpty(selectedRevisionLabel) && revisionLabel == selectedRevisionLabel)
         {
             <option selected value="@urlValue" class="@optionClass">@revisionLabel</option>

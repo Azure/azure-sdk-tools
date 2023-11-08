@@ -20,5 +20,6 @@ namespace APIViewWeb.Models
         public string PackageName { get; set; }
         public string Language { get; set; }
         public string Assignee { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }

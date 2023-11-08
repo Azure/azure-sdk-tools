@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Text.RegularExpressions;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -18,11 +18,36 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         private static readonly ImmutableHashSet<string> reservedNames = ImmutableHashSet.Create("ErrorResponse");
 
         // Avoid to use suffixes "Request(s)", "Parameter(s)", "Option(s)", "Response(s)", "Collection"
-        private static readonly string[] generalSuffixes = new string[] { "Request", "Requests", "Response", "Responses", "Parameter", "Parameters", "Option", "Options", "Collection"};
+        private static readonly string[] generalSuffixes = new string[] { "Request", "Requests", "Response", "Responses", "Parameter", "Parameters", "Option", "Options", "Collection" };
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Descriptors.AZC0030); } }
 
-        protected override bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context) => reservedNames.Contains(symbol.Name);
+        protected override bool ShouldSkip(INamedTypeSymbol symbol, SymbolAnalysisContext context)
+        {
+            if (reservedNames.Contains(symbol.Name))
+                return true;
+
+            // skip property bag classes which have `Options` suffix and don't have serialization
+            if (symbol.Name.EndsWith("Options") && !SupportSerialization(symbol))
+                return true;
+
+            return false;
+        }
+
+        private bool SupportSerialization(INamedTypeSymbol symbol)
+        {
+            // if it has serialization method: `IUtf8JsonSerializable.Write`, e.g. ": IUtf8JsonSerializable"
+            if (symbol.Interfaces.Any(i => i.Name is "IUtf8JsonSerializable"))
+                return true;
+
+            // if it has deserialization method: static <T> Deserialize<T>(JsonElement element)
+            if (symbol.GetMembers($"Deserialize{symbol.Name}").Any(m => m is IMethodSymbol methodSymbol &&
+                methodSymbol is { IsStatic: true, ReturnType: INamedTypeSymbol symbol, Parameters.Length: 1 } &&
+                methodSymbol.Parameters[0].Type.Name is "JsonElement"))
+                return true;
+
+            return false;
+        }
 
         protected override string[] SuffixesToCatch => generalSuffixes;
         protected override Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context)

@@ -7,6 +7,26 @@ A simple command line tool for generating TypeSpec clients.
 npm install @azure-tools/typespec-client-generator-cli
 ```
 
+### Prerequisites
+
+#### emitter-package.json
+
+This will be the package.json that gets used when `npm install` is called.  This replaces the package.json checked into the spec repo and allows each language to fix the version of their emitter to be the same for all packages in their repo.
+The file should be checked into this location `./eng/emitter-package.json`
+
+Example
+
+```json
+{
+    "main": "dist/src/index.js",
+    "dependencies": {
+      "@azure-tools/typespec-csharp": "0.1.11-beta.20230123.1"
+    }
+}
+```
+
+Note that tsp compile currently requires the "main" line to be there.
+
 ### Usage
 ```
 tsp-client <command> [options]
@@ -21,7 +41,7 @@ the `-o` or `--output-dir` option.
 ### init
 Initialize the SDK project folder from a tspconfig.yaml. When using this command pass in a path to a local or remote tspconfig.yaml, using the `-c` or `--tsp-config` flag.
 
-The command will generate the appropriate SDK folder in the repository, create a `tsp-location.yaml` file that will be used for future regeneration, and do an initial generation of the SDK. If you want to skip SDK generation, then pass the `--skip-sync-and-generate` flag.
+The command will generate the appropriate SDK folder in the repository, create a [tsp-location.yaml](#tsp-locationyaml) file that will be used for future regeneration, and do an initial generation of the SDK. If you want to skip SDK generation, then pass the `--skip-sync-and-generate` flag.
 
 ### update
 Sync and generate client libraries from a TypeSpec project. The `update` command will look for a `tsp-location.yaml` file in your current directory to sync a TypeSpec project and generate a client library.
@@ -65,4 +85,35 @@ Generating in a directory that contains a `tsp-location.yaml`:
 
 ```
 tsp-client update
+```
+
+## Important concepts
+
+### Per project setup
+
+Each project will need to have a configuration file that will tell the scripts where to find the typespec spec.
+
+#### tsp-location.yaml
+
+This file is created through the `tsp-client init` command or you can manually create it under the project directory to run other commands, such as `tsp-client update`. 
+
+> NOTE: This file should live under the project directory for each service.
+
+The file has the following properties:
+
+| Property | Description | IsRequired |
+| --- | --- | --- |
+| <a id="directory-anchor"></a> directory | The top level directory where the main.tsp for the service lives.  This should be relative to the spec repo root such as `specification/cognitiveservices/OpenAI.Inference` | true |
+| <a id="additionalDirectories-anchor"></a> additionalDirectories | Sometimes a typespec file will use a relative import that might not be under the main directory.  In this case a single `directory` will not be enough to pull down all necessary files.  To support this you can specify additional directories as a list to sync so that all needed files are synced. | false: default = null |
+| <a id="commit-anchor"></a> commit | The commit sha for the version of the typespec files you want to generate off of.  This allows us to have idempotence on generation until we opt into pointing at a later version. | true |
+| <a id="repo-anchor"></a> repo | The repo this spec lives in.  This should be either `Azure/azure-rest-api-specs` or `Azure/azure-rest-api-specs-pr`.  Note that pr will work locally but not in CI until we add another change to handle token based auth. | true |
+
+Example
+
+```yml
+directory: specification/cognitiveservices/OpenAI.Inference
+additionalDirectories:
+  - specification/cognitiveservices/OpenAI.Authoring
+commit: 14f11cab735354c3e253045f7fbd2f1b9f90f7ca
+repo: Azure/azure-rest-api-specs
 ```

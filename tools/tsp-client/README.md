@@ -11,7 +11,7 @@ npm install @azure-tools/typespec-client-generator-cli
 
 #### emitter-package.json
 
-This will be the package.json that gets used when `npm install` is called.  This replaces the package.json checked into the spec repo and allows each language to fix the version of their emitter to be the same for all packages in their repo.
+This will be the package.json that gets used when `npm install` is called by this tool.  This replaces the package.json checked into the spec repo and allows each language to fix the version of their emitter to be the same for all packages in their repo.
 The file should be checked into this location `./eng/emitter-package.json`
 
 Example
@@ -95,7 +95,7 @@ Each project will need to have a configuration file that will tell the scripts w
 
 #### tsp-location.yaml
 
-This file is created through the `tsp-client init` command or you can manually create it under the project directory to run other commands, such as `tsp-client update`. 
+This file is created through the `tsp-client init` command or you can manually create it under the project directory to run other commands supported by this tool. 
 
 > NOTE: This file should live under the project directory for each service.
 

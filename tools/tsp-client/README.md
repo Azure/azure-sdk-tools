@@ -8,7 +8,7 @@ npm install @azure-tools/typespec-client-generator-cli
 ```
 
 ## Prerequisites
-Please note that these prerequisites apply on the repository where the client library is going to be generated. Repo owners should make sure to follow these prerequisites. Users working with a pre-existing repository that accepts this tool can continue to see the [Usage](#usage) section.
+Please note that these prerequisites apply on the repository where the client library is going to be generated. Repo owners should make sure to follow these prerequisites. Users working with an repository that already accepts this tool can continue to see the [Usage](#usage) section.
 
 - Add an emitter-package.json following these requirements: [emitter-package.json configuration](#emitter-packagejson).
 - Add the [TempTypeSpecFiles](#TempTypeSpecFiles) directory to the .gitignore file for your repository.

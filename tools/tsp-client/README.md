@@ -32,7 +32,7 @@ Note that tsp compile currently requires the "main" line to be there.
 tsp-client <command> [options]
 ```
 
-## Commands:
+## Commands
 Use one of the supported commands to get started generating clients from a TypeSpec project.
 This tool will default to using your current working directory to generate clients in and will
 use it to look for relevant configuration files. To specify a different directory, use
@@ -54,7 +54,7 @@ By default the `sync` command will look for a tsp-location.yaml to get the proje
 ### generate
 Generate a client library from a TypeSpec project. The `generate` command should be run after the `sync` command. `generate` relies on the existence of the `TempTypeSpecFiles` directory created by the `sync` command and on an `emitter-package.json` file checked into your repository at the following path: `<repo root>/eng/emitter-package.json`. The `emitter-package.json` file is used to install project dependencies and get the appropriate emitter package.
 
-## Options:
+## Options
 ```
   -c, --tsp-config          The tspconfig.yaml file to use                      [string]
   --commit                  Commit to be used for project init or update        [string]

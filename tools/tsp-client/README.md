@@ -27,6 +27,8 @@ Example:
 
 Note that tsp compile currently requires the "main" line to be there.
 
+If you are a repo owner, please add the [TempTypeSpecFiles](#TempTypeSpecFiles) directory to the .gitignore file for your repository.
+
 ## Usage
 ```
 tsp-client <command> [options]
@@ -116,4 +118,13 @@ additionalDirectories:
   - specification/cognitiveservices/OpenAI.Authoring
 commit: 14f11cab735354c3e253045f7fbd2f1b9f90f7ca
 repo: Azure/azure-rest-api-specs
+```
+
+### TempTypeSpecFiles
+
+This tool creates a `TempTypeSpecFiles` directory when syncing a TypeSpec project to your local repository. This temporary folder will contain a copy of the TypeSpec project specified by the parameters set in the tsp-location.yaml. You should add a new entry in the .gitignore of your repo so that none of these files are accidentally checked in if `--save-inputs` flag is passed in.
+
+```text
+# .gitignore file
+TempTypeSpecFiles/
 ```

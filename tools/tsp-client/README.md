@@ -8,9 +8,9 @@ npm install @azure-tools/typespec-client-generator-cli
 ```
 
 ## Prerequisites
-Please note that these prerequisites apply on the repository where the client library is going to be generated. Repo owners should make sure to follow these prerequisites. Users working with an repository that already accepts this tool can continue to see the [Usage](#usage) section.
+Please note that these prerequisites apply on the repository where the client library is going to be generated. Repo owners should make sure to follow these prerequisites. Users working with a repository that already accepts this tool can continue to see the [Usage](#usage) section.
 
-- Add an emitter-package.json following these requirements: [emitter-package.json configuration](#emitter-packagejson).
+- Add an emitter-package.json to the repo following this [configuration](#emitter-packagejson).
 - Add the [TempTypeSpecFiles](#TempTypeSpecFiles) directory to the .gitignore file for your repository.
 
 ## Usage
@@ -21,16 +21,16 @@ tsp-client <command> [options]
 ## Commands
 Use one of the supported commands to get started generating clients from a TypeSpec project.
 This tool will default to using your current working directory to generate clients in and will
-use it to look for relevant configuration files. To specify a different directory, use
+use it to look for relevant configuration files. To specify a different output directory, use
 the `-o` or `--output-dir` option.
 
 ### init
 Initialize the SDK project folder from a tspconfig.yaml. When using this command pass in a path to a local or remote tspconfig.yaml, using the `-c` or `--tsp-config` flag.
 
-The command will generate the appropriate SDK folder in the repository, create a [tsp-location.yaml](#tsp-locationyaml) file that will be used for future regeneration, and do an initial generation of the SDK. If you want to skip SDK generation, then pass the `--skip-sync-and-generate` flag.
+The command generates the appropriate SDK folder in the repository, creates a [tsp-location.yaml](#tsp-locationyaml) file to control generation, and performs an initial generation of the client library. If you want to skip client library generation, then pass the `--skip-sync-and-generate` flag.
 
 ### update
-Sync and generate client libraries from a TypeSpec project. The `update` command will look for a `tsp-location.yaml` file in your current directory to sync a TypeSpec project and generate a client library.
+Sync and generate client libraries from a TypeSpec project. The `update` command will look for a [tsp-location.yaml](#tsp-locationyaml) file in your current directory to sync a TypeSpec project and generate a client library.
 
 ### sync
 Sync a TypeSpec project with the parameters specified in tsp-location.yaml.
@@ -76,7 +76,7 @@ tsp-client update
 ## Important concepts
 
 ### Per project setup
-Each project will need to have a configuration file that will tell the tool where to find the TypeSpec project.
+Each project will need to have a configuration file called tsp-location.yaml that will tell the tool where to find the TypeSpec project.
 
 #### tsp-location.yaml
 
@@ -93,7 +93,7 @@ The file has the following properties:
 | <a id="commit-anchor"></a> commit | The commit sha for the version of the typespec files you want to generate off of.  This allows us to have idempotence on generation until we opt into pointing at a later version. | true |
 | <a id="repo-anchor"></a> repo | The repo this spec lives in.  This should be either `Azure/azure-rest-api-specs` or `Azure/azure-rest-api-specs-pr`.  Note that pr will work locally but not in CI until we add another change to handle token based auth. | true |
 
-Example
+Example:
 
 ```yml
 directory: specification/cognitiveservices/OpenAI.Inference

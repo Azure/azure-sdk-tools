@@ -12,7 +12,7 @@ npm install @azure-tools/typespec-client-generator-cli
 #### emitter-package.json
 
 This will be the package.json that gets used when `npm install` is called by this tool.  This replaces the package.json checked into the spec repo and allows each language to fix the version of their emitter to be the same for all packages in their repo.
-The file should be checked into this location `./eng/emitter-package.json`
+The file should be checked into this location `<root of your repo>/eng/emitter-package.json`
 
 Example
 

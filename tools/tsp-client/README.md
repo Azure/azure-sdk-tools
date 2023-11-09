@@ -8,26 +8,10 @@ npm install @azure-tools/typespec-client-generator-cli
 ```
 
 ## Prerequisites
+Please note that these prerequisites apply on the repository where the client library is going to be generated. Repo owners should make sure to follow these prerequisites. Users working with a pre-existing repository that accepts this tool can continue to see the [Usage](#usage) section.
 
-#### emitter-package.json
-
-This will be the package.json that gets used when `npm install` is called by this tool.  This replaces the package.json checked into the spec repo and allows each language to fix the version of their emitter to be the same for all packages in their repo.
-The file should be checked into this location `<root of your repo>/eng/emitter-package.json`
-
-Example:
-
-```json
-{
-    "main": "dist/src/index.js",
-    "dependencies": {
-      "@azure-tools/typespec-csharp": "0.1.11-beta.20230123.1"
-    }
-}
-```
-
-Note that tsp compile currently requires the "main" line to be there.
-
-If you are a repo owner, please add the [TempTypeSpecFiles](#TempTypeSpecFiles) directory to the .gitignore file for your repository.
+- Add an emitter-package.json following these requirements: [emitter-package.json configuration](#emitter-packagejson).
+- Add the [TempTypeSpecFiles](#TempTypeSpecFiles) directory to the .gitignore file for your repository.
 
 ## Usage
 ```
@@ -92,8 +76,7 @@ tsp-client update
 ## Important concepts
 
 ### Per project setup
-
-Each project will need to have a configuration file that will tell the scripts where to find the typespec spec.
+Each project will need to have a configuration file that will tell the tool where to find the TypeSpec project.
 
 #### tsp-location.yaml
 
@@ -122,9 +105,27 @@ repo: Azure/azure-rest-api-specs
 
 ### TempTypeSpecFiles
 
-This tool creates a `TempTypeSpecFiles` directory when syncing a TypeSpec project to your local repository. This temporary folder will contain a copy of the TypeSpec project specified by the parameters set in the tsp-location.yaml. You should add a new entry in the .gitignore of your repo so that none of these files are accidentally checked in if `--save-inputs` flag is passed in.
+This tool creates a `TempTypeSpecFiles` directory when syncing a TypeSpec project to your local repository. This temporary folder will contain a copy of the TypeSpec project specified by the parameters set in the tsp-location.yaml file. If you pass the `--save-inputs` flag to the commandline tool, this directory will not be deleted. You should add a new entry in the .gitignore of your repo so that none of these files are accidentally checked in if `--save-inputs` flag is passed in.
 
 ```text
 # .gitignore file
 TempTypeSpecFiles/
 ```
+
+### emitter-package.json
+
+This will be the package.json that gets used when `npm install` is called by this tool. This replaces the package.json checked into the spec repo and allows each language to fix the version of their emitter to be the same for all packages in their repo.
+The file should be checked into this location `<root of repo>/eng/emitter-package.json`
+
+Example:
+
+```json
+{
+    "main": "dist/src/index.js",
+    "dependencies": {
+      "@azure-tools/typespec-csharp": "0.1.11-beta.20230123.1"
+    }
+}
+```
+
+Note that tsp compile currently requires the "main" line to be there.

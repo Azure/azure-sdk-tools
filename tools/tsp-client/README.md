@@ -1,6 +1,6 @@
 # tsp-client
 
-A simple command line tool for generating TypeSpec clients.
+A simple command line tool to facilitate generating client libraries from TypeSpec.
 
 ### Installation
 ```

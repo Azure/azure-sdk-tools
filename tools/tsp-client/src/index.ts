@@ -5,7 +5,7 @@ import { createTempDirectory, removeDirectory,readTspLocation, getEmitterFromRep
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { compileTsp, discoverMainFile, getEmitterOptions, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, writeFile, cp, readFile } from "node:fs/promises";
+import { mkdir, writeFile, cp, readFile, access } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { fetch } from "./network.js";
 import { parse as parseYaml } from "yaml";
@@ -131,6 +131,13 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     }
   } else {
     const cloneDir = path.join(repoRoot, "..", "sparse-spec");
+    try {
+      // check if there's an existing sparse-spec folder and delete it
+      await access(cloneDir);
+      await removeDirectory(cloneDir);
+    } catch {
+      // do nothing if the directory doesn't exist
+    }
     await mkdir(cloneDir, { recursive: true });
     Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
     Logger.debug(`Cloning repo to ${cloneDir}`);

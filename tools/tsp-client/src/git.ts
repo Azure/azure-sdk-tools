@@ -6,10 +6,13 @@ export async function getRepoRoot(repoPath: string): Promise<string> {
 }
 
 export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string): Promise<void> {
-  simpleGit(rootUrl).clone(repo, cloneDir, ["--no-checkout", "--filter=tree:0"], (err) => {
-    if (err) {
-      throw err;
-    }
+  return new Promise((resolve, reject) => {
+    simpleGit(rootUrl).clone(repo, cloneDir, ["--no-checkout", "--filter=tree:0"], (err) => {
+      if (err) {
+        reject(err);
+      }
+    });
+    resolve();
   });
 }
 
@@ -52,9 +55,12 @@ export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string)
   }
 
 export async function checkoutCommit(cloneDir: string, commit: string): Promise<void> {
-  simpleGit(cloneDir).checkout(commit, undefined, (err) => {
-    if (err) {
-      throw err;
-    }
+  return new Promise((resolve, reject) => {
+    simpleGit(cloneDir).checkout(commit, undefined, (err) => {
+      if (err) {
+        reject(err);
+      }
+    });
+    resolve();
   });
 }

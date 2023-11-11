@@ -40,8 +40,8 @@ namespace APIViewWeb.Repositories
             aiCommentModel.ChangeHistory.Add(new AICommentChangeHistoryModel()
             {
                 ChangeAction = AICommentChangeAction.Deleted,
-                User = user,
-                ChangeDateTime = DateTime.UtcNow
+                ChangedBy = user,
+                ChangedOn = DateTime.UtcNow
             });
             await _aiCommentContainer.UpsertItemAsync(item: aiCommentModel, partitionKey: new PartitionKey(aiCommentModel.Id));
         }

@@ -18,7 +18,10 @@ using APIView.Identity;
 using APIViewWeb.Managers;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using APIViewWeb.Managers.Interfaces;
 
+#if false
+// Removed to allow Review Revision work to progress
 namespace APIViewIntegrationTests
 {
     public class TestsBaseFixture : IDisposable
@@ -29,8 +32,10 @@ namespace APIViewIntegrationTests
         
         public PackageNameManager PackageNameManager { get; private set; }
         public ReviewManager ReviewManager { get; private set; }
+        public APIRevisionsManager APIRevisionManager { get; private set; }
         public BlobCodeFileRepository BlobCodeFileRepository { get; private set; }
         public CosmosReviewRepository ReviewRepository { get; private set; }
+        public CosmosAPIRevisionsRepository APIRevisionRepository { get; private set; }
         public CosmosCommentsRepository CommentRepository { get; private set; }
         public ClaimsPrincipal User { get; private set; }
         public  string TestDataPath { get; private set; }
@@ -70,6 +75,7 @@ namespace APIViewIntegrationTests
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Profiles", "/id").Wait();
             ReviewRepository = new CosmosReviewRepository(config, _cosmosClient);
+            APIRevisionRepository = new CosmosAPIRevisionsRepository(config, _cosmosClient);
             CommentRepository = new CosmosCommentsRepository(config, _cosmosClient);
             var cosmosUserProfileRepository = new CosmosUserProfileRepository(config, _cosmosClient);
 
@@ -100,6 +106,8 @@ namespace APIViewIntegrationTests
                 authorizationServiceMoq.Object, ReviewRepository, BlobCodeFileRepository, blobOriginalsRepository, CommentRepository,
                 languageService, notificationManager, devopsArtifactRepositoryMoq.Object, PackageNameManager, signalRHubContextMoq.Object);
 
+            APIRevisionManager = new APIRevisionsManager(authorizationServiceMoq.Object, ReviewManager, APIRevisionRepository, signalRHubContextMoq.Object);
+
             TestDataPath = config["TestPkgPath"];
         }
 
@@ -121,3 +129,4 @@ namespace APIViewIntegrationTests
         // ICollectionFixture<> interfaces.
     }
 }
+#endif

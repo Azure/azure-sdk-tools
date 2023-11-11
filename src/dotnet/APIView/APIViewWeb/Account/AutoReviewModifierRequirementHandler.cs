@@ -1,7 +1,8 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Threading.Tasks;
+using APIViewWeb.LeanModels;
 using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb
@@ -18,9 +19,9 @@ namespace APIViewWeb
                 {
                     if (requirement is AutoReviewModifierRequirement)
                     {
-                        var review = ((ReviewModel)context.Resource);
+                        var apiRevision = ((APIRevisionListItemModel)context.Resource);
                         // If review is auto created by bot then ensure logged in user is bot and review owner is bot
-                        if (!review.IsAutomatic || (loggedInUser == _autoReviewOwner && review.Author == _autoReviewOwner))
+                        if (apiRevision.APIRevisionType != APIRevisionType.Automatic || (loggedInUser == _autoReviewOwner && apiRevision.CreatedBy == _autoReviewOwner))
                         {
                             context.Succeed(requirement);
                         }

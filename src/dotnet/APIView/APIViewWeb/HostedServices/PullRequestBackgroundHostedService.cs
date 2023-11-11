@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System;
 using System.Threading;
@@ -54,7 +54,8 @@ namespace APIViewWeb.HostedServices
             {
                 try
                 {
-                    await _pullRequestManager.CleanupPullRequestData();
+                    // Removed temporarily for Review Restructure
+                    //await _pullRequestManager.CleanupPullRequestData();
                 }
                 catch (Exception ex)
                 {

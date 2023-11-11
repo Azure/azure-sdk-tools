@@ -18,16 +18,16 @@ namespace APIViewWeb
 
         public CosmosPullRequestsRepository(IConfiguration configuration, ICosmosReviewRepository reviewsRepository, CosmosClient cosmosClient)
         {
-            _pullRequestsContainer = cosmosClient.GetContainer("APIView", "PullRequests");
+            _pullRequestsContainer = cosmosClient.GetContainer("APIViewV2", "PullRequests");
             _reviewsRepository = reviewsRepository;
         }
 
         public async Task<PullRequestModel> GetPullRequestAsync(int pullRequestNumber, string repoName, string packageName, string language = null)
         {
-            var queryBuilder  =  new StringBuilder($"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}' and c.PackageName = '{packageName}'");
+            var queryBuilder  =  new StringBuilder($"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} AND c.RepoName = '{repoName}' AND c.PackageName = '{packageName}' AND c.IsDeleted = false");
             if (language != null)
             {
-                queryBuilder.Append($" and IS_DEFINED(c.Language) and c.Language = '{language}'");
+                queryBuilder.Append($" AND IS_DEFINED(c.Language) AND c.Language = '{language}'");
 
             }
             var requests = await GetPullRequestFromQueryAsync(queryBuilder.ToString());
@@ -36,23 +36,23 @@ namespace APIViewWeb
 
         public async Task UpsertPullRequestAsync(PullRequestModel pullRequestModel)
         {
-            await _pullRequestsContainer.UpsertItemAsync(pullRequestModel, new PartitionKey(pullRequestModel.PullRequestNumber));
+            await _pullRequestsContainer.UpsertItemAsync(pullRequestModel, new PartitionKey(pullRequestModel.ReviewId));
         }
 
         public async Task<IEnumerable<PullRequestModel>> GetPullRequestsAsync(bool isOpen)
         {
-            var query = $"SELECT * FROM PullRequests c WHERE c.IsOpen = {(isOpen? "true": "false")}";
+            var query = $"SELECT * FROM PullRequests c WHERE c.IsOpen = {(isOpen? "true": "false")} AND c.IsDeleted = false";
             return await GetPullRequestFromQueryAsync(query);
         }
 
         public async Task<List<PullRequestModel>> GetPullRequestsAsync(int pullRequestNumber, string repoName)
         {
-            var query = $"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}'";
+            var query = $"SELECT * FROM PullRequests c WHERE c.PullRequestNumber = {pullRequestNumber} and c.RepoName = '{repoName}' AND c.IsDeleted = false";
             return await GetPullRequestFromQueryAsync(query);
         }
 
         public async Task<IEnumerable<PullRequestModel>> GetPullRequestsAsync(string reviewId) {
-            var query = $"SELECT * FROM PullRequests c WHERE c.ReviewId = '{reviewId}'";
+            var query = $"SELECT * FROM PullRequests c WHERE c.ReviewId = '{reviewId}' AND c.IsDeleted = false";
             return await GetPullRequestFromQueryAsync(query);
         }
 

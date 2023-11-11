@@ -10,6 +10,7 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Octokit;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -113,10 +114,13 @@ namespace APIViewWeb.Managers
         /// <param name="id"></param>
         /// <param name="revisionId"></param>
         /// <param name="notes"></param>
-        /// <returns></returns>
-        public async Task ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes = "")
+        /// <returns>true if review approval needs to be updated otherwise false</returns>
+        public async Task<bool> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes = "")
         {
+            bool updateReview = false;
             APIRevisionListItemModel revision = await _apiRevisionsRepository.GetReviewRevisionAsync(revisionId);
+            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(revision.ReviewId);
+
             await ManagerHelpers.AssertApprover<APIRevisionListItemModel>(user, revision, _authorizationService);
             var userId = user.GetGitHubLogin();
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(revision.ChangeHistory, APIRevisionChangeAction.Approved, userId, notes);
@@ -131,9 +135,15 @@ namespace APIViewWeb.Managers
                 revision.Approvers.Remove(userId);
             }
 
+            if (!review.IsApproved && revision.IsApproved)
+            {
+                updateReview = true; // If review is not approved and revision is approved, update review
+            }
+
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
             await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, revisionId, revision.IsApproved);
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, revisionId, userId, revision.IsApproved);
+            return updateReview;
         }
 
         /// <summary>

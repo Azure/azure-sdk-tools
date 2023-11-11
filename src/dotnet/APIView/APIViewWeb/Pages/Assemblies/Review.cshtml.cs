@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -157,10 +158,21 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<PartialViewResult> OnGetAPIDiffRevisionsPartialAsync(string reviewId, string apiRevisionId, APIRevisionType apiRevisionType, bool showDoc = false, bool showDiffOnly = false)
         {
             var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
-            revisions = revisions.Where(r => r.APIRevisionType == apiRevisionType).ToList();
-            var activeRevision = revisions.FirstOrDefault(r => r.Id == apiRevisionId);
+            APIRevisionListItemModel activeRevision = default(APIRevisionListItemModel);
+
+            if (!Guid.TryParse(apiRevisionId, out _))
+            {
+                activeRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, revisions);
+            }
+            else
+            {
+                activeRevision = revisions.FirstOrDefault(r => r.Id == apiRevisionId);
+            }
+
+            var revisionsForDiff = revisions.Where(r => r.APIRevisionType == apiRevisionType && r.Id != apiRevisionId).ToList();
+
             (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
-                revisions: revisions,
+                revisions: revisionsForDiff,
                 activeRevision: activeRevision,
                 diffRevision: default(APIRevisionListItemModel),
                 forDiff: true,
@@ -210,9 +222,13 @@ namespace APIViewWeb.Pages.Assemblies
         /// <param name="id"></param>
         /// <param name="revisionId"></param>
         /// <returns></returns>
-        public async Task<IActionResult> OnPostToggleRevisionApprovalAsync(string id, string revisionId)
+        public async Task<IActionResult> OnPostToggleAPIRevisionApprovalAsync(string id, string revisionId)
         {
-            await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, id, revisionId);
+            var updateReview = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, id, revisionId);
+            if (updateReview)
+            {
+                await OnPostToggleReviewApprovalAsync(id, revisionId);
+            }
             return RedirectToPage(new { id = id });
         }
 
@@ -220,12 +236,11 @@ namespace APIViewWeb.Pages.Assemblies
         /// Request Reviewers for a Review Revision
         /// </summary>
         /// <param name="id"></param>
-        /// <param name="revisionId"></param>
         /// <param name="reviewers"></param>
         /// <returns></returns>
-        public async Task<ActionResult> OnPostRequestReviewersAsync(string id, string revisionId, HashSet<string> reviewers)
+        public async Task<ActionResult> OnPostRequestReviewersAsync(string id, HashSet<string> reviewers)
         {
-            await _reviewManager.AssignReviewersToReviewAsync(User, revisionId, reviewers);
+            await _reviewManager.AssignReviewersToReviewAsync(User, id, reviewers);
             await _notificationManager.NotifyApproversOfReview(User, id, reviewers);
             return RedirectToPage(new { id = id });
         }

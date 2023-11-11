@@ -32,7 +32,7 @@
         }
         <ul class="list-group collapse mb-3@(approvalCollapseState)" id="approveCollapse">
             <li class="list-group-item text-center">
-                <form asp-resource="@Model.ReviewContent.ActiveRevision" class="form-inline" asp-page-handler="ToggleRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+                <form asp-resource="@Model.ReviewContent.ActiveRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
                     <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveRevision.Id" />
                     @if (Model.ReviewContent.DiffRevision == null || Model.ReviewContent.DiffRevision.Approvers.Any())
                     {

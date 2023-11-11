@@ -191,12 +191,13 @@ namespace APIViewWeb.Managers
             {
                 if (!review.AssignedReviewers.Where(x => x.AssingedTo == reviewer).Any())
                 {
-                    review.AssignedReviewers.Append(new ReviewAssignmentModel()
+                    var reviewAssignment = new ReviewAssignmentModel()
                     {
                         AssingedTo = reviewer,
                         AssignedBy = User.GetGitHubLogin(),
                         AssingedOn = DateTime.Now,
-                    });
+                    };
+                    review.AssignedReviewers.Add(reviewAssignment);
                 }
             }
             await _reviewsRepository.UpsertReviewAsync(review);

@@ -213,46 +213,46 @@ async function main() {
   }
 
   switch (options.command) {
-    case "init":
-      const emitter = await getEmitterFromRepoConfig(path.join(await getRepoRoot(rootUrl), "eng", "emitter-package.json"));
-      if (!emitter) {
-        throw new Error("Couldn't find emitter-package.json in the repo");
-      }
-      const outputDir = await sdkInit({config: options.tspConfig!, outputDir: rootUrl, emitter, commit: options.commit, repo: options.repo, isUrl: options.isUrl});
-      Logger.info(`SDK initialized in ${outputDir}`);
-      if (!options.skipSyncAndGenerate) {
-        await syncTspFiles(outputDir);
-        await generate({ rootUrl: outputDir, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
-      }
-      break;
-    case "sync":
-      await syncTspFiles(rootUrl, options.localSpecRepo);
-      break;
-    case "generate":
-      await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
-      break;
-    case "update":
-      if (options.repo && !options.commit) {
-          throw new Error("Commit SHA is required when specifying `--repo`, please specify a commit using `--commit`");
-      }
-      if (options.commit) {
-        let [ directory, commit, repo, additionalDirectories ] = await readTspLocation(rootUrl);
-        commit = options.commit ?? commit;
-        repo = options.repo ?? repo;
-        await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);
-      }
-      if (options.tspConfig) {
-        let [ directory, commit, repo, additionalDirectories ] = await readTspLocation(rootUrl);
-        let tspConfig = resolveTspConfigUrl(options.tspConfig);
-        commit = tspConfig.commit ?? commit;
-        repo = tspConfig.repo ?? repo;
-        await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);
-      }
-      await syncTspFiles(rootUrl);
-      await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
-      break;
-    default:
-      Logger.error(`Unknown command: ${options.command}`);
+      case "init":
+        const emitter = await getEmitterFromRepoConfig(path.join(await getRepoRoot(rootUrl), "eng", "emitter-package.json"));
+        if (!emitter) {
+          throw new Error("Couldn't find emitter-package.json in the repo");
+        }
+        const outputDir = await sdkInit({config: options.tspConfig!, outputDir: rootUrl, emitter, commit: options.commit, repo: options.repo, isUrl: options.isUrl});
+        Logger.info(`SDK initialized in ${outputDir}`);
+        if (!options.skipSyncAndGenerate) {
+          await syncTspFiles(outputDir);
+          await generate({ rootUrl: outputDir, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
+        }
+        break;
+      case "sync":
+        await syncTspFiles(rootUrl, options.localSpecRepo);
+        break;
+      case "generate":
+        await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
+        break;
+      case "update":
+        if (options.repo && !options.commit) {
+            throw new Error("Commit SHA is required when specifying `--repo`, please specify a commit using `--commit`");
+        }
+        if (options.commit) {
+          let [ directory, commit, repo, additionalDirectories ] = await readTspLocation(rootUrl);
+          commit = options.commit ?? commit;
+          repo = options.repo ?? repo;
+          await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);
+        }
+        if (options.tspConfig) {
+          let [ directory, commit, repo, additionalDirectories ] = await readTspLocation(rootUrl);
+          let tspConfig = resolveTspConfigUrl(options.tspConfig);
+          commit = tspConfig.commit ?? commit;
+          repo = tspConfig.repo ?? repo;
+          await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${directory}\ncommit: ${commit}\nrepo: ${repo}\nadditionalDirectories: ${additionalDirectories}`);
+        }
+        await syncTspFiles(rootUrl);
+        await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
+        break;
+      default:
+        Logger.error(`Unknown command: ${options.command}`);
   }
 }
 

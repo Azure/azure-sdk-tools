@@ -43,7 +43,7 @@ namespace APIViewWeb
             return false;
         }
 
-        public override bool GeneratePipelineRunParams(ReviewGenPipelineParamModel param)
+        public override bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param)
         {
             var filePath = param.FileName;
             // Verify TypeSpec source file path is a GitHub URL to TypeSpec package root 

@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
@@ -12,35 +13,32 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Azure.Cosmos;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.VisualStudio.Services.FileContainer;
 
 namespace APIViewWeb.Pages.Assemblies
 {
     public class UsageSamplePageModel : PageModel
     {
-        private readonly IUsageSampleManager _samplesManager;
+        private readonly ISamplesRevisionsManager _samplesRevisionsManager;
         private readonly IReviewManager _reviewManager;
         private readonly ICommentsManager _commentsManager;
         public readonly UserPreferenceCache _preferenceCache;
         private readonly IAuthorizationService _authorizationService;
 
-        public ReviewModel Review { get; private set; }
-        public UsageSampleRevisionModel Sample { get; private set; }
-        public IEnumerable<UsageSampleRevisionModel> SampleRevisions { get; private set; }
-        public UsageSampleModel Samples { get; private set; }
+        public ReviewListItemModel Review { get; private set; }
+        public SamplesRevisionModel ActiveSampleRevision { get; private set; }
+        public IEnumerable<SamplesRevisionModel> SampleRevisions { get; private set; }
         public CodeLineModel[] SampleContent { get; set; }
         public ReviewCommentsModel Comments { get; set; }
         public string SampleOriginal { get; set; }
 
         public UsageSamplePageModel(
-            IUsageSampleManager samplesManager,
+            ISamplesRevisionsManager samplesRevisionsManager,
             IReviewManager reviewManager,
             ICommentsManager commentsManager,
             UserPreferenceCache preferenceCache, 
             IAuthorizationService authorizationService)
         {
-            _samplesManager = samplesManager;
+            _samplesRevisionsManager = samplesRevisionsManager;
             _reviewManager = reviewManager;
             _commentsManager = commentsManager;
             _preferenceCache = preferenceCache;
@@ -48,7 +46,7 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         [FromForm]
-        public UsageSampleUploadModel Upload { get; set; }
+        public SamplesRevisionUploadModel Upload { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
@@ -60,54 +58,49 @@ namespace APIViewWeb.Pages.Assemblies
             // This try-catch is for the case that the deployment is set up incorrectly for usage samples
             try
             {
-                Samples = (await _samplesManager.GetReviewUsageSampleAsync(id)).FirstOrDefault();
-                if (Samples != null)
-                {
-                    SampleRevisions = Samples.Revisions.OrderByDescending(e => e.RevisionNumber).Where(e => !e.RevisionIsDeleted);
-                }
+                SampleRevisions = await _samplesRevisionsManager.GetSamplesRevisionsAsync(Review.Id);
 
                 if (SampleRevisions != null && SampleRevisions.Any())
                 {
                     if (revisionId != null)
                     {
-                        Sample = SampleRevisions.Where(e => e.FileId == revisionId).First();
+                        ActiveSampleRevision = SampleRevisions.Where(s => s.Id == revisionId).First();
                     }
                     else
                     {
-                        Sample = SampleRevisions.First();
+                        ActiveSampleRevision = SampleRevisions.First();
                     }
 
-                    Comments = await _commentsManager.GetUsageSampleCommentsAsync(Samples.ReviewId);
-                    SampleContent = ParseLines(Sample.FileId, Comments).Result;
-                    SampleOriginal = await _samplesManager.GetUsageSampleContentAsync(Sample.OriginalFileId);
+                    Comments = await _commentsManager.GetUsageSampleCommentsAsync(Review.Id);
+                    SampleContent = ParseLines(ActiveSampleRevision.FileId, Comments).Result;
+                    SampleOriginal = await _samplesRevisionsManager.GetSamplesRevisionContentAsync(ActiveSampleRevision.OriginalFileId);
                     Upload.updateString = SampleOriginal;
                     if (SampleContent == null)
                     {
                         // Potentially bad blob setup, potentially erroneous file fetch
-                        Sample.FileId = "File Content Missing";
+                        ActiveSampleRevision.FileId = "File Content Missing";
                     }
                 }
                 else
                 {
                     // Tests the blob response with a dummy file id 
-                    string blobTest = await _samplesManager.GetUsageSampleContentAsync("abdc");
+                    string blobTest = await _samplesRevisionsManager.GetSamplesRevisionContentAsync("abdc");
                     if (blobTest == "Bad Blob")
                     {
                         throw new CosmosException(null, System.Net.HttpStatusCode.NotFound, 0, null, 0.0); // Error does not matter, only type, to ensure clean error page.
                     }
 
                     // No samples.
-                    SampleRevisions = SampleRevisions ?? new List<UsageSampleRevisionModel>(); 
-                    Sample = new UsageSampleRevisionModel(null, -1);
+                    SampleRevisions = SampleRevisions ?? new List<SamplesRevisionModel>(); 
+                    ActiveSampleRevision = new SamplesRevisionModel();
                     SampleContent = Array.Empty<CodeLineModel>();
-                    Samples = Samples ?? new UsageSampleModel(Review.ReviewId);
                 }
             }
             catch (CosmosException)
             {
                 // Error gracefully
-                Sample = new UsageSampleRevisionModel(null, -1);
-                Sample.FileId = "Bad Deployment";
+                ActiveSampleRevision = new SamplesRevisionModel();
+                ActiveSampleRevision.FileId = "Bad Deployment";
             }
 
             return Page();
@@ -125,41 +118,39 @@ namespace APIViewWeb.Pages.Assemblies
             var file = Upload.File;
             string sampleString = Upload.sampleString;
             string reviewId = Upload.ReviewId;
-            int newRevNum = Upload.RevisionNumber+1;
             string revisionTitle = Upload.RevisionTitle;
 
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, openReadStream, newRevNum, revisionTitle, file.FileName);
+                    await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, openReadStream, revisionTitle, file.FileName);
                 }
             }
             else if (sampleString != null)
             {
-                await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, sampleString, newRevNum, revisionTitle);
+                await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, sampleString, revisionTitle);
             }
             else if (Upload.Updating)
             {
-                await _samplesManager.UpsertReviewUsageSampleAsync(User, reviewId, Upload.updateString, newRevNum, revisionTitle);
+                await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, Upload.updateString, revisionTitle);
             }
             else if (Upload.Deleting)
             {
-                await _samplesManager.DeleteUsageSampleAsync(User, reviewId, Upload.FileId, Upload.SampleId);
+                await _samplesRevisionsManager.DeleteSamplesRevisionAsync(User, reviewId, Upload.SampleId);
             }
 
-            
             return RedirectToPage();
         }
 
         private async Task<CodeLineModel[]> ParseLines(string fileId, ReviewCommentsModel comments)
         {
-            if(Sample.FileId == null)
+            if(ActiveSampleRevision.FileId == null)
             {
                 return new CodeLineModel[0];
             }
 
-            string rawContent = (await _samplesManager.GetUsageSampleContentAsync(fileId));
+            string rawContent = (await _samplesRevisionsManager.GetSamplesRevisionContentAsync(fileId));
             if (rawContent == null || rawContent.Equals("Bad Blob"))
             {
                 return null; // should only occur if there is a blob error or the file is removed by other means
@@ -192,8 +183,8 @@ namespace APIViewWeb.Pages.Assemblies
                 // Allows the indent to work correctly for spacing purposes
                 lineContent = "<div class=\"internal\">&nbsp;&nbsp;&nbsp;" + lineContent + "</div>";
 
-                var line = new CodeLine(lineContent, Sample.FileId + "-line-" + (i+1-skipped).ToString() , "");
-                comments.TryGetThreadForLine(Sample.FileId + "-line-" + (i+1-skipped).ToString(), out var thread);
+                var line = new CodeLine(lineContent, ActiveSampleRevision.FileId + "-line-" + (i+1-skipped).ToString() , "");
+                comments.TryGetThreadForLine(ActiveSampleRevision.FileId + "-line-" + (i+1-skipped).ToString(), out var thread);
                 lines[i] = new CodeLineModel(APIView.DIff.DiffLineKind.Unchanged, line, thread, cd, i+1-skipped, new int[0]);
             }
 

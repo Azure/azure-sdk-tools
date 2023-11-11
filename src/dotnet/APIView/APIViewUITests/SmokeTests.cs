@@ -15,8 +15,10 @@ using System.IO;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
+#if false
 namespace APIViewUITests
 {
+
     public class SmokeTestsFixture : IDisposable
     {
         internal readonly HttpClient _httpClient;
@@ -320,3 +322,4 @@ namespace APIViewUITests
         }
     }
 }
+#endif

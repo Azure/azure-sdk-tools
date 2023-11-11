@@ -21,6 +21,8 @@ $(() => {
     // Enable SumoSelect
     (<any>$("#revision-select")).SumoSelect({ search: true, searchText: 'Search Revisions...' });
     (<any>$("#diff-select")).SumoSelect({ search: true, searchText: 'Search Revisons for Diff...' });
+    (<any>$("#revision-type-select")).SumoSelect();
+    (<any>$("#diff-revision-type-select")).SumoSelect();
 
     // Update codeLine Section state after page refresh
     const shownSectionHeadingLineNumbers = sessionStorage.getItem("shownSectionHeadingLineNumbers");
@@ -165,13 +167,40 @@ $(() => {
 
   /* DROPDOWN FILTER FOR REVIEW, REVISIONS AND DIFF (UPDATES REVIEW PAGE ON CHANGE)
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
-  $('#revision-select, #diff-select').each(function(index, value) {
-    $(this).on('change', function() {
-      var url = $(this).find(":selected").val();
-      if (url)
-      {
-        window.location.href = url as string;
-      }
+  rvM.addSelectEventToAPIRevisionSelect();
+
+  $('#revision-type-select, #diff-revision-type-select').each(function(index, value) {
+    $(this).on('change', function () {
+      const pageIds = hp.getReviewAndRevisionIdFromUrl(window.location.href);
+      const reviewId = pageIds["reviewId"];
+      const apiRevisionId = pageIds["revisionId"];
+
+      const select = (index == 0) ? $('#revision-select') : $('#diff-select');
+      const text = (index == 0) ? 'Revisions' : 'Revisions for Diff';
+
+      let uri = (index == 0) ? '?handler=APIRevisionsPartial' : '?handler=APIDiffRevisionsPartial';
+      uri = uri + `&reviewId=${reviewId}`;
+      uri = uri + `&apiRevisionId=${apiRevisionId}`;
+      uri = uri + '&apiRevisionType=' + $(this).find(":selected").val();
+
+      $.ajax({
+        url: uri
+      }).done(function (partialViewResult) {
+        console.log(partialViewResult);
+        const id = select.attr('id');
+        const selectUpdate = $(`<select placeholder="Select ${text}..." id="${id}" aria-label="${text} Select"></select>`);
+        selectUpdate.html(partialViewResult);
+        select.parent().replaceWith(selectUpdate);
+        (<any>$(`#${id}`)).SumoSelect({ placeholder: `Select ${text}...`, search: true, searchText: `Search ${text}...` })
+
+        // Disable Diff Revision Select until a revision is selected
+        if (index == 0)
+        {
+          (<any>$('#diff-revision-type-select')[0]).sumo.disable();
+          (<any>$('#diff-select')[0]).sumo.disable();
+        }
+        rvM.addSelectEventToAPIRevisionSelect();
+      });
     });
   });
   

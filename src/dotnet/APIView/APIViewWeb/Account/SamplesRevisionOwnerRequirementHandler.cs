@@ -1,12 +1,13 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Threading.Tasks;
+using APIViewWeb.LeanModels;
 using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb
 {
-    public class UsageSampleOwnerRequirementHandler : IAuthorizationHandler
+    public class SamplesRevisionOwnerRequirementHandler : IAuthorizationHandler
     {
         public Task HandleAsync(AuthorizationHandlerContext context)
         {
@@ -14,7 +15,7 @@ namespace APIViewWeb
             {
                 if (requirement is UsageSampleOwnerRequirement)
                 {
-                    if (((UsageSampleRevisionModel)context.Resource).CreatedBy == context.User.GetGitHubLogin())
+                    if (((SamplesRevisionModel)context.Resource).CreatedBy == context.User.GetGitHubLogin())
                     {
                         context.Succeed(requirement);
                     }

@@ -1,14 +1,15 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using APIViewWeb.LeanModels;
 using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb
 {
-    public class RevisionOwnerRequirementHandler : IAuthorizationHandler
+    public class APIRevisionOwnerRequirementHandler : IAuthorizationHandler
     {
         public Task HandleAsync(AuthorizationHandlerContext context)
         {
@@ -16,10 +17,9 @@ namespace APIViewWeb
             {
                 if (requirement is RevisionOwnerRequirement)
                 {
-                    var revision = context.Resource as ReviewRevisionModel;
+                    var revision = context.Resource as APIRevisionListItemModel;
                     var loggedInUser = context.User.GetGitHubLogin();
-                    if (revision.Author == loggedInUser ||
-                        revision.Review.Author == loggedInUser)
+                    if (revision.CreatedBy == loggedInUser)
                     {
                         context.Succeed(requirement);
                     }

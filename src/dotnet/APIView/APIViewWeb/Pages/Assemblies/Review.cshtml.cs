@@ -84,7 +84,7 @@ namespace APIViewWeb.Pages.Assemblies
                 showDocumentation: ShowDocumentation, showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                 diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
-            if (!ReviewContent.APIRevisions.Any())
+            if (!ReviewContent.APIRevisionsGrouped.Any())
             {
                 return RedirectToPage("LegacyReview", new { id = id });
             }
@@ -134,7 +134,7 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<PartialViewResult> OnGetAPIRevisionsPartialAsync(string reviewId, APIRevisionType apiRevisionType, bool showDoc = false, bool showDiffOnly = false)
         {
             var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
-            revisions = revisions.Where(r => r.APIRevisionType == apiRevisionType).ToList();
+            revisions = revisions.Where(r => r.APIRevisionType == apiRevisionType).OrderByDescending(c => c.CreatedOn).ToList();
             (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
                 revisions: revisions,
                 activeRevision: default(APIRevisionListItemModel),
@@ -169,7 +169,7 @@ namespace APIViewWeb.Pages.Assemblies
                 activeRevision = revisions.FirstOrDefault(r => r.Id == apiRevisionId);
             }
 
-            var revisionsForDiff = revisions.Where(r => r.APIRevisionType == apiRevisionType && r.Id != apiRevisionId).ToList();
+            var revisionsForDiff = revisions.Where(r => r.APIRevisionType == apiRevisionType && r.Id != apiRevisionId).OrderByDescending(c => c.CreatedOn).ToList();
 
             (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
                 revisions: revisionsForDiff,

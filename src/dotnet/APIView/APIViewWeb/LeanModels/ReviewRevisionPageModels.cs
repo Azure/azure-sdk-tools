@@ -10,11 +10,12 @@ namespace APIViewWeb.LeanModels
         public ReviewListItemModel Review { get; set; }
         public NavigationItem[] Navigation { get; set; }
         public CodeLineModel[] codeLines { get; set; }
-        public Dictionary<string, List<APIRevisionListItemModel>> APIRevisions { get; set; }
-        public APIRevisionListItemModel ActiveRevision { get; set; }
-        public APIRevisionListItemModel DiffRevision { get; set; }
+        public Dictionary<string, List<APIRevisionListItemModel>> APIRevisionsGrouped { get; set; }
+        public APIRevisionListItemModel ActiveAPIRevision { get; set; }
+        public APIRevisionListItemModel LatestApprovedAPIRevision { get; set; }
+        public APIRevisionListItemModel DiffAPIRevision { get; set; }
         public int TotalActiveConversiations { get; set; }
-        public int ActiveConversationsInActiveReviewRevision { get; set; }
+        public int ActiveConversationsInActiveAPIRevision { get; set; }
         public int ActiveConversationsInSampleRevisions { get; set; }
         public HashSet<string> PreferredApprovers = new HashSet<string>();
         public HashSet<GithubUser> TaggableUsers { get; set; }

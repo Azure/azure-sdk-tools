@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
     [Parallelizable(ParallelScope.Children)]
     public class IssueProcessingTests : ProcessingTestBase
     {
-        // JRS - With the updated Initial Triage rule I need to be able to set the following information in order to test
+        // With the updated Initial Triage rule I need to be able to set the following information in order to test
         // all of the code paths.
         // 1. mockGitHubEventClient.UserHasPermissionsReturn - whether or not the user has write or admin permissions
         // 2. mockGitHubEventClient.IsUserMemberOfOrgReturn - whether or not the user is a member of the Azure org

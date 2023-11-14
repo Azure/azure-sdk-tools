@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
+  "homepage": "https://github.com/Azure/azure-sdk-tools",
   "scripts": {
     "build": "npm run clean && npm run build:tsc",
     "build:tsc": "tsc",

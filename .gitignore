@@ -485,9 +485,6 @@ local.settings.json
 # Java tooling
 *.iml
 
-# npm
-*-lock.json
-
 .assets
 tools/asset-sync/.testruns
 

@@ -58,18 +58,16 @@ stages:
             versionSpec: '$(NodeVersion)'
           displayName: 'Install Node.js'
 
-        - bash: |
-            npm install
-          displayName: 'npm install'
+        - script: 'npm ci'
+          displayName: 'npm ci'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
 
-        - bash: |
-            npm pack
+        - script: 'npm pack'
           displayName: 'npm pack'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
           condition: contains(variables['OSVmImage'], 'ubuntu')
 
-        - bash: 'cp azure-tools-typespec-client-generator-cli-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+        - script: 'cp azure-tools-typespec-client-generator-cli-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
           displayName: 'copy to staging dir'
           workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
           condition: contains(variables['OSVmImage'], 'ubuntu')

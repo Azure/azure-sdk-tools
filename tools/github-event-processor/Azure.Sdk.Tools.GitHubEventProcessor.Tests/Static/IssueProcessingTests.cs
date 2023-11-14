@@ -59,6 +59,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="hasCodeownersEntry">Whether or not to expect a codeowners entry for the labels returned.</param>
         /// <param name="isMemberOfOrg">Whether or not the owner that created the issue is a member of Azure</param>
         /// <param name="hasWriteOrAdmin">Whether or not the owner that created the issue has write or admin</param>
+        [Ignore("Ignore until the InitialIssueTriage rule is re-enabled")]
         [Category("static")]
         [NonParallelizable] // All the tests use the same CODEOWNERS file
         // Scenario: Everything turned off, nothing should process

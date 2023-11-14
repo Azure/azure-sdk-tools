@@ -54,7 +54,7 @@ class StubGenerator:
             parser.add_argument(
                 "--mapping-path",
                 default=None,
-                help=("Path to an 'apiview_mapping.json' file that supplies cross-langauge definition IDs.")
+                help=("Path to an 'apiview_mapping_python.json' file that supplies cross-language definition IDs.")
             )
             parser.add_argument(
                 "--verbose",

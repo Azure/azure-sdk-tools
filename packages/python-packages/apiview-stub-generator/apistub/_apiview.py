@@ -131,16 +131,23 @@ class ApiView:
         if postfix_space:
             self.add_space()
 
-    def add_line_marker(self, line_id):
+    import re
+
+    def add_line_marker(self, line_id, add_cross_language_id=False):
         token = Token("", TokenKind.LineIdMarker)
         token.definition_id = line_id
+        if add_cross_language_id:
+            # Check if line_id ends with an underscore and a number
+            numeric_suffix = re.search(r'_(\d+)$', line_id)
+            # If it does, truncate the numeric portion
+            line_key = line_id[:numeric_suffix.start()] if numeric_suffix else line_id
+            cross_lang_id = self.metadata_map.cross_language_map.get(line_key, None)
+            token.cross_language_definition_id = cross_lang_id
         self.add_token(token)
 
-    def add_text(self, text, *, definition_id=None, add_cross_language_id=False):
+    def add_text(self, text, *, definition_id=None):
         token = Token(text, TokenKind.Text)
         self.definition_id = definition_id
-        if add_cross_language_id:
-            token.cross_language_definition_id = self.metadata_map.cross_language_map.get(definition_id, None)
         self.add_token(token)
 
     def add_keyword(self, keyword, prefix_space=False, postfix_space=False):
@@ -167,14 +174,15 @@ class ApiView:
             # Make a Union of types if multiple types are present
             type_name = "Union[{}]".format(", ".join(types))
 
-        self._add_type_token(type_name, line_id)
+        cross_language_id = self.metadata_map.cross_language_map.get(line_id, None)
+        self._add_type_token(type_name, line_id, cross_language_id)
 
     def add_link(self, url):
         self.add_token(Token(url, TokenKind.ExternalLinkStart))
         self.add_token(Token(url))
         self.add_token(Token(kind=TokenKind.ExternalLinkEnd))
 
-    def _add_token_for_type_name(self, type_name, line_id = None):
+    def _add_token_for_type_name(self, type_name, line_id = None, cross_language_id = None):
         logging.debug("Generating tokens for type name {}".format(type_name))
         token = Token(type_name, TokenKind.TypeName)
         type_full_name = type_name[1:] if type_name.startswith("~") else type_name
@@ -182,10 +190,12 @@ class ApiView:
         navigate_to_id = self.node_index.get_id(type_full_name)
         if navigate_to_id:
             token.navigate_to_id = navigate_to_id
+        if cross_language_id:
+            token.cross_language_definition_id = cross_language_id
         self.add_token(token)
 
 
-    def _add_type_token(self, type_name, line_id):
+    def _add_type_token(self, type_name, line_id, cross_language_id):
         # parse to get individual type name
         logging.debug("Generating tokens for type {}".format(type_name))
 
@@ -200,13 +210,13 @@ class ApiView:
             if prefix:
                 self.add_punctuation(prefix)
             # process parsed type name. internal or built in
-            self._add_token_for_type_name(parsed_type)
+            self._add_token_for_type_name(parsed_type, cross_language_id)
             postfix = type_name[index + len(parsed_type):]
             # process remaining string in type recursively
-            self._add_type_token(postfix, line_id)
+            self._add_type_token(postfix, line_id, cross_language_id)
         else:
             # This is required group ending punctuations
-            self.add_punctuation(type_name)        
+            self.add_punctuation(type_name)
 
 
     def add_diagnostic(self, *, obj, target_id):

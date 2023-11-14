@@ -233,7 +233,12 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
       break;
     case SyntaxKind.UnionVariant:
       node = obj as UnionVariantNode;
-      name = node.id.sv;
+      if (node.id?.sv !== undefined) {
+        name = node.id.sv;
+      } else {
+        // TODO: Should never have default value of _
+        name = generateId(node.value) ?? "_";
+      }
       parentId = generateId(node.parent);
       break;
     case SyntaxKind.TypeReference:

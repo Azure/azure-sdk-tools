@@ -1,6 +1,7 @@
 import { parseArgs } from "node:util";
 import { Logger, printUsage, printVersion } from "./log.js";
 import * as path from "node:path";
+import process from  "node:process";
 import { doesFileExist } from "./network.js";
 import PromptSync from "prompt-sync";
 
@@ -109,10 +110,16 @@ export async function getOptions(): Promise<Options> {
   }
   outputDir = path.resolve(path.normalize(outputDir));
 
-  // Ask user is this is the correct output directory
-  const prompt = PromptSync();
-  let useOutputDir = prompt("Use output directory '" + outputDir + "'? (y/n) ", "y");
-
+  let useOutputDir;
+  if (process.stdin.isTTY) {
+    // Ask user is this is the correct output directory
+    const prompt = PromptSync();
+    useOutputDir = prompt("Use output directory '" + outputDir + "'? (y/n) ", "y");
+  } else {
+    // There is no user to ask, so assume yes
+    useOutputDir = 'y';
+  }
+  
   if (useOutputDir.toLowerCase() === "n") {
     const newOutputDir = prompt("Enter output directory: ");
     if (!newOutputDir) {

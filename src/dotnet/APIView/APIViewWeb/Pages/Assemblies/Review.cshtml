@@ -470,7 +470,7 @@
                 </select>
                 <select id="revision-select" aria-label="Revision Select">
                     @{
-                        var revisionsToSelectFrom = Model.ReviewContent.APIRevisionsGrouped[Model.ReviewContent.ActiveAPIRevision.APIRevisionType.ToString()].OrderByDescending(c => c.CreatedOn);
+                        var revisionsToSelectFrom = Model.ReviewContent.APIRevisionsGrouped[Model.ReviewContent.ActiveAPIRevision.APIRevisionType.ToString()];
                         (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
                             revisions: revisionsToSelectFrom,
                             activeRevision: Model.ReviewContent.ActiveAPIRevision,
@@ -500,7 +500,7 @@
                     }
                     else
                     {
-                        var diffRevisionForButton = Model.ReviewContent.APIRevisionsGrouped[diffRevisionTypeFirst].OrderByDescending(c => c.CreatedOn);
+                        var diffRevisionForButton = Model.ReviewContent.APIRevisionsGrouped[diffRevisionTypeFirst];
                         var urlValue = @Url.ActionLink("Review", "Assemblies", new
                         {
                             id = @Model.ReviewContent.Review.Id,
@@ -525,7 +525,7 @@
                     </select>
                     <select id="diff-select" aria-label="Diff Select">
                         @{
-                            var diffRevisionsToSelectFrom = (Model.ReviewContent.APIRevisionsGrouped.ContainsKey("Automatic")) ? Model.ReviewContent.APIRevisionsGrouped["Automatic"].OrderByDescending(c => c.CreatedOn) : Model.ReviewContent.APIRevisionsGrouped[Model.ReviewContent.APIRevisionsGrouped.Keys.First()].OrderByDescending(c => c.CreatedOn);
+                            var diffRevisionsToSelectFrom = (Model.ReviewContent.APIRevisionsGrouped.ContainsKey("Automatic")) ? Model.ReviewContent.APIRevisionsGrouped["Automatic"] : Model.ReviewContent.APIRevisionsGrouped[Model.ReviewContent.APIRevisionsGrouped.Keys.First()];
                             (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) diffRevisionSelectModel = (
                             revisions: diffRevisionsToSelectFrom,
                             activeRevision: Model.ReviewContent.ActiveAPIRevision,

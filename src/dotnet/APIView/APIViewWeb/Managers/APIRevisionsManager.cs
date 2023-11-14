@@ -85,11 +85,16 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="reviewRevision"></param> The list of revisions can be supplied if available to avoid another call to the database
+        /// <param name="apiRevisionType"></param>
         /// <returns></returns>
-        public async Task<APIRevisionListItemModel> GetLatestAPIRevisionsAsync(string reviewId, IEnumerable<APIRevisionListItemModel> reviewRevision = null)
+        public async Task<APIRevisionListItemModel> GetLatestAPIRevisionsAsync(string reviewId, IEnumerable<APIRevisionListItemModel> reviewRevision = null, APIRevisionType apiRevisionType = APIRevisionType.All)
         {
             var revisions = (reviewRevision == null) ? await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId) : reviewRevision;
-            return revisions.OrderBy(r => r.CreatedOn).ToList().First();
+            if (apiRevisionType != APIRevisionType.All)
+            {
+                revisions = revisions.Where(r => r.APIRevisionType == apiRevisionType);
+            }
+            return revisions.OrderByDescending(r => r.CreatedOn).First(); ;
         }
 
         /// <summary>

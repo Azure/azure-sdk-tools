@@ -12,7 +12,6 @@ namespace APIViewWeb.LeanModels
         public CodeLineModel[] codeLines { get; set; }
         public Dictionary<string, List<APIRevisionListItemModel>> APIRevisionsGrouped { get; set; }
         public APIRevisionListItemModel ActiveAPIRevision { get; set; }
-        public APIRevisionListItemModel LatestApprovedAPIRevision { get; set; }
         public APIRevisionListItemModel DiffAPIRevision { get; set; }
         public int TotalActiveConversiations { get; set; }
         public int ActiveConversationsInActiveAPIRevision { get; set; }

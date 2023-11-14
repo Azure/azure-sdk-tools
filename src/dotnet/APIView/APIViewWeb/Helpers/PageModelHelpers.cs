@@ -240,7 +240,7 @@ namespace APIViewWeb.Helpers
             var userId = user.GetGitHubLogin();
             var review = await reviewManager.GetReviewAsync(user, reviewId);
             var revisions = await reviewRevisionsManager.GetAPIRevisionsAsync(reviewId);
-            var activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, revisions);
+            var activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, revisions, APIRevisionType.Automatic);
             APIRevisionListItemModel diffRevision = null;
             if (!string.IsNullOrEmpty(revisionId)) {
                 if (revisions.Where(x => x.Id == revisionId).Any())
@@ -334,9 +334,8 @@ namespace APIViewWeb.Helpers
                 Review = review,
                 Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation,
                 codeLines = codeLines,
-                APIRevisionsGrouped = revisions.GroupBy(r => r.APIRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList()),
+                APIRevisionsGrouped = revisions.OrderByDescending(c => c.CreatedOn).GroupBy(r => r.APIRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList()),
                 ActiveAPIRevision = activeRevision,
-                LatestApprovedAPIRevision = revisions.Where(r => r.IsApproved).OrderByDescending(r => r.ChangeHistory.Last(ch => ch.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn).First(),
                 DiffAPIRevision = diffRevision,
                 TotalActiveConversiations = comments.Threads.Count(t => !t.IsResolved),
                 ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments),

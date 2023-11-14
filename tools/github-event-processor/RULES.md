@@ -104,56 +104,52 @@ This is a stand-alone service providing a REST API which requires a service key 
 
 ### Actions
 
+- Query AI label service for suggestions:
+
+```text
+IF labels were predicted:
+    - Assign returned labels to the issue
+
+    IF service and category labels have AzureSdkOwners (in CODEOWNERS):
+        IF a single AzureSdkOwner:
+            - Assign the AzureSdkOwner issue
+        ELSE
+            - Assign a random AzureSdkOwner from the set to the issue
+            - Create the following comment, mentioning all AzureSdkOwners from the set
+                 "@{person1} @{person2}...${personX}"
+
+        - Create the following comment
+             "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
+
+    # Note: No valid AzureSdkOwners means there were no CODEOWNERS entries for the service label OR no
+    # CODEOWNERS entries for the service label with AzureSdkOwners OR there is a CODEOWNERS entry with
+    # AzureSdkOwners but none of them have permissions to be assigned to an issue for the repository.
+    IF there are no valid AzureSdkOwners, but there are ServiceOwners, and the ServiceAttention rule is enabled
+    for the repository
+        - Add "Service Attention" label to the issue and apply the logic from the "Service Attention" rule
+    ELSE
+        - Add "needs-team-triage" (at this point it owners cannot be determined for this issue)
+
+    IF "needs-team-triage" is not being added to the issue
+         - Add "needs-team-attention" label to the issue
+
+ELSE
+    - Add "needs-triage" label to the issue
+
+```
+
 - Evaluate the user that created the issue:
 
-    ```text
-    IF creator is NOT an Azure SDK team owner
-      IF the user is NOT a member of the Azure Org
-        IF the user does not have Admin or Write Collaborator permission
-          - Add "customer-reported" label to the issue
-          - Add "question" label to the issue
-    ```
-
-- Query AI label service for suggestions:
-  - _This is what we have today_
-
-    ```text
-    IF labels were predicted
-        - Assign returned labels to the issue
-        - Add "needs-team-triage" label to the issue
-    ELSE
-        - Add "needs-triage" label to the issue
-
-    IF the user is NOT a member of the Azure Org
-      IF the user does not have Admin or Write Collaborator permission
+```text
+IF the user is NOT a member of the Azure Org
+  IF the user does not have Admin or Write Collaborator permission
         - Add "customer-reported" label to the issue
         - Add "question" label to the issue
-    ```
+```
 
-  - _This is what we'd like to get to. It requires changes to the CODEOWNERS file structure which have not been done yet_
-
-    ```text
-    IF labels were predicted:
-        - Assign returned labels to the issue
-        - Add "needs-team-attention" label to the issue
-
-        IF service and category labels are associated with an Azure SDK team member:
-            IF a single team member:
-                - Assign team member to the issue
-            ELSE
-                - Assign a random team member from the set to the issue
-                - Create the following comment, mentioning other team members from the set
-                  - "@{person1} @{person2}...${personX}"
-
-            - Create the following comment
-              "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
-        ELSE
-            - Add "Service Attention" label to the issue and apply the logic from the "Service Attention" rule
-            - Create the following comment
-              - "Thank you for your feedback.  This has been routed to the support team for assistance."
-    ELSE
-        - Add "needs-triage" label to the issue
-    ```
+Note: Users are supposed to be **public** members of Azure. This is very clearly stated in the
+the [onboarding docs](https://eng.ms/docs/products/azure-developer-experience/onboard/access). If a user's
+Azure membership is private, API call to check Azure membership will return false which can result in "customer-reported" and "question" labels being added to an issue for someone that is a private member of Azure.
 
 ## Manual issue triage
 

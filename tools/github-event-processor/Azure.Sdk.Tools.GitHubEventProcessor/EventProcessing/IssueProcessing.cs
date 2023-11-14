@@ -11,6 +11,10 @@ using System.Reflection.Emit;
 using System.Reflection.Metadata;
 using System.Xml.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security;
+using Azure.Sdk.Tools.CodeownersUtils.Verification;
+using System.Runtime.Intrinsics.X86;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
@@ -38,37 +42,41 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         }
 
         /// <summary>
-        /// Note: This function does not yet process the way the rule was written because that requires information
-        /// we do not yet have. The proposal is to update CODEOWNERS which is still TBD. When that's updated, this
-        /// rule will need to be updated accordingly. The issue tracking this is
-        /// https://github.com/Azure/azure-sdk-tools/issues/5743
         /// Initial Issue Triage
         /// Trigger: issue opened
         /// Conditions: Issue has no labels
         ///             Issue has no assignee
         /// Resulting Actions:
-        ///     Evaluate the user that created the issue:
-        ///         IF creator is NOT an Azure SDK team owner
-        ///           IF the user is NOT a member of the Azure Org
-        ///             IF the user does not have Admin or Write Collaborator permission
-        ///               Add "customer-reported" label
-        ///               Add "question" label
-        ///     Query AI label service for label suggestions:
-        ///     IF labels were predicted:
-        ///         Assign returned labels to the issue
-        ///         Add "needs-team-attention" label to the issue
-        ///         IF service label is associated with an Azure SDK team member:
-        ///             IF a single team member:
-        ///                 Assign team member to the issue
-        ///             ELSE
-        ///                 Assign a random team member from the set to the issue
-        ///                 Add a comment mentioning the other team members from the set
-        ///                 Add comment indicating issue was routed for assistance: "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
-        ///         ELSE (service label is not associated with an Azure SDK team member)
-        ///             Add "CXP Attention" label to the issue
-        ///             Create a comment mentioning(content from .NET rule #30)
-        ///     ELSE (labels were not predicted)
-        ///         Add "needs-triage" label to the issue
+        ///    Query AI label service for label suggestions:
+        ///      IF labels were predicted:
+        ///        - Assign returned labels to the issue
+        ///    	  IF service and category labels have AzureSdkOwners (in CODEOWNERS):
+        ///         IF a single AzureSdkOwner:
+        ///           - Assign the AzureSdkOwner issue
+        ///         ELSE
+        ///           - Assign a random AzureSdkOwner from the set to the issue
+        ///           - Create the following comment, mentioning all AzureSdkOwners from the set
+        ///             "@{person1} @{person2}...${personX}"
+        ///       - Create the following comment
+        ///         "Thank you for your feedback.  Tagging and routing to the team member best able to assist."
+        ///
+        ///       # Note: No valid AzureSdkOwners means there were no CODEOWNERS entries for the ServiceLabel OR no
+        ///       # CODEOWNERS entries for the ServiceLabel with AzureSdkOwners OR there is a CODEOWNERS entry with
+        ///       # AzureSdkOwners but none of them have permissions to be assigned to an issue for the repository. 
+        ///       IF there are no valid AzureSdkOwners, but there are ServiceOwners, and the ServiceAttention rule is enabled
+        ///         - Add "Service Attention" label to the issue and apply the logic from the "Service Attention" rule
+        ///       ELSE
+        ///         - Add "needs-team-triage" (at this point it owners cannot be determined for this issue)
+        ///
+        ///       IF "needs-team-triage" is not being added to the issue
+        ///         - Add "needs-team-attention" label to the issue
+        ///
+        ///
+        ///      Evaluate the user that created the issue:
+        ///         IF the user is NOT a member of the Azure Org
+        ///           IF the user does not have Admin or Write Collaborator permission
+        ///             - Add "customer-reported" label
+        ///             - Add "question" label
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
@@ -81,25 +89,140 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     // If there are no labels and no assignees
                     if ((issueEventPayload.Issue.Labels.Count == 0) && (issueEventPayload.Issue.Assignee == null))
                     {
-                        // This is a stop-gap. To do what is above, we need CODEOWNERS changes which don't exist yet.
-                        // For the moment, if there are no label suggestions add needs-triage and if there
-                        // are, add them and then add needs-team-triage. The issue created to track these future updates
-                        // is https://github.com/Azure/azure-sdk-tools/issues/5743
                         List<string> labelSuggestions = await gitHubEventClient.QueryAILabelService(issueEventPayload);
-                        if (labelSuggestions.Count > 0 )
+                        if (labelSuggestions.Count > 0)
                         {
+                            // needs-team-attention needs to be added if it can be determined who this issue actually
+                            // belongs to.
+                            bool addNeedsTeamAttention = true;
+
+                            // If labels were predicted, add them to the issue
                             foreach (string label in labelSuggestions)
                             {
                                 gitHubEventClient.AddLabel(label);
                             }
-                            gitHubEventClient.AddLabel(LabelConstants.NeedsTeamTriage);
+
+                            var azureSdkOwners = CodeOwnerUtils.GetAzureSdkOwnersForServiceLabels(labelSuggestions);
+                            bool hasValidAssignee = false;
+                            if (azureSdkOwners.Count > 0)
+                            {
+                                // If there's only a single owner, 
+                                if (azureSdkOwners.Count == 1)
+                                {
+                                    if (await gitHubEventClient.OwnerCanBeAssignedToIssuesInRepo(
+                                                                    issueEventPayload.Repository.Owner.Login,
+                                                                    issueEventPayload.Repository.Name,
+                                                                    azureSdkOwners[0]))
+                                    {
+                                        hasValidAssignee = true;
+                                        gitHubEventClient.AssignOwnerToIssue(
+                                                            issueEventPayload.Repository.Owner.Login,
+                                                            issueEventPayload.Repository.Name,
+                                                            azureSdkOwners[0]);
+                                    }
+                                    // Output something into the logs pointing out that AzureSdkOwners has a user that cannot
+                                    // be assigned to an issue
+                                    else
+                                    {
+                                        Console.WriteLine($"{azureSdkOwners[0]} is the only owner in the AzureSdkOwners for service label(s), {string.Join(",", labelSuggestions)}, but cannot be assigned as an issue owner in this repository.");
+                                    }
+                                }
+                                // else there are multiple owners and a random one needs to be assigned
+                                else
+                                {
+                                    // Create a list of AzureSdkOwners that has been randomized. The reason
+                                    // the entire list is being randomed is because each person has to be
+                                    // checked to see if they can be assigned to an issue in the repository.
+                                    // and having the entire list being random simplifies processing if a given
+                                    // owner cannot be assigned.
+                                    var rnd = new Random();
+                                    var randomAzureSdkOwners = azureSdkOwners.OrderBy(item => rnd.Next(0, azureSdkOwners.Count));
+                                    foreach (string azureSdkOwner in randomAzureSdkOwners)
+                                    {
+                                        if (await gitHubEventClient.OwnerCanBeAssignedToIssuesInRepo(
+                                                                        issueEventPayload.Repository.Owner.Login,
+                                                                        issueEventPayload.Repository.Name,
+                                                                        azureSdkOwner))
+                                        {
+                                            hasValidAssignee = true;
+                                            gitHubEventClient.AssignOwnerToIssue(issueEventPayload.Repository.Owner.Login,
+                                                                                 issueEventPayload.Repository.Name,
+                                                                                 azureSdkOwner);
+                                            // As soon as there's a valid assignee, add the comment mentioning everyone
+                                            // in the AzureSdkOwners and exit. The @ mention is only necessary if there
+                                            // are multiple AzureSdkOwners.
+                                            string azureSdkOwnersAtMention = CodeOwnerUtils.CreateAtMentionForOwnerList(azureSdkOwners);
+                                            gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, 
+                                                                            issueEventPayload.Issue.Number, 
+                                                                            azureSdkOwnersAtMention);
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            Console.WriteLine($"{azureSdkOwner} is an AzureSdkOwner for service labels {string.Join(",", labelSuggestions)} but cannot be assigned as an issue owner in this repository.");
+                                        }
+                                    }
+                                }
+                                // If the issue had a valid assignee add the comment
+                                if (hasValidAssignee)
+                                {
+                                    string issueComment = "Thank you for your feedback. Tagging and routing to the team member best able to assist.";
+                                    gitHubEventClient.CreateComment(issueEventPayload.Repository.Id,
+                                                                    issueEventPayload.Issue.Number,
+                                                                    issueComment);
+                                }
+                                else
+                                {
+                                    // Output a message indicating every owner in the AzureSdkOwners, for the AI label suggestions. The lines immediately
+                                    // above this output will contain the messages for each user checked.
+                                    Console.WriteLine($"AzureSdkOwners for service labels {string.Join(",", labelSuggestions)} has no owners that can be assigned to issues in this repository.");
+                                }
+                            }
+
+                            // If there's no valid AzureSdkOwner to assign the issue to (this means that there's either
+                            // no AzureSdkOwners or none of them have permissions to be assigned to an issue)
+                            if (!hasValidAssignee)
+                            {
+                                // Get the list of ServiceOwners, if any.
+                                var serviceOwners = CodeOwnerUtils.GetServiceOwnersForServiceLabels(labelSuggestions);
+
+                                // Check to see if there are ServiceOwners and the ServiceAttention rule is turned on. If
+                                // both are true then add the ServiceAttention label and run ServiceAttention processing
+                                if (serviceOwners.Count > 0
+                                    && gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ServiceAttention,
+                                                                                        false /* don't output log messages for this check*/))
+
+                                {
+                                    gitHubEventClient.AddLabel(LabelConstants.ServiceAttention);
+                                    Common_ProcessServiceAttentionForLabels(gitHubEventClient,
+                                                                            issueEventPayload.Issue,
+                                                                            issueEventPayload.Repository.Id,
+                                                                            labelSuggestions);
+                                }
+                                // At this point, it cannot be determined who this issue belongs to. Add
+                                // the needs-team-triage label instead of the needs-team-attention label
+                                else
+                                {
+                                    gitHubEventClient.AddLabel(LabelConstants.NeedsTeamTriage);
+                                    addNeedsTeamAttention = false;
+                                }
+                            }
+
+                            // The needs-team-attention label is only added when it can be determined
+                            // who this issue belongs to.
+                            if (addNeedsTeamAttention)
+                            {
+                                gitHubEventClient.AddLabel(LabelConstants.NeedsTeamAttention);
+                            }
                         }
+                        // If there are no labels predicted add NeedsTriage to the issue
                         else
                         {
                             gitHubEventClient.AddLabel(LabelConstants.NeedsTriage);
                         }
 
-                        // If the user is not a member of the Azure Org AND the user does not have write or admin collaborator permission
+                        // If the user is not a member of the Azure Org AND the user does not have write or admin collaborator permission.
+                        // This piece is executed for every issue created that doesn't have labels or owners on it at the time of creation.
                         bool isMemberOfOrg = await gitHubEventClient.IsUserMemberOfOrg(OrgConstants.Azure, issueEventPayload.Issue.User.Login);
                         if (!isMemberOfOrg)
                         {
@@ -158,29 +281,33 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 if (issueEventPayload.Action == ActionConstants.Labeled)
                 {
-                    // If the issue is open, and the label being added is ServiceAttention
-                    if (issueEventPayload.Issue.State == ItemState.Open &&
-                        issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention))
+                    // If the issue is open
+                    if (issueEventPayload.Issue.State == ItemState.Open)
                     {
-                        // Before bothering to fetch parties to mention from the CodeOwners file, ensure that ServiceAttention
-                        // isn't the only label on the issue.
-                        if (issueEventPayload.Issue.Labels.Count > 1)
+                        // If ServiceAttention was the label added then for each label already on the issue that isn't
+                        // ServiceAttention find the people to @ mention
+                        if (issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention))
                         {
-                            string partiesToMention = CodeOwnerUtils.GetPartiesToMentionForServiceAttention(issueEventPayload.Issue.Labels);
-                            if (null != partiesToMention)
+                            // Before bothering to fetch parties to mention from the CodeOwners file, ensure that ServiceAttention
+                            // isn't the only label on the issue.
+                            if (issueEventPayload.Issue.Labels.Count > 1)
                             {
-                                string issueComment = $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc {partiesToMention}.";
-                                gitHubEventClient.CreateComment(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number, issueComment);
+                                Common_ProcessServiceAttentionForLabels(gitHubEventClient, issueEventPayload);
                             }
                             else
                             {
-                                // If there are no codeowners found then output the issue URL so it's in the logs for the event
-                                Console.WriteLine($"There were no parties to mention for issue: {issueEventPayload.Issue.Url}");
+                                Console.WriteLine($"{LabelConstants.ServiceAttention} is the only label on the issue. Other labels are required in order to get parties to mention from the Codeowners file.");
                             }
                         }
-                        else
+                        // Else the label being added is not ServiceAttention and ServiceAttention is already on the issue
+                        // but only for the label added
+                        else if (!issueEventPayload.Label.Name.Equals(LabelConstants.ServiceAttention) &&
+                                 LabelUtils.HasLabel(issueEventPayload.Issue.Labels, LabelConstants.ServiceAttention))
                         {
-                            Console.WriteLine($"{LabelConstants.ServiceAttention} is the only label on the issue. Other labels are required in order to get parties to mention from the Codeowners file.");
+                            Common_ProcessServiceAttentionForLabels(gitHubEventClient,
+                                                                    issueEventPayload.Issue,
+                                                                    issueEventPayload.Repository.Id,
+                                                                    new List<string> { issueEventPayload.Label.Name });
                         }
                     }
                 }
@@ -254,6 +381,51 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     sender.Type != AccountType.Bot)
                 {
                     gitHubEventClient.RemoveLabel(LabelConstants.NoRecentActivity);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Overloaded function to call the common function after converting the IReadOnlyList of Octokit.Label
+        /// into a list of string that only contains the label
+        /// </summary>
+        /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
+        /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
+        public static void Common_ProcessServiceAttentionForLabels(GitHubEventClient gitHubEventClient, IssueEventGitHubPayload issueEventPayload)
+        {
+            List<string> labelOnlyList = issueEventPayload.Issue.Labels.Select(l => l.Name).ToList();
+            Common_ProcessServiceAttentionForLabels(gitHubEventClient, issueEventPayload.Issue, issueEventPayload.Repository.Id, labelOnlyList);
+        }
+
+        /// <summary>
+        /// This is an odd one. The Service Attention is being changed to add @ mentions when Service Attention is added
+        /// OR when a label is added and Service Attention already exists OR, in the initial issue processing when
+        /// ServiceAttention. Sanity says this common function needs to check if ServiceAttention is enabled but
+        /// whether or not to call the function (aka, the event action and criteria) still need to be done by the calling
+        /// method). This differs from the other common functions because the individual rules need to process things differently
+        /// before getting to this point. Some will get the labels from the issue whereas others are adding labels and wanting
+        /// ServiceAttention processing.
+        /// </summary>
+        /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
+        /// <param name="issue">Octokit.Issue object from the respective payload.</param>
+        /// <param name="repositoryId">Long, the ID of the repository.</param>
+        /// <param name="labels">The list of labels to look for service owners for.</param>
+        public static void Common_ProcessServiceAttentionForLabels(GitHubEventClient gitHubEventClient, Issue issue, long repositoryId, List<string> labels)
+        {
+            if (labels.Count > 0)
+            {
+                List<string> ownersToMention = CodeOwnerUtils.GetServiceOwnersForServiceLabels(labels);
+                if (ownersToMention.Count > 0)
+                {
+                    string partiesToMention = CodeOwnerUtils.CreateAtMentionForOwnerList(ownersToMention);
+                    string issueComment = $"Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc {partiesToMention}.";
+                    gitHubEventClient.CreateComment(repositoryId, issue.Number, issueComment);
+                }
+                else
+                {
+                    // If there were no Service Owners found for the list of labels, output the URL and the list
+                    // of labels
+                    Console.WriteLine($"There were no parties to mention found for the following labels ({string.Join(",", labels)}) for issue: {issue.Url}");
                 }
             }
         }
@@ -401,7 +573,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///                 "needs-team-attention"
         ///                 "needs-author-feedback"
         ///                 "Service Attention"
-        ///                 "CXP Attention"
         ///                 "needs-triage"
         ///                 "needs-team-triage"
         /// Resulting Action:

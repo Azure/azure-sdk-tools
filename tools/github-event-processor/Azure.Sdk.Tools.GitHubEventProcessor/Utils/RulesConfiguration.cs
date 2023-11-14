@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using System.IO;
-using Azure.Sdk.Tools.CodeOwnersParser;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
 {
@@ -92,21 +92,32 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Utils
         /// Check whether or not a given rule is enabled, disabled or missing.
         /// </summary>
         /// <param name="rule">String, rule to check. This string should be from RulesConstants.</param>
+        /// <param name="outputRunLogMessages">Boolean to determine whether or not to put log messages, default is true. This is necessary because we have a case where one rule runs another's processing but we only want the log outputting when the specific rule is being executed to avoid confusion.</param>
         /// <returns>True if enabled, False if disabled or missing from the configuration file.</returns>
-        public bool RuleEnabled(string rule)
+        public bool RuleEnabled(string rule, bool outputRunLogMessages = true)
         {
             if (Rules.ContainsKey(rule))
             {
                 if (Rules[rule] == RuleState.On)
                 {
-                    Console.WriteLine($"Rule, {rule}, is {Rules[rule]}. Processing...");
+                    if (outputRunLogMessages)
+                    {
+                        Console.WriteLine($"Rule, {rule}, is {Rules[rule]}. Processing...");
+                    }
                     return true;
                 }
-                Console.WriteLine($"Rule, {rule}, is {Rules[rule]}. Not processing...");
+
+                if (outputRunLogMessages)
+                {
+                    Console.WriteLine($"Rule, {rule}, is {Rules[rule]}. Not processing...");
+                }
             }
             else
             {
-                Console.WriteLine($"Rule, {rule}, is not in the repository config file and will not run.");
+                if (outputRunLogMessages)
+                {
+                    Console.WriteLine($"Rule, {rule}, is not in the repository config file and will not run.");
+                }
             }
             return false;
         }

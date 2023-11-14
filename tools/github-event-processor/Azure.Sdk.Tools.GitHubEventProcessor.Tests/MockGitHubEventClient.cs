@@ -28,6 +28,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         public bool UserHasPermissionsReturn { get; set; } = false;
 
         /// <summary>
+        /// OwnerCanBeAssignedToIssueInRepo will check the list to see if the owner is in there
+        /// returning true if so, false otherwise
+        /// </summary>
+        public List<string> OwnersWithAssignPermission { get; set; } = new List<string>();
+
+        /// <summary>
         /// IsUserMemberOfOrg value. Defaults to false.
         /// </summary>
         public bool IsUserMemberOfOrgReturn { get; set; } = false;
@@ -64,14 +70,33 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
                 Console.WriteLine("MockGitHubEventClient::ProcessPendingUpdates, Issue Update is null");
             }
 
+            // The issue is being assigned. Note, this can only happen for issues, the issueOrPullRequestNumber
+            // in this case will always be an issue with the way events are processed.
+            if (_gitHubIssueAssignment != null)
+            {
+                Console.WriteLine($"MockGitHubEventClient::ProcessPendingUpdates, Issue Assignment is non-null. Assignees={string.Join(",", _gitHubIssueAssignment.Assignees)}");
+                numUpdates++;
+            }
+            else
+            {
+                Console.WriteLine("MockGitHubEventClient::ProcessPendingUpdates, Issue Assignment is null");
+            }
+
             if (_labelsToAdd.Count > 0)
             {
-                Console.WriteLine($"MockGitHubEventClient::ProcessPendingUpdates, number of labels to add = {_labelsToAdd.Count} (only 1 call)");
+                Console.WriteLine($"MockGitHubEventClient::ProcessPendingUpdates, number of labels to add = {_labelsToAdd.Count} (only 1 call). Labels={string.Join(",", _labelsToAdd)}");
                 // Adding labels is a single call to add them all
                 numUpdates++;
             }
 
-            Console.WriteLine($"MockGitHubEventClient::ProcessPendingUpdates, number of labels to remove = {_labelsToRemove.Count}");
+            if (_labelsToRemove.Count > 0)
+            {
+                Console.WriteLine($"MockGitHubEventClient::ProcessPendingUpdates, number of labels to remove = {_labelsToRemove.Count} (1 call for each). Labels={string.Join(",", _labelsToRemove)}");
+            }
+            else
+            {
+                Console.WriteLine("MockGitHubEventClient::ProcessPendingUpdates, number of labels to remove = 0");
+            }
             // Removing labels is a call for each one being removed
             numUpdates += _labelsToRemove.Count;
 
@@ -123,6 +148,19 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         public override Task<bool> DoesUserHavePermissions(long repositoryId, string user, List<string> permissionList)
         {
             return Task.FromResult(UserHasPermissionsReturn);
+        }
+
+
+        /// <summary>
+        /// OwnerCanBeAssignedToIssueInRepo override. Returns OwnerCanBeAssignedToIssueInRepoReturn value
+        /// </summary>
+        /// <param name="repoOwner">The owner of the repository. Repositories are in the form repoOwner/repoName. Azure/azure-sdk would have Azure as the owner and azure-sdk as the repo.</param>
+        /// <param name="repoName">The repository name.</param>
+        /// <param name="assignee">The potential assignee to check..</param>
+        /// <returns>bool, returns OwnerCanBeAssignedToIssueInRepoReturn for testing</returns>
+        public override Task<bool> OwnerCanBeAssignedToIssuesInRepo(string repoOwner, string repoName, string assignee)
+        {
+            return Task.FromResult(OwnersWithAssignPermission.Contains(assignee, StringComparer.OrdinalIgnoreCase));
         }
 
         /// <summary>
@@ -484,6 +522,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         public List<GitHubIssueToLock> GetGitHubIssuesToLock()
         {
             return _gitHubIssuesToLock;
+        }
+
+        public GitHubIssueAssignment GetGitHubIssueAssignment()
+        {
+            return _gitHubIssueAssignment;
         }
 
         /// <summary>

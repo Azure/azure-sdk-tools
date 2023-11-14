@@ -131,14 +131,12 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     }
   } else {
     const cloneDir = path.join(repoRoot, "..", "sparse-spec");
-    // Remove the sparse-spec directory if it exists
-    await removeDirectory(cloneDir);
     await mkdir(cloneDir, { recursive: true });
     Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
     Logger.debug(`Cloning repo to ${cloneDir}`);
     await cloneRepo(tempRoot, cloneDir, `https://github.com/${repo}.git`);
     await sparseCheckout(cloneDir);
-    await addSpecFiles(cloneDir, directory)
+    await addSpecFiles(cloneDir, directory);
     Logger.info(`Processing additional directories: ${additionalDirectories}`)
     for (const dir of additionalDirectories) {
       await addSpecFiles(cloneDir, dir);
@@ -151,8 +149,9 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
       const dirName = path.join(tempRoot, projectName!);
       await cp(path.join(cloneDir, dir), dirName, { recursive: true });
     }
-    Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
-    await removeDirectory(cloneDir);
+    throw "Test"
+    // Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
+    // await removeDirectory(cloneDir);
   }
 
   const emitterPath = path.join(repoRoot, "eng", "emitter-package.json");
@@ -212,17 +211,22 @@ async function main() {
     rootUrl = path.resolve(options.outputDir);
   }
 
+  const repoRoot = await getRepoRoot(rootUrl);
   switch (options.command) {
       case "init":
-        const emitter = await getEmitterFromRepoConfig(path.join(await getRepoRoot(rootUrl), "eng", "emitter-package.json"));
+        const emitter = await getEmitterFromRepoConfig(path.join(repoRoot, "eng", "emitter-package.json"));
         if (!emitter) {
           throw new Error("Couldn't find emitter-package.json in the repo");
         }
         const outputDir = await sdkInit({config: options.tspConfig!, outputDir: rootUrl, emitter, commit: options.commit, repo: options.repo, isUrl: options.isUrl});
         Logger.info(`SDK initialized in ${outputDir}`);
         if (!options.skipSyncAndGenerate) {
-          await syncTspFiles(outputDir);
-          await generate({ rootUrl: outputDir, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
+          syncTspFiles(outputDir).catch((err) => {
+            removeDirectory(path.join(repoRoot, "..", "sparse-spec"))
+            throw err;
+          }).finally(() => {
+            generate({rootUrl: outputDir, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
+          });
         }
         break;
       case "sync":

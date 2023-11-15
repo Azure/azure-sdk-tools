@@ -3,6 +3,14 @@
   "version": "0.1.1",
   "description": "A tool to generate Azure SDKs from TypeSpec",
   "main": "dist/index.js",
+  "homepage": "https://github.com/Azure/azure-sdk-tools/tree/main/tools/tsp-client#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Azure/azure-sdk-tools.git"
+  },
+  "bugs": {
+      "url": "https://github.com/Azure/azure-sdk-tools/issues"
+  },
   "scripts": {
     "build": "npm run clean && npm run build:tsc",
     "build:tsc": "tsc",

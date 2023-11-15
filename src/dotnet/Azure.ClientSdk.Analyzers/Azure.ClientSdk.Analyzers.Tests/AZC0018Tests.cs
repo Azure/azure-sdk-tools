@@ -89,6 +89,43 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0018NotProducedForExtendedReturnType()
+        {
+            const string code = @"
+using Azure;
+using Azure.Core;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Arbitrary
+{
+    public class ExtendedBinaryData : BinaryData
+    {
+        public ExtendedBinaryData(string data): base(data){}
+    }
+}
+
+namespace RandomNamespace
+{
+    public class SomeClient
+    {
+        public virtual AsyncPageable<Arbitrary.ExtendedBinaryData> GetPageableAsync(string s, RequestContext context)
+        {
+            return null;
+        }
+
+        public virtual Pageable<Arbitrary.ExtendedBinaryData> GetPageable(string s, RequestContext context)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
+
+        [Fact]
         public async Task AZC0018ProducedForMethodsWithGenericResponseOfPrimitive()
         {
             const string code = @"

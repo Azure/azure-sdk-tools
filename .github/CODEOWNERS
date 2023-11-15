@@ -44,6 +44,7 @@
 /tools/sdk-testgen/                    @raych1 @tadelesh
 /tools/stress-cluster/                 @benbp @ckairen
 /tools/test-proxy/                     @scbedd @mikeharder
+/tools/tsp-client/                     @catalinaperalta
 /tools/webhook-router/                 @praveenkuttappan @weshaggard
 
 ###########

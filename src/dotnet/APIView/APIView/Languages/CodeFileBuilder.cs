@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIView;
@@ -48,7 +48,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "24";
+        public const string CurrentVersion = "25";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -112,7 +112,8 @@ namespace ApiView
                 VersionString = CurrentVersion,
                 Navigation = new[] { assemblyNavigationItem },
                 Diagnostics = analyzer.Results.ToArray(),
-                PackageName = assemblySymbol.Name
+                PackageName = assemblySymbol.Name,
+                PackageVersion = assemblySymbol.Identity.Version.ToString()
             };
 
             return node;
@@ -139,7 +140,7 @@ namespace ApiView
                         param = firstComma > 0 ? param[..firstComma] : param;
                         builder.Append(new CodeFileToken(param, CodeFileTokenKind.Text)
                         {
-                            // allow assembly to be commentable
+                            // allow assembly to have a comment
                             DefinitionId = attribute.AttributeClass.Name
                         });
                     }

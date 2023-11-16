@@ -6,7 +6,7 @@ trigger:
   paths:
     include:
       - tools/github-event-processor
-      - tools/code-owners-parser/CodeOwnersParser
+      - tools/codeowners-utils/Azure.Sdk.Tools.CodeownersUtils
 
 pr:
   branches:
@@ -18,7 +18,7 @@ pr:
   paths:
     include:
       - tools/github-event-processor
-      - tools/code-owners-parser/CodeOwnersParser
+      - tools/codeowners-utils/Azure.Sdk.Tools.CodeownersUtils
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml

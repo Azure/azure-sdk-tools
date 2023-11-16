@@ -352,7 +352,7 @@ namespace APIViewWeb.Managers
             {
                 if (updateDisabledLanguages.Contains(language))
                 {
-                    _telemetryClient.TrackTrace("Background task to update API review at startup is disabled for langauge " + language);
+                    _telemetryClient.TrackTrace("Background task to update API review at startup is disabled for language " + language);
                     continue;
                 }
 
@@ -360,7 +360,7 @@ namespace APIViewWeb.Managers
                 if (languageService == null)
                     return;
 
-                // If review is updated using devops pipeline then batch process update review requests
+                // If review is updated using Azure DevOps pipeline then batch process update review requests
                 if (languageService.IsReviewGenByPipeline)
                 {
                     await UpdateReviewsUsingPipeline(language, languageService, backgroundBatchProcessCount);
@@ -368,7 +368,7 @@ namespace APIViewWeb.Managers
                 else
                 {
                     var reviews = await _reviewsRepository.GetReviewsAsync(false, language, fetchAllPages: true);
-                    foreach (var review in reviews.Where(r => IsUpdateAvailable(r)))
+                    foreach (var review in reviews.Where(r => IsUpdateAvailable(r) || r.Revisions.Any(rev => string.IsNullOrEmpty(rev.SingleFile?.PackageVersion))))
                     {
                         var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.ReviewId };
                         var operation = _telemetryClient.StartOperation(requestTelemetry);
@@ -405,7 +405,7 @@ namespace APIViewWeb.Managers
                     {
                         //Don't include current revision if file is not required to be updated.
                         // E.g. json token file is uploaded for a language, specific revision was already upgraded.
-                        if (!file.HasOriginal || file.FileName == null || !languageService.IsSupportedFile(file.FileName) || !languageService.CanUpdate(file.VersionString))
+                        if (!file.HasOriginal || file.FileName == null || !languageService.IsSupportedFile(file.FileName) || (!languageService.CanUpdate(file.VersionString) && !string.IsNullOrEmpty(file.PackageVersion)))
                         {
                             continue;
                         }
@@ -557,6 +557,7 @@ namespace APIViewWeb.Managers
                         var file = revision.Files.FirstOrDefault();
                         file.VersionString = codeFile.VersionString;
                         file.PackageName = codeFile.PackageName;
+                        file.PackageVersion = codeFile.PackageVersion;
                         await _reviewsRepository.UpsertReviewAsync(review);
 
                         if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
@@ -753,7 +754,7 @@ namespace APIViewWeb.Managers
             {
                 foreach (var file in revision.Files)
                 {
-                    if (!file.HasOriginal || !languageService.CanUpdate(file.VersionString))
+                    if (!file.HasOriginal || (!languageService.CanUpdate(file.VersionString) && !string.IsNullOrEmpty(file.PackageVersion)))
                     {
                         continue;
                     }
@@ -770,6 +771,8 @@ namespace APIViewWeb.Managers
                         await _codeFileRepository.UpsertCodeFileAsync(revision.RevisionId, file.ReviewFileId, codeFile);
                         // update only version string
                         file.VersionString = codeFile.VersionString;
+                        file.PackageName = codeFile.PackageName;
+                        file.PackageVersion = codeFile.PackageVersion;
                         await _reviewsRepository.UpsertReviewAsync(review);
                     }
                     catch (Exception ex)

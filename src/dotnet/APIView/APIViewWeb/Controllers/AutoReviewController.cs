@@ -155,6 +155,7 @@ namespace APIViewWeb.Controllers
                         !await _apiRevisionsManager.IsAPIRevisionTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
                         !comments.Any(c => latestAutomaticAPIRevision.Id == c.RevisionId))
                     {
+                        // Check if user is authorized to modify automatic review
                         await ManagerHelpers.AssertAutomaticAPIRevisionModifier(user: User, apiRevision: apiRevision, authorizationService: _authorizationService);
                         await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(user: User, apiRevision: latestAutomaticAPIRevision);
                         latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
@@ -186,8 +187,6 @@ namespace APIViewWeb.Controllers
             {
                 review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false);
             }
-
-            // Check if user is authorized to modify automatic review
             
             if (createNewRevision)
             {

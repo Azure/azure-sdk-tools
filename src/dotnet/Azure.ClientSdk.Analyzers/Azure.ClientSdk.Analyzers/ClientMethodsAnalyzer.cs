@@ -14,6 +14,8 @@ namespace Azure.ClientSdk.Analyzers
     {
         private const string AsyncSuffix = "Async";
 
+        private const string AzureNamespace = "Azure";
+        private const string SystemNamespace = "System";
         private const string PageableTypeName = "Pageable";
         private const string AsyncPageableTypeName = "AsyncPageable";
         private const string BinaryDataTypeName = "BinaryData";
@@ -156,7 +158,7 @@ namespace Azure.ClientSdk.Analyzers
                 }
 
                 var pageableReturn = pageableTypeSymbol.TypeArguments.Single();
-                if (!IsOrImplements(pageableReturn, BinaryDataTypeName))
+                if (!IsOrImplements(pageableReturn, BinaryDataTypeName, SystemNamespace))
                 {
                     return false;
                 }
@@ -174,7 +176,7 @@ namespace Azure.ClientSdk.Analyzers
                 unwrappedType = namedTypeSymbol.TypeArguments.Single();
             }
 
-            if (IsOrImplements(unwrappedType, ResponseTypeName))
+            if (IsOrImplements(unwrappedType, ResponseTypeName, AzureNamespace))
             {
                 if (unwrappedType is INamedTypeSymbol responseTypeSymbol && responseTypeSymbol.IsGenericType)
                 {
@@ -186,12 +188,12 @@ namespace Azure.ClientSdk.Analyzers
                 }
                 return;
             }
-            else if (IsOrImplements(unwrappedType, OperationTypeName))
+            else if (IsOrImplements(unwrappedType, OperationTypeName, AzureNamespace))
             {
                 if (unwrappedType is INamedTypeSymbol operationTypeSymbol && operationTypeSymbol.IsGenericType)
                 {
                     var operationReturn = operationTypeSymbol.TypeArguments.Single();
-                    if (IsOrImplements(operationReturn, PageableTypeName) || IsOrImplements(operationReturn, AsyncPageableTypeName))
+                    if (IsOrImplements(operationReturn, PageableTypeName, AzureNamespace) || IsOrImplements(operationReturn, AsyncPageableTypeName, AzureNamespace))
                     {
                         if (!IsValidPageable(operationReturn))
                         {
@@ -200,14 +202,14 @@ namespace Azure.ClientSdk.Analyzers
                         return;
                     }
 
-                    if (!IsOrImplements(operationReturn, BinaryDataTypeName))
+                    if (!IsOrImplements(operationReturn, BinaryDataTypeName, SystemNamespace))
                     {
                         context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0018, method.Locations.FirstOrDefault()), method);
                     }
                 }
                 return;
             }
-            else if (IsOrImplements(originalType, PageableTypeName) || IsOrImplements(originalType, AsyncPageableTypeName))
+            else if (IsOrImplements(originalType, PageableTypeName, AzureNamespace) || IsOrImplements(originalType, AsyncPageableTypeName, AzureNamespace))
             {
                 if (!IsValidPageable(originalType))
                 {
@@ -229,16 +231,16 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        private static bool IsOrImplements(ITypeSymbol typeSymbol, string typeName)
+        private static bool IsOrImplements(ITypeSymbol typeSymbol, string typeName, string namespaceName)
         {
-            if (typeSymbol.Name == typeName)
+            if (typeSymbol.Name == typeName && typeSymbol.ContainingNamespace.Name == namespaceName && typeSymbol.ContainingNamespace.ContainingNamespace.Name == "")
             {
                 return true;
             }
 
             if (typeSymbol.BaseType != null)
             {
-                return IsOrImplements(typeSymbol.BaseType, typeName);
+                return IsOrImplements(typeSymbol.BaseType, typeName, namespaceName);
             }
 
             return false;
@@ -261,11 +263,11 @@ namespace Azure.ClientSdk.Analyzers
                 unwrappedType = namedTypeSymbol.TypeArguments.Single();
             }
 
-            if (IsOrImplements(unwrappedType, ResponseTypeName) ||
-                IsOrImplements(unwrappedType, NullableResponseTypeName) ||
-                IsOrImplements(unwrappedType, OperationTypeName) ||
-                IsOrImplements(originalType, PageableTypeName) ||
-                IsOrImplements(originalType, AsyncPageableTypeName))
+            if (IsOrImplements(unwrappedType, ResponseTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, NullableResponseTypeName, AzureNamespace) ||
+                IsOrImplements(unwrappedType, OperationTypeName, AzureNamespace) ||
+                IsOrImplements(originalType, PageableTypeName, AzureNamespace) ||
+                IsOrImplements(originalType, AsyncPageableTypeName, AzureNamespace))
             {
                 return true;
             }

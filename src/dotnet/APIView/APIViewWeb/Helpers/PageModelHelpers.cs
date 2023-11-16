@@ -239,11 +239,19 @@ namespace APIViewWeb.Helpers
         {
             var userId = user.GetGitHubLogin();
             var review = await reviewManager.GetReviewAsync(user, reviewId);
-            var revisions = await reviewRevisionsManager.GetAPIRevisionsAsync(reviewId);
-            var activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, revisions, APIRevisionType.Automatic);
+            var apiRevisions = await reviewRevisionsManager.GetAPIRevisionsAsync(reviewId);
+
+            // Try getting latest Automatic Revision
+            var activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions, APIRevisionType.Automatic);
+            if (activeRevision == null)
+            {
+                // Get latest of any type
+                activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions);
+            }
+
             APIRevisionListItemModel diffRevision = null;
             if (!string.IsNullOrEmpty(revisionId)) {
-                if (revisions.Where(x => x.Id == revisionId).Any())
+                if (apiRevisions.Where(x => x.Id == revisionId).Any())
                 {
                     activeRevision = await reviewRevisionsManager.GetAPIRevisionAsync(user, revisionId);
                 }
@@ -265,7 +273,7 @@ namespace APIViewWeb.Helpers
 
             if (!string.IsNullOrEmpty(diffRevisionId))
             {
-                if (revisions.Where(x => x.Id == diffRevisionId).Any())
+                if (apiRevisions.Where(x => x.Id == diffRevisionId).Any())
                 {
                     diffRevision = await reviewRevisionsManager.GetAPIRevisionAsync(user, diffRevisionId);
                     var diffRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(diffRevisionId, diffRevision.Files[0].FileId);
@@ -334,7 +342,7 @@ namespace APIViewWeb.Helpers
                 Review = review,
                 Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation,
                 codeLines = codeLines,
-                APIRevisionsGrouped = revisions.OrderByDescending(c => c.CreatedOn).GroupBy(r => r.APIRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList()),
+                APIRevisionsGrouped = apiRevisions.OrderByDescending(c => c.CreatedOn).GroupBy(r => r.APIRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList()),
                 ActiveAPIRevision = activeRevision,
                 DiffAPIRevision = diffRevision,
                 TotalActiveConversiations = comments.Threads.Count(t => !t.IsResolved),

@@ -11,8 +11,8 @@ export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string)
       if (err) {
         reject(err);
       }
+      resolve();
     });
-    resolve();
   });
 }
 
@@ -60,7 +60,7 @@ export async function checkoutCommit(cloneDir: string, commit: string): Promise<
       if (err) {
         reject(err);
       }
+      resolve();
     });
-    resolve();
   });
 }

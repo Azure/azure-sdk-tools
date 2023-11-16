@@ -96,7 +96,7 @@ export async function getOptions(): Promise<Options> {
       isUrl = true;
     }
     if (!isUrl) {
-      if (values.commit === undefined || values.repo === undefined) {
+      if (!values.commit || !values.repo) {
         Logger.error("The commit and repo options are required when tspConfig is a local directory");
         printUsage();
         process.exit(1);

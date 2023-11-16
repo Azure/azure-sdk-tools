@@ -143,7 +143,7 @@ class StubGenerator:
             namespace = self.filter_namespace
 
         logging.debug("Generating tokens")
-        apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, source_url=self.source_url)
+        apiview = self._generate_tokens(pkg_root_path, pkg_name, namespace, version, source_url=self.source_url)
         if apiview.diagnostics:
             logging.info("*************** Completed parsing package with errors ***************")
         else:
@@ -189,7 +189,7 @@ class StubGenerator:
         return sorted(modules)
 
 
-    def _generate_tokens(self, pkg_root_path, package_name, namespace, *, source_url):
+    def _generate_tokens(self, pkg_root_path, package_name, namespace, package_version, *, source_url):
         """This method returns a dictionary of namespace and all public classes in each namespace
         """
         # Import ModuleNode.
@@ -203,7 +203,8 @@ class StubGenerator:
             pkg_name=package_name,
             namespace=namespace,
             metadata_map=mapping,
-            source_url=source_url
+            source_url=source_url,
+            pkg_version=package_version
         )
         modules = self._find_modules(pkg_root_path)
         logging.debug("Modules to generate tokens: {}".format(modules))

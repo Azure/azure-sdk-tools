@@ -12,7 +12,7 @@ from ._version import VERSION
 from ._diagnostic import Diagnostic
 from ._metadata_map import MetadataMap
 
-JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName", "Language"]
+JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName", "Language", "PackageVersion"]
 
 HEADER_TEXT = "# Package is parsed using apiview-stub-generator(version:{0}), Python version: {1}".format(VERSION, platform.python_version())
 TYPE_NAME_REGEX = re.compile(r"(~?[a-zA-Z\d._]+)")
@@ -40,7 +40,7 @@ class ApiView:
                 path = os.path.split(path)[0]
         return None
 
-    def __init__(self, *, pkg_name="", namespace = "", metadata_map=None, source_url=None):
+    def __init__(self, *, pkg_name="", namespace = "", metadata_map=None, source_url=None, pkg_version =""):
         self.name = pkg_name
         self.version = 0
         self.version_string = VERSION
@@ -52,6 +52,7 @@ class ApiView:
         self.namespace = namespace
         self.node_index = NodeIndex()
         self.package_name = pkg_name
+        self.package_version = pkg_version
         self.metadata_map = metadata_map or MetadataMap("")
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
         self.add_literal(HEADER_TEXT)

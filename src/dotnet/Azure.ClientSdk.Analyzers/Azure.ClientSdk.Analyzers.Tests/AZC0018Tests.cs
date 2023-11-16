@@ -126,6 +126,43 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0018ProducedForCustomTypeWithSystemName()
+        {
+            const string code = @"
+using Azure;
+using Azure.Core;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Custom
+{
+    namespace System
+    {
+        public class BinaryData {}
+    }
+}
+
+namespace RandomNamespace
+{
+    using Custom.System;
+    public class SomeClient
+    {
+        public virtual AsyncPageable<BinaryData> {|AZC0018:GetPageableAsync|}(string s, RequestContext context)
+        {
+            return null;
+        }
+
+        public virtual Pageable<BinaryData> {|AZC0018:GetPageable|}(string s, RequestContext context)
+        {
+            return null;
+        }
+    }
+}";
+            await Verifier.CreateAnalyzer(code)
+                .RunAsync();
+        }
+
+        [Fact]
         public async Task AZC0018ProducedForMethodsWithGenericResponseOfPrimitive()
         {
             const string code = @"

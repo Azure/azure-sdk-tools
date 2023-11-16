@@ -233,7 +233,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private static bool IsOrImplements(ITypeSymbol typeSymbol, string typeName, string namespaceName)
         {
-            if (typeSymbol.Name == typeName && typeSymbol.ContainingNamespace.Name == namespaceName)
+            if (typeSymbol.Name == typeName && typeSymbol.ContainingNamespace.Name == namespaceName && typeSymbol.ContainingNamespace.ContainingNamespace.Name == "")
             {
                 return true;
             }

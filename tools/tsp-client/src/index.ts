@@ -224,14 +224,13 @@ async function main() {
             throw new Error("Commit SHA is required when specifying `--repo`, please specify a commit using `--commit`");
         }
         if (options.commit) {
-          let tspLocation: TspLocation = await readTspLocation(rootUrl);
+          const tspLocation: TspLocation = await readTspLocation(rootUrl);
           tspLocation.commit = options.commit ?? tspLocation.commit;
           tspLocation.repo = options.repo ?? tspLocation.repo;
           await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`);
-        }
-        if (options.tspConfig) {
-          let tspLocation: TspLocation = await readTspLocation(rootUrl);
-          let tspConfig = resolveTspConfigUrl(options.tspConfig);
+        } else if (options.tspConfig) {
+          const tspLocation: TspLocation = await readTspLocation(rootUrl);
+          const tspConfig = resolveTspConfigUrl(options.tspConfig);
           tspLocation.commit = tspConfig.commit ?? tspLocation.commit;
           tspLocation.repo = tspConfig.repo ?? tspLocation.repo;
           await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`);

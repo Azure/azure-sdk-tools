@@ -27,13 +27,17 @@
 /eng/common/TestResources/             @benbp @weshaggard @heaths
 
 ###########
+# CODEOWNERS Linter pipeline
+###########
+/eng/common/pipelines/codeowners-linter.yml @kurtzeborn @JimSuplizio
+
+###########
 # Eng Sys Tools
 ###########
 /tools/                                @azure/azure-sdk-eng
-/tools/code-owners-parser/             @konrad-jamrozik @JimSuplizio
 /tools/codeowners-utils/               @JimSuplizio
 /tools/github-issues/                  @praveenkuttappan @weshaggard
-/tools/github-event-processor/         @JimSuplizio @benbp 
+/tools/github-event-processor/         @JimSuplizio @benbp
 /tools/github-team-user-store/         @JimSuplizio @weshaggard
 /tools/js-sdk-release-tools/           @qiaozha @MaryGao
 /tools/mock-service-host/              @raych1 @tadelesh

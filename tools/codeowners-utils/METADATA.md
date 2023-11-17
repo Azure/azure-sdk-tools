@@ -3,7 +3,7 @@
 Azure-sdk* repository CODEOWNERS files contain data beyond the normal source path/owner lines. This metadata is used by workflows for processing. The most notable consumer is [github-event-processor](https://github.com/Azure/azure-sdk-tools/tree/main/tools/github-event-processor) which uses these when processing certain GitHub Actions. The full set of action processing rules is documented [here](https://github.com/Azure/azure-sdk-tools/blob/main/tools/github-event-processor/RULES.md). The common definitions used in this document are as follows:
 
 - **Moniker** - Any of the existing tags we currently support. PRLabel or ServiceLabel would be examples of this.
-- **Metadata block** - A block containing one or more metadata tags and/or a source path/owner line. A block ends with a blank line or _a single source path/owner line_. This means that one more monikers followed by multiple source path/owner lines will only apply the the metadata to the first source path/owner line. Each and every one source path/owner line requires its own metadata monikers.
+- **Metadata block** - A block containing one or more metadata tags and/or a source path/owner line. A block ends with a blank line or _a single source path/owner line_. This means that one more monikers followed by multiple source path/owner lines will only apply the metadata to the first source path/owner line. Each and every one source path/owner line requires its own metadata monikers.
 - **Source path/owner line** - A single source path/owner line in CODEOWNERS is its own block. There are some metadata tags that must be part of a block that ends in source path/owner line and some tags that can be. These are defined below.
 
 ## Metadata Monikers
@@ -73,7 +73,7 @@ OR
 
 ```
 
-- This might look complex but there are really only 2 types of blocks. The first ends with a source path/owner line and may have AzureSdkOwners, ServiceLabel PRLabel entries and the second is ServiceLabel/ServiceOwner block which may have AzureSdkOwners.
+- This might look complex but there are really only 2 types of blocks. The first ends with a source path/owner line and may have AzureSdkOwners, ServiceLabel and PRLabel entries. The second is ServiceLabel/ServiceOwner block which may have AzureSdkOwners.
 
 ```text
 

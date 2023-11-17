@@ -1,6 +1,9 @@
 # Release History
 
-## Version 0.3.9 (TBD)
+## Version 0.3.10 (2023-11-17)
+Update package version in API review codefile
+
+## Version 0.3.9 (2023-11-17)
 Improve support for "CrossLanguageDefinitionId".
 
 ## Version 0.3.8 (2023-07-06)

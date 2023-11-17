@@ -27,6 +27,11 @@
 /eng/common/TestResources/             @benbp @weshaggard @heaths
 
 ###########
+# CODEOWNERS Linter pipeline
+###########
+/eng/common/pipelines/codeowners-linter.yml @kurtzeborn @JimSuplizio
+
+###########
 # Eng Sys Tools
 ###########
 /tools/                                @azure/azure-sdk-eng

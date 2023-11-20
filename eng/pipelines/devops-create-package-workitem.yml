@@ -44,6 +44,9 @@ parameters:
   displayName: Related Work Item ID (Applicable to add release plan work Item as related)
   type: string
   default: ''
+- name: Tag
+  type: string
+  default: ''
 
 variables:
   AzureSDKToolsScriptsPath: $(System.DefaultWorkingDirectory)/azure-sdk-tools/eng/common/scripts
@@ -55,7 +58,7 @@ steps:
   displayName: Create Package Work Item
   inputs:
     pwsh: true
-    filePath: $(AzureSDKToolsScriptsPath)/Update-DevOps-Release-WorkItem
+    filePath: $(AzureSDKToolsScriptsPath)/Update-DevOps-Release-WorkItem.ps1
     arguments: >
       -language '$(Language)'
       -serviceName '$(ServiceName)'
@@ -65,4 +68,5 @@ steps:
       -version '$(PackageVersion)'
       -plannedDate '$(ReleaseDate)'
       -relatedWorkItemId '$(RelatedWorkItemId)'
+      -tag '$(Tag)'
       -devops_pat '$(azuresdk-azure-sdk-devops-release-work-item-pat)'

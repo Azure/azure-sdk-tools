@@ -60,13 +60,13 @@ steps:
     pwsh: true
     filePath: $(AzureSDKToolsScriptsPath)/Update-DevOps-Release-WorkItem.ps1
     arguments: >
-      -language '$(Language)'
-      -serviceName '$(ServiceName)'
-      -packageDisplayName '$(PackageDisplayName)'
-      -packageType '$(PackageType)'
-      -packageName '$(PackageName)'
-      -version '$(PackageVersion)'
-      -plannedDate '$(ReleaseDate)'
-      -relatedWorkItemId '$(RelatedWorkItemId)'
-      -tag '$(Tag)'
+      -language ${{parameters.Language}}
+      -serviceName ${{parameters.ServiceName}}
+      -packageDisplayName ${{parameters.PackageDisplayName}}
+      -packageType ${{parameters.PackageType}}
+      -packageName ${{parameters.PackageName}}
+      -version ${{parameters.PackageVersion}}
+      -plannedDate ${{parameters.ReleaseDate}}
+      -relatedWorkItemId ${{parameters.RelatedWorkItemId}}
+      -tag ${{parameters.Tag}} '$(Tag)'
       -devops_pat '$(azuresdk-azure-sdk-devops-release-work-item-pat)'

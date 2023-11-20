@@ -169,7 +169,15 @@ namespace APIViewWeb.Controllers
                 apiRevisionType: APIRevisionType.PullRequest,
                 prNumber: prNumber);
 
-            var review = await 
+            // fetch review for the package or create brand new review
+
+            // checked if the new apiRevision matches any automatic apiRevision
+            // If it matches do nothing. ie no change in api surface level
+
+            // Check if you have already created a revision for the same PR. i.e commit is different but PR no is the same
+            // if yes, check if the api surface is the same, if so do nothing
+            // if so delete previous revision and create new revision.
+
         }
 
 

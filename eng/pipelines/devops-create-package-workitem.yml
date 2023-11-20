@@ -48,9 +48,6 @@ parameters:
   type: string
   default: ''
 
-variables:
-  AzureSDKToolsScriptsPath: $(System.DefaultWorkingDirectory)/azure-sdk-tools/eng/common/scripts
-
 steps:
 - checkout: self
 
@@ -58,7 +55,7 @@ steps:
   displayName: Create Package Work Item
   inputs:
     pwsh: true
-    filePath: $(AzureSDKToolsScriptsPath)/Update-DevOps-Release-WorkItem.ps1
+    filePath: $(Build.SourcesDirectory)/eng/common/scripts/Update-DevOps-Release-WorkItem.ps1
     arguments: >
       -language "${{parameters.Language}}"
       -serviceName "${{parameters.ServiceName}}"

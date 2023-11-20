@@ -37,7 +37,7 @@ parameters:
   type: string
   default: ''
 - name: ReleaseDate
-  displayName: Release Date (Format: MM/DD/YYYY)
+  displayName: Release Date (Format:MM/DD/YYYY)
   type: string
   default: ''
 - name: RelatedWorkItemId

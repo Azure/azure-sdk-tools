@@ -14,6 +14,7 @@ namespace Azure.Sdk.Tools.CodeownersLinter
 {
     internal class Program
     {
+        const string linterErrorsHelpLink = "https://aka.ms/azsdk/codeownersLinterErrors";
         static void Main(string[] args)
         {
             Stopwatch stopWatch = new Stopwatch();
@@ -224,6 +225,8 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 {
                     Console.WriteLine(error + Environment.NewLine);
                 }
+
+                Console.WriteLine($"There were linter errors. Please visit {linterErrorsHelpLink} for guidance on how to handle them.");
             }
             return returnCode;
         }

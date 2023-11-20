@@ -21,12 +21,12 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        public static async Task AssertAutomaticReviewModifier(ClaimsPrincipal user, ReviewListItemModel review, IAuthorizationService authorizationService)
+        public static async Task AssertAutomaticAPIRevisionModifier(ClaimsPrincipal user, APIRevisionListItemModel apiRevision, IAuthorizationService authorizationService)
         {
             var result = await authorizationService.AuthorizeAsync(
                 user,
-                review,
-                new[] { AutoReviewModifierRequirement.Instance });
+                apiRevision,
+                new[] { AutoAPIRevisionModifierRequirement.Instance });
             if (!result.Succeeded)
             {
                 throw new AuthorizationFailedException();

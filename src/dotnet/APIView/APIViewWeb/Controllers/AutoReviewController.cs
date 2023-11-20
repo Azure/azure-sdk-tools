@@ -75,15 +75,7 @@ namespace APIViewWeb.Controllers
             // With new restriction of creating automatic review only from master branch or GA version, this should ensure latest revision
             // is infact the version intended to be released.
 
-            ReviewListItemModel review;
-            if (String.IsNullOrEmpty(reviewId))
-            {
-                review = await _reviewManager.GetReviewAsync(packageName: packageName, language: language, isClosed: null);
-            }
-            else
-            {
-                review = await _reviewManager.GetReviewAsync(User, reviewId);
-            }
+            ReviewListItemModel review = await _reviewManager.GetReviewAsync(packageName: packageName, language: language, isClosed: null);
 
             if (review != null)
             {
@@ -141,12 +133,15 @@ namespace APIViewWeb.Controllers
             var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
             var apiRevision = default(APIRevisionListItemModel);
             var renderedCodeFile = new RenderedCodeFile(codeFile);
-            var apiRevisions = (await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id)).OrderByDescending(r => r.CreatedOn).ToList();
+            IEnumerable<APIRevisionListItemModel> apiRevisions = new List<APIRevisionListItemModel>();
 
             if (review != null)
             {
+                apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
                 if (apiRevisions.Any())
                 {
+                    apiRevisions = apiRevisions.OrderByDescending(r => r.CreatedOn);
+
                     // Delete pending apiRevisions if it is not in approved state before adding new revision
                     // This is to keep only one pending revision since last approval or from initial review revision
                     var automaticRevisions = new Queue<APIRevisionListItemModel>(apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic));
@@ -159,6 +154,7 @@ namespace APIViewWeb.Controllers
                         !await _apiRevisionsManager.IsAPIRevisionTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
                         !comments.Any(c => latestAutomaticAPIRevision.Id == c.RevisionId))
                     {
+                        await ManagerHelpers.AssertAutomaticAPIRevisionModifier(user: User, apiRevision: apiRevision, authorizationService: _authorizationService);
                         await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(user: User, apiRevision: latestAutomaticAPIRevision);
                         latestAutomaticAPIRevision = automaticRevisions.Dequeue();
                     }
@@ -191,7 +187,7 @@ namespace APIViewWeb.Controllers
             }
 
             // Check if user is authorized to modify automatic review
-            await ManagerHelpers.AssertAutomaticReviewModifier(user: User, review: review, authorizationService: _authorizationService);
+            
             if (createNewRevision)
             {
                 apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(user: User, reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName);
@@ -199,12 +195,15 @@ namespace APIViewWeb.Controllers
 
             if (apiRevision != null)
             {
-                if (!apiRevision.IsApproved)
+                if (!apiRevision.IsApproved && apiRevisions.Any())
                 {
-                    var latestApprovedAPIRevision = apiRevisions.FirstOrDefault(r => r.IsApproved);
-                    if (await _apiRevisionsManager.IsAPIRevisionTheSame(latestApprovedAPIRevision, renderedCodeFile))
+                    foreach (var apiRev in apiRevisions)
                     {
-                        await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(user: User, id: review.Id, apiRevision: apiRevision, notes: $"Approval Copied over from Revision with Id : {latestApprovedAPIRevision.Id}");
+                        if (apiRev.IsApproved && await _apiRevisionsManager.IsAPIRevisionTheSame(apiRev, renderedCodeFile))
+                        {
+                            await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(user: User, id: review.Id, apiRevision: apiRevision, notes: $"Approval Copied over from Revision with Id : {apiRev.Id}");
+                        }
+                        break;
                     }
                 }
             }

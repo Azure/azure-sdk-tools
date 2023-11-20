@@ -14,6 +14,7 @@ namespace Azure.Sdk.Tools.CodeownersLinter
 {
     internal class Program
     {
+        const string linterErrorsHelpLink = "https://aka.ms/azsdk/codeownersLinterErrors";
         static void Main(string[] args)
         {
             Stopwatch stopWatch = new Stopwatch();
@@ -204,8 +205,15 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 // above and doesn't need to be reported here.
                 if (codeownersBaselineFileExists)
                 {
-                    BaselineUtils baselineUtils = new BaselineUtils(codeownersBaselineFile);
-                    errors = baselineUtils.FilterErrorsUsingBaseline(errors);
+                    if (errors.Count == 0)
+                    {
+                        Console.WriteLine($"##vso[task.LogIssue type=warning;]There were no CODEOWNERS parsing errors but there is a baseline file {codeownersBaselineFile} for filtering. If the file is empty, or all errors have been fixed, then it should be deleted.");
+                    }
+                    else
+                    {
+                        BaselineUtils baselineUtils = new BaselineUtils(codeownersBaselineFile);
+                        errors = baselineUtils.FilterErrorsUsingBaseline(errors);
+                    }
                 }
             }
 
@@ -224,6 +232,8 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 {
                     Console.WriteLine(error + Environment.NewLine);
                 }
+
+                Console.WriteLine($"There were linter errors. Please visit {linterErrorsHelpLink} for guidance on how to handle them.");
             }
             return returnCode;
         }

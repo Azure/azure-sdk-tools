@@ -63,11 +63,11 @@ namespace APIViewWeb.Pages.Assemblies
             if (upload != null)
             {
                 var openReadStream = upload.OpenReadStream();
-                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, upload.FileName, Label, openReadStream, language: Language);
+                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, upload.FileName, Label, openReadStream, language: Language);
             }
             else
             {
-                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, FilePath, Label, null);
+                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, FilePath, Label, null);
             }
 
             return RedirectToPage();

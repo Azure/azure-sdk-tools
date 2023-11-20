@@ -1,20 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using ApiView;
-using APIView.DIff;
-using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Configuration;
 using Octokit;
 
 namespace APIViewWeb.Managers
@@ -32,13 +21,35 @@ namespace APIViewWeb.Managers
             _pullRequestsRepository = pullRequestsRepository;
         }
 
-        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModel(string reviewId) {
+        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModelAsync(string reviewId) {
             return await _pullRequestsRepository.GetPullRequestsAsync(reviewId);
         }
 
-        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModel(int pullRequestNumber, string repoName)
+        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModelAsync(int pullRequestNumber, string repoName)
         {
             return await _pullRequestsRepository.GetPullRequestsAsync(pullRequestNumber, repoName);
         }
+
+        public async Task<PullRequestModel> GetPullRequestModelAsync(int prNumber, string repoName, string packageName, string originalFile, string language)
+        {
+            var pullRequestModel = await _pullRequestsRepository.GetPullRequestAsync(prNumber, repoName, packageName, language);
+            if (pullRequestModel == null)
+            {
+                var repoInfo = repoName.Split("/");
+                var pullRequest = await _githubClient.PullRequest.Get(repoInfo[0], repoInfo[1], prNumber);
+                pullRequestModel = new PullRequestModel()
+                {
+                    RepoName = repoName,
+                    PullRequestNumber = prNumber,
+                    FilePath = originalFile,
+                    CreatedBy = pullRequest.User.Login,
+                    PackageName = packageName,
+                    Language = language,
+                    Assignee = pullRequest.Assignee?.Login
+                };
+            }
+            return pullRequestModel;
+        }
+
     }
 }

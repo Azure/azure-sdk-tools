@@ -1,4 +1,3 @@
-using Amazon.Runtime.Internal.Transform;
 using ApiView;
 using APIView.DIff;
 using APIView.Model;
@@ -12,9 +11,11 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Abstractions;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
+using Microsoft.VisualStudio.Services.DelegatedAuthorization;
 using Octokit;
 using System;
 using System.Collections.Generic;
@@ -120,6 +121,58 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// GetNewAPIRevisionAsync
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="packageName"></param>
+        /// <param name="language"></param>
+        /// <param name="label"></param>
+        /// <param name="prNumber"></param>
+        /// <param name="createdBy"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <returns></returns>
+        public APIRevisionListItemModel GetNewAPIRevisionAsync(APIRevisionType apiRevisionType,
+            string reviewId = null, string packageName = null, string language = null,
+            string label = null, int? prNumber = null, string createdBy="azure-sdk")
+        {
+            var apiRevision = new APIRevisionListItemModel()
+            {
+                CreatedBy = createdBy,
+                CreatedOn = DateTime.UtcNow,
+                APIRevisionType = apiRevisionType,
+                ChangeHistory = new List<APIRevisionChangeHistoryModel>()
+                {
+                    new APIRevisionChangeHistoryModel()
+                    {
+                        ChangeAction = APIRevisionChangeAction.Created,
+                        ChangedBy = createdBy,
+                        ChangedOn = DateTime.UtcNow
+                    }
+                },
+            };
+
+            if (!String.IsNullOrEmpty(reviewId))
+                apiRevision.ReviewId = reviewId;
+
+            if (!String.IsNullOrEmpty(packageName))
+                apiRevision.PackageName = packageName;
+
+            if (!String.IsNullOrEmpty(language))
+                apiRevision.Language = language;
+
+            if (!String.IsNullOrEmpty(language))
+                apiRevision.Language = language;
+
+            if (!String.IsNullOrEmpty(label))
+                apiRevision.Label = label;
+
+            if (prNumber != null)
+                apiRevision.PullRequestNo = prNumber;
+
+            return apiRevision;
+        }
+
+        /// <summary>
         /// Add new Approval or ApprovalReverted action to the ChangeHistory of a Revision
         /// </summary>
         /// <param name="user"></param>
@@ -172,6 +225,7 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="user"></param>
         /// <param name="reviewId"></param>
+        /// <param name="apiRevisionType"></param>
         /// <param name="name"></param>
         /// <param name="label"></param>
         /// <param name="fileStream"></param>
@@ -181,6 +235,7 @@ namespace APIViewWeb.Managers
         public async Task AddAPIRevisionAsync(
             ClaimsPrincipal user,
             string reviewId,
+            APIRevisionType apiRevisionType,
             string name,
             string label,
             Stream fileStream,
@@ -188,7 +243,7 @@ namespace APIViewWeb.Managers
             bool awaitComputeDiff = false)
         {
             var review = await _reviewsRepository.GetReviewAsync(reviewId);
-            await AddAPIRevisionAsync(user, review, name, label, fileStream, language, awaitComputeDiff);
+            await AddAPIRevisionAsync(user, review, apiRevisionType, name, label, fileStream, language, awaitComputeDiff);
         }
 
         /// <summary>
@@ -299,6 +354,7 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="user"></param>
         /// <param name="review"></param>
+        /// <param name="apiRevisionType"></param>
         /// <param name="name"></param>
         /// <param name="label"></param>
         /// <param name="fileStream"></param>
@@ -308,13 +364,20 @@ namespace APIViewWeb.Managers
         public async Task AddAPIRevisionAsync(
             ClaimsPrincipal user,
             ReviewListItemModel review,
+            APIRevisionType apiRevisionType,
             string name,
             string label,
             Stream fileStream,
             string language,
             bool awaitComputeDiff = false)
         {
-            var revision = new APIRevisionListItemModel();
+            var revision = GetNewAPIRevisionAsync(
+                reviewId: review.Id,
+                apiRevisionType: apiRevisionType,
+                packageName: review.PackageName,
+                language: review.Language,
+                createdBy: review.CreatedBy,
+                label: label);
 
             var codeFile = await _codeFileManager.CreateCodeFileAsync(
                 revision.Id,
@@ -323,12 +386,7 @@ namespace APIViewWeb.Managers
                 true,
                 language);
 
-            revision.ReviewId = review.Id;
-            revision.PackageName = review.PackageName;
-            revision.Language = review.Language;
             revision.Files.Add(codeFile);
-            revision.CreatedBy = user.GetGitHubLogin();
-            revision.Label = label;
 
             var languageService = language != null ? _languageServices.FirstOrDefault(l => l.Name == language) : _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
             // Run pipeline to generate the review if sandbox is enabled
@@ -536,25 +594,14 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, string reviewId, APIRevisionType apiRevisionType, string label, MemoryStream memoryStream, CodeFile codeFile, string originalName = null)
         {
-            var apiRevision = new APIRevisionListItemModel()
-            {
-                ReviewId = reviewId,
-                PackageName = codeFile.PackageName,
-                Language = codeFile.Language,
-                CreatedOn = DateTime.UtcNow,
-                CreatedBy = user.GetGitHubLogin(),
-                APIRevisionType = apiRevisionType,
-                ChangeHistory = new List<APIRevisionChangeHistoryModel>()
-                {
-                    new APIRevisionChangeHistoryModel()
-                    {
-                        ChangeAction = APIRevisionChangeAction.Created,
-                        ChangedBy = user.GetGitHubLogin(),
-                        ChangedOn = DateTime.UtcNow
-                    }
-                },
-                Label = label
-            };
+
+            var apiRevision = GetNewAPIRevisionAsync(
+                reviewId: reviewId,
+                apiRevisionType: apiRevisionType,
+                packageName: codeFile.PackageName,
+                language: codeFile.Language,
+                createdBy: user.GetGitHubLogin(),
+                label: label);
 
             var apiRevisionCodeFile = await _codeFileManager.CreateReviewCodeFileModel(apiRevisionId: apiRevision.Id, memoryStream: memoryStream, codeFile: codeFile);
             apiRevision.Files.Add(apiRevisionCodeFile);

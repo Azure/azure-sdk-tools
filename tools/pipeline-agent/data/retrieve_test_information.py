@@ -85,7 +85,7 @@ def get_tests_for_build(organization: str, project: str, buildid: str) -> List[R
     run_result_sets = []
 
     for run_id in test_runs:
-        run_result_sets.append(get_test_results(organization, project, run_id))
+        run_result_sets.extend(get_test_results(organization, project, run_id))
 
     return run_result_sets
 
@@ -106,9 +106,7 @@ if __name__ == "__main__":
 
         for test_result_response in results:
             parsed_result = json.loads(test_result_response.text)
-
-            breakpoint()
-            # with open(f'{buildid}_testrun_{test_result_response}.json', 'w') as f:
-            #     f.write(json.dumps(parsed_result, indent=2))
+            with open(f'{buildid}_testrun_{test_result_response}.json', 'w') as f:
+                f.write(json.dumps(parsed_result, indent=2))
 
 

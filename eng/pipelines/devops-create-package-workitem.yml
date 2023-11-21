@@ -1,10 +1,6 @@
-pr: none
-
-trigger: none
-
 pool:
-  name: azsdk-pool-mms-win-2022-general
-  vmImage: windows-2022
+  name: 'azsdk-pool-mms-ubuntu-2204-general'
+  vmImage: 'ubuntu-22.04'
 
 parameters:
 - name: Language
@@ -55,9 +51,20 @@ parameters:
 steps:
 - checkout: self
 
-- pwsh: |
-    $env:AZURE_DEVOPS_EXT_PAT = '$(azuresdk-azure-sdk-devops-release-work-item-pat)'
-    az devops login
-    . $(Build.SourcesDirectory)/eng/common/scripts/Update-DevOps-Release-WorkItem.ps1 -language "${{parameters.Language}}" -serviceName "${{parameters.ServiceName}}" -packageDisplayName "${{parameters.PackageDisplayName}}" -packageType "${{parameters.PackageType}}" -packageName "${{parameters.PackageName}}" -version "${{parameters.PackageVersion}}" -plannedDate "${{parameters.ReleaseDate}}" -relatedWorkItemId ${{parameters.RelatedWorkItemId}} -tag "${{parameters.Tag}}"
-  name: CreatePackage
+
+- task: PowerShell@2
   displayName: Create Package Work Item
+  inputs:
+    pwsh: true
+    filePath: $(Build.SourcesDirectory)/eng/common/scripts/Create-Package-Workitem.ps1
+    arguments: >
+      -language "${{parameters.Language}}"
+      -serviceName "${{parameters.ServiceName}}"
+      -packageDisplayName "${{parameters.PackageDisplayName}}"
+      -packageType "${{parameters.PackageType}}"
+      -packageName "${{parameters.PackageName}}"
+      -version "${{parameters.PackageVersion}}"
+      -plannedDate "${{parameters.ReleaseDate}}"
+      -relatedWorkItemId ${{parameters.RelatedWorkItemId}}
+      -tag "${{parameters.Tag}}"
+      -devops_pat '$(azuresdk-azure-sdk-devops-release-work-item-pat)'

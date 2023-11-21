@@ -47,10 +47,150 @@ Both Johan and Ben have both mentioned separately that it would be a useful to g
 
 IF there is a test that has _only_ succeeded in the past few months...is there a reason that we should run it? We need to ask _more_ of questions like this.
 
-The scripts present in `data` are exploratory and used to investigate what data is available without attempting to integrate it with `pipeline-witness`.
+The scripts present in `data` are exploratory and used to investigate what data is available without attempting to integrate it with `pipeline-witness`. `pipeline-witness` is triggered by `pipeline-completed` events from github. As we process the metadata for a completed build, the `lastUpdatedTime` will be available. This date, plus or minus a couple days will serve as the `minLastUpdatedDate` and `maxLastUpdatedDate` when retrieving TestRuns for a given buildId.
 
-**Schema**:
+Once we've retrieved the buildId, we will pull down the individual testResults for that runId. This is a couple sample test results:
 
+```jsonc
+// individual test result from a python storage run
+{
+    "id": 100000,
+    "project": {
+        "id": "590cfd2a-581c-4dcb-a12e-6568ce786175",
+        "name": "internal",
+        "url": "https://dev.azure.com/azure-sdk/_apis/projects/internal"
+    },
+    "startedDate": "2023-11-18T01:37:20.947Z",
+    "completedDate": "2023-11-18T01:38:01.35Z",
+    "durationInMs": 40403.0,
+    "outcome": "Passed",
+    "revision": 1,
+    "state": "Completed",
+    "testCase": {
+        "name": "test_create_blob"
+    },
+    "testRun": {
+        "id": "44424448",
+        "name": "storage  Test windows2022_39_7",
+        "url": "https://dev.azure.com/azure-sdk/internal/_apis/test/Runs/44424448"
+    },
+    "lastUpdatedDate": "2023-11-18T01:56:33.863Z",
+    "priority": 0,
+    "computerName": "853f4eb1c00000E",
+    "build": {
+        "id": "3274085",
+        "name": "20231117.1",
+        "url": "https://dev.azure.com/azure-sdk/_apis/build/Builds/3274085"
+    },
+    "createdDate": "2023-11-18T01:56:33.863Z",
+    "url": "https://dev.azure.com/azure-sdk/internal/_apis/test/Runs/44424448/Results/100000",
+    "failureType": "None",
+    "automatedTestStorage": "sdk.storage.azure-storage-blob.tests.test_append_blob.TestStorageAppendBlob",
+    "automatedTestType": "JUnit",
+    "testCaseTitle": "test_create_blob",
+    "customFields": [],
+    "testCaseReferenceId": 255381332,
+    "lastUpdatedBy": {
+        "displayName": "internal Build Service (azure-sdk)",
+        "url": "https://spsprodcus3.vssps.visualstudio.com/A207f0a5c-e100-4304-88d7-ea33d810297c/_apis/Identities/429d39d2-8bab-45b8-bbea-f79e43191f9b",
+        "_links": {
+            "avatar": {
+                "href": "https://dev.azure.com/azure-sdk/_apis/GraphProfile/MemberAvatars/svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ"
+            }
+        },
+        "id": "429d39d2-8bab-45b8-bbea-f79e43191f9b",
+        "uniqueName": "Build\\590cfd2a-581c-4dcb-a12e-6568ce786175",
+        "imageUrl": "https://dev.azure.com/azure-sdk/_apis/GraphProfile/MemberAvatars/svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ",
+        "descriptor": "svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ"
+    },
+    "automatedTestName": "test_create_blob"
+}
+```
+
+```jsonc
+// individual test result from .NET core test
+{
+  "id": 100000,
+  "project": {
+    "id": "590cfd2a-581c-4dcb-a12e-6568ce786175",
+    "name": "internal",
+    "url": "https://dev.azure.com/azure-sdk/_apis/projects/internal"
+  },
+  "startedDate": "2023-11-17T09:10:03.47Z",
+  "completedDate": "2023-11-17T09:10:03.47Z",
+  "outcome": "Passed",
+  "revision": 1,
+  "state": "Completed",
+  "testCase": {
+    "name": "CanRoundTripValueBodyMessages(3.1415926d)"
+  },
+  "testRun": {
+    "id": "44405954",
+    "name": "Windows net7.0",
+    "url": "https://dev.azure.com/azure-sdk/internal/_apis/test/Runs/44405954"
+  },
+  "lastUpdatedDate": "2023-11-17T09:13:05.203Z",
+  "priority": 255,
+  "computerName": "7e60d6cbc000003",
+  "build": {
+    "id": "3271643",
+    "name": "20231117.1",
+    "url": "https://dev.azure.com/azure-sdk/_apis/build/Builds/3271643"
+  },
+  "createdDate": "2023-11-17T09:13:05.203Z",
+  "url": "https://dev.azure.com/azure-sdk/internal/_apis/test/Runs/44405954/Results/100000",
+  "failureType": "None",
+  "automatedTestStorage": "azure.core.amqp.tests.dll",
+  "automatedTestType": "UnitTest",
+  "testCaseTitle": "CanRoundTripValueBodyMessages(3.1415926d)",
+  "customFields": [],
+  "testCaseReferenceId": 456716594,
+  "lastUpdatedBy": {
+    "displayName": "internal Build Service (azure-sdk)",
+    "url": "https://spsprodcus3.vssps.visualstudio.com/A207f0a5c-e100-4304-88d7-ea33d810297c/_apis/Identities/429d39d2-8bab-45b8-bbea-f79e43191f9b",
+    "_links": {
+      "avatar": {
+        "href": "https://dev.azure.com/azure-sdk/_apis/GraphProfile/MemberAvatars/svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ"
+      }
+    },
+    "id": "429d39d2-8bab-45b8-bbea-f79e43191f9b",
+    "uniqueName": "Build\\590cfd2a-581c-4dcb-a12e-6568ce786175",
+    "imageUrl": "https://dev.azure.com/azure-sdk/_apis/GraphProfile/MemberAvatars/svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ",
+    "descriptor": "svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ"
+  },
+  "automatedTestName": "Azure.Core.Amqp.Tests.AmqpAnnotatedMessageConverterTests.CanRoundTripValueBodyMessages(3.1415926d)"
+}
+```
+
+From which we we will produce the `TestResults` table.
+
+We discard:
+
+- Build Information (available through TestRunId -> TestRun -> BuildId -> Build via join)
+- Test Run Information (aside from TestRunId to map to TestRun table)
+- `Last Updated By` object information...not useful for test results
+
+| Column | Type | Accessor/Notes |
+|--------|------|----------|
+| TestRunId | `long` | |
+| TestCaseId | `long` | |
+| StartedDate | `DateTime` | |
+| CompletdDate | `DateTime` | |
+| LastUpdateDate | `DateTime` | |
+| CreatedDate | `DateTime` | |
+| Outcome | `string` | |
+| Revision | `int` | |
+| State | `string` | |
+| TestCase | `string` | TestCase.Name |
+| TestCaseTitle | `string` | If TestCase.Name and TestCaseTitle are _always_ the same, we should dump one. |
+| Priority | `int` | |
+| ComputerName | `string` | |
+| Url | `string` | |
+| FailureType | `string` | |
+| TestCaseReferenceId | `long` | |
+| AutomatedTestName | `string` | |
+| AutomatedTestStorageName | `string` | |
+| AutomatedTestType | `string` | |
 
 ## The Language Matrix - How will work be parceled out?
 

@@ -12,18 +12,34 @@
 # | project Title, RunDurationSeconds, CompletedDate
 # | render timechart
 #
-# Because the test run is super high level, we need to reach out to the devs api to retrieve the actual historical build results. This script is intended to aid in that endeavor
+# Because the test run is super high level, we need to reach out to the devs api to retrieve the actual historical build results. This script is intended to aid in that endeavor, and to be used
+# as a reference to implement the upload handler in pipeline-witness.
 
 import os
 import sys
 import base64
 import json
 import argparse
+import datetime
 
-from typing import List, Set
+from typing import List, Set, Any
+from dataclasses import dataclass
 
 import httpx
 from httpx import Response
+
+
+class TestResultItem:
+    def __init__(self):
+        breakpoint()
+        pass
+
+    @classmethod
+    def from_json_obj(cls, json: Any):
+
+        breakpoint()
+        return cls()
+
 
 def GET_NO_CONTINUE(uri: str) -> Response:
     pat_bytes = base64.b64encode(bytes(":" + os.getenv('DEVOPS_TOKEN'), 'utf-8'))
@@ -32,6 +48,7 @@ def GET_NO_CONTINUE(uri: str) -> Response:
     return httpx.get(uri, headers={
         "Authorization": f"Basic {base64_str}"
     })
+
 
 def GET(uri: str) -> List[Response]:
     response_set = []
@@ -56,9 +73,14 @@ def GET(uri: str) -> List[Response]:
 
     return response_set
 
+
 def get_test_runs_for_buildid(organization: str, project: str, buildid: str) -> Set[str]:
-    # todo, get the min and last updated from the build definition itself
-    uri = f"https://vstmr.dev.azure.com/{organization}/{project}/_apis/testresults/runs?minLastUpdatedDate=2023-11-18T00:00:00Z&maxLastUpdatedDate=2023-11-21T00:00:00Z&buildIds={buildid}&api-version=7.2-preview.1"
+    # we will have access to build.FinishTime in the BlobUploadProcessor for pipeline-witness, we will use build.FinishTime +- 24 hours to search for the test runs.
+    # for this test script, we'll just have a static min and max last updated date
+    min_last_updated = "2023-11-16T00:00:00Z"
+    max_last_updated = "2023-11-21T00:00:00Z"
+
+    uri = f"https://vstmr.dev.azure.com/{organization}/{project}/_apis/testresults/runs?minLastUpdatedDate={min_last_updated}&maxLastUpdatedDate={max_last_updated}&buildIds={buildid}&api-version=7.2-preview.1"
     test_runs = GET(uri)
 
     run_set = set()
@@ -82,12 +104,20 @@ def get_individual_test_result(organization: str, project: str, run_id: str, tes
 
 def get_tests_for_build(organization: str, project: str, buildid: str) -> List[Response]:
     test_runs = get_test_runs_for_buildid(organization, project, buildid)
-    run_result_sets = []
+    run_result_sets: List[Response] = []
+    test_results: List[TestResultItem] = []
 
     for run_id in test_runs:
         run_result_sets.extend(get_test_results(organization, project, run_id))
 
-    return run_result_sets
+    for result in run_result_sets:
+        results = json.loads(result.text)
+        for test_result_blob in results["value"]:
+            test_results.append( 
+                TestResultItem.from_json_obj(test_result_blob)
+            )
+
+    return test_results
 
 
 if __name__ == "__main__":
@@ -97,16 +127,18 @@ if __name__ == "__main__":
 
     # both on azure-sdk internal
     targeted_buildids = [
-        "3274085", # storage python
+        # "3274085", # storage python
         "3271643"  # core .net
     ]
 
     for buildid in targeted_buildids:
         results = get_tests_for_build("azure-sdk", "internal", buildid)
 
-        for test_result_response in results:
-            parsed_result = json.loads(test_result_response.text)
-            with open(f'{buildid}_testrun_{test_result_response}.json', 'w') as f:
-                f.write(json.dumps(parsed_result, indent=2))
+        breakpoint()
+        # for test_result_response in results:
+        #     parsed_result = json.loads(test_result_response.text)
+        #     with open(f'{buildid}_testrun_an_out.json', 'w') as f:
+        #         f.write(json.dumps(parsed_result, indent=2))
 
+        #     breakpoint()
 

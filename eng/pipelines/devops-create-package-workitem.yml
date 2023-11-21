@@ -1,6 +1,10 @@
+pr: none
+
+trigger: none
+
 pool:
-  Pool: azsdk-pool-mms-win-2022-general
-  Image: windows-2022
+  name: azsdk-pool-mms-win-2022-general
+  vmImage: windows-2022
 
 parameters:
 - name: Language

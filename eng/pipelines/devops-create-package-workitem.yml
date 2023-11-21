@@ -67,4 +67,4 @@ steps:
       -plannedDate "${{parameters.ReleaseDate}}"
       -relatedWorkItemId ${{parameters.RelatedWorkItemId}}
       -tag "${{parameters.Tag}}"
-      -devops_pat '$(azuresdk-azure-sdk-devops-release-work-item-pat)'
+      -devops_pat "$(azuresdk-azure-sdk-devops-release-work-item-pat)"

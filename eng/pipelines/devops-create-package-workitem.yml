@@ -56,7 +56,7 @@ steps:
   displayName: Create Package Work Item
   inputs:
     pwsh: true
-    filePath: $(Build.SourcesDirectory)/eng/common/scripts/Create-Package-WorkItem.ps1
+    filePath: $(Build.SourcesDirectory)/eng/common/scripts/Update-DevOps-Release-WorkItem.ps1
     arguments: >
       -language "${{parameters.Language}}"
       -serviceName "${{parameters.ServiceName}}"

@@ -166,9 +166,9 @@ From which we we will produce the `TestResults` table.
 
 We discard:
 
-- Build Information (available through TestRunId -> TestRun -> BuildId -> Build via join)
-- Test Run Information (aside from TestRunId to map to TestRun table)
-- `Last Updated By` object information...not useful for test results
+- `build`: Build Information. We discard this as we can get the build info by joining to the `TestRun` table.
+- `testrun`: Which contains details about the testrun which invoked the test. We only retain the Id.
+- `lastUpdatedBy`: What touched this testresult? We don't care when reporting on the tests. We will exclude tests by excluding their TestRunId.
 
 | Column | Type | Accessor/Notes |
 |--------|------|----------|

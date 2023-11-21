@@ -45,11 +45,12 @@ Currently, the test data is not available within our data sets. [This issue has 
 
 Both Johan and Ben have both mentioned separately that it would be a useful to get an _exact list_ of which tests are succeeding and failing.
 
-IF there is a test that has _only_ succeeded in the past few months...is there a reason that we should run it?
+IF there is a test that has _only_ succeeded in the past few months...is there a reason that we should run it? We need to ask _more_ of questions like this.
 
-We need to ask _more_ of questions like this.
+The scripts present in `data` are exploratory and used to investigate what data is available without attempting to integrate it with `pipeline-witness`.
 
-The scripts present in `data` are intended to retrieve some of this data so we can actually reference it later.
+**Schema**:
+
 
 ## The Language Matrix - How will work be parceled out?
 

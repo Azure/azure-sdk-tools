@@ -78,7 +78,7 @@ def get_test_runs_for_buildid(organization: str, project: str, buildid: str) -> 
     # we will have access to build.FinishTime in the BlobUploadProcessor for pipeline-witness, we will use build.FinishTime +- 24 hours to search for the test runs.
     # for this test script, we'll just have a static min and max last updated date
     min_last_updated = "2023-11-16T00:00:00Z"
-    max_last_updated = "2023-11-21T00:00:00Z"
+    max_last_updated = "2023-11-22T00:00:00Z"
 
     uri = f"https://vstmr.dev.azure.com/{organization}/{project}/_apis/testresults/runs?minLastUpdatedDate={min_last_updated}&maxLastUpdatedDate={max_last_updated}&buildIds={buildid}&api-version=7.2-preview.1"
     test_runs = GET(uri)
@@ -125,13 +125,13 @@ if __name__ == "__main__":
         print("This script MUST have access to a valid devops token under environmenet variable DEVOPS_TOKEN. exiting.")
         sys.exit(1)
 
-    # both on azure-sdk internal
+    # all on azure-sdk internal
     targeted_buildids = [
         # "3274085", # storage python (saturday 11/18)
         # "3271643",  # core .net (friday 11/17)
         # "3274125", # go azblob (friday 11/17)
         # "3273253", # iOS identity (friday 11/17)
-        # "3273729", # java storage (friday 11/17 failed)
+        # "3273729", # java storage (friday 11/17 failed, retried tuesday 11/21)
         # "3273544", # cpp storage (friday 11/17)
         "3274026", # js storage (friday 11/17 failed)
     ]

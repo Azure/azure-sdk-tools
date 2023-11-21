@@ -57,6 +57,7 @@ steps:
 
 - pwsh: |
     $env:AZURE_DEVOPS_EXT_PAT = '$(azuresdk-azure-sdk-devops-release-work-item-pat)'
+    az devops login
     . $(Build.SourcesDirectory)/eng/common/scripts/Update-DevOps-Release-WorkItem.ps1 -language "${{parameters.Language}}" -serviceName "${{parameters.ServiceName}}" -packageDisplayName "${{parameters.PackageDisplayName}}" -packageType "${{parameters.PackageType}}" -packageName "${{parameters.PackageName}}" -version "${{parameters.PackageVersion}}" -plannedDate "${{parameters.ReleaseDate}}" -relatedWorkItemId ${{parameters.RelatedWorkItemId}} -tag "${{parameters.Tag}}"
   name: CreatePackage
   displayName: Create Package Work Item

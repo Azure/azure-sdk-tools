@@ -15,6 +15,7 @@ using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.OpenApi.Any;
 
 namespace APIViewWeb.Helpers
 {
@@ -253,7 +254,7 @@ namespace APIViewWeb.Helpers
             if (!string.IsNullOrEmpty(revisionId)) {
                 if (apiRevisions.Where(x => x.Id == revisionId).Any())
                 {
-                    activeRevision = await reviewRevisionsManager.GetAPIRevisionAsync(user, revisionId);
+                    activeRevision = apiRevisions.First(x => x.Id == revisionId);
                 }
                 else
                 {
@@ -444,21 +445,26 @@ namespace APIViewWeb.Helpers
         /// <summary>
         /// Ensure unique label for Revisions
         /// </summary>
-        /// <param name="revision"></param>
+        /// <param name="apiRevision"></param>
         /// <param name="addType"></param>
         /// <returns></returns>
-        public static string ResolveRevisionLabel(APIRevisionListItemModel revision, bool addType = true)
+        public static string ResolveRevisionLabel(APIRevisionListItemModel apiRevision, bool addType = true)
         {
-            var label = $"{revision.CreatedOn.ToString()} | {revision.CreatedBy}";
+            var label = $"{apiRevision.CreatedOn.ToString()} | {apiRevision.CreatedBy}";
 
-            if (!String.IsNullOrWhiteSpace(revision.Label))
+            if (apiRevision.Files.Any() && !String.IsNullOrEmpty(apiRevision.Files[0].PackageVersion))
+            {
+                label = $"{apiRevision.Files[0].PackageVersion} | {label}";
+            }
+
+            if (!String.IsNullOrWhiteSpace(apiRevision.Label))
             { 
-                label = $"{revision.Label} | {label}";
+                label = $"{label} | {apiRevision.Label}";
             }
 
             if (addType)
             {
-                label = $"{revision.APIRevisionType.ToString()} | {label}";
+                label = $"{apiRevision.APIRevisionType.ToString()} | {label}";
             }
             return label;
         }

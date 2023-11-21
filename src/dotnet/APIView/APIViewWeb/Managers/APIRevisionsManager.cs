@@ -8,8 +8,13 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.IdentityModel.Abstractions;
+using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Octokit;
 using System;
 using System.Collections.Generic;
@@ -33,6 +38,8 @@ namespace APIViewWeb.Managers
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
+
+        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
 
         public APIRevisionsManager(
@@ -109,7 +116,7 @@ namespace APIViewWeb.Managers
             {
                 throw new UnauthorizedAccessException();
             }
-            return await _apiRevisionsRepository.GetReviewRevisionAsync(revisionId);
+            return await _apiRevisionsRepository.GetAPIRevisionAsync(revisionId);
         }
 
         /// <summary>
@@ -376,23 +383,23 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="user"></param>
         /// <param name="reviewId"></param>
-        /// <param name="revisionId"></param>
+        /// <param name="apiRevisionId"></param>
         /// <returns></returns>
-        public async Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string revisionId)
+        public async Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string apiRevisionId)
         {
-            var revision = await _apiRevisionsRepository.GetReviewRevisionAsync(revisionId);
-            ManagerHelpers.AssertAPIRevisionDeletion(revision);
-            await ManagerHelpers.AssertAPIRevisionOwner(user, revision, _authorizationService);
-            await SoftDeleteAPIRevisionAsync(user, revision);
+            var apiRevision = await _apiRevisionsRepository.GetReviewRevisionAsync(apiRevisionId);
+            ManagerHelpers.AssertAPIRevisionDeletion(apiRevision);
+            await ManagerHelpers.AssertAPIRevisionOwner(user, apiRevision, _authorizationService);
+            await SoftDeleteAPIRevisionAsync(user, apiRevision);
         }
 
         /// <summary>
         /// Delete APIRevisions
         /// </summary>
         /// <param name="user"></param>
-        /// <param name="revision"></param>
+        /// <param name="apiRevision"></param>
         /// <returns></returns>
-        public async Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, APIRevisionListItemModel revision)
+        public async Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, APIRevisionListItemModel apiRevision)
         {
             ManagerHelpers.AssertAPIRevisionDeletion(revision);
             await ManagerHelpers.AssertAPIRevisionOwner(user, revision, _authorizationService);
@@ -431,6 +438,89 @@ namespace APIViewWeb.Managers
             var lastRevisionTextLines = lastRevisionFile.RenderText(false, skipDiff: true);
             var fileTextLines = renderedCodeFile.RenderText(false, skipDiff: true);
             return lastRevisionTextLines.SequenceEqual(fileTextLines);
+        }
+
+        /// <summary>
+        /// Update APIRevision
+        /// </summary>
+        /// <param name="revision"></param>
+        /// <param name="languageService"></param>
+        /// <param name="telemetryClient"></param>
+        /// <returns></returns>
+        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, TelemetryClient telemetryClient)
+        {
+            foreach (var file in revision.Files)
+            {
+                if (!file.HasOriginal || !languageService.CanUpdate(file.VersionString))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    var fileOriginal = await _originalsRepository.GetOriginalAsync(file.FileId);
+                    // file.Name property has been repurposed to store package name and version string
+                    // This is causing issue when updating review using latest parser since it expects Name field as file name
+                    // We have added a new property FileName which is only set for new reviews
+                    // All older reviews needs to be handled by checking review name field
+                    var fileName = file.FileName ?? file.Name;
+                    var codeFile = await languageService.GetCodeFileAsync(fileName, fileOriginal, false);
+                    await _codeFileRepository.UpsertCodeFileAsync(revision.Id, file.FileId, codeFile);
+                    // update only version string
+                    file.VersionString = codeFile.VersionString;
+                    await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+                }
+                catch (Exception ex)
+                {
+                    telemetryClient.TrackTrace("Failed to update revision " + revision.Id);
+                    telemetryClient.TrackException(ex);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// SoftDelete APIRevision if its not been updated after many months
+        /// </summary>
+        /// <param name="archiveAfterMonths"></param>
+        /// <returns></returns>
+        public async Task AutoArchiveAPIRevisions(int archiveAfterMonths)
+        {
+            var lastUpdatedDate = DateTime.Now.Subtract(TimeSpan.FromDays(archiveAfterMonths * 30));
+            var manualRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(lastUpdatedOn: lastUpdatedDate, apiRevisionType:  APIRevisionType.Manual);
+
+            // Find all inactive reviews
+            foreach (var apiRevision in manualRevisions)
+            {
+                var requestTelemetry = new RequestTelemetry { Name = "Archiving Revision " + apiRevision.Id };
+                var operation = _telemetryClient.StartOperation(requestTelemetry);
+                try
+                {
+                    await SoftDeleteAPIRevisionAsync(apiRevision: apiRevision, notes: "Auto archived");
+                    await Task.Delay(500);
+                }
+                catch (Exception e)
+                {
+                    _telemetryClient.TrackException(e);
+                }
+                finally
+                {
+                    _telemetryClient.StopOperation(operation);
+                }
+            }
+        }
+
+        private async Task SoftDeleteAPIRevisionAsync(APIRevisionListItemModel apiRevision, string userName = "azure-sdk", string notes = "")
+        {
+            if (!apiRevision.IsDeleted)
+            {
+                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(
+                     changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.Deleted, user: userName, notes: notes);
+
+                apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
+                apiRevision.IsDeleted = changeUpdate.ChangeStatus;
+
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            }
         }
 
         /// <summary>

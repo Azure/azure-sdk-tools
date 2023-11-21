@@ -8,6 +8,7 @@ using System.IO;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIView.Model;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewWeb.Managers.Interfaces
 {
@@ -28,5 +29,7 @@ namespace APIViewWeb.Managers.Interfaces
         public Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, APIRevisionListItemModel revision);
         public TreeNode<InlineDiffLine<CodeLine>> ComputeSectionDiff(TreeNode<CodeLine> before, TreeNode<CodeLine> after, RenderedCodeFile beforeFile, RenderedCodeFile afterFile);
         public Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, string reviewId, APIRevisionType apiRevisionType, string label, MemoryStream memoryStream, CodeFile codeFile, string originalName = null);
+        public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, TelemetryClient telemetryClient);
+        public Task AutoArchiveAPIRevisions(int archiveAfterMonths);
     }
 }

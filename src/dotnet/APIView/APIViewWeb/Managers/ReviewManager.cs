@@ -23,6 +23,8 @@ using APIViewWeb.Managers.Interfaces;
 using Amazon.SecurityToken.SAML;
 using Octokit;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.ApplicationInsights.DataContracts;
+using System.IO;
 
 namespace APIViewWeb.Managers
 {
@@ -36,6 +38,7 @@ namespace APIViewWeb.Managers
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly IEnumerable<LanguageService> _languageServices;
 
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
@@ -43,7 +46,7 @@ namespace APIViewWeb.Managers
             IAuthorizationService authorizationService, ICosmosReviewRepository reviewsRepository,
             IAPIRevisionsManager apiRevisionsManager, ICommentsManager commentManager,
             IBlobCodeFileRepository codeFileRepository, ICosmosCommentsRepository commentsRepository, 
-            IHubContext<SignalRHub> signalRHubContext)
+            IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices)
 
         {
             _authorizationService = authorizationService;
@@ -53,6 +56,7 @@ namespace APIViewWeb.Managers
             _codeFileRepository = codeFileRepository;
             _commentsRepository = commentsRepository;
             _signalRHubContext = signalRHubContext;
+            _languageServices = languageServices;
         }
 
         public Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
@@ -307,12 +311,130 @@ namespace APIViewWeb.Managers
             return result.Violations.Count;
         }
 
+        /// <summary>
+        /// Logic to update Reviews in a blackground task
+        /// </summary>
+        /// <param name="updateDisabledLanguages"></param>
+        /// <param name="backgroundBatchProcessCount"></param>
+        /// <returns></returns>
+        public async Task UpdateReviewsInBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount)
+        {
+            foreach (var language in LanguageService.SupportedLanguages)
+            {
+                if (updateDisabledLanguages.Contains(language))
+                {
+                    _telemetryClient.TrackTrace("Background task to update API review at startup is disabled for langauge " + language);
+                    continue;
+                }
+                var languageService = LanguageServiceHelpers.GetLanguageService(language, _languageServices);
+                if (languageService == null)
+                    continue;
+
+                // If review is updated using devops pipeline then batch process update review requests
+                if (languageService.IsReviewGenByPipeline)
+                {
+                    await UpdateReviewsUsingPipeline(language, languageService, backgroundBatchProcessCount);
+                }
+                else
+                {
+                    var reviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: false);
+
+                    foreach (var review in reviews)
+                    {
+                        var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
+
+                        foreach (var revision in revisions)
+                        {
+                            if (
+                                revision.Files.First().HasOriginal &&
+                                LanguageServiceHelpers.GetLanguageService(revision.Language, _languageServices)?.CanUpdate(revision.Files.First().VersionString) == true)
+                            {
+                                var requestTelemetry = new RequestTelemetry { Name = "Updating Review " + review.Id };
+                                var operation = _telemetryClient.StartOperation(requestTelemetry);
+                                try
+                                {
+                                    await Task.Delay(500);
+                                    await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService, _telemetryClient);
+                                }
+                                catch (Exception e)
+                                {
+                                    _telemetryClient.TrackException(e);
+                                }
+                                finally
+                                {
+                                    _telemetryClient.StopOperation(operation);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         private async Task AssertReviewOwnerAsync(ClaimsPrincipal user, ReviewListItemModel reviewModel)
         {
             var result = await _authorizationService.AuthorizeAsync(user, reviewModel, new[] { ReviewOwnerRequirement.Instance });
             if (!result.Succeeded)
             {
                 throw new AuthorizationFailedException();
+            }
+        }
+
+
+        /// <summary>
+        /// Languages that full support sandboxing updates reviews using Azure devops pipeline
+        /// We should batch all eligible reviews to avoid a pipeline run storm
+        /// </summary>
+        /// <param name="language"></param>
+        /// <param name="languageService"></param>
+        /// <param name="backgroundBatchProcessCount"></param>
+        /// <returns></returns>
+        private async Task UpdateReviewsUsingPipeline(string language, LanguageService languageService, int backgroundBatchProcessCount)
+        {
+            var reviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: false);
+            var paramList = new List<APIRevisionGenerationPipelineParamModel>();
+
+            foreach (var review in reviews)
+            {
+                var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
+                foreach (var revision in revisions)
+                {
+                    foreach (var file in revision.Files)
+                    {
+                        //Don't include current revision if file is not required to be updated.
+                        // E.g. json token file is uploaded for a language, specific revision was already upgraded.
+                        if (!file.HasOriginal || file.FileName == null || !languageService.IsSupportedFile(file.FileName) || !languageService.CanUpdate(file.VersionString))
+                        {
+                            continue;
+                        }
+
+                        _telemetryClient.TrackTrace($"Updating review: {review.Id}, revision: {revision.Id}");
+                        paramList.Add(new APIRevisionGenerationPipelineParamModel()
+                        {
+                            FileID = file.FileId,
+                            ReviewID = review.Id,
+                            RevisionID = revision.Id,
+                            FileName = Path.GetFileName(file.FileName)
+                        });
+                    }
+                }
+
+                // This should be changed to configurable batch count
+                if (paramList.Count >= backgroundBatchProcessCount)
+                {
+                    _telemetryClient.TrackTrace($"Running pipeline to update reviews for {language} with batch size {paramList.Count}");
+                    await _apiRevisionsManager.RunAPIRevisionGenerationPipeline(paramList, languageService.Name);
+                    // Delay of 10 minute before starting next batch
+                    // We should try to increase the number of revisions in the batch than number of runs.
+                    await Task.Delay(600000);
+                    paramList.Clear();
+                }
+            }
+
+            if (paramList.Count > 0)
+            {
+                _telemetryClient.TrackTrace($"Running pipeline to update reviews for {language} with batch size {paramList.Count}");
+                await _apiRevisionsManager.RunAPIRevisionGenerationPipeline(paramList, languageService.Name);
             }
         }
     }

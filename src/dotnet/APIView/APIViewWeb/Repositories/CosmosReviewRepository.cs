@@ -188,6 +188,25 @@ namespace APIViewWeb
             return result;
         }
 
+        public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(string language, bool? isClosed = false)
+        {
+            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE r.IsClosed = @isClosed");
+            queryStringBuilder.Append(" AND r.Language = @language");
+
+            var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@language", language)
+                .WithParameter("@isClosed", isClosed);
+
+            var reviews = new List<ReviewListItemModel>();
+            using FeedIterator<ReviewListItemModel> feedIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryDefinition);
+            while (feedIterator.HasMoreResults)
+            {
+                FeedResponse<ReviewListItemModel> response = await feedIterator.ReadNextAsync();
+                reviews.AddRange(response);
+            }
+            return reviews;
+        }
+
         private static string ArrayToQueryString<T>(IEnumerable<T> items)
         {
             var result = new StringBuilder();

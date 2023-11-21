@@ -189,13 +189,40 @@ namespace APIViewWeb
         /// </summary>
         /// <param name="revisionId"></param> The revisionId
         /// <returns></returns>
-        public async Task<APIRevisionListItemModel> GetReviewRevisionAsync(string revisionId)
+        public async Task<APIRevisionListItemModel> GetAPIRevisionAsync(string revisionId)
         {
             var query = $"SELECT * FROM Revisions c WHERE c.id = '{revisionId}'";
             QueryDefinition queryDefinition = new QueryDefinition(query);
             using FeedIterator<APIRevisionListItemModel> feedIterator = _reviewRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);
             FeedResponse<APIRevisionListItemModel> response = await feedIterator.ReadNextAsync();
             return response.Single();
+        }
+
+        /// <summary>
+        /// Get Revisions by LastUpdatedOn Date
+        /// </summary>
+        /// <param name="lastUpdatedOn"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(DateTime lastUpdatedOn, APIRevisionType apiRevisionType = APIRevisionType.All)
+        {
+            var queryStringBuilder = new StringBuilder($"SELECT * FROM Revisions c WHERE c.LastUpdatedOn < '{lastUpdatedOn.ToString("yyyy-MM-dd")}'");
+            if (apiRevisionType != APIRevisionType.All)
+            {
+                queryStringBuilder.Append(" AND c.APIRevisionType = @apiRevisionType");
+            }
+
+            var revisions = new List<APIRevisionListItemModel>();
+            QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@apiRevisionType", apiRevisionType.ToString());
+
+            using FeedIterator<APIRevisionListItemModel> feedIterator = _reviewRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);
+            while (feedIterator.HasMoreResults)
+            {
+                FeedResponse<APIRevisionListItemModel> response = await feedIterator.ReadNextAsync();
+                revisions.AddRange(response);
+            }
+            return revisions;
         }
     }
 }

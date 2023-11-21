@@ -169,28 +169,30 @@ We discard:
 - `build`: Build Information. We discard this as we can get the build info by joining to the `TestRun` table.
 - `testrun`: Which contains details about the testrun which invoked the test. We only retain the Id.
 - `lastUpdatedBy`: What touched this testresult? We don't care when reporting on the tests. We will exclude tests by excluding their TestRunId.
+- `testCase`: In all explored TestResults, TestCase.Name and TestCaseTitle are the same. We will keep the simple top level value and discard the object.
 
-| Column | Type | Accessor/Notes |
-|--------|------|----------|
-| TestRunId | `long` | |
-| TestCaseId | `long` | |
-| StartedDate | `DateTime` | |
-| CompletdDate | `DateTime` | |
-| LastUpdateDate | `DateTime` | |
-| CreatedDate | `DateTime` | |
-| Outcome | `string` | |
-| Revision | `int` | |
-| State | `string` | |
-| TestCase | `string` | TestCase.Name |
-| TestCaseTitle | `string` | If TestCase.Name and TestCaseTitle are _always_ the same, we should dump one. |
-| Priority | `int` | |
-| ComputerName | `string` | |
-| Url | `string` | |
-| FailureType | `string` | |
-| TestCaseReferenceId | `long` | |
-| AutomatedTestName | `string` | |
-| AutomatedTestStorageName | `string` | |
-| AutomatedTestType | `string` | |
+| Column | Type |
+|--------|------|
+| TestRunId | `long` |
+| TestCaseId | `long` |
+| Revision | `int` |
+| TestCaseTitle | `string` |
+| TestCaseReferenceId | `long` |
+| State | `string` |
+| Outcome | `string` |
+| FailureType | `string` |
+| Priority | `int` |
+| ComputerName | `string` |
+| Url | `string` |
+| AutomatedTestName | `string` |
+| AutomatedTestStorageName | `string` |
+| AutomatedTestType | `string` |
+| StartedDate | `DateTime` |
+| CompletdDate | `DateTime` |
+| LastUpdateDate | `DateTime` |
+| CreatedDate | `DateTime` |
+
+> Note! Other samples are available under [sample_test_results.](./data/sample_test_results/)
 
 ## The Language Matrix - How will work be parceled out?
 

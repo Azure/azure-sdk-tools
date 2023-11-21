@@ -1,0 +1,51 @@
+{
+    "id": 100000,
+    "project": {
+      "id": "590cfd2a-581c-4dcb-a12e-6568ce786175",
+      "name": "internal",
+      "url": "https://dev.azure.com/azure-sdk/_apis/projects/internal"
+    },
+    "startedDate": "2023-11-17T20:22:38.11Z",
+    "completedDate": "2023-11-17T20:22:38.127Z",
+    "durationInMs": 17.0,
+    "outcome": "Passed",
+    "revision": 1,
+    "state": "Completed",
+    "testCase": {
+      "name": "test_XMLModel_WithoutXMLMap_CanBeCreated()"
+    },
+    "testRun": {
+      "id": "44416178",
+      "name": "Unit Tests - [Xcode 13.3, iOS 15.4]",
+      "url": "https://dev.azure.com/azure-sdk/internal/_apis/test/Runs/44416178"
+    },
+    "lastUpdatedDate": "2023-11-17T20:22:38.54Z",
+    "priority": 0,
+    "build": {
+      "id": "3273253",
+      "name": "20231117.1",
+      "url": "https://dev.azure.com/azure-sdk/_apis/build/Builds/3273253"
+    },
+    "createdDate": "2023-11-17T20:22:38.54Z",
+    "url": "https://dev.azure.com/azure-sdk/internal/_apis/test/Runs/44416178/Results/100000",
+    "failureType": "None",
+    "automatedTestStorage": "XMLModelTests",
+    "automatedTestType": "JUnit",
+    "testCaseTitle": "test_XMLModel_WithoutXMLMap_CanBeCreated()",
+    "customFields": [],
+    "testCaseReferenceId": 186558572,
+    "lastUpdatedBy": {
+      "displayName": "internal Build Service (azure-sdk)",
+      "url": "https://spsprodcus3.vssps.visualstudio.com/A207f0a5c-e100-4304-88d7-ea33d810297c/_apis/Identities/429d39d2-8bab-45b8-bbea-f79e43191f9b",
+      "_links": {
+        "avatar": {
+          "href": "https://dev.azure.com/azure-sdk/_apis/GraphProfile/MemberAvatars/svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ"
+        }
+      },
+      "id": "429d39d2-8bab-45b8-bbea-f79e43191f9b",
+      "uniqueName": "Build\\590cfd2a-581c-4dcb-a12e-6568ce786175",
+      "imageUrl": "https://dev.azure.com/azure-sdk/_apis/GraphProfile/MemberAvatars/svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ",
+      "descriptor": "svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ"
+    },
+    "automatedTestName": "test_XMLModel_WithoutXMLMap_CanBeCreated()"
+  }

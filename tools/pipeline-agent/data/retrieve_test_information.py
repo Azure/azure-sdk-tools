@@ -127,18 +127,16 @@ if __name__ == "__main__":
 
     # both on azure-sdk internal
     targeted_buildids = [
-        # "3274085", # storage python
-        "3271643"  # core .net
+        # "3274085", # storage python (saturday 11/18)
+        # "3271643",  # core .net (friday 11/17)
+        # "3274125", # go azblob (friday 11/17)
+        # "3273253", # iOS identity (friday 11/17)
+        # "3273729", # java storage (friday 11/17 failed)
+        # "3273544", # cpp storage (friday 11/17)
+        "3274026", # js storage (friday 11/17 failed)
     ]
 
     for buildid in targeted_buildids:
         results = get_tests_for_build("azure-sdk", "internal", buildid)
-
         breakpoint()
-        # for test_result_response in results:
-        #     parsed_result = json.loads(test_result_response.text)
-        #     with open(f'{buildid}_testrun_an_out.json', 'w') as f:
-        #         f.write(json.dumps(parsed_result, indent=2))
-
-        #     breakpoint()
 

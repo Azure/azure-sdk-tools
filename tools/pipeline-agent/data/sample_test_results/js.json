@@ -1,0 +1,51 @@
+{
+    "id": 100000,
+    "project": {
+      "id": "590cfd2a-581c-4dcb-a12e-6568ce786175",
+      "name": "internal",
+      "url": "https://dev.azure.com/azure-sdk/_apis/projects/internal"
+    },
+    "startedDate": "2023-11-18T01:16:02Z",
+    "completedDate": "2023-11-18T01:16:02.023Z",
+    "durationInMs": 23.0,
+    "outcome": "Passed",
+    "revision": 1,
+    "state": "Completed",
+    "testCase": {
+      "name": "Error targets handles a mix of action results with failed actions"
+    },
+    "testRun": {
+      "id": "44423255",
+      "name": "Windows - NodeJS - Unit Tests - [Node 18.x]_1",
+      "url": "https://dev.azure.com/azure-sdk/internal/_apis/test/Runs/44423255"
+    },
+    "lastUpdatedDate": "2023-11-18T01:17:46.873Z",
+    "priority": 0,
+    "build": {
+      "id": "3274026",
+      "name": "20231117.2",
+      "url": "https://dev.azure.com/azure-sdk/_apis/build/Builds/3274026"
+    },
+    "createdDate": "2023-11-18T01:17:46.873Z",
+    "url": "https://dev.azure.com/azure-sdk/internal/_apis/test/Runs/44423255/Results/100000",
+    "failureType": "None",
+    "automatedTestStorage": "handles a mix of action results with failed actions",
+    "automatedTestType": "JUnit",
+    "testCaseTitle": "Error targets handles a mix of action results with failed actions",
+    "customFields": [],
+    "testCaseReferenceId": 469485240,
+    "lastUpdatedBy": {
+      "displayName": "internal Build Service (azure-sdk)",
+      "url": "https://spsprodcus3.vssps.visualstudio.com/A207f0a5c-e100-4304-88d7-ea33d810297c/_apis/Identities/429d39d2-8bab-45b8-bbea-f79e43191f9b",
+      "_links": {
+        "avatar": {
+          "href": "https://dev.azure.com/azure-sdk/_apis/GraphProfile/MemberAvatars/svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ"
+        }
+      },
+      "id": "429d39d2-8bab-45b8-bbea-f79e43191f9b",
+      "uniqueName": "Build\\590cfd2a-581c-4dcb-a12e-6568ce786175",
+      "imageUrl": "https://dev.azure.com/azure-sdk/_apis/GraphProfile/MemberAvatars/svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ",
+      "descriptor": "svc.MjA3ZjBhNWMtZTEwMC00MzA0LTg4ZDctZWEzM2Q4MTAyOTdjOkJ1aWxkOjU5MGNmZDJhLTU4MWMtNGRjYi1hMTJlLTY1NjhjZTc4NjE3NQ"
+    },
+    "automatedTestName": "Error targets handles a mix of action results with failed actions"
+  }

@@ -51,6 +51,11 @@ parameters:
 steps:
 - checkout: self
 
+- pwsh: |
+    az devops login -devops_pat '$(azuresdk-azure-sdk-devops-release-work-item-pat)'
+  name: Login
+  displayName: Connect to Az Devops
+
 - task: PowerShell@2
   displayName: Create Package Work Item
   inputs:

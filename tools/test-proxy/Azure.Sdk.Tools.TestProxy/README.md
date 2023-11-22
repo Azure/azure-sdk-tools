@@ -96,16 +96,18 @@ For a more detailed explanation of how the test proxy works, along with links to
 2. Install test-proxy
 
 ```powershell
-dotnet tool update azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json --version "1.0.0-dev*"
+dotnet tool update azure.sdk.tools.testproxy --global --add-source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json --version "1.0.0-dev*" --ignore-failed-sources
 ```
+
+The test-proxy is also available from the [azure-sdk-for-net public feed](https://dev.azure.com/azure-sdk/public/_artifacts/feed/azure-sdk-for-net)
+
+_Note: if you're not authorized to access these feeds, make sure you have [Azure Artifacts Credential Provider](https://github.com/microsoft/artifacts-credprovider) installed. You can also [download executable](#via-standalone-executable) or use a prebuilt [docker image](#via-docker-image)._
 
 To uninstall an existing test-proxy
 
 ```powershell
 dotnet tool uninstall --global azure.sdk.tools.testproxy
 ```
-
-The test-proxy is also available from the [azure-sdk-for-net public feed](https://dev.azure.com/azure-sdk/public/_artifacts/feed/azure-sdk-for-net)
 
 After successful installation, run the tool:
 

@@ -10,7 +10,7 @@ The `infrastructure/bicep` folder contains the bicep template needed to deploy a
 
 This is the general layout of the project.
 
-![How this project is laid out and works](imgs/arch.png "Layout")
+![How this project is laid out and works](./imgs/arch.png "Layout")
 
 ## Deployment - Kusto Backend
 

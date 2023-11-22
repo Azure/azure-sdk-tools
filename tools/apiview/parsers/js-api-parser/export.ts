@@ -110,6 +110,20 @@ function getReleaseTag(item: ApiItem & { releaseTag?: ReleaseTag }): "alpha" | "
     }
 }
 
+function noOp() { }
+const logger = process.env.DEBUG?.startsWith("export") ?
+    {
+        log: console.log,
+        error: console.error,
+        warn: console.warn,
+        info: console.info,
+    } : {
+        log: noOp,
+        error: noOp,
+        warn: noOp,
+        info: noOp,
+    }
+
 async function main() {
     const inputPath = process.argv[2];
 
@@ -118,6 +132,7 @@ async function main() {
 
     const stats = await stat(inputPath);
     if (stats.isDirectory()) {
+        logger.info(`Processing directory ${inputPath}`);
         let name: string;
         let packageName: string;
         const files = await readdir(inputPath);
@@ -142,6 +157,7 @@ async function main() {
                 .newline()
                 .incIndent();
 
+            logger.info(`Processing ${file}`);
             const apiModel = new ApiModel();
             apiModel.loadPackage(path.join(inputPath, file));
 

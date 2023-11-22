@@ -204,13 +204,13 @@ describe("apiview: tests", () => {
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         @doc(T)
-        scalar Unreal<T extends string>;
+        scalar Unreal<T extends valueof string>;
       }
       `;
       const expect = `
       namespace Azure.Test {
         @doc(T)
-        scalar Unreal<T extends string>
+        scalar Unreal<T extends valueof string>
       }
       `;
       const apiview = await apiViewFor(input, {});
@@ -276,8 +276,6 @@ describe("apiview: tests", () => {
       validateDefinitionIds(apiview);
     });  
   });
-
-
 
   describe("enums", () => {
     it("literal labels", async () => {
@@ -373,7 +371,7 @@ describe("apiview: tests", () => {
   });
 
   describe("unions", () => {
-    it("descriminated union", async () =>{
+    it("discriminated union", async () =>{
       const input = `
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
@@ -423,6 +421,53 @@ describe("apiview: tests", () => {
       compare(expect, actual, 9);
       validateDefinitionIds(apiview);
     });  
+
+    it("unnamed union", async () =>{
+      const input = `
+      @TypeSpec.service( { title: "Test", version: "1" } )
+      namespace Azure.Test {
+        union Animals { Cat, Dog, Snake };
+  
+        model Cat {
+          name: string;
+        }
+  
+        model Dog {
+          name: string;
+        }
+  
+        model Snake {
+          name: string;
+          length: int16;
+        }
+      }`;
+      const expect = `
+      namespace Azure.Test {
+        union Animals {
+          Cat,
+          Dog,
+          Snake
+        }
+
+        model Cat {
+          name: string;
+        }
+  
+        model Dog {
+          name: string;
+        }
+    
+        model Snake {
+          name: string;
+          length: int16;
+        }
+      }
+      `;
+      const apiview = await apiViewFor(input, {});
+      const actual = apiViewText(apiview);
+      compare(expect, actual, 9);
+      validateDefinitionIds(apiview);
+    });
   });
 
   describe("operations", () => {

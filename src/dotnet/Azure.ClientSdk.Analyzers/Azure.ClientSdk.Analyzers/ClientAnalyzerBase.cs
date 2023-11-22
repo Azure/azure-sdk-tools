@@ -79,9 +79,10 @@ namespace Azure.ClientSdk.Analyzers
             }
         }
 
-        protected static IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<ITypeParameterSymbol> genericParameters, ImmutableArray<IParameterSymbol> parameters)
+        protected static IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<ITypeParameterSymbol> genericParameters, ImmutableArray<IParameterSymbol> parameters, bool ignoreStatic = false)
         {
             return methodSymbols.SingleOrDefault(symbol =>
+                (!ignoreStatic || !symbol.IsStatic) &&
                 genericParameters.SequenceEqual(symbol.TypeParameters, ParameterEquivalenceComparer.Default) &&
                 parameters.SequenceEqual(symbol.Parameters, ParameterEquivalenceComparer.Default));
         }

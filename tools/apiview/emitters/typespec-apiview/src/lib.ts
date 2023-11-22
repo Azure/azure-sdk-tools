@@ -4,7 +4,8 @@ export interface ApiViewEmitterOptions {
   "output-file"?: string;
   "service"?: string;
   "version"?: string;
-  "include-global-namespace"?: boolean
+  "include-global-namespace"?: boolean,
+  "mapping-path"?: string;
 }
 
 const ApiViewEmitterOptionsSchema: JSONSchemaType<ApiViewEmitterOptions> = {
@@ -14,7 +15,8 @@ const ApiViewEmitterOptionsSchema: JSONSchemaType<ApiViewEmitterOptions> = {
     "output-file": { type: "string", nullable: true },
     "service": { type: "string", nullable: true },
     "version": {type: "string", nullable: true },
-    "include-global-namespace": {type: "boolean", nullable: true}
+    "include-global-namespace": {type: "boolean", nullable: true},
+    "mapping-path": { type: "string", nullable: true },
   },
   required: [],
 };

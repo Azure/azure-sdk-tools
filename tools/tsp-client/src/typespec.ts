@@ -6,6 +6,13 @@ import * as path from "node:path";
 import { parse as parseYaml } from "yaml";
 
 
+export interface TspLocation {
+  directory: string;
+  commit: string;
+  repo: string;
+  additionalDirectories?: string[];
+}
+
 export async function getEmitterOptions(rootUrl: string, tempRoot: string, emitter: string, saveInputs: boolean, additionalOptions?: string): Promise<Record<string, any>> {
   // TODO: Add a way to specify emitter options like Language-Settings.ps1, could be a languageSettings.ts file
   let emitterOptions: Record<string, Record<string, unknown>> = {};
@@ -28,7 +35,7 @@ export async function getEmitterOptions(rootUrl: string, tempRoot: string, emitt
     emitterOptions[emitter]!["emitter-output-dir"] = rootUrl;
   }
   if (saveInputs) {
-    if (emitterOptions[emitter] === undefined) {
+    if (!emitterOptions[emitter]) {
       emitterOptions[emitter] = {};
     }
     emitterOptions[emitter]!["save-inputs"] = true;

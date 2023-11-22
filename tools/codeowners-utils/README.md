@@ -91,7 +91,7 @@ Line numbers become moot as soon as someone adds a line to the CODEOWNERS file a
 
 ### Where does the team/user and label data come from
 
-The team/user, org visibility and repository label data are stored in Azure Blob Storage. The data is populated by the [github-team-user-store](https://github.com/Azure/azure-sdk-tools/tree/main/tools/github-team-user-store) which runs daily as part of the pipeline-owners-extractor. _Note: To be very clear, this information is not secret nor is it exposing anything that can't already be gleaned from the existing CODEOWNERS files or, in the case of labels, inspecting the repository._ This has to be done this way for the following reasons:
+The team/user, org visibility and repository label data are stored in Azure Blob Storage. The data is populated by the [github-team-user-store](https://github.com/Azure/azure-sdk-tools/tree/main/tools/github-team-user-store) which runs daily as part of the [pipeline-owners-extraction](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112). _Note: To be very clear, this information is not secret nor is it exposing anything that can't already be gleaned from the existing CODEOWNERS files or, in the case of labels, inspecting the repository._ This has to be done this way for the following reasons:
 
 - Fetching this information requires a specific GitHub token with specific permissions which cannot be granted GitHub workflows.
 - This is going to run as part of a nightly run as well as a CI pipeline when changes to CODEOWNERS files are made and public pipelines cannot have variables.
@@ -109,3 +109,48 @@ In addition to the above dependencies, the Azure.Sdk.Tools.CodeownersUtils.Tests
 2. NUnit3TestAdapter - Used to run NUnit3 tests in Visual Studio
 3. Microsoft.NET.Test.Sdk - For the ability to run tests using **dotnet test**
 4. coverlet.collector - Generates test coverage data
+
+## Linter errors and how to deal with them
+
+The [Errors](#errors) section above defines the types of errors.
+
+### Block formatting errors and how to fix them
+
+Block formatting errors should be pretty self explanatory and the error output should clearly indicate the problem. Block errors print out the start/end lines of the metadata block as well as the contents of the block from the CODEOWNERS file. Block formatting errors usually happen when there's an invalid combination or missing metadata tags for a given metadata block. If the nightly build starts failing with a block formatting error, check the history of the CODEOWNERS file PRs and see which one force pushed changes in spite of the failing PR validation. **To be very clear, block formatting errors can't spontaneously happen in the nightly pipeline, those are introduced through PRs. At the time of enabling the linter, there were no block formatting errors in any of the azure-sdk CODEOWNERS files.**
+
+### Single line errors and how to fix them
+
+As per the name, these errors are problems with a single CODEOWNERS line. The error will print the line and each issue wrong with the line. Anything that requires changes outside of the CODEOWNERS file, like changing a user's Azure org visibility to public, or adding a user to an azure-sdk-write team or adding a new team under azure-sdk-write, adding a repository label, etc. requires the [pipeline-owners-extraction](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112) pipeline to run in order to update blob storage. This pipeline runs at 4am every morning and due to the number of GitHub API calls required to fetch/verify this data. If the pipeline needs to be run, please do not manually kick it off, post in the [Engineering Systems Teams channel](https://teams.microsoft.com/l/channel/19%3a59dbfadafb5e41c4890e2cd3d74cc7ba%40thread.skype/Engineering%2520System%2520%25F0%259F%259B%25A0%25EF%25B8%258F?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47) channel asking for someone from EngSys to manually kick off the pipeline.
+
+#### &lt;team&gt; is a malformed team entry and should start with '@Azure/'
+
+As part of the linting validation, when an invalid non-team owner is encountered it'll check to see if that owner is really a malformed team.
+
+**How to fix this:** Add @Azure/ to the team in the CODEOWNERS file and run the pipeline again.
+
+#### Azure/&lt;team&gt; is an invalid team. Ensure the team exists and has write permissions
+
+**How to fix this:** This requires intervention of someone with GitHub permissions. The team needs to be a write team, a child of azure-sdk-write. If one already exists, that's what should be used otherwise create a post in the public [Engineering Systems Teams channel](https://teams.microsoft.com/l/channel/19%3a59dbfadafb5e41c4890e2cd3d74cc7ba%40thread.skype/Engineering%2520System%2520%25F0%259F%259B%25A0%25EF%25B8%258F?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47). Paste the quoted error, say what repository(ies) the error is occurring in and @ mention Scott Kurtzeborn.
+
+#### &lt;user&gt; is not a public member of Azure
+
+The [onboarding docs](https://eng.ms/docs/products/azure-developer-experience/onboard/access) clearly state that your Microsoft and Azure org memberships must be set to **public**. Other workflows use the CODEOWNERS data to check org membership and, because of the permissions required, cannot see private members. This can cause problems in other things, like Actions processing.
+
+**How to fix this:** Set your org membership to public and wait until the next [pipeline-owners-extraction](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112) run completes so the data is updated.
+
+#### &lt;user&gt; is an invalid user. Ensure the user exists, is public member of Azure and has write permissions
+
+This error effectively means that the person is not under the [azure-sdk-write](https://github.com/orgs/Azure/teams/azure-sdk-write/teams), either directly or in one of the teams under it. There are several reasons this can happen. With the most likely reasons being that the user is no longer in the Azure org or at Microsoft, least likely being that someone didn't onboard correctly and doesn't have write permission.
+
+**How to fix this:** There are several fixes for this
+
+1. If the user is part of Microsoft, working in the Azure org followed the [onboarding process](https://eng.ms/docs/products/azure-developer-experience/onboard/access) wait until the next [pipeline-owners-extraction](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112) run completes so the data is updated.
+2. If the user is no longer part of Azure and/or Microsoft then they need to be removed from the CODEOWNERS file where the issue has been identified. This doesn't require waiting for the pipeline-owners-extraction to run.
+
+#### '&lt;SomeLabel&gt;' is not a valid label for this repository
+
+This means that the CODEOWNERS file has a label that isn't in the repository where the CODEOWNERS file resides. Labels for a given repository can be found in the repository/labels for example, in Java that would be [https://github.com/Azure/azure-sdk-for-java/labels](https://github.com/Azure/azure-sdk-for-java/labels). First, check and see if the appropriate label exists, if so change the one in CODEOWNERS and rerun the linter pipeline. If the label doesn't exist and needs to get added please contact SDKGitHubNinjas@microsoft.com for guidance on creating the label. After the label is created, wait until the next [pipeline-owners-extraction](https://dev.azure.com/azure-sdk/internal/_build?definitionId=5112) run completes so the data is updated.
+
+#### The remaining errors
+
+The rest of the errors are self explanatory. They'll consist of things like invalid paths, malformed globs or globs that don't have matches in the repository etc. These just need to be fixed in the CODEOWNERS file and pushing a new commit will automatically trigger the pipeline on the PR.

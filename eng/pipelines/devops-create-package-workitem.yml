@@ -1,0 +1,70 @@
+pool:
+  name: 'azsdk-pool-mms-ubuntu-2204-general'
+  vmImage: 'ubuntu-22.04'
+
+parameters:
+- name: Language
+  type: string
+  default: ''
+  values:
+  - .NET
+  - Java
+  - Python
+  - JavaScript
+  - Go
+  - C++
+  - C
+- name: ServiceName
+  displayName: Service Name (Value should be same as service name in Service Tree)
+  type: string
+  default: ''
+- name: PackageDisplayName
+  displayName: Package Display Name ( for e.g. Azure Core)
+  type: string
+  default: ''
+- name: PackageType
+  type: string
+  default: ''
+  values:
+  - Client
+  - mgmt
+- name: PackageName
+  displayName: Package Name (e.g. Azure.Core)
+  type: string
+  default: ''
+- name: PackageVersion
+  displayName: Package Version (e.g. 1.0.0)
+  type: string
+  default: ''
+- name: ReleaseDate
+  displayName: Release Date (Format:MM/DD/YYYY)
+  type: string
+  default: ''
+- name: RelatedWorkItemId
+  displayName: Related Work Item ID (Applicable to add release plan work Item as related)
+  type: string
+  default: ''
+- name: Tag
+  type: string
+  default: ''
+
+steps:
+- checkout: self
+
+
+- task: PowerShell@2
+  displayName: Create Package Work Item
+  inputs:
+    pwsh: true
+    filePath: $(Build.SourcesDirectory)/eng/common/scripts/Update-DevOps-Release-WorkItem.ps1
+    arguments: >
+      -language "${{parameters.Language}}"
+      -serviceName "${{parameters.ServiceName}}"
+      -packageDisplayName "${{parameters.PackageDisplayName}}"
+      -packageType "${{parameters.PackageType}}"
+      -packageName "${{parameters.PackageName}}"
+      -version "${{parameters.PackageVersion}}"
+      -plannedDate "${{parameters.ReleaseDate}}"
+      -relatedWorkItemId ${{parameters.RelatedWorkItemId}}
+      -tag "${{parameters.Tag}}"
+      -devops_pat "$(azuresdk-azure-sdk-devops-release-work-item-pat)"

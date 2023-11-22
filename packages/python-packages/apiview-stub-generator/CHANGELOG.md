@@ -1,5 +1,11 @@
 # Release History
 
+## Version 0.3.10 (2023-11-17)
+Update package version in API review codefile
+
+## Version 0.3.9 (2023-11-17)
+Improve support for "CrossLanguageDefinitionId".
+
 ## Version 0.3.8 (2023-07-06)
 Display `--source-url` as an actual clickable link.
 Fix issue with line ids in diffs so that the entire signature doesn't turn red if something is changed. 

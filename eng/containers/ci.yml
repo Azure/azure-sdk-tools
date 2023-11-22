@@ -24,6 +24,13 @@ parameters:
     dockerFile: 'tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/Dockerfile'
     stableTags:
     - 'latest'
+  - name: http_fault_injector
+    pool: azsdk-pool-mms-ubuntu-2204-general
+    vmImage: ubuntu-22.04
+    dockerRepo: 'stress/httpfaultinjector'
+    dockerFile: 'tools/http-fault-injector/Dockerfile'
+    stableTags:
+    - 'latest'
 
 trigger:
   branches:
@@ -35,6 +42,7 @@ trigger:
     - tools/keyvault-mock-attestation/Dockerfile
     - tools/stress-cluster/services/Stress.Watcher/
     - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/
+    - tools/http-fault-injector/Dockerfile
 
 pr:
   branches:

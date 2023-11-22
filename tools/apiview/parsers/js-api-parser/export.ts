@@ -110,7 +110,7 @@ function getReleaseTag(item: ApiItem & { releaseTag?: ReleaseTag }): "alpha" | "
     }
 }
 
-function noOp() { }
+function noOp() {}
 const logger = process.env.DEBUG?.startsWith("export") ?
     {
         log: console.log,
@@ -123,6 +123,7 @@ const logger = process.env.DEBUG?.startsWith("export") ?
         warn: noOp,
         info: noOp,
     }
+
 
 async function main() {
     const inputPath = process.argv[2];
@@ -184,18 +185,19 @@ async function main() {
             Tokens: builder.tokens,
             PackageName: packageName,
             VersionString: "1.0.6",
-            Language: "JavaScript"
+            Language: "JavaScript",
+            PackageVersion: "",
         }
         await writeFile(process.argv[3], JSON.stringify(apiViewFile));
 
     } else {
-        var versionString = "";
-        if (inputPath.includes("_")) {
-            versionString = inputPath.split("_").pop().replace(".api.json", "");
-        }
-
         const apiModel = new ApiModel();
-        apiModel.loadPackage(inputPath);
+        const fileName = process.argv[2];
+        var PackageversionString = "";
+        if (fileName.includes("_")) {
+            PackageversionString = fileName.split("_").pop().replace(".api.json", "");
+        }
+        apiModel.loadPackage(fileName);
 
         for (const modelPackage of apiModel.packages) {
             for (const entryPoint of modelPackage.entryPoints) {
@@ -206,20 +208,29 @@ async function main() {
         }
 
         var name = apiModel.packages[0].name;
-        if (versionString != "") {
-            name += "(" + versionString + ")";
+        if (PackageversionString != "") {
+            name += "(" + PackageversionString + ")";
         }
         var apiViewFile: IApiViewFile = {
             Name: name,
             Navigation: navigation,
             Tokens: builder.tokens,
             PackageName: apiModel.packages[0].name,
-            VersionString: "1.0.5",
-            Language: "JavaScript"
+            VersionString: "1.0.8",
+            Language: "JavaScript",
+            PackageVersion: PackageversionString
         }
 
-        await writeFile(process.argv[3], JSON.stringify(apiViewFile));
-
+        writeFile(
+            process.argv[3],
+            JSON.stringify(apiViewFile),
+            // err => {
+            //     if (err) {
+            //         console.error(err);
+            //         return;
+            //     };
+            // }
+        )
     }
 }
 

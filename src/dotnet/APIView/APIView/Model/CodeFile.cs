@@ -46,6 +46,8 @@ namespace ApiView
 
         public string PackageDisplayName { get; set; }
 
+        public string PackageVersion { get; set; }
+
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
 
         public List<CodeFileToken[]> LeafSections { get; set; }

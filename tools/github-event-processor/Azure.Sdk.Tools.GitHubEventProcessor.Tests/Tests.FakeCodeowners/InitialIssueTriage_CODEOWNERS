@@ -1,0 +1,41 @@
+################
+# FAKE Codeowners file for InitialIssueTriage testing. Each metadata block has a unique ServiceLabel for
+# testing different scenarios. The ServiceLabel needs to be returned from the AI Label service mock in order
+# for a particular block to be selected.
+# Note: FakeUser1 is the owner that opened the issue in the 
+# Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json file.
+################
+
+# This scenario is a ServiceOwners block with no AzureSdkOwners
+# ServiceLabel: %FakeLabel1
+# ServiceOwners: @FakeUser7 @FakeUser8
+
+# The scenarios here are a ServiceOwners block with a single AzureSdkOwner.
+# The first scenario will be that the AzureSdkOwner doesn't have issue assignment permissions
+# and the ServiceAttention rule is turned off. The ServiceLabel and NeedsTeamTriage will be added to the issue.
+# The second scenario will be that the AzureSdkOwner doesn't have issue assignment permissions
+# meaning that the ServiceOwners/ServiceAttention fallback will be executed.
+# The third scenario will be that the AzureSdkOwner has issue assignment permissions. This
+# will cause the owner to be assigned to the issue without a comment mentioning all AzureSdkOwners
+# ServiceLabel: %FakeLabel2
+# ServiceOwners: @FakeUser0 @FakeUser9
+# AzureSdkOwners: @FakeUser1
+
+# The scenarios here are a ServiceOwners block with a multiple AzureSdkOwners.
+# The first scenario is that none of the AzureSdkOwners will have issue assignment permissions
+# meaning that the ServiceOwners/ServiceAttention fallback will be executed.
+# The second scenario is that only 1 of the AzureSdkOwners will have issue assignment permissions.
+# This will cause the owner with permissions to be assigned to the issue and both owners will be
+# in the at mention.
+# ServiceOwners block with multiple AzureSdkOwners
+# ServiceLabel: %FakeLabel3
+# ServiceOwners: @FakeUser3 @FakeUser4
+# AzureSdkOwners: @FakeUser1 @FakeUser5
+
+# AzureSdkOwners and ServiceOwners pulled from source path/owners. 
+# The first scenario will test with both AzureSdkOwners having issue assignment permission 
+# The second scenario will test both AzureSdkOwners not having issue assignment permission
+# ServiceLabel: %FakeLabel4
+# AzureSdkOwners:
+/files/filePath0/           @FakeUser5 @FakeUser6
+

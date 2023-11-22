@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
@@ -36,5 +36,6 @@ namespace APIViewWeb
 
         // This field stores original file name uploaded to create review
         public string FileName { get; set; }
+        public string PackageVersion { get; set; }
     }
 }

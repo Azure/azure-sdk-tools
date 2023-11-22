@@ -1,8 +1,8 @@
-import { mkdir, rm, writeFile, stat, readFile, access } from "node:fs/promises";
-import { FileTreeResult } from "./fileTree.js";
+import { mkdir, rm, stat, readFile, access } from "node:fs/promises";
 import * as path from "node:path";
 import { Logger } from "./log.js";
 import { parse as parseYaml } from "yaml";
+import { TspLocation } from "./typespec.js";
 
 export async function ensureDirectory(path: string) {
   await mkdir(path, { recursive: true });
@@ -19,51 +19,20 @@ export async function createTempDirectory(outputDir: string): Promise<string> {
   return tempRoot;
 }
 
-export async function writeFileTree(rootDir: string, files: FileTreeResult["files"]) {
-  for (const [relativeFilePath, contents] of files) {
-    const filePath = path.join(rootDir, relativeFilePath);
-    await ensureDirectory(path.dirname(filePath));
-    Logger.debug(`writing ${filePath}`);
-    await writeFile(filePath, contents);
-  }
-}
-
-export async function tryReadTspLocation(rootDir: string): Promise<string | undefined> {
+export async function readTspLocation(rootDir: string): Promise<TspLocation> {
   try {
     const yamlPath = path.resolve(rootDir, "tsp-location.yaml");
     const fileStat = await stat(yamlPath);
     if (fileStat.isFile()) {
       const fileContents = await readFile(yamlPath, "utf8");
-      const locationYaml = parseYaml(fileContents);
-      const { directory, commit, repo } = locationYaml;
-      if (!directory || !commit || !repo) {
+      const tspLocation: TspLocation = parseYaml(fileContents);
+      if (!tspLocation.directory || !tspLocation.commit || !tspLocation.repo) {
         throw new Error("Invalid tsp-location.yaml");
       }
-      // make GitHub URL
-      return `https://raw.githubusercontent.com/${repo}/${commit}/${directory}/`;
-    }
-  } catch (e) {
-    Logger.error(`Error reading tsp-location.yaml: ${e}`);
-  }
-  return undefined;
-}
-
-export async function readTspLocation(rootDir: string): Promise<[string, string, string, string[]]> {
-  try {
-    const yamlPath = path.resolve(rootDir, "tsp-location.yaml");
-    const fileStat = await stat(yamlPath);
-    if (fileStat.isFile()) {
-      const fileContents = await readFile(yamlPath, "utf8");
-      const locationYaml = parseYaml(fileContents);
-      let { directory, commit, repo, additionalDirectories } = locationYaml;
-      if (!directory || !commit || !repo) {
-        throw new Error("Invalid tsp-location.yaml");
+      if (!tspLocation.additionalDirectories) {
+        tspLocation.additionalDirectories = [];
       }
-      Logger.info(`Additional directories: ${additionalDirectories}`)
-      if (!additionalDirectories) {
-        additionalDirectories = [];
-      }
-      return [ directory, commit, repo, additionalDirectories ];
+      return tspLocation;
     }
     throw new Error("Could not find tsp-location.yaml");
   } catch (e) {

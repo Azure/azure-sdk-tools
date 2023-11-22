@@ -27,3 +27,5 @@ extends:
     ToolDirectory: tools/secret-management
     # Sodium.Core dependency is not strong name signed. Skip validation in order to sign secret cli.
     RequireStrongNames: false
+    # This tool contains native binaries that cause sybmol publishing to fail so disable the symbols for this tool package
+    ShouldPublishSymbols: false

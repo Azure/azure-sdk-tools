@@ -101,7 +101,7 @@ stages:
       displayName: 'Run initialize script'
       inputs:
         pwsh: true
-        filePath: $(autorestRepositoryPath)/eng/scripts/initialize.ps1
+        filePath: $(autorestRepositoryPath)/eng/scripts/Initialize-Repository.ps1
         arguments: -UseTypeSpecNext:$${{ parameters.UseTypeSpecNext }}
         workingDirectory: $(autorestRepositoryPath)
 
@@ -110,7 +110,7 @@ stages:
       name: ci_build
       inputs:
         pwsh: true
-        filePath: $(autorestRepositoryPath)/eng/scripts/build.ps1
+        filePath: $(autorestRepositoryPath)/eng/scripts/Build-Packages.ps1
         arguments: >
           -BuildNumber "$(Build.BuildNumber)"
           -Output "$(Build.ArtifactStagingDirectory)"
@@ -263,7 +263,7 @@ stages:
         displayName: 'Run initialize script'
         inputs:
           pwsh: true
-          filePath: $(autorestRepositoryPath)/eng/scripts/initialize.ps1
+          filePath: $(autorestRepositoryPath)/eng/scripts/Initialize-Repository.ps1
           arguments: -BuildArtifactsPath '$(buildArtifactsPath)'
           workingDirectory: $(autorestRepositoryPath)
 
@@ -271,7 +271,7 @@ stages:
         displayName: 'Run test script'
         inputs:
           pwsh: true
-          filePath: $(autorestRepositoryPath)/eng/scripts/test.ps1
+          filePath: $(autorestRepositoryPath)/eng/scripts/Test-Packages.ps1
           arguments: $(TestArguments)
           workingDirectory: $(autorestRepositoryPath)
 

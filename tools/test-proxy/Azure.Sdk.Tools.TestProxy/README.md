@@ -101,7 +101,7 @@ dotnet tool update azure.sdk.tools.testproxy --global --add-source https://pkgs.
 
 The test-proxy is also available from the [azure-sdk-for-net public feed](https://dev.azure.com/azure-sdk/public/_artifacts/feed/azure-sdk-for-net)
 
-_Note: if you're not authorized to access these feeds, make sure you have [Azure Artifacts credential Provider](https://github.com/microsoft/artifacts-credprovider) installed. You can also [download executable](#via-standalone-executable) or use a prebuilt [docker image](#via-docker-image)._
+_Note: if you're not authorized to access these feeds, make sure you have [Azure Artifacts Credential Provider](https://github.com/microsoft/artifacts-credprovider) installed. You can also [download executable](#via-standalone-executable) or use a prebuilt [docker image](#via-docker-image)._
 
 To uninstall an existing test-proxy
 

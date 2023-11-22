@@ -1,0 +1,43 @@
+.create-merge table TestRunResults (
+    TestRunId: int,
+    TestCaseId: int, 
+    Revision: int,
+    TestCaseTitle: string,
+    TestCaseReferenceId: long,
+    State: string,
+    Outcome: string,
+    FailureType: string,
+    Priority: int,
+    ComputerName: string,
+    Url: string,
+    AutomatedTestName: string,
+    AutomatedTestStorageName: string,
+    AutomatedTestType: string,
+    StartedDate: DateTime,
+    CompletdDate: DateTime,
+    LastUpdateDate: DateTime,
+    CreatedDate: DateTime,
+    EtlIngestDate: datetime
+)
+
+.alter table TestRunResults ingestion json mapping 'TestRunResults_mapping' ```[
+    { "column": "TestCaseId", "path": "$['id']" },
+    { "column": "TestRunId", "path": "$['testRun.id']" },
+    { "column": "Revision", "path": "$['revision']" },
+    { "column": "TestCaseTitle", "path": "$['testCaseTitle']" },
+    { "column": "TestCaseReferenceId", "path": "$['testCaseReferenceId']" },
+    { "column": "State", "path": "$['state']" },
+    { "column": "Outcome", "path": "$['outcome']" },
+    { "column": "FailureType", "path": "$['failureType']" },
+    { "column": "Priority", "path": "$['priority']" },
+    { "column": "ComputerName", "path": "$['computerName']" },
+    { "column": "Url", "path": "$['url']" },
+    { "column": "AutomatedTestName", "path": "$['automatedTestName']" },
+    { "column": "AutomatedTestStorageName", "path": "$['automatedTestStorageName']" },
+    { "column": "AutomatedTestType", "path": "$['automatedTestType']" },
+    { "column": "StartedDate", "path": "$['startedDate']" },
+    { "column": "CompletdDate", "path": "$['completdDate']" },
+    { "column": "LastUpdateDate", "path": "$['lastUpdateDate']" },
+    { "column": "CreatedDate", "path": "$['createdDate']" },
+    { "column": "EtlIngestDate", "path": "$['etlIngestDate']" }
+]```

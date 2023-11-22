@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.PipelineWitness
 {
@@ -800,6 +800,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
                             continuationToken: continuationToken,
                             buildIds: buildIds
                         );
+
+                        // I believe this is the function we will use to retrieve the individual test results.
+                        // var data = testResultsClient.GetTestResultsByBuildWithContinuationTokenAsync(build.Project.Id, build.Id);
 
                         foreach (var testRun in page)
                         {

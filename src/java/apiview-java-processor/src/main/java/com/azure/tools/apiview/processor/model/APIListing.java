@@ -29,7 +29,7 @@ public class APIListing {
     @JsonProperty("PackageName")
     private String packageName;
 
-    @JsonIgnore//("PackageVersion")
+    @JsonProperty("PackageVersion")
     private String packageVersion;
 
     // This string is taken from here:

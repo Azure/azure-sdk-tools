@@ -165,7 +165,7 @@ It can be found at `./eng/common/scripts/TypeSpec-Project-Generate.ps1`.  It tak
 - input: 
     - ProjectDirectory (required)
     - TypespecAdditionalOptions (optional)
-      addtional typespec emitter options, separated by semicolon if more than one, e.g. option1=value1;option2=value2
+      additional typespec emitter options, separated by semicolon if more than one, e.g. option1=value1;option2=value2
     - SaveInputs (optional)
       saves the temporary files during execution, default value is false
 

@@ -11,6 +11,7 @@ namespace APIViewWeb.Models
         [JsonProperty("id")]
         public string Id { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }
+        public string APIRevisionId { get; set; }
         public int PullRequestNumber { get; set; }
         public List<string> Commits { get; set; } = new List<string>();
         public string RepoName { get; set; }

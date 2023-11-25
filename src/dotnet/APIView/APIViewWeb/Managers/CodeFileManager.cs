@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.CodeAnalysis.Host;
 
@@ -169,6 +170,19 @@ namespace APIViewWeb.Managers
             }
             await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, reviewCodeFileModel.FileId, codeFile);
             return reviewCodeFileModel;
+        }
+
+        /// <summary>
+        /// Compare two CodeFiles
+        /// </summary>
+        /// <param name="codeFileA"></param>
+        /// <param name="codeFileB"></param>
+        /// <returns></returns>
+        public bool IsCodeFileTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
+        {
+            var codeFileATextLines = codeFileA.RenderText(false, skipDiff: true);
+            var codeFileBTextLines = codeFileB.RenderText(false, skipDiff: true);
+            return codeFileATextLines.SequenceEqual(codeFileBTextLines);
         }
 
         private void InitializeFromCodeFile(APICodeFileModel file, CodeFile codeFile)

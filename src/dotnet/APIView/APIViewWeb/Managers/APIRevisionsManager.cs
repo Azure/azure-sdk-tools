@@ -11,7 +11,6 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.IdentityModel.Abstractions;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
@@ -46,7 +45,7 @@ namespace APIViewWeb.Managers
         public APIRevisionsManager(
             IAuthorizationService authorizationService,
             ICosmosReviewRepository reviewsRepository,
-            ICosmosAPIRevisionsRepository reviewsRevisionsRepository,
+            ICosmosAPIRevisionsRepository apiRevisionsRepository,
             IHubContext<SignalRHub> signalRHubContext,
             IEnumerable<LanguageService> languageServices,
             IDevopsArtifactRepository devopsArtifctRepository,
@@ -56,7 +55,7 @@ namespace APIViewWeb.Managers
             INotificationManager notificationManager)
         {
             _reviewsRepository = reviewsRepository;
-            _apiRevisionsRepository = reviewsRevisionsRepository;
+            _apiRevisionsRepository = apiRevisionsRepository;
             _authorizationService = authorizationService;
             _signalRHubContext = signalRHubContext;
             _codeFileManager = codeFileManager;
@@ -191,7 +190,7 @@ namespace APIViewWeb.Managers
             bool updateReview = false;
             if (apiRevision == null)
             {
-                apiRevision = await _apiRevisionsRepository.GetReviewRevisionAsync(apiRevisionId);
+                apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
             }
             ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(apiRevision.ReviewId);
 
@@ -459,13 +458,26 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, APIRevisionListItemModel apiRevision)
         {
-            ManagerHelpers.AssertAPIRevisionDeletion(revision);
-            await ManagerHelpers.AssertAPIRevisionOwner(user, revision, _authorizationService);
-            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(revision.ChangeHistory, APIRevisionChangeAction.Deleted, user.GetGitHubLogin());
-            revision.ChangeHistory = changeUpdate.ChangeHistory;
-            revision.IsDeleted = changeUpdate.ChangeStatus;
+            ManagerHelpers.AssertAPIRevisionDeletion(apiRevision);
+            await ManagerHelpers.AssertAPIRevisionOwner(user, apiRevision, _authorizationService);
+            await SoftDeleteAPIRevisionAsync(userName: user.GetGitHubLogin(), apiRevision: apiRevision);
+        }
 
-            await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+        /// <summary>
+        /// Delete APIRevisions
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <param name="apiRevision"></param>
+        /// <param name="notes"></param>
+        /// <returns></returns>
+        public async Task SoftDeleteAPIRevisionAsync(string userName, APIRevisionListItemModel apiRevision, string notes = "")
+        {
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(changeHistory: apiRevision.ChangeHistory, 
+                action: APIRevisionChangeAction.Deleted, user: userName, notes: notes);
+            apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
+            apiRevision.IsDeleted = changeUpdate.ChangeStatus;
+
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
         }
 
         /// <summary>
@@ -584,15 +596,17 @@ namespace APIViewWeb.Managers
         /// <summary>
         /// CreateAPIRevisionAsync
         /// </summary>
-        /// <param name="user"></param>
+        /// <param name="userName"></param>
         /// <param name="reviewId"></param>
         /// <param name="apiRevisionType"></param>
         /// <param name="label"></param>
         /// <param name="memoryStream"></param>
         /// <param name="codeFile"></param>
         /// <param name="originalName"></param>
+        /// <param name="prNumber"></param>
         /// <returns></returns>
-        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, string reviewId, APIRevisionType apiRevisionType, string label, MemoryStream memoryStream, CodeFile codeFile, string originalName = null)
+        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(string userName, string reviewId, APIRevisionType apiRevisionType, string label,
+            MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null)
         {
 
             var apiRevision = GetNewAPIRevisionAsync(
@@ -600,7 +614,8 @@ namespace APIViewWeb.Managers
                 apiRevisionType: apiRevisionType,
                 packageName: codeFile.PackageName,
                 language: codeFile.Language,
-                createdBy: user.GetGitHubLogin(),
+                createdBy: userName,
+                prNumber: prNumber,
                 label: label);
 
             var apiRevisionCodeFile = await _codeFileManager.CreateReviewCodeFileModel(apiRevisionId: apiRevision.Id, memoryStream: memoryStream, codeFile: codeFile);

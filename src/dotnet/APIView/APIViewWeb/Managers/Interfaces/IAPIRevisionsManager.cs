@@ -26,12 +26,18 @@ namespace APIViewWeb.Managers.Interfaces
         public Task RunAPIRevisionGenerationPipeline(List<APIRevisionGenerationPipelineParamModel> reviewGenParams, string language);
         public Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string revisionId);
         public Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, APIRevisionListItemModel apiRevision);
+        public Task SoftDeleteAPIRevisionAsync(string userName, APIRevisionListItemModel apiRevision, string notes = "");
         public Task UpdateAPIRevisionLabelAsync(ClaimsPrincipal user, string revisionId, string label);
         public Task<bool> IsAPIRevisionTheSame(APIRevisionListItemModel apiRevision, RenderedCodeFile renderedCodeFile);
         public Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, APIRevisionListItemModel revision);
         public TreeNode<InlineDiffLine<CodeLine>> ComputeSectionDiff(TreeNode<CodeLine> before, TreeNode<CodeLine> after, RenderedCodeFile beforeFile, RenderedCodeFile afterFile);
+<<<<<<< HEAD
         public Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, string reviewId, APIRevisionType apiRevisionType, string label, MemoryStream memoryStream, CodeFile codeFile, string originalName = null);
         public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, TelemetryClient telemetryClient);
         public Task AutoArchiveAPIRevisions(int archiveAfterMonths);
+=======
+        public Task<APIRevisionListItemModel> CreateAPIRevisionAsync(string userName, string reviewId, APIRevisionType apiRevisionType, string label,
+            MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null);
+>>>>>>> 98cdd54c0 (Add pullRequest controller and pullRequest background task)
     }
 }

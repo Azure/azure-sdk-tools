@@ -8,6 +8,7 @@ using APIViewWeb.Models;
 using System.Collections.Generic;
 using APIViewWeb.Managers;
 using Microsoft.ApplicationInsights;
+using System;
 
 namespace APIViewWeb.Helpers
 {
@@ -73,6 +74,16 @@ namespace APIViewWeb.Helpers
                     throw new AuthorizationFailedException();
                 }
             }
+        }
+
+        public static string ResolveReviewUrl(PullRequestModel pullRequest, string hostName)
+        {
+            var url = $"https://{hostName}/Assemblies/Review/{pullRequest.ReviewId}";
+            if (!String.IsNullOrEmpty(pullRequest.APIRevisionId))
+            {
+                url += $"?revisionId={pullRequest.APIRevisionId}";
+            }
+            return url;
         }
     }
 }

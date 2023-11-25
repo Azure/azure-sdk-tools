@@ -190,7 +190,7 @@ namespace APIViewWeb.Controllers
             
             if (createNewRevision)
             {
-                apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(user: User, reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName);
+                apiRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(userName: User.GetGitHubLogin(), reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, label: label, memoryStream: memoryStream, codeFile: codeFile, originalName: originalName);
             }
 
             if (apiRevision != null)

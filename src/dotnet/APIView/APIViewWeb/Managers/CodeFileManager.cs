@@ -178,7 +178,7 @@ namespace APIViewWeb.Managers
         /// <param name="codeFileA"></param>
         /// <param name="codeFileB"></param>
         /// <returns></returns>
-        public bool IsCodeFileTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
+        public bool IsAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
         {
             var codeFileATextLines = codeFileA.RenderText(false, skipDiff: true);
             var codeFileBTextLines = codeFileB.RenderText(false, skipDiff: true);

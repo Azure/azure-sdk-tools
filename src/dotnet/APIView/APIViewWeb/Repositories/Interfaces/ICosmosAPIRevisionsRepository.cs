@@ -11,9 +11,9 @@ namespace APIViewWeb.Repositories
         /// <summary>
         /// Add new ReviewRevision
         /// </summary>
-        /// <param name="revision"></param>
+        /// <param name="apiRevision"></param>
         /// <returns></returns>
-        public Task UpsertAPIRevisionAsync(APIRevisionListItemModel revision);
+        public Task UpsertAPIRevisionAsync(APIRevisionListItemModel apiRevision);
 
         /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb after applying filter to the query
@@ -34,9 +34,9 @@ namespace APIViewWeb.Repositories
         /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb
         /// </summary>
-        /// <param name="revisionId"></param> The revisionId
+        /// <param name="apiRevisionId"></param> The revisionId
         /// <returns></returns>
-        public Task<APIRevisionListItemModel> GetAPIRevisionAsync(string revisionId);
+        public Task<APIRevisionListItemModel> GetAPIRevisionAsync(string apiRevisionId);
         /// <summary>
         /// Get Revisions by LastUpdatedOn Date
         /// </summary>

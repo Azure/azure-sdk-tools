@@ -16,7 +16,7 @@ namespace APIViewWeb
 {
     public class CLanguageService : LanguageService
     {
-        private const string CurrentVersion = "4";
+        private const string CurrentVersion = "5";
         private static Regex _typeTokenizer = new Regex("\\w+|[^\\w]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private static HashSet<string> _keywords = new HashSet<string>()
         {
@@ -88,7 +88,7 @@ namespace APIViewWeb
             var packageNameMatch = _packageNameParser.Match(originalName);
             if (packageNameMatch.Success)
             {
-                packageNamespace = packageNameMatch.Groups[1].Value.Replace("_", "::");
+                packageNamespace = packageNameMatch.Groups[1].Value.Replace("_", "-");
             }
 
             CodeFileTokensBuilder builder = new CodeFileTokensBuilder();

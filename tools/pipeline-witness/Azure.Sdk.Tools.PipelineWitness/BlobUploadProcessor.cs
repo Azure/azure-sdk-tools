@@ -25,8 +25,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
     using Microsoft.TeamFoundation.Build.WebApi;
     using Microsoft.TeamFoundation.TestManagement.WebApi;
     using Microsoft.VisualStudio.Services.Common;
+    using Microsoft.VisualStudio.Services.TestManagement.TestPlanning.WebApi;
     using Microsoft.VisualStudio.Services.TestResults.WebApi;
-
+    using Microsoft.VisualStudio.Services.WebApi;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
     using Newtonsoft.Json.Serialization;
@@ -801,12 +802,10 @@ namespace Azure.Sdk.Tools.PipelineWitness
                             buildIds: buildIds
                         );
 
-                        // I believe this is the function we will use to retrieve the individual test results.
-                        // var data = testResultsClient.GetTestResultsByBuildWithContinuationTokenAsync(build.Project.Id, build.Id);
-
                         foreach (var testRun in page)
                         {
                             await UploadTestRunBlobAsync(account, build, testRun);
+                            await UploadTestRunResultsAsync(account, build, testRun);
                         }
 
                         continuationToken = page.ContinuationToken;
@@ -886,6 +885,63 @@ namespace Azure.Sdk.Tools.PipelineWitness
             catch (Exception ex)
             {
                 this.logger.LogError(ex, "Error processing test run blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
+                throw;
+            }
+        }
+
+        private async Task UploadTestRunResultsAsync(string account, Build build, TestRun testRun)
+        {
+            try
+            {
+                var continuationToken = string.Empty;
+                var buildIds = new[] { build.Id };
+                var discoveredTestResults = new List<ShallowTestCaseResult>();
+                var blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}/results.jsonl";
+                var blobClient = this.testRunsContainerClient.GetBlobClient(blobPath);
+
+                if (await blobClient.ExistsAsync())
+                {
+                    this.logger.LogInformation("Skipping existing test results blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
+                    return;
+                }
+
+                do
+                {
+                    // the unfortunate fact of the matter is that testResultsClient does not have a API Surface that can get us
+                    // all test results for a specific TestRunId. As a result, we do some internal filtering to only grab the test results that
+                    // are available for a specific run. This will have the knock-on affect of meaning we hit that heavyweight API for test results
+                    // multiple times on each BuildCompletionEvent. This could be a problem, as I believe we listen to individual build completion, and not
+                    // pipeline completion events.
+                    // First build completes, only needs to pull test results for that build...
+                    // but as time goes on, and more builds complete, the set of test results that will be returned will be heavier and heavier.
+                    // we either implement our own manual REST request to devops, or we use metrics only. Leaving that aside for now, I know
+                    // which devops API I can go to manually, it just goes against the grain of the rest of this project.
+                    var page = await testResultsClient.GetTestResultsByBuildWithContinuationTokenAsync(build.Project.Id, build.Id);
+                    discoveredTestResults.AddRange(discoveredTestResults.Where(x => x.RunId == testRun.Id));
+                    continuationToken = page.ContinuationToken;
+                } while (!string.IsNullOrEmpty(continuationToken));
+
+                var content = JsonConvert.SerializeObject(discoveredTestResults.Select(x => new
+                {
+                    TestCaseId = x.Id,
+                    TestRunId = x.RunId,
+                    TestCaseReferenceId =  x.RefId,
+                    TestCaseTitle = x.TestCaseTitle,
+                    Outcome = x.Outcome,
+                    Priority = x.Priority,
+                    AutomatedTestName = x.AutomatedTestName,
+                    AutomatedTestStorageName = x.AutomatedTestStorage,
+                    IsReRun = x.IsReRun,
+                    Tags = x.Tags,
+                    EtlIngestDate = DateTime.UtcNow
+                }), jsonSettings);
+
+                await blobClient.UploadAsync(new BinaryData(content));
+
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Error processing test results for build {BuildId}", build.Id);
                 throw;
             }
         }

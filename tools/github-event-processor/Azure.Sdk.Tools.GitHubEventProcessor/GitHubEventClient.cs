@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.CodeownersUtils.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
 using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
@@ -23,6 +24,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         // Exception string partial from the call to GitHubClient.Repository.Collaborator.ReviewPermission
         // used to determine if the call threw because the user being checked was a bot or didn't exist.
         private static readonly string NotAUserPartial = "is not a user";
+
+        private static readonly int MaxIssueAssignees = 10;
 
         /// <summary>
         /// Class to store the information needed to create a GitHub Comment on an Issue or PullRequest.
@@ -112,6 +115,26 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             }
         }
 
+        /// <summary>
+        /// This class is necessary to assign owners to an issue. The reason this class is necessary is
+        /// becuase unlike every other issue update call, which only requires the repositoryId and issueId,
+        /// this underlying API call needs the repo owner and repo name. Thanks GitHub!
+        /// </summary>
+        public class GitHubIssueAssignment
+        {
+            private string _repoName;
+            private string _repoOwner;
+            private List<string> _assignees = new List<string>();
+            public string RepositoryName { get { return _repoName; } }
+            public string RepositoryOwner { get { return _repoOwner; } }
+            public List<string> Assignees { get { return _assignees; } }
+
+            public GitHubIssueAssignment(string repoOwner, string repoName)
+            {
+                _repoOwner = repoOwner;
+                _repoName = repoName;
+            }
+        }
 
         private GitHubClient _gitHubClient = null;
         private RulesConfiguration _rulesConfiguration = null;
@@ -126,6 +149,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         // Scheduled event processing can process multiple issues, this list will not be used
         // for action processing which uses a shared event.
         protected List<GitHubIssueToUpdate> _gitHubIssuesToUpdate = new List<GitHubIssueToUpdate>();
+        // Necessary for issue assignment which requires the repository owner/name to set instead of just
+        // the Id.
+        protected GitHubIssueAssignment _gitHubIssueAssignment = null;
 
         public int CoreRateLimit { get; set; } = 0;
 
@@ -168,6 +194,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                     await _gitHubClient.Issue.Update(repositoryId, 
                                                      issueOrPullRequestNumber, 
                                                      _issueUpdate);
+                }
+
+                // The issue is being assigned. Note, this can only happen for issues, the issueOrPullRequestNumber
+                // in this case will always be an issue with the way events are processed.
+                if (_gitHubIssueAssignment != null)
+                {
+                    numUpdates++;
+                    AssigneesUpdate assigneesUpdate = new AssigneesUpdate(_gitHubIssueAssignment.Assignees);
+                    await _gitHubClient.Issue.Assignee.AddAssignees(_gitHubIssueAssignment.RepositoryOwner,
+                                                                    _gitHubIssueAssignment.RepositoryName,
+                                                                    issueOrPullRequestNumber,
+                                                                    assigneesUpdate);
                 }
 
                 // Process the labels to add. They're all added as a single call and are additive, not replacement 
@@ -270,6 +308,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 Console.WriteLine("Common IssueUpdate from rules processing will be updated.");
                 numUpdates++;
             }
+
+            if (_gitHubIssueAssignment != null)
+            {
+                Console.WriteLine($"IssueAssignment is being made to (1 call)");
+                numUpdates++;
+            }
+
             if (_labelsToAdd.Count > 0)
             {
                 Console.WriteLine($"There are {_labelsToAdd.Count} labels being added (1 call)");
@@ -300,6 +345,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 Console.WriteLine($"Number of IssuesUpdates (only applicable for Scheduled events) {_gitHubIssuesToUpdate.Count}");
                 numUpdates += _gitHubIssuesToUpdate.Count;
             }
+
             return numUpdates;
         }
 
@@ -309,17 +355,44 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="prependMessage">Optional message to prepend to the rate limit message.</param>
         public async Task WriteRateLimits(string prependMessage = null)
         {
-            var miscRateLimit = await GetRateLimits();
-            CoreRateLimit = miscRateLimit.Resources.Core.Limit;
-            // Get the Minutes till reset.
-            TimeSpan span = miscRateLimit.Resources.Core.Reset.UtcDateTime.Subtract(DateTime.UtcNow);
-            // In the message, cast TotalMinutes to an int to get a whole number of minutes.
-            string rateLimitMessage = $"Limit={miscRateLimit.Resources.Core.Limit}, Remaining={miscRateLimit.Resources.Core.Remaining}, Limit Reset in {(int)span.TotalMinutes} minutes.";
-            if (prependMessage != null)
+            int maxTries = 5;
+            // 200 ms. If the rate limits cannot be fetched in 1 second, there's a problem with GitHub.
+            // Unlike scheduled events which have a longer back off period, normal event processing cannot
+            // delay that long before retrying.
+            int sleepDuration = 200;
+
+            for (int tryNumber = 1; tryNumber <= maxTries; tryNumber++)
             {
-                rateLimitMessage = $"{prependMessage} {rateLimitMessage}";
+                try
+                {
+                    var miscRateLimit = await GetRateLimits();
+                    CoreRateLimit = miscRateLimit.Resources.Core.Limit;
+                    // Get the Minutes till reset.
+                    TimeSpan span = miscRateLimit.Resources.Core.Reset.UtcDateTime.Subtract(DateTime.UtcNow);
+                    // In the message, cast TotalMinutes to an int to get a whole number of minutes.
+                    string rateLimitMessage = $"Limit={miscRateLimit.Resources.Core.Limit}, Remaining={miscRateLimit.Resources.Core.Remaining}, Limit Reset in {(int)span.TotalMinutes} minutes.";
+                    if (prependMessage != null)
+                    {
+                        rateLimitMessage = $"{prependMessage} {rateLimitMessage}";
+                    }
+                    Console.WriteLine(rateLimitMessage);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    if (tryNumber == maxTries)
+                    {
+                        Console.WriteLine($"Exception trying to get RateLimit from GitHub. Number of attempts, {maxTries}, exhausted. Rethrowing.");
+                        throw;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Exception trying to get RateLimit from GitHub, attempt number: {tryNumber} of {maxTries}. Waiting {sleepDuration}ms before trying again.");
+                        Console.WriteLine($"Exception: {ex}");
+                        await Task.Delay(sleepDuration);
+                    }
+                }
             }
-            Console.WriteLine(rateLimitMessage);
         }
 
         /// <summary>
@@ -376,12 +449,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
             return await _gitHubClient.RateLimit.GetRateLimits();
         }
 
-        // JRS - Remove
-        public void SetIssueUpdate(IssueUpdate issueUpdate)
-        {
-            _issueUpdate = issueUpdate;
-        }
-
         /// <summary>
         /// Store the label to add on the list of labels to add to an issue. This is only used by Actions
         /// and not Scheduled events
@@ -389,7 +456,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="labelToAdd">string, the label to add to the issue</param>
         public void AddLabel(string labelToAdd)
         {
-            if (_labelsToRemove.Contains(labelToAdd))
+            if (_labelsToRemove.Contains(labelToAdd, StringComparer.OrdinalIgnoreCase))
             {
                 Console.WriteLine($"Label to add {labelToAdd} is currently on the remove list and will not be added.");
             }
@@ -406,7 +473,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="labelToRemove">string, the label to remove from the issue</param>
         public void RemoveLabel(string labelToRemove)
         {
-            if (_labelsToAdd.Contains(labelToRemove))
+            if (_labelsToAdd.Contains(labelToRemove, StringComparer.OrdinalIgnoreCase))
             {
                 Console.WriteLine($"Label to remove {labelToRemove} is currently on the add list and will not be added");
             }
@@ -667,6 +734,75 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 permission
             };
             return await DoesUserHavePermissions(repositoryId, user, permissionList);
+        }
+
+        /// <summary>
+        /// Before assigning an owner to an issue they need to be checked to see if they're a valid assignee for
+        /// that repository. Also, unlike PRs, issues cannot be assigned to teams. Unfortunately, unlike most other
+        /// APIs that manipulate issues, this particular API requires the repoOwner and repoName instead of just the
+        /// repositoryId (note: Azure/azure-sdk-for-whatever is actually repoOwner/repoName). The repository is in
+        /// payload contains this information which will be Repository.Owner.Name for the owner and Repository.Name
+        /// for the name.
+        /// </summary>
+        /// <param name="repoOwner">The repository owner, found in the Repository.Owner.Name of the payload.</param>
+        /// <param name="repoName">The repository name, found in the Repository.Name of the payload.</param>
+        /// <param name="assignee">The owner to check.</param>
+        /// <returns>True if the owner can be assigned to issues within the repository, false otherwise.</returns>
+        public virtual async Task<bool> OwnerCanBeAssignedToIssuesInRepo(string repoOwner, string repoName, string assignee)
+        {
+            if (string.IsNullOrWhiteSpace(repoOwner))
+            {
+                return false;
+            }
+            // Issues cannot be assigned to teams, only PRs
+            if (assignee.Contains(SeparatorConstants.Team))
+            {
+                return false;
+            }
+            return await _gitHubClient.Issue.Assignee.CheckAssignee(repoOwner, repoName, assignee);
+        }
+
+        /// <summary>
+        /// This function is only valid for issue processing, scheduled events do not assign issue.
+        /// </summary>
+        /// <param name="repoOwner">The repository owner, found in the Repository.Owner.Name of the payload.</param>
+        /// <param name="repoName">The repository name, found in the Repository.Name of the payload.</param>
+        /// <param name="assignee">The owner to assign to an issue. Note, this cannot be a team.</param>
+        public void AssignOwnerToIssue(string repoOwner, string repoName, string assignee)
+        {
+
+            if (assignee == null)
+            {
+                Console.WriteLine("Issue assignee cannot be null.");
+                return;
+            }
+
+            if (assignee.Contains(SeparatorConstants.Team))
+            {
+                Console.WriteLine($"Assignee, {assignee}, is a team. Issues cannot be assigned to a team.");
+                return;
+            }
+
+            if (null == _gitHubIssueAssignment)
+            {
+                _gitHubIssueAssignment = new GitHubIssueAssignment(repoOwner, repoName);
+            }
+
+            if (_gitHubIssueAssignment.Assignees.Contains(assignee, StringComparer.OrdinalIgnoreCase))
+            {
+                Console.WriteLine($"Issue assignee {assignee} is already on the list of assignees for the issue.");
+            }
+            else
+            {
+                if (_gitHubIssueAssignment.Assignees.Count < MaxIssueAssignees)
+                {
+                    _gitHubIssueAssignment.Assignees.Add(assignee);
+                }
+                else
+                {
+                    Console.WriteLine($"The max number of Issue assignees (10) has been reached. {assignee} will not be assigned to the issue.");
+                }
+            }
         }
 
         /// <summary>

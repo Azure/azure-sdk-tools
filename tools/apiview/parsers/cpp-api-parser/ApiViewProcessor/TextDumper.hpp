@@ -16,30 +16,73 @@ public:
 
   virtual void InsertWhitespace(int count) override { m_stream << std::string(count, ' '); }
   virtual void InsertNewline() override { m_stream << std::endl; }
-  virtual void InsertKeyword(std::string_view const& keyword) override { m_stream << keyword; }
-  virtual void InsertText(std::string_view const& text) override { m_stream << text; }
-  virtual void InsertPunctuation(const char punctuation) override { m_stream << punctuation; }
-  virtual void InsertLineIdMarker() override { m_stream << "// "; }
+  virtual void InsertKeyword(std::string_view const& keyword) override
+  {
+    m_stream << keyword;
+    UpdateCursor(keyword.size());
+  }
+  virtual void InsertText(std::string_view const& text) override
+  {
+    m_stream << text;
+    UpdateCursor(text.size());
+  }
+  virtual void InsertPunctuation(const char punctuation) override
+  {
+    m_stream << punctuation;
+    UpdateCursor(1);
+  }
+  virtual void InsertLineIdMarker() override
+  {
+    m_stream << "// ";
+    UpdateCursor(3);
+  }
   virtual void InsertTypeName(std::string_view const& type, std::string_view const&) override
   {
     m_stream << type;
+    UpdateCursor(type.size());
   }
   virtual void InsertMemberName(std::string_view const& member, std::string_view const&) override
   {
     m_stream << member;
+    UpdateCursor(member.size());
   }
-  virtual void InsertStringLiteral(std::string_view const& str) override { m_stream << str; }
-  virtual void InsertLiteral(std::string_view const& str) override { m_stream << str; }
-  virtual void InsertIdentifier(std::string_view const& str) override { m_stream << str; }
-  virtual void InsertComment(std::string_view const& comment) override { m_stream << comment; }
-  virtual void AddDocumentRangeStart() override { m_stream << "/*"; }
-  virtual void AddDocumentRangeEnd() override { m_stream << "*/"; }
+  virtual void InsertStringLiteral(std::string_view const& str) override
+  {
+    m_stream << str;
+    UpdateCursor(str.size());
+  }
+  virtual void InsertLiteral(std::string_view const& str) override
+  {
+    m_stream << str;
+    UpdateCursor(str.size());
+  }
+  virtual void InsertIdentifier(std::string_view const& str) override
+  {
+    m_stream << str;
+    UpdateCursor(str.size());
+  }
+  virtual void InsertComment(std::string_view const& comment) override
+  {
+    m_stream << comment;
+    UpdateCursor(comment.size());
+  }
+  virtual void AddDocumentRangeStart() override
+  {
+    m_stream << "/* ** START DOCUMENTATION RANGE ** */" << std::endl;
+  }
+  virtual void AddDocumentRangeEnd() override
+  {
+    m_stream << "/* ** END DOCUMENTATION RANGE ** */" << std::endl;
+  }
+  virtual void AddExternalLinkStart(std::string_view const& linkValue) override
+  {
+    m_stream << "**LINK** <a href=" << linkValue << "> ** LINK **";
+  }
+  virtual void AddExternalLinkEnd() override { m_stream << "**LINK**</a>**LINK**"; }
   virtual void AddDeprecatedRangeStart() override { m_stream << "/* ** DEPRECATED **"; }
   virtual void AddDeprecatedRangeEnd() override { m_stream << "/* ** DEPRECATED ** */"; }
   virtual void AddDiffRangeStart() override { m_stream << "/* ** DIFF **"; }
   virtual void AddDiffRangeEnd() override { m_stream << " ** DIFF ** */"; }
-  virtual void AddInheritanceInfoStart() override { m_stream << "/* ** INHERITANCE **"; }
-  virtual void AddInheritanceInfoEnd() override { m_stream << " ** INHERITANCE ** */"; }
 
   void DoDumpHierarchyNode(
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node,

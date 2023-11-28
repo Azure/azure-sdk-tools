@@ -49,6 +49,7 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
         case ApiItemKind.Interface:
         case ApiItemKind.Class:
         case ApiItemKind.Namespace:
+        case ApiItemKind.Enum:
             typeKind = item.kind.toLowerCase();
             break
         case ApiItemKind.TypeAlias:
@@ -71,7 +72,8 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
 
     if (item.kind === ApiItemKind.Interface ||
         item.kind === ApiItemKind.Class ||
-        item.kind === ApiItemKind.Namespace)
+        item.kind === ApiItemKind.Namespace ||
+        item.kind === ApiItemKind.Enum)
     {
         if (item.members.length > 0)
         {
@@ -118,10 +120,10 @@ function getReleaseTag(item: ApiItem & {releaseTag?: ReleaseTag}): "alpha" | "be
 
 const apiModel = new ApiModel();
 const fileName = process.argv[2];
-var versionString = "";
+var PackageversionString = "";
 if (fileName.includes("_"))
 {
-    versionString = fileName.split("_").pop().replace(".api.json", "");
+    PackageversionString = fileName.split("_").pop().replace(".api.json", "");
 }
 apiModel.loadPackage(fileName);
 
@@ -137,17 +139,18 @@ for (const modelPackage of apiModel.packages) {
 }
 
 var name = apiModel.packages[0].name;
-if (versionString != "")
+if (PackageversionString != "")
 {
-    name += "(" +versionString + ")";
+    name += "(" +PackageversionString + ")";
 }
 var apiViewFile: IApiViewFile = {
     Name: name,
     Navigation: navigation,
     Tokens: builder.tokens,
     PackageName: apiModel.packages[0].name,
-    VersionString: "1.0.4",
-    Language: "JavaScript"
+    VersionString: "1.0.7",
+    Language: "JavaScript",
+    PackageVersion: PackageversionString
 }
 
 writeFile(process.argv[3], JSON.stringify(apiViewFile), err => {

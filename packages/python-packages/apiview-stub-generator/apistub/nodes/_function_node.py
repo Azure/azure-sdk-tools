@@ -252,7 +252,7 @@ class FunctionNode(NodeEntityBase):
             apiview.add_newline()
 
         apiview.add_whitespace()
-        apiview.add_line_marker(self.namespace_id)
+        apiview.add_line_marker(self.namespace_id, add_cross_language_id=True)
         if self.is_async:
             apiview.add_keyword("async", False, True)
 
@@ -260,8 +260,7 @@ class FunctionNode(NodeEntityBase):
         # Show fully qualified name for module level function and short name for instance functions
         apiview.add_text(
             self.full_name if self.is_module_level else self.name,
-            definition_id=self.namespace_id,
-            add_cross_language_id=True
+            definition_id=self.namespace_id
         )
         # Add parameters
         self._generate_signature_token(apiview, use_multi_line)

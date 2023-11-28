@@ -100,6 +100,18 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
+        public static void LogTrace(string details)
+        {
+            if (null != Logger)
+            {
+                Logger.LogTrace(details);
+            }
+            else
+            {
+                System.Console.WriteLine(details);
+            }
+        }
+
         /// <summary>
         /// Simple access to the logging api. Accepts a simple message (preformatted) and logs to debug logger.
         /// </summary>

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Microsoft.CodeAnalysis;
@@ -11,7 +11,7 @@ namespace ApiView
 {
     public static class CompilationFactory
     {
-        private static HashSet<string> AllowedAssemblies = new HashSet<string>(new []
+        private static HashSet<string> AllowedAssemblies = new HashSet<string>(new[]
         {
             "Microsoft.Bcl.AsyncInterfaces"
         }, StringComparer.InvariantCultureIgnoreCase);
@@ -44,7 +44,7 @@ namespace ApiView
                 // MetadataReference.CreateFromStream closes the stream
                 reference = MetadataReference.CreateFromStream(memoryStream, documentation: documentation);
             }
-            var compilation = CSharpCompilation.Create(null).AddReferences(reference);
+            var compilation = CSharpCompilation.Create(null, options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, metadataImportOptions: MetadataImportOptions.Internal)).AddReferences(reference);
             var corlibLocation = typeof(object).Assembly.Location;
 
             var runtimeFolder = Path.GetDirectoryName(corlibLocation);

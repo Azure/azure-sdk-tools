@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using APIView;
@@ -6,11 +6,9 @@ using APIView.Analysis;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 
 namespace ApiView
@@ -50,7 +48,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "23";
+        public const string CurrentVersion = "25";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -81,6 +79,7 @@ namespace ApiView
             var builder = new CodeFileTokensBuilder();
 
             BuildDependencies(builder, dependencies);
+            BuildInternalsVisibleToAttributes(builder, assemblySymbol);
 
             var navigationItems = new List<NavigationItem>();
             foreach (var namespaceSymbol in SymbolOrderProvider.OrderNamespaces(EnumerateNamespaces(assemblySymbol)))
@@ -113,10 +112,42 @@ namespace ApiView
                 VersionString = CurrentVersion,
                 Navigation = new[] { assemblyNavigationItem },
                 Diagnostics = analyzer.Results.ToArray(),
-                PackageName = assemblySymbol.Name
+                PackageName = assemblySymbol.Name,
+                PackageVersion = assemblySymbol.Identity.Version.ToString()
             };
 
             return node;
+        }
+
+        public static void BuildInternalsVisibleToAttributes(CodeFileTokensBuilder builder, IAssemblySymbol assemblySymbol)
+        {
+            var assemblyAttributes = assemblySymbol.GetAttributes()
+                .Where(a =>
+                    a.AttributeClass.Name == "InternalsVisibleToAttribute" &&
+                    !a.ConstructorArguments[0].Value.ToString().Contains(".Tests") &&
+                    !a.ConstructorArguments[0].Value.ToString().Contains(".Perf") &&
+                    !a.ConstructorArguments[0].Value.ToString().Contains("DynamicProxyGenAssembly2"));
+            if (assemblyAttributes != null && assemblyAttributes.Any())
+            {
+                builder.Append("Exposes internals to:", CodeFileTokenKind.Text);
+                builder.NewLine();
+                foreach (AttributeData attribute in assemblyAttributes)
+                {
+                    if (attribute.ConstructorArguments.Length > 0)
+                    {
+                        var param = attribute.ConstructorArguments[0].Value.ToString();
+                        var firstComma = param.IndexOf(',');
+                        param = firstComma > 0 ? param[..firstComma] : param;
+                        builder.Append(new CodeFileToken(param, CodeFileTokenKind.Text)
+                        {
+                            // allow assembly to have a comment
+                            DefinitionId = attribute.AttributeClass.Name
+                        });
+                    }
+                    builder.NewLine();
+                }
+                builder.NewLine();
+            }
         }
 
         public static void BuildDependencies(CodeFileTokensBuilder builder, List<DependencyInfo> dependencies)
@@ -429,7 +460,7 @@ namespace ApiView
             const string attributeSuffix = "Attribute";
             foreach (var attribute in attributes)
             {
-                if (!IsAccessible(attribute.AttributeClass) || IsSkippedAttribute(attribute.AttributeClass))
+                if ((!IsAccessible(attribute.AttributeClass) && attribute.AttributeClass.Name != "FriendAttribute" )|| IsSkippedAttribute(attribute.AttributeClass))
                 {
                     continue;
                 }
@@ -504,6 +535,9 @@ namespace ApiView
         private bool IsHiddenFromIntellisense(ISymbol member) =>
             member.GetAttributes().Any(d => d.AttributeClass?.Name == "EditorBrowsableAttribute"
                                             && (EditorBrowsableState) d.ConstructorArguments[0].Value == EditorBrowsableState.Never);
+
+        private bool IsDecoratedWithAttribute(ISymbol member, string attributeName) =>
+            member.GetAttributes().Any(d => d.AttributeClass?.Name == attributeName);
 
         private void BuildTypedConstant(CodeFileTokensBuilder builder, TypedConstant typedConstant)
         {
@@ -584,9 +618,28 @@ namespace ApiView
                 builder.Keyword(SyntaxFacts.GetText(ToEffectiveAccessibility(symbol.DeclaredAccessibility)));
                 builder.Space();
             }
-            foreach (var symbolDisplayPart in symbol.ToDisplayParts(_defaultDisplayFormat))
+            if (symbol is IPropertySymbol propSymbol && propSymbol.DeclaredAccessibility != Accessibility.Internal)
             {
-                builder.Append(MapToken(definedSymbol, symbolDisplayPart));
+                var parts = propSymbol.ToDisplayParts(_defaultDisplayFormat);
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    // Skip internal setters
+                    if (parts[i].Kind == SymbolDisplayPartKind.Keyword && parts[i].ToString() == "internal")
+                    {
+                        while (i < parts.Length && parts[i].ToString() != "}")
+                        {
+                            i++;
+                        }
+                    }
+                    builder.Append(MapToken(definedSymbol, parts[i]));
+                }
+            }
+            else
+            {
+                foreach (var symbolDisplayPart in symbol.ToDisplayParts(_defaultDisplayFormat))
+                {
+                    builder.Append(MapToken(definedSymbol, symbolDisplayPart));
+                }
             }
         }
 
@@ -692,6 +745,8 @@ namespace ApiView
                 case Accessibility.ProtectedOrInternal:
                 case Accessibility.Public:
                     return true;
+                case Accessibility.Internal:
+                    return s.GetAttributes().Any(a => a.AttributeClass.Name == "FriendAttribute");
                 default:
                     return IsAccessibleExplicitInterfaceImplementation(s);
             }

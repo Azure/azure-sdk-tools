@@ -37,6 +37,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true),
                 _recordingHandler.ContextDirectory);
 
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
+            _logger.LogDebug($"Attempting to start recording for {file??"In-Memory Recording"} {assetsJson ?? string.Empty}");
+
             if (String.IsNullOrEmpty(file) && !String.IsNullOrEmpty(recordingId))
             {
                 await _recordingHandler.StartPlaybackAsync(recordingId, Response, RecordingType.InMemory, assetsJson);
@@ -54,6 +57,8 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public void Stop()
         {
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
+
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");
             bool.TryParse(RecordingHandler.GetHeader(Request, "x-purge-inmemory-recording", true), out var shouldPurgeRecording);
 

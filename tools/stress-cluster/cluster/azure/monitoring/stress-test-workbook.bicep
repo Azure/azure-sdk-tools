@@ -105,7 +105,7 @@ var workbookContent = {
             multiSelect: true
             quote: '\''
             delimiter: ','
-            query: 'Perf \r\n| where ObjectName == "K8SContainer"\r\n| extend DayBin = bin(TimeGenerated, 3d)\r\n| summarize arg_max(TimeGenerated, *) by InstanceName\r\n| extend ResourceId = split(InstanceName, "/")\r\n| extend PodUid = strcat(ResourceId[-2])\r\n| extend ContainerName = strcat(ResourceId[-1])\r\n// Exclude init containers\r\n| where ContainerName !startswith "init-"\r\n| join kind=inner (\r\n  KubePodInventory\r\n  | where Namespace in ({NamespaceParameter})\r\n  | distinct Namespace, Name, PodUid\r\n) on PodUid\r\n| extend day = tostring(format_datetime(DayBin, "MM/dd"))\r\n| sort by day desc\r\n| project value = PodUid, label = Name, group = day\r\n'
+            query: 'Perf \r\n| where ObjectName == "K8SContainer"\r\n| extend DayBin = bin(TimeGenerated, 3d)\r\n| summarize arg_max(TimeGenerated, *) by InstanceName\r\n| extend ResourceId = split(InstanceName, "/")\r\n| extend PodUid = strcat(ResourceId[-2])\r\n| extend ContainerName = strcat(ResourceId[-1])\r\n// Exclude init containers\r\n| where ContainerName !startswith "init-"\r\n| join kind=inner (\r\n  KubePodInventory\r\n  | where Namespace in ({NamespaceParameter})\r\n  | distinct Namespace, Name, PodUid\r\n) on PodUid\r\n| extend day = tostring(format_datetime(DayBin, "MM/dd"))\r\n| sort by day desc\r\n| project value = PodUid, label = strcat(Name, "/", ContainerName), group = day\r\n\r\n'
             crossComponentResources: [
               logAnalyticsResource
             ]

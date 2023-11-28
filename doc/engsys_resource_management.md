@@ -43,6 +43,9 @@ If you need the group for a little more time, add/update a tag named `DeleteAfte
 
 *To create long-lived resources:*
 
+NOTE: Resource groups in the playground subscription, if compliant and marked with valid aliases (see below), **will still
+be marked for deletion after 30 days.** See the below examples for how to extend this deletion deadline if necessary.
+
 Create a resource group to contain all testing resources. The resource group name should start with your Microsoft alias.
 Valid group name examples: `myalias`, `myalias-feature-101-testing`. Your Microsoft account must be
 [linked to your Github account](https://repos.opensource.microsoft.com/link).

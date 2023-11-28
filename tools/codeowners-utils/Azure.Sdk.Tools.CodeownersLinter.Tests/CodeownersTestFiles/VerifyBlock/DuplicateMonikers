@@ -1,0 +1,37 @@
+# Scenario data for duplicate moniker detection.
+
+# Duplicate PRLabel
+# PRLabel: %TestLabel1
+# PRLabel: %TestLabelBad
+/sdk/someFakePath @TestOwner2
+
+# Duplicate AzureSdkOwners
+# AzureSdkOwners: @TestUser0
+# AzureSdkOwners: @TestUserBad  @TestOwner1
+# ServiceLabel: %TestLabel1
+# ServiceOwners: @TestOwner0  @TestOwner2
+
+# Duplicate ServiceLabel ending in source path
+# ServiceLabel: %TestLabel1
+# ServiceLabel: %TestLabelBad
+/sdk/someFakePath @TestOwner2
+
+# Duplicate ServiceLabel ending /<NotInRepo>/
+# ServiceLabel: %TestLabel1
+# ServiceLabel: %TestLabelBad
+#/<NotInRepo>/  @TestOwner0 @TestOwnerBad
+
+# Duplicate ServiceLabel ending ServiceOwners
+# ServiceLabel: %TestLabel1
+# ServiceLabel: %TestLabelBad
+# ServiceOwners: @TestOwner0 @TestOwnerBad
+
+# Duplicate /<NotInRepo>/
+# ServiceLabel: %TestLabel1
+#/<NotInRepo>/  @TestOwner1 @TestOwnerBad
+#/<NotInRepo>/  @TestOwner0
+
+# Duplicate ServiceOwners
+# ServiceLabel: %TestLabel1
+# ServiceOwners:  @TestOwner0 @TestOwnerBad
+# ServiceOwners:  @TestOwner2

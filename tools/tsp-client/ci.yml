@@ -1,0 +1,120 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/tsp-client
+
+pr:
+  branches:
+    include:
+      - main
+      - feature/*
+      - release/*
+      - hotfix/*
+  paths:
+    include:
+      - tools/tsp-client
+
+variables:
+  - template: ../../eng/pipelines/templates/variables/globals.yml
+  - name: NodeVersion
+    value: '18.x'
+  - name: VAR_ARTIFACT_NAME
+    value: 'drop'
+  - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
+    value: $(Build.ArtifactStagingDirectory)
+
+stages:
+  - stage: InstallAndBuild
+    jobs:
+      - job: Build
+        strategy:
+          matrix:
+            linux:
+              OSVmImage: 'MMSUbuntu20.04'
+              Pool: 'azsdk-pool-mms-ubuntu-2004-general'
+            mac:
+              OSVmImage: 'macos-12'
+              Pool: 'Azure Pipelines'
+            windows:
+              OSVmImage: 'MMS2022'
+              Pool: 'azsdk-pool-mms-win-2022-general'
+        pool:
+          name: $(Pool)
+          vmImage: $(OSVmImage)
+        steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '$(NodeVersion)'
+          displayName: 'Install Node.js'
+
+        - bash: |
+            npm ci
+          displayName: 'npm ci'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
+
+        - bash: |
+            npm pack
+          displayName: 'npm pack'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
+          condition: contains(variables['OSVmImage'], 'ubuntu')
+
+        - bash: 'cp azure-tools-typespec-client-generator-cli-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+          displayName: 'copy to staging dir'
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
+          condition: contains(variables['OSVmImage'], 'ubuntu')
+
+        - task: PublishBuildArtifacts@1
+          inputs:
+            PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+            ArtifactName: '$(VAR_ARTIFACT_NAME)'
+            publishLocation: 'Container'
+          condition: contains(variables['OSVmImage'], 'ubuntu')
+
+  - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
+    - stage: Release
+      dependsOn: InstallAndBuild
+      condition: succeeded()
+      jobs:
+      - job: approve
+        pool: server
+        steps:
+        - task: ManualValidation@0
+          inputs:
+            notifyUsers: 'Click to approve if it''s an expected public release.'
+      - job: release
+        dependsOn: approve
+        condition: and(succeeded(), ne(variables['USER_SKIP_PUBLIC_RELEASE'], 'true'))
+        steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '$(NodeVersion)'
+          displayName: 'Install Node.js'
+        - task: DownloadBuildArtifacts@0
+          inputs:
+            buildType: 'current'
+            downloadType: 'single'
+            artifactName: '$(VAR_ARTIFACT_NAME)'
+            downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+        - bash: |
+            echo -e "\e[32m[$(date -u)] LOG: publish the package"
+            echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc
+            for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARTIFACT_NAME)/*.tgz
+            do
+              echo -e "\e[32m[$(date -u)] LOG: File: $file"
+              npm publish $file --access public || { echo 'publish $file failed' ; exit 1; }
+            done
+            rm ~/.npmrc || { echo 'rm ~/.npmrc failed' ; exit 1; }
+          displayName: Publish
+          workingDirectory: $(System.DefaultWorkingDirectory)/tools/tsp-client
+

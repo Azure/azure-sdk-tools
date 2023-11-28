@@ -38,7 +38,7 @@ export function resolveOptions(context: EmitContext<ApiViewEmitterOptions>): Res
     outputFile: resolvedOptions["output-file"],
     service: resolvedOptions["service"],
     version: resolvedOptions["version"],
-    includeGlobalNamespace: resolvedOptions["include-global-namespace"] ?? false
+    includeGlobalNamespace: resolvedOptions["include-global-namespace"] ?? false,
   };
 }
 
@@ -180,6 +180,7 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
         }  
       }      
       const resolvedProgram = resolveProgramForVersion(program, service.type, versionString);
+  
       const apiview = new ApiView(serviceTitle, namespaceString, versionString, options.includeGlobalNamespace);
       apiview.emit(resolvedProgram);
       apiview.resolveMissingTypeReferences();

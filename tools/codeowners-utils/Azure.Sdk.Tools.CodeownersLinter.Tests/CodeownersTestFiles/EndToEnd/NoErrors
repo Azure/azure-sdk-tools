@@ -1,0 +1,34 @@
+# CODEOWNERS with no errors, for end to end tesing.
+
+# The fallback/catch all
+/** @TestOwner2
+
+# A single source path/owner line
+/sdk/someFakePath1/ @TestOwner0
+
+# PPLabel block ending in a source path/owner line
+# PRLabel: TestLabel1
+/sdk/someFakePath2/ @TestOwner2
+
+# ServiceLabel block ending in a source path/owner line
+# ServiceLabel: %TestLabel1
+/sdk/someFakePath3/ @TestOwner4  @TestOwner2
+
+# ServiceLabel block with MissingFolder moniker for owners
+# ServiceLabel: %TestLabel2
+#/<NotInRepo>/      @TestOwner0     @TestOwner4
+
+# ServiceLabel block with ServiceOwners moniker, no % before label
+# ServiceLabel: TestLabel3
+# ServiceOwners:    @TestOwner0 @TestOwner2
+
+# AzureSdkOwners must be part of a block with a ServiceLabel entry
+# AzureSdkOwners: @TestOwner0
+# ServiceLabel: %TestLabel3
+/sdk/someFakePath4/ @TestOwner2  @TestOwner4
+
+# Every moniker that can be grouped together and end in a source path/owner line.
+# AzureSdkOwners: @TestOwner0
+# PRLabel: %TestLabel2
+# ServiceLabel: %TestLabel4
+/sdk/someFakePath5/ @TestOwner2  @TestOwner4

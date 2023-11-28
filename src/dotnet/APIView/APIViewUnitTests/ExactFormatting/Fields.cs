@@ -5,5 +5,6 @@
         public const int I = 0;
         public static readonly int R;
         public string S;
+        /*-*/internal string T;/*-*/
     }
 }

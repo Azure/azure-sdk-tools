@@ -1,29 +1,21 @@
-import { execSync, spawn } from "child_process";
+import { spawn } from "child_process";
+import { simpleGit } from "simple-git";
 
-export function getRepoRoot(): string {
-    return execSync('git rev-parse --show-toplevel').toString().trim();
+export async function getRepoRoot(repoPath: string): Promise<string> {
+  return simpleGit(repoPath).revparse(["--show-toplevel"]);
 }
-  
+
 export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const git = spawn("git", ["clone", "--no-checkout", "--filter=tree:0", repo, cloneDir], {
-        cwd: rootUrl,
-        stdio: "inherit",
-      });
-      git.once("exit", (code) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(new Error(`git clone failed exited with code ${code}`));
-        }
-      });
-      git.once("error", (err) => {
-        reject(new Error(`git clone failed with error: ${err}`));
-      });
+  return new Promise((resolve, reject) => {
+    simpleGit(rootUrl).clone(repo, cloneDir, ["--no-checkout", "--filter=tree:0"], (err) => {
+      if (err) {
+        reject(err);
+      }
+      resolve();
     });
-  }
-  
-  
+  });
+}
+
   export async function sparseCheckout(cloneDir: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const git = spawn("git", ["sparse-checkout", "init"], {
@@ -42,7 +34,7 @@ export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string)
       });
     });
   }
-  
+
   export async function addSpecFiles(cloneDir: string, subDir: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const git = spawn("git", ["sparse-checkout", "add", subDir], {
@@ -61,22 +53,14 @@ export async function cloneRepo(rootUrl: string, cloneDir: string, repo: string)
       });
     });
   }
-  
-  export async function checkoutCommit(cloneDir: string, commit: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const git = spawn("git", ["checkout", commit], {
-        cwd: cloneDir,
-        stdio: "inherit",
-      });
-      git.once("exit", (code) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(new Error(`git checkout failed exited with code ${code}`));
-        }
-      });
-      git.once("error", (err) => {
-        reject(new Error(`git checkout failed with error: ${err}`));
-      });
+
+export async function checkoutCommit(cloneDir: string, commit: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    simpleGit(cloneDir).checkout(commit, undefined, (err) => {
+      if (err) {
+        reject(err);
+      }
+      resolve();
     });
-  }
+  });
+}

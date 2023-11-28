@@ -144,19 +144,20 @@ namespace APIViewWeb.Controllers
 
                     // Delete pending apiRevisions if it is not in approved state before adding new revision
                     // This is to keep only one pending revision since last approval or from initial review revision
-                    var automaticRevisions = new Queue<APIRevisionListItemModel>(apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic));
-                    var latestAutomaticAPIRevision = automaticRevisions.Peek();
+                    var automaticRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic);
+                    var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
+                    var latestAutomaticAPIRevision = automaticRevisionsQueue.Peek();
                     var comments = await _commentsManager.GetCommentsAsync(review.Id);
 
                     while (
-                        automaticRevisions.Any() &&
+                        automaticRevisionsQueue.Any() &&
                         !latestAutomaticAPIRevision.IsApproved &&
                         !await _apiRevisionsManager.IsAPIRevisionTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
                         !comments.Any(c => latestAutomaticAPIRevision.Id == c.RevisionId))
                     {
                         await ManagerHelpers.AssertAutomaticAPIRevisionModifier(user: User, apiRevision: apiRevision, authorizationService: _authorizationService);
                         await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(user: User, apiRevision: latestAutomaticAPIRevision);
-                        latestAutomaticAPIRevision = automaticRevisions.Dequeue();
+                        latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
                     }
 
                     // We should compare against only latest revision when calling this API from scheduled CI runs
@@ -165,7 +166,7 @@ namespace APIViewWeb.Controllers
 
                     if (compareAllRevisions)
                     {
-                        foreach (var approvedAPIRevision in apiRevisions.Where(r => r.IsApproved))
+                        foreach (var approvedAPIRevision in automaticRevisions.Where(r => r.IsApproved))
                         {
                             if (await _apiRevisionsManager.IsAPIRevisionTheSame(approvedAPIRevision, renderedCodeFile))
                             {

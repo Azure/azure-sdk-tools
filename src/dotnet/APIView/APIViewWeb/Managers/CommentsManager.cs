@@ -74,6 +74,11 @@ namespace APIViewWeb.Managers
             TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
         }
 
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId)
+        {
+            return await _commentsRepository.GetCommentsAsync(reviewId);
+        }
+
         public async Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId)
         {
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);

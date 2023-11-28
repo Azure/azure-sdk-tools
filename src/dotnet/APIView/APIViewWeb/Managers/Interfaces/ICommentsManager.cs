@@ -9,6 +9,7 @@ namespace APIViewWeb.Managers
     public interface ICommentsManager
     {
         public void LoadTaggableUsers();
+        public Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId);
         public Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId);
         public Task<ReviewCommentsModel> GetUsageSampleCommentsAsync(string reviewId);
         public Task AddCommentAsync(ClaimsPrincipal user, CommentItemModel comment);

@@ -20,6 +20,9 @@ using System.Data;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;
+using Amazon.SecurityToken.SAML;
+using Octokit;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace APIViewWeb.Managers
 {
@@ -52,7 +55,7 @@ namespace APIViewWeb.Managers
             _signalRHubContext = signalRHubContext;
         }
 
-        public Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool isClosed = false)
+        public Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
         {
             return _reviewsRepository.GetReviewAsync(language, packageName, isClosed);
         }
@@ -96,6 +99,60 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Get Reviews
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        public async Task<ReviewListItemModel> GetReviewAsync(ClaimsPrincipal user, string id)
+        {
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            var review = await _reviewsRepository.GetReviewAsync(id);
+            return review;
+        }
+
+        /// <summary>
+        /// Create Reviews
+        /// </summary>
+        /// <param name="packageName"></param>
+        /// <param name="language"></param>
+        /// <param name="isClosed"></param>
+        /// <returns></returns>
+        public async Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed=true)
+        {
+            if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(language)) 
+            {
+                throw new ArgumentException("Package Name and Language are required");
+            }
+
+            ReviewListItemModel review = new ReviewListItemModel()
+            {
+                PackageName = packageName,
+                Language = language,
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = "azure-sdk",
+                IsClosed = isClosed,
+                ChangeHistory = new List<ReviewChangeHistoryModel>()
+                {
+                    new ReviewChangeHistoryModel()
+                    {
+                        ChangeAction = ReviewChangeAction.Created,
+                        ChangedBy = "azure-sdk",
+                        ChangedOn = DateTime.UtcNow
+                    }
+                }
+            };
+
+            await _reviewsRepository.UpsertReviewAsync(review);
+            return review;
+        }
+
+        /// <summary>
         /// SoftDeleteReviewAsync
         /// </summary>
         /// <param name="user"></param>
@@ -117,24 +174,6 @@ namespace APIViewWeb.Managers
                 await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(user, revision);
             }
             await _commentManager.SoftDeleteCommentsAsync(user, review.Id);
-        }
-
-        /// <summary>
-        /// Get Reviews
-        /// </summary>
-        /// <param name="user"></param>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        /// <exception cref="UnauthorizedAccessException"></exception>
-        public async Task<ReviewListItemModel> GetReviewAsync(ClaimsPrincipal user, string id)
-        {
-            if (user == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
-
-            var review = await _reviewsRepository.GetReviewAsync(id);
-            return review;
         }
 
         /// <summary>

@@ -84,17 +84,17 @@ namespace APIViewWeb.Managers
         /// Retrieve the latest Revisions for a particular Review from the Revisions container in CosmosDb
         /// </summary>
         /// <param name="reviewId"></param>
-        /// <param name="reviewRevision"></param> The list of revisions can be supplied if available to avoid another call to the database
+        /// <param name="apiRevision"></param> The list of revisions can be supplied if available to avoid another call to the database
         /// <param name="apiRevisionType"></param>
         /// <returns></returns>
-        public async Task<APIRevisionListItemModel> GetLatestAPIRevisionsAsync(string reviewId, IEnumerable<APIRevisionListItemModel> reviewRevision = null, APIRevisionType apiRevisionType = APIRevisionType.All)
+        public async Task<APIRevisionListItemModel> GetLatestAPIRevisionsAsync(string reviewId, IEnumerable<APIRevisionListItemModel> apiRevision = null, APIRevisionType apiRevisionType = APIRevisionType.All)
         {
-            var revisions = (reviewRevision == null) ? await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId) : reviewRevision;
+            var apiRevisions = (apiRevision == null) ? await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId) : apiRevision;
             if (apiRevisionType != APIRevisionType.All)
             {
-                revisions = revisions.Where(r => r.APIRevisionType == apiRevisionType);
+                apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
             }
-            return revisions.OrderByDescending(r => r.CreatedOn).First(); ;
+            return apiRevisions.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
         }
 
         /// <summary>
@@ -117,37 +117,46 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="user"></param>
         /// <param name="id"></param>
-        /// <param name="revisionId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <param name="apiRevision"></param>
         /// <param name="notes"></param>
         /// <returns>true if review approval needs to be updated otherwise false</returns>
-        public async Task<bool> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes = "")
+        public async Task<bool> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string apiRevisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "")
         {
-            bool updateReview = false;
-            APIRevisionListItemModel revision = await _apiRevisionsRepository.GetReviewRevisionAsync(revisionId);
-            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(revision.ReviewId);
-
-            await ManagerHelpers.AssertApprover<APIRevisionListItemModel>(user, revision, _authorizationService);
-            var userId = user.GetGitHubLogin();
-            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(revision.ChangeHistory, APIRevisionChangeAction.Approved, userId, notes);
-            revision.ChangeHistory = changeUpdate.ChangeHistory;
-            revision.IsApproved = changeUpdate.ChangeStatus;
-            if (ChangeHistoryHelpers.GetChangeActionStatus(revision.ChangeHistory, APIRevisionChangeAction.Approved, userId))
+            if (apiRevisionId == null && apiRevision == null)
             {
-                revision.Approvers.Add(userId);
+                throw new ArgumentException(message: "apiRevisionId and apiRevision cannot both be null");
+            }
+
+            bool updateReview = false;
+            if (apiRevision == null)
+            {
+                apiRevision = await _apiRevisionsRepository.GetReviewRevisionAsync(apiRevisionId);
+            }
+            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(apiRevision.ReviewId);
+
+            await ManagerHelpers.AssertApprover<APIRevisionListItemModel>(user, apiRevision, _authorizationService);
+            var userId = user.GetGitHubLogin();
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(apiRevision.ChangeHistory, APIRevisionChangeAction.Approved, userId, notes);
+            apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
+            apiRevision.IsApproved = changeUpdate.ChangeStatus;
+            if (ChangeHistoryHelpers.GetChangeActionStatus(apiRevision.ChangeHistory, APIRevisionChangeAction.Approved, userId))
+            {
+                apiRevision.Approvers.Add(userId);
             }
             else
             {
-                revision.Approvers.Remove(userId);
+                apiRevision.Approvers.Remove(userId);
             }
 
-            if (!review.IsApproved && revision.IsApproved)
+            if (!review.IsApproved && apiRevision.IsApproved)
             {
                 updateReview = true; // If review is not approved and revision is approved, update review
             }
 
-            await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
-            await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, revisionId, revision.IsApproved);
-            await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, revisionId, userId, revision.IsApproved);
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, apiRevisionId, apiRevision.IsApproved);
+            await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, apiRevisionId, userId, apiRevision.IsApproved);
             return updateReview;
         }
 
@@ -372,8 +381,8 @@ namespace APIViewWeb.Managers
         public async Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string revisionId)
         {
             var revision = await _apiRevisionsRepository.GetReviewRevisionAsync(revisionId);
-            AssertAPIRevisionDeletion(revision);
-            await AssertAPIRevisionOwner(user, revision);
+            ManagerHelpers.AssertAPIRevisionDeletion(revision);
+            await ManagerHelpers.AssertAPIRevisionOwner(user, revision, _authorizationService);
             await SoftDeleteAPIRevisionAsync(user, revision);
         }
 
@@ -385,9 +394,8 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, APIRevisionListItemModel revision)
         {
-            AssertAPIRevisionDeletion(revision);
-            await AssertAPIRevisionOwner(user, revision);
-
+            ManagerHelpers.AssertAPIRevisionDeletion(revision);
+            await ManagerHelpers.AssertAPIRevisionOwner(user, revision, _authorizationService);
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(revision.ChangeHistory, APIRevisionChangeAction.Deleted, user.GetGitHubLogin());
             revision.ChangeHistory = changeUpdate.ChangeHistory;
             revision.IsDeleted = changeUpdate.ChangeStatus;
@@ -405,7 +413,7 @@ namespace APIViewWeb.Managers
         public async Task UpdateAPIRevisionLabelAsync(ClaimsPrincipal user, string revisionId, string label)
         {
             var revision = await GetAPIRevisionAsync(user, revisionId);
-            await AssertAPIRevisionOwner(user, revision);
+            await ManagerHelpers.AssertAPIRevisionOwner(user, revision, _authorizationService);
             revision.Label = label;
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
         }
@@ -426,37 +434,46 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Asser that user can delete the apiRevision
+        /// CreateAPIRevisionAsync
         /// </summary>
         /// <param name="user"></param>
-        /// <param name="revisionModel"></param>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <param name="label"></param>
+        /// <param name="memoryStream"></param>
+        /// <param name="codeFile"></param>
+        /// <param name="originalName"></param>
         /// <returns></returns>
-        /// <exception cref="AuthorizationFailedException"></exception>
-        private async Task AssertAPIRevisionOwner(ClaimsPrincipal user, APIRevisionListItemModel revisionModel)
+        public async Task<APIRevisionListItemModel> CreateAPIRevisionAsync(ClaimsPrincipal user, string reviewId, APIRevisionType apiRevisionType, string label, MemoryStream memoryStream, CodeFile codeFile, string originalName = null)
         {
-            var result = await _authorizationService.AuthorizeAsync(
-                user,
-                revisionModel,
-                new[] { RevisionOwnerRequirement.Instance });
-            if (!result.Succeeded)
+            var apiRevision = new APIRevisionListItemModel()
             {
-                throw new AuthorizationFailedException();
-            }
-        }
+                ReviewId = reviewId,
+                PackageName = codeFile.PackageName,
+                Language = codeFile.Language,
+                CreatedOn = DateTime.UtcNow,
+                CreatedBy = user.GetGitHubLogin(),
+                APIRevisionType = apiRevisionType,
+                ChangeHistory = new List<APIRevisionChangeHistoryModel>()
+                {
+                    new APIRevisionChangeHistoryModel()
+                    {
+                        ChangeAction = APIRevisionChangeAction.Created,
+                        ChangedBy = user.GetGitHubLogin(),
+                        ChangedOn = DateTime.UtcNow
+                    }
+                },
+                Label = label
+            };
 
-        /// <summary>
-        /// See if Deletion is allowed
-        /// </summary>
-        /// <param name="apiRevision"></param>
-        /// <exception cref="UnDeletableReviewException"></exception>
-        private void AssertAPIRevisionDeletion(APIRevisionListItemModel apiRevision)
-        {
-            // We allow deletion of manual API review only.
-            // Server side assertion to ensure we are not processing any requests to delete automatic and PR API review
-            if (apiRevision.APIRevisionType != APIRevisionType.Manual)
+            var apiRevisionCodeFile = await _codeFileManager.CreateReviewCodeFileModel(apiRevisionId: apiRevision.Id, memoryStream: memoryStream, codeFile: codeFile);
+            apiRevision.Files.Add(apiRevisionCodeFile);
+            if (!string.IsNullOrEmpty(originalName))
             {
-                throw new UnDeletableReviewException();
+                apiRevisionCodeFile.FileName = originalName;
             }
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            return apiRevision;
         }
 
         /// <summary>

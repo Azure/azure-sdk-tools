@@ -470,6 +470,7 @@
                 </select>
                 <select id="revision-select" aria-label="Revision Select">
                     @{
+
                         var revisionsToSelectFrom = Model.ReviewContent.APIRevisionsGrouped[Model.ReviewContent.ActiveAPIRevision.APIRevisionType.ToString()];
                         (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
                             revisions: revisionsToSelectFrom,
@@ -485,9 +486,11 @@
 
                 @if (@Model.ReviewContent.APIRevisionsGrouped.SelectMany(kvp => kvp.Value).Count() > 1)
                 {
-                    var diffRevisionTypeFirst = (Model.ReviewContent.APIRevisionsGrouped.ContainsKey("Automatic")) ? "Automatic" : Model.ReviewContent.APIRevisionsGrouped.Keys.First();
+                    var diffRevisionType = (Model.ReviewContent.APIRevisionsGrouped.ContainsKey("Automatic")) ? "Automatic" : Model.ReviewContent.APIRevisionsGrouped.Keys.First();
                     @if (Model.DiffRevisionId != null)
                     {
+                        diffRevisionType = Model.ReviewContent.DiffAPIRevision.APIRevisionType.ToString();
+
                         var urlValue = @Url.ActionLink("Review", "Assemblies", new
                         {
                             id = @Model.ReviewContent.Review.Id,
@@ -500,7 +503,8 @@
                     }
                     else
                     {
-                        var diffRevisionForButton = Model.ReviewContent.APIRevisionsGrouped[diffRevisionTypeFirst];
+
+                        var diffRevisionForButton = Model.ReviewContent.APIRevisionsGrouped[diffRevisionType];
                         var urlValue = @Url.ActionLink("Review", "Assemblies", new
                         {
                             id = @Model.ReviewContent.Review.Id,
@@ -514,7 +518,7 @@
                     <select id="diff-revision-type-select" aria-label="Revision Type Select">
                         @foreach (var apiRevisionType in Model.ReviewContent.APIRevisionsGrouped.Keys.Order())
                         {
-                            if (apiRevisionType == diffRevisionTypeFirst)
+                            if (apiRevisionType == diffRevisionType)
                             {
                                 <option selected value="@apiRevisionType">@apiRevisionType</option>
                             }
@@ -525,7 +529,7 @@
                     </select>
                     <select id="diff-select" aria-label="Diff Select">
                         @{
-                            var diffRevisionsToSelectFrom = (Model.ReviewContent.APIRevisionsGrouped.ContainsKey("Automatic")) ? Model.ReviewContent.APIRevisionsGrouped["Automatic"] : Model.ReviewContent.APIRevisionsGrouped[Model.ReviewContent.APIRevisionsGrouped.Keys.First()];
+                            var diffRevisionsToSelectFrom = Model.ReviewContent.APIRevisionsGrouped[diffRevisionType];
                             (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) diffRevisionSelectModel = (
                             revisions: diffRevisionsToSelectFrom,
                             activeRevision: Model.ReviewContent.ActiveAPIRevision,

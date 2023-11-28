@@ -15,6 +15,7 @@ using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.OpenApi.Any;
 
 namespace APIViewWeb.Helpers
 {
@@ -239,13 +240,21 @@ namespace APIViewWeb.Helpers
         {
             var userId = user.GetGitHubLogin();
             var review = await reviewManager.GetReviewAsync(user, reviewId);
-            var revisions = await reviewRevisionsManager.GetAPIRevisionsAsync(reviewId);
-            var activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, revisions, APIRevisionType.Automatic);
+            var apiRevisions = await reviewRevisionsManager.GetAPIRevisionsAsync(reviewId);
+
+            // Try getting latest Automatic Revision
+            var activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions, APIRevisionType.Automatic);
+            if (activeRevision == null)
+            {
+                // Get latest of any type
+                activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions);
+            }
+
             APIRevisionListItemModel diffRevision = null;
             if (!string.IsNullOrEmpty(revisionId)) {
-                if (revisions.Where(x => x.Id == revisionId).Any())
+                if (apiRevisions.Where(x => x.Id == revisionId).Any())
                 {
-                    activeRevision = await reviewRevisionsManager.GetAPIRevisionAsync(user, revisionId);
+                    activeRevision = apiRevisions.First(x => x.Id == revisionId);
                 }
                 else
                 {
@@ -265,7 +274,7 @@ namespace APIViewWeb.Helpers
 
             if (!string.IsNullOrEmpty(diffRevisionId))
             {
-                if (revisions.Where(x => x.Id == diffRevisionId).Any())
+                if (apiRevisions.Where(x => x.Id == diffRevisionId).Any())
                 {
                     diffRevision = await reviewRevisionsManager.GetAPIRevisionAsync(user, diffRevisionId);
                     var diffRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(diffRevisionId, diffRevision.Files[0].FileId);
@@ -334,7 +343,7 @@ namespace APIViewWeb.Helpers
                 Review = review,
                 Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation,
                 codeLines = codeLines,
-                APIRevisionsGrouped = revisions.OrderByDescending(c => c.CreatedOn).GroupBy(r => r.APIRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList()),
+                APIRevisionsGrouped = apiRevisions.OrderByDescending(c => c.CreatedOn).GroupBy(r => r.APIRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList()),
                 ActiveAPIRevision = activeRevision,
                 DiffAPIRevision = diffRevision,
                 TotalActiveConversiations = comments.Threads.Count(t => !t.IsResolved),
@@ -436,21 +445,26 @@ namespace APIViewWeb.Helpers
         /// <summary>
         /// Ensure unique label for Revisions
         /// </summary>
-        /// <param name="revision"></param>
+        /// <param name="apiRevision"></param>
         /// <param name="addType"></param>
         /// <returns></returns>
-        public static string ResolveRevisionLabel(APIRevisionListItemModel revision, bool addType = true)
+        public static string ResolveRevisionLabel(APIRevisionListItemModel apiRevision, bool addType = true)
         {
-            var label = $"{revision.CreatedOn.ToString()} | {revision.CreatedBy}";
+            var label = $"{apiRevision.CreatedOn.ToString()} | {apiRevision.CreatedBy}";
 
-            if (!String.IsNullOrWhiteSpace(revision.Label))
+            if (apiRevision.Files.Any() && !String.IsNullOrEmpty(apiRevision.Files[0].PackageVersion))
+            {
+                label = $"{apiRevision.Files[0].PackageVersion} | {label}";
+            }
+
+            if (!String.IsNullOrWhiteSpace(apiRevision.Label))
             { 
-                label = $"{revision.Label} | {label}";
+                label = $"{label} | {apiRevision.Label}";
             }
 
             if (addType)
             {
-                label = $"{revision.APIRevisionType.ToString()} | {label}";
+                label = $"{apiRevision.APIRevisionType.ToString()} | {label}";
             }
             return label;
         }

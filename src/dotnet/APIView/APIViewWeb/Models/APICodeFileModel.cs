@@ -36,5 +36,7 @@ namespace APIViewWeb
 
         // This field stores original file name uploaded to create review
         public string FileName { get; set; }
+
+        public string PackageVersion { get; set; }
     }
 }

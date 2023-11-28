@@ -32,7 +32,8 @@ namespace SwaggerApiParser
                     swaggerFilePath = swaggerFilePath
                 },
                 fileName = Path.GetFileName(swaggerFilePath),
-                packageName = packageName
+                packageName = packageName,
+                APIVersion = swaggerSpec.info.version
             };
 
             AddDefinitionsToCache(swaggerSpec, swaggerFilePath, schemaCache);

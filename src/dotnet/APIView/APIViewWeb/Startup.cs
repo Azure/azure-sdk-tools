@@ -236,7 +236,7 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, APIRevisionOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
-            services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, AutoAPIRevisionModifierRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, SamplesRevisionOwnerRequirementHandler>();
             services.AddSingleton<CosmosClient>(x =>
             {

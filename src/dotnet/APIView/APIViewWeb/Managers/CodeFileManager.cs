@@ -90,14 +90,14 @@ namespace APIViewWeb.Managers
         /// <summary>
         /// Create Code File
         /// </summary>
-        /// <param name="revisionId"></param>
+        /// <param name="apiRevisionId"></param>
         /// <param name="originalName"></param>
         /// <param name="fileStream"></param>
         /// <param name="runAnalysis"></param>
         /// <param name="language"></param>
         /// <returns></returns>
         public async Task<APICodeFileModel> CreateCodeFileAsync(
-            string revisionId,
+            string apiRevisionId,
             string originalName,
             Stream fileStream,
             bool runAnalysis,
@@ -105,7 +105,7 @@ namespace APIViewWeb.Managers
         {
             using var memoryStream = new MemoryStream();
             var codeFile = await CreateCodeFileAsync(originalName, fileStream, runAnalysis, memoryStream, language);
-            var reviewCodeFileModel = await CreateReviewCodeFileModel(revisionId, memoryStream, codeFile);
+            var reviewCodeFileModel = await CreateReviewCodeFileModel(apiRevisionId, memoryStream, codeFile);
             reviewCodeFileModel.FileName = originalName;
             return reviewCodeFileModel;
         }
@@ -150,11 +150,11 @@ namespace APIViewWeb.Managers
         /// <summary>
         /// Create Code File
         /// </summary>
-        /// <param name="revisionId"></param>
+        /// <param name="apiRevisionId"></param>
         /// <param name="memoryStream"></param>
         /// <param name="codeFile"></param>
         /// <returns></returns>
-        public async Task<APICodeFileModel> CreateReviewCodeFileModel(string revisionId, MemoryStream memoryStream, CodeFile codeFile)
+        public async Task<APICodeFileModel> CreateReviewCodeFileModel(string apiRevisionId, MemoryStream memoryStream, CodeFile codeFile)
         {
             var reviewCodeFileModel = new APICodeFileModel
             {
@@ -167,7 +167,7 @@ namespace APIViewWeb.Managers
                 memoryStream.Position = 0;
                 await _originalsRepository.UploadOriginalAsync(reviewCodeFileModel.FileId, memoryStream);
             }
-            await _codeFileRepository.UpsertCodeFileAsync(revisionId, reviewCodeFileModel.FileId, codeFile);
+            await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, reviewCodeFileModel.FileId, codeFile);
             return reviewCodeFileModel;
         }
 

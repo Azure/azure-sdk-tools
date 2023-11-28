@@ -34,12 +34,13 @@ namespace APIViewWeb
             return await _reviewsContainer.ReadItemAsync<ReviewListItemModel>(reviewId, new PartitionKey(reviewId));
         }
 
-        public async Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool isClosed = false)
+        public async Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
         {
-            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE r.IsClosed = false");
-            queryStringBuilder.Append(" AND r.Language = @language");
-            queryStringBuilder.Append(" AND r.PackageName = @packageName");
-            queryStringBuilder.Append(" AND r.IcClosed = @isClosed");
+            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE r.Language = @language AND r.PackageName = @packageName");
+            if (isClosed.HasValue)
+            {
+                queryStringBuilder.Append(" AND r.IcClosed = @isClosed");
+            }
 
             var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@language", language)

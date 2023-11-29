@@ -21,12 +21,15 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
         private VssCredentials VisualStudioCredentials;
         private VssConnection VisualStudioConnection;
         private string TARGET_ACCOUNT_ID = "azure-sdk";
-        // TODO: populate this
-        private Guid TARGET_PROJECT_ID = Guid.NewGuid();
-
-        // https://dev.azure.com/azure-sdk/internal/_build/results?buildId=3296836&view=results
-        private int TARGET_BUILD_ID = 3296836;
+        private Guid TARGET_PROJECT_ID = new Guid("29ec6040-b234-4e31-b139-33dc4287b756");
+        private int TARGET_BUILD_ID = 3297647; //https://dev.azure.com/azure-sdk/public/_build/results?buildId=3297647&view=results
         private string DEVOPS_PATH = "https://dev.azure.com/azure-sdk";
+        private PipelineWitnessSettings TestSettings = new PipelineWitnessSettings()
+        {
+            PipelineOwnersDefinitionId = 5112,
+                PipelineOwnersFilePath = "pipelineOwners/pipelineOwners.json",
+                PipelineOwnersArtifactName = "pipelineOwners"
+            };
 
 
         public BlobUploadProcessorIntegrationTests()
@@ -48,16 +51,13 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
             var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("AZURESDK_BLOB_SAS"));
             var buildHttpClient = new BuildHttpClient(new Uri(DEVOPS_PATH), VisualStudioCredentials);
             var testResultsClient = new TestResultsHttpClient(new Uri(DEVOPS_PATH), VisualStudioCredentials);
-            var pipelineWitnessOptions = new PipelineWitnessSettings()
-            {
-            };
 
             BlobUploadProcessor processor = new BlobUploadProcessor(logger: new NullLogger<BlobUploadProcessor>(),
                 logProvider: buildLogProvider,
                 blobServiceClient: blobServiceClient,
                 buildClient: buildHttpClient,
                 testResultsClient: testResultsClient,
-                options: Options.Create<PipelineWitnessSettings>(pipelineWitnessOptions),
+                options: Options.Create<PipelineWitnessSettings>(TestSettings),
                 failureAnalyzer: new PassThroughFailureAnalyzer());
 
             await processor.UploadBuildBlobsAsync(TARGET_ACCOUNT_ID, TARGET_PROJECT_ID, TARGET_BUILD_ID);

@@ -4,6 +4,11 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
+using APIViewWeb.Models;
+using System.Collections.Generic;
+using APIViewWeb.Managers;
+using Microsoft.ApplicationInsights;
+using System;
 
 namespace APIViewWeb.Helpers
 {
@@ -53,6 +58,32 @@ namespace APIViewWeb.Helpers
             {
                 throw new UnDeletableReviewException();
             }
+        }
+
+        public static async Task AssertPullRequestCreatorPermission(
+            PullRequestModel prModel, HashSet<string> allowedListBotAccounts, IOpenSourceRequestManager openSourceManager,
+            TelemetryClient telemetryClient)
+        {
+            // White list bot accounts to create API reviews from PR automatically
+            if (!allowedListBotAccounts.Contains(prModel.CreatedBy))
+            {
+                var isAuthorized = await openSourceManager.IsAuthorizedUser(prModel.CreatedBy);
+                if (!isAuthorized)
+                {
+                    telemetryClient.TrackTrace($"API change detection permission failed for user {prModel.CreatedBy}. API review is only created if PR author is an internal user.");
+                    throw new AuthorizationFailedException();
+                }
+            }
+        }
+
+        public static string ResolveReviewUrl(PullRequestModel pullRequest, string hostName)
+        {
+            var url = $"https://{hostName}/Assemblies/Review/{pullRequest.ReviewId}";
+            if (!String.IsNullOrEmpty(pullRequest.APIRevisionId))
+            {
+                url += $"?revisionId={pullRequest.APIRevisionId}";
+            }
+            return url;
         }
     }
 }

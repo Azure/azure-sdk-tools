@@ -76,6 +76,7 @@ namespace APIViewWeb.LeanModels
         public string Label { get; set; }
         public List<APIRevisionChangeHistoryModel> ChangeHistory { get; set; } = new List<APIRevisionChangeHistoryModel>();
         public APIRevisionType APIRevisionType { get; set; }
+        public int? PullRequestNo { get; set; }
         public Dictionary<string, HashSet<int>> HeadingsOfSectionsWithDiff { get; set; } = new Dictionary<string, HashSet<int>>();
         public bool IsApproved { get; set; }
         public HashSet<string> Approvers { get; set; } = new HashSet<string>();

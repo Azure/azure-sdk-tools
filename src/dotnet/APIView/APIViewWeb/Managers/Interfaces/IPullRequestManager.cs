@@ -6,7 +6,10 @@ namespace APIViewWeb.Managers
 {
     public interface IPullRequestManager
     {
-        public Task<IEnumerable<PullRequestModel>> GetPullRequestsModel(string reviewId);
-        public Task<IEnumerable<PullRequestModel>> GetPullRequestsModel(int pullRequestNumber, string repoName);
+        public Task<IEnumerable<PullRequestModel>> GetPullRequestsModelAsync(string reviewId);
+        public Task<IEnumerable<PullRequestModel>> GetPullRequestsModelAsync(int pullRequestNumber, string repoName);
+        public Task<PullRequestModel> GetPullRequestModelAsync(int prNumber, string repoName, string packageName, string originalFile, string language);
+        public Task CreateOrUpdateCommentsOnPR(List<PullRequestModel> pullRequests, string repoOwner, string repoName, int prNumber, string hostName);
+        public Task CleanupPullRequestData();
     }
 }

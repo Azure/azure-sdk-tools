@@ -13,12 +13,29 @@ import { IApiViewFile, IApiViewNavItem } from "./models";
 import { TokensBuilder } from "./tokensBuilder";
 import path = require("path");
 
+const added = new Set<string>();
+
 function appendMembers(
     builder: TokensBuilder,
     navigation: IApiViewNavItem[],
     item: ApiItem
 ) {
-    builder.lineId(item.canonicalReference.toString());
+    const itemCanonicalRef = item.canonicalReference.toString();
+    switch (item.kind) {
+        case ApiItemKind.Interface:
+        case ApiItemKind.Class:
+        case ApiItemKind.Namespace:
+        case ApiItemKind.Enum:
+        case ApiItemKind.Function:
+        case ApiItemKind.TypeAlias:
+            if (added.has(itemCanonicalRef)) {
+                return;
+            }
+    }
+
+    added.add(itemCanonicalRef);
+
+    builder.lineId(itemCanonicalRef);
     builder.indent();
     const releaseTag = getReleaseTag(item);
     const parentReleaseTag = getReleaseTag(item.parent);
@@ -33,7 +50,7 @@ function appendMembers(
         if (item.kind === ApiItemKind.Namespace) {
             builder.splitAppend(
                 `declare namespace ${item.displayName} `,
-                item.canonicalReference.toString(),
+                itemCanonicalRef,
                 item.displayName
             );
         }
@@ -46,7 +63,7 @@ function appendMembers(
             } else {
                 builder.splitAppend(
                     token.text,
-                    item.canonicalReference.toString(),
+                    itemCanonicalRef,
                     item.displayName
                 );
             }

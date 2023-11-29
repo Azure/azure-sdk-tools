@@ -3,6 +3,7 @@ using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using APIViewWeb.Helpers;
+using APIViewWeb.Models;
 
 namespace APIViewWeb.LeanModels
 {
@@ -46,6 +47,46 @@ namespace APIViewWeb.LeanModels
     {
         public int TotalNumberOfReviewRevisions { get; set; }
         public List<APIRevisionListItemModel> APIRevisions { get; set; }
+    }
+
+    public class LegacyReviewModel
+    {
+        [JsonProperty("id")]
+        public string ReviewId { get; set; }
+        public string Name { get; set; }
+        public string Author { get; set; }
+        public DateTime CreationDate { get; set; }
+        public List<LegacyRevisionModel> Revisions { get; set; } = new List<LegacyRevisionModel>();
+        public bool RunAnalysis { get; set; }
+        public bool IsClosed { get; set; }
+        public HashSet<string> Subscribers { get; set; } = new HashSet<string>();
+        public bool IsAutomatic { get; set; }
+        public APIRevisionType FilterType { get; set; }
+        public string ServiceName { get; set; }
+        public string PackageDisplayName { get; set; }
+        public HashSet<string> RequestedReviewers { get; set; }
+        public string RequestedBy { get; set; }
+        public DateTime ApprovalRequestedOn;
+        public DateTime ApprovalDate;
+        public bool IsApprovedForFirstRelease { get; set; }
+        public string ApprovedForFirstReleaseBy { get; set; }
+        public DateTime ApprovedForFirstReleaseOn { get; set; }
+        public DateTime LastUpdated { get; set; }
+    }
+
+    public class LegacyRevisionModel
+    {
+        [JsonProperty("id")]
+        public string RevisionId { get; set; }
+        public List<APICodeFileModel> Files { get; set; } = new List<APICodeFileModel>();
+        public Dictionary<string, HashSet<int>> HeadingsOfSectionsWithDiff { get; set; } = new Dictionary<string, HashSet<int>>();
+        public DateTime CreationDate { get; set; } = DateTime.Now;
+        public string Name { get; set; }
+        public string Author { get; set; }
+        public string Label { get; set; }
+        public int RevisionNumber { get; set; }
+        public HashSet<string> Approvers { get; set; } = new HashSet<string>();
+        public bool IsApproved { get; set; }
     }
 
     public class ReviewListItemModel

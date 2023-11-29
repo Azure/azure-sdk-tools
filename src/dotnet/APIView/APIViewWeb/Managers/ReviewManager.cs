@@ -124,6 +124,25 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Get Legacy Reviews from old database
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="UnauthorizedAccessException"></exception>
+        public async Task<LegacyReviewModel> GetLegacyReviewAsync(ClaimsPrincipal user, string id)
+        {
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            var review = await _reviewsRepository.GetLegacyReviewAsync(id);
+            return review;
+        }
+
+
+        /// <summary>
         /// Create Reviews
         /// </summary>
         /// <param name="packageName"></param>

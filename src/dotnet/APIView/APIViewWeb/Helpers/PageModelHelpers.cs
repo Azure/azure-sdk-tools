@@ -16,11 +16,13 @@ using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Any;
+using Microsoft.AspNetCore.Http;
 
 namespace APIViewWeb.Helpers
 {
     public static class PageModelHelpers
     {
+
         public static UserPreferenceModel GetUserPreference(UserPreferenceCache preferenceCache, ClaimsPrincipal User)
         {
             return preferenceCache.GetUserPreferences(User).Result;
@@ -240,6 +242,12 @@ namespace APIViewWeb.Helpers
         {
             var userId = user.GetGitHubLogin();
             var review = await reviewManager.GetReviewAsync(user, reviewId);
+
+            if (review == null)
+            {
+                return default(ReviewContentModel);
+            }
+
             var apiRevisions = await reviewRevisionsManager.GetAPIRevisionsAsync(reviewId);
 
             // Try getting latest Automatic Revision

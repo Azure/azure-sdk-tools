@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
@@ -9,8 +10,10 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
@@ -83,6 +86,26 @@ namespace APIViewWeb.Pages.Assemblies
                 signalRHubContext: _signalRHubContext, user: User, reviewId: id, revisionId: revisionId, diffRevisionId: DiffRevisionId,
                 showDocumentation: ShowDocumentation, showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                 diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
+
+            if (ReviewContent == default(ReviewContentModel))
+            {
+                // Check if you can get review from legacy data
+                var legacyReview = await _reviewManager.GetLegacyReviewAsync(User, id);
+                if (legacyReview != null)
+                {
+                    var legacyRevision = legacyReview.Revisions.FirstOrDefault(r =>
+                        !string.IsNullOrEmpty(r.Files[0].Language) && !string.IsNullOrEmpty(r.Files[0].PackageName));
+
+                    var review = await _reviewManager.GetReviewAsync(language: legacyRevision.Files[0].Language,
+                        packageName: legacyRevision.Files[0].PackageName);
+
+                    if (review != null)
+                    {
+                        var path = Request.Path.Value.Replace(id, review.Id);
+                        Response.Redirect(Path.Join(Request.Host.Value, path));
+                    }
+                }
+            }
 
             if (!ReviewContent.APIRevisionsGrouped.Any())
             {

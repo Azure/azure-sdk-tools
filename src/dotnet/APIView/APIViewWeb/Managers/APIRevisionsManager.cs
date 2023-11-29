@@ -197,7 +197,7 @@ namespace APIViewWeb.Managers
             bool updateReview = false;
             if (apiRevision == null)
             {
-                apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+                apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
             }
             ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(apiRevision.ReviewId);
 
@@ -451,7 +451,7 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string apiRevisionId)
         {
-            var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
             ManagerHelpers.AssertAPIRevisionDeletion(apiRevision);
             await ManagerHelpers.AssertAPIRevisionOwner(user, apiRevision, _authorizationService);
             await SoftDeleteAPIRevisionAsync(user, apiRevision);

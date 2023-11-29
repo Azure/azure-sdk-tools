@@ -96,14 +96,24 @@ namespace APIViewWeb.Pages.Assemblies
                     var legacyRevision = legacyReview.Revisions.FirstOrDefault(r =>
                         !string.IsNullOrEmpty(r.Files[0].Language) && !string.IsNullOrEmpty(r.Files[0].PackageName));
 
+                    if (legacyRevision == null)
+                    {
+                        return NotFound();
+                    }
+                        
                     var review = await _reviewManager.GetReviewAsync(language: legacyRevision.Files[0].Language,
                         packageName: legacyRevision.Files[0].PackageName);
 
                     if (review != null)
                     {
-                        var path = Request.Path.Value.Replace(id, review.Id);
-                        Response.Redirect(Path.Join(Request.Host.Value, path));
+                        var uri = Request.GetUri().ToString();
+                        uri = uri.Replace(id, review.Id);
+                        return Redirect(uri);
                     }
+                }
+                else
+                {
+                    return NotFound();
                 }
             }
 

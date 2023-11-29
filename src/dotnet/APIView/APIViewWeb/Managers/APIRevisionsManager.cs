@@ -12,13 +12,10 @@ using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.IdentityModel.Abstractions;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
-using Microsoft.VisualStudio.Services.DelegatedAuthorization;
-using Octokit;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
@@ -91,17 +88,27 @@ namespace APIViewWeb.Managers
         /// Retrieve the latest Revisions for a particular Review from the Revisions container in CosmosDb
         /// </summary>
         /// <param name="reviewId"></param>
-        /// <param name="apiRevision"></param> The list of revisions can be supplied if available to avoid another call to the database
+        /// <param name="apiRevisions"></param> The list of revisions can be supplied if available to avoid another call to the database
         /// <param name="apiRevisionType"></param>
         /// <returns></returns>
-        public async Task<APIRevisionListItemModel> GetLatestAPIRevisionsAsync(string reviewId, IEnumerable<APIRevisionListItemModel> apiRevision = null, APIRevisionType apiRevisionType = APIRevisionType.All)
+        public async Task<APIRevisionListItemModel> GetLatestAPIRevisionsAsync(string reviewId = null, IEnumerable<APIRevisionListItemModel> apiRevisions = null, APIRevisionType apiRevisionType = APIRevisionType.All)
         {
-            var apiRevisions = (apiRevision == null) ? await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId) : apiRevision;
+            if (reviewId == null && apiRevisions == null)
+            { 
+                throw new ArgumentNullException("Either reviewId or apiRevisions must be supplied");
+            }
+
+            if (apiRevisions == null)
+            {
+                apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+            }
+
             if (apiRevisionType != APIRevisionType.All)
             {
                 apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
             }
-            return apiRevisions.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
+
+            return apiRevisions.OrderByDescending(r => r.CreatedOn).First(); ;
         }
 
         /// <summary>
@@ -444,7 +451,7 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string apiRevisionId)
         {
-            var apiRevision = await _apiRevisionsRepository.GetReviewRevisionAsync(apiRevisionId);
+            var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
             ManagerHelpers.AssertAPIRevisionDeletion(apiRevision);
             await ManagerHelpers.AssertAPIRevisionOwner(user, apiRevision, _authorizationService);
             await SoftDeleteAPIRevisionAsync(user, apiRevision);
@@ -470,14 +477,18 @@ namespace APIViewWeb.Managers
         /// <param name="apiRevision"></param>
         /// <param name="notes"></param>
         /// <returns></returns>
-        public async Task SoftDeleteAPIRevisionAsync(string userName, APIRevisionListItemModel apiRevision, string notes = "")
+        public async Task SoftDeleteAPIRevisionAsync(APIRevisionListItemModel apiRevision, string userName = "azure-sdk", string notes = "")
         {
-            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(changeHistory: apiRevision.ChangeHistory, 
-                action: APIRevisionChangeAction.Deleted, user: userName, notes: notes);
-            apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
-            apiRevision.IsDeleted = changeUpdate.ChangeStatus;
+            if (!apiRevision.IsDeleted)
+            {
+                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(
+                     changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.Deleted, user: userName, notes: notes);
 
-            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+                apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
+                apiRevision.IsDeleted = changeUpdate.ChangeStatus;
+
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            }
         }
 
         /// <summary>
@@ -493,6 +504,53 @@ namespace APIViewWeb.Managers
             await ManagerHelpers.AssertAPIRevisionOwner(user, revision, _authorizationService);
             revision.Label = label;
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+        }
+
+        /// <summary>
+        /// UpdateAPIRevisionCodeFileAsync
+        /// </summary>
+        /// <param name="repoName"></param>
+        /// <param name="buildId"></param>
+        /// <param name="artifact"></param>
+        /// <param name="project"></param>
+        /// <returns></returns>
+        public async Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifact, string project)
+        {
+            var stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifact, filePath: null, project: project, format: "zip");
+            var archive = new ZipArchive(stream);
+            foreach (var entry in archive.Entries)
+            {
+                var reviewFilePath = entry.FullName;
+                var reviewDetails = reviewFilePath.Split("/");
+
+                if (reviewDetails.Length < 4 || !reviewFilePath.EndsWith(".json"))
+                    continue;
+
+                var reviewId = reviewDetails[1];
+                var apiRevisionId = reviewDetails[2];
+                var codeFile = await CodeFile.DeserializeAsync(entry.Open());
+
+                // Update code file with one downloaded from pipeline
+                var review = await _reviewsRepository.GetReviewAsync(reviewId);
+                if (review != null)
+                {
+                    var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId: apiRevisionId);
+                    if (apiRevision != null)
+                    {
+                        await _codeFileRepository.UpsertCodeFileAsync(apiRevisionId, apiRevision.Files.Single().FileId, codeFile);
+                        var file = apiRevision.Files.FirstOrDefault();
+                        file.VersionString = codeFile.VersionString;
+                        file.PackageName = codeFile.PackageName;
+                        await _reviewsRepository.UpsertReviewAsync(review);
+
+                        if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+                        {
+                            // Trigger diff calculation using updated code file from sandboxing pipeline
+                            await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, apiRevision);
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -576,20 +634,6 @@ namespace APIViewWeb.Managers
                 {
                     _telemetryClient.StopOperation(operation);
                 }
-            }
-        }
-
-        private async Task SoftDeleteAPIRevisionAsync(APIRevisionListItemModel apiRevision, string userName = "azure-sdk", string notes = "")
-        {
-            if (!apiRevision.IsDeleted)
-            {
-                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(
-                     changeHistory: apiRevision.ChangeHistory, action: APIRevisionChangeAction.Deleted, user: userName, notes: notes);
-
-                apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
-                apiRevision.IsDeleted = changeUpdate.ChangeStatus;
-
-                await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             }
         }
 

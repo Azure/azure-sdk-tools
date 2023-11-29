@@ -1,7 +1,6 @@
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
-using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 
 namespace APIViewWeb.Managers.Interfaces

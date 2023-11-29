@@ -19,7 +19,6 @@ namespace APIViewWeb.Managers
 {
     public class PullRequestManager : IPullRequestManager
     {
-        static readonly string REVIEW_URL = "https://{hostName}/Assemblies/Review/{ReviewId}";
         static readonly string PR_APIVIEW_BOT_COMMENT_IDENTIFIER = "**API change check**";
         static readonly string PR_APIVIEW_BOT_COMMENT = "APIView has identified API level changes in this PR and created following API reviews.";
         static readonly string PR_APIVIEW_BOT_NO_CHANGE_COMMENT = "API changes are not detected in this pull request.";
@@ -50,6 +49,8 @@ namespace APIViewWeb.Managers
                 _githubClient.Credentials = new Credentials(ghToken);
                 _isGitClientAvailable = true;
             }
+            var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
+            _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
         }
 
         public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModelAsync(string reviewId) {

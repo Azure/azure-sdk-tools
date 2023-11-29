@@ -20,14 +20,8 @@ using System.Data;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;
-using Amazon.SecurityToken.SAML;
-using Octokit;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.ApplicationInsights.DataContracts;
 using System.IO;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
-using Octokit;
 
 namespace APIViewWeb.Managers
 {
@@ -237,8 +231,9 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// 
+        /// ApproveReviewAsync
         /// </summary>
+        /// <param name="user"></param>
         /// <param name="reviewId"></param>
         /// <param name="notes"></param>
         /// <returns></returns>

@@ -20,8 +20,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
     {
         private VssCredentials VisualStudioCredentials;
         private VssConnection VisualStudioConnection;
-        // TODO: populate this
-        private string TARGET_ACCOUNT_ID = "";
+        private string TARGET_ACCOUNT_ID = "azure-sdk";
         // TODO: populate this
         private Guid TARGET_PROJECT_ID = Guid.NewGuid();
 

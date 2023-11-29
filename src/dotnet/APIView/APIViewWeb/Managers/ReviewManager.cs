@@ -25,6 +25,9 @@ using Octokit;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.ApplicationInsights.DataContracts;
 using System.IO;
+using Microsoft.TeamFoundation.SourceControl.WebApi;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Octokit;
 
 namespace APIViewWeb.Managers
 {
@@ -166,7 +169,7 @@ namespace APIViewWeb.Managers
         {
             var review = await _reviewsRepository.GetReviewAsync(id);
             var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(id);
-            await AssertReviewOwnerAsync(user, review);
+            await ManagerHelpers.AssertReviewOwnerAsync(user, review, _authorizationService);
 
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(review.ChangeHistory, ReviewChangeAction.Deleted, user.GetGitHubLogin());
             review.ChangeHistory = changeUpdate.ChangeHistory;
@@ -208,16 +211,26 @@ namespace APIViewWeb.Managers
         public async Task ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="")
         {
             ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(id);
-            await ManagerHelpers.AssertApprover<ReviewListItemModel>(user, review, _authorizationService);
             var userId = user.GetGitHubLogin();
-            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
-                review.ChangeHistory, ReviewChangeAction.Approved, userId, notes);
-            review.ChangeHistory = changeUpdate.ChangeHistory;
-            review.IsApproved = changeUpdate.ChangeStatus;
-
-            await _reviewsRepository.UpsertReviewAsync(review);
+            await ToggleReviewApproval(user, review, notes);
             await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, revisionId, review.IsApproved);
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, revisionId, userId, review.IsApproved);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="notes"></param>
+        /// <returns></returns>
+        public async Task ApproveReviewAsync(ClaimsPrincipal user, string reviewId, string notes = "")
+        {
+            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(reviewId);
+            if (review.IsApproved)
+            {
+                return;
+            }
+            await ToggleReviewApproval(user, review, notes);
         }
 
         /// <summary>
@@ -371,15 +384,16 @@ namespace APIViewWeb.Managers
             }
         }
 
-        private async Task AssertReviewOwnerAsync(ClaimsPrincipal user, ReviewListItemModel reviewModel)
+        private async Task ToggleReviewApproval(ClaimsPrincipal user, ReviewListItemModel review, string notes)
         {
-            var result = await _authorizationService.AuthorizeAsync(user, reviewModel, new[] { ReviewOwnerRequirement.Instance });
-            if (!result.Succeeded)
-            {
-                throw new AuthorizationFailedException();
-            }
+            await ManagerHelpers.AssertApprover<ReviewListItemModel>(user, review, _authorizationService);
+            var userId = user.GetGitHubLogin();
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
+                review.ChangeHistory, ReviewChangeAction.Approved, userId, notes);
+            review.ChangeHistory = changeUpdate.ChangeHistory;
+            review.IsApproved = changeUpdate.ChangeStatus;
+            await _reviewsRepository.UpsertReviewAsync(review);
         }
-
 
         /// <summary>
         /// Languages that full support sandboxing updates reviews using Azure devops pipeline

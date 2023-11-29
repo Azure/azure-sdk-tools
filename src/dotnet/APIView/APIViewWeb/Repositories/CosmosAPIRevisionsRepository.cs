@@ -216,7 +216,7 @@ namespace APIViewWeb
             QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@apiRevisionType", apiRevisionType.ToString());
 
-            using FeedIterator<APIRevisionListItemModel> feedIterator = _reviewRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);
+            using FeedIterator<APIRevisionListItemModel> feedIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);
             while (feedIterator.HasMoreResults)
             {
                 FeedResponse<APIRevisionListItemModel> response = await feedIterator.ReadNextAsync();

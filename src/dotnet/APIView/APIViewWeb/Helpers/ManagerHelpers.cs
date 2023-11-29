@@ -50,6 +50,15 @@ namespace APIViewWeb.Helpers
             }
         }
 
+        public static async Task AssertReviewOwnerAsync(ClaimsPrincipal user, ReviewListItemModel reviewModel, IAuthorizationService authorizationService)
+        {
+            var result = await authorizationService.AuthorizeAsync(user, reviewModel, new[] { ReviewOwnerRequirement.Instance });
+            if (!result.Succeeded)
+            {
+                throw new AuthorizationFailedException();
+            }
+        }
+
         public static void AssertAPIRevisionDeletion(APIRevisionListItemModel apiRevision)
         {
             // We allow deletion of manual API review only.

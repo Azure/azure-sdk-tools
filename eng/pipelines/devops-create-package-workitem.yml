@@ -5,6 +5,7 @@ pool:
 parameters:
 - name: Language
   type: string
+  default: '.NET'
   values:
   - .NET
   - Java
@@ -23,6 +24,7 @@ parameters:
   default: ''
 - name: PackageType
   type: string
+  default: 'Client'
   values:
   - Client
   - mgmt

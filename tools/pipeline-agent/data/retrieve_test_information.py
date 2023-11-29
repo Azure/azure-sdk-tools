@@ -120,10 +120,16 @@ def get_tests_for_build(organization: str, project: str, buildid: str) -> List[R
     return test_results
 
 
+def get_project_details(organization: str) -> List[Response]:
+    details = GET(f"https://dev.azure.com/{organization}/_apis/projects?api-version=7.2-preview.4")
+    return details
+
 if __name__ == "__main__":
     if not os.getenv("DEVOPS_TOKEN", None):
         print("This script MUST have access to a valid devops token under environmenet variable DEVOPS_TOKEN. exiting.")
         sys.exit(1)
+
+    details = get_project_details("azure-sdk")
 
     # all on azure-sdk internal
     targeted_buildids = [

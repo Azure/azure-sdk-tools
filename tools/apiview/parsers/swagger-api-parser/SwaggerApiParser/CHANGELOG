@@ -1,5 +1,8 @@
 # Release History
 
+## 1.2.0 (11-29-2023)
++ Added API version as PackageVersion in code file.
+
 ## 1.1.0 (6-26-2023)
 + Disabled flatteneing of nested model.
 + Updated definitions to include models all referenced models

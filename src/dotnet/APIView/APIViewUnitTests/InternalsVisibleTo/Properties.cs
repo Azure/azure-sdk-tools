@@ -1,4 +1,4 @@
-﻿/*-*/
+/*-*/
 using System;
 using System.Runtime.CompilerServices;
 using B;
@@ -16,9 +16,9 @@ namespace A {
     public class PublicClass {
         public PublicClass()/*-*/{/*-*/;/*-*/}/*-*/
         /*-*/internal int InternalProperty { get; set; }/*-*/
-        [Friend("TestProject")]
+        /*@internal @*/[Friend("TestProject")]
         internal void InternalMethodWithFriendAttribute()/*-*/{/*-*/;/*-*/}/*-*/
-        [Friend("TestProject")]
+        /*@internal @*/[Friend("TestProject")]
         internal int InternalPropertyWithFriendAttribute { get; set; }
         /*-*/internal void InternalMethod(){ }/*-*/
         public void PublicMethod()/*-*/{/*-*/;/*-*/}/*-*/

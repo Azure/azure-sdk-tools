@@ -17,10 +17,12 @@ namespace APIViewWeb
     public class CosmosReviewRepository : ICosmosReviewRepository
     {
         private readonly Container _reviewsContainer;
+        private readonly Container _legacyReviewsContainer;
 
         public CosmosReviewRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
             _reviewsContainer = cosmosClient.GetContainer("APIViewV2", "Reviews");
+            _legacyReviewsContainer = cosmosClient.GetContainer("APIView", "Reviews");
         }
 
         public async Task UpsertReviewAsync(ReviewListItemModel review)
@@ -31,7 +33,21 @@ namespace APIViewWeb
 
         public async Task<ReviewListItemModel> GetReviewAsync(string reviewId)
         {
-            return await _reviewsContainer.ReadItemAsync<ReviewListItemModel>(reviewId, new PartitionKey(reviewId));
+            var review = default(ReviewListItemModel);
+            try
+            {
+                review = await _reviewsContainer.ReadItemAsync<ReviewListItemModel>(reviewId, new PartitionKey(reviewId));
+            }
+            catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return review;
+            }
+            return review;
+        }
+
+        public async Task<LegacyReviewModel> GetLegacyReviewAsync(string reviewId)
+        {
+            return await _legacyReviewsContainer.ReadItemAsync<LegacyReviewModel>(reviewId, new PartitionKey(reviewId));
         }
 
         public async Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
@@ -39,7 +55,7 @@ namespace APIViewWeb
             var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE r.Language = @language AND r.PackageName = @packageName");
             if (isClosed.HasValue)
             {
-                queryStringBuilder.Append(" AND r.IcClosed = @isClosed");
+                queryStringBuilder.Append(" AND r.IsClosed = @isClosed");
             }
 
             var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())

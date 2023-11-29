@@ -23,5 +23,10 @@ namespace APIViewWeb.Helpers
 
             return result.ToList();
         }
+
+        public static LanguageService GetLanguageService(string language, IEnumerable<LanguageService> languageServices)
+        { 
+            return languageServices.FirstOrDefault(service => service.Name == language);
+        }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
@@ -35,6 +36,13 @@ namespace APIViewWeb.Repositories
         /// </summary>
         /// <param name="revisionId"></param> The revisionId
         /// <returns></returns>
-        public Task<APIRevisionListItemModel> GetReviewRevisionAsync(string revisionId);
+        public Task<APIRevisionListItemModel> GetAPIRevisionAsync(string revisionId);
+        /// <summary>
+        /// Get Revisions by LastUpdatedOn Date
+        /// </summary>
+        /// <param name="lastUpdatedOn"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <returns></returns>
+        public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(DateTime lastUpdatedOn, APIRevisionType apiRevisionType = APIRevisionType.All);
     }
 }

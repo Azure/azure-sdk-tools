@@ -54,8 +54,7 @@ namespace APIViewWeb.HostedServices
             {
                 try
                 {
-                    // Removed temporarily for Review Restructure
-                    //await _pullRequestManager.CleanupPullRequestData();
+                    await _pullRequestManager.CleanupPullRequestData();
                 }
                 catch (Exception ex)
                 {

@@ -1,6 +1,8 @@
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.LeanModels;
+using APIViewWeb.Models;
 
 namespace APIViewWeb.Managers.Interfaces
 {
@@ -11,6 +13,6 @@ namespace APIViewWeb.Managers.Interfaces
         public Task<APICodeFileModel> CreateCodeFileAsync(string apiRevisionId, string originalName, Stream fileStream, bool runAnalysis, string language);
         public Task<CodeFile> CreateCodeFileAsync(string originalName, Stream fileStream, bool runAnalysis, MemoryStream memoryStream, string language = null);
         public Task<APICodeFileModel> CreateReviewCodeFileModel(string apiRevisionId, MemoryStream memoryStream, CodeFile codeFile);
-
+        public bool IsAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB);
     }
 }

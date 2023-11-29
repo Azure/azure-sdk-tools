@@ -18,5 +18,6 @@ namespace APIViewWeb.Managers
         public Task ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="");
         public Task AssignReviewersToReviewAsync(ClaimsPrincipal User, string reviewId, HashSet<string> reviewers);
         public Task<int> GenerateAIReview(string reviewId, string revisionId);
+        public Task UpdateReviewsInBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount);
     }
 }

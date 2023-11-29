@@ -243,8 +243,7 @@ namespace APIViewWeb
                 return new CosmosClient(Configuration["Cosmos:ConnectionString"]);
             });
 
-            // Background Task Removed while working on Review / Revision Restructure
-            //services.AddHostedService<ReviewBackgroundHostedService>();
+            services.AddHostedService<ReviewBackgroundHostedService>();
             //services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
             services.AddControllersWithViews()

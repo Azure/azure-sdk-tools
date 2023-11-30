@@ -60,6 +60,7 @@ namespace APIViewWeb.Managers
         /// Get all Reviews for a language
         /// </summary>
         /// <param name="language"></param>
+        /// <param name="isClosed"></param>
         /// <returns></returns>
         public Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(string language, bool? isClosed = false)
         {

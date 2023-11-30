@@ -22,23 +22,44 @@ import json
 import argparse
 import datetime
 
-from typing import List, Set, Any
-from dataclasses import dataclass
+from typing import List, Set, Any, Dict
+from dataclasses import dataclass, asdict
 
 import httpx
 from httpx import Response
 
+from azure.storage.blob import BlobServiceClient
 
+
+@dataclass
 class TestResultItem:
-    def __init__(self):
-        breakpoint()
-        pass
+    testCaseId: int
+    runId: int
+    testCaseReferenceId: int
+    testCaseTitle: str
+    outcome: str
+    priority: int
+    automatedTestName: str
+    automatedTestStorageName: str
+    isReRun: bool
+    tags: Any
+    etlIngestDate: str
 
-    @classmethod
-    def from_json_obj(cls, json: Any):
-
-        breakpoint()
-        return cls()
+def result_from_json_obj(json) -> TestResultItem:
+    testCaseId = json.get('id', -1)
+    runId = json.get('testRun', {}).get('id', "")
+    referenceId = json.get('testCaseReferenceId')
+    testCaseTitle = json.get('testCaseTitle')
+    outcome = json.get('outcome')
+    priority = json.get('priority')
+    automatedTestName = json.get('automatedTestName')
+    automatedTestStorageName = json.get('automatedTestStorageName')
+    isReRun = False
+    tags = ['tag1', 'a longer tag 3 that is actually heavy?']
+    etlIngestDate = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+    
+    obj = TestResultItem(testCaseId, runId, referenceId, testCaseTitle, outcome, priority, automatedTestName, automatedTestStorageName, isReRun, tags, etlIngestDate)
+    return obj
 
 
 def GET_NO_CONTINUE(uri: str) -> Response:
@@ -102,20 +123,21 @@ def get_individual_test_result(organization: str, project: str, run_id: str, tes
     return GET(uri)
 
 
-def get_tests_for_build(organization: str, project: str, buildid: str) -> List[Response]:
+def get_tests_for_build(organization: str, project: str, buildid: str) -> Dict[str, List[TestResultItem]]:
     test_runs = get_test_runs_for_buildid(organization, project, buildid)
-    run_result_sets: List[Response] = []
-    test_results: List[TestResultItem] = []
+    test_results: Dict[str, List[TestResultItem]] = {}
 
     for run_id in test_runs:
-        run_result_sets.extend(get_test_results(organization, project, run_id))
+        if run_id not in test_results:
+            test_results[run_id] = []
 
-    for result in run_result_sets:
-        results = json.loads(result.text)
-        for test_result_blob in results["value"]:
-            test_results.append( 
-                TestResultItem.from_json_obj(test_result_blob)
-            )
+        test_result_responses = get_test_results(organization, project, run_id)
+        for response_blob in test_result_responses:
+            results = json.loads(response_blob.text)
+            for test_result_blob in results["value"]:
+                test_results[run_id].append( 
+                    result_from_json_obj(test_result_blob)
+                )
 
     return test_results
 
@@ -124,25 +146,111 @@ def get_project_details(organization: str) -> List[Response]:
     details = GET(f"https://dev.azure.com/{organization}/_apis/projects?api-version=7.2-preview.4")
     return details
 
+
+def upload_results(test_run_id: str, results: List[TestResultItem]) -> None:
+    name = os.getenv("BLOB_ACCOUNT_NAME")
+    key = os.getenv("BLOB_ACCOUNT_KEY")
+    blob_service_client = BlobServiceClient(account_url=f"https://{name}.blob.core.windows.net", credential=key)
+    container_client = blob_service_client.get_container_client('testruns')
+
+    blob_name = f"internal/2023/11/17/{test_run_id}/results.jsonl"
+
+    # {build.Project.Name}/{build.QueueTime:yyyy/MM/dd}/{build.Id}
+
+    # convert to jsonl object
+    jsonlString = ""
+    for item in results:
+        jsonlString += json.dumps(asdict(item)) + "\n"
+
+    json_bytes = jsonlString.encode('utf-8')
+    
+    # current_datetime.strftime('%Y-%m-%d')
+    # blob_client = container_client.get_blob_client(blob_name)
+
+    if not os.path.exists(os.path.dirname(blob_name)):
+        os.makedirs(os.path.dirname(blob_name))
+
+    with open(blob_name, 'wb') as f:
+        f.write(json_bytes)
+        
+    # blob_client.upload_blob(json_bytes, blob_type="BlockBlob", content_settings={'content_type': 'application/octet-stream'})
+
+
+def get_combined_blob_size(buildid: str, testruns: List[str]):
+    name = os.getenv("PRIMARY_ACCOUNT_NAME")
+    key = os.getenv("PRIMARY_ACCOUNT_KEY")
+    blob_service_client = BlobServiceClient(account_url=f"https://{name}.blob.core.windows.net", credential=key)
+    testruns_container_client = blob_service_client.get_container_client('testruns')
+    build_log_lines_container_client = blob_service_client.get_container_client('buildloglines')
+    buildtimelinerecords_container_client = blob_service_client.get_container_client('buildtimelinerecords')
+    builds_container_client = blob_service_client.get_container_client('builds')
+    print(f"BuildId: {buildid}")
+    common_prefix = f"internal/2023/11/17/{buildid}"
+    
+    # build log line
+    total_size_bytes = 0
+    count = 0
+    build_log_lines_blobs = build_log_lines_container_client.walk_blobs(name_starts_with=common_prefix)
+    for blob in build_log_lines_blobs:
+        count += 1
+        total_size_bytes += blob.size
+    print(f"... {total_size_bytes} bytes of build log lines across {count} files.")
+
+    # testrun
+    count = 0
+    total_size_bytes = 0
+    for runid in testruns:
+        count+=1
+        testrun_blobs = testruns_container_client.walk_blobs(name_starts_with=f"internal/2023/11/17/{runid}")
+        for blob in testrun_blobs:
+            total_size_bytes += blob.size
+    print(f"... {total_size_bytes} bytes of testruns across {count} files.")
+
+    # build timeline record
+    count = 0
+    total_size_bytes = 0
+    timeline_record_blobs = buildtimelinerecords_container_client.walk_blobs(name_starts_with=common_prefix)
+    for blob in timeline_record_blobs:
+        count+=1
+        total_size_bytes += blob.size
+    print(f"... {total_size_bytes} bytes of timeline records across {count} files.")
+
+    # builds
+    count = 0
+    total_size_bytes = 0
+    build_blobs = builds_container_client.walk_blobs(name_starts_with=common_prefix)
+    for blob in build_blobs:
+        count+=1
+        total_size_bytes += blob.size
+    print(f"... {total_size_bytes} bytes of build blob records across {count} files.")
+
+    breakpoint()
+
+    return total_size_bytes
+
+
 if __name__ == "__main__":
     if not os.getenv("DEVOPS_TOKEN", None):
         print("This script MUST have access to a valid devops token under environmenet variable DEVOPS_TOKEN. exiting.")
         sys.exit(1)
+
 
     details = get_project_details("azure-sdk")
 
     # all on azure-sdk internal
     targeted_buildids = [
         # "3274085", # storage python (saturday 11/18)
-        # "3271643",  # core .net (friday 11/17)
+        "3271643",  # core .net (friday 11/17)
         # "3274125", # go azblob (friday 11/17)
         # "3273253", # iOS identity (friday 11/17)
         # "3273729", # java storage (friday 11/17 failed, retried tuesday 11/21)
         # "3273544", # cpp storage (friday 11/17)
-        "3274026", # js storage (friday 11/17 failed)
+        #"3274026", # js storage (friday 11/17 failed)
     ]
 
     for buildid in targeted_buildids:
         results = get_tests_for_build("azure-sdk", "internal", buildid)
-        breakpoint()
+        size = get_combined_blob_size(buildid, results.keys())
+        for run_id in results:
+            upload_results(run_id, results[run_id])
 

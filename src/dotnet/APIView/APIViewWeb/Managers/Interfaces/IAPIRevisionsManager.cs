@@ -30,7 +30,7 @@ namespace APIViewWeb.Managers.Interfaces
         public Task UpdateAPIRevisionLabelAsync(ClaimsPrincipal user, string revisionId, string label);
         public Task<bool> IsAPIRevisionTheSame(APIRevisionListItemModel apiRevision, RenderedCodeFile renderedCodeFile);
         public Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifact, string project);
-        public Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, APIRevisionListItemModel revision);
+        public Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, APIRevisionListItemModel apiRevision, IEnumerable<APIRevisionListItemModel> apiRevisions = null);
         public TreeNode<InlineDiffLine<CodeLine>> ComputeSectionDiff(TreeNode<CodeLine> before, TreeNode<CodeLine> after, RenderedCodeFile beforeFile, RenderedCodeFile afterFile);
         public Task<APIRevisionListItemModel> CreateAPIRevisionAsync(string userName, string reviewId, APIRevisionType apiRevisionType, string label,
             MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null);

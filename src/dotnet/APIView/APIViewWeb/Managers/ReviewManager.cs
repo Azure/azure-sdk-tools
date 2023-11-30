@@ -56,10 +56,28 @@ namespace APIViewWeb.Managers
             _languageServices = languageServices;
         }
 
+        /// <summary>
+        /// Get all Reviews for a language
+        /// </summary>
+        /// <param name="language"></param>
+        /// <returns></returns>
+        public Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(string language, bool? isClosed = false)
+        {
+            return _reviewsRepository.GetReviewsAsync(language, isClosed);
+        }
+
+        /// <summary>
+        /// Get Reviews using language and package name
+        /// </summary>
+        /// <param name="language"></param>
+        /// <param name="packageName"></param>
+        /// <param name="isClosed"></param>
+        /// <returns></returns>
         public Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)
         {
             return _reviewsRepository.GetReviewAsync(language, packageName, isClosed);
         }
+
         /// <summary>
         /// Get Reviews that have been assigned for review to a user
         /// </summary>

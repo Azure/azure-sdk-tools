@@ -45,6 +45,28 @@ namespace APIViewWeb
             return review;
         }
 
+        public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(string language, bool? isClosed = false)
+        {
+            var queryStringBuilder = new StringBuilder("SELECT * FROM Reviews r WHERE r.Language = @language");
+            if (isClosed.HasValue)
+            {
+                queryStringBuilder.Append(" AND r.IsClosed = @isClosed");
+            }
+
+            var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@language", language)
+                .WithParameter("@isClosed", isClosed);
+
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryDefinition);
+            var reviews = new List<ReviewListItemModel>();
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                reviews.AddRange(result.Resource);
+            }
+            return reviews;
+        }
+
         public async Task<LegacyReviewModel> GetLegacyReviewAsync(string reviewId)
         {
             return await _legacyReviewsContainer.ReadItemAsync<LegacyReviewModel>(reviewId, new PartitionKey(reviewId));

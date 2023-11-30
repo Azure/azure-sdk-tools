@@ -17,6 +17,7 @@ namespace SwaggerApiParser.SwaggerApiView
 
         public string fileName;
         public string packageName;
+        public string APIVersion;
 
 
         public SwaggerApiViewSpec()
@@ -100,6 +101,7 @@ namespace SwaggerApiParser.SwaggerApiView
                 VersionString = "0",
                 Name = this.fileName,
                 PackageName = this.packageName,
+                PackageVersion = this.APIVersion,
                 Navigation = new NavigationItem[] { this.BuildNavigationItem() }
             };
             return ret;

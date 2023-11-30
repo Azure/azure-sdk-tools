@@ -278,4 +278,17 @@ public class SwaggerApiViewTest
         await codeFile.SerializeAsync(writer);
         
     }
+
+    [Fact]
+    public async Task TestCodeFilePackageVersion()
+    {
+        const string runCommandFilePath = "./fixtures/runCommands.json";
+        var swaggerSpec = await SwaggerDeserializer.Deserialize(runCommandFilePath);
+
+        SwaggerApiViewRoot root = new SwaggerApiViewRoot("Microsoft.Compute", "Microsoft.Compute");
+        await root.AddSwaggerSpec(swaggerSpec, Path.GetFullPath(runCommandFilePath), "Microsoft.Compute");
+
+        var codeFile = root.GenerateCodeFile();
+        Assert.Equal("2021-11-01", codeFile.PackageVersion);
+    }
 }

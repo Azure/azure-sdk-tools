@@ -7,6 +7,7 @@ namespace APIViewWeb.Managers
 {
     public interface IReviewManager
     {
+        public Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(string language, bool? isClosed = false);
         public Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false);
         public Task<IEnumerable<ReviewListItemModel>> GetReviewsAssignedToUser(string userName);
         public Task<(IEnumerable<ReviewListItemModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewListAsync(

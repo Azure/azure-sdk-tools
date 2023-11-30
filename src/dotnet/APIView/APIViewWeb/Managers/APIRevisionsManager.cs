@@ -256,19 +256,23 @@ namespace APIViewWeb.Managers
         /// For reviews with collapsible sections (Swagger). Precomputs the line numbers of the headings with diff
         /// </summary>
         /// <param name="reviewId"></param>
-        /// <param name="revision"></param>
+        /// <param name="apiRevision"></param>
+        /// <param name="apiRevisions"></param>
         /// <returns></returns>
-        public async Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, APIRevisionListItemModel revision)
+        public async Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, APIRevisionListItemModel apiRevision, IEnumerable<APIRevisionListItemModel> apiRevisions = null)
         {
-            var revisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
-            var latestRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
+            if (apiRevisions == null)
+            {
+                apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+            } 
+            var latestRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, false);
             var latestRevisionHtmlLines = latestRevisionCodeFile.Render(false);
             var latestRevisionTextLines = latestRevisionCodeFile.RenderText(false);
 
-            foreach (var rev in revisions)
+            foreach (var rev in apiRevisions)
             {
                 // Calculate diff against previous revisions only. APIView only shows diff against revision lower than current one.
-                if (rev.Id != revision.Id && rev.CreatedOn < revision.CreatedOn)
+                if (rev.Id != apiRevision.Id)
                 {
                     var lineNumbersForHeadingOfSectionWithDiff = new HashSet<int>();
                     var earlierRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, false);
@@ -288,13 +292,13 @@ namespace APIViewWeb.Managers
                                 lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
                         }
                     }
-                    if (rev.HeadingsOfSectionsWithDiff.ContainsKey(revision.Id))
+                    if (rev.HeadingsOfSectionsWithDiff.ContainsKey(apiRevision.Id))
                     {
-                        rev.HeadingsOfSectionsWithDiff.Remove(revision.Id);
+                        rev.HeadingsOfSectionsWithDiff.Remove(apiRevision.Id);
                     }
                     if (lineNumbersForHeadingOfSectionWithDiff.Any())
                     {
-                        rev.HeadingsOfSectionsWithDiff.Add(revision.Id, lineNumbersForHeadingOfSectionWithDiff);
+                        rev.HeadingsOfSectionsWithDiff.Add(apiRevision.Id, lineNumbersForHeadingOfSectionWithDiff);
                     }
                 }
                 await _apiRevisionsRepository.UpsertAPIRevisionAsync(rev);

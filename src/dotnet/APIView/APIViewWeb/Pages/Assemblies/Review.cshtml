@@ -46,7 +46,8 @@
                         {
                             @if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 
                                 && Model.ReviewContent.ActiveConversationsInSampleRevisions > 0
-                                && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin()))
+                                && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
+                                && Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn)
                             {
                                 <span class="small text-muted">Approves the current revision of the API</span>
                                 <div class="d-grid gap-2">
@@ -57,7 +58,8 @@
                             }
                             else
                             {
-                                @if (Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin()))
+                                @if (Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
+                                    && Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn)
                                 {
                                     <span class="small text-muted">Approves the current revision of the API</span>
                                     <div class="d-grid gap-2">
@@ -534,7 +536,7 @@
                     </select>
                     <select id="diff-select" aria-label="Diff Select">
                         @{
-                            var diffRevisionsToSelectFrom = Model.ReviewContent.APIRevisionsGrouped[diffRevisionType];
+                            var diffRevisionsToSelectFrom = Model.ReviewContent.APIRevisionsGrouped[diffRevisionType].Where(r => r.Id!= Model.ReviewContent.ActiveAPIRevision.Id);
                             (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) diffRevisionSelectModel = (
                             revisions: diffRevisionsToSelectFrom,
                             activeRevision: Model.ReviewContent.ActiveAPIRevision,

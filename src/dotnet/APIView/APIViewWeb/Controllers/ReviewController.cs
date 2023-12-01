@@ -48,11 +48,14 @@ namespace APIViewWeb.Controllers
         {
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
             var latestAPIRevision = await _apiRevisionManager.GetLatestAPIRevisionsAsync(reviewId: review.Id);
+            var apiRevison = latestAPIRevision;
 
-            if (string.IsNullOrEmpty(revisionId))
-                revisionId = latestAPIRevision.Id;
+            if (!string.IsNullOrEmpty(revisionId))
+            {
+                apiRevison = await _apiRevisionManager.GetAPIRevisionAsync(user: User, apiRevisionId: revisionId);
+            }
 
-            var isLatestAPIRevision = (revisionId == latestAPIRevision.Id);
+            var isLatestAPIRevision = (apiRevison.Id == latestAPIRevision.Id);
 
             await SendAIReviewGenerationStatus(review, reviewId, revisionId, AIReviewGenerationStatus.Generating, isLatestAPIRevision);
 

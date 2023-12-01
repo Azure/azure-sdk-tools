@@ -24,7 +24,7 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
         }
         builder.annotate(releaseTag);
     }
-    
+
     if (item instanceof ApiDeclaredItem) {
         if ( item.kind === ApiItemKind.Namespace) {
             builder.splitAppend(`declare namespace ${item.displayName} `, item.canonicalReference.toString(), item.displayName);
@@ -81,7 +81,7 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
                 .punct("{")
                 .newline()
                 .incIndent()
-    
+
             for (const member of item.members) {
                 appendMembers(builder,navigationItem.ChildItems, member);
             }
@@ -102,7 +102,7 @@ function appendMembers(builder: TokensBuilder, navigation: IApiViewNavItem[], it
         }
     }
     else
-    { 
+    {
         builder.newline();
     }
 }
@@ -130,7 +130,7 @@ apiModel.loadPackage(fileName);
 var navigation: IApiViewNavItem[] = [];
 var builder = new TokensBuilder();
 
-for (const modelPackage of apiModel.packages) {    
+for (const modelPackage of apiModel.packages) {
     for (const entryPoint of modelPackage.entryPoints) {
         for (const member of entryPoint.members) {
             appendMembers(builder, navigation, member);
@@ -148,7 +148,7 @@ var apiViewFile: IApiViewFile = {
     Navigation: navigation,
     Tokens: builder.tokens,
     PackageName: apiModel.packages[0].name,
-    VersionString: "1.0.7",
+    VersionString: "1.0.8",
     Language: "JavaScript",
     PackageVersion: PackageversionString
 }

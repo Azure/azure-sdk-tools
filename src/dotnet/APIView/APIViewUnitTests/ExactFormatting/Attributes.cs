@@ -1,10 +1,19 @@
-﻿/*-*/
+/*-*/
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Diagnostics.CodeAnalysis;
 
 class PrivateAttribute : Attribute { }
+
+namespace System.Diagnostics.CodeAnalysis
+{
+    internal class VisibleInternalFooAttribute : Attribute
+    {
+        public VisibleInternalFooAttribute(string description) { }
+    }
+}
 
 /*-*/
 
@@ -30,6 +39,7 @@ namespace A {
         [Public("s", Property = "a")]
         [Public(null, Property = null)]
         [Array(new[] {1, 2, 3})]
+        /*@internal @*/[VisibleInternalFoo("foo1")]
         public void M1()/*-*/{/*-*/;/*-*/}/*-*/
     }
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]

@@ -155,7 +155,7 @@
                     @{
                         var iconCommentClass = "icon-comments invisible";
                         var comments = TempData["Comments"] as ReviewCommentsModel;
-                        if (sectionKey != null && comments.Threads.Count() > 0)
+                        if (sectionKey != null && comments != null && comments.Threads.Count() > 0)
                         {
                             if (comments.Threads.Any(c => c.LineClass != null && c.LineClass.Contains($"code-line-section-content-{sectionKey}")))
                             {

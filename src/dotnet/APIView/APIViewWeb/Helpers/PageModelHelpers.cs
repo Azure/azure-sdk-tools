@@ -250,12 +250,12 @@ namespace APIViewWeb.Helpers
 
             var apiRevisions = await reviewRevisionsManager.GetAPIRevisionsAsync(reviewId);
 
-            // Try getting latest Automatic Revision
+            // Try getting latest Automatic Revision, otherwise get latest of any type or default
             var activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions, APIRevisionType.Automatic);
             if (activeRevision == null)
             {
-                // Get latest of any type
-                activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions);
+                var notifcation = new NotificationModel() { Message = $"This review has no valid apiRevisons", Level = NotificatonLevel.Warning };
+                await signalRHubContext.Clients.Group(userId).SendAsync("RecieveNotification", notifcation);
             }
 
             APIRevisionListItemModel diffRevision = null;
@@ -381,7 +381,7 @@ namespace APIViewWeb.Helpers
         /// <param name="sectionKeyA"></param>
         /// <param name="sectionKeyB"></param>
         /// <returns></returns>
-        public static async Task<CodeLineModel[]> GetCodeLineSection(ClaimsPrincipal user, IReviewManager reviewManager,
+        public static async Task<CodeLineModel[]> GetCodeLineSectionAsync(ClaimsPrincipal user, IReviewManager reviewManager,
             IAPIRevisionsManager apiRevisionsManager, ICommentsManager commentManager,
             IBlobCodeFileRepository codeFileRepository, string reviewId, int sectionKey, string revisionId = null,
             string diffRevisionId = null, int diffContextSize = 3, string diffContextSeperator = "<br><span>.....</span><br>",

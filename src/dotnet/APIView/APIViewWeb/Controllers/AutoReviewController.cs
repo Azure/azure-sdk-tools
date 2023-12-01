@@ -82,7 +82,7 @@ namespace APIViewWeb.Controllers
                 APIRevisionListItemModel latestAutomaticApiRevisions = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic);
                 
                 // Return 200 OK for approved review and 201 for review in pending status
-                if (firstReleaseStatusOnly != true && latestAutomaticApiRevisions.IsApproved)
+                if (firstReleaseStatusOnly != true && latestAutomaticApiRevisions != null && latestAutomaticApiRevisions.IsApproved)
                 {
                     return Ok();
                 }

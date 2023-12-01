@@ -78,12 +78,12 @@ namespace APIViewWeb.Pages.Assemblies
 
                 foreach (var comment in thread.Comments)
                 {
-                    if (comment.RevisionId == null)
+                    if (comment.APIRevisionId == null)
                     {
                         continue;
                     }
 
-                    APIRevisionListItemModel commentRevision = revisions.SingleOrDefault(r => r.Id == comment.RevisionId);
+                    APIRevisionListItemModel commentRevision = revisions.SingleOrDefault(r => r.Id == comment.APIRevisionId);
 
                     if (commentRevision == null)
                     {

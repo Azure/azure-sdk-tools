@@ -153,7 +153,7 @@ namespace APIViewWeb.Controllers
                         automaticRevisionsQueue.Any() &&
                         !latestAutomaticAPIRevision.IsApproved &&
                         !await _apiRevisionsManager.IsAPIRevisionTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
-                        !comments.Any(c => latestAutomaticAPIRevision.Id == c.RevisionId))
+                        !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
                     {
                         // Check if user is authorized to modify automatic review
                         await ManagerHelpers.AssertAutomaticAPIRevisionModifier(user: User, apiRevision: apiRevision, authorizationService: _authorizationService);

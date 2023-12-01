@@ -336,7 +336,7 @@ namespace APIViewWeb.Managers
                 var comment = new CommentItemModel();
                 comment.CreatedOn = DateTime.UtcNow;
                 comment.ReviewId = reviewId;
-                comment.RevisionId = revisionId;
+                comment.APIRevisionId = revisionId;
                 comment.ElementId = codeLine.ElementId;
                 //comment.SectionClass = sectionClass; // This will be needed for swagger
 

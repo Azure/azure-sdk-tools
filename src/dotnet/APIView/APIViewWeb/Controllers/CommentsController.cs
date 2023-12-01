@@ -39,7 +39,7 @@ namespace APIViewWeb.Controllers
             var comment = new CommentItemModel();
             comment.CreatedOn = DateTime.UtcNow;
             comment.ReviewId = reviewId;
-            comment.RevisionId = revisionId;
+            comment.APIRevisionId = revisionId;
             comment.ElementId = elementId;
             comment.SectionClass = sectionClass;
             comment.CommentText = commentText;

@@ -20,7 +20,7 @@ namespace APIViewWeb.LeanModels
         [JsonProperty("id")]
         public string Id { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }
-        public string RevisionId { get; set; }
+        public string APIRevisionId { get; set; }
         public string ElementId { get; set; }
         public string SectionClass { get; set; }
         public string CommentText { get; set; }

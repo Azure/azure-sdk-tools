@@ -1,0 +1,39 @@
+trigger: none
+pr: none
+
+parameters:
+  - name: Images
+    type: object
+    default:
+      - source: ghcr.io/chaos-mesh/chaos-daemon:v2.1.4
+        mirror: azsdkengsys.azurecr.io/mirror/chaos-mesh/chaos-daemon:v2.1.4
+      - source: ghcr.io/chaos-mesh/chaos-mesh:v2.1.4
+        mirror: azsdkengsys.azurecr.io/mirror/chaos-mesh/chaos-mesh:v2.1.4
+      - source: ghcr.io/chaos-mesh/chaos-dashboard:v2.1.4
+        mirror: azsdkengsys.azurecr.io/mirror/chaos-mesh/chaos-dashboard:v2.1.4
+      - source: ubuntu/squid
+        mirror: azsdkengsys.azurecr.io/mirror/ubuntu/squid
+
+jobs:
+  - job: MirrorImages
+    displayName: Mirror Container Images
+
+    pool:
+      name: azsdk-pool-mms-ubuntu-2004-general
+      vmImage: MMSUbuntu20.04
+
+    steps:
+      - ${{ each image in parameters.Images }}:
+        - task: Docker@2
+          displayName: Login to ${{ split(image.mirror, '.')[0] }}
+          inputs:
+            command: login
+            containerRegistry: ${{ split(image.mirror, '.')[0] }}
+        - task: Powershell@2
+          displayName: Mirror ${{ image.source }} to ${{ image.mirror }}
+          inputs:
+            pwsh: true
+            filePath: $(Build.SourcesDirectory)/eng/scripts/mirror-container-image.ps1
+            arguments: >
+              -Image ${{ image.source }}
+              -Mirror ${{ image.mirror }}

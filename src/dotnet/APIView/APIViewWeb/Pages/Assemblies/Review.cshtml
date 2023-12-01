@@ -44,10 +44,11 @@
                         }
                         else
                         {
+                            var isActiveRevisionAhead = (Model.ReviewContent.DiffAPIRevision == null)? true: Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn;
                             @if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 
                                 && Model.ReviewContent.ActiveConversationsInSampleRevisions > 0
                                 && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
-                                && Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn)
+                           && isActiveRevisionAhead)
                             {
                                 <span class="small text-muted">Approves the current revision of the API</span>
                                 <div class="d-grid gap-2">
@@ -59,7 +60,7 @@
                             else
                             {
                                 @if (Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
-                                    && Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn)
+                               && isActiveRevisionAhead)
                                 {
                                     <span class="small text-muted">Approves the current revision of the API</span>
                                     <div class="d-grid gap-2">

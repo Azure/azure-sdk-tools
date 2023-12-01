@@ -52,12 +52,15 @@
                 <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
             </select>
         </div>
+        @*
+        Disabling Approval since it has no benefit to users at this point
         <div class="input-group input-group-sm mb-2">
             <span class="input-group-text">Status</span>
             <select multiple id="status-filter-select" aria-label="Status Filter">
                 <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
             </select>
         </div>
+        *@
  
         <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="reset-filter-button"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset Filters</button>
         <hr class="border">

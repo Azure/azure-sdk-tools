@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
+using Microsoft.TeamFoundation.Common;
 
 
 namespace APIViewWeb.Pages.Assemblies
@@ -80,6 +81,8 @@ namespace APIViewWeb.Pages.Assemblies
         {
             TempData["Page"] = "api";
 
+            await GetReviewPageModelPropertiesAsync(id, revisionId, DiffRevisionId, ShowDiffOnly);
+
             ReviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
                 reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
                 reviewRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
@@ -140,9 +143,14 @@ namespace APIViewWeb.Pages.Assemblies
             string id, int sectionKey, int? sectionKeyA = null, int? sectionKeyB = null,
             string revisionId = null, string diffRevisionId = null, bool diffOnly = false)
         {
+            if (revisionId == null)
+            {
+                var apiRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: id, apiRevisionType: APIRevisionType.Automatic);
+                revisionId = apiRevision.Id;
+            }
             await GetReviewPageModelPropertiesAsync(id, revisionId, diffRevisionId, diffOnly);
 
-            var codeLines = PageModelHelpers.GetCodeLineSection(user: User, reviewManager: _reviewManager,
+            var codeLines = await PageModelHelpers.GetCodeLineSectionAsync(user: User, reviewManager: _reviewManager,
             apiRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager,
             codeFileRepository: _codeFileRepository, reviewId: id, sectionKey: sectionKey, revisionId: revisionId,
             diffRevisionId: diffRevisionId, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE, diffContextSeperator: DIFF_CONTEXT_SEPERATOR,
@@ -190,19 +198,25 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<PartialViewResult> OnGetAPIDiffRevisionsPartialAsync(string reviewId, string apiRevisionId, APIRevisionType apiRevisionType, bool showDoc = false, bool showDiffOnly = false)
         {
-            var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            if (apiRevisions.IsNullOrEmpty())
+            {
+                var notifcation = new NotificationModel() { Message = $"This review has no valid apiRevisons", Level = NotificatonLevel.Warning };
+                await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
+            }
+
             APIRevisionListItemModel activeRevision = default(APIRevisionListItemModel);
 
             if (!Guid.TryParse(apiRevisionId, out _))
             {
-                activeRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, revisions);
+                activeRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions);
             }
             else
             {
-                activeRevision = revisions.FirstOrDefault(r => r.Id == apiRevisionId);
+                activeRevision = apiRevisions.FirstOrDefault(r => r.Id == apiRevisionId);
             }
 
-            var revisionsForDiff = revisions.Where(r => r.APIRevisionType == apiRevisionType && r.Id != apiRevisionId).OrderByDescending(c => c.CreatedOn).ToList();
+            var revisionsForDiff = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType && r.Id != activeRevision.Id).OrderByDescending(c => c.CreatedOn).ToList();
 
             (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
                 revisions: revisionsForDiff,

@@ -25,7 +25,7 @@ namespace APIViewWeb.Pages.Assemblies
         public readonly UserPreferenceCache _preferenceCache;
         public readonly IUserProfileManager _userProfileManager;
         public const int _defaultPageSize = 50;
-        public const string _defaultSortField = "LastUpdated";
+        public const string _defaultSortField = "LastUpdatedOn";
 
         public IndexPageModel(IReviewManager reviewManager, IUserProfileManager userProfileManager, UserPreferenceCache preferenceCache, IHubContext<SignalRHub> notificationHub)
         {

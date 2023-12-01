@@ -45,7 +45,7 @@ namespace APIViewWeb.Managers
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
             IHubContext<SignalRHub> signalRHubContext,
             IEnumerable<LanguageService> languageServices,
-            IDevopsArtifactRepository devopsArtifctRepository,
+            IDevopsArtifactRepository devopsArtifactRepository,
             ICodeFileManager codeFileManager,
             IBlobCodeFileRepository codeFileRepository,
             IBlobOriginalsRepository originalsRepository,
@@ -58,7 +58,7 @@ namespace APIViewWeb.Managers
             _codeFileManager = codeFileManager;
             _codeFileRepository = codeFileRepository;
             _languageServices = languageServices;
-            _devopsArtifactRepository = devopsArtifctRepository;
+            _devopsArtifactRepository = devopsArtifactRepository;
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
         }
@@ -85,17 +85,20 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Retrieve the latest Revisions for a particular Review from the Revisions container in CosmosDb
+        /// Retrieve the latest APRevison for a particular Review.
+        /// Filter by APIRevisionType if specified and Review contains specified type
+        /// If APIRevisionType is not specified, return the latest revision irrespective of the type
+        /// Return default if no revisoin is found
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="apiRevisions"></param> The list of revisions can be supplied if available to avoid another call to the database
         /// <param name="apiRevisionType"></param>
-        /// <returns></returns>
+        /// <returns>APIRevisionListItemModel</returns>
         public async Task<APIRevisionListItemModel> GetLatestAPIRevisionsAsync(string reviewId = null, IEnumerable<APIRevisionListItemModel> apiRevisions = null, APIRevisionType apiRevisionType = APIRevisionType.All)
         {
             if (reviewId == null && apiRevisions == null)
             { 
-                throw new ArgumentNullException("Either reviewId or apiRevisions must be supplied");
+                throw new ArgumentException("Either reviewId or apiRevisions must be supplied");
             }
 
             if (apiRevisions == null)
@@ -103,27 +106,26 @@ namespace APIViewWeb.Managers
                 apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
             }
 
-            if (apiRevisionType != APIRevisionType.All)
+            if (apiRevisionType != APIRevisionType.All && apiRevisions.Any(r => r.APIRevisionType == apiRevisionType))
             {
                 apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
             }
-
-            return apiRevisions.OrderByDescending(r => r.CreatedOn).First(); ;
+            return apiRevisions.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
         }
 
         /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb.
         /// </summary>
         /// <param name="user"></param>
-        /// <param name="revisionId"></param> The RevisionId for which the revision is to be retrieved
+        /// <param name="apiRevisionId"></param> The RevisionId for which the revision is to be retrieved
         /// <returns></returns>
-        public async Task<APIRevisionListItemModel> GetAPIRevisionAsync(ClaimsPrincipal user, string revisionId)
+        public async Task<APIRevisionListItemModel> GetAPIRevisionAsync(ClaimsPrincipal user, string apiRevisionId)
         {
             if (user == null)
             {
                 throw new UnauthorizedAccessException();
             }
-            return await _apiRevisionsRepository.GetAPIRevisionAsync(revisionId);
+            return await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
         }
 
         /// <summary>

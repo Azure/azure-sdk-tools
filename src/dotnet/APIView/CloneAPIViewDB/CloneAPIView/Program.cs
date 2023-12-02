@@ -53,7 +53,7 @@ static async Task MigrateDocuments(
     Container revisionsContainerNew, Container mappingsContainer, int? limit = null)
 {
     var reviewsOld = new List<ReviewModelOld>();
-    var reviewsOldQuery = $"SELECT * FROM Reviews c Where Exists(Select Value r from r in c.Revisions where IS_DEFINED(r.Files[0].PackageName) AND r.Files[0].PackageName != \"\")";
+    var reviewsOldQuery = $"SELECT * FROM Reviews c Where c.IsClosed = false and Exists(Select Value r from r in c.Revisions where IS_DEFINED(r.Files[0].PackageName) AND r.Files[0].PackageName != \"\")";
     var reviewsOldQueryDefinition = new QueryDefinition(reviewsOldQuery);
     var reviewsOldItemQueryIterator = reviewsContainerOld.GetItemQueryIterator<ReviewModelOld>(reviewsOldQueryDefinition);
 
@@ -117,10 +117,28 @@ static async Task MigrateDocuments(
         else
         {
             // Get mapping
-            mapping = await mappingsContainer.ReadItemAsync<MappingModel>(reviewNew.Id, new PartitionKey(reviewNew.Id));            
+            mapping = await mappingsContainer.ReadItemAsync<MappingModel>(reviewNew.Id, new PartitionKey(reviewNew.Id));
+            if (mapping == null)
+            {
+                mapping = new MappingModel()
+                {
+                    ReviewNewId = reviewNew.Id,
+                    ReviewOldIds = new HashSet<string>()
+                }; 
+            }              
             mapping.ReviewOldIds.Add(reviewOld.ReviewId);
         }
 
+        if (reviewOld.IsApprovedForFirstRelease)
+        {
+            reviewNew.IsApproved = true;
+            reviewNew.ChangeHistory.Add(new ReviewChangeHistoryModel()
+                {
+                    ChangeAction = ReviewChangeAction.Approved,
+                    ChangedBy = reviewOld.ApprovedForFirstReleaseBy,
+                    ChangedOn = reviewOld.ApprovedForFirstReleaseOn
+                });
+        }
         // Create APIRevisions
         foreach (var revisionOld in reviewOld.Revisions)
         {
@@ -310,6 +328,12 @@ static async Task MigrateDocuments(
             prModelNew.Assignee = prModelOld.Assignee;
             prModelNew.IsDeleted = false;
 
+            var oldReview = reviewsOld.Where(rev => rev.ReviewId == prModelOld.ReviewId)?.FirstOrDefault();
+            if (oldReview != null)
+            {
+                prModelNew.APIRevisionId = oldReview.Revisions.Last()?.RevisionId;
+                Console.WriteLine($"Setting previous revision ID {prModelNew.APIRevisionId} from review {oldReview.ReviewId} as API revision ID for PR Model {prModelNew.Id}");
+            }
             Console.WriteLine($"Creating PR    : {prModelNew.Id}");
             await prContainerNew.UpsertItemAsync(prModelNew, new PartitionKey(prModelNew.ReviewId));
         }

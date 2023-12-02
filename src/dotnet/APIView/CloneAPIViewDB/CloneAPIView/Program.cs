@@ -70,7 +70,7 @@ static async Task MigrateDocuments(
     foreach (var reviewOld in reviewsOld)
     {
         i++;
-        commentsContainerOld.WriteLine($"Status: Migrating {i} of {totalReviews} reviews.");
+        Console.WriteLine($"Status: Migrating {i} of {totalReviews} reviews.");
         if (limit.HasValue)
         {
             if (limit == 0)

@@ -14,6 +14,9 @@ using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Options;
 using Microsoft.TeamFoundation.Common;
+using APIViewWeb.LeanModels;
+using APIViewWeb.Helpers;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 
 namespace APIViewWeb.Managers
 {
@@ -71,6 +74,11 @@ namespace APIViewWeb.Managers
             TaggableUsers = new HashSet<GithubUser>(TaggableUsers.OrderBy(g => g.Login));
         }
 
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId)
+        {
+            return await _commentsRepository.GetCommentsAsync(reviewId);
+        }
+
         public async Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId)
         {
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
@@ -81,29 +89,43 @@ namespace APIViewWeb.Managers
         public async Task<ReviewCommentsModel> GetUsageSampleCommentsAsync(string reviewId)
         {
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
-            return new ReviewCommentsModel(reviewId, comments.Where((e) => e.IsUsageSampleComment));
+            return new ReviewCommentsModel(reviewId, comments.Where(c => c.CommentType == LeanModels.CommentType.SamplesRevision));
         }
 
-        public async Task AddCommentAsync(ClaimsPrincipal user, CommentModel comment)
+        public async Task AddCommentAsync(ClaimsPrincipal user, CommentItemModel comment)
         {
-            comment.Username = user.GetGitHubLogin();
-            comment.TimeStamp = DateTime.Now;
+            comment.ChangeHistory.Add(
+                new CommentChangeHistoryModel()
+                {
+                    ChangeAction = CommentChangeAction.Created,
+                    ChangedBy = user.GetGitHubLogin(),
+                    ChangedOn = DateTime.Now,
+                });
+            comment.CreatedBy = user.GetGitHubLogin();
+            comment.CreatedOn = DateTime.Now;
 
             await _commentsRepository.UpsertCommentAsync(comment);
-            if (!comment.IsResolve)
+
+            if (!comment.IsResolved)
             {
                 await _notificationManager.NotifyUserOnCommentTag(comment);
                 await _notificationManager.NotifySubscribersOnComment(user, comment);
             }
         }
 
-        public async Task<CommentModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText, string[] taggedUsers)
+        public async Task<CommentItemModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText, string[] taggedUsers)
         {
             var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
             await AssertOwnerAsync(user, comment);
-            comment.EditedTimeStamp = DateTime.Now;
-            comment.Comment = commentText;
-            comment.Username = user.GetGitHubLogin();
+            comment.ChangeHistory.Add(
+               new CommentChangeHistoryModel()
+               {
+                   ChangeAction = CommentChangeAction.Edited,
+                   ChangedBy = user.GetGitHubLogin(),
+                   ChangedOn = DateTime.Now,
+               });
+            comment.LastEditedOn = DateTime.Now;
+            comment.CommentText = commentText;
 
             foreach (var taggedUser in taggedUsers)
             {
@@ -119,21 +141,60 @@ namespace APIViewWeb.Managers
             return comment;
         }
 
-        public async Task DeleteCommentAsync(ClaimsPrincipal user, string reviewId, string commentId)
+        /// <summary>
+        /// Delete Comment
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="reviewId"></param>
+        /// <returns></returns>
+        public async Task SoftDeleteCommentsAsync(ClaimsPrincipal user, string reviewId)
+        {
+            var comments = await _commentsRepository.GetCommentsAsync(reviewId);
+
+            foreach (var  comment in comments)
+            {
+                await SoftDeleteCommentAsync(user, comment);
+            }
+        }
+
+        /// <summary>
+        /// Delete Comment
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="reviewId"></param>
+        /// <param name="commentId"></param>
+        /// <returns></returns>
+        public async Task SoftDeleteCommentAsync(ClaimsPrincipal user, string reviewId, string commentId)
         {
             var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await SoftDeleteCommentAsync(user, comment);
+        }
+
+        /// <summary>
+        ///  Delete Comment
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="comment"></param>
+        /// <returns></returns>
+        public async Task SoftDeleteCommentAsync(ClaimsPrincipal user, CommentItemModel comment)
+        {
             await AssertOwnerAsync(user, comment);
-            await _commentsRepository.DeleteCommentAsync(comment);
+            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Deleted, user.GetGitHubLogin());
+            comment.ChangeHistory = changeUpdate.ChangeHistory;
+            comment.IsDeleted = changeUpdate.ChangeStatus;
+            await _commentsRepository.UpsertCommentAsync(comment);
         }
 
         public async Task ResolveConversation(ClaimsPrincipal user, string reviewId, string lineId)
         {
-            await AddCommentAsync(user, new CommentModel()
+            var comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
+            foreach (var comment in comments)
             {
-                IsResolve = true,
-                ReviewId = reviewId,
-                ElementId = lineId
-            });
+                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Resolved, user.GetGitHubLogin());
+                comment.ChangeHistory = changeUpdate.ChangeHistory;
+                comment.IsResolved = changeUpdate.ChangeStatus;
+                await _commentsRepository.UpsertCommentAsync(comment);
+            }
         }
 
         public async Task UnresolveConversation(ClaimsPrincipal user, string reviewId, string lineId)
@@ -141,10 +202,10 @@ namespace APIViewWeb.Managers
             var comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
             foreach (var comment in comments)
             {
-                if (comment.IsResolve)
-                {
-                    await _commentsRepository.DeleteCommentAsync(comment);
-                }
+                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Resolved, user.GetGitHubLogin());
+                comment.ChangeHistory = changeUpdate.ChangeHistory;
+                comment.IsResolved = changeUpdate.ChangeStatus;
+                await _commentsRepository.UpsertCommentAsync(comment);
             }
         }
 
@@ -161,7 +222,7 @@ namespace APIViewWeb.Managers
         }
 
         public HashSet<GithubUser> GetTaggableUsers() => TaggableUsers;
-        private async Task AssertOwnerAsync(ClaimsPrincipal user, CommentModel commentModel)
+        private async Task AssertOwnerAsync(ClaimsPrincipal user, CommentItemModel commentModel)
         {
             var result = await _authorizationService.AuthorizeAsync(user, commentModel, new[] { CommentOwnerRequirement.Instance });
             if (!result.Succeeded)

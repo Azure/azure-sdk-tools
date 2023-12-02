@@ -52,19 +52,15 @@
                 <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
             </select>
         </div>
+        @*
+        Disabling Approval since it has no benefit to users at this point
         <div class="input-group input-group-sm mb-2">
             <span class="input-group-text">Status</span>
             <select multiple id="status-filter-select" aria-label="Status Filter">
                 <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
             </select>
         </div>
-        <div class="input-group input-group-sm mb-2">
-            <span class="input-group-text">Type</span>
-            <select multiple id="type-filter-select" aria-label="Type Filter">
-                <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
-            </select>
-        </div>
-
+        *@
  
         <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="reset-filter-button"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset Filters</button>
         <hr class="border">
@@ -76,64 +72,6 @@
         mainContainerClass = String.Empty;
 }
 <div class="container-fluid mb-5@(mainContainerClass)" id="index-main-container">
-    <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <form asp-page-handler="Upload" method="post" enctype="multipart/form-data" id="review-upload-form">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Create Review</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="container-fluid">
-                            <div class="row">
-                                <div class="form-group mb-3">
-                                    <p class="small mb-0">Select Language</p>
-                                    <select asp-for="Upload.Language" id="review-language-select">
-                                        <option selected disabled value="">None Selected</option>
-                                        @foreach (string lang in UploadModel.SupportedLanguages)
-                                        {
-                                            <option value=@lang data-content=@lang>@lang</option>
-                                        }
-                                    </select>
-                                </div>
-                                <div class="input-group mb-3 custom-file-label" id="create-review-via-upload">
-                                    <label for="uploadReviewFile" class="input-group-text small mb-0">Select File to Include in API Review</label>
-                                    <input asp-for="Upload.Files" type="file" class="form-control" id="uploadReviewFile">
-                                </div>
-                                <div class="form-group d-none mb-3" id="create-review-via-path">
-                                    <input asp-for="Upload.FilePath" class="form-control" type="text" placeholder="Package root e.g https://github.com/Azure/azure-rest-api-specs/specification/cognitiveservices/AnomalyDetector/">
-                                </div>
-                                <div class="form-group mb-3 d-none">
-                                    <div class="form-check">
-                                        <input class="form-check-input" hidden asp-for="Upload.RunAnalysis" checked>
-                                        <label class="form-check-label" hidden>
-                                            Run static analysis
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="form-group mb-3">
-                                    <input asp-for="Label" class="form-control" type="text" placeholder="Enter an optional review label">
-                                </div>
-                                <div class="form-group">
-                                    <partial name="_ReviewUploadHelp" />
-                                </div>
-                             </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                        <button id="review-upload-submit-btn" class="btn btn-primary" >
-                            <i class="fas fa-cloud-upload-alt"></i> Upload
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <button type="button" class="btn btn-primary" id="create-review-button" data-bs-toggle="modal" data-bs-target="#uploadModel" data-bs-backdrop="false"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
-
     <div class="mx-5 row">
         <div class="col-md-12" id="reviews-filter-partial">
             <partial name="_ReviewsPartial" model="Model.PagedResults" />

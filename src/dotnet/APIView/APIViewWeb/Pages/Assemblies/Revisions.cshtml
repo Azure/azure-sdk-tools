@@ -1,6 +1,7 @@
 @page "{id?}"
 @model APIViewWeb.Pages.Assemblies.RevisionsPageModel
 @using APIViewWeb.Helpers
+@using APIViewWeb.LeanModels;
 @using APIViewWeb.Models
 @{
     Layout = "Shared/_Layout";
@@ -11,7 +12,7 @@
     <div class="row mx-1 px-0 py-2">
         <div class="col-md-4">
             <div class="input-group-sm input-group">
-                <partial name="Shared/_ReviewBadge" model="Model.Review" />
+                <partial name="Shared/_ReviewBadge" model="(Model.Review, Model.LatestAPIRevision)" />
             </div>
         </div>
         <div class="col-md-4">
@@ -23,14 +24,11 @@
 </div>
 
 <div class="container" id="revisions-main-container">
-    @if (Model.Review.FilterType == ReviewType.Manual)
-    {
-        <div class="row" asp-resource="@Model.Review" asp-requirement="@AutoReviewModifierRequirement.Instance">
-            <div id="add-revision-button">
-                <button type="button" class="btn btn-primary" id="add-revision-button" data-bs-toggle="modal" data-bs-target="#uploadModel"><small>ADD</small><br><i class="fas fa-sm fa-plus"></i><br><small>REVISION</small></button>
-            </div>
+    <div class="row" asp-resource="@Model.LatestAPIRevision" asp-requirement="@AutoAPIRevisionModifierRequirement.Instance">
+        <div id="add-revision-button">
+            <button type="button" class="btn btn-primary" id="add-revision-button" data-bs-toggle="modal" data-bs-target="#uploadModel"><small>ADD</small><br><i class="fas fa-sm fa-plus"></i><br><small>REVISION</small></button>
         </div>
-    }
+    </div>
         
 
     <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
@@ -86,34 +84,105 @@
 
     <div class="row mx-0 px-0 py-2">
         <div class="col-lg-12 mx-0 px-0">
-            <ul class="list-group">
-                @foreach (var revision in Model.Review.Revisions.Reverse())
-                {
-                    <li class="list-group-item">
-                        <form class="form-inline revision-rename-form float-left" asp-page-handler="Rename" method="post">
+            @if (Model.APIRevisions.ContainsKey("Automatic"))
+            {
+                <ul class="list-group">
+                    <li class="list-group-item list-group-item-heading fw-bold">Automatic APIRevisions</li>
+                    @foreach (var revision in Model.APIRevisions["Automatic"])
+                    {
+                        <li class="list-group-item">
+                            <form class="form-inline revision-rename-form float-left" asp-page-handler="Rename" method="post">
                             <span asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance">
                                 <a href="#" class="text-decoration-none revision-rename-icon pr-2">✎</a>
-                                <input type="hidden" name="revisionId" value="@revision.RevisionId" />
+                                <input type="hidden" name="revisionId" value="@revision.Id" />
                                 <span class="revision-name-input form-group-lg pr-2" style="display:none">
                                     <input type="text" class="form-control" name="newLabel" value="@revision.Label" placeholder="Enter a revision label" />
                                     <a href="#" class="text-decoration-none submit-revision-rename">✔️</a>
                                     <a href="#" class="text-decoration-none cancel-revision-rename">❌</a>
                                 </span>
                             </span>
-                            <span class="revision-name-label">@revision.DisplayName</span>
+                            <span class="revision-name-label">@revision.Label</span>
                             <span class="font-italic pl-3">
-                                <span date="@revision.CreationDate"></span>
-                                <span>by @revision.Author</span>
+                                <span>@revision.APIRevisionType.ToString(), Created: </span>
+                                <span date="@revision.CreatedOn"></span>
+                                <span>By: @revision.CreatedBy</span>
                             </span>
-                        </form>
-                        <form asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance"
+                            </form>
+                            <form asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance"
+                                class="form-inline float-right" asp-page-handler="Delete" method="post">
+                                <input type="hidden" name="revisionId" value="@revision.Id" />
+                                <input type="submit" class="btn btn-danger btn-sm" value="Delete" />
+                            </form>
+                        </li>
+                    }
+                </ul>
+            }
+            @if (Model.APIRevisions.ContainsKey("PullRequest"))
+            {
+                <ul class="list-group mt-2">
+                    <li class="list-group-item list-group-item-heading fw-bold">PullRequest APIRevisions</li>
+                    @foreach (var revision in Model.APIRevisions["PullRequest"])
+                    {
+                        <li class="list-group-item">
+                            <form class="form-inline revision-rename-form float-left" asp-page-handler="Rename" method="post">
+                            <span asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance">
+                                <a href="#" class="text-decoration-none revision-rename-icon pr-2">✎</a>
+                                <input type="hidden" name="revisionId" value="@revision.Id" />
+                                <span class="revision-name-input form-group-lg pr-2" style="display:none">
+                                    <input type="text" class="form-control" name="newLabel" value="@revision.Label" placeholder="Enter a revision label" />
+                                    <a href="#" class="text-decoration-none submit-revision-rename">✔️</a>
+                                    <a href="#" class="text-decoration-none cancel-revision-rename">❌</a>
+                                </span>
+                            </span>
+                            <span class="revision-name-label">@revision.Label</span>
+                            <span class="font-italic pl-3">
+                                <span>@revision.APIRevisionType.ToString(), Created: </span>
+                                <span date="@revision.CreatedOn"></span>
+                                <span>By: @revision.CreatedBy</span>
+                            </span>
+                            </form>
+                            <form asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance"
+                                    class="form-inline float-right" asp-page-handler="Delete" method="post">
+                                <input type="hidden" name="revisionId" value="@revision.Id" />
+                                <input type="submit" class="btn btn-danger btn-sm" value="Delete" />
+                            </form>
+                        </li>
+                    }
+                </ul>
+            }
+            @if (Model.APIRevisions.ContainsKey("Manual"))
+            {
+                <ul class="list-group mt-2">
+                    <li class="list-group-item list-group-item-heading fw-bold">Manual APIRevisions</li>
+                    @foreach (var revision in Model.APIRevisions["Manual"])
+                    {
+                        <li class="list-group-item">
+                            <form class="form-inline revision-rename-form float-left" asp-page-handler="Rename" method="post">
+                                <span asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance">
+                                    <a href="#" class="text-decoration-none revision-rename-icon pr-2">✎</a>
+                                    <input type="hidden" name="revisionId" value="@revision.Id" />
+                                    <span class="revision-name-input form-group-lg pr-2" style="display:none">
+                                        <input type="text" class="form-control" name="newLabel" value="@revision.Label" placeholder="Enter a revision label" />
+                                        <a href="#" class="text-decoration-none submit-revision-rename">✔️</a>
+                                        <a href="#" class="text-decoration-none cancel-revision-rename">❌</a>
+                                    </span>
+                                </span>
+                                <span class="revision-name-label">@revision.Label</span>
+                                <span class="font-italic pl-3">
+                                    <span>@revision.APIRevisionType.ToString(), Created: </span>
+                                    <span date="@revision.CreatedOn"></span>
+                                    <span>By: @revision.CreatedBy</span>
+                                </span>
+                            </form>
+                            <form asp-resource="@revision" asp-requirement="@RevisionOwnerRequirement.Instance"
                             class="form-inline float-right" asp-page-handler="Delete" method="post">
-                            <input type="hidden" name="revisionId" value="@revision.RevisionId" />
-                            <input type="submit" class="btn btn-danger btn-sm" value="Delete" />
-                        </form>
-                    </li>
-                }
-            </ul>
+                                <input type="hidden" name="revisionId" value="@revision.Id" />
+                                <input type="submit" class="btn btn-danger btn-sm" value="Delete" />
+                            </form>
+                        </li>
+                    }
+                </ul>
+            }
         </div>
     </div>
 </div>

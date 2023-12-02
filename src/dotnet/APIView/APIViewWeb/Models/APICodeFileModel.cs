@@ -5,11 +5,11 @@ using System;
 
 namespace APIViewWeb
 {
-    public class ReviewCodeFileModel
+    public class APICodeFileModel
     {
         private string _language;
 
-        public string ReviewFileId { get; set; } = IdHelper.GenerateId();
+        public string FileId { get; set; } = IdHelper.GenerateId();
 
         // This is field is more of a display name. It is set to name value returned by parser which has package name and version in following format
         // Package name ( Version )

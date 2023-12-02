@@ -7,7 +7,6 @@ $(() => {
   const languageFilter = $( '#language-filter-select' );
   const stateFilter = $( '#state-filter-select' );
   const statusFilter = $( '#status-filter-select' );
-  const typeFilter = $( '#type-filter-select' );
   const searchBox = $( '#reviews-table-search-box' );
   const searchButton = $( '#reviews-search-button' );
   const resetButton = $( '#reset-filter-button' );
@@ -47,10 +46,6 @@ $(() => {
       uri = uri + '&status=' + encodeURIComponent(`${$(this).val()}`);
     });
 
-    typeFilter.children(":selected").each(function() {
-      uri = uri + '&type=' + encodeURIComponent(`${$(this).val()}`);
-    });
-
     uri = uri + '&pageNo=' + encodeURIComponent(pageNo);
     uri = uri + '&pageSize=' + encodeURIComponent(pageSize);
     uri = encodeURI(uri);
@@ -85,7 +80,6 @@ $(() => {
     (<any>languageFilter).SumoSelect({ selectAll: true });
     (<any>stateFilter).SumoSelect({ selectAll: true });
     (<any>statusFilter).SumoSelect({ selectAll: true });
-    (<any>typeFilter).SumoSelect({ selectAll: true });
     addPaginationEventHandlers();
   });
 
@@ -104,7 +98,7 @@ $(() => {
   });
 
   // Update list of reviews when any dropdown is changed
-  [languageFilter, stateFilter, statusFilter, typeFilter].forEach(function(value, index) {
+  [languageFilter, stateFilter, statusFilter].forEach(function(value, index) {
     value.on('sumo:closed', function() {
       updateListedReviews();
     });
@@ -125,7 +119,6 @@ $(() => {
     (<any>$('#state-filter-select')[0]).sumo.unSelectAll();
     (<any>$('#state-filter-select')[0]).sumo.selectItem('Open');
     (<any>$('#status-filter-select')[0]).sumo.unSelectAll();
-    (<any>$('#type-filter-select')[0]).sumo.unSelectAll();
     searchBox.val('');
     updateListedReviews();
   });

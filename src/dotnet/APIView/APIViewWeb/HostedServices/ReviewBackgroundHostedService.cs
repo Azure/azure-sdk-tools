@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
@@ -16,15 +17,18 @@ namespace APIViewWeb.HostedServices
     {
         private readonly bool _isDisabled;
         private readonly IReviewManager _reviewManager;
+        private readonly IAPIRevisionsManager _apiRevisionManager;
         private readonly int _autoArchiveInactiveGracePeriodMonths; // This is inactive duration in months
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
         private readonly int _backgroundBatchProcessCount;
 
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
-        public ReviewBackgroundHostedService(IReviewManager reviewManager, IConfiguration configuration)
+        public ReviewBackgroundHostedService(IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager, IConfiguration configuration)
         {
             _reviewManager = reviewManager;
+            _apiRevisionManager = apiRevisionManager;
+
             // We can disable background task using app settings if required
             if (bool.TryParse(configuration["BackgroundTaskDisabled"], out bool taskDisabled))
             {
@@ -56,8 +60,8 @@ namespace APIViewWeb.HostedServices
             {
                 try
                 {
-                    await _reviewManager.UpdateReviewBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount);
-                    await ArchiveInactiveReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
+                    await _reviewManager.UpdateReviewsInBackground(_upgradeDisabledLangs, _backgroundBatchProcessCount);
+                    await ArchiveInactiveAPIReviews(stoppingToken, _autoArchiveInactiveGracePeriodMonths);
                 }
                 catch (Exception ex)
                 {
@@ -66,13 +70,13 @@ namespace APIViewWeb.HostedServices
             }
         }
 
-        private async Task ArchiveInactiveReviews(CancellationToken stoppingToken, int archiveAfter)
+        private async Task ArchiveInactiveAPIReviews(CancellationToken stoppingToken, int archiveAfter)
         {
             do
             {
                 try
                 {
-                    await _reviewManager.AutoArchiveReviews(archiveAfter);
+                    await _apiRevisionManager.AutoArchiveAPIRevisions(archiveAfter);
                 }
                 catch(Exception ex)
                 {

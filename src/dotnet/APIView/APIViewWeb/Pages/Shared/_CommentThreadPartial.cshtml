@@ -14,7 +14,7 @@
     <tr class="comment-row @Model.LineClass@commentsDisplayState" data-line-id="@Model.LineId">
         <td class="comment-cell border-top border-bottom" colspan="3">
             <a class="comment-thread-anchor"></a>
-            @if (Model.IsResolved && Model.Comments.First().Username == User.GetGitHubLogin())
+            @if (Model.IsResolved && Model.Comments.First().CreatedBy == User.GetGitHubLogin())
             {
                 @:This thread is marked resolved by @Model.ResolvedBy <a href="#" class="toggle-comments">(show)</a>
                 <br />
@@ -27,42 +27,11 @@
             }
             <div class="border comment-holder rounded-1 @(Model.IsResolved ? "comments-resolved" : "")">
                 <div class="comment-thread-contents">
-                    @{
-                        var groupedComments = Model.Comments.Where(x => !String.IsNullOrEmpty(x.GroupNo));
-                        var unGroupedComments = Model.Comments.Where(x => String.IsNullOrEmpty(x.GroupNo));
-                    }
-                    @if (unGroupedComments.Any())
+                    @foreach (var comment in Model.Comments)
                     {
-                        @foreach (var comment in unGroupedComments)
-                        {
-                            <partial name="_CommentThreadInnerPartial" model="comment" />
-                        }
-                        <partial name="_CommentThreadReplyPartial" model="String.Empty" />
+                        <partial name="_CommentThreadInnerPartial" model="comment" />
                     }
-
-                    @if (groupedComments.Any())
-                    {
-                        var comments = groupedComments.OrderBy(x => Convert.ToInt16(x.GroupNo)).ToArray();
-                        for (int i = 0; i < comments.Length; i++) 
-                        {
-                            var comment = comments[i];
-                            var rowAnchor = $"{Model.LineId}-tr-{comment.GroupNo}";
-
-                            if (i == 0 || (Convert.ToInt16(comment.GroupNo) > Convert.ToInt16(comments[i - 1].GroupNo)))
-                            {
-                                <a class="ps-2 comment-group-anchor-link" href="#@rowAnchor">
-                                    <span class="badge badge-pill badge-light">
-                                        <small>ROW-@comment.GroupNo</small>
-                                    </span>
-                                </a>
-                            }
-                            <partial name="_CommentThreadInnerPartial" model="comment" />
-                            if (i == comments.Length - 1 || (Convert.ToInt16(comments[i + 1].GroupNo) > Convert.ToInt16(comment.GroupNo)))
-                            {
-                                <partial name="_CommentThreadReplyPartial" model="comment.GroupNo" />
-                            }
-                        }
-                    }
+                    <partial name="_CommentThreadReplyPartial" model="String.Empty" />
 
                     <div class="m-2 d-flex justify-content-between">
                         @if (Model.IsResolved)
@@ -76,7 +45,7 @@
                                 </span>
                                 <p>
                                     &nbsp;&nbsp;Please ask
-                                    <a username="@Model.Comments.First().Username" class="font-weight-bolder mt-0">@Model.Comments.First().Username</a>
+                                    <a username="@Model.Comments.First().CreatedBy" class="font-weight-bolder mt-0">@Model.Comments.First().CreatedBy</a>
                                     (or an APIView approver) to unresolve this conversation.
                                 </p>
                             } 
@@ -98,7 +67,7 @@
                                 </span>
                                 <p>
                                     &nbsp;&nbsp;Please ask
-                                    <a username="@Model.Comments.First().Username" class="font-weight-bolder mt-0">@Model.Comments.First().Username</a>
+                                    <a username="@Model.Comments.First().CreatedBy" class="font-weight-bolder mt-0">@Model.Comments.First().CreatedBy</a>
                                     (or an APIView approver) to resolve this conversation.
                                 </p>
 

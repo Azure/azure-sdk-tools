@@ -6,12 +6,10 @@ namespace APIViewWeb.Managers
 {
     public interface IPullRequestManager
     {
-        public Task<string> DetectApiChanges(string buildId, string artifactName, string originalFileName,
-            string commitSha, string repoName, string packageName, int prNumber, string hostName, string codeFileName = null,
-            string baselineCodeFileName = null, bool commentOnPR = true, string language = null, string project = "public");
+        public Task<IEnumerable<PullRequestModel>> GetPullRequestsModelAsync(string reviewId);
+        public Task<IEnumerable<PullRequestModel>> GetPullRequestsModelAsync(int pullRequestNumber, string repoName);
+        public Task<PullRequestModel> GetPullRequestModelAsync(int prNumber, string repoName, string packageName, string originalFile, string language);
+        public Task CreateOrUpdateCommentsOnPR(List<PullRequestModel> pullRequests, string repoOwner, string repoName, int prNumber, string hostName);
         public Task CleanupPullRequestData();
-
-        public Task<IEnumerable<PullRequestModel>> GetPullRequestsModel(string reviewId);
-        public Task<IEnumerable<PullRequestModel>> GetPullRequestsModel(int pullRequestNumber, string repoName);
     }
 }

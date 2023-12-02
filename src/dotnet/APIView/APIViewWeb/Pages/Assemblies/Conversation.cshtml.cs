@@ -4,7 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -17,30 +19,34 @@ namespace APIViewWeb.Pages.Assemblies
     {
         private readonly ICommentsManager _commentsManager;
         private readonly IReviewManager _reviewManager;
-        private readonly IUsageSampleManager _samplesManager;
+        private readonly IAPIRevisionsManager _apiRevisionsManager;
+        private readonly ISamplesRevisionsManager _samplesManager;
         private const string ENDPOINT_SETTING = "Endpoint";
         private readonly IBlobCodeFileRepository _codeFileRepository;
         public readonly UserPreferenceCache _preferenceCache;
 
         public string Endpoint { get; }
-        public ReviewModel Review { get; private set; }
-        public UsageSampleModel Sample { get; private set; }
+        public ReviewListItemModel Review { get; private set; }
+        public APIRevisionListItemModel LatestAPIRevision { get; set; }
+        public IEnumerable<SamplesRevisionModel> SamplesRevisions { get; private set; }
         public IEnumerable<List<string>> SampleLines { get; private set; }
 
-        public IOrderedEnumerable<KeyValuePair<ReviewRevisionModel, List<CommentThreadModel>>> Threads { get; set; }
-        public Dictionary<UsageSampleRevisionModel, List<CommentThreadModel>> UsageSampleThreads { get; set; }
+        public IOrderedEnumerable<KeyValuePair<APIRevisionListItemModel, List<CommentThreadModel>>> Threads { get; set; }
+        public Dictionary<(SamplesRevisionModel sampleRevision, int sampleRevisionNumber), List<CommentThreadModel>> UsageSampleThreads { get; set; }
         public HashSet<GithubUser> TaggableUsers { get; set; }
         public ConversationModel(
             IConfiguration configuration,
             IBlobCodeFileRepository codeFileRepository,
             ICommentsManager commentsManager,
             IReviewManager reviewManager,
+            IAPIRevisionsManager apiRevisionsManager,
             UserPreferenceCache preferenceCache,
-            IUsageSampleManager samplesManager)
+            ISamplesRevisionsManager samplesManager)
         {
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;
+            _apiRevisionsManager = apiRevisionsManager;
             Endpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
             _preferenceCache = preferenceCache;
             _samplesManager = samplesManager;
@@ -51,39 +57,44 @@ namespace APIViewWeb.Pages.Assemblies
             TaggableUsers = _commentsManager.GetTaggableUsers();
             TempData["Page"] = "conversation";
             Review = await _reviewManager.GetReviewAsync(User, id);
-            Sample = (await _samplesManager.GetReviewUsageSampleAsync(id)).FirstOrDefault();
+            LatestAPIRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(Review.Id);
+            SamplesRevisions = await _samplesManager.GetSamplesRevisionsAsync(id);
             var comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Threads = ParseThreads(comments.Threads);
+            Threads = await ParseThreads(comments.Threads);
             UsageSampleThreads = ParseUsageSampleThreads(comments.Threads);
             SampleLines = await getUsageSampleLines();
             return Page();
         }
 
-        private IOrderedEnumerable<KeyValuePair<ReviewRevisionModel, List<CommentThreadModel>>> ParseThreads(IEnumerable<CommentThreadModel> threads)
+        private async Task<IOrderedEnumerable<KeyValuePair<APIRevisionListItemModel, List<CommentThreadModel>>>> ParseThreads(IEnumerable<CommentThreadModel> threads)
         {
-            var threadDict = new Dictionary<ReviewRevisionModel, List<CommentThreadModel>>();
+            var threadDict = new Dictionary<APIRevisionListItemModel, List<CommentThreadModel>>();
+            var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(Review.Id);
 
             foreach (var thread in threads)
             {
-                ReviewRevisionModel lastRevisionForThread = null;
-                int lastRevision = 0;
+                APIRevisionListItemModel lastRevisionForThread = null;
+                DateTime lastRevisionDate = DateTime.MinValue;
+
                 foreach (var comment in thread.Comments)
                 {
-                    if (comment.RevisionId == null)
+                    if (comment.APIRevisionId == null)
                     {
                         continue;
                     }
-                    ReviewRevisionModel commentRevision = Review.Revisions.SingleOrDefault(r => r.RevisionId == comment.RevisionId);
+
+                    APIRevisionListItemModel commentRevision = revisions.SingleOrDefault(r => r.Id == comment.APIRevisionId);
+
                     if (commentRevision == null)
                     {
                         // if revision that comment was added in has been deleted
                         continue;
                     }
-                    var commentRevisionIndex = commentRevision.RevisionNumber;
+                    var commentRevisionDate = commentRevision.CreatedOn;
                     // Group each thread under the last revision where a comment was added for it. 
-                    if (commentRevisionIndex >= lastRevision)
+                    if (commentRevisionDate >= lastRevisionDate)
                     {
-                        lastRevision = commentRevisionIndex;
+                        lastRevisionDate = (DateTime)commentRevisionDate;
                         lastRevisionForThread = commentRevision;
                     }
                 }
@@ -97,14 +108,14 @@ namespace APIViewWeb.Pages.Assemblies
                 }
                 threadDict[lastRevisionForThread].Add(thread);
             }
-            return threadDict.OrderByDescending(kvp => Review.Revisions.IndexOf(kvp.Key));
+            return threadDict.OrderByDescending(kvp => kvp.Key.CreatedOn);
         }
 
-        private Dictionary<UsageSampleRevisionModel, List<CommentThreadModel>> ParseUsageSampleThreads(IEnumerable<CommentThreadModel> threads)
+        private Dictionary<(SamplesRevisionModel sampleRevision, int sampleRevisionNumber), List<CommentThreadModel>> ParseUsageSampleThreads(IEnumerable<CommentThreadModel> threads)
         {
-            var threadDict = new Dictionary<UsageSampleRevisionModel, List<CommentThreadModel>>();
+            var threadDict = new Dictionary<(SamplesRevisionModel sampleRevision, int sampleRevisionNumber), List<CommentThreadModel>>();
             
-            if (Sample == null)
+            if (!SamplesRevisions.Any())
             {
                 return threadDict;
             }
@@ -113,19 +124,20 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 foreach (var comment in thread.Comments)
                 {
-                    if (comment.IsUsageSampleComment)
+                    if (comment.CommentType == CommentType.SamplesRevision)
                     {
-                        var sampleRevision = Sample.Revisions.Where(e => e.FileId.Equals(comment.ElementId.Split("-").First())).First();
-                        if (sampleRevision.RevisionIsDeleted)
+                        var index = SamplesRevisions.ToList().FindIndex(s => s.FileId.Equals(comment.ElementId.Split("-").First()));
+                        var sampleRevision = SamplesRevisions.ElementAt(index);
+                        if (sampleRevision.IsDeleted)
                         {
                             continue;
                         }
 
-                        if(!threadDict.ContainsKey(sampleRevision))
+                        if(!threadDict.ContainsKey((sampleRevision, index)))
                         {
-                            threadDict.Add(sampleRevision, new List<CommentThreadModel>());
+                            threadDict.Add((sampleRevision, index), new List<CommentThreadModel>());
                         }
-                        threadDict[sampleRevision].Add(thread);
+                        threadDict[(sampleRevision, index)].Add(thread);
 
                     }
                 }
@@ -138,14 +150,14 @@ namespace APIViewWeb.Pages.Assemblies
         {
             List<List<string>> lines = new List<List<string>>();
 
-            if (Sample == null)
+            if (!SamplesRevisions.Any())
             {
                 return lines;
             }
 
-            foreach (var revision in Sample.Revisions.ToArray().Reverse())
+            foreach (var revision in SamplesRevisions)
             {
-                string rawContent = await _samplesManager.GetUsageSampleContentAsync(revision.FileId);
+                string rawContent = await _samplesManager.GetSamplesRevisionContentAsync(revision.FileId);
                 if (rawContent == null)
                 {
                     continue;

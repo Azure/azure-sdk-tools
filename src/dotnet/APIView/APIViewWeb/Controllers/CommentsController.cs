@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using APIViewWeb.Hubs;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -35,17 +36,16 @@ namespace APIViewWeb.Controllers
                 return new BadRequestResult();
             }
 
-            var comment = new CommentModel();
-            comment.TimeStamp = DateTime.UtcNow;
+            var comment = new CommentItemModel();
+            comment.CreatedOn = DateTime.UtcNow;
             comment.ReviewId = reviewId;
-            comment.RevisionId = revisionId;
+            comment.APIRevisionId = revisionId;
             comment.ElementId = elementId;
             comment.SectionClass = sectionClass;
-            comment.Comment = commentText;
-            comment.GroupNo = groupNo;
-            comment.IsUsageSampleComment = usageSampleComment;
+            comment.CommentText = commentText;
+            comment.CommentType = (usageSampleComment) ? CommentType.SamplesRevision : CommentType.APIRevision;
             comment.ResolutionLocked = !resolutionLock.Equals("on");
-            comment.Username = User.GetGitHubLogin();
+            comment.CreatedBy = User.GetGitHubLogin();
 
             foreach(string user in taggedUsers)
             {
@@ -90,7 +90,7 @@ namespace APIViewWeb.Controllers
         [HttpPost]
         public async Task<ActionResult> Delete(string reviewId, string commentId, string elementId)
         {
-            await _commentsManager.DeleteCommentAsync(User, reviewId, commentId);
+            await _commentsManager.SoftDeleteCommentAsync(User, reviewId, commentId);
 
             return await CommentPartialAsync(reviewId, elementId);
         }

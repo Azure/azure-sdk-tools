@@ -34,7 +34,7 @@ namespace APIViewWeb
 
         public static string[] SupportedLanguages = LanguageServiceHelpers.SupportedLanguages;
 
-        public virtual bool GeneratePipelineRunParams(ReviewGenPipelineParamModel param) => true;
+        public virtual bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param) => true;
 
 
         public static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());

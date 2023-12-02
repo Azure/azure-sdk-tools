@@ -1,22 +1,23 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
-using ApiView;
-using APIView;
-using APIView.DIff;
-using APIView.Model;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
+using Microsoft.TeamFoundation.Common;
 
 
 namespace APIViewWeb.Pages.Assemblies
@@ -25,7 +26,8 @@ namespace APIViewWeb.Pages.Assemblies
     {
         private static int REVIEW_DIFF_CONTEXT_SIZE = 3;
         private const string DIFF_CONTEXT_SEPERATOR = "<br><span>.....</span><br>";
-        private readonly IReviewManager _manager;
+        private readonly IReviewManager _reviewManager;
+        private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IPullRequestManager _pullRequestManager;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly ICommentsManager _commentsManager;
@@ -33,11 +35,11 @@ namespace APIViewWeb.Pages.Assemblies
         public readonly UserPreferenceCache _preferenceCache;
         private readonly ICosmosUserProfileRepository _userProfileRepository;
         private readonly IConfiguration _configuration;
-
         private readonly IHubContext<SignalRHub> _signalRHubContext;
 
         public ReviewPageModel(
-            IReviewManager manager,
+            IReviewManager reviewManager,
+            IAPIRevisionsManager reviewRevisionManager,
             IPullRequestManager pullRequestManager,
             IBlobCodeFileRepository codeFileRepository,
             ICommentsManager commentsManager,
@@ -47,7 +49,8 @@ namespace APIViewWeb.Pages.Assemblies
             IConfiguration configuration,
             IHubContext<SignalRHub> signalRHub)
         {
-            _manager = manager;
+            _reviewManager = reviewManager;
+            _apiRevisionsManager = reviewRevisionManager;
             _pullRequestManager = pullRequestManager;
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
@@ -58,209 +61,244 @@ namespace APIViewWeb.Pages.Assemblies
             _signalRHubContext = signalRHub;
         }
 
-        public ReviewModel Review { get; set; }
-        public ReviewRevisionModel Revision { get; set; }
-        public ReviewRevisionModel DiffRevision { get; set; }
-        public ReviewRevisionModel[] PreviousRevisions {get; set; }
-        public CodeFile CodeFile { get; set; }
-        public CodeLineModel[] Lines { get; set; }
-        public InlineDiffLine<CodeLine>[] DiffLines { get; set; }
+        public ReviewContentModel ReviewContent { get; set; }
         public ReviewCommentsModel Comments { get; set; }
-        public HashSet<GithubUser> TaggableUsers { get; set; }
-        public HashSet<int> HeadingsOfSectionsWithDiff { get; set; } = new HashSet<int>();
-
-        /// <summary>
-        /// The number of active conversations for this iteration
-        /// </summary>
-        public int ActiveConversations { get; set; }
-
-        public int TotalActiveConversations { get; set; }
-
-        public int UsageSampleConversations { get; set; }
-
         [BindProperty(SupportsGet = true)]
         public string DiffRevisionId { get; set; }
-
         // Flag to decide whether to  include documentation
         [BindProperty(Name = "doc", SupportsGet = true)]
         public bool ShowDocumentation { get; set; }
-
         [BindProperty(Name = "diffOnly", SupportsGet = true)]
         public bool ShowDiffOnly { get; set; }
 
-        public IEnumerable<ReviewModel> ReviewsForPackage { get; set; } = new List<ReviewModel>();
-
-        public readonly HashSet<string> PreferredApprovers = new HashSet<string>();
-
+        /// <summary>
+        /// Handler for loading page
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="revisionId"></param>
+        /// <returns></returns>
         public async Task<IActionResult> OnGetAsync(string id, string revisionId = null)
         {
             TempData["Page"] = "api";
 
-            await GetReviewPageModelPropertiesAsync(id, revisionId);
+            await GetReviewPageModelPropertiesAsync(id, revisionId, DiffRevisionId, ShowDiffOnly);
 
-            if (!Review.Revisions.Any())
+            ReviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
+                reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
+                reviewRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
+                signalRHubContext: _signalRHubContext, user: User, reviewId: id, revisionId: revisionId, diffRevisionId: DiffRevisionId,
+                showDocumentation: ShowDocumentation, showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
+                diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
+
+            if (ReviewContent == default(ReviewContentModel))
+            {
+                // Check if you can get review from legacy data
+                var legacyReview = await _reviewManager.GetLegacyReviewAsync(User, id);
+                if (legacyReview != null)
+                {
+                    var legacyRevision = legacyReview.Revisions.FirstOrDefault(r =>
+                        !string.IsNullOrEmpty(r.Files[0].Language) && !string.IsNullOrEmpty(r.Files[0].PackageName));
+
+                    if (legacyRevision == null)
+                    {
+                        return NotFound();
+                    }
+                        
+                    var review = await _reviewManager.GetReviewAsync(language: legacyRevision.Files[0].Language,
+                        packageName: legacyRevision.Files[0].PackageName);
+
+                    if (review != null)
+                    {
+                        var uri = Request.GetUri().ToString();
+                        uri = uri.Replace(id, review.Id);
+                        return Redirect(uri);
+                    }
+                }
+                else
+                {
+                    return NotFound();
+                }
+            }
+
+            if (!ReviewContent.APIRevisionsGrouped.Any())
             {
                 return RedirectToPage("LegacyReview", new { id = id });
-            }
-            var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
-            CodeFile = renderedCodeFile.CodeFile;
-
-            var fileDiagnostics = CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
-            var fileHtmlLines = renderedCodeFile.Render(ShowDocumentation);
-
-            if (DiffRevision != null)
-            {
-                var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
-
-                var previousHtmlLines = previousRevisionFile.RenderReadOnly(ShowDocumentation);
-                var previousRevisionTextLines = previousRevisionFile.RenderText(ShowDocumentation);
-                var fileTextLines = renderedCodeFile.RenderText(ShowDocumentation);
-
-                var diffLines = InlineDiff.Compute(
-                    previousRevisionTextLines,
-                    fileTextLines,
-                    previousHtmlLines,
-                    fileHtmlLines);
-
-                Lines = CreateLines(fileDiagnostics, diffLines, Comments);
-                if (Lines.Length == 0)
-                {
-                    var notifcation = new NotificationModel() { Message = "There is no diff between the two revisions.", Level = NotificatonLevel.Info };
-                    await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
-                    return Redirect(Request.Headers["referer"]);
-                }
-            }
-            else
-            {
-                Lines = CreateLines(fileDiagnostics, fileHtmlLines, Comments);
-            }
-
-            ActiveConversations = ComputeActiveConversations(fileHtmlLines, Comments);
-            TotalActiveConversations = Comments.Threads.Count(t => !t.IsResolved);
-            UsageSampleConversations = Comments.Threads.Count(t => t.Comments.FirstOrDefault()?.IsUsageSampleComment == true);
-            var filterPreference = _preferenceCache.GetFilterType(User.GetGitHubLogin(), Review.FilterType);
-            ReviewsForPackage = await _manager.GetReviewsAsync(Review.ServiceName, Review.PackageDisplayName, filterPreference);
-
-            var approverConfig = _configuration["approvers"];
-            if (!string.IsNullOrEmpty(approverConfig))
-            {
-                foreach (var username in approverConfig.Split(","))
-                {
-                    if (username.Equals(User.GetGitHubLogin()))
-                    {
-                        var userCache = _preferenceCache.GetUserPreferences(User).Result;
-                        var langs = userCache.ApprovedLanguages.ToHashSet();
-                        if (!langs.Any())
-                        {
-                            UserProfileModel user = await _userProfileRepository.TryGetUserProfileAsync(username);
-                            langs = user.Languages;
-                            userCache.ApprovedLanguages = langs;
-                            _preferenceCache.UpdateUserPreference(userCache, User);
-                        }
-                        if (langs.Contains(Review.Language) || !langs.Any())
-                        {
-                            PreferredApprovers.Add(username);
-                        }
-                    }
-                    else
-                    {
-                        UserProfileModel user = await _userProfileRepository.TryGetUserProfileAsync(username);
-                        var langs = user.Languages;
-                        if (langs.Contains(Review.Language) || !langs.Any())
-                        {
-                            PreferredApprovers.Add(username);
-                        }
-                    }
-                }
             }
 
             return Page();
         }
 
+        /// <summary>
+        /// Gets CodeLine Section for pages with collapsible sections (Swagger Pages)
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="sectionKey"></param>
+        /// <param name="sectionKeyA"></param>
+        /// <param name="sectionKeyB"></param>
+        /// <param name="revisionId"></param>
+        /// <param name="diffRevisionId"></param>
+        /// <param name="diffOnly"></param>
+        /// <returns></returns>
         public async Task<PartialViewResult> OnGetCodeLineSectionAsync(
             string id, int sectionKey, int? sectionKeyA = null, int? sectionKeyB = null,
             string revisionId = null, string diffRevisionId = null, bool diffOnly = false)
         {
+            if (revisionId == null)
+            {
+                var apiRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: id, apiRevisionType: APIRevisionType.Automatic);
+                revisionId = apiRevision.Id;
+            }
             await GetReviewPageModelPropertiesAsync(id, revisionId, diffRevisionId, diffOnly);
-            var renderedCodeFile = await _codeFileRepository.GetCodeFileAsync(Revision);
-            var fileDiagnostics = renderedCodeFile.CodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
-            CodeLine[] currentHtmlLines;
+
+            var codeLines = await PageModelHelpers.GetCodeLineSectionAsync(user: User, reviewManager: _reviewManager,
+            apiRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager,
+            codeFileRepository: _codeFileRepository, reviewId: id, sectionKey: sectionKey, revisionId: revisionId,
+            diffRevisionId: diffRevisionId, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE, diffContextSeperator: DIFF_CONTEXT_SEPERATOR,
+            sectionKeyA: sectionKeyA, sectionKeyB: sectionKeyB
+            );
+
             var userPrefernce = await _preferenceCache.GetUserPreferences(User) ?? new UserPreferenceModel();
 
-            if (DiffRevision != null)
-            {
-                InlineDiffLine<CodeLine>[] diffLines;
-                var previousRevisionFile = await _codeFileRepository.GetCodeFileAsync(DiffRevision);
-
-                if (sectionKeyA != null && sectionKeyB != null)
-                {
-                    var currentRootNode = renderedCodeFile.GetCodeLineSectionRoot((int)sectionKeyA);
-                    var previousRootNode = previousRevisionFile.GetCodeLineSectionRoot((int)sectionKeyB);
-                    var diffSectionRoot = _manager.ComputeSectionDiff(previousRootNode, currentRootNode, previousRevisionFile, renderedCodeFile);
-                    diffLines = renderedCodeFile.GetDiffCodeLineSection(diffSectionRoot);
-                }
-                else if (sectionKeyA != null)
-                {
-                    currentHtmlLines = renderedCodeFile.GetCodeLineSection((int)sectionKeyA);
-                    var previousRevisionHtmlLines = new CodeLine[] { };
-                    var previousRevisionTextLines = new CodeLine[] { };
-                    var currentRevisionTextLines = renderedCodeFile.GetCodeLineSection((int)sectionKeyA, renderType: RenderType.Text);
-                    diffLines = InlineDiff.Compute(
-                        previousRevisionTextLines,
-                        currentRevisionTextLines,
-                        previousRevisionHtmlLines,
-                        currentHtmlLines);
-                }
-                else 
-                {
-                    currentHtmlLines = new CodeLine[] { }; 
-                    var previousRevisionHtmlLines = previousRevisionFile.GetCodeLineSection((int)sectionKeyB, RenderType.ReadOnly);
-                    var previousRevisionTextLines = previousRevisionFile.GetCodeLineSection((int)sectionKeyB, renderType: RenderType.Text);
-                    var currentRevisionTextLines = new CodeLine[] { };
-                    diffLines = InlineDiff.Compute(
-                        previousRevisionTextLines,
-                        currentRevisionTextLines,
-                        previousRevisionHtmlLines,
-                        currentHtmlLines);
-                }
-                Lines = CreateLines(fileDiagnostics, diffLines, Comments, true);
-            }
-            else
-            {
-                currentHtmlLines = renderedCodeFile.GetCodeLineSection(sectionKey);
-                Lines = CreateLines(fileDiagnostics, currentHtmlLines, Comments, true);
-            }
-            TempData["CodeLineSection"] = Lines;
+            TempData["CodeLineSection"] = codeLines;
             TempData["UserPreference"] = userPrefernce;
             return Partial("_CodeLinePartial", sectionKey);
         }
 
+        /// <summary>
+        /// Get Revisions Partial
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <param name="showDoc"></param>
+        /// <param name="showDiffOnly"></param>
+        /// <returns></returns>
+        public async Task<PartialViewResult> OnGetAPIRevisionsPartialAsync(string reviewId, APIRevisionType apiRevisionType, bool showDoc = false, bool showDiffOnly = false)
+        {
+            var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            revisions = revisions.Where(r => r.APIRevisionType == apiRevisionType).OrderByDescending(c => c.CreatedOn).ToList();
+            (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
+                revisions: revisions,
+                activeRevision: default(APIRevisionListItemModel),
+                diffRevision: default(APIRevisionListItemModel),
+                forDiff: false,
+                showDocumentation: showDoc,
+                showDiffOnly: showDiffOnly
+            );
+            return Partial("_RevisionSelectPickerPartial", revisionSelectModel);
+        }
+
+        /// <summary>
+        /// Get Diff Revisions Partial
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <param name="showDoc"></param>
+        /// <param name="showDiffOnly"></param>
+        /// <returns></returns>
+        public async Task<PartialViewResult> OnGetAPIDiffRevisionsPartialAsync(string reviewId, string apiRevisionId, APIRevisionType apiRevisionType, bool showDoc = false, bool showDiffOnly = false)
+        {
+            var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            if (apiRevisions.IsNullOrEmpty())
+            {
+                var notifcation = new NotificationModel() { Message = $"This review has no valid apiRevisons", Level = NotificatonLevel.Warning };
+                await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
+            }
+
+            APIRevisionListItemModel activeRevision = default(APIRevisionListItemModel);
+
+            if (!Guid.TryParse(apiRevisionId, out _))
+            {
+                activeRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions);
+            }
+            else
+            {
+                activeRevision = apiRevisions.FirstOrDefault(r => r.Id == apiRevisionId);
+            }
+
+            var revisionsForDiff = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType && r.Id != activeRevision.Id).OrderByDescending(c => c.CreatedOn).ToList();
+
+            (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
+                revisions: revisionsForDiff,
+                activeRevision: activeRevision,
+                diffRevision: default(APIRevisionListItemModel),
+                forDiff: true,
+                showDocumentation: showDoc,
+                showDiffOnly: showDiffOnly
+            );
+            return Partial("_RevisionSelectPickerPartial", revisionSelectModel);
+        }
+
+        /// <summary>
+        /// Toggle Review State
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<ActionResult> OnPostToggleClosedAsync(string id)
         {
-            await _manager.ToggleIsClosedAsync(User, id);
-
+            await _reviewManager.ToggleReviewIsClosedAsync(User, id);
             return RedirectToPage(new { id = id });
         }
 
+        /// <summary>
+        /// Subscribe or UnSubscribe to a Review
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public async Task<ActionResult> OnPostToggleSubscribedAsync(string id)
         {
             await _notificationManager.ToggleSubscribedAsync(User, id);
             return RedirectToPage(new { id = id });
         }
 
-        public async Task<IActionResult> OnPostToggleApprovalAsync(string id, string revisionId)
+        /// <summary>
+        /// Approve or Revert Approval for a Review
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="revisionId"></param>
+        /// <returns></returns>
+        public async Task<IActionResult> OnPostToggleReviewApprovalAsync(string id, string revisionId)
         {
-            await _manager.ToggleApprovalAsync(User, id, revisionId);
+            await _reviewManager.ToggleReviewApprovalAsync(User, id, revisionId);
             return RedirectToPage(new { id = id });
         }
 
+        /// <summary>
+        /// Approve or Revert Approval for a Revision
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="revisionId"></param>
+        /// <returns></returns>
+        public async Task<IActionResult> OnPostToggleAPIRevisionApprovalAsync(string id, string revisionId)
+        {
+            var updateReview = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, id, revisionId);
+            if (updateReview)
+            {
+                await OnPostToggleReviewApprovalAsync(id, revisionId);
+            }
+            return RedirectToPage(new { id = id });
+        }
+
+        /// <summary>
+        /// Request Reviewers for a Review Revision
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="reviewers"></param>
+        /// <returns></returns>
         public async Task<ActionResult> OnPostRequestReviewersAsync(string id, HashSet<string> reviewers)
         {
-            await _manager.RequestApproversAsync(User, id, reviewers);
+            await _reviewManager.AssignReviewersToReviewAsync(User, id, reviewers);
             await _notificationManager.NotifyApproversOfReview(User, id, reviewers);
             return RedirectToPage(new { id = id });
         }
-
+        /// <summary>
+        /// Get Routing Data for a Review
+        /// </summary>
+        /// <param name="diffRevisionId"></param>
+        /// <param name="showDiffOnly"></param>
+        /// <param name="showDocumentation"></param>
+        /// <param name="revisionId"></param>
+        /// <returns></returns>
         public Dictionary<string, string> GetRoutingData(string diffRevisionId = null, bool? showDiffOnly = null, bool? showDocumentation = null, string revisionId = null)
         {
             var routingData = new Dictionary<string, string>();
@@ -270,209 +308,38 @@ namespace APIViewWeb.Pages.Assemblies
             routingData["diffOnly"] = (showDiffOnly ?? false).ToString();
             return routingData;
         }
-
+        /// <summary>
+        /// Get Pull Requests for a Review
+        /// </summary>
+        /// <returns></returns>
         public async Task<IEnumerable<PullRequestModel>> GetAssociatedPullRequest()
         {
-            return await _pullRequestManager.GetPullRequestsModel(Review.ReviewId);
+            return await _pullRequestManager.GetPullRequestsModelAsync(ReviewContent.Review.Id);
         }
 
+        /// <summary>
+        /// Get PR of Associated Reviews
+        /// </summary>
+        /// <returns></returns>
         public async Task<IEnumerable<PullRequestModel>> GetPRsOfAssoicatedReviews()
         {
-            var creatingPR = (await _pullRequestManager.GetPullRequestsModel(Review.ReviewId)).FirstOrDefault();
-            return await _pullRequestManager.GetPullRequestsModel(creatingPR.PullRequestNumber, creatingPR.RepoName);;
+            var creatingPR = (await _pullRequestManager.GetPullRequestsModelAsync(ReviewContent.Review.Id)).FirstOrDefault();
+            return await _pullRequestManager.GetPullRequestsModelAsync(creatingPR.PullRequestNumber, creatingPR.RepoName);;
         }
 
+        /// <summary>
+        /// Get Review Page Model Properties
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="revisionId"></param>
+        /// <param name="diffRevisionId"></param>
+        /// <param name="diffOnly"></param>
+        /// <returns></returns>
         private async Task GetReviewPageModelPropertiesAsync(string id, string revisionId = null, string diffRevisionId = null, bool diffOnly = false)
         {
-            Review = await _manager.GetReviewAsync(User, id);
-            TaggableUsers = _commentsManager.GetTaggableUsers();
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
-            Revision = Review.Revisions.Last();
-            if (revisionId != null) 
-            {
-                var revision = Review.Revisions.Where(r => r.RevisionId == revisionId);
-                if (revision.Count() == 1)
-                {
-                    Revision = revision.Single();
-                }
-                else 
-                {
-                    var notifcation = new NotificationModel() { Message = $"A revision with ID {revisionId} does not exist for this review.", Level = NotificatonLevel.Warning };
-                    await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
-                }
-
-            }
-                
-            PreviousRevisions = Review.Revisions.TakeWhile(r => r != Revision).ToArray();
             DiffRevisionId = (DiffRevisionId == null) ? diffRevisionId : DiffRevisionId;
             ShowDiffOnly = (ShowDiffOnly == false) ? diffOnly : ShowDiffOnly;
-            DiffRevision = DiffRevisionId != null ?
-                PreviousRevisions.Single(r => r.RevisionId == DiffRevisionId) :
-                DiffRevision;
-            HeadingsOfSectionsWithDiff = (DiffRevision != null && DiffRevision.HeadingsOfSectionsWithDiff.ContainsKey(Revision.RevisionId)) ? 
-                DiffRevision.HeadingsOfSectionsWithDiff[Revision.RevisionId] : new HashSet<int>();
-        }
-
-        private InlineDiffLine<CodeLine>[] CreateDiffOnlyLines(InlineDiffLine<CodeLine>[] lines)
-        {
-            var filteredLines = new List<InlineDiffLine<CodeLine>>();
-            int lastAddedLine = -1;
-            for (int i = 0; i < lines.Count(); i++)
-            {
-                if (lines[i].Kind != DiffLineKind.Unchanged)
-                {
-                    // Find starting index for pre context
-                    int preContextIndx = Math.Max(lastAddedLine + 1, i - REVIEW_DIFF_CONTEXT_SIZE);
-                    if (preContextIndx < i)
-                    {
-                        // Add sepearator to show skipping lines. for e.g. .....
-                        if (filteredLines.Count > 0)
-                        {
-                            filteredLines.Add(new InlineDiffLine<CodeLine>(new CodeLine(DIFF_CONTEXT_SEPERATOR, null, null), DiffLineKind.Unchanged));
-                        }
-
-                        while (preContextIndx < i)
-                        {
-                            filteredLines.Add(lines[preContextIndx]);
-                            preContextIndx++;
-                        }
-                    }
-                    //Add changed line
-                    filteredLines.Add(lines[i]);
-                    lastAddedLine = i;
-
-                    // Add post context
-                    int contextStart = i +1, contextEnd = i + REVIEW_DIFF_CONTEXT_SIZE;
-                    while (contextStart <= contextEnd && contextStart < lines.Count() && lines[contextStart].Kind == DiffLineKind.Unchanged)
-                    {
-                        filteredLines.Add(lines[contextStart]);
-                        lastAddedLine = contextStart;
-                        contextStart++;
-                    }
-                }
-            }
-            return filteredLines.ToArray();
-        }
-
-        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, InlineDiffLine<CodeLine>[] lines, ReviewCommentsModel comments, bool hideCommentRows = false)
-        {
-            if (ShowDiffOnly)
-            {
-                lines = CreateDiffOnlyLines(lines);
-                if (lines.Length == 0)
-                {
-                    return Array.Empty<CodeLineModel>();
-                }
-            }
-            List<int> documentedByLines = new List<int>();
-            int lineNumberExcludingDocumentation = 0;
-            int diffSectionId = 0;
-
-            return lines.Select(
-                (diffLine, index) =>
-                {
-                    if (diffLine.Line.IsDocumentation)
-                    {
-                        // documentedByLines must include the index of a line, assuming that documentation lines are counted
-                        documentedByLines.Add(++index);
-                        return new CodeLineModel(
-                            kind: diffLine.Kind,
-                            codeLine: diffLine.Line,
-                            commentThread: comments.TryGetThreadForLine(diffLine.Line.ElementId, out var thread, hideCommentRows) ?
-                                thread :
-                                null,
-                            diagnostics: diffLine.Kind != DiffLineKind.Removed ?
-                                diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
-                                Array.Empty<CodeDiagnostic>(),
-                            lineNumber: lineNumberExcludingDocumentation,
-                            documentedByLines: new int[] { },
-                            isDiffView: true,
-                            diffSectionId: diffLine.Line.SectionKey != null ? ++diffSectionId : null,
-                            otherLineSectionKey: diffLine.Kind == DiffLineKind.Unchanged ? diffLine.OtherLine.SectionKey : null,
-                            headingsOfSectionsWithDiff: HeadingsOfSectionsWithDiff,
-                            isSubHeadingWithDiffInSection: diffLine.IsHeadingWithDiffInSection
-                        );
-                    }
-                    else
-                    {
-                        CodeLineModel c = new CodeLineModel(
-                             kind: diffLine.Kind,
-                             codeLine: diffLine.Line,
-                             commentThread: diffLine.Kind != DiffLineKind.Removed &&
-                                 comments.TryGetThreadForLine(diffLine.Line.ElementId, out var thread, hideCommentRows) ?
-                                     thread :
-                                     null,
-                             diagnostics: diffLine.Kind != DiffLineKind.Removed ?
-                                 diagnostics.Where(d => d.TargetId == diffLine.Line.ElementId).ToArray() :
-                                 Array.Empty<CodeDiagnostic>(),
-                             lineNumber: diffLine.Line.LineNumber ?? ++lineNumberExcludingDocumentation,
-                             documentedByLines: documentedByLines.ToArray(),
-                             isDiffView: true,
-                             diffSectionId: diffLine.Line.SectionKey != null ? ++diffSectionId : null,
-                             otherLineSectionKey: diffLine.Kind == DiffLineKind.Unchanged ? diffLine.OtherLine.SectionKey : null,
-                             headingsOfSectionsWithDiff: HeadingsOfSectionsWithDiff,
-                             isSubHeadingWithDiffInSection: diffLine.IsHeadingWithDiffInSection
-                         );
-                        documentedByLines.Clear();
-                        return c;
-                    }
-                }).ToArray();
-        }
-
-        private CodeLineModel[] CreateLines(CodeDiagnostic[] diagnostics, CodeLine[] lines, ReviewCommentsModel comments, bool hideCommentRows = false)
-        {
-            List<int> documentedByLines = new List<int>();
-            int lineNumberExcludingDocumentation = 0;
-            return lines.Select(
-                (line, index) =>
-                {
-                    if (line.IsDocumentation)
-                    {
-                        // documentedByLines must include the index of a line, assuming that documentation lines are counted
-                        documentedByLines.Add(++index);
-                        return new CodeLineModel(
-                            DiffLineKind.Unchanged,
-                            line,
-                            comments.TryGetThreadForLine(line.ElementId, out var thread, hideCommentRows) ? thread : null,
-                            diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
-                            lineNumberExcludingDocumentation,
-                            new int[] {}
-                        );
-                    }
-                    else
-                    {
-                        CodeLineModel c = new CodeLineModel(
-                            DiffLineKind.Unchanged,
-                            line,
-                            comments.TryGetThreadForLine(line.ElementId, out var thread, hideCommentRows) ? thread : null,
-                            diagnostics.Where(d => d.TargetId == line.ElementId).ToArray(),
-                            line.LineNumber ?? ++lineNumberExcludingDocumentation,
-                            documentedByLines.ToArray()
-                        );
-                        documentedByLines.Clear();
-                        return c;
-                    }
-                }).ToArray();
-        }
-
-        private int ComputeActiveConversations(CodeLine[] lines, ReviewCommentsModel comments)
-        {
-            int activeThreads = 0;
-            foreach (CodeLine line in lines)
-            {
-                if (string.IsNullOrEmpty(line.ElementId))
-                {
-                    continue;
-                }
-
-                // if we have comments for this line and the thread has not been resolved.
-                // Add "&& !thread.Comments.First().IsUsageSampleComment()" to exclude sample comments from being counted (This also prevents the popup before approval)
-                if (comments.TryGetThreadForLine(line.ElementId, out CommentThreadModel thread) && !thread.IsResolved)
-                {
-                    activeThreads++;
-                }
-            }
-            return activeThreads;
         }
     }
 }

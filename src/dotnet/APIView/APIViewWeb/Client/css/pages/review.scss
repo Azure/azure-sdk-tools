@@ -1,7 +1,11 @@
 @import "../shared/mixins.scss";
 
-#review-info-bar > .SumoSelect {
+#review-info-bar > .SumoSelect:nth-of-type(even) {
     width: 20%;
+}
+
+#review-info-bar > .SumoSelect:nth-of-type(odd) {
+    width: 10%;
 }
 
 #revision-select ~ .optWrapper {

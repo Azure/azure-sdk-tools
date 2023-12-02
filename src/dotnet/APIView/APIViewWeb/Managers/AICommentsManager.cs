@@ -44,8 +44,8 @@ namespace APIViewWeb.Managers
                     new AICommentChangeHistoryModel()
                     {
                         ChangeAction = AICommentChangeAction.Created,
-                        User = user,
-                        ChangeDateTime = DateTime.UtcNow
+                        ChangedBy = user,
+                        ChangedOn = DateTime.UtcNow
                     }
                 }
             };
@@ -89,8 +89,8 @@ namespace APIViewWeb.Managers
             aiCommentModel.ChangeHistory.Add(new AICommentChangeHistoryModel()
             {
                 ChangeAction = AICommentChangeAction.Modified,
-                User = user,
-                ChangeDateTime = DateTime.UtcNow
+                ChangedBy = user,
+                ChangedOn = DateTime.UtcNow
             });
 
             await _aiCommentsRepository.UpsertAICommentAsync(aiCommentModel);

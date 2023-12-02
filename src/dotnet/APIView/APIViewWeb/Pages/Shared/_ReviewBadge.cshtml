@@ -1,19 +1,22 @@
 @using APIViewWeb;
-@using System
+@using System;
 @using System.Text.RegularExpressions;
-@model ReviewModel;
+@using APIViewWeb.Helpers;
+@using APIViewWeb.LeanModels;
+@model (ReviewListItemModel review, APIRevisionListItemModel activeRevision);
 @{
-    var packageName = Model.Revisions.LastOrDefault()?.Files.LastOrDefault()?.PackageName;
+    var packageName = Model.review.PackageName;
 }
-@if (Model.Language != null)
+@if (Model.review.Language != null)
 {
-    string iconClassName = "icon-" + Model.GetLanguageCssSafeName();
-    @if (!string.IsNullOrEmpty(Model.LanguageVariant) && Model.LanguageVariant.ToLower() != "default")
+    string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(Model.review.Language);
+    string langVariant = String.Empty;
+    @if (Model.activeRevision != default(APIRevisionListItemModel) && !string.IsNullOrEmpty(Model.activeRevision.Files.First().LanguageVariant) && Model.activeRevision.Files.First().LanguageVariant.ToLower() != "default")
     {
-        iconClassName += "-" + @Model.LanguageVariant.ToLower();
+        langVariant = @Model.activeRevision.Files.First().LanguageVariant.ToLower();
+        iconClassName += "-" + @Model.activeRevision.Files.First().LanguageVariant.ToLower();
     }
-    <span role="img" class="input-group-text icon-language @iconClassName" aria-label="@Model.Language @Model.LanguageVariant"></span>
-
+    <span role="img" class="input-group-text icon-language @iconClassName" aria-label="@Model.review.Language @langVariant"></span>
 }
 @{
     var packageFieldWidth = 3;
@@ -25,7 +28,7 @@
 <input type="text" class="form-control fw-bold" style="max-width: @(packageFieldWidth)ch; font-family: monospace;" value="@(packageName ?? "")" aria-label="Package Name of Review" readonly>
 @if (packageName != null)
 {
-    @if (Model.IsApprovedForFirstRelease)
+    @if (Model.review.IsApproved)
     {
         <span class="input-group-text" data-bs-toggle="tooltip" title="Approved for First Release">
             <i class="fa-regular fa-circle-check text-success"></i>

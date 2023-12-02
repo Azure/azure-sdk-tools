@@ -1,17 +1,17 @@
-@using APIViewWeb.Models
-@model CommentModel
+@using APIViewWeb.LeanModels;
+@model CommentItemModel
 
-<div id="@Model.CommentId" class="review-comment" data-comment-id="@Model.CommentId">
+<div id="@Model.Id" class="review-comment" data-comment-id="@Model.Id">
     <div class="d-flex">
         <div class="flex-shrink-0">
-            <a username="@Model.Username" title="Github Profile of Commenter">
-                <img username="@Model.Username" size="28" class="comment-icon align-self-start me-3" height="28" width="28" aria-label="User Avatar of Commenter" />
+            <a username="@Model.CreatedBy" title="Github Profile of Commenter">
+                <img username="@Model.CreatedBy" size="28" class="comment-icon align-self-start me-3" height="28" width="28" aria-label="User Avatar of Commenter" />
             </a>
         </div>
         <div class="flex-grow-1 comment-contents">
             <span>
-                <a username="@Model.Username" class="fw-bold mt-0">@Model.Username</a>
-                <a date="@Model.TimeStamp.ToLocalTime()" href="#@Model.CommentId" class="small"></a>
+                <a username="@Model.CreatedBy" class="fw-bold mt-0">@Model.CreatedBy</a>
+                <a date="@Model.CreatedOn.ToLocalTime()" href="#@Model.Id" class="small"></a>
 
                 <div class="dropup float-end">
                     <a class="btn btn-xs p-1 border" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="Dropdown Menu Button">
@@ -19,7 +19,7 @@
                     </a>
 
                     <div class="dropdown-menu dropdown-menu-right">
-                        @if (Model.Username == User.GetGitHubLogin())
+                        @if (Model.CreatedBy == User.GetGitHubLogin())
                         {
                             <a href="#" class="dropdown-item js-delete-comment text-danger">Delete</a>
                             <a href="#" class="dropdown-item js-edit-comment">Edit</a>
@@ -39,7 +39,7 @@
                 </div>
 
                 <form class="float-end me-1" data-post-update="comments" asp-controller="Comments" asp-action="ToggleUpvote" method="post" asp-route-reviewId="@Model.ReviewId">
-                    <input type="hidden" name="commentId" value="@Model.CommentId" />
+                    <input type="hidden" name="commentId" value="@Model.Id" />
                     <button type="submit" class="btn btn-xs btn-upvote border" title="@string.Join(", ", Model.Upvotes)" active-if="@Model.Upvotes.Contains(User.GetGitHubLogin())">
                         @{
                              <span active-if="@Model.Upvotes.Any()">👍</span>
@@ -51,10 +51,10 @@
                     </button>
                 </form>
             </span>
-            <textarea class="js-comment-raw d-none">@Model.Comment</textarea>
-            @if (Model.Comment.Contains("\r\n"))
+            <textarea class="js-comment-raw d-none">@Model.CommentText</textarea>
+            @if (Model.CommentText.Contains("\r\n"))
             {
-                var cmt = Model.Comment.Split("\r\n");
+                var cmt = Model.CommentText.Split("\r\n");
                 string codeBlockString = "";
                 bool codeBlock = false;
                 bool newLineAdded = true;
@@ -95,7 +95,7 @@
             }
             else
             {
-                @Html.FormatAsMarkdown(Model.Comment)
+                @Html.FormatAsMarkdown(Model.CommentText)
             }
         </div>
     </div>

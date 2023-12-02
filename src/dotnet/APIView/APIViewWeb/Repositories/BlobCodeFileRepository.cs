@@ -3,8 +3,10 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Azure.Storage.Blobs;
@@ -25,9 +27,9 @@ namespace APIViewWeb
         }
 
 
-        public Task<RenderedCodeFile> GetCodeFileAsync(ReviewRevisionModel revision, bool updateCache = true)
+        public Task<RenderedCodeFile> GetCodeFileAsync(APIRevisionListItemModel revision, bool updateCache = true)
         {
-            return GetCodeFileAsync(revision.RevisionId, revision.SingleFile.ReviewFileId, updateCache);
+            return GetCodeFileAsync(revision.Id, revision.Files.Single().FileId, updateCache);
         }
 
         public async Task<RenderedCodeFile> GetCodeFileAsync(string revisionId, string codeFileId, bool updateCache = true)

@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using APIViewWeb.Models;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
@@ -16,53 +16,40 @@ namespace APIViewWeb
 
         public CosmosCommentsRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
-            _commentsContainer = cosmosClient.GetContainer("APIView", "Comments");
+            _commentsContainer = cosmosClient.GetContainer("APIViewV2", "Comments");
         }
 
-        public async Task<IEnumerable<CommentModel>> GetCommentsAsync(string reviewId)
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId)
         {
-            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}'");
+            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}' AND c.IsDeleted = false");
         }
 
-        public async Task UpsertCommentAsync(CommentModel commentModel)
+        public async Task UpsertCommentAsync(CommentItemModel commentModel)
         {
             await _commentsContainer.UpsertItemAsync(commentModel, new PartitionKey(commentModel.ReviewId));
         }
 
-        public async Task DeleteCommentAsync(CommentModel commentModel)
+        public async Task<CommentItemModel> GetCommentAsync(string reviewId, string commentId)
         {
-            await _commentsContainer.DeleteItemAsync<CommentModel>(commentModel.CommentId, new PartitionKey(commentModel.ReviewId));
+            return await _commentsContainer.ReadItemAsync<CommentItemModel>(commentId, new PartitionKey(reviewId));
         }
 
-        public async Task DeleteCommentsAsync(string reviewId)
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, string lineId)
         {
-            foreach (var commentModel in await GetCommentsAsync(reviewId))
-            {
-                await DeleteCommentAsync(commentModel);
-            }
+            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}' AND c.ElementId = '{lineId}' AND c.IsDeleted = false");
         }
 
-        public async Task<CommentModel> GetCommentAsync(string reviewId, string commentId)
+        private async Task<IEnumerable<CommentItemModel>> GetCommentsFromQueryAsync(string query)
         {
-            return await _commentsContainer.ReadItemAsync<CommentModel>(commentId, new PartitionKey(reviewId));
-        }
-
-        public async Task<IEnumerable<CommentModel>> GetCommentsAsync(string reviewId, string lineId)
-        {
-            return await GetCommentsFromQueryAsync($"SELECT * FROM Comments c WHERE c.ReviewId = '{reviewId}' AND c.ElementId = '{lineId}'");
-        }
-
-        private async Task<IEnumerable<CommentModel>> GetCommentsFromQueryAsync(string query)
-        {
-            var allReviews = new List<CommentModel>();
-            var itemQueryIterator = _commentsContainer.GetItemQueryIterator<CommentModel>(query);
+            var comments = new List<CommentItemModel>();
+            var itemQueryIterator = _commentsContainer.GetItemQueryIterator<CommentItemModel>(query);
             while (itemQueryIterator.HasMoreResults)
             {
                 var result = await itemQueryIterator.ReadNextAsync();
-                allReviews.AddRange(result.Resource);
+                comments.AddRange(result.Resource);
             }
 
-            return allReviews;
+            return comments;
         }
 
     }

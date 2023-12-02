@@ -6,9 +6,9 @@ variables:
   NugetSecurityAnalysisWarningLevel: 'none'
 
 stages:
-  - stage: 'Migrate DB'
+  - stage: 'MigrateDB'
     jobs:
-      - job: 'Run Script'
+      - job: 'Run'
 
         pool:
           name: azsdk-pool-mms-win-2022-general

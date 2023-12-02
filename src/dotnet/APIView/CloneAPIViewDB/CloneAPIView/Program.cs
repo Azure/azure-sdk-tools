@@ -64,8 +64,13 @@ static async Task MigrateDocuments(
         reviewsOld.AddRange(response.Resource);
     }
 
+    int i = 0;
+    int totalReviews = reviewsOld.Count;
+
     foreach (var reviewOld in reviewsOld)
     {
+        i++;
+        commentsContainerOld.WriteLine($"Status: Migrating {i} of {totalReviews} reviews.");
         if (limit.HasValue)
         {
             if (limit == 0)

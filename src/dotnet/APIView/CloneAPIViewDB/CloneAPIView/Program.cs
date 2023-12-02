@@ -74,8 +74,17 @@ static async Task MigrateDocuments(
             limit--;
         }
 
-        var packageName = reviewOld.Revisions.Last(r => !String.IsNullOrEmpty(r.Files[0].PackageName)).Files[0].PackageName;
-        var language = reviewOld.Revisions.Last(r => !String.IsNullOrEmpty(r.Files[0].Language)).Files[0].Language;
+        Console.WriteLine($"Migrating  review: {reviewOld.ReviewId}");
+
+        if (!reviewOld.Revisions.Any(r => !String.IsNullOrEmpty(r.Files[0].PackageName)))
+        {
+            Console.WriteLine($"Package name is empty for review {reviewOld.ReviewId}");
+            continue;
+        }
+
+        var packageName = reviewOld.Revisions.Last(r => !String.IsNullOrEmpty(r.Files[0].PackageName))?.Files[0].PackageName;
+        var language = reviewOld.Revisions.Last(r => !String.IsNullOrEmpty(r.Files[0].Language))?.Files[0].Language;
+        
 
         if (language == "C" || language == "C++")
         {
@@ -436,7 +445,7 @@ await MigrateDocuments(
     samplesContainerOld: samplesContainerOld, samplesContainerNew: samplesContainerNew,
     commentsContainerOld: commentsContainerOld, commentsContainerNew: commentsContainerNew,
     revisionsContainerNew: revisionsContainerNew, mappingsContainer: mappingsContainer,
-    limit: 2);
+    limit: 10);
 
 
 

@@ -9,6 +9,7 @@ stages:
   - stage: 'MigrateDB'
     jobs:
       - job: 'Run'
+        timeoutInMinutes: 360
 
         pool:
           name: azsdk-pool-mms-win-2022-general

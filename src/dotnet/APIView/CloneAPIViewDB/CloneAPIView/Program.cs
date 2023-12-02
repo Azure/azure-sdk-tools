@@ -444,8 +444,7 @@ await MigrateDocuments(
     prContainerOld: prContainerOld, prContainerNew: prContainerNew,
     samplesContainerOld: samplesContainerOld, samplesContainerNew: samplesContainerNew,
     commentsContainerOld: commentsContainerOld, commentsContainerNew: commentsContainerNew,
-    revisionsContainerNew: revisionsContainerNew, mappingsContainer: mappingsContainer,
-    limit: 10);
+    revisionsContainerNew: revisionsContainerNew, mappingsContainer: mappingsContainer);
 
 
 

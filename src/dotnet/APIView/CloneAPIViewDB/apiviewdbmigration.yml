@@ -1,0 +1,32 @@
+trigger: none
+pr: none
+
+variables:
+  ProjectDirectory: 'src/dotnet/APIView/CloneAPIViewDB/CloneAPIView'  
+  NugetSecurityAnalysisWarningLevel: 'none'
+
+stages:
+  - stage: 'Migrate DB'
+    jobs:
+      - job: 'Run Script'
+
+        pool:
+          name: azsdk-pool-mms-win-2022-general
+          vmImage: windows-2022
+
+        steps:
+          - script: 'dotnet build $(ProjectDirectory)'
+            displayName: 'Build'
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+
+          - script: 'dotnet run'
+            displayName: 'Run Migration'
+            env:
+              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+              DOTNET_CLI_TELEMETRY_OPTOUT: 1
+              DOTNET_MULTILEVEL_LOOKUP: 0
+              CosmosConnectionString: $(APIView-Cosmos-ConnectionString)
+            

@@ -5,6 +5,7 @@ using System.Text;
 
 
 var config = new ConfigurationBuilder()
+    .AddEnvironmentVariables(prefix: "APIVIEW_")
     .AddUserSecrets(typeof(Program).Assembly)
     .Build();
 

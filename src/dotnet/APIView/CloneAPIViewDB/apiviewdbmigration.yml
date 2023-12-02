@@ -29,5 +29,5 @@ stages:
               DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
-              CosmosConnectionString: $(APIView-Cosmos-ConnectionString)
+              APIVIEW_CosmosConnectionString: $(APIView-Cosmos-ConnectionString)
             

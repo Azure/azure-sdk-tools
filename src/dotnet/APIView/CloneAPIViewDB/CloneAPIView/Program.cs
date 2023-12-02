@@ -1,4 +1,4 @@
-﻿using CloneAPIViewDB;
+using CloneAPIViewDB;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using System.Text;
@@ -53,7 +53,7 @@ static async Task MigrateDocuments(
     Container revisionsContainerNew, Container mappingsContainer, int? limit = null)
 {
     var reviewsOld = new List<ReviewModelOld>();
-    var reviewsOldQuery = $"SELECT * FROM Reviews c Where c.IsClosed = false and Exists(Select Value r from r in c.Revisions where IS_DEFINED(r.Files[0].PackageName) AND r.Files[0].PackageName != \"\")";
+    var reviewsOldQuery = $"SELECT * FROM Reviews c Where c.IsClosed != true AND Exists(Select Value r from r in c.Revisions where IS_DEFINED(r.Files[0].PackageName) AND r.Files[0].PackageName != \"\" AND NOT IS_NULL(r.Files[0].PackageName))";
     var reviewsOldQueryDefinition = new QueryDefinition(reviewsOldQuery);
     var reviewsOldItemQueryIterator = reviewsContainerOld.GetItemQueryIterator<ReviewModelOld>(reviewsOldQueryDefinition);
 
@@ -74,17 +74,17 @@ static async Task MigrateDocuments(
             limit--;
         }
 
-        Console.WriteLine($"Migrating  review: {reviewOld.ReviewId}");
+        var revisionWithPackageName = reviewOld.Revisions.LastOrDefault(r => !String.IsNullOrEmpty(r.Files[0].PackageName));
+        var revisonWithlanguage = reviewOld.Revisions.LastOrDefault(r => !String.IsNullOrEmpty(r.Files[0].Language));
 
-        if (!reviewOld.Revisions.Any(r => !String.IsNullOrEmpty(r.Files[0].PackageName)))
+        if (revisionWithPackageName == null || revisonWithlanguage == null)
         {
-            Console.WriteLine($"Package name is empty for review {reviewOld.ReviewId}");
+            Console.WriteLine($"Package name or language is empty for review {reviewOld.ReviewId}");
             continue;
         }
 
-        var packageName = reviewOld.Revisions.Last(r => !String.IsNullOrEmpty(r.Files[0].PackageName))?.Files[0].PackageName;
-        var language = reviewOld.Revisions.Last(r => !String.IsNullOrEmpty(r.Files[0].Language))?.Files[0].Language;
-        
+        var packageName = revisionWithPackageName.Files[0].PackageName;
+        var language = revisonWithlanguage.Files[0].Language;
 
         if (language == "C" || language == "C++")
         {

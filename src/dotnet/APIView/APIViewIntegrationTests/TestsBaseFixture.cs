@@ -19,9 +19,9 @@ using APIViewWeb.Managers;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using APIViewWeb.Managers.Interfaces;
+using Microsoft.CodeAnalysis.Host;
+using Microsoft.Extensions.Options;
 
-#if false
-// Removed to allow Review Revision work to progress
 namespace APIViewIntegrationTests
 {
     public class TestsBaseFixture : IDisposable
@@ -32,6 +32,8 @@ namespace APIViewIntegrationTests
         
         public PackageNameManager PackageNameManager { get; private set; }
         public ReviewManager ReviewManager { get; private set; }
+        public CommentsManager CommentsManager { get; private set; }
+        public CodeFileManager CodeFileManager { get; private set; }
         public APIRevisionsManager APIRevisionManager { get; private set; }
         public BlobCodeFileRepository BlobCodeFileRepository { get; private set; }
         public CosmosReviewRepository ReviewRepository { get; private set; }
@@ -72,6 +74,7 @@ namespace APIViewIntegrationTests
             _cosmosClient = new CosmosClient(config["Cosmos:ConnectionString"]);
             var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync("APIView").Result;
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id").Wait();
+            dataBaseResponse.Database.CreateContainerIfNotExistsAsync("APIRevisions", "/ReviewId").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Profiles", "/id").Wait();
             ReviewRepository = new CosmosReviewRepository(config, _cosmosClient);
@@ -101,12 +104,27 @@ namespace APIViewIntegrationTests
                 .Returns(Task.CompletedTask);
 
             var signalRHubContextMoq = new Mock<IHubContext<SignalRHub>>();
+            var options = new Mock<IOptions<OrganizationOptions>>();
+
+            CommentsManager = new CommentsManager(
+                 authorizationService: authorizationServiceMoq.Object, commentsRepository: CommentRepository,
+                 notificationManager: notificationManager, options: options.Object);
+
+            CodeFileManager = new CodeFileManager(
+            languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
+            originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object);
+
+            APIRevisionManager = new APIRevisionsManager(
+                authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
+                languageServices: languageService, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
+                codeFileManager: CodeFileManager, codeFileRepository: BlobCodeFileRepository, apiRevisionsRepository: APIRevisionRepository,
+                originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object);
+
 
             ReviewManager = new ReviewManager(
-                authorizationServiceMoq.Object, ReviewRepository, BlobCodeFileRepository, blobOriginalsRepository, CommentRepository,
-                languageService, notificationManager, devopsArtifactRepositoryMoq.Object, PackageNameManager, signalRHubContextMoq.Object);
-
-            APIRevisionManager = new APIRevisionsManager(authorizationServiceMoq.Object, ReviewManager, APIRevisionRepository, signalRHubContextMoq.Object);
+                authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
+                apiRevisionsManager: APIRevisionManager, commentManager: CommentsManager, codeFileRepository: BlobCodeFileRepository,
+                commentsRepository: CommentRepository, languageServices: languageService, signalRHubContext: signalRHubContextMoq.Object);
 
             TestDataPath = config["TestPkgPath"];
         }
@@ -129,4 +147,3 @@ namespace APIViewIntegrationTests
         // ICollectionFixture<> interfaces.
     }
 }
-#endif

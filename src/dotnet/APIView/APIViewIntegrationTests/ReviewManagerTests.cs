@@ -2,12 +2,10 @@ using System.Threading.Tasks;
 using Xunit;
 using System.IO;
 using System;
-using APIViewWeb;
 using APIViewWeb.Repositories;
+using APIViewWeb.LeanModels;
+using System.Linq;
 
-#if false
-// Disabling test.
-// New tests need to be added to accomodate Review Revision Restructure
 namespace APIViewIntegrationTests
 {
     [Collection("TestsBase Collection")]
@@ -57,10 +55,16 @@ namespace APIViewIntegrationTests
             var reviewManager = testsBaseFixture.ReviewManager;
             var apiRevisionsManager = testsBaseFixture.APIRevisionManager;
             var user = testsBaseFixture.User;
-            var review = await testsBaseFixture.ReviewManager.CreateReviewAsync(user, fileNameA, "Revision1", fileStreamA, false, "Swagger", true);
-            await apiRevisionsManager.AddAPIRevisionAsync(user, review.ReviewId, fileNameB, "Revision2", fileStreamB, "Swagger", true);
-            review = await reviewManager.GetReviewAsync(user, review.ReviewId);
-            var headingWithDiffInSections = review.Revisions[0].HeadingsOfSectionsWithDiff[review.Revisions[1].RevisionId];
+            var review = await testsBaseFixture.ReviewManager.CreateReviewAsync(packageName: "testPackageA", language: "Swagger", isClosed:false);
+
+            await apiRevisionsManager.AddAPIRevisionAsync(user: user, reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, name: fileNameA,
+                label: "Revision1", fileStream: fileStreamA, language: "Swagger", awaitComputeDiff: true);
+            await apiRevisionsManager.AddAPIRevisionAsync(user: user, reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, name: fileNameB,
+                label: "Revision2", fileStream: fileStreamB, language: "Swagger", awaitComputeDiff: true);
+
+            var apiRevisions = (await apiRevisionsManager.GetAPIRevisionsAsync(review.Id)).ToList();
+
+            var headingWithDiffInSections = apiRevisions[0].HeadingsOfSectionsWithDiff[apiRevisions[1].Id];
             Assert.All(headingWithDiffInSections,
                 item => Assert.Contains(item, new int[] { 2, 16 }));
         }
@@ -71,10 +75,17 @@ namespace APIViewIntegrationTests
             var reviewManager = testsBaseFixture.ReviewManager;
             var apiRevisionsManager = testsBaseFixture.APIRevisionManager;
             var user = testsBaseFixture.User;
-            var review = await reviewManager.CreateReviewAsync(user, fileNameC, "Azure.Analytics.Purview.Account", fileStreamC, false, "Swagger", true);
-            await apiRevisionsManager.AddAPIRevisionAsync(user, review.ReviewId, fileNameD, "Azure.Analytics.Purview.Account", fileStreamD, "Swagger", true);
-            review = await reviewManager.GetReviewAsync(user, review.ReviewId);
-            var headingWithDiffInSections = review.Revisions[0].HeadingsOfSectionsWithDiff[review.Revisions[1].RevisionId];
+
+            var review = await testsBaseFixture.ReviewManager.CreateReviewAsync(packageName: "testPackageB", language: "Swagger", isClosed: false);
+
+            await apiRevisionsManager.AddAPIRevisionAsync(user: user, reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, name: fileNameC,
+                label: "Azure.Analytics.Purview.Account", fileStream: fileStreamC, language: "Swagger", awaitComputeDiff: true);
+            await apiRevisionsManager.AddAPIRevisionAsync(user: user, reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, name: fileNameD,
+                label: "Azure.Analytics.Purview.Accoun", fileStream: fileStreamD, language: "Swagger", awaitComputeDiff: true);
+
+            var apiRevisions = (await apiRevisionsManager.GetAPIRevisionsAsync(review.Id)).ToList();
+
+            var headingWithDiffInSections = apiRevisions[0].HeadingsOfSectionsWithDiff[apiRevisions[1].Id];
             Assert.All(headingWithDiffInSections,
                 item => Assert.Contains(item, new int[] { 20, 275 }));
         }
@@ -85,17 +96,23 @@ namespace APIViewIntegrationTests
             var reviewManager = testsBaseFixture.ReviewManager;
             var apiRevisionsManager = testsBaseFixture.APIRevisionManager;
             var user = testsBaseFixture.User;
-            var review = await reviewManager.CreateReviewAsync(user, fileNameC, "Azure.Analytics.Purview.Account", fileStreamC, false, "Swagger", false);
-            Assert.Equal(ReviewType.Manual, review.FilterType);
 
-            review.FilterType = ReviewType.PullRequest;
+            var review = await testsBaseFixture.ReviewManager.CreateReviewAsync(packageName: "testPackageC", language: "Swagger", isClosed: false);
+
+            await apiRevisionsManager.AddAPIRevisionAsync(user: user, reviewId: review.Id, apiRevisionType: APIRevisionType.Manual, name: fileNameC,
+                label: "Azure.Analytics.Purview.Account", fileStream: fileStreamC, language: "Swagger", awaitComputeDiff: true);
+
+            var apiRevisions = (await apiRevisionsManager.GetAPIRevisionsAsync(review.Id)).ToList();
+
+            Assert.Equal(APIRevisionType.Manual, apiRevisions[0].APIRevisionType);
+
+            apiRevisions[0].APIRevisionType = APIRevisionType.PullRequest;
 
             // Change review type to PullRequest
-            await testsBaseFixture.ReviewRepository.UpsertReviewAsync(review);
-            Assert.Equal(ReviewType.PullRequest, review.FilterType);
+            await testsBaseFixture.APIRevisionRepository.UpsertAPIRevisionAsync(apiRevisions[0]);
+            Assert.Equal(APIRevisionType.PullRequest, apiRevisions[0].APIRevisionType);
 
-            await Assert.ThrowsAsync<UnDeletableReviewException>(async () => await apiRevisionsManager.SoftDeleteAPIRevisionAsync(user, review.ReviewId, review.Revisions[0].RevisionId));
+            await Assert.ThrowsAsync<UnDeletableReviewException>(async () => await apiRevisionsManager.SoftDeleteAPIRevisionAsync(user, review.Id, apiRevisions[0].Id));
         }
     }
 }
-#endif

@@ -288,13 +288,15 @@ static async Task MigratePullRequestModels(Container prContainerOld, Container p
 {
     foreach (var mapping in reviewMap)
     {
-        var reviewOld = reviewsOld.FirstOrDefault(r => r.ReviewId == mapping.ReviewOldId);
-        if (reviewOld == null || reviewOld.FilterType != APIRevisionType.PullRequest)
+        var reviewOld = reviewsOld.FirstOrDefault(r => r.ReviewId == mapping.ReviewOldId && r.FilterType == APIRevisionType.PullRequest);
+        if (reviewOld == null)
+        {
             continue;
+        }
 
         // Create Pull Requests Associated with the ReviewOld
         var pullRequestsOld = new List<PullRequestModelOld>();
-        var prQuery = $"SELECT * FROM c where c.ReviewId = @reviewId and c.IsClosed != true";
+        var prQuery = $"SELECT * FROM c where c.ReviewId = @reviewId";
         var prQueryDefinition = new QueryDefinition(prQuery).WithParameter("@reviewId", reviewOld.ReviewId);
         var prItemQueryIterator = prContainerOld.GetItemQueryIterator<PullRequestModelOld>(prQueryDefinition);
         while (prItemQueryIterator.HasMoreResults)
@@ -302,7 +304,7 @@ static async Task MigratePullRequestModels(Container prContainerOld, Container p
             var result = await prItemQueryIterator.ReadNextAsync();
             pullRequestsOld.AddRange(result.Resource);
         }
-                
+    
         foreach (var prModelOld in pullRequestsOld)
         {
             Console.WriteLine($"Migrating pull request {prModelOld.ReviewId}");
@@ -408,6 +410,7 @@ static async Task MigrateComments(Container commentsContainerOld, Container comm
             commentsOld.AddRange(result.Resource);
         }
 
+        Console.WriteLine($"Processing comments for review {reviewOld.ReviewId}, comments count: {commentsOld.Count}");
         foreach (var comment in commentsOld)
         {
             if (comment._ts <= mapping.CommentMigratedStamp)

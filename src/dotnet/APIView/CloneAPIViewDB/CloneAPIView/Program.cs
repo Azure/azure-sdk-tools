@@ -59,7 +59,7 @@ static async Task MigrateDocuments(
     foreach (var reviewOld in reviewsOld)
     {
         i++;
-        Console.WriteLine($"Status: Migrating {i} of {totalReviews} reviews.");       
+        //Console.WriteLine($"Status: Migrating {i} of {totalReviews} reviews.");       
 
         var mapping = mappings.FirstOrDefault(m => m.ReviewOldId == reviewOld.ReviewId);
         if (mapping == null)
@@ -73,7 +73,7 @@ static async Task MigrateDocuments(
 
         if(reviewOld._ts <= mapping.ReviewMigratedStamp)
         {
-            Console.WriteLine($"Review {reviewOld.ReviewId} was already migrated. Skipping it.");
+            //Console.WriteLine($"Review {reviewOld.ReviewId} was already migrated. Skipping it.");
             continue;
         }
 
@@ -86,6 +86,7 @@ static async Task MigrateDocuments(
             continue;
         }
 
+        Console.WriteLine($"Migrating review {reviewOld.ReviewId}");
         var packageName = revisionWithPackageName.Files[0].PackageName;
         var language = revisonWithlanguage.Files[0].Language;
 
@@ -193,7 +194,7 @@ static async Task MigrateRevision(RevisionModelOld revisionOld,
 
     if(reviewOld.FilterType == APIRevisionType.Manual && revisionOld.IsApproved !=  true && revisionOld.CreationDate.AddYears(2) > DateTime.UtcNow)
     {
-        Console.WriteLine($"Skipping older manual revision for review {reviewOld.ReviewId}");
+        //Console.WriteLine($"Skipping older manual revision for review {reviewOld.ReviewId}");
         return;
     }
     // Copuy RevisionOld to RevisionNew
@@ -310,7 +311,7 @@ static async Task MigratePullRequestModels(Container prContainerOld, Container p
             Console.WriteLine($"Migrating pull request {prModelOld.ReviewId}");
             if (prModelOld._ts <= mapping.PullRequestMigratedStamp)
             {
-                Console.WriteLine($"Pull request ID {prModelOld.ReviewId} was already processed.");
+                //Console.WriteLine($"Pull request ID {prModelOld.ReviewId} was already processed.");
                 continue;
             }
 
@@ -362,7 +363,7 @@ static async Task MigrateSamples(Container samplesContainerOld, Container sample
         {
             if (sampleOld._ts <= mapping.SampleMigratedStamp)
             {
-                Console.WriteLine($"Samples for {sampleOld.ReviewId} was already processed.");
+                //Console.WriteLine($"Samples for {sampleOld.ReviewId} was already processed.");
                 continue;
             }
 
@@ -410,7 +411,12 @@ static async Task MigrateComments(Container commentsContainerOld, Container comm
             commentsOld.AddRange(result.Resource);
         }
 
-        Console.WriteLine($"Processing comments for review {reviewOld.ReviewId}, comments count: {commentsOld.Count}");
+        if(commentsOld.Count > 0)
+        {
+            Console.WriteLine($"Processing comments for review {reviewOld.ReviewId}, comments count: {commentsOld.Count}");
+        }
+
+        
         foreach (var comment in commentsOld)
         {
             if (comment._ts <= mapping.CommentMigratedStamp)

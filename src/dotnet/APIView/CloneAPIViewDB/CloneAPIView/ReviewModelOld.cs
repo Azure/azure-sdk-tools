@@ -1,9 +1,7 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System.Runtime.Serialization;
-using System.Security.Claims;
-using System.Text.RegularExpressions;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 namespace CloneAPIViewDB
 {
     [JsonConverter(typeof(StringEnumConverter))]
@@ -144,6 +142,22 @@ namespace CloneAPIViewDB
         public string PackageName { get; set; }
         public string FileName { get; set; }
         public string PackageVersion { get; set; }
+
+        public APICodeFileModel() { }
+        public APICodeFileModel(CodeFileModel file, string language, string pkgName)
+        {
+            FileId = file.ReviewFileId;
+            Name = file.Name;
+            Language = language;
+            VersionString = file.VersionString;
+            LanguageVariant = file.LanguageVariant;
+            HasOriginal = file.HasOriginal;
+            CreationDate = file.CreationDate;
+            RunAnalysis = file.RunAnalysis;
+            PackageName = pkgName;
+            FileName = file.FileName;
+            PackageVersion = file.PackageVersion;
+        }
     }
 
     public class CodeFileModel
@@ -316,3 +330,4 @@ namespace CloneAPIViewDB
         public HashSet<string> ReviewOldIds { get; set; }
     }
 }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

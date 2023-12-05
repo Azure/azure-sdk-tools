@@ -127,12 +127,15 @@ static async Task MigrateDocuments(
         if (reviewOld.IsApprovedForFirstRelease)
         {
             reviewNew.IsApproved = true;
-            reviewNew.ChangeHistory.Add(new ReviewChangeHistoryModel()
+            if (!reviewNew.ChangeHistory.Where(c => c.ChangeAction == ReviewChangeAction.Approved && c.ChangedBy == reviewOld.ApprovedForFirstReleaseBy).Any())
+            {
+                reviewNew.ChangeHistory.Add(new ReviewChangeHistoryModel()
                 {
                     ChangeAction = ReviewChangeAction.Approved,
                     ChangedBy = reviewOld.ApprovedForFirstReleaseBy,
                     ChangedOn = reviewOld.ApprovedForFirstReleaseOn
                 });
+            }
         }
 
         // Create APIRevisions

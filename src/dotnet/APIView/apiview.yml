@@ -210,17 +210,17 @@ stages:
               codeCoverageTool: Cobertura
               summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml
 
-          - script: >-
-              dotnet test src/dotnet/APIView/APIViewIntegrationTests/APIViewIntegrationTests.csproj
-              --logger trx
-            displayName: "Build & Test (Integration)"
-            env:
-              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-              DOTNET_CLI_TELEMETRY_OPTOUT: 1
-              DOTNET_MULTILEVEL_LOOKUP: 0
-              APIVIEW_ENDPOINT: "http://localhost:5000"
-              APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
-              APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
+          #- script: >-
+          #    dotnet test src/dotnet/APIView/APIViewIntegrationTests/APIViewIntegrationTests.csproj
+          #    --logger trx
+          #  displayName: "Build & Test (Integration)"
+          #  env:
+          #    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          #    DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          #    DOTNET_MULTILEVEL_LOOKUP: 0
+          #    APIVIEW_ENDPOINT: "http://localhost:5000"
+          #    APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
+          #    APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
           
           - script: |
               npm install

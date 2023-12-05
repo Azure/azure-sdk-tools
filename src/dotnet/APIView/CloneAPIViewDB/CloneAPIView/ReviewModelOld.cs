@@ -1,9 +1,7 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System.Runtime.Serialization;
-using System.Security.Claims;
-using System.Text.RegularExpressions;
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 namespace CloneAPIViewDB
 {
     [JsonConverter(typeof(StringEnumConverter))]
@@ -144,6 +142,22 @@ namespace CloneAPIViewDB
         public string PackageName { get; set; }
         public string FileName { get; set; }
         public string PackageVersion { get; set; }
+
+        public APICodeFileModel() { }
+        public APICodeFileModel(CodeFileModel file, string language, string pkgName)
+        {
+            FileId = file.ReviewFileId;
+            Name = file.Name;
+            Language = language;
+            VersionString = file.VersionString;
+            LanguageVariant = file.LanguageVariant;
+            HasOriginal = file.HasOriginal;
+            CreationDate = file.CreationDate;
+            RunAnalysis = file.RunAnalysis;
+            PackageName = pkgName;
+            FileName = file.FileName;
+            PackageVersion = file.PackageVersion;
+        }
     }
 
     public class CodeFileModel
@@ -180,6 +194,7 @@ namespace CloneAPIViewDB
         public HashSet<string> TaggedUsers { get; set; } = new HashSet<string>();
         public bool IsUsageSampleComment { get; set; } = false;
         public bool ResolutionLocked { get; set; } = false;
+        public long _ts { get; set; }
     }
 
     public class PullRequestModelOld
@@ -196,6 +211,8 @@ namespace CloneAPIViewDB
         public string PackageName { get; set; }
         public string Language { get; set; }
         public string Assignee { get; set; }
+
+        public long _ts { get; set; }
     }
 
     public class UsageSampleModel
@@ -204,6 +221,7 @@ namespace CloneAPIViewDB
         public string SampleId { get; set; }
         public string ReviewId { get; set; }
         public List<UsageSampleRevisionModel> Revisions { get; set; }
+        public long _ts { get; set; }
     }
 
     public class UsageSampleRevisionModel
@@ -290,6 +308,7 @@ namespace CloneAPIViewDB
         public DateTime CreatedOn { get; set; }
         public DateTime? LastEditedOn { get; set; }
         public bool IsDeleted { get; set; }
+        public long _ts { get; set; }
     }
     public class PullRequestModel
     {
@@ -312,7 +331,14 @@ namespace CloneAPIViewDB
     public class MappingModel
     {
         [JsonProperty("id")]
+        public string ReviewOldId { get; set; }
         public string ReviewNewId { get; set; }
-        public HashSet<string> ReviewOldIds { get; set; }
+        public long ReviewMigratedStamp { get; set; }
+        public long PullRequestMigratedStamp { get; set; }
+        public long CommentMigratedStamp { get; set; }
+        public long SampleMigratedStamp { get; set; }
+        public string PackageName { get; set; }
+        public string Language { get; set; }
     }
 }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

@@ -1,10 +1,13 @@
 using CloneAPIViewDB;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
+using System.Diagnostics;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 
 var config = new ConfigurationBuilder()
+    .AddEnvironmentVariables(prefix: "APIVIEW_")
     .AddUserSecrets(typeof(Program).Assembly)
     .Build();
 
@@ -19,31 +22,8 @@ var revisionsContainerNew = cosmosClient.GetContainer("APIViewV2", "APIRevisions
 var commentsContainerNew = cosmosClient.GetContainer("APIViewV2", "Comments");
 var prContainerNew = cosmosClient.GetContainer("APIViewV2", "PullRequests");
 var samplesContainerNew = cosmosClient.GetContainer("APIViewV2", "SamplesRevisions");
-var mappingsContainer = cosmosClient.GetContainer("APIViewV2", "LegacyMappings");
+var mappingsContainer = cosmosClient.GetContainer("APIViewV2", "MigrationStatus");
 
-static string ArrayToQueryString<T>(IEnumerable<T> items)
-{
-    var result = new StringBuilder();
-    result.Append("(");
-    foreach (var item in items)
-    {
-        if (item is int)
-        {
-            result.Append($"{item},");
-        }
-        else
-        {
-            result.Append($"\"{item}\",");
-        }
-
-    }
-    if (result[result.Length - 1] == ',')
-    {
-        result.Remove(result.Length - 1, 1);
-    }
-    result.Append(")");
-    return result.ToString();
-}
 
 static async Task MigrateDocuments(
     Container reviewsContainerOld, Container reviewsContainerNew,
@@ -52,26 +32,49 @@ static async Task MigrateDocuments(
     Container commentsContainerOld, Container commentsContainerNew,
     Container revisionsContainerNew, Container mappingsContainer, int? limit = null)
 {
+    Console.WriteLine($"Migration starts at {DateTime.Now}");
+
     var reviewsOld = new List<ReviewModelOld>();
     var reviewsOldQuery = $"SELECT * FROM Reviews c Where c.IsClosed != true AND Exists(Select Value r from r in c.Revisions where IS_DEFINED(r.Files[0].PackageName) AND r.Files[0].PackageName != \"\" AND NOT IS_NULL(r.Files[0].PackageName))";
     var reviewsOldQueryDefinition = new QueryDefinition(reviewsOldQuery);
     var reviewsOldItemQueryIterator = reviewsContainerOld.GetItemQueryIterator<ReviewModelOld>(reviewsOldQueryDefinition);
-
     while (reviewsOldItemQueryIterator.HasMoreResults)
     {
         var response = await reviewsOldItemQueryIterator.ReadNextAsync();
         reviewsOld.AddRange(response.Resource);
     }
 
+    var mappings = new List<MappingModel>();
+    var mappingQueryDef = new QueryDefinition("SELECT * FROM MigrationStatus m");
+    var mappingItemQueryIterator = mappingsContainer.GetItemQueryIterator<MappingModel>(mappingQueryDef);
+    while(mappingItemQueryIterator.HasMoreResults)
+    {
+        var response = await mappingItemQueryIterator.ReadNextAsync();
+        mappings.AddRange(response.Resource);
+    }
+    
+    int i = 0;
+    int totalReviews = reviewsOld.Count;
+
     foreach (var reviewOld in reviewsOld)
     {
-        if (limit.HasValue)
+        i++;
+        //Console.WriteLine($"Status: Migrating {i} of {totalReviews} reviews.");       
+
+        var mapping = mappings.FirstOrDefault(m => m.ReviewOldId == reviewOld.ReviewId);
+        if (mapping == null)
         {
-            if (limit == 0)
+            mapping = new MappingModel()
             {
-                break;
-            }
-            limit--;
+                ReviewOldId = reviewOld.ReviewId
+            };
+            mappings.Add(mapping);
+        }
+
+        if(reviewOld._ts <= mapping.ReviewMigratedStamp)
+        {
+            //Console.WriteLine($"Review {reviewOld.ReviewId} was already migrated. Skipping it.");
+            continue;
         }
 
         var revisionWithPackageName = reviewOld.Revisions.LastOrDefault(r => !String.IsNullOrEmpty(r.Files[0].PackageName));
@@ -79,9 +82,11 @@ static async Task MigrateDocuments(
 
         if (revisionWithPackageName == null || revisonWithlanguage == null)
         {
+            Console.WriteLine($"Package name or language is empty for review {reviewOld.ReviewId}");
             continue;
         }
 
+        Console.WriteLine($"Migrating review {reviewOld.ReviewId}");
         var packageName = revisionWithPackageName.Files[0].PackageName;
         var language = revisonWithlanguage.Files[0].Language;
 
@@ -91,7 +96,6 @@ static async Task MigrateDocuments(
         }
 
         var reviewNew = default(ReviewModel);
-        var mapping = default(MappingModel);
 
         // Get existing review if it exist otherwise create new review
         var reviewNewQuery = $"SELECT * FROM Reviews c Where c.PackageName = \"{packageName}\" AND c.Language = \"{language}\"";
@@ -113,187 +117,187 @@ static async Task MigrateDocuments(
                 PackageName = packageName,
                 Language = language,
                 IsClosed = true,
-            };
-
-            // Create mapping
-            mapping = new MappingModel()
-            {
-                ReviewNewId = reviewNew.Id,
-                ReviewOldIds = new HashSet<string>() { reviewOld.ReviewId }
-            };
+            };           
         }
-        else
+
+        mapping.ReviewNewId = reviewNew.Id;
+        mapping.PackageName = packageName;
+        mapping.Language = language;
+
+        if (reviewOld.IsApprovedForFirstRelease)
         {
-            // Get mapping
-            mapping = await mappingsContainer.ReadItemAsync<MappingModel>(reviewNew.Id, new PartitionKey(reviewNew.Id));            
-            mapping.ReviewOldIds.Add(reviewOld.ReviewId);
+            reviewNew.IsApproved = true;
+            reviewNew.ChangeHistory.Add(new ReviewChangeHistoryModel()
+                {
+                    ChangeAction = ReviewChangeAction.Approved,
+                    ChangedBy = reviewOld.ApprovedForFirstReleaseBy,
+                    ChangedOn = reviewOld.ApprovedForFirstReleaseOn
+                });
         }
 
         // Create APIRevisions
         foreach (var revisionOld in reviewOld.Revisions)
         {
-            if (language != "Swagger" && language != "TypeSpec" && reviewOld.Revisions.Count > 1 && reviewOld.FilterType == APIRevisionType.PullRequest && revisionOld.RevisionNumber == 0)
+            await MigrateRevision(revisionOld, reviewOld, language, packageName, reviewNew, revisionsContainerNew);
+        }                
+
+        if (reviewNew.IsClosed)
+        {
+            Console.WriteLine($"Skipping review {reviewOld.ReviewId} without any revisions");
+            continue;
+        }            
+
+        // Update review
+        Console.WriteLine($"Update Review: {reviewNew.Id}");
+        await reviewsContainerNew.UpsertItemAsync(reviewNew, new PartitionKey(reviewNew.Id));
+
+        // Update mappings
+        Console.WriteLine($"Update Mapping: {mapping.ReviewOldId}");
+        mapping.ReviewMigratedStamp = reviewOld._ts;
+        await mappingsContainer.UpsertItemAsync(mapping, new PartitionKey(mapping.ReviewOldId));
+
+        if (limit.HasValue)
+        {
+            limit--;
+            if (limit <= 0)
             {
-                // Skip Baseline of PR Revision which is a duplicate of Automatic;
-                continue;
-            }
+                break;
+            }            
+        }
+    }
 
-            // Copuy RevisionOld to RevisionNew
-            var apiRevisionNew = new APIRevisionModel();
-            apiRevisionNew.Id = revisionOld.RevisionId;
-            apiRevisionNew.ReviewId = reviewNew.Id;
-            apiRevisionNew.PackageName = reviewNew.PackageName;
-            apiRevisionNew.Language = reviewNew.Language;
+    Console.WriteLine("Migrating Comments");
+    await MigrateComments(commentsContainerOld, commentsContainerNew, mappings, reviewsOld, mappingsContainer);
 
-            foreach (var file in revisionOld.Files)
-            {
-                apiRevisionNew.Files.Add(
-                    new APICodeFileModel()
-                    {
-                        FileId = file.ReviewFileId,
-                        Name = file.Name,
-                        Language = reviewNew.Language,
-                        VersionString = file.VersionString,
-                        LanguageVariant = file.LanguageVariant,
-                        HasOriginal = file.HasOriginal,
-                        CreationDate = file.CreationDate,
-                        RunAnalysis = file.RunAnalysis,
-                        PackageName = reviewNew.PackageName,
-                        FileName = file.FileName,
-                        PackageVersion = file.PackageVersion
-                    }
-                );
-            }
+    Console.WriteLine("Migrating pull request model");
+    await MigratePullRequestModels(prContainerOld, prContainerNew, mappings, reviewsOld, mappingsContainer);
 
-            apiRevisionNew.Label = revisionOld.Label;
+    Console.WriteLine("Migrating samples");
+    await MigrateSamples(samplesContainerOld, samplesContainerNew, mappings, mappingsContainer);
+
+    Console.WriteLine($"Migration Ends at {DateTime.Now}");
+}
+
+static async Task MigrateRevision(RevisionModelOld revisionOld, 
+    ReviewModelOld reviewOld, 
+    string language, 
+    string packageName, 
+    ReviewModel reviewNew,
+    Container revisionsContainerNew
+    )
+{
+    if (language != "Swagger" && language != "TypeSpec" && reviewOld.Revisions.Count > 1 && reviewOld.FilterType == APIRevisionType.PullRequest && revisionOld.RevisionNumber == 0)
+    {
+        // Skip Baseline of PR Revision which is a duplicate of Automatic;
+        return;
+    }
+
+    if(reviewOld.FilterType == APIRevisionType.Manual && revisionOld.IsApproved !=  true && revisionOld.CreationDate.AddYears(2) > DateTime.UtcNow)
+    {
+        //Console.WriteLine($"Skipping older manual revision for review {reviewOld.ReviewId}");
+        return;
+    }
+    // Copuy RevisionOld to RevisionNew
+    var apiRevisionNew = new APIRevisionModel();
+    apiRevisionNew.Id = revisionOld.RevisionId;
+    apiRevisionNew.ReviewId = reviewNew.Id;
+    apiRevisionNew.PackageName = reviewNew.PackageName;
+    apiRevisionNew.Language = reviewNew.Language;
+
+    foreach (var file in revisionOld.Files)
+    {
+        apiRevisionNew.Files.Add(new APICodeFileModel(file, reviewNew.Language, reviewNew.PackageName));
+    }
+
+    apiRevisionNew.Label = revisionOld.Label;
+    apiRevisionNew.ChangeHistory.Add(new APIRevisionChangeHistoryModel()
+    {
+        ChangeAction = APIRevisionChangeAction.Created,
+        ChangedBy = revisionOld.Author,
+        ChangedOn = revisionOld.CreationDate
+    });
+    apiRevisionNew.CreatedBy = revisionOld.Author;
+    apiRevisionNew.CreatedOn = revisionOld.CreationDate;
+
+    // Open review once a revision is added
+    reviewNew.IsClosed = false;
+
+    if (reviewNew.ChangeHistory.Any() && reviewNew.ChangeHistory.Where(ch => ch.ChangeAction == ReviewChangeAction.Created).Any())
+    {
+        if (
+            reviewNew.ChangeHistory.First(ch => ch.ChangeAction == ReviewChangeAction.Created).ChangedOn == default(DateTime) ||
+            reviewNew.ChangeHistory.First(ch => ch.ChangeAction == ReviewChangeAction.Created).ChangedOn > revisionOld.CreationDate)
+        {
+            reviewNew.ChangeHistory.First(ch => ch.ChangeAction == ReviewChangeAction.Created).ChangedOn = revisionOld.CreationDate;
+            reviewNew.ChangeHistory.First(ch => ch.ChangeAction == ReviewChangeAction.Created).ChangedBy = revisionOld.Author;
+            reviewNew.CreatedOn = revisionOld.CreationDate;
+            reviewNew.CreatedBy = revisionOld.Author;
+        }
+    }
+    else
+    {
+        reviewNew.ChangeHistory.Add(new ReviewChangeHistoryModel()
+        {
+            ChangeAction = ReviewChangeAction.Created,
+            ChangedBy = revisionOld.Author,
+            ChangedOn = revisionOld.CreationDate
+        });
+        reviewNew.CreatedOn = revisionOld.CreationDate;
+        reviewNew.CreatedBy = revisionOld.Author;
+    }
+
+    if (reviewNew.LastUpdatedOn == default(DateTime) || reviewNew.LastUpdatedOn < apiRevisionNew.CreatedOn)
+    {
+        // Update last updated on date if its before 
+        reviewNew.LastUpdatedOn = apiRevisionNew.CreatedOn;
+    }
+
+    // Update Approvals
+    if (revisionOld.IsApproved)
+    {
+        reviewNew.IsApproved = true;
+        apiRevisionNew.IsApproved = true;
+        foreach (var approver in revisionOld.Approvers)
+        {
             apiRevisionNew.ChangeHistory.Add(new APIRevisionChangeHistoryModel()
             {
-                ChangeAction = APIRevisionChangeAction.Created,
-                ChangedBy = revisionOld.Author,
-                ChangedOn = revisionOld.CreationDate
+                ChangeAction = APIRevisionChangeAction.Approved,
+                ChangedBy = approver
             });
-            apiRevisionNew.CreatedBy = revisionOld.Author;
-            apiRevisionNew.CreatedOn = revisionOld.CreationDate;
+            apiRevisionNew.Approvers.Add(approver);
+        }
+    }
 
-            // Open review once a revision is added
-            reviewNew.IsClosed = false;
-
-            if (reviewNew.ChangeHistory.Any() && reviewNew.ChangeHistory.Where(ch => ch.ChangeAction == ReviewChangeAction.Created).Any())
+    apiRevisionNew.APIRevisionType = reviewOld.FilterType;
+    if (revisionOld.HeadingsOfSectionsWithDiff.Where(items => items.Value.Any()).Any())
+    {
+        foreach (var key in revisionOld.HeadingsOfSectionsWithDiff.Keys)
+        {
+            if (revisionOld.HeadingsOfSectionsWithDiff[key].Any())
             {
-                if (
-                    reviewNew.ChangeHistory.First(ch => ch.ChangeAction == ReviewChangeAction.Created).ChangedOn == default(DateTime) ||
-                    reviewNew.ChangeHistory.First(ch => ch.ChangeAction == ReviewChangeAction.Created).ChangedOn > revisionOld.CreationDate)
-                {
-                    reviewNew.ChangeHistory.First(ch => ch.ChangeAction == ReviewChangeAction.Created).ChangedOn = revisionOld.CreationDate;
-                    reviewNew.ChangeHistory.First(ch => ch.ChangeAction == ReviewChangeAction.Created).ChangedBy = revisionOld.Author;
-                    reviewNew.CreatedOn = revisionOld.CreationDate;
-                    reviewNew.CreatedBy = revisionOld.Author;
-                }
+                apiRevisionNew.HeadingsOfSectionsWithDiff.Add(key, revisionOld.HeadingsOfSectionsWithDiff[key]);
             }
-            else
-            {
-                reviewNew.ChangeHistory.Add(new ReviewChangeHistoryModel()
-                {
-                    ChangeAction = ReviewChangeAction.Created,
-                    ChangedBy = revisionOld.Author,
-                    ChangedOn = revisionOld.CreationDate
-                });
-                reviewNew.CreatedOn = revisionOld.CreationDate;
-                reviewNew.CreatedBy = revisionOld.Author;
-            }
+        }
+    }
+    apiRevisionNew.IsDeleted = false;
 
-            if (reviewNew.LastUpdatedOn == default(DateTime) || reviewNew.LastUpdatedOn < apiRevisionNew.CreatedOn)
-            {
-                // Update last updated on date if its before 
-                reviewNew.LastUpdatedOn = apiRevisionNew.CreatedOn;
-            }
+    //Console.WriteLine($"Creating APIRevision: {apiRevisionNew.Id}");
+    await revisionsContainerNew.UpsertItemAsync(apiRevisionNew, new PartitionKey(apiRevisionNew.ReviewId));
+}
 
-            // Update Approvals
-            if (revisionOld.IsApproved)
-            {
-                reviewNew.IsApproved = true;
-                apiRevisionNew.IsApproved = true;
-                foreach (var approver in revisionOld.Approvers)
-                {
-                    apiRevisionNew.ChangeHistory.Add(new APIRevisionChangeHistoryModel()
-                    {
-                        ChangeAction = APIRevisionChangeAction.Approved,
-                        ChangedBy = approver
-                    });
-                    apiRevisionNew.Approvers.Add(approver);
-                }
-            }
-
-            apiRevisionNew.APIRevisionType = reviewOld.FilterType;
-            if (revisionOld.HeadingsOfSectionsWithDiff.Where(items => items.Value.Any()).Any())
-            {
-                foreach (var key in revisionOld.HeadingsOfSectionsWithDiff.Keys)
-                {
-                    if (revisionOld.HeadingsOfSectionsWithDiff[key].Any())
-                    {
-                        apiRevisionNew.HeadingsOfSectionsWithDiff.Add(key, revisionOld.HeadingsOfSectionsWithDiff[key]);
-                    }
-                }
-            }
-            apiRevisionNew.IsDeleted = false;
-
-            Console.WriteLine($"Creating APIRevision: {apiRevisionNew.Id}");
-            await revisionsContainerNew.UpsertItemAsync(apiRevisionNew, new PartitionKey(apiRevisionNew.ReviewId));
-
-            // Create Comments Associated with this RevisionOld
-            var commentsOld = new List<CommentModelOld>();
-            var commentsOldQuery = $"SELECT * FROM c WHERE c.RevisionId = @revisionId";
-            var commentsQueryDefinition = new QueryDefinition(commentsOldQuery).WithParameter("@revisionId", revisionOld.RevisionId);
-            var itemQueryIterator = commentsContainerOld.GetItemQueryIterator<CommentModelOld>(commentsQueryDefinition);
-
-            while (itemQueryIterator.HasMoreResults)
-            {
-                var result = await itemQueryIterator.ReadNextAsync();
-                commentsOld.AddRange(result.Resource);
-            }
-
-            foreach (var comment in commentsOld)
-            {
-                var commentNew = new CommentModel();
-                commentNew.Id = comment.CommentId;
-                commentNew.ReviewId = reviewNew.Id;
-                commentNew.APIRevisionId = apiRevisionNew.Id;
-                commentNew.ElementId = comment.ElementId;
-                commentNew.SectionClass = comment.SectionClass;
-                commentNew.CommentText = comment.Comment;
-                commentNew.ChangeHistory.Add(new CommentChangeHistoryModel()
-                {
-                    ChangeAction = CommentChangeAction.Created,
-                    ChangedBy = comment.Username,
-                    ChangedOn = comment.TimeStamp
-                });
-                commentNew.CreatedOn = comment.TimeStamp;
-                commentNew.CreatedBy = comment.Username;
-                if (comment.EditedTimeStamp != null)
-                {
-                    commentNew.ChangeHistory.Add(new CommentChangeHistoryModel()
-                    {
-                        ChangeAction = CommentChangeAction.Edited,
-                        ChangedBy = comment.Username,
-                        ChangedOn = comment.EditedTimeStamp
-                    });
-                }
-                commentNew.LastEditedOn = comment.EditedTimeStamp;
-                commentNew.IsResolved = comment.IsResolve;
-                commentNew.Upvotes = comment.Upvotes;
-                commentNew.TaggedUsers = comment.TaggedUsers;
-                commentNew.CommentType = (comment.IsUsageSampleComment) ? CommentType.SampleRevision : CommentType.APIRevision;
-                commentNew.ResolutionLocked = comment.ResolutionLocked;
-                commentNew.IsDeleted = false;
-
-                Console.WriteLine($"Creating New Comment {commentNew.Id} with ReviewId {commentNew.ReviewId}");
-                await commentsContainerNew.UpsertItemAsync(commentNew, new PartitionKey(commentNew.ReviewId));
-            }
+static async Task MigratePullRequestModels(Container prContainerOld, Container prContainerNew, List<MappingModel> reviewMap, List<ReviewModelOld> reviewsOld, Container mappingContainer)
+{
+    foreach (var mapping in reviewMap)
+    {
+        var reviewOld = reviewsOld.FirstOrDefault(r => r.ReviewId == mapping.ReviewOldId && r.FilterType == APIRevisionType.PullRequest);
+        if (reviewOld == null)
+        {
+            continue;
         }
 
         // Create Pull Requests Associated with the ReviewOld
         var pullRequestsOld = new List<PullRequestModelOld>();
-        var prQuery = $"SELECT * FROM c WHERE c.ReviewId = @reviewId";
+        var prQuery = $"SELECT * FROM c where c.ReviewId = @reviewId";
         var prQueryDefinition = new QueryDefinition(prQuery).WithParameter("@reviewId", reviewOld.ReviewId);
         var prItemQueryIterator = prContainerOld.GetItemQueryIterator<PullRequestModelOld>(prQueryDefinition);
         while (prItemQueryIterator.HasMoreResults)
@@ -301,9 +305,16 @@ static async Task MigrateDocuments(
             var result = await prItemQueryIterator.ReadNextAsync();
             pullRequestsOld.AddRange(result.Resource);
         }
-
+    
         foreach (var prModelOld in pullRequestsOld)
         {
+            Console.WriteLine($"Migrating pull request {prModelOld.ReviewId}");
+            if (prModelOld._ts <= mapping.PullRequestMigratedStamp)
+            {
+                //Console.WriteLine($"Pull request ID {prModelOld.ReviewId} was already processed.");
+                continue;
+            }
+
             var prModelNew = new PullRequestModel();
             prModelNew.Id = prModelOld.PullRequestId;
             prModelNew.PullRequestNumber = prModelOld.PullRequestNumber;
@@ -311,21 +322,36 @@ static async Task MigrateDocuments(
             prModelNew.RepoName = prModelOld.RepoName;
             prModelNew.FilePath = prModelOld.FilePath;
             prModelNew.IsOpen = prModelOld.IsOpen;
-            prModelNew.ReviewId = reviewNew.Id;
+            prModelNew.ReviewId = mapping.ReviewNewId;
             prModelNew.CreatedBy = prModelOld.Author;
-            prModelNew.PackageName = reviewNew.PackageName;
-            prModelNew.Language = reviewNew.Language;
+            prModelNew.PackageName = mapping.PackageName;
+            prModelNew.Language = mapping.Language;
             prModelNew.Assignee = prModelOld.Assignee;
             prModelNew.IsDeleted = false;
 
+            var oldReview = reviewsOld.Where(rev => rev.ReviewId == prModelOld.ReviewId)?.FirstOrDefault();
+            if (oldReview != null)
+            {
+                prModelNew.APIRevisionId = oldReview.Revisions.Last().RevisionId;
+                Console.WriteLine($"Setting previous revision ID {prModelNew.APIRevisionId} from review {oldReview.ReviewId} as API revision ID for PR Model {prModelNew.Id}");
+            }
             Console.WriteLine($"Creating PR    : {prModelNew.Id}");
             await prContainerNew.UpsertItemAsync(prModelNew, new PartitionKey(prModelNew.ReviewId));
+            mapping.PullRequestMigratedStamp = prModelOld._ts;
+            await mappingContainer.UpsertItemAsync(mapping);
         }
+    }    
+}
 
+
+static async Task MigrateSamples(Container samplesContainerOld, Container samplesContainerNew,  List<MappingModel> reviewMap, Container mappingContainer)
+{
+    foreach (var mapping in reviewMap)
+    {
         // Create Sample Revisions Associated with the Review
         var samplesOld = new List<UsageSampleModel>();
-        var samplesQuery = $"SELECT * FROM c WHERE c.ReviewId = @reviewId";
-        var samplesQueryDefinition = new QueryDefinition(samplesQuery).WithParameter("@reviewId", reviewOld.ReviewId);
+        var samplesQuery = $"SELECT * FROM c where c.ReviewId = @reviewId";
+        var samplesQueryDefinition = new QueryDefinition(samplesQuery).WithParameter("@reviewId", mapping.ReviewOldId);
         var samplesItemQueryIterator = samplesContainerOld.GetItemQueryIterator<UsageSampleModel>(samplesQueryDefinition);
         while (samplesItemQueryIterator.HasMoreResults)
         {
@@ -335,13 +361,20 @@ static async Task MigrateDocuments(
 
         foreach (var sampleOld in samplesOld)
         {
+            if (sampleOld._ts <= mapping.SampleMigratedStamp)
+            {
+                //Console.WriteLine($"Samples for {sampleOld.ReviewId} was already processed.");
+                continue;
+            }
+
+            Console.WriteLine($"Migrating sample for review {sampleOld.ReviewId}");
             foreach (var sampleOldRevision in sampleOld.Revisions)
             {
                 var sampleNewRevision = new SampleRevisionModel();
                 sampleNewRevision.Id = Guid.NewGuid().ToString("N");
-                sampleNewRevision.ReviewId = reviewNew.Id;
-                sampleNewRevision.PackageName = reviewNew.PackageName;
-                sampleNewRevision.Language = reviewNew.Language;
+                sampleNewRevision.ReviewId = mapping.ReviewNewId;
+                sampleNewRevision.PackageName = mapping.PackageName;
+                sampleNewRevision.Language = mapping.Language;
                 sampleNewRevision.FileId = sampleOldRevision.FileId;
                 sampleNewRevision.OriginalFileId = sampleOldRevision.OriginalFileId;
                 sampleNewRevision.OriginalFileName = sampleOldRevision.OriginalFileName;
@@ -350,28 +383,51 @@ static async Task MigrateDocuments(
                 sampleNewRevision.Title = sampleOldRevision.RevisionTitle;
                 sampleNewRevision.IsDeleted = sampleOldRevision.RevisionIsDeleted;
 
-                Console.WriteLine($"Creating Sample: {sampleNewRevision.Id}");
                 await samplesContainerNew.UpsertItemAsync(sampleNewRevision, new PartitionKey(sampleNewRevision.ReviewId));
             }
+            mapping.SampleMigratedStamp = sampleOld._ts;
+            await mappingContainer.UpsertItemAsync(mapping);
+        }
+    }
+}
+
+static async Task MigrateComments(Container commentsContainerOld, Container commentsContainerNew, List<MappingModel> reviewMap, List<ReviewModelOld> reviewsOld, Container mappingContainer)
+{
+    foreach(var mapping in reviewMap)
+    {
+        var reviewOld = reviewsOld.FirstOrDefault( r => r.ReviewId == mapping.ReviewOldId );
+        if (reviewOld == null)
+            continue;
+
+        // Create Comments Associated with this RevisionOld
+        var commentsOld = new List<CommentModelOld>();
+        var commentsOldQuery = $"SELECT * FROM c  where c.ReviewId = @reviewId order by c._ts";
+        var commentsQueryDefinition = new QueryDefinition(commentsOldQuery).WithParameter("@reviewId", reviewOld.ReviewId);
+        var itemQueryIterator = commentsContainerOld.GetItemQueryIterator<CommentModelOld>(commentsQueryDefinition);
+
+        while (itemQueryIterator.HasMoreResults)
+        {
+            var result = await itemQueryIterator.ReadNextAsync();
+            commentsOld.AddRange(result.Resource);
         }
 
-        // Create Comments For cases where RevisionId is null or not defined 
-        var commentsOld2 = new List<CommentModelOld>();
-        var commentsOldQuery2 = $"SELECT * FROM c WHERE c.ReviewId = @reviewId AND (c.RevisionId = null OR NOT IS_DEFINED(c.RevisionId))";
-        var commentsQueryDefinition2 = new QueryDefinition(commentsOldQuery2).WithParameter("@reviewId", reviewOld.ReviewId);
-        var itemQueryIterator2 = commentsContainerOld.GetItemQueryIterator<CommentModelOld>(commentsQueryDefinition2);
-
-        while (itemQueryIterator2.HasMoreResults)
+        if(commentsOld.Count > 0)
         {
-            var result = await itemQueryIterator2.ReadNextAsync();
-            commentsOld2.AddRange(result.Resource);
+            Console.WriteLine($"Processing comments for review {reviewOld.ReviewId}, comments count: {commentsOld.Count}");
         }
 
-        foreach (var comment in commentsOld2)
+        
+        foreach (var comment in commentsOld)
         {
+            if (comment._ts <= mapping.CommentMigratedStamp)
+            {
+                continue;
+            }
+
             var commentNew = new CommentModel();
             commentNew.Id = comment.CommentId;
-            commentNew.ReviewId = reviewNew.Id;
+            commentNew.ReviewId = mapping.ReviewNewId;
+            commentNew.APIRevisionId = comment.RevisionId;
             commentNew.ElementId = comment.ElementId;
             commentNew.SectionClass = comment.SectionClass;
             commentNew.CommentText = comment.Comment;
@@ -399,28 +455,19 @@ static async Task MigrateDocuments(
             commentNew.CommentType = (comment.IsUsageSampleComment) ? CommentType.SampleRevision : CommentType.APIRevision;
             commentNew.ResolutionLocked = comment.ResolutionLocked;
             commentNew.IsDeleted = false;
-
-            Console.WriteLine($"Creating New Comment {commentNew.Id} with ReviewId {commentNew.ReviewId}");
+            mapping.CommentMigratedStamp = comment._ts;
             await commentsContainerNew.UpsertItemAsync(commentNew, new PartitionKey(commentNew.ReviewId));
         }
-
-        // Update review
-        Console.WriteLine($"Update Review: {reviewNew.Id}");
-        await reviewsContainerNew.UpsertItemAsync(reviewNew, new PartitionKey(reviewNew.Id));
-
-        // Update mappings
-        Console.WriteLine($"Update Mapping: {mapping.ReviewNewId}");
-        await mappingsContainer.UpsertItemAsync(mapping, new PartitionKey(mapping.ReviewNewId));
+        await mappingContainer.UpsertItemAsync(mapping);
     }
-
 }
+
 await MigrateDocuments(
     reviewsContainerOld: reviewsContainerOld, reviewsContainerNew: reviewsContainerNew,
     prContainerOld: prContainerOld, prContainerNew: prContainerNew,
     samplesContainerOld: samplesContainerOld, samplesContainerNew: samplesContainerNew,
     commentsContainerOld: commentsContainerOld, commentsContainerNew: commentsContainerNew,
-    revisionsContainerNew: revisionsContainerNew, mappingsContainer: mappingsContainer,
-    limit: 2);
+    revisionsContainerNew: revisionsContainerNew, mappingsContainer: mappingsContainer);
 
 
 

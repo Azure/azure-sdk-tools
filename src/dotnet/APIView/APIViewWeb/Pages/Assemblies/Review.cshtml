@@ -262,8 +262,8 @@
         }
         @if (Model.ReviewContent.ActiveAPIRevision.APIRevisionType == APIRevisionType.PullRequest)
         {
-            var prsOfAssociatedReviews = await Model.GetPRsOfAssoicatedReviews();
-            @if (prsOfAssociatedReviews != null && prsOfAssociatedReviews.Count() > 1)
+            var prsOfAssociatedAPIRevisions = await Model.GetPRsOfAssoicatedReviews();
+            @if (prsOfAssociatedAPIRevisions != null && prsOfAssociatedAPIRevisions.Count() > 1)
             {
                 var associatedReviewsState = String.Empty;
                 if (Request.Cookies.ContainsKey("associatedReviewsCollapse"))
@@ -272,10 +272,10 @@
                         associatedReviewsState = " show";
                 }
                 <p class="h6">
-                    <a data-bs-toggle="collapse" href="#associatedReviewsCollapse" aria-expanded="true" aria-controls="associatedReviewsCollapse">Associated Reviews&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+                    <a data-bs-toggle="collapse" href="#associatedReviewsCollapse" aria-expanded="true" aria-controls="associatedReviewsCollapse">Associated APIRevisions&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
                 </p>
                 <ul class="list-group collapse mb-3@(associatedReviewsState)" id="associatedReviewsCollapse">
-                    @foreach (var pr in prsOfAssociatedReviews)
+                    @foreach (var pr in prsOfAssociatedAPIRevisions)
                     {
                         if (pr.ReviewId != Model.ReviewContent.Review.Id)
                         {

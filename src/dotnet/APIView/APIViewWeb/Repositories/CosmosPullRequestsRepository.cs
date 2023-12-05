@@ -53,9 +53,9 @@ namespace APIViewWeb
 
         public async Task<IEnumerable<PullRequestModel>> GetPullRequestsAsync(string reviewId, string apiRevisionId = null) {
             var query = $"SELECT * FROM PullRequests c WHERE c.ReviewId = '{reviewId}' AND c.IsDeleted = false";
-            if (string.IsNullOrEmpty(apiRevisionId))
+            if (!string.IsNullOrEmpty(apiRevisionId))
             {
-                query += $" AND c.APIRevisionId = '{apiRevisionId}')";
+                query += $" AND c.APIRevisionId = '{apiRevisionId}'";
             }
 
             return await GetPullRequestFromQueryAsync(query);

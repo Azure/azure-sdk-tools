@@ -55,7 +55,7 @@ namespace APIViewIntegrationTests
             var reviewManager = testsBaseFixture.ReviewManager;
             var apiRevisionsManager = testsBaseFixture.APIRevisionManager;
             var user = testsBaseFixture.User;
-            var review = await testsBaseFixture.ReviewManager.CreateReviewAsync(packageName: "testPackageA", language: "Swagger", isClosed:false);
+            var review = await testsBaseFixture.ReviewManager.CreateReviewAsync(packageName: "testPackageA", language: "Swagger", isClosed: false);
 
             await apiRevisionsManager.AddAPIRevisionAsync(user: user, reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic, name: fileNameA,
                 label: "Revision1", fileStream: fileStreamA, language: "Swagger", awaitComputeDiff: true);
@@ -64,7 +64,7 @@ namespace APIViewIntegrationTests
 
             var apiRevisions = (await apiRevisionsManager.GetAPIRevisionsAsync(review.Id)).ToList();
 
-            var headingWithDiffInSections = apiRevisions[0].HeadingsOfSectionsWithDiff[apiRevisions[1].Id];
+            var headingWithDiffInSections = apiRevisions[1].HeadingsOfSectionsWithDiff[apiRevisions[0].Id];
             Assert.All(headingWithDiffInSections,
                 item => Assert.Contains(item, new int[] { 2, 16 }));
         }
@@ -85,7 +85,7 @@ namespace APIViewIntegrationTests
 
             var apiRevisions = (await apiRevisionsManager.GetAPIRevisionsAsync(review.Id)).ToList();
 
-            var headingWithDiffInSections = apiRevisions[0].HeadingsOfSectionsWithDiff[apiRevisions[1].Id];
+            var headingWithDiffInSections = apiRevisions[1].HeadingsOfSectionsWithDiff[apiRevisions[0].Id];
             Assert.All(headingWithDiffInSections,
                 item => Assert.Contains(item, new int[] { 20, 275 }));
         }

@@ -52,7 +52,7 @@
                 </form>
             </span>
             <textarea class="js-comment-raw d-none">@Model.CommentText</textarea>
-            @if (Model.CommentText.Contains("\r\n"))
+            @if (!string.IsNullOrEmpty(Model.CommentText) && Model.CommentText.Contains("\r\n"))
             {
                 var cmt = Model.CommentText.Split("\r\n");
                 string codeBlockString = "";

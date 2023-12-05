@@ -33,8 +33,13 @@ steps:
   displayName: (MacOS) Grant access to ~/.Azure
   condition: contains(variables['OSVmImage'], 'mac')
 
+- bash: az --version
+  displayName: Az CLI info
+
 - bash: dotnet --info
+  displayName: .NET information
 
 - pwsh: |
-    eng/common/TestResources/Import-AzModules.ps1
+    eng/common/scripts/Import-AzModules.ps1
     Get-Module -List
+  displayName: Az PowerShell info

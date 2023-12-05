@@ -22,7 +22,7 @@ namespace APIViewWeb.Managers.Interfaces
             string label = null, int? prNumber = null, string createdBy = "azure-sdk");
         public Task<bool> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string revisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "");
         public Task AddAPIRevisionAsync(ClaimsPrincipal user, string reviewId, APIRevisionType apiRevisionType, string name, string label, Stream fileStream, string language = "", bool awaitComputeDiff = false);
-        public Task AddAPIRevisionAsync(ClaimsPrincipal user, ReviewListItemModel review, APIRevisionType apiRevisionType, string name, string label, Stream fileStream, string language, bool awaitComputeDiff = false);
+        public Task<APIRevisionListItemModel> AddAPIRevisionAsync(ClaimsPrincipal user, ReviewListItemModel review, APIRevisionType apiRevisionType, string name, string label, Stream fileStream, string language, bool awaitComputeDiff = false);
         public Task RunAPIRevisionGenerationPipeline(List<APIRevisionGenerationPipelineParamModel> reviewGenParams, string language);
         public Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, string reviewId, string revisionId);
         public Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, APIRevisionListItemModel apiRevision);

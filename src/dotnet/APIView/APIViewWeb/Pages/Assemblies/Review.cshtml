@@ -325,21 +325,6 @@
                     </form>
                 </div>
             </li>
-            <li class="list-group-item">
-                <div class="form-check form-switch">
-                    <form asp-resource="@Model.ReviewContent.Review" class="form-inline" id="reviewCloseForm" method="post" asp-page-handler="ToggleClosed">
-                        @if (Model.ReviewContent.Review.IsClosed)
-                        {
-                            <input class="form-check-input" checked type="checkbox" role="switch" id="reviewCloseSwitch">
-                        }
-                        else
-                        {
-                            <input class="form-check-input" type="checkbox" role="switch" id="reviewCloseSwitch">
-                        }
-                        <label class="form-check-label" for="reviewCloseSwitch">Close Review</label>
-                    </form>
-                </div>
-            </li>
         </ul>
         <p class="h6">
             <a data-bs-toggle="collapse" href="#pageSettingsCollapse" aria-expanded="true" aria-controls="approvalCollapse">Page Settings&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
@@ -607,6 +592,13 @@
         </div>
 
         <div id="review-right" class="col-@reviewRightSize @reviewApprovedClass">
+            @if (!string.IsNullOrEmpty(Model.NotificationMessage))
+            {
+                <div class="alert alert-warning alert-dismissible fade show m-1" role="alert">
+                    @Model.NotificationMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
             <table class="code-window">
                 <tbody>
                     @foreach (var line in Model.ReviewContent.codeLines)

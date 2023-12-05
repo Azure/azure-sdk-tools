@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Any;
 using Microsoft.AspNetCore.Http;
+using Microsoft.VisualStudio.Services.ClientNotification;
 
 namespace APIViewWeb.Helpers
 {
@@ -240,12 +241,18 @@ namespace APIViewWeb.Helpers
             string revisionId = null, string diffRevisionId = null, bool showDocumentation = false, bool showDiffOnly = false, int diffContextSize = 3,
             string diffContextSeperator = "<br><span>.....</span><br>", HashSet<int> headingsOfSectionsWithDiff = null)
         {
+            var reviewPageContent = new ReviewContentModel()
+            {
+                Directive = ReviewContentModelDirective.ProceedWithPageLoad
+            };
+
             var userId = user.GetGitHubLogin();
             var review = await reviewManager.GetReviewAsync(user, reviewId);
 
             if (review == null)
             {
-                return default(ReviewContentModel);
+                reviewPageContent.Directive = ReviewContentModelDirective.TryGetlegacyReview;
+                return reviewPageContent;
             }
 
             var apiRevisions = await reviewRevisionsManager.GetAPIRevisionsAsync(reviewId);
@@ -254,8 +261,9 @@ namespace APIViewWeb.Helpers
             var activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions, APIRevisionType.Automatic);
             if (activeRevision == null)
             {
-                var notifcation = new NotificationModel() { Message = $"This review has no valid apiRevisons", Level = NotificatonLevel.Warning };
-                await signalRHubContext.Clients.Group(userId).SendAsync("RecieveNotification", notifcation);
+                reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevison;
+                reviewPageContent.NotificationMessage = $"Review with ID {reviewId} has no valid APIRevisons";
+                return reviewPageContent;
             }
 
             APIRevisionListItemModel diffRevision = null;
@@ -266,8 +274,9 @@ namespace APIViewWeb.Helpers
                 }
                 else
                 {
-                    var notifcation = new NotificationModel() { Message = $"A revision with ID {revisionId} does not exist for this review.", Level = NotificatonLevel.Warning };
-                    await signalRHubContext.Clients.Group(userId).SendAsync("RecieveNotification", notifcation);
+                    reviewPageContent.NotificationMessage = $"A revision with ID {revisionId} does not exist for review with id {reviewId}";
+                    reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevison;
+                    return reviewPageContent;
                 }
             } 
             var comments = await commentManager.GetReviewCommentsAsync(reviewId);
@@ -278,6 +287,8 @@ namespace APIViewWeb.Helpers
             var activeRevisionHtmlLines = activeRevisionRenderableCodeFile.Render(showDocumentation: showDocumentation);
 
             var codeLines = new CodeLineModel[0];
+            var getCodeLines = false;
+
 
 
             if (!string.IsNullOrEmpty(diffRevisionId))
@@ -297,17 +308,20 @@ namespace APIViewWeb.Helpers
 
                     if (!codeLines.Any())
                     {
-                        var notifcation = new NotificationModel() { Message = $"There is no diff between the two revisions. {activeRevision.Id} : {diffRevisionId}", Level = NotificatonLevel.Info };
-                        await signalRHubContext.Clients.Group(userId).SendAsync("RecieveNotification", notifcation);
+                        getCodeLines = true;
+                        reviewPageContent.NotificationMessage = $"There is no diff between the two revisions. {activeRevision.Id} : {diffRevisionId}";
+                        reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevison;
                     }
                 }
                 else
                 {
-                    var notifcation = new NotificationModel() { Message = $"A diffRevision with ID {diffRevisionId} does not exist for this review.", Level = NotificatonLevel.Warning };
-                    await signalRHubContext.Clients.Group(userId).SendAsync("RecieveNotification", notifcation);
+                    getCodeLines = true;
+                    reviewPageContent.NotificationMessage = $"A diffRevision with ID {diffRevisionId} does not exist for this review.";
+                    reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevison;
                 }
             }
-            else 
+
+            if (string.IsNullOrEmpty(diffRevisionId) || getCodeLines) 
             {
                 codeLines = CreateLines(diagnostics: fileDiagnostics, lines: activeRevisionHtmlLines, comments: comments);
             }
@@ -346,21 +360,19 @@ namespace APIViewWeb.Helpers
                 }
             }
 
-            var reviewPageContent = new ReviewContentModel
-            {
-                Review = review,
-                Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation,
-                codeLines = codeLines,
-                APIRevisionsGrouped = apiRevisions.OrderByDescending(c => c.CreatedOn).GroupBy(r => r.APIRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList()),
-                ActiveAPIRevision = activeRevision,
-                DiffAPIRevision = diffRevision,
-                TotalActiveConversiations = comments.Threads.Count(t => !t.IsResolved),
-                ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments),
-                ActiveConversationsInSampleRevisions = comments.Threads.Count(t => t.Comments.FirstOrDefault()?.CommentType == CommentType.SamplesRevision),
-                PreferredApprovers = preferredApprovers,
-                TaggableUsers = commentManager.GetTaggableUsers(),
-                PageHasLoadableSections = activeRevisionReviewCodeFile.LeafSections?.Any() ?? false
-            };
+            reviewPageContent.Review = review;
+            reviewPageContent.Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation;
+            reviewPageContent.codeLines = codeLines;
+            reviewPageContent.APIRevisionsGrouped = apiRevisions.OrderByDescending(c => c.CreatedOn).GroupBy(r => r.APIRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList());
+            reviewPageContent.ActiveAPIRevision = activeRevision;
+            reviewPageContent.DiffAPIRevision = diffRevision;
+            reviewPageContent.TotalActiveConversiations = comments.Threads.Count(t => !t.IsResolved);
+            reviewPageContent.ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments);
+            reviewPageContent.ActiveConversationsInSampleRevisions = comments.Threads.Count(t => t.Comments.FirstOrDefault()?.CommentType == CommentType.SamplesRevision);
+            reviewPageContent.PreferredApprovers = preferredApprovers;
+            reviewPageContent.TaggableUsers = commentManager.GetTaggableUsers();
+            reviewPageContent.PageHasLoadableSections = activeRevisionReviewCodeFile.LeafSections?.Any() ?? false;
+
             return reviewPageContent;
         }
 

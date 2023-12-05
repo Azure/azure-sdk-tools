@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
@@ -18,6 +19,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Common;
+using Microsoft.VisualStudio.Services.ClientNotification;
 
 
 namespace APIViewWeb.Pages.Assemblies
@@ -70,6 +72,8 @@ namespace APIViewWeb.Pages.Assemblies
         public bool ShowDocumentation { get; set; }
         [BindProperty(Name = "diffOnly", SupportsGet = true)]
         public bool ShowDiffOnly { get; set; }
+        [BindProperty(Name = "notificationMessage", SupportsGet = true)]
+        public string NotificationMessage { get; set; }
 
         /// <summary>
         /// Handler for loading page
@@ -90,7 +94,7 @@ namespace APIViewWeb.Pages.Assemblies
                 showDocumentation: ShowDocumentation, showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                 diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
-            if (ReviewContent == default(ReviewContentModel))
+            if (ReviewContent.Directive == ReviewContentModelDirective.TryGetlegacyReview)
             {
                 // Check if you can get review from legacy data
                 var legacyReview = await _reviewManager.GetLegacyReviewAsync(User, id);
@@ -101,7 +105,7 @@ namespace APIViewWeb.Pages.Assemblies
 
                     if (legacyRevision == null)
                     {
-                        return NotFound();
+                        return RedirectToPage("Index", new { notificationMessage = $"Review with ID : {id} was not found." });
                     }
                         
                     var review = await _reviewManager.GetReviewAsync(language: legacyRevision.Files[0].Language,
@@ -116,8 +120,13 @@ namespace APIViewWeb.Pages.Assemblies
                 }
                 else
                 {
-                    return NotFound();
+                    return RedirectToPage("Index", new { notificationMessage = $"Review with ID : {id} was not found." });
                 }
+            }
+
+            if (ReviewContent.Directive == ReviewContentModelDirective.ErrorDueToInvalidAPIRevison)
+            {
+                NotificationMessage = ReviewContent.NotificationMessage;
             }
 
             if (!ReviewContent.APIRevisionsGrouped.Any())
@@ -314,7 +323,7 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<IEnumerable<PullRequestModel>> GetAssociatedPullRequest()
         {
-            return await _pullRequestManager.GetPullRequestsModelAsync(ReviewContent.Review.Id);
+            return await _pullRequestManager.GetPullRequestsModelAsync(reviewId: ReviewContent.Review.Id, apiRevisionId: ReviewContent.ActiveAPIRevision.Id);
         }
 
         /// <summary>
@@ -323,8 +332,12 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<IEnumerable<PullRequestModel>> GetPRsOfAssoicatedReviews()
         {
-            var creatingPR = (await _pullRequestManager.GetPullRequestsModelAsync(ReviewContent.Review.Id)).FirstOrDefault();
-            return await _pullRequestManager.GetPullRequestsModelAsync(creatingPR.PullRequestNumber, creatingPR.RepoName);;
+            var creatingPR = (await _pullRequestManager.GetPullRequestsModelAsync(reviewId: ReviewContent.Review.Id, apiRevisionId: ReviewContent.ActiveAPIRevision.Id)).FirstOrDefault();
+            if (creatingPR != null)
+            {
+                return await _pullRequestManager.GetPullRequestsModelAsync(creatingPR.PullRequestNumber, creatingPR.RepoName);
+            }
+            return new List<PullRequestModel>();
         }
 
         /// <summary>

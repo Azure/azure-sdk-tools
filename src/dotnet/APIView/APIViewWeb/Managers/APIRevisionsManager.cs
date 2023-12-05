@@ -373,7 +373,7 @@ namespace APIViewWeb.Managers
         /// <param name="language"></param>
         /// <param name="awaitComputeDiff"></param>
         /// <returns></returns>
-        public async Task AddAPIRevisionAsync(
+        public async Task<APIRevisionListItemModel> AddAPIRevisionAsync(
             ClaimsPrincipal user,
             ReviewListItemModel review,
             APIRevisionType apiRevisionType,
@@ -383,48 +383,49 @@ namespace APIViewWeb.Managers
             string language,
             bool awaitComputeDiff = false)
         {
-            var revision = GetNewAPIRevisionAsync(
+            var apiRevision = GetNewAPIRevisionAsync(
                 reviewId: review.Id,
                 apiRevisionType: apiRevisionType,
                 packageName: review.PackageName,
                 language: review.Language,
-                createdBy: review.CreatedBy,
+                createdBy: user.GetGitHubLogin(),
                 label: label);
 
             var codeFile = await _codeFileManager.CreateCodeFileAsync(
-                revision.Id,
+                apiRevision.Id,
                 name,
-                fileStream,
                 true,
+                fileStream,
                 language);
 
-            revision.Files.Add(codeFile);
+            apiRevision.Files.Add(codeFile);
 
             var languageService = language != null ? _languageServices.FirstOrDefault(l => l.Name == language) : _languageServices.FirstOrDefault(s => s.IsSupportedFile(name));
             // Run pipeline to generate the review if sandbox is enabled
             if (languageService != null && languageService.IsReviewGenByPipeline)
             {
                 // Run offline review gen for review and reviewCodeFileModel
-                await GenerateAPIRevisionInExternalResource(review, revision.Id, codeFile.FileId, name, language);
+                await GenerateAPIRevisionInExternalResource(review, apiRevision.Id, codeFile.FileId, name, language);
             }
 
             // auto subscribe revision creation user
             await _notificationManager.SubscribeAsync(review, user);
             await _reviewsRepository.UpsertReviewAsync(review);
-            await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
-            await _notificationManager.NotifySubscribersOnNewRevisionAsync(review, revision, user);
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            await _notificationManager.NotifySubscribersOnNewRevisionAsync(review, apiRevision, user);
 
             if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
             {
                 if (awaitComputeDiff)
                 {
-                    await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, revision);
+                    await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, apiRevision);
                 }
                 else
                 {
-                    _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, revision));
+                    _ = Task.Run(async () => await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, apiRevision));
                 }
             }
+            return apiRevision;
             //await GenerateAIReview(review, revision);
         }
 

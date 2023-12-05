@@ -262,8 +262,8 @@
         }
         @if (Model.ReviewContent.ActiveAPIRevision.APIRevisionType == APIRevisionType.PullRequest)
         {
-            var prsOfAssociatedReviews = await Model.GetPRsOfAssoicatedReviews();
-            @if (prsOfAssociatedReviews != null && prsOfAssociatedReviews.Count() > 1)
+            var prsOfAssociatedAPIRevisions = await Model.GetPRsOfAssoicatedReviews();
+            @if (prsOfAssociatedAPIRevisions != null && prsOfAssociatedAPIRevisions.Count() > 1)
             {
                 var associatedReviewsState = String.Empty;
                 if (Request.Cookies.ContainsKey("associatedReviewsCollapse"))
@@ -272,16 +272,17 @@
                         associatedReviewsState = " show";
                 }
                 <p class="h6">
-                    <a data-bs-toggle="collapse" href="#associatedReviewsCollapse" aria-expanded="true" aria-controls="associatedReviewsCollapse">Associated Reviews&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+                    <a data-bs-toggle="collapse" href="#associatedReviewsCollapse" aria-expanded="true" aria-controls="associatedReviewsCollapse">Associated APIRevisions&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
                 </p>
                 <ul class="list-group collapse mb-3@(associatedReviewsState)" id="associatedReviewsCollapse">
-                    @foreach (var pr in prsOfAssociatedReviews)
+                    @foreach (var pr in prsOfAssociatedAPIRevisions)
                     {
                         if (pr.ReviewId != Model.ReviewContent.Review.Id)
                         {
                             var url = @Url.ActionLink("Review", "Assemblies", new
                             {
                                 id = pr.ReviewId,
+                                revisionId = pr.APIRevisionId
                             });
                             <li class="list-group-item">
                                 <a href="@url" target="_blank">@pr.Language/@pr.PackageName</a>
@@ -322,21 +323,6 @@
                             <input class="form-check-input" type="checkbox" role="switch" disabled id="reviewSubscribeSwitch" data-bs-placement="bottom" data-bs-toggle="tooltip" title="Link a microsoft.com email to your Github account to subscribe">
                         }
                         <label class="form-check-label" for="reviewSubscribeSwitch">Subscribe</label>
-                    </form>
-                </div>
-            </li>
-            <li class="list-group-item">
-                <div class="form-check form-switch">
-                    <form asp-resource="@Model.ReviewContent.Review" class="form-inline" id="reviewCloseForm" method="post" asp-page-handler="ToggleClosed">
-                        @if (Model.ReviewContent.Review.IsClosed)
-                        {
-                            <input class="form-check-input" checked type="checkbox" role="switch" id="reviewCloseSwitch">
-                        }
-                        else
-                        {
-                            <input class="form-check-input" type="checkbox" role="switch" id="reviewCloseSwitch">
-                        }
-                        <label class="form-check-label" for="reviewCloseSwitch">Close Review</label>
                     </form>
                 </div>
             </li>
@@ -607,6 +593,13 @@
         </div>
 
         <div id="review-right" class="col-@reviewRightSize @reviewApprovedClass">
+            @if (!string.IsNullOrEmpty(Model.NotificationMessage))
+            {
+                <div class="alert alert-warning alert-dismissible fade show m-1" role="alert">
+                    @Model.NotificationMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
             <table class="code-window">
                 <tbody>
                     @foreach (var line in Model.ReviewContent.codeLines)

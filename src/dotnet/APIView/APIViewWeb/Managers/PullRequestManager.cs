@@ -53,8 +53,8 @@ namespace APIViewWeb.Managers
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
         }
 
-        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModelAsync(string reviewId) {
-            return await _pullRequestsRepository.GetPullRequestsAsync(reviewId);
+        public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModelAsync(string reviewId, string apiRevisionId = null) {
+            return await _pullRequestsRepository.GetPullRequestsAsync(reviewId, apiRevisionId);
         }
 
         public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModelAsync(int pullRequestNumber, string repoName)

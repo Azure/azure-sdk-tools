@@ -5,6 +5,13 @@ using APIViewWeb.Models;
 
 namespace APIViewWeb.LeanModels
 {
+    public enum ReviewContentModelDirective
+    {
+        ProceedWithPageLoad = 0,
+        TryGetlegacyReview,
+        ErrorDueToInvalidAPIRevison
+    }
+
     public class ReviewContentModel
     {
         public ReviewListItemModel Review { get; set; }
@@ -19,5 +26,7 @@ namespace APIViewWeb.LeanModels
         public HashSet<string> PreferredApprovers = new HashSet<string>();
         public HashSet<GithubUser> TaggableUsers { get; set; }
         public bool PageHasLoadableSections { get; set; }
+        public string NotificationMessage { get; set; }
+        public ReviewContentModelDirective Directive { get; set; }
     }
 }

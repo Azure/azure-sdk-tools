@@ -69,7 +69,16 @@ namespace APIViewWeb
 
         public async Task<LegacyReviewModel> GetLegacyReviewAsync(string reviewId)
         {
-            return await _legacyReviewsContainer.ReadItemAsync<LegacyReviewModel>(reviewId, new PartitionKey(reviewId));
+            var review = default(LegacyReviewModel);
+            try
+            {
+                review = await _legacyReviewsContainer.ReadItemAsync<LegacyReviewModel>(reviewId, new PartitionKey(reviewId));
+            }
+            catch (CosmosException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                return review;
+            }
+            return review;
         }
 
         public async Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false)

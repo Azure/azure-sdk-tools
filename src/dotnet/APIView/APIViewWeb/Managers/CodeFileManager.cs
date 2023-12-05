@@ -60,7 +60,7 @@ namespace APIViewWeb.Managers
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
                 stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, format: "file", project: project);
-                codeFile = await CreateCodeFileAsync(Path.GetFileName(originalFileName), stream, false, originalFileStream);
+                codeFile = await CreateCodeFileAsync(originalName: Path.GetFileName(originalFileName), fileStream: stream, runAnalysis: false, memoryStream: originalFileStream);
             }
             else
             {
@@ -93,19 +93,20 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="apiRevisionId"></param>
         /// <param name="originalName"></param>
-        /// <param name="fileStream"></param>
         /// <param name="runAnalysis"></param>
+        /// <param name="fileStream"></param>
         /// <param name="language"></param>
         /// <returns></returns>
         public async Task<APICodeFileModel> CreateCodeFileAsync(
             string apiRevisionId,
             string originalName,
-            Stream fileStream,
             bool runAnalysis,
-            string language)
+            Stream fileStream = null,
+            string language = null)
         {
             using var memoryStream = new MemoryStream();
-            var codeFile = await CreateCodeFileAsync(originalName, fileStream, runAnalysis, memoryStream, language);
+            var codeFile = await CreateCodeFileAsync(originalName: originalName, runAnalysis: runAnalysis,
+                memoryStream: memoryStream, fileStream: fileStream, language: language);
             var reviewCodeFileModel = await CreateReviewCodeFileModel(apiRevisionId, memoryStream, codeFile);
             reviewCodeFileModel.FileName = originalName;
             return reviewCodeFileModel;
@@ -115,16 +116,16 @@ namespace APIViewWeb.Managers
         /// Create Code File
         /// </summary>
         /// <param name="originalName"></param>
-        /// <param name="fileStream"></param>
         /// <param name="runAnalysis"></param>
         /// <param name="memoryStream"></param>
+        /// <param name="fileStream"></param>
         /// <param name="language"></param>
         /// <returns></returns>
         public async Task<CodeFile> CreateCodeFileAsync(
             string originalName,
-            Stream fileStream,
             bool runAnalysis,
             MemoryStream memoryStream,
+            Stream fileStream = null,
             string language = null)
         {
             var languageService = _languageServices.FirstOrDefault(s => (language != null ? s.Name == language : s.IsSupportedFile(originalName)));

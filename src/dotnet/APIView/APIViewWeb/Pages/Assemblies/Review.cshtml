@@ -282,6 +282,7 @@
                             var url = @Url.ActionLink("Review", "Assemblies", new
                             {
                                 id = pr.ReviewId,
+                                revisionId = pr.APIRevisionId
                             });
                             <li class="list-group-item">
                                 <a href="@url" target="_blank">@pr.Language/@pr.PackageName</a>

@@ -323,7 +323,7 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<IEnumerable<PullRequestModel>> GetAssociatedPullRequest()
         {
-            return await _pullRequestManager.GetPullRequestsModelAsync(ReviewContent.Review.Id);
+            return await _pullRequestManager.GetPullRequestsModelAsync(reviewId: ReviewContent.Review.Id, apiRevisionId: ReviewContent.ActiveAPIRevision.Id);
         }
 
         /// <summary>
@@ -332,8 +332,12 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<IEnumerable<PullRequestModel>> GetPRsOfAssoicatedReviews()
         {
-            var creatingPR = (await _pullRequestManager.GetPullRequestsModelAsync(ReviewContent.Review.Id)).FirstOrDefault();
-            return await _pullRequestManager.GetPullRequestsModelAsync(creatingPR.PullRequestNumber, creatingPR.RepoName);;
+            var creatingPR = (await _pullRequestManager.GetPullRequestsModelAsync(reviewId: ReviewContent.Review.Id, apiRevisionId: ReviewContent.ActiveAPIRevision.Id)).FirstOrDefault();
+            if (creatingPR != null)
+            {
+                return await _pullRequestManager.GetPullRequestsModelAsync(creatingPR.PullRequestNumber, creatingPR.RepoName);
+            }
+            return new List<PullRequestModel>();
         }
 
         /// <summary>

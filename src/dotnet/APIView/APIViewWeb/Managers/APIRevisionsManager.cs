@@ -388,7 +388,7 @@ namespace APIViewWeb.Managers
                 apiRevisionType: apiRevisionType,
                 packageName: review.PackageName,
                 language: review.Language,
-                createdBy: review.CreatedBy,
+                createdBy: user.GetGitHubLogin(),
                 label: label);
 
             var codeFile = await _codeFileManager.CreateCodeFileAsync(

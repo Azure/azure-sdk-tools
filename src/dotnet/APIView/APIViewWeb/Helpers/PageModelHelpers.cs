@@ -18,6 +18,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Any;
 using Microsoft.AspNetCore.Http;
 using Microsoft.VisualStudio.Services.ClientNotification;
+using Microsoft.TeamFoundation.Common;
 
 namespace APIViewWeb.Helpers
 {
@@ -480,6 +481,11 @@ namespace APIViewWeb.Helpers
             if (!String.IsNullOrWhiteSpace(apiRevision.Label))
             { 
                 label = $"{label} | {apiRevision.Label}";
+            }
+
+            if (apiRevision.APIRevisionType == APIRevisionType.PullRequest && apiRevision.PullRequestNo != null)
+            {
+                label = $"PR {apiRevision.PullRequestNo} | {label}";
             }
 
             if (addType)

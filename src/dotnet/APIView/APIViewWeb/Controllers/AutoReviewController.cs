@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Microsoft.VisualStudio.Services.Account;
+using Octokit;
 
 namespace APIViewWeb.Controllers
 {
@@ -155,9 +156,7 @@ namespace APIViewWeb.Controllers
                         !await _apiRevisionsManager.IsAPIRevisionTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
                         !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
                     {
-                        // Check if user is authorized to modify automatic review
-                        await ManagerHelpers.AssertAutomaticAPIRevisionModifier(user: User, apiRevision: apiRevision, authorizationService: _authorizationService);
-                        await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(user: User, apiRevision: latestAutomaticAPIRevision);
+                        await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
                         latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
                     }
 

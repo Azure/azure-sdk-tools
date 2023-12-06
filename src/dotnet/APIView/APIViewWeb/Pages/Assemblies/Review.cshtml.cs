@@ -269,7 +269,7 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<IActionResult> OnPostToggleReviewApprovalAsync(string id, string revisionId)
         {
             await _reviewManager.ToggleReviewApprovalAsync(User, id, revisionId);
-            return RedirectToPage(new { id = id });
+            return RedirectToPage(new { id = id, revisionId = revisionId });
         }
 
         /// <summary>
@@ -285,7 +285,7 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 await OnPostToggleReviewApprovalAsync(id, revisionId);
             }
-            return RedirectToPage(new { id = id });
+            return RedirectToPage(new { id = id, revisionId = revisionId });
         }
 
         /// <summary>

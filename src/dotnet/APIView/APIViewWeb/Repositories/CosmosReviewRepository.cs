@@ -101,9 +101,7 @@ namespace APIViewWeb
 
         public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAssignedToUser(string userName)
         {
-            var query = $"SELECT * FROM Reviews r" +
-                $" JOIN ar IN r.AssignedReviewers" +
-                $" WHERE ar.AssingedTo = @userName";
+            var query = "SELECT * FROM Reviews r WHERE ARRAY_CONTAINS(r.AssignedReviewers, { 'AssingedTo': '" +userName + "' }, true)";
 
             var reviews = new List<ReviewListItemModel>();
             var queryDefinition = new QueryDefinition(query).WithParameter("@userName", userName);

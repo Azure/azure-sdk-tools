@@ -28,6 +28,9 @@ namespace PipelineGenerator.Conventions
         // See https://dev.azure.com/mseng/1ES/_wiki/wikis/SaCE%20Team%20Wiki/13937/How-to-obtain-Azure-DevOps-organization-ID-or-name
         private const string PipelineClassificationOrganizationId = "0fb41ef4-5012-48a9-bf39-4ee3de03ee35";
         private const string PipelineClassificationBulkTagUpdateUrl = "https://artifact-tags-api.prod.space.microsoft.com/tags/bulk";
+        // Service Tree ID for Azure SDK in the product catalog
+        private const string ProductCatalogServiceId = "4405e061-966a-4249-afdd-f7435f54a510";
+        private const string ProductCatalogAssociationUrl = $"https://product-catalog-api.pmeprod.space.microsoft.com/products/{ProductCatalogServiceId}/artifacts";
 
         private const string ReportBuildStatusKey = "reportBuildStatus";
 
@@ -43,6 +46,24 @@ namespace PipelineGenerator.Conventions
         // 1es required classification. Uses external API to set classification
         public enum PipelineClassifications { Production, NonProduction, Empty }
         public abstract PipelineClassifications Classification { get; }
+
+        public class TagRequest
+        {
+            [JsonPropertyName("artifactId")]
+            public string ArtifactId { get; set; }
+            [JsonPropertyName("artifactType")]
+            public string ArtifactType { get; set; }
+            [JsonPropertyName("tags")]
+            public List<string> Tags { get; set; }
+            [JsonPropertyName("autoClassificationSource")]
+            public string AutoClassificationSource { get; set; }
+        }
+
+        public class SaveTagRequests
+        {
+            [JsonPropertyName("saveTagRequests")]
+            public List<TagRequest> Requests { get; set; }
+        }
 
         public string GetDefinitionName(SdkComponent component)
         {
@@ -180,7 +201,7 @@ namespace PipelineGenerator.Conventions
                 return;
             }
 
-            var allTagRequests = new List<object>();
+            var allTagRequests = new List<TagRequest>();
 
             foreach (var definition in definitions)
             {
@@ -191,17 +212,17 @@ namespace PipelineGenerator.Conventions
 
                 var projectId = definition.Project.Id.ToString();
                 var artifactId = $"vsts://{PipelineClassificationOrganizationId}/{projectId}/{definition.Id}";
-                var tagRequest = new
+                var tagRequest = new TagRequest
                 {
-                    artifactId = artifactId,
-                    artifactType = "Microsoft.AzureDevOps/BuildDefinition",
+                    ArtifactId = artifactId,
+                    ArtifactType = "Microsoft.AzureDevOps/BuildDefinition",
                     // Accepted classifications are 'Production' and 'NonProduction'
-                    tags = new List<string>(),
-                    autoClassificationSource = "azure-sdk-pipeline-generator"
+                    Tags = new List<string>(),
+                    AutoClassificationSource = "azure-sdk-pipeline-generator"
                 };
                 if (this.Classification.ToString() != PipelineClassifications.Empty.ToString())
                 {
-                    tagRequest.tags.Add(this.Classification.ToString());
+                    tagRequest.Tags.Add(this.Classification.ToString());
                 }
                 allTagRequests.Add(tagRequest);
             }
@@ -212,19 +233,21 @@ namespace PipelineGenerator.Conventions
             }
 
             using var client = new HttpClient();
+            client.Timeout = TimeSpan.FromMinutes(3);
             var token = Environment.GetEnvironmentVariable(Context.ProductCatalogTokenEnvVar);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             Logger.LogInformation($"Updating {allTagRequests.Count} pipeline classifications at {PipelineClassificationBulkTagUpdateUrl}");
 
-            // The product classification bulk API times out at 100 sec if the tag update count is too large.
+            // The product classification bulk API takes a very long time, so use small update batches
             var batchSize = 25;
             var batch = allTagRequests.Take(batchSize);
             while (batch.Any())
             {
                 // See https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/product-catalog/how-to/use-product-catalog-api
                 // Schema - https://artifact-tags-api.prod.space.microsoft.com/swagger/index.html?url=/swagger/v1/swagger.json#/Tags/put_tags
-                var json = JsonSerializer.Serialize(new { saveTagRequests = batch.ToList() });
+                var bulkRequest = new SaveTagRequests { Requests = batch.ToList() };
+                var json = JsonSerializer.Serialize(bulkRequest);
                 var content = new StringContent(json, Encoding.UTF8, "application/json-patch+json");
                 if (Context.WhatIf)
                 {
@@ -232,7 +255,7 @@ namespace PipelineGenerator.Conventions
                     foreach (var entry in batch)
                     {
                         var pretty = JsonSerializer.Serialize(entry, new JsonSerializerOptions { WriteIndented = true });
-                        Logger.LogDebug($"{pretty}");
+                        Logger.LogDebug("{pretty}", pretty);
                     }
                 } else
                 {
@@ -247,6 +270,30 @@ namespace PipelineGenerator.Conventions
                     {
                         throw new Exception("Did not receive json response from 1es pipeline classification API. " +
                                             "This is likely due to an invalid bearer token returning a login page for a browser.");
+                    }
+                }
+                Logger.LogInformation("Updating product catalog/service tree associations for {Count} pipelines", batch.Count());
+                foreach (var pipeline in batch)
+                {
+                    var productJson = JsonSerializer.Serialize(new {
+                        artifactId = pipeline.ArtifactId,
+                        artifactType = pipeline.ArtifactType
+                    });
+                    var productContent = new StringContent(productJson, Encoding.UTF8, "application/json");
+                    if (Context.WhatIf)
+                    {
+                        Logger.LogInformation("[WHATIF] Updating product catalog association for service {ProductCatalogServiceId}:", ProductCatalogServiceId);
+                        Logger.LogInformation("[WHATIF] {productJson}", productJson);
+                    }
+                    else
+                    {
+                        var updateUrl = ProductCatalogAssociationUrl + $"?artifactType={pipeline.ArtifactType}&artifactId={pipeline.ArtifactId}";
+                        var productSw = new Stopwatch();
+                        productSw.Start();
+                        var productResponse = await client.PutAsync(updateUrl, productContent);
+                        productResponse.EnsureSuccessStatusCode();
+                        productSw.Stop();
+                        Logger.LogInformation($"Updated product catalog association in {productSw.ElapsedMilliseconds / 1000}s");
                     }
                 }
 

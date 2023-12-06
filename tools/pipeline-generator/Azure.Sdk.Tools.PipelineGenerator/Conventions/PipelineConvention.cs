@@ -65,6 +65,12 @@ namespace PipelineGenerator.Conventions
             public List<TagRequest> Requests { get; set; }
         }
 
+        public class ProductCatalogAssociation
+        {
+            [JsonPropertyName("artifactId")]
+            public string ArtifactId { get; set; }
+        }
+
         public string GetDefinitionName(SdkComponent component)
         {
             var baseName = component.Variant == null
@@ -237,6 +243,16 @@ namespace PipelineGenerator.Conventions
             var token = Environment.GetEnvironmentVariable(Context.ProductCatalogTokenEnvVar);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
+            var existingProductCatalogAssociations = await client.GetAsync(ProductCatalogAssociationUrl);
+            var result = await existingProductCatalogAssociations.Content.ReadAsStringAsync();
+            var deserialized = JsonSerializer.Deserialize<Dictionary<string, List<ProductCatalogAssociation>>>(result);
+            var associations = deserialized["value"];
+            var associationCache = new HashSet<string>();
+            foreach (var association in associations)
+            {
+                associationCache.Add(association.ArtifactId);
+            }
+
             Logger.LogInformation($"Updating {allTagRequests.Count} pipeline classifications at {PipelineClassificationBulkTagUpdateUrl}");
 
             // The product classification bulk API takes a very long time, so use small update batches
@@ -272,7 +288,7 @@ namespace PipelineGenerator.Conventions
                                             "This is likely due to an invalid bearer token returning a login page for a browser.");
                     }
                 }
-                Logger.LogInformation("Updating product catalog/service tree associations for {Count} pipelines", batch.Count());
+                Logger.LogInformation("Ensuring product catalog/service tree associations exist for {Count} pipelines", batch.Count());
                 foreach (var pipeline in batch)
                 {
                     var productJson = JsonSerializer.Serialize(new {
@@ -280,10 +296,14 @@ namespace PipelineGenerator.Conventions
                         artifactType = pipeline.ArtifactType
                     });
                     var productContent = new StringContent(productJson, Encoding.UTF8, "application/json");
+                    if (associationCache.Contains(pipeline.ArtifactId))
+                    {
+                        Logger.LogInformation("Product catalog association already exists for {ArtifactId}", pipeline.ArtifactId);
+                        continue;
+                    }
                     if (Context.WhatIf)
                     {
-                        Logger.LogInformation("[WHATIF] Updating product catalog association for service {ProductCatalogServiceId}:", ProductCatalogServiceId);
-                        Logger.LogInformation("[WHATIF] {productJson}", productJson);
+                        Logger.LogInformation($"[WHATIF] Adding artifact {pipeline.ArtifactId} to product catalog.");
                     }
                     else
                     {

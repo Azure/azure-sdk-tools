@@ -10,15 +10,11 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using APIViewWeb.LeanModels;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
-using Microsoft.OpenApi.Any;
-using Microsoft.AspNetCore.Http;
-using Microsoft.VisualStudio.Services.ClientNotification;
-using Microsoft.TeamFoundation.Common;
+
 
 namespace APIViewWeb.Helpers
 {
@@ -452,7 +448,7 @@ namespace APIViewWeb.Helpers
                     diffRevision.HeadingsOfSectionsWithDiff[activeRevision.Id] : new HashSet<int>();
 
                 codeLines = PageModelHelpers.CreateLines(diagnostics: fileDiagnostics, lines: diffLines, comments: comments,
-                    showDiffOnly: true, reviewDiffContextSize: diffContextSize, diffContextSeparator: diffContextSeperator,
+                    showDiffOnly: false, reviewDiffContextSize: diffContextSize, diffContextSeparator: diffContextSeperator,
                     headingsOfSectionsWithDiff: headingsOfSectionsWithDiff);
             }
             else

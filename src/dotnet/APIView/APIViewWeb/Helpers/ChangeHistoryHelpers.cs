@@ -192,7 +192,7 @@ namespace APIViewWeb.Helpers
                     actionReverted = action;
                     break;
                 case "Deleted":
-                    Enum.TryParse(typeof(E), "Undeleted", out object ud);
+                    Enum.TryParse(typeof(E), "UnDeleted", out object ud);
                     actionAdded = action;
                     actionReverted = (E)ud;
                     break;

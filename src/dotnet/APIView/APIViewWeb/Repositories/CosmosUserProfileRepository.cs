@@ -17,7 +17,7 @@ namespace APIViewWeb
 
         public CosmosUserProfileRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
-            _userProfileContainer = cosmosClient.GetContainer("APIViewV2", "Profiles");
+            _userProfileContainer = cosmosClient.GetContainer("APIView", "Profiles");
         }
 
         public async Task<UserProfileModel> TryGetUserProfileAsync(string UserName)

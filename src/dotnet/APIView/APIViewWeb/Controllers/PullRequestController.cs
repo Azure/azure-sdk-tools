@@ -241,9 +241,15 @@ namespace APIViewWeb.Controllers
                 }
             }
 
-            await _apiRevisionsManager.CreateAPIRevisionAsync(
+            var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
                 userName: pullRequestModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
                 label: String.Empty, memoryStream: memoryStream, codeFile: codeFile, originalName: originalFileName, prNumber: prNumber);
+
+            if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+            {
+                await _apiRevisionsManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: review.Id, apiRevision: newAPIRevision);
+            }
+            await  _pullRequestManager.UpsertPullRequestAsync(pullRequestModel);
         }
 
 

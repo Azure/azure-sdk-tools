@@ -190,9 +190,14 @@ namespace APIViewWeb.Managers
             var comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
             foreach (var comment in comments)
             {
-                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Resolved, user.GetGitHubLogin());
-                comment.ChangeHistory = changeUpdate.ChangeHistory;
-                comment.IsResolved = changeUpdate.ChangeStatus;
+                comment.ChangeHistory.Add(
+                    new CommentChangeHistoryModel()
+                    {
+                        ChangeAction = CommentChangeAction.Resolved,
+                        ChangedBy = user.GetGitHubLogin(),
+                        ChangedOn = DateTime.Now,
+                    });
+                comment.IsResolved = true;
                 await _commentsRepository.UpsertCommentAsync(comment);
             }
         }
@@ -202,9 +207,14 @@ namespace APIViewWeb.Managers
             var comments = await _commentsRepository.GetCommentsAsync(reviewId, lineId);
             foreach (var comment in comments)
             {
-                var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(comment.ChangeHistory, CommentChangeAction.Resolved, user.GetGitHubLogin());
-                comment.ChangeHistory = changeUpdate.ChangeHistory;
-                comment.IsResolved = changeUpdate.ChangeStatus;
+                comment.ChangeHistory.Add(
+                    new CommentChangeHistoryModel()
+                    {
+                        ChangeAction = CommentChangeAction.UnResolved,
+                        ChangedBy = user.GetGitHubLogin(),
+                        ChangedOn = DateTime.Now,
+                    });
+                comment.IsResolved = false;
                 await _commentsRepository.UpsertCommentAsync(comment);
             }
         }

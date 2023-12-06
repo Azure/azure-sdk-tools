@@ -13,7 +13,7 @@ namespace APIViewWeb.Models
             ReviewId = reviewId;
             LineId = lineId;
             LineClass = comments.FirstOrDefault().SectionClass;
-            Comments = comments.Where(c => !c.IsResolved);
+            Comments = comments;
             var resolveComment = comments.FirstOrDefault(c => c.IsResolved);
             IsResolved = resolveComment != null;
             ResolvedBy = resolveComment?.CreatedBy;

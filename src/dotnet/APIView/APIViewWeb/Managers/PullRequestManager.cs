@@ -52,6 +52,10 @@ namespace APIViewWeb.Managers
             var pullRequestReviewCloseAfter = _configuration["pull-request-review-close-after-days"] ?? "30";
             _pullRequestCleanupDays = int.Parse(pullRequestReviewCloseAfter);
         }
+        public async Task UpsertPullRequestAsync(PullRequestModel pullRequestModel)
+        {
+            await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
+        }
 
         public async Task<IEnumerable<PullRequestModel>> GetPullRequestsModelAsync(string reviewId, string apiRevisionId = null) {
             return await _pullRequestsRepository.GetPullRequestsAsync(reviewId, apiRevisionId);

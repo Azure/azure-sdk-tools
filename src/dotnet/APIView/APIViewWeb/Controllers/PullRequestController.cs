@@ -190,22 +190,26 @@ namespace APIViewWeb.Controllers
             {
                 if (codeFile.Language == "Swagger" || codeFile.Language == "TypeSpec")
                 {
-                    var baseLineRenderedCodeFile = new RenderedCodeFile(baselineCodeFile);
-                    if (_codeFileManager.IsAPICodeFilesTheSame(renderedCodeFile, baseLineRenderedCodeFile))
-                    {
-                        return;
-                    }
+                    // IsAPICodeFilesTheSame for Swagger should also check subSections stored in LeafSections
+                    // var baseLineRenderedCodeFile = new RenderedCodeFile(baselineCodeFile);
+                    // if (_codeFileManager.IsAPICodeFilesTheSame(renderedCodeFile, baseLineRenderedCodeFile))
+                    // {
+                    //     return;
+                    // }
+                    // 
+                    // var createBaseLine = true;
+                    // 
+                    // foreach (var apiRevision in apiRevisions)
+                    // {
+                    //     if (await _apiRevisionsManager.IsAPIRevisionTheSame(apiRevision, baseLineRenderedCodeFile))
+                    //     {
+                    //         createBaseLine = false;
+                    //         break;
+                    //     }
+                    // }
 
                     var createBaseLine = true;
 
-                    foreach (var apiRevision in apiRevisions)
-                    {
-                        if (await _apiRevisionsManager.IsAPIRevisionTheSame(apiRevision, baseLineRenderedCodeFile))
-                        {
-                            createBaseLine = false;
-                            break;
-                        }
-                    }
                     if (createBaseLine)
                     {
                         await _apiRevisionsManager.CreateAPIRevisionAsync(

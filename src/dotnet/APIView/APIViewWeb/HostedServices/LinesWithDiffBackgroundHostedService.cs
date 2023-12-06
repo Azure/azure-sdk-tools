@@ -45,7 +45,7 @@ namespace APIViewWeb.HostedServices
              
                         foreach (var apiRevision in apiRevisions)
                         {
-                            await _apiRevisionManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: review.Id, apiRevision: apiRevision);
+                            await _apiRevisionManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: review.Id, apiRevision: apiRevision, apiRevisions: apiRevisions);
                         }
                     }
                 }

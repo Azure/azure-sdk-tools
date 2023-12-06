@@ -273,7 +273,6 @@ namespace APIViewWeb.Managers
 
             foreach (var rev in apiRevisions)
             {
-                // Calculate diff against previous revisions only. APIView only shows diff against revision lower than current one.
                 if (rev.Id != apiRevision.Id)
                 {
                     var lineNumbersForHeadingOfSectionWithDiff = new HashSet<int>();

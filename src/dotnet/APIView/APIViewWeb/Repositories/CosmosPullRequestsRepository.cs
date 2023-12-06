@@ -75,7 +75,7 @@ namespace APIViewWeb
             var filtered = new List<PullRequestModel>();
             foreach(var pr in allRequests)
             {
-                if(!await IsApiReviewClosed(pr.ReviewId))
+                if(!string.IsNullOrEmpty(pr.ReviewId) && !await IsApiReviewClosed(pr.ReviewId))
                     filtered.Add(pr);
             }
 

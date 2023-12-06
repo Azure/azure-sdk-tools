@@ -110,49 +110,50 @@ namespace APIViewWeb.Controllers
             string language = null,
             string project = "public")
         {
-           var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
-           var operation = _telemetryClient.StartOperation(requestTelemetry);
-           originalFileName = originalFileName ?? codeFileName;
-           var repoInfo = repoName.Split("/");
-           var pullRequestModel = await _pullRequestManager.GetPullRequestModelAsync(prNumber, repoName, packageName, originalFileName, language);
-           if (pullRequestModel == null)
-           {
-               return "";
-           }
-           if (pullRequestModel.Commits.Any(c => c == commitSha))
-           {
-               // PR commit is already processed. No need to reprocess it again.
-               return !string.IsNullOrEmpty(pullRequestModel.ReviewId) ? ManagerHelpers.ResolveReviewUrl(pullRequest: pullRequestModel, hostName: hostName) : "";
-           }
+            language = LanguageServiceHelpers.MapLanguageAlias(language: language);
+            var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
+            var operation = _telemetryClient.StartOperation(requestTelemetry);
+            originalFileName = originalFileName ?? codeFileName;
+            var repoInfo = repoName.Split("/");
+            var pullRequestModel = await _pullRequestManager.GetPullRequestModelAsync(prNumber, repoName, packageName, originalFileName, language);
+            if (pullRequestModel == null)
+            {
+                return "";
+            }
+            if (pullRequestModel.Commits.Any(c => c == commitSha))
+            {
+                // PR commit is already processed. No need to reprocess it again.
+                return !string.IsNullOrEmpty(pullRequestModel.ReviewId) ? ManagerHelpers.ResolveReviewUrl(pullRequest: pullRequestModel, hostName: hostName) : "";
+            }
            
-           pullRequestModel.Commits.Add(commitSha);
-           //Check if PR owner is part of Azure//Microsoft org in GitHub
-           await ManagerHelpers.AssertPullRequestCreatorPermission(prModel: pullRequestModel, allowedListBotAccounts: _allowedListBotAccounts,
-               openSourceManager: _openSourceManager, telemetryClient: _telemetryClient);
+            pullRequestModel.Commits.Add(commitSha);
+            //Check if PR owner is part of Azure//Microsoft org in GitHub
+            await ManagerHelpers.AssertPullRequestCreatorPermission(prModel: pullRequestModel, allowedListBotAccounts: _allowedListBotAccounts,
+                openSourceManager: _openSourceManager, telemetryClient: _telemetryClient);
            
-           using var memoryStream = new MemoryStream();
-           using var baselineStream = new MemoryStream();
-           var codeFile = await _codeFileManager.GetCodeFileAsync(
-               repoName: repoName, buildId: buildId, artifactName: artifactName,
-               packageName: packageName, originalFileName: originalFileName,
-               codeFileName: codeFileName, originalFileStream: memoryStream,
-               baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
-               project: project);
+            using var memoryStream = new MemoryStream();
+            using var baselineStream = new MemoryStream();
+            var codeFile = await _codeFileManager.GetCodeFileAsync(
+                repoName: repoName, buildId: buildId, artifactName: artifactName,
+                packageName: packageName, originalFileName: originalFileName,
+                codeFileName: codeFileName, originalFileStream: memoryStream,
+                baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
+                project: project);
            
-           CodeFile baseLineCodeFile = null;
-           if (baselineStream.Length > 0)
-           {
-               baselineStream.Position = 0;
-               baseLineCodeFile = await CodeFile.DeserializeAsync(baselineStream);
-           }
-           if (codeFile != null)
-           {
-               await CreateAPIRevisionIfRequired(codeFile, prNumber, originalFileName, memoryStream, pullRequestModel, baseLineCodeFile, baselineStream, baselineCodeFileName);
-           }
-           else
-           {
-               _telemetryClient.TrackTrace("Failed to download artifact. Please recheck build id and artifact path values in API change detection request.");
-           }
+            CodeFile baseLineCodeFile = null;
+            if (baselineStream.Length > 0)
+            {
+                baselineStream.Position = 0;
+                baseLineCodeFile = await CodeFile.DeserializeAsync(baselineStream);
+            }
+            if (codeFile != null)
+            {
+                await CreateAPIRevisionIfRequired(codeFile, prNumber, originalFileName, memoryStream, pullRequestModel, baseLineCodeFile, baselineStream, baselineCodeFileName);
+            }
+            else
+            {
+                _telemetryClient.TrackTrace("Failed to download artifact. Please recheck build id and artifact path values in API change detection request.");
+            }
 
             //Generate combined single comment to update on PR.
             var pullRequests = await _pullRequestManager.GetPullRequestsModelAsync(pullRequestNumber: prNumber, repoName: repoName);
@@ -160,6 +161,8 @@ namespace APIViewWeb.Controllers
             {
                 await _pullRequestManager.CreateOrUpdateCommentsOnPR(pullRequests.ToList(), repoInfo[0], repoInfo[1], prNumber, hostName);
             }
+
+            await _pullRequestManager.UpsertPullRequestAsync(pullRequestModel);
 
             // Return review URL created for current package if exists
             var pr = pullRequests.SingleOrDefault(r => r.PackageName == packageName && (r.Language == null || r.Language == language));
@@ -178,6 +181,7 @@ namespace APIViewWeb.Controllers
             {
                 review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false);
             }
+            pullRequestModel.ReviewId = review.Id;
 
             var renderedCodeFile = new RenderedCodeFile(codeFile);
             var apiRevisions = (await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId: review.Id)).OrderByDescending(r => r.CreatedOn);
@@ -244,12 +248,13 @@ namespace APIViewWeb.Controllers
             var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
                 userName: pullRequestModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
                 label: String.Empty, memoryStream: memoryStream, codeFile: codeFile, originalName: originalFileName, prNumber: prNumber);
+            
+            pullRequestModel.APIRevisionId = newAPIRevision.Id;
 
             if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
             {
                 await _apiRevisionsManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: review.Id, apiRevision: newAPIRevision);
             }
-            await  _pullRequestManager.UpsertPullRequestAsync(pullRequestModel);
         }
 
 

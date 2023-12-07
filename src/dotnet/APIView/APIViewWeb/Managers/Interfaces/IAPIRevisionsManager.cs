@@ -28,13 +28,14 @@ namespace APIViewWeb.Managers.Interfaces
         public Task SoftDeleteAPIRevisionAsync(ClaimsPrincipal user, APIRevisionListItemModel apiRevision);
         public Task SoftDeleteAPIRevisionAsync(APIRevisionListItemModel apiRevision, string userName = "azure-sdk", string notes = "");
         public Task UpdateAPIRevisionLabelAsync(ClaimsPrincipal user, string revisionId, string label);
-        public Task<bool> IsAPIRevisionTheSame(APIRevisionListItemModel apiRevision, RenderedCodeFile renderedCodeFile);
+        public Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel apiRevision, RenderedCodeFile renderedCodeFile);
         public Task UpdateAPIRevisionCodeFileAsync(string repoName, string buildId, string artifact, string project);
         public Task GetLineNumbersOfHeadingsOfSectionsWithDiff(string reviewId, APIRevisionListItemModel apiRevision, IEnumerable<APIRevisionListItemModel> apiRevisions = null);
         public TreeNode<InlineDiffLine<CodeLine>> ComputeSectionDiff(TreeNode<CodeLine> before, TreeNode<CodeLine> after, RenderedCodeFile beforeFile, RenderedCodeFile afterFile);
         public Task<APIRevisionListItemModel> CreateAPIRevisionAsync(string userName, string reviewId, APIRevisionType apiRevisionType, string label,
             MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null);
         public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, TelemetryClient telemetryClient);
+        public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision);
         public Task AutoArchiveAPIRevisions(int archiveAfterMonths);
     }
 }

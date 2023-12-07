@@ -10,6 +10,7 @@ using Microsoft.ApplicationInsights;
 using MongoDB.Driver.Linq;
 using System.Linq;
 using APIViewWeb.LeanModels;
+using Microsoft.ApplicationInsights.DataContracts;
 
 namespace APIViewWeb.HostedServices
 {
@@ -36,9 +37,12 @@ namespace APIViewWeb.HostedServices
         {
             if (!_isDisabled)
             {
+                var requestTelemetry = new RequestTelemetry { Name = "Computing Line Number of Sections with Diff" };
+                var operation = _telemetryClient.StartOperation(requestTelemetry);
                 try
                 {
                     var reviews = await _reviewManager.GetReviewsAsync(language: "Swagger");
+
                     foreach (var review in reviews)
                     {
                         var apiRevisions = await _apiRevisionManager.GetAPIRevisionsAsync(reviewId: review.Id);
@@ -52,6 +56,10 @@ namespace APIViewWeb.HostedServices
                 catch (Exception ex)
                 {
                     _telemetryClient.TrackException(ex);
+                }
+                finally
+                {
+                    _telemetryClient.StopOperation(operation);
                 }
             }
         }

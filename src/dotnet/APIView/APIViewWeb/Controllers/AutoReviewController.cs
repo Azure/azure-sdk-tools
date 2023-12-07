@@ -153,7 +153,7 @@ namespace APIViewWeb.Controllers
                     while (
                         automaticRevisionsQueue.Any() &&
                         !latestAutomaticAPIRevision.IsApproved &&
-                        !await _apiRevisionsManager.IsAPIRevisionTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
+                        !await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
                         !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
                     {
                         await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
@@ -168,14 +168,14 @@ namespace APIViewWeb.Controllers
                     {
                         foreach (var approvedAPIRevision in automaticRevisions.Where(r => r.IsApproved))
                         {
-                            if (await _apiRevisionsManager.IsAPIRevisionTheSame(approvedAPIRevision, renderedCodeFile))
+                            if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile))
                             {
                                 return approvedAPIRevision;
                             }
                         }
                     }
 
-                    if (await _apiRevisionsManager.IsAPIRevisionTheSame(latestAutomaticAPIRevision, renderedCodeFile))
+                    if (await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile))
                     {
                         apiRevision = latestAutomaticAPIRevision;
                         createNewRevision = false;
@@ -198,7 +198,7 @@ namespace APIViewWeb.Controllers
                 {
                     foreach (var apiRev in apiRevisions)
                     {
-                        if (apiRev.IsApproved && await _apiRevisionsManager.IsAPIRevisionTheSame(apiRev, renderedCodeFile))
+                        if (apiRev.IsApproved && await _apiRevisionsManager.AreAPIRevisionsTheSame(apiRev, renderedCodeFile))
                         {
                             await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(user: User, id: review.Id, apiRevision: apiRevision, notes: $"Approval Copied over from Revision with Id : {apiRev.Id}");
                         }

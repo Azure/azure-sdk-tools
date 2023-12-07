@@ -296,9 +296,13 @@ namespace APIViewWeb.Managers
                         {
                             var RevisionARootNode = RevisionACodeFile.GetCodeLineSectionRoot((int)diffLine.Line.SectionKey);
                             var RevisionBRootNode = RevisionBCodeFile.GetCodeLineSectionRoot((int)diffLine.OtherLine.SectionKey);
-                            var diffSectionRoot = ComputeSectionDiff(before: RevisionARootNode, after: RevisionBRootNode, beforeFile: RevisionACodeFile, afterFile: RevisionBCodeFile);
-                            if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot))
-                                lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
+
+                            if (RevisionARootNode != null && RevisionBRootNode != null)
+                            {
+                                var diffSectionRoot = ComputeSectionDiff(before: RevisionARootNode, after: RevisionBRootNode, beforeFile: RevisionACodeFile, afterFile: RevisionBCodeFile);
+                                if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot))
+                                    lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
+                            }
                         }
                     }
 
@@ -321,9 +325,13 @@ namespace APIViewWeb.Managers
                         {
                             var RevisionBRootNode = RevisionBCodeFile.GetCodeLineSectionRoot((int)diffLine.Line.SectionKey);
                             var RevisionARootNode = RevisionACodeFile.GetCodeLineSectionRoot((int)diffLine.OtherLine.SectionKey);
-                            var diffSectionRoot = ComputeSectionDiff(before: RevisionBRootNode, after: RevisionARootNode, beforeFile: RevisionBCodeFile, afterFile: RevisionACodeFile);
-                            if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot))
-                                lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
+
+                            if (RevisionARootNode != null && RevisionBRootNode != null)
+                            {
+                                var diffSectionRoot = ComputeSectionDiff(before: RevisionBRootNode, after: RevisionARootNode, beforeFile: RevisionBCodeFile, afterFile: RevisionACodeFile);
+                                if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot))
+                                    lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
+                            }
                         }
                     }
 

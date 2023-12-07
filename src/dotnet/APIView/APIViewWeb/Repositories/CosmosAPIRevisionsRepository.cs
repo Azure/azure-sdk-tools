@@ -194,8 +194,15 @@ namespace APIViewWeb
             var query = $"SELECT * FROM Revisions c WHERE c.id = '{revisionId}'";
             QueryDefinition queryDefinition = new QueryDefinition(query);
             using FeedIterator<APIRevisionListItemModel> feedIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);
-            FeedResponse<APIRevisionListItemModel> response = await feedIterator.ReadNextAsync();
-            return response.Single();
+            try
+            {
+                FeedResponse<APIRevisionListItemModel> response = await feedIterator.ReadNextAsync();
+                return response.Single();
+            }
+            catch (Exception)
+            {
+                return default(APIRevisionListItemModel);
+            }
         }
 
         /// <summary>

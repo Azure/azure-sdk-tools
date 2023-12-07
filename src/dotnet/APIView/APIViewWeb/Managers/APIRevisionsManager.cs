@@ -11,6 +11,7 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -125,6 +126,11 @@ namespace APIViewWeb.Managers
             {
                 throw new UnauthorizedAccessException();
             }
+            return await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+        }
+
+        public async Task<APIRevisionListItemModel> GetAPIRevisionAsync(string apiRevisionId)
+        {
             return await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
         }
 
@@ -267,32 +273,60 @@ namespace APIViewWeb.Managers
             {
                 apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
             } 
-            var latestRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, false);
-            var latestRevisionHtmlLines = latestRevisionCodeFile.Render(false);
-            var latestRevisionTextLines = latestRevisionCodeFile.RenderText(false);
+            var RevisionACodeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, false);
+            var RevisionAHtmlLines = RevisionACodeFile.Render(false);
+            var RevisionATextLines = RevisionACodeFile.RenderText(false);
 
             foreach (var rev in apiRevisions)
             {
                 if (rev.Id != apiRevision.Id)
                 {
                     var lineNumbersForHeadingOfSectionWithDiff = new HashSet<int>();
-                    var earlierRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, false);
-                    var earlierRevisionHtmlLines = earlierRevisionCodeFile.RenderReadOnly(false);
-                    var earlierRevisionTextLines = earlierRevisionCodeFile.RenderText(false);
+                    var RevisionBCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, false);
+                    var RevisionBHtmlLines = RevisionBCodeFile.RenderReadOnly(false);
+                    var RevisionBTextLines = RevisionBCodeFile.RenderText(false);
 
-                    var diffLines = InlineDiff.Compute(earlierRevisionTextLines, latestRevisionTextLines, earlierRevisionHtmlLines, latestRevisionHtmlLines);
+
+                    // Compute diff before: apiRevision -> after: exisitngAPIRevision
+                    var diffLines = InlineDiff.Compute(before: RevisionATextLines, after: RevisionBTextLines, beforeResults: RevisionAHtmlLines, afterResults: RevisionBHtmlLines);
 
                     foreach (var diffLine in diffLines)
                     {
                         if (diffLine.Kind == DiffLineKind.Unchanged && diffLine.Line.SectionKey != null && diffLine.OtherLine.SectionKey != null)
                         {
-                            var latestRevisionRootNode = latestRevisionCodeFile.GetCodeLineSectionRoot((int)diffLine.Line.SectionKey);
-                            var earlierRevisionRootNode = earlierRevisionCodeFile.GetCodeLineSectionRoot((int)diffLine.OtherLine.SectionKey);
-                            var diffSectionRoot = ComputeSectionDiff(earlierRevisionRootNode, latestRevisionRootNode, earlierRevisionCodeFile, latestRevisionCodeFile);
-                            if (latestRevisionCodeFile.ChildNodeHasDiff(diffSectionRoot))
+                            var RevisionARootNode = RevisionACodeFile.GetCodeLineSectionRoot((int)diffLine.Line.SectionKey);
+                            var RevisionBRootNode = RevisionBCodeFile.GetCodeLineSectionRoot((int)diffLine.OtherLine.SectionKey);
+                            var diffSectionRoot = ComputeSectionDiff(before: RevisionARootNode, after: RevisionBRootNode, beforeFile: RevisionACodeFile, afterFile: RevisionBCodeFile);
+                            if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot))
                                 lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
                         }
                     }
+
+                    if (apiRevision.HeadingsOfSectionsWithDiff.ContainsKey(rev.Id))
+                    {
+                        apiRevision.HeadingsOfSectionsWithDiff.Remove(rev.Id);
+                    }
+                    if (lineNumbersForHeadingOfSectionWithDiff.Any())
+                    {
+                        apiRevision.HeadingsOfSectionsWithDiff.Add(rev.Id, lineNumbersForHeadingOfSectionWithDiff);
+                    }
+                    await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+
+                    // Compute diff before: exisitngAPIRevision -> after: apiRevision
+                    diffLines = InlineDiff.Compute(before: RevisionBTextLines, after: RevisionATextLines, beforeResults: RevisionBHtmlLines, afterResults: RevisionAHtmlLines);
+
+                    foreach (var diffLine in diffLines)
+                    {
+                        if (diffLine.Kind == DiffLineKind.Unchanged && diffLine.Line.SectionKey != null && diffLine.OtherLine.SectionKey != null)
+                        {
+                            var RevisionBRootNode = RevisionBCodeFile.GetCodeLineSectionRoot((int)diffLine.Line.SectionKey);
+                            var RevisionARootNode = RevisionACodeFile.GetCodeLineSectionRoot((int)diffLine.OtherLine.SectionKey);
+                            var diffSectionRoot = ComputeSectionDiff(before: RevisionBRootNode, after: RevisionARootNode, beforeFile: RevisionBCodeFile, afterFile: RevisionACodeFile);
+                            if (RevisionACodeFile.ChildNodeHasDiff(diffSectionRoot))
+                                lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
+                        }
+                    }
+
                     if (rev.HeadingsOfSectionsWithDiff.ContainsKey(apiRevision.Id))
                     {
                         rev.HeadingsOfSectionsWithDiff.Remove(apiRevision.Id);
@@ -301,8 +335,9 @@ namespace APIViewWeb.Managers
                     {
                         rev.HeadingsOfSectionsWithDiff.Add(apiRevision.Id, lineNumbersForHeadingOfSectionWithDiff);
                     }
+                    await _apiRevisionsRepository.UpsertAPIRevisionAsync(rev);
                 }
-                await _apiRevisionsRepository.UpsertAPIRevisionAsync(rev);
+                
             }
         }
 
@@ -677,6 +712,12 @@ namespace APIViewWeb.Managers
             {
                 apiRevisionCodeFile.FileName = originalName;
             }
+
+            if (!String.IsNullOrEmpty(apiRevision.Language) && apiRevision.Language == "Swagger")
+            {
+                await GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: apiRevision.ReviewId, apiRevision: apiRevision);
+            }
+
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             return apiRevision;
         }

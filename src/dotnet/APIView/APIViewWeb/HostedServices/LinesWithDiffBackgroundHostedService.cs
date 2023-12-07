@@ -7,9 +7,6 @@ using APIViewWeb.Managers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
-using MongoDB.Driver.Linq;
-using System.Linq;
-using APIViewWeb.LeanModels;
 using Microsoft.ApplicationInsights.DataContracts;
 
 namespace APIViewWeb.HostedServices
@@ -45,6 +42,7 @@ namespace APIViewWeb.HostedServices
 
                     foreach (var review in reviews)
                     {
+                        _telemetryClient.TrackTrace($"Computing Line Number of Sections with Diff for Review {review.Id}");
                         var apiRevisions = await _apiRevisionManager.GetAPIRevisionsAsync(reviewId: review.Id);
              
                         foreach (var apiRevision in apiRevisions)

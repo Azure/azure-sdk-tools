@@ -13,9 +13,12 @@ strategy:
     MacOS:
       Pool: Azure Pipelines
       OSVmImage: macOS-latest
-    CustomLinux:
+    CustomLinux20:
       Pool: azsdk-pool-mms-ubuntu-2004-general
       OSVmImage: MMSUbuntu20.04
+    CustomLinux22:
+      Pool: azsdk-pool-mms-ubuntu-2204-general
+      OSVmImage: MMSUbuntu22.04
     CustomWindows:
       Pool: azsdk-pool-mms-win-2022-general
       OSVmImage: MMS2022

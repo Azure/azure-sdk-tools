@@ -18,7 +18,6 @@ using System;
 using APIViewWeb.Models;
 using APIViewWeb.LeanModels;
 using Microsoft.VisualStudio.Services.DelegatedAuthorization;
-using Amazon.Util;
 using Octokit;
 using static Microsoft.VisualStudio.Services.Graph.Constants;
 using Microsoft.AspNetCore.Mvc.ViewEngines;
@@ -117,6 +116,23 @@ namespace APIViewWeb.Controllers
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
             var operation = _telemetryClient.StartOperation(requestTelemetry);
             originalFileName = originalFileName ?? codeFileName;
+
+            //Get Code File to find the actual package name emmitted by parser
+            // We should deprecate package name param and use PackageName in CodeFile
+            using var memoryStream = new MemoryStream();
+            using var baselineStream = new MemoryStream();
+            var codeFile = await _codeFileManager.GetCodeFileAsync(
+                repoName: repoName, buildId: buildId, artifactName: artifactName,
+                packageName: packageName, originalFileName: originalFileName,
+                codeFileName: codeFileName, originalFileStream: memoryStream,
+                baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
+                project: project);
+
+            if (codeFile.PackageName != null && (packageName ==  null || packageName != codeFile.PackageName))
+            {
+                packageName = codeFile.PackageName;
+            }
+
             var repoInfo = repoName.Split("/");
             var pullRequestModel = await _pullRequestManager.GetPullRequestModelAsync(prNumber, repoName, packageName, originalFileName, language);
             if (pullRequestModel == null)
@@ -134,15 +150,7 @@ namespace APIViewWeb.Controllers
             await ManagerHelpers.AssertPullRequestCreatorPermission(prModel: pullRequestModel, allowedListBotAccounts: _allowedListBotAccounts,
                 openSourceManager: _openSourceManager, telemetryClient: _telemetryClient);
            
-            using var memoryStream = new MemoryStream();
-            using var baselineStream = new MemoryStream();
-            var codeFile = await _codeFileManager.GetCodeFileAsync(
-                repoName: repoName, buildId: buildId, artifactName: artifactName,
-                packageName: packageName, originalFileName: originalFileName,
-                codeFileName: codeFileName, originalFileStream: memoryStream,
-                baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
-                project: project);
-           
+          
             CodeFile baseLineCodeFile = null;
             if (baselineStream.Length > 0)
             {
@@ -193,29 +201,32 @@ namespace APIViewWeb.Controllers
             {
                 if (codeFile.Language == "Swagger" || codeFile.Language == "TypeSpec")
                 {
-                    if (_codeFileManager.AreCodeFilesTheSame(codeFileA: codeFile, codeFileB: baselineCodeFile))
+                    if(baselineCodeFile != null)
                     {
-                        return;
-                    }
-                    
-                    var createBaseLine = true;
-                    
-                    foreach (var apiRevision in apiRevisions)
-                    {
-                        var aprRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, false);
-                        if (_codeFileManager.AreCodeFilesTheSame(codeFileA: aprRevisionCodeFile.CodeFile, codeFileB: baselineCodeFile))
+                        if (_codeFileManager.AreCodeFilesTheSame(codeFileA: codeFile, codeFileB: baselineCodeFile))
                         {
-                            createBaseLine = false;
-                            break;
+                            return;
                         }
-                    }
 
-                    if (createBaseLine)
-                    {
-                        await _apiRevisionsManager.CreateAPIRevisionAsync(
-                            userName: pullRequestModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
-                            label: $"BaseLine for PR: {prNumber}", memoryStream: baseLineStream, codeFile: baselineCodeFile, originalName: baselineFileName, prNumber: prNumber);
-                    }
+                        var createBaseLine = true;
+
+                        foreach (var apiRevision in apiRevisions)
+                        {
+                            var aprRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, false);
+                            if (_codeFileManager.AreCodeFilesTheSame(codeFileA: aprRevisionCodeFile.CodeFile, codeFileB: baselineCodeFile))
+                            {
+                                createBaseLine = false;
+                                break;
+                            }
+                        }
+
+                        if (createBaseLine)
+                        {
+                            await _apiRevisionsManager.CreateAPIRevisionAsync(
+                                userName: pullRequestModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
+                                label: $"BaseLine for PR: {prNumber}", memoryStream: baseLineStream, codeFile: baselineCodeFile, originalName: baselineFileName, prNumber: prNumber);
+                        }
+                    }                    
 
                     var codeFileUpdated = await AttemptUpdateOfExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, review: review, memoryStream: memoryStream, codeFile: codeFile, prNumber: prNumber);
                     if (codeFileUpdated)

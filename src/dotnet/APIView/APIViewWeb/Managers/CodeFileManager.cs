@@ -188,12 +188,15 @@ namespace APIViewWeb.Managers
 
         public bool AreCodeFilesTheSame(CodeFile codeFileA, CodeFile codeFileB)
         {
+            if( codeFileA == null || codeFileB == null )
+                return false;
+
             bool result = true;
 
-            if (!codeFileA.Tokens.SequenceEqual(codeFileB.Tokens))
+            if (codeFileA.Tokens == null || codeFileB.Tokens == null || !codeFileA.Tokens.SequenceEqual(codeFileB.Tokens))
                 result = false;
 
-            if (!codeFileA.LeafSections.SequenceEqual(codeFileB.LeafSections))
+            if (codeFileA.LeafSections == null || codeFileB.LeafSections == null || !codeFileA.LeafSections.SequenceEqual(codeFileB.LeafSections))
                 result = false;
 
             return result;

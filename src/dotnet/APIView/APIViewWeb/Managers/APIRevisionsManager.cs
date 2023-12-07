@@ -11,6 +11,7 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -677,6 +678,12 @@ namespace APIViewWeb.Managers
             {
                 apiRevisionCodeFile.FileName = originalName;
             }
+
+            if (!String.IsNullOrEmpty(apiRevision.Language) && apiRevision.Language == "Swagger")
+            {
+                await GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: apiRevision.ReviewId, apiRevision: apiRevision);
+            }
+
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             return apiRevision;
         }

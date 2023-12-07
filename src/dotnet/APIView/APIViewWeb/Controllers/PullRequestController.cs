@@ -261,11 +261,6 @@ namespace APIViewWeb.Controllers
                 label: String.Empty, memoryStream: memoryStream, codeFile: codeFile, originalName: originalFileName, prNumber: prNumber);
             
             pullRequestModel.APIRevisionId = newAPIRevision.Id;
-
-            if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
-            {
-                await _apiRevisionsManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: review.Id, apiRevision: newAPIRevision);
-            }
         }
 
         /// <summary>
@@ -292,6 +287,11 @@ namespace APIViewWeb.Controllers
                     // update codeFile for existing apiRevision with the incoming codefile
                     prAPIRevision.Files[0] = await _codeFileManager.CreateReviewCodeFileModel(
                         apiRevisionId: prAPIRevision.Id, memoryStream: memoryStream, codeFile: codeFile);
+
+                    if (!String.IsNullOrEmpty(prAPIRevision.Language) && prAPIRevision.Language == "Swagger")
+                    {
+                        await _apiRevisionsManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: prAPIRevision.ReviewId, apiRevision: prAPIRevision);
+                    }
 
                     await _apiRevisionsManager.UpdateAPIRevisionAsync(prAPIRevision);
                     result = true;

@@ -21,6 +21,7 @@ using Microsoft.VisualStudio.Services.DelegatedAuthorization;
 using Amazon.Util;
 using Octokit;
 using static Microsoft.VisualStudio.Services.Graph.Constants;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 
 namespace APIViewWeb.Controllers
 {
@@ -28,6 +29,7 @@ namespace APIViewWeb.Controllers
     {
         private readonly ICodeFileManager _codeFileManager;
         private readonly IPullRequestManager _pullRequestManager;
+        private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ILogger<PullRequestController> _logger;
@@ -39,11 +41,12 @@ namespace APIViewWeb.Controllers
         string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nupkg", "-sources.jar", ".gosource" };
         
         public PullRequestController(ICodeFileManager codeFileManager, IPullRequestManager pullRequestManager,
-            IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, ILogger<PullRequestController> logger,
+            IBlobCodeFileRepository codeFileRepository, IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, ILogger<PullRequestController> logger,
             IConfiguration configuration, IOpenSourceRequestManager openSourceRequestManager)
         {
             _codeFileManager = codeFileManager;
             _pullRequestManager = pullRequestManager;
+            _codeFileRepository = codeFileRepository;
             _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
             _logger = logger;
@@ -190,31 +193,34 @@ namespace APIViewWeb.Controllers
             {
                 if (codeFile.Language == "Swagger" || codeFile.Language == "TypeSpec")
                 {
-                    // IsAPICodeFilesTheSame for Swagger should also check subSections stored in LeafSections
-                    // var baseLineRenderedCodeFile = new RenderedCodeFile(baselineCodeFile);
-                    // if (_codeFileManager.IsAPICodeFilesTheSame(renderedCodeFile, baseLineRenderedCodeFile))
-                    // {
-                    //     return;
-                    // }
-                    // 
-                    // var createBaseLine = true;
-                    // 
-                    // foreach (var apiRevision in apiRevisions)
-                    // {
-                    //     if (await _apiRevisionsManager.IsAPIRevisionTheSame(apiRevision, baseLineRenderedCodeFile))
-                    //     {
-                    //         createBaseLine = false;
-                    //         break;
-                    //     }
-                    // }
-
+                    if (_codeFileManager.AreCodeFilesTheSame(codeFileA: codeFile, codeFileB: baselineCodeFile))
+                    {
+                        return;
+                    }
+                    
                     var createBaseLine = true;
+                    
+                    foreach (var apiRevision in apiRevisions)
+                    {
+                        var aprRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, false);
+                        if (_codeFileManager.AreCodeFilesTheSame(codeFileA: aprRevisionCodeFile.CodeFile, codeFileB: baselineCodeFile))
+                        {
+                            createBaseLine = false;
+                            break;
+                        }
+                    }
 
                     if (createBaseLine)
                     {
                         await _apiRevisionsManager.CreateAPIRevisionAsync(
                             userName: pullRequestModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
                             label: $"BaseLine for PR: {prNumber}", memoryStream: baseLineStream, codeFile: baselineCodeFile, originalName: baselineFileName, prNumber: prNumber);
+                    }
+
+                    var codeFileUpdated = await AttemptUpdateOfExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, review: review, memoryStream: memoryStream, codeFile: codeFile, prNumber: prNumber);
+                    if (codeFileUpdated)
+                    {
+                        return;
                     }
                 }
                 else
@@ -224,27 +230,17 @@ namespace APIViewWeb.Controllers
 
                     foreach (var autoAPIRevision in autoAPIRevisions)
                     {
-                        if (await _apiRevisionsManager.IsAPIRevisionTheSame(autoAPIRevision, renderedCodeFile))
+                        if (await _apiRevisionsManager.AreAPIRevisionsTheSame(autoAPIRevision, renderedCodeFile))
                         {
                             // no change in api surface level from exisiting revision
                             return;
                         }
                     }
 
-                    var prAPIRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.PullRequest);
-                    var prsForReview = await _pullRequestManager.GetPullRequestsModelAsync(reviewId: review.Id);
-
-                    foreach (var prAPIRevision in prAPIRevisions)
+                    var codeFileUpdated = await AttemptUpdateOfExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, review: review, memoryStream: memoryStream, codeFile: codeFile, prNumber: prNumber);
+                    if (codeFileUpdated)
                     {
-                        // Check if you have already created a revision for the same PR
-                        var existingRevisionForPR = prsForReview.FirstOrDefault(p => p.APIRevisionId == prAPIRevision.Id && p.PullRequestNumber == prNumber);
-                        if (existingRevisionForPR != default(PullRequestModel))
-                        {
-                            // update codeFile for existing apiRevision with the incoming codefile
-                            prAPIRevision.Files[0] = await _codeFileManager.CreateReviewCodeFileModel(
-                                apiRevisionId: prAPIRevision.Id, memoryStream: memoryStream, codeFile: codeFile);
-                            return;
-                        }
+                        return;
                     }
                 }
             }
@@ -259,6 +255,39 @@ namespace APIViewWeb.Controllers
             {
                 await _apiRevisionsManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: review.Id, apiRevision: newAPIRevision);
             }
+        }
+
+        /// <summary>
+        /// Check to see if there is an existing APIRevision for the same PR. If yes, update the codeFile for the existing APIRevision
+        /// </summary>
+        /// <param name="apiRevisions"></param>
+        /// <param name="review"></param>
+        /// <param name="memoryStream"></param>
+        /// <param name="codeFile"></param>
+        /// <param name="prNumber"></param>
+        /// <returns>true if update happened otherwise false</returns>
+        private async Task<bool> AttemptUpdateOfExistingAPIRevisionCodeFile(IEnumerable<APIRevisionListItemModel> apiRevisions, ReviewListItemModel review, MemoryStream memoryStream, CodeFile codeFile, int prNumber)
+        {
+            var result = false;
+            var prAPIRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.PullRequest);
+            var prsForReview = await _pullRequestManager.GetPullRequestsModelAsync(reviewId: review.Id);
+
+            foreach (var prAPIRevision in prAPIRevisions)
+            {
+                // Check if you have already created a revision for the same PR
+                var existingRevisionForPR = prsForReview.FirstOrDefault(p => p.APIRevisionId == prAPIRevision.Id && p.PullRequestNumber == prNumber);
+                if (existingRevisionForPR != default(PullRequestModel))
+                {
+                    // update codeFile for existing apiRevision with the incoming codefile
+                    prAPIRevision.Files[0] = await _codeFileManager.CreateReviewCodeFileModel(
+                        apiRevisionId: prAPIRevision.Id, memoryStream: memoryStream, codeFile: codeFile);
+
+                    await _apiRevisionsManager.UpdateAPIRevisionAsync(prAPIRevision);
+                    result = true;
+                    break;
+                }
+            }
+            return result;
         }
 
 

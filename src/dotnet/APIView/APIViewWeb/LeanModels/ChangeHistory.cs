@@ -42,7 +42,7 @@ namespace APIViewWeb.LeanModels
         Resolved,
         UnResolved,
         Deleted,
-        Undeleted
+        UnDeleted
     }
 
     public abstract class ChangeHistoryModel

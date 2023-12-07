@@ -179,11 +179,24 @@ namespace APIViewWeb.Managers
         /// <param name="codeFileA"></param>
         /// <param name="codeFileB"></param>
         /// <returns></returns>
-        public bool IsAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
+        public bool AreAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB)
         {
             var codeFileATextLines = codeFileA.RenderText(false, skipDiff: true);
             var codeFileBTextLines = codeFileB.RenderText(false, skipDiff: true);
             return codeFileATextLines.SequenceEqual(codeFileBTextLines);
+        }
+
+        public bool AreCodeFilesTheSame(CodeFile codeFileA, CodeFile codeFileB)
+        {
+            bool result = true;
+
+            if (!codeFileA.Tokens.SequenceEqual(codeFileB.Tokens))
+                result = false;
+
+            if (!codeFileA.LeafSections.SequenceEqual(codeFileB.LeafSections))
+                result = false;
+
+            return result;
         }
 
         private void InitializeFromCodeFile(APICodeFileModel file, CodeFile codeFile)

@@ -565,13 +565,11 @@ namespace APIViewWeb.Managers
         /// <param name="revision"></param>
         /// <param name="renderedCodeFile"></param>
         /// <returns></returns>
-        public async Task<bool> IsAPIRevisionTheSame(APIRevisionListItemModel revision, RenderedCodeFile renderedCodeFile)
+        public async Task<bool> AreAPIRevisionsTheSame(APIRevisionListItemModel revision, RenderedCodeFile renderedCodeFile)
         {
             //This will compare and check if new code file content is same as revision in parameter
             var lastRevisionFile = await _codeFileRepository.GetCodeFileAsync(revision, false);
-            var lastRevisionTextLines = lastRevisionFile.RenderText(false, skipDiff: true);
-            var fileTextLines = renderedCodeFile.RenderText(false, skipDiff: true);
-            return lastRevisionTextLines.SequenceEqual(fileTextLines);
+            return _codeFileManager.AreAPICodeFilesTheSame(codeFileA: lastRevisionFile, codeFileB: renderedCodeFile);
         }
 
         /// <summary>
@@ -611,7 +609,12 @@ namespace APIViewWeb.Managers
                 }
             }
         }
-        
+
+        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision)
+        {
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+        }
+
         /// <summary>
         /// SoftDelete APIRevision if its not been updated after many months
         /// </summary>

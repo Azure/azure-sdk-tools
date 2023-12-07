@@ -229,14 +229,13 @@ namespace APIViewWeb.Helpers
         /// <param name="showDiffOnly"></param>
         /// <param name="diffContextSize"></param>
         /// <param name="diffContextSeperator"></param>
-        /// <param name="headingsOfSectionsWithDiff"></param>
         /// <returns></returns>
         public static async Task<ReviewContentModel> GetReviewContentAsync(
             IConfiguration configuration, IReviewManager reviewManager, UserPreferenceCache preferenceCache,
             ICosmosUserProfileRepository userProfileRepository, IAPIRevisionsManager reviewRevisionsManager, ICommentsManager commentManager,
             IBlobCodeFileRepository codeFileRepository, IHubContext<SignalRHub> signalRHubContext, ClaimsPrincipal user, string reviewId,
             string revisionId = null, string diffRevisionId = null, bool showDocumentation = false, bool showDiffOnly = false, int diffContextSize = 3,
-            string diffContextSeperator = "<br><span>.....</span><br>", HashSet<int> headingsOfSectionsWithDiff = null)
+            string diffContextSeperator = "<br><span>.....</span><br>")
         {
             var reviewPageContent = new ReviewContentModel()
             {
@@ -300,6 +299,8 @@ namespace APIViewWeb.Helpers
                     var activeRevisionTextLines = activeRevisionRenderableCodeFile.RenderText(showDocumentation: showDocumentation);
 
                     var diffLines = InlineDiff.Compute(diffRevisionTextLines, activeRevisionTextLines, diffRevisionHTMLLines, activeRevisionHtmlLines);
+                    var headingsOfSectionsWithDiff = activeRevision.HeadingsOfSectionsWithDiff.ContainsKey(diffRevision.Id) ? activeRevision.HeadingsOfSectionsWithDiff[diffRevision.Id] : new HashSet<int>();
+
                     codeLines = CreateLines(diagnostics: fileDiagnostics, lines: diffLines, comments: comments, showDiffOnly: showDiffOnly,
                         reviewDiffContextSize: diffContextSize, diffContextSeparator: diffContextSeperator, headingsOfSectionsWithDiff: headingsOfSectionsWithDiff);
 

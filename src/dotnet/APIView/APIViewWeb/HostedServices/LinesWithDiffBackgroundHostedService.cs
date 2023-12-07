@@ -8,6 +8,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
+using System.Collections.Generic;
+using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.HostedServices
 {
@@ -39,12 +41,12 @@ namespace APIViewWeb.HostedServices
                 try
                 {
                     var reviews = await _reviewManager.GetReviewsAsync(language: "Swagger");
-
+                    
                     foreach (var review in reviews)
                     {
                         _telemetryClient.TrackTrace($"Computing Line Number of Sections with Diff for Review {review.Id}");
                         var apiRevisions = await _apiRevisionManager.GetAPIRevisionsAsync(reviewId: review.Id);
-             
+                    
                         foreach (var apiRevision in apiRevisions)
                         {
                             await _apiRevisionManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: review.Id, apiRevision: apiRevision, apiRevisions: apiRevisions);

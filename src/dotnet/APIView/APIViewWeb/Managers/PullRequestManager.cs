@@ -184,7 +184,7 @@ namespace APIViewWeb.Managers
             if (!String.IsNullOrEmpty(pullRequestModel.APIRevisionId))
             {
                 var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(pullRequestModel.APIRevisionId);
-                if (apiRevision != null)
+                if (apiRevision != null && !apiRevision.Approvers.Any())
                 {
                     await _apiRevisionManager.SoftDeleteAPIRevisionAsync(userName: "azure-sdk", apiRevision: apiRevision, notes: "Deleted by PullRequest CleanUp Automation");
                 }

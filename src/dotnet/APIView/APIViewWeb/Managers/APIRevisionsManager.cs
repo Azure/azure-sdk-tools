@@ -273,24 +273,25 @@ namespace APIViewWeb.Managers
             {
                 apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
             } 
-            var RevisionACodeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, false);
+            var RevisionACodeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, true);
             var RevisionAHtmlLines = RevisionACodeFile.Render(false);
             var RevisionATextLines = RevisionACodeFile.RenderText(false);
 
-            foreach (var rev in apiRevisions)
+            var latestFewRevisions = apiRevisions.Count() > 10? apiRevisions.OrderBy(r => r.CreatedOn).Reverse().Take(10) : apiRevisions;
+            foreach (var rev in latestFewRevisions)
             {
                 if (rev.Id != apiRevision.Id)
                 {
                     var lineNumbersForHeadingOfSectionWithDiff = new HashSet<int>();
-                    var RevisionBCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, false);
+                    var RevisionBCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, true);
                     var RevisionBHtmlLines = RevisionBCodeFile.RenderReadOnly(false);
                     var RevisionBTextLines = RevisionBCodeFile.RenderText(false);
 
 
-                    // Compute diff before: apiRevision -> after: exisitngAPIRevision
+                    // Compute diff before: apiRevision -> after: existing APIRevision
                     var diffLines = InlineDiff.Compute(before: RevisionATextLines, after: RevisionBTextLines, beforeResults: RevisionAHtmlLines, afterResults: RevisionBHtmlLines);
 
-                    foreach (var diffLine in diffLines)
+                    Parallel.ForEach(diffLines, diffLine =>
                     {
                         if (diffLine.Kind == DiffLineKind.Unchanged && diffLine.Line.SectionKey != null && diffLine.OtherLine.SectionKey != null)
                         {
@@ -304,7 +305,7 @@ namespace APIViewWeb.Managers
                                     lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
                             }
                         }
-                    }
+                    });
 
                     if (apiRevision.HeadingsOfSectionsWithDiff.ContainsKey(rev.Id))
                     {
@@ -316,10 +317,10 @@ namespace APIViewWeb.Managers
                     }
                     await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
-                    // Compute diff before: exisitngAPIRevision -> after: apiRevision
+                    // Compute diff before: existing APIRevision -> after: apiRevision
                     diffLines = InlineDiff.Compute(before: RevisionBTextLines, after: RevisionATextLines, beforeResults: RevisionBHtmlLines, afterResults: RevisionAHtmlLines);
 
-                    foreach (var diffLine in diffLines)
+                    Parallel.ForEach(diffLines, diffLine =>
                     {
                         if (diffLine.Kind == DiffLineKind.Unchanged && diffLine.Line.SectionKey != null && diffLine.OtherLine.SectionKey != null)
                         {
@@ -333,7 +334,7 @@ namespace APIViewWeb.Managers
                                     lineNumbersForHeadingOfSectionWithDiff.Add((int)diffLine.Line.LineNumber);
                             }
                         }
-                    }
+                    });
 
                     if (rev.HeadingsOfSectionsWithDiff.ContainsKey(apiRevision.Id))
                     {
@@ -350,7 +351,7 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Computed the diff for hidden (colapsible) API sections
+        /// Computed the diff for hidden (collapsible) API sections
         /// </summary>
         /// <param name="before"></param>
         /// <param name="after"></param>

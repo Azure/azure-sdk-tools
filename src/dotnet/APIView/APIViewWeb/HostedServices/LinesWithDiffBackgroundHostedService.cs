@@ -10,6 +10,7 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using System.Collections.Generic;
 using APIViewWeb.LeanModels;
+using System.Linq;
 
 namespace APIViewWeb.HostedServices
 {
@@ -41,16 +42,20 @@ namespace APIViewWeb.HostedServices
                 try
                 {
                     var reviews = await _reviewManager.GetReviewsAsync(language: "Swagger");
-                    
+                    reviews = reviews.OrderBy(r => r.CreatedOn).Reverse();
+                    int index = 1;
+                    int total = reviews.Count();
                     foreach (var review in reviews)
                     {
-                        _telemetryClient.TrackTrace($"Computing Line Number of Sections with Diff for Review {review.Id}");
+                        _telemetryClient.TrackTrace($"Computing Line Number of Sections with Diff for Review {review.Id}, processing {index}/{total}.");
                         var apiRevisions = await _apiRevisionManager.GetAPIRevisionsAsync(reviewId: review.Id);
-                    
+                        var processedRevisions = new HashSet<string>();
                         foreach (var apiRevision in apiRevisions)
                         {
-                            await _apiRevisionManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: review.Id, apiRevision: apiRevision, apiRevisions: apiRevisions);
+                            processedRevisions.Add(apiRevision.Id);
+                            await _apiRevisionManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(reviewId: review.Id, apiRevision: apiRevision, apiRevisions: apiRevisions.Where(r => !processedRevisions.Contains(r.Id)));                            
                         }
+                        index++;
                     }
                 }
                 catch (Exception ex)

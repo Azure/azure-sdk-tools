@@ -71,7 +71,8 @@ static async Task MigrateDocuments(
             mappings.Add(mapping);
         }
 
-        if(reviewOld._ts <= mapping.ReviewMigratedStamp)
+        //Remigrate reviews created manually. Manual reviews were skipped incorrectly earlier.
+        if(reviewOld._ts <= mapping.ReviewMigratedStamp && reviewOld.FilterType != APIRevisionType.Manual)
         {
             //Console.WriteLine($"Review {reviewOld.ReviewId} was already migrated. Skipping it.");
             continue;
@@ -195,9 +196,9 @@ static async Task MigrateRevision(RevisionModelOld revisionOld,
         return;
     }
 
-    if(reviewOld.FilterType == APIRevisionType.Manual && revisionOld.IsApproved !=  true && revisionOld.CreationDate.AddYears(2) > DateTime.UtcNow)
+    if(reviewOld.FilterType == APIRevisionType.Manual && revisionOld.IsApproved !=  true && revisionOld.CreationDate.AddYears(2) < DateTime.UtcNow)
     {
-        //Console.WriteLine($"Skipping older manual revision for review {reviewOld.ReviewId}");
+        Console.WriteLine($"Skipping older manual revision for review {reviewOld.ReviewId}");
         return;
     }
     // Copuy RevisionOld to RevisionNew

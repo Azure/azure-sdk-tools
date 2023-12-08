@@ -195,9 +195,9 @@ static async Task MigrateRevision(RevisionModelOld revisionOld,
         return;
     }
 
-    if(reviewOld.FilterType == APIRevisionType.Manual && revisionOld.IsApproved !=  true && revisionOld.CreationDate.AddYears(2) > DateTime.UtcNow)
+    if(reviewOld.FilterType == APIRevisionType.Manual && revisionOld.IsApproved !=  true && revisionOld.CreationDate.AddYears(2) < DateTime.UtcNow)
     {
-        //Console.WriteLine($"Skipping older manual revision for review {reviewOld.ReviewId}");
+        Console.WriteLine($"Skipping older manual revision for review {reviewOld.ReviewId}");
         return;
     }
     // Copuy RevisionOld to RevisionNew

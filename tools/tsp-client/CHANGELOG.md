@@ -1,6 +1,6 @@
 # Release
 
-## 2023-12-7 - 0.2.0
+## 2023-12-8 - 0.2.0
 
 - Use the `@typespec/compiler` module installed locally in the `TempTypeSpecFiles/` directory.
 

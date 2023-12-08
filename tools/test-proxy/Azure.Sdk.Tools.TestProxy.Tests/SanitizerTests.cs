@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Http;
@@ -275,6 +275,35 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.NotEqual(originalHeaderValue, testValue);
             Assert.StartsWith("https://fakeaccount.table.core.windows.net", testValue);
+        }
+
+
+        [Fact]
+        public void HeaderRegexSanitizerMultipartReplace()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_header.json");
+            var targetEntry = session.Session.Entries[0];
+            var targetKey = "Cookie";
+
+            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, value: "REDACTED", regex: "SuperDifferent");
+            session.Session.Sanitize(headerRegexSanitizer);
+
+            Assert.Equal("REDACTEDCookie", targetEntry.Request.Headers[targetKey][0]);
+            Assert.Equal("KindaDifferentCookie", targetEntry.Request.Headers[targetKey][1]);
+        }
+
+        [Fact]
+        public void HeaderRegexSanitizerMultipartReplaceLatterOnly()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_header.json");
+            var targetEntry = session.Session.Entries[0];
+            var targetKey = "Cookie";
+
+            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, value: "REDACTED", regex: "KindaDifferent");
+            session.Session.Sanitize(headerRegexSanitizer);
+
+            Assert.Equal("SuperDifferentCookie", targetEntry.Request.Headers[targetKey][0]);
+            Assert.Equal("REDACTEDCookie", targetEntry.Request.Headers[targetKey][1]);
         }
 
         [Fact]

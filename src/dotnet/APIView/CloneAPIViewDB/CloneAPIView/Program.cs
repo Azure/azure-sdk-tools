@@ -71,7 +71,8 @@ static async Task MigrateDocuments(
             mappings.Add(mapping);
         }
 
-        if(reviewOld._ts <= mapping.ReviewMigratedStamp)
+        //Remigrate reviews created manually. Manual reviews were skipped incorrectly earlier.
+        if(reviewOld._ts <= mapping.ReviewMigratedStamp && reviewOld.FilterType != APIRevisionType.Manual)
         {
             //Console.WriteLine($"Review {reviewOld.ReviewId} was already migrated. Skipping it.");
             continue;

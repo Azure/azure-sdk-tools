@@ -50,13 +50,13 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
             var buildLogProvider = new BuildLogProvider(logger: null, VisualStudioConnection);
             var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("AZURESDK_BLOB_SAS"));
             var buildHttpClient = new BuildHttpClient(new Uri(DEVOPS_PATH), VisualStudioCredentials);
-            var testResultsClient = new TestResultsHttpClient(new Uri(DEVOPS_PATH), VisualStudioCredentials);
+            var testResultsBuiltClient = VisualStudioConnection.GetClient<TestResultsHttpClient>();
 
             BlobUploadProcessor processor = new BlobUploadProcessor(logger: new NullLogger<BlobUploadProcessor>(),
                 logProvider: buildLogProvider,
                 blobServiceClient: blobServiceClient,
                 buildClient: buildHttpClient,
-                testResultsClient: testResultsClient,
+                testResultsClient: testResultsBuiltClient,
                 options: Options.Create<PipelineWitnessSettings>(TestSettings),
                 failureAnalyzer: new PassThroughFailureAnalyzer());
 

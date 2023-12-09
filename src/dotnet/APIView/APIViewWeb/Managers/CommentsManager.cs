@@ -89,7 +89,7 @@ namespace APIViewWeb.Managers
         public async Task<ReviewCommentsModel> GetUsageSampleCommentsAsync(string reviewId)
         {
             var comments = await _commentsRepository.GetCommentsAsync(reviewId);
-            return new ReviewCommentsModel(reviewId, comments.Where(c => c.CommentType == LeanModels.CommentType.SamplesRevision));
+            return new ReviewCommentsModel(reviewId, comments.Where(c => c.CommentType == LeanModels.CommentType.SampleRevision));
         }
 
         public async Task AddCommentAsync(ClaimsPrincipal user, CommentItemModel comment)

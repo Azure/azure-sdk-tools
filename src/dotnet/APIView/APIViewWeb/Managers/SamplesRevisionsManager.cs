@@ -97,7 +97,7 @@ namespace APIViewWeb.Managers
             foreach (var comment in comments)
             {
                 var commentSampleId = comment.ElementId.Split("-")[0]; // sample id is stored as first part of ElementId
-                if (comment.CommentType == CommentType.SamplesRevision && commentSampleId == samplesRevision.FileId)  // remove all comments from server 
+                if (comment.CommentType == CommentType.SampleRevision && commentSampleId == samplesRevision.FileId)  // remove all comments from server 
                 {
                     await _commentsManager.SoftDeleteCommentAsync(user, comment);
                 }

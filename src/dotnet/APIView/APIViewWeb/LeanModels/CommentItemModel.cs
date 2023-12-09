@@ -12,7 +12,7 @@ namespace APIViewWeb.LeanModels
     public enum CommentType
     {
         APIRevision = 0,
-        SamplesRevision
+        SampleRevision
     }
 
     public class CommentItemModel

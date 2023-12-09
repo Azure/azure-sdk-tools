@@ -366,7 +366,7 @@ namespace APIViewWeb.Helpers
             reviewPageContent.DiffAPIRevision = diffRevision;
             reviewPageContent.TotalActiveConversiations = comments.Threads.Count(t => !t.IsResolved);
             reviewPageContent.ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments);
-            reviewPageContent.ActiveConversationsInSampleRevisions = comments.Threads.Count(t => t.Comments.FirstOrDefault()?.CommentType == CommentType.SamplesRevision);
+            reviewPageContent.ActiveConversationsInSampleRevisions = comments.Threads.Count(t => t.Comments.FirstOrDefault()?.CommentType == CommentType.SampleRevision);
             reviewPageContent.PreferredApprovers = preferredApprovers;
             reviewPageContent.TaggableUsers = commentManager.GetTaggableUsers();
             reviewPageContent.PageHasLoadableSections = activeRevisionReviewCodeFile.LeafSections?.Any() ?? false;

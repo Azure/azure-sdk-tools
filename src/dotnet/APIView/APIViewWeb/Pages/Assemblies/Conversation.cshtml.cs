@@ -124,7 +124,7 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 foreach (var comment in thread.Comments)
                 {
-                    if (comment.CommentType == CommentType.SamplesRevision)
+                    if (comment.CommentType == CommentType.SampleRevision)
                     {
                         var index = SamplesRevisions.ToList().FindIndex(s => s.FileId.Equals(comment.ElementId.Split("-").First()));
                         var sampleRevision = SamplesRevisions.ElementAt(index);

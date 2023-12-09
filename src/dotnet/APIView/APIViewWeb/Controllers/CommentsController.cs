@@ -43,7 +43,7 @@ namespace APIViewWeb.Controllers
             comment.ElementId = elementId;
             comment.SectionClass = sectionClass;
             comment.CommentText = commentText;
-            comment.CommentType = (usageSampleComment) ? CommentType.SamplesRevision : CommentType.APIRevision;
+            comment.CommentType = (usageSampleComment) ? CommentType.SampleRevision : CommentType.APIRevision;
             comment.ResolutionLocked = !resolutionLock.Equals("on");
             comment.CreatedBy = User.GetGitHubLogin();
 

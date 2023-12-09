@@ -4,8 +4,6 @@ trigger: none
 
 jobs:
 - job: inventory
-  displayName: inventory-${{ variables.OSVmImage }}
-
   strategy:
     matrix:
       Linux:
@@ -57,7 +55,8 @@ jobs:
     # powershell returns CIM/WMI objects faster via Get-WmiObject than Get-CimInstance on either powershell or pwsh.
     - powershell: >
         Get-WmiObject Win32_Product
-        | ForEach-Object { "${{ variables.Host }}, ${{ variables.OSVmImage }}, MSI, $($_.Name), $($_.Version), unknown" } > msi-inventory.csv
+        | ForEach-Object { "${{ variables.Host }}, ${{ variables.OSVmImage }}, MSI, $($_.Name), $($_.Version), unknown" }
+        > msi-inventory.csv
       displayName: Windows Installer products
       workingDirectory: $(Build.ArtifactStagingDirectory)
 
@@ -80,14 +79,16 @@ jobs:
         | ForEach-Object {
           $arch = if ([Version]$_.installationVersion -lt [Version]'17.0') { "x86" } else { "amd64" };
           "${{ variables.Host }}, ${{ variables.OSVmImage }}, VSSetup, $($_.displayName) ($($_.channelId)), $($_.installationVersion), $arch"
-        } > vssetup-inventory.csv
+        }
+        > vssetup-inventory.csv
       displayName: Visual Studio inventory
       workingDirectory: $(Build.ArtifactStagingDirectory)
 
   - pwsh: >
       az extension list
       | ConvertFrom-Json
-      | ForEach-Object { "${{ variables.Host }}, ${{ variables.OSVmImage }}, az, $($_.name), $($_.version), all" } | az-inventory.csv
+      | ForEach-Object { "${{ variables.Host }}, ${{ variables.OSVmImage }}, az, $($_.name), $($_.version), all" }
+      > az-inventory.csv
     displayName: Azure CLI extensions
     workingDirectory: $(Build.ArtifactStagingDirectory)
 
@@ -96,7 +97,8 @@ jobs:
       | ForEach-Object {
         $tokens = $_ -split ' ', 3;
         "${{ variables.Host }}, ${{ variables.OSVmImage }}, dotnet-runtime, $($tokens[0]), $($tokens[1]), all"
-      } >> dotnet-inventory.csv
+      }
+      >> dotnet-inventory.csv
     displayName: .NET runtimes
 
   - pwsh: >
@@ -104,7 +106,8 @@ jobs:
       | ForEach-Object {
         $tokens = $_ -split ' ', 2;
         "${{ variables.Host }}, ${{ variables.OSVmImage }}, dotnet-sdk, SDK, $($tokens[0]), all"
-      } >> dotnet-inventory.csv
+      }
+      >> dotnet-inventory.csv
     displayName: .NET SDKs
     workingDirectory: $(Build.ArtifactStagingDirectory)
 

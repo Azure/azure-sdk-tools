@@ -44,47 +44,49 @@ jobs:
 
   # Inventory files should be written without headers in the format:
   # Host, VmImage, Package Manager, Package Name, Package Version, Package Architecture {unknown, x86, amd64, arm64, all}
-  - $[ if eq(variables.Host, 'MacOS') ]:
-    - bash: sudo chown -R runner ~/.Azure
-      displayName: Grant access to ~/.Azure
+  - bash: sudo chown -R runner ~/.Azure
+    displayName: (MacOS) Grant access to ~/.Azure
+    condition: and(succeeded(), eq(variables.Host, 'MacOS'))
 
-  - $[ if eq(variables.Host, 'Ubuntu') ]:
-    - bash: dpkg-query -Wf '$[ variables.Host ], $[ variables.OSVmImage ], dpkg, ${Package}, ${Version}, ${Architecture}\n' > dpkg-inventory.csv
-      displayName: dpkg inventory
-      workingDirectory: $(Build.ArtifactStagingDirectory)
+  - bash: dpkg-query -Wf '$[ variables.Host ], $[ variables.OSVmImage ], dpkg, ${Package}, ${Version}, ${Architecture}\n' > dpkg-inventory.csv
+    displayName: (Ubuntu) dpkg inventory
+    workingDirectory: $(Build.ArtifactStagingDirectory)
+    condition: and(succeeded(), eq(variables.Host, 'Ubuntu'))
 
-  - $[ if eq(variables.Host, 'Windows') ]:
-    # powershell returns CIM/WMI objects faster via Get-WmiObject than Get-CimInstance on either powershell or pwsh.
-    - powershell: >
-        Get-WmiObject Win32_Product
-        | ForEach-Object { "$[ variables.Host ], $[ variables.OSVmImage ], MSI, $($_.Name), $($_.Version), unknown" }
-        > msi-inventory.csv
-      displayName: Windows Installer products
-      workingDirectory: $(Build.ArtifactStagingDirectory)
+  # powershell returns CIM/WMI objects faster via Get-WmiObject than Get-CimInstance on either powershell or pwsh.
+  - powershell: >
+      Get-WmiObject Win32_Product
+      | ForEach-Object { "$[ variables.Host ], $[ variables.OSVmImage ], MSI, $($_.Name), $($_.Version), unknown" }
+      > msi-inventory.csv
+    displayName: (Windows) Windows Installer products
+    workingDirectory: $(Build.ArtifactStagingDirectory)
+    condition: and(succeeded(), eq(variables.Host, 'Windows'))
 
-    - pwsh: |
-        filter Write-NonWindowsInstaller($arch) {
-          if ($_.DisplayName -and $_.WindowsInstaller -ne 1) {
-            "$[ variables.Host ], $[ variables.OSVmImage ], MSI, $($_.DisplayName), $($_.DisplayVersion), $arch" }
-          }
+  - pwsh: |
+      filter Write-NonWindowsInstaller($arch) {
+        if ($_.DisplayName -and $_.WindowsInstaller -ne 1) {
+          "$[ variables.Host ], $[ variables.OSVmImage ], MSI, $($_.DisplayName), $($_.DisplayVersion), $arch" }
         }
-        Get-ChildItem HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'amd64' >> arp-inventory.csv
-        Get-ChildItem HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'x86' >> arp-inventory.csv
-        Get-ChildItem HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'amd64' >> arp-inventory.csv
-        Get-ChildItem HKCU:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\ -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'x86' >> arp-inventory.csv
-      displayName: Add/Remove Programs inventory
-      workingDirectory: $(Build.ArtifactStagingDirectory)
+      }
+      Get-ChildItem HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'amd64' >> arp-inventory.csv
+      Get-ChildItem HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'x86' >> arp-inventory.csv
+      Get-ChildItem HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\ -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'amd64' >> arp-inventory.csv
+      Get-ChildItem HKCU:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\ -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'x86' >> arp-inventory.csv
+    displayName: (Windows) Add/Remove Programs inventory
+    workingDirectory: $(Build.ArtifactStagingDirectory)
+    condition: and(succeeded(), eq(variables.Host, 'Windows'))
 
-    - pwsh: >
-        & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -prerelease -format json -utf8
-        | ConvertFrom-Json
-        | ForEach-Object {
-          $arch = if ([Version]$_.installationVersion -lt [Version]'17.0') { "x86" } else { "amd64" };
-          "$[ variables.Host ], $[ variables.OSVmImage ], VSSetup, $($_.displayName) ($($_.channelId)), $($_.installationVersion), $arch"
-        }
-        > vssetup-inventory.csv
-      displayName: Visual Studio inventory
-      workingDirectory: $(Build.ArtifactStagingDirectory)
+  - pwsh: >
+      & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -prerelease -format json -utf8
+      | ConvertFrom-Json
+      | ForEach-Object {
+        $arch = if ([Version]$_.installationVersion -lt [Version]'17.0') { "x86" } else { "amd64" };
+        "$[ variables.Host ], $[ variables.OSVmImage ], VSSetup, $($_.displayName) ($($_.channelId)), $($_.installationVersion), $arch"
+      }
+      > vssetup-inventory.csv
+    displayName: (Windows) Visual Studio inventory
+    workingDirectory: $(Build.ArtifactStagingDirectory)
+    condition: and(succeeded(), eq(variables.Host, 'Windows'))
 
   - pwsh: >
       az extension list

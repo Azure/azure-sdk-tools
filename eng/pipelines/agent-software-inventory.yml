@@ -44,20 +44,20 @@ jobs:
 
   # Inventory files should be written without headers in the format:
   # Host, VmImage, Package Manager, Package Name, Package Version, Package Architecture {unknown, x86, amd64, arm64, all}
-  - ${{ if eq(variables.Host, 'MacOS') }}:
+  - $[ if eq(variables.Host, 'MacOS') ]:
     - bash: sudo chown -R runner ~/.Azure
       displayName: Grant access to ~/.Azure
 
-  - ${{ if eq(variables.Host, 'Ubuntu') }}:
-    - bash: dpkg-query -Wf '${{ variables.Host }}, ${{ variables.OSVmImage }}, dpkg, ${Package}, ${Version}, ${Architecture}\n' > dpkg-inventory.csv
+  - $[ if eq(variables.Host, 'Ubuntu') ]:
+    - bash: dpkg-query -Wf '$[ variables.Host ], $[ variables.OSVmImage ], dpkg, ${Package}, ${Version}, ${Architecture}\n' > dpkg-inventory.csv
       displayName: dpkg inventory
       workingDirectory: $(Build.ArtifactStagingDirectory)
 
-  - ${{ if eq(variables.Host, 'Windows') }}:
+  - $[ if eq(variables.Host, 'Windows') ]:
     # powershell returns CIM/WMI objects faster via Get-WmiObject than Get-CimInstance on either powershell or pwsh.
     - powershell: >
         Get-WmiObject Win32_Product
-        | ForEach-Object { "${{ variables.Host }}, ${{ variables.OSVmImage }}, MSI, $($_.Name), $($_.Version), unknown" }
+        | ForEach-Object { "$[ variables.Host ], $[ variables.OSVmImage ], MSI, $($_.Name), $($_.Version), unknown" }
         > msi-inventory.csv
       displayName: Windows Installer products
       workingDirectory: $(Build.ArtifactStagingDirectory)
@@ -65,7 +65,7 @@ jobs:
     - pwsh: |
         filter Write-NonWindowsInstaller($arch) {
           if ($_.DisplayName -and $_.WindowsInstaller -ne 1) {
-            "${{ variables.Host }}, ${{ variables.OSVmImage }}, MSI, $($_.DisplayName), $($_.DisplayVersion), $arch" }
+            "$[ variables.Host ], $[ variables.OSVmImage ], MSI, $($_.DisplayName), $($_.DisplayVersion), $arch" }
           }
         }
         Get-ChildItem HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'amd64' >> arp-inventory.csv
@@ -80,7 +80,7 @@ jobs:
         | ConvertFrom-Json
         | ForEach-Object {
           $arch = if ([Version]$_.installationVersion -lt [Version]'17.0') { "x86" } else { "amd64" };
-          "${{ variables.Host }}, ${{ variables.OSVmImage }}, VSSetup, $($_.displayName) ($($_.channelId)), $($_.installationVersion), $arch"
+          "$[ variables.Host ], $[ variables.OSVmImage ], VSSetup, $($_.displayName) ($($_.channelId)), $($_.installationVersion), $arch"
         }
         > vssetup-inventory.csv
       displayName: Visual Studio inventory
@@ -89,7 +89,7 @@ jobs:
   - pwsh: >
       az extension list
       | ConvertFrom-Json
-      | ForEach-Object { "${{ variables.Host }}, ${{ variables.OSVmImage }}, az, $($_.name), $($_.version), all" }
+      | ForEach-Object { "$[ variables.Host ], $[ variables.OSVmImage ], az, $($_.name), $($_.version), all" }
       > az-inventory.csv
     displayName: Azure CLI extensions
     workingDirectory: $(Build.ArtifactStagingDirectory)
@@ -98,7 +98,7 @@ jobs:
       dotnet --list-runtimes
       | ForEach-Object {
         $tokens = $_ -split ' ', 3;
-        "${{ variables.Host }}, ${{ variables.OSVmImage }}, dotnet-runtime, $($tokens[0]), $($tokens[1]), all"
+        "$[ variables.Host ], $[ variables.OSVmImage ], dotnet-runtime, $($tokens[0]), $($tokens[1]), all"
       }
       >> dotnet-inventory.csv
     displayName: .NET runtimes
@@ -107,7 +107,7 @@ jobs:
       dotnet --list-sdks
       | ForEach-Object {
         $tokens = $_ -split ' ', 2;
-        "${{ variables.Host }}, ${{ variables.OSVmImage }}, dotnet-sdk, SDK, $($tokens[0]), all"
+        "$[ variables.Host ], $[ variables.OSVmImage ], dotnet-sdk, SDK, $($tokens[0]), all"
       }
       >> dotnet-inventory.csv
     displayName: .NET SDKs
@@ -116,14 +116,14 @@ jobs:
   - pwsh: |
       & "${env:BUILD_SOURCESDIRECTORY}/eng/common/scripts/Import-AzModules.ps1"
       Get-Module -List | ForEach-Object {
-        "${{ variables.Host }}, ${{ variables.OSVmImage }}, PowerShell, $($_.Name), $($_.Version), all"
+        "$[ variables.Host ], $[ variables.OSVmImage ], PowerShell, $($_.Name), $($_.Version), all"
       } > powershell-inventory.csv
     displayName: PowerShell modules
     workingDirectory: $(Build.ArtifactStagingDirectory)
 
   - publish: $(Build.ArtifactStagingDirectory)
-    displayName: Publish inventory-${{ variables.OSVmImage }}
-    artifact: inventory-${{ variables.OSVmImage }}
+    displayName: Publish inventory-$[ variables.OSVmImage ]
+    artifact: inventory-$[ variables.OSVmImage ]
 
 - job: assemble
   dependsOn: inventory

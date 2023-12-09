@@ -65,7 +65,7 @@ jobs:
   - pwsh: |
       filter Write-NonWindowsInstaller($arch) {
         if ($_.DisplayName -and $_.WindowsInstaller -ne 1) {
-          "$(Host), $(OSVmImage), MSI, $($_.DisplayName), $($_.DisplayVersion), $arch" }
+          "$(Host), $(OSVmImage), MSI, $($_.DisplayName), $($_.DisplayVersion), $arch"
         }
       }
       Get-ChildItem HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\ -ea SilentlyContinue | Get-ItemProperty | Write-NonWindowsInstaller 'amd64' >> arp-inventory.csv

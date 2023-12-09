@@ -47,7 +47,7 @@ namespace APIViewWeb
             if (updateCache)
             {
                 using var _ = _cache.CreateEntry(key)
-                .SetSlidingExpiration(TimeSpan.FromHours(2))
+                .SetSlidingExpiration(TimeSpan.FromMinutes(10))
                 .SetValue(codeFile);
             }            
 

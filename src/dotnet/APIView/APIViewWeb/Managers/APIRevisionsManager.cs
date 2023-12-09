@@ -273,7 +273,7 @@ namespace APIViewWeb.Managers
             {
                 apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
             } 
-            var RevisionACodeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, true);
+            var RevisionACodeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, false);
             var RevisionAHtmlLines = RevisionACodeFile.Render(false);
             var RevisionATextLines = RevisionACodeFile.RenderText(false);
 
@@ -283,7 +283,7 @@ namespace APIViewWeb.Managers
                 if (rev.Id != apiRevision.Id)
                 {
                     var lineNumbersForHeadingOfSectionWithDiff = new HashSet<int>();
-                    var RevisionBCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, true);
+                    var RevisionBCodeFile = await _codeFileRepository.GetCodeFileAsync(rev, false);
                     var RevisionBHtmlLines = RevisionBCodeFile.RenderReadOnly(false);
                     var RevisionBTextLines = RevisionBCodeFile.RenderText(false);
 

@@ -40,6 +40,8 @@ jobs:
     vmImage: $(OSVmImage)
 
   steps:
+  - checkout: self
+
   # Inventory files should be written without headers in the format:
   # Host, VmImage, Package Manager, Package Name, Package Version, Package Architecture {unknown, x86, amd64, arm64, all}
   - ${{ if eq(variables.Host, 'MacOS') }}:
@@ -128,6 +130,8 @@ jobs:
   pool:
     vmImage: ubuntu-latest
   steps:
+  - checkout: none
+
   - download: current
     displayName: Download artifacts
     patterns: |

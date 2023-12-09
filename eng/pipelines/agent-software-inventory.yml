@@ -114,7 +114,7 @@ jobs:
     workingDirectory: $(Build.ArtifactStagingDirectory)
 
   - pwsh: |
-      eng/common/scripts/Import-AzModules.ps1
+      & "${env:BUILD_SOURCESDIRECTORY}/eng/common/scripts/Import-AzModules.ps1"
       Get-Module -List | ForEach-Object {
         "${{ variables.Host }}, ${{ variables.OSVmImage }}, PowerShell, $($_.Name), $($_.Version), all"
       } > powershell-inventory.csv

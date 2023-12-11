@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.Services;
@@ -22,7 +24,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
         private VssConnection VisualStudioConnection;
         private string TARGET_ACCOUNT_ID = "azure-sdk";
         private Guid TARGET_PROJECT_ID = new Guid("29ec6040-b234-4e31-b139-33dc4287b756");
-        private int TARGET_BUILD_ID = 3297647; //https://dev.azure.com/azure-sdk/public/_build/results?buildId=3297647&view=results
+        private int TARGET_DEFINITION_ID = 297;
         private string DEVOPS_PATH = "https://dev.azure.com/azure-sdk";
         private PipelineWitnessSettings TestSettings = new PipelineWitnessSettings()
         {
@@ -52,6 +54,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
             var buildHttpClient = VisualStudioConnection.GetClient<BuildHttpClient>();
             var testResultsBuiltClient = VisualStudioConnection.GetClient<TestResultsHttpClient>();
 
+            List<Build> recentBuilds = await buildHttpClient.GetBuildsAsync(TARGET_PROJECT_ID, definitions: new[] { TARGET_DEFINITION_ID }, resultFilter: BuildResult.Succeeded, statusFilter: BuildStatus.Completed, top: 1, queryOrder: BuildQueryOrder.FinishTimeDescending);
+            Assert.True(recentBuilds.Count > 0);
+            var targetBuildId = recentBuilds.First().Id;
+
             BlobUploadProcessor processor = new BlobUploadProcessor(logger: new NullLogger<BlobUploadProcessor>(),
                 logProvider: buildLogProvider,
                 blobServiceClient: blobServiceClient,
@@ -60,7 +66,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
                 options: Options.Create<PipelineWitnessSettings>(TestSettings),
                 failureAnalyzer: new PassThroughFailureAnalyzer());
 
-            await processor.UploadBuildBlobsAsync(TARGET_ACCOUNT_ID, TARGET_PROJECT_ID, TARGET_BUILD_ID);
+            await processor.UploadBuildBlobsAsync(TARGET_ACCOUNT_ID, TARGET_PROJECT_ID, targetBuildId);
         }
     }
 }

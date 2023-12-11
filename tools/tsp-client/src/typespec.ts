@@ -1,9 +1,10 @@
-import { NodeHost, compile, getSourceLocation } from "@typespec/compiler";
 import { parse, isImportStatement } from "@typespec/compiler";
+import { ModuleResolutionResult, resolveModule, ResolveModuleHost } from "@typespec/compiler/module-resolver";
 import { Logger } from "./log.js";
-import { readFile, readdir } from "fs/promises";
+import { readFile, readdir, realpath, stat } from "fs/promises";
 import * as path from "node:path";
 import { parse as parseYaml } from "yaml";
+import { pathToFileURL } from "url";
 
 
 export interface TspLocation {
@@ -136,6 +137,9 @@ export async function compileTsp({
   options: Record<string, Record<string, unknown>>;
 }) {
   Logger.debug(`Using emitter output dir: ${outputPath}`);
+
+  const parsedEntrypoint = path.parse(resolvedMainFilePath);
+  const { compile, NodeHost, getSourceLocation } = await importTsp(parsedEntrypoint.dir);
   // compile the local copy of the root file
   const program = await compile(NodeHost, resolvedMainFilePath, {
     outputDir: outputPath,
@@ -153,5 +157,32 @@ export async function compileTsp({
     }
   } else {
     Logger.success("generation complete");
+  }
+}
+
+export async function importTsp(baseDir: string): Promise<typeof import("@typespec/compiler")> {
+  try {
+    const host: ResolveModuleHost = {
+      realpath,
+      readFile: async (path: string) => await readFile(path, "utf-8"),
+      stat,
+    };
+    const resolved: ModuleResolutionResult = await resolveModule(host, "@typespec/compiler", {
+      baseDir,
+    });
+
+    Logger.info(`Resolved path: ${resolved.path}`);
+
+    if (resolved.type === "module") {
+      return import(pathToFileURL(resolved.mainFile).toString());
+    }
+    return import(pathToFileURL(resolved.path).toString());
+  } catch (err: any) {
+    if (err.code === "MODULE_NOT_FOUND") {
+      // Resolution from cwd failed: use current package.
+      return import("@typespec/compiler");
+    } else {
+      throw err;
+    }
   }
 }

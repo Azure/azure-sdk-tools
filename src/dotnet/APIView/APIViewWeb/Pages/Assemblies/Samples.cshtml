@@ -1,6 +1,7 @@
 @page "{id?}/{revisionId?}"
 @model APIViewWeb.Pages.Assemblies.UsageSamplePageModel
 @using APIViewWeb.Helpers
+@using APIViewWeb.LeanModels;
 @using APIViewWeb.Models
 @{
     Layout = "Shared/_Layout";
@@ -8,13 +9,13 @@
     var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
     TempData["UserPreference"] = userPreference;
 }
-@if (Model.Samples == null || Model.Sample.FileId == "Bad Deployment" || Model.Sample.FileId == "File Content Missing") // If the samples container does not exist
+@if (!Model.SampleRevisions.Any() || Model.ActiveSampleRevision.FileId == "Bad Deployment" || Model.ActiveSampleRevision.FileId == "File Content Missing") // If the samples container does not exist
 {
     <div class="container-fluid mx-0 px-0 sub-header-content">
         <div class="row mx-1 px-0 py-2">
             <div class="col-md-6">
                 <div class="input-group-sm input-group">
-                    <partial name="Shared/_ReviewBadge" model="Model.Review" />
+                    <partial name="Shared/_ReviewBadge" model="(Model.Review, default(APIRevisionListItemModel))" />
                 </div>
             </div>
             <div class="col-md-3">
@@ -48,13 +49,13 @@ else
                             {
                                 var urlValue = @Url.ActionLink("Samples", "Assemblies", new
                                 {
-                                    id = @Model.Review.ReviewId,
+                                    id = @Model.Review.Id,
                                     revisionId = @revision.FileId,
                                 });
-    
-                                string revTitle = revision.RevisionTitle == null ? "Rev " + revision.RevisionNumber : "Rev " + revision.RevisionNumber + " - " + revision.RevisionTitle;
 
-                                if (revision.FileId == Model.Sample.FileId)
+                                string revTitle = revision.Title == null ? $"Created On { revision.CreatedOn }" : $"Created On: { revision.Title }";
+
+                                if (revision.FileId == Model.ActiveSampleRevision.FileId)
                                 {
                                     <option selected value="@urlValue">@revTitle</option>
                                 }
@@ -68,7 +69,7 @@ else
                     @if (Model.SampleContent.Length > 0)
                     {
                         <button type="button" class="btn btn-sm border shadow-sm btn-light" data-bs-toggle="modal" data-bs-target="#updateModel"><i class="fa-solid fa-pen-to-square"></i>&nbsp;&nbsp;Edit</button>
-                        @if (Model.Sample.CreatedBy == User.GetGitHubLogin())
+                        @if (Model.ActiveSampleRevision.CreatedBy == User.GetGitHubLogin())
                         {
                             <button type="button" class="btn btn-sm shadow-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModel"><i class="fas fa-times-circle"></i>&nbsp;&nbsp;Delete</button>
                         }
@@ -84,7 +85,7 @@ else
     </div>
     <div class="container-fluid" id="samples-main-container">
         <div class="row mx-0 px-0 py-2">
-            <div class="col-lg-12 mx-0" data-review-id=@Model.Review.ReviewId>
+            <div class="col-lg-12 mx-0" data-review-id=@Model.Review.Id>
                 <div id="add-sample-button">
                     <button type="button" class="btn btn-primary" id="add-sample-button" data-bs-toggle="modal" data-bs-target="#uploadModel"><small>ADD</small><br><i class="fas fa-sm fa-plus"></i><br><small>SAMPLE</small></button>
                 </div>
@@ -106,7 +107,7 @@ else
                             </tbody>
                         </table>
                     </div>
-                    <i> Sample uploaded by <strong> <a username="@Model.Sample.CreatedBy"> @Model.Sample.CreatedBy </a></strong></i>
+                    <i> Sample uploaded by <strong> <a username="@Model.ActiveSampleRevision.CreatedBy"> @Model.ActiveSampleRevision.CreatedBy </a></strong></i>
                 }
             </div>
             <partial name="_SampleCommentFormPartial" />
@@ -144,15 +145,7 @@ else
                                             <label asp-for="Upload.RevisionTitle"> Enter a sample title (Optional) </label>
                                             <input asp-for="Upload.RevisionTitle" class="form-control" type="text" /> <br />
                                             <textarea asp-for="Upload.sampleString" class="new-thread-comment-text form-control" rows="25" placeholder="Enter your markdown formatted usage sample here"></textarea>
-                                            <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
-                                            @if (Model.SampleRevisions == null) 
-                                            {
-                                                <input asp-for="Upload.RevisionNumber" hidden value="-1" />
-                                            }
-                                            else 
-                                            {
-                                                <input asp-for="Upload.RevisionNumber" hidden value="@Model.SampleRevisions.Count()" />
-                                            }
+                                            <input asp-for="Upload.ReviewId" hidden value="@Model.Review.Id" />
                                             <div class="d-flex flex-row-reverse pt-3 mb-3">
                                                 <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fa-solid fa-floppy-disk"></i>&nbsp;&nbsp;Save</button>
                                                 <button type="button" class="btn btn-outline-secondary me-1" data-bs-dismiss="modal">Close</button>
@@ -164,8 +157,7 @@ else
                                     <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
                                         <label asp-for="Upload.RevisionTitle"> Enter a sample title (Optional) </label>
                                         <input asp-for="Upload.RevisionTitle" class="form-control" type="text" /> <br />
-                                        <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
-                                        <input asp-for="Upload.RevisionNumber" hidden value="@Model.SampleRevisions.Count()" />
+                                        <input asp-for="Upload.ReviewId" hidden value="@Model.Review.Id" />
                                         <div class="input-group mb-3 custom-file-label">
                                             <label for="uploadMarkdownSample" class="input-group-text small mb-0">Select usage sample for this review</label>
                                             <input asp-for="Upload.File" type="file" class="form-control" id="uploadMarkdownSample">
@@ -203,10 +195,10 @@ else
                         <div class="form-group">
                             <form asp-page-handler="Upload" method="post">
                                 <input asp-for="Upload.sampleString" hidden value="@null" />
-                                <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
+                                <input asp-for="Upload.ReviewId" hidden value="@Model.Review.Id" />
                                 <input asp-for="Upload.Deleting" hidden type="text" value="@true" />
-                                <input asp-for="Upload.SampleId" hidden type="text" value="@Model.Samples.SampleId" />
-                                <input asp-for="Upload.FileId" hidden type="text" value="@Model.Sample.FileId" />
+                                <input asp-for="Upload.SampleId" hidden type="text" value="@Model.ActiveSampleRevision.Id" />
+                                <input asp-for="Upload.FileId" hidden type="text" value="@Model.ActiveSampleRevision.FileId" />
                                 <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
                                 <button type="submit" name="submit" value="Submit" class="btn btn-outline-danger"><i class="fas fa-times-circle"></i>&nbsp;&nbsp;Delete</button>
                             </form>
@@ -238,9 +230,8 @@ else
                                             <div class="new-sample-content">
                                                 <textarea asp-for="Upload.updateString" class="new-thread-comment-text form-control" rows="25"></textarea>
                                             </div>
-                                            <input asp-for="Upload.ReviewId" hidden value="@Model.Review.ReviewId" />
+                                            <input asp-for="Upload.ReviewId" hidden value="@Model.Review.Id" />
                                             <input asp-for="Upload.Updating" hidden type="text" value="@true" />
-                                            <input asp-for="Upload.RevisionNumber" hidden value="@Model.SampleRevisions.Count()" />
                                         </div>
                                         <p class="text-muted"> This will create a new revision of the sample. </p>
                                     </div>

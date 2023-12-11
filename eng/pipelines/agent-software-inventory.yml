@@ -1,0 +1,47 @@
+# Inventory PowerShell modules installed
+
+trigger: none
+
+strategy:
+  matrix:
+    Linux:
+      Pool: Azure Pipelines
+      OSVmImage: ubuntu-latest
+    Windows:
+      Pool: Azure Pipelines
+      OSVmImage: windows-latest
+    MacOS:
+      Pool: Azure Pipelines
+      OSVmImage: macOS-latest
+    CustomLinux20:
+      Pool: azsdk-pool-mms-ubuntu-2004-general
+      OSVmImage: MMSUbuntu20.04
+    CustomLinux22:
+      Pool: azsdk-pool-mms-ubuntu-2204-general
+      OSVmImage: MMSUbuntu22.04
+    CustomWindows:
+      Pool: azsdk-pool-mms-win-2022-general
+      OSVmImage: MMS2022
+    CustomMacOS:
+      Pool: Azure Pipelines
+      OSVmImage: macos-11
+
+pool:
+  name: $(Pool)
+  vmImage: $(OSVmImage)
+
+steps:
+- bash: sudo chown -R runner ~/.Azure
+  displayName: (MacOS) Grant access to ~/.Azure
+  condition: contains(variables['OSVmImage'], 'mac')
+
+- bash: az --version
+  displayName: Az CLI info
+
+- bash: dotnet --info
+  displayName: .NET information
+
+- pwsh: |
+    eng/common/scripts/Import-AzModules.ps1
+    Get-Module -List
+  displayName: Az PowerShell info

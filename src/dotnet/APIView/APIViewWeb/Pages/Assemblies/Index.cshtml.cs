@@ -8,67 +8,76 @@ using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using APIViewWeb.Managers;
-using Microsoft.TeamFoundation.Common;
 using APIViewWeb.Helpers;
 using Microsoft.VisualStudio.Services.Common;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using APIViewWeb.LeanModels;
 using System.Text;
+using APIViewWeb.Managers.Interfaces;
+using System.IO;
+using ApiView;
+using Microsoft.AspNetCore.Http;
 
 namespace APIViewWeb.Pages.Assemblies
 {
     public class IndexPageModel : PageModel
     {
-        private readonly IReviewManager _manager;
+        private readonly IReviewManager _reviewManager;
+        private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IHubContext<SignalRHub> _notificationHubContext;
         public readonly UserPreferenceCache _preferenceCache;
         public readonly IUserProfileManager _userProfileManager;
-        public const int _defaultPageSize = 50;
-        public const string _defaultSortField = "LastUpdated";
+        private readonly ICodeFileManager _codeFileManager;
 
-        public IndexPageModel(IReviewManager manager, IUserProfileManager userProfileManager, UserPreferenceCache preferenceCache, IHubContext<SignalRHub> notificationHub)
+        public const int _defaultPageSize = 50;
+        public const string _defaultSortField = "LastUpdatedOn";
+
+        public IndexPageModel(IReviewManager reviewManager, IAPIRevisionsManager apiRevisionsManager, IUserProfileManager userProfileManager,
+            UserPreferenceCache preferenceCache, IHubContext<SignalRHub> notificationHub, ICodeFileManager codeFileManager)
         {
             _notificationHubContext = notificationHub;
-            _manager = manager;
+            _reviewManager = reviewManager;
+            _apiRevisionsManager = apiRevisionsManager;
             _preferenceCache = preferenceCache;
             _userProfileManager = userProfileManager;
+            _codeFileManager = codeFileManager;
         }
-
         [FromForm]
         public UploadModel Upload { get; set; }
-
         [FromForm]
         public string Label { get; set; }
 
         public ReviewsProperties ReviewsProperties { get; set; } = new ReviewsProperties();
 
-        public (IEnumerable<ReviewModel> Reviews, int TotalCount, int TotalPages,
+        public (IEnumerable<ReviewListItemModel> Reviews, int TotalCount, int TotalPages,
             int CurrentPage, int? PreviousPage, int? NextPage) PagedResults { get; set; }
+        [BindProperty(Name = "notificationMessage", SupportsGet = true)]
+        public string NotificationMessage { get; set; }
 
         public async Task OnGetAsync(
             IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
-            IEnumerable<string> status, IEnumerable<string> type, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
+            IEnumerable<string> status, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            if (!search.Any() && !languages.Any() && !state.Any() && !status.Any() && !type.Any())
+            if (!search.Any() && !languages.Any() && !state.Any() && !status.Any())
             {
                 UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User);
                 languages = userPreference.Language;
                 state = userPreference.State;
                 status = userPreference.Status;
-                type = userPreference.FilterType.Select(x => x.ToString());
-                await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField, false);
+                await RunGetRequest(search, languages, state, status, pageNo, pageSize, sortField, false);
             }
             else 
             {
-                await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
+                await RunGetRequest(search, languages, state, status, pageNo, pageSize, sortField);
             }
         }
 
         public async Task<PartialViewResult> OnGetReviewsPartialAsync(
             IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
-            IEnumerable<string> status, IEnumerable<string> type, int pageNo = 1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
+            IEnumerable<string> status, int pageNo = 1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
-            await RunGetRequest(search, languages, state, status, type, pageNo, pageSize, sortField);
+            await RunGetRequest(search, languages, state, status, pageNo, pageSize, sortField);
             return Partial("_ReviewsPartial", PagedResults);
         }
 
@@ -90,32 +99,68 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             var file = Upload.Files?.SingleOrDefault();
+            var review = await GetOrCreateReview(file, Upload.FilePath);
 
+            if (review != null)
+            {
+                APIRevisionListItemModel apiRevision = null;
+
+                if (file != null)
+                {
+                    using (var openReadStream = file.OpenReadStream())
+                    {
+                        apiRevision = await _apiRevisionsManager.AddAPIRevisionAsync(user: User, review: review, apiRevisionType: APIRevisionType.Manual,
+                            name: file.FileName, label: Label, fileStream: openReadStream, language: Upload.Language);
+                    }
+                }
+                else if (!string.IsNullOrEmpty(Upload.FilePath))
+                {
+                    apiRevision = await _apiRevisionsManager.AddAPIRevisionAsync(user: User, review: review, apiRevisionType: APIRevisionType.Manual,
+                               name: file.FileName, label: Label, fileStream: null, language: Upload.Language);
+                }
+                return RedirectToPage("Review", new { id = review.Id, revisionId = apiRevision.Id });
+            }
+            return RedirectToPage();
+        }
+
+        private async Task<ReviewListItemModel> GetOrCreateReview(IFormFile file, string filePath)
+        {
+            CodeFile codeFile = null;
+            ReviewListItemModel review = null;
+
+            using var memoryStream = new MemoryStream();
             if (file != null)
             {
                 using (var openReadStream = file.OpenReadStream())
                 {
-                    var reviewModel = await _manager.CreateReviewAsync(User, file.FileName, Label, openReadStream, Upload.RunAnalysis, langauge: Upload.Language);
-                    return RedirectToPage("Review", new { id = reviewModel.ReviewId });
+                    codeFile = await _codeFileManager.CreateCodeFileAsync(
+                        originalName: file?.FileName, fileStream: openReadStream, runAnalysis: Upload.RunAnalysis, memoryStream: memoryStream, language: Upload.Language);
                 }
             }
-            else if (!Upload.FilePath.IsNullOrEmpty())
+            else if (!string.IsNullOrEmpty(filePath))
             {
-                var reviewModel = await _manager.CreateReviewAsync(User, Upload.FilePath, Label, null, Upload.RunAnalysis, langauge: Upload.Language);
-                return RedirectToPage("Review", new { id = reviewModel.ReviewId });
+                codeFile = await _codeFileManager.CreateCodeFileAsync(
+                    originalName: Upload.FilePath, runAnalysis: Upload.RunAnalysis, memoryStream: memoryStream, language: Upload.Language);
             }
 
-            return RedirectToPage();
+            if (codeFile != null)
+            {
+                review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language);
+                if (review == null)
+                {
+                    review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false);
+                }
+            }
+            return review;
         }
 
         private async Task RunGetRequest(IEnumerable<string> search, IEnumerable<string> languages,
-            IEnumerable<string> state, IEnumerable<string> status, IEnumerable<string> type, int pageNo, int pageSize, string sortField, bool fromUrl = true)
+            IEnumerable<string> state, IEnumerable<string> status, int pageNo, int pageSize, string sortField, bool fromUrl = true)
         {
             search = search.Select(x => HttpUtility.UrlDecode(x));
             languages = (fromUrl)? languages.Select(x => HttpUtility.UrlDecode(x)) : languages;
             state = state.Select(x => HttpUtility.UrlDecode(x));
             status = status.Select(x => HttpUtility.UrlDecode(x));
-            type = type.Select(x => HttpUtility.UrlDecode(x));
 
             // Update selected properties
             if (languages.Any())
@@ -136,11 +181,6 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 ReviewsProperties.Status.Selected = status;
             }
-
-            if (type.Any())
-            {
-                ReviewsProperties.Type.Selected = type;
-            }
             
             bool? isClosed = null;
             // Resolve isClosed value
@@ -157,12 +197,7 @@ namespace APIViewWeb.Pages.Assemblies
                 isClosed = null;
             }
 
-            // Resolve FilterType
-            IEnumerable<ReviewType> filterTypes = type.Select(x => (ReviewType)Enum.Parse(typeof(ReviewType), x));
-            IEnumerable<int> filterTypesAsInt = filterTypes.Select(x => (int)x);
-
             _preferenceCache.UpdateUserPreference(new UserPreferenceModel {
-                FilterType = filterTypes,
                 Language = languages,
                 State = state,
                 Status = status
@@ -186,7 +221,7 @@ namespace APIViewWeb.Pages.Assemblies
 
             languages = LanguageServiceHelpers.MapLanguageAliases(languages);
 
-            PagedResults = await _manager.GetPagedReviewsAsync(search, languages, isClosed, filterTypesAsInt, isApproved, offset, pageSize, sortField);
+            PagedResults = await _reviewManager.GetPagedReviewListAsync(search, languages, isClosed, isApproved, offset, pageSize, sortField);
         }
     }
 

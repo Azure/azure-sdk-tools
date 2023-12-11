@@ -24,42 +24,46 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model.ActiveReviews.Any())
+                        @if (Model.ActiveAPIRevisions.Any())
                         {
-                            @foreach (var review in Model.ActiveReviews)
+                            @foreach (var apiRevision in Model.ActiveAPIRevisions)
                             {
-                                var truncationIndex = @Math.Min(@review.DisplayName.Length, 100);
+                                var assignment = Model.Reviews.Single(r => r.Id == apiRevision.ReviewId).AssignedReviewers.First(ar => ar.AssingedTo == User.GetGitHubLogin());
+                                var approvalRequestedOn = assignment.AssingedOn;
+                                var requestBy = assignment.AssignedBy;
+
+                                var truncationIndex = @Math.Min(apiRevision.PackageName.Length, 100);
                                 <tr class="package-data-row">
                                     <td class="align-middle pl-4 pt-0 pb-0">
-                                        @if (review.Language != null)
+                                        @if (apiRevision.Language != null)
                                         {
-                                            string iconClassName = "icon-" + review.GetLanguageCssSafeName();
-                                            @if (!string.IsNullOrEmpty(review.LanguageVariant) && review.LanguageVariant.ToLower() != "default")
+                                            string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(@apiRevision.Language);
+                                            @if (!string.IsNullOrEmpty(apiRevision.Files.FirstOrDefault().LanguageVariant) && apiRevision.Files.FirstOrDefault().LanguageVariant != "default")
                                             {
-                                                iconClassName += "-" + @review.LanguageVariant.ToLower();
+                                                iconClassName += "-" + apiRevision.Files.FirstOrDefault().LanguageVariant.ToLower();
                                             }
-                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@review.Language @review.LanguageVariant"></span>
+                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@apiRevision.Language @apiRevision.Files.FirstOrDefault().LanguageVariant"></span>
                                         }
-                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@review.ReviewId">@review.DisplayName.Substring(0, @truncationIndex)</a>
-                                        @if (review.IsApproved == true)
+                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@apiRevision.ReviewId" asp-route-revisionId="@apiRevision.Id">@apiRevision.PackageName.Substring(0, @truncationIndex)</a>
+                                        @if (apiRevision.IsApproved == true)
                                         {
                                             <i class="fas fa-check-circle text-success ml-2"></i>
                                         }
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <a username="@review.Author">@review.Author</a>
+                                        <a username="@apiRevision.CreatedBy">@apiRevision.CreatedBy</a>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.LastUpdated.ToLocalTime()"></span>
+                                        <span data-placement="left" data-toggle="tooltip" title="@apiRevision.LastUpdatedOn" date="@apiRevision.LastUpdatedOn.ToLocalTime()"></span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <span>@review.FilterType.ToString()</span>
+                                        <span>@apiRevision.APIRevisionType.ToString()</span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.ApprovalRequestedOn.ToLocalTime()"></span>
+                                        <span data-placement="left" data-toggle="tooltip" title="@apiRevision.LastUpdatedOn" date="@approvalRequestedOn.ToLocalTime()"></span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <a username="@review.RequestedBy">@review.RequestedBy</a>
+                                        <a username="@requestBy">@requestBy</a>
                                     </td>
                                 </tr>
                             }
@@ -90,43 +94,47 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (Model.ApprovedReviews.Any())
+                        @if (Model.ApprovedAPIRevisions.Any())
                         {
-                            @foreach (var review in Model.ApprovedReviews)
+                            @foreach (var apiRevision in Model.ApprovedAPIRevisions)
                             {
-                                var truncationIndex = @Math.Min(@review.DisplayName.Length, 100);
+                                var assignment = Model.Reviews.Single(r => r.Id == apiRevision.ReviewId).AssignedReviewers.First(ar => ar.AssingedTo == User.GetGitHubLogin());
+                                var approvalRequestedOn = assignment.AssingedOn;
+                                var requestBy = assignment.AssignedBy;
+
+                                var truncationIndex = @Math.Min(apiRevision.PackageName.Length, 100);
                                 <tr class="package-data-row">
                                     <td class="align-middle pl-4 pt-0 pb-0">
-                                        @if (review.Language != null)
+                                        @if (apiRevision.Language != null)
                                         {
-                                            string iconClassName = "icon-" + review.GetLanguageCssSafeName();
-                                            @if (!string.IsNullOrEmpty(review.LanguageVariant) && review.LanguageVariant.ToLower() != "default")
+                                            string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(@apiRevision.Language);
+                                            @if (!string.IsNullOrEmpty(apiRevision.Files.FirstOrDefault().LanguageVariant) && apiRevision.Files.FirstOrDefault().LanguageVariant != "default")
                                             {
-                                                iconClassName += "-" + @review.LanguageVariant.ToLower();
+                                                iconClassName += "-" + apiRevision.Files.FirstOrDefault().LanguageVariant.ToLower();
                                             }
-                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@review.Language @review.LanguageVariant"></span>
+                                            <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@apiRevision.Language @apiRevision.Files.FirstOrDefault().LanguageVariant"></span>
                                         }
-                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@review.ReviewId">@review.DisplayName.Substring(0, @truncationIndex)</a>
-                                        @if (review.IsApproved == true)
+                                        <a class="review-name align-middle" asp-page="./Review" asp-route-id="@apiRevision.ReviewId">@apiRevision.PackageName.Substring(0, @truncationIndex)</a>
+                                        @if (apiRevision.IsApproved == true)
                                         {
                                             <i class="fas fa-check-circle text-success ml-2"></i>
                                         }
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <a username="@review.Author">@review.Author</a>
+                                        <a username="@apiRevision.CreatedBy">@apiRevision.CreatedBy</a>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.LastUpdated.ToLocalTime()"></span>
+                                        <span data-placement="left" data-toggle="tooltip" title="@apiRevision.LastUpdatedOn" date="@apiRevision.LastUpdatedOn.ToLocalTime()"></span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <span>@review.FilterType.ToString()</span>
+                                        <span>@apiRevision.APIRevisionType.ToString()</span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
-                                        <span data-placement="left" data-toggle="tooltip" title="@review.LastUpdated" date="@review.ApprovalDate.ToLocalTime()"></span>
+                                        <span data-placement="left" data-toggle="tooltip" title="@apiRevision.LastUpdatedOn" date="@approvalRequestedOn.ToLocalTime()"></span>
                                     </td>
                                     <td class="align-middle border-left pl-3">
                                         <span>
-                                            @foreach(var approver in review.Revisions.First().Approvers) {
+                                            @foreach(var approver in apiRevision.Approvers) {
                                                  <a username="@approver"> @approver </a>
                                             }
                                         </span>

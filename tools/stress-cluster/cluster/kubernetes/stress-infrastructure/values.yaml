@@ -1,6 +1,8 @@
 tag: latest
 
 chaos-mesh:
+  images:
+    registry: azsdkengsys.azurecr.io/mirror
   dashboard:
     securityMode: false
   chaosDaemon:

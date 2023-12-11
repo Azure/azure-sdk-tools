@@ -21,6 +21,7 @@ namespace APIViewUnitTests
         }
 
         private Regex _stripRegex = new Regex(@"/\*-\*/(.*?)/\*-\*/", RegexOptions.Singleline);
+        private Regex _retainRegex = new Regex(@"/\*@(.*?)@\*/", RegexOptions.Singleline);
 
         public static IEnumerable<object[]> FormattingFiles(string folder)
         {
@@ -55,6 +56,7 @@ namespace APIViewUnitTests
             code = streamReader.ReadToEnd();
             code = code.Trim(' ', '\t', '\r', '\n');
             formatted = _stripRegex.Replace(code, string.Empty);
+            formatted = _retainRegex.Replace(formatted, "$1");
             formatted = RemoveEmptyLines(formatted);
             formatted = formatted.Trim(' ', '\t', '\r', '\n');
         }
@@ -86,7 +88,7 @@ namespace APIViewUnitTests
         private string RemoveEmptyLines(string content)
         {
             var lines = content
-                .Split(Environment.NewLine)
+                .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None) // handle both NewLine styles as on Windows they can be mismatched between the generated code and the expected code.
                 .Where(s => !string.IsNullOrWhiteSpace(s))
                 .ToArray();
 

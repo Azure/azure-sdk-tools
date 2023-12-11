@@ -27,7 +27,7 @@ namespace APIViewWeb.Pages.Assemblies
             }
 
             var reviewModel = await _manager.GetReviewAsync(User, id);
-            AssemblyName = reviewModel.DisplayName;
+            AssemblyName = reviewModel.PackageName;
 
             return Page();
         }
@@ -39,7 +39,7 @@ namespace APIViewWeb.Pages.Assemblies
                 return NotFound();
             }
 
-            await _manager.DeleteReviewAsync(User, id);
+            await _manager.SoftDeleteReviewAsync(User, id);
 
             return RedirectToPage("./Index");
         }

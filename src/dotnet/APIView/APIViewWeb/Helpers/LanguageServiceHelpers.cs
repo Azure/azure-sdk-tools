@@ -23,5 +23,27 @@ namespace APIViewWeb.Helpers
 
             return result.ToList();
         }
+
+        public static string MapLanguageAlias(string language)
+        {
+            if (language.Equals("net") || language.Equals(".NET"))
+                return "C#";
+
+            if (language.Equals("cpp"))
+                return "C++";
+
+            if (language.Equals("js"))
+                return "JavaScript";
+
+            if (language.Equals("Cadl"))
+                return "TypeSpec";
+
+            return language;
+        }
+
+        public static LanguageService GetLanguageService(string language, IEnumerable<LanguageService> languageServices)
+        { 
+            return languageServices.FirstOrDefault(service => service.Name == language);
+        }
     }
 }

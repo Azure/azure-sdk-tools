@@ -1,0 +1,58 @@
+
+@using APIViewWeb.Helpers
+@using APIViewWeb.LeanModels
+@using APIViewWeb.Models
+@model (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly)
+
+@if (@Model.revisions.Any())
+{
+    var selectedRevisionLabel = String.Empty;
+    if (!@Model.forDiff && @Model.activeRevision != default(APIRevisionListItemModel))
+    {
+        selectedRevisionLabel = PageModelHelpers.ResolveRevisionLabel(@Model.activeRevision, false);
+    }
+    else if (@Model.diffRevision != default(APIRevisionListItemModel))
+    {
+        selectedRevisionLabel = PageModelHelpers.ResolveRevisionLabel(@Model.diffRevision, false);
+    }
+
+    if (String.IsNullOrEmpty(selectedRevisionLabel))
+    {
+        <option selected value=""></option>
+    }
+
+    @foreach (var revision in @Model.revisions)
+    {
+        var optionClass = (revision.IsApproved) ? "option-approved" : "option-pending";
+
+        var urlValue = @Url.ActionLink("Review", "Assemblies", new
+        {
+            id = revision.ReviewId,
+            revisionId = @revision.Id,
+            doc = @Model.showDocumentation
+        });
+
+        if (Model.forDiff)
+        {
+            urlValue = @Url.ActionLink("Review", "Assemblies", new
+            {
+                id = revision.ReviewId,
+                revisionId = @Model.activeRevision.Id,
+                diffOnly = Model.showDiffOnly,
+                doc = @Model.showDocumentation,
+                diffRevisionId = @revision.Id
+            });
+        }
+
+        var revisionLabel = PageModelHelpers.ResolveRevisionLabel(@revision, false);
+
+        if (!String.IsNullOrEmpty(selectedRevisionLabel) && revisionLabel == selectedRevisionLabel)
+        {
+            <option selected value="@urlValue" class="@optionClass">@revisionLabel</option>
+        }
+        else
+        {
+            <option value="@urlValue" class="@optionClass">@revisionLabel</option>
+        }
+    }
+}

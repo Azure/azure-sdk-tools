@@ -1,10 +1,11 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 
 namespace APIViewWeb
@@ -13,9 +14,9 @@ namespace APIViewWeb
     {
         private Dictionary<string, CommentThreadModel> _threads;
 
-        public ReviewCommentsModel(string reviewId, IEnumerable<CommentModel> comments)
+        public ReviewCommentsModel(string reviewId, IEnumerable<CommentItemModel> comments)
         {
-            _threads = comments.OrderBy(c => c.TimeStamp)
+            _threads = comments.OrderBy(c => c.CreatedOn)
                 .GroupBy(c => c.ElementId)
                 .ToDictionary(c => c.Key ?? string.Empty, c => new CommentThreadModel(reviewId, c.Key, c));
         }

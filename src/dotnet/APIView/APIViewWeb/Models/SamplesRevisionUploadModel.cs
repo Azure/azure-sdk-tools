@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Http;
@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace APIViewWeb.Pages.Assemblies
 {
-    public class UsageSampleUploadModel
+    public class SamplesRevisionUploadModel
     {
         [BindProperty]
         public string sampleString { get; set; }
@@ -25,9 +25,6 @@ namespace APIViewWeb.Pages.Assemblies
 
         [BindProperty]
         public bool Updating { get; set; } = false;
-
-        [BindProperty]
-        public int RevisionNumber { get; set; }
 
         [BindProperty]
         public string SampleId { get; set; }

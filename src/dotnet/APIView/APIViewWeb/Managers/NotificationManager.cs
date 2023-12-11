@@ -16,7 +16,8 @@ using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
 using System.Net.Http;
 using System.Text.Json;
-
+using APIViewWeb.LeanModels;
+using APIViewWeb.Helpers;
 
 namespace APIViewWeb.Managers
 {
@@ -45,13 +46,13 @@ namespace APIViewWeb.Managers
             _emailSenderServiceUrl = configuration["azure-sdk-emailer-url"] ?? "";
         }
 
-        public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentModel comment)
+        public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentItemModel comment)
         {
             var review = await _reviewRepository.GetReviewAsync(comment.ReviewId);
             await SendEmailsAsync(review, user, GetHtmlContent(comment, review), comment.TaggedUsers);
         }
 
-        public async Task NotifyUserOnCommentTag(CommentModel comment)
+        public async Task NotifyUserOnCommentTag(CommentItemModel comment)
         {
             foreach (string username in comment.TaggedUsers)
             {
@@ -74,19 +75,23 @@ namespace APIViewWeb.Managers
             }
         }
 
-        public async Task NotifySubscribersOnNewRevisionAsync(ReviewRevisionModel revision, ClaimsPrincipal user)
+        public async Task NotifySubscribersOnNewRevisionAsync(ReviewListItemModel review, APIRevisionListItemModel revision, ClaimsPrincipal user)
         {
-            var review = revision.Review;
-            var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.ReviewId}");
-            var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{revision.DisplayName}</a>," +
-                $" was uploaded by <b>{revision.Author}</b>.";
+            var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}");
+            var htmlContent = $"A new revision, <a href='{uri.ToString()}'>{PageModelHelpers.ResolveRevisionLabel(revision)}</a>," +
+                $" was uploaded by <b>{revision.CreatedBy}</b>.";
             await SendEmailsAsync(review, user, htmlContent, null);
         }
-
+        /// <summary>
+        /// Toggle Subscription to a Review
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="reviewId"></param>
+        /// <returns></returns>
         public async Task ToggleSubscribedAsync(ClaimsPrincipal user, string reviewId)
         {
             var review = await _reviewRepository.GetReviewAsync(reviewId);
-            if (review.IsUserSubscribed(user))
+            if (PageModelHelpers.IsUserSubscribed(user, review.Subscribers))
             {
                 await UnsubscribeAsync(review, user);
             }
@@ -96,7 +101,13 @@ namespace APIViewWeb.Managers
             }
         }
 
-        public async Task SubscribeAsync(ReviewModel review, ClaimsPrincipal user)
+        /// <summary>
+        /// Subscribe to Review
+        /// </summary>
+        /// <param name="review"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public async Task SubscribeAsync(ReviewListItemModel review, ClaimsPrincipal user)
         {
             var email = GetUserEmail(user);
 
@@ -107,7 +118,13 @@ namespace APIViewWeb.Managers
             }
         }
 
-        public async Task UnsubscribeAsync(ReviewModel review, ClaimsPrincipal user)
+        /// <summary>
+        /// Unsubscribe from Review
+        /// </summary>
+        /// <param name="review"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public async Task UnsubscribeAsync(ReviewListItemModel review, ClaimsPrincipal user)
         {
             var email = GetUserEmail(user);
             if (email != null && review.Subscribers.Contains(email))
@@ -120,10 +137,10 @@ namespace APIViewWeb.Managers
         public static string GetUserEmail(ClaimsPrincipal user) =>
             user.FindFirstValue(ClaimConstants.Email);
 
-        private string GetApproverReviewHtmlContent(UserProfileModel user, ReviewModel review)
+        private string GetApproverReviewHtmlContent(UserProfileModel user, ReviewListItemModel review)
         {
-            var reviewName = review.Name;
-            var reviewLink = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.ReviewId}");
+            var reviewName = review.PackageName;
+            var reviewLink = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}");
             var poster = user.UserName;
             var userLink = new Uri($"{_apiviewEndpoint}/Assemblies/Profile/{poster}");
             var requestsLink = new Uri($"{_apiviewEndpoint}/Assemblies/RequestedReviews/");
@@ -135,12 +152,12 @@ namespace APIViewWeb.Managers
             return sb.ToString();
         }
 
-        private string GetCommentTagHtmlContent(CommentModel comment, ReviewModel review)
+        private string GetCommentTagHtmlContent(CommentItemModel comment, ReviewListItemModel review)
         {
-            var reviewName = review.Name;
-            var reviewLink = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.ReviewId}#{Uri.EscapeDataString(comment.ElementId)}");
-            var commentText = comment.Comment;
-            var poster = comment.Username;
+            var reviewName = review.PackageName;
+            var reviewLink = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}#{Uri.EscapeDataString(comment.ElementId)}");
+            var commentText = comment.CommentText;
+            var poster = comment.CreatedBy;
             var userLink = new Uri($"{_apiviewEndpoint}/Assemblies/Profile/{poster}");
             var sb = new StringBuilder();
             sb.Append($"<a href='{userLink.ToString()}'>{poster}</a>");
@@ -153,22 +170,22 @@ namespace APIViewWeb.Managers
             return sb.ToString();
         }
 
-        private string GetHtmlContent(CommentModel comment, ReviewModel review)
+        private string GetHtmlContent(CommentItemModel comment, ReviewListItemModel review)
         {
-            var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.ReviewId}#{Uri.EscapeDataString(comment.ElementId)}");
+            var uri = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}#{Uri.EscapeDataString(comment.ElementId)}");
             var sb = new StringBuilder();
             sb.Append(GetContentHeading(comment, true));
             sb.Append("<br><br>");
             sb.Append($"In <a href='{uri.ToString()}'>{comment.ElementId}</a>:");
             sb.Append("<br><br>");
-            sb.Append(CommentMarkdownExtensions.MarkdownAsHtml(comment.Comment));
+            sb.Append(CommentMarkdownExtensions.MarkdownAsHtml(comment.CommentText));
             return sb.ToString();
         }
 
-        private static string GetContentHeading(CommentModel comment, bool includeHtml) =>
-            $"{(includeHtml ? $"<b>{comment.Username}</b>" : $"{comment.Username}")} commented on this review.";
+        private static string GetContentHeading(CommentItemModel comment, bool includeHtml) =>
+            $"{(includeHtml ? $"<b>{comment.CreatedBy}</b>" : $"{comment.CreatedBy}")} commented on this review.";
 
-        private async Task SendUserEmailsAsync(ReviewModel review, UserProfileModel user, string htmlContent)
+        private async Task SendUserEmailsAsync(ReviewListItemModel review, UserProfileModel user, string htmlContent)
         {
             // Always send email to a test address when test address is configured.
             if (string.IsNullOrEmpty(user.Email))
@@ -177,9 +194,9 @@ namespace APIViewWeb.Managers
                 return;
             }
 
-            await SendEmail(user.Email, $"Notification from APIView - {review.DisplayName}", htmlContent);
+            await SendEmail(user.Email, $"Notification from APIView - {review.PackageName}", htmlContent);
         }
-        private async Task SendEmailsAsync(ReviewModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
+        private async Task SendEmailsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
         {
             var initiatingUserEmail = GetUserEmail(user);
             // Find email address of already tagged users in comment
@@ -191,7 +208,7 @@ namespace APIViewWeb.Managers
                     var email = await GetEmailAddress(username);
                     if (string.IsNullOrEmpty(email))
                     {
-                        _telemetryClient.TrackTrace($"Email address is not available for user {username}, review {review.ReviewId}. Not sending email.");
+                        _telemetryClient.TrackTrace($"Email address is not available for user {username}, review {review.Id}. Not sending email.");
                         continue;
                     }
                     notifiedEmails.Add(email);
@@ -207,7 +224,7 @@ namespace APIViewWeb.Managers
 
             foreach(var userEmail in subscribers)
             {
-                await SendEmail(userEmail, $"Update on APIView - {review.DisplayName} from {GetUserName(user)}", htmlContent);
+                await SendEmail(userEmail, $"Update on APIView - {review.PackageName} from {GetUserName(user)}", htmlContent);
             }
         }
 

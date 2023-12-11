@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System.Collections.Generic;
+using APIViewWeb.LeanModels;
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;
 
@@ -10,7 +11,7 @@ namespace APIViewWeb.Models
     {
         internal IEnumerable<string> _language;
         internal IEnumerable<string> _approvedLanguages;
-        internal IEnumerable<ReviewType> _filterType;
+        internal IEnumerable<APIRevisionType> _apiRevisionType;
         internal IEnumerable<string> _state;
         internal IEnumerable<string> _status;
         internal bool? _hideLineNumbers;
@@ -37,10 +38,10 @@ namespace APIViewWeb.Models
             set => _approvedLanguages = value;
         }
 
-        [Name("FilterType")]
-        public IEnumerable<ReviewType> FilterType {
-            get => _filterType ?? new List<ReviewType>();
-            set => _filterType = value;
+        [Name("APIRevisionType")]
+        public IEnumerable<APIRevisionType> APIRevisionType {
+            get => _apiRevisionType ?? new List<APIRevisionType>();
+            set => _apiRevisionType = value;
         }
 
         [Name("State")]

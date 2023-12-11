@@ -1,4 +1,4 @@
-﻿/*-*/using System;
+/*-*/using System;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using C;
@@ -16,7 +16,7 @@ internal interface IInternal
     void M();
     void N();
 }/*-*/
-[Friend("TestProject")]
+/*@internal @*/[Friend("TestProject")]
 internal interface IInternalWithFriend {
     void M();
     void N();
@@ -35,7 +35,7 @@ namespace A {
         public abstract void Dispose();
         public abstract ValueTask DisposeAsync();
     }
-    [Friend("TestProject")]
+    /*@internal @*/[Friend("TestProject")]
     internal abstract class M : IDisposable {
         protected M()/*-*/{/*-*/;/*-*/}/*-*/
         void IDisposable.Dispose()/*-*/{/*-*/;/*-*/}/*-*/

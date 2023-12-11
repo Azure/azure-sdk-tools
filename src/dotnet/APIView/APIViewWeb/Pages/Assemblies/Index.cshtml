@@ -52,19 +52,15 @@
                 <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.State" />
             </select>
         </div>
+        @*
+        Disabling Approval since it has no benefit to users at this point
         <div class="input-group input-group-sm mb-2">
             <span class="input-group-text">Status</span>
             <select multiple id="status-filter-select" aria-label="Status Filter">
                 <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Status" />
             </select>
         </div>
-        <div class="input-group input-group-sm mb-2">
-            <span class="input-group-text">Type</span>
-            <select multiple id="type-filter-select" aria-label="Type Filter">
-                <partial name="_SelectPickerPartial" model="Model.ReviewsProperties.Type" />
-            </select>
-        </div>
-
+        *@
  
         <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="reset-filter-button"><i class="fa-solid fa-xmark"></i>&nbsp;&nbsp;Reset Filters</button>
         <hr class="border">
@@ -75,6 +71,7 @@
     if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
         mainContainerClass = String.Empty;
 }
+
 <div class="container-fluid mb-5@(mainContainerClass)" id="index-main-container">
     <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
@@ -118,12 +115,12 @@
                                 <div class="form-group">
                                     <partial name="_ReviewUploadHelp" />
                                 </div>
-                             </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                        <button id="review-upload-submit-btn" class="btn btn-primary" >
+                        <button id="review-upload-submit-btn" class="btn btn-primary">
                             <i class="fas fa-cloud-upload-alt"></i> Upload
                         </button>
                     </div>
@@ -133,8 +130,15 @@
     </div>
 
     <button type="button" class="btn btn-primary" id="create-review-button" data-bs-toggle="modal" data-bs-target="#uploadModel" data-bs-backdrop="false"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
-
+    
     <div class="mx-5 row">
+        @if (!string.IsNullOrEmpty(Model.NotificationMessage))
+        {
+            <div class="alert alert-warning alert-dismissible fade show mt-1" role="alert">
+                @Model.NotificationMessage
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
         <div class="col-md-12" id="reviews-filter-partial">
             <partial name="_ReviewsPartial" model="Model.PagedResults" />
         </div> 

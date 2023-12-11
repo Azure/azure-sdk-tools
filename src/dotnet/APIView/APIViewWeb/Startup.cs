@@ -38,6 +38,7 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using APIViewWeb.Helpers;
+using APIViewWeb.Managers.Interfaces;
 
 namespace APIViewWeb
 {
@@ -97,20 +98,24 @@ namespace APIViewWeb
             services.AddSingleton<IBlobCodeFileRepository, BlobCodeFileRepository>();
             services.AddSingleton<IBlobOriginalsRepository, BlobOriginalsRepository>();
             services.AddSingleton<IBlobUsageSampleRepository, BlobUsageSampleRepository>();
+
             services.AddSingleton<ICosmosReviewRepository,CosmosReviewRepository>();
+            services.AddSingleton<ICosmosAPIRevisionsRepository, CosmosAPIRevisionsRepository>();
             services.AddSingleton<ICosmosCommentsRepository, CosmosCommentsRepository>();
             services.AddSingleton<ICosmosPullRequestsRepository, CosmosPullRequestsRepository>();
-            services.AddSingleton<ICosmosUsageSampleRepository, CosmosUsageSampleRepository>();
+            services.AddSingleton<ICosmosSamplesRevisionsRepository, CosmosSamplesRevisionsRepository>();
             services.AddSingleton<ICosmosUserProfileRepository, CosmosUserProfileRepository>();
             services.AddSingleton<IDevopsArtifactRepository, DevopsArtifactRepository>();
             services.AddSingleton<IAICommentsRepository, AICommentsRepository>();
 
             services.AddSingleton<IReviewManager, ReviewManager>();
+            services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
             services.AddSingleton<ICommentsManager, CommentsManager>();
             services.AddSingleton<INotificationManager, NotificationManager>();
             services.AddSingleton<IPullRequestManager, PullRequestManager>();
             services.AddSingleton<IPackageNameManager, PackageNameManager>();
-            services.AddSingleton<IUsageSampleManager, UsageSampleManager>();
+            services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
+            services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
             services.AddSingleton<IOpenSourceRequestManager, OpenSourceRequestManager>();
             services.AddSingleton<IAICommentsManager, AICommentsManager>();
@@ -228,11 +233,11 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
-            services.AddSingleton<IAuthorizationHandler, RevisionOwnerRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, APIRevisionOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ApproverRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ResolverRequirementHandler>();
-            services.AddSingleton<IAuthorizationHandler, AutoReviewModifierRequirementHandler>();
-            services.AddSingleton<IAuthorizationHandler, UsageSampleOwnerRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, AutoAPIRevisionModifierRequirementHandler>();
+            services.AddSingleton<IAuthorizationHandler, SamplesRevisionOwnerRequirementHandler>();
             services.AddSingleton<CosmosClient>(x =>
             {
                 return new CosmosClient(Configuration["Cosmos:ConnectionString"]);
@@ -240,6 +245,7 @@ namespace APIViewWeb
 
             services.AddHostedService<ReviewBackgroundHostedService>();
             services.AddHostedService<PullRequestBackgroundHostedService>();
+            services.AddHostedService<LinesWithDiffBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
             services.AddControllersWithViews()
                 .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)

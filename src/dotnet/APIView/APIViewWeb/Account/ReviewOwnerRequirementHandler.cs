@@ -1,7 +1,8 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Threading.Tasks;
+using APIViewWeb.LeanModels;
 using Microsoft.AspNetCore.Authorization;
 
 namespace APIViewWeb
@@ -14,7 +15,7 @@ namespace APIViewWeb
             {
                 if (requirement is ReviewOwnerRequirement)
                 {
-                    if (((ReviewModel)context.Resource).Author == context.User.GetGitHubLogin())
+                    if (((ReviewListItemModel)context.Resource).CreatedBy == context.User.GetGitHubLogin())
                     {
                         context.Succeed(requirement);
                     }

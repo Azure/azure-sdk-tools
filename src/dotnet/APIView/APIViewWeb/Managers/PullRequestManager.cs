@@ -129,11 +129,12 @@ namespace APIViewWeb.Managers
                 {
                     try
                     {
-                        if (await IsPullRequestEligibleForCleanup(prModel))
+                        if (prModel.APIRevisionId != null && await IsPullRequestEligibleForCleanup(prModel))
                         {
-                            _telemetryClient.TrackEvent("Closing review created for pull request " + prModel.PullRequestNumber);
+                            _telemetryClient.TrackEvent($"Closing review {prModel.ReviewId}/{prModel.APIRevisionId} created for pull request {prModel.PullRequestNumber}");
                             await ClosePullRequestAPIRevision(prModel);
                         }
+                        await Task.Delay(500);
                     }
                     catch (Exception ex)
                     {

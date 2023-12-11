@@ -44,6 +44,7 @@ steps:
 
     - task: PowerShell@2
       displayName: Merge branch from ${{ repo.value.Branch }} into ${{ target.key }}
+      continueOnError: true
       inputs:
         pwsh: true
         workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
@@ -79,6 +80,7 @@ steps:
         Write-Host "gh pr merge $mergeBranch --auto --merge --repo ${{ repo.key }}"
         gh pr merge $mergeBranch --auto --merge --repo ${{ repo.key }}
       displayName: Create Pull Request for merge
+      continueOnError: true
       workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
       env:
         GH_TOKEN: $(azuresdk-github-pat)

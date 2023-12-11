@@ -503,6 +503,9 @@ tools/assets-automation/assets-reporting/js.md
 tools/assets-automation/assets-reporting/.net.md
 tools/assets-automation/assets-reporting/cpp.md
 
+# pipeline witness
+tools/pipeline-witness/Azure.Sdk.Tools.PipelineWitness.Tests/.runsettings
+
 # ios
 src/swift/*.xcworkspace/xcuserdata/
 src/swift/**/*.xcodeproj/xcuserdata/

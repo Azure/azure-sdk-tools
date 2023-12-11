@@ -240,6 +240,13 @@ namespace PipelineGenerator.Conventions
 
             using var client = new HttpClient();
             client.Timeout = TimeSpan.FromMinutes(3);
+            //  - You can get a Bearer token by
+            //    - visiting 'https://product-catalog-web.prod.space.microsoft.com/'
+            //    - pressing Ctrl+Shift+I
+            //    - going to Network tab
+            //    - reloading the page
+            //    - locating row marked with 'mine'
+            //    - clicking on 'Headers' and copying Value from 'authorization' section
             var token = Environment.GetEnvironmentVariable(Context.ProductCatalogTokenEnvVar);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 

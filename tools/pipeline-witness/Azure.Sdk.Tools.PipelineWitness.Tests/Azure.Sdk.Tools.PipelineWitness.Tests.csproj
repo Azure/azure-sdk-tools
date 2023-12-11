@@ -16,4 +16,12 @@
     <ProjectReference Include="..\Azure.Sdk.Tools.PipelineWitness\Azure.Sdk.Tools.PipelineWitness.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update=".Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>.runsettings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>

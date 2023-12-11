@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
         public BlobUploadProcessorIntegrationTests()
         {
             var pat = Environment.GetEnvironmentVariable("AZURESDK_DEVOPS_TOKEN");
-            var blobUri = Environment.GetEnvironmentVariable("AZURESDK_BLOB_SAS");
+            var blobUri = Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS");
 
             if (!string.IsNullOrWhiteSpace(pat) && !string.IsNullOrWhiteSpace(blobUri) )
             {
@@ -48,8 +48,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
         public async Task BasicBlobProcessInvokesSuccessfully()
         {
             var buildLogProvider = new BuildLogProvider(logger: null, VisualStudioConnection);
-            var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("AZURESDK_BLOB_SAS"));
-            var buildHttpClient = new BuildHttpClient(new Uri(DEVOPS_PATH), VisualStudioCredentials);
+            var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS"));
+            var buildHttpClient = VisualStudioConnection.GetClient<BuildHttpClient>();
             var testResultsBuiltClient = VisualStudioConnection.GetClient<TestResultsHttpClient>();
 
             BlobUploadProcessor processor = new BlobUploadProcessor(logger: new NullLogger<BlobUploadProcessor>(),

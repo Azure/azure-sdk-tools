@@ -16,12 +16,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
         public EnvironmentConditionalSkipFact()
         {
             var devopsPat = Environment.GetEnvironmentVariable("AZURESDK_DEVOPS_TOKEN");
-            var blobToken = Environment.GetEnvironmentVariable("AZURESDK_BLOB_SAS");
+            var blobToken = Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS");
 
             // and if we don't, skip this test
             if (string.IsNullOrWhiteSpace(devopsPat) || string.IsNullOrWhiteSpace(blobToken))
             {
-                Skip = "Ignore integration test when necessary environment variables AZURESDK_DEVOPS_PAT, AZURESDK_BLOB_SAS are partially or fully unset.";
+                Skip = "Ignore integration test when necessary environment variables AZURESDK_DEVOPS_PAT, AZURESDK_BLOB_CS are partially or fully unset.";
             }
         }
     }

@@ -64,7 +64,7 @@ namespace APIViewWeb.Pages.Assemblies
                 {
                     if (revisionId != null)
                     {
-                        ActiveSampleRevision = SampleRevisions.Where(s => s.Id == revisionId).First();
+                        ActiveSampleRevision = SampleRevisions.Where(s => s.FileId == revisionId).First();
                     }
                     else
                     {

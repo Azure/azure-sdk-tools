@@ -15,5 +15,5 @@ setup(
     py_modules=["pylint_guidelines_checker"],
     long_description=readme,
     long_description_content_type="text/markdown",
-    python_requires=">=3.7",
+    python_requires=">=3.8",
 )

@@ -1,5 +1,8 @@
 # Release History
 
+## 1.3.0 (12-12-2023)
++ Support local schema reference in another referred swagger file
+
 ## 1.2.0 (11-29-2023)
 + Added API version as PackageVersion in code file.
 

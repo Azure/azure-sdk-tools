@@ -51,7 +51,7 @@ class PylintParser:
     items: List[PylintError] = []
 
     @classmethod
-    def py_run(command=''):
+    def py_run(cls, command=''):
         command_line = f"pylint {command}"
         # Call pylint in a subprocess
         p = Popen(command_line, shell=True, stdout=PIPE, stderr=PIPE)

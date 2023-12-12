@@ -53,11 +53,7 @@ class PylintParser:
 
     @classmethod
     def py_run(command=''):
-        script='pylint'
-        # if windows
-        if os.name == 'nt':
-            script += '.bat'
-        command_line = script + ' ' + command
+        command_line = "pylint" + ' ' + command
         # Call pylint in a subprocess
         p = Popen(command_line, shell=True, stdout=PIPE, stderr=PIPE)
         p.wait()

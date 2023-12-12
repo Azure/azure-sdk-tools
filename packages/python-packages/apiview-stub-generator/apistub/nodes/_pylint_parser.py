@@ -3,7 +3,8 @@ import json
 import logging
 import os
 import re
-from subprocess import Popen, PIPE
+import subprocess
+from subprocess import PIPE
 from typing import List
 
 _HELP_LINK_REGEX = re.compile(r"(.+) See details: *([^\s]+)")
@@ -51,11 +52,9 @@ class PylintParser:
     items: List[PylintError] = []
 
     @classmethod
-    def py_run(cls, command=''):
-        command_line = f"pylint {command}"
+    def py_run(cls, command=[]):
         # Call pylint in a subprocess
-        p = Popen(command_line, shell=True, stdout=PIPE, stderr=PIPE)
-        p.wait()
+        p = subprocess.run(["pylint"].append(command), shell=True, stdout=PIPE, stderr=PIPE)
 
         return (p.stdout, p.stderr)
 
@@ -65,7 +64,7 @@ class PylintParser:
         pkg_name = os.path.split(path)[-1]
         rcfile_path = os.path.join(ApiView.get_root_path(), "pylintrc")
         logging.debug(f"APIView root path: {ApiView.get_root_path()}")
-        (pylint_stdout, pylint_stderr) = cls.py_run(f"{path} --output-format=json --recursive=y --rcfile {rcfile_path}")
+        (pylint_stdout, pylint_stderr) = cls.py_run([path, "--output-format=json", "--recursive=y", f"--rcfile={rcfile_path}"])
         stderr_str = pylint_stderr.read()
         # strip put stray, non-json lines from stdout
         stdout_lines = [x for x in pylint_stdout.readlines() if not x.startswith("Exception")]

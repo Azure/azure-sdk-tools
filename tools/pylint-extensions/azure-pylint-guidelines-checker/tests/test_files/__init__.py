@@ -5,5 +5,5 @@ from something2 import something2 as somethingTwo
 
 __all__ = (
     Something,
-    somethingTwo, #pylint: disable=naming-mismatch
+    somethingTwo,  # pylint: disable=naming-mismatch
 )

@@ -9,13 +9,8 @@ Pylint custom checkers for SDK guidelines: C4717 - C4758
 
 import logging
 import astroid
-from astroid import nodes
-from typing import TYPE_CHECKING, Optional
-
 from pylint.checkers import BaseChecker
 
-if TYPE_CHECKING:
-    from pylint.lint import PyLinter
 
 logger = logging.getLogger(__name__)
 

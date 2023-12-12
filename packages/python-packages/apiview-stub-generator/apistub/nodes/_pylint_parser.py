@@ -2,7 +2,6 @@ import inspect
 import json
 import logging
 import os
-from sys import stderr
 import re
 from subprocess import Popen, PIPE
 from typing import List
@@ -53,7 +52,7 @@ class PylintParser:
 
     @classmethod
     def py_run(command=''):
-        command_line = "pylint" + ' ' + command
+        command_line = f"pylint {command}"
         # Call pylint in a subprocess
         p = Popen(command_line, shell=True, stdout=PIPE, stderr=PIPE)
         p.wait()

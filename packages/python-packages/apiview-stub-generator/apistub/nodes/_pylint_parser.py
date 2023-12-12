@@ -55,7 +55,6 @@ class PylintParser:
     def py_run(cls, command=[]):
         # Call pylint in a subprocess
         p = subprocess.run(["pylint"].append(command), shell=True, stdout=PIPE, stderr=PIPE)
-
         return (p.stdout, p.stderr)
 
     @classmethod
@@ -67,7 +66,10 @@ class PylintParser:
         (pylint_stdout, pylint_stderr) = cls.py_run([path, "--output-format=json", "--recursive=y", f"--rcfile={rcfile_path}"])
         stderr_str = pylint_stderr.read()
         # strip put stray, non-json lines from stdout
-        stdout_lines = [x for x in pylint_stdout.readlines() if not x.startswith("Exception")]
+        try:
+            stdout_lines = [x for x in pylint_stdout.readlines() if not x.startswith("Exception")]
+        except Exception:
+            stdout_lines = pylint_stdout.decode()
         try:
             json_items = json.loads("".join(stdout_lines))
             plugin_failed = any([x["symbol"] == "bad-plugin-value" for x in json_items])

@@ -89,7 +89,7 @@ namespace APIViewWeb.Pages.Assemblies
 
             ReviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
                 reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
-                reviewRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
+                apiRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
                 signalRHubContext: _signalRHubContext, user: User, reviewId: id, revisionId: revisionId, diffRevisionId: DiffRevisionId,
                 showDocumentation: ShowDocumentation, showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                 diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
@@ -183,7 +183,7 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<PartialViewResult> OnGetAPIRevisionsPartialAsync(string reviewId, APIRevisionType apiRevisionType, bool showDoc = false, bool showDiffOnly = false)
         {
-            var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId, queryCache: true);
             revisions = revisions.Where(r => r.APIRevisionType == apiRevisionType).OrderByDescending(c => c.CreatedOn).ToList();
             (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
                 revisions: revisions,
@@ -207,7 +207,7 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<PartialViewResult> OnGetAPIDiffRevisionsPartialAsync(string reviewId, string apiRevisionId, APIRevisionType apiRevisionType, bool showDoc = false, bool showDiffOnly = false)
         {
-            var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId, queryCache: true);
             if (apiRevisions.IsNullOrEmpty())
             {
                 var notifcation = new NotificationModel() { Message = $"This review has no valid apiRevisons", Level = NotificatonLevel.Warning };

@@ -217,7 +217,7 @@ namespace APIViewWeb.Helpers
         /// <param name="reviewManager"></param>
         /// <param name="preferenceCache"></param>
         /// <param name="userProfileRepository"></param> 
-        /// <param name="reviewRevisionsManager"></param> 
+        /// <param name="apiRevisionsManager"></param> 
         /// <param name="commentManager"></param>
         /// <param name="codeFileRepository"></param>
         /// <param name="signalRHubContext"></param>
@@ -232,7 +232,7 @@ namespace APIViewWeb.Helpers
         /// <returns></returns>
         public static async Task<ReviewContentModel> GetReviewContentAsync(
             IConfiguration configuration, IReviewManager reviewManager, UserPreferenceCache preferenceCache,
-            ICosmosUserProfileRepository userProfileRepository, IAPIRevisionsManager reviewRevisionsManager, ICommentsManager commentManager,
+            ICosmosUserProfileRepository userProfileRepository, IAPIRevisionsManager apiRevisionsManager, ICommentsManager commentManager,
             IBlobCodeFileRepository codeFileRepository, IHubContext<SignalRHub> signalRHubContext, ClaimsPrincipal user, string reviewId,
             string revisionId = null, string diffRevisionId = null, bool showDocumentation = false, bool showDiffOnly = false, int diffContextSize = 3,
             string diffContextSeperator = "<br><span>.....</span><br>")
@@ -251,10 +251,10 @@ namespace APIViewWeb.Helpers
                 return reviewPageContent;
             }
 
-            var apiRevisions = await reviewRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            var apiRevisions = await apiRevisionsManager.GetAPIRevisionsAsync(reviewId, updateCache: true);
 
             // Try getting latest Automatic Revision, otherwise get latest of any type or default
-            var activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions, APIRevisionType.Automatic);
+            var activeRevision = await apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions, APIRevisionType.Automatic);
             if (activeRevision == null)
             {
                 reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevison;
@@ -291,7 +291,7 @@ namespace APIViewWeb.Helpers
             {
                 if (apiRevisions.Where(x => x.Id == diffRevisionId).Any())
                 {
-                    diffRevision = await reviewRevisionsManager.GetAPIRevisionAsync(user, diffRevisionId);
+                    diffRevision = await apiRevisionsManager.GetAPIRevisionAsync(user, diffRevisionId);
                     var diffRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(diffRevisionId, diffRevision.Files[0].FileId);
                     var diffRevisionHTMLLines = diffRevisionRenderableCodeFile.RenderReadOnly(showDocumentation: showDocumentation);
                     var diffRevisionTextLines = diffRevisionRenderableCodeFile.RenderText(showDocumentation: showDocumentation);

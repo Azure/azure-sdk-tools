@@ -1,17 +1,9 @@
-using System.Security.Policy;
 using Microsoft.Extensions.Caching.Memory;
 using APIViewWeb.Models;
 using System;
 using System.Collections.Generic;
 using AutoMapper;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Azure.Cosmos;
 using System.Threading.Tasks;
-using System.Text.Json;
-using System.Collections;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
-using System.Linq;
-using Octokit;
 using System.Threading;
 using Microsoft.Extensions.Primitives;
 using System.Security.Claims;

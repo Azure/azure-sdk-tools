@@ -11,8 +11,8 @@ using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -36,6 +36,7 @@ namespace APIViewWeb.Managers
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
+        private readonly IMemoryCache _cache;
 
         static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
 
@@ -50,7 +51,8 @@ namespace APIViewWeb.Managers
             ICodeFileManager codeFileManager,
             IBlobCodeFileRepository codeFileRepository,
             IBlobOriginalsRepository originalsRepository,
-            INotificationManager notificationManager)
+            INotificationManager notificationManager,
+            IMemoryCache cache)
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
@@ -62,6 +64,7 @@ namespace APIViewWeb.Managers
             _devopsArtifactRepository = devopsArtifactRepository;
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
+            _cache = cache;
         }
 
         /// <summary>
@@ -79,10 +82,30 @@ namespace APIViewWeb.Managers
         /// Retrieve Revisions for a particular Review from the Revisions container in CosmosDb
         /// </summary>
         /// <param name="reviewId"></param> The Reviewid for which the revisions are to be retrieved
-        /// <returns></returns>
-        public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(string reviewId)
+        /// <param name="updateCache"></param> update memory cache
+        /// <param name="queryCache"></param> query cache for APIrevisions
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(string reviewId, bool updateCache = false, bool queryCache = false)
         {
-            return await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+            IEnumerable<APIRevisionListItemModel> apiRevisions = new List<APIRevisionListItemModel>();
+            if (queryCache)
+            {
+                _cache.TryGetValue(reviewId, out apiRevisions);
+            }
+
+            if (apiRevisions == null || !apiRevisions.Any())
+            {
+                apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+            }
+
+            if (updateCache && apiRevisions.Any())
+            {
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromHours(24));
+
+                _cache.Set(reviewId, apiRevisions, cacheEntryOptions);
+            }
+
+            return apiRevisions;
         }
 
         /// <summary>

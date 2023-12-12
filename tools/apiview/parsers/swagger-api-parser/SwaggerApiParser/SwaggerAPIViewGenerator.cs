@@ -173,6 +173,7 @@ namespace SwaggerApiParser
                     {
                         var resp = response;
                         var referenceSwaggerFilePath = swaggerFilePath;
+                        string referencePath = "";
 
                         if (response.IsRefObject())
                         {
@@ -180,11 +181,14 @@ namespace SwaggerApiParser
                             if (resp == null)
                             {
                                 resp = (Response)schemaCache.GetResponseFromCache(response.@ref, swaggerFilePath);
+                                // Update reference path if referenced object is in another swagger file
+                                if (response.IsRefObject() && !response.@ref.StartsWith("#"))
+                                    referencePath = response.@ref;
                             }
 
                             if (resp == null)
                             {
-                                var referencePath = response.@ref;
+                                referencePath = response.@ref;
                                 do
                                 {
                                     if (!Path.IsPathFullyQualified(referencePath))
@@ -216,7 +220,13 @@ namespace SwaggerApiParser
                         {
                             if (schema.IsRefObject())
                             {
-                                var referencePath = schema.@ref;
+                                // Update swagger file path to correct file if schema reference is local but parent itself is in another swagger file
+                                if (schema.@ref.StartsWith("#") && !string.IsNullOrEmpty(referencePath))
+                                {
+                                    referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(referencePath, referenceSwaggerFilePath);
+                                }
+                                
+                                referencePath = schema.@ref;
                                 do
                                 {
                                     referenceSwaggerFilePath = Utils.GetReferencedSwaggerFile(referencePath, referenceSwaggerFilePath);

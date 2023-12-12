@@ -1,6 +1,9 @@
 # Inventory PowerShell modules installed
 
 trigger: none
+pr:
+  paths:
+    include: eng/pipelines/agent-software-inventory.yml
 
 strategy:
   matrix:

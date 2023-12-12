@@ -900,7 +900,7 @@ class ClientDocstringUsesLiteralIncludeForCodeExample(BaseChecker):
         """
         try:
             if node.name.endswith("Client") and node.name not in self.ignore_clients:
-                if node.doc.find("code-block") != -1:
+                if node.doc_node.value.find("code-block") != -1:
                     self.add_message(
                         msgid="client-docstring-use-literal-include",
                         node=node,
@@ -926,7 +926,7 @@ class ClientDocstringUsesLiteralIncludeForCodeExample(BaseChecker):
                 and node.parent.name not in self.ignore_clients
                 and node.is_method()
             ):
-                if node.doc.find("code-block") != -1:
+                if node.doc_node.value.find("code-block") != -1:
                     self.add_message(
                         msgid="client-docstring-use-literal-include",
                         node=node,
@@ -1198,7 +1198,7 @@ class ClientLROMethodsUseCorePolling(BaseChecker):
                 if node.name.startswith("begin"):
                     try:
                         # infer_call_result gives the method return value as a string
-                        returns = next(node.infer_call_result()).as_string()
+                        returns = next(node.infer_call_result(caller=node)).as_string()
                         if returns.find("LROPoller") == -1:
                             self.add_message(
                                 msgid="client-lro-methods-use-polling",
@@ -1640,7 +1640,7 @@ class CheckDocstringParameters(BaseChecker):
 
         try:
             # check for incorrect type :class to prevent splitting
-            docstring = node.doc.replace(":class:", "CLASS ")
+            docstring = node.doc_node.value.replace(":class:", "CLASS ")
             # not every method will have a docstring so don't crash here, just return
             docstring = docstring.split(":")
         except AttributeError:
@@ -1754,7 +1754,7 @@ class CheckDocstringParameters(BaseChecker):
 
         try:
             # check for incorrect type :class to prevent splitting
-            docstring = node.doc.replace(":class:", "CLASS ")
+            docstring = node.doc_node.value.replace(":class:", "CLASS ")
             # not every method will have a docstring so don't crash here, just return
             docstring = docstring.split(":")
         except AttributeError:
@@ -1780,7 +1780,7 @@ class CheckDocstringParameters(BaseChecker):
         # Get decorators on the function
         function_decorators = node.decoratornames()
         try:
-            returns = next(node.infer_call_result()).as_string()
+            returns = next(node.infer_call_result(caller=node)).as_string()
             # If returns None ignore
             if returns == "None":
                 return
@@ -2091,10 +2091,10 @@ class CheckDocstringAdmonitionNewline(BaseChecker):
         try:
             # not every class/method will have a docstring so don't crash here, just return
             if (
-                node.doc.find("admonition") != -1
-                and node.doc.find(".. literalinclude") != -1
+                node.doc_node.value.find("admonition") != -1
+                and node.doc_node.value.find(".. literalinclude") != -1
             ):
-                literal_include = node.doc.split(".. literalinclude")[0]
+                literal_include = node.doc_node.value.split(".. literalinclude")[0]
                 chars_list = list(reversed(literal_include))
                 for idx, char in enumerate(chars_list):
                     if char == "\n":
@@ -2271,20 +2271,20 @@ class CheckAPIVersion(BaseChecker):
             api_version = False
 
             if node.name.endswith("Client") and node.name not in self.ignore_clients:
-                if node.doc:
+                if node.doc_node:
                     if (
-                        ":keyword api_version:" in node.doc
-                        or ":keyword str api_version:" in node.doc
+                        ":keyword api_version:" in node.doc_node.value
+                        or ":keyword str api_version:" in node.doc_node.value
                     ):
                         api_version = True
                 if not api_version:
                     for func in node.body:
                         if isinstance(func, astroid.FunctionDef):
                             if func.name == "__init__":
-                                if func.doc:
+                                if func.doc_node:
                                     if (
-                                        ":keyword api_version:" in func.doc
-                                        or ":keyword str api_version:" in func.doc
+                                        ":keyword api_version:" in func.doc_node.value
+                                        or ":keyword str api_version:" in func.doc_node.value
                                     ):
                                         api_version = True
                                 if not api_version:

@@ -2451,7 +2451,7 @@ class TestFileHasCopyrightHeader(pylint.testutils.CheckerTestCase):
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="file-needs-copyright-header", line=0, node=node
+                msg_id="file-needs-copyright-header", line=0, node=node, col_offset=0
             )
         ):
             self.checker.visit_module(node)
@@ -2761,7 +2761,7 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
                 node=function_node_a,
                 col_offset=4,
                 end_line=5,
-                end_col_offset=18,
+                end_col_offset=24,
             ),
         ):
             self.checker.visit_return(function_node_a.body[0])
@@ -2782,11 +2782,11 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=32,
+                line=31,
                 node=function_node_b,
                 col_offset=4,
-                end_line=32,
-                end_col_offset=32,
+                end_line=31,
+                end_col_offset=22,
             )
         ):
             self.checker.visit_return(function_node.body[2])
@@ -2803,10 +2803,10 @@ class TestClientListMethodsUseCorePaging(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="client-paging-methods-use-list",
-                line=8,
+                line=10,
                 node=function_node,
                 col_offset=4,
-                end_line=8,
+                end_line=10,
                 end_col_offset=18,
             )
         ):
@@ -3111,7 +3111,8 @@ class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCa
         PACKAGE_NAME = "correct-package-name"        
         """
         )
-        module_node = astroid.Module(name="node", file="setup.py", doc=""" """)
+        module_node = astroid.Module(name="node", file="setup.py")
+        module_node.doc_node = """ """
         module_node.body = [package_name]
 
         with self.assertNoMessages():
@@ -3123,12 +3124,13 @@ class TestPackageNameDoesNotUseUnderscoreOrPeriod(pylint.testutils.CheckerTestCa
         PACKAGE_NAME = "incorrect.package-name"        
         """
         )
-        module_node = astroid.Module(name="node", file="setup.py", doc=""" """)
+        module_node = astroid.Module(name="node", file="setup.py")
+        module_node.doc_node = """ """
         module_node.body = [package_name]
 
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="package-name-incorrect", line=0, node=module_node
+                msg_id="package-name-incorrect", line=0, node=module_node, col_offset=0,
             )
         ):
             self.checker.visit_module(module_node)
@@ -3153,7 +3155,8 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
                 pass       
         """
         )
-        module_node = astroid.Module(name="node", file="_my_client.py", doc=""" """)
+        module_node = astroid.Module(name="node", file="_my_client.py")
+        module_node.doc_node = """ """
         module_node.body = [client_node]
 
         with self.assertNoMessages():
@@ -3167,11 +3170,12 @@ class TestServiceClientUsesNameWithClientSuffix(pylint.testutils.CheckerTestCase
                 pass       
         """
         )
-        module_node = astroid.Module(name="node", file="_my_client.py", doc=""" """)
+        module_node = astroid.Module(name="node", file="_my_client.py")
+        module_node.doc_node = """ """
         module_node.body = [client_node]
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
-                msg_id="client-suffix-needed", line=0, node=module_node
+                msg_id="client-suffix-needed", line=0, node=module_node, col_offset=0,
             )
         ):
             self.checker.visit_module(module_node)
@@ -3392,7 +3396,7 @@ class TestClientMethodNamesDoNotUseDoubleUnderscorePrefix(
                 node=func_node_c,
                 col_offset=4,
                 end_line=10,
-                end_col_offset=2,
+                end_col_offset=20,
             ),
         ):
             self.checker.visit_functiondef(func_node_a)
@@ -3698,7 +3702,8 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
           """
         )
 
-        module_node = astroid.Module(name="node", file="__init__.py", doc=""" """)
+        module_node = astroid.Module(name="node", file="__init__.py")
+        module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]
 
         for name in module_node.body[-1].assigned_stmts():
@@ -3730,7 +3735,8 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
           """
         )
 
-        module_node = astroid.Module(name="node", file="__init__.py", doc=""" """)
+        module_node = astroid.Module(name="node", file="__init__.py")
+        module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]
 
         for name in module_node.body[-1].assigned_stmts():
@@ -3760,7 +3766,8 @@ class TestCheckNamingMismatchGeneratedCode(pylint.testutils.CheckerTestCase):
           """
         )
 
-        module_node = astroid.Module(name="node", file="__init__.py", doc=""" """)
+        module_node = astroid.Module(name="node", file="__init__.py")
+        module_node.doc_node = """ """
         module_node.body = [import_one, import_two, assign_one]
 
         with self.assertNoMessages():
@@ -3901,18 +3908,18 @@ class TestCheckEnum(pylint.testutils.CheckerTestCase):
         with self.assertAddsMessages(
             pylint.testutils.MessageTest(
                 msg_id="enum-must-inherit-case-insensitive-enum-meta",
-                line=4,
+                line=5,
                 node=node.body[1],
                 col_offset=0,
-                end_line=4,
+                end_line=5,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
                 msg_id="enum-must-be-uppercase",
-                line=5,
+                line=6,
                 node=node.body[1].body[0].targets[0],
                 col_offset=4,
-                end_line=5,
+                end_line=6,
                 end_col_offset=7,
             ),
         ):
@@ -4041,6 +4048,8 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
                 line=1,
                 node=import_node,
                 col_offset=0,
+                end_line=1,
+                end_col_offset=15,
             )
         ):
             self.checker.visit_import(import_node)
@@ -4053,6 +4062,8 @@ class TestCheckNonCoreNetworkImport(pylint.testutils.CheckerTestCase):
                 line=1,
                 node=importfrom_node,
                 col_offset=0,
+                end_line=1,
+                end_col_offset=23,
             )
         ):
             self.checker.visit_importfrom(importfrom_node)
@@ -4102,6 +4113,8 @@ class TestCheckNonAbstractTransportImport(pylint.testutils.CheckerTestCase):
                 line=1,
                 node=importfrom_node,
                 col_offset=0,
+                end_line=1,
+                end_col_offset=59,
             )
         ):
             self.checker.visit_importfrom(importfrom_node)
@@ -4225,7 +4238,7 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
                 node=property_node.targets[0],
                 col_offset=8,
                 end_line=4,
-                end_col_offset=65,
+                end_col_offset=60,
             )
         ):
             self.checker.visit_functiondef(function_node)
@@ -4259,7 +4272,7 @@ class TestTypePropertyNameLength(pylint.testutils.CheckerTestCase):
                 node=property_node.targets[0],
                 col_offset=8,
                 end_line=4,
-                end_col_offset=65,
+                end_col_offset=54,
             )
         ):
             self.checker.visit_functiondef(function_node)
@@ -4311,7 +4324,7 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
                 node=node,
                 col_offset=4,
                 end_line=5,
-                end_col_offset=24,
+                end_col_offset=34,
             )
         ):
             self.checker.visit_functiondef(node)
@@ -4333,7 +4346,7 @@ class TestDeleteOperationReturnType(pylint.testutils.CheckerTestCase):
                 node=node,
                 col_offset=4,
                 end_line=5,
-                end_col_offset=24,
+                end_col_offset=28,
             )
         ):
             self.checker.visit_functiondef(node)
@@ -4582,7 +4595,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                 args="x",
                 node=node,
                 col_offset=0,
-                end_line=3,
+                end_line=2,
                 end_col_offset=16,
             ),
             pylint.testutils.MessageTest(
@@ -4612,6 +4625,8 @@ class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
                 line=1,
                 node=importfrom_node,
                 col_offset=0,
+                end_line=1,
+                end_col_offset=30,
             )
         ):
             self.checker.visit_importfrom(importfrom_node)
@@ -4625,6 +4640,8 @@ class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
                 line=1,
                 node=importfrom_node,
                 col_offset=0,
+                end_line=1,
+                end_col_offset=10,
             )
         ):
             self.checker.visit_import(importfrom_node)
@@ -4660,6 +4677,8 @@ class TestCheckNoLegacyAzureCoreHttpResponseImport(pylint.testutils.CheckerTestC
                 line=1,
                 node=importfrom_node,
                 col_offset=0,
+                end_line=1,
+                end_col_offset=54,
             )
         ):
             self.checker.visit_importfrom(importfrom_node)

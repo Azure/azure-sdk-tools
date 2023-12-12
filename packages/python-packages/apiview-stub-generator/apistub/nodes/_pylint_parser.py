@@ -67,6 +67,8 @@ class PylintParser:
         stderr_str = pylint_stderr.read()
         # strip put stray, non-json lines from stdout
         try:
+            if type(pylint_stdout) == bytes:
+                pylint_stdout = pylint_stdout.decode()
             stdout_lines = [x for x in pylint_stdout.readlines() if not x.startswith("Exception")]
         except Exception:
             stdout_lines = pylint_stdout.decode()

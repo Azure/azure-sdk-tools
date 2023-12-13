@@ -194,8 +194,9 @@ namespace APIViewWeb.Managers
         /// <param name="apiRevisionId"></param>
         /// <param name="apiRevision"></param>
         /// <param name="notes"></param>
+        /// <param name="approver"></param>
         /// <returns>true if review approval needs to be updated otherwise false</returns>
-        public async Task<bool> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string apiRevisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "")
+        public async Task<bool> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string apiRevisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "", string approver = "")
         {
             if (apiRevisionId == null && apiRevision == null)
             {
@@ -210,7 +211,8 @@ namespace APIViewWeb.Managers
             ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(apiRevision.ReviewId);
 
             await ManagerHelpers.AssertApprover<APIRevisionListItemModel>(user, apiRevision, _authorizationService);
-            var userId = user.GetGitHubLogin();
+            // Approver name also needs to be copied over when approval status is copied over.
+            var userId = string.IsNullOrEmpty(approver) ? user.GetGitHubLogin() : approver;
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction(apiRevision.ChangeHistory, APIRevisionChangeAction.Approved, userId, notes);
             apiRevision.ChangeHistory = changeUpdate.ChangeHistory;
             apiRevision.IsApproved = changeUpdate.ChangeStatus;
@@ -229,7 +231,12 @@ namespace APIViewWeb.Managers
             }
 
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
-            await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, apiRevisionId, apiRevision.IsApproved);
+            // No need to send approval status to self when approval is copied over automatically
+            if (userId == user.GetGitHubLogin())
+            {
+                await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, apiRevisionId, apiRevision.IsApproved);
+            }
+            
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, apiRevisionId, userId, apiRevision.IsApproved);
             return updateReview;
         }

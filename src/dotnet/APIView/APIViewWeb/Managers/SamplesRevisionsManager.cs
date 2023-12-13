@@ -9,8 +9,6 @@ using Markdig;
 using Markdig.SyntaxHighlighting;
 using Microsoft.AspNetCore.Authorization;
 using System.Collections.Generic;
-using System.Linq;
-using Microsoft.AspNetCore.Mvc.Formatters;
 using APIViewWeb.Repositories;
 using APIViewWeb.LeanModels;
 
@@ -70,7 +68,10 @@ namespace APIViewWeb.Managers
 
             // Create new file and upsert the updated model
             var sampleRevision = new SamplesRevisionModel();
+            sampleRevision.ReviewId = reviewId;
             sampleRevision.Title = revisionTitle ?? FileName;
+            sampleRevision.CreatedOn = System.DateTime.UtcNow;
+            sampleRevision.CreatedBy = user.GetGitHubLogin();
 
             await _samplesRevisionsRepository.UpsertSamplesRevisionAsync(sampleRevision);
             await _sampleFilesRepository.UploadUsageSampleAsync(sampleRevision.FileId, stream);

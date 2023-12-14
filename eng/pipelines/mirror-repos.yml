@@ -52,6 +52,12 @@ jobs:
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
 
+          Azure/typespec-azure-pr:
+            Branch: main
+            TargetBranches:
+              providerhub:
+                Theirs: '@("**")'
+
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)
@@ -121,6 +127,10 @@ jobs:
           Azure/azure-dev:
             TargetRepos:
               Azure/azure-dev-pr:
+
+          Azure/typespec-azure:
+            TargetRepos:
+              Azure/typesepc-azure-pr:
 
           MicrosoftDocs/azure-dev-docs-pr:
             TargetRepos:

@@ -43,7 +43,7 @@ steps:
       workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
 
     - task: PowerShell@2
-      displayName: Merge branch from ${{ repo.value.Branch }} into ${{ target.key }}
+      displayName: Merge branch from ${{ repo.value.Branch }} into ${{ target.key }}https://github.com/Azure/azure-sdk-tools/blob/weshaggard-patch-1/eng/pipelines/templates/steps/sync-repo-merge-branch.yml
       continueOnError: true
       inputs:
         pwsh: true
@@ -52,9 +52,9 @@ steps:
         arguments: >
           -Verbose
           -SourceBranch ${{ repo.value.Branch }}
-          -Theirs ${{ coalesce(target.value.Theirs, '') }}
-          -Ours ${{ coalesce(target.value.Ours, '') }}
-          -Merge ${{ coalesce(target.value.Merge, '') }}
+          -Theirs ${{ coalesce(target.value.Theirs, '""') }}
+          -Ours ${{ coalesce(target.value.Ours, '""') }}
+          -Merge ${{ coalesce(target.value.Merge, '""') }}
           -AcceptTheirsForFinalMerge $${{ coalesce(target.value.AcceptTheirsForFinalMerge, 'false') }}
 
     - pwsh: |

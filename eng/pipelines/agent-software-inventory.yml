@@ -3,7 +3,8 @@
 trigger: none
 pr:
   paths:
-    include: eng/pipelines/agent-software-inventory.yml
+    include:
+    - eng/pipelines/agent-software-inventory.yml
 
 jobs:
 - job: inventory

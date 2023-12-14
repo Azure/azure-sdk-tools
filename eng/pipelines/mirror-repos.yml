@@ -59,9 +59,7 @@ jobs:
             Branch: main
             TargetBranches:
               providerhub:
-                Theirs: '@("**")'
-                Merge: '@("common/config/rush/pnpm-lock.yaml")'
-                AcceptTheirsForFinalMerge: true
+                Theirs: '@("common/config/rush/pnpm-lock.yaml")'
 
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:

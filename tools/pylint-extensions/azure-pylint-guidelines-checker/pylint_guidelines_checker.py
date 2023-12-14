@@ -683,7 +683,7 @@ class ClientUsesCorrectNamingConventions(BaseChecker):
             for idx in range(len(node.body)):
                 try:
                     const_name = node.body[idx].targets[0].name
-                    if const_name != const_name.upper():
+                    if const_name != const_name.upper() and not const_name.startswith("__"):
                         self.add_message(
                             msgid="client-incorrect-naming-convention",
                             node=node.body[idx],
@@ -698,7 +698,7 @@ class ClientUsesCorrectNamingConventions(BaseChecker):
             # check that methods in client class do not use camelcase
             try:
                 for func in node.body:
-                    if func.name != func.name.lower() and not func.name.startswith("_"):
+                    if func.name != func.name.lower() and not func.name.startswith("_") and isinstance(func, astroid.FunctionDef):
                         self.add_message(
                             msgid="client-incorrect-naming-convention",
                             node=func,

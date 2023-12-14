@@ -2174,6 +2174,17 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_classdef(class_node)
 
+    def test_finds_incorrectly_named_class_constant(self):
+        class_node, const_a = astroid.extract_node(
+            """
+        class SomeClient(): #@
+            __doc__ = "Some docstring" #@
+        """
+        )
+
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+
     def test_guidelines_link_active(self):
         url = "https://azure.github.io/azure-sdk/python_implementation.html#naming-conventions"
         config = Configuration()

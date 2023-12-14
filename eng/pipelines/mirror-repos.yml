@@ -22,6 +22,9 @@ jobs:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 
+          Azure/typespec-azure:
+            TargetRepos:
+              Azure/typesepc-azure-pr:
 
     - template: ./templates/steps/sync-repo-merge-branch.yml
       parameters:
@@ -127,10 +130,6 @@ jobs:
           Azure/azure-dev:
             TargetRepos:
               Azure/azure-dev-pr:
-
-          Azure/typespec-azure:
-            TargetRepos:
-              Azure/typesepc-azure-pr:
 
           MicrosoftDocs/azure-dev-docs-pr:
             TargetRepos:

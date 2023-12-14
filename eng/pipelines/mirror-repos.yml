@@ -24,7 +24,7 @@ jobs:
 
           Azure/typespec-azure:
             TargetRepos:
-              Azure/typesepc-azure-pr:
+              Azure/typespec-azure-pr:
 
     - template: ./templates/steps/sync-repo-merge-branch.yml
       parameters:

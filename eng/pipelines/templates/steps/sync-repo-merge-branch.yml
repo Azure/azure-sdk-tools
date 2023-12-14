@@ -26,7 +26,7 @@ steps:
 
 - ${{ each repo in parameters.Repos }}:
   - pwsh: |
-      git clone "https://${{ parameters.GH_TOKEN }}@github.com/${{ repo.key }}.git" ${{ repo.key }}
+      git clone --filter=tree:0 "https://${{ parameters.GH_TOKEN }}@github.com/${{ repo.key }}.git" ${{ repo.key }}
     displayName: Clone ${{ repo.key }}
     workingDirectory: ${{ parameters.WorkingDirectory }}
 
@@ -52,10 +52,10 @@ steps:
         arguments: >
           -Verbose
           -SourceBranch ${{ repo.value.Branch }}
-          -Theirs ${{ target.value.Theirs }}
-          -Ours ${{ target.value.Ours }}
-          -Merge ${{ target.value.Merge }}
-          -AcceptTheirsForFinalMerge $${{ target.value.AcceptTheirsForFinalMerge }}
+          -Theirs ${{ coalesce(target.value.Theirs, '@()') }}
+          -Ours ${{ coalesce(target.value.Ours, '@()') }}
+          -Merge ${{ coalesce(target.value.Merge, '@()') }}
+          -AcceptTheirsForFinalMerge $${{ coalesce(target.value.AcceptTheirsForFinalMerge, 'false') }}
 
     - pwsh: |
         $mergeBranch = (git rev-parse --abbrev-ref HEAD)

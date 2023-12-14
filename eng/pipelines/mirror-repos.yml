@@ -22,6 +22,9 @@ jobs:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 
+          Azure/typespec-azure:
+            TargetRepos:
+              Azure/typespec-azure-pr:
 
     - template: ./templates/steps/sync-repo-merge-branch.yml
       parameters:
@@ -50,6 +53,14 @@ jobs:
                 Theirs: '@("**")'
                 Ours: '@("specification", "custom-words.txt")'
                 Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
+
+          Azure/typespec-azure-pr:
+            Branch: main
+            TargetBranches:
+              providerhub:
+                Theirs: '@("**")'
+                Merge: '@("common/config/rush/pnpm-lock.yaml")'
                 AcceptTheirsForFinalMerge: true
 
     - template: ./templates/steps/sync-repo-branch.yml

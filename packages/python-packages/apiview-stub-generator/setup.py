@@ -32,10 +32,9 @@ setup(
     package_data={'': ['pylintrc']},
     include_package_data=True,
     install_requires=[
-        "astroid>=2.11",
         "charset-normalizer",
         "pylint",
-        "pylint-guidelines-checker"
+        "azure-pylint-guidelines-checker"
     ],
     python_requires=">=3.7.0",
     entry_points={"console_scripts": ["apistubgen=apistub:console_entry_point",]},

@@ -45,7 +45,6 @@ setup(
     install_requires=[
         "aiohttp",
         "azure-core",
-        "pytest",
         "sphinx",
         "sphinx_rtd_theme",
         "recommonmark"

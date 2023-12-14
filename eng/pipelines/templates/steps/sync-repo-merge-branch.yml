@@ -43,7 +43,7 @@ steps:
       workingDirectory: ${{ parameters.WorkingDirectory }}/${{ repo.key }}
 
     - task: PowerShell@2
-      displayName: Merge branch from ${{ repo.value.Branch }} into ${{ target.key }}https://github.com/Azure/azure-sdk-tools/blob/weshaggard-patch-1/eng/pipelines/templates/steps/sync-repo-merge-branch.yml
+      displayName: Merge branch from ${{ repo.value.Branch }} into ${{ target.key }}
       continueOnError: true
       inputs:
         pwsh: true

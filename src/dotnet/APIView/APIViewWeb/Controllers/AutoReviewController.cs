@@ -118,6 +118,10 @@ namespace APIViewWeb.Controllers
                 packageName: packageName, originalFileName: originalFilePath, codeFileName: reviewFilePath, originalFileStream: memoryStream,
                 project: project);
 
+            if (codeFile == null)
+            {
+                return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
+            }
             var apiRevision = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, compareAllRevisions);
             if (apiRevision != null)
             {

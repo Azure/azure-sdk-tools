@@ -176,8 +176,7 @@ namespace APIViewWeb.Controllers
             await _pullRequestManager.UpsertPullRequestAsync(pullRequestModel);
 
             // Return review URL created for current package if exists
-            var pr = pullRequests.SingleOrDefault(r => r.PackageName == packageName && (r.Language == null || r.Language == language));
-            return pr == null ? "" : ManagerHelpers.ResolveReviewUrl(pullRequest: pr, hostName: hostName);
+            return string.IsNullOrEmpty(pullRequestModel.APIRevisionId)? "" : ManagerHelpers.ResolveReviewUrl(pullRequest: pullRequestModel, hostName: hostName);
 
         }
 

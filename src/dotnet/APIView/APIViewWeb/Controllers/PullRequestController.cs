@@ -255,7 +255,7 @@ namespace APIViewWeb.Controllers
             {
                 var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
                     userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
-                    label: String.Empty, memoryStream: memoryStream, codeFile: codeFile, originalName: originalFileName, prNumber: prModel.PullRequestNumber);
+                    label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile, originalName: originalFileName, prNumber: prModel.PullRequestNumber);
 
                 prModel.APIRevisionId = newAPIRevision.Id;
             }
@@ -298,7 +298,7 @@ namespace APIViewWeb.Controllers
             {
                 var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
                     userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
-                    label: string.Empty, memoryStream: memoryStream, codeFile: codeFile,
+                    label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile,
                     originalName: originalFileName);
                 prModel.APIRevisionId = newAPIRevision.Id;
             }

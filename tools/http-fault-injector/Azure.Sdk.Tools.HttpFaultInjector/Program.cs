@@ -75,12 +75,14 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
 
         private static void Run(Options options)
         {
+            TimeSpan keepAlive = TimeSpan.FromSeconds(options.KeepAliveTimeout);
             if (options.Insecure)
             {
                 _httpClient = new HttpClient(new HttpClientHandler()
                 {
                     // Allow insecure SSL certs
-                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true,
+                    
                 });
             }
             else
@@ -88,6 +90,9 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                 _httpClient = new HttpClient();
             }
 
+            // TODO: we can switch to SocketsHttpHandler and configure read/write/connect timeouts separately
+            // for now let's just set upstream timeout to be slightly bigger than client timeout.
+            _httpClient.Timeout = keepAlive + TimeSpan.FromSeconds(1);
             new WebHostBuilder()
                 .UseKestrel(kestrelOptions =>
                 {
@@ -96,7 +101,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                     {
                         listenOptions.UseHttps();
                     });
-                    kestrelOptions.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(options.KeepAliveTimeout);
+                    kestrelOptions.Limits.KeepAliveTimeout = keepAlive;
                 })
                 .Configure(app => app.Run(async context =>
                 {
@@ -317,23 +322,37 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
 
             Log($"Writing response body of {count} bytes...");
 
-            Stream source = await upstreamResponse.Content.ReadAsStreamAsync(cancellationToken);
+            using Stream source = await upstreamResponse.Content.ReadAsStreamAsync(cancellationToken);
             byte[] buffer = new byte[8192];
 
-            for (long remaining = count; remaining > 0; )
+            try
             {
-                int read = await source.ReadAsync(buffer, 0, (int)Math.Min(buffer.Length, remaining), cancellationToken);
-                if (read <= 0)
+                for (long remaining = count; remaining > 0;)
                 {
-                    break;
+                    int read = await source.ReadAsync(buffer, 0, (int)Math.Min(buffer.Length, remaining), cancellationToken);
+                    if (read <= 0)
+                    {
+                        break;
+                    }
+
+                    remaining -= read;
+                    await response.Body.WriteAsync(buffer, 0, read, cancellationToken);
                 }
 
-                remaining -= read;
-                await response.Body.WriteAsync(buffer, 0, read, cancellationToken);
+                await response.Body.FlushAsync();
+                Log($"Finished writing response body");
             }
-
-            await response.Body.FlushAsync();
-            Log($"Finished writing response body");
+            catch (Exception ex)
+            {
+                Log(ex.ToString());
+            }
+            finally
+            {
+                // disponse content as early as possible (before infinite wait that might happen later)
+                // so that underlying connection returns to connection pool
+                // and we won't run out of them
+                upstreamResponse.Content.Dispose();
+            }
         }
 
         // Close the TCP connection by sending FIN

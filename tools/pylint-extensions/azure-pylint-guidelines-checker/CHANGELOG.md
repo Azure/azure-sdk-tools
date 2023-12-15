@@ -1,6 +1,6 @@
 # Release History
 
-## 0.3.0 (2023-12-14)
+## 0.3.0 (2023-12-15)
 
 - Breaking changes involved in bump to pylint 3.0 support and bug fix to `incorrect-naming-convention` checker
 

@@ -2,7 +2,7 @@
 
 ## 0.3.0 (2023-12-14)
 
-- Breaking changes involved in bump to pylint 3.0 support
+- Breaking changes involved in bump to pylint 3.0 support and bug fix to `incorrect-naming-convention` checker
 
 ## 0.2.0 (2023-10-17)
 

@@ -484,7 +484,7 @@
                     {
                         // Diff revision is null if someone reuses an old URL with a deleted revision as  diff revision
                         // Users copy and shares diff URL to approvers and sometimes they delete and recreate the revision which makes the diff revision null
-                        if (Model.ReviewContent.DiffAPIRevision?.APIRevisionType != null)
+                        if (Model.ReviewContent.DiffAPIRevision.APIRevisionType != null)
                         {
                             diffRevisionType = Model.ReviewContent.DiffAPIRevision.APIRevisionType.ToString();
                         }

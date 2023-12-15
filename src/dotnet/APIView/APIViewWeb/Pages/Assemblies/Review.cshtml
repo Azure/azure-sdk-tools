@@ -480,7 +480,7 @@
                 @if (@Model.ReviewContent.APIRevisionsGrouped.SelectMany(kvp => kvp.Value).Count() > 1)
                 {
                     var diffRevisionType = (Model.ReviewContent.APIRevisionsGrouped.ContainsKey("Automatic")) ? "Automatic" : Model.ReviewContent.APIRevisionsGrouped.Keys.First();
-                    @if (Model.DiffRevisionId != null)
+                    @if (Model.ReviewContent.DiffAPIRevision != null)
                     {
                         // Diff revision is null if someone reuses an old URL with a deleted revision as  diff revision
                         // Users copy and shares diff URL to approvers and sometimes they delete and recreate the revision which makes the diff revision null

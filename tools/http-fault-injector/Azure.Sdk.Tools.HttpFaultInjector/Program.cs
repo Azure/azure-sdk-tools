@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                         if (context.Request.Headers.Remove(_responseSelectionHeader, out var selection))
                         {
                             string optionDescription = _selectionDescriptions.FirstOrDefault(kvp => kvp.Option.Equals(selection)).Description;
-                            if (String.IsNullOrEmpty(optionDescription))
+                            if (string.IsNullOrEmpty(optionDescription))
                             {
                                 Console.WriteLine($"Invalid {_responseSelectionHeader} value {selection}.");
                             }
@@ -142,6 +142,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                     catch (Exception e)
                     {
                         Console.WriteLine(e);
+                        throw;
                     }
                 }))
                 .Build()
@@ -266,7 +267,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                 case "p":
                     // Partial Response (full headers, 50% of body), then wait indefinitely
                     await SendDownstreamResponse(upstreamResponse, context.Response, upstreamResponse.Content.Length / 2);
-                    await Task.Delay(Timeout.InfiniteTimeSpan);
+                    await Task.Delay(Timeout.InfiniteTimeSpan, context.RequestAborted);
                     return true;
                 case "pc":
                     // Partial Response (full headers, 50% of body), then close (TCP FIN)
@@ -284,7 +285,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                     return true;
                 case "n":
                     // No response, then wait indefinitely
-                    await Task.Delay(Timeout.InfiniteTimeSpan);
+                    await Task.Delay(Timeout.InfiniteTimeSpan, context.RequestAborted);
                     return true;
                 case "nc":
                     // No response, then close (TCP FIN)

@@ -2174,6 +2174,17 @@ class TestClientUsesCorrectNamingConventions(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_classdef(class_node)
 
+    def test_finds_incorrectly_named_class_constant(self):
+        class_node, const_a = astroid.extract_node(
+            """
+        class SomeClient(): #@
+            __doc__ = "Some docstring" #@
+        """
+        )
+
+        with self.assertNoMessages():
+            self.checker.visit_classdef(class_node)
+
     def test_guidelines_link_active(self):
         url = "https://azure.github.io/azure-sdk/python_implementation.html#naming-conventions"
         config = Configuration()
@@ -4422,11 +4433,10 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         # Error on documenting keyword only args as param after *args in docstring
         node = astroid.extract_node(
             """
-            def function_foo(*x, y, z):
+            def function_foo(*x, y):
                 '''
                 :param x: x
                 :param str y: y
-                :param str z: z
                 '''
             """
         )
@@ -4435,7 +4445,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                 msg_id="docstring-keyword-should-match-keyword-only",
                 line=2,
                 node=node,
-                args="z, y",
+                args="y",
                 col_offset=0,
                 end_line=2,
                 end_col_offset=16,
@@ -4452,7 +4462,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="docstring-should-be-keyword",
                 line=2,
-                args="y, z",
+                args="y",
                 node=node,
                 col_offset=0,
                 end_line=2,

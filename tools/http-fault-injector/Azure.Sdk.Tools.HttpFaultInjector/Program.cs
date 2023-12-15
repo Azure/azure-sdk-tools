@@ -257,7 +257,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
             {
                 case "f":
                     // Full response
-                    await SendDownstreamResponse(upstreamResponse, context.Response, null, context.RequestAborted);
+                    await SendDownstreamResponse(upstreamResponse, context.Response, upstreamResponse.ContentLength, context.RequestAborted);
                     return true;
                 case "p":
                     // Partial Response (full headers, 50% of body), then wait indefinitely
@@ -296,7 +296,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
             }
         }
 
-        private static async Task SendDownstreamResponse(UpstreamResponse upstreamResponse, HttpResponse response, long? stopAt, CancellationToken cancellationToken)
+        private static async Task SendDownstreamResponse(UpstreamResponse upstreamResponse, HttpResponse response, long? contentBytes, CancellationToken cancellationToken)
         {
             Console.WriteLine();
 
@@ -313,12 +313,14 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                 response.Headers.Add(header.Key, header.Value);
             }
 
-            Log($"Writing response body of {stopAt ?? upstreamResponse.ContentLength} bytes...");
+            long count = contentBytes ?? long.MaxValue;
+
+            Log($"Writing response body of {count} bytes...");
 
             Stream source = await upstreamResponse.Content.ReadAsStreamAsync(cancellationToken);
             byte[] buffer = new byte[8192];
-            long remaining = stopAt ?? long.MaxValue;
-            while (remaining > 0)
+
+            for (long remaining = count; remaining > 0; )
             {
                 int read = await source.ReadAsync(buffer, 0, (int)Math.Min(buffer.Length, remaining), cancellationToken);
                 if (read <= 0)
@@ -326,13 +328,11 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                     break;
                 }
 
-                await response.Body.WriteAsync(buffer, 0, (int)Math.Min(read, remaining), cancellationToken);
                 remaining -= read;
+                await response.Body.WriteAsync(buffer, 0, read, cancellationToken);
             }
 
             await response.Body.FlushAsync();
-
-
             Log($"Finished writing response body");
         }
 

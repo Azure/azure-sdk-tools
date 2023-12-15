@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -101,7 +102,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                 {
                     try
                     {
-                        var upstreamResponse = await SendUpstreamRequest(context.Request);
+                        using var upstreamResponse = await SendUpstreamRequest(context.Request, context.RequestAborted);
 
                         // Attempt to remove the response selection header and use its value to handle the response selection.
                         if (context.Request.Headers.Remove(_responseSelectionHeader, out var selection))
@@ -149,7 +150,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                 .Run();
         }
 
-        private static async Task<UpstreamResponse> SendUpstreamRequest(HttpRequest request)
+        private static async Task<UpstreamResponse> SendUpstreamRequest(HttpRequest request, CancellationToken cancellationToken)
         {
             Console.WriteLine();
             Log("Incoming Request");
@@ -186,74 +187,68 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
             Log("Upstream Request");
             Log($"URL: {upstreamUri}");
 
-            using (var upstreamRequest = new HttpRequestMessage(new HttpMethod(request.Method), upstreamUri))
+            using var upstreamRequest = new HttpRequestMessage(new HttpMethod(request.Method), upstreamUri);
+            Log("Headers:");
+
+            if (request.ContentLength > 0)
             {
-                Log("Headers:");
+                upstreamRequest.Content = new StreamContent(request.Body);
 
-                if (request.ContentLength > 0)
-                {
-                    upstreamRequest.Content = new StreamContent(request.Body);
-
-                    foreach (var header in request.Headers.Where(h => _contentRequestHeaders.Contains(h.Key)))
-                    {
-                        Log($"  {header.Key}:{header.Value.First()}");
-                        upstreamRequest.Content.Headers.Add(header.Key, values: header.Value);
-                    }
-                }
-
-                foreach (var header in request.Headers.Where(h => !_excludedRequestHeaders.Contains(h.Key) && !_contentRequestHeaders.Contains(h.Key)))
+                foreach (var header in request.Headers.Where(h => _contentRequestHeaders.Contains(h.Key)))
                 {
                     Log($"  {header.Key}:{header.Value.First()}");
-                    if (!upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values: header.Value))
-                    {
-                        throw new InvalidOperationException($"Could not add header {header.Key} with value {header.Value}");
-                    }
-                }
-
-                Log("Sending request to upstream server...");
-                using (var upstreamResponseMessage = await _httpClient.SendAsync(upstreamRequest))
-                {
-                    Console.WriteLine();
-                    Log("Upstream Response");
-                    var headers = new List<KeyValuePair<string, StringValues>>();
-
-                    Log($"StatusCode: {upstreamResponseMessage.StatusCode}");
-
-                    Log("Headers:");
-                    foreach (var header in upstreamResponseMessage.Headers)
-                    {
-                        Log($"  {header.Key}:{header.Value.First()}");
-
-                        // Must skip "Transfer-Encoding" header, since if it's set manually Kestrel requires you to implement
-                        // your own chunking.
-                        if (string.Equals(header.Key, "Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
-                        {
-                            continue;
-                        }
-
-                        headers.Add(new KeyValuePair<string, StringValues>(header.Key, header.Value.ToArray()));
-                    }
-
-                    foreach (var header in upstreamResponseMessage.Content.Headers)
-                    {
-                        Log($"  {header.Key}:{header.Value.First()}");
-                        headers.Add(new KeyValuePair<string, StringValues>(header.Key, header.Value.ToArray()));
-                    }
-
-                    Log("Reading upstream response body...");
-
-                    var upstreamResponse = new UpstreamResponse()
-                    {
-                        StatusCode = (int)upstreamResponseMessage.StatusCode,
-                        Headers = headers.ToArray(),
-                        Content = await upstreamResponseMessage.Content.ReadAsByteArrayAsync()
-                    };
-
-                    Log($"ContentLength: {upstreamResponse.Content.Length}");
-
-                    return upstreamResponse;
+                    upstreamRequest.Content.Headers.Add(header.Key, values: header.Value);
                 }
             }
+
+            foreach (var header in request.Headers.Where(h => !_excludedRequestHeaders.Contains(h.Key) && !_contentRequestHeaders.Contains(h.Key)))
+            {
+                Log($"  {header.Key}:{header.Value.First()}");
+                if (!upstreamRequest.Headers.TryAddWithoutValidation(header.Key, values: header.Value))
+                {
+                    throw new InvalidOperationException($"Could not add header {header.Key} with value {header.Value}");
+                }
+            }
+
+            Log("Sending request to upstream server...");
+            var upstreamResponseMessage = await _httpClient.SendAsync(upstreamRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            Console.WriteLine();
+            Log("Upstream Response");
+            var headers = new List<KeyValuePair<string, StringValues>>();
+
+            Log($"StatusCode: {upstreamResponseMessage.StatusCode}");
+
+            Log("Headers:");
+            foreach (var header in upstreamResponseMessage.Headers)
+            {
+                Log($"  {header.Key}:{header.Value.First()}");
+
+                // Must skip "Transfer-Encoding" header, since if it's set manually Kestrel requires you to implement
+                // your own chunking.
+                if (string.Equals(header.Key, "Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                headers.Add(new KeyValuePair<string, StringValues>(header.Key, header.Value.ToArray()));
+            }
+
+            foreach (var header in upstreamResponseMessage.Content.Headers)
+            {
+                Log($"  {header.Key}:{header.Value.First()}");
+                headers.Add(new KeyValuePair<string, StringValues>(header.Key, header.Value.ToArray()));
+            }
+
+            Log("Reading upstream response body...");
+            Log($"ContentLength: {upstreamResponseMessage.Content.Headers.ContentLength}");
+
+            return new UpstreamResponse()
+            {
+                StatusCode = (int)upstreamResponseMessage.StatusCode,
+                Headers = headers.ToArray(),
+                Content = upstreamResponseMessage.Content,
+                ContentLength = upstreamResponseMessage.Content.Headers.ContentLength
+            };
         }
 
         private static async Task<bool> TryHandleResponseOption(string selection, HttpContext context, UpstreamResponse upstreamResponse)
@@ -262,26 +257,26 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
             {
                 case "f":
                     // Full response
-                    await SendDownstreamResponse(upstreamResponse, context.Response);
+                    await SendDownstreamResponse(upstreamResponse, context.Response, null, context.RequestAborted);
                     return true;
                 case "p":
                     // Partial Response (full headers, 50% of body), then wait indefinitely
-                    await SendDownstreamResponse(upstreamResponse, context.Response, upstreamResponse.Content.Length / 2);
+                    await SendDownstreamResponse(upstreamResponse, context.Response, upstreamResponse.ContentLength / 2, context.RequestAborted);
                     await Task.Delay(Timeout.InfiniteTimeSpan, context.RequestAborted);
                     return true;
                 case "pc":
                     // Partial Response (full headers, 50% of body), then close (TCP FIN)
-                    await SendDownstreamResponse(upstreamResponse, context.Response, upstreamResponse.Content.Length / 2);
+                    await SendDownstreamResponse(upstreamResponse, context.Response, upstreamResponse.ContentLength / 2, context.RequestAborted);
                     Close(context);
                     return true;
                 case "pa":
                     // Partial Response (full headers, 50% of body), then abort (TCP RST)
-                    await SendDownstreamResponse(upstreamResponse, context.Response, upstreamResponse.Content.Length / 2);
+                    await SendDownstreamResponse(upstreamResponse, context.Response, upstreamResponse.ContentLength / 2, context.RequestAborted);
                     Abort(context);
                     return true;
                 case "pn":
                     // Partial Response (full headers, 50% of body), then finish normally
-                    await SendDownstreamResponse(upstreamResponse, context.Response, upstreamResponse.Content.Length / 2);
+                    await SendDownstreamResponse(upstreamResponse, context.Response, upstreamResponse.ContentLength / 2, context.RequestAborted);
                     return true;
                 case "n":
                     // No response, then wait indefinitely
@@ -301,7 +296,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
             }
         }
 
-        private static async Task SendDownstreamResponse(UpstreamResponse upstreamResponse, HttpResponse response, int? contentBytes = null)
+        private static async Task SendDownstreamResponse(UpstreamResponse upstreamResponse, HttpResponse response, long? stopAt, CancellationToken cancellationToken)
         {
             Console.WriteLine();
 
@@ -318,9 +313,26 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                 response.Headers.Add(header.Key, header.Value);
             }
 
-            var count = contentBytes ?? upstreamResponse.Content.Length;
-            Log($"Writing response body of {count} bytes...");
-            await response.Body.WriteAsync(upstreamResponse.Content, 0, count);
+            Log($"Writing response body of {stopAt ?? upstreamResponse.ContentLength} bytes...");
+
+            Stream source = await upstreamResponse.Content.ReadAsStreamAsync(cancellationToken);
+            byte[] buffer = new byte[8192];
+            long remaining = stopAt ?? long.MaxValue;
+            while (remaining > 0)
+            {
+                int read = await source.ReadAsync(buffer, 0, (int)Math.Min(buffer.Length, remaining), cancellationToken);
+                if (read <= 0)
+                {
+                    break;
+                }
+
+                await response.Body.WriteAsync(buffer, 0, (int)Math.Min(read, remaining), cancellationToken);
+                remaining -= read;
+            }
+
+            await response.Body.FlushAsync();
+
+
             Log($"Finished writing response body");
         }
 
@@ -345,11 +357,17 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
             Console.WriteLine($"[{DateTime.Now:hh:mm:ss.fff}] {value}");
         }
 
-        private class UpstreamResponse
+        private class UpstreamResponse : IDisposable
         {
             public int StatusCode { get; set; }
             public KeyValuePair<string, StringValues>[] Headers { get; set; }
-            public byte[] Content { get; set; }
+            public HttpContent Content { get; set; }
+            public long? ContentLength { get; set; }
+
+            public void Dispose()
+            {
+                Content.Dispose();
+            }
         }
     }
 }

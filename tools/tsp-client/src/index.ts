@@ -3,7 +3,7 @@ import * as path from "node:path";
 import { installDependencies } from "./npm.js";
 import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
-import { TspLocation, compileTsp, discoverMainFile, getEmitterOptions, resolveTspConfigUrl } from "./typespec.js";
+import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
 import { mkdir, writeFile, cp, readFile } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
@@ -151,11 +151,9 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
 async function generate({
   rootUrl,
   noCleanup,
-  additionalEmitterOptions,
 }: {
   rootUrl: string;
   noCleanup: boolean;
-  additionalEmitterOptions?: string;
 }) {
   const tempRoot = path.join(rootUrl, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(rootUrl);
@@ -171,13 +169,10 @@ async function generate({
   }
   const mainFilePath = await discoverMainFile(srcDir);
   const resolvedMainFilePath = path.join(srcDir, mainFilePath);
-  Logger.info(`Compiling tsp using ${emitter}...`);
-  const emitterOpts = await getEmitterOptions(rootUrl, srcDir, emitter, noCleanup, additionalEmitterOptions);
-
   Logger.info("Installing dependencies from npm...");
   await installDependencies(srcDir);
 
-  await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, options: emitterOpts });
+  await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup });
 
   if (noCleanup) {
     Logger.debug(`Skipping cleanup of temp directory: ${tempRoot}`);
@@ -210,14 +205,14 @@ async function main() {
         Logger.info(`SDK initialized in ${outputDir}`);
         if (!options.skipSyncAndGenerate) {
           await syncTspFiles(outputDir);
-          await generate({ rootUrl: outputDir, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
+          await generate({ rootUrl: outputDir, noCleanup: options.noCleanup});
         }
         break;
       case "sync":
         await syncTspFiles(rootUrl, options.localSpecRepo);
         break;
       case "generate":
-        await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
+        await generate({ rootUrl, noCleanup: options.noCleanup});
         break;
       case "update":
         if (options.repo && !options.commit) {
@@ -236,7 +231,7 @@ async function main() {
           await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`);
         }
         await syncTspFiles(rootUrl);
-        await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
+        await generate({ rootUrl, noCleanup: options.noCleanup});
         break;
       default:
         Logger.error(`Unknown command: ${options.command}`);

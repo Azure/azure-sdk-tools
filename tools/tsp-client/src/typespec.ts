@@ -1,4 +1,4 @@
-import { parse, isImportStatement } from "@typespec/compiler";
+import { parse, isImportStatement, resolvePath, getDirectoryPath, ResolveCompilerOptionsOptions } from "@typespec/compiler";
 import { ModuleResolutionResult, resolveModule, ResolveModuleHost } from "@typespec/compiler/module-resolver";
 import { Logger } from "./log.js";
 import { readFile, readdir, realpath, stat } from "fs/promises";
@@ -129,23 +129,40 @@ export async function compileTsp({
   emitterPackage,
   outputPath,
   resolvedMainFilePath,
-  options,
+  saveInputs,
 }: {
   emitterPackage: string;
   outputPath: string;
   resolvedMainFilePath: string;
-  options: Record<string, Record<string, unknown>>;
+  saveInputs?: boolean;
 }) {
-  Logger.debug(`Using emitter output dir: ${outputPath}`);
+  const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
+  const { compile, NodeHost, getSourceLocation, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
 
-  const parsedEntrypoint = path.parse(resolvedMainFilePath);
-  const { compile, NodeHost, getSourceLocation } = await importTsp(parsedEntrypoint.dir);
-  // compile the local copy of the root file
-  const program = await compile(NodeHost, resolvedMainFilePath, {
-    outputDir: outputPath,
+  const outputDir = resolvePath(outputPath);
+  const overrideOptions: Record<string, Record<string, string>> = {};
+  overrideOptions[emitterPackage] = {"emitter-output-dir": outputDir}
+  if (saveInputs) {
+    overrideOptions[emitterPackage]!["save-inputs"] = "true";
+  }
+  const overrides: Partial<ResolveCompilerOptionsOptions["overrides"]> = {
+    outputDir,
     emit: [emitterPackage],
-    options: options,
+    options: overrideOptions,
+  };
+  Logger.info(`Compiling tsp using ${emitterPackage}...`);
+  const [options, diagnostics] = await resolveCompilerOptions(NodeHost, {
+    cwd: process.cwd(),
+    entrypoint: resolvedMainFilePath,
+    overrides,
   });
+
+  if (diagnostics.length > 0) {
+    // This should not happen, but if it does, we should log it.
+    Logger.debug(`Compiler options diagnostic information: ${JSON.stringify(diagnostics)}`);
+  }
+
+  const program = await compile(NodeHost, resolvedMainFilePath, options);
 
   if (program.diagnostics.length > 0) {
     for (const diagnostic of program.diagnostics) {

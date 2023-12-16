@@ -9,6 +9,7 @@ import { mkdir, writeFile, cp, readFile } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { fetch } from "./network.js";
 import { parse as parseYaml } from "yaml";
+import { joinPaths } from "@typespec/compiler";
 
 
 async function sdkInit(
@@ -170,7 +171,7 @@ async function generate({
     throw new Error("emitter is undefined");
   }
   const mainFilePath = await discoverMainFile(srcDir);
-  const resolvedMainFilePath = path.join(srcDir, mainFilePath);
+  const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
   Logger.info("Installing dependencies from npm...");
   await installDependencies(srcDir);
 

@@ -151,9 +151,11 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
 async function generate({
   rootUrl,
   noCleanup,
+  additionalEmitterOptions,
 }: {
   rootUrl: string;
   noCleanup: boolean;
+  additionalEmitterOptions?: string;
 }) {
   const tempRoot = path.join(rootUrl, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(rootUrl);
@@ -172,7 +174,7 @@ async function generate({
   Logger.info("Installing dependencies from npm...");
   await installDependencies(srcDir);
 
-  await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup });
+  await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup, additionalEmitterOptions });
 
   if (noCleanup) {
     Logger.debug(`Skipping cleanup of temp directory: ${tempRoot}`);
@@ -205,14 +207,14 @@ async function main() {
         Logger.info(`SDK initialized in ${outputDir}`);
         if (!options.skipSyncAndGenerate) {
           await syncTspFiles(outputDir);
-          await generate({ rootUrl: outputDir, noCleanup: options.noCleanup});
+          await generate({ rootUrl: outputDir, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
         }
         break;
       case "sync":
         await syncTspFiles(rootUrl, options.localSpecRepo);
         break;
       case "generate":
-        await generate({ rootUrl, noCleanup: options.noCleanup});
+        await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
         break;
       case "update":
         if (options.repo && !options.commit) {
@@ -231,7 +233,7 @@ async function main() {
           await writeFile(path.join(rootUrl, "tsp-location.yaml"), `directory: ${tspLocation.directory}\ncommit: ${tspLocation.commit}\nrepo: ${tspLocation.repo}\nadditionalDirectories: ${tspLocation.additionalDirectories}`);
         }
         await syncTspFiles(rootUrl);
-        await generate({ rootUrl, noCleanup: options.noCleanup});
+        await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
         break;
       default:
         Logger.error(`Unknown command: ${options.command}`);

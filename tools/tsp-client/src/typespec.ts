@@ -129,11 +129,13 @@ export async function compileTsp({
   emitterPackage,
   outputPath,
   resolvedMainFilePath,
+  additionalEmitterOptions,
   saveInputs,
 }: {
   emitterPackage: string;
   outputPath: string;
   resolvedMainFilePath: string;
+  additionalEmitterOptions?: string;
   saveInputs?: boolean;
 }) {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
@@ -144,6 +146,14 @@ export async function compileTsp({
   overrideOptions[emitterPackage] = {"emitter-output-dir": outputDir}
   if (saveInputs) {
     overrideOptions[emitterPackage]!["save-inputs"] = "true";
+  }
+  if (additionalEmitterOptions) {
+    additionalEmitterOptions.split(";").forEach((option) => {
+      const [key, value] = option.split("=");
+      if (key && value) {
+        overrideOptions[emitterPackage]![key] = value;
+      }
+    });
   }
   const overrides: Partial<ResolveCompilerOptionsOptions["overrides"]> = {
     outputDir,
@@ -156,7 +166,7 @@ export async function compileTsp({
     entrypoint: resolvedMainFilePath,
     overrides,
   });
-
+  Logger.debug(`Compiler options: ${JSON.stringify(options)}`);
   if (diagnostics.length > 0) {
     // This should not happen, but if it does, we should log it.
     Logger.debug(`Compiler options diagnostic information: ${JSON.stringify(diagnostics)}`);

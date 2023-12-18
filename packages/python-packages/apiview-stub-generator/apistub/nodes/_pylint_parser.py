@@ -21,14 +21,14 @@ class PylintError:
         self.column = msg.column
         self.end_line = msg.end_line
         self.end_column = msg.end_column
-        self.path = msg.path
+        self.path = msg.path.split(os.path.sep)[-2:] if msg.path else None
         self.symbol = msg.symbol
         self.message = msg.msg
         self.message_id = msg.msg_id
         self.help_link = None
-        if self.path and self.path.startswith(pkg_name):
-            self.path = self.path[(len(f"{pkg_name}\\\\") - 1):]
         code = self.symbol[0] if self.symbol else ""
+        if self.path:
+            self.path = os.path.join(*self.path)
         self.level = DiagnosticLevel.ERROR if code in "EF" else DiagnosticLevel.WARNING
         self.owner = None
         self._parse_help_link()

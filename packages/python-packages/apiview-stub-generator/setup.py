@@ -29,7 +29,7 @@ setup(
     author_email="azuresdkengsysadmins@microsoft.com",
     license="MIT License",
     packages=find_packages(),
-    package_data={'': ['pylintrc']},
+    package_data={'': ['.pylintrc']},
     include_package_data=True,
     install_requires=[
         "charset-normalizer",

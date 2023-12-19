@@ -3,12 +3,13 @@ import * as path from "node:path";
 import { installDependencies } from "./npm.js";
 import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
-import { TspLocation, compileTsp, discoverMainFile, getEmitterOptions, resolveTspConfigUrl } from "./typespec.js";
+import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
 import { mkdir, writeFile, cp, readFile } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { fetch } from "./network.js";
 import { parse as parseYaml } from "yaml";
+import { joinPaths } from "@typespec/compiler";
 
 
 async function sdkInit(
@@ -170,14 +171,11 @@ async function generate({
     throw new Error("emitter is undefined");
   }
   const mainFilePath = await discoverMainFile(srcDir);
-  const resolvedMainFilePath = path.join(srcDir, mainFilePath);
-  Logger.info(`Compiling tsp using ${emitter}...`);
-  const emitterOpts = await getEmitterOptions(rootUrl, srcDir, emitter, noCleanup, additionalEmitterOptions);
-
+  const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
   Logger.info("Installing dependencies from npm...");
   await installDependencies(srcDir);
 
-  await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, options: emitterOpts });
+  await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup, additionalEmitterOptions });
 
   if (noCleanup) {
     Logger.debug(`Skipping cleanup of temp directory: ${tempRoot}`);

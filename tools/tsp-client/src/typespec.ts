@@ -69,16 +69,20 @@ export async function compileTsp({
   const { compile, NodeHost, getSourceLocation, resolveCompilerOptions } = await importTsp(parsedEntrypoint);
 
   const outputDir = resolvePath(outputPath);
-  const overrideOptions: Record<string, Record<string, string>> = {};
-  overrideOptions[emitterPackage] = {"emitter-output-dir": outputDir}
+  const overrideOptions: Record<string, Record<string, string>> = {
+    [emitterPackage]: {
+      "emitter-output-dir": outputDir,
+    },
+  };
+  const emitterOverrideOptions = overrideOptions[emitterPackage] ?? {[emitterPackage]: {}};
   if (saveInputs) {
-    overrideOptions[emitterPackage]!["save-inputs"] = "true";
+    emitterOverrideOptions["save-inputs"] = "true";
   }
   if (additionalEmitterOptions) {
     additionalEmitterOptions.split(";").forEach((option) => {
       const [key, value] = option.split("=");
       if (key && value) {
-        overrideOptions[emitterPackage]![key] = value;
+        emitterOverrideOptions[key] = value;
       }
     });
   }

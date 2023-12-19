@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
             "Proxy-Connection",
 
             // "X-Upstream-Base-Uri" in original request is used as the Base URI in the upstream request
-            "X-Upstream-Base-Uri",
+            UpstreamBaseUriHeader,
             "Host",
 
             ResponseSelectionHeader

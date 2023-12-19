@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Azure.Sdk.Tools.HttpFaultInjector": {
+      "commandName": "Project",
+      "launchBrowser": false,
+      "environmentVariables": {
+        "OTEL_SERVICE_NAME": "HttpFaultInjector",
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "http://localhost:7777;https://localhost:7778"
+    }
+  }
+}

@@ -38,16 +38,20 @@ async function sdkInit(
       Logger.error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
     }
     Logger.debug(`Service directory: ${serviceDir}`)
-    const additionalDirs: string[] = configYaml?.parameters?.dependencies?.additionalDirectories ?? [];
+    const additionalDirs: string[] | undefined = configYaml?.parameters?.dependencies?.additionalDirectories;
     const packageDir: string | undefined = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {
       Logger.error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
     }
     const newPackageDir = path.join(outputDir, serviceDir, packageDir!)
     await mkdir(newPackageDir, { recursive: true });
+    let additionalDirOutput = "";
+    for (const dir of additionalDirs ?? []) {
+      additionalDirOutput += `\n- ${dir}`;
+    }
     await writeFile(
       path.join(newPackageDir, "tsp-location.yaml"),
-    `directory: ${resolvedConfigUrl.path}\ncommit: ${resolvedConfigUrl.commit}\nrepo: ${resolvedConfigUrl.repo}\nadditionalDirectories: ${additionalDirs}`);
+    `directory: ${resolvedConfigUrl.path}\ncommit: ${resolvedConfigUrl.commit}\nrepo: ${resolvedConfigUrl.repo}\nadditionalDirectories:${additionalDirOutput}\n`);
     return newPackageDir;
   } else {
     // Local directory scenario
@@ -127,8 +131,8 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
     await sparseCheckout(cloneDir);
     await addSpecFiles(cloneDir, tspLocation.directory)
-    Logger.info(`Processing additional directories: ${tspLocation.additionalDirectories}`)
-    for (const dir of tspLocation.additionalDirectories!) {
+    for (const dir of tspLocation.additionalDirectories ?? []) {
+      Logger.info(`Processing additional directory: ${dir}`);
       await addSpecFiles(cloneDir, dir);
     }
     await checkoutCommit(cloneDir, tspLocation.commit);

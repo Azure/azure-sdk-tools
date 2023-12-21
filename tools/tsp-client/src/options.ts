@@ -1,9 +1,9 @@
 import { parseArgs } from "node:util";
 import { Logger, printUsage, printVersion } from "./log.js";
-import * as path from "node:path";
 import process from  "node:process";
 import { doesFileExist } from "./network.js";
 import PromptSync from "prompt-sync";
+import { normalizePath, resolvePath } from "@typespec/compiler";
 
 export interface Options {
   debug: boolean;
@@ -108,7 +108,7 @@ export async function getOptions(): Promise<Options> {
   if (values["output-dir"]) {
     outputDir = values["output-dir"];
   }
-  outputDir = path.resolve(path.normalize(outputDir));
+  outputDir = resolvePath(normalizePath(outputDir));
 
   let useOutputDir;
   if (process.stdin.isTTY) {
@@ -127,7 +127,7 @@ export async function getOptions(): Promise<Options> {
       printUsage();
       process.exit(1);
     }
-    outputDir = path.resolve(path.normalize(newOutputDir));
+    outputDir = resolvePath(normalizePath(newOutputDir));
   }
   Logger.info("Using output directory '" + outputDir + "'");
 

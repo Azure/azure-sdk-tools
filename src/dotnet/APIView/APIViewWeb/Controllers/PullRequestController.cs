@@ -168,14 +168,18 @@ namespace APIViewWeb.Controllers
                     _telemetryClient.TrackTrace("Failed to download artifact. Please recheck build id and artifact path values in API change detection request.");
                 }
 
-                // Update pull request metadata in DB
-                await _pullRequestManager.UpsertPullRequestAsync(pullRequestModel);
-
-                //Generate combined single comment to update on PR.            
+                List<PullRequestModel> pullRequests = new List<PullRequestModel>();
+                //Add pull request info only if API revision is created
+                if (!string.IsNullOrEmpty(pullRequestModel.APIRevisionId))
+                {
+                    // Update pull request metadata in DB
+                    await _pullRequestManager.UpsertPullRequestAsync(pullRequestModel);
+                    pullRequests = (await _pullRequestManager.GetPullRequestsModelAsync(pullRequestNumber: prNumber, repoName: repoName)).ToList();
+                }
+                //Generate combined single comment to update on PR or add a comment stating no API changes.            
                 if (commentOnPR)
                 {
-                    var pullRequests = await _pullRequestManager.GetPullRequestsModelAsync(pullRequestNumber: prNumber, repoName: repoName);
-                    await _pullRequestManager.CreateOrUpdateCommentsOnPR(pullRequests.ToList(), repoInfo[0], repoInfo[1], prNumber, hostName);
+                    await _pullRequestManager.CreateOrUpdateCommentsOnPR(pullRequests, repoInfo[0], repoInfo[1], prNumber, hostName);
                 }
             }
             finally

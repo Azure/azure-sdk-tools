@@ -2,6 +2,7 @@ import * as path from "node:path";
 import { readFile, writeFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { joinPaths } from "@typespec/compiler";
 
 export async function createPackageJson(rootPath: string, deps: Set<string>): Promise<void> {
   const dependencies: Record<string, string> = {};
@@ -14,7 +15,7 @@ export async function createPackageJson(rootPath: string, deps: Set<string>): Pr
     dependencies,
   });
 
-  const filePath = path.join(rootPath, "package.json");
+  const filePath = joinPaths(rootPath, "package.json");
   await writeFile(filePath, packageJson);
 }
 
@@ -43,7 +44,7 @@ export async function getPackageVersion(): Promise<string> {
   if (!packageVersion) {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const packageJson = JSON.parse(
-      await readFile(path.join(__dirname, "..", "package.json"), "utf-8"),
+      await readFile(joinPaths(__dirname, "..", "package.json"), "utf-8"),
     );
     packageVersion = packageJson.version ?? "unknown";
   }

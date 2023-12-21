@@ -46,6 +46,11 @@ public class MigrationRunner
             reviewsOld.AddRange(response.Resource);
         }
 
+        if(reviewsOld.Count == 0)
+        {
+            Console.WriteLine("No reviews found to be migrated.");
+            return;
+        }
         var mappings = new List<MappingModel>();
         string query = "SELECT * FROM MigrationStatus m";
         if (!string.IsNullOrEmpty(reviewId))
@@ -193,11 +198,7 @@ public class MigrationRunner
             return;
         }
 
-        if (reviewOld.FilterType == APIRevisionType.Manual && revisionOld.IsApproved != true && revisionOld.CreationDate.AddYears(2) < DateTime.UtcNow)
-        {
-            Console.WriteLine($"Skipping older manual revision for review {reviewOld.ReviewId}");
-            return;
-        }
+        Console.WriteLine($"Migrating revision {revisionOld.RevisionId} to review {reviewNew.Id}");
         // Copy RevisionOld to RevisionNew
         var apiRevisionNew = new APIRevisionModel();
         apiRevisionNew.Id = revisionOld.RevisionId;

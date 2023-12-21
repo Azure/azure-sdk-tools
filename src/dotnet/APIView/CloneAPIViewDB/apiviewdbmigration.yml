@@ -28,7 +28,7 @@ stages:
               DOTNET_CLI_TELEMETRY_OPTOUT: 1
               DOTNET_MULTILEVEL_LOOKUP: 0
 
-          - script: 'CloneAPIViewDB ${{ parameters.ReviewId }}'
+          - script: 'dotnet run ${{ parameters.ReviewId }}'
             displayName: 'Run Migration'
             workingDirectory: $(ProjectDirectory)
             env:

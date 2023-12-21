@@ -6,7 +6,8 @@
 - Use `resolveCompilerOptions` to get emitter configurations from tspconfig.yaml.
 - Remove unused functions: `getEmitterOptions()`, `resolveCliOptions()`, `resolveImports()`.
 - Fix `additionalDirectories` property outputted by the `init` command.
-- Fixed support for local specs using additional directories.
+- Fixed support for local and remote specs using additional directories.
+- Switched to use path helper functions from `@typespec/compiler`.
 
 ## 2023-12-8 - 0.2.0
 

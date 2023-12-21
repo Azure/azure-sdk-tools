@@ -127,8 +127,7 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
       if (!finalDirName) {
         throw new Error(`Could not find a final directory for the following value: ${normalizedDir}`);
       }
-      const destinationDir = joinPaths(tempRoot, finalDirName);
-      await cp(joinPaths(localSpecRepoRoot, dir), destinationDir, { recursive: true, filter: filter });
+      await cp(joinPaths(localSpecRepoRoot, dir), joinPaths(tempRoot, finalDirName), { recursive: true, filter: filter });
     }
   } else {
     const cloneDir = path.join(repoRoot, "..", "sparse-spec");

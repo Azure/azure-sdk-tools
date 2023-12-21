@@ -116,9 +116,8 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
       throw new Error("Could not find local spec repo root, please make sure the path is correct");
     }
     for (const dir of tspLocation.additionalDirectories!) {
-      Logger.info(`Syncing additional directory: ${dir}`);
-      const finalDirName = getAdditionalDirectoryName(dir);
-      await cp(joinPaths(localSpecRepoRoot, dir), joinPaths(tempRoot, finalDirName), { recursive: true, filter: filter });
+      Logger.info(`Syncing additional directory: ${dir}`);;
+      await cp(joinPaths(localSpecRepoRoot, dir), joinPaths(tempRoot, getAdditionalDirectoryName(dir)), { recursive: true, filter: filter });
     }
   } else {
     const cloneDir = joinPaths(repoRoot, "..", "sparse-spec");
@@ -136,8 +135,7 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     await cp(joinPaths(cloneDir, tspLocation.directory), srcDir, { recursive: true });
     for (const dir of tspLocation.additionalDirectories!) {
       Logger.info(`Syncing additional directory: ${dir}`);
-      const finalDirName = getAdditionalDirectoryName(dir);
-      await cp(joinPaths(cloneDir, dir), joinPaths(tempRoot, finalDirName), { recursive: true });
+      await cp(joinPaths(cloneDir, dir), joinPaths(tempRoot, getAdditionalDirectoryName(dir)), { recursive: true });
     }
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
     await removeDirectory(cloneDir);

@@ -3,7 +3,7 @@ import { Logger, printUsage, printVersion } from "./log.js";
 import process from  "node:process";
 import { doesFileExist } from "./network.js";
 import PromptSync from "prompt-sync";
-import { normalizePath, resolvePath } from "@typespec/compiler";
+import { getNormalizedAbsolutePath, normalizePath, resolvePath } from "@typespec/compiler";
 
 export interface Options {
   debug: boolean;
@@ -108,7 +108,7 @@ export async function getOptions(): Promise<Options> {
   if (values["output-dir"]) {
     outputDir = values["output-dir"];
   }
-  outputDir = resolvePath(normalizePath(outputDir));
+  outputDir = getNormalizedAbsolutePath(outputDir, process.cwd());
 
   let useOutputDir;
   if (process.stdin.isTTY) {

@@ -3,7 +3,7 @@ import { Logger, printUsage, printVersion } from "./log.js";
 import process from  "node:process";
 import { doesFileExist } from "./network.js";
 import PromptSync from "prompt-sync";
-import { getNormalizedAbsolutePath, normalizePath, resolvePath } from "@typespec/compiler";
+import { normalizePath, resolvePath } from "@typespec/compiler";
 
 export interface Options {
   debug: boolean;

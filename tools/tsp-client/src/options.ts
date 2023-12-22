@@ -108,7 +108,7 @@ export async function getOptions(): Promise<Options> {
   if (values["output-dir"]) {
     outputDir = values["output-dir"];
   }
-  outputDir = getNormalizedAbsolutePath(outputDir, process.cwd());
+  outputDir = resolvePath(process.cwd(), outputDir);
 
   let useOutputDir;
   if (process.stdin.isTTY) {

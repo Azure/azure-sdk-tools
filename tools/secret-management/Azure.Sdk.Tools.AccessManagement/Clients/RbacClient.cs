@@ -47,7 +47,7 @@ public class RbacClient : IRbacClient
                 Log.LogInformation($"The role assignment was already created by a different source. Skipping.");
                 return;
             }
-            throw ex;
+            throw;
         }
         Log.LogInformation($"Created role assignment '{roleName}' for principal '{principalId}' with role '{role.Data.RoleName}' in scope '{rbac.Scope}'");
     }

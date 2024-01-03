@@ -83,6 +83,11 @@ public class ServiceConnectionParameterStore : SecretStore
         this.logger.LogDebug("Getting service endpoint details for endpoint '{EndpointId}'", endpointId);
         ServiceEndpoint? endpointDetails = await client.GetServiceEndpointDetailsAsync(this.projectName, endpointId);
 
+        if (endpointDetails == null || endpointDetails.Authorization == null)
+        {
+            throw new RotationException($"Unable to access endpoint '{endpointId}' so updating it in DevOps failed");
+        }
+
         endpointDetails.Authorization.Parameters[this.parameterName] = secretValue.Value;
 
         if (!whatIf)

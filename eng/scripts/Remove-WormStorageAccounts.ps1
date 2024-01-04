@@ -25,11 +25,14 @@ foreach ($group in $groups) {
                 Write-Host "Removing $($account.StorageAccountName) in $($account.ResourceGroupName)"
             }
             $ctx = New-AzStorageContext -StorageAccountName $account.StorageAccountName
-            $immutableBlobs = $ctx `
-                                | Get-AzStorageContainer `
-                                | Where-Object { $_.BlobContainerProperties.HasImmutableStorageWithVersioning } `
-                                | Get-AzStorageBlob
             try {
+                # Sometimes the retrieval here fails in preview/dogfood regions but we should still try to delete the storage account below
+                # so just handle the exception and attempt the delete below.
+                $immutableBlobs = $ctx `
+                    | Get-AzStorageContainer `
+                    | Where-Object { $_.BlobContainerProperties.HasImmutableStorageWithVersioning } `
+                    | Get-AzStorageBlob
+                                
                 foreach ($blob in $immutableBlobs) {
                     Write-Host "Removing legal hold - blob: $($blob.Name), account: $($account.StorageAccountName), group: $($group.ResourceGroupName)"
                     $blob | Set-AzStorageBlobLegalHold -DisableLegalHold | Out-Null

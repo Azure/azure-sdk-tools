@@ -5,6 +5,9 @@ using Azure.Sdk.Tools.SecretRotation.Configuration;
 using Azure.Sdk.Tools.SecretRotation.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
+using Microsoft.Graph.Applications.Item.AddPassword;
+using Microsoft.Graph.Applications.Item.RemovePassword;
+using Microsoft.Graph.Models;
 
 namespace Azure.Sdk.Tools.SecretRotation.Stores.AzureActiveDirectory;
 
@@ -65,22 +68,21 @@ public class AadApplicationSecretStore : SecretStore
     {
         GraphServiceClient graphClient = GetGraphServiceClient();
 
-        this.logger.LogInformation("Getting details for application '{ApplicationId}' from graph api.",
-            this.applicationId);
-
-        IGraphServiceApplicationsCollectionPage? applications =
-            await graphClient.Applications.Request().Filter($"appId eq '{this.applicationId}'").GetAsync();
-
-        Application application = applications.FirstOrDefault()
-            ?? throw new RotationException($"Unable to locate AAD application with id '{this.applicationId}'");
-
+        Application? application = await GetApplicationAsync(graphClient) ??
+            throw new RotationException($"Unable to locate AAD application with id '{this.applicationId}'");
+        
         this.logger.LogInformation("Found AAD application with id '{ApplicationId}', object id '{ObjectId}'",
             this.applicationId,
             application.Id);
 
-        var credential = new PasswordCredential
+        var requestBody = new AddPasswordPostRequestBody
         {
-            DisplayName = this.displayName, StartDateTime = DateTimeOffset.UtcNow, EndDateTime = expirationDate
+            PasswordCredential = new PasswordCredential
+            {
+                DisplayName = this.displayName, 
+                StartDateTime = DateTimeOffset.UtcNow, 
+                EndDateTime = expirationDate
+            }
         };
 
         if (whatIf)
@@ -95,8 +97,9 @@ public class AadApplicationSecretStore : SecretStore
         this.logger.LogInformation("Posting new password request to graph api for application object id '{ObjectId}'",
             application.Id);
 
-        PasswordCredential? newSecret =
-            await graphClient.Applications[application.Id].AddPassword(credential).Request().PostAsync();
+        PasswordCredential newSecret =
+            await graphClient.Applications[application.Id].AddPassword.PostAsync(requestBody) ??
+            throw new RotationException($"Unable to create new password credential for AAD application with id '{this.applicationId}' and password name of '{this.displayName}'");
 
         this.logger.LogInformation("Graph api responded with key id '{KeyId}'", newSecret.KeyId);
 
@@ -104,7 +107,7 @@ public class AadApplicationSecretStore : SecretStore
 
         return new SecretValue
         {
-            Value = newSecret.SecretText,
+            Value = newSecret.SecretText ?? string.Empty,
             ExpirationDate = newSecret.EndDateTime,
             Tags = { ["AadApplicationId"] = this.applicationId, ["AadSecretId"] = keyId }
         };
@@ -143,10 +146,15 @@ public class AadApplicationSecretStore : SecretStore
             {
                 try
                 {
-                    await graphClient.Applications[application.Id].RemovePassword(aadKeyId).Request().PostAsync();
+                    var requestBody = new RemovePasswordPostRequestBody
+                    {
+                        KeyId = aadKeyId,
+                    };
+
+                    await graphClient.Applications[application.Id].RemovePassword.PostAsync(requestBody);
                 }
                 catch (ServiceException ex) when
-                    (ex.Error.Message.StartsWith("No password credential found with keyId"))
+                    (ex.ToString().Contains("No password credential found with keyId"))
                 {
                     // ignore "not found" exception on delete
                 }
@@ -158,18 +166,12 @@ public class AadApplicationSecretStore : SecretStore
     {
         this.logger.LogInformation("Getting details for application '{ApplicationId}' from graph api.",
             this.applicationId);
-        IGraphServiceApplicationsCollectionPage? applications =
-            await graphClient.Applications.Request().Filter($"appId eq '{this.applicationId}'").GetAsync();
-        Application? application = applications.FirstOrDefault();
-        return application;
+        return await graphClient.ApplicationsWithAppId(this.applicationId).GetAsync();
     }
 
     private GraphServiceClient GetGraphServiceClient()
     {
-        string[] scopes = { "https://graph.microsoft.com/.default" };
-
-        GraphServiceClient graphClient = new(this.credential, scopes, new LoggingHttpProvider(this.logger));
-        return graphClient;
+        return new GraphServiceClient(this.credential);
     }
 
     private class Parameters
@@ -183,50 +185,5 @@ public class AadApplicationSecretStore : SecretStore
         [JsonPropertyName("revocationAction")]
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public RevocationAction RevocationAction { get; set; }
-    }
-
-    private class LoggingHttpProvider : IHttpProvider
-    {
-        private readonly HttpProvider internalProvider;
-        private readonly ILogger logger;
-
-        public LoggingHttpProvider(ILogger logger)
-        {
-            this.logger = logger;
-            this.internalProvider = new HttpProvider();
-        }
-
-        public void Dispose()
-        {
-            this.internalProvider.Dispose();
-        }
-
-        public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request)
-        {
-            this.logger.LogDebug("Sending graph request: {Method} {Url}", request.Method, request.RequestUri);
-            HttpResponseMessage? response = await this.internalProvider.SendAsync(request);
-            this.logger.LogDebug("Graph response of {StatusCode} received for {Method} {Url}",
-                (int)response.StatusCode, request.Method, request.RequestUri);
-            return response;
-        }
-
-        public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
-            HttpCompletionOption completionOption, CancellationToken cancellationToken)
-        {
-            this.logger.LogDebug("Sending graph request: {Method} {Url}", request.Method, request.RequestUri);
-            HttpResponseMessage? response =
-                await this.internalProvider.SendAsync(request, completionOption, cancellationToken);
-            this.logger.LogDebug("Graph response of {StatusCode} received for {Method} {Url}",
-                (int)response.StatusCode, request.Method, request.RequestUri);
-            return response;
-        }
-
-        public ISerializer Serializer => this.internalProvider.Serializer;
-
-        public TimeSpan OverallTimeout
-        {
-            get => this.internalProvider.OverallTimeout;
-            set => this.internalProvider.OverallTimeout = value;
-        }
     }
 }

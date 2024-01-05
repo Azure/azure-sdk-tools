@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.PipelineOwnersExtractor.Configuration
 {
     public class PostConfigureKeyVaultSettings<T> : IPostConfigureOptions<T> where T : class
     {
-        private static readonly Regex secretRegex = new Regex(@"(?<vault>https://.*?\.vault\.azure\.net)/secrets/(?<secret>.*)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex secretRegex = new Regex(@"(?<vault>https://[a-zA-Z0-9-]+\.vault\.azure\.net)/secrets/(?<secret>.*)", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private readonly ILogger logger;
         private readonly ISecretClientProvider secretClientProvider;
 

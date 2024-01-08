@@ -24,7 +24,14 @@ foreach ($group in $groups) {
             } else {
                 Write-Host "Removing $($account.StorageAccountName) in $($account.ResourceGroupName)"
             }
+
+            $hasContainers = ($account.Kind -ne "FileStorage")
+
+            # If it doesn't have containers then we can skip the explicit clean-up of this storage account
+            if (!$hasContainers) { continue }
+            
             $ctx = New-AzStorageContext -StorageAccountName $account.StorageAccountName
+
             $immutableBlobs = $ctx `
                                 | Get-AzStorageContainer `
                                 | Where-Object { $_.BlobContainerProperties.HasImmutableStorageWithVersioning } `

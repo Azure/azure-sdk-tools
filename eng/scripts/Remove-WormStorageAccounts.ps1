@@ -24,15 +24,19 @@ foreach ($group in $groups) {
             } else {
                 Write-Host "Removing $($account.StorageAccountName) in $($account.ResourceGroupName)"
             }
+
+            $hasContainers = ($account.Kind -ne "FileStorage")
+
+            # If it doesn't have containers then we can skip the explicit clean-up of this storage account
+            if (!$hasContainers) { continue }
+            
             $ctx = New-AzStorageContext -StorageAccountName $account.StorageAccountName
+
+            $immutableBlobs = $ctx `
+                                | Get-AzStorageContainer `
+                                | Where-Object { $_.BlobContainerProperties.HasImmutableStorageWithVersioning } `
+                                | Get-AzStorageBlob
             try {
-                # Sometimes the retrieval here fails in preview/dogfood regions but we should still try to delete the storage account below
-                # so just handle the exception and attempt the delete below.
-                $immutableBlobs = $ctx `
-                    | Get-AzStorageContainer `
-                    | Where-Object { $_.BlobContainerProperties.HasImmutableStorageWithVersioning } `
-                    | Get-AzStorageBlob
-                                
                 foreach ($blob in $immutableBlobs) {
                     Write-Host "Removing legal hold - blob: $($blob.Name), account: $($account.StorageAccountName), group: $($group.ResourceGroupName)"
                     $blob | Set-AzStorageBlobLegalHold -DisableLegalHold | Out-Null

@@ -341,7 +341,7 @@ stages:
         CommitMsg: Initialize repository for autorest build $(Build.BuildNumber)
         WorkingDirectory: $(sdkRepositoryPath)
         ScriptDirectory: $(toolsRepositoryPath)/eng/common/scripts
-        # To accomodate scheduled runs and retries, we want to overwrite and existing changes on the branch
+        # To accomodate scheduled runs and retries, we want to overwrite any existing changes on the branch
         PushArgs: --force
 
     - task: PowerShell@2

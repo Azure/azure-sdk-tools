@@ -294,9 +294,9 @@ stages:
     buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
     publishArtifactsPath: $(Pipeline.Workspace)/publish_artifacts
     ${{ if eq(variables['Build.Reason'], 'Schedule') }}:
-      branchName: auto-update-autorest-alpha-scheduled
+      branchName: auto-update-autorest-scheduled
     ${{ else }}:
-      branchName: auto-update-autorest-alpha-$(Build.BuildNumber)
+      branchName: auto-update-autorest-$(Build.BuildNumber)
   jobs:
   - job: Initialize
     steps:
@@ -428,27 +428,28 @@ stages:
         $reason = '$(Build.Reason)'
         $preRelease = '${{ parameters.BuildPrereleaseVersion }}' -eq 'true'
 
-        $source = "[$sourceBranch]($repoUrl/tree/$sourceBranch)" 
         if ($sourceBranch -match "^refs/heads/(.+)$") {
-            $source = "branch: [$($Matches[1])]($repoUrl/tree/$sourceBranch)"
+          $prBody = "Triggered from branch: [$($Matches[1])]($repoUrl/tree/$sourceBranch)"
         } elseif ($sourceBranch -match "^refs/tags/(.+)$") {
-            $source = "tag: [$($Matches[1])]($repoUrl/tree/$sourceBranch)"
+          $prBody = "Triggered from tag: [$($Matches[1])]($repoUrl/tree/$sourceBranch)"
         } elseif ($sourceBranch -match "^refs/pull/(\d+)/(head|merge)$") {
-            $source = "pull request: $repoUrl/pull/$($Matches[1])"
-        }
-
-        $prBody = "Triggered from $source"
-
-        $prTitle =  if ($reason -eq 'Schedule') {
-          "Scheduled autorest prerelease test"
-        } elseif ($preRelease) {
-          "Update autorest version to prerelease $generatorVersion" `
+          $prBody = "Triggered from pull request: $repoUrl/pull/$($Matches[1])"
         } else {
-          "Update autorest version to $generatorVersion"
+          $prBody = "Triggered from [$sourceBranch]($repoUrl/tree/$sourceBranch)"
         }
 
-        if ($generateJobResult -ne 'Succeeded') {
-          $prTitle = "Failed: $prTitle"
+        if ($reason -eq 'Schedule') {
+          $prTitle = "Scheduled code regeneration test"
+        } else {
+          if ($preRelease) {
+            $prTitle = "Update autorest version to prerelease $generatorVersion"
+          } else {
+            $prTitle = "Update autorest version to $generatorVersion"
+          }
+
+          if ($generateJobResult -ne 'Succeeded') {
+            $prTitle = "Failed: $prTitle"
+          }
         }
 
         Write-Host "Setting variable 'PullRequestTitle' to '$prTitle'"

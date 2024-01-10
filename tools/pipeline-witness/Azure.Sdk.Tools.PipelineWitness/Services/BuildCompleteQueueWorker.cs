@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
 
         internal override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
         {
-            this.logger.LogInformation($"Processing build.complete event: { message.MessageText }");
+            this.logger.LogInformation("Processing build.complete event: {MessageText}", message.MessageText);
 
             var devopsEvent = JObject.Parse(message.MessageText);
 

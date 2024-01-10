@@ -1,5 +1,5 @@
-﻿using System;
-
+using System;
+using System.Diagnostics;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
@@ -65,44 +65,47 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             builder.Services.AddLogging();
             builder.Services.AddMemoryCache();
-            builder.Services.AddSingleton<BlobUploadProcessor>();
-            builder.Services.AddSingleton<BuildLogProvider>();
-            builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
-            builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CancelledTaskClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CosmosDbEmulatorStartFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, AzurePipelinesPoolOutageClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, PythonPipelineTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JavaScriptLiveTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, TestResourcesDeploymentFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, DotnetPipelineTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JavaPipelineTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JsSamplesExecutionFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JsDevFeedPublishingFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, DownloadSecretsFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, GitCheckoutFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, MavenBrokenPipeFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CodeSigningFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, AzureArtifactsServiceUnavailableClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
+            //builder.Services.AddSingleton<BlobUploadProcessor>();
+            //builder.Services.AddSingleton<BuildLogProvider>();
+            //builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
+            //builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, CancelledTaskClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, CosmosDbEmulatorStartFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, AzurePipelinesPoolOutageClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, PythonPipelineTestFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, JavaScriptLiveTestFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, TestResourcesDeploymentFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, DotnetPipelineTestFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, JavaPipelineTestFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, JsSamplesExecutionFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, JsDevFeedPublishingFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, DownloadSecretsFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, GitCheckoutFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, MavenBrokenPipeFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, CodeSigningFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, AzureArtifactsServiceUnavailableClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
+            //builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
 
             builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
             builder.Services.AddSingleton<TokenCredential, DefaultAzureCredential>();
             builder.Services.AddSingleton<ISecretClientProvider, SecretClientProvider>();
             builder.Services.AddSingleton<IPostConfigureOptions<PipelineWitnessSettings>, PostConfigureKeyVaultSettings<PipelineWitnessSettings>>();
 
-            builder.Services.AddHostedService<CosmosDatabaseInitializer>();
-            builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
-            builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
+            //builder.Services.AddHostedService<CosmosDatabaseInitializer>();
+            //builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
+            //builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
+
+            builder.Services.AddHostedService<LogStuffWorker>(2);
         }
 
         private static void AddHostedService<T>(this IServiceCollection services, int instanceCount) where T : class, IHostedService
         {
             for (var i = 0; i < instanceCount; i++)
             {
-                services.AddSingleton<IHostedService, T>();
+                var instance = i;
+                services.AddSingleton<IHostedService>(provider => ActivatorUtilities.CreateInstance<T>(provider, instance));
             }
         }
     }

@@ -29,61 +29,20 @@ stages:
           - pwsh: |
               dotnet publish tools/${{ parameters.ToolName }}/${{ parameters.ServiceProject }} --configuration Release --output $(Build.ArtifactStagingDirectory)/app
             displayName: Publish
+          - task: ArchiveFiles@2
+            displayName: Archive
+            inputs:
+              rootFolderOrFile: $(Build.ArtifactStagingDirectory)/app
+              includeRootFolder: false
+              archiveFile: $(Build.ArtifactStagingDirectory)/${{ parameters.ToolName }}-$(Build.BuildID).zip
+          - task: AzureWebApp@1
+            displayName: Deploy
+            inputs:
+              azureSubscription: ${{ parameters.Staging.AzureSubscription }}
+              resourceGroupName: ${{ parameters.Staging.ResourceGroupName }}
+              appName: ${{ parameters.Staging.ResourceName }}
+              package: $(Build.ArtifactStagingDirectory)/${{ parameters.ToolName }}-$(Build.BuildID).zip
           - publish: $(Build.ArtifactStagingDirectory)
             displayName: Upload
             artifact: artifacts
             condition: succeededOrFailed()
-
-    - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-      - stage: Staging
-        dependsOn: Build
-        jobs:
-        - deployment: PublishFunction
-          environment: ${{ parameters.Staging.EnvironmentName }}
-          pool:
-            name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: ubuntu-22.04
-          strategy:
-            runOnce:
-              deploy:
-                steps:
-                - task: ArchiveFiles@2
-                  displayName: Archive
-                  inputs:
-                    rootFolderOrFile: $(Pipeline.Workspace)/artifacts/app
-                    includeRootFolder: false
-                    archiveFile: $(Pipeline.Workspace)/artifacts/${{ parameters.ToolName }}-$(Build.BuildID).zip
-                - task: AzureWebApp@1
-                  displayName: Deploy
-                  inputs:
-                    azureSubscription: ${{ parameters.Staging.AzureSubscription }}
-                    resourceGroupName: ${{ parameters.Staging.ResourceGroupName }}
-                    appName: ${{ parameters.Staging.ResourceName }}
-                    package: $(Pipeline.Workspace)/artifacts/${{ parameters.ToolName }}-$(Build.BuildID).zip
-                  
-
-      - stage: Production
-        dependsOn: Staging
-        jobs:
-        - deployment: PublishFunction
-          environment: ${{ parameters.Production.EnvironmentName }}
-          pool:
-            name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: ubuntu-22.04
-          strategy:
-            runOnce:
-                deploy:
-                  steps:
-                    - task: ArchiveFiles@2
-                      displayName: Archive
-                      inputs:
-                        rootFolderOrFile: $(Pipeline.Workspace)/artifacts/app
-                        includeRootFolder: false
-                        archiveFile: $(Pipeline.Workspace)/artifacts/${{ parameters.ToolName }}-$(Build.BuildID).zip
-                    - task: AzureWebApp@1
-                      displayName: Deploy
-                      inputs:
-                        azureSubscription: ${{ parameters.Production.AzureSubscription }}
-                        resourceGroupName: ${{ parameters.Production.ResourceGroupName }}
-                        appName: ${{ parameters.Production.ResourceName }}
-                        package: $(Pipeline.Workspace)/artifacts/${{ parameters.ToolName }}-$(Build.BuildID).zip

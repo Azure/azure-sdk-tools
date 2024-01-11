@@ -63,5 +63,5 @@ setup(
     ],
     zip_safe=False,
     packages=find_packages(),
-    python_requires=">=3.6"
+    python_requires=">=3.8"
 )

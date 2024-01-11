@@ -31,7 +31,7 @@ setup(
         "astroid>=2.11",
         "charset-normalizer",
     ],
-    python_requires=">=3.7.0",
+    python_requires=">=3.8.0",
     entry_points={"console_scripts": ["apiview-gpt=create_review",]},
     classifiers=[
         "Development Status :: 3 - Alpha",

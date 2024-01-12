@@ -85,7 +85,7 @@ export async function getOptions(): Promise<Options> {
     process.exit(1);
   }
 
-  let isUrl = false;
+  let isUrl = true;
   if (positionals[0] === "init") {
     if (!values["tsp-config"]) {
       Logger.error("tspConfig is required");
@@ -93,7 +93,7 @@ export async function getOptions(): Promise<Options> {
       process.exit(1);
     }
     if (await doesFileExist(values["tsp-config"])) {
-      isUrl = true;
+      isUrl = false;
     }
     if (!isUrl) {
       if (!values.commit || !values.repo) {

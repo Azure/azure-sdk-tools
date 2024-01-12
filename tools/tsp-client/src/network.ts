@@ -1,4 +1,5 @@
 import { createDefaultHttpClient, createPipelineRequest } from "@azure/core-rest-pipeline";
+import { stat } from "fs/promises";
 
 const httpClient = createDefaultHttpClient();
 
@@ -19,8 +20,7 @@ export function isValidUrl(url: string) {
   }
 }
 
-export function doesFileExist(url: string): Promise<boolean> {
-  return fetch(url, "HEAD")
-    .then(() => true)
-    .catch(() => false);
+// Checks if a file exists locally
+export function doesFileExist(path: string): Promise<boolean> {
+  return stat(path).then(() => true).catch(() => false);
 }

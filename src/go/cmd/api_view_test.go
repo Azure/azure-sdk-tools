@@ -4,7 +4,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,16 +17,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestFuncDecl(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_func_decl"), "output")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, err := os.ReadFile("./output/test_func_decl.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
+	p, err := createReview(filepath.Clean("testdata/test_func_decl"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,16 +36,7 @@ func TestFuncDecl(t *testing.T) {
 }
 
 func TestInterface(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_interface"), "output")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, err := os.ReadFile("./output/test_interface.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
+	p, err := createReview(filepath.Clean("testdata/test_interface"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,16 +55,7 @@ func TestInterface(t *testing.T) {
 }
 
 func TestStruct(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_struct"), "output")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, err := os.ReadFile("./output/test_struct.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
+	p, err := createReview(filepath.Clean("testdata/test_struct"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,16 +74,7 @@ func TestStruct(t *testing.T) {
 }
 
 func TestConst(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_const"), "output")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, err := os.ReadFile("./output/test_const.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
+	p, err := createReview(filepath.Clean("testdata/test_const"))
 	if err != nil {
 		t.Fatal(err)
 	}

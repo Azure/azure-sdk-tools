@@ -85,6 +85,14 @@ func NewModule(dir string) (*Module, error) {
 			if !indexTestdata && strings.Contains(path, "testdata") {
 				return filepath.SkipDir
 			}
+			if path != dir {
+				// This is a subdirectory of the module we're indexing. If it contains
+				// a go.mod, this subdirectory contains a separate module, not a package
+				// of the module we're indexing.
+				if _, err := os.Stat(filepath.Join(path, "go.mod")); err == nil {
+					return filepath.SkipDir
+				}
+			}
 			p, err := NewPkg(path, mf.Module.Mod.Path)
 			if err == nil {
 				m.packages[baseImportPath+p.Name()] = p

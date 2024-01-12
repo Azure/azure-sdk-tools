@@ -54,6 +54,21 @@ func TestInterface(t *testing.T) {
 	}
 }
 
+func TestMultiModule(t *testing.T) {
+	for _, path := range []string{
+		"testdata/test_multi_module",
+		"testdata/test_multi_module/A",
+		"testdata/test_multi_module/A/B",
+	} {
+		t.Run(path, func(t *testing.T) {
+			p, err := createReview(filepath.Clean(path))
+			require.NoError(t, err)
+			require.Equal(t, 1, len(p.Navigation), "review should include only one package")
+			require.Equal(t, filepath.Base(path), p.Navigation[0].Text, "review includes the wrong module")
+		})
+	}
+}
+
 func TestStruct(t *testing.T) {
 	p, err := createReview(filepath.Clean("testdata/test_struct"))
 	if err != nil {

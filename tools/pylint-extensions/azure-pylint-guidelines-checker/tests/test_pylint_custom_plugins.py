@@ -4433,10 +4433,11 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         # Error on documenting keyword only args as param after *args in docstring
         node = astroid.extract_node(
             """
-            def function_foo(*x, y):
+            def function_foo(*x):
                 '''
                 :param x: x
-                :param str y: y
+                :keyword z: z
+                :paramtype z: str
                 '''
             """
         )
@@ -4445,7 +4446,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                 msg_id="docstring-keyword-should-match-keyword-only",
                 line=2,
                 node=node,
-                args="y",
+                args="z",
                 col_offset=0,
                 end_line=2,
                 end_col_offset=16,
@@ -4454,15 +4455,6 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                 msg_id="docstring-missing-type",
                 line=2,
                 args="x",
-                node=node,
-                col_offset=0,
-                end_line=2,
-                end_col_offset=16,
-            ),
-            pylint.testutils.MessageTest(
-                msg_id="docstring-should-be-keyword",
-                line=2,
-                args="y",
                 node=node,
                 col_offset=0,
                 end_line=2,

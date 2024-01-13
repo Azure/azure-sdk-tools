@@ -35,12 +35,12 @@ async function sdkInit(
     const configYaml = parseYaml(tspConfig);
     const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
     if (!serviceDir) {
-      Logger.error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
+      throw new Error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
     }
     Logger.debug(`Service directory: ${serviceDir}`)
     const packageDir: string | undefined = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {
-      Logger.error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
+      throw new Error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
     }
     const newPackageDir = joinPaths(outputDir, serviceDir, packageDir!)
     await mkdir(newPackageDir, { recursive: true });
@@ -56,7 +56,7 @@ async function sdkInit(
     const configYaml = parseYaml(data);
     const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
     if (!serviceDir) {
-      Logger.error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
+      throw new Error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
     }
     Logger.debug(`Service directory: ${serviceDir}`)
     const additionalDirOutput = formatAdditionalDirectories(configYaml?.parameters?.dependencies?.additionalDirectories);
@@ -234,7 +234,7 @@ async function main() {
         await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
         break;
       default:
-        Logger.error(`Unknown command: ${options.command}`);
+        throw new Error(`Unknown command: ${options.command}`);
   }
 }
 

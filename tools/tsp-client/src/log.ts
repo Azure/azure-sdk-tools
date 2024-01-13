@@ -79,7 +79,8 @@ Options:
   --save-inputs             Don't clean up the temp directory after generation  [boolean]
   --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
   --swagger-readme          Path or url to swagger readme file                  [string]
-  -o, --output-dir          The output directory for the generated files        [string]
+  -o, --output-dir          Specify an alternate output directory for the 
+                            generated files. Default is your current directory  [string]
   --repo                    Repository where the project is defined for init 
                             or update                                           [string]
   -v, --version             Show version number                                 [boolean]

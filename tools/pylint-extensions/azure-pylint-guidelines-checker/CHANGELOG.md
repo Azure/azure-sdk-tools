@@ -2,7 +2,7 @@
 
 ## 0.3.1 (2023-1-16)
 
-- Docstring bug fix where paramtype was being consider for params
+- Docstring bug fix where paramtype was being considered for params
 
 ## 0.3.0 (2023-12-15)
 

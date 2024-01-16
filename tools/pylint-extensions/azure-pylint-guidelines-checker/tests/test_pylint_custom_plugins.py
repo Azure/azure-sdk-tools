@@ -4463,6 +4463,48 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_functiondef(node)
 
+    def test_docstring_class_paramtype(self):
+        node = astroid.extract_node(
+            """
+            class MyClass(): #@
+                def function_foo(**kwargs): #@
+                    '''
+                    :keyword z: z
+                    :paramtype z: str
+                    '''
+                
+                def function_boo(**kwargs): #@
+                    '''
+                    :keyword z: z
+                    :paramtype z: str
+                    '''
+            """
+        )
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-keyword-should-match-keyword-only",
+                line=3,
+                node=node[1],
+                args="z",
+                col_offset=4,
+                end_line=3,
+                end_col_offset=20,
+            ),
+        ):
+            self.checker.visit_functiondef(node[1])
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-keyword-should-match-keyword-only",
+                line=9,
+                node=node[2],
+                args="z",
+                col_offset=4,
+                end_line=9,
+                end_col_offset=20,
+            ),
+        ):
+            self.checker.visit_functiondef(node[2])
+
     def test_docstring_property_decorator(self):
         node = astroid.extract_node(
             """

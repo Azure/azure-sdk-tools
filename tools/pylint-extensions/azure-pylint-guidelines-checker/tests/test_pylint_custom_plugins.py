@@ -4433,10 +4433,11 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         # Error on documenting keyword only args as param after *args in docstring
         node = astroid.extract_node(
             """
-            def function_foo(*x, y):
+            def function_foo(*x):
                 '''
                 :param x: x
-                :param str y: y
+                :keyword z: z
+                :paramtype z: str
                 '''
             """
         )
@@ -4445,7 +4446,7 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                 msg_id="docstring-keyword-should-match-keyword-only",
                 line=2,
                 node=node,
-                args="y",
+                args="z",
                 col_offset=0,
                 end_line=2,
                 end_col_offset=16,
@@ -4459,17 +4460,50 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
                 end_line=2,
                 end_col_offset=16,
             ),
-            pylint.testutils.MessageTest(
-                msg_id="docstring-should-be-keyword",
-                line=2,
-                args="y",
-                node=node,
-                col_offset=0,
-                end_line=2,
-                end_col_offset=16,
-            ),
         ):
             self.checker.visit_functiondef(node)
+
+    def test_docstring_class_paramtype(self):
+        node = astroid.extract_node(
+            """
+            class MyClass(): #@
+                def function_foo(**kwargs): #@
+                    '''
+                    :keyword z: z
+                    :paramtype z: str
+                    '''
+                
+                def function_boo(**kwargs): #@
+                    '''
+                    :keyword z: z
+                    :paramtype z: str
+                    '''
+            """
+        )
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-keyword-should-match-keyword-only",
+                line=3,
+                node=node[1],
+                args="z",
+                col_offset=4,
+                end_line=3,
+                end_col_offset=20,
+            ),
+        ):
+            self.checker.visit_functiondef(node[1])
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-keyword-should-match-keyword-only",
+                line=9,
+                node=node[2],
+                args="z",
+                col_offset=4,
+                end_line=9,
+                end_col_offset=20,
+            ),
+        ):
+            self.checker.visit_functiondef(node[2])
 
     def test_docstring_property_decorator(self):
         node = astroid.extract_node(

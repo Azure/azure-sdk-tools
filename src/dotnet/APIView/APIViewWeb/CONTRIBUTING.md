@@ -62,19 +62,17 @@ Create following Azure resources in your Azure subscription.
  - Create three blob storage containers with names as follows within the storage account created in previous step: `originals`, `codefiles`, and `usagesamples`
 
 #### Azure Cosmos DB
- - Create a Cosmos DB account in Azure and then create a database with name `APIView` in this account. Once database is created successfully then create three containers in `APIView` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
+ - Create a Cosmos DB account in Azure and then create a database with name `APIViewV2` in this account. Once database is created successfully then create three containers in `APIViewV2` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
 
    | Container Name      | Partition Key      |
    |---------------------|--------------------|
    | Reviews             | /id                |
+   | APIRevisions        | /ReviewId          |
    | Comments            | /ReviewId          |
-   | PullRequests        | /PullRequestNumber |
-   | UsageSamples        | /ReviewId          |
-   | UserPreference      | /UserName          |
+   | PullRequests        | /ReviewId          |
+   | SamplesRevisions    | /ReviewId          |
    | Profiles            | /id                |
    
-
-
 ## Getting Started
 
 ### Create a GitHub Oath application for local authentication
@@ -143,7 +141,7 @@ Okay. I have followed all the steps and now I need to verify if it's running fin
 
 - Home page should be displayed with an empty list of reviews. 
 
-- Click `Create review` button and upload previously downloaded `Azure.Template` package. It should show API review for Azure.Template if everything is setup correctly.
+- Click `Create Review` button and upload previously downloaded `Azure.Template` package. It should show API review for Azure.Template if everything is setup correctly.
 
 
 If any of the above steps is showing errors, following are the items to check:

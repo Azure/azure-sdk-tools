@@ -15,10 +15,6 @@
 # Git Hub integration
 /.github/CODEOWNERS                    @azure/azure-sdk-eng
 
-# Repository tooling
-/tools/github                          @jsquire @ronniegeraghty
-/tools/github-issues                   @jsquire @ronniegeraghty
-
 ###########
 # Eng Sys
 ###########

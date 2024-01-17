@@ -923,7 +923,14 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
                 var content = JsonConvert.SerializeObject(discoveredTestResults.Select(x => new
                 {
-                    TestCaseId = x.Id,
+                    OrganizationName = account,
+                    ProjectId = build.Project?.Id,
+                    ProjectName = build.Project?.Name,
+                    BuildDefinitionId = build.Definition?.Id,
+                    BuildDefinitionPath = build.Definition?.Path,
+                    BuildDefinitionName = build.Definition?.Name,
+                    BuildId = build.Id,               
+                    TestCaseId = x.Id,                    
                     TestRunId = x.RunId,
                     TestCaseReferenceId =  x.RefId,
                     TestCaseTitle = x.TestCaseTitle,

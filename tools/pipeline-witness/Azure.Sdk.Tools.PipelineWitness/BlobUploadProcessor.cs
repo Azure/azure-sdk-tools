@@ -889,7 +889,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             }
         }
 
-        private async Task UploadTestRunResultsAsync(string account, Build build, TestRun testRun)
+        private async Task UploadTestRunResultsBlobAsync(string account, Build build, TestRun testRun)
         {
             try
             {

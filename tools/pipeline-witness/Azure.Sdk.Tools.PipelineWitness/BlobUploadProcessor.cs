@@ -916,7 +916,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     // but as time goes on, and more builds complete, the set of test results that will be returned will be heavier and heavier.
                     // we either implement our own manual REST request to devops, or we use metrics only. Leaving that aside for now, I know
                     // which devops API I can go to manually, it just goes against the grain of the rest of this project.
-                    var page = await testResultsClient.GetTestResultsByBuildWithContinuationTokenAsync(build.Project.Id, build.Id);
+                    var page = await testResultsClient.GetTestResultsByBuildWithContinuationTokenAsync(build.Project.Id, build.Id, continuationToken: continuationToken);
                     discoveredTestResults.AddRange(discoveredTestResults.Where(x => x.RunId == testRun.Id));
                     continuationToken = page.ContinuationToken;
                 } while (!string.IsNullOrEmpty(continuationToken));

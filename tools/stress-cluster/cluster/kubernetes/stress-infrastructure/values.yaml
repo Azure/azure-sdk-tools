@@ -5,6 +5,10 @@ chaos-mesh:
     registry: azsdkengsys.azurecr.io/mirror
   dashboard:
     securityMode: false
+    imagePullPolicy: Always
   chaosDaemon:
     runtime: containerd
     socketPath: /run/containerd/containerd.sock
+    imagePullPolicy: Always
+  controllerManager:
+    imagePullPolicy: Always

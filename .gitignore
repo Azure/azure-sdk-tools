@@ -486,7 +486,7 @@ local.settings.json
 *.iml
 
 .assets
-tools/asset-sync/.testruns
+.testruns
 
 # oav converter
 tools/oav-traffic-converter/input-example/

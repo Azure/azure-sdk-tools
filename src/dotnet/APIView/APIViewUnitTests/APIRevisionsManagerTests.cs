@@ -2,17 +2,16 @@ using APIViewWeb;
 using Xunit;
 using APIViewWeb.Repositories;
 using Moq;
-using System.IO;
 using APIViewWeb.Managers.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using APIViewWeb.Hubs;
-using System.Collections;
 using System.Collections.Generic;
 using APIViewWeb.Managers;
 using System;
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewUnitTests
 {
@@ -32,13 +31,14 @@ namespace APIViewUnitTests
             IBlobCodeFileRepository blobCodeFileRepository = new Mock<IBlobCodeFileRepository>().Object;
             IBlobOriginalsRepository blobOriginalRepository = new Mock<IBlobOriginalsRepository>().Object;
             INotificationManager notificationManager = new Mock<INotificationManager>().Object;
+            TelemetryClient telemetryClient = new Mock<TelemetryClient>().Object;
             
             _apiRevisionsManager = new APIRevisionsManager(
                 authorizationService: authorizationService, reviewsRepository: cosmosReviewRepository,
                 apiRevisionsRepository: cosmosAPIRevisionsRepository, signalRHubContext: signalRHub,
                 languageServices: languageServices, devopsArtifactRepository: devopsArtifactRepository,
                 codeFileManager: codeFileManager, codeFileRepository: blobCodeFileRepository,
-                originalsRepository: blobOriginalRepository, notificationManager: notificationManager);    
+                originalsRepository: blobOriginalRepository, notificationManager: notificationManager, telemetryClient: telemetryClient);    
         }
 
         // GetLatestAPIRevisionsAsync

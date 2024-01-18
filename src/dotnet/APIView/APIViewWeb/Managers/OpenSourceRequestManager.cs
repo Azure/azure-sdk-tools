@@ -10,30 +10,25 @@ using APIViewWeb.Models;
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Client.Platforms.Features.DesktopOs.Kerberos;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Octokit;
 
 namespace APIViewWeb.Managers
 {
     public class OpenSourceRequestManager : IOpenSourceRequestManager
     {
         static readonly string[] scopes = new string[] { "api://2789159d-8d8b-4d13-b90b-ca29c1707afd/.default" };
-        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
-
         private readonly string _aadClientId;
         private readonly string _aadClientSecret;
         private readonly string _aadTenantId;
+        private readonly TelemetryClient _telemetryClient;
 
-        public OpenSourceRequestManager(IConfiguration configuration)
+        public OpenSourceRequestManager(IConfiguration configuration, TelemetryClient telemetryClient)
         {
             _aadClientId = configuration["opensource-aad-app-id"] ?? "";
             _aadClientSecret = configuration["opensource-aad-client-secret"] ?? "";
             _aadTenantId = configuration["opensource-aad-tenant-id"] ?? "";
+            _telemetryClient = telemetryClient;
         }
 
         public async Task<OpenSourceUserInfo> GetUserInfo(string githubUserId)

@@ -30,18 +30,15 @@ namespace APIViewWeb.Controllers
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ICommentsManager _commentsManager;
-        private readonly ILogger<AutoReviewController> _logger;
 
         public AutoReviewController(IAuthorizationService authorizationService, ICodeFileManager codeFileManager,
-            IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager, ICommentsManager commentsManager,
-            ILogger<AutoReviewController> logger)
+            IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager, ICommentsManager commentsManager)
         {
             _authorizationService = authorizationService;
             _codeFileManager = codeFileManager;
             _apiRevisionsManager = apiRevisionManager;
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;
-            _logger = logger;
         }
 
         [HttpPost]

@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
@@ -21,13 +20,15 @@ namespace APIViewWeb.HostedServices
         private readonly int _autoArchiveInactiveGracePeriodMonths; // This is inactive duration in months
         private readonly HashSet<string> _upgradeDisabledLangs = new HashSet<string>();
         private readonly int _backgroundBatchProcessCount;
+        private readonly TelemetryClient _telemetryClient;
 
-        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
-
-        public ReviewBackgroundHostedService(IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager, IConfiguration configuration)
+        public ReviewBackgroundHostedService(
+            IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager,
+            IConfiguration configuration, TelemetryClient telemetryClient)
         {
             _reviewManager = reviewManager;
             _apiRevisionManager = apiRevisionManager;
+            _telemetryClient = telemetryClient;
 
             // We can disable background task using app settings if required
             if (bool.TryParse(configuration["BackgroundTaskDisabled"], out bool taskDisabled))

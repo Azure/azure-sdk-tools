@@ -12,7 +12,6 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using APIViewWeb.Repositories;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights;
 using System.Net.Http;
 using System.Text.Json;
@@ -26,24 +25,23 @@ namespace APIViewWeb.Managers
         private readonly string _apiviewEndpoint;
         private readonly ICosmosReviewRepository _reviewRepository;
         private readonly ICosmosUserProfileRepository _userProfileRepository;
-        private readonly IConfiguration _configuration;
         private readonly string _testEmailToAddress;
         private readonly string _emailSenderServiceUrl;
+        private readonly TelemetryClient _telemetryClient;
 
         private const string ENDPOINT_SETTING = "Endpoint";
 
-        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
-
         public NotificationManager(IConfiguration configuration,
             ICosmosReviewRepository reviewRepository,
-            ICosmosUserProfileRepository userProfileRepository)
+            ICosmosUserProfileRepository userProfileRepository,
+            TelemetryClient telemetryClient)
         {
             _apiviewEndpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
             _reviewRepository = reviewRepository;
             _userProfileRepository = userProfileRepository;
-            _configuration = configuration;
             _testEmailToAddress = configuration["apiview-email-test-address"] ?? "";
             _emailSenderServiceUrl = configuration["azure-sdk-emailer-url"] ?? "";
+            _telemetryClient = telemetryClient;
         }
 
         public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentItemModel comment)

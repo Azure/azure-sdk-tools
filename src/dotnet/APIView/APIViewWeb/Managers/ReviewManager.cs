@@ -11,7 +11,6 @@ using APIViewWeb.Hubs;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Net.Http;
@@ -36,14 +35,14 @@ namespace APIViewWeb.Managers
         private readonly ICosmosCommentsRepository _commentsRepository;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly IEnumerable<LanguageService> _languageServices;
-
-        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
+        private readonly TelemetryClient _telemetryClient;
 
         public ReviewManager (
             IAuthorizationService authorizationService, ICosmosReviewRepository reviewsRepository,
             IAPIRevisionsManager apiRevisionsManager, ICommentsManager commentManager,
             IBlobCodeFileRepository codeFileRepository, ICosmosCommentsRepository commentsRepository, 
-            IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices)
+            IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices,
+            TelemetryClient telemetryClient)
 
         {
             _authorizationService = authorizationService;
@@ -54,6 +53,7 @@ namespace APIViewWeb.Managers
             _commentsRepository = commentsRepository;
             _signalRHubContext = signalRHubContext;
             _languageServices = languageServices;
+            _telemetryClient = telemetryClient;
         }
 
         /// <summary>
@@ -400,7 +400,7 @@ namespace APIViewWeb.Managers
                                 try
                                 {
                                     await Task.Delay(500);
-                                    await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService, _telemetryClient);
+                                    await _apiRevisionsManager.UpdateAPIRevisionAsync(revision, languageService);
                                 }
                                 catch (Exception e)
                                 {

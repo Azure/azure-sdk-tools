@@ -259,7 +259,6 @@ async function main() {
         break;
       case "convert":
         Logger.info("Converting swagger to typespec...");
-        // TODO: check support for private repo swagger
         let readme = options.swaggerReadme!;
         if (await doesFileExist(readme)) {
           readme = normalizePath(resolve(readme));

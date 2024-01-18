@@ -1,4 +1,3 @@
-using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,7 +7,6 @@ using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 
 using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -66,7 +64,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             var projectIdString = match.Groups["project"].Value;
             var buildIdString = match.Groups["build"].Value;
 
-            if (!Guid.TryParse(projectIdString, out var projectId))
+            if (!System.Guid.TryParse(projectIdString, out var projectId))
             {
                 this.logger.LogError("Could not parse project id as a guid '{ProjectId}'", projectIdString);
                 return;

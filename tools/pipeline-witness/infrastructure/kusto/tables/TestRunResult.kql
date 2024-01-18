@@ -1,4 +1,4 @@
-.create-merge table TestRunResults (
+.create-merge table TestRunResult (
     TestRunId: int,
     TestCaseId: int, 
     TestCaseReferenceId: int,
@@ -13,7 +13,7 @@
     EtlIngestDate: datetime
 )
 
-.alter table TestRunResults ingestion json mapping 'TestRunResults_mapping' ```[
+.alter table TestRunResult ingestion json mapping 'TestRunResults_mapping' ```[
     { "column": "TestCaseId", "path": "$['testCaseId']" },
     { "column": "TestRunId", "path": "$['testRunId']" },
     { "column": "TestCaseReferenceId", "path": "$['testCaseReferenceId']" },

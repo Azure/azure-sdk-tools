@@ -1,10 +1,7 @@
-using System.Diagnostics;
-
 namespace Azure.Sdk.Tools.PipelineWitness
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.IO;
     using System.IO.Compression;
     using System.Linq;
@@ -18,16 +15,12 @@ namespace Azure.Sdk.Tools.PipelineWitness
     using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
     using Azure.Storage.Blobs;
     using Azure.Storage.Blobs.Models;
-    using Azure.Storage.Queues;
 
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
     using Microsoft.TeamFoundation.Build.WebApi;
     using Microsoft.TeamFoundation.TestManagement.WebApi;
-    using Microsoft.VisualStudio.Services.Common;
-    using Microsoft.VisualStudio.Services.TestManagement.TestPlanning.WebApi;
     using Microsoft.VisualStudio.Services.TestResults.WebApi;
-    using Microsoft.VisualStudio.Services.WebApi;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
     using Newtonsoft.Json.Serialization;
@@ -41,6 +34,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         private const string BuildFailuresContainerName = "buildfailures";
         private const string PipelineOwnersContainerName = "pipelineowners";
         private const string TestRunsContainerName = "testruns";
+        private const string TestResultsContainerName = "testresults";
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
@@ -58,6 +52,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         private readonly BlobContainerClient buildsContainerClient;
         private readonly BlobContainerClient buildTimelineRecordsContainerClient;
         private readonly BlobContainerClient testRunsContainerClient;
+        private readonly BlobContainerClient testResultContainerClient;
         private readonly BlobContainerClient buildDefinitionsContainerClient;
         private readonly BlobContainerClient buildFailuresContainerClient;
         private readonly BlobContainerClient pipelineOwnersContainerClient; 
@@ -90,6 +85,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
             this.buildFailuresContainerClient = blobServiceClient.GetBlobContainerClient(BuildFailuresContainerName);
             this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerName);
+            this.testResultContainerClient = blobServiceClient.GetBlobContainerClient(TestResultsContainerName);
             this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
             this.pipelineOwnersContainerClient = blobServiceClient.GetBlobContainerClient(PipelineOwnersContainerName);
             this.failureAnalyzer = failureAnalyzer;
@@ -805,7 +801,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                         foreach (var testRun in page)
                         {
                             await UploadTestRunBlobAsync(account, build, testRun);
-                            await UploadTestRunResultsAsync(account, build, testRun);
+                            await UploadTestRunResultBlobAsync(account, build, testRun);
                         }
 
                         continuationToken = page.ContinuationToken;
@@ -889,15 +885,15 @@ namespace Azure.Sdk.Tools.PipelineWitness
             }
         }
 
-        private async Task UploadTestRunResultsBlobAsync(string account, Build build, TestRun testRun)
+        private async Task UploadTestRunResultBlobAsync(string account, Build build, TestRun testRun)
         {
             try
             {
                 var continuationToken = string.Empty;
                 var buildIds = new[] { build.Id };
-                var discoveredTestResults = new List<ShallowTestCaseResult>();
-                var blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}/results.jsonl";
-                var blobClient = this.testRunsContainerClient.GetBlobClient(blobPath);
+                var discoveredTestResults = new List<TestCaseResult>();
+                var blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl";
+                var blobClient = this.testResultContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {
@@ -905,23 +901,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     return;
                 }
 
-                do
-                {
-                    // the unfortunate fact of the matter is that testResultsClient does not have a API Surface that can get us
-                    // all test results for a specific TestRunId. As a result, we do some internal filtering to only grab the test results that
-                    // are available for a specific run. This will have the knock-on affect of meaning we hit that heavyweight API for test results
-                    // multiple times on each BuildCompletionEvent. This could be a problem, as I believe we listen to individual build completion, and not
-                    // pipeline completion events.
-                    // First build completes, only needs to pull test results for that build...
-                    // but as time goes on, and more builds complete, the set of test results that will be returned will be heavier and heavier.
-                    // we either implement our own manual REST request to devops, or we use metrics only. Leaving that aside for now, I know
-                    // which devops API I can go to manually, it just goes against the grain of the rest of this project.
-                    var page = await testResultsClient.GetTestResultsByBuildWithContinuationTokenAsync(build.Project.Id, build.Id, continuationToken: continuationToken);
-                    discoveredTestResults.AddRange(page.Where(x => x.RunId == testRun.Id));
-                    continuationToken = page.ContinuationToken;
-                } while (!string.IsNullOrEmpty(continuationToken));
-
-                var content = JsonConvert.SerializeObject(discoveredTestResults.Select(x => new
+                var data = await testResultsClient.GetTestResultsAsync(build.Project.Id, testRun.Id);
+                
+                var content = JsonConvert.SerializeObject(data.Select(x => new
                 {
                     OrganizationName = account,
                     ProjectId = build.Project?.Id,
@@ -931,15 +913,15 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     BuildDefinitionName = build.Definition?.Name,
                     BuildId = build.Id,               
                     TestCaseId = x.Id,                    
-                    TestRunId = x.RunId,
-                    TestCaseReferenceId =  x.RefId,
+                    TestRunId = testRun.Id,
+                    TestCaseReferenceId =  x.TestCaseReferenceId,
                     TestCaseTitle = x.TestCaseTitle,
                     Outcome = x.Outcome,
                     Priority = x.Priority,
                     AutomatedTestName = x.AutomatedTestName,
                     AutomatedTestStorageName = x.AutomatedTestStorage,
-                    IsReRun = x.IsReRun,
-                    Tags = x.Tags,
+                    //IsReRun = x.run,
+                    //Tags = x.Tags,
                     EtlIngestDate = DateTime.UtcNow
                 }), jsonSettings);
 

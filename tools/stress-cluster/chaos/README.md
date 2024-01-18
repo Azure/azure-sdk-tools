@@ -10,7 +10,7 @@ The chaos environment is an AKS cluster (Azure Kubernetes Service) with several 
   * [Creating a Stress Test](#creating-a-stress-test)
      * [Layout](#layout)
      * [Stress Test Metadata](#stress-test-metadata)
-     * [Stress Test Secrets](#stress-test-secrets)
+     * [Stress Test Secrets and Environment](#stress-test-secrets-and-environment)
      * [Stress Test File Share](#stress-test-file-share)
      * [Stress Test Azure Resources](#stress-test-azure-resources)
        * [Deploying to a Custom Subscription](#deploying-to-a-custom-subscription)
@@ -181,7 +181,7 @@ Fields in `Chart.yaml`
 1. Extra fields in `annotations` can be set arbitrarily, and used via the `-Filters` argument to the [stress test deploy
    script](https://github.com/Azure/azure-sdk-tools/blob/main/eng/common/scripts/stress-testing/deploy-stress-tests.ps1).
 
-### Stress Test Secrets
+### Stress Test Secrets and Environment
 
 For ease of implementation regarding merging secrets from various Keyvault sources, secret values injected into the stress
 test container can be found in a file at path `$ENV_FILE` (usually `/mnt/outputs/.env`). This file follows the "dotenv" file syntax (i.e. lines of <key>=<value>), and
@@ -208,6 +208,16 @@ APPINSIGHTS_INSTRUMENTATIONKEY=<value>
 # Bicep template outputs inserted here as well, for example
 RESOURCE_GROUP=<value>
 ```
+
+Additionally, several values are made available as environment variables via the `stress-test-addons.container-env` template (see [job manifest](#job-manifest)):
+
+- `GIT_COMMIT` - Matches the git commit of the repository in which the stress test was deployed from. Useful for telemetry queries.
+- `ENV_FILE` - Path to the env file that can be dot sourced to load deployment and other secrets.
+- `SCENARIO_NAME` - The identifier for the specific test config instance from the scenario matrix.
+- `POD_NAME` - The name of the host pod, useful for custom telemetry.
+- `POD_NAMESPACE` - The kubernetes namespace the container is running in, useful for custom telemetry.
+- `DEBUG_SHARE` - See [stress test file share](#stress-test-file-share)
+- `DEBUG_SHARE_ROOT` - See [stress test file share](#stress-test-file-share)
 
 ### Stress Test File Share
 
@@ -436,7 +446,8 @@ a little bit earlier than pods > 0.
 #### Built-In Labels
 
 - `chaos` - set this to "true" to enable chaos for your pod
-- `Skip.RemoveTestResources` set this to "true" to prevent resources from being deleted immediately after test completion
+- `Skip.RemoveTestResources` - set this to "true" to prevent resources from being deleted immediately after test completion
+- `gitCommit` - this will be automatically set on pod and job labels based on the repository commit the stress test was deployed from. Useful for telemetry queries.
 
 ### Chaos Manifest
 

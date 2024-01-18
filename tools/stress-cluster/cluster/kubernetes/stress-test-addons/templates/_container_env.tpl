@@ -16,6 +16,8 @@ env:
     value: /mnt/share/
   - name: SCENARIO_NAME
     value: {{ .Stress.Scenario }}
+  - name: GIT_COMMIT
+    value: {{ .Values.GitCommit | default "" }}
 volumeMounts:
   - name: test-env-{{ lower .Stress.Scenario }}-{{ .Release.Name }}-{{ .Release.Revision }}
     mountPath: /mnt/outputs

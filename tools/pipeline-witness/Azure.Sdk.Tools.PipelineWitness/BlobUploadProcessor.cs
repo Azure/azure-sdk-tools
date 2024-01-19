@@ -911,17 +911,19 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     BuildDefinitionId = build.Definition?.Id,
                     BuildDefinitionPath = build.Definition?.Path,
                     BuildDefinitionName = build.Definition?.Name,
-                    BuildId = build.Id,               
-                    TestCaseId = x.Id,                    
+                    BuildId = build.Id,
                     TestRunId = testRun.Id,
+                    TestCaseId = x.Id,             
                     TestCaseReferenceId =  x.TestCaseReferenceId,
                     TestCaseTitle = x.TestCaseTitle,
                     Outcome = x.Outcome,
                     Priority = x.Priority,
                     AutomatedTestName = x.AutomatedTestName,
                     AutomatedTestStorageName = x.AutomatedTestStorage,
-                    //IsReRun = x.run,
-                    //Tags = x.Tags,
+                    FailingSince = x.FailingSince,
+                    FailureType = x.FailureType,
+                    StartedDate = x.StartedDate,
+                    CompletedDate = x.CompletedDate,
                     EtlIngestDate = DateTime.UtcNow
                 }), jsonSettings);
 

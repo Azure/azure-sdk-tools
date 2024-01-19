@@ -187,7 +187,7 @@ async function generate({
 
 async function convert(readme: string, outputDir: string): Promise<void> {
   return new Promise((resolve, reject) => {
-      const autorest = spawn("autorest", [readme, "--openapi-to-typespec", "--use=@autorest/openapi-to-typespec", `--output-folder=${outputDir}`], {
+      const autorest = spawn("npx", ["autorest", readme, "--openapi-to-typespec", "--use=@autorest/openapi-to-typespec", `--output-folder=${outputDir}`], {
           cwd: outputDir,
           stdio: "inherit",
           shell: true,

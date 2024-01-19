@@ -124,9 +124,14 @@ namespace APIViewWeb.Pages.Assemblies
                 }
             }
 
-            if (ReviewContent.Directive == ReviewContentModelDirective.ErrorDueToInvalidAPIRevison)
+            if (ReviewContent.Directive == ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonProceedWithPageLoad)
             {
                 NotificationMessage = ReviewContent.NotificationMessage;
+            }
+
+            if (ReviewContent.Directive == ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonRedirectToIndexPage)
+            {
+                return RedirectToPage("Index", new { notificationMessage = ReviewContent.NotificationMessage });
             }
 
             if (ReviewContent.APIRevisionsGrouped == null || !ReviewContent.APIRevisionsGrouped.Any())

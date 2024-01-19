@@ -1,5 +1,14 @@
 # Release
 
+## 2023-12-21 - 0.3.0
+
+- Fix TypeSpec compilation issue with module-resolver.
+- Use `resolveCompilerOptions` to get emitter configurations from tspconfig.yaml.
+- Remove unused functions: `getEmitterOptions()`, `resolveCliOptions()`, `resolveImports()`.
+- Fix `additionalDirectories` property outputted by the `init` command.
+- Fixed support for local and remote specs using additional directories.
+- Switched to use path helper functions from `@typespec/compiler`.
+
 ## 2023-12-8 - 0.2.0
 
 - Use the `@typespec/compiler` module installed locally in the `TempTypeSpecFiles/` directory.

@@ -191,7 +191,7 @@ public class Reconciler
         }
 
         // Create any federated identity credentials that are in the config without a match in the registered application
-        foreach (var config in appAccessConfig.FederatedIdentityCredentials)
+        foreach (var config in appAccessConfig.FederatedIdentityCredentials ?? Enumerable.Empty<FederatedIdentityCredentialsConfig>())
         {
             var match = credentials?.FirstOrDefault(cred => config == cred);
             if (match is null)

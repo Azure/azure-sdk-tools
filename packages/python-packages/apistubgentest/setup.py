@@ -45,7 +45,6 @@ setup(
     install_requires=[
         "aiohttp",
         "azure-core",
-        "pytest",
         "sphinx",
         "sphinx_rtd_theme",
         "recommonmark"
@@ -64,5 +63,5 @@ setup(
     ],
     zip_safe=False,
     packages=find_packages(),
-    python_requires=">=3.6"
+    python_requires=">=3.8"
 )

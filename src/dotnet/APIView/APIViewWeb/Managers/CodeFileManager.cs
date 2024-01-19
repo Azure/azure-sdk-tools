@@ -60,29 +60,45 @@ namespace APIViewWeb.Managers
             {
                 // backward compatibility until all languages moved to sandboxing of codefile to pipeline
                 stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, originalFileName, format: "file", project: project);
-                codeFile = await CreateCodeFileAsync(originalName: Path.GetFileName(originalFileName), fileStream: stream, runAnalysis: false, memoryStream: originalFileStream);
+                try
+                {
+                    codeFile = await CreateCodeFileAsync(originalName: Path.GetFileName(originalFileName), fileStream: stream, runAnalysis: false, memoryStream: originalFileStream);
+                }
+                finally
+                {
+                    stream?.Dispose();
+                }                
             }
             else
             {
                 stream = await _devopsArtifactRepository.DownloadPackageArtifact(repoName, buildId, artifactName, packageName, format: "zip", project: project);
                 var archive = new ZipArchive(stream);
-                foreach (var entry in archive.Entries)
+                try
                 {
-                    var fileName = Path.GetFileName(entry.Name);
-                    if (fileName == originalFileName)
+                    foreach (var entry in archive.Entries)
                     {
-                        await entry.Open().CopyToAsync(originalFileStream);
-                    }
+                        var fileName = Path.GetFileName(entry.Name);
+                        if (fileName == originalFileName)
+                        {
+                            await entry.Open().CopyToAsync(originalFileStream);
+                        }
 
-                    if (fileName == codeFileName)
-                    {
-                        codeFile = await CodeFile.DeserializeAsync(entry.Open());
-                    }
-                    else if (fileName == baselineCodeFileName)
-                    {
-                        await entry.Open().CopyToAsync(baselineStream);
+                        if (fileName == codeFileName)
+                        {
+                            codeFile = await CodeFile.DeserializeAsync(entry.Open());
+                        }
+                        else if (fileName == baselineCodeFileName)
+                        {
+                            await entry.Open().CopyToAsync(baselineStream);
+                        }
                     }
                 }
+                finally
+                {                   
+                    archive?.Dispose();
+                    stream?.Dispose();
+                }
+                
             }
 
             return codeFile;
@@ -109,6 +125,7 @@ namespace APIViewWeb.Managers
                 memoryStream: memoryStream, fileStream: fileStream, language: language);
             var reviewCodeFileModel = await CreateReviewCodeFileModel(apiRevisionId, memoryStream, codeFile);
             reviewCodeFileModel.FileName = originalName;
+            memoryStream.Dispose();
             return reviewCodeFileModel;
         }
 

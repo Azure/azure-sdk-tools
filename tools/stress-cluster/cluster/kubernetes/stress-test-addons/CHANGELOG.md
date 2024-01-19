@@ -1,5 +1,11 @@
 # Release History
 
+## 0.3.1 (2024-01-17)
+
+### Features Added
+
+Add `GIT_COMMIT` to container environment and `gitCommit` to job/pod labels. The value corresponds to the git commit of the stress test being deployed if it's in a git repository.
+
 ## 0.3.0 (2023-09-22)
 
 ### Breaking Changes

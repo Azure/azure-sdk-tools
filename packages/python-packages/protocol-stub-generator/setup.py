@@ -30,7 +30,7 @@ setup(
     license="MIT License",
     packages=find_packages(),
     install_requires=["astroid","pyyaml","jinja2"],
-    python_requires=">=3.4.0",
+    python_requires=">=3.8.0",
     entry_points={
         "console_scripts": [
             "protocolGen=protocol:console_entry_point",

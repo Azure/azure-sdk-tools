@@ -27,7 +27,10 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var outputBuilder = new StringBuilder();
             var errorBuilder = new StringBuilder();
 
-            // Prerequisite: delete build cache file to avoid the following error
+            // JS repo introduced build caching
+            // Build caching has to be disabled to appropriately do "rush build" following a "sparse checkout"
+            // Deleting "build-cache.json" would disable build caching
+            // ...avoids the following error
             //   "Error: Build cache is only supported if running in a Git repository. Either disable the build cache or run Rush in a Git repository."
             var buildCacheFile = Path.Combine(WorkingDirectory, "common", "config", "rush", "build-cache.json");
             File.Delete(buildCacheFile);

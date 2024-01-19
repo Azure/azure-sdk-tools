@@ -257,7 +257,7 @@ namespace APIViewWeb.Helpers
             var activeRevision = await reviewRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions, APIRevisionType.Automatic);
             if (activeRevision == null)
             {
-                reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevison;
+                reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonRedirectToIndexPage;
                 reviewPageContent.NotificationMessage = $"Review with ID {reviewId} has no valid APIRevisons";
                 return reviewPageContent;
             }
@@ -271,7 +271,7 @@ namespace APIViewWeb.Helpers
                 else
                 {
                     reviewPageContent.NotificationMessage = $"A revision with ID {revisionId} does not exist for review with id {reviewId}";
-                    reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevison;
+                    reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonRedirectToIndexPage;
                     return reviewPageContent;
                 }
             } 
@@ -308,20 +308,27 @@ namespace APIViewWeb.Helpers
                     {
                         getCodeLines = true;
                         reviewPageContent.NotificationMessage = $"There is no diff between the two revisions. {activeRevision.Id} : {diffRevisionId}";
-                        reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevison;
+                        reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonProceedWithPageLoad;
                     }
                 }
                 else
                 {
                     getCodeLines = true;
                     reviewPageContent.NotificationMessage = $"A diffRevision with ID {diffRevisionId} does not exist for this review.";
-                    reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevison;
+                    reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonProceedWithPageLoad;
                 }
             }
 
             if (string.IsNullOrEmpty(diffRevisionId) || getCodeLines) 
             {
                 codeLines = CreateLines(diagnostics: fileDiagnostics, lines: activeRevisionHtmlLines, comments: comments);
+            }
+
+            if (codeLines == null || codeLines.Length == 0)
+            {
+                reviewPageContent.NotificationMessage = $"A revision with ID {activeRevision.Id} has no content.";
+                reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonRedirectToIndexPage;
+                return reviewPageContent;
             }
 
             HashSet<string> preferredApprovers = new HashSet<string>();

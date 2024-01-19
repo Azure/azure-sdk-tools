@@ -60,6 +60,10 @@ namespace APIViewWeb
                     var nuspecEntry = archive.Entries.Single(entry => IsNuspec(entry.Name));
 
                     var dllEntries = archive.Entries.Where(entry => IsDll(entry.Name)).ToArray();
+                    if (dllEntries.Length == 0)
+                    {
+                        return Task.FromResult(GetDummyReviewCodeFile(originalName, dependencies));
+                    }
 
                     var dllEntry = dllEntries.First();
                     if (dllEntries.Length > 1)
@@ -96,7 +100,7 @@ namespace APIViewWeb
                 }
 
                 var assemblySymbol = CompilationFactory.GetCompilation(dllStream, docStream);
-                if ( assemblySymbol == null)
+                if (assemblySymbol == null)
                 {
                     return Task.FromResult(GetDummyReviewCodeFile(originalName, dependencies));
                 }

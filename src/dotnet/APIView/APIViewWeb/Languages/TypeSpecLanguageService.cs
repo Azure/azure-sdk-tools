@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Models;
+using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
@@ -14,20 +15,19 @@ namespace APIViewWeb
 {
     public class TypeSpecLanguageService : LanguageProcessor
     {
-        public override string Name { get; } = "TypeSpec";
-
-        public override string [] Extensions { get; } = { ".tsp", ".cadl" };
-
-        public override string VersionString { get; } = "0";
-
-        public override string ProcessName => throw new NotImplementedException();
-
+        private readonly TelemetryClient _telemetryClient;
         private string _typeSpecSpecificPathPrefix;
 
-        public TypeSpecLanguageService(IConfiguration configuration)
+        public override string Name { get; } = "TypeSpec";
+        public override string [] Extensions { get; } = { ".tsp", ".cadl" };
+        public override string VersionString { get; } = "0";
+        public override string ProcessName => throw new NotImplementedException();
+
+        public TypeSpecLanguageService(IConfiguration configuration, TelemetryClient telemetryClient)
         {
             IsReviewGenByPipeline = true;
             _typeSpecSpecificPathPrefix = "/specification";
+            _telemetryClient = telemetryClient;
         }
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {

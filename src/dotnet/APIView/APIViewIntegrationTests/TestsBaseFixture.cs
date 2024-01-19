@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.SignalR;
 using APIViewWeb.Managers.Interfaces;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.Extensions.Options;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewIntegrationTests
 {
@@ -94,7 +95,9 @@ namespace APIViewIntegrationTests
             authorizationServiceMoq.Setup(_ => _.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<Object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
                 .ReturnsAsync(AuthorizationResult.Success);
 
-            var notificationManager = new NotificationManager(config, ReviewRepository, cosmosUserProfileRepository);
+            var telemetryClient = new Mock<TelemetryClient>();
+
+            var notificationManager = new NotificationManager(config, ReviewRepository, cosmosUserProfileRepository, telemetryClient.Object);
 
             var devopsArtifactRepositoryMoq = new Mock<IDevopsArtifactRepository>();
             devopsArtifactRepositoryMoq.Setup(_ => _.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -118,13 +121,15 @@ namespace APIViewIntegrationTests
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 languageServices: languageService, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
                 codeFileManager: CodeFileManager, codeFileRepository: BlobCodeFileRepository, apiRevisionsRepository: APIRevisionRepository,
-                originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object);
+                originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object,
+                telemetryClient: telemetryClient.Object);
 
 
             ReviewManager = new ReviewManager(
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 apiRevisionsManager: APIRevisionManager, commentManager: CommentsManager, codeFileRepository: BlobCodeFileRepository,
-                commentsRepository: CommentRepository, languageServices: languageService, signalRHubContext: signalRHubContextMoq.Object);
+                commentsRepository: CommentRepository, languageServices: languageService, signalRHubContext: signalRHubContextMoq.Object,
+                telemetryClient: telemetryClient.Object);
 
             TestDataPath = config["TestPkgPath"];
         }

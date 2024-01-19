@@ -19,13 +19,15 @@ namespace APIViewWeb.HostedServices
         private readonly bool _isDisabled;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionManager;
+        private readonly TelemetryClient _telemetryClient;
 
-        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
-
-        public LinesWithDiffBackgroundHostedService(IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager, IConfiguration configuration)
+        public LinesWithDiffBackgroundHostedService(IReviewManager reviewManager, 
+            IAPIRevisionsManager apiRevisionManager, IConfiguration configuration,
+            TelemetryClient telemetryClient)
         {
             _reviewManager = reviewManager;
             _apiRevisionManager = apiRevisionManager;
+            _telemetryClient = telemetryClient;
 
             if (bool.TryParse(configuration["LinesWithDiffBackgroundTaskDisabled"], out bool taskDisabled))
             {

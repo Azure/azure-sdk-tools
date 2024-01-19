@@ -9,9 +9,7 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
@@ -36,9 +34,7 @@ namespace APIViewWeb.Managers
         private readonly IDevopsArtifactRepository _devopsArtifactRepository;
         private readonly IBlobOriginalsRepository _originalsRepository;
         private readonly INotificationManager _notificationManager;
-
-        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
-
+        private readonly TelemetryClient _telemetryClient;
 
         public APIRevisionsManager(
             IAuthorizationService authorizationService,
@@ -50,7 +46,8 @@ namespace APIViewWeb.Managers
             ICodeFileManager codeFileManager,
             IBlobCodeFileRepository codeFileRepository,
             IBlobOriginalsRepository originalsRepository,
-            INotificationManager notificationManager)
+            INotificationManager notificationManager,
+            TelemetryClient telemetryClient)
         {
             _reviewsRepository = reviewsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
@@ -62,6 +59,7 @@ namespace APIViewWeb.Managers
             _devopsArtifactRepository = devopsArtifactRepository;
             _originalsRepository = originalsRepository;
             _notificationManager = notificationManager;
+            _telemetryClient = telemetryClient;
         }
 
         /// <summary>
@@ -628,9 +626,8 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="revision"></param>
         /// <param name="languageService"></param>
-        /// <param name="telemetryClient"></param>
         /// <returns></returns>
-        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, TelemetryClient telemetryClient)
+        public async Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService)
         {
             foreach (var file in revision.Files)
             {
@@ -655,8 +652,8 @@ namespace APIViewWeb.Managers
                 }
                 catch (Exception ex)
                 {
-                    telemetryClient.TrackTrace("Failed to update revision " + revision.Id);
-                    telemetryClient.TrackException(ex);
+                    _telemetryClient.TrackTrace("Failed to update revision " + revision.Id);
+                    _telemetryClient.TrackException(ex);
                 }
             }
         }

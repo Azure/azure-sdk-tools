@@ -7,24 +7,23 @@ using System.IO;
 using System.Threading.Tasks;
 using ApiView;
 using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb
 {
     public class PythonLanguageService : LanguageProcessor
     {
+        private readonly string _pythonExecutablePath;
+        private readonly TelemetryClient _telemetryClient;
         public override string Name { get; } = "Python";
         public override string[] Extensions { get; } = { ".whl" };
         public override string VersionString { get; } = "0.3.10";
-
-        private readonly string _pythonExecutablePath;
         public override string ProcessName => _pythonExecutablePath;
 
-        public PythonLanguageService(IConfiguration configuration)
+        public PythonLanguageService(IConfiguration configuration, TelemetryClient telemetryClient)
         {
             _pythonExecutablePath = configuration["PYTHONEXECUTABLEPATH"] ?? "python";
+            _telemetryClient = telemetryClient;
 
             // Check if sandboxing is disabled for python
             bool.TryParse(configuration["ReviewGenByPipelineDisabledForPython"], out bool _isDisabledForPython);

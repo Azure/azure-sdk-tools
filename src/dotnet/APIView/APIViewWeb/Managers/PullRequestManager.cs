@@ -11,7 +11,6 @@ using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Octokit;
 
@@ -23,8 +22,8 @@ namespace APIViewWeb.Managers
         static readonly string PR_APIVIEW_BOT_COMMENT = "APIView has identified API level changes in this PR and created following API reviews.";
         static readonly string PR_APIVIEW_BOT_NO_CHANGE_COMMENT = "API changes are not detected in this pull request.";
         static readonly GitHubClient _githubClient = new GitHubClient(new ProductHeaderValue("apiview"));
-        readonly TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
-
+        
+        private readonly TelemetryClient _telemetryClient;
         private readonly ICosmosPullRequestsRepository _pullRequestsRepository;
         private readonly ICosmosAPIRevisionsRepository _apiRevisionsRepository;
         private readonly IAPIRevisionsManager _apiRevisionManager;
@@ -36,13 +35,16 @@ namespace APIViewWeb.Managers
             ICosmosPullRequestsRepository pullRequestsRepository,
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
             IAPIRevisionsManager apiRevisionManager,
-            IConfiguration configuration
+            IConfiguration configuration,
+            TelemetryClient telemetryClient
             )
         {
             _pullRequestsRepository = pullRequestsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
             _apiRevisionManager = apiRevisionManager;
             _configuration = configuration;
+            _telemetryClient = telemetryClient;
+
             var ghToken = _configuration["github-access-token"];
             if (!string.IsNullOrEmpty(ghToken))
             {

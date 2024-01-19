@@ -129,7 +129,7 @@ namespace APIViewWeb.Pages.Assemblies
                 NotificationMessage = ReviewContent.NotificationMessage;
             }
 
-            if (!ReviewContent.APIRevisionsGrouped.Any())
+            if (ReviewContent.APIRevisionsGrouped == null || !ReviewContent.APIRevisionsGrouped.Any())
             {
                 return RedirectToPage("LegacyReview", new { id = id });
             }

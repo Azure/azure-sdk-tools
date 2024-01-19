@@ -25,17 +25,16 @@ namespace APIViewWeb.Repositories
     {
         private readonly HttpClient _devopsClient;
         private readonly IConfiguration _configuration;
-
         private readonly string _devopsAccessToken;
         private readonly string _hostUrl;
-
         private readonly TelemetryClient _telemetryClient;
-        public DevopsArtifactRepository(IConfiguration configuration)
+
+        public DevopsArtifactRepository(IConfiguration configuration, TelemetryClient telemetryClient)
         {
             _configuration = configuration;
             _devopsAccessToken = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes(string.Format("{0}:{1}", "", _configuration["Azure-Devops-PAT"])));
             _hostUrl = _configuration["APIVIew-Host-Url"];
-            _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
+            _telemetryClient = telemetryClient;
 
             _devopsClient = new HttpClient();
             _devopsClient.DefaultRequestHeaders.Accept.Clear();

@@ -8,18 +8,23 @@ using APIViewWeb.Models;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 
 namespace APIViewWeb.Managers
 {
 
     public class PackageNameManager : IPackageNameManager
     {
+
+        private readonly TelemetryClient _telemetryClient;
+
         static readonly string PACKAGE_CSV_LOOKUP_URL = "https://raw.githubusercontent.com/Azure/azure-sdk/main/_data/releases/latest/<langauge>-packages.csv";
         static readonly HttpClient _httpClient = new();
-
         static Dictionary<string, PackageModel> _packageNameMap = new();
-        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
+
+        public PackageNameManager(TelemetryClient telemetryClient) 
+        {
+            _telemetryClient = telemetryClient;
+        }
 
         public async Task<PackageModel> GetPackageDetails(string packageName)
         {

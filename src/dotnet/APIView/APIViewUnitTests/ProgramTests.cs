@@ -32,7 +32,7 @@ namespace APIViewUnitTests
         [InlineData(0)]
         [InlineData(1)]
         [InlineData(3)]
-        public void RunAsyncThrowsWithIncorrectNumberOfArgs(int length)
+        public async Task RunAsyncThrowsWithIncorrectNumberOfArgs(int length)
         {
             var args = new string[length];
 
@@ -41,11 +41,11 @@ namespace APIViewUnitTests
                 args[i] = InputPath;
             }
 
-            Assert.ThrowsAsync<ArgumentException>(async () => await Program.RunAsync(args));
+            await Assert.ThrowsAsync<ArgumentException>(async () => await Program.RunAsync(args));
         }
 
         [Fact]
-        public void RunAsyncThrowsWithMissingInputFile()
+        public async Task RunAsyncThrowsWithMissingInputFile()
         {
             var args = new string[]
             {
@@ -53,11 +53,11 @@ namespace APIViewUnitTests
                 OutputPath
             };
 
-            Assert.ThrowsAsync<FileNotFoundException>(async () => await Program.RunAsync(args));
+            await Assert.ThrowsAsync<FileNotFoundException>(async () => await Program.RunAsync(args));
         }
 
         [Fact]
-        public void RunAsyncThrowsWithMissingOutputFolder()
+        public async Task RunAsyncThrowsWithMissingOutputFolder()
         {
             var args = new string[]
             {
@@ -65,7 +65,7 @@ namespace APIViewUnitTests
                 Path.Combine("missing_folder", "output.json")
             };
 
-            Assert.ThrowsAsync<FolderNotFoundException>(async () => await Program.RunAsync(args));
+            await Assert.ThrowsAsync<FolderNotFoundException>(async () => await Program.RunAsync(args));
         }
 
         [Theory]

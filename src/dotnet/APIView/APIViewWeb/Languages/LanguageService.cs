@@ -1,14 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using ApiView;
 using APIView;
 using APIViewWeb.Models;
-using Microsoft.ApplicationInsights.Extensibility;
-using Microsoft.ApplicationInsights;
 using APIViewWeb.Helpers;
-using Microsoft.VisualStudio.Services.Common;
 using System.Linq;
 
 namespace APIViewWeb
@@ -35,8 +31,5 @@ namespace APIViewWeb
         public static string[] SupportedLanguages = LanguageServiceHelpers.SupportedLanguages;
 
         public virtual bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param) => true;
-
-
-        public static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
     }
 }

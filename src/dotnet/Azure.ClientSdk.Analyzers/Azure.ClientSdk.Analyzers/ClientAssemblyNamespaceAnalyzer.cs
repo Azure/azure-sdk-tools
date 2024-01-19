@@ -18,6 +18,7 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Containers",
             "Azure.Core.Expressions",
             "Azure.Data",
+            "Azure.Developer",
             "Azure.DigitalTwins",
             "Azure.Identity",
             "Azure.IoT",

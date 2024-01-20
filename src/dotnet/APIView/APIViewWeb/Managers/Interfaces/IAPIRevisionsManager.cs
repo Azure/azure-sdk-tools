@@ -38,5 +38,7 @@ namespace APIViewWeb.Managers.Interfaces
         public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService);
         public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision);
         public Task AutoArchiveAPIRevisions(int archiveAfterMonths);
+        public Task AssignReviewersToAPIRevisionAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers);
+        public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName);
     }
 }

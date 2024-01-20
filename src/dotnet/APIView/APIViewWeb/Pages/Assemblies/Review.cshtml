@@ -192,13 +192,14 @@
                 var anyChecked = false;
             }
             <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" asp-page-handler="RequestReviewers" method="post">
+                <input type="hidden" name="apiRevisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
                 <li class="list-group-item">
                         <ul class="list-group list-group-flush">
                             @foreach (var approver in Model.ReviewContent.PreferredApprovers)
                             {
                                 <li class="list-group-item">
                                     <div class="form-check">
-                                    @if (Model.ReviewContent.Review.AssignedReviewers != null && Model.ReviewContent.Review.AssignedReviewers.Where(a => a.AssingedTo == approver).Any())
+                                    @if (Model.ReviewContent.ActiveAPIRevision.AssignedReviewers != null && Model.ReviewContent.ActiveAPIRevision.AssignedReviewers.Where(a => a.AssingedTo == approver).Any())
                                         {
                                             <input class="form-check-input selectReviewerForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox" checked>
                                             <label class="form-check-label" for="@(approver)CheckBox">
@@ -209,7 +210,7 @@
                                         }
                                         else
                                         {
-                                    <input class="form-check-input selectReviewerForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox">
+                                            <input class="form-check-input selectReviewerForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox">
                                             <label class="form-check-label" for="@(approver)CheckBox">
                                                 <img username="@approver" size="28" width="28" class="comment-icon align-self-start mr-2" />
                                                 @approver

@@ -24,6 +24,7 @@ namespace APIViewWeb.Managers
     {
         private readonly string _apiviewEndpoint;
         private readonly ICosmosReviewRepository _reviewRepository;
+        private readonly ICosmosAPIRevisionsRepository _apiRevisionRepository;
         private readonly ICosmosUserProfileRepository _userProfileRepository;
         private readonly string _testEmailToAddress;
         private readonly string _emailSenderServiceUrl;
@@ -32,12 +33,13 @@ namespace APIViewWeb.Managers
         private const string ENDPOINT_SETTING = "Endpoint";
 
         public NotificationManager(IConfiguration configuration,
-            ICosmosReviewRepository reviewRepository,
+            ICosmosReviewRepository reviewRepository, ICosmosAPIRevisionsRepository apiRevisionRepository,
             ICosmosUserProfileRepository userProfileRepository,
             TelemetryClient telemetryClient)
         {
             _apiviewEndpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
             _reviewRepository = reviewRepository;
+            _apiRevisionRepository = apiRevisionRepository;
             _userProfileRepository = userProfileRepository;
             _testEmailToAddress = configuration["apiview-email-test-address"] ?? "";
             _emailSenderServiceUrl = configuration["azure-sdk-emailer-url"] ?? "";
@@ -61,15 +63,15 @@ namespace APIViewWeb.Managers
             } 
         }
 
-        public async Task NotifyApproversOfReview(ClaimsPrincipal user, string reviewId, HashSet<string> reviewers)
+        public async Task NotifyApproversOfReview(ClaimsPrincipal user, string apiRevisionId, HashSet<string> reviewers)
         {
             var userProfile = await _userProfileRepository.TryGetUserProfileAsync(user.GetGitHubLogin());
-            var review = await _reviewRepository.GetReviewAsync(reviewId);
+            var apiRevision = await _apiRevisionRepository.GetAPIRevisionAsync(apiRevisionId);
             foreach (var reviewer in reviewers)
             {
                 var reviewerProfile = await _userProfileRepository.TryGetUserProfileAsync(reviewer);
-                await SendUserEmailsAsync(review, reviewerProfile,
-                    GetApproverReviewHtmlContent(userProfile, review));
+                await SendUserEmailsAsync(apiRevision, reviewerProfile,
+                    GetApproverReviewHtmlContent(userProfile, apiRevision));
             }
         }
 
@@ -135,10 +137,10 @@ namespace APIViewWeb.Managers
         public static string GetUserEmail(ClaimsPrincipal user) =>
             user.FindFirstValue(ClaimConstants.Email);
 
-        private string GetApproverReviewHtmlContent(UserProfileModel user, ReviewListItemModel review)
+        private string GetApproverReviewHtmlContent<T>(UserProfileModel user, T model) where T : BaseListitemModel
         {
-            var reviewName = review.PackageName;
-            var reviewLink = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{review.Id}");
+            var reviewName = model.PackageName;
+            var reviewLink = new Uri($"{_apiviewEndpoint}/Assemblies/Review/{model.Id}");
             var poster = user.UserName;
             var userLink = new Uri($"{_apiviewEndpoint}/Assemblies/Profile/{poster}");
             var requestsLink = new Uri($"{_apiviewEndpoint}/Assemblies/RequestedReviews/");
@@ -183,7 +185,7 @@ namespace APIViewWeb.Managers
         private static string GetContentHeading(CommentItemModel comment, bool includeHtml) =>
             $"{(includeHtml ? $"<b>{comment.CreatedBy}</b>" : $"{comment.CreatedBy}")} commented on this review.";
 
-        private async Task SendUserEmailsAsync(ReviewListItemModel review, UserProfileModel user, string htmlContent)
+        private async Task SendUserEmailsAsync<T>(T model, UserProfileModel user, string htmlContent) where T : BaseListitemModel 
         {
             // Always send email to a test address when test address is configured.
             if (string.IsNullOrEmpty(user.Email))
@@ -192,7 +194,7 @@ namespace APIViewWeb.Managers
                 return;
             }
 
-            await SendEmail(user.Email, $"Notification from APIView - {review.PackageName}", htmlContent);
+            await SendEmail(user.Email, $"Notification from APIView - {model.PackageName}", htmlContent);
         }
         private async Task SendEmailsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
         {

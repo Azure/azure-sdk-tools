@@ -731,6 +731,42 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Assign reviewers to a review
+        /// </summary>
+        /// <param name="User"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <param name="reviewers"></param>
+        /// <returns></returns>
+        public async Task AssignReviewersToAPIRevisionAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers)
+        {
+            APIRevisionListItemModel apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            foreach (var reviewer in reviewers)
+            {
+                if (!apiRevision.AssignedReviewers.Where(x => x.AssingedTo == reviewer).Any())
+                {
+                    var reviewAssignment = new ReviewAssignmentModel()
+                    {
+                        AssingedTo = reviewer,
+                        AssignedBy = User.GetGitHubLogin(),
+                        AssingedOn = DateTime.Now,
+                    };
+                    apiRevision.AssignedReviewers.Add(reviewAssignment);
+                }
+            }
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+        }
+
+        /// <summary>
+        /// Get Reviews that have been assigned for review to a user
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName)
+        {
+            return await _apiRevisionsRepository.GetAPIRevisionsAssignedToUser(userName);
+        }
+
+        /// <summary>
         /// Generate the Revision on a DevOps Pipeline
         /// </summary>
         /// <param name="review"></param>

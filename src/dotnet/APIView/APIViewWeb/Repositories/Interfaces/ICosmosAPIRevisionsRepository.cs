@@ -44,5 +44,7 @@ namespace APIViewWeb.Repositories
         /// <param name="apiRevisionType"></param>
         /// <returns></returns>
         public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(DateTime lastUpdatedOn, APIRevisionType apiRevisionType = APIRevisionType.All);
+        public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName);
+
     }
 }

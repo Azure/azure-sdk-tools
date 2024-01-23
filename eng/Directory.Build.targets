@@ -12,7 +12,8 @@
     <IsTestProject Condition="'$(IsTestHelperLibrary)' == 'true'">false</IsTestProject>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(SignAssembly)' != 'false'">
+  <!-- Exclude TestReferenceWithInternalsVisibleTo from strong name signing, as it is required for a test scenario -->
+  <PropertyGroup Condition="'$(SignAssembly)' != 'false' and !$(MSBuildProjectName.EndsWith('TestReferenceWithInternalsVisibleTo'))">
     <SignAssembly>true</SignAssembly>
     <DelaySign>false</DelaySign>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)AzureSDKToolsKey.snk</AssemblyOriginatorKeyFile>

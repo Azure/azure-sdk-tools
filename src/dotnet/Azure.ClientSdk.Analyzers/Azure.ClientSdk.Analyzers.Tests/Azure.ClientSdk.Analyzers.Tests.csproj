@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers.csproj" />
+    <ProjectReference Include="..\TestReferenceWithInternalsVisibleTo\TestReferenceWithInternalsVisibleTo.csproj" />
   </ItemGroup>
 
   <ItemGroup>

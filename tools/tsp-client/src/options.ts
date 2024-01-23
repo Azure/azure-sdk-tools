@@ -17,6 +17,7 @@ export interface Options {
   isUrl: boolean;
   localSpecRepo?: string;
   emitterOptions?: string;
+  swaggerReadme?: string;
 }
 
 export async function getOptions(): Promise<Options> {
@@ -60,6 +61,9 @@ export async function getOptions(): Promise<Options> {
       },
       ["skip-sync-and-generate"]: {
         type: "boolean",
+      },
+      ["swagger-readme"]: {
+        type: "string",
       }
     },
   });
@@ -78,15 +82,23 @@ export async function getOptions(): Promise<Options> {
     printUsage();
     process.exit(1);
   }
+  const supportedCommands = ["sync", "generate", "update", "init", "convert"];
 
-  if (positionals[0] !== "sync" && positionals[0] !== "generate" && positionals[0] !== "update" && positionals[0] !== "init") {
-    Logger.error(`Unknown command ${positionals[0]}`);
+  const command = positionals[0];
+  if (!command) {
+    Logger.error("Command is required");
+    printUsage();
+    process.exit(1);
+  }
+
+  if (!supportedCommands.includes(command)) {
+    Logger.error(`Unknown command ${command}`);
     printUsage();
     process.exit(1);
   }
 
   let isUrl = true;
-  if (positionals[0] === "init") {
+  if (command === "init") {
     if (!values["tsp-config"]) {
       Logger.error("tspConfig is required");
       printUsage();
@@ -103,6 +115,15 @@ export async function getOptions(): Promise<Options> {
       }
     }
   }
+
+  if (command === "convert") {
+    if (!values["swagger-readme"]) {
+      Logger.error("Must specify a swagger readme with the `--swagger-readme` flag");
+      printUsage();
+      process.exit(1);
+    }
+  }
+
   // By default, assume that the command is run from the output directory
   let outputDir = ".";
   if (values["output-dir"]) {
@@ -133,7 +154,7 @@ export async function getOptions(): Promise<Options> {
 
   return {
     debug: values.debug ?? false,
-    command: positionals[0],
+    command: command,
     tspConfig: values["tsp-config"],
     noCleanup: values["save-inputs"] ?? false,
     skipSyncAndGenerate: values["skip-sync-and-generate"] ?? false,
@@ -143,5 +164,6 @@ export async function getOptions(): Promise<Options> {
     isUrl: isUrl,
     localSpecRepo: values["local-spec-repo"],
     emitterOptions: values["emitter-options"],
+    swaggerReadme: values["swagger-readme"],
   };
 }

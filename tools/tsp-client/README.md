@@ -40,6 +40,9 @@ By default the `sync` command will look for a tsp-location.yaml to get the proje
 ### generate
 Generate a client library from a TypeSpec project. The `generate` command should be run after the `sync` command. `generate` relies on the existence of the `TempTypeSpecFiles` directory created by the `sync` command and on an `emitter-package.json` file checked into your repository at the following path: `<repo root>/eng/emitter-package.json`. The `emitter-package.json` file is used to install project dependencies and get the appropriate emitter package.
 
+### convert
+Convert an existing swagger specification to a TypeSpec project. This command should only be run once to get started working on a TypeSpec project. TypeSpec projects will need to be optimized manually and fully reviewed after conversion. When using this command a path or url to a swagger README file is required through the `--swagger-readme` flag.
+
 ## Options
 ```
   -c, --tsp-config          The tspconfig.yaml file to use                      [string]
@@ -50,6 +53,7 @@ Generate a client library from a TypeSpec project. The `generate` command should
   --local-spec-repo         Path to local repository with the TypeSpec project  [string]
   --save-inputs             Don't clean up the temp directory after generation  [boolean]
   --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
+  --swagger-readme          Path or url to swagger readme file                  [string]
   -o, --output-dir          Specify an alternate output directory for the 
                             generated files. Default is your local directory.   [string]
   --repo                    Repository where the project is defined for init 

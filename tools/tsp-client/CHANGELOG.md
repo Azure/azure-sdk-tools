@@ -1,8 +1,9 @@
 # Release
 
-## Unreleased - 0.4.0
+## 2024-01-23 - 0.4.0
 
 - Added support for initializing a project from a private repository specification.
+- Added `convert` command to support swagger to TypeSpec project conversion.
 - Changed `doesFileExist()` function to check local file system.
 - Removed `fetch()` function.
 

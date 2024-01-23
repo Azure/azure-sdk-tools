@@ -67,6 +67,7 @@ Commands:
   sync        Sync TypeSpec project specified in tsp-location.yaml      [string]
   generate    Generate from a TypeSpec project                          [string]
   update      Sync and generate from a TypeSpec project                 [string]
+  convert     Convert a swagger specification to TypeSpec               [string]
 
 Options:
   -c, --tsp-config          The tspconfig.yaml file to use                      [string]
@@ -77,7 +78,9 @@ Options:
   --local-spec-repo         Path to local repository with the TypeSpec project  [string]
   --save-inputs             Don't clean up the temp directory after generation  [boolean]
   --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
-  -o, --output-dir          The output directory for the generated files        [string]
+  --swagger-readme          Path or url to swagger readme file                  [string]
+  -o, --output-dir          Specify an alternate output directory for the 
+                            generated files. Default is your current directory  [string]
   --repo                    Repository where the project is defined for init 
                             or update                                           [string]
   -v, --version             Show version number                                 [boolean]

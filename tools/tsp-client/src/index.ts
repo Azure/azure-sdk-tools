@@ -5,9 +5,12 @@ import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "
 import { getOptions } from "./options.js";
 import { mkdir, writeFile, cp, readFile } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
+import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
-import { joinPaths, resolvePath } from "@typespec/compiler";
+import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import { formatAdditionalDirectories, getAdditionalDirectoryName } from "./utils.js";
+import { resolve } from "node:path";
+import { spawn } from "node:child_process";
 
 
 async function sdkInit(
@@ -191,6 +194,28 @@ async function generate({
   }
 }
 
+
+async function convert(readme: string, outputDir: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+      const autorest = spawn("npx", ["autorest", readme, "--openapi-to-typespec", "--use=@autorest/openapi-to-typespec", `--output-folder=${outputDir}`], {
+          cwd: outputDir,
+          stdio: "inherit",
+          shell: true,
+      });
+      autorest.once("exit", (code) => {
+          if (code === 0) {
+              resolve();
+          } else {
+              reject(new Error(`openapi to typespec conversion failed exited with code ${code}`));
+          }
+      });
+      autorest.once("error", (err) => {
+          reject(new Error(`openapi to typespec conversion failed with error: ${err}`));
+      });
+  });
+}
+
+
 async function main() {
   const options = await getOptions();
   if (options.debug) {
@@ -241,6 +266,14 @@ async function main() {
         }
         await syncTspFiles(rootUrl, options.localSpecRepo);
         await generate({ rootUrl, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
+        break;
+      case "convert":
+        Logger.info("Converting swagger to typespec...");
+        let readme = options.swaggerReadme!;
+        if (await doesFileExist(readme)) {
+          readme = normalizePath(resolve(readme));
+        }
+        await convert(readme, rootUrl);
         break;
       default:
         throw new Error(`Unknown command: ${options.command}`);

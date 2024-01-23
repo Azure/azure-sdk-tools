@@ -55,7 +55,6 @@ namespace Azure.ClientSdk.Analyzers
             var parentSymbol = context.Symbol;
             if (symbol.Type.IsVisibleInternalWithoutFriendAttribute(context.Compilation))
             {
-                // Check if the symbol is decorated with an attribute named FooAttribute
                 var diagnostic = Diagnostic.Create(
                     Descriptors.AZC0112,
                     parentSymbol.Locations[0],

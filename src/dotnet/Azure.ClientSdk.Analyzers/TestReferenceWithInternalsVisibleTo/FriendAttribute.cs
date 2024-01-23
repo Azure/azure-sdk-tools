@@ -5,7 +5,10 @@ using System;
 
 internal class FriendAttribute : Attribute
 {
+    public string FriendAssembly { get; }
+
     public FriendAttribute(string friendAssembly)
     {
+        FriendAssembly = friendAssembly;
     }
 }

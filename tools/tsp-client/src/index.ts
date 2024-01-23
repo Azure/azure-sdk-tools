@@ -5,7 +5,6 @@ import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "
 import { getOptions } from "./options.js";
 import { mkdir, writeFile, cp, readFile } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
-import { fetch } from "./network.js";
 import { parse as parseYaml } from "yaml";
 import { joinPaths, resolvePath } from "@typespec/compiler";
 import { formatAdditionalDirectories, getAdditionalDirectoryName } from "./utils.js";
@@ -29,10 +28,18 @@ async function sdkInit(
   }): Promise<string> {
   if (isUrl) {
     // URL scenario
+    const repoRoot = await getRepoRoot(outputDir);
     const resolvedConfigUrl = resolveTspConfigUrl(config);
-    Logger.debug(`Resolved config url: ${resolvedConfigUrl.resolvedUrl}`)
-    const tspConfig = await fetch(resolvedConfigUrl.resolvedUrl);
-    const configYaml = parseYaml(tspConfig);
+    const cloneDir = joinPaths(repoRoot, "..", "sparse-spec");
+    await mkdir(cloneDir, { recursive: true });
+    Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
+    Logger.debug(`Cloning repo to ${cloneDir}`);
+    await cloneRepo(outputDir, cloneDir, `https://github.com/${resolvedConfigUrl.repo}.git`);
+    await sparseCheckout(cloneDir);
+    const tspConfigPath = joinPaths(resolvedConfigUrl.path, "tspconfig.yaml");
+    await addSpecFiles(cloneDir, tspConfigPath)
+    await checkoutCommit(cloneDir, resolvedConfigUrl.commit);
+    const configYaml = parseYaml(joinPaths(cloneDir, tspConfigPath));
     const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
     if (!serviceDir) {
       throw new Error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
@@ -48,6 +55,8 @@ async function sdkInit(
     await writeFile(
       joinPaths(newPackageDir, "tsp-location.yaml"),
     `directory: ${resolvedConfigUrl.path}\ncommit: ${resolvedConfigUrl.commit}\nrepo: ${resolvedConfigUrl.repo}\nadditionalDirectories:${additionalDirOutput}\n`);
+    Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
+    await removeDirectory(cloneDir);
     return newPackageDir;
   } else {
     // Local directory scenario

@@ -17,6 +17,7 @@ metadata:
     scenario: {{ .Stress.Scenario }}
     resourceGroupName: {{ .Stress.ResourceGroupName }}
     baseName: {{ .Stress.BaseName }}
+    gitCommit: {{ .Values.GitCommit | default "" }}
 spec:
   {{- if .Stress.parallel }}
   completions: {{ .Stress.parallel }}
@@ -29,6 +30,7 @@ spec:
       labels:
         release: {{ .Release.Name }}
         scenario: {{ .Stress.Scenario }}
+        gitCommit: {{ .Values.GitCommit | default "" }}
       {{- if .Values.PodDisruptionBudgetExpiry }}
       annotations:
         deletionLockExpiry: {{ .Values.PodDisruptionBudgetExpiry }}
@@ -83,6 +85,7 @@ metadata:
     scenario: {{ .Stress.Scenario }}
     resourceGroupName: {{ .Stress.ResourceGroupName }}
     baseName: {{ .Stress.BaseName }}
+    gitCommit: {{ .Values.GitCommit | default "" }}
 spec:
   {{- if .Stress.parallel }}
   completions: {{ .Stress.parallel }}
@@ -95,6 +98,7 @@ spec:
       labels:
         release: {{ .Release.Name }}
         scenario: {{ .Stress.Scenario }}
+        gitCommit: {{ .Values.GitCommit | default "" }}
       {{- if .Values.PodDisruptionBudgetExpiry }}
       annotations:
         deletionLockExpiry: {{ .Values.PodDisruptionBudgetExpiry }}

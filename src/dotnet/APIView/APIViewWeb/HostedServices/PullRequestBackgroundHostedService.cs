@@ -5,7 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using APIViewWeb.Managers;
 using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
@@ -15,12 +14,14 @@ namespace APIViewWeb.HostedServices
     {
         private bool _isDisabled = false;
         private IPullRequestManager _pullRequestManager;
+        private readonly TelemetryClient _telemetryClient;
 
-        static TelemetryClient _telemetryClient = new(TelemetryConfiguration.CreateDefault());
-
-        public PullRequestBackgroundHostedService(IPullRequestManager pullRequestManager, IConfiguration configuration)
+        public PullRequestBackgroundHostedService(IPullRequestManager pullRequestManager,
+            IConfiguration configuration, TelemetryClient telemetryClient)
         {
             _pullRequestManager = pullRequestManager;
+            _telemetryClient = telemetryClient;
+
             // We can disable background task using app settings if required
             var taskDisabled = configuration["PullRequestCleanupTaskDisabled"];
             if (!String.IsNullOrEmpty(taskDisabled) && taskDisabled == "true")

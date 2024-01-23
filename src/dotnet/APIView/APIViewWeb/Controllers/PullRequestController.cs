@@ -14,13 +14,8 @@ using Microsoft.Extensions.Configuration;
 using System.IO;
 using APIViewWeb.Managers.Interfaces;
 using ApiView;
-using System;
 using APIViewWeb.Models;
 using APIViewWeb.LeanModels;
-using Microsoft.VisualStudio.Services.DelegatedAuthorization;
-using Octokit;
-using static Microsoft.VisualStudio.Services.Graph.Constants;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
 
 namespace APIViewWeb.Controllers
 {
@@ -28,29 +23,26 @@ namespace APIViewWeb.Controllers
     {
         private readonly ICodeFileManager _codeFileManager;
         private readonly IPullRequestManager _pullRequestManager;
-        private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
-        private readonly ILogger<PullRequestController> _logger;
         private readonly IConfiguration _configuration;
         private readonly IOpenSourceRequestManager _openSourceManager;
-        private readonly TelemetryClient _telemetryClient = new TelemetryClient(TelemetryConfiguration.CreateDefault());
+        private readonly TelemetryClient _telemetryClient;
         private HashSet<string> _allowedListBotAccounts = new HashSet<string>();
 
         string[] VALID_EXTENSIONS = new string[] { ".whl", ".api.json", ".nupkg", "-sources.jar", ".gosource" };
         
         public PullRequestController(ICodeFileManager codeFileManager, IPullRequestManager pullRequestManager,
-            IBlobCodeFileRepository codeFileRepository, IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, ILogger<PullRequestController> logger,
-            IConfiguration configuration, IOpenSourceRequestManager openSourceRequestManager)
+            IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager,
+            IConfiguration configuration, IOpenSourceRequestManager openSourceRequestManager, TelemetryClient telemetryClient)
         {
             _codeFileManager = codeFileManager;
             _pullRequestManager = pullRequestManager;
-            _codeFileRepository = codeFileRepository;
             _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
-            _logger = logger;
             _configuration = configuration;
             _openSourceManager = openSourceRequestManager;
+            _telemetryClient = telemetryClient;
 
             var botAllowedList = _configuration["allowedList-bot-github-accounts"];
             if (!string.IsNullOrEmpty(botAllowedList))

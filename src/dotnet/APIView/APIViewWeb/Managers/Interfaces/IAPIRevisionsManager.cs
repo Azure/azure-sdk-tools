@@ -35,7 +35,7 @@ namespace APIViewWeb.Managers.Interfaces
         public TreeNode<InlineDiffLine<CodeLine>> ComputeSectionDiff(TreeNode<CodeLine> before, TreeNode<CodeLine> after, RenderedCodeFile beforeFile, RenderedCodeFile afterFile);
         public Task<APIRevisionListItemModel> CreateAPIRevisionAsync(string userName, string reviewId, APIRevisionType apiRevisionType, string label,
             MemoryStream memoryStream, CodeFile codeFile, string originalName = null, int? prNumber = null);
-        public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService, TelemetryClient telemetryClient);
+        public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision, LanguageService languageService);
         public Task UpdateAPIRevisionAsync(APIRevisionListItemModel revision);
         public Task AutoArchiveAPIRevisions(int archiveAfterMonths);
     }

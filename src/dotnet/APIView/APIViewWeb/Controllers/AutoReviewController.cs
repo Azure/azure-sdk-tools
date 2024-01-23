@@ -1,13 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Amazon.Util;
 using ApiView;
 using APIViewWeb.Filters;
-using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
@@ -15,10 +12,6 @@ using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
-using Microsoft.VisualStudio.Services.Account;
-using Octokit;
 
 namespace APIViewWeb.Controllers
 {
@@ -30,18 +23,15 @@ namespace APIViewWeb.Controllers
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ICommentsManager _commentsManager;
-        private readonly ILogger<AutoReviewController> _logger;
 
         public AutoReviewController(IAuthorizationService authorizationService, ICodeFileManager codeFileManager,
-            IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager, ICommentsManager commentsManager,
-            ILogger<AutoReviewController> logger)
+            IReviewManager reviewManager, IAPIRevisionsManager apiRevisionManager, ICommentsManager commentsManager)
         {
             _authorizationService = authorizationService;
             _codeFileManager = codeFileManager;
             _apiRevisionsManager = apiRevisionManager;
             _commentsManager = commentsManager;
             _reviewManager = reviewManager;
-            _logger = logger;
         }
 
         [HttpPost]
@@ -150,39 +140,42 @@ namespace APIViewWeb.Controllers
                     // Delete pending apiRevisions if it is not in approved state before adding new revision
                     // This is to keep only one pending revision since last approval or from initial review revision
                     var automaticRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic);
-                    var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
-                    var latestAutomaticAPIRevision = automaticRevisionsQueue.Peek();
-                    var comments = await _commentsManager.GetCommentsAsync(review.Id);
-
-                    while (
-                        automaticRevisionsQueue.Any() &&
-                        !latestAutomaticAPIRevision.IsApproved &&
-                        !await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
-                        !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
+                    if (automaticRevisions.Any())
                     {
-                        await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
-                        latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
-                    }
+                        var automaticRevisionsQueue = new Queue<APIRevisionListItemModel>(automaticRevisions);
+                        var latestAutomaticAPIRevision = automaticRevisionsQueue.Peek();
+                        var comments = await _commentsManager.GetCommentsAsync(review.Id);
 
-                    // We should compare against only latest revision when calling this API from scheduled CI runs
-                    // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
-                    // If review surface doesn't match with any approved revisions then we will create new revision if it doesn't match pending latest revision
-
-                    if (compareAllRevisions)
-                    {
-                        foreach (var approvedAPIRevision in automaticRevisions.Where(r => r.IsApproved))
+                        while (
+                            automaticRevisionsQueue.Any() &&
+                            !latestAutomaticAPIRevision.IsApproved &&
+                            !await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
+                            !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
                         {
-                            if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile))
+                            await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(apiRevision: latestAutomaticAPIRevision, notes: "Deleted by Automatic Review Creation...");
+                            latestAutomaticAPIRevision = automaticRevisionsQueue.Dequeue();
+                        }
+
+                        // We should compare against only latest revision when calling this API from scheduled CI runs
+                        // But any manual pipeline run at release time should compare against all approved revisions to ensure hotfix release doesn't have API change
+                        // If review surface doesn't match with any approved revisions then we will create new revision if it doesn't match pending latest revision
+
+                        if (compareAllRevisions)
+                        {
+                            foreach (var approvedAPIRevision in automaticRevisions.Where(r => r.IsApproved))
                             {
-                                return approvedAPIRevision;
+                                if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile))
+                                {
+                                    return approvedAPIRevision;
+                                }
                             }
                         }
-                    }
 
-                    if (await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile))
-                    {
-                        apiRevision = latestAutomaticAPIRevision;
-                        createNewRevision = false;
+                        if (await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile))
+                        {
+                            apiRevision = latestAutomaticAPIRevision;
+                            createNewRevision = false;
+                        }
                     }
                 }
             }

@@ -6,12 +6,11 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 using System;
-using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace APIViewWeb.Controllers
@@ -21,17 +20,16 @@ namespace APIViewWeb.Controllers
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionManager;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
-
-        private readonly ILogger _logger;
+        private readonly TelemetryClient _telemetryClient;
 
         public ReviewController(IReviewManager reviewManager,
             IAPIRevisionsManager apiRevisionManager, IHubContext<SignalRHub> signalRHubContext,
-            ILogger<ReviewController> logger)
+            TelemetryClient telemetryClient)
         {
             _reviewManager = reviewManager;
             _apiRevisionManager = apiRevisionManager;
             _signalRHubContext = signalRHubContext;
-            _logger = logger;
+            _telemetryClient = telemetryClient;
         }
 
         [HttpGet]
@@ -65,7 +63,7 @@ namespace APIViewWeb.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating AI review");
+                _telemetryClient.TrackTrace("Error generating AI review" + ex.Message, SeverityLevel.Error);
                 await SendAIReviewGenerationStatus(review, reviewId, revisionId, AIReviewGenerationStatus.Error, isLatestAPIRevision, errorMessage: ex.Message);
             }
         }

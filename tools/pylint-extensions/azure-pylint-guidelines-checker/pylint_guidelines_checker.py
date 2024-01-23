@@ -1577,15 +1577,15 @@ class CheckDocstringParameters(BaseChecker):
 
     def _find_param(self, line, docstring, idx, docparams):
         # this param has its type on a separate line
-        if line.startswith("param") and line.count(" ") == 1:
+        if line.startswith("param ") and line.count(" ") == 1:
             param = line.split("param ")[1]
             docparams[param] = None
         # this param has its type on the same line
-        if line.startswith("param") and line.count(" ") == 2:
+        if line.startswith("param ") and line.count(" ") == 2:
             _, param_type, param = line.split(" ")
             docparams[param] = param_type
         # if the param has its type on the same line with additional spaces
-        if line.startswith("param") and line.count(" ") > 2:
+        if line.startswith("param ") and line.count(" ") > 2:
             param = line.split(" ")[-1]
             param_type = ("").join(line.split(" ")[1:-1])
             docparams[param] = param_type

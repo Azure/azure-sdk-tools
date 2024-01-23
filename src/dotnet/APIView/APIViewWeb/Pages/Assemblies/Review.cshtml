@@ -613,7 +613,7 @@
         </div>
     </div>
 
-    <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+    <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
         <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
         <div class="modal fade" id="approveModel" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">

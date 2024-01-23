@@ -8,11 +8,6 @@ namespace APIViewWeb.Hubs
     [Authorize]
     public class SignalRHub : Hub
     {
-        private readonly ILogger<SignalRHub> _logger;
-        public SignalRHub(ILogger<SignalRHub> logger) {
-            _logger = logger;
-        }
-
         public override Task OnConnectedAsync()
         {
             string name = Context.User.GetGitHubLogin();

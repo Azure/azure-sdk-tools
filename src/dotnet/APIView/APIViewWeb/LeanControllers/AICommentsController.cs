@@ -10,6 +10,8 @@ using APIViewWeb.LeanModels;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using APIViewWeb.Helpers;
 using Microsoft.Azure.Cosmos.Serialization.HybridRow;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -17,12 +19,12 @@ namespace APIViewWeb.LeanControllers
     public class AICommentsController : BaseApiController
     {
         private readonly IAICommentsManager _aiCommentsManager;
-        private readonly ILogger _logger;
+        private readonly TelemetryClient _telemetryClient;
 
-        public AICommentsController(IAICommentsManager aiCommentsManager, ILogger<AICommentsController> logger)
+        public AICommentsController(IAICommentsManager aiCommentsManager, TelemetryClient telemetryClient)
         {
             _aiCommentsManager = aiCommentsManager;
-            _logger = logger;
+            _telemetryClient = telemetryClient;
         }
         /// <summary>
         /// Create AI Comment
@@ -35,12 +37,12 @@ namespace APIViewWeb.LeanControllers
             try
             {
                 var result = await _aiCommentsManager.CreateAICommentAsync(aiCommentDTOForCreate, User.GetGitHubLogin());
-                _logger.LogInformation("New comment added to database");
+                _telemetryClient.TrackTrace("New comment added to database", SeverityLevel.Information);
                 return new LeanJsonResult(result, StatusCodes.Status201Created);
             }
             catch (Exception err)
             {
-                _logger.LogInformation("Error: Failed to create AI Comment " + err.Message);
+                _telemetryClient.TrackTrace("Error: Failed to create AI Comment " + err.Message, SeverityLevel.Information);
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
         }
@@ -61,7 +63,7 @@ namespace APIViewWeb.LeanControllers
             }
             catch (Exception err)
             {
-                _logger.LogInformation("Error: Failed to update AI comment. " + err.Message);
+                _telemetryClient.TrackTrace("Error: Failed to update AI comment. " + err.Message, SeverityLevel.Information);
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
         }
@@ -81,7 +83,7 @@ namespace APIViewWeb.LeanControllers
             }
             catch (Exception err)
             {
-                _logger.LogInformation("Error:  Failed to update AI comment. " + err.Message);
+                _telemetryClient.TrackTrace("Error:  Failed to update AI comment. " + err.Message, SeverityLevel.Information);
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
 
@@ -103,7 +105,7 @@ namespace APIViewWeb.LeanControllers
             }
             catch (Exception err)
             {
-                _logger.LogInformation("Error: Failed to delete AI comment " + err.Message);
+                _telemetryClient.TrackTrace("Error: Failed to delete AI comment " + err.Message, SeverityLevel.Information);
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
         }
@@ -124,7 +126,7 @@ namespace APIViewWeb.LeanControllers
             }
             catch (Exception err)
             {
-                _logger.LogInformation("Error: Failed to retrieve AI comment" + err.Message);
+                _telemetryClient.TrackTrace("Error: Failed to retrieve AI comment" + err.Message, SeverityLevel.Information);
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
         }

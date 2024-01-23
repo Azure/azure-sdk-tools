@@ -81,18 +81,21 @@
                             </div>
                             <div id=@divId class="collapse show" data-revision-id=@revision.Key.sampleRevisionNumber aria-labelledby="header-@revision.Key.sampleRevisionNumber">
                                 <table class="code-window">
-                                    @foreach (var thread in revision.Value.OrderBy(e => int.Parse(e.LineId.Split("-").Last())))
+                                    @foreach (var thread in revision.Value.OrderBy(e => int.Parse(e.LineId.Split("-").Last())).GroupBy(x => x.LineId).Select(g => g.First()))
                                     {
-                                        @if(thread.Comments.Any())
+                                        int indexA = Model.SampleLines.Count() - (revision.Key.sampleRevisionNumber - skipped);
+                                        int indexB = int.Parse(thread.Comments.First().ElementId.Split("-").Last()) - 1;
+                                        @if (thread.Comments.Any())
                                         {
                                             var elementId = thread.LineId;
+
                                             <tr class="code-line">
                                                 <td class="code p-2" style="word-break: break-all;">
                                                     <a class="comment-url" asp-page="Samples"
                                                         asp-route-id=@Model.Review.Id
                                                         asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
-                                                       asp-fragment=@Uri.EscapeDataString(elementId)>
-                                                        @Html.Raw(Model.SampleLines.ElementAt(revision.Key.sampleRevisionNumber-skipped).ElementAt(int.Parse(thread.Comments.First().ElementId.Split("-").Last())-1))
+                                                        asp-fragment=@Uri.EscapeDataString(elementId)>
+                                                        @Html.Raw(Model.SampleLines.ElementAt(indexA).ElementAt(indexB))
                                                     </a>
                                                 </td>
                                             </tr>

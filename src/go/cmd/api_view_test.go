@@ -4,7 +4,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,16 +17,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestFuncDecl(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_func_decl"), "output")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, err := os.ReadFile("./output/test_func_decl.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
+	p, err := createReview(filepath.Clean("testdata/test_func_decl"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,16 +36,7 @@ func TestFuncDecl(t *testing.T) {
 }
 
 func TestInterface(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_interface"), "output")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, err := os.ReadFile("./output/test_interface.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
+	p, err := createReview(filepath.Clean("testdata/test_interface"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,17 +54,23 @@ func TestInterface(t *testing.T) {
 	}
 }
 
+func TestMultiModule(t *testing.T) {
+	for _, path := range []string{
+		"testdata/test_multi_module",
+		"testdata/test_multi_module/A",
+		"testdata/test_multi_module/A/B",
+	} {
+		t.Run(path, func(t *testing.T) {
+			p, err := createReview(filepath.Clean(path))
+			require.NoError(t, err)
+			require.Equal(t, 1, len(p.Navigation), "review should include only one package")
+			require.Equal(t, filepath.Base(path), p.Navigation[0].Text, "review includes the wrong module")
+		})
+	}
+}
+
 func TestStruct(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_struct"), "output")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, err := os.ReadFile("./output/test_struct.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
+	p, err := createReview(filepath.Clean("testdata/test_struct"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,16 +89,7 @@ func TestStruct(t *testing.T) {
 }
 
 func TestConst(t *testing.T) {
-	err := CreateAPIView(filepath.Clean("testdata/test_const"), "output")
-	if err != nil {
-		t.Fatal(err)
-	}
-	file, err := os.ReadFile("./output/test_const.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := PackageReview{}
-	err = json.Unmarshal(file, &p)
+	p, err := createReview(filepath.Clean("testdata/test_const"))
 	if err != nil {
 		t.Fatal(err)
 	}

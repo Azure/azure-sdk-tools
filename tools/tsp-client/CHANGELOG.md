@@ -1,5 +1,11 @@
 # Release
 
+## Unreleased - 0.4.0
+
+- Added support for initializing a project from a private repository specification.
+- Changed `doesFileExist()` function to check local file system.
+- Removed `fetch()` function.
+
 ## 2023-12-21 - 0.3.0
 
 - Fix TypeSpec compilation issue with module-resolver.

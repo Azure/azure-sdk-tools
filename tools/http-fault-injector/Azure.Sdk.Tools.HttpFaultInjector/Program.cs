@@ -82,8 +82,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                 _httpClient = new HttpClient(new HttpClientHandler()
                 {
                     // Allow insecure SSL certs
-                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true,
-                    
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
                 });
             }
             else

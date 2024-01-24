@@ -55,12 +55,6 @@ jobs:
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
 
-          Azure/typespec-azure-pr:
-            Branch: main
-            TargetBranches:
-              providerhub:
-                Theirs: '@("common/config/rush/pnpm-lock.yaml")'
-
     - template: ./templates/steps/sync-repo-branch.yml
       parameters:
         GH_TOKEN: $(azuresdk-github-pat)

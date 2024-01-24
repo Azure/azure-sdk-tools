@@ -376,8 +376,8 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
 
         private class UpstreamResponse : IDisposable
         {
-            private readonly HttpContent? _content = null;
-            private readonly Stream? _contentStream = null;
+            private readonly HttpContent _content = null;
+            private readonly Stream _contentStream = null;
             private UpstreamResponse(HttpContent content)
             {
                 _content = content;

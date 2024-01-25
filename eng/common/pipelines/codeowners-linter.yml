@@ -26,8 +26,8 @@ stages:
   - job: Run
     timeoutInMinutes: 120
     pool:
-      name: azsdk-pool-mms-ubuntu-2004-general
-      vmImage: ubuntu-20.04
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
 
     variables:
       CodeownersLinterVersion: '1.0.0-dev.20231120.3'
@@ -35,6 +35,7 @@ stages:
       RepoLabelUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/repository-labels-blob"
       TeamUserUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob"
       UserOrgUri: "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/user-org-visibility-blob"
+      ToolPath: $(Pipeline.Workspace)/codeowners-linter
 
     steps:
       # Skip sparse checkout for the `azure-sdk-for-<lang>-pr` private mirrored repositories
@@ -50,10 +51,9 @@ stages:
         inputs:
           command: custom
           custom: 'tool'
-          arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(CodeownersLinterVersion)" "Azure.Sdk.Tools.CodeownersLinter"'
-          workingDirectory: '$(Build.SourcesDirectory)/eng/common'
+          arguments: 'install --tool-path $(ToolPath) --add-source "$(DotNetDevOpsFeed)" --version "$(CodeownersLinterVersion)" "Azure.Sdk.Tools.CodeownersLinter"'
       - pwsh: |
           $env:PATH -split ":"
           codeowners-linter --repoRoot $(Build.SourcesDirectory) --repoName $(Build.Repository.Name) -fbl -rUri "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)"
         displayName: 'Lint CODEOWNERS and filter using baseline'
-        workingDirectory: '$(Build.SourcesDirectory)/eng/common'
+        workingDirectory: $(ToolPath)

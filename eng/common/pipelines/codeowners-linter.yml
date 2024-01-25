@@ -53,6 +53,7 @@ stages:
           arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(CodeownersLinterVersion)" "Azure.Sdk.Tools.CodeownersLinter"'
           workingDirectory: '$(Build.SourcesDirectory)/eng/common'
       - pwsh: |
+          $env:PATH -split ":"
           codeowners-linter --repoRoot $(Build.SourcesDirectory) --repoName $(Build.Repository.Name) -fbl -rUri "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)"
         displayName: 'Lint CODEOWNERS and filter using baseline'
         workingDirectory: '$(Build.SourcesDirectory)/eng/common'

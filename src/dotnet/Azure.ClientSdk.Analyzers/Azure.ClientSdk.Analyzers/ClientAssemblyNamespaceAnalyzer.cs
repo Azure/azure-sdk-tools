@@ -20,10 +20,10 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Data",
             "Azure.Developer",
             "Azure.DigitalTwins",
+            "Azure.Health",
             "Azure.Identity",
             "Azure.IoT",
-            "Azure.Learn",
-            "Azure.Management",
+            "Azure.Maps",
             "Azure.Media",
             "Azure.Messaging",
             "Azure.MixedReality",
@@ -32,7 +32,7 @@ namespace Azure.ClientSdk.Analyzers
             "Azure.Search",
             "Azure.Security",
             "Azure.Storage",
-            "Azure.Template",
+            "Azure.Verticals",
             "Microsoft.Extensions.Azure"
         };
 
@@ -70,6 +70,14 @@ namespace Azure.ClientSdk.Analyzers
             foreach (var prefix in AllowedNamespacePrefix)
             {
                 if (displayString.StartsWith(prefix))
+                {
+                    return;
+                }
+
+                // "Azure.Template" is not an approved namespace prefix, but we have a project template by that name
+                // to help customers get started. We do not want our template to include a suppression for this
+                // descriptor out of the box, so we need to treat it as a special case.
+                if (displayString == "Azure.Template")
                 {
                     return;
                 }

@@ -53,7 +53,7 @@ stages:
           arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(CodeownersLinterVersion)" "Azure.Sdk.Tools.CodeownersLinter"'
           workingDirectory: '$(Build.SourcesDirectory)/eng/common'
       - pwsh: |
-          Get-ChildItem env:
+          $env:PATH.Split(':')
         displayName: 'Print Linux Path variable'
       - pwsh: |
           codeowners-linter --repoRoot $(Build.SourcesDirectory) --repoName $(Build.Repository.Name) -fbl -rUri "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)"

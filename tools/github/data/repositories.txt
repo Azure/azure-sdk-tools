@@ -11,6 +11,8 @@ Azure/azure-sdk-for-c-pr
 Azure/azure-sdk-for-cpp
 Azure/azure-sdk-for-go
 Azure/azure-sdk-for-go-pr
+Azure/azure-sdk-for-rust
+Azure/azure-sdk-for-rust-pr
 Azure/azure-sdk-for-ios
 Azure/azure-sdk-for-ios-pr
 Azure/azure-sdk-for-android

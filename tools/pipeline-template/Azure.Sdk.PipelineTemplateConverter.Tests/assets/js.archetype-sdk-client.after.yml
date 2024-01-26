@@ -1,0 +1,61 @@
+resources:
+  repositories:
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+
+parameters:
+  - name: Artifacts
+    type: object
+    default: []
+  - name: TestPipeline
+    type: boolean
+    default: false
+  - name: ServiceDirectory
+    type: string
+    default: not-specified
+  - name: TestProxy
+    type: boolean
+    default: true
+  - name: IncludeRelease
+    type: boolean
+    default: true
+  - name: TargetDocRepoOwner
+    type: string
+    default: MicrosoftDocs
+  - name: TargetDocRepoName
+    type: string
+    default: azure-docs-sdk-node
+  - name: RunUnitTests
+    type: boolean
+    default: true
+  - name: MatrixConfigs
+    type: object
+    default:
+      - Name: Javascript_ci_test_base
+        Path: eng/pipelines/templates/stages/platform-matrix.json
+        Selection: sparse
+        GenerateVMJobs: true
+  - name: AdditionalMatrixConfigs
+    type: object
+    default: []
+  - name: MatrixFilters
+    type: object
+    default: []
+  - name: MatrixReplace
+    type: object
+    default: []
+
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    sdl:
+      sourceAnalysisPool:
+        name: azsdk-pool-mms-win-2022-1es-pt
+        image: azsdk-pool-mms-win-2022-1espt
+        os: windows

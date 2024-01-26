@@ -1,9 +1,7 @@
-﻿using System;
 using System.CommandLine;
-using System.Runtime.CompilerServices;
 using YamlDotNet.Serialization;
 
-namespace PipelineTemplate;
+namespace Azure.Sdk.PipelineTemplateConverter;
 
 public class StageTemplate
 {
@@ -32,32 +30,37 @@ public class Comment
     public bool PrecedingWhitespace { get; set; } = false;
 }
 
-public class Program
+public class PipelineTemplateConverter
 {
-    static async Task<int> Main(string[] args)
+    public static async Task<int> Main(string[] args)
     {
-        var pipelineTemplate = new Option<FileInfo?>(
+        var pipelineTemplate = new Option<FileInfo>(
             new[] { "-p", "--pipeline" },
-            description: "The pipeline yaml template to convert");
+            description: "The pipeline yaml template to convert")
+            { IsRequired = true };
+        var overwrite = new Option<Boolean>(
+            new[] { "--overwrite" },
+            description: "Write changes back to pipeline file");
 
         var rootCommand = new RootCommand("Pipeline template converter");
         rootCommand.AddOption(pipelineTemplate);
 
-        rootCommand.SetHandler((file) =>
+        rootCommand.SetHandler((file, overwrite) =>
             {
-                Run(file!);
+                Run(file, overwrite);
             },
-            pipelineTemplate);
+            pipelineTemplate, overwrite);
 
         return await rootCommand.InvokeAsync(args);
     }
 
-    static void Run(FileInfo file)
+    public static void Run(FileInfo file, bool overwrite)
     {
         var deserializer = new DeserializerBuilder().Build();
         var contents = File.ReadAllText(file.FullName);
         var comments = BackupComments(contents);
         var template = deserializer.Deserialize<StageTemplate>(contents);
+
         ConvertStageTemplate(template);
 
         var serializer = new SerializerBuilder()
@@ -65,12 +68,19 @@ public class Program
                             .WithIndentedSequences()
                             .Build();
         var output = serializer.Serialize(template);
+
         output = RestoreComments(output, comments);
         output = AddStageTemplateWhitespace(output);
+
+        if (overwrite)
+        {
+            File.WriteAllText(file.FullName, output);
+            return;
+        }
         Console.WriteLine(output);
     }
 
-    static List<Comment> BackupComments(string template)
+    public static List<Comment> BackupComments(string template)
     {
         var comments = new List<Comment>();
         var lines = template.Split(Environment.NewLine);
@@ -112,7 +122,7 @@ public class Program
         return comments;
     }
 
-    static string RestoreComments(string template, List<Comment> comments)
+    public static string RestoreComments(string template, List<Comment> comments)
     {
         var lines = new List<string>();
 
@@ -145,7 +155,7 @@ public class Program
         return string.Join(Environment.NewLine, lines);
     }
 
-    static string AddStageTemplateWhitespace(string template)
+    public static string AddStageTemplateWhitespace(string template)
     {
         var lines = new List<string>();
         foreach (var line in template.Split(Environment.NewLine))
@@ -160,7 +170,7 @@ public class Program
         return string.Join(Environment.NewLine, lines);
     }
 
-    static void ConvertStageTemplate(StageTemplate template)
+    public static void ConvertStageTemplate(StageTemplate template)
     {
         var extends = new Dictionary<string, object>();
         var parameters = new Dictionary<string, object>();

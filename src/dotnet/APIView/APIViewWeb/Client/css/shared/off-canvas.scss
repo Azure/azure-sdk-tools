@@ -16,8 +16,18 @@
     right: 0;
 }
 
-.offcanvas-menu-content {
+.left-offcanvas {
+    @extend .offcanvas-menu;
+    left: 0;
+}
+
+.right-offcanvas-menu-content {
     border-left: 1px solid var(--border-color) !important;
+    transform: translate3d(0, 0, 0);
+}
+
+.left-offcanvas-menu-content {
+    border-right: 1px solid var(--border-color) !important;
     transform: translate3d(0, 0, 0);
 }
 
@@ -25,6 +35,14 @@
     margin-right: 340px;
 }
 
-.show-offcanvas {
+.move-main-content-container-right {
+    margin-left: 50px;
+}
+
+.show-right-offcanvas {
     width: 340px;
+}
+
+.show-left-offcanvas {
+    width: 50px;
 }

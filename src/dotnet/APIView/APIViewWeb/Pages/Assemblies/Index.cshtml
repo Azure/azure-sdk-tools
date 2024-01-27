@@ -33,12 +33,12 @@
 </div>
 
 @{
-    var offCanvasClass = " show-offcanvas";
+    var offCanvasClass = " show-right-offcanvas";
     if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
         offCanvasClass = String.Empty;
 }
 <div id="right-offcanvas-menu" class="right-offcanvas@(offCanvasClass)">
-    <div class="offcanvas-menu-content" id="index-offcanvas-menu-content">
+    <div class="right-offcanvas-menu-content" id="index-offcanvas-menu-content">
         <p class="h6">Filters</p>
         <div class="input-group input-group-sm mb-2">
             <span class="input-group-text">Languages</span>

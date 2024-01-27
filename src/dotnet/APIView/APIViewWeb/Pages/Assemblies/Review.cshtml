@@ -13,12 +13,26 @@
     ViewBag.HasSections = Model.ReviewContent.PageHasLoadableSections;
 }
 @{
-    var offCanvasClass = " show-offcanvas";
+    var rightOffCanvasClass = " show-right-offcanvas";
     if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
-        offCanvasClass = String.Empty;
+        rightOffCanvasClass = String.Empty;
+
+    var leftOffCanvasClass = " show-left-offcanvas";
+    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
+        leftOffCanvasClass = String.Empty;
+
+
 }
-<div id="right-offcanvas-menu" class="right-offcanvas@(offCanvasClass)">
-    <div class="offcanvas-menu-content" id="review-offcanvas-menu-content">
+<div id="left-offcanvas-menu" class="left-offcanvas@(leftOffCanvasClass)">
+    <div class="left-offcanvas-menu-content" id="left-review-offcanvas-menu-content">
+        <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+            <button type="button" class="btn btn-link"><i class="bi bi-clock-history"></i></button>
+            <button type="button" class="btn btn-link"><i class="bi bi-chat-left-dots"></i></button>
+        </div>
+    </div>
+</div>
+<div id="right-offcanvas-menu" class="right-offcanvas@(rightOffCanvasClass)">
+    <div class="right-offcanvas-menu-content" id="right-review-offcanvas-menu-content">
         <p class="h6">
             <a data-bs-toggle="collapse" href="#approveCollapse" aria-expanded="true" aria-controls="approveCollapse">Approval&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
@@ -443,8 +457,8 @@
 </div>
 
 <div class="container-fluid mx-0 px-0 sub-header-content">
-    <div class="row mx-1 px-0 my-1">
-        <div class="col-md-12" id="review-info-bar">
+    <div class="row px-3 py-2 border-bottom" id="review-info-bar">
+        <div class="col-md-11">
             <nav style="--bs-breadcrumb-divider: '-';" aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     @{
@@ -477,17 +491,33 @@
                 </ol>
             </nav>
         </div>
+        <div class="col-1">
+            @if (TempData["page"].Equals("api"))
+            {
+                if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
+                {
+                    <input type="checkbox" class="btn-check" id="review-right-offcanvas-toggle" autocomplete="off">
+                }
+                else
+                {
+                    <input type="checkbox" checked class="btn-check" id="review-right-offcanvas-toggle" autocomplete="off">
+                }
+                <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="review-right-offcanvas-toggle"><i class="fa fa-bars"></i></label>
+            }
+        </div>
     </div>
-
-    <partial name="Shared/_ReviewNavBar" />
 </div>
 @{
-    var mainContainerClass = " move-main-content-container-left";
-    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
-        mainContainerClass = String.Empty;
+    var mainContainerClass = String.Empty;
+    var mainContainerLeftClass = " move-main-content-container-left";
+    if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
+        mainContainerLeftClass = String.Empty;
+
+    var mainContainerRightClass = " move-main-content-container-right";
+    mainContainerClass = mainContainerLeftClass + mainContainerRightClass;
 }
-<div class="container-fluid pt-3@(mainContainerClass)" id="review-main-container">
-    <div class="row mx-3 g-2" data-review-id="@Model.ReviewContent.Review.Id" data-revision-id="@Model.ReviewContent.ActiveAPIRevision.Id" data-language="@Model.ReviewContent.Review.Language">
+<div class="container-fluid pt-2@(mainContainerClass)" id="review-main-container">
+    <div class="row g-2" data-review-id="@Model.ReviewContent.Review.Id" data-revision-id="@Model.ReviewContent.ActiveAPIRevision.Id" data-language="@Model.ReviewContent.Review.Language">
         @{
             var reviewLeftDisplay = String.Empty;
             var reviewRightSize = "10";

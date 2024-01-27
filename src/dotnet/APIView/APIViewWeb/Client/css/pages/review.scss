@@ -1,6 +1,13 @@
 @import "../shared/mixins.scss";
 #review-info-bar {
     font-size: small;
+    background-color: var(--base-fg-color);
+}
+
+#review-right-offcanvas-toggle + .btn-sm {
+    padding: 0.05rem 0.4rem;
+    font-size: 0.775rem;
+    border-radius: 0.2rem;
 }
 
 .breadcrumb .icon-language {
@@ -11,7 +18,7 @@
 #review-left {
     max-width: none;
     min-width: 10px;
-    height: calc(100vh - 220px);
+    height: calc(100vh - 155px);
     overflow: auto;
     max-height: 100vh;
     padding: 5px 0px 5px 10px;
@@ -25,7 +32,7 @@
 #review-right {
     max-width: 100%;
     min-width: 100px;
-    height: calc(100vh - 220px);
+    height: calc(100vh - 155px);
     padding: 0px;
     overflow: auto;
     background-color: var(--base-fg-color);
@@ -33,13 +40,17 @@
     contain: size layout paint;
 }
 
-#review-offcanvas-menu-content {
+
+#right-review-offcanvas-menu-content {
     padding: 10px 20px 10px 20px;
-    min-height: calc(100vh - 190px);
-    max-height: calc(100vh - 190px);
-    overflow-y: auto;
-    margin-top: 150px;
+    @include review-offcanvas-menu-content;
 }
+
+#left-review-offcanvas-menu-content {
+    padding: 10px 5px 10px 5px;
+    @include review-offcanvas-menu-content;
+}
+
 
 .review-approved {
     border: solid 2px var(--success-color);

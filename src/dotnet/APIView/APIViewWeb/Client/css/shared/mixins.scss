@@ -32,6 +32,13 @@
     width: auto;
 }
 
+@mixin review-offcanvas-menu-content {
+    min-height: calc(100vh - 135px);
+    max-height: calc(100vh - 135px);
+    overflow-y: auto;
+    margin-top: 95px;
+}
+
 @mixin placeholder {
     ::-webkit-input-placeholder {
         @content;

@@ -28,6 +28,7 @@ import {
   ScalarStatementNode,
   StringLiteralNode,
   SyntaxKind,
+  TemplateArgumentNode,
   TemplateParameterDeclarationNode,
   TupleExpressionNode,
   TypeReferenceNode,
@@ -460,6 +461,8 @@ export class ApiView {
       case SyntaxKind.EnumStatement:
         this.tokenizeEnumStatement(node as EnumStatementNode);
         break;
+      case SyntaxKind.JsNamespaceDeclaration:
+        throw new Error(`Case "JsNamespaceDeclaration" not implemented`);
       case SyntaxKind.JsSourceFile:
         throw new Error(`Case "JsSourceFile" not implemented`);
       case SyntaxKind.Identifier:
@@ -606,6 +609,14 @@ export class ApiView {
         break;
       case SyntaxKind.VoidKeyword:
         this.keyword("void", true, true);
+        break;
+      case SyntaxKind.TemplateArgument:
+        obj = node as TemplateArgumentNode;
+        if (obj.name) {
+            this.text(obj.name.sv);
+            this.punctuation("=", true, true);
+        }
+        this.tokenize(obj.argument);
         break;
       default:
         // All Projection* cases should fall in here...
@@ -836,7 +847,9 @@ export class ApiView {
 
   private tokenizeNamespaceModel(model: NamespaceModel) {
     this.namespaceStack.push(model.name);
-    this.tokenizeDecorators(model.node.decorators, false);
+    if (model.node.kind === SyntaxKind.NamespaceStatement) {
+        this.tokenizeDecorators(model.node.decorators, false);
+    }
     this.keyword("namespace", false, true);
     this.typeDeclaration(model.name, this.namespaceStack.value(), true);
     this.beginGroup();

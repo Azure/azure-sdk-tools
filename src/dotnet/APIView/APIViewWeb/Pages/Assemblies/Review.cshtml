@@ -443,124 +443,39 @@
 </div>
 
 <div class="container-fluid mx-0 px-0 sub-header-content">
-    <div class="row mx-1 px-0 py-2">
-        <div class="col-md-8">
-            <div class="input-group input-group-sm" id="review-info-bar">
-                <partial name="Shared/_ReviewBadge" model="(Model.ReviewContent.Review, Model.ReviewContent.ActiveAPIRevision)" />
-
-                <span class="input-group-text">Revision:</span>
-                <select id="revision-type-select" aria-label="Revision Type Select">
-                    @foreach (var apiRevisionType in Model.ReviewContent.APIRevisionsGrouped.Keys.Order())
-                    {
-                        if (apiRevisionType == Model.ReviewContent.ActiveAPIRevision.APIRevisionType.ToString())
-                        {
-                            <option selected value="@apiRevisionType">@apiRevisionType</option>
-                        }
-                        else
-                        {
-                            <option value="@apiRevisionType">@apiRevisionType</option>
-                        }
-                    }
-                </select>
-                <select id="revision-select" aria-label="Revision Select">
+    <div class="row mx-1 px-0 my-1">
+        <div class="col-md-12" id="review-info-bar">
+            <nav style="--bs-breadcrumb-divider: '-';" aria-label="breadcrumb">
+                <ol class="breadcrumb">
                     @{
-
-                        var revisionsToSelectFrom = Model.ReviewContent.APIRevisionsGrouped[Model.ReviewContent.ActiveAPIRevision.APIRevisionType.ToString()];
-                        (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
-                            revisions: revisionsToSelectFrom,
-                            activeRevision: Model.ReviewContent.ActiveAPIRevision,
-                            diffRevision: default(APIRevisionListItemModel),
-                            forDiff: false,
-                            showDocumentation: Model.ShowDocumentation,
-                            showDiffOnly: Model.ShowDiffOnly
-                        );
+                        string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(Model.ReviewContent.ActiveAPIRevision.Language);
+                        string langVariant = String.Empty;
                     }
-                    <partial name="Shared/_RevisionSelectPickerPartial" model="revisionSelectModel" />
-                </select>
-
-                @if (@Model.ReviewContent.APIRevisionsGrouped.SelectMany(kvp => kvp.Value).Count() > 1)
-                {
-                    var diffRevisionType = (Model.ReviewContent.APIRevisionsGrouped.ContainsKey("Automatic")) ? "Automatic" : Model.ReviewContent.APIRevisionsGrouped.Keys.First();
+                    @if (!string.IsNullOrEmpty(Model.ReviewContent.ActiveAPIRevision.Files.First().LanguageVariant) && Model.ReviewContent.ActiveAPIRevision.Files.First().LanguageVariant.ToLower() != "default")
+                    {
+                            langVariant = @Model.ReviewContent.ActiveAPIRevision.Files.First().LanguageVariant.ToLower();
+                            iconClassName += "-" + @Model.ReviewContent.ActiveAPIRevision.Files.First().LanguageVariant.ToLower();
+                    }
+                    <li class="breadcrumb-item"><span role="img" class="icon-language @iconClassName" aria-label="@Model.ReviewContent.ActiveAPIRevision.Language @langVariant"></span> @Model.ReviewContent.ActiveAPIRevision.PackageName</li>
+                    @if (Model.ReviewContent.Review.IsApproved)
+                    {
+                        <li class="breadcrumb-item" data-bs-toggle="tooltip" title="Approved for First Release"><i class="fa-regular fa-circle-check text-success"></i></li>
+                    }
+                    <li class="breadcrumb-item"><i class="bi bi-clock-history"></i> @PageModelHelpers.ResolveRevisionLabel(Model.ReviewContent.ActiveAPIRevision, false)</li>
+                    @if (Model.ReviewContent.ActiveAPIRevision.IsApproved)
+                    {
+                        <li class="breadcrumb-item" data-bs-toggle="tooltip" title="APIRevision is Approved"><i class="fa-regular fa-circle-check text-success"></i></li>
+                    }
                     @if (Model.ReviewContent.DiffAPIRevision != null)
                     {
-                        // Diff revision is null if someone reuses an old URL with a deleted revision as  diff revision
-                        // Users copy and shares diff URL to approvers and sometimes they delete and recreate the revision which makes the diff revision null
-                        diffRevisionType = Model.ReviewContent.DiffAPIRevision.APIRevisionType.ToString();
-
-                        var urlValue = @Url.ActionLink("Review", "Assemblies", new
+                        <li class="breadcrumb-item"><i class="bi bi-file-diff"></i> @PageModelHelpers.ResolveRevisionLabel(Model.ReviewContent.DiffAPIRevision, false)</li>
+                        @if (Model.ReviewContent.DiffAPIRevision.IsApproved)
                         {
-                            id = @Model.ReviewContent.Review.Id,
-                            revisionId = @Model.ReviewContent.ActiveAPIRevision.Id,
-                            diffRevisionId = @Model.DiffRevisionId,
-                            doc = @Model.ShowDocumentation,
-                            diffOnly = @Model.ShowDiffOnly
-                        });
-                        <a class="input-group-text" href="@urlValue">Diff With:</a>
-                    }
-                    else
-                    {
-
-                        var diffRevisionForButton = Model.ReviewContent.APIRevisionsGrouped[diffRevisionType];
-                        var urlValue = @Url.ActionLink("Review", "Assemblies", new
-                        {
-                            id = @Model.ReviewContent.Review.Id,
-                            revisionId = @Model.ReviewContent.ActiveAPIRevision.Id,
-                            diffRevisionId = diffRevisionForButton.First().Id,
-                            doc = @Model.ShowDocumentation,
-                            diffOnly = @Model.ShowDiffOnly
-                        });
-                        <a class="input-group-text" href="@urlValue">Diff:</a>
-                    }
-                    <select id="diff-revision-type-select" aria-label="Revision Type Select">
-                        @foreach (var apiRevisionType in Model.ReviewContent.APIRevisionsGrouped.Keys.Order())
-                        {
-                            if (apiRevisionType == diffRevisionType)
-                            {
-                                <option selected value="@apiRevisionType">@apiRevisionType</option>
-                            }
-                            else
-                            {
-                                <option value="@apiRevisionType">@apiRevisionType</option>
-                            }
+                            <li class="breadcrumb-item" data-bs-toggle="tooltip" title="Diff APIRevision is Approved"><i class="fa-regular fa-circle-check text-success"></i></li>
                         }
-                    </select>
-                    <select id="diff-select" aria-label="Diff Select">
-                        @{
-                            var diffRevisionsToSelectFrom = Model.ReviewContent.APIRevisionsGrouped[diffRevisionType].Where(r => r.Id!= Model.ReviewContent.ActiveAPIRevision.Id);
-                            (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) diffRevisionSelectModel = (
-                            revisions: diffRevisionsToSelectFrom,
-                            activeRevision: Model.ReviewContent.ActiveAPIRevision,
-                            diffRevision: Model.ReviewContent.DiffAPIRevision,
-                            forDiff: true,
-                            showDocumentation: Model.ShowDocumentation,
-                            showDiffOnly: Model.ShowDiffOnly
-                            );
-                        }
-                        <partial name="Shared/_RevisionSelectPickerPartial" model="diffRevisionSelectModel" />
-                    </select>
-                }
-                @{
-                    var popOverContent = $"<b>{Model.ReviewContent.ActiveConversationsInActiveAPIRevision}</b> active revision threads.<br><b>{Model.ReviewContent.ActiveConversationsInSampleRevisions}</b> active usage sample threads.<br><b>{Model.ReviewContent.TotalActiveConversiations}</b> total active threads.<br>"
-                    + $"<b>Current Revision:</b> <em>{PageModelHelpers.ResolveRevisionLabel(@Model.ReviewContent.ActiveAPIRevision)}</ em >";
-                    @if (Model.ReviewContent.DiffAPIRevision != null)
-                    {
-                        popOverContent += $"<br><b>Current Diff:</b> <em>{PageModelHelpers.ResolveRevisionLabel(@Model.ReviewContent.DiffAPIRevision)}</em>";
                     }
-                    @if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0)
-                    {
-                        <button type="button" class="btn btn-outline-secondary" id="jump-to-first-comment">
-                            <i class="far fa-comment-alt"></i>
-                        </button>
-                    }
-                    <button type="button" class="btn btn-info" data-bs-placement="bottom" data-bs-trigger="focus" data-bs-toggle="popover" data-bs-html="true" data-bs-title="Page Info" data-bs-content="@popOverContent" data-bs-custom-class="custom-popover">
-                        <span class="badge">@Model.ReviewContent.ActiveConversationsInActiveAPIRevision / @Model.ReviewContent.TotalActiveConversiations</span>
-                    </button>
-                }
-            </div>
-        </div>
-        <div class="col-md-1">
-        </div>
-        <div class="col-md-3">
+                </ol>
+            </nav>
         </div>
     </div>
 

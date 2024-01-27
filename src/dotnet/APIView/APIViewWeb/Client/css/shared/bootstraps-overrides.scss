@@ -99,6 +99,21 @@
     border-bottom: 1px solid var(--border-color) !important;
 }
 
+.breadcrumb {
+    margin-bottom: 0rem;
+}
+.breadcrumb-item + .breadcrumb-item::before {
+    margin-top: 0rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    padding-right: 0.25rem;
+}
+
+.breadcrumb-item + .breadcrumb-item {
+    padding-left: 0.25rem;
+}
+
 .list-group-item {
     color: var(--base-text-color);
     background-color: var(--base-fg-color);

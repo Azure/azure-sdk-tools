@@ -491,20 +491,6 @@ export function addClickEventToClassesInSections() {
 }
 
 /**
- * Add Select Event Handlers to API Revision Select
- */
-export function addSelectEventToAPIRevisionSelect() {
-  $('#revision-select, #diff-select').each(function (index, value) {
-    $(this).on('change', function () {
-      var url = $(this).find(":selected").val();
-      if (url) {
-        window.location.href = url as string;
-      }
-    });
-  });
-}
-
-/**
 * Check if targetAnchor is present, if its not present, expand the section and scroll to the targetAnchor
 * @param { String } uriHash  the hash/id of the anchor we are looking for
 * @param { String [] } mainSections the sections to be expanded if the targetAnchor is not present or hidden

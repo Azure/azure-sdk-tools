@@ -612,11 +612,21 @@ export class ApiView {
         break;
       case SyntaxKind.TemplateArgument:
         obj = node as TemplateArgumentNode;
+        const isExpanded = obj.argument.kind === SyntaxKind.ModelExpression;
+        if (isExpanded) {
+            this.newline();
+            this.indent();
+        }
         if (obj.name) {
             this.text(obj.name.sv);
             this.punctuation("=", true, true);
         }
-        this.tokenize(obj.argument);
+        if (isExpanded) {
+            this.tokenizeModelExpressionExpanded(obj.argument as ModelExpressionNode, false, false);
+            this.deindent();
+        } else {
+            this.tokenize(obj.argument);
+        }
         break;
       default:
         // All Projection* cases should fall in here...
@@ -775,10 +785,12 @@ export class ApiView {
     }
   }
 
-  private tokenizeModelExpressionExpanded(node: ModelExpressionNode, isOperationSignature: boolean) {
+  private tokenizeModelExpressionExpanded(node: ModelExpressionNode, isOperationSignature: boolean, leadingNewline: boolean) {
     if (node.properties.length) {
-      this.blankLines(0);
-      this.indent();
+      if (leadingNewline) {
+        this.blankLines(0);
+        this.indent();
+      }
       if (!isOperationSignature) {
         this.punctuation("{", false, false);
         this.blankLines(0);
@@ -814,7 +826,10 @@ export class ApiView {
         this.blankLines(0);  
       }
       this.trim();
-      this.deindent();
+      if (leadingNewline) {
+        this.deindent();
+      }
+
     } else if (!isOperationSignature) {
       this.punctuation("{}", true, false);
     }
@@ -828,7 +843,7 @@ export class ApiView {
     if (inline) {
       this.tokenizeModelExpressionInline(node, isOperationSignature)
     } else {
-      this.tokenizeModelExpressionExpanded(node, isOperationSignature)
+      this.tokenizeModelExpressionExpanded(node, isOperationSignature, true)
     }
   }
 

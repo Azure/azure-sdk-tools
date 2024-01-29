@@ -539,14 +539,14 @@ describe("apiview: tests", () => {
         >;
 
         @route("/named")
-        op NamedGetFoo is ResourceRead<TResource =
-          {
+        op NamedGetFoo is ResourceRead<
+          TResource = {
             @query
             @doc("The name")
             name: string;
             ...FooParams;
-          }, TParams =
-          {
+          },
+          TParams = {
             parameters:
               {
                 @query

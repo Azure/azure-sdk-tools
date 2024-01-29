@@ -1,6 +1,7 @@
 # Release History
 
-## Version 0.4.5 (09-05-2023)
+## Version 0.4.5 (01-29-2024)
+Support named template arguments.
 Support unnamed unions.
 Support cross-language definition IDs.
 

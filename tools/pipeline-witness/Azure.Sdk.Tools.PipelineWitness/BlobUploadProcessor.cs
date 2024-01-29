@@ -889,9 +889,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
         {
             try
             {
-                var continuationToken = string.Empty;
-                var buildIds = new[] { build.Id };
-                var discoveredTestResults = new List<TestCaseResult>();
                 var blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl";
                 var blobClient = this.testResultContainerClient.GetBlobClient(blobPath);
 

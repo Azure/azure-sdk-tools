@@ -899,32 +899,39 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 }
 
                 var data = await testResultsClient.GetTestResultsAsync(build.Project.Id, testRun.Id);
-                
-                var content = JsonConvert.SerializeObject(data.Select(x => new
-                {
-                    OrganizationName = account,
-                    ProjectId = build.Project?.Id,
-                    ProjectName = build.Project?.Name,
-                    BuildDefinitionId = build.Definition?.Id,
-                    BuildDefinitionPath = build.Definition?.Path,
-                    BuildDefinitionName = build.Definition?.Name,
-                    BuildId = build.Id,
-                    TestRunId = testRun.Id,
-                    TestCaseId = x.Id,             
-                    TestCaseReferenceId =  x.TestCaseReferenceId,
-                    TestCaseTitle = x.TestCaseTitle,
-                    Outcome = x.Outcome,
-                    Priority = x.Priority,
-                    AutomatedTestName = x.AutomatedTestName,
-                    AutomatedTestStorageName = x.AutomatedTestStorage,
-                    FailingSince = x.FailingSince,
-                    FailureType = x.FailureType,
-                    StartedDate = x.StartedDate,
-                    CompletedDate = x.CompletedDate,
-                    EtlIngestDate = DateTime.UtcNow
-                }), jsonSettings);
 
-                await blobClient.UploadAsync(new BinaryData(content));
+                var builder = new StringBuilder();
+
+                foreach(var record in data)
+                {
+                    builder.AppendLine(JsonConvert.SerializeObject(
+                        new
+                        {
+                            OrganizationName = account,
+                            ProjectId = build.Project?.Id,
+                            ProjectName = build.Project?.Name,
+                            BuildDefinitionId = build.Definition?.Id,
+                            BuildDefinitionPath = build.Definition?.Path,
+                            BuildDefinitionName = build.Definition?.Name,
+                            BuildId = build.Id,
+                            TestRunId = testRun.Id,
+                            TestCaseId = record.Id,
+                            TestCaseReferenceId = record.TestCaseReferenceId,
+                            TestCaseTitle = record.TestCaseTitle,
+                            Outcome = record.Outcome,
+                            Priority = record.Priority,
+                            AutomatedTestName = record.AutomatedTestName,
+                            AutomatedTestStorageName = record.AutomatedTestStorage,
+                            FailingSince = record.FailingSince,
+                            FailureType = record.FailureType,
+                            StartedDate = record.StartedDate,
+                            CompletedDate = record.CompletedDate,
+                            EtlIngestDate = DateTime.UtcNow
+                        }, jsonSettings)
+                    );
+                }
+
+                await blobClient.UploadAsync(new BinaryData(builder.ToString()));
 
             }
             catch (Exception ex)

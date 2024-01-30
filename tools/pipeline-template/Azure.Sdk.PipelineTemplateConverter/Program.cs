@@ -1,23 +1,52 @@
 using System.CommandLine;
 using YamlDotNet.Serialization;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.PipelineTemplateConverter;
 
-public class StageTemplate
+public enum TemplateType
 {
-    [YamlMember(Alias = "resources")]
+    Stage,
+    Job,
+    Step,
+    Converted,
+    Ignore
+}
+
+public class BaseTemplate
+{
+    [YamlMember(Alias = "resources", Order = 0)]
     public Dictionary<string, object>? Resources { get; set; }
 
-    [YamlMember(Alias = "parameters")]
+    [YamlMember(Alias = "parameters", Order = 1)]
     public List<object>? Parameters { get; set; }
 
-    [YamlMember(Alias = "variables")]
+    [YamlMember(Alias = "variables", Order = 2)]
     public List<object>? Variables { get; set; }
 
+    private ISerializer Serializer { get; } = new SerializerBuilder()
+        .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull)
+        .WithIndentedSequences()
+        .Build();
+
+    public override string ToString()
+    {
+        return Serializer.Serialize(this);
+    }
+}
+
+public class JobTemplate : BaseTemplate
+{
+    [YamlMember(Alias = "jobs")]
+    public List<Dictionary<string, object>>? Stages { get; set; }
+}
+
+public class StageTemplate : BaseTemplate
+{
     [YamlMember(Alias = "stages")]
     public List<Dictionary<string, object>>? Stages { get; set; }
 
-    [YamlMember(Alias = "extends")]
+    [YamlMember(Alias = "extends", Order = 10)]
     public Dictionary<string, object>? Extends { get; set; }
 }
 
@@ -36,41 +65,83 @@ public class PipelineTemplateConverter
     {
         var pipelineTemplate = new Option<FileInfo>(
             new[] { "-p", "--pipeline" },
-            description: "The pipeline yaml template to convert")
-            { IsRequired = true };
+            description: "The pipeline yaml template to convert");
+        var pipelineTemplateDirectory = new Option<DirectoryInfo>(
+            new[] { "-d", "--directory" },
+            description: "The pipeline yaml directory to convert");
         var overwrite = new Option<Boolean>(
             new[] { "--overwrite" },
             description: "Write changes back to pipeline file");
 
         var rootCommand = new RootCommand("Pipeline template converter");
         rootCommand.AddOption(pipelineTemplate);
-
-        rootCommand.SetHandler((file, overwrite) =>
+        rootCommand.AddOption(pipelineTemplateDirectory);
+        rootCommand.AddOption(overwrite);
+        rootCommand.AddValidator(result =>
+        {
+            var args = result.Children.Select(c => c.Symbol.Name).ToList();
+            if (args.Contains("pipeline") && args.Contains("directory"))
             {
-                Run(file, overwrite);
+                result.ErrorMessage = "Cannot specify both --pipeline and --directory";
+            }
+            if (!args.Contains("pipeline") && !args.Contains("directory"))
+            {
+                result.ErrorMessage = "Must specify either --pipeline or --directory";
+            }
+        });
+
+        rootCommand.SetHandler((file, directory, overwrite) =>
+            {
+                Run(file, directory, overwrite);
             },
-            pipelineTemplate, overwrite);
+            pipelineTemplate, pipelineTemplateDirectory, overwrite);
 
         return await rootCommand.InvokeAsync(args);
     }
 
-    public static void Run(FileInfo file, bool overwrite)
+    public static void Run(FileInfo pipelineTemplate, DirectoryInfo directory, bool overwrite)
+    {
+        var files = new List<FileInfo>();
+        if (pipelineTemplate != null)
+        {
+            files.Add(pipelineTemplate);
+        }
+        else
+        {
+            foreach (var file in directory.GetFiles("*.yml", SearchOption.AllDirectories))
+            {
+                files.Add(file);
+            }
+        }
+        foreach (var file in files)
+        {
+            Convert(file, overwrite);
+        }
+    }
+
+    public static void Convert(FileInfo file, bool overwrite)
     {
         var deserializer = new DeserializerBuilder().Build();
         var contents = File.ReadAllText(file.FullName);
+
+        var templateType = GetTemplateType(contents);
+        if (templateType == TemplateType.Ignore)
+        {
+            return;
+        }
+
         var comments = BackupComments(contents);
-        var template = deserializer.Deserialize<StageTemplate>(contents);
+        var output = "";
 
-        ConvertStageTemplate(template);
-
-        var serializer = new SerializerBuilder()
-                            .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull)
-                            .WithIndentedSequences()
-                            .Build();
-        var output = serializer.Serialize(template);
+        if (templateType == TemplateType.Stage)
+        {
+            var template = deserializer.Deserialize<StageTemplate>(contents);
+            ConvertStageTemplate(template);
+            output = template.ToString();
+        }
 
         output = RestoreComments(output, comments);
-        output = AddStageTemplateWhitespace(output);
+        output = AddTemplateWhitespace(output);
 
         if (overwrite)
         {
@@ -80,18 +151,44 @@ public class PipelineTemplateConverter
         Console.WriteLine(output);
     }
 
+    public static TemplateType GetTemplateType(string template)
+    {
+        var convertedRegex = new Regex(@".*1ESPipelineTemplates.*");
+        var stageRegex = new Regex(@".*stages.*$", RegexOptions.Multiline);
+        var jobRegex = new Regex(@"^jobs:.*$", RegexOptions.Multiline);
+        var stepRegex = new Regex(@"^steps:.*$", RegexOptions.Multiline);
+
+        if (convertedRegex.IsMatch(template))
+        {
+            return TemplateType.Converted;
+        }
+        if (stageRegex.IsMatch(template))
+        {
+            return TemplateType.Stage;
+        }
+        if (jobRegex.IsMatch(template))
+        {
+            return TemplateType.Job;
+        }
+        if (stepRegex.IsMatch(template))
+        {
+            return TemplateType.Step;
+        }
+        return TemplateType.Ignore;
+    }
+
     public static List<Comment> BackupComments(string template)
     {
         var comments = new List<Comment>();
         var lines = template.Split(Environment.NewLine);
-        for(var i = 0; i < lines.Length-1; i++)
+        for (var i = 0; i < lines.Length - 1; i++)
         {
             var comment = new List<string>();
             var precedingWhitespace = false;
             while (i < lines.Length && lines[i].TrimStart(' ').StartsWith("#"))
             {
                 comment.Add(lines[i].Trim(' '));
-                if (lines[i-1].Trim(' ').Length == 0)
+                if (lines[i - 1].Trim(' ').Length == 0)
                 {
                     precedingWhitespace = true;
                 }
@@ -155,7 +252,7 @@ public class PipelineTemplateConverter
         return string.Join(Environment.NewLine, lines);
     }
 
-    public static string AddStageTemplateWhitespace(string template)
+    public static string AddTemplateWhitespace(string template)
     {
         var lines = new List<string>();
         foreach (var line in template.Split(Environment.NewLine))
@@ -168,6 +265,10 @@ public class PipelineTemplateConverter
         }
 
         return string.Join(Environment.NewLine, lines);
+    }
+
+    public static void ConvertJobTemplate(JobTemplate template)
+    {
     }
 
     public static void ConvertStageTemplate(StageTemplate template)

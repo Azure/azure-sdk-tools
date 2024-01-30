@@ -1,10 +1,3 @@
-resources:
-  repositories:
-    - repository: 1ESPipelineTemplates
-      type: git
-      name: 1ESPipelineTemplates/1ESPipelineTemplates
-      ref: refs/tags/release
-
 parameters:
   - name: Artifacts
     type: object
@@ -47,51 +40,43 @@ parameters:
     type: object
     default: []
 
-extends:
-  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
-  parameters:
-    sdl:
-      sourceAnalysisPool:
-        name: azsdk-pool-mms-win-2022-1es-pt
-        image: azsdk-pool-mms-win-2022-1espt
-        os: windows
-    stages:
-      - stage: Build
-        jobs:
-          - template: /eng/pipelines/templates/jobs/ci.yml
-            parameters:
-              ServiceDirectory: ${{ parameters.ServiceDirectory }}
-              TestProxy: ${{ parameters.TestProxy }}
-              Artifacts: ${{ parameters.Artifacts }}
-              ${{ if eq(parameters.ServiceDirectory, 'template') }}:
-                TestPipeline: true
-              RunUnitTests: ${{ parameters.RunUnitTests }}
-              MatrixConfigs:
-                - ${{ each config in parameters.MatrixConfigs }}:
-                    - ${{ config }}
-                - ${{ each config in parameters.AdditionalMatrixConfigs }}:
-                    - ${{ config }}
-              MatrixFilters:
-                - TestType=node|browser
-                - DependencyVersion=^$
-                - ${{ each filter in parameters.MatrixFilters }}:
-                    - ${{ filter}}
-              MatrixReplace: ${{ parameters.MatrixReplace }}
-              IncludeRelease: ${{ parameters.IncludeRelease }}
-        variables:
-          - template: ../variables/globals.yml
+variables:
+  - template: ../variables/globals.yml
 
-      # The Prerelease and Release stages are conditioned on whether we are building a pull request and the branch.
-      - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'), eq(parameters.IncludeRelease,true))}}:
-          - template: archetype-js-release.yml
-            parameters:
-              DependsOn: Build
-              ServiceDirectory: ${{ parameters.ServiceDirectory }}
-              TestProxy: ${{ parameters.TestProxy }}
-              Artifacts: ${{ parameters.Artifacts }}
-              ${{ if eq(parameters.ServiceDirectory, 'template') }}:
-                TestPipeline: true
-              ArtifactName: packages
-              TargetDocRepoOwner: ${{ parameters.TargetDocRepoOwner }}
-              TargetDocRepoName: ${{ parameters.TargetDocRepoName }}
+stages:
+  - stage: Build
+    jobs:
+      - template: /eng/pipelines/templates/jobs/ci.yml
+        parameters:
+          ServiceDirectory: ${{ parameters.ServiceDirectory }}          
+          TestProxy: ${{ parameters.TestProxy }}
+          Artifacts: ${{ parameters.Artifacts }}
+          ${{ if eq(parameters.ServiceDirectory, 'template') }}:
+            TestPipeline: true
+          RunUnitTests: ${{ parameters.RunUnitTests }}
+          MatrixConfigs:
+            - ${{ each config in parameters.MatrixConfigs }}:
+              -  ${{ config }}
+            - ${{ each config in parameters.AdditionalMatrixConfigs }}:
+              -  ${{ config }}
+          MatrixFilters:
+            - TestType=node|browser
+            - DependencyVersion=^$
+            - ${{ each filter in parameters.MatrixFilters }}:
+              - ${{ filter}}
+          MatrixReplace: ${{ parameters.MatrixReplace }}
+          IncludeRelease: ${{ parameters.IncludeRelease }}
 
+  # The Prerelease and Release stages are conditioned on whether we are building a pull request and the branch.
+  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'), eq(parameters.IncludeRelease,true))}}:
+    - template: archetype-js-release.yml
+      parameters:
+        DependsOn: Build
+        ServiceDirectory: ${{ parameters.ServiceDirectory }}
+        TestProxy: ${{ parameters.TestProxy }}
+        Artifacts: ${{ parameters.Artifacts }}
+        ${{ if eq(parameters.ServiceDirectory, 'template') }}:
+          TestPipeline: true
+        ArtifactName: packages
+        TargetDocRepoOwner: ${{ parameters.TargetDocRepoOwner }}
+        TargetDocRepoName: ${{ parameters.TargetDocRepoName }}

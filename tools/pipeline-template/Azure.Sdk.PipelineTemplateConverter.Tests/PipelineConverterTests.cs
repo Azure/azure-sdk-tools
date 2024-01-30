@@ -39,4 +39,29 @@ public class PipelineConverterTests
         var templateType = PipelineTemplateConverter.GetTemplateType(contents);
         templateType.Should().Be(TemplateType.Stage);
     }
+
+    [Fact]
+    public void TestFixTemplateSpecialCharacters()
+    {
+        var contents = @"
+extends:
+  ""${{ if eq(variables['System.TeamProject'], 'internal') }}:"":
+    template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
+  '${{ else }}:':
+    template: stage-redirect.yml
+  parameters:
+";
+
+        var expected = @"
+extends:
+  ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+    template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
+  ${{ else }}:
+    template: stage-redirect.yml
+  parameters:
+";
+
+        var template = PipelineTemplateConverter.FixTemplateSpecialCharacters(contents);
+        template.Should().Be(expected);
+    }
 }

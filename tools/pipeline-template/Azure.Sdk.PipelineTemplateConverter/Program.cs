@@ -142,6 +142,7 @@ public class PipelineTemplateConverter
 
         output = RestoreComments(output, comments);
         output = AddTemplateWhitespace(output);
+        output = FixTemplateSpecialCharacters(output);
 
         if (overwrite)
         {
@@ -252,6 +253,19 @@ public class PipelineTemplateConverter
         return string.Join(Environment.NewLine, lines);
     }
 
+    // Yaml serialization adds quotes when special characters are present,
+    // such as ones used for azure pipelines templating logic.
+    public static string FixTemplateSpecialCharacters(string template)
+    {
+        template = template.Replace("'${{", "${{");
+        template = template.Replace("}}:':", "}}:");
+        template = template.Replace("}}:'", "}}:");
+        template = template.Replace("\"${{", "${{");
+        template = template.Replace("}}:\":", "}}:");
+        template = template.Replace("}}:\"", "}}:");
+        return template;
+    }
+
     public static string AddTemplateWhitespace(string template)
     {
         var lines = new List<string>();
@@ -303,10 +317,21 @@ public class PipelineTemplateConverter
         }
 
         template.Extends = extends;
-        template.Extends.Add("template", "v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates");
+        template.Extends.Add("${{ if eq(variables['System.TeamProject'], 'internal') }}:", new Dictionary<string, object>
+        {
+            ["template"] = "v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates",
+        });
+        template.Extends.Add("${{ else }}:", new Dictionary<string, object>
+        {
+            ["template"] = "stage-redirect.yml",
+        });
         template.Extends.Add("parameters", parameters);
 
-        parameters.Add("sdl", sdl);
+        parameters.Add("${{ if eq(variables['System.TeamProject'], 'internal') }}:", new Dictionary<string, object>
+        {
+            ["sdl"] = sdl
+        });
+
         if (template.Stages != null && template.Stages.Count > 0)
         {
             if (template.Variables != null)

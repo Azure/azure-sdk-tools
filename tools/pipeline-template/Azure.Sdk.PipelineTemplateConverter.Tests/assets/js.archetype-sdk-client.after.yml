@@ -48,13 +48,17 @@ parameters:
     default: []
 
 extends:
-  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+    template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
+  ${{ else }}:
+    template: stage-redirect.yml
   parameters:
-    sdl:
-      sourceAnalysisPool:
-        name: azsdk-pool-mms-win-2022-1es-pt
-        image: azsdk-pool-mms-win-2022-1espt
-        os: windows
+    ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+      sdl:
+        sourceAnalysisPool:
+          name: azsdk-pool-mms-win-2022-1es-pt
+          image: azsdk-pool-mms-win-2022-1espt
+          os: windows
     stages:
       - stage: Build
         jobs:

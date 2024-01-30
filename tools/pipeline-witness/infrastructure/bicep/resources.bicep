@@ -1,7 +1,7 @@
-param location string
 param storageAccountName string
 param kustoClusterName string
 param kustoDatabaseName string
+param location string
 
 var tables = [
   {
@@ -25,7 +25,7 @@ var tables = [
     container: 'buildtimelinerecords'
   }
   {
-    name: 'PipelineOwners'
+    name: 'PipelineOwner'
     container: 'pipelineowners'
   }
   {
@@ -34,7 +34,7 @@ var tables = [
   }
 ]
 
-var kustoScript = loadTextContent('pipelinelogs.kql')
+var kustoScript = loadTextContent('../artifacts/merged.kql')
 
 // Storage Account
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
@@ -100,7 +100,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
 
 // Event Grid
 resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
-  name: storageAccount.name
+  name: storageAccountName
   location: location
   properties: {
     source: storageAccount.id
@@ -110,7 +110,7 @@ resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
 
 // Event Hub
 resource eventhubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
-  name: storageAccount.name
+  name: storageAccountName
   location: location
   sku: {
     name: 'Standard'

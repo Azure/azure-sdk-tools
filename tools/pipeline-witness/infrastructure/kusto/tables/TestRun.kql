@@ -32,7 +32,7 @@
     EtlIngestDate: datetime
 )
 
-.alter table TestRun ingestion json mapping 'TestRun_mapping' ```[
+.create-or-alter table TestRun ingestion json mapping 'TestRun_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
     { "column": "TestRunId", "path": "$['testRunId']" },

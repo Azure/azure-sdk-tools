@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceGroupName": {
+      "value": "pipelinelogs-test"
+    },
+    "location": {
+      "value": "westus2"
+    },
+    "storageAccountName": {
+      "value": "pipelinelogstest"
+    },
+    "kustoClusterName": {
+      "value": "azsdkengsystest"
+    },
+    "kustoDatabaseName": {
+      "value": "test"
+    }
+  }
+}

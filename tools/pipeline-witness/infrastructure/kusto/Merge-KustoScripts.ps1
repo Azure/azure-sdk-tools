@@ -1,6 +1,5 @@
 param (
-  [Parameter(Mandatory=$true)]
-  [string]$OutputPath
+  [string]$OutputPath = (Join-Path $PSScriptRoot '../artifacts/merged.kql')
 )
 
 function ReadFiles([IO.FileInfo[]] $files) {
@@ -12,6 +11,11 @@ function ReadFiles([IO.FileInfo[]] $files) {
       Write-Output ''
       Write-Output ''
   }
+}
+
+$outputFolder = Split-Path $OutputPath -Parent
+if (-not (Test-Path $outputFolder)) {
+  New-Item -ItemType Directory -Force -Path $outputFolder | Out-Null
 }
 
 $lines = @()

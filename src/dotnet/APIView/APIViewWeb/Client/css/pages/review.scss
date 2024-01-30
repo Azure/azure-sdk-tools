@@ -47,14 +47,68 @@
 }
 
 #left-review-offcanvas-menu-content {
-    padding: 10px 5px 10px 5px;
+    padding: 10px 0px 10px 5px;
     @include review-offcanvas-menu-content;
 }
 
+#left-review-offcanvas-menu-content {
+    .btn-check:focus + .btn, .btn:focus {
+        box-shadow: none !important;
+    }
+
+    .btn {
+        border-radius: 0px;
+    }
+    .btn.active {
+        box-shadow: var(--box-shadow-left);
+    }
+}
+
+#apiRevisions-context, #conversiations-context {
+    width: 40dvw;
+    background-color: var(--base-bg-color);
+}
+
+#apiRevisions-context {
+    .card {
+        flex-direction: row;
+        overflow: hidden;
+
+        img {
+            width: 105px;
+            height: 105px;
+        }
+    }
+
+    .card.True {
+        @include review-approval-border;
+    }
+}
+
+.apiRevisions-list-container {
+    overflow: auto;
+    height: 83dvh;
+
+    .btn-group-vertical {
+        align-self: center;
+        margin-right: 15px;
+        display: none;
+    }
+
+    .apirevision-indicator-checks {
+        align-self: center;
+        margin-right: 20px;
+    }
+}
+
+.apiRevisions-list-container > .card:hover {
+    .btn-group-vertical {
+        display: inline-flex;
+    }
+}
 
 .review-approved {
-    border: solid 2px var(--success-color);
-    box-shadow: var(--box-shadow-success);
+    @include review-approval-border;
     border-radius: 3px;
 }
 

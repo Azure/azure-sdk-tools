@@ -368,7 +368,7 @@ namespace APIViewWeb.Helpers
             reviewPageContent.Review = review;
             reviewPageContent.Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation;
             reviewPageContent.codeLines = codeLines;
-            reviewPageContent.APIRevisionsGrouped = apiRevisions.OrderByDescending(c => c.CreatedOn).GroupBy(r => r.APIRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList());
+            reviewPageContent.APIRevisions = apiRevisions.OrderByDescending(c => c.CreatedOn);
             reviewPageContent.ActiveAPIRevision = activeRevision;
             reviewPageContent.DiffAPIRevision = diffRevision;
             reviewPageContent.TotalActiveConversiations = comments.Threads.Count(t => !t.IsResolved);

@@ -63,6 +63,9 @@
 .btn-check:focus + .btn-outline-primary, .btn-outline-primary:focus {
     box-shadow: var(--box-shadow-link);
 }
+.btn-check:focus + .btn, .btn:focus {
+    box-shadow: var(--box-shadow-link);
+}
 
 .page-link {
     background-color: var(--base-fg-color);

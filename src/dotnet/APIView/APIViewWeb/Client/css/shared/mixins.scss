@@ -39,6 +39,11 @@
     margin-top: 95px;
 }
 
+@mixin review-approval-border {
+    border: solid 2px var(--success-color);
+    box-shadow: var(--box-shadow-success);
+}
+
 @mixin placeholder {
     ::-webkit-input-placeholder {
         @content;

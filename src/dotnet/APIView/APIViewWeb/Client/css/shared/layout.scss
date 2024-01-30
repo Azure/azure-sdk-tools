@@ -193,11 +193,11 @@ input[type="search"]::-webkit-search-cancel-button {
     color: var(--primary-btn-color);
 }
 
-.tooltip.bs-tooltip-right .tooltip-arrow::before {
+.tooltip.bs-tooltip-end .tooltip-arrow::before {
     border-right-color: var(--primary-color) !important;
 }
 
-.tooltip.bs-tooltip-left .tooltip-arrow::before {
+.tooltip.bs-tooltip-start .tooltip-arrow::before {
     border-left-color: var(--primary-color) !important;
 }
 

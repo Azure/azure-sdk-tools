@@ -19,7 +19,7 @@ namespace APIViewWeb.LeanModels
         public ReviewListItemModel Review { get; set; }
         public NavigationItem[] Navigation { get; set; }
         public CodeLineModel[] codeLines { get; set; }
-        public Dictionary<string, List<APIRevisionListItemModel>> APIRevisionsGrouped { get; set; }
+        public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; }
         public APIRevisionListItemModel ActiveAPIRevision { get; set; }
         public APIRevisionListItemModel DiffAPIRevision { get; set; }
         public int TotalActiveConversiations { get; set; }

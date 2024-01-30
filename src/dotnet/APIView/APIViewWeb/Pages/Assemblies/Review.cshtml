@@ -26,8 +26,10 @@
 <div id="left-offcanvas-menu" class="left-offcanvas@(leftOffCanvasClass)">
     <div class="left-offcanvas-menu-content" id="left-review-offcanvas-menu-content">
         <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-            <button type="button" class="btn btn-link"><i class="bi bi-clock-history"></i></button>
-            <button type="button" class="btn btn-link"><i class="bi bi-chat-left-dots"></i></button>
+            <button type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="API" active-if="@TempData["page"].Equals("api")"><i class="bi bi-braces"></i></button>
+            <button type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#apiRevisions-context" aria-controls="apiRevisions-context"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></button>
+            <button type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#conversiations-context" aria-controls="conversiations-context"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversiations"></i></button>
+            <button type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"><i class="bi bi-puzzle"></i></button>
         </div>
     </div>
 </div>
@@ -584,4 +586,86 @@
         </div>
     </form>
     <partial name="_CommentFormPartial" model="@Model.ReviewContent.TaggableUsers" /> 
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="apiRevisions-context" aria-labelledby="apiRevisions-context-label">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasLabel">APIRevisions</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="row g-4">
+            <div class="col mx-3">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary">Add Revision</button>
+                    <div class="btn-group" role="group" aria-label="APIRevisions Select">
+                        <input type="checkbox" class="btn-check" id="manual-apirevisions-check" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="manual-apirevisions-check">Manual</label>
+
+                        <input type="checkbox" class="btn-check" id="automatic-apirevisions-check" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="automatic-apirevisions-check">Automatic</label>
+
+                        <input type="checkbox" class="btn-check" id="pullrequest-apirevisions-check" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="pullrequest-apirevisions-check">Pull Request</label>
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="text" class="form-control" id="apiRevisions-search" aria-label="apirevision search">
+                    </div>
+                </div>
+                <div class="apiRevisions-list-container pe-2">
+                    @foreach (var apiRevision in Model.ReviewContent.APIRevisions)
+                    {
+                        <div class="card @apiRevision.IsApproved my-2">
+                            <img username="@apiRevision.CreatedBy" size="105" aria-label="GitHub User Avatar" />
+                            <div class="card-body">
+                                <h6 class="card-title">@apiRevision.Label</h6>
+                                <p class="card-subtitle mb-1 text-body-secondary"><b>Created: </b><span date="@apiRevision.CreatedOn"></span> , <b>By: </b>@apiRevision.CreatedBy</p>
+                                <p class="card-subtitle mb-0 text-body-secondary"><b>Last Updated: </b><span date="@apiRevision.LastUpdatedOn"></span> , <b>Type: </b>@apiRevision.APIRevisionType , <b>Version: </b>@apiRevision.Files[0].PackageVersion</p>
+                            </div>
+                            <div class="btn-group-vertical animate__animated animate__fadeIn" role="group" aria-label="apiRevision action buttons">
+                                @if (apiRevision.Id != Model.ReviewContent.ActiveAPIRevision.Id && (Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Id != apiRevision.Id))
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-primary">Make Active</button>
+                                }  
+
+                                @if ((Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Id != apiRevision.Id) && Model.ReviewContent.ActiveAPIRevision.Id != apiRevision.Id)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-primary">Make Diff</button>
+                                }
+                                @if (User.GetGitHubLogin() == apiRevision.CreatedBy)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-danger">Delete</button>
+                                }
+                            </div>
+                            <div class="apirevision-indicator-checks animate__animated animate__slideInLeft">
+                                @if (apiRevision.IsApproved)
+                                {
+                                    <i class="fas fa-check-circle text-success mr-1"></i>
+                                }
+                                @if (apiRevision.Id == Model.ReviewContent.ActiveAPIRevision.Id)
+                                {
+                                    <i class="bi bi-clock-history mr-1"></i>
+                                }
+                                @if (Model.ReviewContent.DiffAPIRevision != null && Model.ReviewContent.DiffAPIRevision.Id == apiRevision.Id)
+                                {
+                                    <i class="bi bi-file-diff mr-1"></i>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="conversiations-context" aria-labelledby="conversiations-context-label">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="conversiations-context-label">Conversiations</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        Content for the offcanvas goes here. You can place just about any Bootstrap component or custom elements here.
+    </div>
 </div>

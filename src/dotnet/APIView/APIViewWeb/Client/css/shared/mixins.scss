@@ -33,10 +33,10 @@
 }
 
 @mixin review-offcanvas-menu-content {
-    min-height: calc(100vh - 135px);
-    max-height: calc(100vh - 135px);
+    min-height: calc(100vh - 110px);
+    max-height: calc(100vh - 110px);
     overflow-y: auto;
-    margin-top: 95px;
+    margin-top: 80px;
 }
 
 @mixin review-approval-border {

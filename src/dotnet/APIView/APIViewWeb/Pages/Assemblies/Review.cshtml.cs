@@ -70,6 +70,10 @@ namespace APIViewWeb.Pages.Assemblies
         public bool ShowDiffOnly { get; set; }
         [BindProperty(Name = "notificationMessage", SupportsGet = true)]
         public string NotificationMessage { get; set; }
+        [FromForm]
+        public string AddAPIRevisionFilePath { get; set; }
+        [FromForm]
+        public string AddAPIRevisionLabel { get; set; }
 
         /// <summary>
         /// Handler for loading page

@@ -597,7 +597,7 @@
         <div class="row g-4">
             <div class="col mx-3">
                 <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-primary">Add Revision</button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#add-apirevision-context" aria-controls="add-apirevision-context">Add APIRevision</button>
                     <div class="btn-group" role="group" aria-label="APIRevisions Select">
                         <input type="checkbox" class="btn-check" id="manual-apirevisions-check" autocomplete="off">
                         <label class="btn btn-outline-primary" for="manual-apirevisions-check">Manual</label>
@@ -610,13 +610,13 @@
                     </div>
                     <div class="input-group mb-3">
                         <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
-                        <input type="text" class="form-control" id="apiRevisions-search" aria-label="apirevision search">
+                        <input type="search" placeholder="Search.." class="form-control" id="apiRevisions-search" aria-label="apirevision search">
                     </div>
                 </div>
                 <div class="apiRevisions-list-container pe-2">
                     @foreach (var apiRevision in Model.ReviewContent.APIRevisions)
                     {
-                        <div class="card @apiRevision.IsApproved my-2">
+                        <div class="card @apiRevision.IsApproved my-2" data-id="@apiRevision.Id">
                             <img username="@apiRevision.CreatedBy" size="105" aria-label="GitHub User Avatar" />
                             <div class="card-body">
                                 <h6 class="card-title">@apiRevision.Label</h6>
@@ -626,16 +626,19 @@
                             <div class="btn-group-vertical animate__animated animate__fadeIn" role="group" aria-label="apiRevision action buttons">
                                 @if (apiRevision.Id != Model.ReviewContent.ActiveAPIRevision.Id && (Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Id != apiRevision.Id))
                                 {
-                                    <button type="button" class="btn btn-sm btn-outline-primary">Make Active</button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary make-active">Make Active</button>
                                 }  
-
                                 @if ((Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Id != apiRevision.Id) && Model.ReviewContent.ActiveAPIRevision.Id != apiRevision.Id)
                                 {
-                                    <button type="button" class="btn btn-sm btn-outline-primary">Make Diff</button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary make-diff">Make Diff</button>
+                                }
+                                @if (Model.ReviewContent.DiffAPIRevision != null && apiRevision.Id == Model.ReviewContent.DiffAPIRevision.Id)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-primary clear-diff">Clear Diff</button>
                                 }
                                 @if (User.GetGitHubLogin() == apiRevision.CreatedBy)
                                 {
-                                    <button type="button" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete">Delete</button>
                                 }
                             </div>
                             <div class="apirevision-indicator-checks animate__animated animate__slideInLeft">
@@ -667,5 +670,51 @@
     </div>
     <div class="offcanvas-body">
         Content for the offcanvas goes here. You can place just about any Bootstrap component or custom elements here.
+    </div>
+</div>
+
+<div class="offcanvas offcanvas-end" tabindex="-1" id="add-apirevision-context" aria-labelledby="add-apirevision-context-label">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="add-apirevision-context-label">Add APIRevision</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
+            <div class="d-grid gap-2">
+                @if (!(LanguageServiceHelpers.MapLanguageAliases(new List<string> { "TypeSpec" })).Contains(Model.ReviewContent.Review.Language))
+                {
+                    <div class="input-group custom-file-label">
+                        <label class="input-group-text small" for="uploadRevisionFile">Select file to add</label>
+                        <input name="upload" for="upload" type="file" class="form-control" id="uploadRevisionFile">
+                    </div>
+                }
+                else
+                {
+                    <ul class="nav nav-pills nav-fill" id="typespec-pills-tab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="typespec-pills-tsp-tab" data-bs-toggle="pill" data-bs-target="#typespec-pills-tsp" type="button" role="tab" aria-controls="typespec-pills-tsp" aria-selected="true">TypeSpec</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="typespec-pills-json-tab" data-bs-toggle="pill" data-bs-target="#typespec-pills-json" type="button" role="tab" aria-controls="typespec-pills-json" aria-selected="false">Json</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="typespec-pills-tabcontent">
+                        <div class="tab-pane fade show active" id="typespec-pills-tsp" role="tabpanel" aria-labelledby="typespec-pills-tsp-tab" tabindex="0">
+                            <div class="input-group custom-file-label">
+                                <label class="input-group-text small" for="uploadRevisionFile">Select file to add</label>
+                                <input name="upload" for="upload" type="file" class="form-control" id="uploadRevisionFile">
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="typespec-pills-json" role="tabpanel" aria-labelledby="typespec-pills-json-tab" tabindex="0">
+                            <input asp-for="AddAPIRevisionFilePath" class="form-control" type="text" placeholder="Package root e.g https://github.com/Azure/azure-rest-api-specs/specification/cognitiveservices/AnomalyDetector/">
+                        </div>
+                    </div>
+                }
+                <div>
+                    <input asp-for="AddAPIRevisionLabel" class="form-control" type="text" placeholder="Enter an optional revision label">
+                </div>
+                <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
+            </div>
+        </form>
     </div>
 </div>

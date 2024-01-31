@@ -10,18 +10,69 @@ parameters:
   ArtifactName: ''
   ArtifactPath: ''
   CustomCondition: true
+  PublishType: 'pipeline'
 
 steps:
-  - task: PublishPipelineArtifact@1
-    condition: and(succeeded(), ${{ parameters.CustomCondition }})
-    displayName: 'Publish ${{ parameters.ArtifactName }} Artifacts'
-    inputs:
-      artifactName: '${{ parameters.ArtifactName }}'
-      path: '${{ parameters.ArtifactPath }}'
+  - ${{ if eq(PublishType, 'pipeline') }}:
+    - ${{if eq(variables['System.TeamProject'], 'internal')}}:
+      - task: 1ES.PublishPipelineArtifact@1
+        condition: and(succeeded(), ${{ parameters.CustomCondition }})
+        displayName: 'Publish ${{ parameters.ArtifactName }} Artifacts'
+        inputs:
+          artifact: '${{ parameters.ArtifactName }}'
+          path: '${{ parameters.ArtifactPath }}'
 
-  - task: PublishPipelineArtifact@1
-    condition: and(failed(), ${{ parameters.CustomCondition }})
-    displayName: 'Publish failed ${{ parameters.ArtifactName }} Artifacts'
-    inputs:
-      artifactName: '${{ parameters.ArtifactName }}-FailedAttempt$(System.JobAttempt)'
-      path: '${{ parameters.ArtifactPath }}'
+      - task: 1ES.PublishPipelineArtifact@1
+        condition: and(failed(), ${{ parameters.CustomCondition }})
+        displayName: 'Publish failed ${{ parameters.ArtifactName }} Artifacts'
+        inputs:
+          artifact: '${{ parameters.ArtifactName }}-FailedAttempt$(System.JobAttempt)'
+          path: '${{ parameters.ArtifactPath }}'
+    - ${{ else }}:
+      - task: PublishPipelineArtifact@1
+        condition: and(succeeded(), ${{ parameters.CustomCondition }})
+        displayName: 'Publish ${{ parameters.ArtifactName }} Artifacts'
+        inputs:
+          artifactName: '${{ parameters.ArtifactName }}'
+          path: '${{ parameters.ArtifactPath }}'
+
+      - task: PublishPipelineArtifact@1
+        condition: and(failed(), ${{ parameters.CustomCondition }})
+        displayName: 'Publish failed ${{ parameters.ArtifactName }} Artifacts'
+        inputs:
+          artifactName: '${{ parameters.ArtifactName }}-FailedAttempt$(System.JobAttempt)'
+          path: '${{ parameters.ArtifactPath }}'
+
+  - ${{ if eq(PublishType, 'build') }}:
+    - ${{if eq(variables['System.TeamProject'], 'internal')}}:
+      - task: 1ES.PublishBuildArtifact@1
+        condition: and(succeeded(), ${{ parameters.CustomCondition }})
+        displayName: 'Publish ${{ parameters.ArtifactName }} Artifacts'
+        inputs:
+          artifact: '${{ parameters.ArtifactName }}'
+          path: '${{ parameters.ArtifactPath }}'
+
+      - task: 1ES.PublishBuildArtifact@1
+        condition: and(failed(), ${{ parameters.CustomCondition }})
+        displayName: 'Publish failed ${{ parameters.ArtifactName }} Artifacts'
+        inputs:
+          artifact: '${{ parameters.ArtifactName }}-FailedAttempt$(System.JobAttempt)'
+          path: '${{ parameters.ArtifactPath }}'
+    - ${{ else }}:
+      - task: 1ES.PublishBuildArtifact@1
+        condition: and(succeeded(), ${{ parameters.CustomCondition }})
+        displayName: 'Publish ${{ parameters.ArtifactName }} Artifacts'
+        inputs:
+          artifactName: '${{ parameters.ArtifactName }}'
+          pathtoPublish: '${{ parameters.ArtifactPath }}'
+
+      - task: 1ES.PublishBuildArtifact@1
+        condition: and(failed(), ${{ parameters.CustomCondition }})
+        displayName: 'Publish failed ${{ parameters.ArtifactName }} Artifacts'
+        inputs:
+          artifactName: '${{ parameters.ArtifactName }}-FailedAttempt$(System.JobAttempt)'
+          pathtoPublish: '${{ parameters.ArtifactPath }}'
+
+  - ${{ if eq(PublishType, 'nuget') }}:
+    - ${{if eq(variables['System.TeamProject'], 'internal')}}:
+    - ${{ else }}:

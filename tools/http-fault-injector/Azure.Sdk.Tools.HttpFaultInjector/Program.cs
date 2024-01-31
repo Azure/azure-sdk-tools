@@ -42,8 +42,6 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                 kestrelOptions.Limits.KeepAliveTimeout = keepAlive;
             });
 
-            builder.Services.AddControllers();
-
             builder.Services.AddHttpLogging(logging =>
             {
                 logging.LoggingFields = HttpLoggingFields.RequestPropertiesAndHeaders | HttpLoggingFields.ResponsePropertiesAndHeaders;

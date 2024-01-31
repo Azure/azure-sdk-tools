@@ -1,4 +1,4 @@
-.create-or-alter function LatestBuild(sourceBranchFilter:string)
+.create-or-alter function with (folder='', docstring='') LatestBuild(sourceBranchFilter:string)
 { 
     Build
     | where SourceBranch matches regex sourceBranchFilter

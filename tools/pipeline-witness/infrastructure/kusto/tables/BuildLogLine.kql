@@ -11,7 +11,7 @@
     Timestamp: datetime,
     Message: string,
     EtlIngestDate: datetime
-)
+) with (folder='', docstring='')
 
 .create-or-alter table BuildLogLine ingestion json mapping 'BuildLogLine_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },

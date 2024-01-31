@@ -30,7 +30,7 @@
     OrganizationId: string,
     Data: string,
     EtlIngestDate: datetime
-)
+) with (folder='', docstring='')
 
 .create-or-alter table TestRun ingestion json mapping 'TestRun_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },

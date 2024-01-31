@@ -1,4 +1,4 @@
-.create-or-alter materialized-view ManagedDefinition on table BuildDefinition
+.create-or-alter materialized-view with (folder='', docstring='') ManagedDefinition on table BuildDefinition
 {
 BuildDefinition
     | where Variables contains "meta"

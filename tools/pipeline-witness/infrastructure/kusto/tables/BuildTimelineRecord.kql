@@ -33,7 +33,7 @@
     Type: string,
     Issues: string,
     EtlIngestDate: datetime
-)
+) with (folder='', docstring='')
 
 .create-or-alter table BuildTimelineRecord ingestion json mapping 'BuildTimelineRecord_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },

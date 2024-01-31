@@ -12,7 +12,7 @@
     RecordFinishTime: datetime,
     ErrorClassification: string,
     EtlIngestDate: datetime
-)
+) with (folder='', docstring='')
 
 .create-or-alter table BuildFailure ingestion json mapping 'BuildFailure_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },

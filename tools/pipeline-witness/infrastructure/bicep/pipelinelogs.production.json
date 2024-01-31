@@ -6,7 +6,7 @@
       "value": "westus2"
     },
     "storageAccountName": {
-      "value": "pipelinelogs"
+      "value": "azsdkengsyspipelinelogs"
     },
     "kustoClusterName": {
       "value": "azsdkengsys"

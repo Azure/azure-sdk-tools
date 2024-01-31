@@ -109,7 +109,7 @@ resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
 }
 
 // Event Hub
-resource eventhubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
+resource eventHubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
   name: storageAccountName
   location: location
   sku: {
@@ -195,7 +195,7 @@ resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2
 }]
 
 resource eventHubs 'Microsoft.EventHub/namespaces/eventhubs@2022-01-01-preview' = [for (table, i) in tables: {
-  parent: eventhubNamespace
+  parent: eventHubNamespace
   name: table.container
   properties: {
     messageRetentionInDays: 7

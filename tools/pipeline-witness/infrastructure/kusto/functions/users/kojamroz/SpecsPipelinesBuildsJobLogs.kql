@@ -1,12 +1,4 @@
-.create-or-alter function with (
-    folder='users/kojamroz', 
-    docstring="Build logs for specific ADO job in the specs pipelines builds. See source for details."
-    )
-    SpecsPipelinesBuildsJobLogs(
-        jobName:string, 
-        start:datetime, 
-        end:datetime, 
-        buildId:string = "*")
+.create-or-alter function with (folder='users/kojamroz', docstring='Build logs for specific ADO job in the specs pipelines builds. See source for details.') SpecsPipelinesBuildsJobLogs(jobName:string, ['start']:datetime, end:datetime, buildId:string="*")
 {
 // ABOUT THIS FUNCTION
 //

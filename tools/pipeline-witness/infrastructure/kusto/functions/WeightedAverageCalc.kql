@@ -1,4 +1,4 @@
-.create-or-alter function WeightedAverageCalc(startTimeFrame:datetime, endTimeFrame:datetime, platformFilter:dynamic=dynamic(null), serviceFilter:dynamic=dynamic(null), buildTypeFilter:dynamic=dynamic(null))
+.create-or-alter function with (folder='', docstring='') WeightedAverageCalc(startTimeFrame:datetime, endTimeFrame:datetime, platformFilter:dynamic=dynamic(null), serviceFilter:dynamic=dynamic(null), buildTypeFilter:dynamic=dynamic(null))
 {
     let ['language']=dynamic(null);
     let buildCountScorePercent = 25;

@@ -234,7 +234,7 @@ resource eventGridSubscriptions 'Microsoft.EventGrid/systemTopics/eventSubscript
 
 resource kustoDataConnections 'Microsoft.Kusto/Clusters/Databases/DataConnections@2022-02-01' = [for (table, i) in tables: {
   parent: kustoCluster::database
-  name: table.container
+  name: '${kustoDatabaseName}-${table.container}'
   location: location
   kind: 'EventGrid'
   properties: {

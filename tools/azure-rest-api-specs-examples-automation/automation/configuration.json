@@ -1,0 +1,97 @@
+{
+  "sdkExample": {
+    "repository": "https://github.com/Azure/azure-rest-api-specs-examples"
+  },
+  "sdkConfigurations": [
+    {
+      "name": "azure-sdk-for-java",
+      "language": "java",
+      "repository": "https://github.com/Azure/azure-sdk-for-java",
+      "releaseTag": {
+        "regexMatch": "^(?!azure-resourcemanager.*_.+-hybrid)azure-resourcemanager.*_.+$",
+        "packageRegexGroup": "(.*)_.*",
+        "versionRegexGroup": ".*_(.*)"
+      },
+      "ignoredPackages": [
+        "azure-resourcemanager-appplatform",
+        "azure-resourcemanager-appservice",
+        "azure-resourcemanager-authorization",
+        "azure-resourcemanager-cdn",
+        "azure-resourcemanager-compute",
+        "azure-resourcemanager-containerinstance",
+        "azure-resourcemanager-containerregistry",
+        "azure-resourcemanager-containerservice",
+        "azure-resourcemanager-cosmos",
+        "azure-resourcemanager-dns",
+        "azure-resourcemanager-eventhubs",
+        "azure-resourcemanager-keyvault",
+        "azure-resourcemanager-monitor",
+        "azure-resourcemanager-msi",
+        "azure-resourcemanager-network",
+        "azure-resourcemanager-privatedns",
+        "azure-resourcemanager-redis",
+        "azure-resourcemanager-resources",
+        "azure-resourcemanager-search",
+        "azure-resourcemanager-servicebus",
+        "azure-resourcemanager-sql",
+        "azure-resourcemanager-storage",
+        "azure-resourcemanager-trafficmanager"
+      ],
+      "script": {
+        "run": "java/main.sh"
+      }
+    },
+    {
+      "name": "azure-sdk-for-go",
+      "language": "go",
+      "repository": "https://github.com/Azure/azure-sdk-for-go",
+      "releaseTag": {
+        "regexMatch": "^sdk/resourcemanager/.*$",
+        "packageRegexGroup": "(.*)/.*",
+        "versionRegexGroup": ".*/(.*)"
+      },
+      "script": {
+        "run": "go/main.sh"
+      }
+    },
+    {
+      "name": "azure-sdk-for-js",
+      "language": "js",
+      "repository": "https://github.com/Azure/azure-sdk-for-js",
+      "releaseTag": {
+        "regexMatch": "^@azure\/arm-.*$|^@azure-rest\/arm-.*$",
+        "packageRegexGroup": "(.*)_.*",
+        "versionRegexGroup": ".*_(.*)"
+      },
+      "script": {
+        "run": "js/main.sh"
+      }
+    },
+    {
+      "name": "azure-sdk-for-net",
+      "language": "dotnet",
+      "repository": "https://github.com/Azure/azure-sdk-for-net",
+      "releaseTag": {
+        "regexMatch": "^Azure.ResourceManager.*_.+$",
+        "packageRegexGroup": "(.*)_.*",
+        "versionRegexGroup": ".*_(.*)"
+      },
+      "script": {
+        "run": "dotnet/main.sh"
+      }
+    },
+    {
+      "name": "azure-sdk-for-python",
+      "language": "python",
+      "repository": "https://github.com/Azure/azure-sdk-for-python",
+      "releaseTag": {
+        "regexMatch": "^azure-mgmt-.*_.+$",
+        "packageRegexGroup": "(.*)_.*",
+        "versionRegexGroup": ".*_(.*)"
+      },
+      "script": {
+        "run": "python/main.sh"
+      }
+    }
+  ]
+}

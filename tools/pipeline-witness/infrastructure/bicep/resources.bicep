@@ -32,6 +32,10 @@ var tables = [
     name: 'TestRun'
     container: 'testruns'
   }
+  {
+    name: 'TestRunResult'
+    container: 'testrunresults'
+  }
 ]
 
 var kustoScript = loadTextContent('../artifacts/merged.kql')
@@ -41,7 +45,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: storageAccountName
   location: location
   sku: {
-    name: 'Standard_RAGRS'
+    name: 'Standard_LRS'
   }
   kind: 'StorageV2'
   properties: {

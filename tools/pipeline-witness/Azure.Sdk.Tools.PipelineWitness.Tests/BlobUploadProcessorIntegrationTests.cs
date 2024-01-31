@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
         [EnvironmentConditionalSkipFact]
         public async Task BasicBlobProcessInvokesSuccessfully()
         {
-            var buildLogProvider = new BuildLogProvider(logger: null, VisualStudioConnection);
+            var buildLogProvider = new BuildLogProvider(logger: new NullLogger<BuildLogProvider>(), VisualStudioConnection);
             var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS"));
             var buildHttpClient = VisualStudioConnection.GetClient<BuildHttpClient>();
             var testResultsBuiltClient = VisualStudioConnection.GetClient<TestResultsHttpClient>();

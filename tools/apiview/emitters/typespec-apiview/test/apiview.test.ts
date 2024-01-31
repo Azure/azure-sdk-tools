@@ -98,6 +98,8 @@ describe("apiview: tests", () => {
   
         model StringThing is Thing<string>;
   
+        model NamedStringThing is Thing<T = string>;
+
         model Page<T = string> {
           size: int16;
           item: T[];
@@ -138,6 +140,8 @@ describe("apiview: tests", () => {
           prop: X;
         }
   
+        model NamedStringThing is Thing<T = string> {}
+
         model Page<T = string> {
           size: int16;
           item: T[];
@@ -148,7 +152,7 @@ describe("apiview: tests", () => {
         }
   
         model StringThing is Thing<string> {}
-  
+
         model Thing<T> {
           property: T;
         }
@@ -258,7 +262,7 @@ describe("apiview: tests", () => {
           species: string;
         }
   
-        @@doc(Animal, "My doc")
+        @@doc(Animal, "My doc");
       }
       `;
       const expect = `
@@ -497,6 +501,23 @@ describe("apiview: tests", () => {
             };
           }
         >;
+
+        @route("/named")
+        op NamedGetFoo is ResourceRead<
+          TResource = {
+            @query
+            @doc("The name")
+            name: string,
+            ...FooParams
+          },
+          TParams = {
+            parameters: {
+              @query
+              @doc("The collection id.")
+              fooId: string
+            };
+          }
+        >;
       }`;
       const expect = `
       namespace Azure.Test {
@@ -516,7 +537,25 @@ describe("apiview: tests", () => {
               };
           }
         >;
-  
+
+        @route("/named")
+        op NamedGetFoo is ResourceRead<
+          TResource = {
+            @query
+            @doc("The name")
+            name: string;
+            ...FooParams;
+          },
+          TParams = {
+            parameters:
+              {
+                @query
+                @doc("The collection id.")
+                fooId: string;
+              };
+          }
+        >;
+
         op ResourceRead<TResource, TParams>(
           resource: TResource,
           params: TParams

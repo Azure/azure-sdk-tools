@@ -48,6 +48,8 @@ namespace ApiView
 
         public string PackageVersion { get; set; }
 
+        public string CrossLanguagePackageId { get; set; }
+
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
 
         public List<CodeFileToken[]> LeafSections { get; set; }

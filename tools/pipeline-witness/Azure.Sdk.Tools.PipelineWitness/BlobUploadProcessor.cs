@@ -1,10 +1,7 @@
-﻿using System.Diagnostics;
-
 namespace Azure.Sdk.Tools.PipelineWitness
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.IO;
     using System.IO.Compression;
     using System.Linq;
@@ -18,15 +15,12 @@ namespace Azure.Sdk.Tools.PipelineWitness
     using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
     using Azure.Storage.Blobs;
     using Azure.Storage.Blobs.Models;
-    using Azure.Storage.Queues;
 
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Options;
     using Microsoft.TeamFoundation.Build.WebApi;
     using Microsoft.TeamFoundation.TestManagement.WebApi;
-    using Microsoft.VisualStudio.Services.Common;
     using Microsoft.VisualStudio.Services.TestResults.WebApi;
-
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
     using Newtonsoft.Json.Serialization;
@@ -40,6 +34,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         private const string BuildFailuresContainerName = "buildfailures";
         private const string PipelineOwnersContainerName = "pipelineowners";
         private const string TestRunsContainerName = "testruns";
+        private const string TestResultsContainerName = "testrunresults";
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
@@ -57,6 +52,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         private readonly BlobContainerClient buildsContainerClient;
         private readonly BlobContainerClient buildTimelineRecordsContainerClient;
         private readonly BlobContainerClient testRunsContainerClient;
+        private readonly BlobContainerClient testResultsContainerClient;
         private readonly BlobContainerClient buildDefinitionsContainerClient;
         private readonly BlobContainerClient buildFailuresContainerClient;
         private readonly BlobContainerClient pipelineOwnersContainerClient; 
@@ -89,6 +85,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
             this.buildFailuresContainerClient = blobServiceClient.GetBlobContainerClient(BuildFailuresContainerName);
             this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerName);
+            this.testResultsContainerClient = blobServiceClient.GetBlobContainerClient(TestResultsContainerName);
             this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
             this.pipelineOwnersContainerClient = blobServiceClient.GetBlobContainerClient(PipelineOwnersContainerName);
             this.failureAnalyzer = failureAnalyzer;
@@ -804,6 +801,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                         foreach (var testRun in page)
                         {
                             await UploadTestRunBlobAsync(account, build, testRun);
+                            await UploadTestRunResultBlobAsync(account, build, testRun);
                         }
 
                         continuationToken = page.ContinuationToken;
@@ -883,6 +881,62 @@ namespace Azure.Sdk.Tools.PipelineWitness
             catch (Exception ex)
             {
                 this.logger.LogError(ex, "Error processing test run blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
+                throw;
+            }
+        }
+
+        private async Task UploadTestRunResultBlobAsync(string account, Build build, TestRun testRun)
+        {
+            try
+            {
+                var blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl";
+                var blobClient = this.testResultsContainerClient.GetBlobClient(blobPath);
+
+                if (await blobClient.ExistsAsync())
+                {
+                    this.logger.LogInformation("Skipping existing test results blob for build {BuildId}, test run {RunId}", build.Id, testRun.Id);
+                    return;
+                }
+
+                var data = await testResultsClient.GetTestResultsAsync(build.Project.Id, testRun.Id, top: testRun.TotalTests);
+
+                var builder = new StringBuilder();
+
+                foreach(var record in data)
+                {
+                    builder.AppendLine(JsonConvert.SerializeObject(
+                        new
+                        {
+                            OrganizationName = account,
+                            ProjectId = build.Project?.Id,
+                            ProjectName = build.Project?.Name,
+                            BuildDefinitionId = build.Definition?.Id,
+                            BuildDefinitionPath = build.Definition?.Path,
+                            BuildDefinitionName = build.Definition?.Name,
+                            BuildId = build.Id,
+                            TestRunId = testRun.Id,
+                            TestCaseId = record.Id,
+                            TestCaseReferenceId = record.TestCaseReferenceId,
+                            TestCaseTitle = record.TestCaseTitle,
+                            Outcome = record.Outcome,
+                            Priority = record.Priority,
+                            AutomatedTestName = record.AutomatedTestName,
+                            AutomatedTestStorageName = record.AutomatedTestStorage,
+                            FailingSince = record.FailingSince,
+                            FailureType = record.FailureType,
+                            StartedDate = record.StartedDate,
+                            CompletedDate = record.CompletedDate,
+                            EtlIngestDate = DateTime.UtcNow
+                        }, jsonSettings)
+                    );
+                }
+
+                await blobClient.UploadAsync(new BinaryData(builder.ToString()));
+
+            }
+            catch (Exception ex)
+            {
+                this.logger.LogError(ex, "Error processing test results for build {BuildId}", build.Id);
                 throw;
             }
         }

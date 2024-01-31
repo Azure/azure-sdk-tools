@@ -9,6 +9,7 @@ public enum TemplateType
     Stage,
     Job,
     Step,
+    ArtifactTask,
     Converted,
     Ignore
 }
@@ -21,7 +22,13 @@ public class BaseTemplate
     [YamlMember(Alias = "parameters", Order = 1)]
     public List<object>? Parameters { get; set; }
 
-    [YamlMember(Alias = "variables", Order = 2)]
+    [YamlMember(Alias = "trigger", Order = 2)]
+    public object? Trigger { get; set; }
+
+    [YamlMember(Alias = "pr", Order = 3)]
+    public object? PullRequest { get; set; }
+
+    [YamlMember(Alias = "variables", Order = 4)]
     public List<object>? Variables { get; set; }
 
     private ISerializer Serializer { get; } = new SerializerBuilder()
@@ -46,8 +53,11 @@ public class StageTemplate : BaseTemplate
     [YamlMember(Alias = "stages")]
     public List<Dictionary<string, object>>? Stages { get; set; }
 
-    [YamlMember(Alias = "extends", Order = 10)]
+    [YamlMember(Alias = "extends", Order = 11)]
     public Dictionary<string, object>? Extends { get; set; }
+
+    [YamlMember(Alias = "pool", Order = 10)]
+    public Dictionary<string, object>? Pool { get; set; }
 }
 
 public class Comment
@@ -124,8 +134,8 @@ public class PipelineTemplateConverter
         var deserializer = new DeserializerBuilder().Build();
         var contents = File.ReadAllText(file.FullName);
 
-        var templateType = GetTemplateType(contents);
-        if (templateType == TemplateType.Ignore)
+        var templateTypes = GetTemplateType(contents);
+        if (templateTypes.Contains(TemplateType.Ignore))
         {
             return;
         }
@@ -133,16 +143,22 @@ public class PipelineTemplateConverter
         var comments = BackupComments(contents);
         var output = "";
 
-        if (templateType == TemplateType.Stage)
+        if (templateTypes.Contains(TemplateType.Stage))
         {
+            Console.WriteLine($"Converting {file.FullName} stage template");
             var template = deserializer.Deserialize<StageTemplate>(contents);
             ConvertStageTemplate(template);
             output = template.ToString();
+            output = RestoreComments(output, comments);
+            output = AddTemplateWhitespace(output);
+            output = FixTemplateSpecialCharacters(output);
         }
 
-        output = RestoreComments(output, comments);
-        output = AddTemplateWhitespace(output);
-        output = FixTemplateSpecialCharacters(output);
+        if (templateTypes.Contains(TemplateType.ArtifactTask))
+        {
+            Console.WriteLine($"Converting {file.FullName} publish tasks");
+            output = ConvertPublishTasks(output);
+        }
 
         if (overwrite)
         {
@@ -152,30 +168,45 @@ public class PipelineTemplateConverter
         Console.WriteLine(output);
     }
 
-    public static TemplateType GetTemplateType(string template)
+    public static List<TemplateType> GetTemplateType(string template)
     {
         var convertedRegex = new Regex(@".*1ESPipelineTemplates.*");
-        var stageRegex = new Regex(@".*stages.*$", RegexOptions.Multiline);
+        var stageRegex = new Regex(@".*stages:.*$", RegexOptions.Multiline);
         var jobRegex = new Regex(@"^jobs:.*$", RegexOptions.Multiline);
         var stepRegex = new Regex(@"^steps:.*$", RegexOptions.Multiline);
+        var publishRegex = new Regex(@"^PublishPipelineArtifact@1:.*$", RegexOptions.Multiline);
+        var publishBuildRegex = new Regex(@"^PublishBuildArtifact@1:.*$", RegexOptions.Multiline);
+        var nugetRegex = new Regex(@"^NugetCommand@2:.*$", RegexOptions.Multiline);
+
+        var types = new List<TemplateType>();
 
         if (convertedRegex.IsMatch(template))
         {
-            return TemplateType.Converted;
+            types.Add(TemplateType.Converted);
         }
         if (stageRegex.IsMatch(template))
         {
-            return TemplateType.Stage;
+            types.Add(TemplateType.Stage);
         }
         if (jobRegex.IsMatch(template))
         {
-            return TemplateType.Job;
+            types.Add(TemplateType.Job);
         }
         if (stepRegex.IsMatch(template))
         {
-            return TemplateType.Step;
+            types.Add(TemplateType.Step);
         }
-        return TemplateType.Ignore;
+        if (publishRegex.IsMatch(template) || publishBuildRegex.IsMatch(template) || nugetRegex.IsMatch(template))
+        {
+            types.Add(TemplateType.ArtifactTask);
+        }
+
+        if (types.Count == 0)
+        {
+            types.Add(TemplateType.Ignore);
+        }
+
+        return types;
     }
 
     public static List<Comment> BackupComments(string template)
@@ -269,9 +300,15 @@ public class PipelineTemplateConverter
     public static string AddTemplateWhitespace(string template)
     {
         var lines = new List<string>();
+        var addWhitespaceForLines = new List<string>
+        {
+            "extends",
+            "parameters",
+            "trigger",
+        };
         foreach (var line in template.Split(Environment.NewLine))
         {
-            if (line.StartsWith("extends") || line.StartsWith("parameters"))
+            if (addWhitespaceForLines.Any(l => line.StartsWith(l)))
             {
                 lines.Add("");
             }
@@ -281,8 +318,44 @@ public class PipelineTemplateConverter
         return string.Join(Environment.NewLine, lines);
     }
 
-    public static void ConvertJobTemplate(JobTemplate template)
+    public static string ConvertPublishTasks(string template)
     {
+        var lines = template.Split(Environment.NewLine);
+        for (var i = 0; i < lines.Length; i++)
+        {
+            if (lines[i].Contains("task: PublishPipelineArtifact@1"))
+            {
+                lines[i] = lines[i].Replace("task: PublishPipelineArtifact@1", "task: 1ES.PublishPipelineArtifact@1");
+                while (!lines[i].Contains("artifactName:"))
+                {
+                    i++;
+                }
+                lines[i] = lines[i].Replace("artifactName:", "artifact:");
+            }
+            if (lines[i].Contains("task: PublishBuildArtifact@1"))
+            {
+                lines[i] = lines[i].Replace("task: PublishBuildArtifact@1", "task: 1ES.PublishBuildArtifact@1");
+                var changes = 0;
+                while (true)
+                {
+                    i++;
+                    if (lines[i].Contains("artifactName:"))
+                    {
+                        lines[i] = lines[i].Replace("artifactName:", "artifact:");
+                    }
+                    else if (lines[i].Contains("pathtoPublish:"))
+                    {
+                        lines[i] = lines[i].Replace("pathtoPublish:", "path:");
+                    }
+                    if (changes >= 2)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+        return string.Join(Environment.NewLine, lines);
     }
 
     public static void ConvertStageTemplate(StageTemplate template)
@@ -319,7 +392,7 @@ public class PipelineTemplateConverter
         template.Extends = extends;
         template.Extends.Add("${{ if eq(variables['System.TeamProject'], 'internal') }}:", new Dictionary<string, object>
         {
-            ["template"] = "v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates",
+            ["template"] = "v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates",
         });
         template.Extends.Add("${{ else }}:", new Dictionary<string, object>
         {

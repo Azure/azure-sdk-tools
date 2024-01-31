@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         private const string BuildFailuresContainerName = "buildfailures";
         private const string PipelineOwnersContainerName = "pipelineowners";
         private const string TestRunsContainerName = "testruns";
-        private const string TestResultsContainerName = "testresults";
+        private const string TestResultsContainerName = "testrunresults";
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
         private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
@@ -898,7 +898,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     return;
                 }
 
-                var data = await testResultsClient.GetTestResultsAsync(build.Project.Id, testRun.Id);
+                var data = await testResultsClient.GetTestResultsAsync(build.Project.Id, testRun.Id, top: testRun.TotalTests);
 
                 var builder = new StringBuilder();
 

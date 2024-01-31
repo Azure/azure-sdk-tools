@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         private readonly BlobContainerClient buildsContainerClient;
         private readonly BlobContainerClient buildTimelineRecordsContainerClient;
         private readonly BlobContainerClient testRunsContainerClient;
-        private readonly BlobContainerClient testResultContainerClient;
+        private readonly BlobContainerClient testResultsContainerClient;
         private readonly BlobContainerClient buildDefinitionsContainerClient;
         private readonly BlobContainerClient buildFailuresContainerClient;
         private readonly BlobContainerClient pipelineOwnersContainerClient; 
@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
             this.buildFailuresContainerClient = blobServiceClient.GetBlobContainerClient(BuildFailuresContainerName);
             this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerName);
-            this.testResultContainerClient = blobServiceClient.GetBlobContainerClient(TestResultsContainerName);
+            this.testResultsContainerClient = blobServiceClient.GetBlobContainerClient(TestResultsContainerName);
             this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
             this.pipelineOwnersContainerClient = blobServiceClient.GetBlobContainerClient(PipelineOwnersContainerName);
             this.failureAnalyzer = failureAnalyzer;
@@ -890,7 +890,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             try
             {
                 var blobPath = $"{build.Project.Name}/{testRun.CompletedDate:yyyy/MM/dd}/{testRun.Id}.jsonl";
-                var blobClient = this.testResultContainerClient.GetBlobClient(blobPath);
+                var blobClient = this.testResultsContainerClient.GetBlobClient(blobPath);
 
                 if (await blobClient.ExistsAsync())
                 {

@@ -30,5 +30,5 @@ Deploying resources to:
 
 "@
 
-Write-Host "> az deployment sub create --template-file ./bicep/resourceGroup.bicep --parameters $parametersFile --location $location --name $deploymentName --verbose"
-az deployment sub create --template-file ./bicep/resourceGroup.bicep --parameters $parametersFile --location $location --name $deploymentName --verbose
+Write-Host "> az deployment sub create --template-file ./bicep/resourceGroup.bicep --parameters $parametersFile --location $location --name $deploymentName"
+az deployment sub create --template-file ./bicep/resourceGroup.bicep --parameters $parametersFile --location $location --name $deploymentName

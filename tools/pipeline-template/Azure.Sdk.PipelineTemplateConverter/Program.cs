@@ -2,6 +2,7 @@ using System.CommandLine;
 using YamlDotNet.Serialization;
 using System.Text.RegularExpressions;
 using System.ComponentModel.DataAnnotations;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace Azure.Sdk.PipelineTemplateConverter;
 
@@ -72,72 +73,122 @@ public class Comment
 
 public class PublishArtifactTask
 {
-    public string PublishType { get; set; } = "";
-    public int Indent { get; set; } = 0;
-
-    [YamlMember(Alias = "task")]
-    public string? Task { get; set; } = "";
-
-    [YamlMember(Alias = "displayName")]
-    public string? DisplayName { get; set; } = "";
-
-    [YamlMember(Alias = "inputs")]
-    public Inputs TaskInputs { get; set; } = new Inputs();
-
-    public class Inputs
+    public string PublishType
     {
-
-        [YamlMember(Alias = "artifact")]
-        public string? Artifact { get; set; } = "";
-        [YamlMember(Alias = "artifactName")]
-        public string? ArtifactName { get; set; } = "";
-
-        [YamlMember(Alias = "path")]
-        public string? Path { get; set; } = "";
-        [YamlMember(Alias = "pathtoPublish")]
-        public string? PathtoPublish { get; set; } = "";
-
-        // Nuget publish task options
-        [YamlMember(Alias = "packagesToPush")]
-        public string? PackagesToPush { get; set; } = "";
-        [YamlMember(Alias = "packageParentPath")]
-        public string? PackageParentPath { get; set; } = "";
-        [YamlMember(Alias = "nugetFeedType")]
-        public string? NugetFeedType { get; set; } = "";
-        [YamlMember(Alias = "publishVstsFeed")]
-        public string? PublishVstsFeed { get; set; } = "";
+        get
+        {
+            if (Task == "PublishPipelineArtifact@1")
+            {
+                return "pipeline";
+            }
+            if (Task == "PublishBuildArtifact@1")
+            {
+                return "build";
+            }
+            if (Task == "NugetCommand@2")
+            {
+                return "nuget";
+            }
+            return "";
+        }
     }
 
-    public string Convert()
-    {
-        var output =  Indent + $"- template: /eng/common/pipelines/templates/steps/publish-artifact.yml" + Environment.NewLine +
-                      Indent + $"  parameters:" + Environment.NewLine +
-                      Indent + $"    PublishType: {PublishType}" + Environment.NewLine +
-                      Indent + $"    ArtifactName: {TaskInputs.Artifact ?? TaskInputs.ArtifactName}" + Environment.NewLine +
-                      Indent + $"    ArtifactPath: {TaskInputs.Path ?? TaskInputs.PathtoPublish}" + Environment.NewLine;
+    [YamlMember()]
+    public string? Task { get; set; }
 
+    [YamlMember()]
+    public string? DisplayName { get; set; }
+
+    [YamlMember()]
+    public string? Condition { get; set; }
+
+    [YamlMember()]
+    public TaskInputs Inputs { get; set; } = new TaskInputs();
+
+    public string ArtifactName
+    {
+        get
+        {
+            return Inputs.PackagesToPush ?? Inputs.Artifact ?? Inputs.ArtifactName ?? "";
+        }
+    }
+
+    public string ArtifactPath
+    {
+        get
+        {
+            if (Inputs.PackageParentPath != null)
+            {
+                return Inputs.PackageParentPath;
+            }
+            if (Inputs.PackagesToPush != null)
+            {
+                // Hack since packagesToPush is required by the 1es nuget task
+                // This assumes ALL our nuget paths use globs
+                return Inputs.PackagesToPush.Split("/*")[0];
+            }
+            return Inputs.TargetPath ?? Inputs.PathToPublish ?? "";
+        }
+    }
+
+    public class TaskInputs
+    {
+
+        [YamlMember()]
+        public string? Artifact { get; set; }
+        [YamlMember()]
+        public string? ArtifactName { get; set; }
+
+        [YamlMember()]
+        public string? TargetPath { get; set; }
+        [YamlMember()]
+        public string? PathToPublish { get; set; }
+
+        // Nuget publish task options
+        [YamlMember()]
+        public string? PackagesToPush { get; set; }
+        [YamlMember()]
+        public string? PackageParentPath { get; set; }
+        [YamlMember()]
+        public string? NugetFeedType { get; set; }
+        [YamlMember()]
+        public string? PublishVstsFeed { get; set; }
+        // Throwaway properties
+        [YamlMember()]
+        public string? Command { get; set; }
+        [YamlMember()]
+        public string? PublishFeedCredentials { get; set; }
+    }
+
+    public List<string> Convert()
+    {
+        var lines = new List<string>
+        {
+            $"- template: /eng/common/pipelines/templates/steps/publish-artifact.yml",
+            $"  parameters:",
+            $"    PublishType: {PublishType}",
+            $"    ArtifactName: {ArtifactName}",
+            $"    ArtifactPath: {ArtifactPath}",
+        };
+
+        if (Inputs.NugetFeedType != null)
+        {
+            lines.Add($"    NugetFeedType: {Inputs.NugetFeedType}");
+        }
+        if (Inputs.PublishVstsFeed != null)
+        {
+            lines.Add($"    PublishVstsFeed: {Inputs.PublishVstsFeed}");
+        }
         if (DisplayName != null)
         {
-            output += Indent + $"    DisplayName: {DisplayName}" + Environment.NewLine;
+            lines.Add($"    DisplayName: {DisplayName}");
         }
-        if (TaskInputs.PackagesToPush != null)
+        if (Condition != null)
         {
-            output += Indent + $"    PackagesToPush: {TaskInputs.PackagesToPush}" + Environment.NewLine;
-        }
-        if (TaskInputs.PackageParentPath != null)
-        {
-            output += Indent + $"    PackageParentPath: {TaskInputs.PackageParentPath}" + Environment.NewLine;
-        }
-        if (TaskInputs.NugetFeedType != null)
-        {
-            output += Indent + $"    NugetFeedType: {TaskInputs.NugetFeedType}" + Environment.NewLine;
-        }
-        if (TaskInputs.PublishVstsFeed != null)
-        {
-            output += Indent + $"    PublishVstsFeed: {TaskInputs.PublishVstsFeed}" + Environment.NewLine;
+            lines.Add($"    Condition: {Condition}");
         }
 
-        return output;
+        return lines;
     }
 }
 
@@ -417,18 +468,29 @@ public class PipelineTemplateConverter
 
             var yaml = "";
             var indent = lines[i][..^lines[i].TrimStart(' ').Length].Length;
-            var currIndent = int.MaxValue;
-            while (i < lines.Length && currIndent > indent)
-            {
-                yaml += lines[i] + Environment.NewLine;
+            var currIndent = indent;
+
+            do {
+                // The publish tasks have way to much casing variation across our yaml files
+                // (e.g. PathToPublish, pathtoPublish)
+                // so force lowercase the key here. YamlDotNet only supports lowercasing
+                // class properties and not yaml keys.
+                var lowercaseKey = lines[i].TrimStart(' ').Split(":")[0].ToLower();
+                var line = new string(' ', currIndent) + lowercaseKey + ": " + string.Join("", lines[i].TrimStart(' ').Split(":")[1..]);
+                yaml += line + Environment.NewLine;
                 i++;
-                currIndent = lines[i][..^lines[i].TrimStart(' ').Length].Length;
-            }
+                if (i < lines.Length)
+                {
+                    currIndent = lines[i][..^lines[i].TrimStart(' ').Length].Length;
+                }
+            } while (i < lines.Length && currIndent > indent);
 
-            var task = new DeserializerBuilder().Build().Deserialize<PublishArtifactTask[]>(yaml);
-            task[0].Indent = indent;
+            var task = new DeserializerBuilder()
+                            .WithNamingConvention(LowerCaseNamingConvention.Instance)
+                            .Build()
+                            .Deserialize<PublishArtifactTask[]>(yaml);
 
-            foreach (var line in task[0].Convert().Split(Environment.NewLine))
+            foreach (var line in task[0].Convert())
             {
                 linesOut.Add(new string(' ', indent) + line);
             }
@@ -475,7 +537,7 @@ public class PipelineTemplateConverter
         });
         template.Extends.Add("${{ else }}:", new Dictionary<string, object>
         {
-            ["template"] = "stage-redirect.yml",
+            ["template"] = "v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates",
         });
         template.Extends.Add("parameters", parameters);
 

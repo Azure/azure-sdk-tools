@@ -68,4 +68,97 @@ extends:
         var template = PipelineTemplateConverter.FixTemplateSpecialCharacters(contents);
         template.Should().Be(expected);
     }
+
+    [Fact]
+    public void TestConvertPublishTasksPipelineArtifact()
+    {
+        var contents = @"
+          - task: PublishPipelineArtifact@1
+            condition: succeeded()
+            displayName: Test Publish
+            inputs:
+              artifactName: drop
+              targetPath: $(Build.ArtifactStagingDirectory)";
+        var expected = @"
+          - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+            parameters:
+              PublishType: pipeline
+              ArtifactName: drop
+              ArtifactPath: $(Build.ArtifactStagingDirectory)
+              DisplayName: Test Publish
+              Condition: succeeded()";
+
+        var output = PipelineTemplateConverter.ConvertPublishTasks(contents);
+        output.Should().Be(expected);
+    }
+
+    [Fact]
+    public void TestConvertPublishTasksBuildArtifact()
+    {
+        var contents = @"
+          - task: PublishBuildArtifact@1
+            condition: succeeded()
+            displayName: Test Publish
+            inputs:
+              artifactName: drop
+              pathtoPublish: $(Build.ArtifactStagingDirectory)";
+        var expected = @"
+          - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+            parameters:
+              PublishType: build
+              ArtifactName: drop
+              ArtifactPath: $(Build.ArtifactStagingDirectory)
+              DisplayName: Test Publish
+              Condition: succeeded()";
+
+        var output = PipelineTemplateConverter.ConvertPublishTasks(contents);
+        output.Should().Be(expected);
+    }
+
+    [Fact]
+    public void TestConvertPublishTasksNugetCommand()
+    {
+        var contents = @"
+          - task: NugetCommand@2
+            condition: succeeded()
+            displayName: Test Publish
+            inputs:
+              command: push
+              packagesToPush: '$(Pipeline.Workspace)/packages/**/*.nupkg'
+              nuGetFeedType: external
+              publishFeedCredentials: Nuget.org";
+        var expected = @"
+          - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+            parameters:
+              PublishType: nuget
+              ArtifactName: $(Pipeline.Workspace)/packages/**/*.nupkg
+              ArtifactPath: $(Pipeline.Workspace)/packages
+              NugetFeedType: external
+              DisplayName: Test Publish
+              Condition: succeeded()";
+
+        var output = PipelineTemplateConverter.ConvertPublishTasks(contents);
+        output.Should().Be(expected);
+
+        contents = @"
+          - task: NugetCommand@2
+            condition: succeeded()
+            displayName: Test Publish
+            inputs:
+              command: push
+              packagesToPush: '$(Pipeline.Workspace)/packages/**/*.nupkg'
+              publishVstsFeed: $(DevopsFeedId)";
+        expected = @"
+          - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
+            parameters:
+              PublishType: nuget
+              ArtifactName: $(Pipeline.Workspace)/packages/**/*.nupkg
+              ArtifactPath: $(Pipeline.Workspace)/packages
+              PublishVstsFeed: $(DevopsFeedId)
+              DisplayName: Test Publish
+              Condition: succeeded()";
+
+        output = PipelineTemplateConverter.ConvertPublishTasks(contents);
+        output.Should().Be(expected);
+    }
 }

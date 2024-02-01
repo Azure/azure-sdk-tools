@@ -79,7 +79,7 @@ extends:
   ${{ if eq(variables['System.TeamProject'], 'internal') }}:
     template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   ${{ else }}:
-    template: stage-redirect.yml
+    template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
     ${{ if eq(variables['System.TeamProject'], 'internal') }}:
       sdl:

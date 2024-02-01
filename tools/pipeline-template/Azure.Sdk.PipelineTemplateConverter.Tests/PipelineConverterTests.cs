@@ -37,7 +37,11 @@ public class PipelineConverterTests
     {
         var contents = File.ReadAllText("./assets/net.archetype-sdk-client.before.yml");
         var templateType = PipelineTemplateConverter.GetTemplateType(contents);
-        templateType.Should().Be(TemplateType.Stage);
+        templateType.Should().Equal(new List<TemplateType>{ TemplateType.Stage });
+
+        contents = File.ReadAllText("./assets/net.aggregate-reports.before.yml");
+        templateType = PipelineTemplateConverter.GetTemplateType(contents);
+        templateType.Should().Equal(new List<TemplateType>{ TemplateType.Stage, TemplateType.ArtifactTask });
     }
 
     [Fact]

@@ -1,6 +1,7 @@
 using System.CommandLine;
 using YamlDotNet.Serialization;
 using System.Text.RegularExpressions;
+using System.ComponentModel.DataAnnotations;
 
 namespace Azure.Sdk.PipelineTemplateConverter;
 
@@ -20,7 +21,7 @@ public class BaseTemplate
     public Dictionary<string, object>? Resources { get; set; }
 
     [YamlMember(Alias = "parameters", Order = 1)]
-    public List<object>? Parameters { get; set; }
+    public object? Parameters { get; set; }
 
     [YamlMember(Alias = "trigger", Order = 2)]
     public object? Trigger { get; set; }
@@ -38,7 +39,7 @@ public class BaseTemplate
 
     public override string ToString()
     {
-        return Serializer.Serialize(this);
+        return Serializer.Serialize(this) + Environment.NewLine;
     }
 }
 
@@ -67,6 +68,77 @@ public class Comment
     public string AppearsBeforeLine { get; set; } = string.Empty;
     public string AppearsOnLine { get; set; } = string.Empty;
     public bool PrecedingWhitespace { get; set; } = false;
+}
+
+public class PublishArtifactTask
+{
+    public string PublishType { get; set; } = "";
+    public int Indent { get; set; } = 0;
+
+    [YamlMember(Alias = "task")]
+    public string? Task { get; set; } = "";
+
+    [YamlMember(Alias = "displayName")]
+    public string? DisplayName { get; set; } = "";
+
+    [YamlMember(Alias = "inputs")]
+    public Inputs TaskInputs { get; set; } = new Inputs();
+
+    public class Inputs
+    {
+
+        [YamlMember(Alias = "artifact")]
+        public string? Artifact { get; set; } = "";
+        [YamlMember(Alias = "artifactName")]
+        public string? ArtifactName { get; set; } = "";
+
+        [YamlMember(Alias = "path")]
+        public string? Path { get; set; } = "";
+        [YamlMember(Alias = "pathtoPublish")]
+        public string? PathtoPublish { get; set; } = "";
+
+        // Nuget publish task options
+        [YamlMember(Alias = "packagesToPush")]
+        public string? PackagesToPush { get; set; } = "";
+        [YamlMember(Alias = "packageParentPath")]
+        public string? PackageParentPath { get; set; } = "";
+        [YamlMember(Alias = "nugetFeedType")]
+        public string? NugetFeedType { get; set; } = "";
+        [YamlMember(Alias = "publishVstsFeed")]
+        public string? PublishVstsFeed { get; set; } = "";
+    }
+
+    public string Convert()
+    {
+        var output =  Indent + $"- template: /eng/common/pipelines/templates/steps/publish-artifact.yml" + Environment.NewLine +
+                      Indent + $"  parameters:" + Environment.NewLine +
+                      Indent + $"    PublishType: {PublishType}" + Environment.NewLine +
+                      Indent + $"    ArtifactName: {TaskInputs.Artifact ?? TaskInputs.ArtifactName}" + Environment.NewLine +
+                      Indent + $"    ArtifactPath: {TaskInputs.Path ?? TaskInputs.PathtoPublish}" + Environment.NewLine;
+
+        if (DisplayName != null)
+        {
+            output += Indent + $"    DisplayName: {DisplayName}" + Environment.NewLine;
+        }
+        if (TaskInputs.PackagesToPush != null)
+        {
+            output += Indent + $"    PackagesToPush: {TaskInputs.PackagesToPush}" + Environment.NewLine;
+        }
+        if (TaskInputs.PackageParentPath != null)
+        {
+            output += Indent + $"    PackageParentPath: {TaskInputs.PackageParentPath}" + Environment.NewLine;
+        }
+        if (TaskInputs.NugetFeedType != null)
+        {
+            output += Indent + $"    NugetFeedType: {TaskInputs.NugetFeedType}" + Environment.NewLine;
+        }
+        if (TaskInputs.PublishVstsFeed != null)
+        {
+            output += Indent + $"    PublishVstsFeed: {TaskInputs.PublishVstsFeed}" + Environment.NewLine;
+        }
+
+        return output;
+    }
 }
 
 public class PipelineTemplateConverter
@@ -174,8 +246,8 @@ public class PipelineTemplateConverter
         var stageRegex = new Regex(@".*stages:.*$", RegexOptions.Multiline);
         var jobRegex = new Regex(@"^jobs:.*$", RegexOptions.Multiline);
         var stepRegex = new Regex(@"^steps:.*$", RegexOptions.Multiline);
-        var publishRegex = new Regex(@"^PublishPipelineArtifact@1:.*$", RegexOptions.Multiline);
-        var publishBuildRegex = new Regex(@"^PublishBuildArtifact@1:.*$", RegexOptions.Multiline);
+        var publishRegex = new Regex(@"PublishPipelineArtifact@1.*$", RegexOptions.Multiline);
+        var publishBuildRegex = new Regex(@"PublishBuildArtifact@1.*$", RegexOptions.Multiline);
         var nugetRegex = new Regex(@"^NugetCommand@2:.*$", RegexOptions.Multiline);
 
         var types = new List<TemplateType>();
@@ -260,7 +332,18 @@ public class PipelineTemplateConverter
             var _line = line;
             foreach (var comment in comments)
             {
-                if (line.Trim(' ') == comment.AppearsBeforeLine && comment.AppearsBeforeLine != string.Empty)
+                // Comments in embedded strings get preserved during serialization so don't restore those
+                foreach (var commentLine in comment.Value)
+                {
+                    if (line.Contains(commentLine))
+                    {
+                        comment.AppearsBeforeLine = "";
+                        comment.AppearsOnLine = "";
+                    }
+                }
+
+                if (line.Trim(' ') == comment.AppearsBeforeLine &&
+                    comment.AppearsBeforeLine != string.Empty)
                 {
                     var indentation = line.Substring(0, line.Length - line.TrimStart(' ').Length);
                     if (comment.PrecedingWhitespace)
@@ -321,41 +404,37 @@ public class PipelineTemplateConverter
     public static string ConvertPublishTasks(string template)
     {
         var lines = template.Split(Environment.NewLine);
+        var linesOut = new List<string>();
         for (var i = 0; i < lines.Length; i++)
         {
-            if (lines[i].Contains("task: PublishPipelineArtifact@1"))
+            if (!lines[i].Contains("task: PublishPipelineArtifact@1") &&
+                !lines[i].Contains("task: PublishBuildArtifact@1") &&
+                !lines[i].Contains("task: NugetCommand@2"))
             {
-                lines[i] = lines[i].Replace("task: PublishPipelineArtifact@1", "task: 1ES.PublishPipelineArtifact@1");
-                while (!lines[i].Contains("artifactName:"))
-                {
-                    i++;
-                }
-                lines[i] = lines[i].Replace("artifactName:", "artifact:");
+                linesOut.Add(lines[i]);
+                continue;
             }
-            if (lines[i].Contains("task: PublishBuildArtifact@1"))
+
+            var yaml = "";
+            var indent = lines[i][..^lines[i].TrimStart(' ').Length].Length;
+            var currIndent = int.MaxValue;
+            while (i < lines.Length && currIndent > indent)
             {
-                lines[i] = lines[i].Replace("task: PublishBuildArtifact@1", "task: 1ES.PublishBuildArtifact@1");
-                var changes = 0;
-                while (true)
-                {
-                    i++;
-                    if (lines[i].Contains("artifactName:"))
-                    {
-                        lines[i] = lines[i].Replace("artifactName:", "artifact:");
-                    }
-                    else if (lines[i].Contains("pathtoPublish:"))
-                    {
-                        lines[i] = lines[i].Replace("pathtoPublish:", "path:");
-                    }
-                    if (changes >= 2)
-                    {
-                        break;
-                    }
-                }
+                yaml += lines[i] + Environment.NewLine;
+                i++;
+                currIndent = lines[i][..^lines[i].TrimStart(' ').Length].Length;
+            }
+
+            var task = new DeserializerBuilder().Build().Deserialize<PublishArtifactTask[]>(yaml);
+            task[0].Indent = indent;
+
+            foreach (var line in task[0].Convert().Split(Environment.NewLine))
+            {
+                linesOut.Add(new string(' ', indent) + line);
             }
         }
 
-        return string.Join(Environment.NewLine, lines);
+        return string.Join(Environment.NewLine, linesOut);
     }
 
     public static void ConvertStageTemplate(StageTemplate template)

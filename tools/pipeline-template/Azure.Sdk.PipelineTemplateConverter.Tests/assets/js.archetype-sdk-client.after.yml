@@ -49,7 +49,7 @@ parameters:
 
 extends:
   ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-    template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
+    template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   ${{ else }}:
     template: stage-redirect.yml
   parameters:
@@ -98,3 +98,4 @@ extends:
               ArtifactName: packages
               TargetDocRepoOwner: ${{ parameters.TargetDocRepoOwner }}
               TargetDocRepoName: ${{ parameters.TargetDocRepoName }}
+

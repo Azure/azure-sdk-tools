@@ -77,7 +77,7 @@ parameters:
 
 extends:
   ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-    template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
+    template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   ${{ else }}:
     template: stage-redirect.yml
   parameters:
@@ -141,3 +141,4 @@ extends:
               TargetDocRepoName: ${{ parameters.TargetDocRepoName }}
               ${{ if eq(parameters.ReleaseDependsOnLiveTests, 'false') }}:
                 Environment: nuget-break-glass-approvers
+

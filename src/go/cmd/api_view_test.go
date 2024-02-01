@@ -273,3 +273,20 @@ func TestAliasDiagnostics(t *testing.T) {
 		}
 	}
 }
+
+func TestVars(t *testing.T) {
+	review, err := createReview(filepath.Clean("testdata/test_vars"))
+	require.NoError(t, err)
+	require.NotZero(t, review)
+	countSomeChoice := 0
+	hasHTTPClient := false
+	for i := range review.Tokens {
+		if review.Tokens[i].Value == "SomeChoice" && review.Tokens[i-1].Value == "*" {
+			countSomeChoice++
+		} else if review.Tokens[i].Value == "http.Client" && review.Tokens[i-1].Value == "*" {
+			hasHTTPClient = true
+		}
+	}
+	require.EqualValues(t, 2, countSomeChoice)
+	require.True(t, hasHTTPClient)
+}

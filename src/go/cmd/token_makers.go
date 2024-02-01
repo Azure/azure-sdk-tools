@@ -6,11 +6,12 @@ package cmd
 import (
 	"fmt"
 	"go/ast"
-	"golang.org/x/exp/slices"
 	"regexp"
 	"sort"
 	"strings"
 	"unicode"
+
+	"golang.org/x/exp/slices"
 )
 
 // exportedFieldRgx matches exported field names like "policy.ClientOptions", "Transport", and "GetToken(...)"
@@ -52,10 +53,18 @@ func NewDeclaration(pkg Pkg, vs *ast.ValueSpec, imports map[string]string) Decla
 			// const LogCredential log.Classification = "Credential"
 			decl.Type = pkg.translateType(x.Sel.Name, imports)
 		case *ast.StarExpr:
-			// var defaultHTTPClient *http.Client
-			decl.Type = pkg.translateType(x.X.(*ast.SelectorExpr).Sel.Name, imports)
+			switch xX := x.X.(type) {
+			case *ast.Ident:
+				// var SomeTypeValue *SomeType
+				decl.Type = pkg.translateType("*"+xX.Name, imports)
+			case *ast.SelectorExpr:
+				// var defaultHTTPClient *http.Client
+				decl.Type = pkg.translateType(fmt.Sprintf("*%s.%s", xX.X, xX.Sel.Name), imports)
+			default:
+				fmt.Printf("unhandled declaration type %T for %s\n", xX, pkg.getText(vs.Type.Pos(), vs.Type.End()))
+			}
 		default:
-			fmt.Println("unhandled constant type " + pkg.getText(vs.Type.Pos(), vs.Type.End()))
+			fmt.Println("unhandled declaration " + pkg.getText(vs.Type.Pos(), vs.Type.End()))
 		}
 	} else if len(vs.Values) == 1 {
 		switch t := vs.Values[0].(type) {

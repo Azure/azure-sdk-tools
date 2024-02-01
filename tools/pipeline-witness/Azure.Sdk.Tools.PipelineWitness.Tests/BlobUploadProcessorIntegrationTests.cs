@@ -68,5 +68,17 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
 
             await processor.UploadBuildBlobsAsync(TARGET_ACCOUNT_ID, TARGET_PROJECT_ID, targetBuildId);
         }
+
+        [Theory]
+        [InlineData(52438, 10000, 6)]
+        [InlineData(10000, 10000, 1)]
+        [InlineData(5200, 10000, 1)]
+        [InlineData(0, 10000, 0)]
+        public void TestBatching(int startingNumber, int batchSize, int expectedBatchNumber)
+        {
+            var numberOfBatches = BlobUploadProcessor.CalculateBatches(startingNumber, batchSize);
+
+            Assert.Equal(expectedBatchNumber, numberOfBatches);
+        }
     }
 }

@@ -36,6 +36,7 @@ $(() => {
     trigger.closest(".card").children(".apirevision-indicator-checks").append(`<i class="bi bi-clock-history mr-1"></i>`);
     trigger.siblings(".make-diff").remove();
     trigger.remove();
+    $(".apiRevisions-list-container").addClass("apirevisions-changed");
   }
 
   function makeDiffAPIRevisionEventHandler(event) {
@@ -51,7 +52,9 @@ $(() => {
     trigger.closest(".card").children(".apirevision-indicator-checks").append(`<i class="bi bi-file-diff mr-1"></i>`);
     trigger.siblings(".make-active").remove();
     trigger.remove();
+    $(".apiRevisions-list-container").addClass("apirevisions-changed");
   }
+
   function clearDiffAPIRevisionEventHandler(event) {
     const trigger = $(event.target);
     const diffCard = $(".apiRevisions-list-container .bi.bi-file-diff").closest(".card");
@@ -61,8 +64,8 @@ $(() => {
 
     diffCard.find(".btn-group-vertical .make-active").on("click", makeActiveAPIRevisionEventHandler);
     diffCard.find(".btn-group-vertical .make-diff").on("click", makeDiffAPIRevisionEventHandler);
-
     trigger.remove();
+    $(".apiRevisions-list-container").addClass("apirevisions-changed");
   }
 
 
@@ -74,6 +77,10 @@ $(() => {
     $(value).on("shown.bs.offcanvas", function () {
       $("#left-review-offcanvas-menu-content").find('[data-bs-original-title="API"]').removeClass("active");
       $("#left-review-offcanvas-menu-content").find('[data-bs-target="#apiRevisions-context"]').addClass("active");
+
+      if (value == "#apiRevisions-context") {
+        $(".apiRevisions-list-container").removeClass("apirevisions-changed");
+      }
     })
 
     $(value).on("hidden.bs.offcanvas", function (event) {
@@ -99,9 +106,12 @@ $(() => {
         else {
           url.searchParams.delete("diffRevisionId");
         }
-        if (window.location.href != url.href) {
-          window.location.href = url.href;
-        }
+
+        if ($(".apiRevisions-list-container").hasClass("apirevisions-changed")) {
+          if (window.location.href != url.href) {
+            window.location.href = url.href;
+          } 
+        } 
       });
     }
   });

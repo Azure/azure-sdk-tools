@@ -94,6 +94,14 @@
     border: 1px solid var(--border-color) !important;
 }
 
+.border-start {
+    border-left: 1px solid var(--border-color) !important;
+}
+
+.border-end {
+    border-right: 1px solid var(--border-color) !important;
+}
+
 .border-top {
     border-top: 1px solid var(--border-color) !important;
 }

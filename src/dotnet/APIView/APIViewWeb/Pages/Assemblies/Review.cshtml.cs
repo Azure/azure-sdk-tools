@@ -10,13 +10,13 @@ using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Common;
-
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -305,6 +305,31 @@ namespace APIViewWeb.Pages.Assemblies
             await _apiRevisionsManager.AssignReviewersToAPIRevisionAsync(User, apiRevisionId, reviewers);
             await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
             return RedirectToPage(new { id = id, revisionId = apiRevisionId });
+        }
+        /// <summary>
+        /// Upload APIRevisions
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="upload"></param>
+        /// <returns></returns>
+        public async Task<IActionResult> OnPostUploadAsync(string id, [FromForm] IFormFile upload)
+        {
+            if (!ModelState.IsValid)
+            {
+                return RedirectToPage();
+            }
+
+            if (upload != null)
+            {
+                var openReadStream = upload.OpenReadStream();
+                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, upload.FileName, AddAPIRevisionLabel, openReadStream);
+            }
+            else
+            {
+                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, AddAPIRevisionFilePath, AddAPIRevisionLabel, null);
+            }
+
+            return RedirectToPage();
         }
         /// <summary>
         /// Get Routing Data for a Review

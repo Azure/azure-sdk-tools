@@ -322,14 +322,27 @@ namespace APIViewWeb.Pages.Assemblies
             if (upload != null)
             {
                 var openReadStream = upload.OpenReadStream();
-                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, upload.FileName, AddAPIRevisionLabel, openReadStream);
+                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, upload.FileName, AddAPIRevisionLabel, openReadStream, language: null);
             }
             else
             {
                 await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, AddAPIRevisionFilePath, AddAPIRevisionLabel, null);
             }
+            var latestAPIRevision = _apiRevisionsManager.GetLatestAPIRevisionsAsync(id); 
 
-            return RedirectToPage();
+            return RedirectToPage(new { id = id, revisionId = latestAPIRevision.Id } );
+        }
+
+        /// <summary>
+        /// Delete API Revision
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="revisionId"></param>
+        /// <returns></returns>
+        public async Task<IActionResult> OnDeleteAsync(string id, string revisionId)
+        {
+            await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(User, id, revisionId);
+            return new NoContentResult();
         }
         /// <summary>
         /// Get Routing Data for a Review

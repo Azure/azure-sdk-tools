@@ -174,4 +174,26 @@ $(() => {
   $(".apiRevisions-list-container .card .btn.make-active").on("click", makeActiveAPIRevisionEventHandler);
   $(".apiRevisions-list-container .card .btn.make-diff").on("click", makeDiffAPIRevisionEventHandler);
   $(".apiRevisions-list-container .card .btn.clear-diff").on("click", clearDiffAPIRevisionEventHandler);
+
+  // Delete API Revision
+  $(".apiRevisions-list-container .delete").on("click", function () {
+    const id = hp.getReviewAndRevisionIdFromUrl(window.location.href)["reviewId"];
+    const apiRevisionCard = $(this).closest(".card");
+    const apiRevisionsId = apiRevisionCard.attr("data-id");  
+    const url = `/Assemblies/Review`;
+    var options = {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() as string
+      },
+      body: JSON.stringify({ id: id, revisionId: apiRevisionsId  })
+    };
+    fetch(url, options)
+      .then(function (response) {
+        apiRevisionCard.remove();
+      });;
+
+  })
 });
+

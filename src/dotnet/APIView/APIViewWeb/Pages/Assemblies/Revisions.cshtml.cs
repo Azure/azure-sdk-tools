@@ -76,7 +76,6 @@ namespace APIViewWeb.Pages.Assemblies
         public async Task<IActionResult> OnPostDeleteAsync(string id, string revisionId)
         {
             await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(User, id, revisionId);
-
             return RedirectToPage();
         }
 

@@ -1,3 +1,7 @@
+<#
+.SYNOPSIS
+    Deploys the kusto cluster, storage account and associated ingestion queue resources to the specified environment.
+#>
 param(
     [Parameter(Mandatory)]
     [validateSet('production', 'staging', 'test')]
@@ -26,7 +30,7 @@ try {
     Write-Host "Deploying resources to:`n" + `
                "  Subscription: $subscription`n" + `
                "  Resource Group: $resourceGroupName`n" + `
-               "  Location: $location"
+               "  Location: $location`n"
 
     Write-Host "> az deployment sub create --template-file './bicep/resourceGroup.bicep' --parameters $parametersFile --location $location --name $deploymentName"
     az deployment sub create --template-file './bicep/resourceGroup.bicep' --parameters $parametersFile --location $location --name $deploymentName

@@ -1,3 +1,8 @@
+<#
+.SYNOPSIS
+    Downloads Kusto schema from a Kusto cluster and saves it to the file system.
+#>
+
 param(
     [string]$ClusterUri = "https://azsdkengsys.westus2.kusto.windows.net",
     [string]$DatabaseName = "Pipelines",

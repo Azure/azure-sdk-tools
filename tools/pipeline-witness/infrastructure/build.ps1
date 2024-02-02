@@ -1,3 +1,8 @@
+<#
+.SYNOPSIS
+    Validates the bicep file build.
+#>
+
 Push-Location $PSScriptRoot
 try {
     ./Merge-KustoScripts.ps1 -OutputPath "./artifacts/merged.kql"

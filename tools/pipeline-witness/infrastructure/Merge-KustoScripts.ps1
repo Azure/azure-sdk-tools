@@ -1,3 +1,7 @@
+<#
+.SYNOPSIS
+    Merges Kusto scripts into a single file.
+#>
 param (
   [Parameter(Mandatory)]
   [string]$OutputPath

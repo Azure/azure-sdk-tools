@@ -109,6 +109,11 @@ jobs:
               Azure/azure-sdk-for-c-pr:
               azure-sdk/azure-sdk-for-c:
 
+          Azure/azure-sdk-for-rust:
+            TargetRepos:
+              Azure/azure-sdk-for-rust-pr:
+              azure-sdk/azure-sdk-for-rust:
+
           Microsoft/vcpkg:
             TargetRepos:
               azure-sdk/vcpkg:

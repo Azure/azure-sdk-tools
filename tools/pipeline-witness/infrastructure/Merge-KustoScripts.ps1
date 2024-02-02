@@ -1,5 +1,6 @@
 param (
-  [string]$OutputPath = (Join-Path $PSScriptRoot '../artifacts/merged.kql')
+  [Parameter(Mandatory)]
+  [string]$OutputPath
 )
 
 function ReadFiles([IO.FileInfo[]] $files) {
@@ -20,8 +21,13 @@ if (-not (Test-Path $outputFolder)) {
 
 $lines = @()
 
-$lines += ReadFiles (Get-ChildItem -Path "$PSScriptRoot/tables/" -Include "*.kql" -Recurse)
-$lines += ReadFiles (Get-ChildItem -Path "$PSScriptRoot/views/" -Include "*.kql" -Recurse)
-$lines += ReadFiles (Get-ChildItem -Path "$PSScriptRoot/functions/" -Include "*.kql" -Recurse)
+Push-Location "$PSScriptRoot/kusto"
+try {
+  $lines += ReadFiles (Get-ChildItem -Path "./tables/" -Include "*.kql" -Recurse)
+  $lines += ReadFiles (Get-ChildItem -Path "./views/" -Include "*.kql" -Recurse)
+  $lines += ReadFiles (Get-ChildItem -Path "./functions/" -Include "*.kql" -Recurse)
+} finally {
+  Pop-Location
+}
 
 $lines | Set-Content $OutputPath

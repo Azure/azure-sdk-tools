@@ -19,7 +19,7 @@
     | extend SuccessRate = todouble(Succeeded)/Count);
     let maxCount = toscalar (perOwner | summarize max(Count));
         perOwner
-    | extend 
+    | extend
         SuccessRatePoints = SuccessRate * (100 - buildCountScorePercent),
         BuildCountPoints = todouble(Count)/maxCount * buildCountScorePercent
 }

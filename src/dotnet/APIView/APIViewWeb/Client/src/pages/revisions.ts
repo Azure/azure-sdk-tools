@@ -179,21 +179,19 @@ $(() => {
   $(".apiRevisions-list-container .delete").on("click", function () {
     const id = hp.getReviewAndRevisionIdFromUrl(window.location.href)["reviewId"];
     const apiRevisionCard = $(this).closest(".card");
-    const apiRevisionsId = apiRevisionCard.attr("data-id");  
-    const url = `/Assemblies/Review`;
-    var options = {
-      method: "DELETE",
+    const apiRevisionsId = apiRevisionCard.attr("data-id");
+    const url = `/Assemblies/Review/${id}/${apiRevisionsId}`;
+    var antiForgeryToken = $("input[name=__RequestVerificationToken]").val();
+
+    $.ajax({
+      type: "DELETE",
+      url: url,
       headers: {
-        "Content-Type": "application/json",
-        "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() as string
+        "RequestVerificationToken": antiForgeryToken as string
       },
-      body: JSON.stringify({ id: id, revisionId: apiRevisionsId  })
-    };
-    fetch(url, options)
-      .then(function (response) {
+      success: function (data) {
         apiRevisionCard.remove();
-      });;
-
-  })
+      }
+    });
+  });
 });
-

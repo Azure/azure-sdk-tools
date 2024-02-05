@@ -1,4 +1,6 @@
 # tox-monorepo
+**Note** This plugin isn't compatible with tox4. However, tox4 adds native support for the use-case that tox-monorepo enables: [--root](https://tox.wiki/en/stable/cli_interface.html#tox---root) allows for {toxinidir} to be specified indepedently of the location of tox.ini.
+Please refer to [PR #30159](https://github.com/Azure/azure-sdk-for-python/pull/30159) if additional context is needed to migrate your codebase.
 
 This plugin changes {toxinidir} to be the directory that executes the tox command, rather than where the tox.ini actually lives on disk. This allows a monorepo to easily share a single tox.ini file rather than have to keep copies up to date.
 

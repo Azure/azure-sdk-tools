@@ -1,5 +1,10 @@
 # Release
 
+## 2024-02-05 - 0.4.1
+
+- Fix tspconfig.yaml file processing when a url is passed to the `init` command.
+- Support passing in directory of tspconfig.yaml for local specifications in `init` command.
+
 ## 2024-01-23 - 0.4.0
 
 - Added support for initializing a project from a private repository specification.

@@ -42,7 +42,8 @@ async function sdkInit(
     const tspConfigPath = joinPaths(resolvedConfigUrl.path, "tspconfig.yaml");
     await addSpecFiles(cloneDir, tspConfigPath)
     await checkoutCommit(cloneDir, resolvedConfigUrl.commit);
-    const configYaml = parseYaml(joinPaths(cloneDir, tspConfigPath));
+    const data = await readFile(joinPaths(cloneDir, tspConfigPath), "utf8");
+    const configYaml = parseYaml(data);
     const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
     if (!serviceDir) {
       throw new Error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
@@ -63,8 +64,10 @@ async function sdkInit(
     return newPackageDir;
   } else {
     // Local directory scenario
-    let configFile = joinPaths(config, "tspconfig.yaml")
-    const data = await readFile(configFile, "utf8");
+    if (!config.endsWith("tspconfig.yaml")) {
+      config = joinPaths(config, "tspconfig.yaml");
+    }
+    const data = await readFile(config, "utf8");
     const configYaml = parseYaml(data);
     const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
     if (!serviceDir) {
@@ -78,8 +81,8 @@ async function sdkInit(
     }
     const newPackageDir = joinPaths(outputDir, serviceDir, packageDir)
     await mkdir(newPackageDir, { recursive: true });
-    configFile = configFile.replaceAll("\\", "/");
-    const matchRes = configFile.match('.*/(?<path>specification/.*)/tspconfig.yaml$')
+    config = config.replaceAll("\\", "/");
+    const matchRes = config.match('.*/(?<path>specification/.*)/tspconfig.yaml$')
     var directory = "";
     if (matchRes) {
       if (matchRes.groups) {

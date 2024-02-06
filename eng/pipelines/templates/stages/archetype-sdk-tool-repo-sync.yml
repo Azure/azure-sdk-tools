@@ -76,11 +76,6 @@ stages:
             runOnce:
               deploy:
                 steps:
-                  - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
-                    parameters:
-                      Paths:
-                        - ${{ parameters.DirectoryToSync }}
-
                   - pwsh: |
                       New-Item -Path $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} -ItemType File
                     displayName: Create PRData Artifact

@@ -24,48 +24,51 @@ $(() => {
   }
 
   function makeActiveAPIRevisionEventHandler(event) {
-    const trigger = $(event.target);
-    const activeCard = $(".apiRevisions-list-container .bi.bi-clock-history").closest(".card");
-    activeCard.find(".bi.bi-clock-history").remove();
-    activeCard.find(".btn-group-vertical").append(`<button type="button" class="btn btn-sm btn-outline-primary make-active">Make Active</button>`);
-    activeCard.find(".btn-group-vertical").append(`<button type="button" class="btn btn-sm btn-outline-primary make-diff">Make Diff</button>`);
+    const trigger = $(event.currentTarget);
+    const activeCard = $(".apiRevisions-list-container .bi.bi-clock-history.active-rev").closest(".card");
+    activeCard.find(".bi.bi-clock-history.active-rev").remove();
+    activeCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>`);
+    activeCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-clock-history mr-1"></i></button>`);
 
-    activeCard.find(".btn-group-vertical .make-active").on("click", makeActiveAPIRevisionEventHandler);
-    activeCard.find(".btn-group-vertical .make-diff").on("click", makeDiffAPIRevisionEventHandler);
+    activeCard.find(".btn-group .make-active").on("click", makeActiveAPIRevisionEventHandler);
+    activeCard.find(".btn-group .make-diff").on("click", makeDiffAPIRevisionEventHandler);
 
-    trigger.closest(".card").children(".apirevision-indicator-checks").append(`<i class="bi bi-clock-history mr-1"></i>`);
+    trigger.closest(".card").children(".apirevision-indicator-checks").append(`<i class="bi bi-clock-history active-rev mr-1"></i>`);
     trigger.siblings(".make-diff").remove();
     trigger.remove();
     $(".apiRevisions-list-container").addClass("apirevisions-changed");
+    $(".tooltip").remove();
   }
 
   function makeDiffAPIRevisionEventHandler(event) {
-    const trigger = $(event.target);
-    const diffCard = $(".apiRevisions-list-container .bi.bi-file-diff").closest(".card");
-    diffCard.find(".bi.bi-file-diff").remove();
-    diffCard.find(".btn-group-vertical").append(`<button type="button" class="btn btn-sm btn-outline-primary make-active">Make Active</button>`);
-    diffCard.find(".btn-group-vertical").append(`<button type="button" class="btn btn-sm btn-outline-primary make-diff">Make Diff</button>`);
+    const trigger = $(event.currentTarget);
+    const diffCard = $(".apiRevisions-list-container .bi.bi-file-dif.diff-rev").closest(".card");
+    diffCard.find(".bi.bi-file-diff.diff-rev").remove();
+    diffCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>`);
+    diffCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-clock-history mr-1"></i></button>`);
 
-    diffCard.find(".btn-group-vertical .make-active").on("click", makeActiveAPIRevisionEventHandler);
-    diffCard.find(".btn-group-vertical .make-diff").on("click", makeDiffAPIRevisionEventHandler);
+    diffCard.find(".btn-group .make-active").on("click", makeActiveAPIRevisionEventHandler);
+    diffCard.find(".btn-group .make-diff").on("click", makeDiffAPIRevisionEventHandler);
 
-    trigger.closest(".card").children(".apirevision-indicator-checks").append(`<i class="bi bi-file-diff mr-1"></i>`);
+    trigger.closest(".card").children(".apirevision-indicator-checks").append(`<i class="bi bi-file-diff diff-rev mr-1"></i>`);
     trigger.siblings(".make-active").remove();
     trigger.remove();
     $(".apiRevisions-list-container").addClass("apirevisions-changed");
+    $(".tooltip").remove();
   }
 
   function clearDiffAPIRevisionEventHandler(event) {
-    const trigger = $(event.target);
-    const diffCard = $(".apiRevisions-list-container .bi.bi-file-diff").closest(".card");
-    diffCard.find(".bi.bi-file-diff").remove();
-    trigger.closest(".btn-group-vertical").append(`<button type="button" class="btn btn-sm btn-outline-primary make-active">Make Active</button>`);
-    trigger.closest(".btn-group-vertical").append(`<button type="button" class="btn btn-sm btn-outline-primary make-diff">Make Diff</button>`);
+    const trigger = $(event.currentTarget);
+    const diffCard = $(".apiRevisions-list-container .bi.bi-file-diff.diff-rev").closest(".card");
+    diffCard.find(".bi.bi-file-diff.diff-rev").remove();
+    trigger.closest(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>`);
+    trigger.closest(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-clock-history mr-1"></i></button>`);
 
-    diffCard.find(".btn-group-vertical .make-active").on("click", makeActiveAPIRevisionEventHandler);
-    diffCard.find(".btn-group-vertical .make-diff").on("click", makeDiffAPIRevisionEventHandler);
+    diffCard.find(".btn-group .make-active").on("click", makeActiveAPIRevisionEventHandler);
+    diffCard.find(".btn-group .make-diff").on("click", makeDiffAPIRevisionEventHandler);
     trigger.remove();
     $(".apiRevisions-list-container").addClass("apirevisions-changed");
+    $(".tooltip").remove();
   }
 
 
@@ -91,9 +94,9 @@ $(() => {
 
     if (value == "#apiRevisions-context") {
       $(value).on("hide.bs.offcanvas", function (event) {
-        const activeRevisionId = $(".apiRevisions-list-container .bi.bi-clock-history").closest(".card").attr("data-id");
+        const activeRevisionId = $(".apiRevisions-list-container .bi.bi-clock-history.active-rev").closest(".card").attr("data-id");
         let diffRevisionId = "";
-        const diffIcon = $(".apiRevisions-list-container .bi.bi-file-diff");
+        const diffIcon = $(".apiRevisions-list-container .bi.bi-file-diff.diff-rev");
         if (diffIcon.length > 0) {
           diffRevisionId = diffIcon.closest(".card").attr("data-id")!;
         }
@@ -110,8 +113,8 @@ $(() => {
         if ($(".apiRevisions-list-container").hasClass("apirevisions-changed")) {
           if (window.location.href != url.href) {
             window.location.href = url.href;
-          } 
-        } 
+          }
+        }
       });
     }
   });

@@ -62,6 +62,35 @@ public class Comment
     public string AppearsOnLine { get; set; } = string.Empty;
     public int LineInstance { get; set; } = 0;
     public bool PrecedingWhitespace { get; set; } = false;
+
+    public Comment(List<string> value)
+    {
+        Value = value;
+    }
+
+    public Comment(string value)
+    {
+        Value = new List<string> { value };
+    }
+}
+
+public class Line
+{
+    public string Value { get; set; } = "";
+    public int Instance { get; set; } = 0;
+    public Comment? Comment { get; set; }
+    public Comment? InlineComment { get; set; }
+    public bool NewLineAfter { get; set; } = false;
+
+    public Line(string line)
+    {
+        if (line.Contains('#'))
+        {
+            line = line[..line.IndexOf("#")];
+        }
+
+        Value = line.Trim();
+    }
 }
 
 public class PublishArtifactTask
@@ -258,7 +287,7 @@ public class PipelineTemplateConverter
             return;
         }
 
-        var comments = BackupComments(contents);
+        var processedLines = BackupCommentsAndFormatting(contents);
         var output = "";
 
         if (templateTypes.Contains(TemplateType.Ignore))
@@ -277,7 +306,7 @@ public class PipelineTemplateConverter
             var template = deserializer.Deserialize<StageTemplate>(contents);
             ConvertStageTemplate(template);
             output = template.ToString();
-            output = RestoreComments(output, comments);
+            output = RestoreCommentsAndFormatting(output, processedLines);
             output = AddTemplateWhitespace(output);
             output = FixTemplateSpecialCharacters(output);
         }
@@ -327,98 +356,108 @@ public class PipelineTemplateConverter
         return types;
     }
 
-    public static List<Comment> BackupComments(string template)
+    public static string GetLineInstanceKey(string line)
+    {
+        var key = line.Trim(' ');
+        if (line.Contains('#'))
+        {
+            key = line[..line.IndexOf("#")];
+        }
+        return key;
+    }
+
+    public static List<Line> BackupCommentsAndFormatting(string template)
     {
         var lineInstances = new Dictionary<string, int>();
-        var comments = new List<Comment>();
         var lines = template.Split(Environment.NewLine);
+        var processedLines = new List<Line>();
         for (var i = 0; i < lines.Length - 1; i++)
         {
             var comment = new List<string>();
-            var precedingWhitespace = false;
             while (i < lines.Length && lines[i].TrimStart(' ').StartsWith("#"))
             {
                 comment.Add(lines[i].Trim(' '));
-                if (i > 0 && lines[i - 1].Trim(' ').Length == 0)
-                {
-                    precedingWhitespace = true;
-                }
                 i++;
             }
 
-            lineInstances[lines[i]] = lineInstances.ContainsKey(lines[i]) ? lineInstances[lines[i]] + 1 : 1;
+            var line = new Line(lines[i]);
+            lineInstances[line.Value] = lineInstances.ContainsKey(line.Value) ? lineInstances[line.Value] + 1 : 1;
+            line.Instance = lineInstances[line.Value];
 
             if (comment.Count > 0)
             {
-                comments.Add(new Comment
-                {
-                    Value = comment,
-                    // Trim out any inline comments too so we can match on the output string properly
-                    AppearsBeforeLine = lines[i].Contains('#') ? lines[i][..lines[i].IndexOf("#")].Trim(' ') : lines[i].Trim(' '),
-                    LineInstance = lineInstances[lines[i]],
-                    PrecedingWhitespace = precedingWhitespace,
-                });
+                line.Comment = new Comment(comment);
             }
 
             if (lines[i].Contains('#'))
             {
-                var inline = lines[i][lines[i].IndexOf("#")..];
-                comments.Add(new Comment
-                {
-                    Value = new List<string> { inline },
-                    AppearsOnLine = lines[i][..lines[i].IndexOf("#")].Trim(' '),
-                    LineInstance = lineInstances[lines[i]],
-                });
+                var inlineComment = lines[i][lines[i].IndexOf("#")..];
+                line.InlineComment = new Comment(inlineComment);
             }
+
+            if (i < lines.Length - 1 && lines[i + 1].Trim(' ').Length == 0)
+            {
+                line.NewLineAfter = true;
+            }
+
+            processedLines.Add(line);
         }
 
-        return comments;
+        return processedLines;
     }
 
-    public static string RestoreComments(string template, List<Comment> comments)
+    public static string RestoreCommentsAndFormatting(string template, List<Line> processedLines)
     {
         var lines = new List<string>();
         var lineInstances = new Dictionary<string, int>();
 
+        var lookup = new Dictionary<(string, int), Line>();
+        foreach (var line in processedLines)
+        {
+            lookup.Add((line.Value, line.Instance), line);
+        }
+
         foreach (var line in template.Split(Environment.NewLine))
         {
-            lineInstances[line] = lineInstances.ContainsKey(line) ? lineInstances[line] + 1 : 1;
-            var _line = line;
-            foreach (var comment in comments)
+            var parsed = new Line(line).Value;
+            lineInstances[parsed] = lineInstances.ContainsKey(parsed) ? lineInstances[parsed] + 1 : 1;
+            if (!lookup.ContainsKey((parsed, lineInstances[parsed])))
             {
-                // Comments in embedded strings get preserved during serialization so don't restore those
-                foreach (var commentLine in comment.Value)
-                {
-                    if (line.Contains(commentLine))
-                    {
-                        comment.AppearsBeforeLine = "";
-                        comment.AppearsOnLine = "";
-                    }
-                }
-
-                if (comment.AppearsBeforeLine != string.Empty &&
-                    line.Trim(' ') == comment.AppearsBeforeLine &&
-                    comment.LineInstance == lineInstances[line]
-                ) {
-                    var indentation = line.Substring(0, line.Length - line.TrimStart(' ').Length);
-                    if (comment.PrecedingWhitespace)
-                    {
-                        lines.Add("");
-                    }
-                    foreach (var commentLine in comment.Value)
-                    {
-                        lines.Add(indentation + commentLine);
-                    }
-                }
-                if (comment.AppearsOnLine != string.Empty &&
-                    line.Trim(' ') == comment.AppearsOnLine &&
-                    comment.LineInstance == lineInstances[line]
-                 ) {
-                    _line = line + "  " + comment.Value.First();
-                }
-
+                lines.Add(line);
+                continue;
             }
-            lines.Add(_line);
+
+            var indentation = line[..^line.TrimStart(' ').Length];
+            var original = lookup[(parsed, lineInstances[parsed])];
+
+            // Comments in embedded strings get preserved during serialization so don't restore those
+            var lineIsComment = original.Comment?.Value.Any(c => line.Contains(c)) ?? false;
+            var lineHasInlineComment = original.InlineComment?.Value.Any(c => line.Contains(c)) ?? false;
+            if (lineIsComment || lineHasInlineComment)
+            {
+                lines.Add(line);
+                continue;
+            }
+
+            foreach (var commentLine in original.Comment?.Value ?? new List<string>())
+            {
+                lines.Add(indentation + commentLine);
+            }
+
+            var inlineComment = original.InlineComment?.Value.FirstOrDefault();
+            if (inlineComment != null)
+            {
+                lines.Add(line + "  " + inlineComment);
+            }
+            else
+            {
+                lines.Add(line);
+            }
+
+            if (original.NewLineAfter)
+            {
+                lines.Add("");
+            }
         }
 
         return string.Join(Environment.NewLine, lines);

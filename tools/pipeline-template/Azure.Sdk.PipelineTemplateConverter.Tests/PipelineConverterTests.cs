@@ -45,89 +45,41 @@ public class PipelineConverterTests
     }
 
     [Fact]
-    public void TestRestoreCommentsAll()
-    {
-        var contents = @"
-                # This is a comment
-                steps:  # this is an inline comment
-                  - pwsh: |
-                      Write-Host 'Hello, world!'
-                      # This is an embedded string comment that should not be duplicated
-                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
-
-        var serialized = @"
-                steps:
-                  - pwsh: |
-                      Write-Host 'Hello, world!'
-                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
-
-        var comments = PipelineTemplateConverter.BackupComments(contents);
-        var output = PipelineTemplateConverter.RestoreComments(serialized, comments);
-        output.Should().Be(contents);
-    }
-
-    [Fact]
     public void TestRestoreComments()
     {
         var contents = @"
                 # This is a comment
-                steps:
-                  - pwsh: |
-                      Write-Host 'Hello, world!'
-                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
-
-        var serialized = @"
-                steps:
-                  - pwsh: |
-                      Write-Host 'Hello, world!'
-                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
-
-        var comments = PipelineTemplateConverter.BackupComments(contents);
-        var output = PipelineTemplateConverter.RestoreComments(serialized, comments);
-        output.Should().Be(contents);
-    }
-
-    [Fact]
-    public void TestRestoreInlineComments()
-    {
-        var contents = @"
                 steps:  # this is an inline comment
                   - pwsh: |
                       Write-Host 'Hello, world!'
-                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
-
-        var serialized = @"
-                steps:
-                  - pwsh: |
-                      Write-Host 'Hello, world!'
-                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
-
-        var comments = PipelineTemplateConverter.BackupComments(contents);
-        var output = PipelineTemplateConverter.RestoreComments(serialized, comments);
-        output.Should().Be(contents);
-    }
-
-    [Fact]
-    public void TestRestoreEmbeddedComments()
-    {
-        var contents = @"
-                steps:
+                      # This is an embedded string comment that should not be duplicated
+                      Write-Host 'Goodbye, world!'  # embedded inline comment
+                  # This is a comment above the second pwsh line
                   - pwsh: |
                       Write-Host 'Hello, world!'
                       # This is an embedded string comment that should not be duplicated
-                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
+                      Write-Host 'Goodbye, world!'  # embedded inline comment
+                  - foo: bar
+
+                  - foo: bar  # this is an inline comment on the third matching line
+                  - baz: qux".TrimStart(Environment.NewLine.ToCharArray());
 
         var serialized = @"
                 steps:
                   - pwsh: |
                       Write-Host 'Hello, world!'
-                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
+                      Write-Host 'Goodbye, world!'
+                  - pwsh: |
+                      Write-Host 'Hello, world!'
+                      Write-Host 'Goodbye, world!'
+                  - foo: bar
+                  - foo: bar
+                  - baz: qux".TrimStart(Environment.NewLine.ToCharArray());
 
-        var comments = PipelineTemplateConverter.BackupComments(contents);
-        var output = PipelineTemplateConverter.RestoreComments(serialized, comments);
+        var processedLines = PipelineTemplateConverter.BackupCommentsAndFormatting(contents);
+        var output = PipelineTemplateConverter.RestoreCommentsAndFormatting(serialized, processedLines);
         output.Should().Be(contents);
     }
-
 
     [Fact]
     public void TestFixTemplateSpecialCharacters()

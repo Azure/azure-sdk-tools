@@ -76,6 +76,8 @@ stages:
             runOnce:
               deploy:
                 steps:
+                  - checkout: self
+                  
                   - pwsh: |
                       New-Item -Path $(Build.ArtifactStagingDirectory)/${{ parameters.PRDataFileName }} -ItemType File
                     displayName: Create PRData Artifact

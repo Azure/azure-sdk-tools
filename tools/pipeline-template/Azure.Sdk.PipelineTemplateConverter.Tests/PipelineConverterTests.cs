@@ -45,23 +45,108 @@ public class PipelineConverterTests
     }
 
     [Fact]
+    public void TestRestoreCommentsAll()
+    {
+        var contents = @"
+                # This is a comment
+                steps:  # this is an inline comment
+                  - pwsh: |
+                      Write-Host 'Hello, world!'
+                      # This is an embedded string comment that should not be duplicated
+                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
+
+        var serialized = @"
+                steps:
+                  - pwsh: |
+                      Write-Host 'Hello, world!'
+                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
+
+        var comments = PipelineTemplateConverter.BackupComments(contents);
+        var output = PipelineTemplateConverter.RestoreComments(serialized, comments);
+        output.Should().Be(contents);
+    }
+
+    [Fact]
+    public void TestRestoreComments()
+    {
+        var contents = @"
+                # This is a comment
+                steps:
+                  - pwsh: |
+                      Write-Host 'Hello, world!'
+                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
+
+        var serialized = @"
+                steps:
+                  - pwsh: |
+                      Write-Host 'Hello, world!'
+                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
+
+        var comments = PipelineTemplateConverter.BackupComments(contents);
+        var output = PipelineTemplateConverter.RestoreComments(serialized, comments);
+        output.Should().Be(contents);
+    }
+
+    [Fact]
+    public void TestRestoreInlineComments()
+    {
+        var contents = @"
+                steps:  # this is an inline comment
+                  - pwsh: |
+                      Write-Host 'Hello, world!'
+                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
+
+        var serialized = @"
+                steps:
+                  - pwsh: |
+                      Write-Host 'Hello, world!'
+                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
+
+        var comments = PipelineTemplateConverter.BackupComments(contents);
+        var output = PipelineTemplateConverter.RestoreComments(serialized, comments);
+        output.Should().Be(contents);
+    }
+
+    [Fact]
+    public void TestRestoreEmbeddedComments()
+    {
+        var contents = @"
+                steps:
+                  - pwsh: |
+                      Write-Host 'Hello, world!'
+                      # This is an embedded string comment that should not be duplicated
+                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
+
+        var serialized = @"
+                steps:
+                  - pwsh: |
+                      Write-Host 'Hello, world!'
+                      Write-Host 'Goodbye, world!'".TrimStart(Environment.NewLine.ToCharArray());
+
+        var comments = PipelineTemplateConverter.BackupComments(contents);
+        var output = PipelineTemplateConverter.RestoreComments(serialized, comments);
+        output.Should().Be(contents);
+    }
+
+
+    [Fact]
     public void TestFixTemplateSpecialCharacters()
     {
         var contents = @"
 extends:
   ""${{ if eq(variables['System.TeamProject'], 'internal') }}:"":
+    template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  ${{ else }}:
     template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
-  '${{ else }}:':
-    template: stage-redirect.yml
   parameters:
 ";
 
         var expected = @"
 extends:
   ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-    template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
+    template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
   ${{ else }}:
-    template: stage-redirect.yml
+    template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
 ";
 

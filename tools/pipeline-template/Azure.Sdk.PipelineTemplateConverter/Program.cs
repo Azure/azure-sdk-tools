@@ -9,8 +9,6 @@ namespace Azure.Sdk.PipelineTemplateConverter;
 public enum TemplateType
 {
     Stage,
-    Job,
-    Step,
     ArtifactTask,
     Converted,
     Ignore
@@ -44,12 +42,6 @@ public class BaseTemplate
     }
 }
 
-public class JobTemplate : BaseTemplate
-{
-    [YamlMember(Alias = "jobs")]
-    public List<Dictionary<string, object>>? Stages { get; set; }
-}
-
 public class StageTemplate : BaseTemplate
 {
     [YamlMember(Alias = "stages")]
@@ -68,6 +60,7 @@ public class Comment
     // NOTE: this won't handle duplicate lines, but probably not a case that will be hit
     public string AppearsBeforeLine { get; set; } = string.Empty;
     public string AppearsOnLine { get; set; } = string.Empty;
+    public int LineInstance { get; set; } = 0;
     public bool PrecedingWhitespace { get; set; } = false;
 }
 
@@ -127,7 +120,7 @@ public class PublishArtifactTask
                 // This assumes ALL our nuget paths use globs
                 return Inputs.PackagesToPush.Split("/*")[0];
             }
-            return Inputs.TargetPath ?? Inputs.PathToPublish ?? "";
+            return Inputs.Path ?? Inputs.TargetPath ?? Inputs.PathToPublish ?? "";
         }
     }
 
@@ -139,6 +132,8 @@ public class PublishArtifactTask
         [YamlMember()]
         public string? ArtifactName { get; set; }
 
+        [YamlMember()]
+        public string? Path { get; set; }
         [YamlMember()]
         public string? TargetPath { get; set; }
         [YamlMember()]
@@ -266,6 +261,16 @@ public class PipelineTemplateConverter
         var comments = BackupComments(contents);
         var output = "";
 
+        if (templateTypes.Contains(TemplateType.Ignore))
+        {
+            return;
+        }
+        if (templateTypes.Contains(TemplateType.Converted))
+        {
+            Console.WriteLine($"Skipping {file.FullName} already converted");
+            return;
+        }
+
         if (templateTypes.Contains(TemplateType.Stage))
         {
             Console.WriteLine($"Converting {file.FullName} stage template");
@@ -295,8 +300,6 @@ public class PipelineTemplateConverter
     {
         var convertedRegex = new Regex(@".*1ESPipelineTemplates.*");
         var stageRegex = new Regex(@".*stages:.*$", RegexOptions.Multiline);
-        var jobRegex = new Regex(@"^jobs:.*$", RegexOptions.Multiline);
-        var stepRegex = new Regex(@"^steps:.*$", RegexOptions.Multiline);
         var publishRegex = new Regex(@"PublishPipelineArtifact@1.*$", RegexOptions.Multiline);
         var publishBuildRegex = new Regex(@"PublishBuildArtifact@1.*$", RegexOptions.Multiline);
         var nugetRegex = new Regex(@"^NugetCommand@2:.*$", RegexOptions.Multiline);
@@ -310,14 +313,6 @@ public class PipelineTemplateConverter
         if (stageRegex.IsMatch(template))
         {
             types.Add(TemplateType.Stage);
-        }
-        if (jobRegex.IsMatch(template))
-        {
-            types.Add(TemplateType.Job);
-        }
-        if (stepRegex.IsMatch(template))
-        {
-            types.Add(TemplateType.Step);
         }
         if (publishRegex.IsMatch(template) || publishBuildRegex.IsMatch(template) || nugetRegex.IsMatch(template))
         {
@@ -334,6 +329,7 @@ public class PipelineTemplateConverter
 
     public static List<Comment> BackupComments(string template)
     {
+        var lineInstances = new Dictionary<string, int>();
         var comments = new List<Comment>();
         var lines = template.Split(Environment.NewLine);
         for (var i = 0; i < lines.Length - 1; i++)
@@ -343,19 +339,23 @@ public class PipelineTemplateConverter
             while (i < lines.Length && lines[i].TrimStart(' ').StartsWith("#"))
             {
                 comment.Add(lines[i].Trim(' '));
-                if (lines[i - 1].Trim(' ').Length == 0)
+                if (i > 0 && lines[i - 1].Trim(' ').Length == 0)
                 {
                     precedingWhitespace = true;
                 }
                 i++;
             }
 
+            lineInstances[lines[i]] = lineInstances.ContainsKey(lines[i]) ? lineInstances[lines[i]] + 1 : 1;
+
             if (comment.Count > 0)
             {
                 comments.Add(new Comment
                 {
                     Value = comment,
-                    AppearsBeforeLine = lines[i].Trim(' '),
+                    // Trim out any inline comments too so we can match on the output string properly
+                    AppearsBeforeLine = lines[i].Contains('#') ? lines[i][..lines[i].IndexOf("#")].Trim(' ') : lines[i].Trim(' '),
+                    LineInstance = lineInstances[lines[i]],
                     PrecedingWhitespace = precedingWhitespace,
                 });
             }
@@ -366,7 +366,8 @@ public class PipelineTemplateConverter
                 comments.Add(new Comment
                 {
                     Value = new List<string> { inline },
-                    AppearsOnLine = lines[i].Substring(0, lines[i].IndexOf("#")).Trim(' '),
+                    AppearsOnLine = lines[i][..lines[i].IndexOf("#")].Trim(' '),
+                    LineInstance = lineInstances[lines[i]],
                 });
             }
         }
@@ -377,9 +378,11 @@ public class PipelineTemplateConverter
     public static string RestoreComments(string template, List<Comment> comments)
     {
         var lines = new List<string>();
+        var lineInstances = new Dictionary<string, int>();
 
         foreach (var line in template.Split(Environment.NewLine))
         {
+            lineInstances[line] = lineInstances.ContainsKey(line) ? lineInstances[line] + 1 : 1;
             var _line = line;
             foreach (var comment in comments)
             {
@@ -393,9 +396,10 @@ public class PipelineTemplateConverter
                     }
                 }
 
-                if (line.Trim(' ') == comment.AppearsBeforeLine &&
-                    comment.AppearsBeforeLine != string.Empty)
-                {
+                if (comment.AppearsBeforeLine != string.Empty &&
+                    line.Trim(' ') == comment.AppearsBeforeLine &&
+                    comment.LineInstance == lineInstances[line]
+                ) {
                     var indentation = line.Substring(0, line.Length - line.TrimStart(' ').Length);
                     if (comment.PrecedingWhitespace)
                     {
@@ -406,8 +410,10 @@ public class PipelineTemplateConverter
                         lines.Add(indentation + commentLine);
                     }
                 }
-                if (line.Trim(' ') == comment.AppearsOnLine && comment.AppearsOnLine != string.Empty)
-                {
+                if (comment.AppearsOnLine != string.Empty &&
+                    line.Trim(' ') == comment.AppearsOnLine &&
+                    comment.LineInstance == lineInstances[line]
+                 ) {
                     _line = line + "  " + comment.Value.First();
                 }
 

@@ -79,9 +79,14 @@
         overflow: hidden;
         background-color: var(--base-fg-color);
 
+        .card-body {
+            padding: 0.5rem 0.75rem;
+            font-size: small;
+        }
+
         img {
-            width: 105px;
-            height: 105px;
+            width: 80px;
+            height: 80px;
         }
     }
 
@@ -92,22 +97,22 @@
 
 .apiRevisions-list-container {
     overflow: auto;
-    height: 80dvh;
+    height: 78dvh;
 
-    .btn-group-vertical {
+    .apirevision-actions {
         align-self: center;
         margin-right: 15px;
         display: none;
     }
 
-    .apirevision-indicator-checks {
+    .apirevision-indicator-checks, .apirevision-actions {
         align-self: center;
         margin-right: 20px;
     }
 }
 
 .apiRevisions-list-container > .card:hover {
-    .btn-group-vertical {
+    .apirevision-actions {
         display: inline-flex;
     }
 }

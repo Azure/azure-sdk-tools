@@ -590,7 +590,7 @@
 
 <div class="offcanvas offcanvas-end border-start" tabindex="-1" id="apiRevisions-context" aria-labelledby="apiRevisions-context-label">
     <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="offcanvasLabel">APIRevisions</h5>
+        <h5 class="offcanvas-title" id="offcanvasLabel"><a asp-page="Revisions" asp-route-id="@Model.ReviewContent.Review.Id">APIRevisions</a></h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
@@ -623,23 +623,26 @@
                                 <p class="card-subtitle mb-1 text-body-secondary"><b>Created: </b><span date="@apiRevision.CreatedOn"></span> , <b>By: </b>@apiRevision.CreatedBy</p>
                                 <p class="card-subtitle mb-0 text-body-secondary"><b>Last Updated: </b><span date="@apiRevision.LastUpdatedOn"></span> , <b>Type: </b>@apiRevision.APIRevisionType , <b>Version: </b>@apiRevision.Files[0].PackageVersion</p>
                             </div>
-                            <div class="btn-group-vertical animate__animated animate__fadeIn" role="group" aria-label="apiRevision action buttons">
-                                @if (apiRevision.Id != Model.ReviewContent.ActiveAPIRevision.Id && (Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Id != apiRevision.Id))
-                                {
-                                    <button type="button" class="btn btn-sm btn-outline-primary make-active">Make Active</button>
-                                }  
-                                @if ((Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Id != apiRevision.Id) && Model.ReviewContent.ActiveAPIRevision.Id != apiRevision.Id)
-                                {
-                                    <button type="button" class="btn btn-sm btn-outline-primary make-diff">Make Diff</button>
-                                }
-                                @if (Model.ReviewContent.DiffAPIRevision != null && apiRevision.Id == Model.ReviewContent.DiffAPIRevision.Id)
-                                {
-                                    <button type="button" class="btn btn-sm btn-outline-primary clear-diff">Clear Diff</button>
-                                }
-                                @if (User.GetGitHubLogin() == apiRevision.CreatedBy)
-                                {
-                                    <button type="button" class="btn btn-sm btn-outline-danger delete">Delete</button>
-                                }
+                            <div class="apirevision-actions">
+                                <div class="btn-group animate__animated animate__fadeIn" role="group" aria-label="apiRevision action buttons">
+                                    @if (apiRevision.Id != Model.ReviewContent.ActiveAPIRevision.Id && (Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Id != apiRevision.Id))
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-clock-history mr-1"></i></button>
+                                    }
+                                    @if ((Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Id != apiRevision.Id) && Model.ReviewContent.ActiveAPIRevision.Id != apiRevision.Id)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>
+                                    }
+                                    @if (Model.ReviewContent.DiffAPIRevision != null && apiRevision.Id == Model.ReviewContent.DiffAPIRevision.Id)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-primary clear-diff" data-bs-toggle="tooltip" title="Clear Diff"><i class="bi bi-file-earmark-minus"></i></button>
+                                    }
+                                    @if (User.GetGitHubLogin() == apiRevision.CreatedBy)
+                                    {
+                                        <button type="button" class="btn btn-sm btn-outline-primary rename" data-bs-toggle="tooltip" title="Rename"><i class="bi bi-pencil-square"></i></button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary delete" data-bs-toggle="tooltip" title="Delete"><i class="bi bi-x-circle text-danger"></i></button>
+                                    }
+                                </div>
                             </div>
                             <div class="apirevision-indicator-checks animate__animated animate__slideInLeft">
                                 @if (apiRevision.IsApproved)
@@ -648,11 +651,11 @@
                                 }
                                 @if (apiRevision.Id == Model.ReviewContent.ActiveAPIRevision.Id)
                                 {
-                                    <i class="bi bi-clock-history mr-1"></i>
+                                    <i class="bi bi-clock-history active-rev mr-1"></i>
                                 }
                                 @if (Model.ReviewContent.DiffAPIRevision != null && Model.ReviewContent.DiffAPIRevision.Id == apiRevision.Id)
                                 {
-                                    <i class="bi bi-file-diff mr-1"></i>
+                                    <i class="bi bi-file-diff diff-rev mr-1"></i>
                                 }
                             </div>
                         </div>

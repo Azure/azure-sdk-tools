@@ -231,5 +231,21 @@ namespace APIViewWeb
             }
             return revisions;
         }
+
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName)
+        {
+            var query = "SELECT * FROM Revisions r WHERE ARRAY_CONTAINS(r.AssignedReviewers, { 'AssingedTo': '" + userName + "' }, true)";
+
+            var apiRevisions = new List<APIRevisionListItemModel>();
+            var queryDefinition = new QueryDefinition(query).WithParameter("@userName", userName);
+            var itemQueryIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                apiRevisions.AddRange(result.Resource);
+            }
+
+            return apiRevisions.OrderByDescending(r => r.LastUpdatedOn);
+        }
     }
 }

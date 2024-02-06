@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
@@ -14,12 +12,10 @@ using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Common;
-using Microsoft.VisualStudio.Services.ClientNotification;
 
 
 namespace APIViewWeb.Pages.Assemblies
@@ -294,16 +290,17 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         /// <summary>
-        /// Request Reviewers for a Review Revision
+        /// Request Reviewers for aa APIRevision
         /// </summary>
         /// <param name="id"></param>
+        /// <param name="apiRevisionId"></param>
         /// <param name="reviewers"></param>
         /// <returns></returns>
-        public async Task<ActionResult> OnPostRequestReviewersAsync(string id, HashSet<string> reviewers)
+        public async Task<ActionResult> OnPostRequestReviewersAsync(string id, string apiRevisionId, HashSet<string> reviewers)
         {
-            await _reviewManager.AssignReviewersToReviewAsync(User, id, reviewers);
-            await _notificationManager.NotifyApproversOfReview(User, id, reviewers);
-            return RedirectToPage(new { id = id });
+            await _apiRevisionsManager.AssignReviewersToAPIRevisionAsync(User, apiRevisionId, reviewers);
+            await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
+            return RedirectToPage(new { id = id, revisionId = apiRevisionId });
         }
         /// <summary>
         /// Get Routing Data for a Review

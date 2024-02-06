@@ -80,16 +80,6 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Get Reviews that have been assigned for review to a user
-        /// </summary>
-        /// <param name="userName"></param>
-        /// <returns></returns>
-        public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAssignedToUser(string userName)
-        {
-            return await _reviewsRepository.GetReviewsAssignedToUser(userName);
-        }
-
-        /// <summary>
         /// Get List of Reviews for the Review Page
         /// </summary>
         /// <param name="search"></param>
@@ -264,32 +254,6 @@ namespace APIViewWeb.Managers
                 return;
             }
             await ToggleReviewApproval(user, review, notes);
-        }
-
-        /// <summary>
-        /// Assign reviewers to a review
-        /// </summary>
-        /// <param name="User"></param>
-        /// <param name="reviewId"></param>
-        /// <param name="reviewers"></param>
-        /// <returns></returns>
-        public async Task AssignReviewersToReviewAsync(ClaimsPrincipal User, string reviewId, HashSet<string> reviewers)
-        {
-            ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(reviewId);
-            foreach (var reviewer in reviewers)
-            {
-                if (!review.AssignedReviewers.Where(x => x.AssingedTo == reviewer).Any())
-                {
-                    var reviewAssignment = new ReviewAssignmentModel()
-                    {
-                        AssingedTo = reviewer,
-                        AssignedBy = User.GetGitHubLogin(),
-                        AssingedOn = DateTime.Now,
-                    };
-                    review.AssignedReviewers.Add(reviewAssignment);
-                }
-            }
-            await _reviewsRepository.UpsertReviewAsync(review);
         }
 
         /// <summary>

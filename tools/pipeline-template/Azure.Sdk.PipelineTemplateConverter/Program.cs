@@ -1,7 +1,7 @@
 using System.CommandLine;
 using YamlDotNet.Serialization;
 using System.Text.RegularExpressions;
-using System.ComponentModel.DataAnnotations;
+using YamlDotNet.Core;
 using YamlDotNet.Serialization.NamingConventions;
 
 namespace Azure.Sdk.PipelineTemplateConverter;
@@ -45,7 +45,7 @@ public class BaseTemplate
 
 public class StageTemplate : BaseTemplate
 {
-    [YamlMember(Alias = "stages")]
+    [YamlMember(Alias = "stages", ScalarStyle = ScalarStyle.Literal)]
     public List<Dictionary<string, object>>? Stages { get; set; }
 
     [YamlMember(Alias = "extends", Order = 11)]
@@ -435,13 +435,16 @@ public class PipelineTemplateConverter
                 line.NewLineBefore = true;
             }
             // Handle various special cases where we know whether we want a newline or not
-            if (lines[i].StartsWith("parameters:") && templateTypes.Contains(TemplateType.Stage))
+            if (templateTypes.Contains(TemplateType.Stage))
             {
-                line.NewLineBefore = true;
-            }
-            if (lines[i].StartsWith("variables:") && templateTypes.Contains(TemplateType.Stage))
-            {
-                line.NewLineBefore = false;
+                if (lines[i].StartsWith("parameters:") || lines[i].StartsWith("trigger:"))
+                {
+                    line.NewLineBefore = true;
+                }
+                else if (lines[i].StartsWith("variables:"))
+                {
+                    line.NewLineBefore = false;
+                }
             }
 
             processedLines.Add(line);

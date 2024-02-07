@@ -229,14 +229,18 @@ async function main() {
     rootUrl = resolvePath(options.outputDir);
   }
 
-  // FIXME: this is a workaround meanwhile we fix the issue with failing to delete the sparse-spec directory
-  // Tracking issue: https://github.com/Azure/azure-sdk-tools/issues/7636
   const repoRoot = await getRepoRoot(rootUrl);
-  access(joinPaths(repoRoot, "..", "sparse-spec")).then(() => {
-    Logger.debug("Deleting existing sparse-spec directory");
-    removeDirectory(joinPaths(repoRoot, "..", "sparse-spec"));
-  }).catch(() => {});
-
+  try {
+    // FIXME: this is a workaround meanwhile we fix the issue with failing to delete the sparse-spec directory
+    // Tracking issue: https://github.com/Azure/azure-sdk-tools/issues/7636
+    access(joinPaths(repoRoot, "..", "sparse-spec")).then(() => {
+      Logger.debug("Deleting existing sparse-spec directory");
+      removeDirectory(joinPaths(repoRoot, "..", "sparse-spec"));
+    }).catch(() => {});
+  } catch (err) {
+    Logger.debug(`Error occurred while attempting to remove sparse-spec directory: ${err}`);
+  }
+  
   switch (options.command) {
       case "init":
         const emitter = await getEmitterFromRepoConfig(joinPaths(repoRoot, "eng", "emitter-package.json"));

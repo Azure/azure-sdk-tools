@@ -29,10 +29,11 @@ public class BaseTemplate
     public object? PullRequest { get; set; }
 
     [YamlMember(Alias = "variables", Order = 4)]
-    public List<object>? Variables { get; set; }
+    public object? Variables { get; set; }
 
     private ISerializer Serializer { get; } = new SerializerBuilder()
         .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull)
+        .DisableAliases()
         .WithIndentedSequences()
         .Build();
 
@@ -61,7 +62,7 @@ public class Comment
     public string AppearsBeforeLine { get; set; } = string.Empty;
     public string AppearsOnLine { get; set; } = string.Empty;
     public int LineInstance { get; set; } = 0;
-    public bool PrecedingWhitespace { get; set; } = false;
+    public bool NewLineBefore { get; set; } = false;
 
     public Comment(List<string> value)
     {
@@ -80,7 +81,7 @@ public class Line
     public int Instance { get; set; } = 0;
     public Comment? Comment { get; set; }
     public Comment? InlineComment { get; set; }
-    public bool NewLineAfter { get; set; } = false;
+    public bool NewLineBefore { get; set; } = false;
     // YamlDotNet serialization removes quotes, but we want to preserve them
     // for line/comment lookup and reducing diff sizes
     public char? Quote { get; set; }
@@ -315,13 +316,9 @@ public class PipelineTemplateConverter
             return;
         }
 
-        var processedLines = BackupCommentsAndFormatting(contents);
+        var processedLines = BackupCommentsAndFormatting(contents, templateTypes);
         var output = "";
 
-        if (templateTypes.Contains(TemplateType.Ignore))
-        {
-            return;
-        }
         if (templateTypes.Contains(TemplateType.Converted))
         {
             Console.WriteLine($"Skipping {file.FullName} already converted");
@@ -335,8 +332,6 @@ public class PipelineTemplateConverter
             ConvertStageTemplate(template);
             output = template.ToString();
             output = RestoreCommentsAndFormatting(output, processedLines);
-            output = AddTemplateWhitespace(output);
-            output = FixTemplateSpecialCharacters(output);
         }
 
         if (templateTypes.Contains(TemplateType.ArtifactTask))
@@ -384,7 +379,7 @@ public class PipelineTemplateConverter
         return types;
     }
 
-    public static List<Line> BackupCommentsAndFormatting(string template)
+    public static List<Line> BackupCommentsAndFormatting(string template, List<TemplateType> templateTypes)
     {
         var lineInstances = new Dictionary<string, int>();
         var lines = template.Split(Environment.NewLine);
@@ -393,6 +388,11 @@ public class PipelineTemplateConverter
         for (var i = 0; i < lines.Length; i++)
         {
             var comment = new List<string>();
+            var commentHasNewLineBefore = false;
+            if (i > 0 && lines[i - 1].Trim().Length == 0)
+            {
+                commentHasNewLineBefore = true;
+            }
 
             while (i < lines.Length && lines[i].TrimStart(' ').StartsWith("#"))
             {
@@ -421,6 +421,7 @@ public class PipelineTemplateConverter
             if (comment.Count > 0)
             {
                 line.Comment = new Comment(comment);
+                line.Comment.NewLineBefore = commentHasNewLineBefore;
             }
 
             if (line.Value.Contains('#'))
@@ -429,9 +430,18 @@ public class PipelineTemplateConverter
                 line.InlineComment = new Comment(inlineComment);
             }
 
-            if (i < lines.Length - 1 && lines[i + 1].Trim(' ').Length == 0)
+            if (i > 0 && lines[i - 1].Trim().Length == 0)
             {
-                line.NewLineAfter = true;
+                line.NewLineBefore = true;
+            }
+            // Handle various special cases where we know whether we want a newline or not
+            if (lines[i].StartsWith("parameters:") && templateTypes.Contains(TemplateType.Stage))
+            {
+                line.NewLineBefore = true;
+            }
+            if (lines[i].StartsWith("variables:") && templateTypes.Contains(TemplateType.Stage))
+            {
+                line.NewLineBefore = false;
             }
 
             processedLines.Add(line);
@@ -451,18 +461,28 @@ public class PipelineTemplateConverter
             lookup.Add((line.LookupKey, line.Instance), line);
         }
 
-        foreach (var line in template.Split(Environment.NewLine))
+        foreach (var _line in template.Split(Environment.NewLine))
         {
+            var line = FixTemplateSpecialCharacters(_line);
             var parsed = new Line(line);
             lineInstances[parsed.LookupKey] = lineInstances.ContainsKey(parsed.LookupKey) ? lineInstances[parsed.LookupKey] + 1 : 1;
             if (!lookup.ContainsKey((parsed.LookupKey, lineInstances[parsed.LookupKey])))
             {
+                // Fix preceding newline with newly added extends directive
+                if (line.StartsWith("extends:"))
+                {
+                    lines.Add("");
+                }
                 lines.Add(line);
                 continue;
             }
 
             var indentation = line[..^line.TrimStart(' ').Length];
             var original = lookup[(parsed.LookupKey, lineInstances[parsed.LookupKey])];
+            if (original.NewLineBefore || original.Comment?.NewLineBefore == true)
+            {
+                lines.Add("");
+            }
 
             // Comments in embedded strings get preserved during serialization so don't restore those
             var lineIsComment = original.Comment?.Value.Any(c => line.Contains(c)) ?? false;
@@ -487,11 +507,6 @@ public class PipelineTemplateConverter
             {
                 lines.Add(indentation + original.Value);
             }
-
-            if (original.NewLineAfter)
-            {
-                lines.Add("");
-            }
         }
 
         return string.Join(Environment.NewLine, lines);
@@ -499,36 +514,15 @@ public class PipelineTemplateConverter
 
     // Yaml serialization adds quotes when special characters are present,
     // such as ones used for azure pipelines templating logic.
-    public static string FixTemplateSpecialCharacters(string template)
+    public static string FixTemplateSpecialCharacters(string line)
     {
-        template = template.Replace("'${{", "${{");
-        template = template.Replace("}}:':", "}}:");
-        template = template.Replace("}}:'", "}}:");
-        template = template.Replace("\"${{", "${{");
-        template = template.Replace("}}:\":", "}}:");
-        template = template.Replace("}}:\"", "}}:");
-        return template;
-    }
-
-    public static string AddTemplateWhitespace(string template)
-    {
-        var lines = new List<string>();
-        var addWhitespaceForLines = new List<string>
-        {
-            "extends",
-            "parameters",
-            "trigger",
-        };
-        foreach (var line in template.Split(Environment.NewLine))
-        {
-            if (addWhitespaceForLines.Any(l => line.StartsWith(l)))
-            {
-                lines.Add("");
-            }
-            lines.Add(line);
-        }
-
-        return string.Join(Environment.NewLine, lines);
+        line = line.Replace("'${{", "${{");
+        line = line.Replace("}}:':", "}}:");
+        line = line.Replace("}}:'", "}}:");
+        line = line.Replace("\"${{", "${{");
+        line = line.Replace("}}:\":", "}}:");
+        line = line.Replace("}}:\"", "}}:");
+        return line;
     }
 
     public static string ConvertPublishTasks(string template)
@@ -602,12 +596,8 @@ public class PipelineTemplateConverter
             ["ref"] = "refs/tags/release",
         };
 
-        repositories.Add(repository);
-        if (template.Resources == null)
-        {
-            template.Resources = new Dictionary<string, object>();
-            template.Resources["repositories"] = repositories;
-        }
+        template.Resources ??= new Dictionary<string, object>();
+        template.Resources["repositories"] = repositories.Prepend(repository);
 
         template.Extends = extends;
         template.Extends.Add("${{ if eq(variables['System.TeamProject'], 'internal') }}:", new Dictionary<string, object>
@@ -629,7 +619,13 @@ public class PipelineTemplateConverter
         {
             if (template.Variables != null)
             {
-                template.Stages[0]["variables"] = template.Variables;
+                foreach (var stage in template.Stages)
+                {
+                    if (stage.ContainsKey("stage"))
+                    {
+                        stage["variables"] = template.Variables;
+                    }
+                }
             }
             parameters.Add("stages", template.Stages);
         }

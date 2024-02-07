@@ -47,7 +47,6 @@ parameters:
     type: object
     default: []
 
-
 extends:
   ${{ if eq(variables['System.TeamProject'], 'internal') }}:
     template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
@@ -60,6 +59,7 @@ extends:
           name: azsdk-pool-mms-win-2022-1es-pt
           image: azsdk-pool-mms-win-2022-1espt
           os: windows
+
     stages:
       - stage: Build
         jobs:
@@ -83,7 +83,6 @@ extends:
                     - ${{ filter}}
               MatrixReplace: ${{ parameters.MatrixReplace }}
               IncludeRelease: ${{ parameters.IncludeRelease }}
-
         variables:
           - template: ../variables/globals.yml
 
@@ -100,6 +99,5 @@ extends:
               ArtifactName: packages
               TargetDocRepoOwner: ${{ parameters.TargetDocRepoOwner }}
               TargetDocRepoName: ${{ parameters.TargetDocRepoName }}
-
 
 

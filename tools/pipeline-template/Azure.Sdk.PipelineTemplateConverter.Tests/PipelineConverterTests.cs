@@ -63,7 +63,8 @@ public class PipelineConverterTests
                   - baz: qux
                   - quux: corge".TrimStart(Environment.NewLine.ToCharArray());
 
-        var processedLines = PipelineTemplateConverter.BackupCommentsAndFormatting(contents);
+        var processedLines = PipelineTemplateConverter.BackupCommentsAndFormatting(
+                                contents, new List<TemplateType>{ TemplateType.Stage });
         var output = PipelineTemplateConverter.RestoreCommentsAndFormatting(serialized, processedLines);
         output.Should().Be(contents);
     }
@@ -100,7 +101,8 @@ public class PipelineConverterTests
                   - foo: bar
                   - baz: qux".TrimStart(Environment.NewLine.ToCharArray());
 
-        var processedLines = PipelineTemplateConverter.BackupCommentsAndFormatting(contents);
+        var processedLines = PipelineTemplateConverter.BackupCommentsAndFormatting(
+                                contents, new List<TemplateType>{ TemplateType.Stage });
         var output = PipelineTemplateConverter.RestoreCommentsAndFormatting(serialized, processedLines);
         output.Should().Be(contents);
     }

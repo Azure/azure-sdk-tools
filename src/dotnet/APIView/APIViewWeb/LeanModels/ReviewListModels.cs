@@ -89,12 +89,16 @@ namespace APIViewWeb.LeanModels
         public bool IsApproved { get; set; }
     }
 
-    public class ReviewListItemModel
+    public class BaseListitemModel 
     {
         [JsonProperty("id")]
         public string Id { get; set; } = IdHelper.GenerateId();
         public string PackageName { get; set; }
         public string Language { get; set; }
+    }
+
+    public class ReviewListItemModel : BaseListitemModel
+    {
         public HashSet<string> Subscribers { get; set; } = new HashSet<string>();
         public List<ReviewChangeHistoryModel> ChangeHistory { get; set; } = new List<ReviewChangeHistoryModel>();
         public List<ReviewAssignmentModel> AssignedReviewers { get; set; } = new List<ReviewAssignmentModel>();
@@ -106,19 +110,16 @@ namespace APIViewWeb.LeanModels
         public bool IsDeleted { get; set; }
     }
 
-    public class APIRevisionListItemModel
+    public class APIRevisionListItemModel : BaseListitemModel
     {
-        [JsonProperty("id")]
-        public string Id { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }
-        public string PackageName { get; set; }
-        public string Language { get; set; }
         public List<APICodeFileModel> Files { get; set; } = new List<APICodeFileModel>();
         public string Label { get; set; }
         public List<APIRevisionChangeHistoryModel> ChangeHistory { get; set; } = new List<APIRevisionChangeHistoryModel>();
         public APIRevisionType APIRevisionType { get; set; }
         public int? PullRequestNo { get; set; }
         public Dictionary<string, HashSet<int>> HeadingsOfSectionsWithDiff { get; set; } = new Dictionary<string, HashSet<int>>();
+        public List<ReviewAssignmentModel> AssignedReviewers { get; set; } = new List<ReviewAssignmentModel>();
         public bool IsApproved { get; set; }
         public HashSet<string> Approvers { get; set; } = new HashSet<string>();
         public string CreatedBy { get; set; }

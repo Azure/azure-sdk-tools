@@ -17,7 +17,7 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         public readonly UserPreferenceCache _preferenceCache;
 
-        public IEnumerable<ReviewListItemModel> Reviews { get; set; } = new List<ReviewListItemModel>();
+        public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ActiveAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
         public IEnumerable<APIRevisionListItemModel> ApprovedAPIRevisions { get; set; } = new List<APIRevisionListItemModel>();
 
@@ -30,16 +30,24 @@ namespace APIViewWeb.Pages.Assemblies
 
         public async Task<IActionResult> OnGetAsync()
         {
-            Reviews = await _reviewManager.GetReviewsAssignedToUser(User.GetGitHubLogin());
+            APIRevisions = await _apiRevisionsManager.GetAPIRevisionsAssignedToUser(User.GetGitHubLogin());
 
-            foreach (var review in Reviews.OrderByDescending(r => r.AssignedReviewers.Select(x => x.AssingedOn)))
+            List<APIRevisionListItemModel> activeAPIRevs = new List<APIRevisionListItemModel>();
+            List<APIRevisionListItemModel> approvedAPIRevs = new List<APIRevisionListItemModel>();
+            foreach (var apiRevison in APIRevisions.OrderByDescending(r => r.AssignedReviewers.Select(x => x.AssingedOn)))
             {
-                var apiRevisoins = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
-                ActiveAPIRevisions = ActiveAPIRevisions.Concat(apiRevisoins.Where(r => r.IsApproved == false));
+                if (!apiRevison.IsApproved)
+                {
+                    activeAPIRevs.Add(apiRevison);
+                }
 
-                // Remove all approvals over a week old
-                ApprovedAPIRevisions = ApprovedAPIRevisions.Concat(apiRevisoins.Where(r => r.IsApproved == true).Where(r => r.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn >= DateTime.Now.AddDays(-7)));
+                if (apiRevison.IsApproved && apiRevison.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn >= DateTime.Now.AddDays(-7))
+                {
+                    approvedAPIRevs.Add(apiRevison);
+                }
             }
+            ActiveAPIRevisions = activeAPIRevs;
+            ApprovedAPIRevisions = approvedAPIRevs;
             ApprovedAPIRevisions.OrderByDescending(r => r.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn);
 
             return Page();

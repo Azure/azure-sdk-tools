@@ -389,16 +389,32 @@ public class PipelineTemplateConverter
         var lineInstances = new Dictionary<string, int>();
         var lines = template.Split(Environment.NewLine);
         var processedLines = new List<Line>();
+
         for (var i = 0; i < lines.Length; i++)
         {
             var comment = new List<string>();
+
             while (i < lines.Length && lines[i].TrimStart(' ').StartsWith("#"))
             {
                 comment.Add(lines[i].Trim(' '));
                 i++;
             }
 
-            var line = new Line(lines[i]);
+            Line line;
+            /*
+            * What happens when a file simply ends on a comment? there's nowhere to associate the line
+            * With. When that occurs, simply insert a new empty string. Files shouldn't end without
+            * trailing whitespace anyway, so this is not a destructive update.
+            */
+            if (i < lines.Length)
+            {
+                line = new Line(lines[i]);
+            }
+            else
+            {
+                line = new Line(String.Empty);
+            }
+
             lineInstances[line.LookupKey] = lineInstances.ContainsKey(line.LookupKey) ? lineInstances[line.LookupKey] + 1 : 1;
             line.Instance = lineInstances[line.LookupKey];
 
@@ -407,7 +423,7 @@ public class PipelineTemplateConverter
                 line.Comment = new Comment(comment);
             }
 
-            if (lines[i].Contains('#'))
+            if (line.Value.Contains('#'))
             {
                 var inlineComment = lines[i][lines[i].IndexOf("#")..];
                 line.InlineComment = new Comment(inlineComment);

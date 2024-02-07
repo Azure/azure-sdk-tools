@@ -71,7 +71,7 @@ namespace Azure.SDK.ChangelogGen
 
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+                .AddJsonFile("appSettings.json", optional: true, reloadOnChange: true);
 
             var settings = builder.Build().GetSection("settings");
 

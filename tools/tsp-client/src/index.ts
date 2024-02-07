@@ -67,7 +67,15 @@ async function sdkInit(
     if (!config.endsWith("tspconfig.yaml")) {
       config = joinPaths(config, "tspconfig.yaml");
     }
-    const data = await readFile(config, "utf8");
+    let data;
+    try {
+      data = await readFile(config, "utf8");
+    } catch (err) {
+      throw new Error(`Could not find tspconfig.yaml at ${config}`);
+    }
+    if (!data) {
+      throw new Error(`tspconfig.yaml is empty at ${config}`);
+    }
     const configYaml = parseYaml(data);
     const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
     if (!serviceDir) {

@@ -47,6 +47,7 @@ parameters:
     type: object
     default: []
 
+
 extends:
   ${{ if eq(variables['System.TeamProject'], 'internal') }}:
     template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
@@ -82,6 +83,7 @@ extends:
                     - ${{ filter}}
               MatrixReplace: ${{ parameters.MatrixReplace }}
               IncludeRelease: ${{ parameters.IncludeRelease }}
+
         variables:
           - template: ../variables/globals.yml
 
@@ -98,4 +100,6 @@ extends:
               ArtifactName: packages
               TargetDocRepoOwner: ${{ parameters.TargetDocRepoOwner }}
               TargetDocRepoName: ${{ parameters.TargetDocRepoName }}
+
+
 

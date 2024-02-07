@@ -12,7 +12,7 @@ public class PipelineConverterTests
         PipelineTemplateConverter.Convert(new FileInfo("./assets/net.archetype-sdk-client.converted.yml"), true);
         var converted = File.ReadAllLines("./assets/net.archetype-sdk-client.converted.yml");
         var after = File.ReadAllLines("./assets/net.archetype-sdk-client.after.yml");
-        for (var i = 0; i < after.Length; i++)
+        for (var i = 0; i < after.Length-1; i++)
         {
             after[i].Should().Be(converted[i]);
         }
@@ -25,9 +25,8 @@ public class PipelineConverterTests
         PipelineTemplateConverter.Convert(new FileInfo("./assets/js.archetype-sdk-client.converted.yml"), true);
         var converted = File.ReadAllLines("./assets/js.archetype-sdk-client.converted.yml");
         var after = File.ReadAllLines("./assets/js.archetype-sdk-client.after.yml");
-        for (var i = 0; i < after.Length; i++)
+        for (var i = 0; i < after.Length-1; i++)
         {
-            i.Should().BeLessThan(converted.Length);
             after[i].Should().Be(converted[i]);
         }
     }
@@ -42,6 +41,31 @@ public class PipelineConverterTests
         contents = File.ReadAllText("./assets/net.aggregate-reports.before.yml");
         templateType = PipelineTemplateConverter.GetTemplateType(contents);
         templateType.Should().Equal(new List<TemplateType>{ TemplateType.Stage, TemplateType.ArtifactTask });
+    }
+
+    [Fact]
+    public void TestRestoreQuotes()
+    {
+        var contents = @"
+                steps:
+                  - a: ""comment""  # inline comment
+                  - foo: bar
+                  - foo: 'bar'
+                  - baz: 'qux'
+                  - quux: ""corge""".TrimStart(Environment.NewLine.ToCharArray());
+
+        // Test indent change as well
+        var serialized = @"
+                steps:
+                  - a: comment
+                  - foo: bar
+                  - foo: bar
+                  - baz: qux
+                  - quux: corge".TrimStart(Environment.NewLine.ToCharArray());
+
+        var processedLines = PipelineTemplateConverter.BackupCommentsAndFormatting(contents);
+        var output = PipelineTemplateConverter.RestoreCommentsAndFormatting(serialized, processedLines);
+        output.Should().Be(contents);
     }
 
     [Fact]

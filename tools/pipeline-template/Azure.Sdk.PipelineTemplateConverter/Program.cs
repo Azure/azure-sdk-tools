@@ -81,6 +81,10 @@ public class Line
     public Comment? Comment { get; set; }
     public Comment? InlineComment { get; set; }
     public bool NewLineAfter { get; set; } = false;
+    // YamlDotNet serialization removes quotes, but we want to preserve them
+    // for line/comment lookup and reducing diff sizes
+    public char? Quote { get; set; }
+    public string LookupKey { get; set; }
 
     public Line(string line)
     {
@@ -89,7 +93,31 @@ public class Line
             line = line[..line.IndexOf("#")];
         }
 
+        var singleQuoted = new Regex(@"(^[ \t]*-?[ ]*\w*:[ ]*)'(.*)'[ ]*");
+        var doubleQuoted = new Regex(@"(^[ \t]*-?[ ]*\w*:[ ]*)""(.*)""[ ]*");
+        var singleQuotedMatch = singleQuoted.Match(line);
+        var doubleQuotedMatch = doubleQuoted.Match(line);
+
         Value = line.Trim();
+
+        if (singleQuotedMatch.Success)
+        {
+            Quote = '\'';
+            var head = singleQuotedMatch.Groups[1].Value;
+            var tail = singleQuotedMatch.Groups[2].Value;
+            LookupKey = (head + tail).Trim();
+        }
+        else if (doubleQuotedMatch.Success)
+        {
+            Quote = '"';
+            var head = doubleQuotedMatch.Groups[1].Value;
+            var tail = doubleQuotedMatch.Groups[2].Value;
+            LookupKey = (head + tail).Trim();
+        }
+        else
+        {
+            LookupKey = Value;
+        }
     }
 }
 
@@ -356,22 +384,12 @@ public class PipelineTemplateConverter
         return types;
     }
 
-    public static string GetLineInstanceKey(string line)
-    {
-        var key = line.Trim(' ');
-        if (line.Contains('#'))
-        {
-            key = line[..line.IndexOf("#")];
-        }
-        return key;
-    }
-
     public static List<Line> BackupCommentsAndFormatting(string template)
     {
         var lineInstances = new Dictionary<string, int>();
         var lines = template.Split(Environment.NewLine);
         var processedLines = new List<Line>();
-        for (var i = 0; i < lines.Length - 1; i++)
+        for (var i = 0; i < lines.Length; i++)
         {
             var comment = new List<string>();
             while (i < lines.Length && lines[i].TrimStart(' ').StartsWith("#"))
@@ -381,8 +399,8 @@ public class PipelineTemplateConverter
             }
 
             var line = new Line(lines[i]);
-            lineInstances[line.Value] = lineInstances.ContainsKey(line.Value) ? lineInstances[line.Value] + 1 : 1;
-            line.Instance = lineInstances[line.Value];
+            lineInstances[line.LookupKey] = lineInstances.ContainsKey(line.LookupKey) ? lineInstances[line.LookupKey] + 1 : 1;
+            line.Instance = lineInstances[line.LookupKey];
 
             if (comment.Count > 0)
             {
@@ -414,21 +432,21 @@ public class PipelineTemplateConverter
         var lookup = new Dictionary<(string, int), Line>();
         foreach (var line in processedLines)
         {
-            lookup.Add((line.Value, line.Instance), line);
+            lookup.Add((line.LookupKey, line.Instance), line);
         }
 
         foreach (var line in template.Split(Environment.NewLine))
         {
-            var parsed = new Line(line).Value;
-            lineInstances[parsed] = lineInstances.ContainsKey(parsed) ? lineInstances[parsed] + 1 : 1;
-            if (!lookup.ContainsKey((parsed, lineInstances[parsed])))
+            var parsed = new Line(line);
+            lineInstances[parsed.LookupKey] = lineInstances.ContainsKey(parsed.LookupKey) ? lineInstances[parsed.LookupKey] + 1 : 1;
+            if (!lookup.ContainsKey((parsed.LookupKey, lineInstances[parsed.LookupKey])))
             {
                 lines.Add(line);
                 continue;
             }
 
             var indentation = line[..^line.TrimStart(' ').Length];
-            var original = lookup[(parsed, lineInstances[parsed])];
+            var original = lookup[(parsed.LookupKey, lineInstances[parsed.LookupKey])];
 
             // Comments in embedded strings get preserved during serialization so don't restore those
             var lineIsComment = original.Comment?.Value.Any(c => line.Contains(c)) ?? false;
@@ -447,11 +465,11 @@ public class PipelineTemplateConverter
             var inlineComment = original.InlineComment?.Value.FirstOrDefault();
             if (inlineComment != null)
             {
-                lines.Add(line + "  " + inlineComment);
+                lines.Add(indentation + original.Value + "  " + inlineComment);
             }
             else
             {
-                lines.Add(line);
+                lines.Add(indentation + original.Value);
             }
 
             if (original.NewLineAfter)

@@ -1,14 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Collections;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using Azure.SDK.ChangelogGen.Compare;
 using Azure.SDK.ChangelogGen.Report;
 using Azure.SDK.ChangelogGen.Utilities;
 using LibGit2Sharp;
-using Markdig.Parsers;
 
 namespace Azure.SDK.ChangelogGen
 {
@@ -36,7 +33,8 @@ namespace Azure.SDK.ChangelogGen
                 }
 
                 Context context = new Context();
-                if (!context.Init(args)) {
+                if (!context.Init(args))
+                {
                     return;
                 }
 
@@ -156,7 +154,7 @@ namespace Azure.SDK.ChangelogGen
             else
             {
                 Logger.Log($"Spec Tag change detected: {baselineVersionTag} -> {curVersionTag}");
-                return new StringValueChange(curVersionTag, baselineVersionTag, 
+                return new StringValueChange(curVersionTag, baselineVersionTag,
                     $"Upgraded api-version tag from '{baselineVersionTag}' to '{curVersionTag}'. Tag detail available at {source}");
             }
         }
@@ -173,7 +171,8 @@ namespace Azure.SDK.ChangelogGen
             List<string> azureRefs = new List<string>()
             {
                 typeof(Azure.ResourceManager.ArmClient).Assembly.Location,
-                typeof(Azure.Core.AzureLocation).Assembly.Location
+                typeof(Azure.Core.AzureLocation).Assembly.Location,
+                typeof(System.ClientModel.Primitives.ModelReaderWriter).Assembly.Location,
             };
             List<string> allRefs = runtimeRefs.Concat(azureRefs).ToList();
             Assembly curApi = CompileHelper.Compile("curApi.dll", curApiFileContent, allRefs);

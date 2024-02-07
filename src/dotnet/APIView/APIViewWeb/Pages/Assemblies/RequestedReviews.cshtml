@@ -28,7 +28,7 @@
                         {
                             @foreach (var apiRevision in Model.ActiveAPIRevisions)
                             {
-                                var assignment = Model.Reviews.Single(r => r.Id == apiRevision.ReviewId).AssignedReviewers.First(ar => ar.AssingedTo == User.GetGitHubLogin());
+                                var assignment = apiRevision.AssignedReviewers.First(ar => ar.AssingedTo == User.GetGitHubLogin());
                                 var approvalRequestedOn = assignment.AssingedOn;
                                 var requestBy = assignment.AssignedBy;
 
@@ -98,7 +98,7 @@
                         {
                             @foreach (var apiRevision in Model.ApprovedAPIRevisions)
                             {
-                                var assignment = Model.Reviews.Single(r => r.Id == apiRevision.ReviewId).AssignedReviewers.First(ar => ar.AssingedTo == User.GetGitHubLogin());
+                                var assignment = apiRevision.AssignedReviewers.First(ar => ar.AssingedTo == User.GetGitHubLogin());
                                 var approvalRequestedOn = assignment.AssingedOn;
                                 var requestBy = assignment.AssignedBy;
 

@@ -424,7 +424,7 @@ public class PipelineTemplateConverter
                 line.Comment.NewLineBefore = commentHasNewLineBefore;
             }
 
-            if (line.Value.Contains('#'))
+            if (lines[i].Contains('#'))
             {
                 var inlineComment = lines[i][lines[i].IndexOf("#")..];
                 line.InlineComment = new Comment(inlineComment);

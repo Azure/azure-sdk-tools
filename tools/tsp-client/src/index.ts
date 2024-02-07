@@ -42,7 +42,15 @@ async function sdkInit(
     const tspConfigPath = joinPaths(resolvedConfigUrl.path, "tspconfig.yaml");
     await addSpecFiles(cloneDir, tspConfigPath)
     await checkoutCommit(cloneDir, resolvedConfigUrl.commit);
-    const data = await readFile(joinPaths(cloneDir, tspConfigPath), "utf8");
+    let data;
+    try {
+      data = await readFile(joinPaths(cloneDir, tspConfigPath), "utf8");
+    } catch (err) {
+      throw new Error(`Could not read tspconfig.yaml at ${tspConfigPath}. Error: ${err}`);
+    }
+    if (!data) {
+      throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
+    }
     const configYaml = parseYaml(data);
     const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
     if (!serviceDir) {
@@ -71,7 +79,7 @@ async function sdkInit(
     try {
       data = await readFile(config, "utf8");
     } catch (err) {
-      throw new Error(`Could not find tspconfig.yaml at ${config}`);
+      throw new Error(`Could not read tspconfig.yaml at ${config}`);
     }
     if (!data) {
       throw new Error(`tspconfig.yaml is empty at ${config}`);

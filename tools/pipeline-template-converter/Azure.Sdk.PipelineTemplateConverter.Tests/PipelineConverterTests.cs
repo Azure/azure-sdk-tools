@@ -41,6 +41,10 @@ public class PipelineConverterTests
         contents = File.ReadAllText("./assets/net.aggregate-reports.before.yml");
         templateType = PipelineTemplateConverter.GetTemplateType(contents);
         templateType.Should().Equal(new List<TemplateType>{ TemplateType.Stage, TemplateType.ArtifactTask });
+
+        contents = File.ReadAllText("./assets/net.aggregate-reports.converted.yml");
+        templateType = PipelineTemplateConverter.GetTemplateType(contents);
+        templateType.Should().Equal(new List<TemplateType>{ TemplateType.Converted, TemplateType.Stage });
     }
 
     [Fact]

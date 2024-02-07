@@ -53,12 +53,13 @@
 
 #left-review-offcanvas-menu-content {
     .btn-check:focus + .btn, .btn:focus {
-        box-shadow: none !important;
+        box-shadow: var(--box-shadow-left);
     }
 
     .btn {
         border-radius: 0px;
     }
+
     .btn.active {
         box-shadow: var(--box-shadow-left);
     }
@@ -71,50 +72,6 @@
 #add-apirevision-context {
     width: 30dvw;
     background-color: var(--base-bg-color);
-}
-
-#apiRevisions-context {
-    .card {
-        flex-direction: row;
-        overflow: hidden;
-        background-color: var(--base-fg-color);
-
-        .card-body {
-            padding: 0.5rem 0.75rem;
-            font-size: small;
-        }
-
-        img {
-            width: 80px;
-            height: 80px;
-        }
-    }
-
-    .card.True {
-        @include review-approval-border;
-    }
-}
-
-.apiRevisions-list-container {
-    overflow: auto;
-    height: 78dvh;
-
-    .apirevision-actions {
-        align-self: center;
-        margin-right: 15px;
-        display: none;
-    }
-
-    .apirevision-indicator-checks, .apirevision-actions {
-        align-self: center;
-        margin-right: 20px;
-    }
-}
-
-.apiRevisions-list-container > .card:hover {
-    .apirevision-actions {
-        display: inline-flex;
-    }
 }
 
 .review-approved {

@@ -71,6 +71,12 @@ $(() => {
     $(".tooltip").remove();
   }
 
+  function exitAPIRevisionRename(apiRevisionCard) {
+    apiRevisionCard.find(".card-title").removeClass("d-none");
+    apiRevisionCard.find(".card-subtitle").removeClass("d-none");
+    apiRevisionCard.find(".edit-api-revision-label").addClass("d-none");
+  }
+
 
   /* MANAGE APIREVISIONS IN CONTEXT OF REVIEW PAGE
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
@@ -179,11 +185,12 @@ $(() => {
   $(".apiRevisions-list-container .card .btn.clear-diff").on("click", clearDiffAPIRevisionEventHandler);
 
   // Delete API Revision
-  $(".apiRevisions-list-container .delete").on("click", function () {
+  $(".apiRevisions-list-container .delete").on("click", function (e) {
+    e.stopPropagation();
     const id = hp.getReviewAndRevisionIdFromUrl(window.location.href)["reviewId"];
     const apiRevisionCard = $(this).closest(".card");
     const apiRevisionsId = apiRevisionCard.attr("data-id");
-    const url = `/Assemblies/Review/${id}/${apiRevisionsId}`;
+    const url = `/Assemblies/Revisions/${id}/${apiRevisionsId}`;
     var antiForgeryToken = $("input[name=__RequestVerificationToken]").val();
 
     $.ajax({
@@ -196,5 +203,53 @@ $(() => {
         apiRevisionCard.remove();
       }
     });
+  });
+
+  // Rename API Revision Label
+  $(".apiRevisions-list-container .rename").on("click", function (e) {
+    e.stopPropagation();
+    const apiRevisionCard = $(this).closest(".card");
+    apiRevisionCard.find(".card-title").addClass("d-none");
+    apiRevisionCard.find(".card-subtitle").addClass("d-none");
+    apiRevisionCard.find(".edit-api-revision-label").removeClass("d-none");
+  });
+
+  $(".apiRevisions-list-container .cancel-rename").on("click", function (e) {
+    e.stopPropagation();
+    const apiRevisionCard = $(this).closest(".card");
+    exitAPIRevisionRename(apiRevisionCard);
+  });
+
+  $(".apiRevisions-list-container .enter-rename").on("click", function (e) {
+    e.stopPropagation();
+    const id = hp.getReviewAndRevisionIdFromUrl(window.location.href)["reviewId"];
+    const apiRevisionCard = $(this).closest(".card");
+    const updatedLabel = apiRevisionCard.find(".edit-api-revision-label > input").val();
+    const apiRevisionsId = apiRevisionCard.attr("data-id");
+    const url = `/Assemblies/Revisions/${id}/${apiRevisionsId}?handler=Rename&newLabel=${updatedLabel}`;
+    var antiForgeryToken = $("input[name=__RequestVerificationToken]").val();
+  
+    $.ajax({
+      type: "POST",
+      url: url,
+      headers: {
+        "RequestVerificationToken": antiForgeryToken as string
+      },
+      success: function (data) {
+        apiRevisionCard.find(".card-title").text(data);
+        exitAPIRevisionRename(apiRevisionCard);
+      }
+    });
+  });
+
+  $(".edit-api-revision-label").on("click", function (e) {
+    e.stopPropagation();
+  });
+
+  // Open API Revision in new tab
+  $("#revisions-main-container .apiRevisions-list-container .card").on("click", function () {
+    const apiRevisionsId = $(this).attr("data-id");
+    const uri = (window.location.href).replace("/Revisions/", "/Review/") + `?revisionId=${apiRevisionsId}`;
+    window.open(uri, "_blank");
   });
 });

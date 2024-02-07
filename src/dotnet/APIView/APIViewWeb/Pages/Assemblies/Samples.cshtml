@@ -13,18 +13,9 @@
 @if (Model.ActiveSampleRevision != null && (Model.ActiveSampleRevision.FileId == "Bad Deployment" || Model.ActiveSampleRevision.FileId == "File Content Missing")) // If the samples container does not exist
 {
     <div class="container-fluid mx-0 px-0 sub-header-content">
-        <div class="row mx-1 px-0 py-2">
-            <div class="col-md-6">
-                <div class="input-group-sm input-group">
-                    <partial name="Shared/_ReviewBadge" model="(Model.Review, default(APIRevisionListItemModel))" />
-                </div>
-            </div>
-            <div class="col-md-3">
-            </div>
-            <div class="col-md-3">
-            </div>
+        <div class="row px-3 py-2 border-bottom" id="review-info-bar">
+            <partial name="Shared/_ReviewBadge" model="(Model.Review, default(APIRevisionListItemModel), default(APIRevisionListItemModel), default(UserPreferenceModel))" />
         </div>
-        <partial name="Shared/_ReviewNavBar" />
     </div>
     <div class="container">
         <div class="row mx-1 px-0 py-3">

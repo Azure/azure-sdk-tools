@@ -1,4 +1,3 @@
-
 @using APIViewWeb.Helpers;
 @using APIViewWeb.LeanModels;
 @using APIViewWeb.Models
@@ -31,12 +30,12 @@
                                 }
                                 <a class="review-name align-middle" asp-page="./Review" asp-route-id="@review.Id">@review.PackageName.Substring(0, @truncationIndex)</a>
                                 @*
-                                Disabling approval (first release / Package name approval) for now as it is of no benefit to users
-                                @if (review.IsApproved == true)
-                                {
-                                    <i class="fas fa-check-circle text-success ml-2"></i>
-                                }
-                                *@
+                        Disabling approval (first release / Package name approval) for now as it is of no benefit to users
+                        @if (review.IsApproved == true)
+                        {
+                        <i class="fas fa-check-circle text-success ml-2"></i>
+                        }
+                        *@
                             </td>
                             <td class="align-middle cst-bdr-left ps-3">
                                 <a username="@review.CreatedBy">@review.CreatedBy</a>

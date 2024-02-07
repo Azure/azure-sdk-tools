@@ -70,10 +70,6 @@ namespace APIViewWeb.Pages.Assemblies
         public bool ShowDiffOnly { get; set; }
         [BindProperty(Name = "notificationMessage", SupportsGet = true)]
         public string NotificationMessage { get; set; }
-        [FromForm]
-        public string AddAPIRevisionFilePath { get; set; }
-        [FromForm]
-        public string AddAPIRevisionLabel { get; set; }
 
         /// <summary>
         /// Handler for loading page
@@ -311,8 +307,10 @@ namespace APIViewWeb.Pages.Assemblies
         /// </summary>
         /// <param name="id"></param>
         /// <param name="upload"></param>
+        /// <param name="label"></param>
+        /// <param name="filePath"></param>
         /// <returns></returns>
-        public async Task<IActionResult> OnPostUploadAsync(string id, [FromForm] IFormFile upload)
+        public async Task<IActionResult> OnPostUploadAsync(string id, [FromForm] IFormFile upload, [FromForm] string label, [FromForm] string filePath)
         {
             if (!ModelState.IsValid)
             {
@@ -322,27 +320,15 @@ namespace APIViewWeb.Pages.Assemblies
             if (upload != null)
             {
                 var openReadStream = upload.OpenReadStream();
-                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, upload.FileName, AddAPIRevisionLabel, openReadStream, language: null);
+                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, upload.FileName, label, openReadStream, language: null);
             }
             else
             {
-                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, AddAPIRevisionFilePath, AddAPIRevisionLabel, null);
+                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, filePath, label, null);
             }
-            var latestAPIRevision = _apiRevisionsManager.GetLatestAPIRevisionsAsync(id); 
+            var latestAPIRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(id); 
 
             return RedirectToPage(new { id = id, revisionId = latestAPIRevision.Id } );
-        }
-
-        /// <summary>
-        /// Delete API Revision
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="revisionId"></param>
-        /// <returns></returns>
-        public async Task<IActionResult> OnDeleteAsync(string id, string revisionId)
-        {
-            await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(User, id, revisionId);
-            return new NoContentResult();
         }
         /// <summary>
         /// Get Routing Data for a Review

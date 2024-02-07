@@ -23,7 +23,7 @@
 }
 
 @mixin fixed-page-heights {
-    height: calc(100vh - 190px);
+    height: calc(100vh - 130px); 
     overflow-y: auto;
 }
 

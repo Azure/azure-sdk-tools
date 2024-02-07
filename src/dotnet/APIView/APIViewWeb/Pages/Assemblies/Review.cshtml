@@ -18,18 +18,15 @@
         rightOffCanvasClass = String.Empty;
 
     var leftOffCanvasClass = " show-left-offcanvas";
-    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
-        leftOffCanvasClass = String.Empty;
-
-
 }
+
 <div id="left-offcanvas-menu" class="left-offcanvas@(leftOffCanvasClass)">
     <div class="left-offcanvas-menu-content" id="left-review-offcanvas-menu-content">
         <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
-            <button type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="API" active-if="@TempData["page"].Equals("api")"><i class="bi bi-braces"></i></button>
-            <button type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#apiRevisions-context" aria-controls="apiRevisions-context"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></button>
-            <button type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#conversiations-context" aria-controls="conversiations-context"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversiations"></i></button>
-            <button type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"><i class="bi bi-puzzle"></i></button>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="API" active-if="@TempData["page"].Equals("api")"><i class="bi bi-braces"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#apiRevisions-context" aria-controls="apiRevisions-context"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#conversiations-context" aria-controls="conversiations-context"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversiations"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"><i class="bi bi-puzzle"></i></a>
         </div>
     </div>
 </div>
@@ -460,53 +457,7 @@
 
 <div class="container-fluid mx-0 px-0 sub-header-content">
     <div class="row px-3 py-2 border-bottom" id="review-info-bar">
-        <div class="col-md-11">
-            <nav style="--bs-breadcrumb-divider: '-';" aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    @{
-                        string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(Model.ReviewContent.ActiveAPIRevision.Language);
-                        string langVariant = String.Empty;
-                    }
-                    @if (!string.IsNullOrEmpty(Model.ReviewContent.ActiveAPIRevision.Files.First().LanguageVariant) && Model.ReviewContent.ActiveAPIRevision.Files.First().LanguageVariant.ToLower() != "default")
-                    {
-                            langVariant = @Model.ReviewContent.ActiveAPIRevision.Files.First().LanguageVariant.ToLower();
-                            iconClassName += "-" + @Model.ReviewContent.ActiveAPIRevision.Files.First().LanguageVariant.ToLower();
-                    }
-                    <li class="breadcrumb-item"><span role="img" class="icon-language @iconClassName" aria-label="@Model.ReviewContent.ActiveAPIRevision.Language @langVariant"></span> @Model.ReviewContent.ActiveAPIRevision.PackageName</li>
-                    @if (Model.ReviewContent.Review.IsApproved)
-                    {
-                        <li class="breadcrumb-item" data-bs-toggle="tooltip" title="Approved for First Release"><i class="fa-regular fa-circle-check text-success"></i></li>
-                    }
-                    <li class="breadcrumb-item"><i class="bi bi-clock-history"></i> @PageModelHelpers.ResolveRevisionLabel(Model.ReviewContent.ActiveAPIRevision, false)</li>
-                    @if (Model.ReviewContent.ActiveAPIRevision.IsApproved)
-                    {
-                        <li class="breadcrumb-item" data-bs-toggle="tooltip" title="APIRevision is Approved"><i class="fa-regular fa-circle-check text-success"></i></li>
-                    }
-                    @if (Model.ReviewContent.DiffAPIRevision != null)
-                    {
-                        <li class="breadcrumb-item"><i class="bi bi-file-diff"></i> @PageModelHelpers.ResolveRevisionLabel(Model.ReviewContent.DiffAPIRevision, false)</li>
-                        @if (Model.ReviewContent.DiffAPIRevision.IsApproved)
-                        {
-                            <li class="breadcrumb-item" data-bs-toggle="tooltip" title="Diff APIRevision is Approved"><i class="fa-regular fa-circle-check text-success"></i></li>
-                        }
-                    }
-                </ol>
-            </nav>
-        </div>
-        <div class="col-1">
-            @if (TempData["page"].Equals("api"))
-            {
-                if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
-                {
-                    <input type="checkbox" class="btn-check" id="review-right-offcanvas-toggle" autocomplete="off">
-                }
-                else
-                {
-                    <input type="checkbox" checked class="btn-check" id="review-right-offcanvas-toggle" autocomplete="off">
-                }
-                <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="review-right-offcanvas-toggle"><i class="fa fa-bars"></i></label>
-            }
-        </div>
+        <partial name="Shared/_ReviewBadge" model="(Model.ReviewContent.Review, Model.ReviewContent.ActiveAPIRevision, Model.ReviewContent.DiffAPIRevision, userPreference)" />
     </div>
 </div>
 @{
@@ -588,81 +539,15 @@
     <partial name="_CommentFormPartial" model="@Model.ReviewContent.TaggableUsers" /> 
 </div>
 
+<partial name="Shared/_AddAPIRevisionsPartial" model="Model.ReviewContent.Review" />
+
 <div class="offcanvas offcanvas-end border-start" tabindex="-1" id="apiRevisions-context" aria-labelledby="apiRevisions-context-label">
     <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="offcanvasLabel"><a asp-page="Revisions" asp-route-id="@Model.ReviewContent.Review.Id">APIRevisions</a></h5>
+        <h5 class="offcanvas-title" id="offcanvasLabel"><a asp-page="Revisions" asp-route-id="@Model.ReviewContent.Review.Id">Revisions</a></h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-        <div class="row g-4">
-            <div class="col mx-3">
-                <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#add-apirevision-context" aria-controls="add-apirevision-context">Add APIRevision</button>
-                    <div class="btn-group" role="group" aria-label="APIRevisions Select">
-                        <input type="checkbox" class="btn-check" id="manual-apirevisions-check" autocomplete="off">
-                        <label class="btn btn-outline-primary" for="manual-apirevisions-check">Manual</label>
-
-                        <input type="checkbox" class="btn-check" id="automatic-apirevisions-check" autocomplete="off">
-                        <label class="btn btn-outline-primary" for="automatic-apirevisions-check">Automatic</label>
-
-                        <input type="checkbox" class="btn-check" id="pullrequest-apirevisions-check" autocomplete="off">
-                        <label class="btn btn-outline-primary" for="pullrequest-apirevisions-check">Pull Request</label>
-                    </div>
-                    <div class="input-group mb-3">
-                        <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
-                        <input type="search" placeholder="Search.." class="form-control" id="apiRevisions-search" aria-label="apirevision search">
-                    </div>
-                </div>
-                <div class="apiRevisions-list-container pe-2">
-                    @foreach (var apiRevision in Model.ReviewContent.APIRevisions)
-                    {
-                        <div class="card @apiRevision.IsApproved my-2" data-id="@apiRevision.Id">
-                            <img username="@apiRevision.CreatedBy" size="105" aria-label="GitHub User Avatar" />
-                            <div class="card-body">
-                                <h6 class="card-title">@apiRevision.Label</h6>
-                                <p class="card-subtitle mb-1 text-body-secondary"><b>Created: </b><span date="@apiRevision.CreatedOn"></span> , <b>By: </b>@apiRevision.CreatedBy</p>
-                                <p class="card-subtitle mb-0 text-body-secondary"><b>Last Updated: </b><span date="@apiRevision.LastUpdatedOn"></span> , <b>Type: </b>@apiRevision.APIRevisionType , <b>Version: </b>@apiRevision.Files[0].PackageVersion</p>
-                            </div>
-                            <div class="apirevision-actions">
-                                <div class="btn-group animate__animated animate__fadeIn" role="group" aria-label="apiRevision action buttons">
-                                    @if (apiRevision.Id != Model.ReviewContent.ActiveAPIRevision.Id && (Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Id != apiRevision.Id))
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-clock-history mr-1"></i></button>
-                                    }
-                                    @if ((Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Id != apiRevision.Id) && Model.ReviewContent.ActiveAPIRevision.Id != apiRevision.Id)
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>
-                                    }
-                                    @if (Model.ReviewContent.DiffAPIRevision != null && apiRevision.Id == Model.ReviewContent.DiffAPIRevision.Id)
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-primary clear-diff" data-bs-toggle="tooltip" title="Clear Diff"><i class="bi bi-file-earmark-minus"></i></button>
-                                    }
-                                    @if (User.GetGitHubLogin() == apiRevision.CreatedBy)
-                                    {
-                                        <button type="button" class="btn btn-sm btn-outline-primary rename" data-bs-toggle="tooltip" title="Rename"><i class="bi bi-pencil-square"></i></button>
-                                        <button type="button" class="btn btn-sm btn-outline-primary delete" data-bs-toggle="tooltip" title="Delete"><i class="bi bi-x-circle text-danger"></i></button>
-                                    }
-                                </div>
-                            </div>
-                            <div class="apirevision-indicator-checks animate__animated animate__slideInLeft">
-                                @if (apiRevision.IsApproved)
-                                {
-                                    <i class="fas fa-check-circle text-success mr-1"></i>
-                                }
-                                @if (apiRevision.Id == Model.ReviewContent.ActiveAPIRevision.Id)
-                                {
-                                    <i class="bi bi-clock-history active-rev mr-1"></i>
-                                }
-                                @if (Model.ReviewContent.DiffAPIRevision != null && Model.ReviewContent.DiffAPIRevision.Id == apiRevision.Id)
-                                {
-                                    <i class="bi bi-file-diff diff-rev mr-1"></i>
-                                }
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
+        <partial name="Shared/_APIRevisionsPartial" model="(Model.ReviewContent.Review, Model.ReviewContent.APIRevisions, Model.ReviewContent.ActiveAPIRevision, Model.ReviewContent.DiffAPIRevision)" />
     </div>
 </div>
 
@@ -673,51 +558,5 @@
     </div>
     <div class="offcanvas-body">
         Content for the offcanvas goes here. You can place just about any Bootstrap component or custom elements here.
-    </div>
-</div>
-
-<div class="offcanvas offcanvas-end border-start" tabindex="-1" id="add-apirevision-context" aria-labelledby="add-apirevision-context-label">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="add-apirevision-context-label">Add APIRevision</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-    </div>
-    <div class="offcanvas-body">
-        <form asp-page-handler="Upload" method="post" enctype="multipart/form-data">
-            <div class="d-grid gap-2">
-                @if (!(LanguageServiceHelpers.MapLanguageAliases(new List<string> { "TypeSpec" })).Contains(Model.ReviewContent.Review.Language))
-                {
-                    <div class="input-group custom-file-label">
-                        <label class="input-group-text small" for="uploadRevisionFile">Select file to add</label>
-                        <input name="upload" for="upload" type="file" class="form-control" id="uploadRevisionFile">
-                    </div>
-                }
-                else
-                {
-                    <ul class="nav nav-pills nav-fill" id="typespec-pills-tab" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="typespec-pills-tsp-tab" data-bs-toggle="pill" data-bs-target="#typespec-pills-tsp" type="button" role="tab" aria-controls="typespec-pills-tsp" aria-selected="true">TypeSpec</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="typespec-pills-json-tab" data-bs-toggle="pill" data-bs-target="#typespec-pills-json" type="button" role="tab" aria-controls="typespec-pills-json" aria-selected="false">Json</button>
-                        </li>
-                    </ul>
-                    <div class="tab-content" id="typespec-pills-tabcontent">
-                        <div class="tab-pane fade show active" id="typespec-pills-tsp" role="tabpanel" aria-labelledby="typespec-pills-tsp-tab" tabindex="0">
-                            <div class="input-group custom-file-label">
-                                <label class="input-group-text small" for="uploadRevisionFile">Select file to add</label>
-                                <input name="upload" for="upload" type="file" class="form-control" id="uploadRevisionFile">
-                            </div>
-                        </div>
-                        <div class="tab-pane fade" id="typespec-pills-json" role="tabpanel" aria-labelledby="typespec-pills-json-tab" tabindex="0">
-                            <input asp-for="AddAPIRevisionFilePath" class="form-control" type="text" placeholder="Package root e.g https://github.com/Azure/azure-rest-api-specs/specification/cognitiveservices/AnomalyDetector/">
-                        </div>
-                    </div>
-                }
-                <div>
-                    <input asp-for="AddAPIRevisionLabel" class="form-control" type="text" placeholder="Enter an optional revision label">
-                </div>
-                <button type="submit" class="btn btn-primary" onclick="this.form.submit(); this.disabled = true;"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
-            </div>
-        </form>
     </div>
 </div>

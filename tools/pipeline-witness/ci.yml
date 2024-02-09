@@ -28,12 +28,12 @@ extends:
     ServiceProject: Azure.Sdk.Tools.PipelineWitness
     TestProject: Azure.Sdk.Tools.PipelineWitness.Tests
     Production:
-      EnvironmentName: pipelinewitnessprod
+      EnvironmentName: package-publish
       ResourceGroupName: pipelinewitnessprod
       AzureSubscription: Azure SDK Engineering System
       ResourceName: pipelinewitnessprod-app
     Staging:
-      EnvironmentName: pipelinewitnessstaging
+      EnvironmentName: package-publish
       ResourceGroupName: pipelinewitnessstaging
       AzureSubscription: Azure SDK Engineering System
       ResourceName: pipelinewitnessstaging-app

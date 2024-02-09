@@ -102,57 +102,104 @@ public class PipelineTemplateConverter
                 i++;
             }
 
-            Line line;
-            /*
-            * What happens when a file simply ends on a comment? there's nowhere to associate the line
-            * With. When that occurs, simply insert a new empty string. Files shouldn't end without
-            * trailing whitespace anyway, so this is not a destructive update.
-            */
-            if (i < lines.Length)
-            {
-                line = new Line(lines[i]);
-            }
-            else
-            {
-                line = new Line(String.Empty);
-            }
-
-            lineInstances[line.LookupKey] = lineInstances.ContainsKey(line.LookupKey) ? lineInstances[line.LookupKey] + 1 : 1;
-            line.Instance = lineInstances[line.LookupKey];
-
-            if (comment.Count > 0)
-            {
-                line.Comment = new Comment(comment);
-                line.Comment.NewLineBefore = commentHasNewLineBefore;
-            }
-
-            if (lines[i].Contains('#'))
-            {
-                var inlineComment = lines[i][lines[i].IndexOf("#")..];
-                line.InlineComment = new Comment(inlineComment);
-            }
-
-            if (i > 0 && lines[i - 1].Trim().Length == 0)
-            {
-                line.NewLineBefore = true;
-            }
-            // Handle various special cases where we know whether we want a newline or not
-            if (templateTypes.Contains(TemplateType.Stage))
-            {
-                if (lines[i].StartsWith("parameters:") || lines[i].StartsWith("trigger:"))
-                {
-                    line.NewLineBefore = true;
-                }
-                else if (lines[i].StartsWith("variables:"))
-                {
-                    line.NewLineBefore = false;
-                }
-            }
+            var line = new Line(lines[i]);
+            HandleEndOfFileComment(lines, i, ref line, comment);
+            SetLineInstance(line, lineInstances);
+            HandleComment(line, comment, commentHasNewLineBefore);
+            HandleInlineComment(lines, i, line);
+            HandleBlockChompIndicator(line, lines, i);
+            SetLinePrecedingNewline(line, templateTypes, lines, i);
 
             processedLines.Add(line);
         }
 
         return processedLines;
+    }
+
+    // What happens when a file simply ends on a comment? there's nowhere to associate the line
+    // With. When that occurs, simply insert a new empty string. Files shouldn't end without
+    // trailing whitespace anyway, so this is not a destructive update.
+    public static void HandleEndOfFileComment(string[] lines, int index, ref Line line, List<string> comment)
+    {
+        if (index >= lines.Length)
+        {
+            line = new Line(String.Empty);
+        }
+    }
+
+    public static void SetLineInstance(Line line, Dictionary<string, int> lineInstances)
+    {
+        lineInstances[line.LookupKey] = lineInstances.ContainsKey(line.LookupKey) ? lineInstances[line.LookupKey] + 1 : 1;
+        line.Instance = lineInstances[line.LookupKey];
+    }
+
+    public static void HandleComment(Line line, List<string> comment, bool commentHasNewLineBefore = false)
+    {
+        if (comment.Count > 0)
+        {
+            line.Comment = new Comment(comment);
+            line.Comment.NewLineBefore = commentHasNewLineBefore;
+        }
+    }
+
+    public static void HandleInlineComment(string[] lines, int index, Line line)
+    {
+        if (lines[index].Contains('#'))
+        {
+            var inlineComment = lines[index][lines[index].IndexOf("#")..];
+            line.InlineComment = new Comment(inlineComment);
+        }
+    }
+
+    // The purpose of this method is preserve the original yaml formatting for readability
+    // when a block chomp indicator `>` is encountered.
+    // The yamldotnet parser/scanner deletes newlines and block chomp indicators at a low
+    // level we can't override, so handle this separately.
+    public static void HandleBlockChompIndicator(Line line, string[] lines, int index)
+    {
+        if (!line.Value.Contains(": >") && !line.Value.Contains(": >-"))
+        {
+            return;
+        }
+
+        var indent = lines[index][..^lines[index].TrimStart(' ').Length].Length;
+        var contents = new List<string>();
+
+        do
+        {
+            var nextIndent = lines[index + 1][..^lines[index + 1].TrimStart(' ').Length].Length;
+            if (nextIndent <= indent)
+            {
+                break;
+            }
+            index++;
+            contents.Add(lines[index].Trim());
+        }
+        while (index < lines.Length - 1);
+
+        line.BlockChompedLine = contents;
+        line.LookupKey = line.Value.Replace(": >-", ":").Replace(": >", ":");
+        line.LookupKey += " " + string.Join(" ", line.BlockChompedLine);
+    }
+
+    public static void SetLinePrecedingNewline(Line line, List<TemplateType> templateTypes, string[] lines, int index)
+    {
+        if (index > 0 && lines[index - 1].Trim().Length == 0)
+        {
+            line.NewLineBefore = true;
+        }
+        // Handle various special cases where we know whether we want a newline or not
+        else if (templateTypes.Contains(TemplateType.Stage))
+        {
+            if (lines[index].StartsWith("parameters:") || lines[index].StartsWith("trigger:"))
+            {
+                line.NewLineBefore = true;
+            }
+            else if (lines[index].StartsWith("variables:"))
+            {
+                line.NewLineBefore = false;
+            }
+        }
     }
 
     public static string RestoreCommentsAndFormatting(string template, List<Line> processedLines)
@@ -211,6 +258,14 @@ public class PipelineTemplateConverter
             else
             {
                 lines.Add(indentation + original.Value);
+            }
+
+            if (original.BlockChompedLine != null)
+            {
+                foreach (var chompedLine in original.BlockChompedLine)
+                {
+                    lines.Add(indentation + "  " + chompedLine);
+                }
             }
         }
 

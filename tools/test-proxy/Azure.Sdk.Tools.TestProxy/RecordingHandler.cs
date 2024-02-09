@@ -202,7 +202,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var sanitizers = session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers;
 
-            DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
+            DebugLogger.LogRequestDetails(incomingRequest, sanitizers, new List<string>() { "x-recording-id" });
 
             (RecordEntry entry, byte[] requestBody) = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
 
@@ -456,7 +456,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var sanitizers = session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers;
 
-            DebugLogger.LogRequestDetails(incomingRequest, sanitizers, new List<string>() { recordingId });
+            DebugLogger.LogRequestDetails(incomingRequest, sanitizers, new List<string>() { "x-recording-id" });
 
             var entry = (await CreateEntryAsync(incomingRequest).ConfigureAwait(false)).Item1;
 

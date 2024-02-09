@@ -178,12 +178,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         /// <param name="req">The http request which needs to be detailed.</param>
         /// <param name="sanitizers">The set of sanitizers to apply before logging.</param>
+        /// <param name="additionalLoggedHeaders">By default, only headers that are used in matching are included in the log set. Use this to override the behavior without affecting other usages
+        /// of CreateNoBodyRecordEntry (which is used in core functionality)</param>
         /// <returns>The log line.</returns>
-        public static void LogRequestDetails(HttpRequest req, IEnumerable<RecordedTestSanitizer> sanitizers)
+        public static void LogRequestDetails(HttpRequest req, IEnumerable<RecordedTestSanitizer> sanitizers, List<string> additionalLoggedHeaders = null)
         {
             if (CheckLogLevel(LogLevel.Debug))
             {
-                Logger.LogDebug(_generateLogLine(req, sanitizers));
+                Logger.LogDebug(_generateLogLine(req, sanitizers, additionalLoggedHeaders));
             }
         }
 
@@ -193,10 +195,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         /// <param name="req">The request</param>
         /// <param name="sanitizers">The set of sanitizers to apply before logging.</param>
+        /// <param name="additionalLoggedHeaders">By default, only headers that are used in matching are included in the log set. Use this to override the behavior without affecting other usages
+        /// of CreateNoBodyRecordEntry (which is used in core functionality)</param>
         /// <returns>The log line.</returns>
-        private static string _generateLogLine(HttpRequest req, IEnumerable<RecordedTestSanitizer> sanitizers)
+        private static string _generateLogLine(HttpRequest req, IEnumerable<RecordedTestSanitizer> sanitizers, List<string> additionalLoggedHeaders = null)
         {
-            RecordEntry entry = RecordingHandler.CreateNoBodyRecordEntry(req);
+            RecordEntry entry = RecordingHandler.CreateNoBodyRecordEntry(req, additionalLoggedHeaders);
 
             if (sanitizers != null)
             {

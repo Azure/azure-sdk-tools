@@ -456,7 +456,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var sanitizers = session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers;
 
-            DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
+            DebugLogger.LogRequestDetails(incomingRequest, sanitizers, new List<string>() { recordingId });
 
             var entry = (await CreateEntryAsync(incomingRequest).ConfigureAwait(false)).Item1;
 
@@ -563,15 +563,16 @@ namespace Azure.Sdk.Tools.TestProxy
             return (entry, bytes);
         }
 
-        public static RecordEntry CreateNoBodyRecordEntry(HttpRequest request)
+        public static RecordEntry CreateNoBodyRecordEntry(HttpRequest request, List<string> additionalHeaders = null)
         {
+            if (additionalHeaders == null) additionalHeaders = new List<string>();
             var entry = new RecordEntry();
             entry.RequestUri = GetRequestUri(request).AbsoluteUri;
             entry.RequestMethod = new RequestMethod(request.Method);
 
             foreach (var header in request.Headers)
             {
-                if (IncludeHeader(header.Key))
+                if (IncludeHeader(header.Key) || additionalHeaders.Contains(header.Key))
                 {
                     entry.Request.Headers.Add(header.Key, header.Value.ToArray());
                 }

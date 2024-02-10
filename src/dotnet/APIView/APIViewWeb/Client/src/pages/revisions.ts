@@ -2,21 +2,10 @@ import * as hp from "../shared/helpers";
 
 $(() => {
   const apiRevisionsSearchBox = $("#apiRevisions-search");
-  const apiRevisionsSearchContext = $(".apiRevisions-list-container .card-body");
+  const samplesRevisionsSearchBox = $("#samplesRevisions-search");
+  const apiRevisionsSearchContext = $(".api-revisions.revisions-list-container .card-body");
+  const samplesRevisionsSearchContext = $(".samples-revisions.revisions-list-container .card-body");
   const apiRevisionTypeFilter = ["#manual-apirevisions-check", "#automatic-apirevisions-check", "#pullrequest-apirevisions-check"];
-
-  $(document).on("click", ".revision-rename-icon", e => {
-    toggleNameField($(e.target));
-  });
-
-  $(document).on("click", ".cancel-revision-rename", e => {
-    var icon = $(e.target).parent().siblings(".revision-rename-icon");
-    toggleNameField(icon);
-  });
-
-  $(document).on("click", ".submit-revision-rename", e => {
-    $(e.target).parents(".revision-rename-form").submit();
-  });
 
   function toggleNameField(renameIcon: JQuery) {
     renameIcon.toggle();
@@ -25,7 +14,7 @@ $(() => {
 
   function makeActiveAPIRevisionEventHandler(event) {
     const trigger = $(event.currentTarget);
-    const activeCard = $(".apiRevisions-list-container .bi.bi-clock-history.active-rev").closest(".card");
+    const activeCard = $(".revisions-list-container .bi.bi-clock-history.active-rev").closest(".card");
     activeCard.find(".bi.bi-clock-history.active-rev").remove();
     activeCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>`);
     activeCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-clock-history mr-1"></i></button>`);
@@ -33,16 +22,16 @@ $(() => {
     activeCard.find(".btn-group .make-active").on("click", makeActiveAPIRevisionEventHandler);
     activeCard.find(".btn-group .make-diff").on("click", makeDiffAPIRevisionEventHandler);
 
-    trigger.closest(".card").children(".apirevision-indicator-checks").append(`<i class="bi bi-clock-history active-rev mr-1"></i>`);
+    trigger.closest(".card").children(".revision-indicator-checks").append(`<i class="bi bi-clock-history active-rev mr-1"></i>`);
     trigger.siblings(".make-diff").remove();
     trigger.remove();
-    $(".apiRevisions-list-container").addClass("apirevisions-changed");
+    $(".revisions-list-container").addClass("revisions-changed");
     $(".tooltip").remove();
   }
 
   function makeDiffAPIRevisionEventHandler(event) {
     const trigger = $(event.currentTarget);
-    const diffCard = $(".apiRevisions-list-container .bi.bi-file-dif.diff-rev").closest(".card");
+    const diffCard = $(".revisions-list-container .bi.bi-file-dif.diff-rev").closest(".card");
     diffCard.find(".bi.bi-file-diff.diff-rev").remove();
     diffCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>`);
     diffCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-clock-history mr-1"></i></button>`);
@@ -50,16 +39,16 @@ $(() => {
     diffCard.find(".btn-group .make-active").on("click", makeActiveAPIRevisionEventHandler);
     diffCard.find(".btn-group .make-diff").on("click", makeDiffAPIRevisionEventHandler);
 
-    trigger.closest(".card").children(".apirevision-indicator-checks").append(`<i class="bi bi-file-diff diff-rev mr-1"></i>`);
+    trigger.closest(".card").children(".revision-indicator-checks").append(`<i class="bi bi-file-diff diff-rev mr-1"></i>`);
     trigger.siblings(".make-active").remove();
     trigger.remove();
-    $(".apiRevisions-list-container").addClass("apirevisions-changed");
+    $(".revisions-list-container").addClass("revisions-changed");
     $(".tooltip").remove();
   }
 
   function clearDiffAPIRevisionEventHandler(event) {
     const trigger = $(event.currentTarget);
-    const diffCard = $(".apiRevisions-list-container .bi.bi-file-diff.diff-rev").closest(".card");
+    const diffCard = $(".revisions-list-container .bi.bi-file-diff.diff-rev").closest(".card");
     diffCard.find(".bi.bi-file-diff.diff-rev").remove();
     trigger.closest(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>`);
     trigger.closest(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-clock-history mr-1"></i></button>`);
@@ -67,14 +56,27 @@ $(() => {
     diffCard.find(".btn-group .make-active").on("click", makeActiveAPIRevisionEventHandler);
     diffCard.find(".btn-group .make-diff").on("click", makeDiffAPIRevisionEventHandler);
     trigger.remove();
-    $(".apiRevisions-list-container").addClass("apirevisions-changed");
+    $(".revisions-list-container").addClass("revisions-changed");
     $(".tooltip").remove();
   }
 
   function exitAPIRevisionRename(apiRevisionCard) {
     apiRevisionCard.find(".card-title").removeClass("d-none");
     apiRevisionCard.find(".card-subtitle").removeClass("d-none");
-    apiRevisionCard.find(".edit-api-revision-label").addClass("d-none");
+    apiRevisionCard.find(".edit-revision-label").addClass("d-none");
+  }
+
+  function searchRevisions(searchBox, searchContext) {
+    const searchText = (searchBox.val() as string).toUpperCase();
+    (<any>searchContext.closest(".card").show()).unmark();
+
+    if (searchText) {
+      (<any>searchContext).mark(searchText, {
+        done: function () {
+          searchContext.not(":has(mark)").closest(".card").hide();
+        }
+      })
+    }
   }
 
 
@@ -88,7 +90,7 @@ $(() => {
       $("#left-review-offcanvas-menu-content").find('[data-bs-target="#apiRevisions-context"]').addClass("active");
 
       if (value == "#apiRevisions-context") {
-        $(".apiRevisions-list-container").removeClass("apirevisions-changed");
+        $(".revisions-list-container").removeClass("revisions-changed");
       }
     })
 
@@ -100,9 +102,9 @@ $(() => {
 
     if (value == "#apiRevisions-context") {
       $(value).on("hide.bs.offcanvas", function (event) {
-        const activeRevisionId = $(".apiRevisions-list-container .bi.bi-clock-history.active-rev").closest(".card").attr("data-id");
+        const activeRevisionId = $(".revisions-list-container .bi.bi-clock-history.active-rev").closest(".card").attr("data-id");
         let diffRevisionId = "";
-        const diffIcon = $(".apiRevisions-list-container .bi.bi-file-diff.diff-rev");
+        const diffIcon = $(".revisions-list-container .bi.bi-file-diff.diff-rev");
         if (diffIcon.length > 0) {
           diffRevisionId = diffIcon.closest(".card").attr("data-id")!;
         }
@@ -116,7 +118,7 @@ $(() => {
           url.searchParams.delete("diffRevisionId");
         }
 
-        if ($(".apiRevisions-list-container").hasClass("apirevisions-changed")) {
+        if ($(".revisions-list-container").hasClass("revisions-changed")) {
           if (window.location.href != url.href) {
             window.location.href = url.href;
           }
@@ -140,16 +142,11 @@ $(() => {
     apiRevisionTypeFilter.forEach(function (value, index) {
       $(value).removeAttr('checked');
     });
-    const searchText = (apiRevisionsSearchBox.val() as string).toUpperCase();
-    (<any>apiRevisionsSearchContext.closest(".card").show()).unmark();
+    searchRevisions(apiRevisionsSearchBox, apiRevisionsSearchContext);
+  });
 
-    if (searchText) {
-      (<any>apiRevisionsSearchContext).mark(searchText, {
-        done: function () {
-          apiRevisionsSearchContext.not(":has(mark)").closest(".card").hide();
-        }
-      })
-    }
+  samplesRevisionsSearchBox.on("input", function () {
+    searchRevisions(samplesRevisionsSearchBox, samplesRevisionsSearchContext);
   });
 
   // Filter by APIRevision Type
@@ -161,10 +158,10 @@ $(() => {
       const prChecked = $(apiRevisionTypeFilter[2]).is(":checked");
 
       if ((manualChecked && autoChecked && prChecked) || (!manualChecked && !autoChecked && !prChecked)) {
-        $(".apiRevisions-list-container .card").show();
+        $(".api-revisions.revisions-list-container .card").show();
       }
       else {
-        $(".apiRevisions-list-container .card-subtitle").each(function (index, element) {
+        $(".api-revisions.revisions-list-container .card-subtitle").each(function (index, element) {
           if ((manualChecked && element.innerText.includes("Type: Manual")) ||
             (autoChecked && element.innerText.includes("Type: Automatic")) ||
             (prChecked && element.innerText.includes("Type: PullRequest ")) ||
@@ -180,12 +177,12 @@ $(() => {
   });
 
   // Set Active or Diff APIRevision
-  $(".apiRevisions-list-container .card .btn.make-active").on("click", makeActiveAPIRevisionEventHandler);
-  $(".apiRevisions-list-container .card .btn.make-diff").on("click", makeDiffAPIRevisionEventHandler);
-  $(".apiRevisions-list-container .card .btn.clear-diff").on("click", clearDiffAPIRevisionEventHandler);
+  $(".revisions-list-container .card .btn.make-active").on("click", makeActiveAPIRevisionEventHandler);
+  $(".revisions-list-container .card .btn.make-diff").on("click", makeDiffAPIRevisionEventHandler);
+  $(".revisions-list-container .card .btn.clear-diff").on("click", clearDiffAPIRevisionEventHandler);
 
   // Delete API Revision
-  $(".apiRevisions-list-container .delete").on("click", function (e) {
+  $(".revisions-list-container .delete").on("click", function (e) {
     e.stopPropagation();
     const id = hp.getReviewAndRevisionIdFromUrl(window.location.href)["reviewId"];
     const apiRevisionCard = $(this).closest(".card");
@@ -206,25 +203,25 @@ $(() => {
   });
 
   // Rename API Revision Label
-  $(".apiRevisions-list-container .rename").on("click", function (e) {
+  $(".revisions-list-container .rename").on("click", function (e) {
     e.stopPropagation();
     const apiRevisionCard = $(this).closest(".card");
     apiRevisionCard.find(".card-title").addClass("d-none");
     apiRevisionCard.find(".card-subtitle").addClass("d-none");
-    apiRevisionCard.find(".edit-api-revision-label").removeClass("d-none");
+    apiRevisionCard.find(".edit-revision-label").removeClass("d-none");
   });
 
-  $(".apiRevisions-list-container .cancel-rename").on("click", function (e) {
+  $(".revisions-list-container .cancel-rename").on("click", function (e) {
     e.stopPropagation();
     const apiRevisionCard = $(this).closest(".card");
     exitAPIRevisionRename(apiRevisionCard);
   });
 
-  $(".apiRevisions-list-container .enter-rename").on("click", function (e) {
+  $(".revisions-list-container .enter-rename").on("click", function (e) {
     e.stopPropagation();
     const id = hp.getReviewAndRevisionIdFromUrl(window.location.href)["reviewId"];
     const apiRevisionCard = $(this).closest(".card");
-    const updatedLabel = apiRevisionCard.find(".edit-api-revision-label > input").val();
+    const updatedLabel = apiRevisionCard.find(".edit-revision-label > input").val();
     const apiRevisionsId = apiRevisionCard.attr("data-id");
     const url = `/Assemblies/Revisions/${id}/${apiRevisionsId}?handler=Rename&newLabel=${updatedLabel}`;
     var antiForgeryToken = $("input[name=__RequestVerificationToken]").val();
@@ -242,14 +239,23 @@ $(() => {
     });
   });
 
-  $(".edit-api-revision-label").on("click", function (e) {
+  $(".edit-revision-label").on("click", function (e) {
     e.stopPropagation();
   });
 
   // Open API Revision in new tab
-  $("#revisions-main-container .apiRevisions-list-container .card").on("click", function () {
+  $("#revisions-main-container .revisions-list-container .card").on("click", function () {
     const apiRevisionsId = $(this).attr("data-id");
-    const uri = (window.location.href).replace("/Revisions/", "/Review/") + `?revisionId=${apiRevisionsId}`;
-    window.open(uri, "_blank");
+    const revisionContainer = $(this).closest(".revisions-list-container");
+
+    if (revisionContainer.hasClass("api-revisions")) {
+      const uri = (window.location.href).replace("/Revisions/", "/Review/") + `?revisionId=${apiRevisionsId}`;
+      window.open(uri, "_blank");
+    }
+
+    if (revisionContainer.hasClass("samples-revisions")) {
+      const uri = (window.location.href).replace("/Revisions/", "/Samples/") + `?revisionId=${apiRevisionsId}`;
+      window.open(uri, "_blank");
+    }
   });
 });

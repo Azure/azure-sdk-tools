@@ -9,7 +9,7 @@
 #revisions-main-container {
     @include main-content-container;
 
-    .apiRevisions-list-container {
+    .revisions-list-container {
         .card {
             cursor: pointer;
         }
@@ -20,17 +20,17 @@
     }
 }
 
-.apiRevisions-list-container {
+.revisions-list-container {
     overflow: auto;
     height: 78dvh;
 
-    .apirevision-actions {
+    .revision-actions {
         align-self: center;
         margin-right: 15px;
         display: none;
     }
 
-    .apirevision-indicator-checks, .apirevision-actions {
+    .revision-indicator-checks, .revision-actions {
         align-self: center;
         margin-right: 20px;
     }
@@ -50,7 +50,7 @@
             height: 80px;
         }
 
-        .edit-api-revision-label {
+        .edit-revision-label {
             max-width: 500px;
         }
     }
@@ -60,8 +60,8 @@
     }
 }
 
-.apiRevisions-list-container > .card:hover {
-    .apirevision-actions {
+.revisions-list-container > .card:hover {
+    .revision-actions {
         display: inline-flex;
     }
 }

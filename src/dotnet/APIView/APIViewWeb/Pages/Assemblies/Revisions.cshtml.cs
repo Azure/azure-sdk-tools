@@ -14,20 +14,23 @@ namespace APIViewWeb.Pages.Assemblies
     {
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
+        private readonly ISamplesRevisionsManager _samplesRevisionsManager;
         public readonly UserPreferenceCache _preferenceCache;
 
         public RevisionsPageModel(
             IReviewManager manager,
             IAPIRevisionsManager reviewRevisionsManager,
+            ISamplesRevisionsManager samplesRevisionsManager,
             UserPreferenceCache preferenceCache)
         {
             _reviewManager = manager;
             _apiRevisionsManager = reviewRevisionsManager;
+            _samplesRevisionsManager = samplesRevisionsManager;
             _preferenceCache = preferenceCache;
         }
 
         public ReviewListItemModel Review { get; set; }
-        public APIRevisionListItemModel LatestAPIRevision { get; set; }
+        public IEnumerable<SamplesRevisionModel> SamplesRevisions { get; set; }
         public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; }
 
         public async Task<IActionResult> OnGetAsync(string id)
@@ -35,11 +38,12 @@ namespace APIViewWeb.Pages.Assemblies
             TempData["Page"] = "revisions";
 
             Review = await _reviewManager.GetReviewAsync(User, id);
-            LatestAPIRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(Review.Id);
             APIRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(Review.Id);
+            SamplesRevisions = await _samplesRevisionsManager.GetSamplesRevisionsAsync(Review.Id);
 
             return Page();
         }
+
         public async Task<IActionResult> OnPostUploadAsync(string id, [FromForm] IFormFile upload, [FromForm] string label, [FromForm] string filePath)
         {
             if (!ModelState.IsValid)

@@ -25,7 +25,7 @@
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Review" asp-route-id="@Model.Review.Id"><i class="bi bi-braces" data-bs-toggle="tooltip" data-bs-placement="right" title="API"></i></a>
             <a type="button" class="btn btn-lg btn-link mb-2" active-if="@TempData["page"].Equals("revisions")"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></a>
             <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#conversiations-context" aria-controls="conversiations-context"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversiations"></i></a>
-            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"><i class="bi bi-puzzle"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
         </div>
     </div>
 </div>
@@ -43,6 +43,7 @@
         </div>
         <div class="col">
             <h6 class="ms-3">Sample Revisions</h6>
+            <partial name="Shared/_SamplesRevisionsPartial" model="(Model.Review, Model.SamplesRevisions, default(SamplesRevisionModel))" />
         </div>
     </div>
 </div>

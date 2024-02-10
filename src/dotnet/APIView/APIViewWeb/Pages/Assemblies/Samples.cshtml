@@ -10,6 +10,28 @@
     TempData["UserPreference"] = userPreference;
 }
 
+@{
+    var mainContainerClass = " move-main-content-container-right";
+    var leftOffCanvasClass = " show-left-offcanvas";
+}
+
+<div class="container-fluid mx-0 px-0 sub-header-content">
+    <div class="row px-3 py-2 border-bottom" id="review-info-bar">
+        <partial name="Shared/_ReviewBadge" model="(Model.Review, default(APIRevisionListItemModel), default(APIRevisionListItemModel), default(UserPreferenceModel))" />
+    </div>
+</div>
+
+<div id="left-offcanvas-menu" class="left-offcanvas@(leftOffCanvasClass)">
+    <div class="left-offcanvas-menu-content" id="left-review-offcanvas-menu-content">
+        <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="API" active-if="@TempData["page"].Equals("api")"><i class="bi bi-braces"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#apiRevisions-context" aria-controls="apiRevisions-context"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#conversiations-context" aria-controls="conversiations-context"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversiations"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
+        </div>
+    </div>
+</div>
+
 @if (Model.ActiveSampleRevision != null && (Model.ActiveSampleRevision.FileId == "Bad Deployment" || Model.ActiveSampleRevision.FileId == "File Content Missing")) // If the samples container does not exist
 {
     <div class="container-fluid mx-0 px-0 sub-header-content">
@@ -17,7 +39,7 @@
             <partial name="Shared/_ReviewBadge" model="(Model.Review, default(APIRevisionListItemModel), default(APIRevisionListItemModel), default(UserPreferenceModel))" />
         </div>
     </div>
-    <div class="container">
+    <div class="container-fluid pt-2@(mainContainerClass)" id="samples-main-container">
         <div class="row mx-1 px-0 py-3">
             <div class="text-muted">
                 <p> <strong> Usage Samples are not available for this APIView deployment. </strong></p>
@@ -32,7 +54,6 @@ else
         <div class="row mx-1 px-0 py-2">
             <div class="col-md-8">
                 <div class="input-group-sm input-group" id="review-info-bar">
-                    <partial name="Shared/_ReviewBadge" model="(Model.Review, default(APIRevisionListItemModel))"/>
                     @if (Model.SampleRevisions.Any())
                     {
                         @if (Model.SampleContent.Length > 0)
@@ -76,9 +97,8 @@ else
             <div class="col-md-3">
             </div>
         </div>
-        <partial name="Shared/_ReviewNavBar" />
     </div>
-    <div class="container-fluid" id="samples-main-container">
+    <div class="container-fluid pt-2@(mainContainerClass)" id="samples-main-container">
         <div class="row mx-0 px-0 py-2">
             <div class="col-lg-12 mx-0" data-review-id=@Model.Review.Id>
                 <div id="add-sample-button">

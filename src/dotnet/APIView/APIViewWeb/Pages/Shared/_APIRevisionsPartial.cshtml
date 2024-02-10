@@ -26,7 +26,7 @@
             </div>
         </form>
 
-        <div class="apiRevisions-list-container p-2">
+        <div class="api-revisions revisions-list-container p-2">
             @foreach (var apiRevision in Model.APIRevisions)
             {
                 <div class="card @apiRevision.IsApproved my-2" data-id="@apiRevision.Id">
@@ -44,7 +44,7 @@
                         <p class="card-subtitle mb-1 text-body-secondary"><b>Created: </b><span date="@apiRevision.CreatedOn"></span> , <b>By: </b>@apiRevision.CreatedBy</p>
                         <p class="card-subtitle mb-0 text-body-secondary"><b>Last Updated: </b><span date="@apiRevision.LastUpdatedOn"></span> , <b>Type: </b>@apiRevision.APIRevisionType , <b>Version: </b>@apiRevision.Files[0].PackageVersion</p>
                     </div>
-                    <div class="apirevision-actions">
+                    <div class="revision-actions">
                         <div class="btn-group animate__animated animate__fadeIn" role="group" aria-label="apiRevision action buttons">
                             @if (Model.activeAPIRevision != null)
                             {
@@ -69,7 +69,7 @@
                             }
                         </div>
                     </div>
-                    <div class="apirevision-indicator-checks animate__animated animate__slideInLeft">
+                    <div class="revision-indicator-checks animate__animated animate__slideInLeft">
                         @if (apiRevision.IsApproved)
                         {
                             <i class="fas fa-check-circle text-success mr-1"></i>

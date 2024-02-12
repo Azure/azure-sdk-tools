@@ -1,5 +1,3 @@
-#cspell: ignore azblob
-
 param(
     [string] $StorageAccountKey
 )

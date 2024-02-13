@@ -1,9 +1,9 @@
-import { installDependencies } from "./npm.js";
+import { npmCIDependencies, npmInstallDependencies } from "./npm.js";
 import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, writeFile, cp, readFile, access } from "node:fs/promises";
+import { mkdir, writeFile, cp, readFile, access, stat } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
@@ -172,8 +172,18 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     await removeDirectory(cloneDir);
   }
 
-  const emitterPath = joinPaths(repoRoot, "eng", "emitter-package.json");
-  await cp(emitterPath, joinPaths(srcDir, "package.json"), { recursive: true });
+  try {
+    const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
+    await cp(emitterLockPath, joinPaths(srcDir, "package-lock.json"), { recursive: true });
+  } catch (err) {
+    Logger.debug("emitter-package-lock.json not found, will look for emitter-package.json");
+  }
+  try {
+    const emitterPath = joinPaths(repoRoot, "eng", "emitter-package.json");
+    await cp(emitterPath, joinPaths(srcDir, "package.json"), { recursive: true });
+  } catch (err) {
+    throw new Error("emitter-package.json not found. To continue using tsp-client, please provide an emitter-package.json file in the eng/ directory of the repository.");
+  }
 }
 
 
@@ -201,8 +211,13 @@ async function generate({
   const mainFilePath = await discoverMainFile(srcDir);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
   Logger.info("Installing dependencies from npm...");
-  await installDependencies(srcDir);
-
+  try {
+    await stat(joinPaths(srcDir, "package-lock.json"));
+    await npmCIDependencies(srcDir);
+  } catch (err) {
+    // If package-lock.json doesn't exist, we'll attempt to install dependencies without the lock file
+    await npmInstallDependencies(srcDir);
+  }
   await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup, additionalEmitterOptions });
 
   if (noCleanup) {

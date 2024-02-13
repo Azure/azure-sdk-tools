@@ -28,7 +28,7 @@ steps:
     pip install GitPython
     pip install pymongo==3.13.0
     pip list
-    python .\eng\scripts\OpenAPI Hub\sync-repo-structure-cache.py
+    python eng/scripts/OpenAPI Hub/sync-repo-structure-cache.py
   displayName: Run Script
   env: 
     MONGO_CONNECTION_STRING: $(Open-API-MongoDB-Connection-String)

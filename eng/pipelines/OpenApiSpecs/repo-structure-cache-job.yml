@@ -31,8 +31,8 @@ steps:
     python ./scripts/GetRepoTree.py
   displayName: Run Script
   env: 
-    MONGO_CONNECTION_STRING: $(MONGOCONNECTIONSTRING)
-    GITHUB_TOKEN: $(GITHUB-TOKEN)
+    MONGO_CONNECTION_STRING: $(Open-API-MongoDB-Connection-String)
+    GITHUB_TOKEN: $(azure-sdk-github-token)
     REPO__CLONE_PATH: $(System.DefaultWorkingDirectory)
     DB_NAME: ${{ parameters.DB_NAME }}
     COLLECTION_NAME: ${{ parameters.COLLECTION_NAME }}

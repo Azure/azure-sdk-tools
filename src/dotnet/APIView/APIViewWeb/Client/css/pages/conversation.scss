@@ -1,7 +1,6 @@
 @import "../shared/mixins.scss";
 
 #conversation-main-container {
-    @include fixed-page-heights;
     color: var(--base-text-color);
     padding-right: 0px;
     padding-left: 0px;

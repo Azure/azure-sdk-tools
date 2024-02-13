@@ -86,8 +86,8 @@ $(() => {
   // Toggle active class for left side offcanvas buttons
   ["#apiRevisions-context", "#add-apirevision-context"].forEach(function (value, index) {
     $(value).on("shown.bs.offcanvas", function () {
-      $("#left-review-offcanvas-menu-content").find('[data-bs-original-title="API"]').removeClass("active");
-      $("#left-review-offcanvas-menu-content").find('[data-bs-target="#apiRevisions-context"]').addClass("active");
+      $("#left-offcanvas-menu-content").find('[data-bs-original-title="API"]').removeClass("active");
+      $("#left-offcanvas-menu-content").find('[data-bs-target="#apiRevisions-context"]').addClass("active");
 
       if (value == "#apiRevisions-context") {
         $(".revisions-list-container").removeClass("revisions-changed");
@@ -95,8 +95,8 @@ $(() => {
     })
 
     $(value).on("hidden.bs.offcanvas", function (event) {
-      $("#left-review-offcanvas-menu-content").find('[data-bs-original-title="API"]').addClass("active");
-      $("#left-review-offcanvas-menu-content").find('[data-bs-target="#apiRevisions-context"]').removeClass("active");
+      $("#left-offcanvas-menu-content").find('[data-bs-original-title="API"]').addClass("active");
+      $("#left-offcanvas-menu-content").find('[data-bs-target="#apiRevisions-context"]').removeClass("active");
       event.stopPropagation();
     })
 
@@ -128,13 +128,13 @@ $(() => {
   });
 
   $("#conversiations-context").on("hidden.bs.offcanvas", function () {
-    $("#left-review-offcanvas-menu-content").find('[data-bs-original-title="API"]').addClass("active");
-    $("#left-review-offcanvas-menu-content").find('[data-bs-target="#conversiations-context"]').removeClass("active");
+    $("#left-offcanvas-menu-content").find('[data-bs-original-title="API"]').addClass("active");
+    $("#left-offcanvas-menu-content").find('[data-bs-target="#conversiations-context"]').removeClass("active");
   });
 
   $("#conversiations-context").on("shown.bs.offcanvas", function () {
-    $("#left-review-offcanvas-menu-content").find('[data-bs-original-title="API"]').removeClass("active");
-    $("#left-review-offcanvas-menu-content").find('[data-bs-target="#conversiations-context"]').addClass("active");
+    $("#left-offcanvas-menu-content").find('[data-bs-original-title="API"]').removeClass("active");
+    $("#left-offcanvas-menu-content").find('[data-bs-target="#conversiations-context"]').addClass("active");
   });
 
   // Search / Filter APIRevisions

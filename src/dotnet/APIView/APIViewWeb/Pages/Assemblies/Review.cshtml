@@ -14,14 +14,19 @@
 }
 @{
     var rightOffCanvasClass = " show-right-offcanvas";
-    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
-        rightOffCanvasClass = String.Empty;
-
     var leftOffCanvasClass = " show-left-offcanvas";
+    var mainContainerLeftClass = " move-main-content-container-left";
+    var mainContainerRightClass = " move-main-content-container-right";
+    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
+    {
+        rightOffCanvasClass = String.Empty;
+        mainContainerRightClass = String.Empty;
+    }
+    var mainContainerClass = mainContainerLeftClass + mainContainerRightClass;
 }
 
 <div id="left-offcanvas-menu" class="left-offcanvas@(leftOffCanvasClass)">
-    <div class="left-offcanvas-menu-content" id="left-review-offcanvas-menu-content">
+    <div class="left-offcanvas-menu-content" id="left-offcanvas-menu-content">
         <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
             <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="API" active-if="@TempData["page"].Equals("api")"><i class="bi bi-braces"></i></a>
             <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#apiRevisions-context" aria-controls="apiRevisions-context"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></a>
@@ -31,7 +36,7 @@
     </div>
 </div>
 <div id="right-offcanvas-menu" class="right-offcanvas@(rightOffCanvasClass)">
-    <div class="right-offcanvas-menu-content" id="right-review-offcanvas-menu-content">
+    <div class="right-offcanvas-menu-content" id="right-offcanvas-menu-content">
         <p class="h6">
             <a data-bs-toggle="collapse" href="#approveCollapse" aria-expanded="true" aria-controls="approveCollapse">Approval&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
@@ -460,15 +465,7 @@
         <partial name="Shared/_ReviewBadge" model="(Model.ReviewContent.Review, Model.ReviewContent.ActiveAPIRevision, Model.ReviewContent.DiffAPIRevision, userPreference)" />
     </div>
 </div>
-@{
-    var mainContainerClass = String.Empty;
-    var mainContainerLeftClass = " move-main-content-container-left";
-    if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
-        mainContainerLeftClass = String.Empty;
 
-    var mainContainerRightClass = " move-main-content-container-right";
-    mainContainerClass = mainContainerLeftClass + mainContainerRightClass;
-}
 <div class="container-fluid pt-2@(mainContainerClass)" id="review-main-container">
     <div class="row g-2" data-review-id="@Model.ReviewContent.Review.Id" data-revision-id="@Model.ReviewContent.ActiveAPIRevision.Id" data-language="@Model.ReviewContent.Review.Language">
         @{
@@ -543,7 +540,7 @@
 
 <div class="offcanvas offcanvas-end border-start" tabindex="-1" id="apiRevisions-context" aria-labelledby="apiRevisions-context-label">
     <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="offcanvasLabel"><a asp-page="Revisions" asp-route-id="@Model.ReviewContent.Review.Id">Revisions</a></h5>
+        <h5 class="offcanvas-title" id="apiRevisions-context-label"><a asp-page="Revisions" asp-route-id="@Model.ReviewContent.Review.Id">Revisions</a></h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">

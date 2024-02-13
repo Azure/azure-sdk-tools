@@ -4,10 +4,12 @@
     background-color: var(--base-fg-color);
 }
 
-#review-right-offcanvas-toggle + .btn-sm {
-    padding: 0.05rem 0.4rem;
-    font-size: 0.775rem;
-    border-radius: 0.2rem;
+#review-right-offcanvas-toggle, #samples-right-offcanvas-toggle  {
+    + .btn-sm {
+        padding: 0.05rem 0.4rem;
+        font-size: 0.775rem;
+        border-radius: 0.2rem;
+    }
 }
 
 .breadcrumb .icon-language {
@@ -40,38 +42,12 @@
     contain: size layout paint;
 }
 
-
-#right-review-offcanvas-menu-content {
-    padding: 10px 20px 10px 20px;
-    @include review-offcanvas-menu-content;
-}
-
-#left-review-offcanvas-menu-content {
-    padding: 10px 0px 10px 5px;
-    @include review-offcanvas-menu-content;
-}
-
-#left-review-offcanvas-menu-content {
-    .btn-check:focus + .btn, .btn:focus {
-        box-shadow: var(--box-shadow-left);
-    }
-
-    .btn {
-        border-radius: 0px;
-    }
-
-    .btn.active {
-        box-shadow: var(--box-shadow-left);
-    }
-}
-
 #apiRevisions-context, #conversiations-context, #add-apirevision-context {
-    width: 50dvw;
-    background-color: var(--base-bg-color);
+    @include offcanvas-context-large
 }
+
 #add-apirevision-context {
-    width: 30dvw;
-    background-color: var(--base-bg-color);
+    @include offcanvas-context-small
 }
 
 .review-approved {

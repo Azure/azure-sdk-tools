@@ -31,6 +31,28 @@
     transform: translate3d(0, 0, 0);
 }
 
+#right-offcanvas-menu-content {
+    padding: 10px 20px 10px 20px;
+    @include review-offcanvas-menu-content;
+}
+
+#left-offcanvas-menu-content {
+    padding: 10px 0px 10px 5px;
+    @include review-offcanvas-menu-content;
+
+    .btn-check:focus + .btn, .btn:focus {
+        box-shadow: var(--box-shadow-left);
+    }
+
+    .btn {
+        border-radius: 0px;
+    }
+
+    .btn.active {
+        box-shadow: var(--box-shadow-left);
+    }
+}
+
 .move-main-content-container-left {
     margin-right: 340px;
 }

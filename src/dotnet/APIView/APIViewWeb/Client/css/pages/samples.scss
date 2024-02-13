@@ -1,17 +1,20 @@
 @import "../shared/mixins.scss";
 
-#add-sample-button {
-    @include bottom-right-floating;
-    @include btn-circle;
-    @include btn-circle-xl;
-}
-
 #samples-main-container {
     @include main-content-container;
 }
 
+#edit-samples-context, #upload-samples-context {
+    @include offcanvas-context-large
+}
+
 .samples-center {
     overflow: auto;
+    height: calc(100vh - 130px);
+    padding: 0px;
+    background-color: var(--base-fg-color);
+    scroll-behavior: smooth;
+    contain: size layout paint;
 }
 
 .usage-sample + .border + .rounded {
@@ -31,4 +34,10 @@
 
 .usage-sample .internal {
     display: inline-block;
+}
+
+.edit-samples-content {
+    textarea {
+        height: 60dvh;
+    }
 }

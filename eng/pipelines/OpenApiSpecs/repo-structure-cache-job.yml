@@ -1,0 +1,39 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+parameters:
+- name: DB_NAME
+  type: string
+  default: "openapi-portal"
+
+- name: COLLECTION_NAME
+  type: string
+  default: "repoStructureCache"
+
+- name: REPOS_URL_LIST
+  type: string
+  default: "https://github.com/test-repo-billy/azure-rest-api-specs/tree/main,https://github.com/test-repo-billy/azure-rest-api-specs-pr/tree/RPSaaSDev,https://github.com/test-repo-billy/azure-rest-api-specs-pr/tree/main,https://github.com/test-repo-billy/azure-rest-api-specs/tree/RPSaaSDev"
+
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+
+- script: |
+    pip install GitPython
+    pip install pymongo==3.13.0
+    pip list
+    python ./scripts/GetRepoTree.py
+  displayName: Run Script
+  env: 
+    MONGO_CONNECTION_STRING: $(MONGOCONNECTIONSTRING)
+    GITHUB_TOKEN: $(GITHUB-TOKEN)
+    REPO__CLONE_PATH: $(System.DefaultWorkingDirectory)
+    DB_NAME: ${{ parameters.DB_NAME }}
+    COLLECTION_NAME: ${{ parameters.COLLECTION_NAME }}
+    REPOS_URL_LIST: ${{ parameters.REPOS_URL_LIST }}

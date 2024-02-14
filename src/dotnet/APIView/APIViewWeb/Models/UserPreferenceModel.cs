@@ -19,6 +19,7 @@ namespace APIViewWeb.Models
         internal bool? _hideReviewPageOptions;
         internal bool? _hideIndexPageOptions;
         internal bool? _hideSamplesPageOptions;
+        internal bool? _hideRevisionsPageOptions;
         internal bool? _showComments;
         internal bool? _showSystemComments;
         internal string _theme;
@@ -99,6 +100,13 @@ namespace APIViewWeb.Models
         {
             get => _hideSamplesPageOptions ?? false;
             set => _hideSamplesPageOptions = value;
+        }
+
+        [Name("HideRevisionsPageOptions")]
+        public bool? HideRevisionsPageOptions
+        {
+            get => _hideRevisionsPageOptions ?? false;
+            set => _hideRevisionsPageOptions = value;
         }
 
         [Name("ShowComments")]

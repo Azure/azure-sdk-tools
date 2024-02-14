@@ -6,7 +6,8 @@
 @{
     Layout = "Shared/_Layout";
     ViewData["Title"] = "Revisions";
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    TempData["UserPreference"] = userPreference;
 }
 <div class="container-fluid mx-0 px-0 sub-header-content">
     <div class="row px-3 py-2 border-bottom" id="review-info-bar">
@@ -15,8 +16,16 @@
 </div>
 
 @{
-    var mainContainerClass = " move-main-content-container-right";
+    var rightOffCanvasClass = " show-right-offcanvas";
     var leftOffCanvasClass = " show-left-offcanvas";
+    var mainContainerLeftClass = " move-main-content-container-left";
+    var mainContainerRightClass = " move-main-content-container-right";
+    if (userPreference.HideRevisionsPageOptions.HasValue && userPreference.HideRevisionsPageOptions == true)
+    {
+        rightOffCanvasClass = String.Empty;
+        mainContainerRightClass = String.Empty;
+    }
+    var mainContainerClass = mainContainerLeftClass + mainContainerRightClass;
 }
 
 <div id="left-offcanvas-menu" class="left-offcanvas@(leftOffCanvasClass)">
@@ -24,27 +33,49 @@
         <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Review" asp-route-id="@Model.Review.Id"><i class="bi bi-braces" data-bs-toggle="tooltip" data-bs-placement="right" title="API"></i></a>
             <a type="button" class="btn btn-lg btn-link mb-2" active-if="@TempData["page"].Equals("revisions")"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></a>
-            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#conversiations-context" aria-controls="conversiations-context"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversiations"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Conversation" asp-route-id="@Model.Review.Id"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversiations"></i></a>
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
         </div>
     </div>
 </div>
 
-<div class="container-fluid pt-2@(mainContainerClass)" id="revisions-main-container">
-    <div class="row">
-        <div id="add-revision-button">
-            <button type="button" class="btn btn-primary" id="add-revision-button" data-bs-toggle="offcanvas" data-bs-target="#add-apirevision-context"><small>ADD</small><br><i class="fas fa-sm fa-plus"></i><br><small>REVISION</small></button>
-        </div>
+<div id="right-offcanvas-menu" class="right-offcanvas@(rightOffCanvasClass)">
+    <div class="right-offcanvas-menu-content" id="right-offcanvas-menu-content">
+        <p class="h6">
+            <a data-bs-toggle="collapse" href="#revisionsUpdateCollapse" aria-expanded="true" aria-controls="revisionsUpdateCollapse">Update&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+        </p>
+        @{
+            var revisionsUpdateCollapseState = " show";
+            if (Request.Cookies.ContainsKey("revisionsUpdateCollapse"))
+            {
+                if (!Request.Cookies["revisionsUpdateCollapse"].Equals("shown"))
+                    revisionsUpdateCollapseState = String.Empty;
+            }
+        }
+        <ul class="list-group collapse mb-3@(revisionsUpdateCollapseState)" id="samplesInfoCollapse">
+            <li class="list-group-item text-center">
+                <div class="d-grid gap-2 my-2">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#add-apirevision-context" aria-controls="add-apirevision-context">Add APIRevisions</button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#upload-samples-context" aria-controls="upload-samples-context">Add Samples Revisions</button>
+                </div>
+            </li>
+        </ul>
     </div>
+</div>
+
+<div class="container-fluid pt-2@(mainContainerClass)" id="revisions-main-container">
     <div class="row g-2">
         <div class="col">
             <h6 class="ms-3">APIRevisions</h6>
             <partial name="Shared/_APIRevisionsPartial" model="(Model.Review, Model.APIRevisions, default(APIRevisionListItemModel), default(APIRevisionListItemModel))" />
         </div>
-        <div class="col">
-            <h6 class="ms-3">Sample Revisions</h6>
-            <partial name="Shared/_SamplesRevisionsPartial" model="(Model.Review, Model.SamplesRevisions, default(SamplesRevisionModel))" />
-        </div>
+        @if (Model.SamplesRevisions.Any())
+        {
+            <div class="col">
+                <h6 class="ms-3">Sample Revisions</h6>
+                <partial name="Shared/_SamplesRevisionsPartial" model="(Model.Review, Model.SamplesRevisions, default(SamplesRevisionModel))" />
+            </div>
+        }
     </div>
 </div>
 

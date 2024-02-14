@@ -1,15 +1,8 @@
 @import "../shared/mixins.scss";
+
 #review-info-bar {
     font-size: small;
     background-color: var(--base-fg-color);
-}
-
-#review-right-offcanvas-toggle, #samples-right-offcanvas-toggle  {
-    + .btn-sm {
-        padding: 0.05rem 0.4rem;
-        font-size: 0.775rem;
-        border-radius: 0.2rem;
-    }
 }
 
 .breadcrumb .icon-language {
@@ -40,14 +33,6 @@
     background-color: var(--base-fg-color);
     scroll-behavior: smooth;
     contain: size layout paint;
-}
-
-#apiRevisions-context, #conversiations-context, #add-apirevision-context {
-    @include offcanvas-context-large
-}
-
-#add-apirevision-context {
-    @include offcanvas-context-small
 }
 
 .review-approved {

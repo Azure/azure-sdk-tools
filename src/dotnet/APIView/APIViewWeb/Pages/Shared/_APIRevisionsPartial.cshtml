@@ -35,7 +35,7 @@
                         <h6 class="card-title">@apiRevision.Label</h6>
                         @if (User.GetGitHubLogin() == apiRevision.CreatedBy)
                         {
-                            <div class="input-group input-group-sm mb-1 edit-api-revision-label d-none">
+                            <div class="input-group input-group-sm mb-1 edit-revision-label d-none">
                                 <input type="text" class="form-control" value="@apiRevision.Label" aria-label="Edit APIRevison Label">
                                 <button class="input-group-text enter-rename"><i class="bi bi-check"></i></button>
                                 <button class="input-group-text cancel-rename"><i class="bi bi-x"></i></button>

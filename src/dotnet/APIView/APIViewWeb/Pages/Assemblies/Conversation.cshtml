@@ -13,47 +13,68 @@
         <partial name="Shared/_ReviewBadge" model="(Model.Review, default(APIRevisionListItemModel), default(APIRevisionListItemModel), default(UserPreferenceModel))" />
     </div>
 </div>
-<div class="container" id="conversation-main-container">
-    <div class="row mx-0 px-0 py-2">
-        <div class="col-lg-12 px-0" data-review-id=@Model.Review.Id>
-            @if (!Model.Threads.Any() && !Model.UsageSampleThreads.Any())
-            {
-                <div class="text-muted">There are no comments in the review.</div>
-            }
-            else
-            {
-                @if (Model.Threads.Any())
-                {
-                    <div class="border rounded conversiation-center">
-                        @foreach (var revision in Model.Threads)
-                        {
-                            var divId = $"rev-{revision.Key.Id}";
+@{
+    var leftOffCanvasClass = " show-left-offcanvas";
+    var mainContainerClass = " move-main-content-container-right";
+}
 
-                            <div class="card-header p-2 clickable" id="header-@revision.Key.Id" data-toggle="collapse" data-target="#@divId">
-                                PageModelHelpers.ResolveRevisionLabel(@revision.Key.Label)
-                            </div>
-                            <div id=@divId class="collapse show" data-revision-id=@revision.Key.Id aria-labelledby="header-@revision.Key.Id">
-                                <table class="code-window">
-                                    @foreach (var thread in revision.Value)
-                                    {
-                                        var elementId = thread.LineId;
-                                        <tr class="code-line"><td class="code p-2" style="word-break: break-all;"><a class="comment-url" asp-page="Review"
-                                            asp-route-id=@Model.Review.Id
-                                            asp-route-revisionId=@revision.Key.Id
-                                            asp-fragment=@Uri.EscapeDataString(elementId)>@elementId</a>
-                                            </td>
-                                        </tr>
-                                        <partial name="_CommentThreadPartial" model="@thread" />
-                                    }
-                                </table>
-                            </div>
-                        }
-                    </div>
-                }
-                @if (Model.UsageSampleThreads.Count > 0)
-                {
-                    var skipped = 1;
-                    <br />
+<div id="left-offcanvas-menu" class="left-offcanvas@(leftOffCanvasClass)">
+    <div class="left-offcanvas-menu-content" id="left-offcanvas-menu-content">
+        <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Review" asp-route-id="@Model.Review.Id"><i class="bi bi-braces" data-bs-toggle="tooltip" data-bs-placement="right" title="API"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Revisions" asp-route-id="@Model.Review.Id"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="API" active-if="@TempData["page"].Equals("conversation")"><i class="bi bi-chat-left-dots"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
+        </div>
+    </div>
+</div>
+<div class="container-fluid pt-2@(mainContainerClass)" id="conversation-main-container">
+    <div class="row g-2" data-review-id="@Model.Review.Id">
+        @if (!Model.Threads.Any() && !Model.UsageSampleThreads.Any())
+        {
+            <div class="text-muted">There are no comments in the review.</div>
+        }
+        else
+        {
+            @if (Model.Threads.Any())
+            {
+                <div class="col mx-3">
+                    <h6 class="ms-3">APIRevisions Comments</h6>
+                    @if (Model.Threads.Any())
+                    {
+                        <div class="border rounded conversiation-center">
+                            @foreach (var revision in Model.Threads)
+                            {
+                                var divId = $"rev-{revision.Key.Id}";
+
+                                <div class="card-header p-2 clickable" id="header-@revision.Key.Id" data-toggle="collapse" data-target="#@divId">
+                                    @PageModelHelpers.ResolveRevisionLabel(revision.Key)
+                                </div>
+                                <div id=@divId class="collapse show" data-revision-id=@revision.Key.Id aria-labelledby="header-@revision.Key.Id">
+                                    <table class="code-window">
+                                        @foreach (var thread in revision.Value)
+                                        {
+                                            var elementId = thread.LineId;
+                                            <tr class="code-line"><td class="code p-2" style="word-break: break-all;"><a class="comment-url" asp-page="Review"
+                                                    asp-route-id=@Model.Review.Id
+                                                    asp-route-revisionId=@revision.Key.Id
+                                                    asp-fragment=@Uri.EscapeDataString(elementId)>@elementId</a>
+                                                </td>
+                                            </tr>
+                                            <partial name="_CommentThreadPartial" model="@thread" />
+                                        }
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (Model.UsageSampleThreads.Any())
+            {
+                var skipped = 1;
+                <div class="col mx-3">
+                    <h6 class="ms-3">Sample Revisions Comments</h6>
                     <div class="border rounded conversiation-center">
                         @foreach (var revision in Model.UsageSampleThreads.Reverse())
                         {
@@ -68,14 +89,14 @@
                             {
                                 displayName += " - " + revision.Key.sampleRevision.OriginalFileName;
                             }
-                            <div class="card-header p-2 text-black-50 clickable" id="header-@revision.Key.sampleRevisionNumber" data-toggle="collapse" data-target="#@divId">
+                            <div class="card-header p-2 clickable" id="header-@revision.Key.sampleRevisionNumber" data-toggle="collapse" data-target="#@divId">
                                 @displayName
                             </div>
                             <div id=@divId class="collapse show" data-revision-id=@revision.Key.sampleRevisionNumber aria-labelledby="header-@revision.Key.sampleRevisionNumber">
                                 <table class="code-window">
                                     @foreach (var thread in revision.Value.OrderBy(e => int.Parse(e.LineId.Split("-").Last())).GroupBy(x => x.LineId).Select(g => g.First()))
                                     {
-                                        int indexA = Model.SampleLines.Count() - (revision.Key.sampleRevisionNumber - skipped);
+                                        int indexA = Model.SampleLines.Count() - Math.Abs(revision.Key.sampleRevisionNumber - skipped);
                                         int indexB = int.Parse(thread.Comments.First().ElementId.Split("-").Last()) - 1;
                                         @if (thread.Comments.Any())
                                         {
@@ -98,10 +119,9 @@
                             </div>
                         }
                     </div>
-                }
+                </div>
             }
-
-    </div>
+        }
         <partial name="_CommentFormPartial" model="@Model.TaggableUsers" />
     </div>
 </div>

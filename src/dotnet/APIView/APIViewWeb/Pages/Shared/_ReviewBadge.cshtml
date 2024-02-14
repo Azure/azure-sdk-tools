@@ -55,6 +55,18 @@
         }
         <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="review-right-offcanvas-toggle"><i class="fa fa-bars"></i></label>
     }
+    @if (TempData["page"].Equals("revisions"))
+    {
+        if (Model.userPreference != null && Model.userPreference.HideRevisionsPageOptions.HasValue && Model.userPreference.HideRevisionsPageOptions == true)
+        {
+            <input type="checkbox" class="btn-check" id="revisions-right-offcanvas-toggle" autocomplete="off">
+        }
+        else
+        {
+            <input type="checkbox" checked class="btn-check" id="revisions-right-offcanvas-toggle" autocomplete="off">
+        }
+        <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="revisions-right-offcanvas-toggle"><i class="fa fa-bars"></i></label>
+    }
     @if (TempData["page"].Equals("samples"))
     {
         if (Model.userPreference != null && Model.userPreference.HideSamplesPageOptions.HasValue && Model.userPreference.HideSamplesPageOptions == true)

@@ -12,6 +12,7 @@ namespace APIViewWeb.Managers
         public Task<string> GetSamplesRevisionContentAsync(string fileId);
         public Task<SamplesRevisionModel> UpsertSamplesRevisionsAsync(ClaimsPrincipal user, string reviewId, string sample, string revisionTitle, string FileName = null);
         public Task<SamplesRevisionModel> UpsertSamplesRevisionsAsync(ClaimsPrincipal user, string reviewId, Stream fileStream, string revisionTitle, string FileName);
+        public Task UpdateSamplesRevisionTitle(string reviewId, string sampleId, string newTitle);
         public Task DeleteSamplesRevisionAsync(ClaimsPrincipal user, string reviewId, string sampleId);
     }
 }

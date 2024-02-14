@@ -7,12 +7,14 @@ using ApiView;
 using APIView;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Azure.Cosmos;
+using Octokit;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -58,13 +60,13 @@ namespace APIViewWeb.Pages.Assemblies
             // This try-catch is for the case that the deployment is set up incorrectly for usage samples
             try
             {
-                SampleRevisions = await _samplesRevisionsManager.GetSamplesRevisionsAsync(Review.Id);
+                SampleRevisions = (await _samplesRevisionsManager.GetSamplesRevisionsAsync(Review.Id)).OrderBy(s => s.CreatedOn);
 
                 if (SampleRevisions != null && SampleRevisions.Any())
                 {
                     if (revisionId != null)
                     {
-                        ActiveSampleRevision = SampleRevisions.Where(s => s.FileId == revisionId).First();
+                        ActiveSampleRevision = SampleRevisions.Where(s => s.Id == revisionId).First();
                     }
                     else
                     {
@@ -74,7 +76,7 @@ namespace APIViewWeb.Pages.Assemblies
                     Comments = await _commentsManager.GetUsageSampleCommentsAsync(Review.Id);
                     SampleContent = ParseLines(ActiveSampleRevision.FileId, Comments).Result;
                     SampleOriginal = await _samplesRevisionsManager.GetSamplesRevisionContentAsync(ActiveSampleRevision.OriginalFileId);
-                    Upload.updateString = SampleOriginal;
+                    Upload.UpdateString = SampleOriginal;
                     if (SampleContent == null)
                     {
                         // Potentially bad blob setup, potentially erroneous file fetch
@@ -115,32 +117,45 @@ namespace APIViewWeb.Pages.Assemblies
 
             await AssertAccess(User);
 
-            var file = Upload.File;
-            string sampleString = Upload.sampleString;
-            string reviewId = Upload.ReviewId;
-            string revisionTitle = Upload.RevisionTitle;
+            SamplesRevisionModel sampleRevision = null;
 
-            if (file != null)
+            if (Upload.File != null)
             {
-                using (var openReadStream = file.OpenReadStream())
+                using (var openReadStream = Upload.File.OpenReadStream())
                 {
-                    await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, openReadStream, revisionTitle, file.FileName);
+                    sampleRevision = await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, Upload.ReviewId, openReadStream, Upload.RevisionTitle, Upload.File.FileName);
                 }
             }
-            else if (sampleString != null)
+            else if (Upload.SampleString != null)
             {
-                await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, sampleString, revisionTitle);
+                sampleRevision = await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, Upload.ReviewId, Upload.SampleString, Upload.RevisionTitle);
             }
             else if (Upload.Updating)
             {
-                await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, reviewId, Upload.updateString, revisionTitle);
+                sampleRevision = await _samplesRevisionsManager.UpsertSamplesRevisionsAsync(User, Upload.ReviewId, Upload.UpdateString, Upload.RevisionTitle);
             }
-            else if (Upload.Deleting)
+            else if (Upload.Deleting || Upload.DeletingAndRedirect)
             {
-                await _samplesRevisionsManager.DeleteSamplesRevisionAsync(User, reviewId, Upload.SampleId);
+                await _samplesRevisionsManager.DeleteSamplesRevisionAsync(User, Upload.ReviewId, Upload.SampleId);
+
+                if (Upload.Deleting)
+                {
+                    return new NoContentResult();
+                }
+                return RedirectToPage();
+            }
+            else if (Upload.Renaming)
+            {
+                await _samplesRevisionsManager.UpdateSamplesRevisionTitle(Upload.ReviewId, Upload.SampleId, Upload.RevisionTitle);
+                return Content(Upload.RevisionTitle);
             }
 
-            return RedirectToPage();
+            if (sampleRevision != null)
+            {
+                return RedirectToPage(new { id = sampleRevision.ReviewId, revisionId = sampleRevision.Id });
+            }
+            return StatusCode(500);
+            
         }
 
         private async Task<CodeLineModel[]> ParseLines(string fileId, ReviewCommentsModel comments)

@@ -302,6 +302,7 @@ namespace APIViewWeb.Pages.Assemblies
             await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
             return RedirectToPage(new { id = id, revisionId = apiRevisionId });
         }
+
         /// <summary>
         /// Upload APIRevisions
         /// </summary>
@@ -317,19 +318,12 @@ namespace APIViewWeb.Pages.Assemblies
                 return RedirectToPage();
             }
 
-            if (upload != null)
-            {
-                var openReadStream = upload.OpenReadStream();
-                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, upload.FileName, label, openReadStream, language: null);
-            }
-            else
-            {
-                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, filePath, label, null);
-            }
-            var latestAPIRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(id); 
+            var apiRevision = await PageModelHelpers.UploadAPIRevisionAsync(_apiRevisionsManager, User, id, upload, label, filePath);
 
-            return RedirectToPage(new { id = id, revisionId = latestAPIRevision.Id } );
+            return RedirectToPage(new { id = id, revisionId = apiRevision.Id });
         }
+
+
         /// <summary>
         /// Get Routing Data for a Review
         /// </summary>

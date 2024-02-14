@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
@@ -38,12 +40,20 @@ namespace APIViewWeb.Pages.Assemblies
             TempData["Page"] = "revisions";
 
             Review = await _reviewManager.GetReviewAsync(User, id);
-            APIRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(Review.Id);
-            SamplesRevisions = await _samplesRevisionsManager.GetSamplesRevisionsAsync(Review.Id);
+            APIRevisions = (await _apiRevisionsManager.GetAPIRevisionsAsync(Review.Id)).OrderByDescending(c => c.CreatedOn);
+            SamplesRevisions = (await _samplesRevisionsManager.GetSamplesRevisionsAsync(Review.Id)).OrderByDescending(c => c.CreatedOn);
 
             return Page();
         }
 
+        /// <summary>
+        /// Upload APIRevisions
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="upload"></param>
+        /// <param name="label"></param>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
         public async Task<IActionResult> OnPostUploadAsync(string id, [FromForm] IFormFile upload, [FromForm] string label, [FromForm] string filePath)
         {
             if (!ModelState.IsValid)
@@ -51,15 +61,7 @@ namespace APIViewWeb.Pages.Assemblies
                 return RedirectToPage();
             }
 
-            if (upload != null)
-            {
-                var openReadStream = upload.OpenReadStream();
-                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, upload.FileName, label, openReadStream, language: null);
-            }
-            else
-            {
-                await _apiRevisionsManager.AddAPIRevisionAsync(User, id, APIRevisionType.Manual, filePath, label, null);
-            }
+            await PageModelHelpers.UploadAPIRevisionAsync(_apiRevisionsManager, User, id, upload, label, filePath);
 
             return RedirectToPage();
         }

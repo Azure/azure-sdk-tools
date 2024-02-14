@@ -26,7 +26,7 @@
                                 @if (review.Language != null)
                                 {
                                     string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(@review.Language);
-                                    <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@review.Language"></span>
+                                    <span role="img" class="m-1 icon icon-language @iconClassName" aria-label="@review.Language"></span>
                                 }
                                 <a class="review-name align-middle" asp-page="./Review" asp-route-id="@review.Id">@review.PackageName.Substring(0, @truncationIndex)</a>
                                 @*

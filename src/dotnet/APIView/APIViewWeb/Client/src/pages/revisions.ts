@@ -1,4 +1,6 @@
 import * as hp from "../shared/helpers";
+import { rightOffCanvasNavToggle } from "../shared/off-canvas";
+
 
 $(() => {
   const apiRevisionsSearchBox = $("#apiRevisions-search");
@@ -14,15 +16,28 @@ $(() => {
 
   function makeActiveAPIRevisionEventHandler(event) {
     const trigger = $(event.currentTarget);
-    const activeCard = $(".revisions-list-container .bi.bi-clock-history.active-rev").closest(".card");
-    activeCard.find(".bi.bi-clock-history.active-rev").remove();
-    activeCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>`);
-    activeCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-clock-history mr-1"></i></button>`);
+    let context = "api"; // Can be API or Sample
+    let classSelect = ".bi.bi-clock-history";
+    let classTxt = "bi bi-clock-history";
+    if (trigger.find(".bi.bi-puzzle").length > 0) {
+      context = "sample";
+      classSelect = ".bi.bi-puzzle";
+      classTxt = "bi bi-puzzle";
+    }
+
+    const activeCard = $(`.revisions-list-container ${classSelect}.active-rev`).closest(".card");
+    activeCard.find(`${classSelect}.active-rev`).remove();
+    if (context == "api") {
+      activeCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>`);
+    }
+    activeCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="${classTxt} mr-1"></i></button>`);
 
     activeCard.find(".btn-group .make-active").on("click", makeActiveAPIRevisionEventHandler);
-    activeCard.find(".btn-group .make-diff").on("click", makeDiffAPIRevisionEventHandler);
+    if (context == "api") {
+      activeCard.find(".btn-group .make-diff").on("click", makeDiffAPIRevisionEventHandler);
+    }
 
-    trigger.closest(".card").children(".revision-indicator-checks").append(`<i class="bi bi-clock-history active-rev mr-1"></i>`);
+    trigger.closest(".card").children(".revision-indicator-checks").append(`<i class="${classTxt} active-rev mr-1"></i>`);
     trigger.siblings(".make-diff").remove();
     trigger.remove();
     $(".revisions-list-container").addClass("revisions-changed");
@@ -66,6 +81,56 @@ $(() => {
     apiRevisionCard.find(".edit-revision-label").addClass("d-none");
   }
 
+  function handleShownRevisionContext(context) {
+    $("#left-offcanvas-menu-content").find('[data-bs-original-title="API"]').removeClass("active");
+    $("#left-offcanvas-menu-content").find('[data-bs-original-title="Samples"]').removeClass("active");
+    $("#left-offcanvas-menu-content").find(`[data-bs-target="${context}"]`).addClass("active");
+    if (context == "#apiRevisions-context" || context == "#samplesRevisions-context") {
+      $(".revisions-list-container").removeClass("revisions-changed");
+    }
+  }
+
+  function handleHiddenRevisionContext(context) {
+    if (context == "#apiRevisions-context" || context == "#add-apirevision-context") {
+      $("#left-offcanvas-menu-content").find('[data-bs-original-title="API"]').addClass("active");
+    }
+
+    if (context == "#samplesRevisions-context") {
+      $("#left-offcanvas-menu-content").find('[data-bs-original-title="Samples"]').addClass("active");
+    }
+    $("#left-offcanvas-menu-content").find(`[data-bs-target="${context}"]`).removeClass("active");
+  }
+
+  function handleHideRevisionContext(context) {
+    let classSelect = ".bi.bi-clock-history";
+    if (context == "#samplesRevisions-context") {
+      classSelect = ".bi.bi-puzzle";
+    }
+    $(context).on("hide.bs.offcanvas", function (event) {
+      const activeRevisionId = $(`.revisions-list-container ${classSelect}.active-rev`).closest(".card").attr("data-id");
+      let diffRevisionId = "";
+      const diffIcon = $(".revisions-list-container .bi.bi-file-diff.diff-rev");
+      if (diffIcon.length > 0) {
+        diffRevisionId = diffIcon.closest(".card").attr("data-id")!;
+      }
+
+      const url = new URL(window.location.href);
+      url.searchParams.set("revisionId", activeRevisionId!);
+      if (diffRevisionId) {
+        url.searchParams.set("diffRevisionId", diffRevisionId!);
+      }
+      else {
+        url.searchParams.delete("diffRevisionId");
+      }
+
+      if ($(".revisions-list-container").hasClass("revisions-changed")) {
+        if (window.location.href != url.href) {
+          window.location.href = url.href;
+        }
+      }
+    });
+  }
+
   function searchRevisions(searchBox, searchContext) {
     const searchText = (searchBox.val() as string).toUpperCase();
     (<any>searchContext.closest(".card").show()).unmark();
@@ -78,63 +143,97 @@ $(() => {
       })
     }
   }
+  function deleteRevisions(target) {
+    const id = hp.getReviewAndRevisionIdFromUrl(window.location.href)["reviewId"];
+    const revisionCard = $(target).closest(".card");
+    const revisionsId = revisionCard.attr("data-id");
+    var antiForgeryToken = $("input[name=__RequestVerificationToken]").val();
+    let url = `/Assemblies/Revisions/${id}/${revisionsId}`;
+
+    let ajax = {
+      type: "DELETE",
+      headers: {
+        "RequestVerificationToken": antiForgeryToken as string
+      },
+      success: function () {
+        revisionCard.remove();
+      }
+    };
+
+    if ($(target).closest(".revisions-list-container").hasClass("samples-revisions")) {
+      url = `/Assemblies/Samples/${id}/${revisionsId}?handler=Upload`;
+      const data = {
+        Deleting: true,
+        ReviewId: id,
+        SampleId: revisionsId
+      };
+      ajax["data"] = data;
+      ajax["type"] = "POST";
+    }
+    ajax["url"] = url;
+    $.ajax(ajax);
+  }
+
+  function renameRevision(target) {
+    const id = hp.getReviewAndRevisionIdFromUrl(window.location.href)["reviewId"];
+    const revisionCard = $(target).closest(".card");
+    const updatedLabel = revisionCard.find(".edit-revision-label > input").val();
+    const revisionsId = revisionCard.attr("data-id");
+    var antiForgeryToken = $("input[name=__RequestVerificationToken]").val();
+    let url = `/Assemblies/Revisions/${id}/${revisionsId}?handler=Rename&newLabel=${updatedLabel}`;
+
+    let ajax = {
+      type: "POST",
+      headers: {
+        "RequestVerificationToken": antiForgeryToken as string
+      },
+      success: function (data) {
+        revisionCard.find(".card-title").text(data);
+        exitAPIRevisionRename(revisionCard);
+      }
+    };
+
+    if ($(target).closest(".revisions-list-container").hasClass("samples-revisions")) {
+      url = `/Assemblies/Samples/${id}/${revisionsId}?handler=Upload`;
+      const data = {
+        Renaming: true,
+        RevisionTitle: updatedLabel,
+        ReviewId: id,
+        SampleId: revisionsId
+      };
+      ajax["data"] = data;
+    }
+    ajax["url"] = url;
+    $.ajax(ajax);
+  }
+
+  /* RIGHT OFFCANVAS OPERATIONS
+--------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  // Open / Close right Offcanvas Menu
+  $("#revisions-right-offcanvas-toggle").on('click', function () {
+    hp.updatePageSettings(function () {
+      rightOffCanvasNavToggle("revisions-main-container");
+    });
+  });
 
 
   /* MANAGE APIREVISIONS IN CONTEXT OF REVIEW PAGE
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
 
   // Toggle active class for left side offcanvas buttons
-  ["#apiRevisions-context", "#add-apirevision-context"].forEach(function (value, index) {
+  ["#apiRevisions-context", "#add-apirevision-context", "#samplesRevisions-context"].forEach(function (value, index) {
     $(value).on("shown.bs.offcanvas", function () {
-      $("#left-offcanvas-menu-content").find('[data-bs-original-title="API"]').removeClass("active");
-      $("#left-offcanvas-menu-content").find('[data-bs-target="#apiRevisions-context"]').addClass("active");
-
-      if (value == "#apiRevisions-context") {
-        $(".revisions-list-container").removeClass("revisions-changed");
-      }
-    })
+      handleShownRevisionContext(value);
+    });
 
     $(value).on("hidden.bs.offcanvas", function (event) {
-      $("#left-offcanvas-menu-content").find('[data-bs-original-title="API"]').addClass("active");
-      $("#left-offcanvas-menu-content").find('[data-bs-target="#apiRevisions-context"]').removeClass("active");
+      handleHiddenRevisionContext(value);
       event.stopPropagation();
-    })
+    });
 
-    if (value == "#apiRevisions-context") {
-      $(value).on("hide.bs.offcanvas", function (event) {
-        const activeRevisionId = $(".revisions-list-container .bi.bi-clock-history.active-rev").closest(".card").attr("data-id");
-        let diffRevisionId = "";
-        const diffIcon = $(".revisions-list-container .bi.bi-file-diff.diff-rev");
-        if (diffIcon.length > 0) {
-          diffRevisionId = diffIcon.closest(".card").attr("data-id")!;
-        }
-
-        const url = new URL(window.location.href);
-        url.searchParams.set("revisionId", activeRevisionId!);
-        if (diffRevisionId) {
-          url.searchParams.set("diffRevisionId", diffRevisionId!);
-        }
-        else {
-          url.searchParams.delete("diffRevisionId");
-        }
-
-        if ($(".revisions-list-container").hasClass("revisions-changed")) {
-          if (window.location.href != url.href) {
-            window.location.href = url.href;
-          }
-        }
-      });
+    if (value == "#apiRevisions-context" || value == "#samplesRevisions-context") {
+      handleHideRevisionContext(value);
     }
-  });
-
-  $("#conversiations-context").on("hidden.bs.offcanvas", function () {
-    $("#left-offcanvas-menu-content").find('[data-bs-original-title="API"]').addClass("active");
-    $("#left-offcanvas-menu-content").find('[data-bs-target="#conversiations-context"]').removeClass("active");
-  });
-
-  $("#conversiations-context").on("shown.bs.offcanvas", function () {
-    $("#left-offcanvas-menu-content").find('[data-bs-original-title="API"]').removeClass("active");
-    $("#left-offcanvas-menu-content").find('[data-bs-target="#conversiations-context"]').addClass("active");
   });
 
   // Search / Filter APIRevisions
@@ -184,22 +283,7 @@ $(() => {
   // Delete API Revision
   $(".revisions-list-container .delete").on("click", function (e) {
     e.stopPropagation();
-    const id = hp.getReviewAndRevisionIdFromUrl(window.location.href)["reviewId"];
-    const apiRevisionCard = $(this).closest(".card");
-    const apiRevisionsId = apiRevisionCard.attr("data-id");
-    const url = `/Assemblies/Revisions/${id}/${apiRevisionsId}`;
-    var antiForgeryToken = $("input[name=__RequestVerificationToken]").val();
-
-    $.ajax({
-      type: "DELETE",
-      url: url,
-      headers: {
-        "RequestVerificationToken": antiForgeryToken as string
-      },
-      success: function (data) {
-        apiRevisionCard.remove();
-      }
-    });
+    deleteRevisions(this);
   });
 
   // Rename API Revision Label
@@ -219,24 +303,7 @@ $(() => {
 
   $(".revisions-list-container .enter-rename").on("click", function (e) {
     e.stopPropagation();
-    const id = hp.getReviewAndRevisionIdFromUrl(window.location.href)["reviewId"];
-    const apiRevisionCard = $(this).closest(".card");
-    const updatedLabel = apiRevisionCard.find(".edit-revision-label > input").val();
-    const apiRevisionsId = apiRevisionCard.attr("data-id");
-    const url = `/Assemblies/Revisions/${id}/${apiRevisionsId}?handler=Rename&newLabel=${updatedLabel}`;
-    var antiForgeryToken = $("input[name=__RequestVerificationToken]").val();
-  
-    $.ajax({
-      type: "POST",
-      url: url,
-      headers: {
-        "RequestVerificationToken": antiForgeryToken as string
-      },
-      success: function (data) {
-        apiRevisionCard.find(".card-title").text(data);
-        exitAPIRevisionRename(apiRevisionCard);
-      }
-    });
+    renameRevision(this);
   });
 
   $(".edit-revision-label").on("click", function (e) {

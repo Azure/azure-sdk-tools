@@ -3,7 +3,7 @@ import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRe
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, writeFile, cp, readFile, access, stat } from "node:fs/promises";
+import { mkdir, writeFile, cp, readFile, access } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
@@ -212,7 +212,6 @@ async function generate({
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
   Logger.info("Installing dependencies from npm...");
   try {
-    await stat(joinPaths(srcDir, "package-lock.json"));
     await npmCIDependencies(srcDir);
   } catch (err) {
     // If package-lock.json doesn't exist, we'll attempt to install dependencies without the lock file

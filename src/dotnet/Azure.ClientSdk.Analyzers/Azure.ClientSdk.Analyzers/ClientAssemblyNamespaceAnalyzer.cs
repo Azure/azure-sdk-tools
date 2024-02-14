@@ -78,7 +78,7 @@ namespace Azure.ClientSdk.Analyzers
                 // "Azure.Template" is not an approved namespace prefix, but we have a project template by that name
                 // to help customers get started. We do not want our template to include a suppression for this
                 // descriptor out of the box, so we need to treat it as a special case.
-                if (displayString == "Azure.Template")
+                if (displayString.StartsWith("Azure.Template"))
                 {
                     return;
                 }

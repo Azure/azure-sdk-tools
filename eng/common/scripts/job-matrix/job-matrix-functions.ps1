@@ -339,7 +339,7 @@ function ProcessReplace {
 
     foreach ($element in $matrix) {
         $replacement = [MatrixParameter[]]@()
-        if (!$element || ($element -is [hashtable] -and !$element.ContainsKey("_permutation"))) {
+        if (!$element || !$element.Count) {
             $replaceMatrix += CreateMatrixCombinationScalar $replacement $displayNamesLookup
             continue
         }
@@ -376,7 +376,7 @@ function ProcessEnvironmentVariableReferences([array]$matrix, $displayNamesLooku
 
     foreach ($element in $matrix) {
         $updated = [MatrixParameter[]]@()
-        if (!$element || ($element -is [hashtable] -and !$element.ContainsKey("_permutation"))) {
+        if (!$element || !$element.Count) {
             $updatedMatrix += CreateMatrixCombinationScalar $updated $displayNamesLookup
             continue
         }

@@ -374,15 +374,22 @@ function ProcessEnvironmentVariableReferences([array]$matrix, $displayNamesLooku
     $updatedMatrix = @()
 
     foreach ($element in $matrix) {
+        Write-Host "BBP ELEMENT NULL?"
+        $element -eq $null
+
+        Write-Host "BBP ELEMENT TYPE?"
+        $element.GetType()
+
         Write-Host "BBP ELEMENT"
         $element
         Write-Host "BBP ELEMENT JSON"
         $element | ConvertTo-Json -Depth 100
 
+        $updated = [MatrixParameter[]]@()
         if (!$element || $element.PSobject.Properties.name -notcontains "_permutation") {
+            $updatedMatrix += CreateMatrixCombinationScalar $updated $displayNamesLookup
             continue
         }
-        $updated = [MatrixParameter[]]@()
 
         foreach ($perm in $element._permutation) {
             # Iterate nested permutations or run once for singular values (int, string, bool)

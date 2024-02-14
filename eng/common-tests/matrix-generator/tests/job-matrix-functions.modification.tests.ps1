@@ -591,26 +591,34 @@ Describe "Platform Matrix Environment Variables" -Tag "UnitTest", "envvar" {
   "matrix": {
     "foo": "bar",
     "envReference": ["env:TestMatrixEnvReference", "env:TestMatrixEnvReference2", "noref"]
-  }
+  },
+  "include": [
+    {
+      "foo": "bar",
+      "envReference": "env:TestMatrixEnvReference"
+    }
+  ]
 }
 '@
 
         [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference", "")
         [array]$matrix = GenerateMatrix (GetMatrixConfigFromJson $matrixJson) "sparse"
-        $matrix.Length | Should -Be 3
+        $matrix.Length | Should -Be 4
         $matrix[0].name | Should -Be "bar"
         $matrix[0].parameters.envReference | Should -Be ""
 
         [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference", "replaced")
         [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference2", "replaced2")
         [array]$replacedMatrix = GenerateMatrix (GetMatrixConfigFromJson $matrixJson) "sparse"
-        $replacedMatrix.Length | Should -Be 3
+        $replacedMatrix.Length | Should -Be 4
         $replacedMatrix[0].name | Should -Be "bar_replaced"
         $replacedMatrix[0].parameters.envReference | Should -Be "replaced"
         $replacedMatrix[1].name | Should -Be "bar_replaced2"
         $replacedMatrix[1].parameters.envReference | Should -Be "replaced2"
         $replacedMatrix[2].name | Should -Be "bar_noref"
         $replacedMatrix[2].parameters.envReference | Should -Be "noref"
+        $replacedMatrix[3].name | Should -Be "bar_replaced"
+        $replacedMatrix[3].parameters.envReference | Should -Be "replaced"
     }
 
     It "Should support filter/replace with variable reference syntax" {

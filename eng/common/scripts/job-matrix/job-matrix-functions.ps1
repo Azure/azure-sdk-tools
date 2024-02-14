@@ -338,10 +338,11 @@ function ProcessReplace {
     $replaceMatrix = @()
 
     foreach ($element in $matrix) {
-        if (!$element || $element.PSobject.Properties.name -notcontains "_permutation") {
+        $replacement = [MatrixParameter[]]@()
+        if (!$element || ($element -is [hashtable] -and !$element.ContainsKey("_permutation"))) {
+            $replaceMatrix += CreateMatrixCombinationScalar $replacement $displayNamesLookup
             continue
         }
-        $replacement = [MatrixParameter[]]@()
 
         foreach ($perm in $element._permutation) {
             $replace = $perm
@@ -374,20 +375,8 @@ function ProcessEnvironmentVariableReferences([array]$matrix, $displayNamesLooku
     $updatedMatrix = @()
 
     foreach ($element in $matrix) {
-        if ($element -eq $null) {
-            Write-Host "BBP ELEMENT NULL"
-        }
-
-        Write-Host "BBP ELEMENT TYPE?"
-        Write-Host "$($element.GetType())"
-
-        Write-Host "BBP ELEMENT"
-        Write-Host $element
-        Write-Host "BBP ELEMENT JSON"
-        Write-Host ($element | ConvertTo-Json -Depth 100)
-
         $updated = [MatrixParameter[]]@()
-        if (!$element || $element.PSobject.Properties.name -notcontains "_permutation") {
+        if (!$element || ($element -is [hashtable] -and !$element.ContainsKey("_permutation"))) {
             $updatedMatrix += CreateMatrixCombinationScalar $updated $displayNamesLookup
             continue
         }

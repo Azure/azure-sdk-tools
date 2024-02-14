@@ -339,7 +339,7 @@ function ProcessReplace {
 
     foreach ($element in $matrix) {
         $replacement = [MatrixParameter[]]@()
-        if (!$element || !$element.Count) {
+        if (!$element -or $element.Count -eq 0) {
             $replaceMatrix += CreateMatrixCombinationScalar $replacement $displayNamesLookup
             continue
         }
@@ -376,15 +376,10 @@ function ProcessEnvironmentVariableReferences([array]$matrix, $displayNamesLooku
 
     foreach ($element in $matrix) {
         $updated = [MatrixParameter[]]@()
-        Write-Host "BBP COUNT"
-        Write-Host ($element.Count)
-        if (!$element || $element.Count -eq 0) {
-            Write-Host "BBP SKIPPING"
+        if (!$element -or $element.Count -eq 0) {
             $updatedMatrix += CreateMatrixCombinationScalar $updated $displayNamesLookup
-            Write-Host "BBP SKIPPED"
             continue
         }
-        Write-Host "BBP CONTINUED"
 
         foreach ($perm in $element._permutation) {
             # Iterate nested permutations or run once for singular values (int, string, bool)

@@ -338,7 +338,7 @@ function ProcessReplace {
     $replaceMatrix = @()
 
     foreach ($element in $matrix) {
-        if (!$element || [bool]$element.PSobject.Properties.name -notmatch "_permutation") {
+        if (!$element || $element.PSobject.Properties.name -notcontains "_permutation") {
             continue
         }
         $replacement = [MatrixParameter[]]@()
@@ -374,7 +374,7 @@ function ProcessEnvironmentVariableReferences([array]$matrix, $displayNamesLooku
     $updatedMatrix = @()
 
     foreach ($element in $matrix) {
-        if (!$element || [bool]$element.PSobject.Properties.name -notmatch "_permutation") {
+        if (!$element || $element.PSobject.Properties.name -notcontains "_permutation") {
             continue
         }
         $updated = [MatrixParameter[]]@()
@@ -382,7 +382,7 @@ function ProcessEnvironmentVariableReferences([array]$matrix, $displayNamesLooku
         foreach ($perm in $element._permutation) {
             # Iterate nested permutations or run once for singular values (int, string, bool)
             foreach ($flattened in $perm.Flatten()) {
-                if ($flattened.Value?.GetType() -eq "".GetType() -and $flattened.Value.StartsWith("env:")) {
+                if ($flattened.Value -is [string] -and $flattened.Value.StartsWith("env:")) {
                     $envKey = $flattened.Value.Replace("env:", "")
                     $value = [System.Environment]::GetEnvironmentVariable($envKey) ?? ""
                     if (!$value) {

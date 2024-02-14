@@ -116,7 +116,7 @@ This tool creates a `TempTypeSpecFiles` directory when syncing a TypeSpec projec
 TempTypeSpecFiles/
 ```
 
-### Client library repository set up
+## Client library repository set up
 
 Each repository that wants to support `tsp-client` for generating and updating client libraries will need the following files:
 
@@ -144,4 +144,5 @@ Example:
 ```
 
 > NOTE: tsp compile currently requires the "main" line to be there.
+
 > NOTE: This file replaces the package.json checked into the `azure-rest-api-spec` repository. 

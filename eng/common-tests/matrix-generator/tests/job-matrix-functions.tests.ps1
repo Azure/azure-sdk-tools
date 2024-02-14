@@ -228,17 +228,17 @@ Describe "Matrix-Reverse-Lookup" -Tag "UnitTest", "lookup" {
          @{ index = 1; expected = @(0,0,0,1) }
          @{ index = 2; expected = @(0,0,0,2) }
          @{ index = 3; expected = @(0,0,0,3) }
-                      
+
          @{ index = 4; expected = @(0,0,1,0) }
          @{ index = 5; expected = @(0,0,1,1) }
          @{ index = 6; expected = @(0,0,1,2) }
          @{ index = 7; expected = @(0,0,1,3) }
-                      
+
          @{ index = 8; expected = @(0,1,0,0) }
          @{ index = 9; expected = @(0,1,0,1) }
          @{ index = 10; expected = @(0,1,0,2) }
          @{ index = 11; expected = @(0,1,0,3) }
-                      
+
          @{ index = 12; expected = @(0,1,1,0) }
          @{ index = 13; expected = @(0,1,1,1) }
          @{ index = 14; expected = @(0,1,1,2) }

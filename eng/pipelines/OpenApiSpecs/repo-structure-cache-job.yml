@@ -32,7 +32,7 @@ steps:
   displayName: Run Script
   env: 
     MONGO_CONNECTION_STRING: $(Open-API-MongoDB-Connection-String)
-    GITHUB_TOKEN: $(azure-sdk-github-pat)
+    GITHUB_TOKEN: $(azuresdk-github-pat)
     REPO__CLONE_PATH: $(System.DefaultWorkingDirectory)
     DB_NAME: ${{ parameters.DB_NAME }}
     COLLECTION_NAME: ${{ parameters.COLLECTION_NAME }}

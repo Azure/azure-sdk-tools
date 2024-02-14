@@ -76,7 +76,7 @@ class MatrixParameter {
             $displayName = $this.Value.ToString()
         }
 
-        if ($displayNamesLookup.ContainsKey($displayName)) {
+        if ($displayNamesLookup -and $displayNamesLookup.ContainsKey($displayName)) {
             $displayName = $displayNamesLookup[$displayName]
         }
 

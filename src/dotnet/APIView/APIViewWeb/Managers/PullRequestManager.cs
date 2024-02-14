@@ -89,7 +89,7 @@ namespace APIViewWeb.Managers
             return pullRequestModel;
         }
 
-        public async Task CreateOrUpdateCommentsOnPR(List<PullRequestModel> pullRequests, string repoOwner, string repoName, int prNumber, string hostName)
+        public async Task CreateOrUpdateCommentsOnPR(List<PullRequestModel> pullRequests, string repoOwner, string repoName, int prNumber, string hostName, string commitSha)
         {
             var existingComment = await GetExistingCommentForPackage(repoOwner, repoName, prNumber);
             var bldr = new StringBuilder(PR_APIVIEW_BOT_COMMENT_IDENTIFIER);
@@ -97,7 +97,9 @@ namespace APIViewWeb.Managers
             if (pullRequests.Count > 0)
             {
                 bldr.Append(PR_APIVIEW_BOT_COMMENT).Append(Environment.NewLine).Append(Environment.NewLine);
-                foreach (var p in pullRequests)
+                // Include API review revisions generated with same exact Commit Sha as latest commit SHA to exclude any stale reviews that are not modified in latest commit.
+                // This will ensure comment shows only the reviews modified byu latest commit.
+                foreach (var p in pullRequests.Where(p => p.Commits.LastOrDefault() == commitSha))
                 {
                     var revisionLink = ManagerHelpers.ResolveReviewUrl(pullRequest: p, hostName: hostName);
                     bldr.Append('[').Append(p.PackageName).Append("](").Append(revisionLink).Append(')');

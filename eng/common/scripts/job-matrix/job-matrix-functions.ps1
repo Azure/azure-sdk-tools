@@ -340,7 +340,6 @@ function ProcessReplace {
     foreach ($element in $matrix) {
         $replacement = [MatrixParameter[]]@()
         if (!$element -or $element.Count -eq 0) {
-            $replaceMatrix += CreateMatrixCombinationScalar $replacement $displayNamesLookup
             continue
         }
 
@@ -377,7 +376,6 @@ function ProcessEnvironmentVariableReferences([array]$matrix, $displayNamesLooku
     foreach ($element in $matrix) {
         $updated = [MatrixParameter[]]@()
         if (!$element -or $element.Count -eq 0) {
-            $updatedMatrix += CreateMatrixCombinationScalar $updated $displayNamesLookup
             continue
         }
 

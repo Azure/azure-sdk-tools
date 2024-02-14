@@ -150,10 +150,22 @@ namespace Azure.Template.RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0001NotProducedForAzureTemplate()
+        public async Task AZC0001NotProducedForAzureTemplateRoot()
         {
             const string code = @"
 namespace Azure.Template
+{
+    public class Program { }
+}";
+
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0001NotProducedForAzureTemplateSubNamespace()
+        {
+            const string code = @"
+namespace Azure.Template.Models
 {
     public class Program { }
 }";

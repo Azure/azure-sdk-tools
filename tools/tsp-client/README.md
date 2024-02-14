@@ -118,7 +118,7 @@ TempTypeSpecFiles/
 
 ## Per repository set up
 
-Each repository that wants to support `tsp-client` for generating and updating client libraries will need the following files:
+Each repository that intends to support `tsp-client` for generating and updating client libraries will need the following configuration files:
 
 ### emitter-package-lock.json (Optional)
 

@@ -338,6 +338,9 @@ function ProcessReplace {
     $replaceMatrix = @()
 
     foreach ($element in $matrix) {
+        if (!$element || [bool]$element.PSobject.Properties.name -notmatch "_permutation") {
+            continue
+        }
         $replacement = [MatrixParameter[]]@()
 
         foreach ($perm in $element._permutation) {
@@ -371,6 +374,9 @@ function ProcessEnvironmentVariableReferences([array]$matrix, $displayNamesLooku
     $updatedMatrix = @()
 
     foreach ($element in $matrix) {
+        if (!$element || [bool]$element.PSobject.Properties.name -notmatch "_permutation") {
+            continue
+        }
         $updated = [MatrixParameter[]]@()
 
         foreach ($perm in $element._permutation) {

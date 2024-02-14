@@ -20,8 +20,12 @@ export async function createPackageJson(rootPath: string, deps: Set<string>): Pr
 }
 
 export async function npmCIDependencies(workingDir: string): Promise<void> {
+  const args = ["ci"];
+  if (process.env['TSPCLIENT_UNSAFE_FORCE'] === "force") {
+    args.push("--force");
+  }
   return new Promise((resolve, reject) => {
-    const npm = spawn("npm", ["ci"], {
+    const npm = spawn("npm", args, {
       cwd: workingDir,
       stdio: "inherit",
       shell: true,
@@ -40,8 +44,12 @@ export async function npmCIDependencies(workingDir: string): Promise<void> {
 }
 
 export async function npmInstallDependencies(workingDir: string): Promise<void> {
+  const args = ["install"];
+  if (process.env['TSPCLIENT_UNSAFE_FORCE'] === "force") {
+    args.push("--force");
+  }
   return new Promise((resolve, reject) => {
-    const npm = spawn("npm", ["install", "--no-lock-file"], {
+    const npm = spawn("npm", args, {
       cwd: workingDir,
       stdio: "inherit",
       shell: true,

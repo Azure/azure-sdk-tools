@@ -1,6 +1,11 @@
 .create-merge table TestRun (
     OrganizationName: string,
     ProjectId: string,
+    ProjectName: string,
+    BuildDefinitionId: long,
+    BuildDefinitionPath: string,
+    BuildDefinitionName: string,
+    BuildId: long,
     TestRunId: int,
     Title: string,
     StartedDate: datetime,
@@ -8,8 +13,6 @@
     ResultDurationSeconds: real,
     RunDurationSeconds: real,
     BranchName: string,
-    BuildDefinitionId: int,
-    BuildId: long,
     HasDetail: bool,
     IsAutomated: bool,
     ResultAbortedCount: int,
@@ -30,11 +33,16 @@
     OrganizationId: string,
     Data: string,
     EtlIngestDate: datetime
-)
+) with (folder='', docstring='')
 
-.alter table TestRun ingestion json mapping 'TestRun_mapping' ```[
+.create-or-alter table TestRun ingestion json mapping 'TestRun_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
+    { "column": "ProjectName", "path": "$['projectName']" },
+    { "column": "BuildDefinitionId", "path": "$['buildDefinitionId']" },
+    { "column": "BuildDefinitionPath", "path": "$['buildDefinitionPath']" },
+    { "column": "BuildDefinitionName", "path": "$['buildDefinitionName']" },
+    { "column": "BuildId", "path": "$['buildId']" },
     { "column": "TestRunId", "path": "$['testRunId']" },
     { "column": "Title", "path": "$['title']" },
     { "column": "StartedDate", "path": "$['startedDate']" },
@@ -42,8 +50,6 @@
     { "column": "ResultDurationSeconds", "path": "$['resultDurationSeconds']" },
     { "column": "RunDurationSeconds", "path": "$['runDurationSeconds']" },
     { "column": "BranchName", "path": "$['branchName']" },
-    { "column": "BuildDefinitionId", "path": "$['buildDefinitionId']" },
-    { "column": "BuildId", "path": "$['buildId']" },
     { "column": "HasDetail", "path": "$['hasDetail']" },
     { "column": "IsAutomated", "path": "$['isAutomated']" },
     { "column": "ResultAbortedCount", "path": "$['resultAbortedCount']" },

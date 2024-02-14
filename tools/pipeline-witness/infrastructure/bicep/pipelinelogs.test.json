@@ -3,19 +3,19 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "resourceGroupName": {
-      "value": "pipelinelogs"
+      "value": "pipelinelogs-test"
     },
     "location": {
       "value": "westus2"
     },
     "storageAccountName": {
-      "value": "azsdkengsyspipelinelogs"
+      "value": "pipelinelogstest"
     },
     "kustoClusterName": {
-      "value": "azsdkengsys"
+      "value": "azsdkengsystest"
     },
     "kustoDatabaseName": {
-      "value": "Pipelines"
+      "value": "test"
     }
   }
 }

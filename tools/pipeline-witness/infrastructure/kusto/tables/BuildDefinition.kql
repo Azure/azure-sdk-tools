@@ -57,9 +57,9 @@
     Tags: string,
     Data: string,
     EtlIngestDate: datetime
-)
+) with (folder='', docstring='')
 
-.alter table BuildDefinition ingestion json mapping 'BuildDefinition_mapping' ```[
+.create-or-alter table BuildDefinition ingestion json mapping 'BuildDefinition_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
     { "column": "BuildDefinitionId", "path": "$['buildDefinitionId']" },

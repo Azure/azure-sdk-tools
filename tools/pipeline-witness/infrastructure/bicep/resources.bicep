@@ -1,7 +1,7 @@
-param location string
 param storageAccountName string
 param kustoClusterName string
 param kustoDatabaseName string
+param location string
 
 var tables = [
   {
@@ -25,23 +25,27 @@ var tables = [
     container: 'buildtimelinerecords'
   }
   {
-    name: 'PipelineOwners'
+    name: 'PipelineOwner'
     container: 'pipelineowners'
   }
   {
     name: 'TestRun'
     container: 'testruns'
   }
+  {
+    name: 'TestRunResult'
+    container: 'testrunresults'
+  }
 ]
 
-var kustoScript = loadTextContent('pipelinelogs.kql')
+var kustoScript = loadTextContent('../artifacts/merged.kql')
 
 // Storage Account
 resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: storageAccountName
   location: location
   sku: {
-    name: 'Standard_RAGRS'
+    name: 'Standard_LRS'
   }
   kind: 'StorageV2'
   properties: {
@@ -100,7 +104,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
 
 // Event Grid
 resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
-  name: storageAccount.name
+  name: storageAccountName
   location: location
   properties: {
     source: storageAccount.id
@@ -109,8 +113,8 @@ resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
 }
 
 // Event Hub
-resource eventhubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
-  name: storageAccount.name
+resource eventHubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
+  name: storageAccountName
   location: location
   sku: {
     name: 'Standard'
@@ -195,7 +199,7 @@ resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2
 }]
 
 resource eventHubs 'Microsoft.EventHub/namespaces/eventhubs@2022-01-01-preview' = [for (table, i) in tables: {
-  parent: eventhubNamespace
+  parent: eventHubNamespace
   name: table.container
   properties: {
     messageRetentionInDays: 7
@@ -230,7 +234,7 @@ resource eventGridSubscriptions 'Microsoft.EventGrid/systemTopics/eventSubscript
 
 resource kustoDataConnections 'Microsoft.Kusto/Clusters/Databases/DataConnections@2022-02-01' = [for (table, i) in tables: {
   parent: kustoCluster::database
-  name: table.container
+  name: '${kustoDatabaseName}-${table.container}'
   location: location
   kind: 'EventGrid'
   properties: {

@@ -57,9 +57,9 @@
     ValidationResults: string,
     Data: string,
     EtlIngestDate: datetime
-)
+) with (folder='', docstring='')
 
-.alter table Build ingestion json mapping 'Build_mapping' ```[
+.create-or-alter table Build ingestion json mapping 'Build_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
     { "column": "BuildId", "path": "$['buildId']" },

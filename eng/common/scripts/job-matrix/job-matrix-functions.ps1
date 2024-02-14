@@ -374,16 +374,17 @@ function ProcessEnvironmentVariableReferences([array]$matrix, $displayNamesLooku
     $updatedMatrix = @()
 
     foreach ($element in $matrix) {
-        Write-Host "BBP ELEMENT NULL?"
-        $element -eq $null
+        if ($element -eq $null) {
+            Write-Host "BBP ELEMENT NULL"
+        }
 
         Write-Host "BBP ELEMENT TYPE?"
-        $element.GetType()
+        Write-Host "$($element.GetType())"
 
         Write-Host "BBP ELEMENT"
-        $element
+        Write-Host $element
         Write-Host "BBP ELEMENT JSON"
-        $element | ConvertTo-Json -Depth 100
+        Write-Host ($element | ConvertTo-Json -Depth 100)
 
         $updated = [MatrixParameter[]]@()
         if (!$element || $element.PSobject.Properties.name -notcontains "_permutation") {

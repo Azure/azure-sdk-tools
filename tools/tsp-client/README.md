@@ -116,7 +116,7 @@ This tool creates a `TempTypeSpecFiles` directory when syncing a TypeSpec projec
 TempTypeSpecFiles/
 ```
 
-## Client library repository set up
+## Per repository set up
 
 Each repository that wants to support `tsp-client` for generating and updating client libraries will need the following files:
 

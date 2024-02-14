@@ -378,10 +378,13 @@ function ProcessEnvironmentVariableReferences([array]$matrix, $displayNamesLooku
         $updated = [MatrixParameter[]]@()
         Write-Host "BBP COUNT"
         Write-Host ($element.Count)
-        if (!$element || !$element.Count) {
+        if (!$element || $element.Count -eq 0) {
+            Write-Host "BBP SKIPPING"
             $updatedMatrix += CreateMatrixCombinationScalar $updated $displayNamesLookup
+            Write-Host "BBP SKIPPED"
             continue
         }
+        Write-Host "BBP CONTINUED"
 
         foreach ($perm in $element._permutation) {
             # Iterate nested permutations or run once for singular values (int, string, bool)

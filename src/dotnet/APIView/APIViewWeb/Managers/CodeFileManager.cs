@@ -227,6 +227,7 @@ namespace APIViewWeb.Managers
             file.Name = codeFile.Name;
             file.PackageName = codeFile.PackageName;
             file.PackageVersion = codeFile.PackageVersion;
+            file.CrossLanguagePackageId = codeFile.CrossLanguagePackageId;
         }
     }
 }

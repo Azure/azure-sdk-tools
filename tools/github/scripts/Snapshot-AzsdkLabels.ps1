@@ -21,12 +21,13 @@ param (
         'Azure/azure-sdk-for-js'
         'Azure/azure-sdk-for-net'
         'Azure/azure-sdk-for-python'
+        'Azure/azure-sdk-for-rust'
         'Azure/azure-sdk-tools'
     ),
 
     [Parameter(ParameterSetName = 'Languages')]
     [ValidateNotNullOrEmpty()]
-    [string[]] $Languages = @('cpp', 'go', 'java', 'js', 'net', 'python', 'c', 'ios', 'android'),
+    [string[]] $Languages = @('cpp', 'go', 'java', 'js', 'net', 'python', 'rust', 'c', 'ios', 'android'),
 
     [Parameter()]
     [ValidateRange(0,100)]

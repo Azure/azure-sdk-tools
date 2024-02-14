@@ -97,7 +97,7 @@ namespace APIViewIntegrationTests
 
             var telemetryClient = new Mock<TelemetryClient>();
 
-            var notificationManager = new NotificationManager(config, ReviewRepository, cosmosUserProfileRepository, telemetryClient.Object);
+            var notificationManager = new NotificationManager(config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, telemetryClient.Object);
 
             var devopsArtifactRepositoryMoq = new Mock<IDevopsArtifactRepository>();
             devopsArtifactRepositoryMoq.Setup(_ => _.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))

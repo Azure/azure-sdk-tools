@@ -27,12 +27,13 @@ import {
   visitChildren,
   ScalarStatementNode,
   TypeReferenceNode,
+  JsNamespaceDeclarationNode,
 } from "@typespec/compiler";
 
 export class NamespaceModel {
   kind = SyntaxKind.NamespaceStatement;
   name: string;
-  node: NamespaceStatementNode;
+  node: NamespaceStatementNode | JsNamespaceDeclarationNode;
   operations = new Map<string, OperationStatementNode | InterfaceStatementNode>();
   resources = new Map<
     string,

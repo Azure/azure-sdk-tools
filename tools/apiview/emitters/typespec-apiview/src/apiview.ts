@@ -28,6 +28,7 @@ import {
   ScalarStatementNode,
   StringLiteralNode,
   SyntaxKind,
+  TemplateArgumentNode,
   TemplateParameterDeclarationNode,
   TupleExpressionNode,
   TypeReferenceNode,
@@ -460,6 +461,8 @@ export class ApiView {
       case SyntaxKind.EnumStatement:
         this.tokenizeEnumStatement(node as EnumStatementNode);
         break;
+      case SyntaxKind.JsNamespaceDeclaration:
+        throw new Error(`Case "JsNamespaceDeclaration" not implemented`);
       case SyntaxKind.JsSourceFile:
         throw new Error(`Case "JsSourceFile" not implemented`);
       case SyntaxKind.Identifier:
@@ -606,6 +609,24 @@ export class ApiView {
         break;
       case SyntaxKind.VoidKeyword:
         this.keyword("void", true, true);
+        break;
+      case SyntaxKind.TemplateArgument:
+        obj = node as TemplateArgumentNode;
+        const isExpanded = obj.argument.kind === SyntaxKind.ModelExpression;
+        if (isExpanded) {
+            this.newline();
+            this.indent();
+        }
+        if (obj.name) {
+            this.text(obj.name.sv);
+            this.punctuation("=", true, true);
+        }
+        if (isExpanded) {
+            this.tokenizeModelExpressionExpanded(obj.argument as ModelExpressionNode, false, false);
+            this.deindent();
+        } else {
+            this.tokenize(obj.argument);
+        }
         break;
       default:
         // All Projection* cases should fall in here...
@@ -764,10 +785,12 @@ export class ApiView {
     }
   }
 
-  private tokenizeModelExpressionExpanded(node: ModelExpressionNode, isOperationSignature: boolean) {
+  private tokenizeModelExpressionExpanded(node: ModelExpressionNode, isOperationSignature: boolean, leadingNewline: boolean) {
     if (node.properties.length) {
-      this.blankLines(0);
-      this.indent();
+      if (leadingNewline) {
+        this.blankLines(0);
+        this.indent();
+      }
       if (!isOperationSignature) {
         this.punctuation("{", false, false);
         this.blankLines(0);
@@ -803,7 +826,10 @@ export class ApiView {
         this.blankLines(0);  
       }
       this.trim();
-      this.deindent();
+      if (leadingNewline) {
+        this.deindent();
+      }
+
     } else if (!isOperationSignature) {
       this.punctuation("{}", true, false);
     }
@@ -817,7 +843,7 @@ export class ApiView {
     if (inline) {
       this.tokenizeModelExpressionInline(node, isOperationSignature)
     } else {
-      this.tokenizeModelExpressionExpanded(node, isOperationSignature)
+      this.tokenizeModelExpressionExpanded(node, isOperationSignature, true)
     }
   }
 
@@ -836,7 +862,9 @@ export class ApiView {
 
   private tokenizeNamespaceModel(model: NamespaceModel) {
     this.namespaceStack.push(model.name);
-    this.tokenizeDecorators(model.node.decorators, false);
+    if (model.node.kind === SyntaxKind.NamespaceStatement) {
+        this.tokenizeDecorators(model.node.decorators, false);
+    }
     this.keyword("namespace", false, true);
     this.typeDeclaration(model.name, this.namespaceStack.value(), true);
     this.beginGroup();

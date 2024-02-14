@@ -11,7 +11,7 @@ namespace Azure.ClientSdk.Analyzers.Tests
     {
         private readonly string message = "Namespace '{0}' shouldn't contain public types."
             + " Use one of the following pre-approved namespace groups (https://azure.github.io/azure-sdk/registered_namespaces.html):"
-            + " Azure.AI, Azure.Analytics, Azure.Communication, Azure.Containers, Azure.Core.Expressions, Azure.Data, Azure.Developer,"
+            + " Azure.AI, Azure.Analytics, Azure.Communication, Azure.Compute, Azure.Containers, Azure.Core.Expressions, Azure.Data, Azure.Developer,"
             + " Azure.DigitalTwins, Azure.Health, Azure.Identity, Azure.IoT, Azure.Maps, Azure.Media, Azure.Messaging, Azure.MixedReality,"
             + " Azure.Monitor, Azure.ResourceManager, Azure.Search, Azure.Security, Azure.Storage, Azure.Verticals,"
             + " Microsoft.Extensions.Azure";

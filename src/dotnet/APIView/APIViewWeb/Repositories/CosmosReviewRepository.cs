@@ -99,22 +99,6 @@ namespace APIViewWeb
             return result.Resource.FirstOrDefault();    
         }
 
-        public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAssignedToUser(string userName)
-        {
-            var query = "SELECT * FROM Reviews r WHERE ARRAY_CONTAINS(r.AssignedReviewers, { 'AssingedTo': '" +userName + "' }, true)";
-
-            var reviews = new List<ReviewListItemModel>();
-            var queryDefinition = new QueryDefinition(query).WithParameter("@userName", userName);
-            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryDefinition);
-            while (itemQueryIterator.HasMoreResults)
-            {
-                var result = await itemQueryIterator.ReadNextAsync();
-                reviews.AddRange(result.Resource);
-            }
-
-            return reviews.OrderByDescending(r => r.LastUpdatedOn);
-        }
-
         /// <summary>
         /// Get Reviews based on search criteria
         /// </summary>

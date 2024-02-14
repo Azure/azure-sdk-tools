@@ -33,17 +33,33 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0001ProducedForSubNamespacesOfAzureTemplate()
+        public async Task AZC0001ProducedForInvalidNamespaceWithValidRoot()
         {
             const string code = @"
-namespace Azure.Template.RandomNamespace
+namespace Azure.StorageBadNamespace
 {
     public class Program { }
 }";
 
             var diagnostic = Verifier.Diagnostic("AZC0001")
-                .WithMessage(string.Format(this.message, "Azure.Template.RandomNamespace"))
-                .WithSpan(2, 26, 2, 41);
+                .WithMessage(string.Format(this.message, "Azure.StorageBadNamespace"))
+                .WithSpan(2, 17, 2, 36);
+
+            await Verifier.VerifyAnalyzerAsync(code, diagnostic);
+        }
+
+        [Fact]
+        public async Task AZC0001ProducedForInvalidSubNamespaceWithValidRoot()
+        {
+            const string code = @"
+namespace Azure.StorageBadNamespace.Child
+{
+    public class Program { }
+}";
+
+            var diagnostic = Verifier.Diagnostic("AZC0001")
+                .WithMessage(string.Format(this.message, "Azure.StorageBadNamespace.Child"))
+                .WithSpan(2, 37, 2, 42);
 
             await Verifier.VerifyAnalyzerAsync(code, diagnostic);
         }
@@ -79,6 +95,17 @@ namespace RandomNamespace
         public async Task AZC0001NotProducedForAllowedNamespaces()
         {
             const string code = @"
+namespace Azure.Storage
+{
+    public class Program { }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0001NotProducedForAllowedSubNamespaces()
+        {
+            const string code = @"
 namespace Azure.Storage.Hello
 {
     public class Program { }
@@ -90,6 +117,18 @@ namespace Azure.Storage.Hello
         public async Task AZC0001NotProducedForAzureCoreExpressions()
         {
             const string code = @"
+namespace Azure.Core.Expressions
+{
+    public class Program { }
+}";
+
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0001NotProducedForAzureCoreExpressionsSubNamespace()
+        {
+            const string code = @"
 namespace Azure.Core.Expressions.Foobar
 {
     public class Program { }
@@ -99,10 +138,34 @@ namespace Azure.Core.Expressions.Foobar
         }
 
         [Fact]
-        public async Task AZC0001NotProducedForAzureTemplate()
+        public async Task AZC0001NotProducedForSubNamespacesOfAzureTemplate()
+        {
+            const string code = @"
+namespace Azure.Template.RandomNamespace
+{
+    public class Program { }
+}";
+
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0001NotProducedForAzureTemplateRoot()
         {
             const string code = @"
 namespace Azure.Template
+{
+    public class Program { }
+}";
+
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0001NotProducedForAzureTemplateSubNamespace()
+        {
+            const string code = @"
+namespace Azure.Template.Models
 {
     public class Program { }
 }";

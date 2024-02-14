@@ -70,7 +70,8 @@ namespace Azure.ClientSdk.Analyzers
             var displayString = namespaceSymbol.ToDisplayString();
             foreach (var prefix in AllowedNamespacePrefix)
             {
-                if (displayString.StartsWith(prefix))
+                // Both the namespace itself or a sub-namespace are valid.
+                if (displayString == prefix || displayString.StartsWith(prefix + "."))
                 {
                     return;
                 }
@@ -78,7 +79,7 @@ namespace Azure.ClientSdk.Analyzers
                 // "Azure.Template" is not an approved namespace prefix, but we have a project template by that name
                 // to help customers get started. We do not want our template to include a suppression for this
                 // descriptor out of the box, so we need to treat it as a special case.
-                if (displayString == "Azure.Template")
+                if (displayString == "Azure.Template" || displayString.StartsWith("Azure.Template."))
                 {
                     return;
                 }

@@ -376,6 +376,8 @@ function ProcessEnvironmentVariableReferences([array]$matrix, $displayNamesLooku
 
     foreach ($element in $matrix) {
         $updated = [MatrixParameter[]]@()
+        Write-Host "BBP COUNT"
+        Write-Host ($element.Count)
         if (!$element || !$element.Count) {
             $updatedMatrix += CreateMatrixCombinationScalar $updated $displayNamesLookup
             continue

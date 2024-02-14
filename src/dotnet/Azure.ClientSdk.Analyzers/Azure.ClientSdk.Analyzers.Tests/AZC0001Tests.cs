@@ -33,22 +33,6 @@ namespace RandomNamespace
         }
 
         [Fact]
-        public async Task AZC0001ProducedForSubNamespacesOfAzureTemplate()
-        {
-            const string code = @"
-namespace Azure.Template.RandomNamespace
-{
-    public class Program { }
-}";
-
-            var diagnostic = Verifier.Diagnostic("AZC0001")
-                .WithMessage(string.Format(this.message, "Azure.Template.RandomNamespace"))
-                .WithSpan(2, 26, 2, 41);
-
-            await Verifier.VerifyAnalyzerAsync(code, diagnostic);
-        }
-
-        [Fact]
         public async Task AZC0001ProducedOneErrorPerNamespaceDefinition()
         {
             const string code = @"
@@ -91,6 +75,18 @@ namespace Azure.Storage.Hello
         {
             const string code = @"
 namespace Azure.Core.Expressions.Foobar
+{
+    public class Program { }
+}";
+
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0001NotProducedForSubNamespacesOfAzureTemplate()
+        {
+            const string code = @"
+namespace Azure.Template.RandomNamespace
 {
     public class Program { }
 }";

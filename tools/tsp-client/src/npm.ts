@@ -19,9 +19,9 @@ export async function createPackageJson(rootPath: string, deps: Set<string>): Pr
   await writeFile(filePath, packageJson);
 }
 
-export async function npmCIDependencies(workingDir: string): Promise<void> {
+export async function npmInstallationCommand(workingDir: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
-    const npm = spawn("npm", ["ci"], {
+    const npm = spawn("npm", args, {
       cwd: workingDir,
       stdio: "inherit",
       shell: true,
@@ -30,31 +30,11 @@ export async function npmCIDependencies(workingDir: string): Promise<void> {
       if (code === 0) {
         resolve();
       } else {
-        reject(new Error(`npm ci failed exited with code ${code}`));
+        reject(new Error(`npm ${args[0]} failed exited with code ${code}`));
       }
     });
     npm.once("error", (err) => {
-      reject(new Error(`npm ci failed with error: ${err}`));
-    });
-  });
-}
-
-export async function npmInstallDependencies(workingDir: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const npm = spawn("npm", ["install", "--no-lock-file"], {
-      cwd: workingDir,
-      stdio: "inherit",
-      shell: true,
-    });
-    npm.once("exit", (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`npm install failed exited with code ${code}`));
-      }
-    });
-    npm.once("error", (err) => {
-      reject(new Error(`npm install failed with error: ${err}`));
+      reject(new Error(`npm ${args[0]} failed with error: ${err}`));
     });
   });
 }

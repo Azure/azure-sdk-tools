@@ -1,9 +1,9 @@
-import { npmCIDependencies, npmInstallDependencies } from "./npm.js";
+import { npmInstallationCommand } from "./npm.js";
 import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, writeFile, cp, readFile, access } from "node:fs/promises";
+import { mkdir, writeFile, cp, readFile, access, stat } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
@@ -211,12 +211,19 @@ async function generate({
   const mainFilePath = await discoverMainFile(srcDir);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
   Logger.info("Installing dependencies from npm...");
+  const args: string[] = [];
   try {
-    await npmCIDependencies(srcDir);
+    // Check is package-lock.json exists, if it does, we'll install dependencies through `npm ci`
+    await stat(joinPaths(srcDir, "package-lock.json"));
+    args.push("ci");
   } catch (err) {
-    // If package-lock.json doesn't exist, we'll attempt to install dependencies without the lock file
-    await npmInstallDependencies(srcDir);
+    // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
+    args.push("install");
   }
+  if (process.env['TSPCLIENT_UNSAFE_FORCE'] === "force") {
+    args.push("--force");
+  }
+  await npmInstallationCommand(srcDir, args);
   await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup, additionalEmitterOptions });
 
   if (noCleanup) {

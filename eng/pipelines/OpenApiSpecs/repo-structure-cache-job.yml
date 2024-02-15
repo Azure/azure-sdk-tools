@@ -1,8 +1,3 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 parameters:
 - name: DB_NAME
   type: string
@@ -20,20 +15,16 @@ trigger:
 - main
 
 pool:
-  vmImage: ubuntu-latest
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
 
 steps:
 
 - script: |
-    pip install GitPython
-    pip install pymongo==3.13.0
+    pip install -r 'eng/scripts/OpenAPI Hub/requirements.txt'
     pip list
-    python 'eng/scripts/OpenAPI Hub/sync-repo-structure-cache.py'
+    python 'eng/scripts/OpenAPI Hub/sync-repo-structure-cache.py' --db-name ${{ parameters.DB_NAME }} --collection-name ${{ parameters.COLLECTION_NAME }} --repos-url-list ${{ parameters.REPOS_URL_LIST }} --repo_clone_path $(System.DefaultWorkingDirectory)
   displayName: Run Script
   env: 
     MONGO_CONNECTION_STRING: $(Open-API-MongoDB-Connection-String)
     GITHUB_TOKEN: $(azuresdk-github-pat)
-    REPO__CLONE_PATH: $(System.DefaultWorkingDirectory)
-    DB_NAME: ${{ parameters.DB_NAME }}
-    COLLECTION_NAME: ${{ parameters.COLLECTION_NAME }}
-    REPOS_URL_LIST: ${{ parameters.REPOS_URL_LIST }}

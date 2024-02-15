@@ -602,10 +602,7 @@ Describe "Platform Matrix Environment Variables" -Tag "UnitTest", "envvar" {
 '@
 
         [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference", "")
-        [array]$matrix = GenerateMatrix (GetMatrixConfigFromJson $matrixJson) "sparse"
-        $matrix.Length | Should -Be 4
-        $matrix[0].name | Should -Be "bar"
-        $matrix[0].parameters.envReference | Should -Be ""
+        { GenerateMatrix (GetMatrixConfigFromJson $matrixJson) "sparse" } | Should -Throw
 
         [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference", "replaced")
         [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference2", "replaced2")

@@ -253,15 +253,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                                                                    prReview);
                 }
 
-                // Process any issue locks
-                foreach (var issueToLock in _gitHubIssuesToLock)
-                {
-                    numUpdates++;
-                    await _gitHubClient.Issue.LockUnlock.Lock(issueToLock.RepositoryId,
-                                                              issueToLock.IssueNumber,
-                                                              issueToLock.LockReason);
-                }
-
                 // Process any Scheduled task IssueUpdates
                 foreach (var issueToUpdate in _gitHubIssuesToUpdate)
                 {
@@ -270,6 +261,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                                                      issueToUpdate.IssueOrPRNumber, 
                                                      issueToUpdate.IssueUpdate);
                 }
+
+                // Process any issue locks last in case the issue is being updated or having a comment added
+                // prior to being locked
+                foreach (var issueToLock in _gitHubIssuesToLock)
+                {
+                    numUpdates++;
+                    await _gitHubClient.Issue.LockUnlock.Lock(issueToLock.RepositoryId,
+                                                              issueToLock.IssueNumber,
+                                                              issueToLock.LockReason);
+                }
+
                 Console.WriteLine("Finished processing pending updates.");
             }
             // For the moment, nothing special is being done when rate limit exceptions are
@@ -335,15 +337,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 Console.WriteLine($"Number of Review Dismissals {_gitHubReviewDismissals.Count}");
                 numUpdates += _gitHubReviewDismissals.Count;
             }
-            if (_gitHubIssuesToLock.Count > 0)
-            {
-                Console.WriteLine($"Number of Issues to Lock {_gitHubIssuesToLock.Count}");
-                numUpdates += _gitHubIssuesToLock.Count;
-            }
             if (_gitHubIssuesToUpdate.Count > 0)
             {
                 Console.WriteLine($"Number of IssuesUpdates (only applicable for Scheduled events) {_gitHubIssuesToUpdate.Count}");
                 numUpdates += _gitHubIssuesToUpdate.Count;
+            }
+            if (_gitHubIssuesToLock.Count > 0)
+            {
+                Console.WriteLine($"Number of Issues to Lock {_gitHubIssuesToLock.Count}");
+                numUpdates += _gitHubIssuesToLock.Count;
             }
 
             return numUpdates;
@@ -865,10 +867,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="repoName">Should be repository.Name from the cron payload</param>
         /// <param name="issueType">IssueTypeQualifier of Issue or PullRequest</param>
         /// <param name="itemState">ItemState of Open or Closed</param>
+        /// <param name="daysSinceLastUpdate">Optional: Number of days since last updated</param>
         /// <param name="issueIsQualifiers">Optional: List of IssueIsQualifier (ex. locked/unlocked) to include, null if none</param>
         /// <param name="labelsToInclude">Optional: List of labels to include, null if none</param>
         /// <param name="labelsToExclude">Optional: List of labels to exclude, null if none</param>
-        /// <param name="daysSinceLastUpdate">Optional: Number of days since last updated </param>
+        /// <param name="daysSinceCreated">Optional: Number of days since the issue was created</param>
         /// <returns>SearchIssuesRequest created with the information passed in.</returns>
         public SearchIssuesRequest CreateSearchRequest(string repoOwner,
                                                        string repoName,
@@ -877,7 +880,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                                                        int daysSinceLastUpdate = 0,
                                                        List<IssueIsQualifier> issueIsQualifiers = null,
                                                        List<string> labelsToInclude = null,
-                                                       List<string> labelsToExclude = null)
+                                                       List<string> labelsToExclude = null,
+                                                       int daysSinceCreated = 0)
         {
             var request = new SearchIssuesRequest();
 
@@ -902,6 +906,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 DateTime daysAgo = DateTime.UtcNow.AddDays(0 - daysSinceLastUpdate);
                 DateTimeOffset daysAgoOffset = new DateTimeOffset(daysAgo);
                 request.Updated = new DateRange(daysAgoOffset, SearchQualifierOperator.LessThan);
+            }
+
+            if (daysSinceCreated > 0)
+            {
+                // Octokit's DateRange wants a DateTimeOffset as other constructors are depricated
+                // AddDays of 0-days to effectively subtract them.
+                DateTime daysAgo = DateTime.UtcNow.AddDays(0 - daysSinceCreated);
+                DateTimeOffset daysAgoOffset = new DateTimeOffset(daysAgo);
+                request.Created = new DateRange(daysAgoOffset, SearchQualifierOperator.LessThan);
             }
 
             if (null != labelsToInclude)

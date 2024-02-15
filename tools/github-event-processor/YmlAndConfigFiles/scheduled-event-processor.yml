@@ -14,6 +14,8 @@ on:
     - cron: '30 4,10,16,22 * * *'
     # Lock closed issues, every 6 hours at 05:30 AM, 11:30 AM, 05:30 PM and 11:30 PM - LockClosedIssues
     - cron: '30 5,11,17,23 * * *'
+    # Enforce 2 year max life of issues, every Saturday at 12:30 AM - Enforce2YearMaxLifeOfIssues
+    - cron: '30 0 * * SAT'
 # This removes all unnecessary permissions, the ones needed will be set below.
 # https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
 permissions: {}
@@ -119,6 +121,16 @@ jobs:
         run: |
           echo $GITHUB_PAYLOAD > payload.json
           github-event-processor ${{ github.event_name }} payload.json LockClosedIssues
+        shell: bash
+        env:
+          GITHUB_PAYLOAD: ${{ toJson(github.event) }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enforce 2 Year Max Life of Issues Scheduled Event
+        if: github.event.schedule == '30 0 * * SAT'
+        run: |
+          echo $GITHUB_PAYLOAD > payload.json
+          github-event-processor ${{ github.event_name }} payload.json Enforce2YearMaxLifeOfIssues
         shell: bash
         env:
           GITHUB_PAYLOAD: ${{ toJson(github.event) }}

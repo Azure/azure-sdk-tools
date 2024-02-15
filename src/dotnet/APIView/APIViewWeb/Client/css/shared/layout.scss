@@ -93,6 +93,11 @@ html {
     color: var(--link-active);
 }
 
+.navbar-brand {
+    padding-top: 0rem;
+    padding-bottom: 0rem;
+}
+
 .rounded-1 {
     border-radius: 3px !important;
 }

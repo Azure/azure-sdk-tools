@@ -390,10 +390,12 @@ $(() => {
     highlightCurrentRow(inlineRow, true);
   });
 
-  $("#jump-to-first-comment").on("click", function () {
+  $("#jump-to-first-comment").on("click", function (e) {
+    e.preventDefault();
     var commentRows = $('.comment-row');
     var displayedCommentRows = hp.getDisplayedCommentRows(commentRows, false, true);
     $(displayedCommentRows[0])[0].scrollIntoView();
+    e.stopPropagation();
   });
 
   function highlightCurrentRow(rowElement: JQuery<HTMLElement> = $(), isInlineRow: boolean = false) {

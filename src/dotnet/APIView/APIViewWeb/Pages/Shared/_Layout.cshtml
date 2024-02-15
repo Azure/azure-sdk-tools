@@ -48,9 +48,6 @@
                     <ul class="navbar-nav me-auto">
                         @if (User.Identity.IsAuthenticated) {
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Assemblies/Index">Reviews</a>
-                            </li>
-                            <li class="nav-item">
                                 <span asp-resource="@Model" asp-requirement="@ApproverRequirement.Instance">
                                     <a class="nav-link" asp-area="" asp-page="/Assemblies/RequestedReviews">Requested Reviews</a>
                                 </span>

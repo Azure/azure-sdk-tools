@@ -27,7 +27,6 @@ $(() => {
 
     // Scroll ids into view for Ids hidden in collapsed sections
     const uriHash = location.hash;
-    console.log(`Initial uriHash: ${uriHash}`);
     if (uriHash) {
       let targetAnchorId = uriHash.replace('#', '');
       targetAnchorId = decodeURIComponent(targetAnchorId);

@@ -13,7 +13,7 @@
 #review-left {
     max-width: none;
     min-width: 10px;
-    height: calc(100vh - 130px);
+    height: calc(100vh - 120px);
     overflow: auto;
     max-height: 100vh;
     padding: 5px 0px 5px 10px;
@@ -27,7 +27,7 @@
 #review-right {
     max-width: 100%;
     min-width: 100px;
-    height: calc(100vh - 130px);
+    height: calc(100vh - 120px);
     padding: 0px;
     overflow: auto;
     background-color: var(--base-fg-color);

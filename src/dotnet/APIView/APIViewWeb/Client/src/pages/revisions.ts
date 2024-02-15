@@ -46,7 +46,7 @@ $(() => {
 
   function makeDiffAPIRevisionEventHandler(event) {
     const trigger = $(event.currentTarget);
-    const diffCard = $(".revisions-list-container .bi.bi-file-dif.diff-rev").closest(".card");
+    const diffCard = $(".revisions-list-container .bi.bi-file-diff.diff-rev").closest(".card");
     diffCard.find(".bi.bi-file-diff.diff-rev").remove();
     diffCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-diff" data-bs-toggle="tooltip" title="Make Diff"><i class="bi bi-file-diff mr-1"></i></button>`);
     diffCard.find(".btn-group").prepend(`<button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-clock-history mr-1"></i></button>`);
@@ -115,7 +115,15 @@ $(() => {
       }
 
       const url = new URL(window.location.href);
-      url.searchParams.set("revisionId", activeRevisionId!);
+      const currRevisionId = hp.getReviewAndRevisionIdFromUrl(url.href)["revisionId"];
+    
+      if (!currRevisionId || url.searchParams.has("revisionId")) {
+          url.searchParams.set("revisionId", activeRevisionId!);
+      }
+      else {
+          url.pathname = url.pathname.replace(currRevisionId, activeRevisionId!);
+      }
+
       if (diffRevisionId) {
         url.searchParams.set("diffRevisionId", diffRevisionId!);
       }

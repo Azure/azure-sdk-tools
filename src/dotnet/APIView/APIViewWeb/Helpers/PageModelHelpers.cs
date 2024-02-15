@@ -14,7 +14,6 @@ using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
-using SharpCompress.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -506,6 +505,7 @@ namespace APIViewWeb.Helpers
         /// Upload API Revision
         /// </summary>
         /// <param name="apiRevisionsManager"></param>
+        /// <param name="user"></param>
         /// <param name="id"></param>
         /// <param name="upload"></param>
         /// <param name="label"></param>

@@ -244,14 +244,17 @@ export function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearC
  * @returns result dictionary of "reviewId" and "revisionId", if they exist; undefined otherwise
  */
 export function getReviewAndRevisionIdFromUrl(uri) {
-  const regex = /.+(Review|Conversation|Revisions|Samples)\/([a-zA-Z0-9]+)(\?revisionId=([a-zA-Z0-9]+))?/;
+  const regex = /.+(Review|Conversation|Revisions|Samples)\/([a-zA-Z0-9]+)(\/([a-zA-Z0-9]+)|\?revisionId=([a-zA-Z0-9]+))?/;
 
   const match = uri.match(regex);
   const result = {}
 
   if (match) {
     result["reviewId"] = match[2];
-    result["revisionId"] = match[4];  // undefined if latest revision 
+    result["revisionId"] = match[4];  // undefined if latest revision, or searchParam used
+    if (!result["revisionId"]) {
+      result["revisionId"] = match[5];
+    }
   } 
 
   return result;

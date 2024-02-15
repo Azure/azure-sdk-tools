@@ -30,7 +30,15 @@
         <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
             <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="API" active-if="@TempData["page"].Equals("api")"><i class="bi bi-braces"></i></a>
             <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#apiRevisions-context" aria-controls="apiRevisions-context"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></a>
-            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Conversation" asp-route-id="@Model.ReviewContent.Review.Id"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversiations"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Conversation" asp-route-id="@Model.ReviewContent.Review.Id"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversiations"></i>
+                @if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0)
+                {
+                    var count = (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 10) ? "9+" : $"{Model.ReviewContent.ActiveConversationsInActiveAPIRevision}";
+                    <span class="position-absolute start translate-middle badge rounded-pill bg-danger" id="jump-to-first-comment">
+                        @count
+                        <span class="visually-hidden">unread messages</span>
+                    </span>                }
+            </a>
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.ReviewContent.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
         </div>
     </div>
@@ -63,8 +71,8 @@
                         else
                         {
                             var isActiveRevisionAhead = (Model.ReviewContent.DiffAPIRevision == null)? true: Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn;
-                            @if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 
-                                && Model.ReviewContent.ActiveConversationsInSampleRevisions > 0
+                            @if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 
+                                || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
                                 && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
                            && isActiveRevisionAhead)
                             {

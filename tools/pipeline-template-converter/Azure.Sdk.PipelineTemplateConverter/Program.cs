@@ -1,7 +1,4 @@
 using System.CommandLine;
-using YamlDotNet.Serialization;
-using System.Text.RegularExpressions;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace Azure.Sdk.PipelineTemplateConverter;
 
@@ -50,7 +47,7 @@ public class Program
         var files = new List<FileInfo>();
         if (pipelineTemplate != null)
         {
-            files.Add(pipelineTemplate);
+            files.AddRange(PipelineResolver.ResolvePipeline(pipelineTemplate));
         }
         else
         {

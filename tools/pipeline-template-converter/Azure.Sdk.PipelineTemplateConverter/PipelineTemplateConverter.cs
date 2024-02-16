@@ -9,39 +9,8 @@ public class PipelineTemplateConverter
 {
     public static void Convert(FileInfo file, bool overwrite)
     {
-        var deserializer = new DeserializerBuilder().Build();
         var contents = File.ReadAllText(file.FullName);
-
-        var templateTypes = GetTemplateType(contents);
-        if (templateTypes.Contains(TemplateType.Ignore))
-        {
-            return;
-        }
-
-        var processedLines = BackupCommentsAndFormatting(contents, templateTypes);
-        var output = "";
-
-        if (templateTypes.Contains(TemplateType.Converted))
-        {
-            Console.WriteLine($"Skipping {file.FullName} already converted");
-            return;
-        }
-
-        if (templateTypes.Contains(TemplateType.Stage))
-        {
-            Console.WriteLine($"Converting {file.FullName} stage template");
-            var template = deserializer.Deserialize<StageTemplate>(contents);
-            ConvertStageTemplate(template);
-            output = template.ToString();
-            output = RestoreCommentsAndFormatting(output, processedLines);
-        }
-
-        if (templateTypes.Contains(TemplateType.ArtifactTask))
-        {
-            Console.WriteLine($"Converting {file.FullName} publish tasks");
-            output = ConvertPublishTasks(output);
-        }
-
+        var output = Convert(contents, file.FullName);
         if (overwrite)
         {
             File.WriteAllText(file.FullName, output);
@@ -50,24 +19,99 @@ public class PipelineTemplateConverter
         Console.WriteLine(output);
     }
 
+    public static string Convert(string contents, string templateName)
+    {
+        var deserializer = new DeserializerBuilder().Build();
+
+        var templateTypes = GetTemplateType(contents);
+        if (templateTypes.Contains(TemplateType.Ignore))
+        {
+            return contents;
+        }
+
+        var processedLines = BackupCommentsAndFormatting(contents, templateTypes);
+        var output = contents;
+
+        if (templateTypes.Contains(TemplateType.Converted))
+        {
+            Console.WriteLine($"Skipping {templateName} already converted");
+            return output;
+        }
+
+        if (templateTypes.Contains(TemplateType.Stage))
+        {
+            Console.WriteLine($"Converting {templateName} stage template");
+            var template = deserializer.Deserialize<StageTemplate>(contents);
+            ConvertStageTemplate(template);
+            output = template.ToString();
+            output = RestoreCommentsAndFormatting(output, processedLines);
+        }
+        else if (templateTypes.Contains(TemplateType.GeneratedMatrixJob))
+        {
+            Console.WriteLine($"Converting {templateName} standalone job template");
+            var template = deserializer.Deserialize<JobTemplate>(contents);
+            ConvertGeneratedMatrixJobTemplate(template);
+            output = template.ToString();
+            output = RestoreCommentsAndFormatting(output, processedLines);
+        }
+
+        if (templateTypes.Contains(TemplateType.PoolDeclaration))
+        {
+            Console.WriteLine($"Converting {templateName} pool values");
+            output = ConvertPoolDeclaration(output);
+        }
+
+        if (templateTypes.Contains(TemplateType.ArtifactTask))
+        {
+            Console.WriteLine($"Converting {templateName} publish tasks");
+            output = ConvertPublishTasks(output);
+        }
+
+        return output;
+    }
+
     public static List<TemplateType> GetTemplateType(string template)
     {
-        var convertedRegex = new Regex(@".*1ESPipelineTemplates.*");
+        var convertedRegexes = new List<Regex> {
+                                    new Regex(@".*1ESPipelineTemplates.*$", RegexOptions.Multiline),
+                                    new Regex(@"\s+os:\s\${{ parameters.OSName.*$", RegexOptions.Multiline),
+                                };
         var stageRegex = new Regex(@".*stages:.*$", RegexOptions.Multiline);
+        var jobRegexes = new List<Regex> {
+                            new Regex(@".*jobs:.*$", RegexOptions.Multiline),
+                            new Regex(@".*parameters.Matrix.*$", RegexOptions.Multiline),
+                        };
+        var poolRegex = new Regex(@".*pool:.*$", RegexOptions.Multiline);
         var publishRegex = new Regex(@"PublishPipelineArtifact@1.*$", RegexOptions.Multiline);
         var publishBuildRegex = new Regex(@"PublishBuildArtifact@1.*$", RegexOptions.Multiline);
         var nugetRegex = new Regex(@"^NugetCommand@2:.*$", RegexOptions.Multiline);
 
         var types = new List<TemplateType>();
 
-        if (convertedRegex.IsMatch(template))
+        foreach (var regex in convertedRegexes)
         {
-            types.Add(TemplateType.Converted);
+            if (regex.IsMatch(template))
+            {
+                types.Add(TemplateType.Converted);
+                break;
+            }
         }
+
+        // Don't mark templates as job type if matches are within a stage templatGeneratedMatrixJob
         if (stageRegex.IsMatch(template))
         {
             types.Add(TemplateType.Stage);
         }
+        else if (jobRegexes[0].IsMatch(template) && jobRegexes[1].IsMatch(template))
+        {
+            types.Add(TemplateType.GeneratedMatrixJob);
+        }
+
+        if (poolRegex.IsMatch(template))
+        {
+            types.Add(TemplateType.PoolDeclaration);
+        }
+
         if (publishRegex.IsMatch(template) || publishBuildRegex.IsMatch(template) || nugetRegex.IsMatch(template))
         {
             types.Add(TemplateType.ArtifactTask);
@@ -200,6 +244,13 @@ public class PipelineTemplateConverter
                 line.NewLineBefore = false;
             }
         }
+        else if (templateTypes.Contains(TemplateType.GeneratedMatrixJob))
+        {
+            if (lines[index].StartsWith("jobs:"))
+            {
+                line.NewLineBefore = true;
+            }
+        }
     }
 
     public static string RestoreCommentsAndFormatting(string template, List<Line> processedLines)
@@ -285,6 +336,65 @@ public class PipelineTemplateConverter
         return line;
     }
 
+    /*
+    * pool:
+    *   name: mms-ubuntu
+    *   vmImage: ubuntu20.04
+    *
+    * becomes
+    * pool:
+    *   name: mms-ubuntu
+    *   vmImage: ubuntu20.04
+    *   os: linux
+    */
+    public static string ConvertPoolDeclaration(string template)
+    {
+        var lines = template.Split(Environment.NewLine);
+        var linesOut = new List<string>();
+        for (var i = 0; i < lines.Length; i++)
+        {
+            if (!lines[i].Contains(" pool:"))
+            {
+                linesOut.Add(lines[i]);
+                continue;
+            }
+
+            while (i < lines.Length)
+            {
+                linesOut.Add(lines[i]);
+                if (lines[i].Contains("vmImage:") && lines[i-1].Contains("name:") ||
+                    lines[i].Contains("name:") && lines[i-1].Contains("vmImage:"))
+                {
+                    var combined = lines[i] + " " + lines[i - 1];
+                    var os = "";
+
+                    if (combined.ToLower().Contains("win"))
+                    {
+                        os = "windows";
+                    }
+                    else if (combined.ToLower().Contains("ubuntu") || combined.ToLower().Contains("linux"))
+                    {
+                        os = "linux";
+                    }
+                    else if (combined.ToLower().Contains("mac"))
+                    {
+                        os = "macOS";
+                    }
+                    else if (combined.ToLower().Contains("osvmimage"))
+                    {
+                        os = "${{ parameters.OSName }}";
+                    }
+
+                    linesOut.Add(new string(' ', lines[i][..^lines[i].TrimStart(' ').Length].Length) + "os: " + os);
+                    break;
+                }
+                i++;
+            }
+        }
+
+        return string.Join(Environment.NewLine, linesOut);
+    }
+
     public static string ConvertPublishTasks(string template)
     {
         var lines = template.Split(Environment.NewLine);
@@ -331,6 +441,18 @@ public class PipelineTemplateConverter
         }
 
         return string.Join(Environment.NewLine, linesOut);
+    }
+
+    public static void ConvertGeneratedMatrixJobTemplate(JobTemplate template)
+    {
+        var parameters = template.Parameters as List<object> ?? new List<object>();
+        var osname = new Dictionary<string, string>
+        {
+            ["name"] = "OSName",
+            ["type"] = "string",
+        };
+        parameters.Add(osname);
+        template.Parameters = parameters;
     }
 
     public static void ConvertStageTemplate(StageTemplate template)

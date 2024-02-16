@@ -29,14 +29,18 @@ lintDiffBuildLogs
     | extend Context = parse_json(raw)
     | extend PrUrl = strcat(Context.sourceRepoUri, "/pull/", Context.prNumber)
 ;
-let lintDiffReportStartMarker = "momentOfTruth.lintDiff: --- Lint Violation Result ----";
-let lintDiffReportEndMarker = "---------- Linter Diff Results ----------";
+let lintDiffReportStartMarker = "momentOfTruth.lintDiff: --- Lint Violation Result ----"
+;
+let lintDiffReportEndMarker = "---------- Linter Diff Results ----------"
+;
 let lintDiffReportStartLines = lintDiffBuildLogs
     | where Message has lintDiffReportStartMarker
-    | project StartLineNumber = LineNumber, BuildId;
+    | project StartLineNumber = LineNumber, BuildId
+;
 let lintDiffReportEndLines = lintDiffBuildLogs
     | where Message has lintDiffReportEndMarker
-    | project EndLineNumber = LineNumber, BuildId;
+    | project EndLineNumber = LineNumber, BuildId
+;
 let lintDiffReport =
 lintDiffBuildLogs
     | join kind=inner lintDiffReportStartLines on BuildId
@@ -53,11 +57,11 @@ lintDiffNewViolations
     | project Timestamp, PacificTime, PrUrl, BuildUrl = buildUrl, BuildId, NewErros, NewWarnings, Context, Report
 ;
 let prs = cluster('1es').database('GitHub').PullRequest
-| where UpdatedAt between (start..end)
-| where RepositoryName startswith "azure-rest-api-specs"
-| extend HasTypespecLabel = Labels has '"name":"TypeSpec"'
-| project RepositoryId = strcat(OrganizationLogin, "/", RepositoryName), PrNo = Number, PrUrl = HtmlUrl, HasTypespecLabel
+    | where UpdatedAt between (start..end)
+    | where RepositoryName startswith "azure-rest-api-specs"
+    | extend HasTypespecLabel = Labels has '"name":"TypeSpec"'
+    | project RepositoryId = strcat(OrganizationLogin, "/", RepositoryName), PrNo = Number, PrUrl = HtmlUrl, HasTypespecLabel
 ;
 prs
-| join kind=inner lintDiffRows on PrUrl
-| project-away PrUrl1
+    | join kind=inner lintDiffRows on PrUrl
+    | project-away PrUrl1

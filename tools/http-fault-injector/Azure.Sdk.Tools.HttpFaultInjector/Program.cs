@@ -1,5 +1,3 @@
-using System;
-using System.Net.Http;
 using CommandLine;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
+using System;
+using System.Net.Http;
 
 namespace Azure.Sdk.Tools.HttpFaultInjector
 {

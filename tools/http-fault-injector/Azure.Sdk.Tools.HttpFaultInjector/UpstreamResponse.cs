@@ -1,11 +1,10 @@
-using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Primitives;
 
 namespace Azure.Sdk.Tools.HttpFaultInjector
 {

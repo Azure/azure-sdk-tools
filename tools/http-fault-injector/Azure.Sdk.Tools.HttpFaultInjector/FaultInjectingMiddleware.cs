@@ -1,18 +1,18 @@
+using System.Threading.Tasks;
+using System.Threading;
+using Microsoft.Extensions.Logging;
 using System;
-using System.Buffers;
+using Microsoft.AspNetCore.Connections.Features;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Connections.Features;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
+using System.Linq;
+using System.IO;
+using System.Buffers;
+using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.HttpFaultInjector
 {

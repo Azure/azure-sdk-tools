@@ -63,9 +63,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             await LockClosedIssues(gitHubEventClient, scheduledEventPayload);
                             break;
                         }
-                    case RulesConstants.Enforce2YearMaxLifeOfIssues:
+                    case RulesConstants.EnforceMaxLifeOfIssues:
                         {
-                            await Enforce2YearMaxLifeOfIssues(gitHubEventClient, scheduledEventPayload);
+                            await EnforceMaxLifeOfIssues(gitHubEventClient, scheduledEventPayload);
                             break;
                         }
                     default:
@@ -545,7 +545,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             }
         }
         /// <summary>
-        /// Trigger: Weekly, JRS-TBD When
+        /// Trigger: Weekly, Saturday 12:30am
         /// Query Criteria
         ///     Issue is open
         ///     Issue was last updated more than 30 days ago
@@ -563,9 +563,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
-        public static async Task Enforce2YearMaxLifeOfIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
+        public static async Task EnforceMaxLifeOfIssues(GitHubEventClient gitHubEventClient, ScheduledEventGitHubPayload scheduledEventPayload)
         {
-            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.Enforce2YearMaxLifeOfIssues))
+            if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.EnforceMaxLifeOfIssues))
             {
                 int ScheduledTaskUpdateLimit = await gitHubEventClient.ComputeScheduledTaskUpdateLimit();
 

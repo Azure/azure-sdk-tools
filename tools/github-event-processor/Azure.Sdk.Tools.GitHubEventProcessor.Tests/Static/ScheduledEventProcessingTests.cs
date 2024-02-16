@@ -277,7 +277,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         }
 
         /// <summary>
-        /// Test the Enforce2YearMaxLifeOfIssues scheduled event.
+        /// Test the EnforceMaxLifeOfIssues scheduled event.
         /// Each item returned from the query will have three updates:
         ///     Issue will be closed
         ///     Issue will have a comment added
@@ -287,11 +287,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="payloadFile">JSon payload file for the event being tested</param>
         /// <param name="ruleState">Whether or not the rule is on/off</param>
         [Category("static")]
-        [TestCase(RulesConstants.Enforce2YearMaxLifeOfIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.On)]
-        [TestCase(RulesConstants.Enforce2YearMaxLifeOfIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.Off)]
-        public async Task TestEnforce2YearMaxLifeOfIssues(string rule, string payloadFile, RuleState ruleState)
+        [TestCase(RulesConstants.EnforceMaxLifeOfIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.On)]
+        [TestCase(RulesConstants.EnforceMaxLifeOfIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.Off)]
+        public async Task TestEnforceMaxLifeOfIssues(string rule, string payloadFile, RuleState ruleState)
         {
-            // Need something divisible by 3 Because Enforce2YearMaxLifeOfIssues does 3 updates per issue
+            // Need something divisible by 3 Because EnforceMaxLifeOfIssues does 3 updates per issue
             // creating 100 results should only result in 34 issues being closed and 34 comments created
             // and 34 issues being locked = 102 expected updates.
             int expectedUpdates = 102;
@@ -301,7 +301,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             ScheduledEventGitHubPayload scheduledEventPayload = SimpleJsonSerializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
             // Create the fake issues to update. 
             mockGitHubEventClient.CreateSearchIssuesResult(expectedUpdates, scheduledEventPayload.Repository, ItemState.Open);
-            await ScheduledEventProcessing.Enforce2YearMaxLifeOfIssues(mockGitHubEventClient, scheduledEventPayload);
+            await ScheduledEventProcessing.EnforceMaxLifeOfIssues(mockGitHubEventClient, scheduledEventPayload);
 
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(scheduledEventPayload.Repository.Id);
             // Verify the RuleCheck 

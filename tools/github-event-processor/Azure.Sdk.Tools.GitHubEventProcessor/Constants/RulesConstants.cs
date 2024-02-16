@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
         public const string IdentifyStalePullRequests = "IdentifyStalePullRequests";
         public const string CloseAddressedIssues = "CloseAddressedIssues";
         public const string LockClosedIssues = "LockClosedIssues";
-        public const string Enforce2YearMaxLifeOfIssues = "Enforce2YearMaxLifeOfIssues";
+        public const string EnforceMaxLifeOfIssues = "EnforceMaxLifeOfIssues";
 
     }
 }

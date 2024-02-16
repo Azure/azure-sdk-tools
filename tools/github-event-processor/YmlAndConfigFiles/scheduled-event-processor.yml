@@ -130,7 +130,7 @@ jobs:
         if: github.event.schedule == '30 0 * * SAT'
         run: |
           echo $GITHUB_PAYLOAD > payload.json
-          github-event-processor ${{ github.event_name }} payload.json Enforce2YearMaxLifeOfIssues
+          github-event-processor ${{ github.event_name }} payload.json EnforceMaxLifeOfIssues
         shell: bash
         env:
           GITHUB_PAYLOAD: ${{ toJson(github.event) }}

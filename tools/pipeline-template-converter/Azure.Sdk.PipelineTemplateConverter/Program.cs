@@ -51,10 +51,7 @@ public class Program
         }
         else
         {
-            foreach (var file in directory.GetFiles("*.yml", SearchOption.AllDirectories))
-            {
-                files.Add(file);
-            }
+            files.AddRange(PipelineResolver.ResolveDirectory(directory));
         }
         foreach (var file in files)
         {

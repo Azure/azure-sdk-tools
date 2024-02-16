@@ -4,7 +4,12 @@ namespace Azure.Sdk.PipelineTemplateConverter
 {
     public static class PipelineResolver
     {
-        public const string BAD_ARGUMENT_EXCEPTION = 
+        private static List<string> IgnoreList = new()
+        {
+            "eng/common/pipelines/templates/steps/publish-artifact.yml"
+        };
+
+        public const string BAD_ARGUMENT_EXCEPTION =
             "The target path \"{0}\" does not exist within a git repository. This is disallowed when invoking the tool against a pipeline.";
         public const string TEMPLATE_EXPRESSION = @"template:\s*(.+)";
 
@@ -97,6 +102,16 @@ namespace Azure.Sdk.PipelineTemplateConverter
                 var dependentTemplateReferences = new List<FileInfo>() { new FileInfo(templatePath) };
                 foreach (var templateReference in templateReferences)
                 {
+                    if (templateReference.FullName == templatePath)
+                    {
+                        throw new Exception($"Found circular reference in template file \"{templatePath}\"");
+                    }
+
+                    if (IgnoreTemplate(templateReference))
+                    {
+                        continue;
+                    }
+
                     dependentTemplateReferences.AddRange(GetReferencedTemplates(templateReference.FullName, repoRoot));
                 }
 
@@ -110,6 +125,43 @@ namespace Azure.Sdk.PipelineTemplateConverter
             var templateReferences = GetReferencedTemplates(pipelineTemplate.FullName, root);
 
             return templateReferences;
+        }
+
+        public static List<FileInfo> ResolveDirectory(DirectoryInfo directory)
+        {
+            var files = new List<FileInfo>();
+            foreach (var file in directory.GetFiles("*.yml", SearchOption.AllDirectories))
+            {
+                var skip = false;
+                foreach (var ignore in IgnoreList)
+                {
+                    if (file.FullName.Contains(ignore))
+                    {
+                        Console.WriteLine($"Skipping {file.FullName} in ignore list");
+                        skip = true;
+                    }
+                }
+                if (!skip)
+                {
+                    files.Add(file);
+                }
+            }
+
+            return files;
+        }
+
+        public static bool IgnoreTemplate(FileInfo file)
+        {
+            foreach (var ignore in IgnoreList)
+            {
+                if (file.FullName.Contains(ignore))
+                {
+                    Console.WriteLine($"Skipping {file.FullName} in ignore list");
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

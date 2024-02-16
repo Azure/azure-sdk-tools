@@ -1,0 +1,67 @@
+// Query by Konrad Jamrozik, 2/15/2024
+// Reused some cluster('1es').database('GitHub') query snippets from Mike Harder
+//
+// This query returns rows from given time range representing LintDiff runs that have at least 1 new error or warning.
+// Each row contains the following columns, among others:
+// - PrUrl: the PR URL 
+// - BuildUrl: the ADO build URL
+// - HasTypespecLabel: if the PR has TypeSpec label or not
+// - NewErrors: the number of new LintDiff errors
+// - NewWarnings: the number of new LintDiff warnings
+// - Report: full details of the LintDiff errors in a parsed json (source at [1])
+// - Context: full context of given LintDiff run, in a parsed json
+//
+// [1] https://devdiv.visualstudio.com/DevDiv/_git/openapi-alps/commit/d33db8a2deb96c492ba373c96707a087f6077de0?path=/private/azure-swagger-validation/azureSwaggerValidation/src/momentOfTruth.ts&version=GBmain&line=328&lineEnd=329&lineStartColumn=1&lineEndColumn=1&type=2&lineStyle=plain&_a=files
+let start = ago(6h);
+let end = now();
+let buildIds = "*";
+let lintDiffBuildLogs =
+SpecsPipelinesBuildsJobLogs("LintDiff", start, end, buildIds)
+    | where BuildDefinitionName == "Azure.azure-rest-api-specs-pipeline"
+;
+let lintDiffNewViolations = lintDiffBuildLogs
+    | parse-where Message with * "\"title\": \"" NewErros "new errors / " NewWarnings "new warnings" *
+    | where toint(NewErros) > 0 or toint(NewWarnings) > 0
+;
+let prInfoFromLintDiffBuildLogs = 
+lintDiffBuildLogs
+    | parse-where Message with 'Current execution context is' raw
+    | extend Context = parse_json(raw)
+    | extend PrUrl = strcat(Context.sourceRepoUri, "/pull/", Context.prNumber)
+;
+let lintDiffReportStartMarker = "momentOfTruth.lintDiff: --- Lint Violation Result ----"
+;
+let lintDiffReportEndMarker = "---------- Linter Diff Results ----------"
+;
+let lintDiffReportStartLines = lintDiffBuildLogs
+    | where Message has lintDiffReportStartMarker
+    | project StartLineNumber = LineNumber, BuildId
+;
+let lintDiffReportEndLines = lintDiffBuildLogs
+    | where Message has lintDiffReportEndMarker
+    | project EndLineNumber = LineNumber, BuildId
+;
+let lintDiffReport =
+lintDiffBuildLogs
+    | join kind=inner lintDiffReportStartLines on BuildId
+    | join kind=inner lintDiffReportEndLines on BuildId
+    | where LineNumber > StartLineNumber and LineNumber < EndLineNumber
+    | project BuildId, LineNumber, Message
+    | order by BuildId, LineNumber asc
+    | summarize Report = parse_json(strcat_array(make_list(Message), "")) by BuildId
+;
+let lintDiffRows = 
+lintDiffNewViolations
+    | join kind=inner prInfoFromLintDiffBuildLogs on BuildId
+    | join kind=inner lintDiffReport on BuildId
+    | project Timestamp, PacificTime, PrUrl, BuildUrl = buildUrl, BuildId, NewErros, NewWarnings, Context, Report
+;
+let prs = cluster('1es').database('GitHub').PullRequest
+    | where UpdatedAt between (start..end)
+    | where RepositoryName startswith "azure-rest-api-specs"
+    | extend HasTypespecLabel = Labels has '"name":"TypeSpec"'
+    | project RepositoryId = strcat(OrganizationLogin, "/", RepositoryName), PrNo = Number, PrUrl = HtmlUrl, HasTypespecLabel
+;
+prs
+    | join kind=inner lintDiffRows on PrUrl
+    | project-away PrUrl1

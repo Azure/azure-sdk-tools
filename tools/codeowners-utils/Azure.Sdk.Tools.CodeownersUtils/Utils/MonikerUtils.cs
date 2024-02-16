@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
                 {
                     // Line starts with "<Moniker>:", unfortunately /<NotInRepo>/ has no colon and needs
                     // to be checked separately
-                    if (strippedLine.StartsWith($"{tempMoniker}{SeparatorConstants.Colon}"))
+                    if (strippedLine.StartsWith($"{tempMoniker}{SeparatorConstants.Colon}", StringComparison.OrdinalIgnoreCase))
                     {
                         return tempMoniker;
                     }
@@ -69,7 +69,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
                 {
                     // Line starts with "<Moniker>:", unfortunately /<NotInRepo>/ has no colon and needs
                     // to be checked separately
-                    if (strippedLine.StartsWith($"{tempMoniker}{SeparatorConstants.Colon}"))
+                    if (strippedLine.StartsWith($"{tempMoniker}{SeparatorConstants.Colon}", StringComparison.OrdinalIgnoreCase))
                     {
                         return true;
                     }

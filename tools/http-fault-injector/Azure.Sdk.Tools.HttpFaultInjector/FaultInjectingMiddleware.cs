@@ -67,13 +67,10 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
 
             using (var upstreamRequest = new HttpRequestMessage(new HttpMethod(request.Method), upstreamUri))
             {
-                if (request.ContentLength > 0)
+                upstreamRequest.Content = new StreamContent(request.Body);
+                foreach (var header in request.Headers.Where(h => Utils.ContentRequestHeaders.Contains(h.Key)))
                 {
-                    upstreamRequest.Content = new StreamContent(request.Body);
-                    foreach (var header in request.Headers.Where(h => Utils.ContentRequestHeaders.Contains(h.Key)))
-                    {
-                        upstreamRequest.Content.Headers.Add(header.Key, values: header.Value);
-                    }
+                    upstreamRequest.Content.Headers.Add(header.Key, values: header.Value);
                 }
 
                 foreach (var header in request.Headers.Where(h => !Utils.ExcludedRequestHeaders.Contains(h.Key) && !Utils.ContentRequestHeaders.Contains(h.Key)))

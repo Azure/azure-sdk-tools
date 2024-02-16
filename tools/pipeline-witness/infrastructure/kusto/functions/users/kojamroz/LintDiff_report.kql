@@ -6,7 +6,7 @@
 // - PrUrl: the PR URL 
 // - BuildUrl: the ADO build URL
 // - HasTypespecLabel: if the PR has TypeSpec label or not
-// - NewErors: the number of new LintDiff errors
+// - NewErrors: the number of new LintDiff errors
 // - NewWarnings: the number of new LintDiff warnings
 // - Report: full details of the LintDiff errors in a parsed json (source at [1])
 // - Context: full context of given LintDiff run, in a parsed json

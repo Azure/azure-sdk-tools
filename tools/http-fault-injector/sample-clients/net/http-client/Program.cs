@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.HttpClientSample
         {
             var baseUrl = "http://localhost:5000";
 
-            var uploadStream = new LoggingStream(new MemoryStream(Encoding.UTF8.GetBytes(new string('a', 10 * 1024 * 1024))));
+            var uploadStream = new LoggingStream(new MemoryStream(Encoding.UTF8.GetBytes(new string('a', 20 * 1024 * 1024))));
 
             var response = await client.PutAsync(baseUrl + "/upload", new StreamContent(uploadStream));
 

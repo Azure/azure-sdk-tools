@@ -32,11 +32,9 @@ This list of examples is exhaustive. If an example isn't in here then it won't w
 ```text
 
 # AzureSdkOwners: @fakeUser3 @fakeUser4
-# ServiceLabel: %fakeLabel12
 /sdk/SomePath/  @fakeUser1 @fakeUser2 @Azure/fakeTeam1
 OR
 # AzureSdkOwners:
-# ServiceLabel: %fakeLabel12
 /sdk/SomePath/  @fakeUser1 @fakeUser2 @Azure/fakeTeam1
 OR
 # AzureSdkOwners: @fakeUser3 @fakeUser4

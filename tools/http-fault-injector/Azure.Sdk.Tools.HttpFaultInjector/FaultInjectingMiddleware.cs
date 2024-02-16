@@ -1,18 +1,18 @@
-using System.Threading.Tasks;
-using System.Threading;
-using Microsoft.Extensions.Logging;
 using System;
-using Microsoft.AspNetCore.Connections.Features;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
+using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Linq;
-using System.IO;
-using System.Buffers;
-using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Connections.Features;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
 
 namespace Azure.Sdk.Tools.HttpFaultInjector
 {
@@ -122,7 +122,42 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
 
         private async Task ProxyResponse(HttpContext context, string upstreamUri, string fault, CancellationToken cancellationToken)
         {
+            switch (fault)
+            {
+                case "nq":
+                    // No request body, then wait indefinitely
+                    await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+                    return;
+                case "nqc":
+                    // No request body, then close (TCP FIN)
+                    Close(context);
+                    return;
+                case "nqa":
+                    // No request body, then abort (TCP RST)
+                    Abort(context);
+                    return;
+                case "pq":
+                    // Partial request (50% of body), then wait indefinitely
+                    await ReadPartialRequest(context.Request, cancellationToken);
+                    await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+                    return;
+                case "pqc":
+                    // Partial request (50% of body), then close (TCP FIN)
+                    await ReadPartialRequest(context.Request, cancellationToken);
+                    Close(context);
+                    return;
+                case "pqa":
+                    // Partial request (50% of body), then abort (TCP RST)
+                    await ReadPartialRequest(context.Request, cancellationToken);
+                    Abort(context);
+                    return;
+                default:
+                    // Fall through and read full request body
+                    break;
+            }
+
             UpstreamResponse upstreamResponse = await SendUpstreamRequest(context.Request, upstreamUri, cancellationToken);
+
             switch (fault)
             {
                 case "f":
@@ -136,12 +171,12 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                     return;
                 case "pc":
                     // Partial Response (full headers, 50% of body), then close (TCP FIN)
-                    await SendDownstreamResponse(context.Response,upstreamResponse, upstreamResponse.ContentLength / 2, cancellationToken);
+                    await SendDownstreamResponse(context.Response, upstreamResponse, upstreamResponse.ContentLength / 2, cancellationToken);
                     Close(context);
                     return;
                 case "pa":
                     // Partial Response (full headers, 50% of body), then abort (TCP RST)
-                    await SendDownstreamResponse(context.Response,upstreamResponse, upstreamResponse.ContentLength / 2, cancellationToken);
+                    await SendDownstreamResponse(context.Response, upstreamResponse, upstreamResponse.ContentLength / 2, cancellationToken);
                     Abort(context);
                     return;
                 case "pn":
@@ -163,6 +198,36 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
                 default:
                     // can't really happen since we validated options before calling into this method.
                     throw new ArgumentException($"Invalid fault mode: {fault}", nameof(fault));
+            }
+        }
+
+        private static async Task ReadPartialRequest(HttpRequest request, CancellationToken cancellationToken)
+        {
+            var contentLength = request.ContentLength
+                ?? throw new InvalidOperationException("Partial request options require content-length request headers");
+            var bytesToRead = contentLength / 2;
+            long totalBytesRead = 0;
+            var buffer = ArrayPool<byte>.Shared.Rent(81920);
+            try
+            {
+                while (true)
+                {
+                    var bytesRead = await request.Body.ReadAsync(
+                        buffer,
+                        0,
+                        (int)Math.Min(buffer.Length, bytesToRead - totalBytesRead),
+                        cancellationToken
+                    );
+                    totalBytesRead += bytesRead;
+                    if (totalBytesRead >= bytesToRead || bytesRead == 0)
+                    {
+                        break;
+                    }
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
             }
         }
 

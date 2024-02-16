@@ -150,11 +150,10 @@ public class PipelineConverterTests
         var expected = @"
               - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
                 parameters:
-                  PublishType: pipeline
                   ArtifactName: drop
                   ArtifactPath: $(Build.ArtifactStagingDirectory)
                   DisplayName: Test Publish
-                  Condition: succeeded()";
+                  CustomCondition: succeeded()";
 
         var output = PipelineTemplateConverter.ConvertPublishTasks(contents);
         output.Should().Be(expected);
@@ -173,11 +172,10 @@ public class PipelineConverterTests
         var expected = @"
               - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
                 parameters:
-                  PublishType: build
                   ArtifactName: drop
                   ArtifactPath: $(Build.ArtifactStagingDirectory)
                   DisplayName: Test Publish
-                  Condition: succeeded()";
+                  CustomCondition: succeeded()";
 
         var output = PipelineTemplateConverter.ConvertPublishTasks(contents);
         output.Should().Be(expected);
@@ -194,16 +192,15 @@ public class PipelineConverterTests
                   command: push
                   packagesToPush: '$(Pipeline.Workspace)/packages/**/*.nupkg'
                   nuGetFeedType: external
-                  publishFeedCredentials: Nuget.org";
+                  publishFeedCredentials: Nuget.org".TrimStart(Environment.NewLine.ToCharArray());
         var expected = @"
-              - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
-                parameters:
-                  PublishType: nuget
-                  ArtifactName: $(Pipeline.Workspace)/packages/**/*.nupkg
-                  ArtifactPath: $(Pipeline.Workspace)/packages
-                  NugetFeedType: external
-                  DisplayName: Test Publish
-                  Condition: succeeded()";
+              - task: 1ES.PublishNuget@1
+                inputs:
+                  packagesToPush: $(Pipeline.Workspace)/packages/**/*.nupkg
+                  packageParentPath: $(Pipeline.Workspace)/packages
+                  nuGetFeedType: external
+                displayName: Test Publish
+                condition: succeeded()".TrimStart(Environment.NewLine.ToCharArray());
 
         var output = PipelineTemplateConverter.ConvertPublishTasks(contents);
         output.Should().Be(expected);
@@ -215,16 +212,15 @@ public class PipelineConverterTests
                 inputs:
                   command: push
                   packagesToPush: '$(Pipeline.Workspace)/packages/**/*.nupkg'
-                  publishVstsFeed: $(DevopsFeedId)";
+                  publishVstsFeed: $(DevopsFeedId)".TrimStart(Environment.NewLine.ToCharArray());
         expected = @"
-              - template: /eng/common/pipelines/templates/steps/publish-artifact.yml
-                parameters:
-                  PublishType: nuget
-                  ArtifactName: $(Pipeline.Workspace)/packages/**/*.nupkg
-                  ArtifactPath: $(Pipeline.Workspace)/packages
-                  PublishVstsFeed: $(DevopsFeedId)
-                  DisplayName: Test Publish
-                  Condition: succeeded()";
+              - task: 1ES.PublishNuget@1
+                inputs:
+                  packagesToPush: $(Pipeline.Workspace)/packages/**/*.nupkg
+                  packageParentPath: $(Pipeline.Workspace)/packages
+                  publishVstsFeed: $(DevopsFeedId)
+                displayName: Test Publish
+                condition: succeeded()".TrimStart(Environment.NewLine.ToCharArray());
 
         output = PipelineTemplateConverter.ConvertPublishTasks(contents);
         output.Should().Be(expected);

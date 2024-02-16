@@ -4,26 +4,6 @@ namespace Azure.Sdk.PipelineTemplateConverter;
 
 public class PublishArtifactTask
 {
-    public string PublishType
-    {
-        get
-        {
-            if (Task == "PublishPipelineArtifact@1")
-            {
-                return "pipeline";
-            }
-            if (Task == "PublishBuildArtifact@1")
-            {
-                return "build";
-            }
-            if (Task == "NugetCommand@2")
-            {
-                return "nuget";
-            }
-            return "";
-        }
-    }
-
     [YamlMember()]
     public string? Task { get; set; }
 
@@ -95,30 +75,59 @@ public class PublishArtifactTask
 
     public List<string> Convert()
     {
+        if (Inputs.PackagesToPush != null)
+        {
+            return ConvertNuget();
+        }
+        return ConvertPublish();
+    }
+
+    public List<string> ConvertPublish()
+    {
         var lines = new List<string>
         {
             $"- template: /eng/common/pipelines/templates/steps/publish-artifact.yml",
             $"  parameters:",
-            $"    PublishType: {PublishType}",
             $"    ArtifactName: {ArtifactName}",
             $"    ArtifactPath: {ArtifactPath}",
         };
-
-        if (Inputs.NugetFeedType != null)
-        {
-            lines.Add($"    NugetFeedType: {Inputs.NugetFeedType}");
-        }
-        if (Inputs.PublishVstsFeed != null)
-        {
-            lines.Add($"    PublishVstsFeed: {Inputs.PublishVstsFeed}");
-        }
         if (DisplayName != null)
         {
             lines.Add($"    DisplayName: {DisplayName}");
         }
         if (Condition != null)
         {
-            lines.Add($"    Condition: {Condition}");
+            lines.Add($"    CustomCondition: {Condition}");
+        }
+
+        return lines;
+    }
+
+    public List<string> ConvertNuget()
+    {
+        var lines = new List<string>
+        {
+            $"- task: 1ES.PublishNuget@1",
+            $"  inputs:",
+            $"    packagesToPush: {ArtifactName}",
+            $"    packageParentPath: {ArtifactPath}",
+        };
+
+        if (Inputs.NugetFeedType != null)
+        {
+            lines.Add($"    nuGetFeedType: {Inputs.NugetFeedType}");
+        }
+        if (Inputs.PublishVstsFeed != null)
+        {
+            lines.Add($"    publishVstsFeed: {Inputs.PublishVstsFeed}");
+        }
+        if (DisplayName != null)
+        {
+            lines.Add($"  displayName: {DisplayName}");
+        }
+        if (Condition != null)
+        {
+            lines.Add($"  condition: {Condition}");
         }
 
         return lines;

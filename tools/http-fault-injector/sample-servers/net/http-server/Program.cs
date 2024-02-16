@@ -1,3 +1,4 @@
+using System;
 using System.Buffers;
 using System.Net;
 using Microsoft.AspNetCore.Builder;
@@ -21,6 +22,8 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.HttpServerSample
                 })
                 .Configure(app => app.Run(async context =>
                 {
+                    Console.WriteLine($"Request: {context.Request.Path}");
+
                     if (!bool.TryParse(context.Request.Query["chunked"], out var chunked))
                     {
                         chunked = false;
@@ -58,6 +61,11 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.HttpServerSample
                     {
                         response = "Hello World!";
                     }
+
+                    var shortResponse = (response.Length <= 40 ? response : response.Substring(0, 40) + "...");
+
+                    Console.WriteLine($"Response: {response.Substring(0, Math.Min(40, response.Length))}");
+                    Console.WriteLine($"ResponseLength: {response.Length}");
 
                     if (!chunked)
                     {

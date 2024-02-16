@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Builder;
+using System.Buffers;
+using System.Net;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using System.Net;
 
 namespace Azure.Sdk.Tools.HttpFaultInjector.HttpServerSample
 {
@@ -18,9 +19,52 @@ namespace Azure.Sdk.Tools.HttpFaultInjector.HttpServerSample
                         listenOptions.UseHttps("testCert.pfx", "testPassword");
                     });
                 })
-                .Configure(app => app.Run(context =>
+                .Configure(app => app.Run(async context =>
                 {
-                    return context.Response.WriteAsync("Hello World!");
+                    if (!bool.TryParse(context.Request.Query["chunked"], out var chunked))
+                    {
+                        chunked = false;
+                    }
+
+                    string response;
+                    if (context.Request.Path == "/download")
+                    {
+                        if (!int.TryParse(context.Request.Query["length"], out var length))
+                        {
+                            length = 1024;
+                        }
+                        response = new string('a', length);
+                    }
+                    else if (context.Request.Path == "/upload")
+                    {
+                        var totalBytes = 0;
+                        var buffer = ArrayPool<byte>.Shared.Rent(8192);
+                        try
+                        {
+                            int bytesRead;
+                            while ((bytesRead = await context.Request.Body.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                            {
+                                totalBytes += bytesRead;
+                            }
+                        }
+                        finally
+                        {
+                            ArrayPool<byte>.Shared.Return(buffer);
+                        }
+
+                        response = totalBytes.ToString();
+                    }
+                    else
+                    {
+                        response = "Hello World!";
+                    }
+
+                    if (!chunked)
+                    {
+                        context.Response.ContentLength = response.Length;
+                    }
+
+                    await context.Response.WriteAsync(response);
                 }))
                 .Build()
                 .Run();

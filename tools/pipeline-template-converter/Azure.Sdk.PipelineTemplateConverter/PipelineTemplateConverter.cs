@@ -346,7 +346,34 @@ public class PipelineTemplateConverter
                 ["name"] = "azsdk-pool-mms-win-2022-1es-pt",
                 ["image"] = "azsdk-pool-mms-win-2022-1espt",
                 ["os"] = "windows",
-            }
+            },
+            ["eslint"] = new Dictionary<string, object>
+            {
+                ["enabled"] = false,
+                ["justificationForDisabling"] = "ESLint injected task has failures because it uses an old version of mkdirp. We should " +
+                    "not fail for tools not controlled by the repo. See: https://dev.azure.com/azure-sdk/internal/_build/results?buildId=3499746"
+            },
+            ["codeql"] = new Dictionary<string, object>
+            {
+                ["compiled"] = new Dictionary<string, object>
+                {
+                    ["enabled"] = false,
+                    ["justificationForDisabling"] = "CodeQL times our pipelines out by running for 2+ hours before being force canceled."
+                }
+            },
+            ["psscriptanalyzer"] = new Dictionary<string, object>
+            {
+                ["compiled"] = true,
+                ["break"] = true
+            },
+            ["policy"] = "M365",
+            ["credscan"] = new Dictionary<string, object>
+            {
+                ["suppressionsFile"] = "$(Build.SourcesDirectory)/eng/CredScanSuppression.json",
+                ["scanFolder"] = "$(Build.SourcesDirectory)/credscan.tsv",
+                ["toolVersion"] = "2.3.12.23",
+                ["baselineFiles"] = "$(Build.SourcesDirectory)/eng/<language>.gdnbaselines"
+            },
         };
 
         var repository = new Dictionary<string, object>

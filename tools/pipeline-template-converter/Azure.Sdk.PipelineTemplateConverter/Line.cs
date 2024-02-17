@@ -9,6 +9,7 @@ public class Line
     public Comment? Comment { get; set; }
     public Comment? InlineComment { get; set; }
     public List<string>? BlockChompedLine { get; set; }
+    public string BlockChompedIndent { get; set; } = "  ";
     public bool NewLineBefore { get; set; } = false;
     // YamlDotNet serialization removes quotes, but we want to preserve them
     // for line/comment lookup and reducing diff sizes

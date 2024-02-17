@@ -206,7 +206,16 @@ public class PipelineTemplateConverter
             return;
         }
 
-        var indent = lines[index][..^lines[index].TrimStart(' ').Length].Length;
+
+        // Trim out dashes in addition to spaces to get indent level to handle situations like
+        //     - script:
+        //         stuff we want to capture
+        //       displayName: at key indent level but not list indent level
+        var indent = lines[index][..^lines[index].TrimStart(new char[] { ' ', '-' }).Length].Length;
+        if (lines[index].TrimStart(' ').StartsWith('-'))
+        {
+            line.BlockChompedIndent = "    ";
+        }
         var contents = new List<string>();
 
         do
@@ -315,7 +324,7 @@ public class PipelineTemplateConverter
             {
                 foreach (var chompedLine in original.BlockChompedLine)
                 {
-                    lines.Add(indentation + "  " + chompedLine);
+                    lines.Add(indentation + original.BlockChompedIndent + chompedLine);
                 }
             }
         }

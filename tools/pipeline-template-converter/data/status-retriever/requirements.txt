@@ -1,0 +1,3 @@
+httpx
+azure-storage-blob
+jsonlines

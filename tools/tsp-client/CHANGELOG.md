@@ -4,7 +4,8 @@
 
 - Support `emitter-package-lock.json` files.
 - Use `npm ci` in case a package-lock.json file exists in the TempTypeSpecFiles directory.
-- Renamed `npmInstall` function to `npmCommand`.
+- Renamed `installDependencies` function to `npmCommand`.
+- `npmCommand` function takes a list of arguments and supports running various npm commands.
 
 ## 2024-02-06 - 0.4.1
 

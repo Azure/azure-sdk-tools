@@ -1,4 +1,4 @@
-import { npmInstallationCommand } from "./npm.js";
+import { npmCommand } from "./npm.js";
 import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
@@ -176,13 +176,14 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
     await cp(emitterLockPath, joinPaths(srcDir, "package-lock.json"), { recursive: true });
   } catch (err) {
-    Logger.debug("emitter-package-lock.json not found, will look for emitter-package.json");
+    Logger.debug(`Ran into the following error when looking for emitter-package-lock.json: ${err}`);
+    Logger.debug("Will attempt look for emitter-package.json...");
   }
   try {
     const emitterPath = joinPaths(repoRoot, "eng", "emitter-package.json");
     await cp(emitterPath, joinPaths(srcDir, "package.json"), { recursive: true });
   } catch (err) {
-    throw new Error("emitter-package.json not found. To continue using tsp-client, please provide an emitter-package.json file in the eng/ directory of the repository.");
+    throw new Error(`Ran into the following error: ${err}\nTo continue using tsp-client, please provide a valid emitter-package.json file in the eng/ directory of the repository.`);
   }
 }
 
@@ -213,7 +214,7 @@ async function generate({
   Logger.info("Installing dependencies from npm...");
   const args: string[] = [];
   try {
-    // Check is package-lock.json exists, if it does, we'll install dependencies through `npm ci`
+    // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
     await stat(joinPaths(srcDir, "package-lock.json"));
     args.push("ci");
   } catch (err) {
@@ -223,7 +224,7 @@ async function generate({
   if (process.env['TSPCLIENT_UNSAFE_FORCE'] === "force") {
     args.push("--force");
   }
-  await npmInstallationCommand(srcDir, args);
+  await npmCommand(srcDir, args);
   await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup, additionalEmitterOptions });
 
   if (noCleanup) {

@@ -19,7 +19,7 @@ export async function createPackageJson(rootPath: string, deps: Set<string>): Pr
   await writeFile(filePath, packageJson);
 }
 
-export async function npmInstallationCommand(workingDir: string, args: string[]): Promise<void> {
+export async function npmCommand(workingDir: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
     const npm = spawn("npm", args, {
       cwd: workingDir,

@@ -221,7 +221,9 @@ async function generate({
     // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
     args.push("install");
   }
-  if (process.env['TSPCLIENT_UNSAFE_FORCE'] === "force") {
+  // NOTE: This environment variable should be used for developer testing only. A force
+  // install may ignore any conflicting dependencies and may result in a broken build.
+  if (process.env['TSPCLIENT_FORCE_INSTALL'] === "force") {
     args.push("--force");
   }
   await npmCommand(srcDir, args);

@@ -126,7 +126,7 @@ jobs:
           GITHUB_PAYLOAD: ${{ toJson(github.event) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enforce 2 Year Max Life of Issues Scheduled Event
+      - name: Enforce Max Life of Issues Scheduled Event
         if: github.event.schedule == '30 0 * * SAT'
         run: |
           echo $GITHUB_PAYLOAD > payload.json

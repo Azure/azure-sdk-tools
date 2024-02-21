@@ -1,5 +1,12 @@
 # Release
 
+## 2024-02-20 - 0.5.0
+
+- Support `emitter-package-lock.json` files.
+- Use `npm ci` in case a package-lock.json file exists in the TempTypeSpecFiles directory.
+- Renamed `installDependencies` function to `npmCommand`.
+- `npmCommand` function takes a list of arguments and supports running various npm commands.
+
 ## 2024-02-06 - 0.4.1
 
 - Fix tspconfig.yaml file processing when a url is passed to the `init` command.

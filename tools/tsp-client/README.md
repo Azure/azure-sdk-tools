@@ -116,9 +116,20 @@ This tool creates a `TempTypeSpecFiles` directory when syncing a TypeSpec projec
 TempTypeSpecFiles/
 ```
 
-### emitter-package.json
+## Per repository set up
 
-This will be the package.json that gets used when `npm install` is called by this tool. This replaces the package.json checked into the spec repo and allows each language to fix the version of their emitter to be the same for all packages in their repo.
+Each repository that intends to support `tsp-client` for generating and updating client libraries will need the following configuration files:
+
+### emitter-package-lock.json (Optional)
+
+`emitter-package-lock.json` will be used the same as a `package-lock.json`. The tool will run a clean npm installation before generating client libraries. This file allows consistent dependency trees and allows each repository to control their dependency installation.
+The file should be checked into this location: `<root of repo>/eng/emitter-package-lock.json`
+
+> NOTE: The tool will run `npm ci` to install dependencies, so ensure that the `emitter-package-lock.json` and `emitter-package.json` files both exist and are in sync with each other.
+
+### emitter-package.json (Required)
+
+`emitter-package.json` will be used the same as a `package.json` file. If the is no `emitter-package-lock.json` file, the tool will run `npm install` on the contents of `emitter-package.json`. This file allows each repository to pin the version of their emitter and other dependencies to be used when generating client libraries.
 The file should be checked into this location `<root of repo>/eng/emitter-package.json`
 
 Example:
@@ -132,4 +143,6 @@ Example:
 }
 ```
 
-Note that tsp compile currently requires the "main" line to be there.
+> NOTE: tsp compile currently requires the "main" line to be there.
+
+> NOTE: This file replaces the package.json checked into the `azure-rest-api-spec` repository. 

@@ -11,6 +11,7 @@ import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import { formatAdditionalDirectories, getAdditionalDirectoryName } from "./utils.js";
 import { resolve } from "node:path";
 import { spawn } from "node:child_process";
+import { config as dotenvConfig } from "dotenv";
 
 
 async function sdkInit(
@@ -222,8 +223,9 @@ async function generate({
     args.push("install");
   }
   // NOTE: This environment variable should be used for developer testing only. A force
-  // install may ignore any conflicting dependencies and may result in a broken build.
-  if (process.env['TSPCLIENT_FORCE_INSTALL'] === "force") {
+  // install may ignore any conflicting dependencies and result in unexpected behavior.
+  dotenvConfig({path: resolve(await getRepoRoot(rootUrl), ".env")});
+  if (process.env['TSPCLIENT_FORCE_INSTALL']?.toLowerCase() === "true") {
     args.push("--force");
   }
   await npmCommand(srcDir, args);

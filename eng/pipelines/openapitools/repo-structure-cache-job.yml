@@ -1,0 +1,30 @@
+parameters:
+- name: DB_NAME
+  type: string
+  default: "openapi-portal"
+
+- name: COLLECTION_NAME
+  type: string
+  default: "repoStructureCache"
+
+- name: REPOS_URL_LIST
+  type: string
+  default: "https://github.com/test-repo-billy/azure-rest-api-specs/tree/main,https://github.com/test-repo-billy/azure-rest-api-specs-pr/tree/RPSaaSDev,https://github.com/test-repo-billy/azure-rest-api-specs-pr/tree/main,https://github.com/test-repo-billy/azure-rest-api-specs/tree/RPSaaSDev"
+
+trigger:
+- main
+
+pool:
+  name: azsdk-pool-mms-ubuntu-2204-general
+  vmImage: ubuntu-22.04
+
+steps:
+
+- script: |
+    pip install -r 'eng/scripts/OpenAPI Hub/requirements.txt'
+    pip list
+    python 'eng/scripts/OpenAPI Hub/sync-repo-structure-cache.py' --db_name ${{ parameters.DB_NAME }} --collection_name ${{ parameters.COLLECTION_NAME }} --repos_url_list ${{ parameters.REPOS_URL_LIST }} --repo_clone_path $(System.DefaultWorkingDirectory)
+  displayName: Run Script
+  env: 
+    MONGO_CONNECTION_STRING: $(Open-API-MongoDB-Connection-String)
+    GITHUB_TOKEN: $(azuresdk-github-pat)

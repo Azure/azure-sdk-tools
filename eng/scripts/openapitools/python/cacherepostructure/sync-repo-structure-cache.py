@@ -72,20 +72,20 @@ def update_mongo_collection(
         raise e
 
     print(f"Existing document: {existing_document}")
-    # if existing_document:
-    #     print(f"Document for '{new_document['key']}' exists, replacing...")
-    #     try:
-    #         collection.replace_one({"key": new_document['key']}, new_document)
-    #     except Exception as e:
-    #         print(f"Error while replacing document: {e}")
-    #         raise e
-    # else: 
-    #     print(f"Document does not exist, inserting '{new_document['key']}'...")
-    #     try:
-    #         collection.insert_one(new_document)
-    #     except Exception as e:
-    #         print(f"Error while inserting document: {e}")
-    #         raise e
+    if existing_document:
+        print(f"Document for '{new_document['key']}' exists, replacing...")
+        try:
+            collection.replace_one({"key": new_document['key']}, new_document)
+        except Exception as e:
+            print(f"Error while replacing document: {e}")
+            raise e
+    else: 
+        print(f"Document does not exist, inserting '{new_document['key']}'...")
+        try:
+            collection.insert_one(new_document)
+        except Exception as e:
+            print(f"Error while inserting document: {e}")
+            raise e
 
     print("\033[92mDocument saved\033[0m")
 

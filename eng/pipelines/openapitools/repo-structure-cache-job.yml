@@ -9,7 +9,7 @@ parameters:
 
 - name: REPOS_URL_LIST
   type: string
-  default: "https://github.com/test-repo-billy/azure-rest-api-specs/tree/main,https://github.com/test-repo-billy/azure-rest-api-specs-pr/tree/RPSaaSDev,https://github.com/test-repo-billy/azure-rest-api-specs-pr/tree/main,https://github.com/test-repo-billy/azure-rest-api-specs/tree/RPSaaSDev"
+  default: "https://github.com/azure/azure-rest-api-specs/tree/main,https://github.com/azure/azure-rest-api-specs-pr/tree/RPSaaSDev,https://github.com/azure/azure-rest-api-specs-pr/tree/main,https://github.com/azure/azure-rest-api-specs/tree/RPSaaSDev"
 
 trigger:
 - main
@@ -21,7 +21,7 @@ pool:
 steps:
 
 - script: |
-    pip install -r 'eng/scripts/OpenAPI Hub/requirements.txt'
+    pip install -r 'eng/scripts/openapitools/python/cacherepostructure/requirements.txt'
     pip list
     python 'eng/scripts/openapitools/python/cacherepostructure/sync-repo-structure-cache.py' --db_name ${{ parameters.DB_NAME }} --collection_name ${{ parameters.COLLECTION_NAME }} --repos_url_list ${{ parameters.REPOS_URL_LIST }} --repo_clone_path $(System.DefaultWorkingDirectory)
   displayName: Run Script

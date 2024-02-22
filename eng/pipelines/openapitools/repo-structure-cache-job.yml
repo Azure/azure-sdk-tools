@@ -9,7 +9,7 @@ parameters:
 
 - name: REPOS_URL_LIST
   type: string
-  default: "https://github.com/azure/azure-rest-api-specs/tree/main,https://github.com/azure/azure-rest-api-specs-pr/tree/RPSaaSDev,https://github.com/azure/azure-rest-api-specs-pr/tree/main,https://github.com/azure/azure-rest-api-specs-pr/tree/RPSaaSMaster"
+  default: "https://github.com/Azure/azure-rest-api-specs/tree/main,https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSDev,https://github.com/Azure/azure-rest-api-specs-pr/tree/main,https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster"
 
 trigger:
 - main

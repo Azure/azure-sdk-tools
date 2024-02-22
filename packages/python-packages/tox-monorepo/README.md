@@ -2,6 +2,18 @@
 
 This plugin changes {toxinidir} to be the directory that executes the tox command, rather than where the tox.ini actually lives on disk. This allows a monorepo to easily share a single tox.ini file rather than have to keep copies up to date.
 
+Deprecation Notice
+------------------
+
+With the availability of `tox 4`, `tox-monorepo` no longer has a purpose. It's usage has been entirely supplanted by the `root` argument provided with `tox 4`. Users should only consume `tox-monorepo` if they are forced onto the earlier `tox 3`.
+
+To take advantage of `tox 4`'s new feature in your `tox.ini`...
+
+1. Call `tox` with the addition of `--root path/to/folder/with/tox.ini` (still from the root of your package)
+2. Replace all occurrences of `{toxinidir}` with `{tox_root}`.
+
+Feel free to reference [this PR](https://github.com/Azure/azure-sdk-for-python/pull/30159/files) from azure-sdk-for-python supplanting the usage of `tox-monorepo` while upgrading to `tox 4`.
+
 Features
 --------
 

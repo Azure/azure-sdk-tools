@@ -66,13 +66,13 @@ def update_mongo_collection(
     print(f"Using database '{DB_NAME}' and collection '{COLLECTION_NAME}'")
 
     try:
-        existing_document: bool = collection.count_documents({"key": new_document["key"]}) == 0
+        existing_document_count: bool = collection.count_documents({"key": new_document["key"]})
     except Exception as e:
         print(f"Error while checking for existing document: {e}")
         raise e
 
-    print(f"Existing document: {existing_document}")
-    if existing_document:
+    print(f"Existing documents: {existing_document_count}")
+    if existing_document_count > 0:
         print(f"Document for '{new_document['key']}' exists, replacing...")
         try:
             collection.replace_one({"key": new_document['key']}, new_document)

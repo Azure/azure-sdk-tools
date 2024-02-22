@@ -1,7 +1,7 @@
 parameters:
 - name: DB_NAME
   type: string
-  default: "openapi-portal"
+  default: "openapiPortal"
 
 - name: COLLECTION_NAME
   type: string
@@ -9,7 +9,7 @@ parameters:
 
 - name: REPOS_URL_LIST
   type: string
-  default: "https://github.com/azure/azure-rest-api-specs/tree/main,https://github.com/azure/azure-rest-api-specs-pr/tree/RPSaaSDev,https://github.com/azure/azure-rest-api-specs-pr/tree/main,https://github.com/azure/azure-rest-api-specs/tree/RPSaaSDev"
+  default: "https://github.com/azure/azure-rest-api-specs/tree/main,https://github.com/azure/azure-rest-api-specs-pr/tree/RPSaaSDev,https://github.com/azure/azure-rest-api-specs-pr/tree/main,https://github.com/azure/azure-rest-api-specs-pr/tree/RPSaaSMaster"
 
 trigger:
 - main

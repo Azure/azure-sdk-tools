@@ -1,30 +1,26 @@
-parameters:
-- name: DB_NAME
-  type: string
-  default: "openapiPortal"
-
-- name: COLLECTION_NAME
-  type: string
-  default: "repoStructureCache"
-
-- name: REPOS_URL_LIST
-  type: string
-  default: "https://github.com/Azure/azure-rest-api-specs/tree/main,https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSDev,https://github.com/Azure/azure-rest-api-specs-pr/tree/main,https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster"
-
-trigger:
-- main
+trigger: none
+pr: none
 
 pool:
   name: azsdk-pool-mms-ubuntu-2204-general
   vmImage: ubuntu-22.04
 
 steps:
-
 - script: |
     pip install -r 'eng/scripts/openapitools/python/cacherepostructure/requirements.txt'
     pip list
-    python 'eng/scripts/openapitools/python/cacherepostructure/sync-repo-structure-cache.py' --db_name ${{ parameters.DB_NAME }} --collection_name ${{ parameters.COLLECTION_NAME }} --repos_url_list ${{ parameters.REPOS_URL_LIST }} --repo_clone_path $(System.DefaultWorkingDirectory)
-  displayName: Run Script
+  displayName: Install dependencies
+
+- script: |
+    python 'eng/scripts/openapitools/python/cacherepostructure/sync-repo-structure-cache.py' --db_name "openapiPortal" --collection_name "repoStructureCache" --repos_url_list "https://github.com/Azure/azure-rest-api-specs/tree/main,https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSDev,https://github.com/Azure/azure-rest-api-specs-pr/tree/main,https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster" --repo_clone_path $(System.DefaultWorkingDirectory)
+  displayName: Update PROD cache
   env: 
     MONGO_CONNECTION_STRING: $(Open-API-MongoDB-Connection-String)
+    GITHUB_TOKEN: $(azuresdk-github-pat)
+
+- script: |
+    python 'eng/scripts/openapitools/python/cacherepostructure/sync-repo-structure-cache.py' --db_name "openapiPortal" --collection_name "repoStructureCache" --repos_url_list "https://github.com/Azure/azure-rest-api-specs/tree/main,https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSDev,https://github.com/Azure/azure-rest-api-specs-pr/tree/main,https://github.com/Azure/azure-rest-api-specs-pr/tree/RPSaaSMaster" --repo_clone_path $(System.DefaultWorkingDirectory)
+  displayName: Update PPE cache
+  env: 
+    MONGO_CONNECTION_STRING: $(Open-API-MongoDB-Connection-String-PPE)
     GITHUB_TOKEN: $(azuresdk-github-pat)

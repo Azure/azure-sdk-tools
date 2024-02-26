@@ -234,11 +234,11 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Verification
                 blockErrorStrings.Add($"{MonikerConstants.PRLabel}{ErrorMessageConstants.NeedsToEndWithSourceOwnerPartial}");
             }
 
-            // ServiceLabel needs to be part of a block that has one of, ServiceOwners or #/<NotInRepo>/ (MonikerConstants.MissingFolder),
-            // or ends in a source path/owner line both not both.
+            // ServiceLabel needs to be part of a block that has AzureSdkOwners or one of; ServiceOwners or #/<NotInRepo>/
+            // (MonikerConstants.MissingFolder), or ends in a source path/owner line both not both.
             if (blockHasServiceLabel)
             {
-                if (!endsWithSourceOwnerLine && !blockHasServiceOwners && !blockHasMissingFolder)
+                if (!endsWithSourceOwnerLine && !blockHasServiceOwners && !blockHasMissingFolder && !blockHasAzureSdkOwners)
                 {
                     blockErrorStrings.Add(ErrorMessageConstants.ServiceLabelNeedsOwners);
                 }

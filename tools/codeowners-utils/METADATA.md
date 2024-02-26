@@ -10,7 +10,7 @@ Azure-sdk* repository CODEOWNERS files contain data beyond the normal source pat
 
 - **AzureSdkOwners:** - This moniker is used to denote Azure Sdk owners that have triage responsibility for a given service label. This moniker must be part of a block containing a ServiceLabel entry.
 - **PRLabel:** - This moniker is used by workflows to determine what label(s) will get added to a pull request based upon the file paths of the files in the pull request. This moniker must be part of a block that ends in a source path/owner line.
-- **ServiceLabel:** - This moniker contains the service label that's used to figure out what users need to be @ mentioned in an issue when the Service Attention label is added. This moniker must be part of a block that either ends in a source path/owner line, the ServiceOwners moniker or the /&lt;NotInRepo&gt;/ moniker. If the ServiceLabel is part of a block that ends in the source path/owner line, the service owners are inferred from that.
+- **ServiceLabel:** - This moniker contains the service label that's used to figure out what users should be assigned at triage to own issues,, whether part of the Azure SDK team or service partners.  If the label is owned by a service partner or has a set of service owners included, these users would be @ mentioned in an issue when the Service Attention label is added. This moniker must be part of a block that either ends in a source path/owner line, the AzureSdkOwners moniker, ServiceOwners moniker, or the /&lt;NotInRepo&gt;/ moniker. If the ServiceLabel is part of a block that ends in the source path/owner line, the service owners are inferred from that.
 - **ServiceOwners:** - The moniker is used to identify the owners associated with a service label if the service label isn't part of a block ending in a source path/owner line. This moniker cannot be part of a source path/owner line.
 - **/&lt;NotInRepo&gt;/** - This is the existing moniker used to denote service owners in CODEOWNERS files. This will ultimately be replaced by the ServiceOwners moniker, which more clearly defines what it actually is, but right now the parser and linter will handle both. This moniker cannot be part of a source path/owner line. Also, this is the only moniker that doesn't have a colon separator after the moniker, before the labels.
 
@@ -27,7 +27,7 @@ This list of examples is exhaustive. If an example isn't in here then it won't w
 
 ```
 
-- `AzureSdkOwners` must be part of a block that contains a ServiceLabel entry. If that block ends in a source path/owner line, and the AzureSdkOwners entry is empty, it'll have the same owners that are only the source path/owner line. If it's part of block that contains a ServiceLabel/ServiceOwner combination, then it must have it's own owners defined.
+- `AzureSdkOwners` must be part of a block that contains a ServiceLabel entry. If that block ends in a source path/owner line, and the AzureSdkOwners entry is empty, it'll have the same owners that are only the source path/owner line. If it's part of block that contains ServiceLabel/AzureSdkOwners combination OR a ServiceLabel/ServiceOwner/AzureSdkOwners combination, then it must have it's own owners defined.
 
 ```text
 
@@ -42,6 +42,9 @@ OR
 # AzureSdkOwners: @fakeUser3 @fakeUser4
 # ServiceLabel: %fakeLabel12
 # ServiceOwners: @fakeUser1 @fakeUser2
+OR
+# AzureSdkOwners: @fakeUser3 @fakeUser4
+# ServiceLabel: %fakeLabel12
 
 ```
 
@@ -63,7 +66,7 @@ OR
 
 ```
 
-- If a `ServiceLabel` is not part of a block that ends in a source path/owner line, then it must be part of a two line block consisting only of a ServiceLabel and either a ServiceOwners or /&lt;NotInRepo&gt;/. New entries should use ServiceOwners.
+- If a `ServiceLabel` is not part of a block that ends in a source path/owner line, then it must be part of a block consisting only of a ServiceLabel and one or both of the following; AzureSdkOwners, ServiceOwners or /&lt;NotInRepo&gt;/. New entries should use ServiceOwners.
 
 ```text
 
@@ -72,10 +75,16 @@ OR
 OR
 # ServiceLabel: %Label1 %Label2
 # /&lt;NotInRepo&gt;/ @fakeUser1 @Azure/fakeTeam1
-
+OR
+# AzureSdkOwners: @fakeUser1 @Azure/fakeTeam1
+# ServiceLabel: %Label1 %Label2
+OR
+# AzureSdkOwners: @fakeUser1 @Azure/fakeTeam1
+# ServiceLabel: %Label1 %Label2
+# ServiceOwners: @fakeUser1 @Azure/fakeTeam1
 ```
 
-- This might look complex but there are really only 2 types of blocks. The first ends with a source path/owner line and may have AzureSdkOwners, ServiceLabel and PRLabel entries. The second is ServiceLabel/ServiceOwner block which may have AzureSdkOwners.
+- This might look complex but there are really only 3 types of blocks. The first ends with a source path/owner line and may have AzureSdkOwners, ServiceLabel and PRLabel entries. The second is a ServiceLabel/ServiceOwner block which may have AzureSdkOwners. The third is an AzureSdkOwner/ServiceLabel block.
 
 ```text
 
@@ -91,5 +100,12 @@ OR
 # AzureSdkOwners: (optional)
 # ServiceLabel: %Label1 %Label2
 # ServiceOwners: @fakeUser1 @Azure/fakeTeam1
+
+```
+
+```text
+
+# AzureSdkOwners: @fakeUser1 @Azure/fakeTeam1
+# ServiceLabel: %Label1 %Label2
 
 ```

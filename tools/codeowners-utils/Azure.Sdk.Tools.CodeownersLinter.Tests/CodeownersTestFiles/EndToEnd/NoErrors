@@ -27,6 +27,10 @@
 # ServiceLabel: %TestLabel3
 /sdk/someFakePath4/ @TestOwner2  @TestOwner4
 
+# AzureSdkOwners with only a ServiceLabel entry
+# AzureSdkOwners: @TestOwner2 @TestOwner0
+# ServiceLabel: %TestLabel4
+
 # Every moniker that can be grouped together and end in a source path/owner line.
 # AzureSdkOwners: @TestOwner0
 # PRLabel: %TestLabel2

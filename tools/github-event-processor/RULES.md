@@ -618,11 +618,11 @@ OR
 
 - Lock issue conversations
 
-## Enforce 2 year max life of issues
+## Enforce max life of issues
 
 ### Trigger
 
-- CRON (weekly, Saturday at 12:30am)
+- CRON (weekly, Monday at 10am)
 
 ### Criteria
 

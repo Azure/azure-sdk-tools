@@ -14,8 +14,8 @@ on:
     - cron: '30 4,10,16,22 * * *'
     # Lock closed issues, every 6 hours at 05:30 AM, 11:30 AM, 05:30 PM and 11:30 PM - LockClosedIssues
     - cron: '30 5,11,17,23 * * *'
-    # Enforce 2 year max life of issues, every Saturday at 12:30 AM - Enforce2YearMaxLifeOfIssues
-    - cron: '30 0 * * SAT'
+    # Enforce max life of issues, every Monday at 10:00 AM - EnforceMaxLifeOfIssues
+    - cron: '0 10 * * MON'
 # This removes all unnecessary permissions, the ones needed will be set below.
 # https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token
 permissions: {}

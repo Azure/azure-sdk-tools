@@ -545,7 +545,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             }
         }
         /// <summary>
-        /// Trigger: Weekly, Saturday 12:30am
+        /// Trigger: Weekly, Monday at 10am
         /// Query Criteria
         ///     Issue is open
         ///     Issue was last updated more than 30 days ago

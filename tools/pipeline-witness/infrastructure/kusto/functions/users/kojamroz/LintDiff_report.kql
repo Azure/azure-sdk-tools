@@ -29,9 +29,11 @@ lintDiffBuildLogs
     | extend Context = parse_json(raw)
     | extend PrUrl = strcat(Context.sourceRepoUri, "/pull/", Context.prNumber)
 ;
-let lintDiffReportStartMarker = "momentOfTruth.lintDiff: --- Lint Violation Result ----"
+// CODESYNC to https://devdiv.visualstudio.com/DevDiv/_git/openapi-alps?path=/private/azure-swagger-validation/azureSwaggerValidation/src/momentOfTruth.ts&version=GCc59d7623faf7ecac934d247581ddd6d1d78d6c28&line=394&lineEnd=394&lineStartColumn=16&lineEndColumn=76&lineStyle=plain&_a=contents
+let lintDiffReportStartMarker = "momentOfTruth.lintDiff: ---- LintDiff Violations Report ----"
 ;
-let lintDiffReportEndMarker = "---------- Linter Diff Results ----------"
+// CODESYNC to https://devdiv.visualstudio.com/DevDiv/_git/openapi-alps?path=/private/azure-swagger-validation/azureSwaggerValidation/src/momentOfTruthPostProcessing.ts&version=GCc59d7623faf7ecac934d247581ddd6d1d78d6c28&line=371&lineEnd=371&lineStartColumn=17&lineEndColumn=56&lineStyle=plain&_a=contents
+let lintDiffReportEndMarker = "---------- LintDiff Results ----------"
 ;
 let lintDiffReportStartLines = lintDiffBuildLogs
     | where Message has lintDiffReportStartMarker

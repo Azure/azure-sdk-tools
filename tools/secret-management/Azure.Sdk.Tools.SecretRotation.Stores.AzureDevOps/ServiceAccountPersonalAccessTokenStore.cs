@@ -131,6 +131,10 @@ public class ServiceAccountPersonalAccessTokenStore : SecretStore
 
         PatTokenResult result = await client.CreatePatAsync(new PatTokenCreateRequest { AllOrgs = false, DisplayName = this.patDisplayName, Scope = this.scopes, ValidTo = expirationDate.UtcDateTime });
 
+        if (result.PatTokenError != SessionTokenError.None) {
+            throw new RotationException($"Unable to create PAT: {result.PatTokenError}");
+        }
+
         string authorizationId = result.PatToken.AuthorizationId.ToString();
 
         this.logger.LogInformation("Azure DevOps responded with authorization id '{AuthorizationId}'", authorizationId);

@@ -135,10 +135,11 @@ namespace APIViewWeb.Managers
                     {
                         if (prModel.APIRevisionId != null && await IsPullRequestEligibleForCleanup(prModel))
                         {
-                            _telemetryClient.TrackEvent($"Closing review {prModel.ReviewId}/{prModel.APIRevisionId} created for pull request {prModel.PullRequestNumber}");
+                            _telemetryClient.TrackEvent($"Closing revision {prModel.ReviewId}/{prModel.APIRevisionId} created for pull request {prModel.PullRequestNumber}");
                             await ClosePullRequestAPIRevision(prModel);
                         }
-                        await Task.Delay(500);
+                        // Wait 10 seconds before processing next record.
+                        await Task.Delay(10000);
                     }
                     catch (Exception ex)
                     {

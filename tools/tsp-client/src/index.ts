@@ -1,9 +1,9 @@
-import { installDependencies } from "./npm.js";
+import { npmCommand } from "./npm.js";
 import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, writeFile, cp, readFile, access } from "node:fs/promises";
+import { mkdir, writeFile, cp, readFile, access, stat } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
@@ -11,6 +11,7 @@ import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import { formatAdditionalDirectories, getAdditionalDirectoryName } from "./utils.js";
 import { resolve } from "node:path";
 import { spawn } from "node:child_process";
+import { config as dotenvConfig } from "dotenv";
 
 
 async function sdkInit(
@@ -172,8 +173,19 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     await removeDirectory(cloneDir);
   }
 
-  const emitterPath = joinPaths(repoRoot, "eng", "emitter-package.json");
-  await cp(emitterPath, joinPaths(srcDir, "package.json"), { recursive: true });
+  try {
+    const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
+    await cp(emitterLockPath, joinPaths(srcDir, "package-lock.json"), { recursive: true });
+  } catch (err) {
+    Logger.debug(`Ran into the following error when looking for emitter-package-lock.json: ${err}`);
+    Logger.debug("Will attempt look for emitter-package.json...");
+  }
+  try {
+    const emitterPath = joinPaths(repoRoot, "eng", "emitter-package.json");
+    await cp(emitterPath, joinPaths(srcDir, "package.json"), { recursive: true });
+  } catch (err) {
+    throw new Error(`Ran into the following error: ${err}\nTo continue using tsp-client, please provide a valid emitter-package.json file in the eng/ directory of the repository.`);
+  }
 }
 
 
@@ -201,8 +213,22 @@ async function generate({
   const mainFilePath = await discoverMainFile(srcDir);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
   Logger.info("Installing dependencies from npm...");
-  await installDependencies(srcDir);
-
+  const args: string[] = [];
+  try {
+    // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
+    await stat(joinPaths(srcDir, "package-lock.json"));
+    args.push("ci");
+  } catch (err) {
+    // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
+    args.push("install");
+  }
+  // NOTE: This environment variable should be used for developer testing only. A force
+  // install may ignore any conflicting dependencies and result in unexpected behavior.
+  dotenvConfig({path: resolve(await getRepoRoot(rootUrl), ".env")});
+  if (process.env['TSPCLIENT_FORCE_INSTALL']?.toLowerCase() === "true") {
+    args.push("--force");
+  }
+  await npmCommand(srcDir, args);
   await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup, additionalEmitterOptions });
 
   if (noCleanup) {

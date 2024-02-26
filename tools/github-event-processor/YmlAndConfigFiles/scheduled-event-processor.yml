@@ -127,7 +127,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enforce Max Life of Issues Scheduled Event
-        if: github.event.schedule == '30 0 * * SAT'
+        if: github.event.schedule == '0 10 * * MON'
         run: |
           echo $GITHUB_PAYLOAD > payload.json
           github-event-processor ${{ github.event_name }} payload.json EnforceMaxLifeOfIssues

@@ -1,0 +1,28 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+ 
+processors:
+  batch:
+ 
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging, azuremonitor]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [azuremonitor]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [azuremonitor]
+
+exporters:
+  logging:
+    verbosity: normal
+  azuremonitor:
+#    connection_string: "%APPLICATIONINSIGHTS_CONNECTION_STRING%"

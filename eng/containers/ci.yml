@@ -31,6 +31,13 @@ parameters:
     dockerFile: 'tools/http-fault-injector/Dockerfile'
     stableTags:
     - 'latest'
+  - name: otel_collector
+    pool: azsdk-pool-mms-ubuntu-2204-general
+    vmImage: ubuntu-22.04
+    dockerRepo: 'stress/otelcollector'
+    dockerFile: 'tools/stress-cluster/services/otelcollector/Dockerfile'
+    stableTags:
+    - '0.94.0'
 
 trigger:
   branches:
@@ -41,6 +48,7 @@ trigger:
     - eng/containers/
     - tools/keyvault-mock-attestation/Dockerfile
     - tools/stress-cluster/services/Stress.Watcher/
+    - tools/stress-cluster/services/otelcollector/
     - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/
     - tools/http-fault-injector/Dockerfile
 
@@ -53,7 +61,9 @@ pr:
     - eng/containers/
     - tools/keyvault-mock-attestation/Dockerfile
     - tools/stress-cluster/services/Stress.Watcher/
+    - tools/stress-cluster/services/otelcollector/
     - tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/
+    - tools/http-fault-injector/Dockerfile
 
 variables:
   - name: containerRegistry

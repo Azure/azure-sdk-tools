@@ -214,7 +214,6 @@ $(() => {
     }
 
     let issueBody = escape("```" + language + "\n" + codeLine.text().trim() + "\n```\n#\n" + comment + "\n#\n" + "[Created from ApiView comment](" + apiViewUrl + ")");
-    // TODO uncomment below once the feature to support public ApiView Reviews is enabled.
     
     
 

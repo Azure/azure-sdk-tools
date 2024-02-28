@@ -7,11 +7,6 @@
     Path: string,
     RepositoryId: string,
     RepositoryName: string,
-    AuthoredByDescriptor: string,
-    AuthoredByDisplayName: string,
-    AuthoredById: string,
-    AuthoredByIsContainer: string,
-    AuthoredByUniqueName: string,
     CreatedDate: datetime,
     DefaultBranch: string,
     DraftOfId: long,
@@ -55,7 +50,7 @@
     Options: string,
     Variables: string,
     Tags: string,
-    Data: string,
+    Triggers: dynamic,
     EtlIngestDate: datetime
 ) with (folder='', docstring='')
 
@@ -68,11 +63,6 @@
     { "column": "Path", "path": "$['path']" },
     { "column": "RepositoryId", "path": "$['repositoryId']" },
     { "column": "RepositoryName", "path": "$['repositoryName']" },
-    { "column": "AuthoredByDescriptor", "path": "$['authoredByDescriptor']" },
-    { "column": "AuthoredByDisplayName", "path": "$['authoredByDisplayName']" },
-    { "column": "AuthoredById", "path": "$['authoredById']" },
-    { "column": "AuthoredByIsContainer", "path": "$['authoredByIsContainer']" },
-    { "column": "AuthoredByUniqueName", "path": "$['authoredByUniqueName']" },
     { "column": "CreatedDate", "path": "$['createdDate']" },
     { "column": "DefaultBranch", "path": "$['defaultBranch']" },
     { "column": "DraftOfId", "path": "$['draftOfId']" },
@@ -116,6 +106,6 @@
     { "column": "Options", "path": "$['options']" },
     { "column": "Variables", "path": "$['variables']" },
     { "column": "Tags", "path": "$['tags']" },
-    { "column": "Data", "path": "$['data']" },
+    { "column": "Triggers", "path": "$['triggers']" },
     { "column": "EtlIngestDate", "path": "$['etlIngestDate']" }
 ]```

@@ -398,11 +398,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     Path = definition.Path,
                     RepositoryId = definition.Repository.Id,
                     RepositoryName = definition.Repository.Name,
-                    AuthoredByDescriptor = definition.AuthoredBy.Descriptor.ToString(),
-                    AuthoredByDisplayName = definition.AuthoredBy.DisplayName,
-                    AuthoredById = definition.AuthoredBy.Id,
-                    AuthoredByIsContainer = definition.AuthoredBy.IsContainer,
-                    AuthoredByUniqueName = definition.AuthoredBy.UniqueName,
                     CreatedDate = definition.CreatedDate,
                     DefaultBranch = definition.Repository.DefaultBranch,
                     DraftOfId = default(string),
@@ -445,7 +440,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     Options = definition.Options,
                     Variables = definition.Variables,
                     Tags = definition.Tags,
-                    Data = definition,
+                    Triggers = definition.Triggers,
                     EtlIngestDate = DateTimeOffset.UtcNow
                 }, jsonSettings);
 
@@ -548,10 +543,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     StartTime = build.StartTime,
                     FinishTime = build.FinishTime,
                     KeepForever = build.KeepForever,
-                    LastChangedByDisplayName = build.LastChangedBy?.DisplayName,
-                    LastChangedById = build.LastChangedBy?.Id,
-                    LastChangedByIsContainer = build.LastChangedBy?.IsContainer,
-                    LastChangedByUniqueName = build.LastChangedBy?.UniqueName,
                     LastChangedDate = build.LastChangedDate,
                     LogsId = build.Logs?.Id,
                     LogsType = build.Logs?.Type,
@@ -569,14 +560,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     Reason = build.Reason,
                     RepositoryCheckoutSubmodules = build.Repository?.CheckoutSubmodules,
                     RepositoryType = build.Repository?.Type,
-                    RequestedByDisplayName = build.RequestedBy?.DisplayName,
-                    RequestedById = build.RequestedBy?.Id,
-                    RequestedByIsContainer = build.RequestedBy?.IsContainer,
-                    RequestedByUniqueName = build.RequestedBy?.UniqueName,
-                    RequestedForDisplayName = build.RequestedFor?.DisplayName,
-                    RequestedForId = build.RequestedFor?.Id,
-                    RequestedForIsContainer = build.RequestedFor?.IsContainer,
-                    RequestedForUniqueName = build.RequestedFor?.UniqueName,
                     Result = build.Result,
                     RetainedByRelease = build.RetainedByRelease,
                     SourceBranch = build.SourceBranch,
@@ -585,7 +568,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     Tags = build.Tags?.Any() == true ? JsonConvert.SerializeObject(build.Tags, jsonSettings) : null,
                     Uri = build.Uri,
                     ValidationResults = build.ValidationResults,
-                    Data = JsonConvert.SerializeObject(build, jsonSettings),
                     EtlIngestDate = DateTime.UtcNow,
                 }, jsonSettings);
 
@@ -869,7 +851,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
                         : testRun.Release?.Id > 0 ? "Release"
                         : "",
                     OrganizationId = default(string),
-                    Data = default(string),
                     EtlIngestDate = DateTime.UtcNow,
                 }, jsonSettings);
 

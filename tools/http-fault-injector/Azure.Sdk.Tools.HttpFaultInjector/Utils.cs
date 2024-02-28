@@ -7,14 +7,20 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
     {
         public static readonly IDictionary<string, string> FaultModes = new Dictionary<string, string>()
         {
-            { "f", "Full response" },
-            { "p", "Partial Response (full headers, 50% of body), then wait indefinitely" },
-            {"pc", "Partial Response (full headers, 50% of body), then close (TCP FIN)" },
-            {"pa", "Partial Response (full headers, 50% of body), then abort (TCP RST)" },
-            {"pn", "Partial Response (full headers, 50% of body), then finish normally" },
-            {"n", "No response, then wait indefinitely"},
-            {"nc", "No response, then close (TCP FIN)" },
-            {"na", "No response, then abort (TCP RST)" }
+            {  "f", "Full response" },
+            {  "p", "Partial Response (full headers, 50% of body), then wait indefinitely" },
+            { "pc", "Partial Response (full headers, 50% of body), then close (TCP FIN)" },
+            { "pa", "Partial Response (full headers, 50% of body), then abort (TCP RST)" },
+            { "pn", "Partial Response (full headers, 50% of body), then finish normally" },
+            {  "n", "No response, then wait indefinitely"},
+            { "nc", "No response, then close (TCP FIN)" },
+            { "na", "No response, then abort (TCP RST)" },
+            { "pq", "Partial request (50% of body), then wait indefinitely"},
+            {"pqc", "Partial request (50% of body), then close (TCP FIN)"},
+            {"pqa", "Partial request (50% of body), then abort (TCP RST)"},
+            { "nq", "No request body, then wait indefinitely"},
+            {"nqc", "No request body, then close (TCP FIN)"},
+            {"nqa", "No request body, then abort (TCP RST)"},
         };
 
         public static readonly string[] ExcludedRequestHeaders = new string[] {

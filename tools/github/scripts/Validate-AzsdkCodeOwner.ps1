@@ -10,17 +10,14 @@ if (!(Get-Command -Type Application gh -ErrorAction Ignore)) {
 
 $hasOrgs = $false
 $hasPermissions = $false
-$isVerbose = $PSCmdlet.MyInvocation.BoundParameters["Verbose"].IsPresent
 
 # Verify that the user exists and has the correct public
 # organization memberships.
 $response = (gh api "https://api.github.com/users/$UserName/orgs")
 $json = $response | ConvertFrom-Json
 
-if ($isVerbose) {
-    Write-Verbose "Orginizations API Response:"
-    Write-Verbose "`t$response"
-}
+Write-Verbose "Orginizations API Response:"
+Write-Verbose "`t$response"
 
 # If there were no organizations, the user fails validation.
 if ($json -ne $null) {
@@ -32,13 +29,11 @@ if ($json -ne $null) {
         $orgs.Add("$($org.login)") | Out-Null
     }
 
-    if ($isVerbose) {
-        Write-Verbose ""
-        Write-Verbose "Orginizations:"
+    Write-Verbose ""
+    Write-Verbose "Orginizations:"
 
-        foreach ($org in $orgs) {
-            Write-Verbose "`t$($org)"
-        }
+    foreach ($org in $orgs) {
+        Write-Verbose "`t$($org)"
     }
 
     if ($orgs.Contains("Microsoft") -and $orgs.Contains("Azure")) {
@@ -51,11 +46,9 @@ if ($json -ne $null) {
 # priviledged operation that requires an authenticated caller.
 $response = (gh api "https://api.github.com/repos/Azure/azure-sdk-for-net/collaborators/$UserName/permission")
 
-if ($isVerbose) {
-    Write-Verbose ""
-    Write-Verbose "Permissions API Response:"
-    Write-Verbose "`t$response"
-}
+Write-Verbose ""
+Write-Verbose "Permissions API Response:"
+Write-Verbose "`t$response"
 
 $permission = ($response | ConvertFrom-Json).permission
 

@@ -47,7 +47,7 @@ Following are tools required to develop and run test instance of APIView to veri
 - Xcode 10.2 or higher (Optional: Only to generate and test Go reviews)
  - Azure subscription with permission to create storage account and Cosmos DB instance.
 
-In addition to local machine setup, you will also require an Azure storage account to store source and stub file and Azure Cosmos database instance to store review metadata. We have added a section below with more details on Azure resources required for testing.
+In addition to local machine setup, you will also require an Azure storage account to store source and stub file, an Azure App Configuration instance, and Azure Cosmos database instance to store review metadata. We have added a section below with more details on Azure resources required for testing.
 
 
 ### Azure resources required to run APIView instance locally
@@ -72,7 +72,11 @@ Create following Azure resources in your Azure subscription.
    | PullRequests        | /ReviewId          |
    | SamplesRevisions    | /ReviewId          |
    | Profiles            | /id                |
-   
+
+#### Azure App Configuration
+
+- Create an Azure App Configuration instance in Azure. [Azure App Configuration](https://learn.microsoft.com/en-us/azure/azure-app-configuration/quickstart-azure-app-configuration-create?tabs=azure-portal), it can be empty for basic local debugging.
+
 ## Getting Started
 
 ### Create a GitHub Oath application for local authentication
@@ -115,7 +119,8 @@ Following configuration is required to connect local debug instance to Azure res
     "github-access-token": "",
     "ApiKey": "",
     "PYTHONEXECUTABLEPATH": "<Full path to python executable>",
-    "BackgroundTaskDisabled": true
+    "BackgroundTaskDisabled": true,
+    "APPCONFIG": "<connection string to app configuration>"
   }
 
 ### Compile TypeScript code

@@ -2,7 +2,7 @@ Import-Module Pester
 
 
 BeforeAll {
-  . $PSScriptRoot/../../../common/scripts/job-matrix/job-matrix-functions.ps1
+    . $PSScriptRoot/../../../common/scripts/job-matrix/job-matrix-functions.ps1
 
     function CompareMatrices([Array]$matrix, [Array]$expected) {
         $matrix.Length | Should -Be $expected.Length
@@ -33,17 +33,17 @@ Describe "Platform Matrix nonSparse" -Tag "UnitTest", "nonsparse" {
     }
 
     It "Should process nonSparse parameters" {
-        $parameters, $nonSparse = ProcessNonSparseParameters $config.matrixParameters "testField1","testField3"
+        $parameters, $nonSparse = ProcessNonSparseParameters $config.matrixParameters "testField1", "testField3"
 
         $parameters.Count | Should -Be 1
         $parameters[0].Name | Should -Be "testField2"
-        $parameters[0].Value | Should -Be 1,2,3
+        $parameters[0].Value | Should -Be 1, 2, 3
 
         $nonSparse.Count | Should -Be 2
         $nonSparse[0].Name | Should -Be "testField1"
-        $nonSparse[0].Value | Should -Be 1,2
+        $nonSparse[0].Value | Should -Be 1, 2
         $nonSparse[1].Name | Should -Be "testField3"
-        $nonSparse[1].Value | Should -Be 1,2,3,4
+        $nonSparse[1].Value | Should -Be 1, 2, 3, 4
 
         $parameters, $nonSparse = ProcessNonSparseParameters $config.matrixParameters "testField3"
         $parameters.Count | Should -Be 2
@@ -51,7 +51,7 @@ Describe "Platform Matrix nonSparse" -Tag "UnitTest", "nonsparse" {
 
         $nonSparse.Count | Should -Be 1
         $nonSparse[0].Name | Should -Be "testField3"
-        $nonSparse[0].Value | Should -Be 1,2,3,4
+        $nonSparse[0].Value | Should -Be 1, 2, 3, 4
     }
 
     It "Should ignore nonSparse with all selection" {
@@ -77,10 +77,10 @@ Describe "Platform Matrix nonSparse" -Tag "UnitTest", "nonsparse" {
 '@
         $config = GetMatrixConfigFromJson $matrixJson
 
-        $matrix = GenerateMatrix $config "all" -nonSparseParameters "testField3","testField4"
+        $matrix = GenerateMatrix $config "all" -nonSparseParameters "testField3", "testField4"
         $matrix.Length | Should -Be 16
 
-        $matrix = GenerateMatrix $config "sparse" -nonSparseParameters "testField3","testField4"
+        $matrix = GenerateMatrix $config "sparse" -nonSparseParameters "testField3", "testField4"
         $matrix.Length | Should -Be 8
     }
 
@@ -125,13 +125,13 @@ Describe "Platform Matrix nonSparse" -Tag "UnitTest", "nonsparse" {
     }
 }
 
-# This test is currently disabled (it doesn't have "UnitTest" tag) as it fails 
+# This test is currently disabled (it doesn't have "UnitTest" tag) as it fails
 # in test "Should generate a sparse matrix where the entire base matrix is imported" on line:
 #
 #   $matrix = GenerateMatrix $importConfig "sparse"
 #
 # with message:
-# 
+#
 #   ParameterBindingArgumentTransformationException: Cannot process argument transformation on parameter 'parameters'. Cannot convert the "System.Collections.Hashtable" value of type "System.Collections.Hashtable" to type "MatrixParameter".
 #
 # See full build failure:
@@ -392,11 +392,11 @@ Describe "Platform Matrix Import" -Tag "import" {
 
 Describe "Platform Matrix Replace" -Tag "UnitTest", "replace" {
     It "Should parse replacement syntax" -TestCases @(
-         @{ query = 'foo=bar/baz'; key = '^foo$'; value = '^bar$'; replace = 'baz' },
-         @{ query = 'foo=\/p:bar/\/p:baz'; key = '^foo$'; value = '^\/p:bar$'; replace = '/p:baz' },
-         @{ query = 'f\=o\/o=\/p:b\=ar/\/p:b\=az'; key = '^f\=o\/o$'; value = '^\/p:b\=ar$'; replace = '/p:b=az' },
-         @{ query = 'foo=bar/'; key = '^foo$'; value = '^bar$'; replace = '' },
-         @{ query = 'foo=/baz'; key = '^foo$'; value = '^$'; replace = 'baz' }
+        @{ query = 'foo=bar/baz'; key = '^foo$'; value = '^bar$'; replace = 'baz' },
+        @{ query = 'foo=\/p:bar/\/p:baz'; key = '^foo$'; value = '^\/p:bar$'; replace = '/p:baz' },
+        @{ query = 'f\=o\/o=\/p:b\=ar/\/p:b\=az'; key = '^f\=o\/o$'; value = '^\/p:b\=ar$'; replace = '/p:b=az' },
+        @{ query = 'foo=bar/'; key = '^foo$'; value = '^bar$'; replace = '' },
+        @{ query = 'foo=/baz'; key = '^foo$'; value = '^$'; replace = 'baz' }
     ) {
         $parsed = ParseReplacement $query
         $parsed.key | Should -Be $key
@@ -582,5 +582,100 @@ Describe "Platform Matrix Replace" -Tag "UnitTest", "replace" {
         $matrix[2].parameters.Baz | Should -Be "importedBaz"
         $matrix[2].parameters.replaceme | Should -Be "replaceme"
     }
+}
 
+Describe "Platform Matrix Environment Variables" -Tag "UnitTest", "envvar" {
+    It "Should parse environment variable reference syntax" {
+        $matrixJson = @'
+{
+  "matrix": {
+    "foo": "bar",
+    "envReference": ["env:TestMatrixEnvReference", "env:TestMatrixEnvReference2", "noref"]
+  },
+  "include": [
+    {
+      "foo": "bar",
+      "envReference": "env:TestMatrixEnvReference"
+    }
+  ]
+}
+'@
+
+        [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference", "")
+        { GenerateMatrix (GetMatrixConfigFromJson $matrixJson) "sparse" } | Should -Throw
+
+        [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference", "replaced")
+        [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference2", "replaced2")
+        [array]$replacedMatrix = GenerateMatrix (GetMatrixConfigFromJson $matrixJson) "sparse"
+        $replacedMatrix.Length | Should -Be 4
+        $replacedMatrix[0].name | Should -Be "bar_replaced"
+        $replacedMatrix[0].parameters.envReference | Should -Be "replaced"
+        $replacedMatrix[1].name | Should -Be "bar_replaced2"
+        $replacedMatrix[1].parameters.envReference | Should -Be "replaced2"
+        $replacedMatrix[2].name | Should -Be "bar_noref"
+        $replacedMatrix[2].parameters.envReference | Should -Be "noref"
+        $replacedMatrix[3].name | Should -Be "bar_replaced"
+        $replacedMatrix[3].parameters.envReference | Should -Be "replaced"
+    }
+
+    It "Should support filter/replace with variable reference syntax" {
+        $matrixJson = @'
+{
+  "displayNames": {
+    "env:replaceme": "env:TestMatrixEnvReference"
+  },
+  "matrix": {
+    "foo": "bar",
+    "envReference": "env:replaceme"
+  }
+}
+'@
+
+        [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference", "replaced")
+
+        [array]$replacedMatrix = GenerateMatrix `
+            -config (GetMatrixConfigFromJson $matrixJson) `
+            -selectFromMatrixType "sparse" `
+            -replace @("envReference=env:replaceme/env:TestMatrixEnvReference")
+        $replacedMatrix.Length | Should -Be 1
+        $replacedMatrix[0].name | Should -Be "bar_replaced"
+        $replacedMatrix[0].parameters.envReference | Should -Be "replaced"
+
+        # Don't filter out by replaced values, but by original references
+        [System.Environment]::SetEnvironmentVariable("replaceme", "filter_replaced")
+        [array]$replacedMatrix = GenerateMatrix `
+            -config (GetMatrixConfigFromJson $matrixJson) `
+            -selectFromMatrixType "sparse" `
+            -filter @("envReference=env:replaceme")
+        $replacedMatrix.Length | Should -Be 1
+        $replacedMatrix[0].name | Should -Be "bar_filter_replaced"
+        $replacedMatrix[0].parameters.envReference | Should -Be "filter_replaced"
+    }
+
+    It "Should support display name and display name filter with variable reference syntax" {
+        $matrixJson = @'
+{
+  "displayNames": {
+    "replaced": "display"
+  },
+  "matrix": {
+    "foo": "bar",
+    "envReference": "env:TestMatrixEnvReference"
+  }
+}
+'@
+
+        [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference", "replaced")
+        [array]$replacedMatrix = GenerateMatrix (GetMatrixConfigFromJson $matrixJson) "sparse"
+        $replacedMatrix.Length | Should -Be 1
+        $replacedMatrix[0].name | Should -Be "bar_display"
+        $replacedMatrix[0].parameters.envReference | Should -Be "replaced"
+
+        [System.Environment]::SetEnvironmentVariable("TestMatrixEnvReference", "replaced")
+        [array]$replacedMatrix = GenerateMatrix `
+            -config (GetMatrixConfigFromJson $matrixJson) `
+            -selectFromMatrixType "sparse" `
+            -displayNameFilter "doesnotexist"
+        $replacedMatrix | Should -BeNullOrEmpty
+    }
 }

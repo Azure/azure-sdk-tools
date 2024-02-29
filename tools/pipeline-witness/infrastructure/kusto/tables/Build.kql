@@ -41,7 +41,7 @@
     SourceVersion: string,
     Status: string,
     Tags: string,
-    Uri: string,
+    Url: string,
     ValidationResults: string,
     EtlIngestDate: datetime
 ) with (folder='', docstring='')
@@ -89,7 +89,7 @@
     { "column": "SourceVersion", "path": "$['sourceVersion']" },
     { "column": "Status", "path": "$['status']" },
     { "column": "Tags", "path": "$['tags']" },
-    { "column": "Uri", "path": "$['uri']" },
+    { "column": "Url", "path": "$['url']" },
     { "column": "ValidationResults", "path": "$['validationResults']" },
     { "column": "EtlIngestDate", "path": "$['etlIngestDate']" }
 ]```

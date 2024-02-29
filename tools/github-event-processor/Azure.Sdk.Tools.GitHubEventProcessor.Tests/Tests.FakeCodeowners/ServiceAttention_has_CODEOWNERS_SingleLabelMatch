@@ -20,10 +20,14 @@
 /files/filePath7/           @FakeUser7 @FakeUser17
 # ServiceLabel: %FakeLabel8 %Service Attention
 /files/filePath8/           @FakeUser8
+# The payload coming in has FakeLabel9, FakeLabel4 and FakeLabel1.
+# Since the match looks for a ServiceLabel entry that is fully included
+# in the Issue's payload, from the last->first of the entries,
+# FakeLabel9 is the first match
 # ServiceLabel: %FakeLabel9 %Service Attention
 /files/filePath9/           @FakeUser9
 
-# ServiceLabel: %FakeLabel4 %FakeLabel9 %Service Attention
+# ServiceLabel: %FakeLabel5 %FakeLabel8 %Service Attention
 # ServiceOwners: @FakeUser4 @FakeUser9
 
 # ServiceLabel: %FakeLabel10 %FakeLabel4 %Service Attention

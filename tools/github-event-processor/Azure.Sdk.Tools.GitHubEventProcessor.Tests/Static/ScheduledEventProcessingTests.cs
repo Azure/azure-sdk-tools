@@ -186,7 +186,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(expectedUpdates / 2, numComments, $"The number of comments should have been {expectedUpdates / 2} but was instead, {numComments}");
 
                 // Verify LabelConstants.NoRecentActivity was added
-                Assert.IsTrue(mockGitHubEventClient.GetGitHubIssuesToUpdate()[0].IssueUpdate.Labels.Contains(LabelConstants.NoRecentActivity), $"rule should have added {LabelConstants.NoRecentActivity} label and did not.");
+                Assert.IsTrue(mockGitHubEventClient.GetGitHubIssuesToUpdate()[0].IssueUpdate.Labels.Contains(TriageLabelConstants.NoRecentActivity), $"rule should have added {TriageLabelConstants.NoRecentActivity} label and did not.");
             }
             else
             {
@@ -231,7 +231,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(expectedUpdates / 2, numComments, $"The number of comments should have been {expectedUpdates / 2} but was instead, {numComments}");
 
                 // Verify LabelConstants.NoRecentActivity was added
-                Assert.IsTrue(mockGitHubEventClient.GetGitHubIssuesToUpdate()[0].IssueUpdate.Labels.Contains(LabelConstants.NoRecentActivity), $"rule should have added {LabelConstants.NoRecentActivity} label and did not.");
+                Assert.IsTrue(mockGitHubEventClient.GetGitHubIssuesToUpdate()[0].IssueUpdate.Labels.Contains(TriageLabelConstants.NoRecentActivity), $"rule should have added {TriageLabelConstants.NoRecentActivity} label and did not.");
             }
             else
             {

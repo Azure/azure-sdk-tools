@@ -6,6 +6,13 @@
 # Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json file.
 ################
 
+# AzureSdkOwners pulled from source path/owners, there are no ServiceOwners so the ServiceAttention rule
+# should not run. The entry only having a %Client label is the fallback for the scenario where the label list
+# contains %Client as well as a ServiceLabel that doesn't exist on any other entry
+# The ServiceLabel has 
+# ServiceLabel: %Client
+# AzureSdkOwners: @FakeUser1
+
 # This scenario is a ServiceOwners block with no AzureSdkOwners
 # ServiceLabel: %FakeLabel1
 # ServiceOwners: @FakeUser7 @FakeUser8
@@ -39,3 +46,9 @@
 # AzureSdkOwners:
 /files/filePath0/           @FakeUser5 @FakeUser6
 
+# AzureSdkOwners and ServiceOwners pulled from source path/owners.
+# This scenario is to ensure the two label match.
+# The ServiceLabel has 
+# ServiceLabel: %Client %FakeLabel4
+# AzureSdkOwners:
+/files/filePath10/           @FakeUser5 @FakeUser6

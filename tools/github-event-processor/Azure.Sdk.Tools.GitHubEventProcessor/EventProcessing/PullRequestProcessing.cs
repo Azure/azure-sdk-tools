@@ -66,8 +66,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(prEventPayload.Repository.Id, prEventPayload.PullRequest.User.Login);
                             if (!hasAdminOrWritePermission)
                             {
-                                gitHubEventClient.AddLabel(LabelConstants.CustomerReported);
-                                gitHubEventClient.AddLabel(LabelConstants.CommunityContribution);
+                                gitHubEventClient.AddLabel(TriageLabelConstants.CustomerReported);
+                                gitHubEventClient.AddLabel(TriageLabelConstants.CommunityContribution);
                                 string prComment = $"Thank you for your contribution @{prEventPayload.PullRequest.User.Login}! We will review the pull request and get back to you soon.";
                                 gitHubEventClient.CreateComment(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number, prComment);
                             }
@@ -110,7 +110,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 // 1. The sender is not a bot.
                 // 2. The Pull request has "no-recent-activity" label
                 if (prEventPayload.Sender.Type != AccountType.Bot &&
-                    LabelUtils.HasLabel(prEventPayload.PullRequest.Labels, LabelConstants.NoRecentActivity))
+                    LabelUtils.HasLabel(prEventPayload.PullRequest.Labels, TriageLabelConstants.NoRecentActivity))
                 {
                     bool removeLabel = false;
                     // Pull request conditions AND the pull request needs to be in an opened state
@@ -129,7 +129,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     }
                     if (removeLabel)
                     {
-                        gitHubEventClient.RemoveLabel(LabelConstants.NoRecentActivity);
+                        gitHubEventClient.RemoveLabel(TriageLabelConstants.NoRecentActivity);
                     }
                 }
             }

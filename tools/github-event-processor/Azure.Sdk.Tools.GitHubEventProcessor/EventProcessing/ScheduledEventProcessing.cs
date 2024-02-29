@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                 List<string> includeLabels = new List<string>
                 {
-                    LabelConstants.IssueAddressed
+                    TriageLabelConstants.IssueAddressed
                 };
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
@@ -182,8 +182,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                 List<string> includeLabels = new List<string>
                 {
-                    LabelConstants.NeedsAuthorFeedback,
-                    LabelConstants.NoRecentActivity
+                    TriageLabelConstants.NeedsAuthorFeedback,
+                    TriageLabelConstants.NoRecentActivity
                 };
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
@@ -258,7 +258,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                 List<string> includeLabels = new List<string>
                 {
-                    LabelConstants.NoRecentActivity
+                    TriageLabelConstants.NoRecentActivity
                 };
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
@@ -337,7 +337,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                 List<string> excludeLabels = new List<string>
                 {
-                    LabelConstants.NoRecentActivity
+                    TriageLabelConstants.NoRecentActivity
                 };
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
@@ -367,7 +367,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     {
                         Issue issue = result.Items[iCounter++];
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
-                        issueUpdate.AddLabel(LabelConstants.NoRecentActivity);
+                        issueUpdate.AddLabel(TriageLabelConstants.NoRecentActivity);
                         gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
                                                                issue.Number,
                                                                issueUpdate);
@@ -418,11 +418,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                 List<string> includeLabels = new List<string>
                 {
-                    LabelConstants.NeedsAuthorFeedback
+                    TriageLabelConstants.NeedsAuthorFeedback
                 };
                 List<string> excludeLabels = new List<string>
                 {
-                    LabelConstants.NoRecentActivity
+                    TriageLabelConstants.NoRecentActivity
                 };
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
@@ -452,7 +452,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     {
                         Issue issue = result.Items[iCounter++];
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
-                        issueUpdate.AddLabel(LabelConstants.NoRecentActivity);
+                        issueUpdate.AddLabel(TriageLabelConstants.NoRecentActivity);
                         gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
                                                                issue.Number,
                                                                issueUpdate);

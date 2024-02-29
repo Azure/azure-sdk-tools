@@ -96,14 +96,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 // then customer-reported and community-contribution labels should have been added along with a comment
                 if (!isMemberOfOrg && !hasWriteOrAdmin)
                 {
-                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CustomerReported), $"User does not have write or admin permission, IssueUpdate should contain {LabelConstants.CustomerReported}.");
-                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CommunityContribution), $"User does not have write or admin permission, IssueUpdate should contain {LabelConstants.CommunityContribution}.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.CustomerReported), $"User does not have write or admin permission, IssueUpdate should contain {TriageLabelConstants.CustomerReported}.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.CommunityContribution), $"User does not have write or admin permission, IssueUpdate should contain {TriageLabelConstants.CommunityContribution}.");
                     Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, "Without admin or write permission there should have been a comment added.");
                 }
                 else
                 {
-                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CustomerReported), $"User has write or admin permission or is a member of Azure, IssueUpdate should not contain {LabelConstants.CustomerReported}.");
-                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CommunityContribution), $"User has write or admin permission or is a member of Azure, IssueUpdate should not contain {LabelConstants.CommunityContribution}.");
+                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.CustomerReported), $"User has write or admin permission or is a member of Azure, IssueUpdate should not contain {TriageLabelConstants.CustomerReported}.");
+                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.CommunityContribution), $"User has write or admin permission or is a member of Azure, IssueUpdate should not contain {TriageLabelConstants.CommunityContribution}.");
                     Assert.AreEqual(0, mockGitHubEventClient.GetComments().Count, "User has write or admin permission or is a member of Azure, there should not have been a comment added.");
                 }
             }
@@ -150,7 +150,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
 
                 // Verify that NeedsAuthorFeedback was removed
-                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove should contain {LabelConstants.NoRecentActivity} and does not.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NoRecentActivity), $"Labels to remove should contain {TriageLabelConstants.NoRecentActivity} and does not.");
             }
             else
             {

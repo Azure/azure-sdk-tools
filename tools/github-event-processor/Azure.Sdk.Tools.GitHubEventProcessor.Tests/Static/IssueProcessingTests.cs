@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
@@ -254,6 +255,38 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   true, // Has CODEOWNERS entry
                   true,
                   true)]
+        // Scenario: The AI label has a matching CODEOWNERS entry that matches both labels returned.
+        //           One of of AzureSdkOwners will have assignment permissions.
+        // Expected: The labels are added to the issue
+        //           One of the AzureSdkOWners with permission is assigned to the issue
+        //           A comment is added @ mentioning all of the AzureSdkOwners
+        //           A second comment is added thanking the creator, tagging and routing to the team
+        //           NeedsTeamTriage is added to the issue
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "Client, FakeLabel4", // labels returned from the AI Label service
+                  "FakeUser6", // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
+        // Scenario: The AI label has a matching CODEOWNERS entry that matches only the Category label
+        //           One of of AzureSdkOwners will have assignment permissions.
+        // Expected: The labels are added to the issue
+        //           One of the AzureSdkOWners with permission is assigned to the issue
+        //           A comment is added @ mentioning all of the AzureSdkOwners
+        //           A second comment is added thanking the creator, tagging and routing to the team
+        //           NeedsTeamTriage is added to the issue
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "Client, FakeLabel6", // labels returned from the AI Label service, there is no FakeLabel6 only Client will match
+                  "FakeUser1", // owners with permission to be assigned to issues
+                  true, // Has CODEOWNERS entry
+                  true,
+                  true)]
         public async Task TestInitialIssueTriage(string rule, 
                                                  string payloadFile,
                                                  RuleState ruleState, 
@@ -309,20 +342,20 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 // then customer-reported and question labels should be added to the issue.
                 if (!isMemberOfOrg && !hasWriteOrAdmin)
                 {
-                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CustomerReported), $"Labels to add should contain {LabelConstants.CustomerReported} which it should when the user is not part of the org and doesn't have write/admin collaborator permissions.");
-                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.Question), $"Labels to add should contain {LabelConstants.Question} which it should when the user is not part of the org and doesn't have write/admin collaborator permissions.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.CustomerReported), $"Labels to add should contain {TriageLabelConstants.CustomerReported} which it should when the user is not part of the org and doesn't have write/admin collaborator permissions.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.Question), $"Labels to add should contain {TriageLabelConstants.Question} which it should when the user is not part of the org and doesn't have write/admin collaborator permissions.");
                 }
                 else
                 {
-                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.CustomerReported), $"Labels to add contains {LabelConstants.CustomerReported} and shouldn't when the user is part of the org or has write/admin collaborator permissions.");
-                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.Question), $"Labels to add contains {LabelConstants.Question} and shouldn't when the user is part of the org or has write/admin collaborator permissions.");
+                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.CustomerReported), $"Labels to add contains {TriageLabelConstants.CustomerReported} and shouldn't when the user is part of the org or has write/admin collaborator permissions.");
+                    Assert.False(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.Question), $"Labels to add contains {TriageLabelConstants.Question} and shouldn't when the user is part of the org or has write/admin collaborator permissions.");
                 }
 
                 // If there are no labels being returned from the AI Label service, the only processing is whether or not the creator
                 // is a member of the Azure org or has Write or Admin permissions
                 if (expectedLabels.Count == 0)
                 {
-                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTriage), $"Labels to add should contain {LabelConstants.NeedsTriage} when the AI Label service has no suggested labels.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTriage), $"Labels to add should contain {TriageLabelConstants.NeedsTriage} when the AI Label service has no suggested labels.");
                 }
                 // else the AI Label Service returned labels to add
                 else
@@ -341,7 +374,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     // line otherwise the block is malformed and will get thrown away. 
                     if (!hasCodeownersEntry)
                     {
-                        Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamTriage), $"With no CODEOWNERS entry {LabelConstants.NeedsTeamTriage} should have been added to the issue.");
+                        Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamTriage), $"With no CODEOWNERS entry {TriageLabelConstants.NeedsTeamTriage} should have been added to the issue.");
                     }
                     // There is a CODEOWNERS entry for the ServiceLabel returned from the AI Label service
                     else
@@ -358,18 +391,18 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                             bool ownerFromOwnersWithPermList = mockGitHubEventClient.OwnersWithAssignPermission.Contains(githubIssueAssignment.Assignees[0], StringComparer.OrdinalIgnoreCase);
                             Assert.True(ownerFromOwnersWithPermList, $"The owner assigned to the issue, {githubIssueAssignment.Assignees[0]}, was not in the list of owners with assign permission, {string.Join(",", mockGitHubEventClient.OwnersWithAssignPermission)}");
 
-                            Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamAttention), $"With a valid AzureSdkOwner to assign to the issue the {LabelConstants.NeedsTeamAttention} should have been added to the issue.");
+                            Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamAttention), $"With a valid AzureSdkOwner to assign to the issue the {TriageLabelConstants.NeedsTeamAttention} should have been added to the issue.");
 
                             // If there is more than one AzureSdkOwner, a comment will also be created to @ mention all of the owners
                             // and a second comment will be created thanking the issue creator for their feedback.
-                            var azureSdkOwners = CodeOwnerUtils.GetAzureSdkOwnersForServiceLabels(expectedLabels);
+                            CodeownersEntry codeownersEntry = CodeOwnerUtils.GetCodeownersEntryForLabelList(expectedLabels);
                             // With a single AzureSdkOwner there should only be one comment thanking the creator for feedback and tagging and routing the issue
-                            if (azureSdkOwners.Count == 1)
+                            if (codeownersEntry.AzureSdkOwners.Count == 1)
                             {
                                 Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, $"With only one AzureSdkOwner there should only be one comment thanking the creator, tagging and routing but {mockGitHubEventClient.GetComments().Count} comments were created.");
                             }
                             // With more than one AzureSdkOWner there should be two comments. The first is an @ metion and the second is the same one thanking the creator
-                            else if (azureSdkOwners.Count > 1)
+                            else if (codeownersEntry.AzureSdkOwners.Count > 1)
                             {
                                 Assert.AreEqual(2, mockGitHubEventClient.GetComments().Count, $"With multiple AzureSdkOwners there should only be two comments. One @ mentioning everyone on the list and the other thanking the creator, tagging and routing but {mockGitHubEventClient.GetComments().Count} comments were created.");
                             }
@@ -385,13 +418,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                         {
                             if (serviceAttentionRuleState == RuleState.Off)
                             {
-                                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamTriage), $"With no valid AzureSdkOwners and the ServiceAttention rule being disabled, {LabelConstants.NeedsTeamTriage} should have been added to the issue.");
+                                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamTriage), $"With no valid AzureSdkOwners and the ServiceAttention rule being disabled, {TriageLabelConstants.NeedsTeamTriage} should have been added to the issue.");
                             }
                             // else, the ServiceAttention rule will which creates a comment that ends with @ mentioning the service owners
                             // and NeedsTeamAttention is added to the issue
                             else
                             {
-                                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamAttention), $"With no valid AzureSdkOwners but valid ServiceOwners and ServiceAttention rule being enabled, {LabelConstants.NeedsTeamAttention} should have been added to the issue.");
+                                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamAttention), $"With no valid AzureSdkOwners but valid ServiceOwners and ServiceAttention rule being enabled, {TriageLabelConstants.NeedsTeamAttention} should have been added to the issue.");
                                 Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, $"With no AzureSdkOwners and the ServiceAttention rule being enabled, there should only be one comment created by the ServiceAttention rule but {mockGitHubEventClient.GetComments().Count} comments were created.");
                             }
                         }
@@ -436,14 +469,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 // If the label being added is NeedsTriage, there should be no updates
                 if (labelAddedIsNeedsTriage)
                 {
-                    Assert.AreEqual(0, totalUpdates, $"The label being added was {LabelConstants.NeedsTriage} and should not have produced any updates.");
+                    Assert.AreEqual(0, totalUpdates, $"The label being added was {TriageLabelConstants.NeedsTriage} and should not have produced any updates.");
                 }
                 else
                 {
                     // There should be one update, an IssueUpdate with the NoRecentActivity label removed
                     Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
                     // Verify that NeedsTriage was removed
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTriage), $"Labels to remove should contain {LabelConstants.NeedsTriage} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NeedsTriage), $"Labels to remove should contain {TriageLabelConstants.NeedsTriage} and does not.");
                 }
             }
             else
@@ -467,27 +500,20 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
         /// <param name="hasPartiesToMentionForServiceAttention">Determines whether to load the codeowners with parties to mention or the one without</param>
         [Category("static")]
         [NonParallelizable]
-        [TestCase(RulesConstants.ServiceAttention, "Tests.JsonEventPayloads/ServiceAttention_issue_labeled.json", RuleState.Off, true)]
-        [TestCase(RulesConstants.ServiceAttention, "Tests.JsonEventPayloads/ServiceAttention_issue_labeled.json", RuleState.On, true)]
-        [TestCase(RulesConstants.ServiceAttention, "Tests.JsonEventPayloads/ServiceAttention_issue_labeled.json", RuleState.On, false)]
-        public async Task TestServiceAttention(string rule, string payloadFile, RuleState ruleState, bool hasPartiesToMentionForServiceAttention)
+        [TestCase(RulesConstants.ServiceAttention, "Tests.JsonEventPayloads/ServiceAttention_issue_labeled.json", "Tests.FakeCodeowners/ServiceAttention_has_CODEOWNERS", RuleState.Off, null)]
+        [TestCase(RulesConstants.ServiceAttention, "Tests.JsonEventPayloads/ServiceAttention_issue_labeled.json", "Tests.FakeCodeowners/ServiceAttention_has_CODEOWNERS", RuleState.On, "@FakeUser4 @FakeUser9")]
+        [TestCase(RulesConstants.ServiceAttention, "Tests.JsonEventPayloads/ServiceAttention_issue_labeled.json", "Tests.FakeCodeowners/ServiceAttention_has_CODEOWNERS_SingleLabelMatch", RuleState.On, "@FakeUser9")]
+        [TestCase(RulesConstants.ServiceAttention, "Tests.JsonEventPayloads/ServiceAttention_issue_labeled.json", "Tests.FakeCodeowners/ServiceAttention_does_not_have_CODEOWNERS", RuleState.On, null)]
+        public async Task TestServiceAttention(string rule, string payloadFile, string codeownersFile, RuleState ruleState, string expectedNames)
         {
             var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
             mockGitHubEventClient.RulesConfiguration.Rules[rule] = ruleState;
             var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
             var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
 
-            // Set the path to the fake CODEOWNERS file to be used for testing
-            if (hasPartiesToMentionForServiceAttention)
-            {
-                CodeOwnerUtils.ResetCodeOwnerEntries();
-                CodeOwnerUtils.codeOwnersFilePathOverride = "Tests.FakeCodeowners/ServiceAttention_has_CODEOWNERS";
-            }
-            else
-            {
-                CodeOwnerUtils.ResetCodeOwnerEntries();
-                CodeOwnerUtils.codeOwnersFilePathOverride = "Tests.FakeCodeowners/ServiceAttention_does_not_have_CODEOWNERS";
-            }
+            CodeOwnerUtils.ResetCodeOwnerEntries();
+            CodeOwnerUtils.codeOwnersFilePathOverride = codeownersFile;
+
             IssueProcessing.ServiceAttention(mockGitHubEventClient, issueEventPayload);
 
             // Verify the RuleCheck
@@ -496,9 +522,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
             if (RuleState.On == ruleState)
             {
-                if (hasPartiesToMentionForServiceAttention)
+                if (null != expectedNames)
                 {
-                    string expectedNames = "@FakeUser1 @FakeUser11 @FakeUser14 @FakeUser24 @FakeUser4 @FakeUser9";
                     // "Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc @FakeUser1 @FakeUser11 @FakeUser4 @FakeUser14 @FakeUser24 @FakeUser9."
                     // There should be one update, a comment
                     Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
@@ -517,43 +542,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             {
                 Assert.AreEqual(0, totalUpdates, $"{rule} is {ruleState} and should not have produced any updates.");
             }
-        }
-
-        /// <summary>
-        /// This is for testing an update to the Service Attention rule. If Service Attention is already on the rule and the rule
-        /// is labled, then that label's people are @ mentioned.
-        /// Trigger: issue labeled
-        /// Conditions: Issue is open
-        ///             "Service Attention" is already on the issue
-        ///             The label has a CODEOWNERS entry with ServiceOwners
-        /// Resulting Action: Add issue comment "Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc ${mentionees}."
-        /// </summary>
-        /// <param name="rule">String, RulesConstants for the rule being tested</param>
-        /// <param name="payloadFile">JSon payload file for the event being tested</param>
-        /// <param name="expectedOwners">The expected owners to be @ mentioned for the label being added. This needs to be ordered as the API getting the owners orders them.</param>
-        [Category("static")]
-        [NonParallelizable]
-        [TestCase(RulesConstants.ServiceAttention, "Tests.JsonEventPayloads/ServiceAttention_issue_labeled_already_has_ServiceAttention.json", "@FakeUser14 @FakeUser24 @FakeUser4")]
-        public async Task TestServiceAttentionAlreadyOnIssue(string rule, string payloadFile, string expectedOwners)
-        {
-            var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
-            mockGitHubEventClient.RulesConfiguration.Rules[rule] = RuleState.On;
-            var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
-            var issueEventPayload = SimpleJsonSerializer.Deserialize<IssueEventGitHubPayload>(rawJson);
-
-            CodeOwnerUtils.ResetCodeOwnerEntries();
-            CodeOwnerUtils.codeOwnersFilePathOverride = "Tests.FakeCodeowners/ServiceAttention_has_CODEOWNERS";
-
-            IssueProcessing.ServiceAttention(mockGitHubEventClient, issueEventPayload);
-            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(issueEventPayload.Repository.Id, issueEventPayload.Issue.Number);
-            // "Thanks for the feedback! We are routing this to the appropriate team for follow-up. cc @FakeUser1 @FakeUser11 @FakeUser4 @FakeUser14 @FakeUser24 @FakeUser9."
-            // There should be one update, a comment
-            Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
-
-            // Verify that a single comment was created
-            Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, $"{rule} should have produced a single comment.");
-            string comment = mockGitHubEventClient.GetComments()[0].Comment;
-            Assert.True(comment.Contains(expectedOwners), $"Comment should have contained expected names {expectedOwners} but did not. Full comment={comment}");
         }
 
         /// <summary>
@@ -594,7 +582,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 // If issue already has needs-team-triage there should be no updates
                 if (alreadyHasNeedsTeamTriage)
                 {
-                    Assert.AreEqual(0, totalUpdates, $"The issue already has {LabelConstants.NeedsTeamTriage} and should not have produced any updates.");
+                    Assert.AreEqual(0, totalUpdates, $"The issue already has {TriageLabelConstants.NeedsTeamTriage} and should not have produced any updates.");
                 }
                 else
                 {
@@ -603,11 +591,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                         // There should be one update, the label NoRecentActivity should have been added
                         Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
                         // Verify that NeedsTeamTriage was added
-                        Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamTriage), $"Labels to add should contain {LabelConstants.NeedsTeamTriage} and does not.");
+                        Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamTriage), $"Labels to add should contain {TriageLabelConstants.NeedsTeamTriage} and does not.");
                     }
                     else
                     {
-                        Assert.AreEqual(0, totalUpdates, $"The issue only 1 of {LabelConstants.ServiceAttention}. With the other still being on the issue there should have been no updates.");
+                        Assert.AreEqual(0, totalUpdates, $"The issue only 1 of {TriageLabelConstants.ServiceAttention}. With the other still being on the issue there should have been no updates.");
                     }
                 }
             }
@@ -651,7 +639,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
 
                 // Verify that NoRecentActivity was removed
-                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove should contain {LabelConstants.NoRecentActivity} and does not.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NoRecentActivity), $"Labels to remove should contain {TriageLabelConstants.NoRecentActivity} and does not.");
             }
             else
             {
@@ -699,7 +687,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
 
                 // Verify that NeedsTeamAttention was added
-                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamAttention), $"Lables to add should contain {LabelConstants.NeedsTeamAttention} and does not.");
+                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamAttention), $"Lables to add should contain {TriageLabelConstants.NeedsTeamAttention} and does not.");
             }
             else
             {
@@ -751,9 +739,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     Assert.AreEqual(4, totalUpdates, $"The number of updates should have been 3 but was instead, {totalUpdates}");
 
                     // Verify that NeedsTriage, NeedsTeamTriage and NeedsTeamAttention were removed
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTriage), $"Labels to remove should contain {LabelConstants.NeedsTriage} and does not.");
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTeamTriage), $"Labels to remove should contain {LabelConstants.NeedsTeamTriage} and does not.");
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTeamAttention), $"Labels to remove should contain {LabelConstants.NeedsTeamAttention} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NeedsTriage), $"Labels to remove should contain {TriageLabelConstants.NeedsTriage} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NeedsTeamTriage), $"Labels to remove should contain {TriageLabelConstants.NeedsTeamTriage} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NeedsTeamAttention), $"Labels to remove should contain {TriageLabelConstants.NeedsTeamAttention} and does not.");
                 }
 
                 // The comment should be created regardless
@@ -815,15 +803,15 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     Assert.AreEqual(6, totalUpdates, $"The number of updates should have been 2 but was instead, {totalUpdates}");
 
                     // Verify that NeedsTriage was added to the remove list
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTriage), $"Labels to remove should contain {LabelConstants.NeedsTriage} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NeedsTriage), $"Labels to remove should contain {TriageLabelConstants.NeedsTriage} and does not.");
                     // Verify that NeedsTeamTriage was added to the remove list
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTeamTriage), $"Labels to remove should contain {LabelConstants.NeedsTeamTriage} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NeedsTeamTriage), $"Labels to remove should contain {TriageLabelConstants.NeedsTeamTriage} and does not.");
                     // Verify that NeedsTeamAttention was added to the remove list
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsTeamAttention), $"Labels to remove should contain {LabelConstants.NeedsTeamAttention} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NeedsTeamAttention), $"Labels to remove should contain {TriageLabelConstants.NeedsTeamAttention} and does not.");
                     // Verify that NeedsAuthorFeedback was added to the remove list
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsAuthorFeedback), $"Labels to remove should contain {LabelConstants.NeedsAuthorFeedback} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NeedsAuthorFeedback), $"Labels to remove should contain {TriageLabelConstants.NeedsAuthorFeedback} and does not.");
                     // Verify that NoRecentActivity was added to the remove list
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove should contain {LabelConstants.NoRecentActivity} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NoRecentActivity), $"Labels to remove should contain {TriageLabelConstants.NoRecentActivity} and does not.");
                 }
                 // Regardless of whether or not there were labels to remove, a single comment should be created.
                 Assert.AreEqual(1, mockGitHubEventClient.GetComments().Count, $"{rule} should have produced a single comment.");
@@ -876,7 +864,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
 
                 // Verify that IssueAddressed was added to the remove list
-                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.IssueAddressed), $"Labels to remove should contain {LabelConstants.IssueAddressed} and does not.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.IssueAddressed), $"Labels to remove should contain {TriageLabelConstants.IssueAddressed} and does not.");
             }
             else
             {

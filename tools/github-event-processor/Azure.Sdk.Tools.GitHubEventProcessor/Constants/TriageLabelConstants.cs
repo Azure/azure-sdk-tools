@@ -6,11 +6,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
 {
 
     /// <summary>
-    /// These are label constants that are common to all language repositories and ones
-    /// that the rules use for processing. No team, or lanaguage specific labels belong
-    /// in here.
+    /// These are triage label constants and are common to all language repositories. No category labels,
+    /// service labels or repository specific labels belong in here.
     /// </summary>
-    public class LabelConstants
+    public class TriageLabelConstants
     {
         public const string CommunityContribution = "Community Contribution";
         public const string CustomerReported = "customer-reported";

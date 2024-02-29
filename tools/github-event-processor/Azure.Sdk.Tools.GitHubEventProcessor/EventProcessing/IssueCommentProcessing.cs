@@ -46,11 +46,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 if (issueCommentPayload.Action == ActionConstants.Created)
                 {
                     if (issueCommentPayload.Issue.State == ItemState.Open &&
-                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NeedsAuthorFeedback) &&
+                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, TriageLabelConstants.NeedsAuthorFeedback) &&
                         issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login)
                     {
-                        gitHubEventClient.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
-                        gitHubEventClient.AddLabel(LabelConstants.NeedsTeamAttention);
+                        gitHubEventClient.RemoveLabel(TriageLabelConstants.NeedsAuthorFeedback);
+                        gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
                     }
                 }
             }
@@ -95,17 +95,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 if (issueCommentPayload.Action == ActionConstants.Created)
                 {
                     if (issueCommentPayload.Issue.State == ItemState.Closed &&
-                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NoRecentActivity) &&
-                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.NeedsAuthorFeedback) &&
+                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, TriageLabelConstants.NoRecentActivity) &&
+                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, TriageLabelConstants.NeedsAuthorFeedback) &&
                         issueCommentPayload.Sender.Login == issueCommentPayload.Issue.User.Login &&
                         issueCommentPayload.Comment.CreatedAt != issueCommentPayload.Issue.ClosedAt.Value &&
                         // Ensure both times are in UTC so timezones don't get tripped up. ClosedAt is nullable
                         // but being that the issue is closed is part of the criteria, this will be set
                         DateTime.UtcNow <= issueCommentPayload.Issue.ClosedAt.Value.UtcDateTime.AddDays(7))
                     {
-                        gitHubEventClient.RemoveLabel(LabelConstants.NeedsAuthorFeedback);
-                        gitHubEventClient.RemoveLabel(LabelConstants.NoRecentActivity);
-                        gitHubEventClient.AddLabel(LabelConstants.NeedsTeamAttention);
+                        gitHubEventClient.RemoveLabel(TriageLabelConstants.NeedsAuthorFeedback);
+                        gitHubEventClient.RemoveLabel(TriageLabelConstants.NoRecentActivity);
+                        gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
                         gitHubEventClient.SetIssueState(issueCommentPayload.Issue, ItemState.Open);
                     }
                 }
@@ -173,7 +173,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 if (issueCommentPayload.Action == ActionConstants.Created)
                 {
                     if (CommentUtils.CommentContainsText(issueCommentPayload.Comment.Body, CommentConstants.Unresolve) &&
-                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, LabelConstants.IssueAddressed))
+                        LabelUtils.HasLabel(issueCommentPayload.Issue.Labels, TriageLabelConstants.IssueAddressed))
                     {
                         bool hasAdminOrWritePermission = await gitHubEventClient.DoesUserHaveAdminOrWritePermission(issueCommentPayload.Repository.Id, issueCommentPayload.Sender.Login);
 
@@ -182,8 +182,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             hasAdminOrWritePermission)
                         {
                             gitHubEventClient.SetIssueState(issueCommentPayload.Issue, ItemState.Open);
-                            gitHubEventClient.RemoveLabel(LabelConstants.IssueAddressed);
-                            gitHubEventClient.AddLabel(LabelConstants.NeedsTeamAttention);
+                            gitHubEventClient.RemoveLabel(TriageLabelConstants.IssueAddressed);
+                            gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
                         }
                         // else the user is not the original author AND they don't have admin or write permission
                         else

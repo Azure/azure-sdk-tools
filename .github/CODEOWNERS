@@ -32,7 +32,6 @@
 ###########
 /tools/                                @azure/azure-sdk-eng
 /tools/codeowners-utils/               @JimSuplizio
-/tools/github-issues/                  @praveenkuttappan @weshaggard
 /tools/github-event-processor/         @JimSuplizio @benbp
 /tools/github-team-user-store/         @JimSuplizio @weshaggard
 /tools/js-sdk-release-tools/           @qiaozha @MaryGao

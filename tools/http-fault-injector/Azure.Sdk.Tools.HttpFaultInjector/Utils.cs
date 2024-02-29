@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Metadata;
+using Microsoft.AspNetCore.Http;
+using OpenTelemetry.Trace;
 
 namespace Azure.Sdk.Tools.HttpFaultInjector
 {
@@ -34,14 +38,28 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
             ResponseSelectionHeader
         };
 
-        // Headers which must be set on HttpContent instead of HttpRequestMessage
+        // Headers which must be set on HttpContent instead of HttpRequestMessage, values from HttpContentHeaders
         public static readonly string[] ContentRequestHeaders = new string[] {
+            "Allow",
+            "Content-Disposition",
+            "Content-Encoding",
+            "Content-Language",
             "Content-Length",
+            "Content-Location",
+            "Content-MD5",
+            "Content-Range",
             "Content-Type",
+            "Expires",
+            "Last-Modified"
         };
 
         public const string ResponseSelectionHeader = "x-ms-faultinjector-response-option";
         public const string UpstreamBaseUriHeader = "X-Upstream-Base-Uri";
+
+        public static bool HasBody(HttpRequest request)
+        {
+            return request.ContentLength > 0 || request.Headers.TransferEncoding.Contains("chunked");
+        }
 
         public static string ReadSelectionFromConsole()
         {

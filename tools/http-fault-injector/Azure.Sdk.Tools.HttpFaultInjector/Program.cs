@@ -7,7 +7,9 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using System;
+using System.IO;
 using System.Net.Http;
+using System.Reflection;
 
 namespace Azure.Sdk.Tools.HttpFaultInjector
 {
@@ -28,6 +30,7 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
             {
                 settings.CaseSensitive = false;
                 settings.HelpWriter = Console.Error;
+                settings.IgnoreUnknownArguments = true;
             });
 
             parser.ParseArguments<Options>(args).WithParsed(options => Run(options, args));
@@ -36,7 +39,12 @@ namespace Azure.Sdk.Tools.HttpFaultInjector
         private static void Run(Options options, string[] args)
         {
             TimeSpan keepAlive = TimeSpan.FromSeconds(options.KeepAliveTimeout);
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(new WebApplicationOptions()
+            {
+                Args = args,
+                ContentRootPath = Directory.GetParent(Assembly.GetExecutingAssembly().Location)?.FullName
+            });
+
             builder.WebHost.ConfigureKestrel(kestrelOptions =>
             {
                 kestrelOptions.Limits.KeepAliveTimeout = keepAlive;

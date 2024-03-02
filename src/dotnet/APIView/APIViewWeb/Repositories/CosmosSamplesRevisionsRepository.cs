@@ -17,7 +17,7 @@ namespace APIViewWeb
 
         public CosmosSamplesRevisionsRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
-            _samplesRevisionsContainer = cosmosClient.GetContainer("APIViewV2", "SamplesRevisions");
+            _samplesRevisionsContainer = cosmosClient.GetContainer(configuration["CosmosDBName"], "SamplesRevisions");
         }
 
         public async Task<IEnumerable<SamplesRevisionModel>> GetSamplesRevisionsAsync(string reviewId)

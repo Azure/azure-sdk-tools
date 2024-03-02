@@ -39,6 +39,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;
+using WebMarkupMin.AspNetCore7;
 
 namespace APIViewWeb
 {
@@ -247,6 +248,11 @@ namespace APIViewWeb
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddHostedService<LinesWithDiffBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
+            services.AddWebMarkupMin(options =>
+            {
+                options.AllowMinificationInDevelopmentEnvironment = true;
+                options.AllowCompressionInDevelopmentEnvironment = true;
+            }).AddHtmlMinification().AddHttpCompression();
             services.AddControllersWithViews()
                 .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
                 .PartManager.ApplicationParts.Add(new AssemblyPart(typeof(BaseApiController).Assembly));
@@ -328,6 +334,7 @@ namespace APIViewWeb
             app.UseMiddleware<SwaggerAuthMiddleware>();
             app.UseSwagger();
             app.UseSwaggerUI();
+            app.UseWebMarkupMin();
 
             app.UseEndpoints(endpoints => {
                 endpoints.MapRazorPages();

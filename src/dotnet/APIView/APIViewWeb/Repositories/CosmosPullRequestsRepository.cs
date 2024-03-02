@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
@@ -18,7 +19,7 @@ namespace APIViewWeb
 
         public CosmosPullRequestsRepository(IConfiguration configuration, ICosmosReviewRepository reviewsRepository, CosmosClient cosmosClient)
         {
-            _pullRequestsContainer = cosmosClient.GetContainer("APIViewV2", "PullRequests");
+            _pullRequestsContainer = cosmosClient.GetContainer(configuration["CosmosDBName"], "PullRequests");
             _reviewsRepository = reviewsRepository;
         }
 
@@ -73,19 +74,36 @@ namespace APIViewWeb
 
             // Cosmos doesn't allow cross join of two containers so we need to filter closed API reviews
             var filtered = new List<PullRequestModel>();
-            foreach(var pr in allRequests)
+            Dictionary<string, List<PullRequestModel>> kvp = new Dictionary<string, List<PullRequestModel>>();
+            foreach (var pr in allRequests)
             {
-                if(!string.IsNullOrEmpty(pr.ReviewId) && !await IsApiReviewClosed(pr.ReviewId))
-                    filtered.Add(pr);
+                if (!string.IsNullOrEmpty(pr.ReviewId))
+                {
+                    if (kvp.ContainsKey(pr.ReviewId))
+                    {
+                        kvp[pr.ReviewId].Add(pr);
+                    }
+                    else
+                    {
+                        kvp.Add(pr.ReviewId, new List<PullRequestModel> { pr });    
+                    }
+                }
             }
 
-            return filtered;
-        }
+            if (kvp.Any())
+            {
+                var reviews = await _reviewsRepository.GetReviewsAsync(reviewIds: new List<string>(kvp.Keys), isClosed: false);
+                var reviewIds = reviews.Select(r => r.Id).ToList();
 
-        private async Task<bool> IsApiReviewClosed(string reviewId)
-        {
-            var review = await _reviewsRepository.GetReviewAsync(reviewId);
-            return review?.IsClosed ?? true;
+                foreach (var kv in kvp)
+                {
+                    if (reviewIds.Contains(kv.Key))
+                    {
+                        filtered.AddRange(kv.Value);
+                    }
+                }
+            }
+            return filtered;
         }
     }
 }

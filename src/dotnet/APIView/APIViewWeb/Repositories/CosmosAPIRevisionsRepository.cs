@@ -21,7 +21,7 @@ namespace APIViewWeb
 
         public CosmosAPIRevisionsRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
-            _apiRevisionContainer = cosmosClient.GetContainer("APIViewV2", "APIRevisions");
+            _apiRevisionContainer = cosmosClient.GetContainer(configuration["CosmosDBName"], "APIRevisions");
         }
 
         /// <summary>

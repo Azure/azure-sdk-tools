@@ -17,6 +17,7 @@
               crossorigin="anonymous"
               integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" />
     </environment>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <!-- Soma Select -->
@@ -46,9 +47,6 @@
                 <div class="navbar-collapse collapse">
                     <ul class="navbar-nav me-auto">
                         @if (User.Identity.IsAuthenticated) {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Assemblies/Index">Reviews</a>
-                            </li>
                             <li class="nav-item">
                                 <span asp-resource="@Model" asp-requirement="@ApproverRequirement.Instance">
                                     <a class="nav-link" asp-area="" asp-page="/Assemblies/RequestedReviews">Requested Reviews</a>

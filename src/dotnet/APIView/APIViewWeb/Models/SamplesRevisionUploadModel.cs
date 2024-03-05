@@ -9,10 +9,10 @@ namespace APIViewWeb.Pages.Assemblies
     public class SamplesRevisionUploadModel
     {
         [BindProperty]
-        public string sampleString { get; set; }
+        public string SampleString { get; set; }
 
         [BindProperty]
-        public string updateString { get; set; }
+        public string UpdateString { get; set; }
 
         [BindProperty]
         public string ReviewId { get; set; }
@@ -24,7 +24,13 @@ namespace APIViewWeb.Pages.Assemblies
         public bool Deleting { get; set; } = false;
 
         [BindProperty]
+        public bool DeletingAndRedirect { get; set; } = false;
+
+        [BindProperty]
         public bool Updating { get; set; } = false;
+
+        [BindProperty]
+        public bool Renaming { get; set; } = false;
 
         [BindProperty]
         public string SampleId { get; set; }

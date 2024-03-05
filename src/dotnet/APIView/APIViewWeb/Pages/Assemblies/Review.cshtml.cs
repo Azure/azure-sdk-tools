@@ -10,13 +10,13 @@ using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Common;
-
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -130,7 +130,7 @@ namespace APIViewWeb.Pages.Assemblies
                 return RedirectToPage("Index", new { notificationMessage = ReviewContent.NotificationMessage });
             }
 
-            if (ReviewContent.APIRevisionsGrouped == null || !ReviewContent.APIRevisionsGrouped.Any())
+            if (ReviewContent.APIRevisions == null || !ReviewContent.APIRevisions.Any())
             {
                 return RedirectToPage("LegacyReview", new { id = id });
             }
@@ -302,6 +302,28 @@ namespace APIViewWeb.Pages.Assemblies
             await _notificationManager.NotifyApproversOfReview(User, apiRevisionId, reviewers);
             return RedirectToPage(new { id = id, revisionId = apiRevisionId });
         }
+
+        /// <summary>
+        /// Upload APIRevisions
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="upload"></param>
+        /// <param name="label"></param>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public async Task<IActionResult> OnPostUploadAsync(string id, [FromForm] IFormFile upload, [FromForm] string label, [FromForm] string filePath)
+        {
+            if (!ModelState.IsValid)
+            {
+                return RedirectToPage();
+            }
+
+            var apiRevision = await PageModelHelpers.UploadAPIRevisionAsync(_apiRevisionsManager, User, id, upload, label, filePath);
+
+            return RedirectToPage(new { id = id, revisionId = apiRevision.Id });
+        }
+
+
         /// <summary>
         /// Get Routing Data for a Review
         /// </summary>

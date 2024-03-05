@@ -14,6 +14,8 @@ using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 
 namespace APIViewWeb.Helpers
@@ -368,7 +370,7 @@ namespace APIViewWeb.Helpers
             reviewPageContent.Review = review;
             reviewPageContent.Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation;
             reviewPageContent.codeLines = codeLines;
-            reviewPageContent.APIRevisionsGrouped = apiRevisions.OrderByDescending(c => c.CreatedOn).GroupBy(r => r.APIRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList());
+            reviewPageContent.APIRevisions = apiRevisions.OrderByDescending(c => c.CreatedOn);
             reviewPageContent.ActiveAPIRevision = activeRevision;
             reviewPageContent.DiffAPIRevision = diffRevision;
             reviewPageContent.TotalActiveConversiations = comments.Threads.Count(t => !t.IsResolved);
@@ -499,6 +501,29 @@ namespace APIViewWeb.Helpers
             return label;
         }
 
+        /// <summary>
+        /// Upload API Revision
+        /// </summary>
+        /// <param name="apiRevisionsManager"></param>
+        /// <param name="user"></param>
+        /// <param name="id"></param>
+        /// <param name="upload"></param>
+        /// <param name="label"></param>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public static async Task<APIRevisionListItemModel> UploadAPIRevisionAsync(IAPIRevisionsManager apiRevisionsManager, ClaimsPrincipal user,  string id, [FromForm] IFormFile upload, [FromForm] string label, [FromForm] string filePath) 
+        {
+            if (upload != null)
+            {
+                var openReadStream = upload.OpenReadStream();
+                return await apiRevisionsManager.AddAPIRevisionAsync(user, id, APIRevisionType.Manual, upload.FileName, label, openReadStream, language: null);
+            }
+            else
+            {
+                return await apiRevisionsManager.AddAPIRevisionAsync(user, id, APIRevisionType.Manual, filePath, label, null);
+            }
+        }
+        
         /// <summary>
         /// Create DiffOnly Lines
         /// </summary>

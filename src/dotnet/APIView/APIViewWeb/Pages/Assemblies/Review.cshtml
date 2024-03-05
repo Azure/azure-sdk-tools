@@ -6,8 +6,7 @@
 @{
     Layout = "Shared/_Layout";
     ViewData["Title"] = Model.ReviewContent.Review.PackageName;
-    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
-    TempData["UserPreference"] = userPreference;
+    TempData["UserPreference"] = Model.UserPreference;
     TempData["LanguageCssSafeName"] = PageModelHelpers.GetLanguageCssSafeName(Model.ReviewContent.Review.Language);
     TempData["Comments"] = Model.Comments;
     ViewBag.HasSections = Model.ReviewContent.PageHasLoadableSections;
@@ -17,7 +16,7 @@
     var leftOffCanvasClass = " show-left-offcanvas";
     var mainContainerLeftClass = " move-main-content-container-left";
     var mainContainerRightClass = " move-main-content-container-right";
-    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
+    if (Model.UserPreference.HideReviewPageOptions.HasValue && Model.UserPreference.HideReviewPageOptions == true)
     {
         rightOffCanvasClass = String.Empty;
         mainContainerRightClass = String.Empty;
@@ -368,7 +367,7 @@
         <ul class="list-group collapse mb-3@(pageSettingsCollapseState)" id="pageSettingsCollapse">
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    @if (userPreference.ShowComments == true)
+                    @if (Model.UserPreference.ShowComments == true)
                     {
                         <input class="form-check-input" type="checkbox" role="switch" id="show-comments-checkbox" checked>
                     }
@@ -381,7 +380,7 @@
             </li>
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    @if (userPreference.ShowSystemComments == true)
+                    @if (Model.UserPreference.ShowSystemComments == true)
                     {
                         <input class="form-check-input" type="checkbox" role="switch" id="show-system-comments-checkbox" checked>
                     }
@@ -394,22 +393,22 @@
             </li>
             <li class="list-group-item" id="show-documentation-component">
                 <div class="form-check form-switch">
-                    @if (Model.ShowDocumentation)
+                    @if (Model.ShowDocumentation ?? false)
                     {
-                        <input class="form-check-input show-documentation-checkbox" checked type="checkbox" role="switch" asp-for="@Model.ShowDocumentation" id="showDocumentationSwitch">
+                        <input class="form-check-input show-documentation-checkbox" checked type="checkbox" role="switch" id="showDocumentationSwitch">
                     }
                     else
                     {
-                        <input class="form-check-input show-documentation-checkbox" type="checkbox" role="switch" asp-for="@Model.ShowDocumentation" id="showDocumentationSwitch">                  
+                        <input class="form-check-input show-documentation-checkbox" type="checkbox" role="switch" id="showDocumentationSwitch">                  
                     }
-                    <a class="show-documentation-switch" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly, revisionId: Model.ReviewContent.ActiveAPIRevision.Id)>
+                    <a class="show-documentation-switch" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !(Model.ShowDocumentation ?? false), showDiffOnly: Model.ShowDiffOnly, revisionId: Model.ReviewContent.ActiveAPIRevision.Id)>
                         <label class="form-check-label" for="showDocumentationSwitch">Show Documentation</label>
                     </a>
                 </div>
             </li>
             <li class="list-group-item" id="show-hidden-api-component">
                 <div class="form-check form-switch">
-                    @if (userPreference.ShowHiddenApis == true)
+                    @if (Model.UserPreference.ShowHiddenApis == true)
                     {
                         <input class="form-check-input" type="checkbox" role="switch" id="show-hidden-api-checkbox" checked>
                     }
@@ -422,7 +421,7 @@
             </li>
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    @if (userPreference.HideLineNumbers == true)
+                    @if (Model.UserPreference.HideLineNumbers == true)
                     {
                         <input class="form-check-input" type="checkbox" role="switch" id="hide-line-numbers">
                     }
@@ -435,7 +434,7 @@
             </li>
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    @if (userPreference.HideLeftNavigation == true)
+                    @if (Model.UserPreference.HideLeftNavigation == true)
                     {
                         <input class="form-check-input" type="checkbox" role="switch" id="hide-left-navigation">
                     }
@@ -470,7 +469,7 @@
 
 <div class="container-fluid mx-0 px-0 sub-header-content">
     <div class="row px-3 py-2 border-bottom" id="review-info-bar">
-        <partial name="Shared/_ReviewBadge" model="(Model.ReviewContent.Review, Model.ReviewContent.ActiveAPIRevision, Model.ReviewContent.DiffAPIRevision, userPreference)" />
+        <partial name="Shared/_ReviewBadge" model="(Model.ReviewContent.Review, Model.ReviewContent.ActiveAPIRevision, Model.ReviewContent.DiffAPIRevision, Model.UserPreference)" />
     </div>
 </div>
 
@@ -479,7 +478,7 @@
         @{
             var reviewLeftDisplay = String.Empty;
             var reviewRightSize = "10";
-            if (userPreference.HideLeftNavigation == true)
+            if (Model.UserPreference.HideLeftNavigation == true)
             {
                 reviewLeftDisplay = "d-none";
                 reviewRightSize = "12";

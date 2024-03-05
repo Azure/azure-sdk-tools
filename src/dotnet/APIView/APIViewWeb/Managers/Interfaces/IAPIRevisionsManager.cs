@@ -40,5 +40,6 @@ namespace APIViewWeb.Managers.Interfaces
         public Task AutoArchiveAPIRevisions(int archiveAfterMonths);
         public Task AssignReviewersToAPIRevisionAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers);
         public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName);
+        public Task<APIRevisionListItemModel> UpdateRevisionPackageVersionAsync(APIRevisionListItemModel revision, string packageVersion);
     }
 }

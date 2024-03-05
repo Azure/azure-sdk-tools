@@ -828,5 +828,15 @@ namespace APIViewWeb.Managers
             }
             return result;
         }
+
+        public async Task<APIRevisionListItemModel> UpdateRevisionPackageVersionAsync(APIRevisionListItemModel revision, string packageVersion)
+        {
+            if (packageVersion != null && !packageVersion.Equals(revision.Files[0].PackageVersion))
+            {
+                revision.Files[0].PackageVersion = packageVersion;
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+            }
+            return revision;
+        }
     }
 }

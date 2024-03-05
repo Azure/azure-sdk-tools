@@ -46,9 +46,9 @@ namespace APIViewWeb.Controllers
                         runAnalysis: false, memoryStream: memoryStream);
 
                     var apiRevision = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
-
                     if (apiRevision != null)
                     {
+                        apiRevision = await _apiRevisionsManager.UpdateRevisionPackageVersionAsync(apiRevision, codeFile.PackageVersion);
                         var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
                         return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                     }
@@ -115,6 +115,7 @@ namespace APIViewWeb.Controllers
             var apiRevision = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, compareAllRevisions);
             if (apiRevision != null)
             {
+                apiRevision = await _apiRevisionsManager.UpdateRevisionPackageVersionAsync(apiRevision, codeFile.PackageVersion);
                 var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
                 return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
             }

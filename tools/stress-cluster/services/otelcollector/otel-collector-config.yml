@@ -19,10 +19,10 @@ service:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [azuremonitor]
+      exporters: [logging, azuremonitor]
 
 exporters:
   logging:
-    verbosity: normal
+    verbosity: detailed
   azuremonitor:
-#    connection_string: "%APPLICATIONINSIGHTS_CONNECTION_STRING%"
+    connection_string: "${env:APPLICATIONINSIGHTS_CONNECTION_STRING}"

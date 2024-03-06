@@ -829,6 +829,7 @@ namespace APIViewWeb.Managers
             return result;
         }
 
+
         public async Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label)
         {
             if (packageVersion != null && !packageVersion.Equals(revision.Files[0].PackageVersion))
@@ -838,6 +839,43 @@ namespace APIViewWeb.Managers
                 await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
             }
             return revision;
+        }
+
+
+        /// <summary>
+        /// Retrieve the latest APIRevison for a particular Review with a matching package version(atleast major and minor version match).
+        /// Filter by APIRevisionType if specified and Review contains specified type
+        /// If APIRevisionType is not specified, return the latest revision irrespective of the type
+        /// Return default if no revision is found
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="packageVersion"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <returns>APIRevisionListItemModel</returns>
+        public async Task<APIRevisionListItemModel> GetRevisionForPackageVersionAsync(string reviewId, string packageVersion, APIRevisionType apiRevisionType = APIRevisionType.All)
+        {
+            var apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+            if (apiRevisionType != APIRevisionType.All && apiRevisions.Any(r => r.APIRevisionType == apiRevisionType))
+            {
+                apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
+                // Check for exact same package version
+                // If exact version is not found in revision then search for same major and minor version and return the latest.
+                var exactMatchRevisions = apiRevisions.Where(r => packageVersion.Equals(r.Files[0].PackageVersion));
+                if (exactMatchRevisions.Any())
+                {
+                    return exactMatchRevisions.OrderByDescending(r => r.CreatedOn).First();
+                }
+
+                // Check for revisions with matching
+                var versionGroups = packageVersion.Split('.');
+                var majorMinor = $"{versionGroups[0]}.{versionGroups[1]}";
+                var majorMinorMatchRevisions = apiRevisions.Where(r => !string.IsNullOrEmpty(r.Files[0].PackageVersion) && r.Files[0].PackageVersion.StartsWith(majorMinor));
+                if (majorMinorMatchRevisions.Any())
+                {
+                    return majorMinorMatchRevisions.OrderByDescending(r => r.CreatedOn).First();
+                }
+            }
+            return null;
         }
     }
 }

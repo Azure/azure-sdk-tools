@@ -41,5 +41,6 @@ namespace APIViewWeb.Managers.Interfaces
         public Task AssignReviewersToAPIRevisionAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers);
         public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName);
         public Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label);
+        public Task<APIRevisionListItemModel> GetRevisionForPackageVersionAsync(string reviewId, string packageVersion, APIRevisionType apiRevisionType);
     }
 }

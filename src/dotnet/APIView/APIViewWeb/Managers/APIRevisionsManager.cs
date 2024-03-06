@@ -868,7 +868,7 @@ namespace APIViewWeb.Managers
 
                 // Check for revisions with matching
                 var versionGroups = packageVersion.Split('.');
-                var majorMinor = $"{versionGroups[0]}.{versionGroups[1]}";
+                var majorMinor = $"{versionGroups[0]}.{versionGroups[1]}.";
                 var majorMinorMatchRevisions = apiRevisions.Where(r => !string.IsNullOrEmpty(r.Files[0].PackageVersion) && r.Files[0].PackageVersion.StartsWith(majorMinor));
                 if (majorMinorMatchRevisions.Any())
                 {

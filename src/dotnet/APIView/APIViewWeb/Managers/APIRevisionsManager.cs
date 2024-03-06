@@ -829,11 +829,12 @@ namespace APIViewWeb.Managers
             return result;
         }
 
-        public async Task<APIRevisionListItemModel> UpdateRevisionPackageVersionAsync(APIRevisionListItemModel revision, string packageVersion)
+        public async Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label)
         {
             if (packageVersion != null && !packageVersion.Equals(revision.Files[0].PackageVersion))
             {
                 revision.Files[0].PackageVersion = packageVersion;
+                revision.Label = label;
                 await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
             }
             return revision;

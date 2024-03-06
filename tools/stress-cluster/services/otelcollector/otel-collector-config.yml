@@ -23,6 +23,6 @@ service:
 
 exporters:
   logging:
-    verbosity: detailed
+    verbosity: "${env:OTEL_LOG_LEVEL}"
   azuremonitor:
     connection_string: "${env:APPLICATIONINSIGHTS_CONNECTION_STRING}"

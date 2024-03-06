@@ -153,7 +153,19 @@
             !(LanguageServiceHelpers.MapLanguageAliases(new List<string> { "Swagger", "TypeSpec" })).Contains(Model.ReviewContent.Review.Language))
             {
                 var reviewIsApproved = Model.ReviewContent.Review.IsApproved;
-                var approver = (reviewIsApproved) ? "azure-sdk" : null;
+                string approver = null;
+                if (reviewIsApproved)
+                {
+                    var changeAction = Model.ReviewContent.Review.ChangeHistory.First(_ => _.ChangeAction == ReviewChangeAction.Approved);
+                    if (changeAction != null)
+                    {
+                        approver = changeAction.ChangedBy;
+                    }
+                    else
+                    {
+                        approver = "azure-sdk";
+                    }
+                }
 
                 @if (!reviewIsApproved)
                 {

@@ -40,7 +40,8 @@ function Write-Sourceable-BashFile([string]$sourceableBashFilePath) {
 
     # the .sh file equivalent with all variables exported and properly quoted so it
     # can be sourced in a bash script.    
-    $sourceableBashFileText = "# This file is intended to be sourced by a bash script`nExample: . $ENV_FILE + '.sh'"
+    $sourceableBashFileText = "# This file is intended to be sourced by a bash script`n" + 
+    "# Example: . $ENV_FILE + '.sh'`n"
 
     foreach ($envLine in $envLines) {
         Write-Output "Processing $envLine"

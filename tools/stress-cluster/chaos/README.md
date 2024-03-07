@@ -184,9 +184,12 @@ Fields in `Chart.yaml`
 ### Stress Test Secrets and Environment
 
 For ease of implementation regarding merging secrets from various Keyvault sources, secret values injected into the stress
-test container can be found in a file at path `$ENV_FILE` (usually `/mnt/outputs/.env`). This file follows the "dotenv" file syntax (i.e. lines of <key>=<value>), and
+test container can be found in two files:
+
+* `$ENV_FILE` (usually `/mnt/outputs/.env`). This file follows the "dotenv" file syntax (i.e. lines of <key>=<value>), and
 can be [loaded](https://www.npmjs.com/package/dotenv) [via](https://pypi.org/project/python-dotenv/)
 [various](https://mvnrepository.com/artifact/io.github.cdimascio/dotenv-java) [packages](https://www.nuget.org/packages/dotenv.net/).
+* `$ENV_FILE + '.sh'` (usually `/mnt/outputs/.env.sh`). This file is bash compatible and can be sourced into a shell.
 
 Stress tests should publish telemetry and logs to Application Insights via the `$APPINSIGHTS_CONNECTION_STRING` environment variable
 injected into the container. An `$APPINSIGHTS_INSTRUMENTATIONKEY` environment variable is also made available for

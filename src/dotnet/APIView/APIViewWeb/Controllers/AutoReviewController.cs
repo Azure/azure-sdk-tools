@@ -15,7 +15,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace APIViewWeb.Controllers
 {
-    [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
     public class AutoReviewController : Controller
     {
         private readonly IAuthorizationService _authorizationService;
@@ -36,6 +35,7 @@ namespace APIViewWeb.Controllers
 
         // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
         // regular CI pipeline will not send this flag in request
+        [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
         [HttpPost]
         public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false)
         {
@@ -100,6 +100,7 @@ namespace APIViewWeb.Controllers
 
         // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
         // regular CI pipeline will not send this flag in request
+        [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
         [HttpGet]
         public async Task<ActionResult> CreateApiReview(
             string buildId,
@@ -168,6 +169,7 @@ namespace APIViewWeb.Controllers
                         while (
                             automaticRevisionsQueue.Any() &&
                             !latestAutomaticAPIRevision.IsApproved &&
+                            !latestAutomaticAPIRevision.IsReleased &&
                             !await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
                             !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
                         {

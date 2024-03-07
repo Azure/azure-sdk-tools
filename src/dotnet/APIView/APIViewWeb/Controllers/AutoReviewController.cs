@@ -34,8 +34,10 @@ namespace APIViewWeb.Controllers
             _reviewManager = reviewManager;
         }
 
+        // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
+        // regular CI pipeline will not send this flag in request
         [HttpPost]
-        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null)
+        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false)
         {
             if (file != null)
             {
@@ -49,6 +51,12 @@ namespace APIViewWeb.Controllers
                     if (apiRevision != null)
                     {
                         apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label);
+                        if (setReleaseTag)
+                        {
+                            // Set current revision as released. Preview packages are released without api review approval so we cannot really check if revision is approved to mark it as released.
+                            // Pipeline enforces API view approval to release a GA package and request to tag a release is only sent after releasing a package. Hence we don't need to check approval status.
+                            apiRevision = await _apiRevisionsManager.TagRevisionAsReleasedAsync(apiRevision);
+                        }
                         var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
                         return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                     }
@@ -90,6 +98,8 @@ namespace APIViewWeb.Controllers
             throw new Exception("Review is not found for package " + packageName);
         }
 
+        // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
+        // regular CI pipeline will not send this flag in request
         [HttpGet]
         public async Task<ActionResult> CreateApiReview(
             string buildId,
@@ -101,7 +111,8 @@ namespace APIViewWeb.Controllers
             string packageName,
             bool compareAllRevisions,
             string project,
-            string packageVersion = null
+            string packageVersion = null,
+            bool setReleaseTag = false
             )
         {
             using var memoryStream = new MemoryStream();
@@ -117,6 +128,12 @@ namespace APIViewWeb.Controllers
             if (apiRevision != null)
             {
                 apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label);
+                if (setReleaseTag)
+                {
+                    // Set current revision as released. Preview packages are released without api review approval so we cannot really check if revision is approved to mark it as released.
+                    // Pipeline enforces API view approval to release a GA package and request to tag a release is only sent after releasing a package. Hence we don't need to check approval status.
+                    apiRevision = await _apiRevisionsManager.TagRevisionAsReleasedAsync(apiRevision);
+                }
                 var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
                 return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
             }

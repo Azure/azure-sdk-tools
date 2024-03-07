@@ -24,9 +24,9 @@ parameters:
   default: ''
 - name: PackageType
   type: string
-  default: 'Client'
+  default: 'client'
   values:
-  - Client
+  - client
   - mgmt
 - name: PackageName
   displayName: Package Name (e.g. Azure.Core)
@@ -50,7 +50,6 @@ parameters:
 
 steps:
 - checkout: self
-
 
 - task: PowerShell@2
   displayName: Create Package Work Item

@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.4.6 (03-04-2024)
+## Version 0.4.6 (03-08-2024)
 Support CrossLanguagePackageId.
 
 ## Version 0.4.5 (01-29-2024)

@@ -180,7 +180,7 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
         }  
       }      
       const resolvedProgram = resolveProgramForVersion(program, service.type, versionString);
-  
+      
       const apiview = new ApiView(serviceTitle, namespaceString, versionString, options.includeGlobalNamespace);
       apiview.emit(resolvedProgram);
       apiview.resolveMissingTypeReferences();

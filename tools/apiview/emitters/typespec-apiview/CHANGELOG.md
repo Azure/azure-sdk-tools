@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.4.6 (03-04-2024)
+Support CrossLanguagePackageId.
+
 ## Version 0.4.5 (01-29-2024)
 Support named template arguments.
 Support unnamed unions.

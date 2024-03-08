@@ -13,6 +13,7 @@ import {
   IdentifierNode,
   InterfaceStatementNode,
   IntersectionExpressionNode,
+  listServices,
   MemberExpressionNode,
   ModelExpressionNode,
   ModelPropertyNode,
@@ -20,6 +21,7 @@ import {
   ModelStatementNode,
   Namespace,
   navigateProgram,
+  NoTarget,
   NumericLiteralNode,
   OperationSignatureDeclarationNode,
   OperationSignatureReferenceNode,
@@ -41,6 +43,7 @@ import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
 import { ApiViewNavigation } from "./navigation.js";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
+import { reportDiagnostic } from "./lib.js";
 
 const WHITESPACE = " ";
 
@@ -80,11 +83,13 @@ export interface ApiViewDocument {
   Diagnostics: ApiViewDiagnostic[];
   VersionString: string;
   Language: string;
+  CrossLanguagePackageId: string | undefined;
 }
 
 export class ApiView {
   name: string;
   packageName: string;
+  crossLanguagePackageId: string | undefined;
   tokens: ApiViewToken[] = [];
   navigationItems: ApiViewNavigation[] = [];
   diagnostics: ApiViewDiagnostic[] = [];
@@ -101,7 +106,7 @@ export class ApiView {
     this.packageName = packageName;
     this.versionString = versionString ?? "";
     this.includeGlobalNamespace = includeGlobalNamespace ?? false;
-
+    this.crossLanguagePackageId = packageName;
     this.emitHeader();
   }
 
@@ -1067,7 +1072,8 @@ export class ApiView {
       Navigation: this.navigationItems,
       Diagnostics: this.diagnostics,
       VersionString: this.versionString,
-      Language: "TypeSpec"
+      Language: "TypeSpec",
+      CrossLanguagePackageId: this.crossLanguagePackageId
     };
   }
 

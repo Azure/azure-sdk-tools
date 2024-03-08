@@ -829,7 +829,7 @@ namespace APIViewWeb.Managers
             return result;
         }
 
-        public async Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label)
+        public async Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label, bool setReleaseTag = false)
         {
             // Do not update package version metadata once a revision is marked as released
             // This is to avoid updating metadata when a request is processed with a new version (auto incremented version change) right after a version is released
@@ -841,23 +841,15 @@ namespace APIViewWeb.Managers
             {
                 revision.Files[0].PackageVersion = packageVersion;
                 revision.Label = label;
-                await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
             }
-            return revision;
-        }
 
-        public async Task<APIRevisionListItemModel> TagRevisionAsReleasedAsync(APIRevisionListItemModel revision)
-        {
-            // Don't update release date if revision is already marked as released
-            //This shouldn't be the case but adding this check to safe guard released on property
-            if (revision.IsReleased)
+            if (setReleaseTag)
             {
-                return revision;
+                revision.IsReleased = true;
+                revision.ReleasedOn = DateTime.UtcNow;
             }
-            revision.IsReleased = true;
-            revision.ReleasedOn = DateTime.UtcNow;
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
-            return revision; ;
+            return revision;
         }
     }
 }

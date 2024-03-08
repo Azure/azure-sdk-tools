@@ -50,13 +50,7 @@ namespace APIViewWeb.Controllers
                     var apiRevision = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
                     if (apiRevision != null)
                     {
-                        apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label);
-                        if (setReleaseTag)
-                        {
-                            // Set current revision as released. Preview packages are released without api review approval so we cannot really check if revision is approved to mark it as released.
-                            // Pipeline enforces API view approval to release a GA package and request to tag a release is only sent after releasing a package. Hence we don't need to check approval status.
-                            apiRevision = await _apiRevisionsManager.TagRevisionAsReleasedAsync(apiRevision);
-                        }
+                        apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
                         var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
                         return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                     }
@@ -128,13 +122,7 @@ namespace APIViewWeb.Controllers
             var apiRevision = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, compareAllRevisions);
             if (apiRevision != null)
             {
-                apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label);
-                if (setReleaseTag)
-                {
-                    // Set current revision as released. Preview packages are released without api review approval so we cannot really check if revision is approved to mark it as released.
-                    // Pipeline enforces API view approval to release a GA package and request to tag a release is only sent after releasing a package. Hence we don't need to check approval status.
-                    apiRevision = await _apiRevisionsManager.TagRevisionAsReleasedAsync(apiRevision);
-                }
+                apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
                 var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
                 return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
             }

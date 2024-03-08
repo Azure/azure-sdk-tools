@@ -15,7 +15,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace APIViewWeb.Controllers
 {
-    [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
     public class AutoReviewController : Controller
     {
         private readonly IAuthorizationService _authorizationService;
@@ -34,8 +33,11 @@ namespace APIViewWeb.Controllers
             _reviewManager = reviewManager;
         }
 
+        // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
+        // regular CI pipeline will not send this flag in request
+        [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
         [HttpPost]
-        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null)
+        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false)
         {
             if (file != null)
             {
@@ -48,7 +50,7 @@ namespace APIViewWeb.Controllers
                     var apiRevision = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
                     if (apiRevision != null)
                     {
-                        apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label);
+                        apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
                         var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
                         return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                     }
@@ -106,6 +108,9 @@ namespace APIViewWeb.Controllers
             return StatusCode(StatusCodes.Status404NotFound, "Review is not found for package " + packageName);
         }
 
+        // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
+        // regular CI pipeline will not send this flag in request
+        [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
         [HttpGet]
         public async Task<ActionResult> CreateApiReview(
             string buildId,
@@ -117,7 +122,8 @@ namespace APIViewWeb.Controllers
             string packageName,
             bool compareAllRevisions,
             string project,
-            string packageVersion = null
+            string packageVersion = null,
+            bool setReleaseTag = false
             )
         {
             using var memoryStream = new MemoryStream();
@@ -132,7 +138,7 @@ namespace APIViewWeb.Controllers
             var apiRevision = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, compareAllRevisions);
             if (apiRevision != null)
             {
-                apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label);
+                apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
                 var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
                 return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
             }
@@ -167,6 +173,7 @@ namespace APIViewWeb.Controllers
                         while (
                             automaticRevisionsQueue.Any() &&
                             !latestAutomaticAPIRevision.IsApproved &&
+                            !latestAutomaticAPIRevision.IsReleased &&
                             !await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
                             !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
                         {

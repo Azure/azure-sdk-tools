@@ -58,22 +58,38 @@ namespace APIViewWeb.Controllers
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
         }
     
-        public async Task<ActionResult> GetReviewStatus(string language, string packageName, string reviewId = null, bool? firstReleaseStatusOnly = null)
+        public async Task<ActionResult> GetReviewStatus(string language, string packageName, string reviewId = null, bool? firstReleaseStatusOnly = null, string packageVersion = null)
         {
-            // This API is used by prepare release script to check if API review for a package is approved or not.
-            // This caller script doesn't have artifact to submit and so it can't check using create review API
-            // So it rely on approval status of latest revision of automatic review for the package
-            // With new restriction of creating automatic review only from master branch or GA version, this should ensure latest revision
-            // is infact the version intended to be released.
+            // This API is used to get approval status of an API review revision. If a package version is passed then it will try to find a revision with exact package version match or revisions with same major and minor version.
+            // If there is no matching revisions then it will return latest automatic revision details.
+            // This is used by prepare release script and build pipeline to verify approval status.
 
             ReviewListItemModel review = await _reviewManager.GetReviewAsync(packageName: packageName, language: language, isClosed: null);
 
             if (review != null)
             {
-                APIRevisionListItemModel latestAutomaticApiRevisions = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic);
+                APIRevisionListItemModel apiRevision = null;
                 
+                if (!string.IsNullOrEmpty(packageVersion))
+                {
+                    var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId: review.Id, packageVersion: packageVersion, apiRevisionType: APIRevisionType.Automatic);
+                    if (apiRevisions.Any())
+                        apiRevision = apiRevisions.FirstOrDefault();
+                }
+
+                if (apiRevision == null)
+                {
+                    apiRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic);
+                }
+                
+
+                if(apiRevision == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Review is not found for package " + packageName);
+                }
+
                 // Return 200 OK for approved review and 201 for review in pending status
-                if (firstReleaseStatusOnly != true && latestAutomaticApiRevisions != null && latestAutomaticApiRevisions.IsApproved)
+                if (firstReleaseStatusOnly != true && apiRevision != null && apiRevision.IsApproved)
                 {
                     return Ok();
                 }
@@ -87,7 +103,7 @@ namespace APIViewWeb.Controllers
                     return StatusCode(statusCode: StatusCodes.Status202Accepted);
                 }
             }
-            throw new Exception("Review is not found for package " + packageName);
+            return StatusCode(StatusCodes.Status404NotFound, "Review is not found for package " + packageName);
         }
 
         [HttpGet]

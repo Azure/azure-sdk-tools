@@ -77,10 +77,37 @@ namespace APIViewWeb.Managers
         /// Retrieve Revisions for a particular Review from the Revisions container in CosmosDb
         /// </summary>
         /// <param name="reviewId"></param> The Reviewid for which the revisions are to be retrieved
+        /// <param name="packageVersion"></param> Optional package version param to return a matching revision for the package version 
+        /// <param name="apiRevisionType"></param> optional API revision type filter
         /// <returns></returns>
-        public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(string reviewId)
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(string reviewId, string packageVersion = "", APIRevisionType apiRevisionType = APIRevisionType.All)
         {
-            return await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+            var apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+
+            if (apiRevisionType != APIRevisionType.All)
+                apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
+
+            if (!string.IsNullOrEmpty(packageVersion))
+            {                
+                // Check for exact same package version
+                // If exact version is not found in revision then search for same major and minor version and return the latest.
+                var exactMatchRevisions = apiRevisions.Where(r => packageVersion.Equals(r.Files[0].PackageVersion));
+                if (exactMatchRevisions.Any())
+                {
+                    return exactMatchRevisions.OrderByDescending(r => r.CreatedOn);
+                }
+
+                // Check for revisions with matching
+                var versionGroups = packageVersion.Split('.');
+                var majorMinor = $"{versionGroups[0]}.{versionGroups[1]}.";
+                var majorMinorMatchRevisions = apiRevisions.Where(r => !string.IsNullOrEmpty(r.Files[0].PackageVersion) && r.Files[0].PackageVersion.StartsWith(majorMinor));
+                if (majorMinorMatchRevisions.Any())
+                {
+                    return majorMinorMatchRevisions.OrderByDescending(r => r.CreatedOn);
+                }                
+                return majorMinorMatchRevisions;
+            }
+            return apiRevisions;
         }
 
         /// <summary>
@@ -828,6 +855,7 @@ namespace APIViewWeb.Managers
             }
             return result;
         }
+
 
         public async Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label)
         {

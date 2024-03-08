@@ -68,20 +68,28 @@ namespace APIViewWeb.Controllers
 
             if (review != null)
             {
-                APIRevisionListItemModel apiRevisions = null;
+                APIRevisionListItemModel apiRevision = null;
                 
                 if (!string.IsNullOrEmpty(packageVersion))
                 {
-                    apiRevisions = await _apiRevisionsManager.GetRevisionForPackageVersionAsync(reviewId: review.Id, packageVersion: packageVersion, apiRevisionType: APIRevisionType.Automatic);
+                    var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId: review.Id, packageVersion: packageVersion, apiRevisionType: APIRevisionType.Automatic);
+                    if (apiRevisions.Any())
+                        apiRevision = apiRevisions.FirstOrDefault();
                 }
 
-                if (apiRevisions == null)
+                if (apiRevision == null)
                 {
-                    apiRevisions = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic);
+                    apiRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic);
                 }
                 
+
+                if(apiRevision == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Review is not found for package " + packageName);
+                }
+
                 // Return 200 OK for approved review and 201 for review in pending status
-                if (firstReleaseStatusOnly != true && apiRevisions != null && apiRevisions.IsApproved)
+                if (firstReleaseStatusOnly != true && apiRevision != null && apiRevision.IsApproved)
                 {
                     return Ok();
                 }
@@ -95,7 +103,7 @@ namespace APIViewWeb.Controllers
                     return StatusCode(statusCode: StatusCodes.Status202Accepted);
                 }
             }
-            throw new Exception("Review is not found for package " + packageName);
+            return StatusCode(StatusCodes.Status404NotFound, "Review is not found for package " + packageName);
         }
 
         [HttpGet]

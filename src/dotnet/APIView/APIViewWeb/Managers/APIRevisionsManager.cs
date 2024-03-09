@@ -793,6 +793,38 @@ namespace APIViewWeb.Managers
             return await _apiRevisionsRepository.GetAPIRevisionsAssignedToUser(userName);
         }
 
+        public async Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label, bool setReleaseTag = false)
+        {
+            // Do not update package version metadata once a revision is marked as released
+            // This is to avoid updating metadata when a request is processed with a new version (auto incremented version change) right after a version is released
+            // without any API changes.
+            if (revision.IsReleased)
+                return revision;
+
+            if (packageVersion != null && !packageVersion.Equals(revision.Files[0].PackageVersion))
+            {
+                revision.Files[0].PackageVersion = packageVersion;
+                revision.Label = label;
+            }
+
+            if (setReleaseTag)
+            {
+                revision.IsReleased = true;
+                revision.ReleasedOn = DateTime.UtcNow;
+            }
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+            return revision;
+        }
+
+        /// <summary>
+        /// Get ReviewIds of Language corresponding Review linked by CrossLanguagePackageId
+        /// </summary>
+        /// <param name="crossLanguagePackageId"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<string>> GetReviewIdsOfLanguageCorrespondingReviewAsync(string crossLanguagePackageId) {
+            return await _apiRevisionsRepository.GetReviewIdsOfLanguageCorrespondingReviewAsync(crossLanguagePackageId);
+        }
+
         /// <summary>
         /// Generate the Revision on a DevOps Pipeline
         /// </summary>
@@ -854,29 +886,6 @@ namespace APIViewWeb.Managers
                 }
             }
             return result;
-        }
-
-        public async Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label, bool setReleaseTag = false)
-        {
-            // Do not update package version metadata once a revision is marked as released
-            // This is to avoid updating metadata when a request is processed with a new version (auto incremented version change) right after a version is released
-            // without any API changes.
-            if (revision.IsReleased)
-                return revision;
-
-            if (packageVersion != null && !packageVersion.Equals(revision.Files[0].PackageVersion))
-            {
-                revision.Files[0].PackageVersion = packageVersion;
-                revision.Label = label;
-            }
-
-            if (setReleaseTag)
-            {
-                revision.IsReleased = true;
-                revision.ReleasedOn = DateTime.UtcNow;
-            }
-            await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
-            return revision;
         }
     }
 }

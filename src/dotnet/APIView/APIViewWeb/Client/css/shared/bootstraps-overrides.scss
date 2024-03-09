@@ -114,12 +114,19 @@
     border-bottom: 1px solid var(--border-color) !important;
 }
 
-.border-start {
-    border-left: 1px solid var(--border-color) !important;
+.breadcrumb {
+    margin-bottom: 0rem;
+}
+.breadcrumb-item + .breadcrumb-item::before {
+    margin-top: 0rem;
 }
 
-.border-end {
-    border-right: 1px solid var(--border-color) !important;
+.breadcrumb-item + .breadcrumb-item::before {
+    padding-right: 0.25rem;
+}
+
+.breadcrumb-item + .breadcrumb-item {
+    padding-left: 0.25rem;
 }
 
 .list-group-item {

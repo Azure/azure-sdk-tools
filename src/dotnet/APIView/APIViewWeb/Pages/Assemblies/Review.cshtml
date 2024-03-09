@@ -527,13 +527,13 @@
                     }
                 </tbody>
             </table>
-            <partial name="_CrossLanguageViewPartial" model="@Model.CrossLanguage" />
+            <partial name="_CrossLanguageViewPartial" model="@Model.ReviewContent.CrossLanguageViewContent.Keys" />
         </div>
     </div>
-    @if (Model.CrossLanguage.Any())
+    @if (Model.ReviewContent.CrossLanguageViewContent.Any())
     {
         <div class="row d-none" id="cross-language-code-lines">
-            @foreach(var language in Model.CrossLanguage)
+            @foreach (var language in Model.ReviewContent.CrossLanguageViewContent.Keys)
             {
                 var reviewcontent = Model.ReviewContent.CrossLanguageViewContent[language];
                 var langId = PageModelHelpers.GetLanguageCssSafeName(language);

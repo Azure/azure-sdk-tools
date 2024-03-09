@@ -70,10 +70,6 @@ namespace APIViewWeb.Pages.Assemblies
         public bool ShowDiffOnly { get; set; }
         [BindProperty(Name = "notificationMessage", SupportsGet = true)]
         public string NotificationMessage { get; set; }
-        [BindProperty(Name = "crossLanguage", SupportsGet = true)]
-        [ModelBinder(BinderType = typeof(DecodeModelBinder))]
-        public IEnumerable<string>CrossLanguage { get; set; }
-
 
         /// <summary>
         /// Handler for loading page
@@ -94,12 +90,11 @@ namespace APIViewWeb.Pages.Assemblies
                 showDocumentation: ShowDocumentation, showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                 diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
-            // Get Cross  Language View Details
-            foreach (var language in CrossLanguage)
+            if (!String.IsNullOrEmpty(ReviewContent.ActiveAPIRevision.Files.First().CrossLanguagePackageId))
             {
-                var packageName = LanguageServiceHelpers.GetCorrespondingPackageName(ReviewContent.Review.Language, language, ReviewContent.Review.PackageName);
-                var review = await _reviewManager.GetReviewAsync(language, packageName);
-                if (review != null)
+                var correspondingReviewId = await _apiRevisionsManager.GetReviewIdsOfLanguageCorrespondingReviewAsync(ReviewContent.ActiveAPIRevision.Files.First().CrossLanguagePackageId);
+                var correspondingReviews = await _reviewManager.GetReviewsAsync(reviewIds: correspondingReviewId, isClosed: false);
+                foreach (var review in correspondingReviews)
                 {
                     var reviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
                         reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
@@ -108,7 +103,7 @@ namespace APIViewWeb.Pages.Assemblies
                         showDocumentation: ShowDocumentation, showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                         diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
-                    ReviewContent.CrossLanguageViewContent.Add(review.Language, reviewContent);
+                        ReviewContent.CrossLanguageViewContent.Add(review.Language, reviewContent);
                 }
             }
 

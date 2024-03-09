@@ -62,7 +62,6 @@
     }
 
     var userPreference = TempData["UserPreference"] as UserPreferenceModel ?? new UserPreferenceModel();
-    var crossLanguageView = TempData["CrossLanguageEntries"] as IEnumerable<string>;
 
     // Always show hidden APIs if we are in Diff mode and there are changes.
     if (Model.CodeLine.IsHiddenApi && Model.Kind == DiffLineKind.Unchanged)
@@ -114,7 +113,7 @@
                 else
                 {
                     var lineNumberClass = $"line-number";
-                    @if (crossLanguageView.Any() && !String.IsNullOrEmpty(Model.CodeLine.CrossLanguageDefinitionId) && PageModelHelpers.IsAPIStubHeader(Model.CodeLine.DisplayString))
+                    @if (!String.IsNullOrEmpty(Model.CodeLine.CrossLanguageDefinitionId) && PageModelHelpers.IsAPIStubHeader(Model.CodeLine.DisplayString))
                     {
                         lineNumberClass = $"{lineNumberClass} cl-line-no";                     }
 

@@ -541,11 +541,8 @@ namespace APIViewWeb.Helpers
         /// <returns></returns>
         public static bool IsAPIStubHeader(string content)
         {
-            if (content.Contains(">model<") || content.Contains(">enum<") || content.Contains(">alias<"))
-            {
-                return true;
-            }
-            return false;
+            List<String> apiStubHEaders = new List<String> { ">model<", ">enum<", ">alias<", ">module<", ">package<", ">class<", ">interface<", ">def<" };
+            return apiStubHEaders.Any(content.Contains);
         }
         /// <summary>
         /// Create DiffOnly Lines

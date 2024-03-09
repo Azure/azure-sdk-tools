@@ -93,7 +93,7 @@ namespace APIViewWeb.Pages.Assemblies
             if (!String.IsNullOrEmpty(ReviewContent.ActiveAPIRevision.Files.First().CrossLanguagePackageId))
             {
                 var correspondingReviewId = await _apiRevisionsManager.GetReviewIdsOfLanguageCorrespondingReviewAsync(ReviewContent.ActiveAPIRevision.Files.First().CrossLanguagePackageId);
-                var correspondingReviews = await _reviewManager.GetReviewsAsync(reviewIds: correspondingReviewId, isClosed: false);
+                var correspondingReviews = await _reviewManager.GetReviewsAsync(reviewIds: correspondingReviewId.Where(_ => _ != id).ToList(), isClosed: false);
                 foreach (var review in correspondingReviews)
                 {
                     var reviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,

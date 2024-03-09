@@ -37,8 +37,7 @@
                     <span class="position-absolute start translate-middle badge rounded-pill bg-danger" id="jump-to-first-comment">
                         @count
                         <span class="visually-hidden">unread messages</span>
-                    </span>
-                }
+                    </span>                }
             </a>
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.ReviewContent.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
         </div>
@@ -527,7 +526,7 @@
                     }
                 </tbody>
             </table>
-            <partial name="_CrossLanguageViewPartial" model="@Model.ReviewContent.CrossLanguageViewContent.Keys" />
+            <partial name="_CrossLanguageViewPartial" model="@Model.ReviewContent.CrossLanguageViewContent" />
         </div>
     </div>
     @if (Model.ReviewContent.CrossLanguageViewContent.Any())
@@ -548,6 +547,7 @@
             }
         </div>
     }
+
     <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
         <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
         <div class="modal fade" id="approveModel" tabindex="-1" role="dialog">

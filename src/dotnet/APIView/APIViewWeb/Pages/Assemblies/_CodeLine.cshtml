@@ -98,7 +98,7 @@
                             </svg>";
         }
     }
-    cellContent += Model.CodeLine.DisplayString;
+    cellContent += Model.CodeLine.DisplayString.Replace(' ', '\u00A0');
 }
 
 <tr class="@rowClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)" data-cross-lang-id="@(isRemoved ? string.Empty : Model.CodeLine.CrossLanguageDefinitionId)">

@@ -1,10 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using APIViewWeb.LeanModels;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
-using Microsoft.Identity.Client;
-using Microsoft.VisualStudio.Services.Common;
 
 namespace APIViewWeb.Helpers
 {

@@ -526,8 +526,27 @@
                     }
                 </tbody>
             </table>
+            <partial name="_CrossLanguageViewPartial" model="@Model.ReviewContent.CrossLanguageViewContent" />
         </div>
     </div>
+    @if (Model.ReviewContent.CrossLanguageViewContent.Any())
+    {
+        <div class="row d-none" id="cross-language-code-lines">
+            @foreach (var language in Model.ReviewContent.CrossLanguageViewContent.Keys)
+            {
+                var reviewcontent = Model.ReviewContent.CrossLanguageViewContent[language];
+                var langId = PageModelHelpers.GetLanguageCssSafeName(language);
+                <table data-language="@langId" data-review-id="@reviewcontent.Review.Id" data-revision-id="@reviewcontent.ActiveAPIRevision.Id">
+                    <tbody>
+                        @foreach (var line in reviewcontent.codeLines)
+                        {
+                            <partial name="_CodeLine" model="@line" />
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    }
 
     <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
         <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />

@@ -232,6 +232,11 @@ namespace APIViewWeb
             return revisions;
         }
 
+        /// <summary>
+        /// Get APIRevisions assigned to a user for review
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <returns></returns>
         public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName)
         {
             var query = "SELECT * FROM Revisions r WHERE ARRAY_CONTAINS(r.AssignedReviewers, { 'AssingedTo': '" + userName + "' }, true)";
@@ -246,6 +251,26 @@ namespace APIViewWeb
             }
 
             return apiRevisions.OrderByDescending(r => r.LastUpdatedOn);
+        }
+
+        /// <summary>
+        /// Get ReviewIds for review that are linked by crossLanguagePackageId
+        /// </summary>
+        /// <param name="crossLanguagePackageId"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<string>> GetReviewIdsOfLanguageCorrespondingReviewAsync(string crossLanguagePackageId)
+        {
+            var query = $"SELECT DISTINCT VALUE c.ReviewId FROM c WHERE ARRAY_LENGTH(c.Files) > 0 AND c.Files[0].CrossLanguagePackageId = '{crossLanguagePackageId}'";
+
+            var reviewIds = new List<string>();
+            var queryDefinition = new QueryDefinition(query);
+            var itemQueryIterator = _apiRevisionContainer.GetItemQueryIterator<string>(queryDefinition);
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                reviewIds.AddRange(result.Resource);
+            }
+            return reviewIds;
         }
     }
 }

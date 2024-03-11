@@ -90,6 +90,23 @@ namespace APIViewWeb.Pages.Assemblies
                 showDocumentation: ShowDocumentation, showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                 diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
+            if (!String.IsNullOrEmpty(ReviewContent.ActiveAPIRevision.Files.First().CrossLanguagePackageId))
+            {
+                var correspondingReviewId = await _apiRevisionsManager.GetReviewIdsOfLanguageCorrespondingReviewAsync(ReviewContent.ActiveAPIRevision.Files.First().CrossLanguagePackageId);
+                var correspondingReviews = await _reviewManager.GetReviewsAsync(reviewIds: correspondingReviewId.Where(_ => _ != id).ToList(), isClosed: false);
+                foreach (var review in correspondingReviews)
+                {
+                    var reviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
+                        reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
+                        reviewRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
+                        signalRHubContext: _signalRHubContext, user: User, review: review, revisionId: null, diffRevisionId: null,
+                        showDocumentation: ShowDocumentation, showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
+                        diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
+
+                        ReviewContent.CrossLanguageViewContent.Add(review.Language, reviewContent);
+                }
+            }
+
             if (ReviewContent.Directive == ReviewContentModelDirective.TryGetlegacyReview)
             {
                 // Check if you can get review from legacy data

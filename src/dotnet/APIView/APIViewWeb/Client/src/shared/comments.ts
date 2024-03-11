@@ -24,12 +24,11 @@ $(() => {
 
   $(document).on("click", ".line-comment-button", e => {
     let id = hp.getElementId(e.target);
-    let inlineId = hp.getElementId(e.target, "data-inline-id");
+    let crossLangId = hp.getElementId(e.target, "data-cross-lang-id");
     if (id) {
       var rowSectionClasses = hp.getCodeRowSectionClasses(id);
-      if (inlineId) {
-        let groupNo = inlineId.replace(`${id}-tr-`, '');
-        hp.showCommentBox(id, rowSectionClasses, groupNo);
+      if (crossLangId) {
+        hp.showCommentBox(id, rowSectionClasses, crossLangId);
       }
       else {
         hp.showCommentBox(id, rowSectionClasses);
@@ -107,11 +106,7 @@ $(() => {
     $(e.target).find('button').prop("disabled", true);
     const form = <HTMLFormElement><any>$(e.target);
     let lineId = hp.getElementId(e.target);
-    let inlineRowNo = $(e.target).find(".new-comment-content small");
-
-    if (inlineRowNo.length == 0) {
-      inlineRowNo = hp.getReplyGroupNo($(e.target));
-    }
+    let crossLangId = hp.getElementId(e.target, "data-cross-lang-id");
 
     if (lineId) {
       let commentRow = hp.getCommentsRow(lineId);
@@ -125,9 +120,8 @@ $(() => {
       serializedForm.push({ name: "sectionClass", value: rowSectionClasses });
       serializedForm.push({ name: "taggedUsers", value: getTaggedUsers(e.target) });
       
-      if (inlineRowNo.length > 0) {
-        let groupNo = inlineRowNo.text().replace("ROW-", '');
-        serializedForm.push({ name: "groupNo", value: groupNo });
+      if (crossLangId) {
+        serializedForm.push({ name: "crossLangId", value: crossLangId });
       }
       
       $.ajax({
@@ -146,15 +140,8 @@ $(() => {
 
   $(document).on("click", ".review-thread-reply-button", e => {
     let lineId = hp.getElementId(e.target);
-    let inlineRowNo = hp.getReplyGroupNo($(e.target).parent().parent());
     if (lineId) {
-      if (inlineRowNo.length > 0) {
-        let groupNo = inlineRowNo.text().replace("ROW-", '');
-        hp.showCommentBox(lineId,'', groupNo);
-      }
-      else {
         hp.showCommentBox(lineId);
-      }
     }
     e.preventDefault();
   });

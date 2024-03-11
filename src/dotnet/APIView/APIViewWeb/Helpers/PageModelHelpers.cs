@@ -535,6 +535,7 @@ namespace APIViewWeb.Helpers
             }
         }
         
+        /// <summary>
         /// Decide if the content of the API is the header or content
         /// </summary>
         /// <param name="content"></param>

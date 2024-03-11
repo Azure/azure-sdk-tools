@@ -213,8 +213,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             {
                                 gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
                             }
-                            gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamTriage);
-
                         }
                         // If there are no labels predicted add NeedsTriage to the issue
                         else

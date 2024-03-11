@@ -388,6 +388,23 @@ Describe "Platform Matrix Import" -Tag "import" {
         { GenerateMatrix $importConfig "sparse" } | Should -Throw
     }
 
+    It "Should process filters against env references in imported matrix in the correct order" {
+        $matrixJson = @'
+{
+    "matrix": {
+        "$IMPORT": "./matrix-generator/tests/test-import-matrix-env.json",
+        "BarEnv": "env:BAR"
+    }
+}
+'@
+
+        [System.Environment]::SetEnvironmentVariable("FOO", "Value1")
+        [System.Environment]::SetEnvironmentVariable("BAR", "Value2")
+        $importConfig = GetMatrixConfigFromJson $matrixJson
+        [array]$matrix = GenerateMatrix $importConfig "sparse" -filter @("FooEnv=.*FOO.*")
+
+        $matrix[0].name | Should -Be Value2_Value1
+    }
 }
 
 Describe "Platform Matrix Replace" -Tag "UnitTest", "replace" {

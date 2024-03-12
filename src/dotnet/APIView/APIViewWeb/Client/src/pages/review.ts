@@ -13,7 +13,6 @@ $(() => {
   const TOGGLE_DOCUMENTATION = ".line-toggle-documentation-button";
   const SEL_HIDDEN_CLASS = ".hidden-api-toggleable";
   const SHOW_HIDDEN_CHECKBOX = "#show-hidden-api-checkbox";
-  const SHOW_HIDDEN_HREF = ".show-hidden-api";
 
   rvM.hideCheckboxesIfNotApplicable();
 
@@ -78,33 +77,12 @@ $(() => {
   --------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $(SHOW_DOC_CHECKBOX).on("click", e => {
     $(SHOW_DOC_HREF)[0].click();
-    /*if((e.target as HTMLInputElement).checked) {
-      // show all documentation
-      $(".code-line-documentation").removeClass('hidden-row');
-      $(TOGGLE_DOCUMENTATION).children('i').removeClass("fa-square-plus");
-      $(TOGGLE_DOCUMENTATION).children('i').addClass("fa-square-minus");
-      $(TOGGLE_DOCUMENTATION).children('svg').removeClass("invisible");
-    } else {
-      // hide all documentation
-      $(".code-line-documentation").addClass("hidden-row");
-      $(TOGGLE_DOCUMENTATION).children('i').removeClass("fa-square-minus");
-      $(TOGGLE_DOCUMENTATION).children('i').addClass("fa-square-plus");
-      $(TOGGLE_DOCUMENTATION).children('svg').addClass("invisible");
-    }*/
-  });
-
-  $(SHOW_DOC_HREF).on("click", e => {
-    $(SHOW_DOC_CHECKBOX)[0].click();
   });
 
   $(SHOW_HIDDEN_CHECKBOX).on("click", e => {
     hp.updatePageSettings(function() {
       $(SEL_HIDDEN_CLASS).toggleClass("d-none");
     });
-  });
-
-  $(SHOW_HIDDEN_HREF).on("click", e => {
-      $(SHOW_HIDDEN_CHECKBOX)[0].click();
   });
   
   $(SHOW_DIFFONLY_CHECKBOX).on("click", e => {

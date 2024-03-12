@@ -66,7 +66,7 @@ function Get-Package-Root-Path($packageName, $language)
     . (Join-Path $clonedRepoPath "eng/common/scripts/common.ps1")
     Write-Host "Language repo root path: [$RepoRoot]"
     # Parse package properties from cloned repo and find the package repo path
-    $packageProperties = Get-PkgProperties -PackageName $PackageName -ServiceDirectory ""
+    $packageProperties = Get-PkgProperties -PackageName $PackageName
     if (!$packageProperties)
     {
         Write-Error "Could not find a package with name [ $packageName ] in repo."

@@ -22,12 +22,6 @@ parameters:
   displayName: Package Display Name ( for e.g. Azure Core)
   type: string
   default: ''
-- name: PackageType
-  type: string
-  default: 'client'
-  values:
-  - client
-  - mgmt
 - name: PackageName
   displayName: Package Name (e.g. Azure.Core)
   type: string
@@ -60,7 +54,6 @@ steps:
       -Language "$(Language)"
       -ServiceName "$(ServiceName)"
       -PackageDisplayName "$(PackageDisplayName)"
-      -PackageType "$(PackageType)"
       -PackageName "$(PackageName)"
       -PackageVersion "$(PackageVersion)"
       -ReleaseDate "$(ReleaseDate)"

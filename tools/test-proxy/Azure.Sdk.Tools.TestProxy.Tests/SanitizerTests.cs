@@ -453,6 +453,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public void BodyKeySanitizerKey()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_body_with_content.json");
+            var targetEntry = session.Session.Entries[0];
+
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$..phoneNumber");
+            session.Session.Sanitize(bodyKeySanitizer);
+
+            var newBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
+            Assert.Equal("{\"phoneNumber\":\"sanitized\"}", newBody);
+        }
+
+        [Fact]
         public void BodyKeySanitizerIgnoresNulls()
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/response_with_null_secrets.json");

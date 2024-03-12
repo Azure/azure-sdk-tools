@@ -1,0 +1,49 @@
+{
+  "Entries": [
+    {
+      "RequestUri": "https://REDACTED/operatorInformation/:search?api-version=2024-03-01-preview",
+      "RequestMethod": "POST",
+      "RequestHeaders": {
+        "Accept": "application/json",
+        "Authorization": "Sanitized",
+        "Content-Length": "86",
+        "Content-Type": "application/json",
+        "User-Agent": "azsdk-java-azure-communication-phonenumbers/1.2.0-beta.2 (20.0.1; Windows 11; 10.0)",
+        "x-ms-client-request-id": "fafb6d96-04b5-4865-8cf8-0267c6e5bc6c",
+        "x-ms-date": "Tue, 12 Mar 2024 17:05:59 GMT",
+      },
+      "RequestBody": {
+        "phoneNumbers": [
+          "\u002B18332116898"
+        ],
+        "options": {
+          "includeAdditionalOperatorDetails": false
+        }
+      },
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "api-supported-versions": "2023-05-01-preview, 2023-10-01-preview, 2024-01-31-preview, 2024-03-01-preview, 2024-08-31-preview",
+        "Content-Length": "180",
+        "Content-Type": "application/json; charset=utf-8",
+        "Date": "Tue, 12 Mar 2024 17:05:58 GMT",
+        "MS-CV": "w5uPoqJ55ESutYYainil7w.0",
+        "Strict-Transport-Security": "max-age=31536000;includeSubDomains",
+        "X-Cache": "CONFIG_NOCACHE",
+        "X-Processing-Time": "41ms"
+      },
+      "ResponseBody": {
+        "values": [
+          {
+            "phoneNumber": "\u002B18332116898",
+            "nationalFormat": "(833) 201-6398",
+            "internationalFormat": "\u002B1 833-201-6498",
+            "isoCountryCode": null,
+            "numberType": null,
+            "operatorDetails": null
+          }
+        ]
+      }
+    }
+  ],
+  "Variables": {}
+}

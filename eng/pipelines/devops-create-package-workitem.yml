@@ -22,12 +22,6 @@ parameters:
   displayName: Package Display Name ( for e.g. Azure Core)
   type: string
   default: ''
-- name: PackageType
-  type: string
-  default: 'client'
-  values:
-  - client
-  - mgmt
 - name: PackageName
   displayName: Package Name (e.g. Azure.Core)
   type: string
@@ -55,15 +49,15 @@ steps:
   displayName: Create Package Work Item
   inputs:
     pwsh: true
-    filePath: $(Build.SourcesDirectory)/eng/common/scripts/Update-DevOps-Release-WorkItem.ps1
+    filePath: $(Build.SourcesDirectory)/eng/scripts/Create-Package-WorkItem.ps1
     arguments: >
-      -language "$(Language)"
-      -serviceName "$(ServiceName)"
-      -packageDisplayName "$(PackageDisplayName)"
-      -packageType "$(PackageType)"
-      -packageName "$(PackageName)"
-      -version "$(PackageVersion)"
-      -plannedDate "$(ReleaseDate)"
-      -relatedWorkItemId "$(RelatedWorkItemId)"
-      -tag "$(Tag)"
-      -devops_pat "$(azuresdk-azure-sdk-devops-release-work-item-pat)"
+      -Language "$(Language)"
+      -ServiceName "$(ServiceName)"
+      -PackageDisplayName "$(PackageDisplayName)"
+      -PackageName "$(PackageName)"
+      -PackageVersion "$(PackageVersion)"
+      -ReleaseDate "$(ReleaseDate)"
+      -RelatedWorkItemId "$(RelatedWorkItemId)"
+      -Tag "$(Tag)"
+      -WorkingDir "$(Pipeline.Workspace)"
+      -Devops_pat "$(azuresdk-azure-sdk-devops-release-work-item-pat)"

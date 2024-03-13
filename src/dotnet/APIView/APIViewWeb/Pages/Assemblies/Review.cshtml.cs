@@ -101,7 +101,7 @@ namespace APIViewWeb.Pages.Assemblies
                         reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
                         reviewRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
                         signalRHubContext: _signalRHubContext, user: User, review: review, revisionId: null, diffRevisionId: null,
-                        showDocumentation: ShowDocumentation, showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
+                        showDocumentation: (ShowDocumentation ?? false), showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                         diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
                         ReviewContent.CrossLanguageViewContent.Add(review.Language, reviewContent);

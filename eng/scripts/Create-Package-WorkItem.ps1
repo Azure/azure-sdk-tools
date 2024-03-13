@@ -55,8 +55,8 @@ try
 {
     . "eng/common/scripts/common.ps1"
     # Parse package properties from cloned repo and find the package repo path
-    $packageProperties = Get-PkgProperties -PackageName $PackageName
-    if (!$packageProperties)
+    $PkgProperties = Get-PkgProperties -PackageName $PackageName
+    if (!$PkgProperties)
     {
         Write-Error "Failed to find package properties for package name [$PackageName]."
         exit 1

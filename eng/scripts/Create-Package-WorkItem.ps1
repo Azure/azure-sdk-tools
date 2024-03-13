@@ -37,14 +37,6 @@ function Get-Repo-Name($language)
     return ""
 }
 
-function Sparse-Checkout($repoName)
-{
-    Write-Host "Sparse checkout repo [$repoName]."
-    git sparse-checkout init
-    git sparse-checkout set "sdk" "eng"
-    git checkout
-}
-
 
 $repoName = Get-Repo-Name $language
 if (!$repoName)
@@ -56,7 +48,7 @@ if (!$repoName)
 # clone language repo
 $clonedRepoPath = Join-Path $WorkingDir $repoName
 Write-Host "Cloning repo [$repoName] to [$WorkingDir]."
-git clone --no-checkout --filter=tree:0 "https://github.com/azure/$repoName.git" $clonedRepoPath
+git clone --depth 1 "https://github.com/azure/$repoName.git" $clonedRepoPath
 Push-Location $clonedRepoPath
 
 try

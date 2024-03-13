@@ -458,7 +458,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_body_with_content.json");
             var targetEntry = session.Session.Entries[0];
 
-            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$..phoneNumber");
+            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$..phoneNumbers")
             session.Session.Sanitize(bodyKeySanitizer);
 
             var newBody = Encoding.UTF8.GetString(targetEntry.Request.Body);

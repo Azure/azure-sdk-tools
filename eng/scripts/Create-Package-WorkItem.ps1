@@ -53,9 +53,7 @@ Push-Location $clonedRepoPath
 
 try
 {
-    Sparse-Checkout $repoName
     . "eng/common/scripts/common.ps1"
-
     # Parse package properties from cloned repo and find the package repo path
     $packageProperties = Get-PkgProperties -PackageName $PackageName
     if (!$packageProperties)

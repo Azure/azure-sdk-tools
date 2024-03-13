@@ -458,11 +458,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_body_with_content.json");
             var targetEntry = session.Session.Entries[0];
 
-            var bodyKeySanitizer = new BodyKeySanitizer(jsonPath: "$..phoneNumber");
-            session.Session.Sanitize(bodyKeySanitizer);
+            var phoneNumbersSanitizer = new BodyRegexSanitizer(value: "Sanitized", regex: "((?:\\u002B)[0-9]{11,})|((?:\\%2B)[0-9]{11,})|((?:[+]?)[0-9]{11,})");
+            session.Session.Sanitize(phoneNumbersSanitizer);
 
             var newBody = Encoding.UTF8.GetString(targetEntry.Request.Body);
-            Assert.Equal("{\"phoneNumber\":\"sanitized\"}", newBody);
+
+            Assert.Contains("{\"phoneNumbers\":[\"Sanitized\"]", newBody);
         }
 
         [Fact]

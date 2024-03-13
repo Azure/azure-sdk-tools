@@ -10,7 +10,7 @@
         "Content-Type": "application/json",
         "User-Agent": "azsdk-java-azure-communication-phonenumbers/1.2.0-beta.2 (20.0.1; Windows 11; 10.0)",
         "x-ms-client-request-id": "fafb6d96-04b5-4865-8cf8-0267c6e5bc6c",
-        "x-ms-date": "Tue, 12 Mar 2024 17:05:59 GMT",
+        "x-ms-date": "Tue, 12 Mar 2024 17:05:59 GMT"
       },
       "RequestBody": {
         "phoneNumbers": [

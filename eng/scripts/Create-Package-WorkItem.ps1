@@ -73,7 +73,7 @@ try
     }
 
     # Create or update package work item  
-    $EngCommonScriptsDir/Update-DevOps-Release-WorkItem.ps1 `
+    &$EngCommonScriptsDir/Update-DevOps-Release-WorkItem.ps1 `
     -language $Language `
     -packageName $PackageName `
     -version $PackageVersion `

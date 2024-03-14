@@ -1,16 +1,17 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {  Observable, ReplaySubject, map, share } from 'rxjs';
+import {  Observable, map, share } from 'rxjs';
 import { AppVersion, UserProfile } from 'src/app/_models/auth_service_models';
 import { environment } from 'src/environments/environment';
+import { ConfigService } from '../config/config.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private _userProfileObservable : Observable<UserProfile> | undefined;
-  baseUrl : string =  environment.apiUrl + "auth";
-  constructor(private http: HttpClient) { }
+  baseUrl : string =  this.configService.apiUrl + "auth";
+  constructor(private http: HttpClient, private configService: ConfigService) { }
 
   isLoggedIn() : Observable<boolean> {
     return this.http.get(this.baseUrl, { withCredentials: true }).pipe(

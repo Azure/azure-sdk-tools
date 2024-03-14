@@ -6,15 +6,16 @@ import { PaginatedResult } from 'src/app/_models/pagination';
 import { Review } from 'src/app/_models/review';
 import { Revision } from 'src/app/_models/revision';
 import { environment } from 'src/environments/environment';
+import { ConfigService } from '../config/config.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReviewsService {
-  baseUrl : string = environment.apiUrl + "reviews";
+  baseUrl : string = this.configService.apiUrl + "reviews";
   paginatedResult: PaginatedResult<Review[]> = new PaginatedResult<Review[]>
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private configService: ConfigService) { }
 
   getReviews(noOfItemsRead: number, pageSize: number,
     name: string, languages: string [], approval: string,
@@ -65,7 +66,7 @@ export class ReviewsService {
   }
 
   openReviewPage(reviewId: string) {
-    window.open(environment.webAppUrl + `Assemblies/Review/${reviewId}`, '_blank');
+    window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}`, '_blank');
   }
 
   createReview(formData: any) : Observable<Revision> {

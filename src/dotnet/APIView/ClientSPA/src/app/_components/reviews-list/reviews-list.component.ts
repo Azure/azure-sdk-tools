@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { FirstReleaseApproval, Review, SelectItemModel } from 'src/app/_models/review';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';

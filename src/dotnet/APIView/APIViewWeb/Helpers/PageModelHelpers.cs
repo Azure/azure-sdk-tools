@@ -497,7 +497,7 @@ namespace APIViewWeb.Helpers
         {
             var label = String.Empty;
             
-            if (addCreatedBy)
+            if (apiRevision.APIRevisionType != APIRevisionType.Automatic && addCreatedBy)
                 label = $"{apiRevision.CreatedBy}";
 
             if (addCreatedOn)

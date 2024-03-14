@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
@@ -38,6 +38,14 @@ import { VirtualScrollerModule } from 'primeng/virtualscroller';
 import { RevisionsListComponent } from './_components/revisions-list/revisions-list.component';
 import { ApprovalPipe } from './_pipes/approval.pipe';
 import { LastUpdatedOnPipe } from './_pipes/last-updated-on.pipe';
+import { Observable } from 'rxjs';
+import { ConfigService } from './_services/config/config.service';
+
+export function initializeApp(configService: ConfigService) {
+  return (): Observable<any> => {
+    return configService.loadConfig();
+  }
+}
 
 @NgModule({
   declarations: [
@@ -82,7 +90,15 @@ import { LastUpdatedOnPipe } from './_pipes/last-updated-on.pipe';
     TreeSelectModule,
     VirtualScrollerModule
   ],
-  providers: [],
+  providers: [
+    ConfigService,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeApp,
+      deps: [ConfigService],
+      multi: true
+    }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

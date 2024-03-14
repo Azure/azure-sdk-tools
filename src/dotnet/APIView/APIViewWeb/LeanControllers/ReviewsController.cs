@@ -67,39 +67,5 @@ namespace APIViewWeb.LeanControllers
             }
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
-
-        ///<summary>
-        ///Retrieve the Content (codeLines and Navigation) of a review
-        ///</summary>
-        ///<param name="reviewId"></param>
-        ///<param name="revisionId"></param>
-        ///<returns></returns>
-        [HttpGet]
-        [Route("{reviewId}/content")]
-        public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, [FromQuery]string revisionId=null)
-        {
-           var review = await _reviewManager.GetReviewAsync(user:User, id: reviewId);
-           var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
-           var activeRevision = (string.IsNullOrEmpty(revisionId)) ? 
-               await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, revisions) : await _apiRevisionsManager.GetAPIRevisionAsync(user: User, apiRevisionId: revisionId);
-           var comments = await _commentManager.GetReviewCommentsAsync(reviewId);
-
-           var renderableCodeFile = await _codeFileRepository.GetCodeFileAsync(activeRevision.Id, activeRevision.Files[0].FileId);
-           var reviewCodeFile = renderableCodeFile.CodeFile;
-           var fileDiagnostics = reviewCodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
-           var htmlLines = renderableCodeFile.Render(showDocumentation: false);
-           var codeLines = PageModelHelpers.CreateLines(diagnostics: fileDiagnostics, lines: htmlLines, comments: comments);
-
-           var pageModel = new ReviewContentModel
-           {
-               Review = review,
-               Navigation = renderableCodeFile.CodeFile.Navigation,
-               codeLines = codeLines,
-               APIRevisionsGrouped = revisions.GroupBy(r => r.APIRevisionType).ToDictionary(r => r.Key.ToString(), r => r.ToList()),
-               ActiveAPIRevision = activeRevision
-           };
-
-           return new LeanJsonResult(pageModel, StatusCodes.Status200OK);
-        }
     }
 }

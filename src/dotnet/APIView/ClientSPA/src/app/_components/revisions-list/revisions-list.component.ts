@@ -6,8 +6,8 @@ import { Pagination } from 'src/app/_models/pagination';
 import { FirstReleaseApproval, Review } from 'src/app/_models/review';
 import { Revision } from 'src/app/_models/revision';
 import { AuthService } from 'src/app/_services/auth/auth.service';
+import { ConfigService } from 'src/app/_services/config/config.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
-import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-revisions-list',
@@ -20,8 +20,8 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   @ViewChild('firstReleaseApprovalAllCheck') firstReleaseApprovalAllCheck!: ElementRef<HTMLInputElement>;
 
   userProfile : UserProfile | undefined;
-  reviewPageWebAppUrl : string = environment.webAppUrl + "Assemblies/Review/";
-  profilePageWebAppUrl : string = environment.webAppUrl + "Assemblies/Profile/";
+  reviewPageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Review/";
+  profilePageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Profile/";
   revisions : Revision[] = [];
   totalNumberOfRevisions = 0;
   pagination: Pagination | undefined;
@@ -55,7 +55,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   badgeClass : Map<string, string> = new Map<string, string>();
 
-  constructor(private revisionsService: RevisionsService, private authService: AuthService) { }
+  constructor(private revisionsService: RevisionsService, private authService: AuthService, private configService: ConfigService) { }
 
   ngOnInit(): void {
     this.createFilters();

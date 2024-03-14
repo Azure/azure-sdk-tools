@@ -296,7 +296,7 @@ namespace APIViewWeb.Managers
             else if (!string.IsNullOrEmpty(filePath))
             {
                 apiRevision = await AddAPIRevisionAsync(user: user, review: review, apiRevisionType: APIRevisionType.Manual,
-                           name: file.FileName, label: label, fileStream: null, language: language);
+                           name: filePath, label: label, fileStream: null, language: language);
             }
             return apiRevision;
         }

@@ -18,6 +18,7 @@ export interface Options {
   localSpecRepo?: string;
   emitterOptions?: string;
   swaggerReadme?: string;
+  arm: boolean;
 }
 
 export async function getOptions(): Promise<Options> {
@@ -64,6 +65,9 @@ export async function getOptions(): Promise<Options> {
       },
       ["swagger-readme"]: {
         type: "string",
+      },
+      arm: {
+        type: "boolean",
       }
     },
   });
@@ -165,5 +169,6 @@ export async function getOptions(): Promise<Options> {
     localSpecRepo: values["local-spec-repo"],
     emitterOptions: values["emitter-options"],
     swaggerReadme: values["swagger-readme"],
+    arm: values.arm ?? false,
   };
 }

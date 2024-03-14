@@ -1,16 +1,15 @@
-import { npmCommand } from "./npm.js";
+import { npmCommand, npxCommand } from "./npm.js";
 import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, writeFile, cp, readFile, access, stat } from "node:fs/promises";
+import { mkdir, writeFile, cp, readFile, access, stat, rename } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import { formatAdditionalDirectories, getAdditionalDirectoryName } from "./utils.js";
 import { resolve } from "node:path";
-import { spawn } from "node:child_process";
 import { config as dotenvConfig } from "dotenv";
 
 
@@ -240,26 +239,26 @@ async function generate({
 }
 
 
-async function convert(readme: string, outputDir: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-      const autorest = spawn("npx", ["autorest", readme, "--openapi-to-typespec", "--use=@autorest/openapi-to-typespec", `--output-folder=${outputDir}`], {
-          cwd: outputDir,
-          stdio: "inherit",
-          shell: true,
-      });
-      autorest.once("exit", (code) => {
-          if (code === 0) {
-              resolve();
-          } else {
-              reject(new Error(`openapi to typespec conversion failed exited with code ${code}`));
-          }
-      });
-      autorest.once("error", (err) => {
-          reject(new Error(`openapi to typespec conversion failed with error: ${err}`));
-      });
-  });
+async function convert(readme: string, outputDir: string, arm?: boolean): Promise<void> {
+  const args = ["autorest", readme, "--openapi-to-typespec", `--output-folder=${outputDir}`, "--use=@autorest/openapi-to-typespec"];
+  if (arm) {
+    const generateMetadataCmd = ["autorest", "--csharp", "--max-memory-size=8192", '--use="https://aka.ms/azsdk/openapi-to-typespec-csharp"', `--output-folder=${outputDir}`, "--mgmt-debug.only-generate-metadata", "--azure-arm", "--skip-csproj", readme];
+    try {
+      await npxCommand(outputDir, generateMetadataCmd);
+    } catch (err) {
+      Logger.error(`Error occurred while attempting to generate ARM metadata: ${err}`);
+      process.exit(1);
+    }
+    try {
+      await rename(joinPaths(outputDir, "metadata.json"), joinPaths(outputDir, "resources.json"));
+    } catch (err) {
+      Logger.error(`Error occurred while attempting to rename metadata.json to resources.json: ${err}`);
+      process.exit(1);
+    }
+    args.push("--isArm");
+  }
+  return await npxCommand(outputDir, args);
 }
-
 
 async function main() {
   const options = await getOptions();
@@ -330,7 +329,7 @@ async function main() {
         if (await doesFileExist(readme)) {
           readme = normalizePath(resolve(readme));
         }
-        await convert(readme, rootUrl);
+        await convert(readme, rootUrl, options.arm);
         break;
       default:
         throw new Error(`Unknown command: ${options.command}`);

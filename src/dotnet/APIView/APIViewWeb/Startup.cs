@@ -227,11 +227,15 @@ namespace APIViewWeb
                 options.AddPolicy("AllowCredentials", builder =>
                 {
                     string [] origins = new string[] { 
-                        "https://localhost:4200"
+                        "https://localhost:4200",
+                        "https://spa.apiviewuxtest.com",
+                        "https://spa.apiview.com",
+                        "https://apiview-staging.azurewebsites.net"
+
                     };
                     builder.WithOrigins(origins)
-                        .AllowAnyHeader()
                         .AllowAnyMethod()
+                        .AllowAnyHeader()
                         .AllowCredentials();
                 });
             });

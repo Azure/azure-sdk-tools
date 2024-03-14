@@ -6,16 +6,17 @@ import { Observable, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/_models/pagination';
 import { Revision } from 'src/app/_models/revision';
 import { environment } from 'src/environments/environment';
+import { ConfigService } from '../config/config.service';
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class RevisionsService {
-  baseUrl : string = environment.apiUrl + "APIRevisions";
+  baseUrl : string = this.configService.apiUrl + "APIRevisions";
   paginatedResult: PaginatedResult<Revision[]> = new PaginatedResult<Revision[]>
   
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private configService: ConfigService) { }
 
   getAPIRevisions(noOfItemsRead: number, pageSize: number,
     reviewId : string, label: string, author: string, 
@@ -98,10 +99,10 @@ export class RevisionsService {
   }
 
   openDiffOfAPIRevisions(reviewId: string, activeAPIRevisionId: string, diffAPIRevisionsId: string) {
-    window.open(environment.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}&diffOnly=False&doc=False&diffRevisionId=${diffAPIRevisionsId}`, '_blank');
+    window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}&diffOnly=False&doc=False&diffRevisionId=${diffAPIRevisionsId}`, '_blank');
   }
 
   openAPIRevisionPage(reviewId: string, activeAPIRevisionId: string) {
-    window.open(environment.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}`, '_blank');
+    window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}`, '_blank');
   }
 }

@@ -155,7 +155,7 @@
                 string approver = null;
                 if (reviewIsApproved)
                 {
-                    var changeAction = Model.ReviewContent.Review.ChangeHistory.First(_ => _.ChangeAction == ReviewChangeAction.Approved);
+                    var changeAction = Model.ReviewContent.Review.ChangeHistory.FirstOrDefault(_ => _.ChangeAction == ReviewChangeAction.Approved);
                     if (changeAction != null)
                     {
                         approver = changeAction.ChangedBy;

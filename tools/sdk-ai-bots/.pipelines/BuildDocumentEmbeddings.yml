@@ -33,6 +33,7 @@ stages:
       inputs:
         versionSpec: '3.x'
         addToPath: true
+    - checkout: self
     - checkout: git://internal/_git/azure-sdk-docs-eng.ms
       path: s/tools/sdk-ai-bots/repos/azure-sdk-docs-eng.ms
       displayName: 'Checkout azure-sdk-docs-eng.ms repository'

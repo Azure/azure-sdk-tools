@@ -1,0 +1,47 @@
+trigger: none
+
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight build
+  branches:
+    include:
+    - main
+  always: true
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  aoai-endpoint: ''
+  aoai-key: ''
+  asch-key: ''
+  asch-endpoint: ''
+  asch-index-name: ''
+  aoai-embedding-model: ''
+
+parameters:
+- name: incrementalEmbedding
+  displayName: 'Incremental Embedding Build?'
+  type: boolean
+  default: true
+
+stages:
+- stage: BuildEngHubDocEmbeddings
+  displayName: 'Build EngHub Document Embeddings'
+  jobs:
+  - job: Build
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.x'
+        addToPath: true
+    - script: |
+        "/tools/sdk-ai-bots/Scripts/Build-EngHubDocEmbeddings.ps1 -IncrementalEmbedding $(incrementalEmbedding)"
+      displayName: 'Run embeddings build script'
+      env:
+        AZURE_OPENAI_ENDPOINT: $(aoai-endpoint)
+        AZURE_OPENAI_API_KEY: $(aoai-key)
+        AZURE_SEARCH_ENDPOINT: $(asch-key)
+        AZURE_SEARCH_KEY: $(asch-endpoint)
+        AZURE_SEARCH_INDEX_NAME: $(asch-index-name)
+        AZURE_OPENAI_EMBEDDING_MODEL: $(aoai-embedding-model)

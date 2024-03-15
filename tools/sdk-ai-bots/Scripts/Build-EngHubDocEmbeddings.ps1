@@ -18,11 +18,7 @@ param (
   [string] $IncrementalEmbedding = $true
 )
 
-$workingDirectory = Get-Location
-if($env:AGENT_ID) {
-  $workingDirectory = $(System.DefaultWorkingDirectory)
-}
-$workingDirectory = Join-Path $workingDirectory "tools\sdk-ai-bots"
+$workingDirectory = Join-Path Get-Location "tools\sdk-ai-bots"
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
 $embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 

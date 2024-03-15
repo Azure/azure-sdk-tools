@@ -250,6 +250,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     return true;
                 }
+
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Recv failure: Operation timed out
+                if (result.StdErr.Contains("Recv failure: Operation timed out"))
+                {
+                    return true;
+                }
             }
 
             return false;

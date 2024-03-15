@@ -33,6 +33,9 @@ stages:
       inputs:
         versionSpec: '3.x'
         addToPath: true
+    - checkout: git://azure-sdk/internal/_git/azure-sdk-docs-eng.ms
+      path: s/tools/sdk-ai-bots/repos/azure-sdk-docs-eng.ms
+      displayName: 'Checkout azure-sdk-docs-eng.ms repository'
     - task: Powershell@2
       inputs:
         filePath: $(Build.SourcesDirectory)/tools/sdk-ai-bots/Scripts/Build-EngHubDocEmbeddings.ps1

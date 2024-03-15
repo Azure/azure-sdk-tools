@@ -32,12 +32,6 @@ if (-not (Test-Path -Path $reposFolder)) {
   New-Item -ItemType Directory -Path $reposFolder
 }
 
-# Clone azure-sdk-docs-eng.ms repository
-Write-Host "Cloning azure-sdk-docs-eng.ms repository at $reposFolder"
-if(-not (Clone-Repository -RepoUrl "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms" -RootFolder $reposFolder)) {
-  exit 1
-}
-
 # Create embeddingSource folder on current location
 $embeddingSourceFolder = Join-Path -Path $workingDirectory -ChildPath "embeddingSource"
 if (-not (Test-Path -Path $embeddingSourceFolder)) {

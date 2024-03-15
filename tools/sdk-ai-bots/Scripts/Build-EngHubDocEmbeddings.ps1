@@ -22,10 +22,9 @@ $workingDirectory = Join-Path (Get-Location) "tools\sdk-ai-bots"
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
 $embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 
-. (Join-Path $scriptsRoot Common.ps1)
-
 Write-Host "scriptsRoot: $scriptsRoot"
 Write-Host "embeddingToolFolder: $embeddingToolFolder"
+. (Join-Path $scriptsRoot Common.ps1)
 
 # Create 'repos' folder on current location
 $reposFolder = Join-Path -Path $workingDirectory -ChildPath "repos"

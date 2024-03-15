@@ -39,7 +39,7 @@ stages:
         arguments: >
           -IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"
         pwsh: true
-        workingDirectory: $(Pipeline.Workspace)
+        workingDirectory: $(Build.SourcesDirectory)
       displayName: 'Run embeddings build script'
       env:
         AZURE_OPENAI_ENDPOINT: $(aoai-endpoint)

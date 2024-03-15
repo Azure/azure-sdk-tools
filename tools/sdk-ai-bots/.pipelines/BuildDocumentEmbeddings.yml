@@ -12,12 +12,10 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  aoai-endpoint: ''
-  aoai-key: ''
-  asch-key: ''
-  asch-endpoint: ''
-  asch-index-name: ''
-  aoai-embedding-model: ''
+  aoai-endpoint: $(azure-openai-endpoint)
+  asch-endpoint: $(azure-search-endpoint)
+  asch-index-name: $(azure-search-index-name)
+  aoai-embedding-model: $(azure-openai-embedding-model)
 
 parameters:
 - name: incrementalEmbedding
@@ -40,8 +38,9 @@ stages:
       displayName: 'Run embeddings build script'
       env:
         AZURE_OPENAI_ENDPOINT: $(aoai-endpoint)
-        AZURE_OPENAI_API_KEY: $(aoai-key)
-        AZURE_SEARCH_ENDPOINT: $(asch-key)
-        AZURE_SEARCH_KEY: $(asch-endpoint)
+        AZURE_SEARCH_ENDPOINT: $(asch-endpoint)
         AZURE_SEARCH_INDEX_NAME: $(asch-index-name)
         AZURE_OPENAI_EMBEDDING_MODEL: $(aoai-embedding-model)
+        AZURE_OPENAI_API_KEY: $(azure-openapi-key)
+        AZURE_SEARCH_KEY: $(azure-search-key)
+        AZURE_STORAGE_ACCOUNT_KEY: $(storage-account-key)

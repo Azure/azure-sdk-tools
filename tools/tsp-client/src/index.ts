@@ -260,6 +260,7 @@ async function convert(readme: string, outputDir: string, arm?: boolean): Promis
   return await npxCommand(outputDir, args);
 }
 
+
 async function main() {
   const options = await getOptions();
   if (options.debug) {

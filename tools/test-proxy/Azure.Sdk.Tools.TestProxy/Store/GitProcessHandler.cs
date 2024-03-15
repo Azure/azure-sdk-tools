@@ -232,21 +232,17 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     return true;
                 }
 
-                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443: Connection timed out
-                if (result.StdErr.Contains("Failed to connect to github.com port 443: Connection timed out"))
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443 after 21019 ms: Couldn't connect to server
+                var regex = new Regex(@"Failed to connect to github.com port 443 after [\d]+ ms: Couldn't connect to server");
+                if (regex.IsMatch(result.StdErr))
                 {
                     return true;
                 }
 
                 // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443: Operation timed out
-                if (result.StdErr.Contains("Failed to connect to github.com port 443: Operation timed out"))
-                {
-                    return true;
-                }
-
-                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443 after 21019 ms: Couldn't connect to server
-                var regex = new Regex(@"Failed to connect to github.com port 443 after [\d]+ ms: Couldn't connect to server");
-                if (regex.IsMatch(result.StdErr))
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443: Connection timed out
+                // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Recv failure: Operation timed out
+                if (result.StdErr.Contains("timed out"))
                 {
                     return true;
                 }

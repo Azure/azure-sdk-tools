@@ -333,26 +333,35 @@ public final class ASTUtils {
         return false;
     }
 
-    public static boolean isTypeImplementingInterface(TypeDeclaration type, String interfaceName) {
+    public static boolean isTypeImplementingInterface(TypeDeclaration<?> type, String interfaceName) {
         return type.asClassOrInterfaceDeclaration().getImplementedTypes().stream()
                 .anyMatch(_interface -> _interface.getNameAsString().equals(interfaceName));
     }
 
-    private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
-        if (!nodeOptional.isPresent()) {
+    public static String getNodeFullyQualifiedName(Node node) {
+        if (node == null) {
             return "";
         }
 
-        Node node = nodeOptional.get();
         if (node instanceof TypeDeclaration<?>) {
             TypeDeclaration<?> type = (TypeDeclaration<?>) node;
             return type.getFullyQualifiedName().get();
         } else if (node instanceof CallableDeclaration) {
-            CallableDeclaration callableDeclaration = (CallableDeclaration) node;
-            return getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
+            CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) node;
+            String fqn = getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
+
+            if (callableDeclaration.isConstructorDeclaration()) {
+                fqn += ".ctor";
+            }
+
+            return fqn;
         } else {
             return "";
         }
+    }
+
+    private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
+        return nodeOptional.map(ASTUtils::getNodeFullyQualifiedName).orElse("");
     }
 
     /**

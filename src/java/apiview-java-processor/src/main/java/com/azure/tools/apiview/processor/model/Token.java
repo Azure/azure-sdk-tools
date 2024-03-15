@@ -15,6 +15,9 @@ public class Token {
     @JsonProperty("Value")
     private String value;
 
+    @JsonProperty("CrossLanguageDefinitionId")
+    private String crossLanguageDefinitionId;
+
     public Token(final TokenKind kind) {
         this(kind, null);
     }
@@ -35,6 +38,18 @@ public class Token {
 
     public void setDefinitionId(String definitionId) {
         this.definitionId = definitionId;
+    }
+
+    public String getCrossLanguageDefinitionId() {
+        return crossLanguageDefinitionId;
+    }
+
+    /**
+     * This is used to link tokens back to TypeSpec definitions, and therefore, to other languages that have been
+     * generated from the same TypeSpec.
+     */
+    public void setCrossLanguageDefinitionId(String crossLanguageDefinitionId) {
+        this.crossLanguageDefinitionId = crossLanguageDefinitionId;
     }
 
     public String getNavigateToId() {

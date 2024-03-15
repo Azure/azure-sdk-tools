@@ -1,0 +1,85 @@
+{
+  "type": "AdaptiveCard",
+  "body": [
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "Answer:",
+              "weight": "Bolder",
+              "wrap": true
+            }
+          ],
+          "width": "97px",
+          "horizontalAlignment": "Left"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "${answer}",
+              "wrap": true
+            }
+          ],
+          "width": "stretch"
+        }
+      ],
+      "horizontalAlignment": "Left"
+    },
+    {
+      "type": "ColumnSet",
+      "isVisible": "${hasRelevancies}",
+      "columns": [
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "Relevant topics:",
+              "weight": "Bolder",
+              "wrap": true
+            }
+          ],
+          "width": "97px"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "$data": "${relevancies}",
+              "type": "TextBlock",
+              "text": "${relevance}"
+            }
+          ],
+          "width": "stretch"
+        }
+      ],
+      "separator": true
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.Submit",
+      "iconUrl": "https://saazuresdkbot.blob.core.windows.net/resources/LikeIcon.png",
+      "tooltip": "Like",
+      "data": {
+        "vote": "yes"
+      }
+    },
+    {
+      "type": "Action.Submit",
+      "iconUrl": "https://saazuresdkbot.blob.core.windows.net/resources/DislikeIcon.png",
+      "tooltip": "Dislike",
+      "data": {
+        "vote": "no"
+      }
+    }
+  ],
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.6"
+}

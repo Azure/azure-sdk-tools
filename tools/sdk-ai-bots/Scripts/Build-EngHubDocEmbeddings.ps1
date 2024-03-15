@@ -18,7 +18,7 @@ param (
   [string] $IncrementalEmbedding = $true
 )
 
-$workingDirectory = Join-Path Get-Location "tools\sdk-ai-bots"
+$workingDirectory = Join-Path (Get-Location) "tools\sdk-ai-bots"
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
 $embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 

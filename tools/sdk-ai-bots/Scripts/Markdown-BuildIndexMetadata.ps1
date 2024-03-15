@@ -1,5 +1,24 @@
-# This script is used to generate metadata file for all the markdown files under `docs` folder in this repo. Then use the metadata file and these markdown files to generate the index in azure search which would be used as the knowledge base of Teams Assistant for Azure SDK.
+<#
+.SYNOPSIS
+This code build the index metadata file for the markdown files.
 
+.DESCRIPTION
+This script is used to generate metadata file for all the specified markdown files. 
+Then use the metadata file and these markdown files to generate the embeddings in azure search 
+which would be used as the knowledge base of Teams Assistant for Azure SDK.
+
+.PARAMETER MarkdownDirectory
+The directory of markdown files.
+
+.PARAMETER OutputDirectory
+The output directory of metadata file.
+
+.PARAMETER DocBaseUrl
+The base url that will be used to access the markdown file.
+
+.EXAMPLE
+Markdown-BuildIndexMetadata.ps1 -MarkdownDirectory "C:\repos\azure-sdk-docs\docs" -OutputDirectory "C:\repos\azure-sdk-docs\embeddingSource\enghub-docs"
+#>
 [CmdletBinding()]
 param (
   [Parameter(Position = 0)]
@@ -15,6 +34,8 @@ if (-not $DocBaseUrl)
 {
     $DocBaseUrl = "https://eng.ms/docs/products/azure-developer-experience"
 }
+
+Write-Host "Building metadata for markdown files in $MarkdownDirectory and output to $OutputDirectory. DocBaseUrl: $DocBaseUrl"
 
 function Generate-Metadata([string]$rootFolder, [string]$outputFolder)
 {
@@ -101,7 +122,11 @@ function Copy-Files([string]$rootFolder, [string]$outputFolder) {
 $MarkdownDirectory = Convert-Path $MarkdownDirectory
 $OutputDirectory = Convert-Path $OutputDirectory
 
+# Generate metadata file
+Write-Host "Generating metadata file..."
 Generate-Metadata $MarkdownDirectory $OutputDirectory
+# Copy markdown files to output folder
+Write-Host "Copying markdown files to output folder..."
 Copy-Files $MarkdownDirectory $OutputDirectory
 
 

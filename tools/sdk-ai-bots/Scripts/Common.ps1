@@ -1,3 +1,7 @@
+<#
+.DESCRIPTION
+This script contains some common functions.
+#>
 # Clone document source repository
 function Clone-Repository {
     param (

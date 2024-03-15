@@ -1,3 +1,17 @@
+<#
+.SYNOPSIS
+This code build the embeddings for the document under https://github.com/Azure/typespec-azure.
+
+.DESCRIPTION
+This code is responsible for refreshing the embeddings for the document of typespec.
+
+.PARAMETER IncrementalEmbedding
+Control the incremental building behavior for the embeddings.
+
+.EXAMPLE
+Build-TypeSpecAzureDocEmbeddings.ps1 -IncrementalEmbedding $true
+#>
+
 [CmdletBinding()]
 param (
   [Parameter(Position = 0)]
@@ -9,9 +23,9 @@ $workingDirectory = Get-Location
 if($env:AGENT_ID) {
   $workingDirectory = $(System.DefaultWorkingDirectory)
 }
-
+$workingDirectory = Join-Path $workingDirectory "tools\sdk-ai-bots"
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
-$embeddingToolFolder = Join-Path $workingDirectory "embeddings"
+$embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 
 . (Join-Path $scriptsRoot common.ps1)
 

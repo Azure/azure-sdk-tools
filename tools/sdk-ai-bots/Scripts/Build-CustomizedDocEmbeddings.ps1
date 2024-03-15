@@ -62,15 +62,11 @@ function Download-GitHubFile {
 }
 
 
-$workingDirectory = Get-Location
-if($env:AGENT_ID) {
-  $workingDirectory = $(System.DefaultWorkingDirectory)
-}
-$workingDirectory = Join-Path $workingDirectory "tools\sdk-ai-bots"
+$workingDirectory = Join-Path (Get-Location) "tools\sdk-ai-bots"
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
 $embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 
-. (Join-Path $scriptsRoot common.ps1)
+. (Join-Path $scriptsRoot Common.ps1)
 
 Write-Host "scriptsRoot: $scriptsRoot"
 Write-Host "embeddingToolFolder: $embeddingToolFolder"

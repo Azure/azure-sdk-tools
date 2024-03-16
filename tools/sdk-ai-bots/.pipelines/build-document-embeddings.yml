@@ -24,23 +24,12 @@ parameters:
   default: true
 
 stages:
-- stage: SetupEnvironment
-  displayName: 'Setup Environment'
-  jobs:
-    - job: SetupEnvironment
-      steps:
-      - task: UsePythonVersion@0
-        inputs:
-          versionSpec: '3.x'
-          addToPath: true
-      - checkout: self
-
 - stage: BuildEngHubDocEmbeddings
   displayName: 'Build EngHub Document Embeddings'
-  dependsOn: SetupEnvironment
   jobs:
   - job: BuildEngHubDocumentEmbeddings
     steps:
+    - template: .pipelines/setup-pipeline.yml
     - checkout: git://internal/_git/azure-sdk-docs-eng.ms
       displayName: 'Checkout azure-sdk-docs-eng.ms repository'
     - task: Powershell@2

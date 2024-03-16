@@ -271,7 +271,7 @@ async function generateLockFile(rootUrl: string, repoRoot: string) {
   await npmCommand(tempRoot, args);
   const lockFile = await stat(joinPaths(tempRoot, "package-lock.json"));
   if (lockFile.isFile()) {
-    await cp(joinPaths(tempRoot, "package-lock.json"), joinPaths(rootUrl, "emitter-package-lock.json"));
+    await cp(joinPaths(tempRoot, "package-lock.json"), joinPaths(repoRoot, "eng", "emitter-package-lock.json"));
   }
   await removeDirectory(tempRoot);
   Logger.info(`Lock file generated in ${joinPaths(rootUrl, "emitter-package-lock.json")}`);

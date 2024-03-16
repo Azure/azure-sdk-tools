@@ -23,16 +23,18 @@ parameters:
   type: boolean
   default: true
 
-jobs:
-  - job: SetupEnvironment
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.x'
-        addToPath: true
-    - checkout: self
-
 stages:
+- stage: SetupEnvironment
+  displayName: 'Setup Environment'
+  jobs:
+    - job: Setup
+      steps:
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.x'
+          addToPath: true
+      - checkout: self
+
 - stage: BuildEngHubDocEmbeddings
   displayName: 'Build EngHub Document Embeddings'
   jobs:

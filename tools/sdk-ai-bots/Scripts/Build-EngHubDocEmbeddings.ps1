@@ -17,20 +17,14 @@ param (
   [ValidateNotNullOrEmpty()]
   [string] $IncrementalEmbedding = $true
 )
-
-$workingDirectory = Join-Path (Get-Location) "tools\sdk-ai-bots"
+$buildSourceDirectory = Get-Location
+$workingDirectory = Join-Path $buildSourceDirectory "azure-sdk-tools\tools\sdk-ai-bots"
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
 $embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 
 Write-Host "scriptsRoot: $scriptsRoot"
 Write-Host "embeddingToolFolder: $embeddingToolFolder"
 . (Join-Path $scriptsRoot Common.ps1)
-
-# Create 'repos' folder on current location
-$reposFolder = Join-Path -Path $workingDirectory -ChildPath "repos"
-if (-not (Test-Path -Path $reposFolder)) {
-  New-Item -ItemType Directory -Path $reposFolder
-}
 
 # Create embeddingSource folder on current location
 $embeddingSourceFolder = Join-Path -Path $workingDirectory -ChildPath "embeddingSource"
@@ -44,7 +38,7 @@ if (-not (Test-Path -Path $enghubDocsDestFolder)) {
   New-Item -ItemType Directory -Path $enghubDocsDestFolder
 }
 
-$enghubDocsSrcFolder = Join-Path -Path $reposFolder -ChildPath "azure-sdk-docs-eng.ms/docs"
+$enghubDocsSrcFolder = Join-Path -Path $buildSourceDirectory -ChildPath "azure-sdk-docs-eng.ms/docs"
 
 # Call the script to build the metadata.json file
 Write-Host "Building metadata.json file for enghub documents"

@@ -29,7 +29,7 @@ stages:
   jobs:
   - job: BuildEngHubDocumentEmbeddings
     steps:
-    - template: .pipelines/setup-pipeline.yml
+    - template: setup-pipeline.yml
     - checkout: git://internal/_git/azure-sdk-docs-eng.ms
       displayName: 'Checkout azure-sdk-docs-eng.ms repository'
     - task: Powershell@2

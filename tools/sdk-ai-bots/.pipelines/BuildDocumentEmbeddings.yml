@@ -27,7 +27,7 @@ stages:
 - stage: SetupEnvironment
   displayName: 'Setup Environment'
   jobs:
-    - job: Setup
+    - job: SetupEnvironment
       steps:
       - task: UsePythonVersion@0
         inputs:
@@ -38,11 +38,13 @@ stages:
 - stage: BuildEngHubDocEmbeddings
   displayName: 'Build EngHub Document Embeddings'
   jobs:
-  - job: Build EngHub Document Embeddings
-    dependsOn: SetupEnvironment
+  - job: checkout
     steps:
     - checkout: git://internal/_git/azure-sdk-docs-eng.ms
-      displayName: 'Checkout azure-sdk-docs-eng.ms repository'    
+      displayName: 'Checkout azure-sdk-docs-eng.ms repository'
+  - job: BuildEngHubDocumentEmbeddings
+    dependsOn: SetupEnvironment
+    steps:    
     - task: Powershell@2
       inputs:
         filePath: $(Build.SourcesDirectory)/azure-sdk-tools/tools/sdk-ai-bots/Scripts/Build-EngHubDocEmbeddings.ps1

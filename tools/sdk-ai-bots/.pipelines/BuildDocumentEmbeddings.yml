@@ -35,7 +35,6 @@ stages:
         addToPath: true
     - checkout: self
     - checkout: git://internal/_git/azure-sdk-docs-eng.ms
-      path: s/tools/sdk-ai-bots/repos/azure-sdk-docs-eng.ms
       displayName: 'Checkout azure-sdk-docs-eng.ms repository'
     - task: Powershell@2
       inputs:

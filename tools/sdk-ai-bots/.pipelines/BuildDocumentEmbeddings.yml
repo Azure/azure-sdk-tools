@@ -23,19 +23,23 @@ parameters:
   type: boolean
   default: true
 
-stages:
-- stage: BuildEngHubDocEmbeddings
-  displayName: 'Build EngHub Document Embeddings'
-  jobs:
-  - job: Build
+jobs:
+  - job: SetupEnvironment
     steps:
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.x'
         addToPath: true
     - checkout: self
+stages:
+- stage: BuildEngHubDocEmbeddings
+  displayName: 'Build EngHub Document Embeddings'
+  jobs:
+  - job: Build EngHub Document Embeddings
+    dependsOn: SetupEnvironment
+    steps:
     - checkout: git://internal/_git/azure-sdk-docs-eng.ms
-      displayName: 'Checkout azure-sdk-docs-eng.ms repository'
+      displayName: 'Checkout azure-sdk-docs-eng.ms repository'    
     - task: Powershell@2
       inputs:
         filePath: $(Build.SourcesDirectory)/azure-sdk-tools/tools/sdk-ai-bots/Scripts/Build-EngHubDocEmbeddings.ps1

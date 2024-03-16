@@ -26,6 +26,11 @@ Write-Host "scriptsRoot: $scriptsRoot"
 Write-Host "embeddingToolFolder: $embeddingToolFolder"
 . (Join-Path $scriptsRoot Common.ps1)
 
+# Install Az.Storage module
+if (-not (Get-Module -ListAvailable -Name Az.Storage)) {
+  Install-Module -Name Az.Storage -Force -AllowClobber -Scope CurrentUser
+}
+
 # Create embeddingSource folder on current location
 $embeddingSourceFolder = Join-Path -Path $workingDirectory -ChildPath "embeddingSource"
 if (-not (Test-Path -Path $embeddingSourceFolder)) {

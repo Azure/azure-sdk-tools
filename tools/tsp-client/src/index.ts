@@ -260,6 +260,22 @@ async function convert(readme: string, outputDir: string): Promise<void> {
   });
 }
 
+async function generateLockFile(rootUrl: string, repoRoot: string) {
+  Logger.info("Generating lock file...");
+  const args: string[] = ["install"];
+  if (process.env['TSPCLIENT_FORCE_INSTALL']?.toLowerCase() === "true") {
+    args.push("--force");
+  }
+  const tempRoot = await createTempDirectory(rootUrl);
+  await cp(joinPaths(repoRoot, "eng", "emitter-package.json"), joinPaths(tempRoot, "package.json"));
+  await npmCommand(tempRoot, args);
+  const lockFile = await stat(joinPaths(tempRoot, "package-lock.json"));
+  if (lockFile.isFile()) {
+    await cp(joinPaths(tempRoot, "package-lock.json"), joinPaths(rootUrl, "emitter-package-lock.json"));
+  }
+  await removeDirectory(tempRoot);
+  Logger.info(`Lock file generated in ${joinPaths(rootUrl, "emitter-package-lock.json")}`);
+}
 
 async function main() {
   const options = await getOptions();
@@ -285,7 +301,12 @@ async function main() {
   } catch (err) {
     Logger.debug(`Error occurred while attempting to remove sparse-spec directory: ${err}`);
   }
-  
+
+  if (options.generateLockFile) {
+    await generateLockFile(rootUrl, repoRoot);
+    return;
+  }
+
   switch (options.command) {
       case "init":
         const emitter = await getEmitterFromRepoConfig(joinPaths(repoRoot, "eng", "emitter-package.json"));

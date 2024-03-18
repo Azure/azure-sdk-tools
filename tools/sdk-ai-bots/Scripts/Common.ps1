@@ -86,15 +86,28 @@ function Build-Embeddings {
         Write-Host "Building embeddings..."
         try {
             Push-Location $embeddingToolFolder
+
+            Write-Host "Check Python environment"
+            python --version
+            python -m pip --version
+
             # setup python environment and install required packages
             Write-Host "Setting up python environment"
             python -m pip install --upgrade pip
     
+            Write-Host "Check requirements.txt file"
+            Get-Content -Path "requirements.txt"
+
             Write-Host "Installing required packages"
             python -m pip install -r requirements.txt
             
+            Write-Host "Check current directory"
+            Get-Location
+
             Write-Host "List package versions..."
             python -m pip list > pip_list.txt
+            Write-Host "Check pip_list.txt file"
+            Test-Path "pip_list.txt"
             Write-Host "Print the content of pip_list.txt"
             Get-Content -Path "pip_list.txt"
             

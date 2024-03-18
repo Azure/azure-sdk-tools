@@ -18,26 +18,23 @@ param (
   [ValidateNotNullOrEmpty()]
   [string] $IncrementalEmbedding = $true
 )
-
-$workingDirectory = Join-Path (Get-Location) "tools\sdk-ai-bots"
+# Set the working directory, current location is supposed to be the root of the repository
+$buildSourceDirectory = Get-Location
+$workingDirectory = Join-Path $buildSourceDirectory "tools\sdk-ai-bots"
+if($env:AGENT_ID) {
+  # Running in Azure DevOps
+  $workingDirectory = Join-Path $buildSourceDirectory "azure-sdk-tools\tools\sdk-ai-bots"
+}
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
 $embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 
-. (Join-Path $scriptsRoot Common.ps1)
-
 Write-Host "scriptsRoot: $scriptsRoot"
 Write-Host "embeddingToolFolder: $embeddingToolFolder"
+. (Join-Path $scriptsRoot Common.ps1)
 
-# Create 'repos' folder on current location
-$reposFolder = Join-Path -Path $workingDirectory -ChildPath "repos"
-if (-not (Test-Path -Path $reposFolder)) {
-  New-Item -ItemType Directory -Path $reposFolder
-}
-
-# Clone Azure/typespec-azure repository
-Write-Host "Cloning Azure/typespec-azure repository at $reposFolder"
-if(-not (Clone-Repository -RepoUrl "https://github.com/Azure/typespec-azure.git" -RootFolder $reposFolder)) {
-  exit 1
+# Install Az.Storage module
+if (-not (Get-Module -ListAvailable -Name Az.Storage)) {
+  Install-Module -Name Az.Storage -Force -AllowClobber -Scope CurrentUser
 }
 
 # Create embeddingSource folder on current location
@@ -52,7 +49,19 @@ if (-not (Test-Path -Path $typespecDocsDestFolder)) {
   New-Item -ItemType Directory -Path $typespecDocsDestFolder
 }
 
-$typespecDocsSrcFolder = Join-Path -Path $reposFolder -ChildPath "typespec-azure/docs"
+$reposFolder = Join-Path -Path $buildSourceDirectory -ChildPath "typespec-azure"
+if(-not (Test-Path $reposFolder)) {
+  # Clone Azure/typespec-azure repository
+  Write-Host "Cloning Azure/typespec-azure repository at $buildSourceDirectory"
+  if(-not (Clone-Repository -RepoUrl "https://github.com/Azure/typespec-azure.git" -RootFolder $buildSourceDirectory)) {
+    exit 1
+  }
+}
+$typespecDocsSrcFolder = Join-Path -Path $buildSourceDirectory -ChildPath "typespec-azure/docs"
+if(-not (Test-Path $typespecDocsSrcFolder)) {
+  Write-Error "Failed to find the typespec documents folder at $typespecDocsSrcFolder"
+  exit 1
+}
 
 # Call the script to build the metadata.json file
 Write-Host "Building metadata.json file for typespec documents"

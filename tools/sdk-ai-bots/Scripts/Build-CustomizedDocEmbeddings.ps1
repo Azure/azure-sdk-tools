@@ -62,14 +62,24 @@ function Download-GitHubFile {
 }
 
 
-$workingDirectory = Join-Path (Get-Location) "tools\sdk-ai-bots"
+# Set the working directory, current location is supposed to be the root of the repository
+$buildSourceDirectory = Get-Location
+$workingDirectory = Join-Path $buildSourceDirectory "tools\sdk-ai-bots"
+if($env:AGENT_ID) {
+  # Running in Azure DevOps
+  $workingDirectory = Join-Path $buildSourceDirectory "azure-sdk-tools\tools\sdk-ai-bots"
+}
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
 $embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 
-. (Join-Path $scriptsRoot Common.ps1)
-
 Write-Host "scriptsRoot: $scriptsRoot"
 Write-Host "embeddingToolFolder: $embeddingToolFolder"
+. (Join-Path $scriptsRoot Common.ps1)
+
+# Install Az.Storage module
+if (-not (Get-Module -ListAvailable -Name Az.Storage)) {
+  Install-Module -Name Az.Storage -Force -AllowClobber -Scope CurrentUser
+}
 
 # Create embeddingSource folder on current location
 $embeddingSourceFolder = Join-Path -Path $workingDirectory -ChildPath "embeddingSource"

@@ -51,7 +51,7 @@ if (-not (Test-Path -Path $enghubDocsDestFolder)) {
 $reposFolder = Join-Path -Path $buildSourceDirectory -ChildPath "azure-sdk-docs-eng.ms"
 if(-not (Test-Path $reposFolder)) {
   # Clone eng hub repository
-  Write-Host "Cloning azure-sdk-docs-eng.ms repository at $reposFolder"
+  Write-Host "Cloning azure-sdk-docs-eng.ms repository at $buildSourceDirectory"
   if(-not (Clone-Repository -RepoUrl "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms" -RootFolder $buildSourceDirectory)) {
     exit 1
   }

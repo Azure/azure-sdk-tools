@@ -165,7 +165,7 @@ extends:
                     TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
           - ${{ each test in parameters.TestMatrix }}:
-            - job: Test_${{ test }}
+            - job: Test_${{ test.name }}
 
               pool:
                 ${{ if eq(test.os, 'macOS') }}:

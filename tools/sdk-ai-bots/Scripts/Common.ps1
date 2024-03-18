@@ -91,10 +91,10 @@ function Build-Embeddings {
             python -m pip install --upgrade pip
     
             Write-Host "Installing required packages"
-            pip install -r requirements.txt
+            python -m pip install -r requirements.txt
             
             Write-Host "List package versions..."
-            pip list
+            python -m pip list
             Write-Host "Starts building"
             python main.py
         }

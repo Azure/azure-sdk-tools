@@ -10,7 +10,6 @@ resources:
 #   pool: azsdk-pool-mms-ubuntu-2204-general
 #   vmImage: ubuntu-22.04
 #   dockerRepo: 'engsys/testproxy-lin'
-#   additionalDockerArgs: ''
 #   prepareScript: tools/test-proxy/docker/prepare.ps1
 #   excludeFromManifest: true/false
 #   dockerFile: 'tools/test-proxy/docker/dockerfile'
@@ -53,55 +52,42 @@ extends:
     stages:
       - stage:
         displayName: Build/Publish Containers
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
         jobs:
           - ${{ each config in parameters.DockerDeployments }}:
             - job: container_build_${{ config.name }}
               displayName: Build ${{ config.name }} Image
               pool:
-                name: ${{ config.pool }}
-                vmImage: ${{ config.vmImage }}
+                name: $(LINUXPOOL)
+                vmImage: $(LINUXVMIMAGE)
+                os: linux
+
+              ${{ if parameters.Publish }}:
+                templateContext:
+                  outputs:
+                    - output: containerImage
+                      displayName: Push ${{ config.name }}:${{ parameters.ImageTag }}
+                      condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+                      image: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}
+                    - ${{ if config.stableTags }}:
+                      - ${{ each stableTag in config.stableTags }}:
+                        - output: containerImage
+                          displayName: Push ${{ config.name }}:${{ stableTag }}
+                          condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+                          image: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}
+
               steps:
                 - ${{ if config.prepareScript }}:
                   - pwsh: |
                       ./${{ config.prepareScript }}
                     displayName: "Run prep script"
-                - task: Docker@2
+                - task: 1ES.BuildContainerImage@1
                   displayName: Build ${{ config.name }}:${{ parameters.ImageTag }}
                   inputs:
-                    command: build
-                    Dockerfile: ${{ config.dockerFile }}
-                    tags: ${{ parameters.ImageTag }}
-                    arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }} ${{ config.AdditionalDockerArgs }}'
-
-                - ${{ if parameters.Publish }}:
-                  - task: Docker@2
-                    displayName: Push ${{ config.name }}:${{ parameters.ImageTag }}
-                    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-                    inputs:
-                      containerRegistry: ${{ parameters.ContainerRegistry }}
-                      repository: ${{ config.dockerRepo }}
-                      command: push
-                      tags: ${{ parameters.ImageTag }}
-
-                  - ${{ if config.stableTags }}:
-                    - ${{ each stableTag in config.stableTags }}:
-                      - task: Docker@2
-                        displayName: Build ${{ config.name }}:${{ stableTag }}
-                        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-                        inputs:
-                          command: build
-                          Dockerfile: ${{ config.dockerFile }}
-                          tags: ${{ stableTag }}
-                          arguments: '-t ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ stableTag }} ${{ config.exclude }}'
-
-                      - task: Docker@2
-                        displayName: Push ${{ config.name }}:${{ stableTag }}
-                        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-                        inputs:
-                          containerRegistry: ${{ parameters.ContainerRegistry }}
-                          repository: ${{ config.dockerRepo }}
-                          command: push
-                          tags: ${{ stableTag }}
+                    image: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}
+                    path: ${{ config.dockerFile }}
 
           - ${{ if and(parameters.ManifestDeployment, parameters.Publish) }}:
             - ${{ each deployment in parameters.ManifestDeployment }}:
@@ -112,8 +98,9 @@ extends:
                     - ${{ each config in parameters.DockerDeployments }}:
                       - container_build_${{ config.name }}
                 pool:
-                  name: azsdk-pool-mms-ubuntu-2204-general
-                  vmImage: ubuntu-22.04
+                  name: $(LINUXPOOL)
+                  vmImage: $(LINUXVMIMAGE)
+                  os: linux
 
                 steps:
                   - task: Docker@2

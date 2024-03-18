@@ -17,7 +17,6 @@ Param (
   [bool] $MarkPackageAsShipped = $false
 )
 
-Set-StrictMode -Version 3
 . (Join-Path $PSScriptRoot common.ps1)
 . (Join-Path $PSScriptRoot Helpers ApiView-Helpers.ps1)
 

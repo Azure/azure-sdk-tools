@@ -10,7 +10,7 @@ resources:
 #   dockerRepo: 'engsys/testproxy-lin'
 #   prepareScript: tools/test-proxy/docker/prepare.ps1
 #   excludeFromManifest: true/false
-#   dockerFile: 'tools/test-proxy/docker/dockerfile'
+#   configPath: 'tools/test-proxy/docker'
 #   stableTags:
 #   - 'latest'
 
@@ -85,7 +85,7 @@ extends:
                   displayName: Build ${{ config.name }}:${{ parameters.ImageTag }}
                   inputs:
                     image: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}
-                    path: ${{ config.dockerFile }}
+                    path: ${{ config.configPath }}
 
           - ${{ if and(parameters.ManifestDeployment, parameters.Publish) }}:
             - ${{ each deployment in parameters.ManifestDeployment }}:

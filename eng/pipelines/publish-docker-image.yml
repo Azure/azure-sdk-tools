@@ -7,8 +7,6 @@ resources:
 
 # Additional sample inputs can be found in `eng/containers/ci.yml`, but here is an example.
 # - name: test_proxy_linux
-#   pool: azsdk-pool-mms-ubuntu-2204-general
-#   vmImage: ubuntu-22.04
 #   dockerRepo: 'engsys/testproxy-lin'
 #   prepareScript: tools/test-proxy/docker/prepare.ps1
 #   excludeFromManifest: true/false
@@ -61,7 +59,7 @@ extends:
               displayName: Build ${{ config.name }} Image
               pool:
                 name: $(LINUXPOOL)
-                vmImage: $(LINUXVMIMAGE)
+                image: $(LINUXVMIMAGE)
                 os: linux
 
               ${{ if parameters.Publish }}:
@@ -99,7 +97,7 @@ extends:
                       - container_build_${{ config.name }}
                 pool:
                   name: $(LINUXPOOL)
-                  vmImage: $(LINUXVMIMAGE)
+                  image: $(LINUXVMIMAGE)
                   os: linux
 
                 steps:

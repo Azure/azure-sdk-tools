@@ -51,7 +51,8 @@ extends:
         image: azsdk-pool-mms-win-2022-1espt
         os: windows
     stages:
-      - stage: Build/Publish Containers
+      - stage:
+        displayName: Build/Publish Containers
         jobs:
           - ${{ each config in parameters.DockerDeployments }}:
             - job: container_build_${{ config.name }}

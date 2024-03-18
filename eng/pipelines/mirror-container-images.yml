@@ -33,8 +33,10 @@ extends:
       sourceAnalysisPool:
         name: azsdk-pool-mms-win-2022-general
         image: azsdk-pool-mms-win-2022-1espt
+        os: windows
     stages:
-      - stage: Mirror Images
+      - stage:
+        displayName: Mirror Images
         jobs:
           - job: MirrorImages
             displayName: Mirror Container Images

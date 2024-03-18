@@ -56,7 +56,7 @@ stages:
   - job: BuildTypeSpecDocumentEmbeddings
     steps:
     - template: setup-pipeline.yml
-    - checkout: git://Azure/typespec-azure.git@main
+    - checkout: github://Azure/typespec-azure.git@main
       displayName: 'Checkout azure typespec repository'
     - task: Powershell@2
       inputs:

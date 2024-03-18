@@ -94,7 +94,7 @@ function Build-Embeddings {
             pip install -r requirements.txt
             
             Write-Host "List package versions..."
-            pip List
+            pip list
             Write-Host "Starts building"
             python main.py
         }

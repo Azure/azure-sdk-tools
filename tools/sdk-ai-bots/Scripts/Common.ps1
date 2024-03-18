@@ -82,18 +82,18 @@ function Build-Embeddings {
         Write-Error "The embedding tool folder does not exist: $embeddingToolFolder"
         return $false
     }
-    $stopwatch = Measure-Command {
+    #$stopwatch = Measure-Command {
         Write-Host "Building embeddings..."
         try {
             Push-Location $embeddingToolFolder
 
             Write-Host "Check Python environment"
-            python --version 2>&1
-            python -m pip --version 2>&1
+            python --version
+            python -m pip --version
 
             # setup python environment and install required packages
             Write-Host "Setting up python environment"
-            python -m pip install --upgrade pip 2>&1
+            python -m pip install --upgrade pip
     
             Write-Host "Check requirements.txt file"
             Get-Content -Path "requirements.txt" 2>&1
@@ -121,9 +121,9 @@ function Build-Embeddings {
         finally {
             Pop-Location
         }
-    }
+    #}
     
-    Write-Host "Finishes building with time: $($stopwatch.TotalSeconds) seconds"
+    #Write-Host "Finishes building with time: $($stopwatch.TotalSeconds) seconds"
     return $true
 }
 

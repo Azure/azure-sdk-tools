@@ -53,8 +53,8 @@ extends:
       - stage:
         displayName: Build/Publish Containers
         variables:
-          - template: /eng/pipelines/templates/variables/globals.yml
-          - template: /eng/pipelines/templates/variables/image.yml
+          - template: /eng/pipelines/templates/variables/globals.yml@self
+          - template: /eng/pipelines/templates/variables/image.yml@self
         jobs:
           - ${{ each config in parameters.DockerDeployments }}:
             - job: container_build_${{ config.name }}

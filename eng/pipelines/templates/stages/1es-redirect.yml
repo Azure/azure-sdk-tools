@@ -36,3 +36,5 @@ extends:
       psscriptanalyzer:
         compiled: true
         break: true
+
+    stages: ${{ parameters.stages }}

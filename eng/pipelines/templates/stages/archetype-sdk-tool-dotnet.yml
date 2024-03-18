@@ -1,5 +1,9 @@
 resources:
   repositories:
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
@@ -45,30 +49,54 @@ parameters:
   - name: RequireStrongNames
     type: boolean
     default: true
-
-
-variables:
-  - template: ../variables/globals.yml
-  - name: Warn
-    ${{ if parameters.NoWarn }}:
-      value: ''
-    ${{ if not(parameters.NoWarn) }}:
-      value: -warnaserror
-  # A path to directory to contain the output of "dotnet pack" call,
-  # to be consumed as input by "publish" task.
-  - name: packagesToPublishDir
-    value: $(Build.ArtifactStagingDirectory)/packages
+  - name: TestMatrix
+    type: object
+    default:
+      - name: Windows
+        Pool: $(WINDOWSPOOL)
+        Image: $(WINDOWSVMIMAGE)
+        Os: windows
+      - name: Linux
+        Pool: $(LINUXPOOL)
+        Image: $(LINUXVMIMAGE)
+        Os: linux
+      - name: Mac
+        Pool: $(MACPOOL)
+        Image: $(MACVMIMAGE)
+        Os: macOS
 
 stages:
   - stage: BuildTestAndPackage
 
+    variables:
+      - template: /eng/pipelines/templates/variables/globals.yml
+      - template: /eng/pipelines/templates/variables/image.yml
+      - name: Warn
+        ${{ if parameters.NoWarn }}:
+          value: ''
+        ${{ if not(parameters.NoWarn) }}:
+          value: -warnaserror
+      # A path to directory to contain the output of "dotnet pack" call,
+      # to be consumed as input by "publish" task.
+      - name: packagesToPublishDir
+        value: $(Build.ArtifactStagingDirectory)/packages
+
     pool:
-      name: azsdk-pool-mms-ubuntu-2204-general
-      vmImage: ubuntu-22.04
+      name: $(LINUXPOOL)
+      image: $(LINUXVMIMAGE)
+      os: linux
 
     jobs:
       - job: BuildAndPackage
         displayName: Build and Package
+
+        templateContext:
+          outputs:
+            - output: pipelineArtifact
+              displayName: Publish to packages artifact
+              condition: succeededOrFailed()
+              artifactName: packages
+              targetPath: $(packagesToPublishDir)
 
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
@@ -96,28 +124,13 @@ stages:
               }
             displayName: Create dir for packages to publish or list its contents
 
-          - publish: $(packagesToPublishDir)
-            displayName: Publish to packages artifact
-            artifact: packages
-            condition: succeededOrFailed()
-
       - ${{ if ne(length(parameters.StandaloneExeMatrix), 0) }}:
-        - job: Produce_Executables
-
-          strategy:
-            matrix:
-              linux:
-                imageName: 'ubuntu-22.04'
-                poolName: 'azsdk-pool-mms-ubuntu-2204-general'
-                artifactName: 'linux_windows'
-              mac:
-                imageName: 'macos-11'
-                poolName: 'Azure Pipelines'
-                artifactName: 'mac'
+        - job: Produce_Executables_linux
 
           pool:
-            name: $(poolName)
-            vmImage: $(imageName)
+            name: $(LINUXPOOL)
+            image: $(LINUXVMIMAGE)
+            os: linux
 
           steps:
             - template: /eng/pipelines/templates/steps/install-dotnet.yml
@@ -128,46 +141,55 @@ stages:
                 BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
                 TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
-      - job: Test
+        - job: Produce_Executables_mac
 
-        strategy:
-          matrix:
-            Windows:
-              Pool: azsdk-pool-mms-win-2022-general
-              Image: windows-2022
-            Linux:
-              Pool: azsdk-pool-mms-ubuntu-2204-general
-              Image: ubuntu-22.04
-            Mac:
-              Pool: Azure Pipelines
-              Image: macos-11
+          pool:
+            name: $(MACPOOL)
+            vmImage: $(MACVMIMAGE)
+            os: macOS
 
-        pool:
-          name: $(Pool)
-          vmImage: $(Image)
+          steps:
+            - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
-        steps:
-          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+            - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
+              parameters:
+                StagingDirectory: $(Build.ArtifactStagingDirectory)
+                BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
+                TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
-          - ${{ parameters.TestPreSteps }}
+      - ${{ each test in parameters.TestMatrix }}:
+        - job: Test_${{ test }}
 
-          - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
-            displayName: 'Test'
-            workingDirectory: '${{ coalesce(parameters.TestDirectory, parameters.ToolDirectory) }}'
-            env:
-              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-              DOTNET_CLI_TELEMETRY_OPTOUT: 1
-              DOTNET_MULTILEVEL_LOOKUP: 0
+          pool:
+            ${{ if eq(test.os, 'macOS') }}:
+              vmImage: ${{ test.Image }}
+            ${{ else }}:
+              image: ${{ test.Image }}
+            name: ${{ test.Pool }}
+            os: ${{ test.Os }}
 
-          - ${{ parameters.TestPostSteps }}
+          steps:
+            - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
-          - task: PublishTestResults@2
-            condition: succeededOrFailed()
-            inputs:
-              testResultsFiles: '**/*.trx'
-              testRunTitle: $(System.JobDisplayName)
-              testResultsFormat: 'VSTest'
-              mergeTestResults: true
+            - ${{ parameters.TestPreSteps }}
+
+            - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
+              displayName: 'Test'
+              workingDirectory: '${{ coalesce(parameters.TestDirectory, parameters.ToolDirectory) }}'
+              env:
+                DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+                DOTNET_CLI_TELEMETRY_OPTOUT: 1
+                DOTNET_MULTILEVEL_LOOKUP: 0
+
+            - ${{ parameters.TestPostSteps }}
+
+            - task: PublishTestResults@2
+              condition: succeededOrFailed()
+              inputs:
+                testResultsFiles: '**/*.trx'
+                testRunTitle: $(System.JobDisplayName)
+                testResultsFormat: 'VSTest'
+                mergeTestResults: true
 
       - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
         - template: /eng/pipelines/publish-docker-image.yml

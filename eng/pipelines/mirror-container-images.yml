@@ -1,10 +1,3 @@
-resources:
-  repositories:
-    - repository: 1ESPipelineTemplates
-      type: git
-      name: 1ESPipelineTemplates/1ESPipelineTemplates
-      ref: refs/tags/release
-
 trigger: none
 pr: none
 
@@ -25,20 +18,13 @@ parameters:
         mirror: azsdkengsys.azurecr.io/mirror/ubuntu/squid
 
 extends:
-  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    settings:
-      skipBuildTagsForGitHubPullRequests: true
-    sdl:
-      sourceAnalysisPool:
-        name: azsdk-pool-mms-win-2022-general
-        image: azsdk-pool-mms-win-2022-1espt
-        os: windows
     stages:
       - stage:
         displayName: Mirror Images
         variables:
-          - template: /eng/pipelines/templates/variables/image.yml@self
+          - template: /eng/pipelines/templates/variables/image.yml
         jobs:
           - job: MirrorImages
             displayName: Mirror Container Images

@@ -96,20 +96,20 @@ function Build-Embeddings {
             python -m pip install --upgrade pip
     
             Write-Host "Check requirements.txt file"
-            Get-Content -Path "requirements.txt" 2>&1
+            Get-Content -Path "requirements.txt"
 
             Write-Host "Installing required packages"
-            python -m pip install -r requirements.txt 2>&1
+            python -m pip install -r requirements.txt
             
-            Write-Host "Check current directory"
-            Get-Location 2>&1
+            $currentDir = Get-Location
+            Write-Host "Current directory: $currentDir"
 
             Write-Host "List package versions..."
-            python -m pip list > pip_list.txt 2>&1
-            Write-Host "Check pip_list.txt file"
-            Test-Path "pip_list.txt" 2>&1
+            python -m pip list > pip_list.txt
+
             Write-Host "Print the content of pip_list.txt"
-            Get-Content -Path "pip_list.txt" 2>&1
+            $installedPkg = Get-Content -Path "pip_list.txt"
+            Write-Host $installedPkg
             
             Write-Host "Starts building"
             python main.py

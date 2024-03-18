@@ -17,8 +17,13 @@ param (
   [ValidateNotNullOrEmpty()]
   [string] $IncrementalEmbedding = $true
 )
+# Set the working directory, current location is supposed to be the root of the repository
 $buildSourceDirectory = Get-Location
-$workingDirectory = Join-Path $buildSourceDirectory "azure-sdk-tools\tools\sdk-ai-bots"
+$workingDirectory = Join-Path $buildSourceDirectory "tools\sdk-ai-bots"
+if($env:AGENT_ID) {
+  # Running in Azure DevOps
+  $workingDirectory = Join-Path $buildSourceDirectory "azure-sdk-tools\tools\sdk-ai-bots"
+}
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
 $embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 
@@ -43,7 +48,19 @@ if (-not (Test-Path -Path $enghubDocsDestFolder)) {
   New-Item -ItemType Directory -Path $enghubDocsDestFolder
 }
 
+$reposFolder = Join-Path -Path $buildSourceDirectory -ChildPath "azure-sdk-docs-eng.ms"
+if(-not (Test-Path $reposFolder)) {
+  # Clone eng hub repository
+  Write-Host "Cloning azure-sdk-docs-eng.ms repository at $reposFolder"
+  if(-not (Clone-Repository -RepoUrl "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms" -RootFolder $buildSourceDirectory)) {
+    exit 1
+  }
+}
 $enghubDocsSrcFolder = Join-Path -Path $buildSourceDirectory -ChildPath "azure-sdk-docs-eng.ms/docs"
+if(-not (Test-Path $enghubDocsSrcFolder)) {
+  Write-Error "Failed to find the enghub documents folder at $enghubDocsSrcFolder"
+  exit 1
+}
 
 # Call the script to build the metadata.json file
 Write-Host "Building metadata.json file for enghub documents"

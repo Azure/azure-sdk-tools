@@ -13,6 +13,10 @@ function Clone-Repository {
         [string] $RootFolder
     )
     try {
+        if(-not (Test-Path $RootFolder)) {
+            New-Item -ItemType Directory -Path $RootFolder            
+        }
+        
         Push-Location $RootFolder
         # Clone repository
         git clone $RepoUrl

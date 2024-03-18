@@ -174,12 +174,12 @@ stages:
   - ${{ if and(parameters.PublishDependsOnTest, ne(length(parameters.TestMatrix), 0)) }}:
     - Test
   variables:
-    toolsRepositoryPath: $(Build.SourcesDirectory)
+    toolsRepositoryPath: $(Build.SourcesDirectory)/azure-sdk-tools
     buildArtifactsPath: $(Pipeline.Workspace)/build_artifacts
   jobs:
   - job: Publish
     steps:
-    - checkout: azure-sdk-tools
+    - checkout: none
 
     - download: current
       artifact: build_artifacts
@@ -215,16 +215,6 @@ stages:
             # Nuget packages are always published to the same internal feed https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
             nuGetFeedType: 'internal'
             publishVstsFeed: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
-
-    - ${{ if ne(parameters.EmitterPackageJsonPath, 'not-specified') }}:
-      - task: PowerShell@2
-        displayName: Create emitter-package-lock.json
-        inputs:
-          pwsh: true
-          filePath: $(toolsRepositoryPath)/eng/scripts/autorest/New-EmitterPackageLock.ps1
-          arguments: >
-            -EmitterPackageJsonPath "$(buildArtifactsPath)/emitter-package.json"
-            -OutputDirectory "$(Build.ArtifactStagingDirectory)"
 
     - template: ../../../common/pipelines/templates/steps/publish-artifact.yml
       parameters:
@@ -326,10 +316,16 @@ stages:
       - pwsh: |
           Write-Host "Copying emitter-package.json to $(sdkRepositoryPath)/eng"
           Copy-Item $(buildArtifactsPath)/emitter-package.json $(sdkRepositoryPath)/eng -Force
+        displayName: Copy emitter-package json file
 
-          Write-Host "Copying emitter-package-lock.json to $(sdkRepositoryPath)/eng"
-          Copy-Item $(publishArtifactsPath)/emitter-package-lock.json $(sdkRepositoryPath)/eng -Force
-        displayName: Copy emitter-package json files
+      - task: PowerShell@2
+        displayName: Create emitter-package lock file
+        inputs:
+          pwsh: true
+          filePath: $(sdkRepositoryPath)/eng/common/scripts/typespec/New-EmitterPackageLock.ps1
+          arguments: >
+            -EmitterPackageJsonPath "$(sdkRepositoryPath)/eng/emitter-package.json"
+            -OutputDirectory "$(sdkRepositoryPath)/eng"
 
     - ${{ parameters.SdkInitializationSteps }}
 

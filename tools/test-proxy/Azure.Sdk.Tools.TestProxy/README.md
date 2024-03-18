@@ -16,11 +16,8 @@ to documentation in your specific language repository in order to configure reco
 
 - [Azure SDK Tools Test Proxy](#azure-sdk-tools-test-proxy)
       - [Test documentation by language:](#test-documentation-by-language)
-  - [Table of contents](#table-of-contents)
   - [Installation](#installation)
     - [Via Local Compile or .NET](#via-local-compile-or-net)
-    - [Via Docker Image](#via-docker-image)
-      - [A note about docker caching](#a-note-about-docker-caching)
     - [Via Standalone Executable](#via-standalone-executable)
       - [Which should I install?](#which-should-i-install)
   - [Command line arguments](#command-line-arguments)
@@ -62,10 +59,6 @@ to documentation in your specific language repository in order to configure reco
       - [Providing your own `Host` header](#providing-your-own-host-header)
   - [Testing](#testing)
   - [SSL Support](#ssl-support)
-    - [On Mac and Windows, .NET can be used to generate a local certificate](#on-mac-and-windows-net-can-be-used-to-generate-a-local-certificate)
-      - [Option 1](#option-1)
-      - [Option 2](#option-2)
-    - [Docker Image + SSL](#docker-image--ssl)
   - [Troubleshooting](#troubleshooting)
     - [Visual studio](#visual-studio)
       - [ASP.NET and web development](#aspnet-and-web-development)
@@ -101,7 +94,7 @@ dotnet tool update azure.sdk.tools.testproxy --global --add-source https://pkgs.
 
 The test-proxy is also available from the [azure-sdk-for-net public feed](https://dev.azure.com/azure-sdk/public/_artifacts/feed/azure-sdk-for-net)
 
-_Note: if you're not authorized to access these feeds, make sure you have [Azure Artifacts Credential Provider](https://github.com/microsoft/artifacts-credprovider) installed. You can also [download executable](#via-standalone-executable) or use a prebuilt [docker image](#via-docker-image)._
+_Note: if you're not authorized to access these feeds, make sure you have [Azure Artifacts Credential Provider](https://github.com/microsoft/artifacts-credprovider) installed. You can also [download executable](#via-standalone-executable)._
 
 To uninstall an existing test-proxy
 
@@ -119,40 +112,6 @@ If you've already installed the tool, you can always check the installed version
 
 ```powershell
 test-proxy --version
-```
-
-### Via Docker Image
-
-The Azure SDK Team maintains a public Azure Container Registry.
-
-```powershell
-docker run -v <your-volume-name-or-location>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/test-proxy:latest
-```
-
-For example, to save test recordings to disk in your repo's `/sdk/<service>/tests/recordings` directory, provide the path to the root of the repo:
-
-```powershell
-docker run -v C:\\repo\\azure-sdk-for-<language>:/srv/testproxy/ -p 5001:5001 -p 5000:5000 azsdkengsys.azurecr.io/engsys/test-proxy:latest
-```
-
-Note the **port and volume mapping** as arguments! Any files that exist in this volume locally will only be appended to/updated in place. It is a non-destructive initialize.
-
-Within the container, recording outputs are written within the directory `/srv/testproxy/`.
-
-NOTE: if you are authenticated to github via SSH keys instead of a credential manager with https, you must mount your ssh credentials into docker. The following command shows an example mounting the default ssh key ~/.ssh/id_rsa on linux:
-
-```bash
-docker run -v /home/ben/.ssh:/root/.ssh -v /home/ben/sdk/azure-sdk-for-go:/srv/testproxy --add-host=host.docker.internal:host-gateway -p 5001:5001 -p 5000:5000 testproxy bash -c 'eval `ssh-agent` && ssh-add /root/.ssh/id_rsa && test-proxy start --dump'
-```
-
-#### A note about docker caching
-
-The azure-sdk team regularly update the image associated with the `latest` tag. Combined with the fact that docker will aggressively cache if possible, it is very possible that developers' local machines may be running outdated versions of the test-proxy.
-
-To ensure that your local copy is up to date, run:
-
-```powershell
-docker pull azsdkengsys.azurecr.io/engsys/test-proxy:latest
 ```
 
 ### Via Standalone Executable
@@ -286,7 +245,6 @@ The test-proxy is integrated with the following environment variables.
 | `Logging__LogLevel__Default` | Defaults to `Information`. Possible valid values are <br/><br/>`Debug`, `Information`, `Warning`, `Error`, `Critical`.<br><br>Do not set for .NET test runs as it would cause the tests *themselves* to start emitting logs.|
 | `Logging__LogLevel__Azure.Sdk.Tools.TestProxy`| Set to `Debug` to see request level logs emitted by the Test Proxy.|
 
-Both of the above variables can be set in the `docker` runtime by providing additional arguments EG: `docker run -e Logging__LogLevel__Default=Warning azsdkengsys.azurecr.io/engsys/test-proxy:latest`. For multiple environment variables, just use multiple `-e` provisions.
 
 ## How do I use the test-proxy to get a recording?
 
@@ -312,7 +270,6 @@ A couple notes before running the test-proxy:
 
 - Reference [command line arguments](#command-line-arguments) and understand the options.
 - The test-proxy runs in a "context" which is just a directory on your disk. When initializing a recording, all paths should be relative to this context directory.
-- If running the proxy as a docker image, ensure you **map** `etc/testproxy/` to a target context directory on your drive. In the example `docker run` invocations above, look for the `-v` argument.
 
 ### Where will my recordings end up?
 
@@ -788,36 +745,6 @@ The test-proxy server supports SSL, but due to its local-hosted nature, SSL vali
 Within this repository there is a single certificate.
 
 - `eng/common/testproxy/dotnet-devcert.pfx`: generated on a `Ubuntu` distribution using `openssl`.
-
-Unfortunately, the `dotnet dev-certs` generated certificates are _not_ acceptable to a standard ubuntu distro. The issue is that the `KeyUsage` field in the `.crt` [MUST contain](https://github.com/dotnet/aspnetcore/issues/7246#issuecomment-541165030) the `keyCertSign` flag. Certificates generated by `dotnet dev-certs` do NOT have this flag. This means that if you're on Windows AND running the Ubuntu docker image, you will need to trust the `dotnet-devcert.pfx` locally prior to `docker run`.
-
-For further details on importing and using the provided dev-certificates, please investigate the [additional docker readme.](../docker/README.md)
-
-### On Mac and Windows, .NET can be used to generate a local certificate
-
-There are two options here, generate your own SSL Cert, or import an existing one.
-
-#### Option 1
-
-Invoke the command:
-
-```powershell
-dotnet dev-certs https --trust
-```
-
-This will be automatically retrieved if you run the nuget installed version of the tool. You may optionally use `openssl` [like so](https://raw.githubusercontent.com/BorisWilhelms/create-dotnet-devcert/f3b5da6f9107834eb31ea5ba7c0583e14cda6b31/create-dotnet-devcert.sh) to generate a certificate. Note that this shell script creates a dev cert that is compatible with ubuntu.
-
-#### Option 2
-
-Import the appropriate already existing certificate within the `eng/common/testproxy/` folder.
-
-### Docker Image + SSL
-
-To connect to the docker on SSL, both the docker image and your local machine must trust the same SSL cert. The docker image already has `dotnet-devcert.pfx` imported and trusted, so all that is necessary is to trust that same cert prior to `docker run`.
-
-In the future, passing in a custom cert via a bound volume that contains your certificate will be a possibility as well.
-
-For additional reading on this process for trusting SSL certs locally, feel free to read up [here.](https://devblogs.microsoft.com/aspnet/configuring-https-in-asp-net-core-across-different-platforms/) The afore-mentioned [docker specific readme](../docker/README.md) also has details that are relevant.
 
 ## Troubleshooting
 

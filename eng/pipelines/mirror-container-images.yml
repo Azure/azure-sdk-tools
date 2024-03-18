@@ -34,7 +34,7 @@ extends:
         name: azsdk-pool-mms-win-2022-general
         image: azsdk-pool-mms-win-2022-1espt
     stages:
-      - stage:
+      - stage: Mirror Images
         jobs:
           - job: MirrorImages
             displayName: Mirror Container Images

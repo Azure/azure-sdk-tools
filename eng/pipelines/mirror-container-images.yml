@@ -1,3 +1,10 @@
+resources:
+  repositories:
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+
 trigger: none
 pr: none
 
@@ -17,32 +24,43 @@ parameters:
       - source: ubuntu/squid
         mirror: azsdkengsys.azurecr.io/mirror/ubuntu/squid
 
-jobs:
-  - job: MirrorImages
-    displayName: Mirror Container Images
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    settings:
+      skipBuildTagsForGitHubPullRequests: true
+    sdl:
+      sourceAnalysisPool:
+        name: azsdk-pool-mms-win-2022-general
+        image: azsdk-pool-mms-win-2022-1espt
+    stages:
+      - stage:
+        jobs:
+          - job: MirrorImages
+            displayName: Mirror Container Images
 
-    pool:
-      name: azsdk-pool-mms-ubuntu-2004-general
-      vmImage: MMSUbuntu20.04
+            pool:
+              name: azsdk-pool-mms-ubuntu-2004-general
+              vmImage: MMSUbuntu20.04
 
-    steps:
-      - ${{ each image in parameters.Images }}:
-        - task: Docker@2
-          displayName: Login to ${{ split(image.mirror, '.')[0] }}
-          inputs:
-            command: login
-            containerRegistry: ${{ split(image.mirror, '.')[0] }}
-        - task: Powershell@2
-          displayName: Mirror ${{ image.source }} to ${{ image.mirror }}
-          inputs:
-            pwsh: true
-            filePath: $(Build.SourcesDirectory)/eng/scripts/mirror-container-image.ps1
-            ${{ if image.changes }}:
-              arguments: >
-                -Image ${{ image.source }}
-                -Mirror ${{ image.mirror }}
-                -changes '${{ image.changes }}'
-            ${{ else }}:
-              arguments: >
-                -Image ${{ image.source }}
-                -Mirror ${{ image.mirror }}
+            steps:
+              - ${{ each image in parameters.Images }}:
+                - task: Docker@2
+                  displayName: Login to ${{ split(image.mirror, '.')[0] }}
+                  inputs:
+                    command: login
+                    containerRegistry: ${{ split(image.mirror, '.')[0] }}
+                - task: Powershell@2
+                  displayName: Mirror ${{ image.source }} to ${{ image.mirror }}
+                  inputs:
+                    pwsh: true
+                    filePath: $(Build.SourcesDirectory)/eng/scripts/mirror-container-image.ps1
+                    ${{ if image.changes }}:
+                      arguments: >
+                        -Image ${{ image.source }}
+                        -Mirror ${{ image.mirror }}
+                        -changes '${{ image.changes }}'
+                    ${{ else }}:
+                      arguments: >
+                        -Image ${{ image.source }}
+                        -Mirror ${{ image.mirror }}

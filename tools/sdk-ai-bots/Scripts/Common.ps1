@@ -88,28 +88,28 @@ function Build-Embeddings {
             Push-Location $embeddingToolFolder
 
             Write-Host "Check Python environment"
-            python --version
-            python -m pip --version
+            python --version 2>&1
+            python -m pip --version 2>&1
 
             # setup python environment and install required packages
             Write-Host "Setting up python environment"
-            python -m pip install --upgrade pip
+            python -m pip install --upgrade pip 2>&1
     
             Write-Host "Check requirements.txt file"
-            Get-Content -Path "requirements.txt"
+            Get-Content -Path "requirements.txt" 2>&1
 
             Write-Host "Installing required packages"
-            python -m pip install -r requirements.txt
+            python -m pip install -r requirements.txt 2>&1
             
             Write-Host "Check current directory"
-            Get-Location
+            Get-Location 2>&1
 
             Write-Host "List package versions..."
-            python -m pip list > pip_list.txt
+            python -m pip list > pip_list.txt 2>&1
             Write-Host "Check pip_list.txt file"
-            Test-Path "pip_list.txt"
+            Test-Path "pip_list.txt" 2>&1
             Write-Host "Print the content of pip_list.txt"
-            Get-Content -Path "pip_list.txt"
+            Get-Content -Path "pip_list.txt" 2>&1
             
             Write-Host "Starts building"
             python main.py

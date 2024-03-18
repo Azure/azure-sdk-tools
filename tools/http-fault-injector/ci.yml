@@ -25,3 +25,4 @@ extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
     ToolDirectory: tools/http-fault-injector
+    Use1ESOfficial: true

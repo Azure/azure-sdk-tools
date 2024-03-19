@@ -28,6 +28,9 @@ namespace PipelineGenerator.CommandParserOptions
         [Option('t', "patvar", Required = false, HelpText = "Environment variable name containing a Personal Access Token.")]
         public string Patvar { get; set; }
 
+        [Option("productCatalogTokenEnvVar", Required = false, HelpText = "Environment variable name containing a 1es product catalog bearer token. Set this to enable 1ES pipeline classification.")]
+        public string ProductCatalogTokenEnvVar { get; set; }
+
         [Option("whatif", Required = false, HelpText = "Dry Run changes")]
         public bool WhatIf { get; set; }
     }

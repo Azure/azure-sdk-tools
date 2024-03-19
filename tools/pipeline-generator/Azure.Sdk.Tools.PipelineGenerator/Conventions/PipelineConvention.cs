@@ -3,8 +3,13 @@ using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,15 +23,53 @@ namespace PipelineGenerator.Conventions
             Context = context;
         }
 
+        // Organization id for dev.azure.com/azure-sdk
+        // From https://ado-org-api.prod.space.microsoft.com/orgs/azure-sdk
+        // See https://dev.azure.com/mseng/1ES/_wiki/wikis/SaCE%20Team%20Wiki/13937/How-to-obtain-Azure-DevOps-organization-ID-or-name
+        private const string PipelineClassificationOrganizationId = "0fb41ef4-5012-48a9-bf39-4ee3de03ee35";
+        private const string PipelineClassificationBulkTagUpdateUrl = "https://artifact-tags-api.prod.space.microsoft.com/tags/bulk";
+        // Service Tree ID for Azure SDK in the product catalog
+        private const string ProductCatalogServiceId = "4405e061-966a-4249-afdd-f7435f54a510";
+        private const string ProductCatalogAssociationUrl = $"https://product-catalog-api.pmeprod.space.microsoft.com/products/{ProductCatalogServiceId}/artifacts";
+
         private const string ReportBuildStatusKey = "reportBuildStatus";
 
         private Dictionary<string, BuildDefinitionReference> pipelineReferences;
+        private readonly HashSet<string> definitions = new();
+        private readonly HashSet<string> pipelineClassifications = new();
 
         protected ILogger Logger { get; }
         protected PipelineGenerationContext Context { get; }
         public abstract string SearchPattern { get; }
         public abstract string PipelineNameSuffix { get; }
         public abstract string PipelineCategory { get; }
+        // 1es required classification. Uses external API to set classification
+        public enum PipelineClassifications { Production, NonProduction, Empty }
+        public abstract PipelineClassifications Classification { get; }
+
+        public class TagRequest
+        {
+            [JsonPropertyName("artifactId")]
+            public string ArtifactId { get; set; }
+            [JsonPropertyName("artifactType")]
+            public string ArtifactType { get; set; }
+            [JsonPropertyName("tags")]
+            public List<string> Tags { get; set; }
+            [JsonPropertyName("autoClassificationSource")]
+            public string AutoClassificationSource { get; set; }
+        }
+
+        public class SaveTagRequests
+        {
+            [JsonPropertyName("saveTagRequests")]
+            public List<TagRequest> Requests { get; set; }
+        }
+
+        public class ProductCatalogAssociation
+        {
+            [JsonPropertyName("artifactId")]
+            public string ArtifactId { get; set; }
+        }
 
         public string GetDefinitionName(SdkComponent component)
         {
@@ -35,6 +78,32 @@ namespace PipelineGenerator.Conventions
                             : $"{Context.Prefix} - {component.Name} - {component.Variant}";
             return baseName + PipelineNameSuffix;
         }
+
+        private string GetChangesKey(BuildDefinition definition)
+        {
+            return $"{definition.Name}/{definition.Id}";
+        }
+
+        public bool HasDefinitionChanges(BuildDefinition definition)
+        {
+            return this.definitions.Contains(GetChangesKey(definition));
+        }
+
+        public void RequireDefinitionChanges(BuildDefinition definition)
+        {
+            this.definitions.Add(GetChangesKey(definition));
+        }
+
+        public bool HasClassificationChanges(BuildDefinition definition)
+        {
+            return this.pipelineClassifications.Contains(GetChangesKey(definition));
+        }
+
+        public void RequireClassificationChanges(BuildDefinition definition)
+        {
+            this.pipelineClassifications.Add(GetChangesKey(definition));
+        }
+
 
         public async Task<BuildDefinition> DeleteDefinitionAsync(SdkComponent component, CancellationToken cancellationToken)
         {
@@ -83,12 +152,20 @@ namespace PipelineGenerator.Conventions
             {
                 Logger.LogDebug("Definition '{0}' was not found.", definitionName);
                 definition = await CreateDefinitionAsync(definitionName, component, cancellationToken);
+                if (Context.SetPipelineClassification)
+                {
+                    RequireClassificationChanges(definition);
+                }
+            }
+            if (Context.ForcePipelineClassification)
+            {
+                RequireClassificationChanges(definition);
             }
 
             Logger.LogDebug("Applying convention to '{0}' definition.", definitionName);
-            var hasChanges = await ApplyConventionAsync(definition, component);
+            await ApplyConventionAsync(definition, component);
 
-            if (hasChanges || Context.OverwriteTriggers)
+            if (HasDefinitionChanges(definition) || Context.OverwriteTriggers)
             {
                 if (!Context.WhatIf)
                 {
@@ -111,6 +188,151 @@ namespace PipelineGenerator.Conventions
             }
 
             return definition;
+        }
+
+        public async Task UpdatePipelineClassifications(List<BuildDefinition> definitions)
+        {
+            if (!Context.ForcePipelineClassification && !Context.SetPipelineClassification)
+            {
+                Logger.LogInformation("Skipping 1es pipeline classification as --set-pipeline-classification or --force-pipeline-classification was not set.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(Context.ProductCatalogTokenEnvVar))
+            {
+                throw new Exception("No product catalog token environment variable specified, cannot perform 1es pipeline classification.");
+            }
+            else if (definitions.Count == 0)
+            {
+                return;
+            }
+
+            var allTagRequests = new List<TagRequest>();
+
+            foreach (var definition in definitions)
+            {
+                if (!HasClassificationChanges(definition) && !Context.ForcePipelineClassification)
+                {
+                    continue;
+                }
+
+                var projectId = definition.Project.Id.ToString();
+                var artifactId = $"vsts://{PipelineClassificationOrganizationId}/{projectId}/{definition.Id}";
+                var tagRequest = new TagRequest
+                {
+                    ArtifactId = artifactId,
+                    ArtifactType = "Microsoft.AzureDevOps/BuildDefinition",
+                    // Accepted classifications are 'Production' and 'NonProduction'
+                    Tags = new List<string>(),
+                    AutoClassificationSource = "azure-sdk-pipeline-generator"
+                };
+                if (this.Classification.ToString() != PipelineClassifications.Empty.ToString())
+                {
+                    tagRequest.Tags.Add(this.Classification.ToString());
+                }
+                allTagRequests.Add(tagRequest);
+            }
+
+            if (allTagRequests.Count == 0)
+            {
+                return;
+            }
+
+            using var client = new HttpClient();
+            client.Timeout = TimeSpan.FromMinutes(3);
+            //  - You can get a Bearer token by
+            //    - visiting 'https://product-catalog-web.prod.space.microsoft.com/'
+            //    - pressing Ctrl+Shift+I
+            //    - going to Network tab
+            //    - reloading the page
+            //    - locating row marked with 'mine'
+            //    - clicking on 'Headers' and copying Value from 'authorization' section
+            var token = Environment.GetEnvironmentVariable(Context.ProductCatalogTokenEnvVar);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var existingProductCatalogAssociations = await client.GetAsync(ProductCatalogAssociationUrl);
+            var result = await existingProductCatalogAssociations.Content.ReadAsStringAsync();
+            var deserialized = JsonSerializer.Deserialize<Dictionary<string, List<ProductCatalogAssociation>>>(result);
+            var associations = deserialized["value"];
+            var associationCache = new HashSet<string>();
+            foreach (var association in associations)
+            {
+                associationCache.Add(association.ArtifactId);
+            }
+
+            Logger.LogInformation($"Updating {allTagRequests.Count} pipeline classifications at {PipelineClassificationBulkTagUpdateUrl}");
+
+            // The product classification bulk API takes a very long time, so use small update batches
+            var batchSize = 25;
+            var batch = allTagRequests.Take(batchSize);
+            while (batch.Any())
+            {
+                // See https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/product-catalog/how-to/use-product-catalog-api
+                // Schema - https://artifact-tags-api.prod.space.microsoft.com/swagger/index.html?url=/swagger/v1/swagger.json#/Tags/put_tags
+                var bulkRequest = new SaveTagRequests { Requests = batch.ToList() };
+                var json = JsonSerializer.Serialize(bulkRequest);
+                var content = new StringContent(json, Encoding.UTF8, "application/json-patch+json");
+                if (Context.WhatIf)
+                {
+                    Logger.LogInformation("[WHATIF] Batching {Count} pipeline classifications", batch.Count());
+                    foreach (var entry in batch)
+                    {
+                        var pretty = JsonSerializer.Serialize(entry, new JsonSerializerOptions { WriteIndented = true });
+                        Logger.LogDebug("{pretty}", pretty);
+                    }
+                } else
+                {
+                    Logger.LogInformation("Batching {Count} pipeline classifications", batch.Count());
+                    var sw = new Stopwatch();
+                    sw.Start();
+                    var response = await client.PutAsync(PipelineClassificationBulkTagUpdateUrl, content);
+                    response.EnsureSuccessStatusCode();
+                    sw.Stop();
+                    Logger.LogInformation($"Batched {batch.Count()} pipeline classifications in {sw.ElapsedMilliseconds / 1000}s");
+                    if (response.Content.Headers.ContentType.MediaType != "application/json")
+                    {
+                        throw new Exception("Did not receive json response from 1es pipeline classification API. " +
+                                            "This is likely due to an invalid bearer token returning a login page for a browser.");
+                    }
+                }
+                Logger.LogInformation("Ensuring product catalog/service tree associations exist for {Count} pipelines", batch.Count());
+                foreach (var pipeline in batch)
+                {
+                    var productJson = JsonSerializer.Serialize(new {
+                        artifactId = pipeline.ArtifactId,
+                        artifactType = pipeline.ArtifactType
+                    });
+                    var productContent = new StringContent(productJson, Encoding.UTF8, "application/json");
+                    if (associationCache.Contains(pipeline.ArtifactId))
+                    {
+                        Logger.LogInformation("Product catalog association already exists for {ArtifactId}", pipeline.ArtifactId);
+                        continue;
+                    }
+                    if (Context.WhatIf)
+                    {
+                        Logger.LogInformation($"[WHATIF] Adding artifact {pipeline.ArtifactId} to product catalog.");
+                    }
+                    else
+                    {
+                        var updateUrl = ProductCatalogAssociationUrl + $"?artifactType={pipeline.ArtifactType}&artifactId={pipeline.ArtifactId}";
+                        var productSw = new Stopwatch();
+                        productSw.Start();
+                        var productResponse = await client.PutAsync(updateUrl, productContent);
+                        productResponse.EnsureSuccessStatusCode();
+                        productSw.Stop();
+                        Logger.LogInformation($"Updated product catalog association in {productSw.ElapsedMilliseconds / 1000}s");
+                    }
+                }
+
+                if (batch.Count() < batchSize)
+                {
+                    break;
+                }
+                allTagRequests = allTagRequests.GetRange(batchSize, allTagRequests.Count - batchSize);
+                batch = allTagRequests.Take(batchSize);
+            }
+
+            return;
         }
 
         private async Task<BuildDefinition> GetExistingDefinitionAsync(string definitionName, CancellationToken cancellationToken)
@@ -213,13 +435,16 @@ namespace PipelineGenerator.Conventions
             return definition;
         }
 
-        protected bool EnsureManagedVariables(BuildDefinition definition, SdkComponent component)
+        protected void EnsureManagedVariables(BuildDefinition definition, SdkComponent component)
         {
-            var hasChanges = false;
+            if (!Context.SetManagedVariables)
+            {
+                return;
+            }
 
             var managedVariables = new Dictionary<string, string>
             {
-                { "meta.platform", this.Context.Prefix },
+                { "meta.platform", Context.Prefix },
                 { "meta.component", component.Name },
                 { "meta.variant", component.Variant },
                 { "meta.category", this.PipelineCategory },
@@ -234,7 +459,7 @@ namespace PipelineGenerator.Conventions
                     {
                         Logger.LogInformation("Removing managed variable {Name}", key);
                         definition.Variables.Remove(key);
-                        hasChanges = true;
+                        RequireDefinitionChanges(definition);
                     }
 
                     // else: Nothing to do if an empty variable doesn't already exist.
@@ -253,53 +478,43 @@ namespace PipelineGenerator.Conventions
                 }
 
                 definition.Variables[key] = new BuildDefinitionVariable { Value = value, IsSecret = false, AllowOverride = false };
-                hasChanges = true;
+                RequireDefinitionChanges(definition);
             }
-
-            return hasChanges;
         }
 
-        protected bool EnsureVariableGroups(BuildDefinition definition)
+        protected void EnsureVariableGroups(BuildDefinition definition)
         {
-            var hasChanges = false;
-
             var definitionVariableGroupSet = definition.VariableGroups
                 .Select(group => group.Id)
                 .ToHashSet();
 
-            var parameterGroupSet = this.Context.VariableGroups.ToHashSet();
+            var parameterGroupSet = Context.VariableGroups.ToHashSet();
 
             var idsToAdd = parameterGroupSet.Except(definitionVariableGroupSet);
             if (idsToAdd.Any())
             {
-                hasChanges = true;
+                RequireDefinitionChanges(definition);
             }
             var groupsToAdd = idsToAdd.Select(id => new VariableGroup { Id = id });
 
             definition.VariableGroups.AddRange(groupsToAdd);
-
-            return hasChanges;
         }
 
-        private bool EnsureReportBuildStatus(BuildDefinition definition)
+        private void EnsureReportBuildStatus(BuildDefinition definition)
         {
-            var hasChanges = false;
-
             if (definition.Repository.Properties.TryGetValue(ReportBuildStatusKey, out var reportBuildStatusString))
             {
                 if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
                 {
                     definition.Repository.Properties[ReportBuildStatusKey] = "true";
-                    hasChanges = true;
+                    RequireDefinitionChanges(definition);
                 }
             }
             else
             {
                 definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
-                hasChanges = true;
+                RequireDefinitionChanges(definition);
             }
-
-            return hasChanges;
         }
 
         protected const int FirstSchedulingHour = 0;
@@ -329,29 +544,21 @@ namespace PipelineGenerator.Conventions
             return schedule;
         }
 
-        protected virtual Task<bool> ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
+        protected virtual Task ApplyConventionAsync(BuildDefinition definition, SdkComponent component)
         {
-            bool hasChanges = false;
+            EnsureVariableGroups(definition);
+            EnsureManagedVariables(definition, component);
+            EnsureReportBuildStatus(definition);
+            EnsureDefinitionProperties(definition);
+            return Task.CompletedTask;
+        }
 
-            if (EnsureVariableGroups(definition))
+        protected void EnsureDefinitionProperties(BuildDefinition definition)
+        {
+            if (definition.Path != Context.DevOpsPath)
             {
-                hasChanges = true;
-            }
-
-            if (Context.SetManagedVariables && EnsureManagedVariables(definition, component))
-            {
-                hasChanges = true;
-            }
-
-            if (EnsureReportBuildStatus(definition))
-            {
-                hasChanges = true;
-            }
-
-            if (definition.Path != this.Context.DevOpsPath)
-            {
-                definition.Path = this.Context.DevOpsPath;
-                hasChanges = true;
+                definition.Path = Context.DevOpsPath;
+                RequireDefinitionChanges(definition);
             }
 
             if (definition.Repository.Properties.TryGetValue(ReportBuildStatusKey, out var reportBuildStatusString))
@@ -359,21 +566,18 @@ namespace PipelineGenerator.Conventions
                 if (!bool.TryParse(reportBuildStatusString, out var reportBuildStatusValue) || !reportBuildStatusValue)
                 {
                     definition.Repository.Properties[ReportBuildStatusKey] = "true";
-                    hasChanges = true;
+                    RequireDefinitionChanges(definition);
                 }
             }
             else
             {
                 definition.Repository.Properties.Add(ReportBuildStatusKey, "true");
-                hasChanges = true;
+                RequireDefinitionChanges(definition);
             }
-
-            return Task.FromResult(hasChanges);
         }
 
-        protected bool EnsureDefaultPullRequestTrigger(BuildDefinition definition, bool overrideYaml = true, bool securePipeline = true)
+        protected void EnsureDefaultPullRequestTrigger(BuildDefinition definition, bool overrideYaml = true, bool securePipeline = true)
         {
-            bool hasChanges = false;
             var prTriggers = definition.Triggers.OfType<PullRequestTrigger>();
             if (prTriggers == default || !prTriggers.Any())
             {
@@ -399,7 +603,7 @@ namespace PipelineGenerator.Conventions
                 newTrigger.IsCommentRequiredForPullRequest = securePipeline;
 
                 definition.Triggers.Add(newTrigger);
-                hasChanges = true;
+                RequireDefinitionChanges(definition);
             }
             else
             {
@@ -411,27 +615,27 @@ namespace PipelineGenerator.Conventions
                         if (trigger.SettingsSourceType != 1)
                         {
                             trigger.SettingsSourceType = 1;
-                            hasChanges = true;
+                            RequireDefinitionChanges(definition);
                         }
 
                         // If any branch filters exist then overwrite them to the most generous filter.
                         // The filter should support all branches because PR triggers with a yaml override
                         // like this are expected to be manually invoked by `/azp run` comments, and these PRs
                         // may be targeting development branches.
-                        if (!trigger.BranchFilters.SequenceEqual(new List<string>{"+*"}))
+                        if (!trigger.BranchFilters.SequenceEqual(new List<string> { "+*" }))
                         {
                             var filters = trigger.BranchFilters.Select(f => $"'{f}'");
                             Logger.LogInformation($"Overwriting branch filters ({String.Join(", ", filters)}) for PR trigger with '+*'");
                             trigger.BranchFilters.Clear();
                             trigger.BranchFilters.Add("+*");
-                            hasChanges = true;
+                            RequireDefinitionChanges(definition);
                         }
                     }
                     else if (trigger.SettingsSourceType != 2)
                     {
                         // Pull settings from yaml
                         trigger.SettingsSourceType = 2;
-                        hasChanges = true;
+                        RequireDefinitionChanges(definition);
                     }
                     if (trigger.RequireCommentsForNonTeamMembersOnly != false ||
                        trigger.Forks.AllowSecrets != securePipeline ||
@@ -444,16 +648,19 @@ namespace PipelineGenerator.Conventions
                         trigger.RequireCommentsForNonTeamMembersOnly = false;
                         trigger.IsCommentRequiredForPullRequest = securePipeline;
 
-                        hasChanges = true;
+                        RequireDefinitionChanges(definition);
                     }
                 }
             }
-            return hasChanges;
         }
 
-        protected bool EnsureDefaultScheduledTrigger(BuildDefinition definition)
+        protected void EnsureDefaultScheduledTrigger(BuildDefinition definition)
         {
-            bool hasChanges = false;
+            if (Context.NoSchedule)
+            {
+                return;
+            }
+
             var scheduleTriggers = definition.Triggers.OfType<ScheduleTrigger>();
 
             // Only add the schedule trigger if one doesn't exist.
@@ -467,14 +674,12 @@ namespace PipelineGenerator.Conventions
                     Schedules = new List<Schedule> { computedSchedule }
                 });
 
-                hasChanges = true;
+                RequireDefinitionChanges(definition);
             }
-            return hasChanges;
         }
 
-        protected bool EnsureDefaultCITrigger(BuildDefinition definition)
+        protected void EnsureDefaultCITrigger(BuildDefinition definition)
         {
-            bool hasChanges = false;
             var ciTrigger = definition.Triggers.OfType<ContinuousIntegrationTrigger>().SingleOrDefault();
             if (ciTrigger == null || Context.OverwriteTriggers)
             {
@@ -483,17 +688,16 @@ namespace PipelineGenerator.Conventions
                 {
                     SettingsSourceType = 2 // Get CI trigger data from yaml file
                 });
-                hasChanges = true;
+                RequireDefinitionChanges(definition);
             }
             else
             {
                 if (ciTrigger.SettingsSourceType != 2)
                 {
                     ciTrigger.SettingsSourceType = 2;
-                    hasChanges = true;
+                    RequireDefinitionChanges(definition);
                 }
             }
-            return hasChanges;
         }
     }
 }

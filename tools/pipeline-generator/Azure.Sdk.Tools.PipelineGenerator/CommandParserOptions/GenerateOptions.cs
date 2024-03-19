@@ -48,6 +48,12 @@ namespace PipelineGenerator.CommandParserOptions
         [Option("set-managed-variables", Required = false, HelpText = "Set managed meta.* variable values")]
         public bool SetManagedVariables { get; set; }
 
+        [Option("set-pipeline-classification", Required = false, HelpText = "Set 1es production classification for changed pipelines")]
+        public bool SetPipelineClassification { get; set; }
+
+        [Option("force-pipeline-classification", Required = false, HelpText = "Set 1es production classification for all pipelines")]
+        public bool ForcePipelineClassification { get; set; }
+
         [Option("overwrite-triggers", Required = false, HelpText = "Overwrite existing pipeline triggers (triggers may be manually modified, use with caution)")]
         public bool OverwriteTriggers { get; set; }
     }

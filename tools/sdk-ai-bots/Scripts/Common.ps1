@@ -88,15 +88,21 @@ function Build-Embeddings {
             Push-Location $embeddingToolFolder
 
             Write-Host "Check Python environment"
-            python --version
-            python -m pip --version
+            $pythonVersion = python --version
+            Write-Host "Python version: $pythonVersion"
+            $pipVersion = python -m pip --version
+            Write-Host "Pip version: $pipVersion"
+
+            # Print Python version
+            $pythonVersion = python -c "import sys; print(sys.version)"
+            Write-Host "Python version: $pythonVersion"
+            # Print Python executable path
+            $pythonEnvExePath = python -c "import sys; print(sys.executable)"
+            Write-Host "Python executable path: $pythonEnvExePath"
 
             # setup python environment and install required packages
             Write-Host "Setting up python environment"
             python -m pip install --upgrade pip
-    
-            Write-Host "Check requirements.txt file"
-            Get-Content -Path "requirements.txt"
 
             Write-Host "Installing required packages"
             python -m pip install -r requirements.txt
@@ -161,4 +167,11 @@ function Upload-AzureBlob {
         Write-Error "Failed to upload Azure blob: $BlobName with exception:`n$_"
     }
     return $false
+}
+
+function Initialize-PythonEnv {
+    Write-Host "Create Conda environment"
+    conda create -n myenv python=3.11 -y
+    Write-Host "Activate Conda environment"
+    conda activate myenv
 }

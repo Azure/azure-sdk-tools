@@ -9,7 +9,7 @@ schedules:
   always: true
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: 'windows-latest'
 
 variables:
   aoai-endpoint: $(azure-openai-endpoint)

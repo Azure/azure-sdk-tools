@@ -1,8 +1,9 @@
 # Release
 
-## 2024-03-19 - 0.5.1
+## 2024-03-19 - 0.6.0
 
-- Support swagger to TypeSpec conversion for ARM specifications.
+- Support swagger to TypeSpec conversion for ARM specifications using the `--arm` flag. Example usage: `tsp-client convert --swagger-readme <path to your readme> --arm`
+- Support `--generate-lock-file` flag to generate an `emitter-package-lock.json` file in the `eng/` directory based on the `emitter-package.json`. Example usage: `tsp-client --generate-lock-file`
 
 ## 2024-02-21 - 0.5.0
 

@@ -70,6 +70,7 @@ Commands:
   convert     Convert a swagger specification to TypeSpec               [string]
 
 Options:
+  --arm                     Convert ARM swagger specification to TypeSpec       [boolean]
   -c, --tsp-config          The tspconfig.yaml file to use                      [string]
   --commit                  Commit to be used for project init or update        [string]
   -d, --debug               Enable debug logging                                [boolean]

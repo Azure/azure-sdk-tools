@@ -45,6 +45,7 @@ Convert an existing swagger specification to a TypeSpec project. This command sh
 
 ## Options
 ```
+  --arm                     Convert ARM swagger specification to TypeSpec       [boolean]
   -c, --tsp-config          The tspconfig.yaml file to use                      [string]
   --commit                  Commit to be used for project init or update        [string]
   -d, --debug               Enable debug logging                                [boolean]
@@ -55,7 +56,7 @@ Convert an existing swagger specification to a TypeSpec project. This command sh
   --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
   --swagger-readme          Path or url to swagger readme file                  [string]
   -o, --output-dir          Specify an alternate output directory for the 
-                            generated files. Default is your local directory.   [string]
+                            generated files. Default is your current directory  [string]
   --repo                    Repository where the project is defined for init 
                             or update                                           [string]
   -v, --version             Show version number                                 [boolean]

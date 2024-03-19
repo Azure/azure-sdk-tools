@@ -118,7 +118,13 @@ function Build-Embeddings {
             Write-Host $installedPkg
             
             Write-Host "Starts building"
-            python main.py
+            $condaPath = "C:\Miniconda\Scripts\conda.exe"
+            if(-not (Test-Path $condaPath)) {
+                Write-Error "Conda is not installed at $condaPath"
+                return $false
+            }
+            & $condaPath create -n myenv python=3.11 -y
+            & $condaPath run -n myenv python main.py
         }
         catch {
             Write-Error "Failed to build embeddings with exception:`n$_"
@@ -178,7 +184,7 @@ function Initialize-PythonEnv {
     }
     & $condaPath create -n myenv python=3.11 -y
     Write-Host "Initialize Conda environment"
-    & $condaPath init
+    & $condaPath init powershell        
     Write-Host "Activate Conda environment"
     & $condaPath activate myenv
 }

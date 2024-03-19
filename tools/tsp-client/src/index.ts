@@ -240,9 +240,9 @@ async function generate({
 
 
 async function convert(readme: string, outputDir: string, arm?: boolean): Promise<void> {
-  const args = ["autorest", readme, "--openapi-to-typespec", `--output-folder=${outputDir}`, "--use=@autorest/openapi-to-typespec"];
+  const args = ["autorest", "--openapi-to-typespec", "--csharp=false", `--output-folder="${outputDir}"`, "--use=@autorest/openapi-to-typespec", `"${readme}"`];
   if (arm) {
-    const generateMetadataCmd = ["autorest", "--csharp", "--max-memory-size=8192", '--use="https://aka.ms/azsdk/openapi-to-typespec-csharp"', `--output-folder=${outputDir}`, "--mgmt-debug.only-generate-metadata", "--azure-arm", "--skip-csproj", readme];
+    const generateMetadataCmd = ["autorest", "--csharp", "--max-memory-size=8192", '--use="https://aka.ms/azsdk/openapi-to-typespec-csharp"', `--output-folder="${outputDir}"`, "--mgmt-debug.only-generate-metadata", "--azure-arm", "--skip-csproj", `"${readme}"`];
     try {
       await npxCommand(outputDir, generateMetadataCmd);
     } catch (err) {

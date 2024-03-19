@@ -8,5 +8,5 @@ steps:
     $env:Path += ";C:\Miniconda\Scripts"
     $env:Path += ";C:\Miniconda\Library\bin"
   displayName: 'Install Miniconda'
-  shell: powershell
+  shell: pwsh
 - checkout: self

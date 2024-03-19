@@ -1,5 +1,9 @@
 # Release
 
+## 2024-03-19 - 0.5.1
+
+- Support swagger to TypeSpec conversion for ARM specifications.
+
 ## 2024-02-21 - 0.5.0
 
 - Support `emitter-package-lock.json` files.

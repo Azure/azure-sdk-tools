@@ -23,6 +23,8 @@ extends:
   ${{ else }}:
     template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
+    authenticatedContainerRegistries:
+      - serviceConnection: azsdkengsys
     settings:
       skipBuildTagsForGitHubPullRequests: true
     sdl:
@@ -36,5 +38,6 @@ extends:
       psscriptanalyzer:
         compiled: true
         break: true
+      policy: M365
 
     stages: ${{ parameters.stages }}

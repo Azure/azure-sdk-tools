@@ -36,5 +36,8 @@ extends:
       psscriptanalyzer:
         compiled: true
         break: true
+      policy: M365
+      authenticatedContainerRegistries:
+        - serviceConnection: Azure SDK ACR
 
     stages: ${{ parameters.stages }}

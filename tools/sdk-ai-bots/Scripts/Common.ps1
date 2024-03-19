@@ -186,7 +186,11 @@ function Upload-AzureBlob {
 }
 
 function Initialize-CondaEnv {
-    if(-not (Test-Path "C:\Miniconda" -PathType Container)) {
+    try {
+        Get-Command conda -ErrorAction Stop >$null
+        Write-Host "Conda is installed."
+    } catch {
+        Write-Host "Conda is not installed."
         Write-Host "Installing Miniconda"
         Invoke-WebRequest -Uri "https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe" -OutFile "miniconda.exe"
         Start-Process "miniconda.exe" -ArgumentList "/S /D=C:\Miniconda" -Wait
@@ -195,7 +199,9 @@ function Initialize-CondaEnv {
         $env:Path += ";C:\Miniconda\Scripts"
         $env:Path += ";C:\Miniconda\Library\bin"
         conda --version
-    }<#
+    }
+    return $true
+    <#
     Write-Host "Create Conda environment"
     $condaPath = "C:\Miniconda\Scripts\conda.exe"
     if(-not (Test-Path $condaPath)) {

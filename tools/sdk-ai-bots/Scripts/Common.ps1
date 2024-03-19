@@ -177,6 +177,8 @@ function Initialize-PythonEnv {
         return $false
     }
     & $condaPath create -n myenv python=3.11 -y
+    Write-Host "Initialize Conda environment"
+    & $condaPath init
     Write-Host "Activate Conda environment"
     & $condaPath activate myenv
 }

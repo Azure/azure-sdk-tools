@@ -17,7 +17,9 @@ export interface Options {
   isUrl: boolean;
   localSpecRepo?: string;
   emitterOptions?: string;
+  generateLockFile: boolean;
   swaggerReadme?: string;
+  arm: boolean;
 }
 
 export async function getOptions(): Promise<Options> {
@@ -53,6 +55,9 @@ export async function getOptions(): Promise<Options> {
       ["emitter-options"]: {
         type: "string",
       },
+      ["generate-lock-file"]: {
+        "type": "boolean",
+      },
       ["local-spec-repo"]: {
         type: "string",
       },
@@ -64,6 +69,9 @@ export async function getOptions(): Promise<Options> {
       },
       ["swagger-readme"]: {
         type: "string",
+      },
+      arm: {
+        type: "boolean",
       }
     },
   });
@@ -77,50 +85,53 @@ export async function getOptions(): Promise<Options> {
     process.exit(0);
   }
 
-  if (positionals.length === 0) {
-    Logger.error("Command is required");
-    printUsage();
-    process.exit(1);
-  }
-  const supportedCommands = ["sync", "generate", "update", "init", "convert"];
-
-  const command = positionals[0];
-  if (!command) {
-    Logger.error("Command is required");
-    printUsage();
-    process.exit(1);
-  }
-
-  if (!supportedCommands.includes(command)) {
-    Logger.error(`Unknown command ${command}`);
-    printUsage();
-    process.exit(1);
-  }
-
   let isUrl = true;
-  if (command === "init") {
-    if (!values["tsp-config"]) {
-      Logger.error("tspConfig is required");
+  const supportedCommands = ["sync", "generate", "update", "init", "convert"];
+  const command = positionals[0];
+
+  if (!values["generate-lock-file"]) {
+    if (positionals.length === 0) {
+      Logger.error("Command is required");
       printUsage();
       process.exit(1);
     }
-    if (await doesFileExist(values["tsp-config"])) {
-      isUrl = false;
+
+    if (!command) {
+      Logger.error("Command is required");
+      printUsage();
+      process.exit(1);
     }
-    if (!isUrl) {
-      if (!values.commit || !values.repo) {
-        Logger.error("The commit and repo options are required when tspConfig is a local directory");
+
+    if (!supportedCommands.includes(command)) {
+      Logger.error(`Unknown command ${command}`);
+      printUsage();
+      process.exit(1);
+    }
+
+    if (command === "init") {
+      if (!values["tsp-config"]) {
+        Logger.error("tspConfig is required");
         printUsage();
         process.exit(1);
       }
+      if (await doesFileExist(values["tsp-config"])) {
+        isUrl = false;
+      }
+      if (!isUrl) {
+        if (!values.commit || !values.repo) {
+          Logger.error("The commit and repo options are required when tspConfig is a local directory");
+          printUsage();
+          process.exit(1);
+        }
+      }
     }
-  }
 
-  if (command === "convert") {
-    if (!values["swagger-readme"]) {
-      Logger.error("Must specify a swagger readme with the `--swagger-readme` flag");
-      printUsage();
-      process.exit(1);
+    if (command === "convert") {
+      if (!values["swagger-readme"]) {
+        Logger.error("Must specify a swagger readme with the `--swagger-readme` flag");
+        printUsage();
+        process.exit(1);
+      }
     }
   }
 
@@ -154,7 +165,7 @@ export async function getOptions(): Promise<Options> {
 
   return {
     debug: values.debug ?? false,
-    command: command,
+    command: command ?? "",
     tspConfig: values["tsp-config"],
     noCleanup: values["save-inputs"] ?? false,
     skipSyncAndGenerate: values["skip-sync-and-generate"] ?? false,
@@ -164,6 +175,8 @@ export async function getOptions(): Promise<Options> {
     isUrl: isUrl,
     localSpecRepo: values["local-spec-repo"],
     emitterOptions: values["emitter-options"],
+    generateLockFile: values["generate-lock-file"] ?? false,
     swaggerReadme: values["swagger-readme"],
+    arm: values.arm ?? false,
   };
 }

@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
                 name: "--universalOutput",
                 description: "Flag; Redirect all logs to stdout, including what would normally be showing up on stderr.",
                 getDefaultValue: () => false);
-            dumpOption.AddAlias("-u");
+            universalOption.AddAlias("-u");
 
 
             var collectedArgs = new Argument<string[]>("args")

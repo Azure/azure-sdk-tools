@@ -69,6 +69,8 @@ stages:
               inputs:
                 image: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}
                 path: ${{ config.configPath }}
+                enableNetwork: true
+                useBuildKit: true
 
       - ${{ if and(parameters.ManifestDeployment, parameters.Publish) }}:
         - ${{ each deployment in parameters.ManifestDeployment }}:

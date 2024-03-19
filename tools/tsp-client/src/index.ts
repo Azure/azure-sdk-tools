@@ -274,7 +274,7 @@ async function generateLockFile(rootUrl: string, repoRoot: string) {
     await cp(joinPaths(tempRoot, "package-lock.json"), joinPaths(repoRoot, "eng", "emitter-package-lock.json"));
   }
   await removeDirectory(tempRoot);
-  Logger.info(`Lock file generated in ${joinPaths(rootUrl, "emitter-package-lock.json")}`);
+  Logger.info(`Lock file generated in ${joinPaths(repoRoot, "eng", "emitter-package-lock.json")}`);
 }
 
 async function main() {

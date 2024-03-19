@@ -28,6 +28,8 @@ class GoVet:
         match = re.search(r'go ([.0-9]*)', go_mod, re.MULTILINE)
         if match:
             self.golang_version = match.group(1)
+        else:
+            self.golang_version = '1.18'
 
         self.modules = []
         match = re.search(r'github\.com/Azure/azure-sdk-for-go/sdk/azcore (v[.\-\w]*)', go_mod, re.MULTILINE)

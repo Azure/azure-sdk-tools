@@ -94,7 +94,9 @@ $env:RAG_CHUNK_PATH = $ragChunkPath
 $env:METADATA_PATH = "$embeddingSourceFolder/metadata_enghub_docs.json"
 $env:DOCUMENT_PATH = $enghubDocsDestFolder
 $env:INCREMENTAL_EMBEDDING = $IncrementalEmbedding
-Initialize-PythonEnv
+if(-not (Initialize-PythonEnv)) {
+  exit 1
+}
 if(-not (Build-Embeddings -EmbeddingToolFolder $embeddingToolFolder)) {
   exit 1
 }

@@ -171,7 +171,12 @@ function Upload-AzureBlob {
 
 function Initialize-PythonEnv {
     Write-Host "Create Conda environment"
-    conda create -n myenv python=3.11 -y
+    $condaPath = "C:\Miniconda\Scripts\conda.exe"
+    if(-not (Test-Path $condaPath)) {
+        Write-Error "Conda is not installed at $condaPath"
+        return $false
+    }
+    & $condaPath create -n myenv python=3.11 -y
     Write-Host "Activate Conda environment"
-    conda activate myenv
+    & $condaPath activate myenv
 }

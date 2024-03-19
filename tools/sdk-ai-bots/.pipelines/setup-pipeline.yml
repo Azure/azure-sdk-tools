@@ -7,5 +7,6 @@ steps:
     $env:Path += ";C:\Miniconda"
     $env:Path += ";C:\Miniconda\Scripts"
     $env:Path += ";C:\Miniconda\Library\bin"
+    conda --version
   displayName: 'Install Miniconda'
 - checkout: self

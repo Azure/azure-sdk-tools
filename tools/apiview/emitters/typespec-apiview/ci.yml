@@ -80,7 +80,7 @@ stages:
         steps:
         - checkout: none
         - download: current
-        
+
         - pwsh: |
             $detectedPackageName=Get-ChildItem $(Pipeline.Workspace)/$(ArtifactName)/*.tgz
             Write-Host "Detected package name: $detectedPackageName"

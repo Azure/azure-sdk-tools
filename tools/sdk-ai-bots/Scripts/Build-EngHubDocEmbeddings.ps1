@@ -77,10 +77,14 @@ else {
 
 # Download previous saved embeddings(last_rag_chunks_enghub_docs.json) from Azure Blob Storage
 $storageAccountName = "saazuresdkbot"
-$containerName = "rag-contents"
 $blobName = "last_rag_chunks_enghub_docs.json"
 $destinationPath = $embeddingSourceFolder
 $ragChunkPath = Join-Path -Path $embeddingSourceFolder -ChildPath $blobName
+$containerName = $env:AZURE_STORAGE_ACCOUNT_CONTAINER
+if(-not $containerName) {
+  Write-Error "Please set the environment variable 'AZURE_STORAGE_ACCOUNT_CONTAINER'."
+  exit 1
+}
 if($IncrementalEmbedding -eq $true) {
   Write-Host "Downloading previous saved embeddings $blobName from Azure Blob Storage"
   if(-not (Download-AzureBlob -StorageAccountName $storageAccountName -ContainerName $containerName -BlobName $blobName -DestinationPath $destinationPath)) {

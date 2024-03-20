@@ -12,6 +12,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
+  st-container-name: $(storage-account-container)
   aoai-endpoint: $(azure-openai-endpoint)
   asch-endpoint: $(azure-search-endpoint)
   asch-index-name: $(azure-search-index-name)
@@ -48,6 +49,7 @@ stages:
         AZURE_OPENAI_API_KEY: $(azure-openapi-key)
         AZURE_SEARCH_KEY: $(azure-search-key)
         AZURE_STORAGE_ACCOUNT_KEY: $(storage-account-key)
+        AZURE_STORAGE_ACCOUNT_CONTAINER: $(st-container-name)
 
 - stage: BuildCustomizedDocEmbeddings
   displayName: 'Build Customized Document Embeddings'
@@ -71,3 +73,4 @@ stages:
         AZURE_OPENAI_API_KEY: $(azure-openapi-key)
         AZURE_SEARCH_KEY: $(azure-search-key)
         AZURE_STORAGE_ACCOUNT_KEY: $(storage-account-key)
+        AZURE_STORAGE_ACCOUNT_CONTAINER: $(st-container-name)

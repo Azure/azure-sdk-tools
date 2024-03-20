@@ -113,10 +113,14 @@ else {
 
 # Download previous saved embeddings(last_rag_chunks_customized_docs.json) from Azure Blob Storage
 $storageAccountName = "saazuresdkbot"
-$containerName = "rag-contents"
 $blobName = "last_rag_chunks_customized_docs.json"
 $destinationPath = $embeddingSourceFolder
 $ragChunkPath = Join-Path -Path $embeddingSourceFolder -ChildPath $blobName
+$containerName = $env:AZURE_STORAGE_ACCOUNT_CONTAINER
+if(-not $containerName) {
+  Write-Error "Please set the environment variable 'AZURE_STORAGE_ACCOUNT_CONTAINER'."
+  exit 1
+}
 if($IncrementalEmbedding -eq $true) {
   Write-Host "Downloading previous saved embeddings $blobName from Azure Blob Storage"
   if(-not (Download-AzureBlob -StorageAccountName $storageAccountName -ContainerName $containerName -BlobName $blobName -DestinationPath $destinationPath)) {
@@ -130,7 +134,18 @@ $env:RAG_CHUNK_PATH = $ragChunkPath
 $env:METADATA_PATH = $customizedDocsMetadataFile
 $env:DOCUMENT_PATH = $customizedDocsDestFolder
 $env:INCREMENTAL_EMBEDDING = $IncrementalEmbedding
-if(-not (Build-Embeddings -EmbeddingToolFolder $embeddingToolFolder)) {
+$env:AZURESEARCH_FIELDS_CONTENT = "Text"
+$env:AZURESEARCH_FIELDS_CONTENT_VECTOR = "Embedding"
+$env:AZURESEARCH_FIELDS_TAG = "AdditionalMetadata"
+$env:AZURESEARCH_FIELDS_ID = "Id"
+
+$CondaPath = Initialize-CondaEnv
+if(-not $CondaPath) {
+  Write-Error "Failed to initialize conda environment at $CondaPath."
+  exit 1
+}
+
+if(-not (Build-Embeddings -EmbeddingToolFolder $embeddingToolFolder -CondaPath $CondaPath)) {
   exit 1
 }
 

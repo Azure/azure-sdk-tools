@@ -194,15 +194,15 @@ extends:
                 Publish: false
                 ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
 
-                  #- ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-                  #  - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
-                  #    parameters:
-                  #      # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
-                  #      DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
-                  #      ExeMatrix: ${{ parameters.StandaloneExeMatrix }}
-                  #      ShouldPublishExecutables: ${{ parameters.ReleaseBinaries }}
-                  #      ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
-                  #      RequireStrongNames: ${{ parameters.RequireStrongNames }}
+      - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+        - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
+          parameters:
+            # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
+            DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+            ExeMatrix: ${{ parameters.StandaloneExeMatrix }}
+            ShouldPublishExecutables: ${{ parameters.ReleaseBinaries }}
+            ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
+            RequireStrongNames: ${{ parameters.RequireStrongNames }}
 
       - ${{if and(not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages

@@ -110,7 +110,6 @@ extends:
                 onlyAddExtraIndex: false
 
             - pwsh: |
-                # twine upload --repository ${{ parameters.FeedName }} --config-file $(PYPIRC_PATH) $(Pipeline.Workspace)/${{ parameters.ArtifactName }}/*.whl
+                twine upload --repository ${{ parameters.FeedName }} --config-file $(PYPIRC_PATH) $(Pipeline.Workspace)/${{ parameters.ArtifactName }}/*.whl
                 echo "Uploaded whl to devops feed ${{ parameters.FeedName }}"
-                echo "BEBRODER SKIPPED"
               displayName: 'Publish ${{ parameters.PackageName }} to DevOps feed'

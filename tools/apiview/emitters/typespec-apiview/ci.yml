@@ -103,6 +103,5 @@ extends:
                 npm config set $regAuth`:_authToken=`$`{NPM_TOKEN`}
                 Write-Host "Publishing to $($regAuth)"
                 Write-Host "npm publish $detectedPackageName --registry=$registry --always-auth=true --access='public'"
-                # npm publish $detectedPackageName --registry=$registry --always-auth=true --access="public"
-                Write-Host "BEBRODER SKIPPING"
+                npm publish $detectedPackageName --registry=$registry --always-auth=true --access="public"
               displayName: Publish package

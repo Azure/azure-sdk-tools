@@ -75,7 +75,10 @@ function Build-Embeddings {
     param (
         [Parameter(Position = 0)]
         [ValidateNotNullOrEmpty()]
-        [string] $EmbeddingToolFolder
+        [string] $EmbeddingToolFolder,
+        [Parameter(Position = 1)]
+        [ValidateNotNullOrEmpty()]
+        [string] $CondaPath
     )
 
     if(-not (Test-Path $embeddingToolFolder)){
@@ -83,58 +86,37 @@ function Build-Embeddings {
         return $false
     }
     
-    #$stopwatch = Measure-Command {
+    $stopwatch = Measure-Command {
         Write-Host "Building embeddings..."
         try {
-            Push-Location $embeddingToolFolder
-
-            Write-Host "Check Python environment"
-            $pythonVersion = python --version
-            Write-Host "Python version: $pythonVersion"
-            $pipVersion = python -m pip --version
-            Write-Host "Pip version: $pipVersion"
-
-            # Print Python version
-            $pythonVersion = python -c "import sys; print(sys.version)"
-            Write-Host "Python version: $pythonVersion"
-            # Print Python executable path
-            $pythonEnvExePath = python -c "import sys; print(sys.executable)"
-            Write-Host "Python executable path: $pythonEnvExePath"
-
-            $condaPath = "C:\Miniconda\Scripts\conda.exe"
-            if(-not (Test-Path $condaPath)) {
-                Write-Error "Conda is not installed at $condaPath"
-                return $false
-            }
+            Push-Location $embeddingToolFolder            
+            
             Write-Host "Create Conda environment"
-            & $condaPath create -n myenv python=3.11 -y
+            & $CondaPath create -n myenv python=3.11 -y
 
             # Print Python version
-            $pythonVersion = & $condaPath run -n myenv python -c "import sys; print(sys.version)"
+            $pythonVersion = & $CondaPath run -n myenv python -c "import sys; print(sys.version)"
             Write-Host "Python version: $pythonVersion"
             # Print Python executable path
-            $pythonEnvExePath = & $condaPath run -n myenv python -c "import sys; print(sys.executable)"
+            $pythonEnvExePath = & $CondaPath run -n myenv python -c "import sys; print(sys.executable)"
             Write-Host "Python executable path: $pythonEnvExePath"
 
             # setup python environment and install required packages
             Write-Host "Setting up python environment"
-            & $condaPath run -n myenv python -m pip install --upgrade pip
+            & $CondaPath run -n myenv python -m pip install --upgrade pip
 
             Write-Host "Installing required packages"
-            & $condaPath run -n myenv python -m pip install -r requirements.txt
-            
-            $currentDir = Get-Location
-            Write-Host "Current directory: $currentDir"
+            & $CondaPath run -n myenv python -m pip install -r requirements.txt
 
             Write-Host "List package versions..."
-            & $condaPath run -n myenv python -m pip list > pip_list.txt
+            & $CondaPath run -n myenv python -m pip list > pip_list.txt
 
             Write-Host "Print the content of pip_list.txt"
             $installedPkg = Get-Content -Path "pip_list.txt"
             Write-Host $installedPkg
             
             Write-Host "Starts building"
-            & $condaPath run -n myenv python main.py
+            & $CondaPath run -n myenv python main.py
         }
         catch {
             Write-Error "Failed to build embeddings with exception:`n$_"
@@ -142,10 +124,9 @@ function Build-Embeddings {
         }
         finally {
             Pop-Location
-        }
-    #}
+        }    
     
-    #Write-Host "Finishes building with time: $($stopwatch.TotalSeconds) seconds"
+    Write-Host "Finishes building with time: $($stopwatch.TotalSeconds) seconds"
     return $true
 }
 
@@ -185,10 +166,14 @@ function Upload-AzureBlob {
     return $false
 }
 
+# only support windows platform
 function Initialize-CondaEnv {
+    $condaPath = "C:\Miniconda\Scripts\conda.exe"
     try {
         Get-Command conda -ErrorAction Stop >$null
         Write-Host "Conda is installed."
+        $condaPath = (Get-Command conda -All | Where-Object { $_.CommandType -eq 'Application' -and $_.Source -like '*conda.exe' }).Source
+        Write-Host $condaPath
     } catch {
         Write-Host "Conda is not installed."
         Write-Host "Installing Miniconda"
@@ -200,17 +185,5 @@ function Initialize-CondaEnv {
         $env:Path += ";C:\Miniconda\Library\bin"
         conda --version
     }
-    return $true
-    <#
-    Write-Host "Create Conda environment"
-    $condaPath = "C:\Miniconda\Scripts\conda.exe"
-    if(-not (Test-Path $condaPath)) {
-        Write-Error "Conda is not installed at $condaPath"
-        return $false
-    }
-    & $condaPath create -n myenv python=3.11 -y
-    Write-Host "Initialize Conda environment"
-    & $condaPath init powershell        
-    Write-Host "Activate Conda environment"
-    & $condaPath activate myenv*/#>
+    return $condaPath
 }

@@ -100,27 +100,13 @@ $env:AZURESEARCH_FIELDS_CONTENT_VECTOR = "Embedding"
 $env:AZURESEARCH_FIELDS_TAG = "AdditionalMetadata"
 $env:AZURESEARCH_FIELDS_ID = "Id"
 
-if(-not (Initialize-CondaEnv)) {
+$CondaPath = Initialize-CondaEnv
+if(-not $CondaPath) {
+  Write-Error "Failed to initialize conda environment at $CondaPath."
   exit 1
 }
 
-# print the variables
-Write-Host "RAG_CHUNK_PATH: $env:RAG_CHUNK_PATH"
-Write-Host "METADATA_PATH: $env:METADATA_PATH"
-Write-Host "DOCUMENT_PATH: $env:DOCUMENT_PATH"
-Write-Host "INCREMENTAL_EMBEDDING: $env:INCREMENTAL_EMBEDDING"
-Write-Host "AZURE_OPENAI_ENDPOINT: $env:AZURE_OPENAI_ENDPOINT"
-Write-Host "AZURE_SEARCH_ENDPOINT: $env:AZURE_SEARCH_ENDPOINT"
-Write-Host "AZURE_SEARCH_INDEX_NAME: $env:AZURE_SEARCH_INDEX_NAME"
-Write-Host "AZURE_OPENAI_EMBEDDING_MODEL: $env:AZURE_OPENAI_EMBEDDING_MODEL"
-Write-Host "AZURE_OPENAI_API_KEY: $env:AZURE_OPENAI_API_KEY"
-Write-Host "AZURE_SEARCH_KEY: $env:AZURE_SEARCH_KEY"
-Write-Host "AZURE_STORAGE_ACCOUNT_KEY: $env:AZURE_STORAGE_ACCOUNT_KEY"
-Write-Host "AZURESEARCH_FIELDS_CONTENT: $env:AZURESEARCH_FIELDS_CONTENT"
-Write-Host "AZURESEARCH_FIELDS_CONTENT_VECTOR: $env:AZURESEARCH_FIELDS_CONTENT_VECTOR"
-Write-Host "AZURESEARCH_FIELDS_TAG: $env:AZURESEARCH_FIELDS_TAG"
-Write-Host "AZURESEARCH_FIELDS_ID: $env:AZURESEARCH_FIELDS_ID"
-if(-not (Build-Embeddings -EmbeddingToolFolder $embeddingToolFolder)) {
+if(-not (Build-Embeddings -EmbeddingToolFolder $embeddingToolFolder -CondaPath $CondaPath)) {
   exit 1
 }
 

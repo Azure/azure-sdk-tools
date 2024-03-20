@@ -109,7 +109,7 @@ if(-not $CondaPath) {
   Write-Error "Failed to initialize conda environment at $CondaPath."
   exit 1
 }
-
+Write-Host "CondaPath: $CondaPath"
 if(-not (Build-Embeddings -EmbeddingToolFolder $embeddingToolFolder -CondaPath $CondaPath)) {
   exit 1
 }

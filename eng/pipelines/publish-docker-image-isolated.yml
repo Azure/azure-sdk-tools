@@ -71,6 +71,16 @@ stages:
                 path: ${{ config.configPath }}
                 enableNetwork: true
                 useBuildKit: true
+            - ${{ if config.stableTags }}:
+              - ${{ each stableTag in config.stableTags }}:
+                - task: 1ES.BuildContainerImage@1
+                  displayName: Build ${{ config.name }}:${{ stableTag }}
+                  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+                  inputs:
+                    image: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}
+                    path: ${{ config.configPath }}
+                    enableNetwork: true
+                    useBuildKit: true
 
       - ${{ if and(parameters.ManifestDeployment, parameters.Publish) }}:
         - ${{ each deployment in parameters.ManifestDeployment }}:

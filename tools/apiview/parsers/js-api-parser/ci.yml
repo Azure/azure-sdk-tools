@@ -8,7 +8,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - tools/apiview/parsers/js-api-parser          
+      - tools/apiview/parsers/js-api-parser
 
 pr:
   branches:
@@ -19,82 +19,95 @@ pr:
       - hotfix/*
   paths:
     include:
-      - tools/apiview/parsers/js-api-parser          
+      - tools/apiview/parsers/js-api-parser
 
-variables:
-  NodeVersion: '18.x'
-  TypeScriptGeneratorDirectory: 'tools/apiview/parsers/js-api-parser'
-  ArtifactName: 'apiview'
-  FeedRegistry: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage: 'Build'
+        variables:
+          - template: /eng/pipelines/templates/variables/image.yml
+          - name: NodeVersion
+            value: '18.x'
+          - name: ArtifactName
+            value: 'apiview'
+          - name: TypeScriptGeneratorDirectory
+            value: 'tools/apiview/parsers/js-api-parser'
+        jobs:
+          - job: 'Build'
 
-stages:
-  - stage: 'Build'
-    jobs:
-      - job: 'Build'
+            pool:
+              name: $(LINUXNEXTPOOL)
+              image: $(LINUXNEXTVMIMAGE)
+              os: linux
 
-        pool:
-          name: azsdk-pool-mms-ubuntu-2204-general
-          vmImage: ubuntu-22.04
+            steps:
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: '$(NodeVersion)'
+                displayName: 'Use NodeJS $(NodeVersion)'
 
-        steps:
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '$(NodeVersion)'
-            displayName: 'Use NodeJS $(NodeVersion)'
+              - script: |
+                  npm install -g npm@8.16.0
+                displayName: "Install npm 8.16.0"
 
-          - script: |
-              npm install -g npm@8.16.0
-            displayName: "Install npm 8.16.0"
-          
-          - script: |
-              npm install
-            workingDirectory: $(TypeScriptGeneratorDirectory)
-            displayName: "Install npm packages typescript generator"
+              - script: |
+                  npm install
+                workingDirectory: $(TypeScriptGeneratorDirectory)
+                displayName: "Install npm packages typescript generator"
 
-          - script: |
-              npm run-script build
-            workingDirectory: $(TypeScriptGeneratorDirectory)
-            displayName: "Build typescript generator"
+              - script: |
+                  npm run-script build
+                workingDirectory: $(TypeScriptGeneratorDirectory)
+                displayName: "Build typescript generator"
 
-          - pwsh: |
-              npm pack $(TypeScriptGeneratorDirectory)
-              Copy-Item ./*.tgz $(Build.ArtifactStagingDirectory)
-            displayName: "Pack typescript generator"
+              - pwsh: |
+                  npm pack $(TypeScriptGeneratorDirectory)
+                  Copy-Item ./*.tgz $(Build.ArtifactStagingDirectory)
+                displayName: "Pack typescript generator"
 
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-              artifactName: $(ArtifactName)
+              - task: 1ES.PublishPipelineArtifact@1
+                inputs:
+                  targetPath: '$(Build.ArtifactStagingDirectory)'
+                  artifactName: $(ArtifactName)
 
-  - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - stage: 'Release'
-      dependsOn: Build
-      condition: Succeeded()
-      jobs:
-      - job: PublishPackage
-        displayName: 'Publish ts-genapi package to devops feed'
-        pool:
-          name: azsdk-pool-mms-ubuntu-2204-general
-          vmImage: ubuntu-22.04
-        steps:
-        - checkout: none
-        - download: current
-        
-        - pwsh: |
-            $detectedPackageName=Get-ChildItem $(Pipeline.Workspace)/$(ArtifactName)/*.tgz
-            Write-Host "Detected package name: $detectedPackageName"
-            $registry="$(FeedRegistry)"
-            $regAuth=$registry.replace("https:","")
-            $npmReg = $regAuth.replace("registry/","");
-            $env:NPM_TOKEN="$(azure-sdk-devops-npm-token)"
-            Write-Host "Publishing to $($regAuth)"
-            npm config set $regAuth`:username=azure-sdk
-            npm config set $regAuth`:_password=`$`{NPM_TOKEN`}
-            npm config set $regAuth`:email=not_set
-            npm config set $npmReg`:username=azure-sdk
-            npm config set $npmReg`:_password=`$`{NPM_TOKEN`}
-            npm config set $npmReg`:email=not_set
-            Write-Host "Publishing package"
-            Write-Host "npm publish $detectedPackageName --registry=$registry --always-auth=true"
-            npm publish $detectedPackageName --registry=$registry --always-auth=true
-          displayName: Publish package
+      - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
+        - stage: 'Release'
+          dependsOn: Build
+          condition: Succeeded()
+          variables:
+            - template: /eng/pipelines/templates/variables/image.yml
+            - name: ArtifactName
+              value: 'apiview'
+            - name: FeedRegistry
+              value: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js/npm/registry/'
+          jobs:
+          - job: PublishPackage
+            displayName: 'Publish ts-genapi package to devops feed'
+            pool:
+              name: $(LINUXNEXTPOOL)
+              image: $(LINUXNEXTVMIMAGE)
+              os: linux
+            steps:
+            - checkout: none
+            - download: current
+
+            - pwsh: |
+                $detectedPackageName=Get-ChildItem $(Pipeline.Workspace)/$(ArtifactName)/*.tgz
+                Write-Host "Detected package name: $detectedPackageName"
+                $registry="$(FeedRegistry)"
+                $regAuth=$registry.replace("https:","")
+                $npmReg = $regAuth.replace("registry/","");
+                $env:NPM_TOKEN="$(azure-sdk-devops-npm-token)"
+                Write-Host "Publishing to $($regAuth)"
+                npm config set $regAuth`:username=azure-sdk
+                npm config set $regAuth`:_password=`$`{NPM_TOKEN`}
+                npm config set $regAuth`:email=not_set
+                npm config set $npmReg`:username=azure-sdk
+                npm config set $npmReg`:_password=`$`{NPM_TOKEN`}
+                npm config set $npmReg`:email=not_set
+                Write-Host "Publishing package"
+                Write-Host "npm publish $detectedPackageName --registry=$registry --always-auth=true"
+                npm publish $detectedPackageName --registry=$registry --always-auth=true
+              displayName: Publish package

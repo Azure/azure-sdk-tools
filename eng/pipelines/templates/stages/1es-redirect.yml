@@ -23,8 +23,9 @@ extends:
   ${{ else }}:
     template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
-    authenticatedContainerRegistries:
-      - serviceConnection: azsdkengsys
+    ${{ if and(parameters.Use1ESOfficial, eq(variables['System.TeamProject'], 'internal')) }}:
+      authenticatedContainerRegistries:
+        - serviceConnection: azsdkengsys
     settings:
       skipBuildTagsForGitHubPullRequests: true
     sdl:

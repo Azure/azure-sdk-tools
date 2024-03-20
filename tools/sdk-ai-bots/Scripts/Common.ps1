@@ -125,7 +125,7 @@ function Build-Embeddings {
         finally {
             Pop-Location
         }    
-    
+    }
     Write-Host "Finishes building with time: $($stopwatch.TotalSeconds) seconds"
     return $true
 }

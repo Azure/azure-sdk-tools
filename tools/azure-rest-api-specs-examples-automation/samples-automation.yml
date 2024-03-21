@@ -1,0 +1,26 @@
+trigger: none
+
+pr: none
+
+variables:
+- template: ../../eng/pipelines/templates/variables/globals.yml
+- name: GoVersion
+  value: '1.18'
+
+jobs:
+- job: Automation
+  timeoutInMinutes: 360
+
+  pool:
+    name: "azsdk-pool-mms-ubuntu-2004-general"
+    vmImage: "MMSUbuntu20.04"
+
+  steps:
+  - task: GoTool@0
+    inputs:
+      version: $(GoVersion)
+
+  - script: |
+      ./automation/main.sh --build-id=$(Build.BuildId) --github-token=$(azuresdk-github-pat) --release-in-days=10 --skip-processed=true --persist-data=true --merge-pull-request=true
+    displayName: 'Collect examples'
+    workingDirectory: ./tools/azure-rest-api-specs-examples-automation

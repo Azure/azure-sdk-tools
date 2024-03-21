@@ -3,6 +3,10 @@
     "TypeList": {
       "commandName": "Project",
       "commandLineArgs": "..\\..\\..\\TestLibrary\\Debug\\netcoreapp2.1\\TestLibrary.dll"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
     }
   }
 }

@@ -13,7 +13,6 @@ import {
   IdentifierNode,
   InterfaceStatementNode,
   IntersectionExpressionNode,
-  listServices,
   MemberExpressionNode,
   ModelExpressionNode,
   ModelPropertyNode,
@@ -21,7 +20,6 @@ import {
   ModelStatementNode,
   Namespace,
   navigateProgram,
-  NoTarget,
   NumericLiteralNode,
   OperationSignatureDeclarationNode,
   OperationSignatureReferenceNode,
@@ -29,6 +27,9 @@ import {
   Program,
   ScalarStatementNode,
   StringLiteralNode,
+  StringTemplateExpressionNode,
+  StringTemplateHeadNode,
+  StringTemplateSpanNode,
   SyntaxKind,
   TemplateArgumentNode,
   TemplateParameterDeclarationNode,
@@ -43,7 +44,6 @@ import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
 import { ApiViewNavigation } from "./navigation.js";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
-import { reportDiagnostic } from "./lib.js";
 
 const WHITESPACE = " ";
 
@@ -633,9 +633,45 @@ export class ApiView {
             this.tokenize(obj.argument);
         }
         break;
+      case SyntaxKind.StringTemplateExpression:
+        obj = node as StringTemplateExpressionNode;
+        const multiLine = (obj.head.value.includes("\n") || obj.spans.some(x => x.literal.value.includes("\n")))
+
+        if (multiLine) {
+          this.punctuation(`"""`);
+          this.newline();
+          this.indent();
+        } else {
+          this.punctuation(`"`);
+        }
+        this.tokenize(obj.head);
+        for (const span of obj.spans) {
+            this.tokenize(span);
+        }
+        if (multiLine) {
+          this.newline();
+          this.deindent();
+          this.punctuation(`"""`);
+        } else {
+          this.punctuation(`"`);
+        }
+        break;
+      case SyntaxKind.StringTemplateSpan:
+        obj = node as StringTemplateSpanNode;
+        this.punctuation("${", false, false);
+        this.tokenize(obj.expression);
+        this.punctuation("}", false, false);
+        this.tokenize(obj.literal);
+        break;
+      case SyntaxKind.StringTemplateHead:
+      case SyntaxKind.StringTemplateMiddle:
+      case SyntaxKind.StringTemplateTail:
+        obj = node as StringTemplateHeadNode;
+        this.literal(obj.value);
+        break;
       default:
         // All Projection* cases should fall in here...
-        throw new Error(`Case "${node.kind.toString()}" not implemented`);
+        throw new Error(`Case "${SyntaxKind[node.kind].toString()}" not implemented`);
     }
   }
 

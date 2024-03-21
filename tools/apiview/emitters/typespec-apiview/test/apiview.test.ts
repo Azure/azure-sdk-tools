@@ -693,4 +693,50 @@ describe("apiview: tests", () => {
       validateDefinitionIds(apiview);
     });  
   });
+
+  describe("string templates", () => {
+    it("templates", async () => {
+      const input = `
+      @TypeSpec.service( { title: "Test", version: "1" } )
+      namespace Azure.Test {  
+        alias myconst = "foobar";
+        model Person {
+          simple: "Simple \${123} end";
+          multiline: """
+            Multi
+               \${123}
+               \${true}
+            line
+          """;
+          ref: "Ref this alias \${myconst} end";
+          template: Template<"custom">;          
+        }
+        alias Template<T extends valueof string> = "Foo \${T} bar";
+      }`;
+
+      const expect = `
+      namespace Azure.Test {
+        model Person {
+          simple: "Simple \${123} end";
+          multiline: """
+            Multi
+               \${123}
+               \${true}
+            line
+          """;
+          ref: "Ref this alias \${myconst} end";
+          template: Template<"custom">;
+        }
+
+        alias myconst = "foobar";
+
+        alias Template<T extends valueof string> = "Foo \${T} bar";
+      }
+      `;
+      const apiview = await apiViewFor(input, {});
+      const lines = apiViewText(apiview);
+      compare(expect, lines, 9);
+      validateDefinitionIds(apiview);
+    });
+  });
 });

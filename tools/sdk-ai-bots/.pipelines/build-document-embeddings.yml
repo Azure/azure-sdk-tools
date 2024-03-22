@@ -59,8 +59,6 @@ stages:
   - job: BuildCustomizedDocumentEmbeddings
     steps:
     - template: setup-pipeline.yml
-      parameters:
-        pythonVersion: '3.11.3'
     - task: Powershell@2
       inputs:
         filePath: $(Build.SourcesDirectory)/azure-sdk-tools/tools/sdk-ai-bots/Scripts/Build-EngCustomizedDocEmbeddings.ps1

@@ -243,7 +243,7 @@ describe("apiview: tests", () => {
           species: string;
         }
   
-        alias Creature = Animal
+        alias Creature = Animal;
       }
       `;
       const apiview = await apiViewFor(input, {});
@@ -251,7 +251,33 @@ describe("apiview: tests", () => {
       compare(expect, actual, 9);
       validateDefinitionIds(apiview);
     });  
-  });
+
+    it("templated alias", async () => {
+        const input = `
+        @TypeSpec.service( { title: "Test", version: "1" } )
+        namespace Azure.Test {
+          model Animal {
+            species: string;
+          }
+
+          alias Template<T extends valueof string> = "Foo \${T} bar";
+        }
+        `;
+        const expect = `
+        namespace Azure.Test {
+          model Animal {
+            species: string;
+          }
+    
+          alias Template<T extends valueof string> = "Foo \${T} bar";
+        }
+        `;
+        const apiview = await apiViewFor(input, {});
+        const actual = apiViewText(apiview);
+        compare(expect, actual, 9);
+        validateDefinitionIds(apiview);
+      });  
+    });
 
   describe("augment decorators", () => {
     it("simple augment", async () => {
@@ -704,8 +730,8 @@ describe("apiview: tests", () => {
           simple: "Simple \${123} end";
           multiline: """
             Multi
-               \${123}
-               \${true}
+              \${123}
+              \${true}
             line
           """;
           ref: "Ref this alias \${myconst} end";
@@ -719,10 +745,10 @@ describe("apiview: tests", () => {
         model Person {
           simple: "Simple \${123} end";
           multiline: """
-            Multi
-               \${123}
-               \${true}
-            line
+              Multi
+                \${123}
+                \${true}
+              line
           """;
           ref: "Ref this alias \${myconst} end";
           template: Template<"custom">;

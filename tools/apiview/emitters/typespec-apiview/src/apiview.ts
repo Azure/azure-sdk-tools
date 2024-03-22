@@ -8,6 +8,7 @@ import {
   EnumMemberNode,
   EnumSpreadMemberNode,
   EnumStatementNode,
+  Expression,
   getNamespaceFullName,
   getSourceLocation,
   IdentifierNode,
@@ -383,6 +384,7 @@ export class ApiView {
         this.namespaceStack.push(obj.id.sv);
         this.keyword("alias", false, true);
         this.typeDeclaration(obj.id.sv, this.namespaceStack.value(), true);
+        this.tokenizeTemplateParameters(obj.templateParameters);
         this.punctuation("=", true, true);
         this.tokenize(obj.value);
         this.namespaceStack.pop();
@@ -635,26 +637,24 @@ export class ApiView {
         break;
       case SyntaxKind.StringTemplateExpression:
         obj = node as StringTemplateExpressionNode;
-        const multiLine = (obj.head.value.includes("\n") || obj.spans.some(x => x.literal.value.includes("\n")))
-
-        if (multiLine) {
-          this.punctuation(`"""`);
+        const stringValue = this.buildTemplateString(obj);
+        const multiLine = stringValue.includes("\n");
+        // single line case
+        if (!multiLine) {
+          this.stringLiteral(stringValue);
+          break;
+        }
+        // otherwise multiline case
+        const lines = stringValue.split("\n");
+        this.punctuation(`"""`);
+        this.newline();
+        this.indent();
+        for (const line of lines) {
+          this.literal(line);
           this.newline();
-          this.indent();
-        } else {
-          this.punctuation(`"`);
         }
-        this.tokenize(obj.head);
-        for (const span of obj.spans) {
-            this.tokenize(span);
-        }
-        if (multiLine) {
-          this.newline();
-          this.deindent();
-          this.punctuation(`"""`);
-        } else {
-          this.punctuation(`"`);
-        }
+        this.deindent();
+        this.punctuation(`"""`);
         break;
       case SyntaxKind.StringTemplateSpan:
         obj = node as StringTemplateSpanNode;
@@ -670,9 +670,48 @@ export class ApiView {
         this.literal(obj.value);
         break;
       default:
-        // All Projection* cases should fall in here...
+        // All Projection* cases should fail here...
         throw new Error(`Case "${SyntaxKind[node.kind].toString()}" not implemented`);
     }
+  }
+
+  private buildExpressionString(node: Expression) {
+    switch (node.kind) {
+      case SyntaxKind.StringLiteral:
+        return `"${(node as StringLiteralNode).value}"`;
+      case SyntaxKind.NumericLiteral:
+        return (node as NumericLiteralNode).value.toString();
+      case SyntaxKind.BooleanLiteral:
+        return (node as BooleanLiteralNode).value.toString();
+      case SyntaxKind.StringTemplateExpression:
+        return this.buildTemplateString(node as StringTemplateExpressionNode);
+      case SyntaxKind.VoidKeyword:
+        return "void";
+      case SyntaxKind.NeverKeyword:
+        return "never";
+      case SyntaxKind.TypeReference:
+        const obj = node as TypeReferenceNode;
+        switch (obj.target.kind) {
+          case SyntaxKind.Identifier:
+            return (obj.target as IdentifierNode).sv;
+          case SyntaxKind.MemberExpression:
+            return this.getFullyQualifiedIdentifier(obj.target as MemberExpressionNode);
+        }
+        break;
+      default:
+        throw new Error(`Unsupported expression kind: ${SyntaxKind[node.kind]}`);
+      //unsupported ArrayExpressionNode | MemberExpressionNode | ModelExpressionNode | TupleExpressionNode | UnionExpressionNode | IntersectionExpressionNode | TypeReferenceNode | ValueOfExpressionNode | AnyKeywordNode;
+    }
+  }
+
+  /** Constructs a single string with template markers. */
+  private buildTemplateString(node: StringTemplateExpressionNode): string {
+    let result = node.head.value;
+    for (const span of node.spans) {
+      result += "${" + this.buildExpressionString(span.expression) + "}";
+      result += span.literal.value;
+    }
+    return result;
   }
 
   private tokenizeModelStatement(node: ModelStatementNode) {
@@ -927,6 +966,7 @@ export class ApiView {
     }
     for (const node of model.aliases.values()) {
         this.tokenize(node);
+        this.punctuation(";");
         this.blankLines(1);
     }  
     this.endGroup();

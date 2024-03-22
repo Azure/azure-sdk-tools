@@ -24,7 +24,6 @@ Azure/azure-sdk-actions
 Azure/autorest
 Azure/autorest.csharp
 Azure/autorest.java
-Azure/autorest.python
 Azure/autorest.typescript
 Azure/autorest.go
 Azure/autorest.swift

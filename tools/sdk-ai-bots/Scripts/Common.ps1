@@ -77,7 +77,6 @@ function Build-Embeddings {
         [ValidateNotNullOrEmpty()]
         [string] $EmbeddingToolFolder,
         [Parameter(Position = 1)]
-        [ValidateNotNullOrEmpty()]
         [string] $CondaPath
     )
 
@@ -85,47 +84,89 @@ function Build-Embeddings {
         Write-Error "The embedding tool folder does not exist: $embeddingToolFolder"
         return $false
     }
+    $stopwatch = $null
+    if ($CondaPath -and (Test-Path $CondaPath)) {
+        $stopwatch = Measure-Command {
+            Write-Host "Building embeddings..."
+            try {
+                Push-Location $embeddingToolFolder            
+                
+                Write-Host "Create Conda environment"
+                & $CondaPath create -n myenv python=3.11 -y
     
-    $stopwatch = Measure-Command {
-        Write-Host "Building embeddings..."
-        try {
-            Push-Location $embeddingToolFolder            
-            
-            Write-Host "Create Conda environment"
-            & $CondaPath create -n myenv python=3.11 -y
-
-            # Print Python version
-            $pythonVersion = & $CondaPath run -n myenv python -c "import sys; print(sys.version)"
-            Write-Host "Python version: $pythonVersion"
-            # Print Python executable path
-            $pythonEnvExePath = & $CondaPath run -n myenv python -c "import sys; print(sys.executable)"
-            Write-Host "Python executable path: $pythonEnvExePath"
-
-            # setup python environment and install required packages
-            Write-Host "Setting up python environment"
-            & $CondaPath run -n myenv python -m pip install --upgrade pip
-
-            Write-Host "Installing required packages"
-            & $CondaPath run -n myenv python -m pip install -r requirements.txt
-
-            Write-Host "List package versions..."
-            & $CondaPath run -n myenv python -m pip list > pip_list.txt
-
-            Write-Host "Print the content of pip_list.txt"
-            $installedPkg = Get-Content -Path "pip_list.txt"
-            Write-Host $installedPkg
-            
-            Write-Host "Starts building"
-            & $CondaPath run -n myenv python main.py
+                # Print Python version
+                $pythonVersion = & $CondaPath run -n myenv python -c "import sys; print(sys.version)"
+                Write-Host "Python version: $pythonVersion"
+                # Print Python executable path
+                $pythonEnvExePath = & $CondaPath run -n myenv python -c "import sys; print(sys.executable)"
+                Write-Host "Python executable path: $pythonEnvExePath"
+    
+                # setup python environment and install required packages
+                Write-Host "Setting up python environment"
+                & $CondaPath run -n myenv python -m pip install --upgrade pip
+    
+                Write-Host "Installing required packages"
+                & $CondaPath run -n myenv python -m pip install -r requirements.txt
+    
+                Write-Host "List package versions..."
+                & $CondaPath run -n myenv python -m pip list > pip_list.txt
+    
+                Write-Host "Print the content of pip_list.txt"
+                $installedPkg = Get-Content -Path "pip_list.txt"
+                Write-Host $installedPkg
+                
+                Write-Host "Starts building"
+                & $CondaPath run -n myenv python main.py
+            }
+            catch {
+                Write-Error "Failed to build embeddings with exception:`n$_"
+                return $false
+            }
+            finally {
+                Pop-Location
+            }    
         }
-        catch {
-            Write-Error "Failed to build embeddings with exception:`n$_"
-            return $false
-        }
-        finally {
-            Pop-Location
-        }    
     }
+    else {
+        $stopwatch = Measure-Command {
+            Write-Host "Building embeddings..."
+            try {
+                Push-Location $embeddingToolFolder
+    
+                # Print Python version
+                $pythonVersion = python -c "import sys; print(sys.version)"
+                Write-Host "Python version: $pythonVersion"
+                # Print Python executable path
+                $pythonEnvExePath = python -c "import sys; print(sys.executable)"
+                Write-Host "Python executable path: $pythonEnvExePath"
+    
+                # setup python environment and install required packages
+                Write-Host "Setting up python environment"
+                python -m pip install --upgrade pip
+    
+                Write-Host "Installing required packages"
+                python -m pip install -r requirements.txt
+    
+                Write-Host "List package versions..."
+                python -m pip list > pip_list.txt
+    
+                Write-Host "Print the content of pip_list.txt"
+                $installedPkg = Get-Content -Path "pip_list.txt"
+                Write-Host $installedPkg
+                
+                Write-Host "Starts building"
+                python main.py
+            }
+            catch {
+                Write-Error "Failed to build embeddings with exception:`n$_"
+                return $false
+            }
+            finally {
+                Pop-Location
+            }    
+        }
+    }
+    
     Write-Host "Finishes building with time: $($stopwatch.TotalSeconds) seconds"
     return $true
 }

@@ -31,6 +31,8 @@ stages:
   - job: BuildEngHubDocumentEmbeddings
     steps:
     - template: setup-pipeline.yml
+      parameters:
+          pythonVersion: '3.11.3'
     - checkout: git://internal/_git/azure-sdk-docs-eng.ms
       displayName: 'Checkout azure-sdk-docs-eng.ms repository'
     - task: Powershell@2
@@ -57,6 +59,8 @@ stages:
   - job: BuildCustomizedDocumentEmbeddings
     steps:
     - template: setup-pipeline.yml
+      parameters:
+        pythonVersion: '3.11.3'
     - task: Powershell@2
       inputs:
         filePath: $(Build.SourcesDirectory)/azure-sdk-tools/tools/sdk-ai-bots/Scripts/Build-EngCustomizedDocEmbeddings.ps1

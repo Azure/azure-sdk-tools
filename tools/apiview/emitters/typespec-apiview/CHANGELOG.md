@@ -1,5 +1,10 @@
 # Release History
 
+## Version 0.4.7 (03-22-2024)
+Support TypeSpec string templates.
+Fix display issue with templated aliases.
+Ensure alias statements end with semicolon.
+
 ## Version 0.4.6 (03-08-2024)
 Support CrossLanguagePackageId.
 

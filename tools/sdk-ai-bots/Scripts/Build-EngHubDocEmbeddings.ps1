@@ -21,7 +21,7 @@ param (
 $buildSourceDirectory = Get-Location
 $workingDirectory = Join-Path $buildSourceDirectory "tools\sdk-ai-bots"
 if($env:AGENT_ID) {
-  # Running in Azure DevOps
+  # Running in Azure DevOps, pipeline would checkout two repositories, azure-sdk-tools and enginerring hub repository, so the working directory should be azure-sdk-tools
   $workingDirectory = Join-Path $buildSourceDirectory "azure-sdk-tools\tools\sdk-ai-bots"
 }
 $scriptsRoot = Join-Path $workingDirectory "Scripts"

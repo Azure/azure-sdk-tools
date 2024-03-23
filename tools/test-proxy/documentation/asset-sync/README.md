@@ -178,6 +178,8 @@ You could...
 
 Given the relative lack of complexity present in an `assets.json`, manual generation is recommended _unless recordings already exist_. In which case [this later section has you covered.](#im-a-dev-who-uses-the-test-proxy-currently-how-do-i-externalize-my-recordings)
 
+Once an assets.json with **blank** `Tag` value is present, start your recordings in `Record` mode as normal. Given that there is no tag present in the `assets.json`, the `main` branch will be restored from `azure-sdk-assets`. From there, on successful record-test run, the assets will be in a `test-proxy push`-able state. After that first push, your `tag` will be populated!
+
 ### My tests don't use the test-proxy at all currently, how do I externalize my recordings?
 
 You don't. Your first step is to integrate your test framework with the `test-proxy`.

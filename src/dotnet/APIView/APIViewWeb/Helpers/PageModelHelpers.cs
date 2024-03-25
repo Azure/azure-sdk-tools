@@ -270,7 +270,7 @@ namespace APIViewWeb.Helpers
             if (activeRevision == null)
             {
                 reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonRedirectToIndexPage;
-                reviewPageContent.NotificationMessage = $"Review with ID {review.Id} has no valid APIRevisons";
+                reviewPageContent.NotificationMessage = $"Review with ID {review.Id} has no valid APIRevisions";
                 return reviewPageContent;
             }
 

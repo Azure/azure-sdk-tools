@@ -55,6 +55,31 @@ stages:
         AZURE_STORAGE_ACCOUNT_NAME: $(st-account-name)
         AZURE_STORAGE_ACCOUNT_CONTAINER: $(st-container-name)
 
+- stage: BuildTypeSpecDocEmbeddings
+  displayName: 'Build TypeSpec Document Embeddings'
+  jobs:
+  - job: BuildTypeSpecDocumentEmbeddings
+    steps:
+    - template: setup-pipeline.yml
+    - task: Powershell@2
+      inputs:
+        filePath: $(Build.SourcesDirectory)/tools/sdk-ai-bots/Scripts/Build-TypeSpecAzureDocEmbeddings.ps1
+        arguments: >
+          -IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"
+        pwsh: true
+        workingDirectory: $(Build.SourcesDirectory)
+      displayName: 'Run embeddings build script'
+      env:
+        AZURE_OPENAI_ENDPOINT: $(aoai-endpoint)
+        AZURE_SEARCH_ENDPOINT: $(asch-endpoint)
+        AZURE_SEARCH_INDEX_NAME: $(asch-index-name)
+        AZURE_OPENAI_EMBEDDING_MODEL: $(aoai-embedding-model)
+        AZURE_OPENAI_API_KEY: $(azure-openapi-key)
+        AZURE_SEARCH_KEY: $(azure-search-key)
+        AZURE_STORAGE_ACCOUNT_KEY: $(storage-account-key)
+        AZURE_STORAGE_ACCOUNT_NAME: $(st-account-name)
+        AZURE_STORAGE_ACCOUNT_CONTAINER: $(st-container-name)        
+
 - stage: BuildCustomizedDocEmbeddings
   displayName: 'Build Customized Document Embeddings'
   jobs:

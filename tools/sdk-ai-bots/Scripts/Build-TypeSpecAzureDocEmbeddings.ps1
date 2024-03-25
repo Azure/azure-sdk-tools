@@ -105,13 +105,7 @@ $env:AZURESEARCH_FIELDS_CONTENT_VECTOR = "Embedding"
 $env:AZURESEARCH_FIELDS_TAG = "AdditionalMetadata"
 $env:AZURESEARCH_FIELDS_ID = "Id"
 
-$CondaPath = Initialize-CondaEnv
-if(-not $CondaPath) {
-  Write-Error "Failed to initialize conda environment at $CondaPath."
-  exit 1
-}
-
-if(-not (Build-Embeddings -EmbeddingToolFolder $embeddingToolFolder -CondaPath $CondaPath)) {
+if(-not (Build-Embeddings -EmbeddingToolFolder $embeddingToolFolder)) {
   exit 1
 }
 

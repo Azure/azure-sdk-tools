@@ -63,7 +63,7 @@ stages:
     - template: setup-pipeline.yml
     - task: Powershell@2
       inputs:
-        filePath: $(Build.SourcesDirectory)/tools/sdk-ai-bots/Scripts/Build-EngCustomizedDocEmbeddings.ps1
+        filePath: $(Build.SourcesDirectory)/tools/sdk-ai-bots/Scripts/Build-CustomizedDocEmbeddings.ps1
         arguments: >
           -IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"
         pwsh: true

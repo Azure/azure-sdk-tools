@@ -12,6 +12,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
+  st-account-name: $(storage-account-name)
   st-container-name: $(storage-account-container)
   aoai-endpoint: $(azure-openai-endpoint)
   asch-endpoint: $(azure-search-endpoint)
@@ -51,6 +52,7 @@ stages:
         AZURE_OPENAI_API_KEY: $(azure-openapi-key)
         AZURE_SEARCH_KEY: $(azure-search-key)
         AZURE_STORAGE_ACCOUNT_KEY: $(storage-account-key)
+        AZURE_STORAGE_ACCOUNT_NAME: $(st-account-name)
         AZURE_STORAGE_ACCOUNT_CONTAINER: $(st-container-name)
 
 - stage: BuildCustomizedDocEmbeddings
@@ -61,7 +63,7 @@ stages:
     - template: setup-pipeline.yml
     - task: Powershell@2
       inputs:
-        filePath: $(Build.SourcesDirectory)/azure-sdk-tools/tools/sdk-ai-bots/Scripts/Build-EngCustomizedDocEmbeddings.ps1
+        filePath: $(Build.SourcesDirectory)/tools/sdk-ai-bots/Scripts/Build-EngCustomizedDocEmbeddings.ps1
         arguments: >
           -IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"
         pwsh: true
@@ -75,4 +77,5 @@ stages:
         AZURE_OPENAI_API_KEY: $(azure-openapi-key)
         AZURE_SEARCH_KEY: $(azure-search-key)
         AZURE_STORAGE_ACCOUNT_KEY: $(storage-account-key)
+        AZURE_STORAGE_ACCOUNT_NAME: $(st-account-name)
         AZURE_STORAGE_ACCOUNT_CONTAINER: $(st-container-name)

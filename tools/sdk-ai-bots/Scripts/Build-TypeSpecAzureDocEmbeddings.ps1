@@ -77,10 +77,10 @@ else {
 }
 
 # Download previous saved embeddings(last_rag_chunks_typespec_docs.json) from Azure Blob Storage
-$storageAccountName = "saazuresdkbot"
 $blobName = "last_rag_chunks_typespec_docs.json"
 $destinationPath = $embeddingSourceFolder
 $ragChunkPath = Join-Path -Path $embeddingSourceFolder -ChildPath $blobName
+$storageAccountName = $env:AZURE_STORAGE_ACCOUNT_NAME
 $containerName = $env:AZURE_STORAGE_ACCOUNT_CONTAINER
 if(-not $containerName) {
   Write-Error "Please set the environment variable 'AZURE_STORAGE_ACCOUNT_CONTAINER'."

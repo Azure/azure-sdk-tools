@@ -108,10 +108,10 @@ else {
 }
 
 # Download previous saved embeddings(last_rag_chunks_customized_docs.json) from Azure Blob Storage
-$storageAccountName = "saazuresdkbot"
 $blobName = "last_rag_chunks_customized_docs.json"
 $destinationPath = $embeddingSourceFolder
 $ragChunkPath = Join-Path -Path $embeddingSourceFolder -ChildPath $blobName
+$storageAccountName = $env:AZURE_STORAGE_ACCOUNT_NAME
 $containerName = $env:AZURE_STORAGE_ACCOUNT_CONTAINER
 if(-not $containerName) {
   Write-Error "Please set the environment variable 'AZURE_STORAGE_ACCOUNT_CONTAINER'."
@@ -135,13 +135,6 @@ $env:AZURESEARCH_FIELDS_CONTENT_VECTOR = "Embedding"
 $env:AZURESEARCH_FIELDS_TAG = "AdditionalMetadata"
 $env:AZURESEARCH_FIELDS_ID = "Id"
 
-<#
-$CondaPath = Initialize-CondaEnv
-if(-not $CondaPath) {
-  Write-Error "Failed to initialize conda environment at $CondaPath."
-  exit 1
-}
-#>
 if(-not (Build-Embeddings -EmbeddingToolFolder $embeddingToolFolder)) {
   exit 1
 }

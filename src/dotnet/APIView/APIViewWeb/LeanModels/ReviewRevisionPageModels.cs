@@ -22,7 +22,7 @@ namespace APIViewWeb.LeanModels
         public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; }
         public APIRevisionListItemModel ActiveAPIRevision { get; set; }
         public APIRevisionListItemModel DiffAPIRevision { get; set; }
-        public int TotalActiveConversiations { get; set; }
+        public int TotalActiveConversations { get; set; }
         public int ActiveConversationsInActiveAPIRevision { get; set; }
         public int ActiveConversationsInSampleRevisions { get; set; }
         public HashSet<string> PreferredApprovers = new HashSet<string>();

@@ -184,6 +184,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                                 throw new GitProcessException(result);
                             }
 
+                            DebugLogger.LogInformation($"Retrying git command {arguments} in {workingDirectory} after {attempts} attempts.");
+
                             attempts++;
 
                             if (continueToAttempt && attempts < RETRY_INTERMITTENT_FAILURE_COUNT)

@@ -3,11 +3,7 @@ package com.azure.tools.apiview.processor;
 import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.Analyser;
 import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
-import com.azure.tools.apiview.processor.model.APIListing;
-import com.azure.tools.apiview.processor.model.Diagnostic;
-import com.azure.tools.apiview.processor.model.DiagnosticKind;
-import com.azure.tools.apiview.processor.model.LanguageVariant;
-import com.azure.tools.apiview.processor.model.Token;
+import com.azure.tools.apiview.processor.model.*;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -167,11 +164,26 @@ public class Main {
         }
         System.out.println("  Using '" + apiListing.getLanguageVariant() + "' for the language variant");
 
-        final Analyser analyser = new JavaASTAnalyser(inputFile, apiListing);
+        final Analyser analyser = new JavaASTAnalyser(apiListing);
 
         // Read all files within the jar file so that we can create a list of files to analyse
         final List<Path> allFiles = new ArrayList<>();
         try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
+
+            try {
+                // we eagerly load the apiview_properties.json file into an ApiViewProperties object, so that it can
+                // be used throughout the analysis process, as required
+                URL apiViewPropertiesFile = fs.getPath("/META-INF/apiview_properties.json").toUri().toURL();
+                final ObjectMapper objectMapper = new ObjectMapper();
+                ApiViewProperties properties = objectMapper.readValue(apiViewPropertiesFile, ApiViewProperties.class);
+                apiListing.setApiViewProperties(properties);
+                System.out.println("  Found apiview_properties.json file in jar file");
+                System.out.println("    - Found " + properties.getCrossLanguageDefinitionIds().size() + " cross-language definition IDs");
+            } catch (Exception e) {
+                // this is fine, we just won't have any APIView properties to read in
+                System.out.println("  No apiview_properties.json file found in jar file - continuing...");
+            }
+
             fs.getRootDirectories().forEach(root -> {
                 try (Stream<Path> paths = Files.walk(root)) {
                     paths.forEach(allFiles::add);
@@ -183,6 +195,8 @@ public class Main {
 
             // Do the analysis while the filesystem is still represented in memory
             analyser.analyse(allFiles);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

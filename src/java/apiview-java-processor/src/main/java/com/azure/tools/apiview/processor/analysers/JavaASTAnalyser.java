@@ -39,6 +39,7 @@ import com.github.javaparser.ast.expr.Name;
 import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.modules.ModuleDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
+import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
 import com.github.javaparser.ast.nodeTypes.NodeWithType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
@@ -73,13 +74,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptToFindJavadocComment;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPublicOrProtected;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.INDENT;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.NEWLINE;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.NOTHING;
@@ -111,19 +106,18 @@ public class JavaASTAnalyser implements Analyser {
 
     private static final Pattern SPLIT_NEWLINE = Pattern.compile(MiscUtils.LINEBREAK);
 
+    // This is the model that we build up as the AST of all files are analysed. The APIListing is then output as
+    // JSON that can be understood by APIView.
     private final APIListing apiListing;
 
-    private final Map<String, JavadocComment> packageNameToPackageInfoJavaDoc;
+    private final Map<String, JavadocComment> packageNameToPackageInfoJavaDoc = new HashMap<>();
 
-    private final Diagnostics diagnostic;
+    private final Diagnostics diagnostic = new Diagnostics();
 
-    private int indent;
+    private int indent = 0;
 
-    public JavaASTAnalyser(File inputFile, APIListing apiListing) {
+    public JavaASTAnalyser(APIListing apiListing) {
         this.apiListing = apiListing;
-        this.indent = 0;
-        this.packageNameToPackageInfoJavaDoc = new HashMap<>();
-        this.diagnostic = new Diagnostics();
     }
 
     @Override
@@ -183,10 +177,6 @@ public class JavaASTAnalyser implements Analyser {
             }
         }
 
-        public CompilationUnit getCompilationUnit() {
-            return compilationUnit;
-        }
-
         public Path getPath() {
             return path;
         }
@@ -209,7 +199,6 @@ public class JavaASTAnalyser implements Analyser {
             // Set up a minimal type solver that only looks at the classes used to run this sample.
             CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
             combinedTypeSolver.add(new ReflectionTypeSolver(false));
-//            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
 
             ParserConfiguration parserConfiguration = new ParserConfiguration()
                 .setStoreTokens(true)
@@ -343,7 +332,7 @@ public class JavaASTAnalyser implements Analyser {
                 // we don't care to present test scope dependencies
                 return;
             }
-            String scope = k.equals("") ? "compile" : k;
+            String scope = k.isEmpty() ? "compile" : k;
 
             addToken(makeWhitespace());
             addToken(new Token(COMMENT, "// " + scope + " scope"), NEWLINE);
@@ -510,6 +499,23 @@ public class JavaASTAnalyser implements Analyser {
             addToken(new Token(TYPE_NAME, moduleDeclaration.getNameAsString(), MODULE_INFO_KEY), SPACE);
             addToken(new Token(PUNCTUATION, "{"), NEWLINE);
 
+            // Sometimes an exports or opens statement is conditional, so we need to handle that case
+            // in a single location here, to remove duplication.
+            Consumer<NodeList<Name>> conditionalExportsToOrOpensToConsumer = names -> {
+                if (!names.isEmpty()) {
+                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(KEYWORD, "to"), SPACE);
+
+                    for (int i = 0; i < names.size(); i++) {
+                        addToken(new Token(TYPE_NAME, names.get(i).toString()));
+
+                        if (i < names.size() - 1) {
+                            addToken(new Token(PUNCTUATION, ","), SPACE);
+                        }
+                    }
+                }
+            };
+
             moduleDeclaration.getDirectives().forEach(moduleDirective -> {
                 indent();
                 addToken(makeWhitespace());
@@ -532,43 +538,14 @@ public class JavaASTAnalyser implements Analyser {
                 moduleDirective.ifModuleExportsStmt(d -> {
                     addToken(new Token(KEYWORD, "exports"), SPACE);
                     addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-exports-" + d.getNameAsString())));
-
-                    NodeList<Name> names = d.getModuleNames();
-
-                    if (!names.isEmpty()) {
-                        addToken(new Token(WHITESPACE, " "));
-                        addToken(new Token(KEYWORD, "to"), SPACE);
-
-                        for (int i = 0; i < names.size(); i++) {
-                            addToken(new Token(TYPE_NAME, names.get(i).toString()));
-
-                            if (i < names.size() - 1) {
-                                addToken(new Token(PUNCTUATION, ","), SPACE);
-                            }
-                        }
-                    }
-
+                    conditionalExportsToOrOpensToConsumer.accept(d.getModuleNames());
                     addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
                 moduleDirective.ifModuleOpensStmt(d -> {
                     addToken(new Token(KEYWORD, "opens"), SPACE);
                     addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-opens-" + d.getNameAsString())));
-
-                    NodeList<Name> names = d.getModuleNames();
-                    if (names.size() > 0) {
-                        addToken(new Token(WHITESPACE, " "));
-                        addToken(new Token(KEYWORD, "to"), SPACE);
-
-                        for (int i = 0; i < names.size(); i++) {
-                            addToken(new Token(TYPE_NAME, names.get(i).toString()));
-
-                            if (i < names.size() - 1) {
-                                addToken(new Token(PUNCTUATION, ","), SPACE);
-                            }
-                        }
-                    }
-
+                    conditionalExportsToOrOpensToConsumer.accept(d.getModuleNames());
                     addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
@@ -694,7 +671,13 @@ public class JavaASTAnalyser implements Analyser {
                 addToken(new Token(DEPRECATED_RANGE_START));
             }
 
-            addToken(new Token(TYPE_NAME, className, classId));
+            // setting the class name. We need to look up to see if the apiview_properties.json file specified a
+            // cross language definition id for this type. If it did, we will use that. The apiview_properties.json
+            // file uses fully-qualified type names and method names, so we need to ensure that it what we are using
+            // when we look for a match.
+            Token typeNameToken = new Token(TYPE_NAME, className, classId);
+            checkForCrossLanguageDefinitionId(typeNameToken, typeDeclaration);
+            addToken(typeNameToken);
 
             if (isDeprecated) {
                 addToken(new Token(DEPRECATED_RANGE_END));
@@ -753,6 +736,25 @@ public class JavaASTAnalyser implements Analyser {
             }
             // open ClassOrInterfaceDeclaration
             addToken(SPACE, new Token(PUNCTUATION, "{"), NEWLINE);
+        }
+
+        /*
+         * This method is used to add 'cross language definition id' to the token if it is defined in the
+         * apiview_properties.json file. This is used most commonly in conjunction with TypeSpec-generated libraries,
+         * so that we may review cross languages with some level of confidence that the types and methods are the same.
+         */
+        private void checkForCrossLanguageDefinitionId(Token typeNameToken, NodeWithSimpleName<?> node) {
+            Optional<String> fqn;
+            if (node instanceof TypeDeclaration) {
+                fqn = ((TypeDeclaration<?>) node).getFullyQualifiedName();
+            } else if (node instanceof CallableDeclaration) {
+                fqn = Optional.of(getNodeFullyQualifiedName((CallableDeclaration<?>) node));
+            } else {
+                fqn = Optional.empty();
+            }
+
+            fqn.flatMap(_fqn -> apiListing.getApiViewProperties().getCrossLanguageDefinitionId(_fqn))
+               .ifPresent(typeNameToken::setCrossLanguageDefinitionId);
         }
 
         private void tokeniseAnnotationMember(AnnotationDeclaration annotationDeclaration) {
@@ -1125,7 +1127,9 @@ public class JavaASTAnalyser implements Analyser {
                 addToken(new Token(DEPRECATED_RANGE_START));
             }
 
-            addToken(new Token(MEMBER_NAME, name, definitionId));
+            Token nameToken = new Token(MEMBER_NAME, name, definitionId);
+            checkForCrossLanguageDefinitionId(nameToken, callableDeclaration);
+            addToken(nameToken);
 
             if (isDeprecated) {
                 addToken(new Token(DEPRECATED_RANGE_END));
@@ -1188,7 +1192,7 @@ public class JavaASTAnalyser implements Analyser {
 
         private void getThrowException(CallableDeclaration<?> callableDeclaration) {
             final NodeList<ReferenceType> thrownExceptions = callableDeclaration.getThrownExceptions();
-            if (thrownExceptions.size() == 0) {
+            if (thrownExceptions.isEmpty()) {
                 return;
             }
 
@@ -1425,7 +1429,7 @@ public class JavaASTAnalyser implements Analyser {
                 // convert http/s links to external clickable links
                 Matcher urlMatch = MiscUtils.URL_MATCH.matcher(line2);
                 int currentIndex = 0;
-                while(urlMatch.find(currentIndex) == true) {
+                while(urlMatch.find(currentIndex)) {
                     int start = urlMatch.start();
                     int end = urlMatch.end();
 

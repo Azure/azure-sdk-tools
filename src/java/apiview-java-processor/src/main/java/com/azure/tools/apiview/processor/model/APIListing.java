@@ -56,12 +56,16 @@ public class APIListing {
     @JsonIgnore
     private Pom mavenPom;
 
+    @JsonIgnore
+    private ApiViewProperties apiViewProperties;
+
     public APIListing() {
         this.diagnostics = new ArrayList<>();
         this.knownTypes = new HashMap<>();
         this.packageNamesToTypesMap = new HashMap<>();
         this.typeToPackageNameMap = new HashMap<>();
         this.navigation = new ArrayList<>();
+        this.apiViewProperties = new ApiViewProperties();
     }
 
     public void setReviewName(final String name) {
@@ -157,5 +161,13 @@ public class APIListing {
 
     public Pom getMavenPom() {
         return mavenPom;
+    }
+
+    public void setApiViewProperties(ApiViewProperties properties) {
+        this.apiViewProperties = properties;
+    }
+
+    public ApiViewProperties getApiViewProperties() {
+        return apiViewProperties;
     }
 }

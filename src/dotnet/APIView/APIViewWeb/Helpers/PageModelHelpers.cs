@@ -270,7 +270,7 @@ namespace APIViewWeb.Helpers
             if (activeRevision == null)
             {
                 reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonRedirectToIndexPage;
-                reviewPageContent.NotificationMessage = $"Review with ID {review.Id} has no valid APIRevisons";
+                reviewPageContent.NotificationMessage = $"Review with ID {review.Id} has no valid APIRevisions";
                 return reviewPageContent;
             }
 
@@ -384,7 +384,7 @@ namespace APIViewWeb.Helpers
             reviewPageContent.APIRevisions = apiRevisions.OrderByDescending(c => c.CreatedOn);
             reviewPageContent.ActiveAPIRevision = activeRevision;
             reviewPageContent.DiffAPIRevision = diffRevision;
-            reviewPageContent.TotalActiveConversiations = comments.Threads.Count(t => !t.IsResolved);
+            reviewPageContent.TotalActiveConversations = comments.Threads.Count(t => !t.IsResolved);
             reviewPageContent.ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments);
             reviewPageContent.ActiveConversationsInSampleRevisions = comments.Threads.Count(t => t.Comments.FirstOrDefault()?.CommentType == CommentType.SampleRevision);
             reviewPageContent.PreferredApprovers = preferredApprovers;

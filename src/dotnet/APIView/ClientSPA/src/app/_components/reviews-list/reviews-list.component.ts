@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnInit, AfterViewInit, Output, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { FirstReleaseApproval, Review, SelectItemModel } from 'src/app/_models/review';
@@ -9,14 +9,16 @@ import { MenuItem, SortEvent } from 'primeng/api';
 import { FileSelectEvent, FileUpload } from 'primeng/fileupload';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { environment } from 'src/environments/environment';
+import { CookieService } from 'ngx-cookie-service';
 
 @Component({
   selector: 'app-reviews-list',
   templateUrl: './reviews-list.component.html',
   styleUrls: ['./reviews-list.component.scss']
 })
-export class ReviewsListComponent implements OnInit {
+export class ReviewsListComponent implements OnInit, AfterViewInit {
   @Output() reviewEmitter : EventEmitter<Review> = new EventEmitter<Review>();
+  @ViewChild("reviewsTable") reviewsTable!: Table;
   @ViewChild("reviewCreationFileUpload") reviewCreationFileUpload!: FileUpload;
   @ViewChild("firstReleaseApprovalAllCheck") firstReleaseApprovalAllCheck!: ElementRef<HTMLInputElement>;
 
@@ -62,13 +64,26 @@ export class ReviewsListComponent implements OnInit {
   createReviewInstruction : string[] | undefined;
   acceptedFilesForReviewUpload : string | undefined;
 
-  constructor(private reviewsService: ReviewsService,  private apiRevisionsService: RevisionsService, private fb: FormBuilder) { }
+  constructor(private reviewsService: ReviewsService,  private apiRevisionsService: RevisionsService,
+    private fb: FormBuilder, private cookieService: CookieService, private cd: ChangeDetectorRef) { }
 
   ngOnInit(): void {
-    this.loadReviews(0, this.pageSize * 2, true); // Initial load of 2 pages
+    if (this.cookieService.check("reviewFilters")) {
+      const filtersAsStrings = this.cookieService.get("reviewFilters");
+      this.filters = JSON.parse(filtersAsStrings);
+    }
+
+    this.loadReviews(0, this.pageSize * 2, true, this.filters); // Initial load of 2 pages
     this.createFilters();
     this.createContextMenuItems();
     this.createReviewFormGroup();
+  }
+
+  ngAfterViewInit() {
+    if (this.filters != null) {
+      this.reviewsTable.filters = this.filters;
+      this.cd.detectChanges();
+    }
   }
 
   /**
@@ -197,6 +212,8 @@ export class ReviewsListComponent implements OnInit {
    */
   onFilter(event: TableFilterEvent) {
     this.filters = event.filters;
+    const filtersAsStrings = JSON.stringify(this.filters);
+    this.cookieService.set("reviewFilters", filtersAsStrings);
     this.loadReviews(0, this.pageSize, true, this.filters, this.sortField, this.sortOrder);
   }
 

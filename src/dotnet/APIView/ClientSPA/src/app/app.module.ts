@@ -40,6 +40,7 @@ import { ApprovalPipe } from './_pipes/approval.pipe';
 import { LastUpdatedOnPipe } from './_pipes/last-updated-on.pipe';
 import { Observable } from 'rxjs';
 import { ConfigService } from './_services/config/config.service';
+import { CookieService } from 'ngx-cookie-service';
 
 export function initializeApp(configService: ConfigService) {
   return (): Observable<any> => {
@@ -97,7 +98,8 @@ export function initializeApp(configService: ConfigService) {
       useFactory: initializeApp,
       deps: [ConfigService],
       multi: true
-    }
+    },
+    CookieService
   ],
   bootstrap: [AppComponent]
 })

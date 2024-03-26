@@ -18,10 +18,6 @@ from splitting.utils import rag_chunk_to_json
 
 class Embedding:
     def __init__(self):
-        os.environ["AZURESEARCH_FIELDS_CONTENT"] = "Text"
-        os.environ["AZURESEARCH_FIELDS_CONTENT_VECTOR"] = "Embedding"
-        os.environ["AZURESEARCH_FIELDS_TAG"] = "AdditionalMetadata"
-        os.environ["AZURESEARCH_FIELDS_ID"] = "Id"
 
         embeddings: OpenAIEmbeddings = OpenAIEmbeddings(
             openai_api_type="azure",

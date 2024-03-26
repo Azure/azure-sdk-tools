@@ -17,30 +17,23 @@ param (
   [ValidateNotNullOrEmpty()]
   [string] $IncrementalEmbedding = $true
 )
-
-$workingDirectory = Get-Location
+# Set the working directory, current location is supposed to be the root of the repository
+$buildSourceDirectory = Get-Location
+$workingDirectory = Join-Path $buildSourceDirectory "tools\sdk-ai-bots"
 if($env:AGENT_ID) {
-  $workingDirectory = $(System.DefaultWorkingDirectory)
+  # Running in Azure DevOps, pipeline would checkout two repositories, azure-sdk-tools and enginerring hub repository, so the working directory should be azure-sdk-tools
+  $workingDirectory = Join-Path $buildSourceDirectory "azure-sdk-tools\tools\sdk-ai-bots"
 }
-$workingDirectory = Join-Path $workingDirectory "tools\sdk-ai-bots"
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
 $embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 
-. (Join-Path $scriptsRoot common.ps1)
-
 Write-Host "scriptsRoot: $scriptsRoot"
 Write-Host "embeddingToolFolder: $embeddingToolFolder"
+. (Join-Path $scriptsRoot Common.ps1)
 
-# Create 'repos' folder on current location
-$reposFolder = Join-Path -Path $workingDirectory -ChildPath "repos"
-if (-not (Test-Path -Path $reposFolder)) {
-  New-Item -ItemType Directory -Path $reposFolder
-}
-
-# Clone azure-sdk-docs-eng.ms repository
-Write-Host "Cloning azure-sdk-docs-eng.ms repository at $reposFolder"
-if(-not (Clone-Repository -RepoUrl "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms" -RootFolder $reposFolder)) {
-  exit 1
+# Install Az.Storage module
+if (-not (Get-Module -ListAvailable -Name Az.Storage)) {
+  Install-Module -Name Az.Storage -Force -AllowClobber -Scope CurrentUser
 }
 
 # Create embeddingSource folder on current location
@@ -55,7 +48,19 @@ if (-not (Test-Path -Path $enghubDocsDestFolder)) {
   New-Item -ItemType Directory -Path $enghubDocsDestFolder
 }
 
-$enghubDocsSrcFolder = Join-Path -Path $reposFolder -ChildPath "azure-sdk-docs-eng.ms/docs"
+$reposFolder = Join-Path -Path $buildSourceDirectory -ChildPath "azure-sdk-docs-eng.ms"
+if(-not (Test-Path $reposFolder)) {
+  # Clone eng hub repository
+  Write-Host "Cloning azure-sdk-docs-eng.ms repository at $buildSourceDirectory"
+  if(-not (Clone-Repository -RepoUrl "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms" -RootFolder $buildSourceDirectory)) {
+    exit 1
+  }
+}
+$enghubDocsSrcFolder = Join-Path -Path $buildSourceDirectory -ChildPath "azure-sdk-docs-eng.ms/docs"
+if(-not (Test-Path $enghubDocsSrcFolder)) {
+  Write-Error "Failed to find the enghub documents folder at $enghubDocsSrcFolder"
+  exit 1
+}
 
 # Call the script to build the metadata.json file
 Write-Host "Building metadata.json file for enghub documents"
@@ -71,11 +76,15 @@ else {
 }
 
 # Download previous saved embeddings(last_rag_chunks_enghub_docs.json) from Azure Blob Storage
-$storageAccountName = "saazuresdkbot"
-$containerName = "rag-contents"
 $blobName = "last_rag_chunks_enghub_docs.json"
 $destinationPath = $embeddingSourceFolder
 $ragChunkPath = Join-Path -Path $embeddingSourceFolder -ChildPath $blobName
+$storageAccountName = $env:AZURE_STORAGE_ACCOUNT_NAME
+$containerName = $env:AZURE_STORAGE_ACCOUNT_CONTAINER
+if(-not $containerName) {
+  Write-Error "Please set the environment variable 'AZURE_STORAGE_ACCOUNT_CONTAINER'."
+  exit 1
+}
 if($IncrementalEmbedding -eq $true) {
   Write-Host "Downloading previous saved embeddings $blobName from Azure Blob Storage"
   if(-not (Download-AzureBlob -StorageAccountName $storageAccountName -ContainerName $containerName -BlobName $blobName -DestinationPath $destinationPath)) {
@@ -89,6 +98,12 @@ $env:RAG_CHUNK_PATH = $ragChunkPath
 $env:METADATA_PATH = "$embeddingSourceFolder/metadata_enghub_docs.json"
 $env:DOCUMENT_PATH = $enghubDocsDestFolder
 $env:INCREMENTAL_EMBEDDING = $IncrementalEmbedding
+
+$env:AZURESEARCH_FIELDS_CONTENT = "Text"
+$env:AZURESEARCH_FIELDS_CONTENT_VECTOR = "Embedding"
+$env:AZURESEARCH_FIELDS_TAG = "AdditionalMetadata"
+$env:AZURESEARCH_FIELDS_ID = "Id"
+
 if(-not (Build-Embeddings -EmbeddingToolFolder $embeddingToolFolder)) {
   exit 1
 }

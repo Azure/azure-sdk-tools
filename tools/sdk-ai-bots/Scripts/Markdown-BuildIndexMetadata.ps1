@@ -62,15 +62,14 @@ function Generate-Metadata([string]$rootFolder, [string]$outputFolder)
             $pagePath = $_.DirectoryName.Substring($_.DirectoryName.IndexOf("\docs\")+"\docs\".Length).Replace('\','/')
             $url = $DocBaseUrl + '/' + $pagePath + '/' + $fileName
             $url = $url.Replace(' ', '%20')
-            #Write-Host "filename:" $fileName
-            Write-Host "url:" $url
+            Write-Host "The URL of the Markdown file is: $url"
             $title = Get-TitleFromMarkdown $_.FullName
             Write-Host "The title of the Markdown file is: $title"
-            #$key = $_.Name.Replace(' ','-')
             # adding path path to key to avoid name conflict
             $key = $pagePath + '/' + $_.Name
             $key = $key.Replace(' ', '-')
             $key = $key.Replace('/', '-')
+            Write-Host "The key of the Markdown file is: $key"
             $fileData = @{
                 "title" = $title
                 "url" = $url

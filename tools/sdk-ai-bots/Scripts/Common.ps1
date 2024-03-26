@@ -13,6 +13,10 @@ function Clone-Repository {
         [string] $RootFolder
     )
     try {
+        if(-not (Test-Path $RootFolder)) {
+            New-Item -ItemType Directory -Path $RootFolder            
+        }
+        
         Push-Location $RootFolder
         # Clone repository
         git clone $RepoUrl
@@ -82,13 +86,28 @@ function Build-Embeddings {
         Write-Host "Building embeddings..."
         try {
             Push-Location $embeddingToolFolder
+
+            # Print Python version
+            $pythonVersion = python -c "import sys; print(sys.version)"
+            Write-Host "Python version: $pythonVersion"
+            # Print Python executable path
+            $pythonEnvExePath = python -c "import sys; print(sys.executable)"
+            Write-Host "Python executable path: $pythonEnvExePath"
+
             # setup python environment and install required packages
             Write-Host "Setting up python environment"
             python -m pip install --upgrade pip
-    
+
             Write-Host "Installing required packages"
-            pip install -r requirements.txt
-    
+            python -m pip install -r requirements.txt
+
+            Write-Host "List package versions..."
+            python -m pip list > pip_list.txt
+
+            Write-Host "Print the content of pip_list.txt"
+            $installedPkg = Get-Content -Path "pip_list.txt"
+            Write-Host $installedPkg
+
             Write-Host "Starts building"
             python main.py
         }
@@ -100,7 +119,6 @@ function Build-Embeddings {
             Pop-Location
         }
     }
-    
     Write-Host "Finishes building with time: $($stopwatch.TotalSeconds) seconds"
     return $true
 }

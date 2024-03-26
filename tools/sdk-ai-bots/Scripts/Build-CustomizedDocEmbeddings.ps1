@@ -52,28 +52,30 @@ function Download-GitHubFile {
     }
 
     try {
-        Invoke-WebRequest -Uri $url -OutFile $DestinationFilePath
+        Invoke-WebRequest -Uri $FileUrl -OutFile $DestinationFilePath
         Write-Host "File downloaded successfully to: $DestinationFilePath"
     }
     catch {
-        Write-Error "Failed to download file from GitHub: $url"
+        Write-Error "Failed to download file from GitHub: $FileUrl"
         exit 1
     }
 }
 
 
-$workingDirectory = Get-Location
-if($env:AGENT_ID) {
-  $workingDirectory = $(System.DefaultWorkingDirectory)
-}
-$workingDirectory = Join-Path $workingDirectory "tools\sdk-ai-bots"
+# Set the working directory, current location is supposed to be the root of the repository
+$buildSourceDirectory = Get-Location
+$workingDirectory = Join-Path $buildSourceDirectory "tools\sdk-ai-bots"
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
 $embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 
-. (Join-Path $scriptsRoot common.ps1)
-
 Write-Host "scriptsRoot: $scriptsRoot"
 Write-Host "embeddingToolFolder: $embeddingToolFolder"
+. (Join-Path $scriptsRoot Common.ps1)
+
+# Install Az.Storage module
+if (-not (Get-Module -ListAvailable -Name Az.Storage)) {
+  Install-Module -Name Az.Storage -Force -AllowClobber -Scope CurrentUser
+}
 
 # Create embeddingSource folder on current location
 $embeddingSourceFolder = Join-Path -Path $workingDirectory -ChildPath "embeddingSource"
@@ -106,11 +108,15 @@ else {
 }
 
 # Download previous saved embeddings(last_rag_chunks_customized_docs.json) from Azure Blob Storage
-$storageAccountName = "saazuresdkbot"
-$containerName = "rag-contents"
 $blobName = "last_rag_chunks_customized_docs.json"
 $destinationPath = $embeddingSourceFolder
 $ragChunkPath = Join-Path -Path $embeddingSourceFolder -ChildPath $blobName
+$storageAccountName = $env:AZURE_STORAGE_ACCOUNT_NAME
+$containerName = $env:AZURE_STORAGE_ACCOUNT_CONTAINER
+if(-not $containerName) {
+  Write-Error "Please set the environment variable 'AZURE_STORAGE_ACCOUNT_CONTAINER'."
+  exit 1
+}
 if($IncrementalEmbedding -eq $true) {
   Write-Host "Downloading previous saved embeddings $blobName from Azure Blob Storage"
   if(-not (Download-AzureBlob -StorageAccountName $storageAccountName -ContainerName $containerName -BlobName $blobName -DestinationPath $destinationPath)) {
@@ -124,6 +130,11 @@ $env:RAG_CHUNK_PATH = $ragChunkPath
 $env:METADATA_PATH = $customizedDocsMetadataFile
 $env:DOCUMENT_PATH = $customizedDocsDestFolder
 $env:INCREMENTAL_EMBEDDING = $IncrementalEmbedding
+$env:AZURESEARCH_FIELDS_CONTENT = "Text"
+$env:AZURESEARCH_FIELDS_CONTENT_VECTOR = "Embedding"
+$env:AZURESEARCH_FIELDS_TAG = "AdditionalMetadata"
+$env:AZURESEARCH_FIELDS_ID = "Id"
+
 if(-not (Build-Embeddings -EmbeddingToolFolder $embeddingToolFolder)) {
   exit 1
 }

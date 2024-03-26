@@ -193,6 +193,10 @@ $(() => {
   $("#reviewSubscribeSwitch").on('change', function () {
     $("#reviewSubscribeForm").submit();
   });
+  // Toggle Subscribe Switch
+  $("#reviewViewedSwitch").on('change', function () {
+    $("#reviewViewedForm").submit();
+  });
   // Toggle Close Switch
   $("#reviewCloseSwitch").on('change', function () {
     $("#reviewCloseForm").submit();

@@ -4,7 +4,7 @@
         <h6>Select a Review on the left panel to view its APIRevisions</h6>
         <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
             <button type="button" (click)="clear()" class="btn btn-outline-primary">Clear Filters</button>
-            <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders me-1"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders"></i></button>
         </div>
     </div>
 </div>
@@ -14,7 +14,7 @@
         <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
             <button *ngIf="!showDeletedAPIRevisions" type="button" (click)="toggleShowDeletedAPIRevisions()" class="btn btn-outline-primary">View Deleted APIRevisions</button>
             <button type="button" (click)="clear()" class="btn btn-outline-primary">Clear Filters</button>
-            <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders me-1"></i></button>
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders"></i></button>
         </div>
     </div>
 </div>
@@ -49,10 +49,10 @@
             <div>
                 <button *ngIf="showDeletedAPIRevisions && showDeleteButton" (click)="restoreRevisions(selectedRevisions)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Restore</button>
                 <button *ngIf="!showDeletedAPIRevisions && showDeleteButton" (click)="deleteRevisions(selectedRevisions)" type="button" class="btn btn-sm btn-outline-danger me-1"><i class="bi bi-x-octagon-fill me-1"></i>Delete</button>
-                <button *ngIf="showSelectionActions" type="button" class="btn btn-sm btn-outline-primary me-1" (click)="selectedRevisions = []"><i class="bi bi-x-circle me-1"></i>Selection</button>
+                <button *ngIf="showSelectionActions" type="button" class="btn btn-sm btn-outline-primary me-1" (click)="clearSelection()"><i class="bi bi-x-circle me-1"></i>Selection</button>
                 <button *ngIf="!showDeletedAPIRevisions && showDiffButton" type="button" class="btn btn-sm btn-outline-primary me-1" (click)="viewDiffOfSelectedAPIRevisions()"><i class="bi bi-file-diff me-1"></i>Diff</button>
                 <button *ngIf="tableHasFilters()" (click)="clear(apiRevisionsTable)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Filters</button>
-                <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders me-1"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders"></i></button>
             </div>
         </div>
     </ng-template>
@@ -126,6 +126,7 @@
     </ng-template>
 </p-table>
 <p-sidebar [(visible)]="sidebarVisible" position="right">
+    <h3>Filter APIRevisions</h3>
     <ul class="list-group list-group-flush">
         <li class="list-group-item">
             <div class="form-check form-switch">
@@ -137,23 +138,6 @@
             <div class="form-check form-switch">
                 <input class="form-check-input" (change)="toggleShowAPIRevisionsAssignedToMe()" type="checkbox" role="switch" id="showRevisionsUserIsAssignedtoReview" [checked]="showAPIRevisionsAssignedToMe">
                 <label class="form-check-label" for="showRevisionsUserIsAssignedtoReview">View APIRevisions Assigned to Me</label>
-            </div>
-        </li>
-        <li class="list-group-item">
-            <div class="me-auto">
-                <div class="fw-medium">First Release Aprroval</div>
-                <div class="d-grid gap-2 mt-2">
-                    <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-                        <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" (click)="updateFirstReleaseApproval('Pending')">
-                        <label class="btn btn-outline-primary btn-sm" for="btnradio1">Pending</label>
-                        
-                        <input type="radio" #firstReleaseApprovalAllCheck class="btn-check" name="btnradio" id="btnradio2" autocomplete="off" (click)="updateFirstReleaseApproval('All')" checked>
-                        <label class="btn btn-outline-primary btn-sm" for="btnradio2">All</label>
-                        
-                        <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off" (click)="updateFirstReleaseApproval('Approved')">
-                        <label class="btn btn-outline-primary btn-sm" for="btnradio3">Approved</label>
-                    </div>
-                </div>
             </div>
         </li>
     </ul>

@@ -16,8 +16,6 @@ import { RevisionsService } from 'src/app/_services/revisions/revisions.service'
 })
 export class RevisionsListComponent implements OnInit, OnChanges {
   @Input() review : Review | null = null;
-  @Input() clearTableFiltersFlag : boolean | null = null;
-  @ViewChild('firstReleaseApprovalAllCheck') firstReleaseApprovalAllCheck!: ElementRef<HTMLInputElement>;
 
   userProfile : UserProfile | undefined;
   reviewPageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Review/";
@@ -40,7 +38,6 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   selectedDetails: any[] = [];
   private _showDeletedAPIRevisions : boolean = false;
   private _showAPIRevisionsAssignedToMe : boolean = false;
-  @Output() firstReleaseApprovalEmitter : EventEmitter<FirstReleaseApproval> = new EventEmitter<FirstReleaseApproval>();
 
   // Context Menu
   contextMenuItems! : MenuItem[];
@@ -79,14 +76,6 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       }
       this.showSelectionActions = false;
       this.showDiffButton = false;
-    }
-    
-    if (changes['clearTableFiltersFlag'] && changes['clearTableFiltersFlag'].currentValue) {
-      if (this.clearTableFiltersFlag) {
-        this.clearTableFiltersFlag = false;
-        this.firstReleaseApprovalAllCheck.nativeElement.checked = true;
-        this.updateFirstReleaseApproval("All");
-      }
     }
   }
 
@@ -255,6 +244,15 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   }
 
   /**
+  * Clear selected items on the page
+  */
+  clearSelection() {
+    this.selectedRevisions = []
+    this.showSelectionActions = false;
+    this.showDeleteButton = false;
+  }
+
+  /**
   * Toggle Show deleted APIRevisions
   */
   toggleShowDeletedAPIRevisions() {
@@ -287,15 +285,6 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     }
     msg = msg + " from";
     this.apiRevisionsListDetail = msg;
-  }
-
-  updateFirstReleaseApproval(value : string) {
-    const firstReleaseApproval =  FirstReleaseApproval[value as keyof typeof FirstReleaseApproval];
-    this.firstReleaseApprovalEmitter.emit(firstReleaseApproval);
-    if (value != "All") {
-      this.review = null;
-      this.revisions = [];
-    }
   }
 
   // Getters and Setters

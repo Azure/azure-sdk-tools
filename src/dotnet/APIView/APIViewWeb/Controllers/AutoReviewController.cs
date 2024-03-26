@@ -12,6 +12,7 @@ using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Octokit;
 
 namespace APIViewWeb.Controllers
 {
@@ -37,7 +38,7 @@ namespace APIViewWeb.Controllers
         // regular CI pipeline will not send this flag in request
         [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
         [HttpPost]
-        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false)
+        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false, string commitSHA = null, string sourceBranch = null)
         {
             if (file != null)
             {
@@ -123,7 +124,9 @@ namespace APIViewWeb.Controllers
             bool compareAllRevisions,
             string project,
             string packageVersion = null,
-            bool setReleaseTag = false
+            bool setReleaseTag = false,
+            string commitSHA = null,
+            string sourceBranch = null
             )
         {
             using var memoryStream = new MemoryStream();

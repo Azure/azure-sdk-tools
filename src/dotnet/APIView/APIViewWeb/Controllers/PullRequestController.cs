@@ -63,7 +63,8 @@ namespace APIViewWeb.Controllers
             string codeFile = null,
             string baselineCodeFile = null,
             bool commentOnPR = true,
-            string language = null)
+            string language = null,
+            string sourceBranch = null)
         {
             if (!ValidateInputParams())
             {

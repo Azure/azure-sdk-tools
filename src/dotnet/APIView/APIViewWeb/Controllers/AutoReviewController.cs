@@ -47,12 +47,24 @@ namespace APIViewWeb.Controllers
                     var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
                         runAnalysis: false, memoryStream: memoryStream);
 
-                    var apiRevision = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
+                    (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
                     if (apiRevision != null)
                     {
                         apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
                         var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
-                        return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
+
+                        if (apiRevision.IsApproved)
+                        {
+                            return Ok(reviewUrl);
+                        }
+                        else if (review.IsApproved)
+                        {
+                            return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
+                        }
+                        else 
+                        {
+                            return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
+                        }
                     }
                 };
             }
@@ -135,18 +147,30 @@ namespace APIViewWeb.Controllers
             {
                 return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
             }
-            var apiRevision = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, compareAllRevisions);
+            (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, compareAllRevisions);
             if (apiRevision != null)
             {
                 apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
                 var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
-                return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
+
+                if (apiRevision.IsApproved)
+                {
+                    return Ok(reviewUrl);
+                }
+                else if (review.IsApproved)
+                {
+                    return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
+                }
+                else
+                {
+                    return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
+                }
             }
             // Return internal server error for any unknown error
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
         }
 
-        private async Task<APIRevisionListItemModel> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, bool compareAllRevisions = false)
+        private async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, bool compareAllRevisions = false)
         {
             var createNewRevision = true;
             var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
@@ -191,7 +215,7 @@ namespace APIViewWeb.Controllers
                             {
                                 if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile))
                                 {
-                                    return approvedAPIRevision;
+                                    return (review, approvedAPIRevision);
                                 }
                             }
                         }
@@ -228,7 +252,7 @@ namespace APIViewWeb.Controllers
                     }
                 }
             }
-            return apiRevision;
+            return (review, apiRevision);
         }
     }
 }

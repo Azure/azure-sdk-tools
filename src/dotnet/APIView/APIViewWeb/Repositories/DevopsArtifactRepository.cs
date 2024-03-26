@@ -78,8 +78,8 @@ namespace APIViewWeb.Repositories
                 var rateLimitReset = downloadResp.Headers.GetValues("X-RateLimit-Reset");
 
                 var traceMessage = $"request: {request} failed with statusCode: {downloadResp.StatusCode}," +
-                    $"retryAfter: {retryAfter}, rateLimitResource: {rateLimitResource}, rateLimitDelay: {rateLimitDelay}," +
-                    $"rateLimitLimit: {rateLimitLimit}, rateLimitRemaining: {rateLimitRemaining}, rateLimitReset: {rateLimitReset}";
+                    $"retryAfter: {retryAfter.FirstOrDefault()}, rateLimitResource: {rateLimitResource.FirstOrDefault()}, rateLimitDelay: {rateLimitDelay.FirstOrDefault()}," +
+                    $"rateLimitLimit: {rateLimitLimit.FirstOrDefault()}, rateLimitRemaining: {rateLimitRemaining.FirstOrDefault()}, rateLimitReset: {rateLimitReset.FirstOrDefault()}";
 
                 _telemetryClient.TrackTrace(traceMessage);
             }

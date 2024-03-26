@@ -7,9 +7,7 @@ import { FirstReleaseApproval, Review } from 'src/app/_models/review';
   styleUrls: ['./index-page.component.scss']
 })
 export class IndexPageComponent {
-  clearTableFilters: boolean = false;
   review : Review | null = null;
-  firstReleaseApproval : FirstReleaseApproval = FirstReleaseApproval.All;
 
   /**
    * Pass ReviewId to revision component to load revisions
@@ -18,21 +16,4 @@ export class IndexPageComponent {
   getRevisions(review: Review) {
     this.review = review;
   }
-
-  /**
-   * Set flag to clear asignToMe Flag
-   *  * @param value
-   */
-  setClearTableFiltersFlag(value: boolean) {
-    this.clearTableFilters = value;
-  }
-
-  /**
-   * Updated the First Release Approval Value
-   *  * @param firstReleaseApproval
-   */
-  updateFirstReleaseApprovalValue(firstReleaseApproval: FirstReleaseApproval) {
-    this.firstReleaseApproval = firstReleaseApproval;
-  }
-
 }

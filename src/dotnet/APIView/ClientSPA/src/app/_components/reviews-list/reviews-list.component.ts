@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { FirstReleaseApproval, Review, SelectItemModel } from 'src/app/_models/review';
@@ -15,10 +15,10 @@ import { environment } from 'src/environments/environment';
   templateUrl: './reviews-list.component.html',
   styleUrls: ['./reviews-list.component.scss']
 })
-export class ReviewsListComponent implements OnInit, OnChanges {
+export class ReviewsListComponent implements OnInit {
   @Output() reviewEmitter : EventEmitter<Review> = new EventEmitter<Review>();
-  @Output() clearTableFiltersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @ViewChild("reviewCreationFileUpload") reviewCreationFileUpload!: FileUpload;
+  @ViewChild("firstReleaseApprovalAllCheck") firstReleaseApprovalAllCheck!: ElementRef<HTMLInputElement>;
 
   assetsPath : string = environment.assetsPath;
   reviews : Review[] = [];
@@ -33,12 +33,13 @@ export class ReviewsListComponent implements OnInit, OnChanges {
   sortOrder : number = 1;
   filters: any = null;
 
-  sidebarVisible : boolean = false;
+  createReviewSidebarVisible : boolean = false;
+  filterSideBarVisible : boolean = false;
 
   // Filter Options
   languages: SelectItemModel[] = [];
   selectedLanguages: SelectItemModel[] = [];
-  @Input() firstReleaseApproval : FirstReleaseApproval = FirstReleaseApproval.All;
+  firstReleaseApproval : FirstReleaseApproval = FirstReleaseApproval.All;
 
   // Context Menu
   contextMenuItems! : MenuItem[];
@@ -68,14 +69,6 @@ export class ReviewsListComponent implements OnInit, OnChanges {
     this.createFilters();
     this.createContextMenuItems();
     this.createReviewFormGroup();
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['firstReleaseApproval'].previousValue != changes['firstReleaseApproval'].currentValue){
-      this.loadReviews(0, this.pageSize * 2, true);
-      const firstReleaseApprovalValue = FirstReleaseApproval[changes['firstReleaseApproval'].currentValue];
-      this.reviewListDetail = (firstReleaseApprovalValue != "All") ? firstReleaseApprovalValue: "";
-    }
   }
 
   /**
@@ -115,6 +108,12 @@ export class ReviewsListComponent implements OnInit, OnChanges {
         }
       }
     });
+  }
+
+  updateFirstReleaseApproval(value : string) {
+    this.firstReleaseApproval = FirstReleaseApproval[value as keyof typeof FirstReleaseApproval];
+    this.loadReviews(0, this.pageSize * 2, true);
+    this.reviewListDetail = (value != "All") ? value: "";
   }
 
   createContextMenuItems() {
@@ -170,8 +169,9 @@ export class ReviewsListComponent implements OnInit, OnChanges {
    */
   clear(table: Table) {
     table.clear();
+    this.firstReleaseApprovalAllCheck.nativeElement.checked = true;
+    this.firstReleaseApproval = FirstReleaseApproval.All;
     this.loadReviews(0, this.pageSize, true, this.filters, this.sortField, this.sortOrder);
-    this.clearTableFiltersEmitter.emit(true);
   }
 
   /**
@@ -256,7 +256,7 @@ export class ReviewsListComponent implements OnInit, OnChanges {
       this.reviewsService.createReview(formData).subscribe({
         next: (response: any) => {
           if (response) {
-            this.sidebarVisible = false;
+            this.createReviewSidebarVisible = false;
             this.creatingReview = false;
             this.crButtonText = "Create Review";
             this.apiRevisionsService.openAPIRevisionPage(response.reviewId, response.id);

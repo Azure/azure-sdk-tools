@@ -30,7 +30,8 @@
                 <p-chip *ngFor="let lang of selectedLanguages" label="{{ lang.data }}"></p-chip>
             </div>
             <div>
-                <button *ngIf="tableHasFilters()" (click)="clear(reviewsTable)" type="button" class="btn btn-sm btn-outline-primary"><i class="bi bi-x-circle me-1"></i>Filters</button>
+                <button *ngIf="tableHasFilters()" (click)="clear(reviewsTable)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Filters</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="filterSideBarVisible = true"><i class="bi bi-sliders"></i></button>
             </div>
         </div>
     </ng-template>
@@ -73,8 +74,8 @@
         </div>
     </ng-template>
 </p-table>
-<button type="button" (click)="sidebarVisible = true" class="btn btn-primary" id="create-review-button"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
-<p-sidebar [(visible)]="sidebarVisible" (onHide)="onHideSideBar()" position="right">
+<button type="button" (click)="createReviewSidebarVisible = true" class="btn btn-primary" id="create-review-button"><small>CREATE</small><br><i class="fas fa-plus"></i><br><small>REVIEW</small></button>
+<p-sidebar [(visible)]="createReviewSidebarVisible" (onHide)="onHideSideBar()" position="right">
     <h3>Create Review</h3>
     <p>
         Select a Language Below to view instructions for creating a Review.
@@ -155,4 +156,26 @@
             </button>
         </div>
     </form>
+</p-sidebar>
+<p-sidebar [(visible)]="filterSideBarVisible" position="right">
+    <h3>Filter Reviews</h3>
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+            <div class="me-auto">
+                <div class="fw-medium">First Release Aprroval</div>
+                <div class="d-grid gap-2 mt-2">
+                    <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                        <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" (click)="updateFirstReleaseApproval('Pending')">
+                        <label class="btn btn-outline-primary btn-sm" for="btnradio1">Pending</label>
+                        
+                        <input type="radio" #firstReleaseApprovalAllCheck class="btn-check" name="btnradio" id="btnradio2" autocomplete="off" (click)="updateFirstReleaseApproval('All')" checked>
+                        <label class="btn btn-outline-primary btn-sm" for="btnradio2">All</label>
+                        
+                        <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off" (click)="updateFirstReleaseApproval('Approved')">
+                        <label class="btn btn-outline-primary btn-sm" for="btnradio3">Approved</label>
+                    </div>
+                </div>
+            </div>
+        </li>
+    </ul>
 </p-sidebar>

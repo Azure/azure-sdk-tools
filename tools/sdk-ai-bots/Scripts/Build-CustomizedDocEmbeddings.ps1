@@ -52,11 +52,11 @@ function Download-GitHubFile {
     }
 
     try {
-        Invoke-WebRequest -Uri $url -OutFile $DestinationFilePath
+        Invoke-WebRequest -Uri $FileUrl -OutFile $DestinationFilePath
         Write-Host "File downloaded successfully to: $DestinationFilePath"
     }
     catch {
-        Write-Error "Failed to download file from GitHub: $url"
+        Write-Error "Failed to download file from GitHub: $FileUrl"
         exit 1
     }
 }

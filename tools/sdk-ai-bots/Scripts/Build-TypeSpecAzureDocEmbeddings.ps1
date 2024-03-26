@@ -21,11 +21,6 @@ param (
 # Set the working directory, current location is supposed to be the root of the repository
 $buildSourceDirectory = Get-Location
 $workingDirectory = Join-Path $buildSourceDirectory "tools\sdk-ai-bots"
-<#
-if($env:AGENT_ID) {
-  # Running in Azure DevOps, pipeline would checkout two repositories, azure-sdk-tools and typespec repository, so the working directory should be azure-sdk-tools
-  $workingDirectory = Join-Path $buildSourceDirectory "azure-sdk-tools\tools\sdk-ai-bots"
-}#>
 $scriptsRoot = Join-Path $workingDirectory "Scripts"
 $embeddingToolFolder = Join-Path $workingDirectory "Embeddings"
 

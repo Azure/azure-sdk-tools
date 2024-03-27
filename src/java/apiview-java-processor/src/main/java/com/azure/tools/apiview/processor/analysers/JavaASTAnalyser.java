@@ -112,12 +112,13 @@ public class JavaASTAnalyser implements Analyser {
 
     private final Map<String, JavadocComment> packageNameToPackageInfoJavaDoc = new HashMap<>();
 
-    private final Diagnostics diagnostic = new Diagnostics();
+    private final Diagnostics diagnostic;
 
     private int indent = 0;
 
     public JavaASTAnalyser(APIListing apiListing) {
         this.apiListing = apiListing;
+        diagnostic = Diagnostics.getDiagnostics(apiListing);
     }
 
     @Override

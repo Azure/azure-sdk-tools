@@ -1,4 +1,4 @@
-package com.azure.tools.apiview.processor.diagnostics.rules;
+package com.azure.tools.apiview.processor.diagnostics.rules.general;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
@@ -26,7 +26,6 @@ public class BadAnnotationDiagnosticRule implements DiagnosticRule {
 
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
-
         getClasses(cu).forEach(typeDeclaration -> {
             // check annotations on the type itself
             typeDeclaration.getAnnotations()
@@ -41,6 +40,7 @@ public class BadAnnotationDiagnosticRule implements DiagnosticRule {
             getPublicOrProtectedConstructors(typeDeclaration)
                     .forEach(constructor -> constructor.getAnnotations()
                             .forEach(annotation -> checkForBadAnnotations(listing, constructor, annotation)));
+
             // check annotations on methods
             getPublicOrProtectedMethods(typeDeclaration)
                     .forEach(method -> method.getAnnotations()

@@ -1,4 +1,4 @@
-package com.azure.tools.apiview.processor.diagnostics.rules;
+package com.azure.tools.apiview.processor.diagnostics.rules.utils;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
@@ -8,64 +8,20 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeImplementingInterface;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.ERROR;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
 
-/**
- * This diagnostic ensures that builder traits are applied correctly against client builders.
- */
-public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
+public abstract class BuilderTraitsDiagnosticRule implements DiagnosticRule {
     private static final String ANNOTATION_SERVICE_CLIENT_BUILDER = "ServiceClientBuilder";
 
     private final Map<String, TraitClass> traits;
 
-    public BuilderTraitsDiagnosticRule() {
-        traits = new HashMap<>();
-        traits.put("KeyCredentialTrait", new TraitClass(
-                new TraitMethod("credential", "KeyCredential")
-        ));
-        traits.put("AzureKeyCredentialTrait", new TraitClass(
-            new TraitMethod("credential", "AzureKeyCredential")
-        ));
-        traits.put("AzureNamedKeyCredentialTrait", new TraitClass(
-            new TraitMethod("credential", "AzureNamedKeyCredential")
-        ));
-        traits.put("AzureSasCredentialTrait", new TraitClass(
-            new TraitMethod("credential", "AzureSasCredential")
-        ));
-        traits.put("TokenCredentialTrait", new TraitClass(
-            new TraitMethod("credential", "TokenCredential")
-        ));
-        traits.put("ConfigurationTrait", new TraitClass(
-            new TraitMethod("configuration", "Configuration")
-        ));
-        traits.put("ConnectionStringTrait", new TraitClass(
-            new TraitMethod("connectionString", "String")
-        ));
-        traits.put("EndpointTrait", new TraitClass(
-            new TraitMethod("endpoint", "String")
-        ));
-        traits.put("HttpTrait", new TraitClass(TraitClass.BUILDER_PROTOCOL_HTTP,
-            new TraitMethod("httpClient", "HttpClient"),
-            new TraitMethod("pipeline", "HttpPipeline"),
-            new TraitMethod("addPolicy", "HttpPipelinePolicy"),
-            new TraitMethod("retryOptions", "RetryOptions"),
-            new TraitMethod("httpLogOptions", "HttpLogOptions"),
-            new TraitMethod("clientOptions", "ClientOptions")
-        ));
-        traits.put("AmqpTrait", new TraitClass(TraitClass.BUILDER_PROTOCOL_AMQP,
-            new TraitMethod("retryOptions", "AmqpRetryOptions"),
-            new TraitMethod("transportType", "AmqpTransportType"),
-            new TraitMethod("proxyOptions", "ProxyOptions"),
-            new TraitMethod("clientOptions", "ClientOptions")
-        ));
+    protected BuilderTraitsDiagnosticRule(Map<String, TraitClass> traits) {
+        this.traits = traits;
     }
 
     @Override
@@ -146,10 +102,10 @@ public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
                             // that mean this method is non-standard and not part of the trait.
                             String message = isTypeImplementingInterface(type, traitName) ?
                                     "This builder implements the " + traitName + " trait, but offers duplicate " +
-                                    "functionality. Consider whether this impacts consistency with other builders." :
+                                            "functionality. Consider whether this impacts consistency with other builders." :
                                     "This builder does not implement the " + traitName + " trait, but offers " +
-                                    "similar functionality. Consider implementing the trait and aligning the parameters " +
-                                    "in this builder method.";
+                                            "similar functionality. Consider implementing the trait and aligning the parameters " +
+                                            "in this builder method.";
                             listing.addDiagnostic(new Diagnostic(WARNING, makeId(matchingNameMethod), message));
                         }
                     }
@@ -158,10 +114,10 @@ public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
         });
     }
 
-    private static class TraitClass {
-        static final String BUILDER_PROTOCOL_NOT_APPLICABLE = "N/A";
-        static final String BUILDER_PROTOCOL_HTTP = "ServiceClientProtocol.HTTP";
-        static final String BUILDER_PROTOCOL_AMQP = "ServiceClientProtocol.AMQP";
+    public static class TraitClass {
+        public static final String BUILDER_PROTOCOL_NOT_APPLICABLE = "N/A";
+        public static final String BUILDER_PROTOCOL_HTTP = "ServiceClientProtocol.HTTP";
+        public static final String BUILDER_PROTOCOL_AMQP = "ServiceClientProtocol.AMQP";
 
         private final String builderProtocol;
         private final List<TraitMethod> methods;
@@ -176,7 +132,7 @@ public class BuilderTraitsDiagnosticRule implements DiagnosticRule {
         }
     }
 
-    private static class TraitMethod {
+    public static class TraitMethod {
         private final String methodName;
         private final String[] methodParamTypes;
 

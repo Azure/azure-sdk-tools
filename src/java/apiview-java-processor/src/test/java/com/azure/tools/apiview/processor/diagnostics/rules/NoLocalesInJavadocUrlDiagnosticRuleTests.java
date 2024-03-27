@@ -3,6 +3,7 @@
 
 package com.azure.tools.apiview.processor.diagnostics.rules;
 
+import com.azure.tools.apiview.processor.diagnostics.rules.general.NoLocalesInJavadocUrlDiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.comments.Comment;

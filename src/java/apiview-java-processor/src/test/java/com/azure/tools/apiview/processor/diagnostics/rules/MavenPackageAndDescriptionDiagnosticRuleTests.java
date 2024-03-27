@@ -3,16 +3,17 @@
 
 package com.azure.tools.apiview.processor.diagnostics.rules;
 
+import com.azure.tools.apiview.processor.diagnostics.rules.azure.MavenPackageAndDescriptionDiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import org.junit.jupiter.api.Test;
 
 import java.util.regex.Pattern;
 
-import static com.azure.tools.apiview.processor.diagnostics.rules.MavenPackageAndDescriptionDiagnosticRule.DEFAULT_MAVEN_DESCRIPTION;
-import static com.azure.tools.apiview.processor.diagnostics.rules.MavenPackageAndDescriptionDiagnosticRule.DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK;
-import static com.azure.tools.apiview.processor.diagnostics.rules.MavenPackageAndDescriptionDiagnosticRule.DEFAULT_MAVEN_NAME;
-import static com.azure.tools.apiview.processor.diagnostics.rules.MavenPackageAndDescriptionDiagnosticRule.DEFAULT_MAVEN_NAME_GUIDELINE_LINK;
+import static com.azure.tools.apiview.processor.diagnostics.rules.azure.MavenPackageAndDescriptionDiagnosticRule.DEFAULT_MAVEN_DESCRIPTION;
+import static com.azure.tools.apiview.processor.diagnostics.rules.azure.MavenPackageAndDescriptionDiagnosticRule.DEFAULT_MAVEN_DESCRIPTION_GUIDELINE_LINK;
+import static com.azure.tools.apiview.processor.diagnostics.rules.azure.MavenPackageAndDescriptionDiagnosticRule.DEFAULT_MAVEN_NAME;
+import static com.azure.tools.apiview.processor.diagnostics.rules.azure.MavenPackageAndDescriptionDiagnosticRule.DEFAULT_MAVEN_NAME_GUIDELINE_LINK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;

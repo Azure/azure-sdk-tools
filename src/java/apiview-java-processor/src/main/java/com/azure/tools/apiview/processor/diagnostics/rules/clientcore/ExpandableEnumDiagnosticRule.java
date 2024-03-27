@@ -1,4 +1,4 @@
-package com.azure.tools.apiview.processor.diagnostics.rules;
+package com.azure.tools.apiview.processor.diagnostics.rules.clientcore;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
@@ -18,25 +18,29 @@ import static com.azure.tools.apiview.processor.model.DiagnosticKind.WARNING;
  * Diagnostic rule to validate if types extending from ExpandableStringEnum include
  * fromString() and values() methods.
  */
-public class ExpandableStringEnumDiagnosticRule implements DiagnosticRule {
+public class ExpandableEnumDiagnosticRule implements DiagnosticRule {
+    private final String parentTypeName;
+
+    public ExpandableEnumDiagnosticRule(String parentTypeName) {
+        this.parentTypeName = parentTypeName;
+    }
 
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
-
         cu.getPrimaryType().ifPresent(typeDeclaration -> {
             if (typeDeclaration instanceof ClassOrInterfaceDeclaration) {
                 ClassOrInterfaceDeclaration classDeclaration = (ClassOrInterfaceDeclaration) typeDeclaration;
                 // check if the type extends ExpandableStringEnum
                 if (classDeclaration.getExtendedTypes() != null
                         && classDeclaration.getExtendedTypes().stream()
-                        .anyMatch(extendedType -> extendedType.getNameAsString().equals("ExpandableStringEnum"))) {
+                        .anyMatch(extendedType -> extendedType.getNameAsString().equals(parentTypeName))) {
                     checkRequiredMethodsExist(cu, listing);
                 }
             }
         });
     }
 
-    private static void checkRequiredMethodsExist(CompilationUnit cu, APIListing listing) {
+    private void checkRequiredMethodsExist(CompilationUnit cu, APIListing listing) {
         getClassName(cu).ifPresent(className -> {
             AtomicBoolean hasFromStringMethod = new AtomicBoolean(false);
             AtomicBoolean hasValuesMethod = new AtomicBoolean(false);
@@ -55,14 +59,14 @@ public class ExpandableStringEnumDiagnosticRule implements DiagnosticRule {
                 listing.addDiagnostic(new Diagnostic(
                         ERROR,
                         makeId(cu),
-                        "Types extending ExpandableStringEnum should include public static fromString() method."));
+                        "Types extending " + parentTypeName + " should include public static fromString() method."));
             }
             if (!hasValuesMethod.get()) {
                 // Missing values method can be logged at warning level.
                 listing.addDiagnostic(new Diagnostic(
                         WARNING,
                         makeId(cu),
-                        "Types extending ExpandableStringEnum should include public static values() method."));
+                        "Types extending " + parentTypeName + " should include public static values() method."));
             }
         });
     }

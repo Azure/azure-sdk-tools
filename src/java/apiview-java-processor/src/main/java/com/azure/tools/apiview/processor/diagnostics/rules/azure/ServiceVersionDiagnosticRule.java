@@ -1,4 +1,4 @@
-package com.azure.tools.apiview.processor.diagnostics.rules;
+package com.azure.tools.apiview.processor.diagnostics.rules.azure;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;

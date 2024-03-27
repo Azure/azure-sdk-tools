@@ -103,7 +103,8 @@ namespace APIViewWeb.Controllers
             string baselineCodeFileName = null,
             bool commentOnPR = true,
             string language = null,
-            string project = "public")
+            string project = "public",
+            string sourceBranch = null)
         {
             language = LanguageServiceHelpers.MapLanguageAlias(language: language);
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
@@ -139,6 +140,7 @@ namespace APIViewWeb.Controllers
             }
            
             pullRequestModel.Commits.Add(commitSha);
+            pullRequestModel.SourceBranch = sourceBranch;
             //Check if PR owner is part of Azure//Microsoft org in GitHub
             await ManagerHelpers.AssertPullRequestCreatorPermission(prModel: pullRequestModel, allowedListBotAccounts: _allowedListBotAccounts,
                 openSourceManager: _openSourceManager, telemetryClient: _telemetryClient);
@@ -257,6 +259,7 @@ namespace APIViewWeb.Controllers
                 prModel.APIRevisionId = newAPIRevision.Id;
             }
         }
+
         private async Task CreateUpdateRevisionWithBaseline(PullRequestModel prModel,
             CodeFile codeFile,
             CodeFile baselineCodeFile,

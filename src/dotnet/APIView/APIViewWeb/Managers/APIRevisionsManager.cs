@@ -793,27 +793,38 @@ namespace APIViewWeb.Managers
             return await _apiRevisionsRepository.GetAPIRevisionsAssignedToUser(userName);
         }
 
-        public async Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label, bool setReleaseTag = false)
+        public async Task<APIRevisionListItemModel> UpdateAPIRevisionMetadataAsync(APIRevisionListItemModel apiRevision, string packageVersion, string label, bool setReleaseTag = false, string commitSHA = null, string sourceBranch = null)
         {
             // Do not update package version metadata once a revision is marked as released
             // This is to avoid updating metadata when a request is processed with a new version (auto incremented version change) right after a version is released
             // without any API changes.
-            if (revision.IsReleased)
-                return revision;
+            if (apiRevision.IsReleased)
+                return apiRevision;
 
-            if (packageVersion != null && !packageVersion.Equals(revision.Files[0].PackageVersion))
+            if (packageVersion != null && !packageVersion.Equals(apiRevision.Files[0].PackageVersion))
             {
-                revision.Files[0].PackageVersion = packageVersion;
-                revision.Label = label;
+                apiRevision.Files[0].PackageVersion = packageVersion;
+                apiRevision.Label = label;
+
+                if (commitSHA != null)
+                {
+                    apiRevision.CommitSHA = commitSHA;
+                }
+
+                if (sourceBranch != null)
+                {
+                    apiRevision.SourceBranch = sourceBranch;
+                }
             }
 
             if (setReleaseTag)
             {
-                revision.IsReleased = true;
-                revision.ReleasedOn = DateTime.UtcNow;
+                apiRevision.IsReleased = true;
+                apiRevision.ReleasedOn = DateTime.UtcNow;
             }
-            await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
-            return revision;
+
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+            return apiRevision;
         }
 
         /// <summary>

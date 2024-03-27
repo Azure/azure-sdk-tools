@@ -118,7 +118,7 @@ public class JavaASTAnalyser implements Analyser {
 
     public JavaASTAnalyser(APIListing apiListing) {
         this.apiListing = apiListing;
-        diagnostic = Diagnostics.getDiagnostics(apiListing);
+        diagnostic = new Diagnostics(apiListing);
     }
 
     @Override

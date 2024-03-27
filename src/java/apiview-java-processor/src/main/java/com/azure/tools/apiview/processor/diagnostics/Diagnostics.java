@@ -22,95 +22,100 @@ import static com.azure.tools.apiview.processor.diagnostics.rules.general.BadAnn
 
 public class Diagnostics {
     private static final String AZURE_PACKAGE_PREFIX = "com.azure";
-    private static final String CLIENT_CORE_PACKAGE_PREFIX = "io.clientcore";
+    private static final String CLIENT_CORE_PACKAGE_PREFIX = "com.generic"; // FIXME need to update this to the correct package prefix
 
     final List<DiagnosticRule> rules;
 
-    private Diagnostics() {
+    public Diagnostics(APIListing apiListing) {
         rules = new ArrayList<>();
-    }
 
-    /**
-     * Returns the diagnostics that are relevant to the given API listing.
-     */
-    public static Diagnostics getDiagnostics(APIListing apiListing) {
-        Diagnostics d = new Diagnostics();
+        System.out.print("  Setting up diagnostics...");
 
         // Special rules for com.azure or io.clientcore libraries only
         if (apiListing.getPackageName().startsWith(AZURE_PACKAGE_PREFIX)) {
-            d.add(new PackageNameDiagnosticRule(Pattern.compile("^" + AZURE_PACKAGE_PREFIX + "(\\.[a-z0-9]+)+$")));
-            d.add(new AzureCoreBuilderTraitsDiagnosticRule());
-            d.add(new MissingAnnotationsDiagnosticRule(AZURE_PACKAGE_PREFIX));
-            d.add(new AzureCoreFluentSetterReturnTypeDiagnosticRule());
-            d.add(new ServiceVersionDiagnosticRule());
-            d.add(new ExpandableEnumDiagnosticRule("ExpandableStringEnum"));
-            d.add(new MavenPackageAndDescriptionDiagnosticRule());
-
-            // common APIs for all builders (below we will do rules for http or amqp builders)
-            d.add(new RequiredBuilderMethodsDiagnosticRule(null)
-                    .add("configuration", new ExactTypeNameCheckFunction("Configuration"))
-                    .add("clientOptions", new ExactTypeNameCheckFunction("ClientOptions"))
-                    .add("connectionString", new ExactTypeNameCheckFunction("String"))
-                    .add("credential", new ExactTypeNameCheckFunction(new ParameterAllowedTypes("TokenCredential",
-                            "AzureKeyCredential", "AzureSasCredential", "AzureNamedKeyCredential", "KeyCredential")))
-                    .add("endpoint", new ExactTypeNameCheckFunction("String"))
-                    .add("serviceVersion", m -> MiscUtils.checkMethodParameterTypeSuffix(m, "ServiceVersion")));
-            d.add(new RequiredBuilderMethodsDiagnosticRule("amqp")
-                    .add("proxyOptions", new ExactTypeNameCheckFunction("ProxyOptions"))
-                    .add("retry", new ExactTypeNameCheckFunction("AmqpRetryOptions"))
-                    .add("transportType", new DirectSubclassCheckFunction("AmqpTransportType")));
-            d.add(new RequiredBuilderMethodsDiagnosticRule("http")
-                    .add("addPolicy", new ExactTypeNameCheckFunction("HttpPipelinePolicy"))
-                    .add("httpClient", new ExactTypeNameCheckFunction("HttpClient"))
-                    .add("httpLogOptions", new ExactTypeNameCheckFunction("HttpLogOptions"))
-                    .add("pipeline", new ExactTypeNameCheckFunction("HttpPipeline"))
-                    .add("retryPolicy", new ExactTypeNameCheckFunction("RetryPolicy")));
+            System.out.println("Applying com.azure specific diagnostics...");
+            addAzureCoreDiagnostics();
         } else if (apiListing.getPackageName().startsWith(CLIENT_CORE_PACKAGE_PREFIX)) {
-            d.add(new PackageNameDiagnosticRule(Pattern.compile("^" + CLIENT_CORE_PACKAGE_PREFIX + "(\\.[a-z0-9]+)+$")));
-            d.add(new ClientCoreBuilderTraitsDiagnosticRule());
-            d.add(new MissingAnnotationsDiagnosticRule(CLIENT_CORE_PACKAGE_PREFIX));
-            d.add(new ClientCoreFluentSetterReturnTypeDiagnosticRule());
-            d.add(new ExpandableEnumDiagnosticRule("ExpandableEnum"));
-
-            // common APIs for all builders (below we will do rules for http or amqp builders)
-            d.add(new RequiredBuilderMethodsDiagnosticRule(null)
-                    .add("configuration", new ExactTypeNameCheckFunction("Configuration"))
-                    .add("clientOptions", new ExactTypeNameCheckFunction("ClientOptions"))
-                    .add("credential", new ExactTypeNameCheckFunction(new ParameterAllowedTypes("KeyCredential")))
-                    .add("endpoint", new ExactTypeNameCheckFunction("String"))
-                    .add("serviceVersion", m -> MiscUtils.checkMethodParameterTypeSuffix(m, "ServiceVersion"))
-                    .add("addHttpPipelinePolicy", new ExactTypeNameCheckFunction("HttpPipelinePolicy"))
-                    .add("httpClient", new ExactTypeNameCheckFunction("HttpClient"))
-                    .add("httpLogOptions", new ExactTypeNameCheckFunction("HttpLogOptions"))
-                    .add("httpPipeline", new ExactTypeNameCheckFunction("HttpPipeline"))
-                    .add("httpRetryOptions", new ExactTypeNameCheckFunction("RetryPolicy")));
+            System.out.println("Applying io.clientcore specific diagnostics...");
+            addClientCoreDiagnostics();
+        } else {
+            System.out.println("Applying general-purpose diagnostics...");
         }
 
         // general rules applicable in all cases
-        d.add(new UpperCaseEnumValuesDiagnosticRule());
-        d.add(new ImportsDiagnosticRule("com.sun"));
-        d.add(new IllegalPackageAPIExportsDiagnosticRule("implementation", "netty"));
-        d.add(new NoPublicFieldsDiagnosticRule());
-        d.add(new UpperCaseNamingDiagnosticRule("URL", "HTTP", "XML", "JSON", "SAS", "CPK", "API"));
-        d.add(new ConsiderFinalClassDiagnosticRule());
-        d.add(new IllegalMethodNamesDiagnosticRule(
+        rules.add(new UpperCaseEnumValuesDiagnosticRule());
+        rules.add(new ImportsDiagnosticRule("com.sun"));
+        rules.add(new IllegalPackageAPIExportsDiagnosticRule("implementation", "netty"));
+        rules.add(new NoPublicFieldsDiagnosticRule());
+        rules.add(new UpperCaseNamingDiagnosticRule("URL", "HTTP", "XML", "JSON", "SAS", "CPK", "API"));
+        rules.add(new ConsiderFinalClassDiagnosticRule());
+        rules.add(new IllegalMethodNamesDiagnosticRule(
                 new Rule("Builder$", "tokenCredential"), // it should just be 'credential'
                 new Rule("Builder$", "^set"),            // we shouldn't have setters in the builder
                 new Rule("^isHas"),
                 new Rule("^setHas")
         ));
-        d.add(new MissingJavaDocDiagnosticRule());
-        d.add(new MissingJavadocCodeSnippetsRule());
-        d.add(new NoLocalesInJavadocUrlDiagnosticRule());
-        d.add(new ModuleInfoDiagnosticRule());
-        d.add(new BadAnnotationDiagnosticRule(
+        rules.add(new MissingJavaDocDiagnosticRule());
+        rules.add(new MissingJavadocCodeSnippetsRule());
+        rules.add(new NoLocalesInJavadocUrlDiagnosticRule());
+        rules.add(new ModuleInfoDiagnosticRule());
+        rules.add(new BadAnnotationDiagnosticRule(
                 new BadAnnotation("JacksonXmlRootElement",
                         "From the Jackson JavaDoc: \"NOTE! Since 2.4 this annotation is usually not necessary and " +
                                 "you should use JsonRootName instead. About the only expected usage may be to have different " +
                                 "root name for XML content than other formats.\"")
         ));
+    }
 
-        return d;
+    private void addAzureCoreDiagnostics() {
+        rules.add(new PackageNameDiagnosticRule(Pattern.compile("^" + AZURE_PACKAGE_PREFIX + "(\\.[a-z0-9]+)+$")));
+        rules.add(new AzureCoreBuilderTraitsDiagnosticRule());
+        rules.add(new MissingAnnotationsDiagnosticRule(AZURE_PACKAGE_PREFIX));
+        rules.add(new AzureCoreFluentSetterReturnTypeDiagnosticRule());
+        rules.add(new ServiceVersionDiagnosticRule());
+        rules.add(new ExpandableEnumDiagnosticRule("ExpandableStringEnum"));
+        rules.add(new MavenPackageAndDescriptionDiagnosticRule());
+
+        // common APIs for all builders (below we will do rules for http or amqp builders)
+        rules.add(new RequiredBuilderMethodsDiagnosticRule(null)
+                .add("configuration", new ExactTypeNameCheckFunction("Configuration"))
+                .add("clientOptions", new ExactTypeNameCheckFunction("ClientOptions"))
+                .add("connectionString", new ExactTypeNameCheckFunction("String"))
+                .add("credential", new ExactTypeNameCheckFunction(new ParameterAllowedTypes("TokenCredential",
+                        "AzureKeyCredential", "AzureSasCredential", "AzureNamedKeyCredential", "KeyCredential")))
+                .add("endpoint", new ExactTypeNameCheckFunction("String"))
+                .add("serviceVersion", m -> MiscUtils.checkMethodParameterTypeSuffix(m, "ServiceVersion")));
+        rules.add(new RequiredBuilderMethodsDiagnosticRule("amqp")
+                .add("proxyOptions", new ExactTypeNameCheckFunction("ProxyOptions"))
+                .add("retry", new ExactTypeNameCheckFunction("AmqpRetryOptions"))
+                .add("transportType", new DirectSubclassCheckFunction("AmqpTransportType")));
+        rules.add(new RequiredBuilderMethodsDiagnosticRule("http")
+                .add("addPolicy", new ExactTypeNameCheckFunction("HttpPipelinePolicy"))
+                .add("httpClient", new ExactTypeNameCheckFunction("HttpClient"))
+                .add("httpLogOptions", new ExactTypeNameCheckFunction("HttpLogOptions"))
+                .add("pipeline", new ExactTypeNameCheckFunction("HttpPipeline"))
+                .add("retryPolicy", new ExactTypeNameCheckFunction("RetryPolicy")));
+    }
+
+    private void addClientCoreDiagnostics() {
+        rules.add(new PackageNameDiagnosticRule(Pattern.compile("^" + CLIENT_CORE_PACKAGE_PREFIX + "(\\.[a-z0-9]+)+$")));
+        rules.add(new ClientCoreBuilderTraitsDiagnosticRule());
+        rules.add(new MissingAnnotationsDiagnosticRule(CLIENT_CORE_PACKAGE_PREFIX));
+        rules.add(new ClientCoreFluentSetterReturnTypeDiagnosticRule());
+        rules.add(new ExpandableEnumDiagnosticRule("ExpandableEnum"));
+
+        // common APIs for all builders (below we will do rules for http or amqp builders)
+        rules.add(new RequiredBuilderMethodsDiagnosticRule(null)
+                .add("endpoint", new ExactTypeNameCheckFunction("String"))
+                .add("configuration", new ExactTypeNameCheckFunction("Configuration"))
+                .add("credential", new ExactTypeNameCheckFunction(new ParameterAllowedTypes("KeyCredential")))
+                .add("addHttpPipelinePolicy", new ExactTypeNameCheckFunction("HttpPipelinePolicy"))
+                .add("httpClient", new ExactTypeNameCheckFunction("HttpClient"))
+                .add("httpLogOptions", new ExactTypeNameCheckFunction("HttpLogOptions"))
+                .add("httpPipeline", new ExactTypeNameCheckFunction("HttpPipeline"))
+                .add("httpRetryOptions", new ExactTypeNameCheckFunction("RetryOptions"))
+                .add("httpRedirectOptions", new ExactTypeNameCheckFunction("HttpRedirectOptions"))
+                .add("proxyOptions", new ExactTypeNameCheckFunction("ProxyOptions")));
     }
     
     private void add(DiagnosticRule rule) {

@@ -1,0 +1,412 @@
+p-contextmenusub {
+    ul {
+        padding-left: 0rem;
+    }  
+}
+
+.p-breadcrumb {
+    background: var(--base-fg-color);
+    padding: 0.3rem;
+    font-size:small;
+}
+
+.p-breadcrumb-list {
+    margin-bottom: 0;
+    padding-left: 0.3rem;
+}
+
+.p-breadcrumb .p-breadcrumb-list li.p-menuitem-separator {
+    color: var(--base-text-color);
+}
+
+.p-breadcrumb .p-breadcrumb-list li:last-child .p-menuitem-text {
+    color: var(--base-text-color);
+}
+
+.p-breadcrumb .p-breadcrumb-list li .p-menuitem-link .p-menuitem-text {
+    color: var(--link-color);
+}
+
+.p-breadcrumb .p-breadcrumb-list li .p-menuitem-link .p-menuitem-icon {
+    color: var(--link-color);
+}
+
+.p-datatable .p-datatable-header {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    border-width: 0px 0px 1px 0px;
+    border-style: solid;
+    border-color: var(--border-color);
+}
+
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-thead, 
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-datatable-table > .p-datatable-tfoot, 
+.p-datatable.p-datatable-scrollable > .p-datatable-wrapper > .p-scroller-viewport > .p-scroller > 
+.p-datatable-table > .p-datatable-thead, .p-datatable.p-datatable-scrollable > .p-datatable-wrapper > 
+.p-scroller-viewport > .p-scroller > .p-datatable-table > .p-datatable-tfoot {
+    background-color: var(--base-fg-color);
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+    border: 0px solid var(--border-color);
+    color: var(--base-text-color);
+    background: var(--base-fg-color);
+}
+
+.p-datatable .p-datatable-tbody > tr {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    transition: box-shadow 0.15s;
+}
+
+.p-datatable .p-datatable-tbody > tr {
+    outline: 0.05rem solid var(--border-color);
+    outline-offset: 0rem;
+}
+
+.p-datatable .p-datatable-footer {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    border-width: 0px;
+    border-style: solid;
+    border-color: var(--border-color);
+}
+
+.p-datatable.p-datatable-sm .p-datatable-footer {
+    padding: 0.3rem 0.3rem;
+}
+
+.p-datatable .p-sortable-column:not(.p-highlight):hover {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+}
+
+.p-datatable.p-datatable-hoverable-rows .p-datatable-tbody > tr:not(.p-highlight):hover {
+    background: var(--base-bg-color);
+    color: var(--base-text-color);
+}
+
+.p-datatable .p-datatable-tbody > tr.p-highlight {
+    background: var(--base-bg-color);
+    color: var(--base-text-color);
+}
+.p-sidebar {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    border: 1px solid var(--border-color);
+}
+
+.p-chip {
+    background-color: var(--base-fg-color);
+    color: var(--base-text-color);
+}
+
+.p-contextmenu {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    border: 1px solid var(--border-color);
+}
+
+.p-contextmenu .p-menuitem > .p-menuitem-content .p-menuitem-link {
+    color: var(--link-color);
+    .p-menuitem-text, .p-menuitem-icon {
+        color: var(--link-color);
+    }
+}
+
+.p-contextmenu .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover {
+    color: var(--link-active);
+    background: var(--base-bg-color);
+}
+
+.p-contextmenu .p-menuitem > .p-menuitem-content {
+    color: var(--link-color);
+}
+
+.p-contextmenu .p-menuitem:not(.p-highlight):not(.p-disabled) > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-text {
+    color: var(--link-active);
+}
+
+.p-checkbox .p-checkbox-box {
+    border: 2px solid var(--border-color);
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+}
+
+.p-checkbox .p-checkbox-box.p-highlight {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+}
+
+.p-checkbox:not(.p-checkbox-disabled) .p-checkbox-box.p-highlight:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-color);
+    color: var(--primary-btn-color);
+}
+
+.p-checkbox .p-checkbox-box .p-checkbox-icon {
+    color: var(--primary-btn-color);
+}
+
+.p-datatable .p-datatable-tbody > tr:focus {
+    outline: 0.15rem solid var(--link-color);
+    outline-offset: 0.15rem;
+}
+
+.p-inputtext {
+    color: var(--base-text-color);
+    background: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+}
+
+.p-dropdown .p-dropdown-trigger {
+    color: var(--base-text-color);
+    background: var(--base-fg-color);
+}
+
+.p-dropdown {
+    background: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.p-dropdown > .p-inputtext {
+    border: 0px;
+}
+
+.p-dropdown-panel {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    border: 1px solid var(--border-color);
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item {
+    color: var(--base-text-color);
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item.p-highlight,
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled):hover {
+    color: var(--base-text-color);
+    background: var(--base-bg-color);
+}
+
+.p-dropdown:not(.p-disabled):hover {
+    border-color: var(--outer-glow);
+}
+
+.p-dropdown:not(.p-disabled).p-focus {
+    box-shadow: var(--shadow-color-primary);
+    border-color: var(--primary-btn-color);
+}
+
+.p-dropdown-panel .p-dropdown-header {
+    padding: 0.5rem 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--base-text-color);
+    background: var(--base-fg-color);
+    border-top-right-radius: 4px;
+    border-top-left-radius: 4px;
+}
+
+.p-dropdown-panel .p-dropdown-items .p-dropdown-item:not(.p-highlight):not(.p-disabled).p-focus {
+    background: var(--base-fg-color);
+}
+
+.p-inputtext:enabled:hover {
+    border-color: var(--outer-glow);
+}
+
+.p-inputtext:enabled:focus {
+    box-shadow: var(--shadow-color-primary);
+    border-color: var(--primary-btn-color);
+}
+
+.p-menubar {
+    padding: 0.4rem 0.5rem;
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+}
+
+.p-menubar-root-list {
+    margin-bottom: 0;
+    padding-left: 0;
+}
+
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link {
+    padding: 0rem 0.5rem;
+}
+.p-menubar .p-menuitem > .p-menuitem-content .p-menuitem-link {
+    color: var(--base-text-color);
+    padding: 0.5rem 1rem;
+}
+
+.p-menubar .p-menubar-root-list > .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text {
+    color: var(--base-text-color);
+}
+.p-menubar .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text {
+    color: var(--link-color);
+}
+
+.p-multiselect {
+    background: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+}
+
+.p-multiselect .p-multiselect-trigger {
+    color: var(--base-text-color);
+}
+
+.p-multiselect-panel .p-multiselect-header {
+    border-bottom: 1px solid var(--border-color);
+    color: var(--base-text-color);
+    background: var(--base-bg-color);
+}
+
+.p-multiselect-panel {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    border: 1px solid var(--border-color);
+}
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item {
+    color: var(--base-text-color);
+}
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item.p-highlight {
+    color: var(--primary-btn-color);
+    background: var(--link-color);
+}
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled):hover {
+    color: var(--primary-btn-color);
+    background: var(--link-active);
+}
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item:focus {
+    box-shadow: var(--shadow-color-primary);
+}
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item-group {
+    color: var(--base-text-color);
+    background: var(--base-bg-color);
+}
+
+.p-multiselect-items-wrapper, .p-dropdown-items-wrapper {
+    ul {
+        padding-left: 0rem;
+    }
+}
+
+.p-multiselect:not(.p-disabled):hover {
+    border-color: var(--outer-glow);
+}
+
+.p-multiselect:not(.p-disabled).p-focus {
+    box-shadow: var(--shadow-color-primary);
+    border-color: var(--primary-btn-color);
+}
+
+.p-multiselect-panel .p-multiselect-items .p-multiselect-item:not(.p-highlight):not(.p-disabled).p-focus {
+    background: var(--base-fg-color);;
+}
+
+.p-datatable .p-sortable-column.p-highlight, .p-datatable .p-sortable-column.p-highlight:hover {
+    background: var(--base-fg-color);
+    color: var(--link-color);
+}
+
+.p-datatable .p-sortable-column:focus {
+    box-shadow: var(--shadow-color-primary);
+}
+
+.p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon {
+    color: var(--link-active);
+}
+
+.p-tooltip .p-tooltip-text {
+    background-color: var(--primary-color) !important;
+    color: var(--primary-btn-color) !important;
+}
+
+.p-tooltip .p-tooltip-arrow {
+    border-top-color: var(--primary-color) !important;
+}
+
+.p-splitter {
+    border: 0px;
+    background: var(--base-fg-color);
+    border-radius: 5px;
+    color: var(--base-text-color);
+}
+
+.p-splitter .p-splitter-gutter {
+    transition: box-shadow 0.15s;
+    background: var(--base-bg-color);
+}
+.p-splitter .p-splitter-gutter .p-splitter-gutter-handle {
+    background: var(--border-color);
+}
+
+.p-virtualscroller .p-virtualscroller-content {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+.p-tree {
+    border: 1px solid var(--border-color);
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+}
+
+.p-tree .p-tree-container .p-treenode .p-treenode-content .p-tree-toggler {
+    color: var(--base-text-color);
+}
+
+.p-tree .p-tree-container .p-treenode .p-treenode-content .p-tree-toggler:enabled:hover {
+    color: var(--base-text-color);
+}
+
+.p-tree .p-tree-container .p-treenode .p-treenode-content:focus {
+    box-shadow: inset var(--shadow-color-primary);
+}
+
+.p-tree .p-tree-container .p-treenode .p-treenode-content .p-tree-toggler:focus {
+    box-shadow: var(--shadow-color-primary);
+}
+
+.p-toolbar {
+    background: var(--base-fg-color);
+    border: 0px;
+    padding: 0.4rem 0.4rem;
+}
+
+.p-fileupload .p-fileupload-buttonbar {
+    background: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    color: var(--base-text-color);
+    padding: 0.75rem 0.75rem;
+}
+
+.p-fileupload .p-fileupload-content {
+    background: var(--base-fg-color);
+    border: 1px solid var(--border-color);
+    color: var(--base-text-color);
+    padding: 0.5rem 0.25rem;
+}
+
+.p-button {
+    color: var(--primary-btn-color);
+    background: var(--link-color);
+    border: 1px solid var(--link-color);
+    padding: 0.3rem 0.5rem;
+}
+
+.p-button:focus {
+    box-shadow: var(--shadow-color-primary);
+}
+
+.p-progressbar {
+    background: var(--base-fg-color);
+}

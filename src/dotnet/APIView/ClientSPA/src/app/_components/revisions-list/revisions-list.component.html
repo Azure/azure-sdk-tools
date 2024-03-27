@@ -1,0 +1,160 @@
+<p-contextMenu #cm [model]="contextMenuItems"></p-contextMenu>
+<div *ngIf="review == null && revisions.length == 0" class="d-flex justify-content-center align-items-center" style="height: 90vh;">
+    <div class="text-center">
+        <h6>Select a Review on the left panel to view its APIRevisions</h6>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
+            <button type="button" (click)="clear()" class="btn btn-outline-primary">Clear Filters</button>
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders me-1"></i></button>
+        </div>
+    </div>
+</div>
+<div *ngIf="review != null && revisions.length == 0" class="d-flex justify-content-center align-items-center" style="height: 90vh;">
+    <div class="text-center">
+        <h6>There are no {{apiRevisionsListDetail}} {{review.packageName}}</h6>        
+        <div class="btn-group btn-group-sm" role="group" aria-label="Small button group">
+            <button *ngIf="!showDeletedAPIRevisions" type="button" (click)="toggleShowDeletedAPIRevisions()" class="btn btn-outline-primary">View Deleted APIRevisions</button>
+            <button type="button" (click)="clear()" class="btn btn-outline-primary">Clear Filters</button>
+            <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders me-1"></i></button>
+        </div>
+    </div>
+</div>
+<p-table *ngIf="revisions.length > 0"
+    #apiRevisionsTable
+    [rows]="noOfRows"
+    [value]="revisions"
+    dataKey="id"
+    [scrollable]="true"
+    scrollHeight="flex"
+    responsiveLayout="stack"
+    [lazy]="true"
+    [lazyLoadOnInit]="false"
+    [virtualScroll]="true"
+    [virtualScrollDelay]="0"
+    [virtualScrollItemSize]="rowHeight"
+    [selection]="selectedRevisions"
+    (selectionChange)="onSelectionChange($event)"
+    [(contextMenuSelection)]="selectedRevision"
+    [contextMenu]="cm"
+    [customSort]="true"
+    (onLazyLoad)="onLazyLoad($event)"
+    (onSort)="onSort($event)"
+    (onFilter)="onFilter($event)"
+    [tableStyle]="{ 'min-width': '20rem'}"
+    styleClass="p-datatable-striped p-datatable-sm">
+    <ng-template pTemplate="caption">
+        <div class="d-flex justify-content-between index-table-info">
+            <div>
+                <p-chip label=""></p-chip>
+            </div>
+            <div>
+                <button *ngIf="showDeletedAPIRevisions && showDeleteButton" (click)="restoreRevisions(selectedRevisions)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Restore</button>
+                <button *ngIf="!showDeletedAPIRevisions && showDeleteButton" (click)="deleteRevisions(selectedRevisions)" type="button" class="btn btn-sm btn-outline-danger me-1"><i class="bi bi-x-octagon-fill me-1"></i>Delete</button>
+                <button *ngIf="showSelectionActions" type="button" class="btn btn-sm btn-outline-primary me-1" (click)="selectedRevisions = []"><i class="bi bi-x-circle me-1"></i>Selection</button>
+                <button *ngIf="!showDeletedAPIRevisions && showDiffButton" type="button" class="btn btn-sm btn-outline-primary me-1" (click)="viewDiffOfSelectedAPIRevisions()"><i class="bi bi-file-diff me-1"></i>Diff</button>
+                <button *ngIf="tableHasFilters()" (click)="clear(apiRevisionsTable)" type="button" class="btn btn-sm btn-outline-primary me-1"><i class="bi bi-x-circle me-1"></i>Filters</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="sidebarVisible = true"><i class="bi bi-sliders me-1"></i></button>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="header">
+        <tr>
+            <th style="width:1%"></th>
+            <th style="width:25%">APIRevision - Label</th>
+            <th style="width:19%">Author</th>
+            <th style="width:15%">Details</th>
+            <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="created" style="width:15%">Created<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
+            <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="lastUpdatedOn" style="width:15%">Updated<p-sortIcon class="ms-2" field="lastUpdatedOn"></p-sortIcon></th>
+            <th *ngIf="showAPIRevisionsAssignedToMe" style="width:15%">RequestedOn</th>            
+            <th *ngIf="showAPIRevisionsAssignedToMe"  style="width:15%">RequestedBy</th>
+        </tr>
+        <tr>
+            <th>
+            </th>
+            <th>
+                <p-columnFilter type="text" field="label" [showMenu]="false"></p-columnFilter>
+            </th>
+            <th>
+                <p-columnFilter type="text" field="author" [showMenu]="false"></p-columnFilter>
+            </th>
+            <th>
+                <p-columnFilter id="details-filter" field="details" matchMode="in" [showMenu]="false">
+                    <ng-template pTemplate="filter" let-value let-filter="filterCallback">
+                        <p-multiSelect [ngModel]="value" [options]="details" [group]="true" [filter]="false" [(ngModel)]="selectedDetails" (onChange)="filter($event.value)" optionLabel="label" scrollHeight="500px">
+                            <ng-template let-group pTemplate="group">
+                                <div class="inline-block vertical-align-middle">
+                                    <span class="ml-1 mt-1">{{ group.label }}</span>
+                                </div>
+                            </ng-template>
+                        </p-multiSelect>
+                    </ng-template>
+                </p-columnFilter>
+            </th>
+            <th>
+            </th>
+            <th>
+            </th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-revision>
+        <tr [pContextMenuRow]="revision">
+            <td><p-tableCheckbox [value]="revision"></p-tableCheckbox></td>
+            <td>
+                <a *ngIf="!showDeletedAPIRevisions; else disabledLink" href="{{reviewPageWebAppUrl}}{{revision.reviewId}}/{{revision.id}}" target="_blank">{{ revision.resolvedLabel }}</a>
+                <ng-template #disabledLink>{{ revision.resolvedLabel }}</ng-template>
+            </td>
+            <td class="author-table-data">
+                <img [alt]="revision.createdBy" src="https://github.com/{{ revision.createdBy }}.png?size=40" width="32" />
+                <span><a href="{{profilePageWebAppUrl}}{{ revision.createdBy }}" target="_blank">{{ revision.createdBy }}</a></span>
+            </td>
+            <td>
+                <i class="{{ badgeClass.get(revision.isApproved.toString()) }} me-2"></i>
+                <i class="{{ badgeClass.get(revision.apiRevisionType) }} me-2"></i>
+            </td> 
+            <td *ngIf="!showAPIRevisionsAssignedToMe">{{ (revision.createdOn !== null) ? (revision.createdOn | timeago) : "" }}</td>
+            <td *ngIf="!showAPIRevisionsAssignedToMe">{{ (revision.lastUpdatedOn !== null) ? (revision | lastUpdatedOn| timeago) : "" }}</td>
+            <td *ngIf="showAPIRevisionsAssignedToMe">{{ (revision.assignedReviewers[0].assingedOn !== null) ? (revision.assignedReviewers[0].assingedOn | timeago) : "" }}</td>
+            <td *ngIf="showAPIRevisionsAssignedToMe">{{revision.assignedReviewers[0].assignedBy}}</td>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="summary">
+        <div *ngIf="review != null" class="flex align-items-center justify-content-center">
+            {{totalNumberOfRevisions}} {{apiRevisionsListDetail}} {{review.packageName}}
+        </div>
+        <div  *ngIf="review == null" class="flex align-items-center justify-content-center">
+            {{totalNumberOfRevisions}} {{apiRevisionsListDetail}} all Reviews
+        </div>
+    </ng-template>
+</p-table>
+<p-sidebar [(visible)]="sidebarVisible" position="right">
+    <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+            <div class="form-check form-switch">
+                <input class="form-check-input" (change)="toggleShowDeletedAPIRevisions()" type="checkbox" role="switch" id="showDeletedAPIRevisions" [checked]="showDeletedAPIRevisions">
+                <label class="form-check-label" for="showDeletedAPIRevisions">View Deleted APIRevisions</label>
+            </div>
+        </li>
+        <li class="list-group-item">
+            <div class="form-check form-switch">
+                <input class="form-check-input" (change)="toggleShowAPIRevisionsAssignedToMe()" type="checkbox" role="switch" id="showRevisionsUserIsAssignedtoReview" [checked]="showAPIRevisionsAssignedToMe">
+                <label class="form-check-label" for="showRevisionsUserIsAssignedtoReview">View APIRevisions Assigned to Me</label>
+            </div>
+        </li>
+        <li class="list-group-item">
+            <div class="me-auto">
+                <div class="fw-medium">First Release Aprroval</div>
+                <div class="d-grid gap-2 mt-2">
+                    <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                        <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" (click)="updateFirstReleaseApproval('Pending')">
+                        <label class="btn btn-outline-primary btn-sm" for="btnradio1">Pending</label>
+                        
+                        <input type="radio" #firstReleaseApprovalAllCheck class="btn-check" name="btnradio" id="btnradio2" autocomplete="off" (click)="updateFirstReleaseApproval('All')" checked>
+                        <label class="btn btn-outline-primary btn-sm" for="btnradio2">All</label>
+                        
+                        <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off" (click)="updateFirstReleaseApproval('Approved')">
+                        <label class="btn btn-outline-primary btn-sm" for="btnradio3">Approved</label>
+                    </div>
+                </div>
+            </div>
+        </li>
+    </ul>
+</p-sidebar>

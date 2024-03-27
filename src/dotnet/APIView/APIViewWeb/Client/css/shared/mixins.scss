@@ -66,3 +66,93 @@
         @content;
     }
 }
+
+@mixin main-nav-cst-theme {
+    background-color: var(--navbar-bg);
+    color: var(--navbar-text);
+    padding-top : 0px;
+    padding-bottom : 0px;
+
+    a:hover {
+        text-decoration: none;
+    }
+
+    a:link, a:visited {
+        color: var(--navbar-text);
+    }
+
+    a:hover, a:active {
+        color: var(--navbar-link-active);
+    }
+
+    border-bottom: 1px solid var(--border-color);
+    z-index: 2;
+}
+
+@mixin apiview-logo {
+    width: 30px;
+}
+
+@mixin app-footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    white-space: nowrap;
+    height: 30px;
+    line-height: 30px;
+    z-index: 3;
+    background: var(--base-bg-color);
+}
+
+@mixin base-tags {
+    p {
+        color: var(--base-text-color);
+    }
+    
+    a:link {
+        color: var(--link-color);
+        text-decoration: none;
+    }
+    
+    a:active {
+        color: var(--link-active);
+    }
+    
+    a:hover {
+        color: var(--link-active);
+        text-decoration: underline;
+    }
+    
+    a:visited {
+        color: var(--link-visited);
+    }
+
+    html {
+        font-size: 14px;
+    }
+}
+
+@mixin webkit-scrollbar {
+    ::-webkit-scrollbar {
+        width: 10px;
+    }
+    
+    ::-webkit-scrollbar:horizontal {
+        height: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        border: solid 3px var(--base-bg-color);
+        background-color: var(--text-muted-color);
+        border-radius: 6px;
+    }
+    
+    ::-webkit-scrollbar-track-piece {
+        background: transparent;
+        background-color: var(--base-fg-color)
+    }
+    
+    ::-webkit-scrollbar-corner {
+        background-color: var(--base-fg-color)
+    }
+}

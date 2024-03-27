@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos.Linq;
-using Microsoft.TeamFoundation.SourceControl.WebApi;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace APIViewWeb.Helpers
 {
@@ -27,15 +26,33 @@ namespace APIViewWeb.Helpers
     {
         public string Name { get; set; }
         public IEnumerable<string> Languages { get; set; }
-        public IEnumerable<string> Details { get; set; }
-        public string SortField { get; set; } = "PackageName";
+        public string SortField { get; set; } = "LastUpdatedOn";
         public int SortOrder { get; set; } = 1;
+        public bool? IsApproved { get; set; }
     }
 
     public class APIRevisionsFilterAndSortParams : ReviewFilterAndSortParams
     {
+        public bool IsDeleted { get; set; }
+        public bool AssignedToMe { get; set; }
+        public string Label { get; set; }
         public string Author { get; set; }
         public string ReviewId { get; set; }
+        public IEnumerable<string> Details { get; set; }
+    }
+
+    public class APIRevisionSoftDeleteParam
+    {
+        public string reviewId { get; set; }
+        public IEnumerable<string> apiRevisionIds { get; set;}
+    }
+
+    public class ReviewCreationParam                                                                    
+    {
+        public IFormFile File { get; set; }
+        public string Language { get; set; }
+        public string Label { get; set; }
+        public string FilePath { get; set; }
     }
 
     public class PagedList<T> : List<T>

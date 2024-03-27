@@ -223,8 +223,23 @@ namespace APIViewWeb
             }
 
             services.AddAuthorization();
-            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
+            services.AddCors(options => {
+                options.AddPolicy("AllowCredentials", builder =>
+                {
+                    string [] origins = new string[] { 
+                        "https://localhost:4200",
+                        "https://spa.apiviewuxtest.com",
+                        "https://spa.apiview.com",
+                        "https://apiview-staging.azurewebsites.net"
 
+                    };
+                    builder.WithOrigins(origins)
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+            });
+            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
@@ -317,7 +332,7 @@ namespace APIViewWeb
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseCors("AllowCredentials");
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();

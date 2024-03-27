@@ -8,6 +8,12 @@ export function getLatestStableVersion(npmViewResult: NPMViewResult) {
     return stableVersion;
 }
 
+export function getNextVersion(npmViewResult: NPMViewResult) {
+    const distTags: StringMap<string> | undefined = npmViewResult['dist-tags'];
+    const nextVersion = distTags && distTags['next'];
+    return nextVersion;
+}
+
 export function isBetaVersion(stableVersion: string) {
     return stableVersion.includes('beta');
 }

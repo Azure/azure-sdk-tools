@@ -12,10 +12,12 @@ import {
     bumpPreviewVersion,
     getLatestStableVersion,
     getNewVersion,
+    getNextVersion,
     isBetaVersion
 } from "../../utils/version";
 import {isGeneratedCodeStable} from "./isGeneratedCodeStable";
 import {execSync} from "child_process";
+import { compareDate, getLatestversionDate, getNextversionDate } from "../../utils/date";
 
 const fs = require('fs');
 const path = require('path');
@@ -29,6 +31,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
     const npm = new NPMScope({ executionFolderPath: packageFolderPath });
     const npmViewResult: NPMViewResult = await npm.view({ packageName });
     const stableVersion = getLatestStableVersion(npmViewResult);
+    const nextVersion = getNextVersion(npmViewResult);
 
     if (npmViewResult.exitCode !== 0 || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.log(`Package ${packageName} is first${npmViewResult.exitCode !== 0? ' ': ' stable'} release, generating changelogs and setting version for first${npmViewResult.exitCode !== 0? ' ': ' stable'} release...`);
@@ -48,6 +51,25 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
             await shell.exec(`npm pack ${packageName}@${stableVersion}`);
             await shell.exec('tar -xzf *.tgz');
             await shell.cd(packageFolderPath);
+
+            await shell.mkdir(path.join(packageFolderPath, 'changelog-next'));
+            await shell.cd(path.join(packageFolderPath, 'changelog-next'));
+            await shell.exec(`npm pack ${packageName}@${nextVersion}`);
+            await shell.exec('tar -xzf *.tgz');
+            await shell.cd(packageFolderPath);
+
+            let changeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+            if(nextVersion){
+                const getLatestDate = getLatestversionDate(npmViewResult, stableVersion);
+                const getNextDate = getNextversionDate(npmViewResult,nextVersion);
+                if (getLatestDate && getNextDate){
+                    if (!compareDate(getLatestDate, getNextDate)){
+                        changeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-next', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+                    }
+                }
+            } else {
+                return changeLogContent;
+            }
             // only track2 sdk includes sdk-type with value mgmt
             const sdkType = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'package.json'), {encoding: 'utf-8'}))['sdk-type'];
             if (sdkType && sdkType === 'mgmt') {
@@ -70,7 +92,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                     makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
                     const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
-                    makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog);
+                    makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, changeLogContent);
                     logger.log('Generate changelogs and setting version for track2 release successfully');
                     return changelog;
                 }
@@ -83,6 +105,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
             }
         } finally {
             await shell.exec(`rm -r ${path.join(packageFolderPath, 'changelog-temp')}`);
+            await shell.exec(`rm -r ${path.join(packageFolderPath, 'changelog-next')}`);
             await shell.cd(jsSdkRepoPath);
         }
     }

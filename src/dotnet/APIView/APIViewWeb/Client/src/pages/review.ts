@@ -193,7 +193,7 @@ $(() => {
   $("#reviewSubscribeSwitch").on('change', function () {
     $("#reviewSubscribeForm").submit();
   });
-  // Toggle Subscribe Switch
+  // Toggle  Switch
   $("#reviewViewedSwitch").on('change', function () {
     $("#reviewViewedForm").submit();
   });
@@ -204,7 +204,7 @@ $(() => {
 
   // Manage Expand / Collapse State of options
   [$("#approveCollapse"), $("#requestReviewersCollapse"), $("#reviewOptionsCollapse"), $("#pageSettingsCollapse"),
-    $("#associatedPRCollapse"), $("#associatedReviewsCollapse"), $("#generateAIReviewCollapse")].forEach(function (value, index) {
+    $("#associatedPRCollapse"), $("#associatedReviewsCollapse"), $("#generateAIReviewCollapse"), $("#apiRevisionOptionsCollapse")].forEach(function (value, index) {
     const id = value.attr("id");
     value.on('hidden.bs.collapse', function () {
       document.cookie = `${id}=hidden; max-age=${7 * 24 * 60 * 60}`;

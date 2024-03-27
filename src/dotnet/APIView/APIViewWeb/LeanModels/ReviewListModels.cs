@@ -118,6 +118,8 @@ namespace APIViewWeb.LeanModels
         public List<APIRevisionChangeHistoryModel> ChangeHistory { get; set; } = new List<APIRevisionChangeHistoryModel>();
         public APIRevisionType APIRevisionType { get; set; }
         public int? PullRequestNo { get; set; }
+        public string CommitSHA { get; set; }
+        public string SourceBranch { get; set; }
         public Dictionary<string, HashSet<int>> HeadingsOfSectionsWithDiff { get; set; } = new Dictionary<string, HashSet<int>>();
         public List<ReviewAssignmentModel> AssignedReviewers { get; set; } = new List<ReviewAssignmentModel>();
         public bool IsApproved { get; set; }

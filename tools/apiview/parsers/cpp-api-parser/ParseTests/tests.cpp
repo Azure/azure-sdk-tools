@@ -261,8 +261,8 @@ struct NsDumper : AstDumper
   virtual void AddDocumentRangeEnd() override {}
   virtual void AddDeprecatedRangeStart() override {}
   virtual void AddDeprecatedRangeEnd() override {}
-  virtual void AddDiffRangeStart() override {}
-  virtual void AddDiffRangeEnd() override {}
+  virtual void AddSkipDiffRangeStart() override {}
+  virtual void AddSkipDiffRangeEnd() override {}
   virtual void AddExternalLinkStart(std::string_view const& url) override {}
   virtual void AddExternalLinkEnd() override {}
   virtual void DumpTypeHierarchyNode(

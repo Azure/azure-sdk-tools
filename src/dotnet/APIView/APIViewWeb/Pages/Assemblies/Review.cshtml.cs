@@ -223,13 +223,13 @@ namespace APIViewWeb.Pages.Assemblies
             string userName = User.GetGitHubLogin();
             var revision = await _apiRevisionsManager.GetAPIRevisionAsync(revisionId);
 
-            if (revision.ViewedUsers.Contains(userName))
+            if (revision.ViewedBy.Contains(userName))
             {
-                revision.ViewedUsers.Remove(userName);
+                revision.ViewedBy.Remove(userName);
             }
             else
             {
-                revision.ViewedUsers.Add(userName);
+                revision.ViewedBy.Add(userName);
             }
 
             await _apiRevisionsManager.UpdateAPIRevisionAsync(revision);

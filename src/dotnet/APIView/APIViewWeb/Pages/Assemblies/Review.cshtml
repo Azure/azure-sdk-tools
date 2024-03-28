@@ -331,7 +331,7 @@
             }
         }
         <p class="h6">
-            <a data-bs-toggle="collapse" href="#reviewOptionsCollapse" aria-expanded="true" aria-controls="approvalCollapse">Review Options&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+            <a data-bs-toggle="collapse" href="#reviewOptionsCollapse" aria-expanded="true" aria-controls="reviewOptionsCollapse">Review Options&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
         @{
             var reviewOptionsCollapseState = " show";
@@ -366,7 +366,7 @@
             </li>
         </ul>
         <p class="h6">
-            <a data-bs-toggle="collapse" href="#pageSettingsCollapse" aria-expanded="true" aria-controls="approvalCollapse">Page Settings&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+            <a data-bs-toggle="collapse" href="#pageSettingsCollapse" aria-expanded="true" aria-controls="pageSettingsCollapse">Page Settings&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
         @{
             var pageSettingsCollapseState = String.Empty;
@@ -477,11 +477,11 @@
             }
         </ul>
         <p class="h6">
-            <a data-bs-toggle="collapse" href="#apiRevisionOptionsCollapse" aria-expanded="true" aria-controls="approvalCollapse">API Revision Options&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+            <a data-bs-toggle="collapse" href="#apiRevisionOptionsCollapse" aria-expanded="true" aria-controls="apiRevisionOptionsCollapse">API Revision Options&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
         @{
             var apiRevisionOptionsCollapseState = " show";
-            if (Request.Cookies.ContainsKey("APIRevisionOptionsCollapse"))
+            if (Request.Cookies.ContainsKey("apiRevisionOptionsCollapse"))
             {
                 if (!Request.Cookies["apiRevisionOptionsCollapse"].Equals("shown"))
                     apiRevisionOptionsCollapseState = String.Empty;
@@ -492,7 +492,7 @@
                 <div class="form-check form-switch">
                     <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" id="reviewViewedForm" method="post" asp-page-handler="ToggleViewed">
                         <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
-                        @if (Model.ReviewContent.ActiveAPIRevision.ViewedUsers.Contains(User.GetGitHubLogin()))
+                        @if (Model.ReviewContent.ActiveAPIRevision.ViewedBy.Contains(User.GetGitHubLogin()))
                         {
                             <input class="form-check-input" checked type="checkbox" role="switch" id="reviewViewedSwitch">
                         }

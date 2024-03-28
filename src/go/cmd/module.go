@@ -39,6 +39,23 @@ type Module struct {
 	packages map[string]*Pkg
 }
 
+var majorVerSuffix = regexp.MustCompile(`/v\d+$`)
+
+// fetches the value for Module.PackageName from the full module path
+func getPackageNameFromModPath(modPath string) string {
+	// for official SDKs, use a subset of the full module path
+	// e.g. github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appcomplianceautomation/armappcomplianceautomation
+	// becomes resourcemanager/appcomplianceautomation/armappcomplianceautomation
+	if suffix, ok := strings.CutPrefix(modPath, "github.com/Azure/azure-sdk-for-go/sdk/"); ok {
+		modPath = suffix
+	}
+	// now strip off any major version suffix
+	if loc := majorVerSuffix.FindStringIndex(modPath); loc != nil {
+		modPath = modPath[:loc[0]]
+	}
+	return modPath
+}
+
 // NewModule indexes an Azure SDK module's ASTs
 func NewModule(dir string) (*Module, error) {
 	mf, err := parseModFile(dir)
@@ -48,30 +65,12 @@ func NewModule(dir string) (*Module, error) {
 	// sdkRoot is the path on disk to the sdk folder e.g. /home/user/me/azure-sdk-for-go/sdk.
 	// Used to find definitions of types imported from other Azure SDK modules.
 	sdkRoot := ""
-	packageName := ""
-	if before, after, found := strings.Cut(dir, fmt.Sprintf("%s%c", sdkDirName, filepath.Separator)); found {
+	if before, _, found := strings.Cut(dir, fmt.Sprintf("%s%c", sdkDirName, filepath.Separator)); found {
 		sdkRoot = filepath.Join(before, sdkDirName)
-		if filepath.Base(after) == "internal" {
-			packageName = after
-		} else {
-			packageName = filepath.Base(after)
-		}
-		fmt.Printf("Package Name: %s\n", packageName)
 	}
 
-	//Package name can still be empty when generating API review using uploaded zip folder of a specific package in which case parent directory will not be sdk
-	if packageName == "" {
-		modulePath := mf.Module.Mod.Path
-		packageName = path.Base(modulePath)
-		fmt.Printf("Module path: %s\n", modulePath)
-		// Set relative path as package name for internal package to avoid collision
-		if packageName == "internal" {
-			if _, after, found := strings.Cut(modulePath, fmt.Sprintf("/%s/", sdkDirName)); found {
-				packageName = after
-			}
-		}
-		fmt.Printf("Package Name: %s\n", packageName)
-	}
+	packageName := getPackageNameFromModPath(mf.Module.Mod.Path)
+	fmt.Printf("Package Name: %s\n", packageName)
 	m := Module{Name: filepath.Base(dir), PackageName: packageName, packages: map[string]*Pkg{}}
 
 	baseImportPath := path.Dir(mf.Module.Mod.Path) + "/"

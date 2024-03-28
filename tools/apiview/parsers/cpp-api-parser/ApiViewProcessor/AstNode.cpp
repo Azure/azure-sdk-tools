@@ -2693,25 +2693,59 @@ class AstFriend : public AstNode {
   std::unique_ptr<AstNode> m_friendFunction;
 
 public:
+  static bool ShouldIncludeFriendDeclaration(FriendDecl const* friendDecl)
+  {
+    if (!friendDecl->getFriendType() && !friendDecl->getFriendDecl())
+    {
+      return false;
+    }
+
+    if (friendDecl->getFriendType())
+    {
+      auto friendTypeName
+          = QualType::getAsString(friendDecl->getFriendType()->getType().split(), LangOptions{});
+      // If the friend type is in the std namespace, we don't want to include it.
+      if (friendTypeName.find("std::") == 0)
+      {
+        return false;
+      }
+
+      // If the friend type is in the detail namespace, we don't want to include it.
+      if (friendTypeName.find("_detail::") != std::string::npos)
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
   AstFriend(
       FriendDecl const* friendDecl,
       AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNode()
   {
-    if (friendDecl->getFriendType())
+    if (ShouldIncludeFriendDeclaration(friendDecl))
     {
-      m_friendType
-          = QualType::getAsString(friendDecl->getFriendType()->getType().split(), LangOptions{});
-    }
-    else if (friendDecl->getFriendDecl())
-    {
-      m_friendFunction
-          = AstNode::Create(friendDecl->getFriendDecl(), azureClassesDatabase, parentNode);
+      if (friendDecl->getFriendType())
+      {
+        m_friendType
+            = QualType::getAsString(friendDecl->getFriendType()->getType().split(), LangOptions{});
+      }
+      else if (friendDecl->getFriendDecl())
+      {
+        m_friendFunction
+            = AstNode::Create(friendDecl->getFriendDecl(), azureClassesDatabase, parentNode);
+      }
     }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
+    // If we're skipping this friend declaration, don't do anything.
+    if (m_friendFunction == nullptr && m_friendType.empty())
+    {
+      return;
+    }
     if (dumpOptions.NeedsLeftAlign)
     {
       dumper->LeftAlign();
@@ -2729,7 +2763,7 @@ public:
     }
     else
     {
-      dumper->InsertIdentifier(m_friendType);
+      dumper->InsertTypeName(m_friendType, "friend_" + m_friendType);
       if (dumpOptions.NeedsTrailingSemi)
       {
         dumper->InsertPunctuation(';');

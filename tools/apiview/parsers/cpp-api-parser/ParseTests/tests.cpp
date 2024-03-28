@@ -99,16 +99,21 @@ private:
         std::vector<std::filesystem::path> const& additionalIncludePaths,
         std::vector<std::string> const& additionalArguments)
         : CompilationDatabase(), m_filesToCompile(filesToCompile),
-          m_sourceLocation(std::filesystem::absolute(sourceLocation)), m_additionalIncludePaths{
-                                                                           additionalIncludePaths}
+          m_sourceLocation(std::filesystem::absolute(sourceLocation)),
+          m_additionalIncludePaths{additionalIncludePaths}
     {
       for (auto const& arg : additionalArguments)
       {
         m_additionalArguments.push_back(std::string(arg));
       }
     }
-    std::vector<std::string>
-        defaultCommandLine{"clang++.exe", "-DAZ_RTTI", "-fcxx-exceptions", "-c", "-std=c++14", "-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"};
+    std::vector<std::string> defaultCommandLine{
+        "clang++.exe",
+        "-DAZ_RTTI",
+        "-fcxx-exceptions",
+        "-c",
+        "-std=c++14",
+        "-D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"};
     // Inherited via CompilationDatabase
     virtual std::vector<CompileCommand> getCompileCommands(llvm::StringRef FilePath) const override
     {
@@ -591,15 +596,43 @@ TEST_F(TestParser, TestDtors)
   db->DumpClassDatabase(&dumper);
   EXPECT_EQ(2ul, dumper.Messages.size());
 
-  size_t nonVirtualDestructor= 0;
+  size_t nonVirtualDestructor = 0;
   for (const auto& msg : dumper.Messages)
   {
     if (msg.DiagnosticId == "CPA000B")
     {
-      nonVirtualDestructor+= 1;
+      nonVirtualDestructor += 1;
     }
   }
   EXPECT_EQ(nonVirtualDestructor, 2ul);
+}
+
+TEST_F(TestParser, TestFriends)
+{
+  ApiViewProcessor processor("tests", R"({
+  "sourceFilesToProcess": [
+    "FriendsTests.cpp"
+  ],
+  "additionalIncludeDirectories": [],
+  "additionalCompilerSwitches": ["-Qunused-arguments"],
+  "allowInternal": true,
+  "includeDetail": false,
+  "includePrivate": false,
+  "filterNamespace": null
+}
+)"_json);
+
+  EXPECT_EQ(processor.ProcessApiView(), 0);
+
+  auto& db = processor.GetClassesDatabase();
+
+  EXPECT_EQ(4ul, db->GetAstNodeMap().size());
+  EXPECT_EQ("M2", db->GetAstNodeMap().at(1)->Name());
+
+  NsDumper dumper;
+  db->DumpClassDatabase(&dumper);
+
+  EXPECT_TRUE(SyntaxCheckClassDb(db, "Friends_Test1.cpp"));
 }
 
 TEST_F(TestParser, TestDocuments)
@@ -617,7 +650,6 @@ TEST_F(TestParser, TestDocuments)
 }
 )"_json);
 
-
   EXPECT_EQ(processor.ProcessApiView(), 0);
 
   auto& db = processor.GetClassesDatabase();
@@ -626,8 +658,6 @@ TEST_F(TestParser, TestDocuments)
   NsDumper dumper;
   db->DumpClassDatabase(&dumper);
 }
-
-
 
 #if 0
 TEST_F(TestParser, AzureCore1)

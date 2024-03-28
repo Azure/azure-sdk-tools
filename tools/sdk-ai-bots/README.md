@@ -14,7 +14,7 @@ AzureSdkQaBot is a Teams bot which can answer the questions related to the Azure
 -	Assist with reviewing pull requests for REST API specifications, including query the status of the specification pull request, providing suggestions for next steps, and facilitating the merge process (note that merging is disabled during testing phase)
 
 **How to use this bot**
--	Create a post in this [teams channel](https://teams.microsoft.com/l/channel/19%3AHfX8n9euCnjYR1IWxqMJ5jCeX5yJWRj0PEgu3er2X_41%40thread.tacv2/General?groupId=93980b5e-48ff-442d-98a8-6ee038284ad0&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
+-	Create a post in the teams channel by accessing https://aka.ms/azsdk/teams-bot.
 -	In the post content, please include `@AzureSDKAssistant-dev` with your questions. 
 > Note: Select the name when typing `@`, copying of the `@AzureSDKAssistant-dev` text to the question would not work.
 

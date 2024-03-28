@@ -2,7 +2,22 @@
 This folder contains a collection of tools that utilize AI techniques.
 
 #### AzureSdkQaBot
-AzureSdkQaBot is a Teams bot which can answer the questions related to the Azure SDK domain. It is written in C#.
+AzureSdkQaBot is a Teams bot which can answer the questions related to the Azure SDK domain. It is powered by Azure OpenAI and written in C#.
+
+**Capability of this bot**
+
+-	This bot can provide general QA by searching through a knowledge base that includes documents from three sources:
+    - Azure SDK documents available at the [engineering hub site](https://eng.ms/docs/products/azure-developer-experience)
+    - TypeSpec documents available at https://github.com/azure/typespec-azure
+    - Some markdown documents from a [customized list](https://github.com/Azure/azure-sdk-tools/blob/main/tools/sdk-ai-bots/Embeddings/settings/metadata_customized_docs.json)
+
+-	Assist with reviewing pull requests for REST API specifications, including query the status of the specification pull request, providing suggestions for next steps, and facilitating the merge process (note that merging is disabled during testing phase)
+
+**How to use this bot**
+-	Create a post in this [teams channel](https://teams.microsoft.com/l/channel/19%3AHfX8n9euCnjYR1IWxqMJ5jCeX5yJWRj0PEgu3er2X_41%40thread.tacv2/General?groupId=93980b5e-48ff-442d-98a8-6ee038284ad0&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47)
+-	In the post content, please include `@AzureSDKAssistant-dev` with your questions. 
+> Note: Select the name when typing `@`, copying of the `@AzureSDKAssistant-dev` text to the question would not work.
+
 
 #### Embeddings
 It is a tool written in Python that uses `langchain` library to create embeddings in Azure Search Service.

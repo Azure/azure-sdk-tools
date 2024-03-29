@@ -173,7 +173,9 @@ function AddGithubUsersToAliasCache() {
     Write-Error "Failed to retrieve github -> microsoft alias mappings from opensource api."
     exit 1
   }
+  Write-Host "Found $($users.Count) users"
   foreach ($user in $users) {
+    $user
     if ($user.aad.alias) {
       $OwnerAliasCache[$user.aad.alias] = $true
     }

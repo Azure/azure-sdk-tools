@@ -294,7 +294,7 @@ func TestVars(t *testing.T) {
 func Test_getPackageNameFromModPath(t *testing.T) {
 	require.EqualValues(t, "foo", getPackageNameFromModPath("foo"))
 	require.EqualValues(t, "foo", getPackageNameFromModPath("foo/v2"))
-	require.EqualValues(t, "foo", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo"))
-	require.EqualValues(t, "foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar"))
-	require.EqualValues(t, "foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar/v5"))
+	require.EqualValues(t, "sdk/foo", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo"))
+	require.EqualValues(t, "sdk/foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar"))
+	require.EqualValues(t, "sdk/foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar/v5"))
 }

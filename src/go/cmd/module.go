@@ -45,8 +45,8 @@ var majorVerSuffix = regexp.MustCompile(`/v\d+$`)
 func getPackageNameFromModPath(modPath string) string {
 	// for official SDKs, use a subset of the full module path
 	// e.g. github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/appcomplianceautomation/armappcomplianceautomation
-	// becomes resourcemanager/appcomplianceautomation/armappcomplianceautomation
-	if suffix, ok := strings.CutPrefix(modPath, "github.com/Azure/azure-sdk-for-go/sdk/"); ok {
+	// becomes sdk/resourcemanager/appcomplianceautomation/armappcomplianceautomation
+	if suffix, ok := strings.CutPrefix(modPath, "github.com/Azure/azure-sdk-for-go/"); ok {
 		modPath = suffix
 	}
 	// now strip off any major version suffix

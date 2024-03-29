@@ -175,14 +175,13 @@ function AddGithubUsersToAliasCache() {
   }
   Write-Host "Found $($users.Count) users"
   foreach ($user in $users) {
-    $user
-    if ($user.aad.alias) {
+    if ($user -and $user.aad.alias) {
       $OwnerAliasCache[$user.aad.alias] = $true
     }
-    if ($user.aad.userPrincipalName) {
+    if ($user -and $user.aad.userPrincipalName) {
       $OwnerAliasCache[$user.aad.userPrincipalName] = $true
     }
-    if ($user.github.login) {
+    if ($user -and $user.github.login) {
       $OwnerAliasCache[$user.github.login] = $true
     }
   }
@@ -336,11 +335,14 @@ function HasDeleteLock([object]$ResourceGroup) {
 }
 
 function DeleteArmDeployments([object]$ResourceGroup) {
-  if (!$DeleteArmDeployments) {
+  if (!$DeleteArmDeployments -or !$ResourceGroup) {
     return
   }
-  $toDelete = @(Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName `
-              | Where-Object { $_ -and ($_.Outputs?.Count -or $_.Parameters?.ContainsKey('testApplicationSecret')) })
+  $toDelete = @()
+  try {
+    $toDelete = @(Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName `
+                | Where-Object { $_ -and ($_.Outputs?.Count -or $_.Parameters?.ContainsKey('testApplicationSecret')) })
+  } catch {}
   if (!$toDelete -or !$toDelete.Count) {
     return
   }

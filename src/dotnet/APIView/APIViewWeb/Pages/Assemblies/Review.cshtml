@@ -505,9 +505,26 @@
                     </form>
                 </div>
             </li>
+            <li class="list-group-item">
+            @if (Model.ReviewContent.ActiveAPIRevision.ChangeHistory.Any())
+            {
+                <ul class="approval-list-group">
+                    @foreach (var change in Model.ReviewContent.ActiveAPIRevision.ChangeHistory)
+                    {
+                        <li class="approval-list-group-item">@change.ChangeAction by @change.ChangedBy on @change.ChangedOn</li>
+                    }
+                </ul>
+            }    
+            </li>
         </ul>
     </div>
 </div>
+
+
+
+
+
+
 
 <div class="container-fluid mx-0 px-0 sub-header-content">
     <div class="row px-3 py-2 border-bottom" id="review-info-bar">

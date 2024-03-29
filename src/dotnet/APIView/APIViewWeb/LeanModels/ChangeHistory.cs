@@ -46,7 +46,8 @@ namespace APIViewWeb.LeanModels
     }
 
     public abstract class ChangeHistoryModel
-    {
+    {   
+        public string ChangeAction { get; set; }
         public string ChangedBy { get; set; }
         public DateTime? ChangedOn { get; set; }
         public string Notes { get; set; }

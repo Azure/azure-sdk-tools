@@ -2,21 +2,21 @@
 // Licensed under the MIT License.
 
 using APIView;
+using APIView.Model;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ApiView
 {
     public class CodeFile
     {
-        private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions()
+        private static readonly JsonSerializer JsonSerializer = new JsonSerializer()
         {
-            AllowTrailingCommas = true,
-            ReadCommentHandling = JsonCommentHandling.Skip
+            NullValueHandling = NullValueHandling.Ignore,
         };
 
         private string _versionString;
@@ -32,6 +32,11 @@ namespace ApiView
             get => _versionString ?? Version.ToString();
 #pragma warning restore 618
             set => _versionString = value;
+        }
+
+        public string CodeFileVersion
+        {
+            get => this.APITree.Count > 0 ? "v2" : "_v1";
         }
 
         public string Name { get; set; }
@@ -51,6 +56,7 @@ namespace ApiView
         public string CrossLanguagePackageId { get; set; }
 
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
+        public List<APITreeNode> APITree { get; set; } = new List<APITreeNode>();
 
         public List<CodeFileToken[]> LeafSections { get; set; }
 
@@ -67,9 +73,16 @@ namespace ApiView
 
         public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false)
         {
-            var codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(
-                stream,
-                JsonSerializerOptions);
+            CodeFile codeFile = null;
+
+            using (var streamReader = new StreamReader(stream))
+            {
+                using (var jsonReader = new JsonTextReader(streamReader))
+                {
+                    jsonReader.SupportMultipleContent = true;
+                    codeFile =  JsonSerializer.Deserialize<CodeFile>(jsonReader);
+                }
+            }
 
             if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language))
                 hasSections = true;
@@ -145,10 +158,14 @@ namespace ApiView
 
         public async Task SerializeAsync(Stream stream)
         {
-            await JsonSerializer.SerializeAsync(
-                stream,
-                this,
-                JsonSerializerOptions);
+            using (var streamWriter = new StreamWriter(stream))
+            {
+                using (var jsonWriter = new JsonTextWriter(streamWriter))
+                {
+                    JsonSerializer.Serialize(jsonWriter, this);
+                    await jsonWriter.FlushAsync();
+                }
+            }
         }
     }
 }

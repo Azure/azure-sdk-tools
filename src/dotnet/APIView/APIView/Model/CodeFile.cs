@@ -36,7 +36,7 @@ namespace ApiView
 
         public string CodeFileVersion
         {
-            get => this.APITree.Count > 0 ? "v2" : "_v1";
+            get => this.APITree.Count > 0 ? "v2" : "v1";
         }
 
         public string Name { get; set; }
@@ -75,7 +75,7 @@ namespace ApiView
         {
             CodeFile codeFile = null;
 
-            using (var streamReader = new StreamReader(stream))
+            using (var streamReader = new StreamReader(stream, leaveOpen: true))
             {
                 using (var jsonReader = new JsonTextReader(streamReader))
                 {
@@ -158,7 +158,7 @@ namespace ApiView
 
         public async Task SerializeAsync(Stream stream)
         {
-            using (var streamWriter = new StreamWriter(stream))
+            using (var streamWriter = new StreamWriter(stream, leaveOpen: true))
             {
                 using (var jsonWriter = new JsonTextWriter(streamWriter))
                 {

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ApiView;
 using APIView;
+using APIView.Model;
 using APIViewWeb.Models;
 
 namespace APIViewWeb.LeanModels
@@ -19,6 +20,7 @@ namespace APIViewWeb.LeanModels
         public ReviewListItemModel Review { get; set; }
         public NavigationItem[] Navigation { get; set; }
         public CodeLineModel[] codeLines { get; set; }
+        public List<APITreeNode> APITree { get; set; } = new List<APITreeNode>();
         public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; }
         public APIRevisionListItemModel ActiveAPIRevision { get; set; }
         public APIRevisionListItemModel DiffAPIRevision { get; set; }

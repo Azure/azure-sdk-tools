@@ -13,6 +13,9 @@ using System;
 using APIView;
 using Microsoft.AspNetCore.Authorization;
 using APIViewWeb.Pages.Assemblies;
+using Microsoft.Extensions.Configuration;
+using APIViewWeb.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -21,18 +24,29 @@ namespace APIViewWeb.LeanControllers
         private readonly ILogger<ReviewsController> _logger;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
-        private readonly ICommentsManager _commentManager;
+        private readonly ICommentsManager _commentsManager;
         private readonly IBlobCodeFileRepository _codeFileRepository;
-        
+        private readonly IConfiguration _configuration;
+        public readonly UserPreferenceCache _preferenceCache;
+        private readonly ICosmosUserProfileRepository _userProfileRepository;
+        private readonly IHubContext<SignalRHub> _signalRHubContext;
+
         public ReviewsController(ILogger<ReviewsController> logger,
             IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
-            ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository)
+            ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
+            IConfiguration configuration, UserPreferenceCache preferenceCache,
+            ICosmosUserProfileRepository userProfileRepository, IHubContext<SignalRHub> signalRHub)
         {
             _logger = logger;
             _apiRevisionsManager = reviewRevisionsManager;
             _reviewManager = reviewManager;
-            _commentManager = commentManager;
+            _commentsManager = commentManager;
             _codeFileRepository = codeFileRepository;
+            _configuration = configuration;
+            _preferenceCache = preferenceCache;
+            _userProfileRepository = userProfileRepository;
+            _signalRHubContext = signalRHub;
+
         }
 
         /// <summary>
@@ -66,6 +80,28 @@ namespace APIViewWeb.LeanControllers
                 return new LeanJsonResult(apiRevision, StatusCodes.Status201Created);
             }
             return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+
+        ///<summary>
+        ///Retrieve the Content (codeLines and Navigation) of a review
+        ///</summary>
+        ///<param name="reviewId"></param>
+        ///<param name="revisionId"></param>
+        /// <param name="diffRevisionId"></param>
+        ///<returns></returns>
+        [HttpGet]
+        [Route("{reviewId}/content")]
+        public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, [FromQuery] string revisionId = null,
+            [FromQuery] string diffRevisionId = null)
+        {
+            var review = await _reviewManager.GetReviewAsync(User, reviewId);
+
+            var reviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
+                reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
+                reviewRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
+                signalRHubContext: _signalRHubContext, user: User, reviewId: reviewId, revisionId: revisionId, diffRevisionId: diffRevisionId);
+
+            return new LeanJsonResult(reviewContent, StatusCodes.Status200OK);
         }
     }
 }

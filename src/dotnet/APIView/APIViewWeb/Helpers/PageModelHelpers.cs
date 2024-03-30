@@ -294,56 +294,67 @@ namespace APIViewWeb.Helpers
             var activeRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(activeRevision.Id, activeRevision.Files[0].FileId);
             var activeRevisionReviewCodeFile = activeRevisionRenderableCodeFile.CodeFile;
             var fileDiagnostics = activeRevisionReviewCodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
-            var activeRevisionHtmlLines = activeRevisionRenderableCodeFile.Render(showDocumentation: showDocumentation);
 
-            var codeLines = new CodeLineModel[0];
-            var getCodeLines = false;
-
-
-
-            if (!string.IsNullOrEmpty(diffRevisionId))
+            if (activeRevisionReviewCodeFile.CodeFileVersion.Equals("v1"))
             {
-                if (apiRevisions.Where(x => x.Id == diffRevisionId).Any())
+                var activeRevisionHtmlLines = activeRevisionRenderableCodeFile.Render(showDocumentation: showDocumentation);
+
+                var codeLines = new CodeLineModel[0];
+                var getCodeLines = false;
+
+
+
+                if (!string.IsNullOrEmpty(diffRevisionId))
                 {
-                    diffRevision = await reviewRevisionsManager.GetAPIRevisionAsync(user, diffRevisionId);
-                    var diffRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(diffRevisionId, diffRevision.Files[0].FileId);
-                    var diffRevisionHTMLLines = diffRevisionRenderableCodeFile.RenderReadOnly(showDocumentation: showDocumentation);
-                    var diffRevisionTextLines = diffRevisionRenderableCodeFile.RenderText(showDocumentation: showDocumentation);
+                    if (apiRevisions.Where(x => x.Id == diffRevisionId).Any())
+                    {
+                        diffRevision = await reviewRevisionsManager.GetAPIRevisionAsync(user, diffRevisionId);
+                        var diffRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(diffRevisionId, diffRevision.Files[0].FileId);
+                        var diffRevisionHTMLLines = diffRevisionRenderableCodeFile.RenderReadOnly(showDocumentation: showDocumentation);
+                        var diffRevisionTextLines = diffRevisionRenderableCodeFile.RenderText(showDocumentation: showDocumentation);
 
-                    var activeRevisionTextLines = activeRevisionRenderableCodeFile.RenderText(showDocumentation: showDocumentation);
+                        var activeRevisionTextLines = activeRevisionRenderableCodeFile.RenderText(showDocumentation: showDocumentation);
 
-                    var diffLines = InlineDiff.Compute(diffRevisionTextLines, activeRevisionTextLines, diffRevisionHTMLLines, activeRevisionHtmlLines);
-                    var headingsOfSectionsWithDiff = activeRevision.HeadingsOfSectionsWithDiff.ContainsKey(diffRevision.Id) ? activeRevision.HeadingsOfSectionsWithDiff[diffRevision.Id] : new HashSet<int>();
+                        var diffLines = InlineDiff.Compute(diffRevisionTextLines, activeRevisionTextLines, diffRevisionHTMLLines, activeRevisionHtmlLines);
+                        var headingsOfSectionsWithDiff = activeRevision.HeadingsOfSectionsWithDiff.ContainsKey(diffRevision.Id) ? activeRevision.HeadingsOfSectionsWithDiff[diffRevision.Id] : new HashSet<int>();
 
-                    codeLines = CreateLines(diagnostics: fileDiagnostics, lines: diffLines, comments: comments, showDiffOnly: showDiffOnly,
-                        reviewDiffContextSize: diffContextSize, diffContextSeparator: diffContextSeperator, headingsOfSectionsWithDiff: headingsOfSectionsWithDiff,
-                        language: activeRevision.Language);
+                        codeLines = CreateLines(diagnostics: fileDiagnostics, lines: diffLines, comments: comments, showDiffOnly: showDiffOnly,
+                            reviewDiffContextSize: diffContextSize, diffContextSeparator: diffContextSeperator, headingsOfSectionsWithDiff: headingsOfSectionsWithDiff,
+                            language: activeRevision.Language);
 
-                    if (!codeLines.Any())
+                        if (!codeLines.Any())
+                        {
+                            getCodeLines = true;
+                            reviewPageContent.NotificationMessage = $"There is no diff between the two revisions. {activeRevision.Id} : {diffRevisionId}";
+                            reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonProceedWithPageLoad;
+                        }
+                    }
+                    else
                     {
                         getCodeLines = true;
-                        reviewPageContent.NotificationMessage = $"There is no diff between the two revisions. {activeRevision.Id} : {diffRevisionId}";
+                        reviewPageContent.NotificationMessage = $"A diffRevision with ID {diffRevisionId} does not exist for this review.";
                         reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonProceedWithPageLoad;
                     }
                 }
-                else
+
+                if (string.IsNullOrEmpty(diffRevisionId) || getCodeLines)
                 {
-                    getCodeLines = true;
-                    reviewPageContent.NotificationMessage = $"A diffRevision with ID {diffRevisionId} does not exist for this review.";
-                    reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonProceedWithPageLoad;
+                    codeLines = CreateLines(diagnostics: fileDiagnostics, lines: activeRevisionHtmlLines, comments: comments, language: activeRevision.Language);
                 }
-            }
 
-            if (string.IsNullOrEmpty(diffRevisionId) || getCodeLines) 
-            {
-                codeLines = CreateLines(diagnostics: fileDiagnostics, lines: activeRevisionHtmlLines, comments: comments, language: activeRevision.Language);
-            }
+                if (codeLines == null || codeLines.Length == 0)
+                {
+                    reviewPageContent.NotificationMessage = $"A revision with ID {activeRevision.Id} has no content.";
+                    reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonRedirectToIndexPage;
+                    return reviewPageContent;
+                }
 
-            if (codeLines == null || codeLines.Length == 0)
+                reviewPageContent.codeLines = codeLines;
+                reviewPageContent.ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments);
+            }
+            else if (activeRevisionReviewCodeFile.CodeFileVersion.Equals("v2"))
             {
-                reviewPageContent.NotificationMessage = $"A revision with ID {activeRevision.Id} has no content.";
-                reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonRedirectToIndexPage;
-                return reviewPageContent;
+                reviewPageContent.APITree = activeRevisionReviewCodeFile.APITree;
             }
 
             HashSet<string> preferredApprovers = new HashSet<string>();
@@ -382,7 +393,6 @@ namespace APIViewWeb.Helpers
 
             reviewPageContent.Review = review;
             reviewPageContent.Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation;
-            reviewPageContent.codeLines = codeLines;
             reviewPageContent.APIRevisions = apiRevisions.OrderByDescending(c => c.CreatedOn);
             reviewPageContent.ActiveAPIRevision = activeRevision;
             reviewPageContent.DiffAPIRevision = diffRevision;

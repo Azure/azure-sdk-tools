@@ -1,0 +1,32 @@
+<app-nav-bar></app-nav-bar>
+<div class="container-fluid main-container">
+    <app-review-info [review]="reviewContent?.review" (revisionsSidePanel)="showRevisionsPanel($event)"></app-review-info>
+    <div class="row">
+        <div class="col-auto" style="width: 65px;">
+            <p-menu [model]="sideMenu"></p-menu>
+        </div>
+        <div class="col">
+            <p-splitter 
+            [panelSizes]="[15, 70, 15]" 
+            [style]="{ height: 'calc(100vh - 119px)' }">
+            <ng-template pTemplate>
+                <div class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel">
+                    <app-review-nav [reviewPageNavigation]="reviewPageNavigation"></app-review-nav>
+                </div>
+            </ng-template>
+            <ng-template pTemplate>
+                <div class="col flex align-items-center justify-content-center overflow-auto border review-panel">
+                    <app-code-panel [apiTreeNodeData]="apiTreeNodeData" [tokenLineData]="tokenLineData"></app-code-panel>
+                </div>
+            </ng-template>
+            <ng-template pTemplate>
+                <div class="col flex align-items-center justify-content-center border rounded-end overflow-auto review-panel">Panel 3</div>
+            </ng-template>
+        </p-splitter>
+        </div>
+    </div>
+</div>
+<p-sidebar [(visible)]="revisionSidePanel!" position="right">
+    Revisions
+</p-sidebar>
+<app-footer></app-footer>

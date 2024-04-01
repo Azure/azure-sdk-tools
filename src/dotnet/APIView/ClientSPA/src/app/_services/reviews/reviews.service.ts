@@ -3,9 +3,8 @@ import { Injectable } from '@angular/core';
 
 import { Observable, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/_models/pagination';
-import { Review } from 'src/app/_models/review';
-import { Revision } from 'src/app/_models/revision';
-import { environment } from 'src/environments/environment';
+import { Review, ReviewContent } from 'src/app/_models/review';
+import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
 
 @Injectable({
@@ -69,7 +68,7 @@ export class ReviewsService {
     window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}`, '_blank');
   }
 
-  createReview(formData: any) : Observable<Revision> {
+  createReview(formData: any) : Observable<APIRevision> {
     const headers = new HttpHeaders({
       'Content-Type': 'undefined',
     })
@@ -87,4 +86,9 @@ export class ReviewsService {
       )
     );
   }
-}
+
+  getReviewContent(reviewId: string, revisionId: string = "") : Observable<ReviewContent>{
+    let params = new HttpParams();
+    params = params.append('revisionId', revisionId);
+    return this.http.get<ReviewContent>(this.baseUrl + `/${reviewId}/content`, { params: params });
+  }}

@@ -8,6 +8,7 @@ p-contextmenusub {
     background: var(--base-fg-color);
     padding: 0.3rem;
     font-size:small;
+    border: 1px solid var(--border-color);
 }
 
 .p-breadcrumb-list {
@@ -54,14 +55,10 @@ p-contextmenusub {
 }
 
 .p-datatable .p-datatable-tbody > tr {
-    background: var(--base-fg-color);
+    background: none;
     color: var(--base-text-color);
+    outline: 1px solid var(--border-color-transparent);
     transition: box-shadow 0.15s;
-}
-
-.p-datatable .p-datatable-tbody > tr {
-    outline: 0.05rem solid var(--border-color);
-    outline-offset: 0rem;
 }
 
 .p-datatable .p-datatable-footer {

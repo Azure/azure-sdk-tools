@@ -1,15 +1,18 @@
-import { Revision } from "./revision"
-
-export enum DiffLineKind {
-    Added,
-    Removed,
-    Unchanged
-}
+import { APITreeNode, APIRevision } from "./revision"
 
 export enum FirstReleaseApproval {
   Approved,
   Pending,
   All
+}
+
+export enum ReviewPageWorkerMessageDirective {
+  BuildAPITree,
+  PassToTokenBuilder,
+  BuildTokens,
+  CreatePageNavigation,
+  UpdateCodeLines,
+  CreateLineOfTokens
 }
 
 export interface Review {
@@ -32,4 +35,11 @@ export interface SelectItemModel {
   label: string,
   data: string
 }
-  
+
+export interface ReviewContent {
+  review: Review
+  apiTree: APITreeNode[]
+  apiRevisions: APIRevision[]
+  activeAPIRevision: APIRevision
+  diffAPIRevision: APIRevision
+}

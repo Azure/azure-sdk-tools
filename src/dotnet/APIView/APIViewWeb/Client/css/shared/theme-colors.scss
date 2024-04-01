@@ -16,6 +16,7 @@
     --warning-color: #{$warning};
     --danger-color: #{$danger};
     --border-color: #{shade-color($base-bg-color, 20%)};
+    --border-color-transparent: #{shade-color($base-bg-color, 2%)};
     --primary-btn-color: #fff;
     /*----Links------------------------------------------------------*/
     --link-color: #{$primary};
@@ -74,7 +75,8 @@
     --info-color: #{$info-color};
     --warning-color: #{$orange};
     --danger-color: #{$danger};
-    --border-color: #{tint-color($base-bg-color, 30%)};
+    --border-color: #{tint-color($base-bg-color, 20%)};
+    --border-color-transparent: #{tint-color($base-bg-color, 7%)};
     --primary-btn-color: #fff;
     /*----Links------------------------------------------------------*/
     --link-color: #{$primary-color};
@@ -135,7 +137,8 @@
     --warning-color: #{$warning-color};
     $danger-color: #C80C07;
     --danger-color: #{$danger-color};
-    --border-color: #{tint-color($base-bg-color, 30%)};
+    --border-color: #{tint-color($base-bg-color, 20%)};
+    --border-color-transparent: #{tint-color($base-bg-color, 7%)};
     --primary-btn-color: #{$base-bg-color};
     /*----Links------------------------------------------------------*/
     --link-color: #{$primary-color};

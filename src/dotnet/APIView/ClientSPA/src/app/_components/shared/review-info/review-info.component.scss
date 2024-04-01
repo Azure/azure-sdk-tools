@@ -1,0 +1,41 @@
+
+:host ::ng-deep {
+    .p-inputtext {
+        padding: 0.3rem 0.5rem;
+    }
+
+    .p-dropdown .p-dropdown-trigger {
+        border-top-right-radius: 0px;
+        border-bottom-right-radius: 0px;
+    }
+
+    .p-dropdown {
+        border-radius: 0px;
+    }
+
+    .p-dropdown-panel {
+        border-top-right-radius: 0px;
+        border-top-left-radius: 0px;
+    }
+
+    .p-toolbar {
+        border-top: solid 1px var(--border-color);
+        border-radius: 0px;
+    }
+
+    .btn-outline-primary  {
+        border-color: var(--border-color);
+    }
+    
+    .revision-drop-down {
+        max-width: 15vw;
+    }
+
+    .review-name {
+        display: block;
+        max-width: 10vw;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+}

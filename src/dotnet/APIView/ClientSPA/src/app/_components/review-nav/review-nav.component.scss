@@ -1,0 +1,21 @@
+:host ::ng-deep {
+    .p-tree {
+        font-family: Consolas,monospace;
+        font-size: 14px;
+        border: 0px;
+        padding: 0.1rem;
+        max-height: 100%;
+        width: 100%;
+        overflow-y: scroll;
+        overflow-x: hidden;
+    }
+
+    .p-tree .p-tree-container .p-treenode .p-treenode-content {
+        display: block;
+        padding: 0.15rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        border: 0px;
+    }
+}

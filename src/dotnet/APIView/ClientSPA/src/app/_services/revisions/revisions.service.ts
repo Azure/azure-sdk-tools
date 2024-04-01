@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 
 
 import { PaginatedResult } from 'src/app/_models/pagination';
-import { Revision } from 'src/app/_models/revision';
+import { APIRevision } from 'src/app/_models/revision';
 import { environment } from 'src/environments/environment';
 import { ConfigService } from '../config/config.service';
 
@@ -14,14 +14,14 @@ import { ConfigService } from '../config/config.service';
 })
 export class RevisionsService {
   baseUrl : string = this.configService.apiUrl + "APIRevisions";
-  paginatedResult: PaginatedResult<Revision[]> = new PaginatedResult<Revision[]>
+  paginatedResult: PaginatedResult<APIRevision[]> = new PaginatedResult<APIRevision[]>
   
   constructor(private http: HttpClient, private configService: ConfigService) { }
 
   getAPIRevisions(noOfItemsRead: number, pageSize: number,
     reviewId : string, label: string, author: string, 
     details: string [], sortField: string, sortOrder: number, isDeleted: boolean = false, isAssignedToMe: boolean = false
-    ): Observable<PaginatedResult<Revision[]>> {
+    ): Observable<PaginatedResult<APIRevision[]>> {
     let params = new HttpParams();
     params = params.append('noOfItemsRead', noOfItemsRead);
     params = params.append('pageSize', pageSize);
@@ -41,7 +41,7 @@ export class RevisionsService {
       'Content-Type': 'application/json',
     })
        
-    return this.http.post<Revision[]>(this.baseUrl, data,
+    return this.http.post<APIRevision[]>(this.baseUrl, data,
       { 
         headers:headers,
         params: params,

@@ -41,6 +41,10 @@ import { LastUpdatedOnPipe } from './_pipes/last-updated-on.pipe';
 import { Observable } from 'rxjs';
 import { ConfigService } from './_services/config/config.service';
 import { CookieService } from 'ngx-cookie-service';
+import { ReviewPageComponent } from './_components/review-page/review-page.component';
+import { ReviewNavComponent } from './_components/review-nav/review-nav.component';
+import { ReviewInfoComponent } from './_components/shared/review-info/review-info.component';
+import { CodePanelComponent } from './_components/code-panel/code-panel.component';
 
 export function initializeApp(configService: ConfigService) {
   return (): Observable<any> => {
@@ -58,7 +62,11 @@ export function initializeApp(configService: ConfigService) {
     FooterComponent,
     RevisionsListComponent,
     ApprovalPipe,
-    LastUpdatedOnPipe
+    LastUpdatedOnPipe,
+    ReviewPageComponent,
+    ReviewNavComponent,
+    ReviewInfoComponent,
+    CodePanelComponent
   ],
   imports: [
     AppRoutingModule,

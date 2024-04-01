@@ -1,6 +1,6 @@
 import { ChangeHistory } from "./review"
 
-export interface Revision {
+export interface APIRevision {
   id: string
   reviewId: string
   packageName: string
@@ -22,5 +22,17 @@ export interface AssignedReviewer {
   assignedBy: string;
   assingedTo: string;
   assingedOn: string;
+}
+
+export interface StructuredToken {
+  properties: { [key: string]: string; }
+  renderClasses: Set<string>
+}
+
+export interface APITreeNode {
+  properties: { [key: string]: string; }
+  topTokens: StructuredToken[];
+  bottomTokens: StructuredToken[];
+  children: APITreeNode[];
 }
   

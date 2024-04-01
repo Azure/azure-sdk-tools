@@ -4,7 +4,7 @@ import { Table, TableFilterEvent, TableLazyLoadEvent } from 'primeng/table';
 import { UserProfile } from 'src/app/_models/auth_service_models';
 import { Pagination } from 'src/app/_models/pagination';
 import { FirstReleaseApproval, Review } from 'src/app/_models/review';
-import { Revision } from 'src/app/_models/revision';
+import { APIRevision } from 'src/app/_models/revision';
 import { AuthService } from 'src/app/_services/auth/auth.service';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
@@ -20,7 +20,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   userProfile : UserProfile | undefined;
   reviewPageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Review/";
   profilePageWebAppUrl : string = this.configService.webAppUrl + "Assemblies/Profile/";
-  revisions : Revision[] = [];
+  revisions : APIRevision[] = [];
   totalNumberOfRevisions = 0;
   pagination: Pagination | undefined;
   insertIndex : number = 0;
@@ -41,8 +41,8 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   // Context Menu
   contextMenuItems! : MenuItem[];
-  selectedRevision!: Revision;
-  selectedRevisions!: Revision[];
+  selectedRevision!: APIRevision;
+  selectedRevisions!: APIRevision[];
   showSelectionActions : boolean = false;
   showDiffButton : boolean = false;
   showDeleteButton : boolean = false;
@@ -174,14 +174,14 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     }
   }
   
-  viewRevision(revision: Revision) {
+  viewRevision(revision: APIRevision) {
     if (!this.showDeletedAPIRevisions)
     {
       this.revisionsService.openAPIRevisionPage(this.review!.id, revision.id);
     }
   }
 
-  deleteRevisions(revisions: Revision []) {
+  deleteRevisions(revisions: APIRevision []) {
     this.revisionsService.deleteAPIRevisions(this.review!.id, revisions.map(r => r.id)).subscribe({
       next: (response: any) => {
         if (response) {
@@ -192,7 +192,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     });
   }
 
-  restoreRevisions(revisions: Revision []) {
+  restoreRevisions(revisions: APIRevision []) {
     this.revisionsService.restoreAPIRevisions(this.review!.id, revisions.map(r => r.id)).subscribe({
       next: (response: any) => {
         if (response) {
@@ -203,7 +203,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     });
   }
 
-  deleteRevision(revision: Revision) {
+  deleteRevision(revision: APIRevision) {
     this.revisionsService.deleteAPIRevisions(revision.reviewId, [revision.id]).subscribe({
       next: (response: any) => {
         if (response) {
@@ -336,7 +336,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
    * Callback to invoke on table selection.
    * @param event the Filter event
    */
-  onSelectionChange(value : Revision[] = []) {
+  onSelectionChange(value : APIRevision[] = []) {
     this.selectedRevisions = value;
     this.showSelectionActions = (value.length > 0) ? true : false;
     this.showDiffButton = (value.length == 2) ? true : false;

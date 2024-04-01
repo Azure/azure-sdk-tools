@@ -273,15 +273,11 @@ pre {
     color: var(--base-text-color);
 }
 
+/*#approval-list-group #approval-list-group-item {
+    list-style-type: none !important;
+    padding-left: 0;
+}*/
 
-.approval-list-group {
-    list-style-type: none !important; /* Remove default bullet points */
-}
-
-.approval-list-group-item::before {
-    content: "\f00c"; /* Unicode for the check icon in Bootstrap Icons */
-    font-family: "Bootstrap Icons";
-    display: inline-block;
-    width: 1em; /* Space out the icon and the list item text */
-    margin-right: 0.5em; /* Align the icon with the list item text */
+.bi bi-plus-circle-fill created {
+    color: darkorange;
 }

@@ -291,7 +291,7 @@ bool ApiViewProcessorImpl::CollectCppClassesVisitor::ShouldCollectNamedDecl(
   auto fileEntry = namedDecl->getASTContext().getSourceManager().getFileEntryForID(fileId);
   if (fileEntry)
   {
-    if (fileEntry->getName().starts_with_insensitive(
+    if (fileEntry->getName().startswith_insensitive(
             stringFromU8string(m_processorImpl->CurrentSourceRoot().u8string())))
     {
       // If the file containing the type is within the source root, we want to consider the type.

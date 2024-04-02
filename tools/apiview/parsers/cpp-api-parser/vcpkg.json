@@ -8,7 +8,11 @@
     {
       "name": "nlohmann-json"
     },
-    { "name": "gtest" },
-    { "name": "tclap" }
+    {
+      "name": "gtest"
+    },
+    {
+      "name": "tclap"
+    }
   ]
-  }
+}

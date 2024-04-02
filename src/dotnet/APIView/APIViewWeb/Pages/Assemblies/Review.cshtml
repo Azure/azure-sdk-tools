@@ -506,70 +506,84 @@
                 </div>
             </li>
             <li class="list-group-item">
-                <div class="approval-list-group" id="approval-list-group"
-                    <h6>Revision History</h6><br />
-                        @if (Model.ReviewContent.ActiveAPIRevision.ChangeHistory.Any())
+                <div>
+                    <h6>Revision History</h6>
+                        <ul class="approval-list-group" id="approval-list-group">
+                        @foreach (var change in Model.ReviewContent.ActiveAPIRevision.ChangeHistory)
                         {
-                            <ul class="approval-list-group" id="approval-list-group">
-                            @foreach (var change in Model.ReviewContent.ActiveAPIRevision.ChangeHistory)
-                            {
-                                <li class="approval-list-group-item">
-                                    <div class="d-flex align-items-start">
-                                        <div class="me-2">
-                                            @if (change.ChangeAction.ToString() == "Created")
-                                            {
-                                                <i class="bi bi-plus-circle-fill created"></i>
-                                            }
-                                            else if (change.ChangeAction.ToString() == "Approved")
-                                            {
-                                                <i class="bi bi-check-circle-fill approved"></i>
-                                            }
-                                            else if (change.ChangeAction.ToString() == "ApprovalReverted")
-                                            {
-                                                <i class="bi bi-arrow-left-circle-fill approvalreverted"></i>
-                                            }
-                                            else if (change.ChangeAction.ToString() == "Deleted")
-                                            {
-                                                <i class="bi bi-backspace-fill deleted"></i>
-                                            }
-                                            else if (change.ChangeAction.ToString() == "UnDeleted")
-                                            {
-                                                <i class="bi bi-plus-circle-fill undeleted"></i>
-                                            }
-                                        </div>
+                            <li class="list-group-item approval-list-group-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                        @if (change.ChangeAction.ToString() == "Created")
+                                        {
+                                            <i class="bi bi-plus-circle-fill created status-icon"></i>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "Approved")
+                                        {
+                                            <i class="bi bi-check-circle-fill approved status-icon"></i>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "ApprovalReverted")
+                                        {
+                                            <i class="bi bi-arrow-left-circle-fill approval-reverted status-icon"></i>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "Deleted")
+                                        {
+                                            <i class="bi bi-backspace-fill deleted status-icon"></i>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "UnDeleted")
+                                        {
+                                            <i class="bi bi-plus-circle-fill undeleted status-icon"></i>
+                                        }
+                                    </div>                                   
+                                    <div class="revision-events">
+                                        @if (change.ChangeAction.ToString() == "Created")
+                                        {
+                                            <span class="revision-info">Created</span><br />                                           
+                                            <span class="revision-info">@change.ChangedOn</span>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "Approved")
+                                        {
+                                            <span class="revision-info">Approved</span><br />                                                
+                                            <span class="revision-info">@change.ChangedBy</span><br />
+                                            <span class="revision-info">@change.ChangedOn</span>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "ApprovalReverted")
+                                        {
+                                            <span class="revision-info">Approval Reverted</span><br />
+                                            <span class="revision-info">@change.ChangedBy</span><br />
+                                            <span class="revision-info">@change.ChangedOn</span>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "Deleted")
+                                        {
+                                            <span class="revision-info">Deleted</span><br />
+                                            <span class="revision-info">@change.ChangedBy</span><br />
+                                            <span class="revision-info">change.ChangedOn</span>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "UnDeleted")
+                                        {
+                                            <span class="revision-info">UnDeleted</span><br />
+                                            <span >@change.ChangedBy</span><br />
+                                            <span class="revision-info">@change.ChangedOn</span>
+                                        }
+                                    </div>                                   
+                                </div>
+                                <div>
+                                    @if (!String.IsNullOrEmpty(change.Notes))
+                                    {
                                         <div>
-                                            @if (change.ChangeAction.ToString() == "Created")
-                                            {
-                                                <span>Revision Created</span><br />                                           
-                                                <span>@change.ChangedOn</span>
-                                            }
-                                            else if (change.ChangeAction.ToString() == "Approved")
-                                            {
-                                                <span>Approved</span><br />                                                
-                                                <span>@change.ChangedOn</span><br />
-                                                <span>@change.ChangedBy</span>
-                                            }
-                                            else if (change.ChangeAction.ToString() == "ApprovalReverted")
-                                            {
-                                                <span>Reverted by: @change.ChangedBy</span><br />
-                                                <span>On: @change.ChangedOn</span>
-                                            }
-                                            else if (change.ChangeAction.ToString() == "Deleted")
-                                            {
-                                                <span>Deleted by: @change.ChangedBy</span><br />
-                                                <span>On: @change.ChangedOn</span>
-                                            }
-                                            else if (change.ChangeAction.ToString() == "UnDeleted")
-                                            {
-                                                <span>UnDeleted by: @change.ChangedBy</span><br />
-                                                <span>On: @change.ChangedOn</span>
-                                            }
+                                            <p>Note: @change.Notes</p>
                                         </div>
-                                    </div>
-                                </li>
-                            }    
-                            </ul>
-                        } 
+                                    }
+                                    @*
+                                    else
+                                    {
+                                        <p>Note:</p>
+                                    }
+                                    *@
+                                </div>
+                            </li>
+                        }    
+                        </ul> 
                 </div>
             </li>
         </ul>

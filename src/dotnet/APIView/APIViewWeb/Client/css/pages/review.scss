@@ -67,12 +67,39 @@
 }
 
 
-/*#approval-list-group #approval-list-group-item {
-    list-style-type: none !important;
+
+.approval-list-group {
     padding-left: 0;
-}*/
+}
 
+.approval-list-group-item {
+    list-style-type: none;
+}
 
-.bi bi-plus-circle-fill created {
+.revision-info {
+    display: inline-block;
+}
+
+.created {
     color: darkorange;
+}
+
+.approved {
+    color: forestgreen;
+}
+
+.approval-reverted {
+    color: red;
+}
+
+.deleted {
+    color: black;
+}
+
+.undeleted {
+    color: yellow;
+}
+
+.status-icon {
+    font-size: 21px;
 }

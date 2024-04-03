@@ -32,7 +32,7 @@ stages:
         timeoutInMinutes: 300
         pool: 
           name: azsdk-pool-mms-win-2022-general
-          vmimage: 1espt-win-2022-cpp-rollback
+          vmImage: 1espt-win-2022-cpp-rollback
 
         steps:
           - pwsh: |

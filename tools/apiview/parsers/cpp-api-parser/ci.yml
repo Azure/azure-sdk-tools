@@ -30,9 +30,11 @@ stages:
     jobs:
       - job: 'Build'
         timeoutInMinutes: 300
-        pool: 
+        pool:
           name: azsdk-pool-mms-win-2022-general
-          vmImage: 1espt-win-2022-cpp-rollback
+          os: windows
+          demands:
+          - ImageOverride -equals 1espt-win-2022-cpp-rollback
 
         steps:
           - pwsh: |

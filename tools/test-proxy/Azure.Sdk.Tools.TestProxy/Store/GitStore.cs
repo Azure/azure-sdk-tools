@@ -127,10 +127,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     string assetMessage = "Automatic asset update from test-proxy.";
                     string configurationString = $"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\"";
 
-
                     GitHandler.Run($"branch {branchGuid}", config);
                     GitHandler.Run($"checkout {branchGuid}", config);
 
+                    /*
+                     * This code works by generating a patch file for SPECIFICALLY the eng folder from main.
+                     * Given that these changes appear as "new" changes, they just look like normal file additions. 
+                     * This totally eliminates the possibility of weird historical merge if main has code that we don't expect. 
+                     * Under azure-sdk-assets, we should never see this, but we have already seen it with specific integration
+                     * test tags under azure-sdk-assets-integration. By keeping it as "patch", the soft RESET on unsuccessful 
+                     * push action will properly put their repo into the expected "ready to push" state that a failed
+                     * merge would NOT.
+                     */
                     GitHandler.Run($"diff --output=changes.patch --no-color --binary --no-prefix HEAD main -- eng/", config);
                     GitHandler.Run($"apply --directory=eng/ changes.patch", config);
                     var pathLocation = Path.Combine(config.AssetsRepoLocation, "changes.patch");

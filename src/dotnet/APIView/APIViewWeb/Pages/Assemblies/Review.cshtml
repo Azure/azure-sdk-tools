@@ -3,6 +3,8 @@
 @using APIViewWeb.Helpers
 @using APIViewWeb.LeanModels;
 @using APIViewWeb.Models
+@using System
+@using System.Text.RegularExpressions
 @{
     Layout = "Shared/_Layout";
     ViewData["Title"] = Model.ReviewContent.Review.PackageName;
@@ -538,33 +540,26 @@
                                     <div class="revision-events">
                                         @if (change.ChangeAction.ToString() == "Created")
                                         {
-                                            <span class="revision-info">Created</span><br />                                           
-                                            <span class="revision-info">@change.ChangedOn</span>
+                                            <span class="revision-info">Created</span><br />
                                         }
                                         else if (change.ChangeAction.ToString() == "Approved")
                                         {
-                                            <span class="revision-info">Approved</span><br />                                                
-                                            <span class="revision-info">@change.ChangedBy</span><br />
-                                            <span class="revision-info">@change.ChangedOn</span>
+                                            <span class="revision-info">Approved</span><br />                                                                                           
                                         }
                                         else if (change.ChangeAction.ToString() == "ApprovalReverted")
                                         {
-                                            <span class="revision-info">Approval Reverted</span><br />
-                                            <span class="revision-info">@change.ChangedBy</span><br />
-                                            <span class="revision-info">@change.ChangedOn</span>
+                                            <span class="revision-info">Approval Reverted</span><br />                                            
                                         }
                                         else if (change.ChangeAction.ToString() == "Deleted")
                                         {
                                             <span class="revision-info">Deleted</span><br />
-                                            <span class="revision-info">@change.ChangedBy</span><br />
-                                            <span class="revision-info">change.ChangedOn</span>
                                         }
                                         else if (change.ChangeAction.ToString() == "UnDeleted")
                                         {
                                             <span class="revision-info">UnDeleted</span><br />
-                                            <span >@change.ChangedBy</span><br />
-                                            <span class="revision-info">@change.ChangedOn</span>
                                         }
+                                        <span class="revision-info">@change.ChangedBy</span><br />
+                                        <span data-bs-toggle="tooltip" title="@change.ChangedOn" date="@(change.ChangedOn.GetValueOrDefault())" class="revision-info"></span>
                                     </div>                                   
                                 </div>
                                 <div>
@@ -574,10 +569,12 @@
                                             <p>Note: @change.Notes</p>
                                         </div>
                                     }
+                                    @*
                                     else
                                     {
                                         <p>Note:</p>
                                     }
+                                    *@
                                 </div>
                             </li>
                         }    

@@ -48,6 +48,7 @@ clangSerialization
 clangTooling
 clangEdit
 clangAnalysis
+clangASTMatchers
 )
 
 

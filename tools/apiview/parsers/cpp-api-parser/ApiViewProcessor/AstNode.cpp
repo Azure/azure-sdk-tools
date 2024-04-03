@@ -57,7 +57,7 @@ struct AstTerminalNode : public AstNode
 };
 
 /** An AST Type represents a type in the C++ language.
- * 
+ *
  */
 class AstType {
 
@@ -984,6 +984,12 @@ public:
         m_deprecatedReplacement = deprecated->getReplacement();
         break;
       }
+      case attr::Kind::WarnUnusedResult: {
+        auto nodiscard = cast<WarnUnusedResultAttr>(attribute);
+        m_nodiscardMessage = nodiscard->getMessage();
+        break;
+      }
+
       case attr::Kind::CXX11NoReturn:
         break;
       default: {
@@ -1009,6 +1015,9 @@ public:
       case attr::Kind::Deprecated:
         DumpDeprecated(dumper, options);
         break;
+      case attr::Kind::WarnUnusedResult:
+        DumpNoDiscard(dumper, options);
+        break;
       case attr::Kind::CXX11NoReturn:
         dumper->InsertPunctuation('[');
         dumper->InsertPunctuation('[');
@@ -1020,6 +1029,37 @@ public:
         llvm::outs() << llvm::raw_ostream::Colors::RED
                      << "Unknown attribute kind: " << m_attributeKind
                      << llvm::raw_ostream::Colors::RESET;
+        break;
+    }
+  }
+
+  void DumpNoDiscard(AstDumper* dumper, DumpNodeOptions const& options) const
+  {
+    if (options.NeedsLeftAlign)
+    {
+      dumper->LeftAlign();
+    }
+    switch (m_syntax)
+    {
+      case Attr::Syntax::AS_C2x:
+      case Attr::Syntax::AS_CXX11:
+        dumper->InsertPunctuation('[');
+        dumper->InsertPunctuation('[');
+        dumper->InsertKeyword(m_attributeName);
+        if (!m_nodiscardMessage.empty())
+        {
+          dumper->InsertPunctuation('(');
+          dumper->InsertPunctuation('"');
+          dumper->InsertLiteral(m_nodiscardMessage);
+          dumper->InsertPunctuation('"');
+          dumper->InsertPunctuation(')');
+        }
+        dumper->InsertPunctuation(']');
+        dumper->InsertPunctuation(']');
+        break;
+
+      default:
+        llvm::outs() << "UNknown syntax for nodiscard\n";
         break;
     }
   }
@@ -1109,6 +1149,7 @@ private:
   std::string m_attributeName;
   std::string m_deprecatedMessage;
   std::string m_deprecatedReplacement;
+  std::string m_nodiscardMessage;
 };
 
 AstNamedNode::AstNamedNode(
@@ -1196,8 +1237,8 @@ void AstNamedNode::DumpDocumentation(AstDumper* dumper, DumpNodeOptions const& o
         innerOptions.NeedsTrailingNewline = false;
         m_nodeDocumentation->DumpNode(dumper, innerOptions);
       }
-      dumper->Newline(); // We need to insert a newline here to ensure that the comment is properly
-                         // closed.
+      dumper->Newline(); // We need to insert a newline here to ensure that the comment is
+                         // properly closed.
       dumper->LeftAlign();
       dumper->InsertComment(" */");
       if (options.NeedsTrailingNewline)
@@ -1215,6 +1256,7 @@ void AstNamedNode::DumpSourceComment(AstDumper* dumper, DumpNodeOptions const& o
 {
   if (options.NeedsSourceComment)
   {
+    dumper->AddSkipDiffRangeStart();
     if (options.NeedsLeadingNewline)
     {
       dumper->Newline();
@@ -1238,6 +1280,7 @@ void AstNamedNode::DumpSourceComment(AstDumper* dumper, DumpNodeOptions const& o
     {
       dumper->Newline();
     }
+    dumper->AddSkipDiffRangeEnd();
   }
 }
 
@@ -1960,14 +2003,14 @@ public:
       : AstFunction(method, database, parentNode), m_isVirtual(method->isVirtual()),
         m_isPure(method->isPure()), m_isConst(method->isConst())
   {
-    // We assume that this is an implicit override if there are overriden methods. If we later find
-    // an override attribute, we know it's not an implicit override.
+    // We assume that this is an implicit override if there are overriden methods. If we later
+    // find an override attribute, we know it's not an implicit override.
     //
     // Note that we don't do this for destructors, because they typically won't have an override
     // attribute.
     //
-    // Also note that if size_overriden_methods is non-zero, it means that the base class method is
-    // already virtual.
+    // Also note that if size_overriden_methods is non-zero, it means that the base class method
+    // is already virtual.
     //
     if (method->getKind() == Decl::Kind::CXXMethod)
     {
@@ -2001,7 +2044,9 @@ public:
           }
           break;
         case attr::Deprecated:
+        case attr::WarnUnusedResult:
           break;
+
         default:
           llvm::outs() << "Unknown Method Attribute: ";
           attr->printPretty(llvm::outs(), LangOptions());
@@ -2648,25 +2693,59 @@ class AstFriend : public AstNode {
   std::unique_ptr<AstNode> m_friendFunction;
 
 public:
+  static bool ShouldIncludeFriendDeclaration(FriendDecl const* friendDecl)
+  {
+    if (!friendDecl->getFriendType() && !friendDecl->getFriendDecl())
+    {
+      return false;
+    }
+
+    if (friendDecl->getFriendType())
+    {
+      auto friendTypeName
+          = QualType::getAsString(friendDecl->getFriendType()->getType().split(), LangOptions{});
+      // If the friend type is in the std namespace, we don't want to include it.
+      if (friendTypeName.find("std::") == 0)
+      {
+        return false;
+      }
+
+      // If the friend type is in the detail namespace, we don't want to include it.
+      if (friendTypeName.find("_detail::") != std::string::npos)
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
   AstFriend(
       FriendDecl const* friendDecl,
       AzureClassesDatabase* const azureClassesDatabase,
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> parentNode)
       : AstNode()
   {
-    if (friendDecl->getFriendType())
+    if (ShouldIncludeFriendDeclaration(friendDecl))
     {
-      m_friendType
-          = QualType::getAsString(friendDecl->getFriendType()->getType().split(), LangOptions{});
-    }
-    else if (friendDecl->getFriendDecl())
-    {
-      m_friendFunction
-          = AstNode::Create(friendDecl->getFriendDecl(), azureClassesDatabase, parentNode);
+      if (friendDecl->getFriendType())
+      {
+        m_friendType
+            = QualType::getAsString(friendDecl->getFriendType()->getType().split(), LangOptions{});
+      }
+      else if (friendDecl->getFriendDecl())
+      {
+        m_friendFunction
+            = AstNode::Create(friendDecl->getFriendDecl(), azureClassesDatabase, parentNode);
+      }
     }
   }
   void DumpNode(AstDumper* dumper, DumpNodeOptions const& dumpOptions) const override
   {
+    // If we're skipping this friend declaration, don't do anything.
+    if (m_friendFunction == nullptr && m_friendType.empty())
+    {
+      return;
+    }
     if (dumpOptions.NeedsLeftAlign)
     {
       dumper->LeftAlign();
@@ -2684,7 +2763,7 @@ public:
     }
     else
     {
-      dumper->InsertIdentifier(m_friendType);
+      dumper->InsertTypeName(m_friendType, "friend_" + m_friendType);
       if (dumpOptions.NeedsTrailingSemi)
       {
         dumper->InsertPunctuation(';');
@@ -2949,8 +3028,8 @@ AstClassLike::AstClassLike(
         if (child->getAccess() == AS_private) //&& !options.IncludePrivate)
         {
           shouldIncludeChild = false;
-          // If the method is a virtual method, then we need to include it because it's functionally
-          // a protected method.
+          // If the method is a virtual method, then we need to include it because it's
+          // functionally a protected method.
           if (child->getKind() == Decl::Kind::CXXMethod)
           {
             if (cast<CXXMethodDecl>(child)->isVirtual())

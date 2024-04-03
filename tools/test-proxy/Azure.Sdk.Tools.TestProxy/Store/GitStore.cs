@@ -124,17 +124,20 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     string branchGuid = Guid.NewGuid().ToString().Substring(0, 8);
                     string gitUserName = GetGitOwnerName(config);
                     string gitUserEmail = GetGitOwnerEmail(config);
+                    string commitMessage = "Automatic asset update from test-proxy.";
+
                     GitHandler.Run($"branch {branchGuid}", config);
                     GitHandler.Run($"checkout {branchGuid}", config);
 
-                    // fetch main and merge it
-                    GitHandler.Run($"fetch origin main", config);
-                    GitHandler.Run($"merge --no-edit origin/main", config);
-
                     // add all the recording changes and commit them
                     GitHandler.Run($"add -A .", config);
-                    GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit --no-gpg-sign -m \"Automatic asset update from test-proxy.\"", config);
-                    
+                    GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit --no-gpg-sign -m \"{commitMessage}\"", config);
+
+                    // fetch main and merge it, we must invoke this after the commit for code is complete, otherwise
+                    // we get an error about unmerged changes present when we attempt to merge
+                    GitHandler.Run($"fetch origin main", config);
+                    GitHandler.Run($"merge origin/main -m \"{commitMessage}\"", config);
+
                     // Get the first 10 digits of the combined SHA. The generatedTagName will be the
                     // config.TagPrefix_<SHA>
                     if (GitHandler.TryRun("rev-parse --short=10 HEAD", config.AssetsRepoLocation.ToString(), out CommandResult SHAResult))

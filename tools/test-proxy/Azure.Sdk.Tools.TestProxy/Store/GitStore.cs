@@ -126,9 +126,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     string gitUserEmail = GetGitOwnerEmail(config);
                     GitHandler.Run($"branch {branchGuid}", config);
                     GitHandler.Run($"checkout {branchGuid}", config);
+
+                    // fetch main and merge it
+                    GitHandler.Run($"fetch origin main", config);
+                    GitHandler.Run($"fetch merge --no-edit origin/main", config);
+
+                    // add all the recording changes and commit them
                     GitHandler.Run($"add -A .", config);
                     GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit --no-gpg-sign -m \"Automatic asset update from test-proxy.\"", config);
-                    // Get the first 10 digits of the commit SHA. The generatedTagName will be the
+                    
+                    // Get the first 10 digits of the combined SHA. The generatedTagName will be the
                     // config.TagPrefix_<SHA>
                     if (GitHandler.TryRun("rev-parse --short=10 HEAD", config.AssetsRepoLocation.ToString(), out CommandResult SHAResult))
                     {
@@ -157,6 +164,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     HideOrigin(config);
 
                     // the only executions that have a real chance of failing are
+                    // - merge main
                     // - ls-remote origin
                     // - push
                     // if we have a failure on either of these, we need to unstage our changes for an easy re-attempt at pushing.
@@ -547,11 +555,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (combinedPath.ToLower() == AssetsJsonFileName)
             {
-                return "./";
+                return "./ eng/";
             }
             else
             {
-                return combinedPath.Substring(0, combinedPath.Length - (AssetsJsonFileName.Length + 1));
+                return combinedPath.Substring(0, combinedPath.Length - (AssetsJsonFileName.Length + 1)) + " eng/";
             }
         }
         #endregion

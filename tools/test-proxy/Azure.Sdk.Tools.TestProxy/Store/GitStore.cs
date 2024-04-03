@@ -125,21 +125,23 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     string gitUserName = GetGitOwnerName(config);
                     string gitUserEmail = GetGitOwnerEmail(config);
                     string assetMessage = "Automatic asset update from test-proxy.";
-                    string mergeMessage = "Automated merge from main for this asset.";
                     string configurationString = $"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\"";
 
 
                     GitHandler.Run($"branch {branchGuid}", config);
                     GitHandler.Run($"checkout {branchGuid}", config);
 
+                    GitHandler.Run($"diff --output=changes.patch --no-color --binary --no-prefix HEAD main -- eng/", config);
+                    GitHandler.Run($"apply --directory=eng/ changes.patch", config);
+                    var pathLocation = Path.Combine(config.AssetsRepoLocation, "changes.patch");
+
+                    if (File.Exists(pathLocation)) {
+                        File.Delete(pathLocation);
+                    }
+
                     // add all the recording changes and commit them
                     GitHandler.Run($"add -A .", config);
-                    GitHandler.Run($"commit {configurationString} --no-gpg-sign -m \"{assetMessage}\"", config);
-
-                    // fetch main and merge it, we must invoke this after the commit for code is complete, otherwise
-                    // we get an error about unmerged changes present when we attempt to merge
-                    GitHandler.Run($"fetch origin main", config);
-                    GitHandler.Run($"merge origin/main {configurationString} -m \"{mergeMessage}\"", config);
+                    GitHandler.Run($"{configurationString} commit --no-gpg-sign -m \"{assetMessage}\"", config);
 
                     // Get the first 10 digits of the combined SHA. The generatedTagName will be the
                     // config.TagPrefix_<SHA>

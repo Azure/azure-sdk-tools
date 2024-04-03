@@ -4,7 +4,8 @@ from azure.search.documents.indexes.models import (
     SearchField,
     SearchFieldDataType,
     SimpleField,
-    HnswVectorSearchAlgorithmConfiguration
+    HnswAlgorithmConfiguration,
+    VectorSearch
 )
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents import SearchClient
@@ -71,11 +72,15 @@ class Embedding:
                 facetable=True,
             )
         ]
-        algorithm = HnswVectorSearchAlgorithmConfiguration(
+        algorithm_configuration = HnswAlgorithmConfiguration(
             name="searchAlgorithm",
+            kind="hnsw",
             parameters={
                 "metric": "cosine",
-            }
+                }
+        )
+        vector_search: VectorSearch = VectorSearch(
+            algorithms=[algorithm_configuration]
         )
         azure_search: AzureSearch = AzureSearch(
             azure_search_endpoint=AZURE_SEARCH_ENDPOINT,
@@ -83,7 +88,7 @@ class Embedding:
             index_name=AZURE_SEARCH_INDEX_NAME,
             embedding_function=embedding_function,
             fields=fields,
-            algorithm_configurations=[algorithm]
+            vector_search=vector_search
         )
         azure_search_client: SearchClient = SearchClient(
             endpoint=AZURE_SEARCH_ENDPOINT,

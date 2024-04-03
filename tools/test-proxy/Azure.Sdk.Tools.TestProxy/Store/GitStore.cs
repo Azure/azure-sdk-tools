@@ -129,7 +129,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
                     // fetch main and merge it
                     GitHandler.Run($"fetch origin main", config);
-                    GitHandler.Run($"fetch merge --no-edit origin/main", config);
+                    GitHandler.Run($"merge --no-edit origin/main", config);
 
                     // add all the recording changes and commit them
                     GitHandler.Run($"add -A .", config);

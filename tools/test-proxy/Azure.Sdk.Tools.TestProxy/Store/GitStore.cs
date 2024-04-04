@@ -139,15 +139,24 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                      * push action will properly put their repo into the expected "ready to push" state that a failed
                      * merge would NOT.
                      */
+                    var engPatchLocation = Path.Combine(config.AssetsRepoLocation, "changes.patch");
                     GitHandler.Run($"diff --output=changes.patch --no-color --binary --no-prefix HEAD main -- eng/", config);
-                    if (GitHandler.TryRun($"apply --check --directory=eng/ changes.patch", config.AssetsRepoLocation.ToString(), out var applyResult))
+                    if (GitHandler.TryRun($"apply --check --directory=eng/ changes.patch", config.AssetsRepoLocation.ToString(), out var engPatchResult))
                     {
                         GitHandler.Run($"apply --directory=eng/ changes.patch", config);
                     }
-                    var pathLocation = Path.Combine(config.AssetsRepoLocation, "changes.patch");
+                    if (File.Exists(engPatchLocation)) {
+                        File.Delete(engPatchLocation);
+                    }
 
-                    if (File.Exists(pathLocation)) {
-                        File.Delete(pathLocation);
+                    GitHandler.Run($"diff --output=changes.patch --no-color --binary --no-prefix HEAD main -- .gitignore", config);
+                    if (GitHandler.TryRun($"apply --check changes.patch", config.AssetsRepoLocation.ToString(), out var applyResult))
+                    {
+                        GitHandler.Run($"apply changes.patch", config);
+                    }
+                    if (File.Exists(engPatchLocation))
+                    {
+                        File.Delete(engPatchLocation);
                     }
 
                     // add all the recording changes and commit them

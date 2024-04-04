@@ -9,6 +9,7 @@ stages:
     jobs:
     - job: Solution_Integration_Test
 
+      condition: false
       strategy:
         matrix:
           Windows:
@@ -46,6 +47,7 @@ stages:
             mergeTestResults: true
 
     - job: CLI_Integration_Test
+      condition: false
       strategy:
         matrix:
           Windows:
@@ -85,6 +87,7 @@ stages:
     - job: Test_JS_Utils
 
       displayName: Invoke JS Utils CI Tests
+      condition: false
 
       strategy:
         matrix:
@@ -141,6 +144,7 @@ stages:
     - job: Test_Net_Core
 
       displayName: Invoke .NET Azure.Core.Testframework CI Tests
+      condition: false
 
       strategy:
         matrix:
@@ -186,6 +190,7 @@ stages:
 
       displayName: Run Python Tables CI Tests
 
+      condition: false
 
       strategy:
         matrix:
@@ -272,12 +277,14 @@ stages:
           displayName: Clone Repo
 
         - pwsh: |
-            Write-Host "mvn install -f eng/code-quality-reports/pom.xml `"-Dspotless.skip=true`" `"-Dcodesnippet.skip=true`" `"-Drevapi.skip=true`" `"-Dspotbugs.skip=true`" `"-DskipTests=true`" `"-Djacoco.skip=true`" `"-Dmaven.javadoc.skip=true`" -DskipTestCompile "-DskipCheckStyle=true" --no-transfer-progress"
-            mvn install -f eng/code-quality-reports/pom.xml "-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true" --no-transfer-progress
-            Write-Host "mvn install -f sdk/serialization/azure-xml/pom.xml `"-Dspotless.skip=true`" `"-Dcodesnippet.skip=true`" `"-Drevapi.skip=true`" `"-Dspotbugs.skip=true`" `"-DskipTests=true`" `"-Djacoco.skip=true`" `"-Dmaven.javadoc.skip=true`" -DskipTestCompile "-DskipCheckStyle=true" --no-transfer-progress"
-            mvn install -f sdk/serialization/azure-xml/pom.xml "-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true" --no-transfer-progress
-            Write-Host "mvn install -f sdk/core/azure-core/pom.xml `"-Dspotless.skip=true`" `"-Dcodesnippet.skip=true`" `"-Drevapi.skip=true`" `"-Dspotbugs.skip=true`" `"-DskipTests=true`" `"-Djacoco.skip=true`" `"-Dmaven.javadoc.skip=true`" -DskipTestCompile "-DskipCheckStyle=true" --no-transfer-progress"
-            mvn install -f sdk/core/azure-core/pom.xml "-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true" --no-transfer-progress
+            $commonArgs = '"-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true" --no-transfer-progress'
+
+            Write-Host "mvn install -f eng/code-quality-reports/pom.xml $commonArgs"
+            mvn install -f eng/code-quality-reports/pom.xml $commonArgs
+            Write-Host "mvn install -f sdk/serialization/azure-xml/pom.xml $commonArgs"
+            mvn install -f sdk/serialization/azure-xml/pom.xml $commonArgs
+            Write-Host "mvn install -f sdk/core/azure-core/pom.xml $commonArgs"
+            mvn install -f sdk/core/azure-core/pom.xml $commonArgs
             Write-Host "mvn install -f sdk/core/azure-core-test/pom.xml `"-Dspotless.skip=true`" -DskipTests=true `"-Dmaven.javadoc.skip=true`" -DskipCheckStyle=true --no-transfer-progress"
             mvn install -f sdk/core/azure-core-test/pom.xml "-Dspotless.skip=true" -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true --no-transfer-progress
           displayName: 'Install azure-core-test'

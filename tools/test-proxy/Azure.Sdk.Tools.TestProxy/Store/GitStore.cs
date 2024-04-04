@@ -180,7 +180,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     HideOrigin(config);
 
                     // the only executions that have a real chance of failing are
-                    // - merge main
                     // - ls-remote origin
                     // - push
                     // if we have a failure on either of these, we need to unstage our changes for an easy re-attempt at pushing.

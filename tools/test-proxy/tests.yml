@@ -9,7 +9,6 @@ stages:
     jobs:
     - job: Solution_Integration_Test
 
-      condition: false
       strategy:
         matrix:
           Windows:
@@ -47,7 +46,6 @@ stages:
             mergeTestResults: true
 
     - job: CLI_Integration_Test
-      condition: false
       strategy:
         matrix:
           Windows:
@@ -87,7 +85,6 @@ stages:
     - job: Test_JS_Utils
 
       displayName: Invoke JS Utils CI Tests
-      condition: false
 
       strategy:
         matrix:
@@ -144,7 +141,6 @@ stages:
     - job: Test_Net_Core
 
       displayName: Invoke .NET Azure.Core.Testframework CI Tests
-      condition: false
 
       strategy:
         matrix:
@@ -190,7 +186,6 @@ stages:
 
       displayName: Run Python Tables CI Tests
 
-      condition: false
 
       strategy:
         matrix:

@@ -438,10 +438,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Theory]
-        [InlineData("assets.json", false, "./")]
-        [InlineData("assets.json", true, "python/recordings")]
-        [InlineData("sdk/storage/assets.json", false, "sdk/storage")]
-        [InlineData("sdk/storage/assets.json", true, "python/recordings/sdk/storage")]
+        [InlineData("assets.json", false, "./ eng/")]
+        [InlineData("assets.json", true, "python/recordings eng/")]
+        [InlineData("sdk/storage/assets.json", false, "sdk/storage eng/")]
+        [InlineData("sdk/storage/assets.json", true, "python/recordings/sdk/storage eng/")]
         public async Task ResolveCheckPathsResolvesProperly(string assetsJsonPath, bool includePrefix, string expectedResult)
         {
             var expectedPaths = new string[]

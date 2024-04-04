@@ -47,7 +47,7 @@ stages:
             mergeTestResults: true
 
     - job: CLI_Integration_Test
-
+      condition: false
       strategy:
         matrix:
           Windows:

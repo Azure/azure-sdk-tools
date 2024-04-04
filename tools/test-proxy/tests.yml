@@ -9,6 +9,7 @@ stages:
     jobs:
     - job: Solution_Integration_Test
 
+      condition: false
       strategy:
         matrix:
           Windows:

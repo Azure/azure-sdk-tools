@@ -6,15 +6,6 @@ export enum FirstReleaseApproval {
   All
 }
 
-export enum ReviewPageWorkerMessageDirective {
-  BuildAPITree,
-  PassToTokenBuilder,
-  BuildTokens,
-  CreatePageNavigation,
-  UpdateCodeLines,
-  CreateLineOfTokens
-}
-
 export interface Review {
   id: string
   packageName: string

@@ -149,7 +149,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                         File.Delete(engPatchLocation);
                     }
 
-                    GitHandler.Run($"diff --output=changes.patch --no-color --binary --no-prefix HEAD main -- .gitignore", config);
+                    GitHandler.Run($"diff --output=changes.patch --no-color --binary HEAD main -- .gitignore", config);
                     if (GitHandler.TryRun($"apply --check changes.patch", config.AssetsRepoLocation.ToString(), out var applyResult))
                     {
                         GitHandler.Run($"apply changes.patch", config);
@@ -582,11 +582,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (combinedPath.ToLower() == AssetsJsonFileName)
             {
-                return "./ eng/";
+                return "./ eng/ .gitignore";
             }
             else
             {
-                return combinedPath.Substring(0, combinedPath.Length - (AssetsJsonFileName.Length + 1)) + " eng/";
+                return combinedPath.Substring(0, combinedPath.Length - (AssetsJsonFileName.Length + 1)) + " eng/ .gitignore";
             }
         }
         #endregion

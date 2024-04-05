@@ -16,3 +16,13 @@ steps:
       workingDirectory: $(System.DefaultWorkingDirectory)
       filePath: $(System.DefaultWorkingDirectory)/eng/scripts/test-wif.ps1
       # arguments:
+      # steps:
+
+  - task: AzureCLI@2
+    displayName: Login WIF
+    inputs:
+      azureSubscription: "bebroder-wif"
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        az group show -n automation

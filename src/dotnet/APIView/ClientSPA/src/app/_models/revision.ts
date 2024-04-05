@@ -1,5 +1,14 @@
 import { ChangeHistory } from "./review"
 
+export enum ReviewPageWorkerMessageDirective {
+  BuildAPITree,
+  PassToTokenBuilder,
+  BuildTokens,
+  CreatePageNavigation,
+  CreateCodeLineHusk,
+  CreateLineOfTokens
+}
+
 export interface APIRevision {
   id: string
   reviewId: string
@@ -35,4 +44,32 @@ export interface APITreeNode {
   bottomTokens: StructuredToken[];
   children: APITreeNode[];
 }
+
+export interface CodeHuskNode {
+  name: string
+  id: string
+  indent: number
+  position: string
+}
+
+export interface CreateCodeLineHuskMessage {
+  directive: ReviewPageWorkerMessageDirective
+  nodeData: CodeHuskNode
+}
+
+export interface CreateLinesOfTokensMessage {
+  directive: ReviewPageWorkerMessageDirective
+  tokenLine: StructuredToken[]
+  nodeId: string
+  lineId: string
+  position: string
+}
+
+export interface BuildTokensMessage {
+  directive: ReviewPageWorkerMessageDirective
+  apiTreeNode: APITreeNode
+  huskNodeId: string
+  position: string
+}
+  
   

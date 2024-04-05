@@ -1,0 +1,18 @@
+trigger: none
+pr: none
+
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+
+# pool:
+#   name: $(LINUXPOOL)
+#   image: $(LINUXVMIMAGE)
+
+steps:
+  - task: PowerShell@2
+    displayName: Test WIF
+    inputs:
+      pwsh: true
+      workingDirectory: $(System.DefaultWorkingDirectory)
+      filePath: $(System.DefaultWorkingDirectory)/eng/scripts/test-wif.ps1
+      # arguments:

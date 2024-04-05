@@ -116,6 +116,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             SetOrigin(config);
             var pendingChanges = DetectPendingChanges(config);
             var generatedTagName = config.TagPrefix;
+            bool codeCommitted = false;
 
             if (pendingChanges.Length > 0)
             {
@@ -162,6 +163,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     // add all the recording changes and commit them
                     GitHandler.Run($"add -A .", config);
                     GitHandler.Run($"{configurationString} commit --no-gpg-sign -m \"{assetMessage}\"", config);
+                    codeCommitted = true;
 
                     // Get the first 10 digits of the combined SHA. The generatedTagName will be the
                     // config.TagPrefix_<SHA>
@@ -191,11 +193,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     HideOrigin(config);
 
-                    // the only executions that have a real chance of failing are
-                    // - ls-remote origin
-                    // - push
-                    // if we have a failure on either of these, we need to unstage our changes for an easy re-attempt at pushing.
-                    GitHandler.TryRun("reset --soft HEAD^", config.AssetsRepoLocation.ToString(), out CommandResult ResetResult);
+                    // we should not reset soft if we haven't ever committed.
+                    if (codeCommitted)
+                    {
+                        // the only executions that have a real chance of failing are
+                        // - ls-remote origin
+                        // - push
+                        // if we have a failure on either of these, we need to unstage our changes for an easy re-attempt at pushing.
+                        GitHandler.TryRun("reset --soft HEAD^", config.AssetsRepoLocation.ToString(), out CommandResult ResetResult);
+                    }
 
                     throw GenerateInvokeException(e.Result);
                 }

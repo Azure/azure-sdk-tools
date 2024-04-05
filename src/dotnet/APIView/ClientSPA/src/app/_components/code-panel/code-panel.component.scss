@@ -1,0 +1,41 @@
+:host ::ng-deep {
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    width: 200%;
+    transform: translate3d(0, 0, 0);
+
+    .line-actions {
+        text-align: right;
+        white-space: nowrap;
+        padding-left: 10px;
+        padding-right: 10px;
+        border-right: 1px solid var(--border-color);
+        cursor: pointer;
+
+        span:not(:last-child) {
+            margin-right: 5px;
+        }
+    }
+
+    .line-actions:hover > .commentable {
+        opacity: 1;
+    }
+
+    .comment-button {
+        opacity: 0;
+        color: var(--primary-color);
+    }
+
+    .csComment {
+        color: var(--code-comment);
+    }
+
+    .csKeyword {
+        color: var(--keyword-color);
+    }
+
+    .csTypeName {
+        color: var(--class-color);
+    }
+}

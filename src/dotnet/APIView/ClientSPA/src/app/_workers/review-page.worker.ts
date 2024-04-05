@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { ReviewPageWorkerMessageDirective } from "../_models/review";
+import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from "../_models/revision";
 import { APITreeNode, StructuredToken } from "../_models/revision";
 
 addEventListener('message', ({ data }) => {
@@ -12,16 +12,20 @@ addEventListener('message', ({ data }) => {
       navTreeNodes.push(buildAPITree(apiTreeNode as APITreeNode, treeNodeId));
     });
 
-    const message =  {
+    const createNavigationMessage =  {
       directive: ReviewPageWorkerMessageDirective.CreatePageNavigation,
       navTree : navTreeNodes
     };
-    postMessage(message);
+    postMessage(createNavigationMessage);
   }
 
   if (data.directive === ReviewPageWorkerMessageDirective.BuildTokens) {
-    buildTokens(data.apiTreeNode.topTokens, data.apiTreeNodeId, "top");
-    buildTokens(data.apiTreeNode.bottomTokens, data.apiTreeNodeId, "bottom");
+    if (data.position === "top") {
+      buildTokens(data.apiTreeNode.topTokens, data.huskNodeId, data.position);
+    }
+    else {
+      buildTokens(data.apiTreeNode.bottomTokens, data.huskNodeId, data.position);
+    }
   }
 });
 
@@ -31,25 +35,25 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
   treeNodeId.push(idPart);
   const nodeId = treeNodeId.join("-");
 
-  let nodeData: any = {
+  let nodeData: CodeHuskNode = {
     name: apiTreeNode.properties["Name"],
     id: nodeId,
-    indent: indent
+    indent: indent,
+    position: "top"
   };
 
-  let updateCodeLineMessage =  {
-    directive: ReviewPageWorkerMessageDirective.UpdateCodeLines,
+  let createCodeLineHuskMessage : CreateCodeLineHuskMessage =  {
+    directive: ReviewPageWorkerMessageDirective.CreateCodeLineHusk,
     nodeData: nodeData,
   };
+  postMessage(createCodeLineHuskMessage);
 
-  postMessage(updateCodeLineMessage);
-
-  let buildTokensMessage =  { 
+  let buildTokensMessage : BuildTokensMessage =  { 
     directive: ReviewPageWorkerMessageDirective.PassToTokenBuilder,
     apiTreeNode: apiTreeNode,
-    apiTreeNodeId: nodeId
+    huskNodeId: nodeId,
+    position: "top"
   };
-
   postMessage(buildTokensMessage);
 
   let treeNode: any = {
@@ -61,26 +65,39 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
 
   let children : any[] = [];
   apiTreeNode.children.forEach(child => {
-    children.push(buildAPITree(child, treeNodeId, indent + 1));
+    const childTreeNodes = buildAPITree(child, treeNodeId, indent + 1);
+    if (child.children.length > 0) {
+      children.push(childTreeNodes);
+    }
   });
+
+  if (apiTreeNode.bottomTokens.length > 0) {
+    nodeData.position = "bottom";
+    createCodeLineHuskMessage.nodeData = nodeData;
+    postMessage(createCodeLineHuskMessage);
+
+    buildTokensMessage.position = "bottom";
+    postMessage(buildTokensMessage);
+  }
 
   treeNode.children = children;
   treeNodeId.pop();
   return treeNode;
 }
 
-function buildTokens(tokens: StructuredToken[], id: string, appendTo: string) {
+function buildTokens(tokens: StructuredToken[], id: string, position: string) {
   const tokenLine : StructuredToken[] = [];
   for (let token of tokens) {
     if (token.properties["Kind"] === "LineBreak") {
-      const message =  {
+      const createLinesOfTokensMessage : CreateLinesOfTokensMessage =  {
         directive: ReviewPageWorkerMessageDirective.CreateLineOfTokens,
         tokenLine : tokenLine,
         nodeId : id,
-        appendTo: appendTo
+        lineId : createHashFromTokenLine(tokenLine),
+        position : position   
       };
 
-      postMessage(message);
+      postMessage(createLinesOfTokensMessage);
 
       tokenLine.length = 0;
     }
@@ -90,14 +107,16 @@ function buildTokens(tokens: StructuredToken[], id: string, appendTo: string) {
   }
 
   if (tokenLine.length > 0) {
-    const message =  {
+
+    const createLinesOfTokensMessage : CreateLinesOfTokensMessage =  {
       directive: ReviewPageWorkerMessageDirective.CreateLineOfTokens,
       tokenLine : tokenLine,
       nodeId : id,
-      appendTo: appendTo
+      lineId : createHashFromTokenLine(tokenLine),
+      position : position
     };
 
-    postMessage(message);
+    postMessage(createLinesOfTokensMessage);
   }
 }
 
@@ -105,19 +124,29 @@ function getTokenNodeIdPart(apiTreeNode: APITreeNode) {
   const kind = apiTreeNode.properties["Kind"];
   const typeKind = apiTreeNode.properties["TypeKind"];
   const methodKind = apiTreeNode.properties["MethodKind"];
-  const name = apiTreeNode.properties["Id"];
+  const id = apiTreeNode.properties["Id"];
 
   let idPart = kind;
   if (typeKind) {
-    idPart = `${idPart}_${typeKind}`;
+    idPart = `${idPart}-${typeKind}`;
   }
 
   if (methodKind) {
-    idPart = `${idPart}_${methodKind}`;
+    idPart = `${idPart}-${methodKind}`;
   }
 
-  if (name) {
-    idPart = `${idPart}_${name}`;
+  if (id) {
+    idPart = `${idPart}-${id}`;
   }
   return idPart.toLocaleLowerCase();
+}
+
+function createHashFromTokenLine(tokenLines: StructuredToken[]) {
+  const arrayString = JSON.stringify(tokenLines);
+  const hash = arrayString.split('').reduce((prevHash, currVal) =>
+    ((prevHash << 5) - prevHash) + currVal.charCodeAt(0), 0);
+
+  const cssId = 'id' + hash.toString();
+
+  return cssId;
 }

@@ -1,1 +1,10 @@
-<div #codeLinesContainer></div>
+
+<div *ngIf="isLoading" class="spinner-border m-3" role="status">
+    <span class="visually-hidden">Loading...</span>
+</div>
+<div style="display: flex;">
+    <div style="flex: 0 0 auto;" #lineNumbersContainer>
+    </div>
+    <div stule="flex: 1" #codeLinesContainer>
+    </div>
+</div>

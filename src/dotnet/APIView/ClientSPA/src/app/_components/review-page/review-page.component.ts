@@ -2,8 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { BehaviorSubject } from 'rxjs';
-import { ReviewContent, ReviewPageWorkerMessageDirective } from 'src/app/_models/review';
-import { APIRevision } from 'src/app/_models/revision';
+import { ReviewContent,  } from 'src/app/_models/review';
+import { APIRevision, CodeHuskNode, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 
 @Component({
@@ -17,8 +17,8 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
   reviewPageNavigation : TreeNode[] = [];
   apiTreeBuilder: Worker | undefined = undefined;
   tokenBuilder: Worker | undefined = undefined;
-  apiTreeNodeData: BehaviorSubject<any> = new BehaviorSubject<any>({});
-  tokenLineData: BehaviorSubject<any> = new BehaviorSubject<any>({});
+  apiTreeNodeData: BehaviorSubject<CodeHuskNode | null> = new BehaviorSubject<CodeHuskNode | null>(null);
+  tokenLineData: BehaviorSubject<CreateLinesOfTokensMessage | null> = new BehaviorSubject<CreateLinesOfTokensMessage | null>(null);
 
   sideMenu: MenuItem[] | undefined;
 
@@ -70,8 +70,10 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
         this.tokenBuilder!.postMessage(data);
       }
 
-      if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodeLines) {
-        this.apiTreeNodeData.next(data.nodeData);
+      if (data.directive === ReviewPageWorkerMessageDirective.CreateCodeLineHusk) {
+        if (data.nodeData) {
+          this.apiTreeNodeData.next(data.nodeData);
+        }
       }
     };
 

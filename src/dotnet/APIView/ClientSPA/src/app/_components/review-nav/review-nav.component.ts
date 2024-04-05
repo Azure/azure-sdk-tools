@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { TreeNode } from 'primeng/api';
 
 @Component({
@@ -6,6 +6,14 @@ import { TreeNode } from 'primeng/api';
   templateUrl: './review-nav.component.html',
   styleUrls: ['./review-nav.component.scss']
 })
-export class ReviewNavComponent {
+export class ReviewNavComponent implements OnChanges {
   @Input() reviewPageNavigation: TreeNode[] = [];
+
+  isLoading: boolean = true;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes["reviewPageNavigation"].currentValue.length > 0) {
+      this.isLoading = false;
+    }
+  }
 }

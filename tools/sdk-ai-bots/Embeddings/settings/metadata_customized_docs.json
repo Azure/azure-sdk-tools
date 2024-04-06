@@ -47,10 +47,6 @@
     "title": "AutoRest Extensions for OpenAPI 2.0",
     "url": "https://github.com/Azure/autorest/blob/main/docs/extensions/readme.md"
   },
-  "avocado-readme.md": {
-    "title": "Avocado Readme",
-    "url": "https://github.com/Azure/avocado/blob/main/README.md"
-  },
   "control_plane_template.md": {
     "title": "Control plane pull request template",
     "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/.github/PULL_REQUEST_TEMPLATE/control_plane_template.md"
@@ -58,5 +54,17 @@
   "data_plane_template.md": {
     "title": "Data plane pull request template",
     "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/.github/PULL_REQUEST_TEMPLATE/data_plane_template.md"
+  },
+  "directory-structure.md": {
+    "title": "azure-rest-api-specs repos directory structure",
+    "url": "https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/directory-structure.md"
+  },
+  "pr-brch-deep.md": {
+    "title": "Breaking Changes process deep dive",
+    "url": "https://eng.ms/docs/products/azure-developer-experience/design/specs-pr-guides/pr-brch-deep"
+  },
+  "api-versions-and-branches.md": {
+    "title": "API versions and branches",
+    "url": "https://eng.ms/docs/products/azure-developer-experience/design/api-specs-pr/api-versions-and-branches"
   }
 }

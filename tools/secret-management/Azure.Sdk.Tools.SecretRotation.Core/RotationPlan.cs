@@ -16,6 +16,7 @@ public class RotationPlan
         SecretStore primaryStore,
         IList<SecretStore> secondaryStores,
         TimeSpan rotationThreshold,
+        TimeSpan? warningThreshold,
         TimeSpan rotationPeriod,
         TimeSpan? revokeAfterPeriod)
     {
@@ -25,6 +26,7 @@ public class RotationPlan
         OriginStore = originStore;
         PrimaryStore = primaryStore;
         RotationThreshold = rotationThreshold;
+        WarningThreshold = warningThreshold;
         RotationPeriod = rotationPeriod;
         RevokeAfterPeriod = revokeAfterPeriod;
         SecondaryStores = new ReadOnlyCollection<SecretStore>(secondaryStores);
@@ -39,6 +41,8 @@ public class RotationPlan
     public IReadOnlyCollection<SecretStore> SecondaryStores { get; }
 
     public TimeSpan RotationThreshold { get; }
+
+    public TimeSpan? WarningThreshold { get; }
 
     public TimeSpan RotationPeriod { get; }
 
@@ -102,21 +106,31 @@ public class RotationPlan
 
             SecretState[] allStates = secondaryStoreStates.Prepend(primaryStoreState).ToArray();
 
-            DateTimeOffset thresholdDate = this.timeProvider.GetCurrentDateTimeOffset().Add(RotationThreshold);
+            DateTimeOffset rotationThresholdDate = this.timeProvider.GetCurrentDateTimeOffset().Add(RotationThreshold);
 
-            DateTimeOffset? minExpirationDate = allStates.Where(x => x.ExpirationDate.HasValue).Min(x => x.ExpirationDate);
+            DateTimeOffset? warningThresholdDate = WarningThreshold.HasValue
+                ? this.timeProvider.GetCurrentDateTimeOffset().Add(WarningThreshold.Value)
+                : default;
 
-            bool anyExpired = minExpirationDate == null || minExpirationDate <= invocationTime;
+            DateTimeOffset? minExpirationDate = allStates
+                .Where(x => x.ExpirationDate.HasValue)
+                .Min(x => x.ExpirationDate);
 
-            bool anyThresholdExpired = minExpirationDate <= thresholdDate;
+            var state = RotationState.UpToDate;
+
+            if (minExpirationDate == null || minExpirationDate <= invocationTime)
+                state = RotationState.Expired;
+            else if (warningThresholdDate.HasValue && minExpirationDate <= warningThresholdDate)
+                state = RotationState.Warning;
+            else if (minExpirationDate <= rotationThresholdDate)
+                state = RotationState.Rotate;
 
             bool anyRequireRevocation = rotationArtifacts.Any(state => state.RevokeAfterDate <= invocationTime);
 
             var status = new RotationPlanStatus
             {
                 ExpirationDate = minExpirationDate,
-                Expired = anyExpired,
-                ThresholdExpired = anyThresholdExpired,
+                State = state,
                 RequiresRevocation = anyRequireRevocation,
                 PrimaryStoreState = primaryStoreState,
                 SecondaryStoreStates = secondaryStoreStates.ToArray()
@@ -128,6 +142,7 @@ public class RotationPlan
         {
             var status = new RotationPlanStatus
             {
+                State = RotationState.Error,
                 Exception = ex
             };
 

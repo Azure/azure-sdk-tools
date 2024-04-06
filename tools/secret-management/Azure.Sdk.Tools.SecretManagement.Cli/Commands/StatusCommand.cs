@@ -38,8 +38,7 @@ public class StatusCommand : RotationCommandBase
 
                 builder.AppendLine($"  Status:");
                 builder.AppendLine($"    ExpirationDate: {status.ExpirationDate}");
-                builder.AppendLine($"    Expired: {status.Expired}");
-                builder.AppendLine($"    ThresholdExpired: {status.ThresholdExpired}");
+                builder.AppendLine($"    State: {status.State}");
                 builder.AppendLine($"    RequiresRevocation: {status.RequiresRevocation}");
                 builder.AppendLine($"    Exception: {status.Exception?.Message}");
 
@@ -50,23 +49,21 @@ public class StatusCommand : RotationCommandBase
             statuses.Add((plan, status));
         }
 
-        var errored = statuses.Where(x => x.Status.Exception is not null).ToArray();
-        var expired = statuses.Except(errored).Where(x => x.Status is { Expired: true }).ToArray();
-        var expiring = statuses.Except(errored).Where(x => x.Status is { Expired: false, ThresholdExpired: true }).ToArray();
-        var upToDate = statuses.Except(errored).Where(x => x.Status is { Expired: false, ThresholdExpired: false }).ToArray();
+        var plansBuyState = statuses.GroupBy(x => x.Status.State)
+            .ToDictionary(x => x.Key, x => x.ToArray());
 
         var statusBuilder = new StringBuilder();
 
-        void AppendStatusSection(IList<(RotationPlan Plan, RotationPlanStatus Status)> sectionStatuses, string header)
+        void AppendStatusSection(RotationState state, string header)
         {
-            if (!sectionStatuses.Any())
+            if (!plansBuyState.TryGetValue(RotationState.Expired, out var matchingPlans))
             {
                 return;
             }
 
             statusBuilder.AppendLine();
             statusBuilder.AppendLine(header);
-            foreach ((RotationPlan plan, RotationPlanStatus status) in sectionStatuses)
+            foreach ((RotationPlan plan, RotationPlanStatus status) in matchingPlans)
             {
                 foreach (string line in GetPlanStatusLine(plan, status).Split("\n"))
                 {
@@ -76,14 +73,15 @@ public class StatusCommand : RotationCommandBase
             }
         }
 
-        AppendStatusSection(expired, "Expired:");
-        AppendStatusSection(expiring, "Expiring:");
-        AppendStatusSection(upToDate, "Up-to-date:");
-        AppendStatusSection(errored, "Error reading plan status:");
+        AppendStatusSection(RotationState.Expired, "Expired:");
+        AppendStatusSection(RotationState.Warning, "Expiring:");
+        AppendStatusSection(RotationState.Rotate, "Should Rotate:");
+        AppendStatusSection(RotationState.UpToDate, "Up-to-date:");
+        AppendStatusSection(RotationState.Error, "Error reading plan status:");
 
         logger.LogInformation(statusBuilder.ToString());
 
-        if (expired.Any())
+        if (statuses.Any(x => x.Status.State is RotationState.Expired or RotationState.Warning))
         {
             invocationContext.ExitCode = 1;
         }

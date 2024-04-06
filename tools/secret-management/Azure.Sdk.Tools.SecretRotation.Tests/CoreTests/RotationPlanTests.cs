@@ -19,34 +19,41 @@ public class RotationPlanTests
     ///     Then the result's Expired property should return True
     /// </summary>
     [Theory]
-    [TestCase(24, 0, 30, true, true)]
-    [TestCase(24, -1, 30, true, true)]
-    [TestCase(24, -1, 23, true, true)]
-    [TestCase(24, 30, 0, true, true)]
-    [TestCase(24, 30, -1, true, true)]
-    [TestCase(24, 23, -1, true, true)]
-    [TestCase(24, 24, 30, false, true)]
-    [TestCase(24, 23, 30, false, true)]
-    [TestCase(24, 30, 24, false, true)]
-    [TestCase(24, 30, 23, false, true)]
-    [TestCase(24, 25, 25, false, false)]
+    [TestCase(24, 22, 0, 30, RotationState.Expired)] // primary at expiration
+    [TestCase(24, 22, -1, 30, RotationState.Expired)] // primary past expiration
+    [TestCase(24, 22, -1, 23, RotationState.Expired)] // primary past expiration, secondary past rotation
+    [TestCase(24, 22, 30, 0, RotationState.Expired)] // secondary at expiration
+    [TestCase(24, 22, 30, -1, RotationState.Expired)] // secondary past expiration
+    [TestCase(24, 22, 23, -1, RotationState.Expired)] // secondary past expiration, primary past rotation
+    [TestCase(24, 22, 24, 30, RotationState.Rotate)] // primary at rotation
+    [TestCase(24, 22, 23, 30, RotationState.Rotate)] // primary between rotate and warning
+    [TestCase(24, 22, 30, 24, RotationState.Rotate)] // secondary at rotate
+    [TestCase(24, 22, 30, 23, RotationState.Rotate)] // secondary between rotate and warning
+    [TestCase(24, 22, 22, 30, RotationState.Warning)] // primary at warning
+    [TestCase(24, 22, 10, 30, RotationState.Warning)] // primary past warning
+    [TestCase(24, 22, 30, 22, RotationState.Warning)] // secondary at warning
+    [TestCase(24, 22, 30, 10, RotationState.Warning)] // secondary past warning
+    [TestCase(24, 22, 25, 25, RotationState.UpToDate)]
     public async Task GetStatusAsync_ExpectExpirationState(
-        int thresholdHours,
+        int rotateThresholdHours,
+        int warningThresholdHours,
         int hoursUntilPrimaryExpires,
         int hoursUntilSecondaryExpires,
-        bool expectExpired,
-        bool expectThresholdExpired)
+        RotationState expectedState)
     {
         DateTimeOffset staticTestTime = DateTimeOffset.Parse("2020-06-01T12:00:00Z");
-        TimeSpan threshold = TimeSpan.FromHours(thresholdHours);
+        TimeSpan rotateThreshold = TimeSpan.FromHours(rotateThresholdHours);
+        TimeSpan warningThreshold = TimeSpan.FromHours(warningThresholdHours);
 
-        var primaryState =
-            new SecretState { ExpirationDate = staticTestTime.AddHours(hoursUntilPrimaryExpires) }; // after threshold
-        var secondaryState =
-            new SecretState
-            {
-                ExpirationDate = staticTestTime.AddHours(hoursUntilSecondaryExpires)
-            }; // before threshold
+        var primaryState = new SecretState
+        {
+            ExpirationDate = staticTestTime.AddHours(hoursUntilPrimaryExpires)
+        }; 
+
+        var secondaryState = new SecretState
+        {
+            ExpirationDate = staticTestTime.AddHours(hoursUntilSecondaryExpires)
+        };
 
         var rotationPlan = new RotationPlan(
             Mock.Of<ILogger>(),
@@ -58,15 +65,15 @@ public class RotationPlanTests
             {
                 Mock.Of<SecretStore>(x => x.CanRead && x.GetCurrentStateAsync() == Task.FromResult(secondaryState))
             },
-            threshold,
+            rotateThreshold,
+            warningThreshold,
             default,
             default);
 
         // Act
         RotationPlanStatus status = await rotationPlan.GetStatusAsync();
 
-        Assert.AreEqual(expectExpired, status.Expired);
-        Assert.AreEqual(expectThresholdExpired, status.ThresholdExpired);
+        Assert.AreEqual(expectedState, status.State);
     }
 
     /// <summary>
@@ -100,6 +107,7 @@ public class RotationPlanTests
                 x => x.GetCurrentStateAsync() == Task.FromResult(new SecretState()) &&
                      x.GetRotationArtifactsAsync() == Task.FromResult(rotationArtifacts.AsEnumerable())),
             Array.Empty<SecretStore>(),
+            default,
             default,
             default,
             default);
@@ -157,9 +165,10 @@ public class RotationPlanTests
             originStore,
             primaryStore,
             new[] { secondaryStore },
-            TimeSpan.FromDays(1),
-            TimeSpan.FromDays(2),
-            default);
+            rotationThreshold: TimeSpan.FromDays(3),
+            warningThreshold: TimeSpan.FromDays(2),
+            rotationPeriod: TimeSpan.FromDays(2),
+            revokeAfterPeriod: default);
 
         // Act
         await rotationPlan.ExecuteAsync(true, false);

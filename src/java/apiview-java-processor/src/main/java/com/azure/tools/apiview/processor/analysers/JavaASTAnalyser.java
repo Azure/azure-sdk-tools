@@ -1,5 +1,6 @@
 package com.azure.tools.apiview.processor.analysers;
 
+import com.azure.tools.apiview.processor.analysers.models.AnnotationRule;
 import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
 import com.azure.tools.apiview.processor.analysers.util.TokenModifier;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
@@ -101,8 +102,24 @@ public class JavaASTAnalyser implements Analyser {
     public static final String MODULE_INFO_KEY = "module-info";
 
     private static final boolean SHOW_JAVADOC = true;
-    private static final Set<String> BLOCKED_ANNOTATIONS =
-        new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
+//    private static final Set<String> BLOCKED_ANNOTATIONS =
+//        new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
+
+    private static final Map<String, AnnotationRule> ANNOTATION_RULE_MAP;
+    static {
+        /*
+         For some annotations, we want to customise how they are displayed. Sometimes, we don't show them in any
+         circumstance. Other times, we want to show them but not their attributes. This map is used to define these
+         customisations. These rules override the default output that APIView will do, based on the location
+         annotation in the code.
+         */
+        ANNOTATION_RULE_MAP = new HashMap<>();
+        ANNOTATION_RULE_MAP.put("ServiceMethod", new AnnotationRule().setHidden(true));
+        ANNOTATION_RULE_MAP.put("SuppressWarnings", new AnnotationRule().setHidden(true));
+
+        // we always want @Metadata annotations to be fully expanded
+        ANNOTATION_RULE_MAP.put("Metadata", new AnnotationRule().setHidden(false).setHideAttributes(false));
+    }
 
     private static final Pattern SPLIT_NEWLINE = Pattern.compile(MiscUtils.LINEBREAK);
 
@@ -1033,12 +1050,27 @@ public class JavaASTAnalyser implements Analyser {
             final boolean showAnnotationProperties,
             final boolean addNewline) {
             Consumer<AnnotationExpr> consumer = annotation -> {
+                // Check the annotation rules map for any overrides
+                final String annotationName = annotation.getName().toString();
+                AnnotationRule annotationRule = ANNOTATION_RULE_MAP.get(annotationName);
+
+                boolean _showAnnotationProperties = showAnnotationProperties;
+                if (annotationRule != null) {
+                    // if there is a rule to hide the annotation...stop now!
+                    if (annotationRule.isHidden()) {
+                        return;
+                    }
+
+                    // we override the showAnnotationProperties flag if the annotation rule specifies it
+                    _showAnnotationProperties = !annotationRule.isHideAttributes();
+                }
+
                 if (addNewline) {
                     addToken(makeWhitespace());
                 }
 
-                addToken(new Token(TYPE_NAME, "@" + annotation.getName().toString(), makeId(annotation, nodeWithAnnotations)));
-                if (showAnnotationProperties) {
+                addToken(new Token(TYPE_NAME, "@" + annotationName, makeId(annotation, nodeWithAnnotations)));
+                if (_showAnnotationProperties) {
                     if (annotation instanceof NormalAnnotationExpr) {
                         addToken(new Token(PUNCTUATION, "("));
                         NodeList<MemberValuePair> pairs = ((NormalAnnotationExpr) annotation).getPairs();
@@ -1071,7 +1103,7 @@ public class JavaASTAnalyser implements Analyser {
                 .stream()
                 .filter(annotationExpr -> {
                     String id = annotationExpr.getName().getIdentifier();
-                    return !BLOCKED_ANNOTATIONS.contains(id) && !id.startsWith("Json");
+                    return !id.startsWith("Json");
                 })
                 .sorted(Comparator.comparing(a -> a.getName().getIdentifier())) // we sort the annotations alphabetically
                 .forEach(consumer);

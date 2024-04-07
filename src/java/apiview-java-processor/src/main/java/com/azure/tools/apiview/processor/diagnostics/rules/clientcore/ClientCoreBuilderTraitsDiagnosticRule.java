@@ -27,7 +27,7 @@ public class ClientCoreBuilderTraitsDiagnosticRule extends BuilderTraitsDiagnost
                 new TraitMethod("httpClient", "HttpClient"),
                 new TraitMethod("httpPipeline", "HttpPipeline"),
                 new TraitMethod("addHttpPipelinePolicy", "HttpPipelinePolicy"),
-                new TraitMethod("httpRetryOptions", "RetryOptions"),
+                new TraitMethod("httpRetryOptions", "HttpRetryOptions"),
                 new TraitMethod("httpLogOptions", "HttpLogOptions"),
                 new TraitMethod("httpRedirectOptions", "HttpRedirectOptions")
         ));

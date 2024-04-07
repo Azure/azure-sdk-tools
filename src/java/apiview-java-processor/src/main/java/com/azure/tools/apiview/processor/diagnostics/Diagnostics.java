@@ -124,7 +124,7 @@ public class Diagnostics {
             .add("httpClient", new ExactTypeNameCheckFunction("HttpClient"))
             .add("httpLogOptions", new ExactTypeNameCheckFunction("HttpLogOptions"))
             .add("httpPipeline", new ExactTypeNameCheckFunction("HttpPipeline"))
-            .add("httpRetryOptions", new ExactTypeNameCheckFunction("RetryOptions"))
+            .add("httpRetryOptions", new ExactTypeNameCheckFunction("HttpRetryOptions"))
             .add("httpRedirectOptions", new ExactTypeNameCheckFunction("HttpRedirectOptions"))
             .add("proxyOptions", new ExactTypeNameCheckFunction("ProxyOptions")));
     }

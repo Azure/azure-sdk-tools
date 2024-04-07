@@ -110,7 +110,6 @@ public class Diagnostics {
     }
 
     private void addClientCoreDiagnostics() {
-//        rules.add(new PackageNameDiagnosticRule(Pattern.compile("^" + GENERIC.getPackagePrefix() + "(\\.[a-z0-9]+)+$")));
         rules.add(new ClientCoreBuilderTraitsDiagnosticRule());
         rules.add(new MissingAnnotationsDiagnosticRule(GENERIC.getPackagePrefix()));
         rules.add(new ClientCoreFluentSetterReturnTypeDiagnosticRule());

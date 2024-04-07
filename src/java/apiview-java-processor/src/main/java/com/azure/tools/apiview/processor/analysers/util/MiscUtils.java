@@ -87,6 +87,19 @@ public final class MiscUtils {
         return allLines.toString();
     }
 
+    public static String upperCase(String s) {
+        return upperCase(s, 0);
+    }
+
+    /**
+     * Makes all characters in the string uppercase, other than the given index.
+     */
+    public static String upperCase(String s, int index) {
+        return s.substring(0, index).toLowerCase()
+                + Character.toUpperCase(s.charAt(index))
+                + s.substring(index + 1).toLowerCase();
+    }
+
     private MiscUtils() {
     }
 }

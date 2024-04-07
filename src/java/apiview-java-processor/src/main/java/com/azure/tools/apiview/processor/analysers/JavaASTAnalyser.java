@@ -1,5 +1,6 @@
 package com.azure.tools.apiview.processor.analysers;
 
+import com.azure.tools.apiview.processor.analysers.models.AnnotationRendererModel;
 import com.azure.tools.apiview.processor.analysers.models.AnnotationRule;
 import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
 import com.azure.tools.apiview.processor.analysers.util.TokenModifier;
@@ -52,19 +53,10 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -76,6 +68,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang.StringEscapeUtils;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
+import static com.azure.tools.apiview.processor.analysers.util.MiscUtils.*;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.INDENT;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.NEWLINE;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.NOTHING;
@@ -115,8 +108,8 @@ public class JavaASTAnalyser implements Analyser {
         ANNOTATION_RULE_MAP.put("ServiceMethod", new AnnotationRule().setHidden(true));
         ANNOTATION_RULE_MAP.put("SuppressWarnings", new AnnotationRule().setHidden(true));
 
-        // we always want @Metadata annotations to be fully expanded
-        ANNOTATION_RULE_MAP.put("Metadata", new AnnotationRule().setHidden(false).setHideAttributes(false));
+        // we always want @Metadata annotations to be fully expanded, but in a condensed form
+        ANNOTATION_RULE_MAP.put("Metadata", new AnnotationRule().setShowProperties(true).setCondensed(true));
     }
 
     private static final Pattern SPLIT_NEWLINE = Pattern.compile(MiscUtils.LINEBREAK);
@@ -1052,45 +1045,20 @@ public class JavaASTAnalyser implements Analyser {
                 final String annotationName = annotation.getName().toString();
                 AnnotationRule annotationRule = ANNOTATION_RULE_MAP.get(annotationName);
 
-                boolean _showAnnotationProperties = showAnnotationProperties;
-                if (annotationRule != null) {
-                    // if there is a rule to hide the annotation...stop now!
-                    if (annotationRule.isHidden()) {
-                        return;
-                    }
+                AnnotationRendererModel model = new AnnotationRendererModel(
+                        annotation, nodeWithAnnotations, annotationRule, showAnnotationProperties, addNewline);
 
-                    // we override the showAnnotationProperties flag if the annotation rule specifies it
-                    _showAnnotationProperties = !annotationRule.isHideAttributes();
+                if (model.isHidden()) {
+                    return;
                 }
 
-                if (addNewline) {
+                if (model.isAddNewline()) {
                     addToken(makeWhitespace());
                 }
 
-                addToken(new Token(TYPE_NAME, "@" + annotationName, makeId(annotation, nodeWithAnnotations)));
-                if (_showAnnotationProperties) {
-                    if (annotation instanceof NormalAnnotationExpr) {
-                        addToken(new Token(PUNCTUATION, "("));
-                        NodeList<MemberValuePair> pairs = ((NormalAnnotationExpr) annotation).getPairs();
-                        for (int i = 0; i < pairs.size(); i++) {
-                            MemberValuePair pair = pairs.get(i);
+                renderAnnotation(model).forEach(JavaASTAnalyser.this::addToken);
 
-                            addToken(new Token(TEXT, pair.getNameAsString()));
-                            addToken(new Token(PUNCTUATION, " = "));
-
-                            Expression valueExpr = pair.getValue();
-                            processAnnotationValueExpression(valueExpr);
-
-                            if (i < pairs.size() - 1) {
-                                addToken(new Token(PUNCTUATION, ", "));
-                            }
-                        }
-
-                        addToken(new Token(PUNCTUATION, ")"));
-                    }
-                }
-
-                if (addNewline) {
+                if (model.isAddNewline()) {
                     addNewLine();
                 } else {
                     addToken(new Token(WHITESPACE, " "));
@@ -1107,37 +1075,90 @@ public class JavaASTAnalyser implements Analyser {
                 .forEach(consumer);
         }
 
-        private void processAnnotationValueExpression(Expression valueExpr) {
+        private List<Token> renderAnnotation(AnnotationRendererModel m) {
+            final AnnotationExpr a = m.getAnnotation();
+            List<Token> tokens = new ArrayList<>();
+            tokens.add(new Token(TYPE_NAME, "@" + a.getNameAsString(), makeId(a, m.getAnnotationParent())));
+            if (m.isShowProperties()) {
+                if (a instanceof NormalAnnotationExpr) {
+                    tokens.add(new Token(PUNCTUATION, "("));
+                    NodeList<MemberValuePair> pairs = ((NormalAnnotationExpr) a).getPairs();
+                    for (int i = 0; i < pairs.size(); i++) {
+                        MemberValuePair pair = pairs.get(i);
+
+                        // If the pair is a boolean expression, and we are condensed, we only take the name.
+                        // If we are not a boolean expression, and we are condensed, we only take the value.
+                        // If we are not condensed, we take both.
+                        final Expression valueExpr = pair.getValue();
+                        if (m.isCondensed()) {
+                            if (valueExpr.isBooleanLiteralExpr()) {
+                                tokens.add(new Token(MEMBER_NAME, upperCase(pair.getNameAsString())));
+                            } else {
+                                processAnnotationValueExpression(valueExpr, m.isCondensed(), tokens);
+                            }
+                        } else {
+                            tokens.add(new Token(MEMBER_NAME, pair.getNameAsString()));
+                            tokens.add(new Token(PUNCTUATION, " = "));
+
+                            processAnnotationValueExpression(valueExpr, m.isCondensed(), tokens);
+                        }
+
+                        if (i < pairs.size() - 1) {
+                            tokens.add(new Token(PUNCTUATION, ", "));
+                        }
+                    }
+
+                    tokens.add(new Token(PUNCTUATION, ")"));
+                }
+            }
+            return tokens;
+        }
+
+        private void processAnnotationValueExpression(final Expression valueExpr, final boolean condensed, final List<Token> tokens) {
             if (valueExpr.isClassExpr()) {
                 // lookup to see if the type is known about, if so, make it a link, otherwise leave it as text
                 String typeName = valueExpr.getChildNodes().get(0).toString();
                 if (apiListing.getKnownTypes().containsKey(typeName)) {
                     final Token token = new Token(TYPE_NAME, typeName);
                     token.setNavigateToId(apiListing.getKnownTypes().get(typeName));
-                    addToken(token);
+                    tokens.add(token);
                     return;
                 }
             } else if (valueExpr.isArrayInitializerExpr()) {
-                addToken(new Token(PUNCTUATION, "{ "));
+                if (!condensed) {
+                    tokens.add(new Token(PUNCTUATION, "{ "));
+                }
                 for (int i = 0; i < valueExpr.getChildNodes().size(); i++) {
                     Node n = valueExpr.getChildNodes().get(i);
 
                     if (n instanceof Expression) {
-                        processAnnotationValueExpression((Expression) n);
+                        processAnnotationValueExpression((Expression) n, condensed, tokens);
                     } else {
-                        addToken(new Token(TEXT, valueExpr.toString()));
+                        tokens.add(new Token(TEXT, valueExpr.toString()));
                     }
 
                     if (i < valueExpr.getChildNodes().size() - 1) {
-                        addToken(new Token(PUNCTUATION, ", "));
+                        tokens.add(new Token(PUNCTUATION, ", "));
                     }
                 }
-                addToken(new Token(PUNCTUATION, " }"));
+                if (!condensed) {
+                    tokens.add(new Token(PUNCTUATION, " }"));
+                }
                 return;
             }
 
-            // if we fall through to here, just treat it as a string
-            addToken(new Token(TEXT, valueExpr.toString()));
+            // if we fall through to here, just treat it as a string.
+            // If we are in condensed mode, we strip off everything before the last period
+            String value = valueExpr.toString();
+            if (condensed) {
+                int lastPeriod = value.lastIndexOf('.');
+                if (lastPeriod != -1) {
+                    value = value.substring(lastPeriod + 1);
+                }
+                tokens.add(new Token(TEXT, upperCase(value)));
+            } else {
+                tokens.add(new Token(TEXT, value));
+            }
         }
 
         private void getModifiers(NodeList<Modifier> modifiers) {

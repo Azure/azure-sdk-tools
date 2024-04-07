@@ -1,30 +1,50 @@
 package com.azure.tools.apiview.processor.analysers.models;
 
-import java.util.Set;
+import java.util.Optional;
 
 public class AnnotationRule {
 
-    private boolean hideAnnotation = false;
+    private Optional<Boolean> hideAnnotation = Optional.empty();
 
-    private boolean hideAttributes = false;
+    private Optional<Boolean> showProperties = Optional.empty();
 
-    private boolean showOnNewline = false;
+    private Optional<Boolean> showOnNewline = Optional.empty();
+
+    private Optional<Boolean> condensed = Optional.empty();
 
     public AnnotationRule setHidden(boolean hidden) {
-        this.hideAnnotation = hidden;
+        this.hideAnnotation = Optional.of(hidden);
         return this;
     }
 
-    public boolean isHidden() {
+    public Optional<Boolean> isHidden() {
         return hideAnnotation;
     }
 
-    public AnnotationRule setHideAttributes(boolean hidden) {
-        this.hideAttributes = hidden;
+    public AnnotationRule setShowProperties(boolean showProperties) {
+        this.showProperties = Optional.of(showProperties);
         return this;
     }
 
-    public boolean isHideAttributes() {
-        return hideAttributes;
+    public Optional<Boolean> isShowProperties() {
+        return showProperties;
+    }
+
+    public AnnotationRule setShowOnNewline(boolean showOnNewline) {
+        this.showOnNewline = Optional.of(showOnNewline);
+        return this;
+    }
+
+    public Optional<Boolean> isShowOnNewline() {
+        return showOnNewline;
+    }
+
+    public AnnotationRule setCondensed(boolean condensed) {
+        this.condensed = Optional.of(condensed);
+        return this;
+    }
+
+    public Optional<Boolean> isCondensed() {
+        return condensed;
     }
 }

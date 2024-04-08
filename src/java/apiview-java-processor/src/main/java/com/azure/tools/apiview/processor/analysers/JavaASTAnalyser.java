@@ -9,8 +9,10 @@ import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.TypeKind;
 import com.azure.tools.apiview.processor.model.maven.Dependency;
 import com.azure.tools.apiview.processor.model.maven.Pom;
+import com.github.javaparser.JavaParser;
+import com.github.javaparser.ParseProblemException;
+import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParserConfiguration;
-import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
@@ -50,9 +52,11 @@ import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+import org.unbescape.html.HtmlEscape;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -67,14 +71,18 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang.StringEscapeUtils;
-
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptToFindJavadocComment;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getNodeFullyQualifiedName;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPublicOrProtected;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.INDENT;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.NEWLINE;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.NOTHING;
@@ -84,6 +92,8 @@ import static com.azure.tools.apiview.processor.model.TokenKind.DEPRECATED_RANGE
 import static com.azure.tools.apiview.processor.model.TokenKind.DEPRECATED_RANGE_START;
 import static com.azure.tools.apiview.processor.model.TokenKind.DOCUMENTATION_RANGE_END;
 import static com.azure.tools.apiview.processor.model.TokenKind.DOCUMENTATION_RANGE_START;
+import static com.azure.tools.apiview.processor.model.TokenKind.EXTERNAL_LINK_END;
+import static com.azure.tools.apiview.processor.model.TokenKind.EXTERNAL_LINK_START;
 import static com.azure.tools.apiview.processor.model.TokenKind.KEYWORD;
 import static com.azure.tools.apiview.processor.model.TokenKind.MEMBER_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.NEW_LINE;
@@ -93,8 +103,6 @@ import static com.azure.tools.apiview.processor.model.TokenKind.SKIP_DIFF_START;
 import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 import static com.azure.tools.apiview.processor.model.TokenKind.TYPE_NAME;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
-import static com.azure.tools.apiview.processor.model.TokenKind.EXTERNAL_LINK_START;
-import static com.azure.tools.apiview.processor.model.TokenKind.EXTERNAL_LINK_END;
 
 public class JavaASTAnalyser implements Analyser {
     public static final String MAVEN_KEY = "Maven";
@@ -104,7 +112,23 @@ public class JavaASTAnalyser implements Analyser {
     private static final Set<String> BLOCKED_ANNOTATIONS =
         new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
 
-    private static final Pattern SPLIT_NEWLINE = Pattern.compile(MiscUtils.LINEBREAK);
+    private static final DefaultPrinterConfiguration DEFAULT_PRINTER_CONFIGURATION
+        = new DefaultPrinterConfiguration();
+    private static final JavaParser PARSER;
+
+    static {
+        // Set up a minimal type solver that only looks at the classes used to run this sample.
+        CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
+        combinedTypeSolver.add(new ReflectionTypeSolver(false));
+
+        ParserConfiguration parserConfiguration = new ParserConfiguration()
+            .setStoreTokens(true)
+            .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
+            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
+
+        // Configure JavaParser to use type resolution
+        PARSER = new JavaParser(parserConfiguration);
+    }
 
     // This is the model that we build up as the AST of all files are analysed. The APIListing is then output as
     // JSON that can be understood by APIView.
@@ -196,19 +220,7 @@ public class JavaASTAnalyser implements Analyser {
             return Optional.of(new ScanClass(path, null));
         }
         try {
-            // Set up a minimal type solver that only looks at the classes used to run this sample.
-            CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
-            combinedTypeSolver.add(new ReflectionTypeSolver(false));
-
-            ParserConfiguration parserConfiguration = new ParserConfiguration()
-                .setStoreTokens(true)
-                .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
-                .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
-
-            // Configure JavaParser to use type resolution
-            StaticJavaParser.setConfiguration(parserConfiguration);
-
-            CompilationUnit compilationUnit = StaticJavaParser.parse(path);
+            CompilationUnit compilationUnit = parse(Files.newBufferedReader(path));
             new ScanForClassTypeVisitor().visit(compilationUnit, null);
 
             if (path.endsWith("package-info.java")) {
@@ -228,6 +240,16 @@ public class JavaASTAnalyser implements Analyser {
             e.printStackTrace();
             return Optional.empty();
         }
+    }
+
+    private static CompilationUnit parse(Reader reader) {
+        ParseResult<CompilationUnit> result = PARSER.parse(reader);
+
+        if (result.isSuccessful()) {
+            return result.getResult().get();
+        }
+
+        throw new ParseProblemException(result.getProblems());
     }
 
     private void processPackage(String packageName, List<ScanClass> scanClasses) {
@@ -1416,13 +1438,12 @@ public class JavaASTAnalyser implements Analyser {
         // The updated configuration from getDeclarationAsString removes the comment option and hence the toString
         // returns an empty string now. So, here we are using the toString overload that takes a PrintConfiguration
         // to get the old behavior.
-        String javaDocText = javadoc.toString(new DefaultPrinterConfiguration());
-        Arrays.stream(SPLIT_NEWLINE.split(javaDocText)).forEach(line -> {
+        String javaDocText = javadoc.toString(DEFAULT_PRINTER_CONFIGURATION);
+        splitNewLine(javaDocText).forEach(line -> {
             // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
-            final String wrappedString = MiscUtils.wrap(line, 120);
-            Arrays.stream(SPLIT_NEWLINE.split(wrappedString)).forEach(line2 -> {
+            MiscUtils.wrap(line, 120).forEach(line2 -> {
                 if (line2.contains("&")) {
-                    line2 = StringEscapeUtils.unescapeHtml(line2);
+                    line2 = HtmlEscape.unescapeHtml(line2);
                 }
                 addToken(makeWhitespace());
 
@@ -1463,11 +1484,10 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private Token makeWhitespace() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < indent; i++) {
-            sb.append(" ");
-        }
-        return new Token(WHITESPACE, sb.toString());
+        byte[] bytes = new byte[indent];
+        Arrays.fill(bytes, (byte) ' ');
+
+        return new Token(WHITESPACE, new String(bytes, StandardCharsets.UTF_8));
     }
 
     private void addComment(String comment) {
@@ -1506,5 +1526,13 @@ public class JavaASTAnalyser implements Analyser {
             case NOTHING:
                 break;
         }
+    }
+
+    private static Stream<String> splitNewLine(String input) {
+        if (input == null || input.isEmpty()) {
+            return Stream.empty();
+        }
+
+        return Stream.of(input.split("\n"));
     }
 }

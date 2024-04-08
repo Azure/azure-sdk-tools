@@ -1,13 +1,18 @@
 package com.azure.tools.apiview.processor;
 
-import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonWriter;
 import com.azure.tools.apiview.processor.analysers.Analyser;
+import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
-import com.azure.tools.apiview.processor.model.*;
+import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ApiViewProperties;
+import com.azure.tools.apiview.processor.model.Diagnostic;
+import com.azure.tools.apiview.processor.model.DiagnosticKind;
+import com.azure.tools.apiview.processor.model.LanguageVariant;
+import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.maven.Pom;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,17 +30,8 @@ import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
 import static com.azure.tools.apiview.processor.model.TokenKind.LINE_ID_MARKER;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_CREATORS;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_FIELDS;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_GETTERS;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_IS_GETTERS;
 
 public class Main {
-    private static final ObjectWriter WRITER = new ObjectMapper()
-        .disable(AUTO_DETECT_CREATORS, AUTO_DETECT_FIELDS, AUTO_DETECT_GETTERS, AUTO_DETECT_IS_GETTERS)
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-        .writerWithDefaultPrettyPrinter();
-
     // expected argument order:
     // [inputFiles] <outputDirectory>
     public static void main(String[] args) throws IOException {
@@ -57,18 +53,20 @@ public class Main {
         System.out.println("Running with following configuration:");
         System.out.printf("  Output directory: '%s'%n", outputDir);
 
-        for (final String jarFile : jarFilesArray) {
-            System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
+        for (int i = 0; i < 1; i++) {
+            for (final String jarFile : jarFilesArray) {
+                System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
 
-            final File file = new File(jarFile);
-            if (!file.exists()) {
-                System.out.printf("Cannot find file '%s'%n", file);
-                System.exit(-1);
+                final File file = new File(jarFile);
+                if (!file.exists()) {
+                    System.out.printf("Cannot find file '%s'%n", file);
+                    System.exit(-1);
+                }
+
+                final String jsonFileName = file.getName().substring(0, file.getName().length() - 4) + ".json";
+                final File outputFile = new File(outputDir, jsonFileName);
+                processFile(file, outputFile);
             }
-
-            final String jsonFileName = file.getName().substring(0, file.getName().length() - 4) + ".json";
-            final File outputFile = new File(outputDir, jsonFileName);
-            processFile(file, outputFile);
         }
     }
 
@@ -132,7 +130,9 @@ public class Main {
         }
 
         // Write out to the filesystem
-        WRITER.writeValue(outputFile, apiListing);
+        try (JsonWriter jsonWriter = JsonProviders.createWriter(Files.newBufferedWriter(outputFile.toPath()))) {
+            apiListing.toJson(jsonWriter);
+        }
     }
 
     private static void processJavaSourcesJar(File inputFile, APIListing apiListing) throws IOException {
@@ -174,11 +174,11 @@ public class Main {
                 // we eagerly load the apiview_properties.json file into an ApiViewProperties object, so that it can
                 // be used throughout the analysis process, as required
                 URL apiViewPropertiesFile = fs.getPath("/META-INF/apiview_properties.json").toUri().toURL();
-                final ObjectMapper objectMapper = new ObjectMapper();
-                ApiViewProperties properties = objectMapper.readValue(apiViewPropertiesFile, ApiViewProperties.class);
-                apiListing.setApiViewProperties(properties);
+                try (JsonReader reader = JsonProviders.createReader(apiViewPropertiesFile.openStream())) {
+                    apiListing.setApiViewProperties(ApiViewProperties.fromJson(reader));
+                }
                 System.out.println("  Found apiview_properties.json file in jar file");
-                System.out.println("    - Found " + properties.getCrossLanguageDefinitionIds().size() + " cross-language definition IDs");
+                System.out.println("    - Found " + apiListing.getApiViewProperties().getCrossLanguageDefinitionIds().size() + " cross-language definition IDs");
             } catch (Exception e) {
                 // this is fine, we just won't have any APIView properties to read in
                 System.out.println("  No apiview_properties.json file found in jar file - continuing...");

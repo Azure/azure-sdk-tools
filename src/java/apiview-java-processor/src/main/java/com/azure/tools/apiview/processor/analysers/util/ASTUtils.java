@@ -25,14 +25,12 @@ import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
  * Abstract syntax tree (AST) utility methods.
  */
 public final class ASTUtils {
-    private static final Pattern MAKE_ID = Pattern.compile("\"| ");
 
     /**
      * Attempts to get the package name for a compilation unit.
@@ -181,7 +179,7 @@ public final class ASTUtils {
      * @return Whether the access specifier is package-private or private.
      */
     public static boolean isPrivateOrPackagePrivate(AccessSpecifier accessSpecifier) {
-        return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.PACKAGE_PRIVATE);
+        return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.NONE);
     }
 
     public static String makeId(CompilationUnit cu) {
@@ -209,7 +207,34 @@ public final class ASTUtils {
     }
 
     public static String makeId(String fullPath) {
-        return MAKE_ID.matcher(fullPath).replaceAll("-");
+        if (fullPath == null || fullPath.isEmpty()) {
+            return fullPath;
+        }
+
+        StringBuilder sb = null;
+        int prevStart = 0;
+
+        int length = fullPath.length();
+        for (int i = 0; i < length; i++) {
+            char c = fullPath.charAt(i);
+            if (c == '"' || c == ' ') {
+                if (sb == null) {
+                    sb = new StringBuilder(length);
+                }
+
+                if (prevStart != i) {
+                    sb.append(fullPath, prevStart, i);
+                }
+                prevStart = i + 1;
+            }
+        }
+
+        if (sb == null) {
+            return fullPath;
+        }
+
+        sb.append(fullPath, prevStart, length);
+        return sb.toString();
     }
 
     public static String makeId(AnnotationExpr annotation, NodeWithAnnotations<?> nodeWithAnnotations) {

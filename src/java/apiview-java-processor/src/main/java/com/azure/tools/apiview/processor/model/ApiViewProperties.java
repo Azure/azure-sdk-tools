@@ -1,7 +1,11 @@
 package com.azure.tools.apiview.processor.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -11,11 +15,10 @@ import java.util.Optional;
  * Sometimes libraries carry additional metadata with them that can make the output from APIView more useful. This
  * class is used to store that metadata, as it is deserialized from the /META-INF/apiview_properties.json file.
  */
-public class ApiViewProperties {
+public class ApiViewProperties implements JsonSerializable<ApiViewProperties> {
 
     // This is a map of model names and methods to their TypeSpec definition IDs.
-    @JsonProperty("CrossLanguageDefinitionId")
-    private final Map<String, String> crossLanguageDefinitionIds = new HashMap<>();
+    private Map<String, String> crossLanguageDefinitionIds = new HashMap<>();
 
     /**
      * Cross Languages Definition ID is used to map from a model name or a method name to a TypeSpec definition ID. This
@@ -31,5 +34,31 @@ public class ApiViewProperties {
      */
     public Map<String, String> getCrossLanguageDefinitionIds() {
         return Collections.unmodifiableMap(crossLanguageDefinitionIds);
+    }
+
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        return jsonWriter.writeStartObject()
+            .writeMapField("CrossLanguageDefinitionId", crossLanguageDefinitionIds, JsonWriter::writeString)
+            .writeEndObject();
+    }
+
+    public static ApiViewProperties fromJson(JsonReader jsonReader) throws IOException {
+        return jsonReader.readObject(reader -> {
+            ApiViewProperties properties = new ApiViewProperties();
+
+            while (reader.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
+
+                if ("CrossLanguageDefinitionId".equals(fieldName)) {
+                    properties.crossLanguageDefinitionIds = reader.readMap(JsonReader::getString);
+                } else {
+                    reader.skipChildren();
+                }
+            }
+
+            return properties;
+        });
     }
 }

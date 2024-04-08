@@ -10,8 +10,7 @@ import com.azure.tools.apiview.processor.model.TypeKind;
 import com.azure.tools.apiview.processor.model.maven.Dependency;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.github.javaparser.JavaParser;
-import com.github.javaparser.ParseProblemException;
-import com.github.javaparser.ParseResult;
+import com.github.javaparser.JavaParserAdapter;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.TokenRange;
 import com.github.javaparser.ast.CompilationUnit;
@@ -48,14 +47,13 @@ import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
+import com.github.javaparser.printer.DefaultPrettyPrinter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import org.unbescape.html.HtmlEscape;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,9 +110,8 @@ public class JavaASTAnalyser implements Analyser {
     private static final Set<String> BLOCKED_ANNOTATIONS =
         new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
 
-    private static final DefaultPrinterConfiguration DEFAULT_PRINTER_CONFIGURATION
-        = new DefaultPrinterConfiguration();
-    private static final JavaParser PARSER;
+    private static final DefaultPrettyPrinter DEFAULT_PRINTER = new DefaultPrettyPrinter();
+    private static final JavaParserAdapter PARSER;
 
     static {
         // Set up a minimal type solver that only looks at the classes used to run this sample.
@@ -124,10 +121,11 @@ public class JavaASTAnalyser implements Analyser {
         ParserConfiguration parserConfiguration = new ParserConfiguration()
             .setStoreTokens(true)
             .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
-            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
+            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11)
+            .setDetectOriginalLineSeparator(false);
 
         // Configure JavaParser to use type resolution
-        PARSER = new JavaParser(parserConfiguration);
+        PARSER = JavaParserAdapter.of(new JavaParser(parserConfiguration));
     }
 
     // This is the model that we build up as the AST of all files are analysed. The APIListing is then output as
@@ -220,7 +218,8 @@ public class JavaASTAnalyser implements Analyser {
             return Optional.of(new ScanClass(path, null));
         }
         try {
-            CompilationUnit compilationUnit = parse(Files.newBufferedReader(path));
+            CompilationUnit compilationUnit = PARSER.parse(Files.newBufferedReader(path));
+            compilationUnit.setStorage(path, StandardCharsets.UTF_8);
             new ScanForClassTypeVisitor().visit(compilationUnit, null);
 
             if (path.endsWith("package-info.java")) {
@@ -240,16 +239,6 @@ public class JavaASTAnalyser implements Analyser {
             e.printStackTrace();
             return Optional.empty();
         }
-    }
-
-    private static CompilationUnit parse(Reader reader) {
-        ParseResult<CompilationUnit> result = PARSER.parse(reader);
-
-        if (result.isSuccessful()) {
-            return result.getResult().get();
-        }
-
-        throw new ParseProblemException(result.getProblems());
     }
 
     private void processPackage(String packageName, List<ScanClass> scanClasses) {
@@ -1438,7 +1427,7 @@ public class JavaASTAnalyser implements Analyser {
         // The updated configuration from getDeclarationAsString removes the comment option and hence the toString
         // returns an empty string now. So, here we are using the toString overload that takes a PrintConfiguration
         // to get the old behavior.
-        String javaDocText = javadoc.toString(DEFAULT_PRINTER_CONFIGURATION);
+        String javaDocText = DEFAULT_PRINTER.print(javadoc);
         splitNewLine(javaDocText).forEach(line -> {
             // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
             MiscUtils.wrap(line, 120).forEach(line2 -> {

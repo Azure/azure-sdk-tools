@@ -53,7 +53,7 @@ public class Main {
         System.out.println("Running with following configuration:");
         System.out.printf("  Output directory: '%s'%n", outputDir);
 
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 50; i++) {
             for (final String jarFile : jarFilesArray) {
                 System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
 

@@ -30,6 +30,7 @@ import { ImageModule } from 'primeng/image';
 import { LanguageNamesPipe } from './_pipes/language-names.pipe';
 import { AvatarModule } from 'primeng/avatar';
 import { ContextMenuModule } from 'primeng/contextmenu';
+import { EditorModule } from 'primeng/editor';
 import { FileUploadModule } from 'primeng/fileupload';
 import { TooltipModule } from 'primeng/tooltip';
 import { SplitterModule } from 'primeng/splitter';
@@ -45,6 +46,7 @@ import { ReviewPageComponent } from './_components/review-page/review-page.compo
 import { ReviewNavComponent } from './_components/review-nav/review-nav.component';
 import { ReviewInfoComponent } from './_components/shared/review-info/review-info.component';
 import { CodePanelComponent } from './_components/code-panel/code-panel.component';
+import { CommentComponent } from './_components/shared/comment/comment.component';
 
 export function initializeApp(configService: ConfigService) {
   return (): Observable<any> => {
@@ -66,7 +68,8 @@ export function initializeApp(configService: ConfigService) {
     ReviewPageComponent,
     ReviewNavComponent,
     ReviewInfoComponent,
-    CodePanelComponent
+    CodePanelComponent,
+    CommentComponent
   ],
   imports: [
     AppRoutingModule,
@@ -97,7 +100,8 @@ export function initializeApp(configService: ConfigService) {
     TimeagoModule.forRoot(),
     TooltipModule,
     TreeSelectModule,
-    VirtualScrollerModule
+    VirtualScrollerModule,
+    EditorModule
   ],
   providers: [
     ConfigService,

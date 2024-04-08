@@ -87,12 +87,15 @@ public final class MiscUtils {
         return allLines.toString();
     }
 
+    /**
+     * Makes all characters in the string lowercase, other than the first character.
+     */
     public static String upperCase(String s) {
         return upperCase(s, 0);
     }
 
     /**
-     * Makes all characters in the string uppercase, other than the given index.
+     * Makes all characters in the string lowercase, other than the given index.
      */
     public static String upperCase(String s, int index) {
         return s.substring(0, index).toLowerCase()

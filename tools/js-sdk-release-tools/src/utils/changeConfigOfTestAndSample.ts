@@ -32,9 +32,9 @@ export function changeConfigOfTestAndSample(packagePath: string, mode: ChangeMod
         packageJson = JSON.parse(packageJsonFile);
         apiExtractor = JSON.parse(apiExtractorFile);
         tsConfig['include'] = ["./src/**/*.ts"];
-        const isEasm = packageJson["type"] === "module";
+        const isEsm = packageJson["type"] === "module";
         // Only update other files for common JS packages
-        if(!isEasm) {
+        if(!isEsm) {
             packageJson['module'] = "./dist-esm/index.js";
             if (sdkType === SdkType.Hlc) {
                 apiExtractor['mainEntryPointFilePath'] = "./dist-esm/index.d.ts";

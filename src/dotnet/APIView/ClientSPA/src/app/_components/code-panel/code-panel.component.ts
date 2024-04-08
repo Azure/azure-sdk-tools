@@ -55,7 +55,7 @@ export class CodePanelComponent {
             token.renderClasses.forEach((c: string) => span.classList.add(c));
             span.textContent = token.properties["Value"];
             if (token.properties["Id"]){
-              span.id = token.properties["Id"];
+              span.setAttribute('data-token-id', token.properties["Id"]);
             }
             line.appendChild(span);
           }

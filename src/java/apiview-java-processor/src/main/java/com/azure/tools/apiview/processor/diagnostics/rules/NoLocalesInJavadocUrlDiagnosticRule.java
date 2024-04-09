@@ -52,7 +52,7 @@ public class NoLocalesInJavadocUrlDiagnosticRule implements DiagnosticRule {
 
     void checkJavaDoc(NodeWithJavadoc<?> n, String id, APIListing listing) {
         n.getJavadocComment().ifPresent(javadoc -> {
-            final String javadocString = javadoc.toString().toLowerCase();
+            final String javadocString = javadoc.asString().toLowerCase();
 
             Matcher matcher = LANGUAGE_PATTERN.matcher(javadocString);
             while (matcher.find()) {

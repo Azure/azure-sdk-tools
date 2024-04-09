@@ -53,18 +53,20 @@ public class Main {
         System.out.println("Running with following configuration:");
         System.out.printf("  Output directory: '%s'%n", outputDir);
 
-        for (final String jarFile : jarFilesArray) {
-            System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
+        for (int i = 0; i < 50; i++) {
+            for (final String jarFile : jarFilesArray) {
+                System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
 
-            final File file = new File(jarFile);
-            if (!file.exists()) {
-                System.out.printf("Cannot find file '%s'%n", file);
-                System.exit(-1);
+                final File file = new File(jarFile);
+                if (!file.exists()) {
+                    System.out.printf("Cannot find file '%s'%n", file);
+                    System.exit(-1);
+                }
+
+                final String jsonFileName = file.getName().substring(0, file.getName().length() - 4) + ".json";
+                final File outputFile = new File(outputDir, jsonFileName);
+                processFile(file, outputFile);
             }
-
-            final String jsonFileName = file.getName().substring(0, file.getName().length() - 4) + ".json";
-            final File outputFile = new File(outputDir, jsonFileName);
-            processFile(file, outputFile);
         }
     }
 

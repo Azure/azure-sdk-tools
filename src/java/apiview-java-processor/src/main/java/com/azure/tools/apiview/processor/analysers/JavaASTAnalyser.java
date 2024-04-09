@@ -47,10 +47,6 @@ import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
-import com.github.javaparser.printer.DefaultPrettyPrinter;
-import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 import org.unbescape.html.HtmlEscape;
 
 import java.io.IOException;
@@ -110,22 +106,18 @@ public class JavaASTAnalyser implements Analyser {
     private static final Set<String> BLOCKED_ANNOTATIONS =
         new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
 
-    private static final DefaultPrettyPrinter DEFAULT_PRINTER = new DefaultPrettyPrinter();
-    private static final JavaParserAdapter PARSER;
+    private static final JavaParserAdapter JAVA_8_PARSER;
+    private static final JavaParserAdapter JAVA_11_PARSER;
 
     static {
-        // Set up a minimal type solver that only looks at the classes used to run this sample.
-        CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
-        combinedTypeSolver.add(new ReflectionTypeSolver(false));
-
-        ParserConfiguration parserConfiguration = new ParserConfiguration()
-            .setStoreTokens(true)
-            .setSymbolResolver(new JavaSymbolSolver(combinedTypeSolver))
-            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11)
-            .setDetectOriginalLineSeparator(false);
-
         // Configure JavaParser to use type resolution
-        PARSER = JavaParserAdapter.of(new JavaParser(parserConfiguration));
+        JAVA_8_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
+            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_8)
+            .setDetectOriginalLineSeparator(false)));
+
+        JAVA_11_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
+            .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11)
+            .setDetectOriginalLineSeparator(false)));
     }
 
     // This is the model that we build up as the AST of all files are analysed. The APIListing is then output as
@@ -218,7 +210,10 @@ public class JavaASTAnalyser implements Analyser {
             return Optional.of(new ScanClass(path, null));
         }
         try {
-            CompilationUnit compilationUnit = PARSER.parse(Files.newBufferedReader(path));
+            CompilationUnit compilationUnit = path.endsWith("module-info.java")
+                ? JAVA_11_PARSER.parse(Files.newBufferedReader(path))
+                : JAVA_8_PARSER.parse(Files.newBufferedReader(path));
+
             compilationUnit.setStorage(path, StandardCharsets.UTF_8);
             new ScanForClassTypeVisitor().visit(compilationUnit, null);
 
@@ -518,7 +513,7 @@ public class JavaASTAnalyser implements Analyser {
                     addToken(new Token(KEYWORD, "to"), SPACE);
 
                     for (int i = 0; i < names.size(); i++) {
-                        addToken(new Token(TYPE_NAME, names.get(i).toString()));
+                        addToken(new Token(TYPE_NAME, names.get(i).asString()));
 
                         if (i < names.size() - 1) {
                             addToken(new Token(PUNCTUATION, ","), SPACE);
@@ -573,7 +568,7 @@ public class JavaASTAnalyser implements Analyser {
 
                     NodeList<Name> names = d.getWith();
                     for (int i = 0; i < names.size(); i++) {
-                        addToken(new Token(TYPE_NAME, names.get(i).toString()));
+                        addToken(new Token(TYPE_NAME, names.get(i).asString()));
 
                         if (i < names.size() - 1) {
                             addToken(new Token(PUNCTUATION, ","), SPACE);
@@ -829,7 +824,7 @@ public class JavaASTAnalyser implements Analyser {
                 final NodeList<Modifier> fieldModifiers = fieldDeclaration.getModifiers();
                 // public, protected, static, final
                 for (final Modifier fieldModifier : fieldModifiers) {
-                    addToken(new Token(KEYWORD, fieldModifier.toString()));
+                    addToken(new Token(KEYWORD, fieldModifier.getKeyword().asString()));
                 }
 
                 // field type and name
@@ -1047,7 +1042,7 @@ public class JavaASTAnalyser implements Analyser {
                     addToken(makeWhitespace());
                 }
 
-                addToken(new Token(TYPE_NAME, "@" + annotation.getName().toString(), makeId(annotation, nodeWithAnnotations)));
+                addToken(new Token(TYPE_NAME, "@" + annotation.getName().asString(), makeId(annotation, nodeWithAnnotations)));
                 if (showAnnotationProperties) {
                     if (annotation instanceof NormalAnnotationExpr) {
                         addToken(new Token(PUNCTUATION, "("));
@@ -1122,7 +1117,7 @@ public class JavaASTAnalyser implements Analyser {
 
         private void getModifiers(NodeList<Modifier> modifiers) {
             for (final Modifier modifier : modifiers) {
-                addToken(new Token(KEYWORD, modifier.toString()));
+                addToken(new Token(KEYWORD, modifier.getKeyword().asString()));
             }
         }
 
@@ -1210,7 +1205,7 @@ public class JavaASTAnalyser implements Analyser {
             addToken(new Token(KEYWORD, "throws"), SPACE);
 
             for (int i = 0, max = thrownExceptions.size(); i < max; i++) {
-                final String exceptionName = thrownExceptions.get(i).getElementType().toString();
+                final String exceptionName = thrownExceptions.get(i).getElementType().asString();
                 final Token throwsToken = new Token(TYPE_NAME, exceptionName);
 
                 // we look up the package name in case it is a custom type in the same library,
@@ -1249,7 +1244,7 @@ public class JavaASTAnalyser implements Analyser {
 
         private void getClassType(Type type) {
             if (type.isPrimitiveType()) {
-                addToken(new Token(TYPE_NAME, type.asPrimitiveType().toString()));
+                addToken(new Token(TYPE_NAME, type.asPrimitiveType().asString()));
             } else if (type.isVoidType()) {
                 addToken(new Token(TYPE_NAME, "void"));
             } else if (type.isReferenceType()) {
@@ -1376,7 +1371,7 @@ public class JavaASTAnalyser implements Analyser {
             compilationUnit.getImports().stream()
                 .map(ImportDeclaration::getName)
                 .forEach(name -> name.getQualifier().ifPresent(packageName ->
-                    apiListing.addPackageTypeMapping(packageName.toString(), name.getIdentifier())));
+                    apiListing.addPackageTypeMapping(packageName.asString(), name.getIdentifier())));
         }
     }
 
@@ -1427,8 +1422,7 @@ public class JavaASTAnalyser implements Analyser {
         // The updated configuration from getDeclarationAsString removes the comment option and hence the toString
         // returns an empty string now. So, here we are using the toString overload that takes a PrintConfiguration
         // to get the old behavior.
-        String javaDocText = DEFAULT_PRINTER.print(javadoc);
-        splitNewLine(javaDocText).forEach(line -> {
+        splitNewLine(javadoc.asString()).forEach(line -> {
             // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
             MiscUtils.wrap(line, 120).forEach(line2 -> {
                 if (line2.contains("&")) {

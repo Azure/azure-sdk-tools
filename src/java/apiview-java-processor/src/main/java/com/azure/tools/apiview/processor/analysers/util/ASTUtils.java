@@ -14,6 +14,7 @@ import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.Comment;
@@ -116,7 +117,9 @@ public final class ASTUtils {
      * @return All public API constructors contained in the type declaration.
      */
     public static Stream<ConstructorDeclaration> getPublicOrProtectedConstructors(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getConstructors().stream()
+        return typeDeclaration.getMembers().stream()
+            .filter(member -> member instanceof ConstructorDeclaration)
+            .map(member -> (ConstructorDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
@@ -137,7 +140,9 @@ public final class ASTUtils {
      * @return All public API methods contained in the type declaration.
      */
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getMethods().stream()
+        return typeDeclaration.getMembers().stream()
+            .filter(member -> member instanceof MethodDeclaration)
+            .map(member -> (MethodDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
@@ -158,7 +163,9 @@ public final class ASTUtils {
      * @return All public API fields contained in the type declaration.
      */
     public static Stream<FieldDeclaration> getPublicOrProtectedFields(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getFields().stream()
+        return typeDeclaration.getMembers().stream()
+            .filter(member -> member instanceof FieldDeclaration)
+            .map(member -> (FieldDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
@@ -225,6 +232,8 @@ public final class ASTUtils {
                 if (prevStart != i) {
                     sb.append(fullPath, prevStart, i);
                 }
+
+                sb.append('-');
                 prevStart = i + 1;
             }
         }

@@ -986,9 +986,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
-                    new RecordedTestSanitizer(),
+                    new RecordedTestSanitizer(), // handles authorize header
                     new BodyKeySanitizer("$..access_token"),
-                    new BodyKeySanitizer("$..refresh_token")
+                    new BodyKeySanitizer("$..refresh_token"),
+                    new HeaderRegexSanitizer("x-ms-encryption-key", "Sanitized")
+
                 };
 
                 Transforms = new List<ResponseTransform>

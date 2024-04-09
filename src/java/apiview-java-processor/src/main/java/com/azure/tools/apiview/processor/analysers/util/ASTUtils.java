@@ -181,7 +181,7 @@ public final class ASTUtils {
      * @return Whether the access specifier is package-private or private.
      */
     public static boolean isPrivateOrPackagePrivate(AccessSpecifier accessSpecifier) {
-        return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.PACKAGE_PRIVATE);
+        return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.NONE);
     }
 
     public static String makeId(CompilationUnit cu) {

@@ -1,4 +1,4 @@
-package com.azure.tools.apiview.processor.diagnostics.rules;
+package com.azure.tools.apiview.processor.diagnostics.rules.general;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
@@ -21,16 +21,14 @@ public class UpperCaseEnumValuesDiagnosticRule implements DiagnosticRule {
         getClasses(cu)
             .filter(TypeDeclaration::isEnumDeclaration)
             .map(TypeDeclaration::asEnumDeclaration)
-            .forEach(enumDeclaration -> {
-                enumDeclaration.getEntries().forEach(enumConstantDeclaration -> {
-                    String name = enumConstantDeclaration.getName().asString();
-                    if (!name.equals(name.toUpperCase())) {
-                        listing.addDiagnostic(new Diagnostic(
-                            WARNING,
-                            makeId(enumConstantDeclaration),
-                            "All enum constants should be upper case, using underscores as necessary between words."));
-                    }
-                });
-            });
+            .forEach(enumDeclaration -> enumDeclaration.getEntries().forEach(enumConstantDeclaration -> {
+                String name = enumConstantDeclaration.getName().asString();
+                if (!name.equals(name.toUpperCase())) {
+                    listing.addDiagnostic(new Diagnostic(
+                        WARNING,
+                        makeId(enumConstantDeclaration),
+                        "All enum constants should be upper case, using underscores as necessary between words."));
+                }
+            }));
     }
 }

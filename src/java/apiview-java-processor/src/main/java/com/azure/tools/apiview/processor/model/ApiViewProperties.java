@@ -13,6 +13,9 @@ import java.util.Optional;
  */
 public class ApiViewProperties {
 
+    @JsonProperty("flavor")
+    private Flavor flavor;
+
     // This is a map of model names and methods to their TypeSpec definition IDs.
     @JsonProperty("CrossLanguageDefinitionId")
     private final Map<String, String> crossLanguageDefinitionIds = new HashMap<>();
@@ -31,5 +34,9 @@ public class ApiViewProperties {
      */
     public Map<String, String> getCrossLanguageDefinitionIds() {
         return Collections.unmodifiableMap(crossLanguageDefinitionIds);
+    }
+
+    public Flavor getFlavor() {
+        return flavor;
     }
 }

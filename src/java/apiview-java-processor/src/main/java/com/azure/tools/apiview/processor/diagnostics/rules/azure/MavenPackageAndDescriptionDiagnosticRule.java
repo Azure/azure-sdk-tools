@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.azure.tools.apiview.processor.diagnostics.rules;
+package com.azure.tools.apiview.processor.diagnostics.rules.azure;
 
 import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;

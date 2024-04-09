@@ -8,6 +8,7 @@ import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -164,8 +165,6 @@ public class Main {
         }
         System.out.println("  Using '" + apiListing.getLanguageVariant() + "' for the language variant");
 
-        final Analyser analyser = new JavaASTAnalyser(apiListing);
-
         // Read all files within the jar file so that we can create a list of files to analyse
         final List<Path> allFiles = new ArrayList<>();
         try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
@@ -179,6 +178,9 @@ public class Main {
                 apiListing.setApiViewProperties(properties);
                 System.out.println("  Found apiview_properties.json file in jar file");
                 System.out.println("    - Found " + properties.getCrossLanguageDefinitionIds().size() + " cross-language definition IDs");
+            } catch (InvalidFormatException e) {
+                System.out.println("  ERROR: Unable to parse apiview_properties.json file in jar file");
+                e.printStackTrace();
             } catch (Exception e) {
                 // this is fine, we just won't have any APIView properties to read in
                 System.out.println("  No apiview_properties.json file found in jar file - continuing...");
@@ -194,6 +196,7 @@ public class Main {
             });
 
             // Do the analysis while the filesystem is still represented in memory
+            final Analyser analyser = new JavaASTAnalyser(apiListing);
             analyser.analyse(allFiles);
         } catch (Exception e) {
             e.printStackTrace();

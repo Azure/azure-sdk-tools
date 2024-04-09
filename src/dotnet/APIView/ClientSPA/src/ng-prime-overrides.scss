@@ -407,3 +407,7 @@ p-contextmenusub {
 .p-progressbar {
     background: var(--base-fg-color);
 }
+
+.p-button.p-button-icon-only.p-button-rounded {
+    border-radius: 50%;
+}

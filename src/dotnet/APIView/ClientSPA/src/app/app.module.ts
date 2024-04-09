@@ -18,6 +18,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { PaginatorModule } from 'primeng/paginator';
 import { TabMenuModule } from 'primeng/tabmenu';
 import { ToolbarModule } from 'primeng/toolbar';
+import { CardModule } from 'primeng/card';
 import { DropdownModule } from 'primeng/dropdown';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { TreeSelectModule } from 'primeng/treeselect';
@@ -33,6 +34,7 @@ import { ContextMenuModule } from 'primeng/contextmenu';
 import { EditorModule } from 'primeng/editor';
 import { FileUploadModule } from 'primeng/fileupload';
 import { TooltipModule } from 'primeng/tooltip';
+import { PanelModule } from 'primeng/panel';
 import { SplitterModule } from 'primeng/splitter';
 import { SplitButtonModule } from 'primeng/splitbutton';
 import { TimelineModule } from 'primeng/timeline';
@@ -104,7 +106,7 @@ export function initializeApp(configService: ConfigService) {
     TreeSelectModule,
     VirtualScrollerModule,
     EditorModule,
-
+    PanelModule
   ],
   providers: [
     ConfigService,

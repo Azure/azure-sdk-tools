@@ -35,6 +35,7 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { TooltipModule } from 'primeng/tooltip';
 import { SplitterModule } from 'primeng/splitter';
 import { SplitButtonModule } from 'primeng/splitbutton';
+import { TimelineModule } from 'primeng/timeline';
 import { VirtualScrollerModule } from 'primeng/virtualscroller';
 import { RevisionsListComponent } from './_components/revisions-list/revisions-list.component';
 import { ApprovalPipe } from './_pipes/approval.pipe';
@@ -46,7 +47,7 @@ import { ReviewPageComponent } from './_components/review-page/review-page.compo
 import { ReviewNavComponent } from './_components/review-nav/review-nav.component';
 import { ReviewInfoComponent } from './_components/shared/review-info/review-info.component';
 import { CodePanelComponent } from './_components/code-panel/code-panel.component';
-import { CommentComponent } from './_components/shared/comment/comment.component';
+import { CommentThreadComponent } from './_components/shared/comment-thread/comment-thread.component';
 
 export function initializeApp(configService: ConfigService) {
   return (): Observable<any> => {
@@ -69,7 +70,7 @@ export function initializeApp(configService: ConfigService) {
     ReviewNavComponent,
     ReviewInfoComponent,
     CodePanelComponent,
-    CommentComponent
+    CommentThreadComponent
   ],
   imports: [
     AppRoutingModule,
@@ -98,10 +99,12 @@ export function initializeApp(configService: ConfigService) {
     SplitButtonModule,
     TableModule,
     TimeagoModule.forRoot(),
+    TimelineModule,
     TooltipModule,
     TreeSelectModule,
     VirtualScrollerModule,
-    EditorModule
+    EditorModule,
+
   ],
   providers: [
     ConfigService,

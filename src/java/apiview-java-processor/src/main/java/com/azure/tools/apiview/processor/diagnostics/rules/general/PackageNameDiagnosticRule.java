@@ -1,4 +1,4 @@
-package com.azure.tools.apiview.processor.diagnostics.rules;
+package com.azure.tools.apiview.processor.diagnostics.rules.general;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
@@ -11,7 +11,11 @@ import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.*;
 
 public class PackageNameDiagnosticRule implements DiagnosticRule {
-    final static Pattern regex = Pattern.compile("^com.azure(\\.[a-z0-9]+)+$");
+    private final Pattern regex;
+
+    public PackageNameDiagnosticRule(Pattern regex) {
+        this.regex = regex;
+    }
 
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
@@ -22,7 +26,7 @@ public class PackageNameDiagnosticRule implements DiagnosticRule {
                     listing.addDiagnostic(new Diagnostic(
                         ERROR,
                         typeId,
-                        "Package name must start with 'com.azure.<group>.', and it must be lower-case, with no underscores or hyphens."));
+                        "Package name match the following regex: " + regex.pattern()));
                 }
             });
         });

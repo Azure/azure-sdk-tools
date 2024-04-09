@@ -75,6 +75,22 @@ public final class MiscUtils {
         }
     }
 
+    /**
+     * Makes all characters in the string lowercase, other than the first character.
+     */
+    public static String upperCase(String s) {
+        return upperCase(s, 0);
+    }
+
+    /**
+     * Makes all characters in the string lowercase, other than the given index.
+     */
+    public static String upperCase(String s, int index) {
+        return s.substring(0, index).toLowerCase()
+                + Character.toUpperCase(s.charAt(index))
+                + s.substring(index + 1).toLowerCase();
+    }
+
     private MiscUtils() {
     }
 }

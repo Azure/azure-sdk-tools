@@ -116,6 +116,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             SetOrigin(config);
             var pendingChanges = DetectPendingChanges(config);
             var generatedTagName = config.TagPrefix;
+            bool codeCommitted = false;
 
             if (pendingChanges.Length > 0)
             {
@@ -124,11 +125,47 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     string branchGuid = Guid.NewGuid().ToString().Substring(0, 8);
                     string gitUserName = GetGitOwnerName(config);
                     string gitUserEmail = GetGitOwnerEmail(config);
+                    string assetMessage = "Automatic asset update from test-proxy.";
+                    string configurationString = $"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\"";
+
                     GitHandler.Run($"branch {branchGuid}", config);
                     GitHandler.Run($"checkout {branchGuid}", config);
+
+                    /*
+                     * This code works by generating a patch file for SPECIFICALLY the eng folder from main.
+                     * Given that these changes appear as "new" changes, they just look like normal file additions. 
+                     * This totally eliminates the possibility of weird historical merge if main has code that we don't expect. 
+                     * Under azure-sdk-assets, we should never see this, but we have already seen it with specific integration
+                     * test tags under azure-sdk-assets-integration. By keeping it as "patch", the soft RESET on unsuccessful 
+                     * push action will properly put their repo into the expected "ready to push" state that a failed
+                     * merge would NOT.
+                     */
+                    var engPatchLocation = Path.Combine(config.AssetsRepoLocation, "changes.patch");
+                    GitHandler.Run($"diff --output=changes.patch --no-color --binary --no-prefix HEAD main -- eng/", config);
+                    if (GitHandler.TryRun($"apply --check --directory=eng/ changes.patch", config.AssetsRepoLocation.ToString(), out var engPatchResult))
+                    {
+                        GitHandler.Run($"apply --directory=eng/ changes.patch", config);
+                    }
+                    if (File.Exists(engPatchLocation)) {
+                        File.Delete(engPatchLocation);
+                    }
+
+                    GitHandler.Run($"diff --output=changes.patch --no-color --binary HEAD main -- .gitignore", config);
+                    if (GitHandler.TryRun($"apply --check changes.patch", config.AssetsRepoLocation.ToString(), out var applyResult))
+                    {
+                        GitHandler.Run($"apply changes.patch", config);
+                    }
+                    if (File.Exists(engPatchLocation))
+                    {
+                        File.Delete(engPatchLocation);
+                    }
+
+                    // add all the recording changes and commit them
                     GitHandler.Run($"add -A .", config);
-                    GitHandler.Run($"-c user.name=\"{gitUserName}\" -c user.email=\"{gitUserEmail}\" commit --no-gpg-sign -m \"Automatic asset update from test-proxy.\"", config);
-                    // Get the first 10 digits of the commit SHA. The generatedTagName will be the
+                    GitHandler.Run($"{configurationString} commit --no-gpg-sign -m \"{assetMessage}\"", config);
+                    codeCommitted = true;
+
+                    // Get the first 10 digits of the combined SHA. The generatedTagName will be the
                     // config.TagPrefix_<SHA>
                     if (GitHandler.TryRun("rev-parse --short=10 HEAD", config.AssetsRepoLocation.ToString(), out CommandResult SHAResult))
                     {
@@ -156,11 +193,15 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     HideOrigin(config);
 
-                    // the only executions that have a real chance of failing are
-                    // - ls-remote origin
-                    // - push
-                    // if we have a failure on either of these, we need to unstage our changes for an easy re-attempt at pushing.
-                    GitHandler.TryRun("reset --soft HEAD^", config.AssetsRepoLocation.ToString(), out CommandResult ResetResult);
+                    // we should not reset soft if we haven't ever committed.
+                    if (codeCommitted)
+                    {
+                        // the only executions that have a real chance of failing are
+                        // - ls-remote origin
+                        // - push
+                        // if we have a failure on either of these, we need to unstage our changes for an easy re-attempt at pushing.
+                        GitHandler.TryRun("reset --soft HEAD^", config.AssetsRepoLocation.ToString(), out CommandResult ResetResult);
+                    }
 
                     throw GenerateInvokeException(e.Result);
                 }
@@ -547,11 +588,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (combinedPath.ToLower() == AssetsJsonFileName)
             {
-                return "./";
+                return "./ eng/ .gitignore";
             }
             else
             {
-                return combinedPath.Substring(0, combinedPath.Length - (AssetsJsonFileName.Length + 1));
+                return combinedPath.Substring(0, combinedPath.Length - (AssetsJsonFileName.Length + 1)) + " eng/ .gitignore";
             }
         }
         #endregion

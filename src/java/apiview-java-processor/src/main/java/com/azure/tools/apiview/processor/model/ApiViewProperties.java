@@ -16,6 +16,7 @@ import java.util.Optional;
  * class is used to store that metadata, as it is deserialized from the /META-INF/apiview_properties.json file.
  */
 public class ApiViewProperties implements JsonSerializable<ApiViewProperties> {
+    private Flavor flavor;
 
     // This is a map of model names and methods to their TypeSpec definition IDs.
     private Map<String, String> crossLanguageDefinitionIds = new HashMap<>();
@@ -36,11 +37,20 @@ public class ApiViewProperties implements JsonSerializable<ApiViewProperties> {
         return Collections.unmodifiableMap(crossLanguageDefinitionIds);
     }
 
+    public Flavor getFlavor() {
+        return flavor;
+    }
+
     @Override
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
-        return jsonWriter.writeStartObject()
-            .writeMapField("CrossLanguageDefinitionId", crossLanguageDefinitionIds, JsonWriter::writeString)
-            .writeEndObject();
+        jsonWriter.writeStartObject()
+            .writeMapField("CrossLanguageDefinitionId", crossLanguageDefinitionIds, JsonWriter::writeString);
+
+        if (flavor != null) {
+            jsonWriter.writeStringField("flavor", flavor.getSerializationValue());
+        }
+
+        return jsonWriter.writeEndObject();
     }
 
     public static ApiViewProperties fromJson(JsonReader jsonReader) throws IOException {
@@ -53,6 +63,8 @@ public class ApiViewProperties implements JsonSerializable<ApiViewProperties> {
 
                 if ("CrossLanguageDefinitionId".equals(fieldName)) {
                     properties.crossLanguageDefinitionIds = reader.readMap(JsonReader::getString);
+                } else if ("flavor".equals(fieldName)) {
+                    properties.flavor = Flavor.fromSerializationValue(reader.getString());
                 } else {
                     reader.skipChildren();
                 }

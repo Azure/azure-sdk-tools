@@ -66,12 +66,12 @@
     font-size: medium;
 }
 
-.approval-list-group {
-    padding-left: 0;
-}
-
 .approval-list-group-item {
     list-style-type: none;
+}
+
+.revision-title {
+    margin-bottom: 0;
 }
 
 .revision-info {
@@ -101,5 +101,5 @@
 }
 
 .status-icon {
-    font-size: 18px;
+    font-size: 0.8em;
 }

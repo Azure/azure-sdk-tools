@@ -509,13 +509,38 @@
             </li>
             <li class="list-group-item">
                 <div>
-                    <h6>Revision History</h6>
-                        <ul class="approval-list-group" id="approval-list-group">
+                    <p class="revision-title">Revision History:</p>
                         @foreach (var change in Model.ReviewContent.ActiveAPIRevision.ChangeHistory)
                         {
                             <li class="list-group-item approval-list-group-item">
                                 <div class="d-flex align-items-start">
                                     <div class="me-3">
+                                    @{
+                                        var changeAction = change.ChangeAction.ToString();
+                                        string iconClass = "";
+                                        switch (changeAction)
+                                        {
+                                            case "Created":
+                                                iconClass = "bi bi-plus-circle-fill created status-icon";
+                                                break;
+                                            case "Approved":
+                                                iconClass = "bi bi-check-circle-fill approved status-icon";
+                                                break;
+                                            case "ApprovalReverted":
+                                                iconClass = "bi bi-arrow-left-circle-fill approval-reverted status-icon";
+                                                break;
+                                            case "Deleted":
+                                                iconClass = "bi bi-backspace-fill deleted status-icon";
+                                                break;
+                                            case "UnDeleted":
+                                                iconClass = "bi bi-plus-circle-fill undeleted status-icon";
+                                                break;
+                                        }
+                                    }
+
+                            @* <div class="me-3">
+                                <i class="@iconClass"></i>
+                            </div>
                                         @if (change.ChangeAction.ToString() == "Created")
                                         {
                                             <i class="bi bi-plus-circle-fill created status-icon"></i>
@@ -536,61 +561,39 @@
                                         {
                                             <i class="bi bi-plus-circle-fill undeleted status-icon"></i>
                                         }
-                                    </div>                                   
+                                    </div> *@                                   
                                     <div class="revision-events">
                                         @if (change.ChangeAction.ToString() == "Created")
                                         {
-                                            <span class="revision-info">Created</span><br />
+                                            <span class="revision-info">Created:</span>
                                         }
                                         else if (change.ChangeAction.ToString() == "Approved")
                                         {
-                                            <span class="revision-info">Approved</span><br />                                                                                           
+                                            <span class="revision-info">Approved:</span>                                                                                           
                                         }
                                         else if (change.ChangeAction.ToString() == "ApprovalReverted")
                                         {
-                                            <span class="revision-info">Approval Reverted</span><br />                                            
+                                            <span class="revision-info">Approval Reverted:</span>                                         
                                         }
                                         else if (change.ChangeAction.ToString() == "Deleted")
                                         {
-                                            <span class="revision-info">Deleted</span><br />
+                                            <span class="revision-info">Deleted:</span>
                                         }
                                         else if (change.ChangeAction.ToString() == "UnDeleted")
                                         {
-                                            <span class="revision-info">UnDeleted</span><br />
+                                            <span class="revision-info">UnDeleted:</span>
                                         }
                                         <span class="revision-info">@change.ChangedBy</span><br />
                                         <span data-bs-toggle="tooltip" title="@change.ChangedOn" date="@(change.ChangedOn.GetValueOrDefault())" class="revision-info"></span>
                                     </div>                                   
                                 </div>
-                                <div>
-                                    @if (!String.IsNullOrEmpty(change.Notes))
-                                    {
-                                        <div>
-                                            <p>Note: @change.Notes</p>
-                                        </div>
-                                    }
-                                    @*
-                                    else
-                                    {
-                                        <p>Note:</p>
-                                    }
-                                    *@
-                                </div>
                             </li>
                         }    
-                        </ul> 
                 </div>
             </li>
         </ul>
     </div>
 </div>
-
-
-
-
-
-
-
 <div class="container-fluid mx-0 px-0 sub-header-content">
     <div class="row px-3 py-2 border-bottom" id="review-info-bar">
         <partial name="Shared/_ReviewBadge" model="(Model.ReviewContent.Review, Model.ReviewContent.ActiveAPIRevision, Model.ReviewContent.DiffAPIRevision, Model.UserPreference)" />

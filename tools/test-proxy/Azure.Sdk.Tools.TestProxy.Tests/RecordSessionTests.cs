@@ -1,8 +1,9 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -34,6 +35,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("true", "application/json")]
         [InlineData("false", "application/json")]
         [InlineData("{ \"json\": \"value\" }", "unknown")]
+        [InlineData("{ \"a-key\": \"akeywith+inthemiddle\" }", "unknown")]
         [InlineData("multi\rline", "application/xml")]
         [InlineData("multi\r\nline", "application/xml")]
         [InlineData("multi\n\rline\n", "application/xml")]
@@ -90,6 +92,48 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(bodyBytes, deserializedRecord.Request.Body);
             Assert.Equal(bodyBytes, deserializedRecord.Response.Body);
+        }
+
+        [Fact]
+        public void CheckEscaping()
+        {
+            var shouldNotExist = new string[] {
+                "\\u0026", "\\u002B"
+            };
+
+            var body = "{\"tags\":{\"hidden-link:/app-insights-resource-id\":\"/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/Lwm_Rg/providers/microsoft.insights/components/FunctionApp1Lwm\"}"
+            + ",\"properties\":{\"WEBSITE_CONTENTAZUREFILECONNECTIONSTRING\":\"DefaultEndpointsProtocol=https;AccountName=anaccountname!;AccountKey=aBase64&String+Fake==;EndpointSuffix=core.windows.net\"}}";
+
+            var session = new RecordSession();
+            session.Entries.Add(new RecordEntry()
+            {
+                Response = new RequestOrResponse()
+                {
+                    Headers = new SortedDictionary<string, string[]>()
+                    {
+                        {
+                            "Content-Type", new string[] { "application/json" }
+                        }
+                    },
+                    Body = Encoding.UTF8.GetBytes(body),
+                }
+            });
+
+            var tmpDir = Path.GetTempPath();
+            var recordSession = Path.Combine(tmpDir, $"{Guid.NewGuid()}.json");
+            using var stream = System.IO.File.Create(recordSession);
+            var options = new JsonWriterOptions { Indented = true };
+            var writer = new Utf8JsonWriter(stream, options);
+            session.Serialize(writer);
+            writer.Flush();
+            stream.Close();
+
+            var text = File.ReadAllText(recordSession);
+
+            foreach(var unicodeChar in shouldNotExist)
+            {
+                Assert.DoesNotContain(unicodeChar, text);
+            }
         }
 
         [Theory]

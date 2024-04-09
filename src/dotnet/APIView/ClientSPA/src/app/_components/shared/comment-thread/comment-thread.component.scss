@@ -1,0 +1,50 @@
+:host ::ng-deep {
+    .user-avartar {
+        border-radius: 50%;
+    }
+    .p-timeline-event-opposite {
+        flex: 0 0 auto !important;
+    }
+
+    .p-timeline .p-timeline-event-connector {
+        background-color: var(--border-color) !important;
+    }
+
+    .p-timeline.p-timeline-vertical .p-timeline-event-connector {
+        width: 1px;
+    }
+
+    .p-panel .p-panel-header {
+        border: none;
+        padding: 0px;
+        background: inherit;
+        color: inherit;
+    }
+
+    .p-panel .p-panel-content {
+        padding: 0px;
+        border: none;
+        background: inherit;
+        color: inherit;
+    }
+
+    .p-panel.p-panel-toggleable .p-panel-header {
+        padding: 0px;
+    }
+
+    .p-panel .p-panel-footer {
+        padding: 0.5rem 0 0.5rem 0;
+        border: none;
+        background: inherit;
+        color: inherit;
+    }
+
+    .thumbs-up-button {
+        color: var(--border-color);
+        background-color: transparent;
+        border: 1px solid var(--border-color-transparent);
+        height: 1.8rem;
+        width: 1.8rem;
+    }
+
+}

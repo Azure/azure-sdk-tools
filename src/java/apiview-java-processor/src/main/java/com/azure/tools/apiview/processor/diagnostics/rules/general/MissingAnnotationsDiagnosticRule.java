@@ -1,4 +1,4 @@
-package com.azure.tools.apiview.processor.diagnostics.rules;
+package com.azure.tools.apiview.processor.diagnostics.rules.general;
 
 import com.azure.tools.apiview.processor.diagnostics.DiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
@@ -10,12 +10,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
 import static com.azure.tools.apiview.processor.model.DiagnosticKind.*;
 
+/**
+ * This diagnostic, whilst being in the 'general' package, is still very heavily skewed towards azure and client core
+ * libraries, so it isn't enabled for all libraries.
+ */
 public class MissingAnnotationsDiagnosticRule implements DiagnosticRule {
+
+    private final String packagePrefix;
+
+    public MissingAnnotationsDiagnosticRule(String packagePrefix) {
+        this.packagePrefix = packagePrefix;
+    }
 
     @Override
     public void scanIndividual(final CompilationUnit cu, final APIListing listing) {
         getClasses(cu)
-            .filter(type -> getPackageName(type).startsWith("com.azure"))   // we only want to give this guidance to Azure SDK developers
+            .filter(type -> getPackageName(type).startsWith(packagePrefix))   // we only want to give this guidance to Azure SDK developers
             .forEach(typeDeclaration -> {
                 String className = typeDeclaration.getNameAsString();
 

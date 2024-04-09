@@ -1,9 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { BehaviorSubject } from 'rxjs';
-import { ReviewContent,  } from 'src/app/_models/review';
+import { CommentItemModel, ReviewContent,  } from 'src/app/_models/review';
 import { APIRevision, CodeHuskNode, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 
 @Component({
@@ -11,8 +12,12 @@ import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
   templateUrl: './review-page.component.html',
   styleUrls: ['./review-page.component.scss']
 })
-export class ReviewPageComponent implements OnInit, OnDestroy {
+export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
+  reviewId = this.route.snapshot.paramMap.get('reviewId');
+  apiRevisionId = this.route.snapshot.queryParamMap.get('revisionId');
+
   reviewContent : ReviewContent | undefined = undefined;
+  reviewComments : CommentItemModel[] | undefined = [];
   revisionSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
   apiTreeBuilder: Worker | undefined = undefined;
@@ -22,7 +27,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
 
   sideMenu: MenuItem[] | undefined;
 
-  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService) {}
+  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private commentsService: CommentsService) {}
 
   ngOnInit() {
     this.apiTreeBuilder = new Worker(new URL('../../_workers/review-page.worker', import.meta.url));
@@ -30,14 +35,11 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
 
     this.registerWorkerEventHandler();
 
-    const reviewId = this.route.snapshot.paramMap.get('reviewId');
-    const apiRevisionId = this.route.snapshot.queryParamMap.get('revisionId');
-
-    if (reviewId && apiRevisionId) {
-      this.loadReviewContent(reviewId, apiRevisionId);
+    if (this.reviewId && this.apiRevisionId) {
+      this.loadReviewContent(this.reviewId, this.apiRevisionId);
     }
-    else if (reviewId) {
-      this.loadReviewContent(reviewId);
+    else if (this.reviewId) {
+      this.loadReviewContent(this.reviewId);
     }
 
     this.sideMenu = [
@@ -51,7 +53,14 @@ export class ReviewPageComponent implements OnInit, OnDestroy {
           icon: 'bi bi-chat-left-dots'
       }
     ];
+  }
 
+  ngAfterViewInit() {
+    this.commentsService.getComments(this.reviewId!).subscribe({
+      next: (response: CommentItemModel[]) => {
+        this.reviewComments = response;
+      }
+    });
   }
 
   ngOnDestroy() {

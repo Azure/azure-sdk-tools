@@ -6,6 +6,11 @@ export enum FirstReleaseApproval {
   All
 }
 
+export enum CommentType {
+  APIRevision = 0,
+  SampleRevision
+}
+
 export interface Review {
   id: string
   packageName: string
@@ -16,10 +21,10 @@ export interface Review {
 }
 
 export interface ChangeHistory {
-  changeAction: string
-  user: string
-  changeDateTime: string
-  notes: any
+  changeAction: string;
+  changedBy: string;
+  changedOn: string | null;
+  notes: string;
 }
 
 export interface SelectItemModel {
@@ -33,4 +38,25 @@ export interface ReviewContent {
   apiRevisions: APIRevision[]
   activeAPIRevision: APIRevision
   diffAPIRevision: APIRevision
+}
+
+
+export interface CommentItemModel {
+    id: string;
+    reviewId: string;
+    aPIRevisionId: string;
+    elementId: string;
+    sectionClass: string;
+    commentText: string;
+    crossLanguageId: string;
+    changeHistory: ChangeHistory[];
+    isResolved: boolean;
+    upvotes: string[];
+    taggedUsers: Set<string>;
+    commentType: CommentType;
+    resolutionLocked: boolean;
+    createdBy: string;
+    createdOn: string;
+    lastEditedOn: string | null;
+    isDeleted: boolean;
 }

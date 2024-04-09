@@ -1,9 +1,25 @@
-<div class="border-top border-bottom">
-    <p-timeline [value]="comments">
-        <ng-template pTemplate="content" let-comment>
-            {{ comment.commentText }}
-            {{ comment.commentDate | date: 'short' }}
-            {{ comment.createdBy }}
-        </ng-template>
-    </p-timeline>
+<div class="border-top border-bottom p-2 ">
+    <div class="border rounded py-2 col-9">
+        <p-timeline [value]="comments">
+            <ng-template pTemplate="marker" let-comment>
+                <img [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="32" class="user-avartar"/>
+            </ng-template>        
+            <ng-template pTemplate="content" let-comment>
+                <p-panel [toggleable]="false" class="mb-2">
+                    <ng-template pTemplate="header">
+                        <div class="flex align-items-center gap-2">
+                            <span class="fw-bold">{{ comment.createdBy }}</span>
+                            <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
+                        </div>
+                    </ng-template>
+                    <p class="mb-1">
+                        {{ comment.commentText }}
+                    </p>
+                    <ng-template pTemplate="icons">
+                        <p-button icon="bi bi-hand-thumbs-up" [rounded]="true" styleClass="thumbs-up-button"></p-button>
+                    </ng-template>
+                </p-panel>
+            </ng-template>
+        </p-timeline>
+    </div>
 </div>

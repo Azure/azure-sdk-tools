@@ -1,0 +1,9 @@
+<div class="border-top border-bottom">
+    <p-timeline [value]="comments">
+        <ng-template pTemplate="content" let-comment>
+            {{ comment.commentText }}
+            {{ comment.commentDate | date: 'short' }}
+            {{ comment.createdBy }}
+        </ng-template>
+    </p-timeline>
+</div>

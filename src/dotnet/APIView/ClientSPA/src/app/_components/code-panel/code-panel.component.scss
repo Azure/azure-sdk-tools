@@ -5,11 +5,37 @@
     width: 200%;
     transform: translate3d(0, 0, 0);
 
+    --max-line-number-width: 4ch;
+
+    .api-node {
+        display: grid;
+        --max-cell-width: 0px;
+        grid-template-columns: minmax(auto, max-content) 1fr;
+    }
+
+    .comment-thread {
+        grid-column:  span 2;
+    }
+
+    .code-line {
+        display: contents;
+    }
+    
+    .code-line-content {
+        grid-column: 2;
+    }
+
+    .line-number {
+        display: inline-block;
+        width: var(--max-line-number-width);
+    }
+
     .line-actions {
+        grid-column: 1;
         text-align: right;
         white-space: nowrap;
-        padding-left: 10px;
-        padding-right: 10px;
+        padding-left: 2px;
+        padding-right: 5px;
         border-right: 1px solid var(--border-color);
         cursor: pointer;
 

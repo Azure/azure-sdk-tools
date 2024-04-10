@@ -18,6 +18,7 @@ using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -146,7 +147,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     }
 
                     using var stream = System.IO.File.Create(recordingSession.Path);
-                    var options = new JsonWriterOptions { Indented = true };
+                    var options = new JsonWriterOptions { Indented = true, Encoder = RecordEntry.WriterOptions.Encoder };
                     var writer = new Utf8JsonWriter(stream, options);
                     recordingSession.Session.Serialize(writer);
                     writer.Flush();

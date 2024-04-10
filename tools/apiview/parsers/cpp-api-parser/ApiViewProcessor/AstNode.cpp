@@ -1318,6 +1318,45 @@ static std::string GetNavigationId(clang::FunctionDecl const* func)
   return navigationId;
 }
 
+static std::string GetNavigationId(
+    clang::FriendDecl const* friendDecl,
+    std::string const& parentNodeNavigationId)
+{
+  std::string navigationId = parentNodeNavigationId + "_friend_";
+  auto dc = friendDecl->getFriendDecl();
+  if (dc)
+  {
+    if (isa<FunctionDecl>(dc))
+    {
+      auto fd = cast<FunctionDecl>(dc);
+      navigationId += GetNavigationId(fd);
+    }
+    else if (isa<CXXRecordDecl>(dc))
+    {
+      auto rd = cast<CXXRecordDecl>(dc);
+      navigationId += rd->getQualifiedNameAsString();
+    }
+    else
+    {
+      dc->dump(llvm::outs());
+    }
+  }
+  else
+  {
+    auto friendType = friendDecl->getFriendType();
+    if (friendType)
+    {
+      navigationId
+          += QualType::getAsString(friendDecl->getFriendType()->getType().split(), LangOptions{});
+    }
+    else
+    {
+      friendDecl->dump(llvm::outs());
+    }
+  }
+  return navigationId;
+}
+
 static std::string GetNavigationId(clang::ParmVarDecl const* param)
 {
 
@@ -2690,6 +2729,7 @@ public:
 
 class AstFriend : public AstNode {
   std::string m_friendType;
+  std::string m_navigationId;
   std::unique_ptr<AstNode> m_friendFunction;
 
 public:
@@ -2727,6 +2767,7 @@ public:
   {
     if (ShouldIncludeFriendDeclaration(friendDecl))
     {
+      m_navigationId = GetNavigationId(friendDecl, parentNode->NavigationId);
       if (friendDecl->getFriendType())
       {
         m_friendType
@@ -2763,7 +2804,7 @@ public:
     }
     else
     {
-      dumper->InsertTypeName(m_friendType, "friend_" + m_friendType);
+      dumper->InsertTypeName(m_friendType, m_navigationId);
       if (dumpOptions.NeedsTrailingSemi)
       {
         dumper->InsertPunctuation(';');

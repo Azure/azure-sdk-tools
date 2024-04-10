@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-package com.azure.tools.apiview.processor.diagnostics.rules;
+package com.azure.tools.apiview.processor.diagnostics.rules.general;
 
+import com.azure.tools.apiview.processor.diagnostics.rules.general.NoLocalesInJavadocUrlDiagnosticRule;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.comments.Comment;

@@ -203,6 +203,7 @@ extends:
             ShouldPublishExecutables: ${{ parameters.ReleaseBinaries }}
             ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
             RequireStrongNames: ${{ parameters.RequireStrongNames }}
+            Use1ESTemplate: true
 
       - ${{if and(not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages

@@ -2,8 +2,9 @@
     font-family: Consolas, monospace;
     font-size: 14px;
     line-height: 1.5;
-    width: 200%;
+    width: 500%;
     transform: translate3d(0, 0, 0);
+    display: block;
 
     --max-line-number-width: 4ch;
 
@@ -34,7 +35,7 @@
         grid-column: 1;
         text-align: right;
         white-space: nowrap;
-        padding-left: 2px;
+        padding-left: 5px;
         padding-right: 5px;
         border-right: 1px solid var(--border-color);
         cursor: pointer;

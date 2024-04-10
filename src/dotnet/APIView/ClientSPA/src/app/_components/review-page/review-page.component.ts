@@ -14,7 +14,8 @@ import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 })
 export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
   reviewId = this.route.snapshot.paramMap.get('reviewId');
-  apiRevisionId = this.route.snapshot.queryParamMap.get('revisionId');
+  activeApiRevisionId = this.route.snapshot.queryParamMap.get('activeApiRevisionId');
+  diffApiRevisionId = this.route.snapshot.queryParamMap.get('diffApiRevisionId');
 
   reviewContent : ReviewContent | undefined = undefined;
   reviewComments : CommentItemModel[] | undefined = [];
@@ -34,13 +35,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
     this.tokenBuilder = new Worker(new URL('../../_workers/review-page.worker', import.meta.url));
 
     this.registerWorkerEventHandler();
-
-    if (this.reviewId && this.apiRevisionId) {
-      this.loadReviewContent(this.reviewId, this.apiRevisionId);
-    }
-    else if (this.reviewId) {
-      this.loadReviewContent(this.reviewId);
-    }
+    this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
 
     this.sideMenu = [
       {
@@ -93,8 +88,8 @@ export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  loadReviewContent(reviewId: string, revisionId: string | undefined = undefined) {
-    this.reviewsService.getReviewContent(reviewId, revisionId).subscribe({
+  loadReviewContent(reviewId: string, activeApiRevisionId: string | null = null, diffApiRevisionId: string | null = null) {
+    this.reviewsService.getReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId).subscribe({
       next: (response: ReviewContent) => {
           this.reviewContent = response;
           const message: any = {

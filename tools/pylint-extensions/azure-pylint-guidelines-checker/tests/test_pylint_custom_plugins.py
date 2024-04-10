@@ -4746,3 +4746,46 @@ class TestCheckNoLegacyAzureCoreHttpResponseImport(pylint.testutils.CheckerTestC
         importfrom_node.root().name = "azure.core"
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
+
+
+class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
+    """Test that we are blocking disallowed imports and allowing allowed imports."""
+
+    CHECKER_CLASS = checker.NoImportTypingFromTypeCheck
+
+    def test_disallowed_import_from(self):
+        """Check that illegal imports raise warnings"""
+        import_node = astroid.extract_node(
+            """
+            from typing import TYPE_CHECKING
+
+            if TYPE_CHECKING:
+                from typing import Any #@
+            """
+        )
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="no-typing-import-in-type-check",
+                line=5,
+                node=import_node,
+                col_offset=4,
+                end_line=5,
+                end_col_offset=26,
+            )
+        ):
+            self.checker.visit_importfrom(import_node)
+
+    def test_allowed_imports(self):
+        """Check that allowed imports don't raise warnings."""
+        # import not in the blocked list.
+        importfrom_node = astroid.extract_node(
+        """
+            from typing import TYPE_CHECKING
+
+            if TYPE_CHECKING:
+
+                from math import PI
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(importfrom_node)

@@ -40,7 +40,7 @@ namespace APIViewWeb.Managers.Interfaces
         public Task AutoArchiveAPIRevisions(int archiveAfterMonths);
         public Task AssignReviewersToAPIRevisionAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers);
         public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName);
-        public Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label, bool setReleaseTag = false);
+        public Task<APIRevisionListItemModel> UpdateAPIRevisionMetadataAsync(APIRevisionListItemModel apiRevision, string packageVersion, string label, bool setReleaseTag = false, string commitSHA = null, string sourceBranch = null);
         public Task<IEnumerable<string>> GetReviewIdsOfLanguageCorrespondingReviewAsync(string crossLanguagePackageId);
     }
 }

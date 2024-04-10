@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [InlineData("true", "application/json")]
         [InlineData("false", "application/json")]
         [InlineData("{ \"json\": \"value\" }", "unknown")]
-        [InlineData("{ \"a-key\": \"akeywith+inthemiddle\" }", "unknown")]
+        [InlineData("{ \"a-key\": \"akeywith+inthemiddle\" }", "application/json")]
         [InlineData("multi\rline", "application/xml")]
         [InlineData("multi\r\nline", "application/xml")]
         [InlineData("multi\n\rline\n", "application/xml")]
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var arrayBufferWriter = new ArrayBufferWriter<byte>();
             using var jsonWriter = new Utf8JsonWriter(arrayBufferWriter, new JsonWriterOptions()
             {
-                Indented = true
+                Indented = true, Encoder = RecordEntry.WriterOptions.Encoder
             });
             session.Serialize(jsonWriter);
             jsonWriter.Flush();
@@ -96,7 +96,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void EnsureProperJsonEscaping()
+        public void EnsureJsonEscaping()
         {
             var shouldNotExist = new string[] {
                 "\\u0026", "\\u002B"
@@ -123,7 +123,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var tmpDir = Path.GetTempPath();
             var recordSession = Path.Combine(tmpDir, $"{Guid.NewGuid()}.json");
             using var stream = System.IO.File.Create(recordSession);
-            var options = new JsonWriterOptions { Indented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+            var options = new JsonWriterOptions { Indented = true, Encoder = RecordEntry.WriterOptions.Encoder };
             var writer = new Utf8JsonWriter(stream, options);
 
             session.Serialize(writer);

@@ -4,41 +4,55 @@ using Microsoft.CodeAnalysis.CSharp;
 
 namespace APIView.Model
 {
+    public enum StructuredTokenKind
+    {
+        LineBreak = 0,
+        NoneBreakingSpace = 1,
+        ParameterSeparator = 2,
+        Content = 3,
+    }
+
+
     public class StructuredToken
     {
+        public string Value { get; set; }
+        public string Id { get; set; }
+        public string GroupId { get; set; }
+        public StructuredTokenKind Kind { get; set; }
         public Dictionary<string, string> Properties { get; } = new Dictionary<string, string>();
         public HashSet<string> RenderClasses { get; } = new HashSet<string>();
 
         public StructuredToken(string value)
         {
-            Properties.Add("Value", value);
+            Value = value;
+            Kind = StructuredTokenKind.Content;
         }
 
         public static StructuredToken CreateLineBreakToken()
         {
             var token = new StructuredToken("\n");
-            token.Properties.Add("Kind", "LineBreak");
+            token.Kind = StructuredTokenKind.LineBreak;
             return token;
         }
 
         public static StructuredToken CreateSpaceToken()
         {
             var token = new StructuredToken("\u0020");
-            token.Properties.Add("Kind", "Space");
+            token.Kind = StructuredTokenKind.NoneBreakingSpace;
             return token;
         }
 
         public static StructuredToken CreateTextToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClasses.Add("Text");
+            token.RenderClasses.Add("csText");
             return token;
         }
 
         public static StructuredToken CreateKeywordToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClasses.Add("Keyword");
+            token.RenderClasses.Add("csKeyword");
             return token;
         }
 
@@ -55,7 +69,7 @@ namespace APIView.Model
         public static StructuredToken CreatePunctuationToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClasses.Add("Punctuation");
+            token.RenderClasses.Add("csPunctuation");
             return token;
         }
 
@@ -67,41 +81,47 @@ namespace APIView.Model
         public static StructuredToken CreateTypeNameToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClasses.Add("TypeName");
+            token.RenderClasses.Add("csTypeName");
             return token;
         }
 
         public static StructuredToken CreateMemberNameToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClasses.Add("MemberName");
+            token.RenderClasses.Add("csMemberName");
             return token;
         }
 
         public static StructuredToken CreateLiteralToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClasses.Add("Literal");
+            token.RenderClasses.Add("csLiteral");
             return token;
         }
 
         public static StructuredToken CreateStringLiteralToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClasses.Add("StringLiteral");
+            token.RenderClasses.Add("csStringLiteral");
             return token;
         }
 
         public static StructuredToken CreateParameterSeparatorToken()
         {
             var token = new StructuredToken("\u0020");
-            token.Properties.Add("Kind", "ParamSeparator");
+            token.Kind = StructuredTokenKind.ParameterSeparator;
             return token;
         }
     }
 
     public class APITreeNode
     {
+        public string Name { get; set; }
+        public string Id { get; set; }
+        public string Kind { get; set; }
+        public string SubKind { get; set; }
+        public bool IsHidden { get; set; }
+        public bool IsDeprecated { get; set; }
         public Dictionary<string, string> Properties { get; } = new Dictionary<string, string>();
         public List<StructuredToken> TopTokens { get; } = new List<StructuredToken>();
         public List<StructuredToken> BottomTokens { get; } = new List<StructuredToken>();

@@ -355,6 +355,16 @@ namespace APIViewWeb.Helpers
             else if (activeRevisionReviewCodeFile.CodeFileVersion.Equals("v2"))
             {
                 reviewPageContent.APITree = activeRevisionReviewCodeFile.APITree;
+
+                if (!string.IsNullOrEmpty(diffRevisionId))
+                {
+                    if (apiRevisions.Where(x => x.Id == diffRevisionId).Any())
+                    {
+                        diffRevision = await reviewRevisionsManager.GetAPIRevisionAsync(user, diffRevisionId);
+                        var diffRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(diffRevisionId, diffRevision.Files[0].FileId);
+                        reviewPageContent.APITree = await CodeFileHelpers.ComputeAPITreeDiff(activeRevisionReviewCodeFile.APITree, diffRevisionRenderableCodeFile.CodeFile.APITree);
+                    }
+                }
             }
 
             HashSet<string> preferredApprovers = new HashSet<string>();

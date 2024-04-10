@@ -87,8 +87,13 @@ export class ReviewsService {
     );
   }
 
-  getReviewContent(reviewId: string, revisionId: string = "") : Observable<ReviewContent>{
+  getReviewContent(reviewId: string, activeApiRevisionId: string | null = null, diffApiRevisionId: string | null = null) : Observable<ReviewContent>{
     let params = new HttpParams();
-    params = params.append('revisionId', revisionId);
+    if (activeApiRevisionId) {
+      params = params.append('activeApiRevisionId', activeApiRevisionId);
+    }
+    if (diffApiRevisionId) {
+      params = params.append('diffApiRevisionId', diffApiRevisionId);
+    }
     return this.http.get<ReviewContent>(this.baseUrl + `/${reviewId}/content`, { params: params });
   }}

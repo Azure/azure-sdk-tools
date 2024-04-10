@@ -34,6 +34,7 @@ namespace Azure.Sdk.Tools.TestProxy
         private const string SkipRecordingHeaderKey = "x-recording-skip";
         private const string SkipRecordingRequestBody = "request-body";
         private const string SkipRecordingRequestResponse = "request-response";
+        private const string placeholder = "sanitized";
 
         public IAssetsStore Store;
         public StoreResolver Resolver;
@@ -985,13 +986,20 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());
                 }
+                
+
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
                     new RecordedTestSanitizer(), // handles authorize header
                     new BodyKeySanitizer("$..access_token"),
                     new BodyKeySanitizer("$..refresh_token"),
-                    new HeaderRegexSanitizer("x-ms-encryption-key", "Sanitized"),
-                    new GeneralRegexSanitizer(value: "Sanitized", regex: "AccountKey=[^;]+")
+                    // new HeaderRegexSanitizer("x-ms-encryption-key", "Sanitized"), left commented for now
+                    new GeneralRegexSanitizer(value: placeholder, regex: "AccountKey=(?<key>[^;]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(value: placeholder, regex: "SharedAccessKey=(?<key>[^;]+)", groupForReplace: "key"),
+                    // TODO: create an option for 'ignore case'
+                    new GeneralRegexSanitizer(value: placeholder, regex: "Accesskey=(?<key>[^;]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(value: placeholder, regex: "accesskey=(?<key>[^;]+)", groupForReplace: "key"),
+                    new HeaderRegexSanitizer("api-key", value: placeholder)
                 };
 
                 Transforms = new List<ResponseTransform>

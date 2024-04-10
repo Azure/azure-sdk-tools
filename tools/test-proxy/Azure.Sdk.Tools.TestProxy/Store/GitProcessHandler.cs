@@ -241,6 +241,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                     return true;
                 }
 
+                // Unable to write data to the transport connection: Connection reset by peer.
+                // Unable to read data from the transport connection: Connection reset by peer.
+                // Connection reset by peer
+                if (result.StdErr.ToLower().Contains("connection reset"))
+                {
+                    return true;
+                }
+
                 // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443: Operation timed out
                 // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Failed to connect to github.com port 443: Connection timed out
                 // fatal: unable to access 'https://github.com/Azure/azure-sdk-assets/': Recv failure: Operation timed out

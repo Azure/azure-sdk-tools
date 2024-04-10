@@ -11,7 +11,6 @@ const routes: Routes = [
     runGuardsAndResolvers: 'always',
     canActivate: [AuthGuard],
     children: [
-      { path: 'review/:reviewId/:revisionId', component: ReviewPageComponent },
       { path: 'review/:reviewId', component: ReviewPageComponent },
     ]
   },

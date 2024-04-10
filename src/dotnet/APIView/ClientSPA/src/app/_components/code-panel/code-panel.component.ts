@@ -1,4 +1,4 @@
-import { ApplicationRef, Component, ElementRef, Injector, Input, ViewChild, ViewContainerRef, } from '@angular/core';
+import { ApplicationRef, ChangeDetectorRef, Component, ElementRef, Injector, Input, ViewChild, ViewContainerRef, } from '@angular/core';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { CommentItemModel } from 'src/app/_models/review';
@@ -23,6 +23,8 @@ export class CodePanelComponent {
 
   private destroyApiTreeNode$ = new Subject<void>();
   private destroyTokenLineData$ = new Subject<void>();
+
+  constructor(private changeDeterctorRef: ChangeDetectorRef) { }
 
   ngAfterViewInit() {
     this.apiTreeNodeData.pipe(
@@ -59,9 +61,9 @@ export class CodePanelComponent {
           for (let token of lineData.tokenLine) {
             const span = document.createElement('span');
             token.renderClasses.forEach((c: string) => span.classList.add(c));
-            span.textContent = token.properties["Value"];
-            if (token.properties["Id"]){
-              const tokenId = token.properties["Id"];
+            span.textContent = token.value;
+            if (token.id){
+              const tokenId = token.id;
               span.setAttribute('data-token-id', tokenId);
 
               if (this.reviewComments && this.reviewComments.length > 0)
@@ -100,6 +102,7 @@ export class CodePanelComponent {
               const commentThreadNode = this.commentThreadRef.createComponent(CommentThreadComponent);
               commentThreadNode.instance.comments = commentThreadData;
               node!.appendChild(commentThreadNode.location.nativeElement);
+              this.changeDeterctorRef.detectChanges();
             }
           }
         }

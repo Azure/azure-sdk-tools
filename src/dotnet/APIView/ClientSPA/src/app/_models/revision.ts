@@ -9,6 +9,14 @@ export enum ReviewPageWorkerMessageDirective {
   CreateLineOfTokens
 }
 
+
+export enum StructuredTokenKind {
+    LineBreak = 0,
+    NoneBreakingSpace = 1,
+    ParameterSeparator = 2,
+    Content = 3
+}
+
 export interface APIRevision {
   id: string
   reviewId: string
@@ -34,11 +42,21 @@ export interface AssignedReviewer {
 }
 
 export interface StructuredToken {
+  value: string;
+  id: string;
+  groupId: string;
+  kind: string;
   properties: { [key: string]: string; }
   renderClasses: Set<string>
 }
 
 export interface APITreeNode {
+  name: string;
+  id: string;
+  kind: string;
+  subKind: string;
+  isHidden: boolean;
+  isDeprecated: boolean;
   properties: { [key: string]: string; }
   topTokens: StructuredToken[];
   bottomTokens: StructuredToken[];

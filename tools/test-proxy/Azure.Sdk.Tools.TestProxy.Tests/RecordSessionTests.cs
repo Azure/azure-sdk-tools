@@ -96,7 +96,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void EnsureJsonEscapingNotAggressive()
+        public void EnsureProperJsonEscaping()
         {
             var shouldNotExist = new string[] {
                 "\\u0026", "\\u002B"

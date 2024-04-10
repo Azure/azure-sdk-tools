@@ -140,12 +140,12 @@ public class Main {
         final ReviewProperties reviewProperties = getReviewProperties(inputFile);
 
         final String groupId = reviewProperties.getMavenPom().getGroupId();
+        final String artifactId = reviewProperties.getMavenPom().getArtifactId();
 
-        final String reviewName = reviewProperties.getMavenPom().getArtifactId()
-                                      + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
+        final String reviewName = artifactId + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
         System.out.println("  Using '" + reviewName + "' for the review name");
 
-        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + reviewProperties.getMavenPom().getArtifactId();
+        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + artifactId;
         System.out.println("  Using '" + packageName + "' for the package name");
 
         System.out.println("  Using '" + reviewProperties.getMavenPom().getVersion() + "' for the package version");
@@ -172,7 +172,9 @@ public class Main {
             try {
                 // we eagerly load the apiview_properties.json file into an ApiViewProperties object, so that it can
                 // be used throughout the analysis process, as required
-                URL apiViewPropertiesFile = fs.getPath("/META-INF/apiview_properties.json").toUri().toURL();
+                // the filename is [<artifactid>_]apiview_properties.json
+                String filename = (artifactId != null && !artifactId.isEmpty() ? (artifactId + "_") : "") + "apiview_properties.json";
+                URL apiViewPropertiesFile = fs.getPath("/META-INF/" + filename).toUri().toURL();
                 final ObjectMapper objectMapper = new ObjectMapper();
                 ApiViewProperties properties = objectMapper.readValue(apiViewPropertiesFile, ApiViewProperties.class);
                 apiListing.setApiViewProperties(properties);

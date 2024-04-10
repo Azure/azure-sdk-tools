@@ -86,20 +86,20 @@ namespace APIViewWeb.LeanControllers
         ///Retrieve the Content (codeLines and Navigation) of a review
         ///</summary>
         ///<param name="reviewId"></param>
-        ///<param name="revisionId"></param>
-        /// <param name="diffRevisionId"></param>
+        ///<param name="activeApiRevisionId"></param>
+        /// <param name="diffApiRevisionId"></param>
         ///<returns></returns>
         [HttpGet]
         [Route("{reviewId}/content")]
-        public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, [FromQuery] string revisionId = null,
-            [FromQuery] string diffRevisionId = null)
+        public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId = null,
+            [FromQuery] string diffApiRevisionId = null)
         {
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
 
             var reviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
                 reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
                 reviewRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
-                signalRHubContext: _signalRHubContext, user: User, reviewId: reviewId, revisionId: revisionId, diffRevisionId: diffRevisionId);
+                signalRHubContext: _signalRHubContext, user: User, reviewId: reviewId, revisionId: activeApiRevisionId, diffRevisionId: diffApiRevisionId);
 
             return new LeanJsonResult(reviewContent, StatusCodes.Status200OK);
         }

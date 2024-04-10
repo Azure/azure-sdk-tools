@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from "../_models/revision";
+import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective, StructuredTokenKind } from "../_models/revision";
 import { APITreeNode, StructuredToken } from "../_models/revision";
 
 addEventListener('message', ({ data }) => {
@@ -36,7 +36,7 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
   const nodeId = treeNodeId.join("-");
 
   let nodeData: CodeHuskNode = {
-    name: apiTreeNode.properties["Name"],
+    name: apiTreeNode.name,
     id: nodeId,
     indent: indent,
     position: "top"
@@ -88,7 +88,7 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
 function buildTokens(tokens: StructuredToken[], id: string, position: string) {
   const tokenLine : StructuredToken[] = [];
   for (let token of tokens) {
-    if (token.properties["Kind"] === "LineBreak") {
+    if (token.kind === "LineBreak") {
       const createLinesOfTokensMessage : CreateLinesOfTokensMessage =  {
         directive: ReviewPageWorkerMessageDirective.CreateLineOfTokens,
         tokenLine : tokenLine,
@@ -121,18 +121,13 @@ function buildTokens(tokens: StructuredToken[], id: string, position: string) {
 }
 
 function getTokenNodeIdPart(apiTreeNode: APITreeNode) {
-  const kind = apiTreeNode.properties["Kind"];
-  const typeKind = apiTreeNode.properties["TypeKind"];
-  const methodKind = apiTreeNode.properties["MethodKind"];
-  const id = apiTreeNode.properties["Id"];
+  const kind = apiTreeNode.kind;
+  const subKind = apiTreeNode.subKind;;
+  const id = apiTreeNode.id;
 
   let idPart = kind;
-  if (typeKind) {
-    idPart = `${idPart}-${typeKind}`;
-  }
-
-  if (methodKind) {
-    idPart = `${idPart}-${methodKind}`;
+  if (subKind) {
+    idPart = `${idPart}-${subKind}`;
   }
 
   if (id) {

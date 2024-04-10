@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using ApiView;
 using APIView;
 using APIView.Model;
 using APIViewWeb.Models;

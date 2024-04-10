@@ -4,7 +4,7 @@
 # ------------------------------------
 
 """
-Pylint custom checkers for SDK guidelines: C4717 - C4758
+Pylint custom checkers for SDK guidelines: C4717 - C4760
 """
 
 import logging
@@ -2716,7 +2716,7 @@ class NoImportTypingFromTypeCheck(BaseChecker):
     name = "no-typing-import-in-type-check"
     priority = -1
     msgs = {
-        "C4757": (
+        "C4760": (
             "Do not import from typing inside of TYPE_CHECKING.",
             "no-typing-import-in-type-check",
             "Do not import from typing inside of TYPE_CHECKING. You can import from typing outside of TYPE_CHECKING.",

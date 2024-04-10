@@ -8,6 +8,7 @@ using System.IO;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Unicode;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -16,9 +17,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         // Requests and responses are usually formatted using Newtonsoft.Json that has more relaxed encoding rules
         // To enable us to store more responses as JSON instead of string in Recording files use
         // relaxed settings for roundtrip.
-        private static readonly JsonWriterOptions WriterOptions = new JsonWriterOptions()
+        public static readonly JsonWriterOptions WriterOptions = new JsonWriterOptions()
         {
-            Encoder = new RecordSessionEncoder()
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
         public RequestOrResponse Request { get; set; } = new RequestOrResponse();
@@ -216,13 +217,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         document.RootElement.ValueKind != JsonValueKind.String &&
                         document.RootElement.ValueKind != JsonValueKind.Null)
                     {
-                        using var memoryStream = new MemoryStream();
-                        // Settings of this writer should be in sync with the one used in deserialization
-                        using (var reformattedWriter = new Utf8JsonWriter(memoryStream, WriterOptions))
-                        {
-                            document.RootElement.WriteTo(reformattedWriter);
-                        }
-
                         jsonWriter.WritePropertyName(name.AsSpan());
                         document.RootElement.WriteTo(jsonWriter);
                         return;

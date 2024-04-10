@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using Azure.Core;
 using Azure.Core.Pipeline;
@@ -95,7 +96,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void CheckEscaping()
+        public void EnsureJsonEscapingNotAggressive()
         {
             var shouldNotExist = new string[] {
                 "\\u0026", "\\u002B"
@@ -122,8 +123,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var tmpDir = Path.GetTempPath();
             var recordSession = Path.Combine(tmpDir, $"{Guid.NewGuid()}.json");
             using var stream = System.IO.File.Create(recordSession);
-            var options = new JsonWriterOptions { Indented = true };
+            var options = new JsonWriterOptions { Indented = true, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
             var writer = new Utf8JsonWriter(stream, options);
+
             session.Serialize(writer);
             writer.Flush();
             stream.Close();
@@ -135,6 +137,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Assert.DoesNotContain(unicodeChar, text);
             }
         }
+
+
 
         [Theory]
         [InlineData("{\"json\":\"value\"}", "application/json")]

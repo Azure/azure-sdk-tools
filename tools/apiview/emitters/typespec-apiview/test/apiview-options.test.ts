@@ -5,6 +5,7 @@ describe("apiview-options: tests", () => {
 
   it("omits namespaces that aren't proper subnamespaces", async () => {
     const input = `
+    #suppress "deprecated"
     @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Foo {};
@@ -36,6 +37,7 @@ describe("apiview-options: tests", () => {
     const input = `
     model SomeGlobal {};
 
+    #suppress "deprecated"
     @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Foo {};
@@ -46,6 +48,7 @@ describe("apiview-options: tests", () => {
       model SomeGlobal {}
     }
 
+    #suppress "deprecated"
     @TypeSpec.service(
       {
         title: "Test";
@@ -65,6 +68,7 @@ describe("apiview-options: tests", () => {
 
   it("emits error if multi-service package tries to specify version", async () => {
     const input = `
+    #suppress "deprecated"
     @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Foo {};
@@ -90,11 +94,13 @@ describe("apiview-options: tests", () => {
 
   it("allows options if multi-service package specifies --service", async () => {
     const input = `
+    #suppress "deprecated"
     @TypeSpec.service( { title: "Test", version: "1" } )
     namespace Azure.Test {
       model Foo {};
     }
 
+    #suppress "deprecated"
     @TypeSpec.service( { title: "OtherTest", version: "1" } )
     namespace Azure.OtherTest {
       model Foo {};

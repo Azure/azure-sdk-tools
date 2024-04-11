@@ -1001,7 +1001,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     new RecordedTestSanitizer(),
 
                     // new defaults begin
-                    new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;\"]+)", groupForReplace: "key"),
                     new GeneralRegexSanitizer(regex: "AccountKey=(?<key>[^;]+)", groupForReplace: "key"),
                     // "containerUrl": "<URL>/<Container>?sp=...st=...se=...spr=...sv=...sr=...sig="
                     new GeneralRegexSanitizer(regex: "accesskey=(?<key>[^;]+)", groupForReplace: "key"),

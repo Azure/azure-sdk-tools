@@ -1002,17 +1002,17 @@ namespace Azure.Sdk.Tools.TestProxy
                     new RecordedTestSanitizer(),
 
                     // new defaults begin
-                    new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;\"]+)", groupForReplace: "key"),
-                    new GeneralRegexSanitizer(regex: "AccountKey=(?<key>[^;]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(regex: "AccountKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
                     // "containerUrl": "<URL>/<Container>?sp=...st=...se=...spr=...sv=...sr=...sig="
-                    new GeneralRegexSanitizer(regex: "accesskey=(?<key>[^;]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(regex: "accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
                     // "token": "sv=2023-08-03\u0026ss=b\u0026srt=sco\u0026se=2050-12-12T00%3A00%3A00Z\u0026sp=rwdxlacuptf\u0026sig="
                     new BodyKeySanitizer("$..applicationSecret"),
                     new BodyKeySanitizer("$..apiKey"),
                     new HeaderRegexSanitizer("api-key"),
                     new BodyKeySanitizer("$..connectionString"),
-                    new GeneralRegexSanitizer(regex: "Accesskey=(?<key>[^;\"]+)", groupForReplace: "key"),
-                    new GeneralRegexSanitizer(regex: "Secret=(?<key>[^;\"]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(regex: "Accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(regex: "Secret=(?<key>[^;\\\"]+)", groupForReplace: "key"),
                     new HeaderRegexSanitizer("x-ms-encryption-key"),
                     new BodyKeySanitizer("$..sshPassword"),
                     new BodyKeySanitizer("$..aliasSecondaryConnectionString"),
@@ -1027,14 +1027,14 @@ namespace Azure.Sdk.Tools.TestProxy
                     // "token": "sv=...ss=...srt=...se=...sp=...sig=" request body covered by 1052
                     new BodyKeySanitizer("$..WEBSITE_AUTH_ENCRYPTION_KEY"),
                     new BodyKeySanitizer("$..decryptionKey"),
-                    // "ServiceBusDlqSupplementaryAuthorization": "SharedAccessSignature sr=...\sig=...se=….skn=….",
-                    // "ServiceBusSupplementaryAuthorization": "SharedAccessSignature sr=...sig=...se=...skn=...",
+                    new HeaderRegexSanitizer("ServiceBusDlqSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    new HeaderRegexSanitizer("ServiceBusSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
                     // "RequestBody": "client_id=...grant_type=...client_info=...client_secret=…scope=...", covered by 1036/1037
                     new BodyKeySanitizer("$..access_token"),
                     new BodyKeySanitizer("$..AccessToken"),
                     //(client_id=)[^&]+ body regex // disabled, not a secret?
-                    new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\"]+)", groupForReplace: "secret"),
-                    new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\"]+)", groupForReplace: "secret"),
+                    new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
                     // new BodyKeySanitizer("$..targetModelLocation"), disabled, not a secret?
                     new BodyKeySanitizer("$..targetResourceId"),
                     new BodyKeySanitizer("$..urlSource"),
@@ -1049,7 +1049,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     new BodyKeySanitizer("$..inputDataUri"),
                     new BodyKeySanitizer("$..containerUri"),
                     new BodyKeySanitizer("$..sasUri"),
-                    new BodyRegexSanitizer("(?:\\?(sv|sig|se|srt|ss|sp)=)(?<secret>.*)"),
+                    new BodyRegexSanitizer("(?:\\?(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]*)", groupForReplace: "secret"),
                     new BodyKeySanitizer("$..id"),
                     new BodyKeySanitizer("$..token"),
                     new BodyKeySanitizer("$..appId"),
@@ -1072,7 +1072,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     new HeaderRegexSanitizer("SupplementaryAuthorization"),
                     new BodyKeySanitizer("$.key"),
                     new BodyKeySanitizer("$.value[*].key"),
-                    // "sig=(.*)" URI
+                    new UriRegexSanitizer(regex: "sig=(?<sig>[^&]+)", groupForReplace: "sig"),
                     // new HeaderRegexSanitizer("x-ms-encryption-key"), dup
                     new HeaderRegexSanitizer("x-ms-rename-source"),
                     new HeaderRegexSanitizer("x-ms-file-rename-source"),
@@ -1088,8 +1088,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     new BodyKeySanitizer("$..storageContainerUri"),
                     new BodyKeySanitizer("$..storageContainerReadListSas"),
                     new BodyKeySanitizer("$..storageContainerWriteSas"),
-                    // "token=(?<token>[^\\u0026]+)($|\\u0026)" // BodyRegex?
-                    // "-----BEGIN PRIVATE KEY-----\\n(.+\\n)*-----END PRIVATE KEY-----\\n" BodyRegex
+                    new BodyRegexSanitizer("token=(?<token>[^&]+)($|&", groupForReplace: "token"),
+                    new BodyRegexSanitizer("-----BEGIN PRIVATE KEY-----\\n(.+\\n)*-----END PRIVATE KEY-----\\n"),
                     new BodyKeySanitizer("$..primaryMasterKey"),
                     new BodyKeySanitizer("$..primaryReadonlyMasterKey"),
                     new BodyKeySanitizer("$..secondaryMasterKey"),

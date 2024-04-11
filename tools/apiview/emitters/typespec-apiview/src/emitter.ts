@@ -174,7 +174,7 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
               version: versionString,
               serviceTitle: serviceTitle,
               allowed: allowedVersions.join(" | "),
-            },
+            }, 
           })
           return;
         }  

@@ -5,6 +5,7 @@ import {
   BaseNode,
   BooleanLiteralNode,
   DecoratorExpressionNode,
+  DirectiveExpressionNode,
   EnumMemberNode,
   EnumSpreadMemberNode,
   EnumStatementNode,
@@ -446,7 +447,22 @@ export class ApiView {
         }
         break;
       case SyntaxKind.DirectiveExpression:
-        throw new Error(`Case "DirectiveExpression" not implemented`);
+        obj = node as DirectiveExpressionNode;
+        this.keyword(`#${obj.target.sv}`, false, true);
+        for (const arg of obj.arguments) {
+          switch (arg.kind) {
+            case SyntaxKind.StringLiteral:
+              this.stringLiteral(arg.value);
+              this.space();
+              break;
+            case SyntaxKind.Identifier:
+              this.stringLiteral(arg.sv);
+              this.space();
+              break;
+          }
+        }
+        this.newline();
+        break;
       case SyntaxKind.EmptyStatement:
         throw new Error(`Case "EmptyStatement" not implemented`);
       case SyntaxKind.EnumMember:
@@ -716,6 +732,7 @@ export class ApiView {
 
   private tokenizeModelStatement(node: ModelStatementNode) {
     this.namespaceStack.push(node.id.sv);
+    this.tokenizeDirectives(node.directives);
     this.tokenizeDecorators(node.decorators, false);
     this.keyword("model", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
@@ -972,6 +989,15 @@ export class ApiView {
     this.endGroup();
     this.blankLines(1);
     this.namespaceStack.pop();
+  }
+
+  private tokenizeDirectives(nodes?: readonly DirectiveExpressionNode[]) {
+    if (!nodes) {
+      return;
+    }
+    for (const node of nodes) {
+      this.tokenize(node);
+    }
   }
 
   private tokenizeDecorators(nodes: readonly DecoratorExpressionNode[], inline: boolean) {

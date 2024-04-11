@@ -799,13 +799,12 @@ describe("apiview: tests", () => {
       }
       `;
       const expect = `
-      #suppress "deprecated"
-      @TypeSpec.service( { title: "Test", version: "1" } )
-      namespace Azure.Test {  
+      namespace Azure.Test {
         #suppress "foo" "bar"
         model Foo {
           name: string;
         }
+      }
       `;
       const apiview = await apiViewFor(input, {});
       const lines = apiViewText(apiview);

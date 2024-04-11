@@ -1031,7 +1031,64 @@ namespace Azure.Sdk.Tools.TestProxy
                     // "RequestBody": "client_id=...grant_type=...client_info=...client_secret=…scope=...",
                     new BodyKeySanitizer("$..access_token"),
                     new BodyKeySanitizer("$..AccessToken"),
-                    
+                    //(client_id=)[^&]+ body regex
+                    //(client_secret=)[^&]+ body regex
+                    //(client_assertion=)[^&]+ body regex
+                    new BodyKeySanitizer("$..targetModelLocation"),
+                    new BodyKeySanitizer("$..targetResourceId"),
+                    new BodyKeySanitizer("$..urlSource"),
+                    new BodyKeySanitizer("$..azureBlobSource.containerUrl"),
+                    new BodyKeySanitizer("$..source"),
+                    new BodyKeySanitizer("$..resourceLocation"),
+                    new HeaderRegexSanitizer("Location"),
+                    new BodyKeySanitizer("$..to"),
+                    new BodyKeySanitizer("$..from"),
+                    new HeaderRegexSanitizer("subscription-key"),
+                    new BodyKeySanitizer("$..outputDataUri"),
+                    new BodyKeySanitizer("$..inputDataUri"),
+                    new BodyKeySanitizer("$..containerUri"),
+                    new BodyKeySanitizer("$..sasUri"),
+                    // "(?:\\\\?(sv|sig|se|srt|ss|sp)=)(?<secret>.*)" General?
+                    new BodyKeySanitizer("$..id"),
+                    new BodyKeySanitizer("$..token"),
+                    new BodyKeySanitizer("$..appId"),
+                    new BodyKeySanitizer("$..userId"),
+                    // "name" I think this one is too generic, we should probably drop it?
+                    new BodyKeySanitizer("$..id"),
+                    new BodyKeySanitizer("$..storageAccount"),
+                    new BodyKeySanitizer("$..resourceGroup"),
+                    new BodyKeySanitizer("$..guardian"),
+                    new BodyKeySanitizer("$..scan"),
+                    new BodyKeySanitizer("$..catalog"),
+                    new BodyKeySanitizer("$..lastModifiedBy"),
+                    new BodyKeySanitizer("$..managedResourceGroupName"),
+                    new BodyKeySanitizer("$..friendlyName"),
+                    new BodyKeySanitizer("$..createdBy"),
+                    new BodyKeySanitizer("$..tenantId"),
+                    new BodyKeySanitizer("$..principalId"),
+                    new BodyKeySanitizer("$..clientId"),
+                    new BodyKeySanitizer("$..credential"),
+                    // "SupplementaryAuthorization" SB Sas Token, Body?
+                    new BodyKeySanitizer("$.key"),
+                    new BodyKeySanitizer("$.value[*].key"),
+                    // "sig=(.*)"
+                    // new HeaderRegexSanitizer("x-ms-encryption-key"), dup
+                    new HeaderRegexSanitizer("x-ms-rename-source"),
+                    new HeaderRegexSanitizer("x-ms-file-rename-source"),
+                    new HeaderRegexSanitizer("x-ms-copy-source"),
+                    new HeaderRegexSanitizer("x-ms-copy-source-authorization"),
+                    new HeaderRegexSanitizer("x-ms-file-rename-source-authorization"),
+                    new HeaderRegexSanitizer("x-ms-encryption-key-sha256"),
+                    new BodyKeySanitizer("$..uploadUrl"),
+                    new BodyKeySanitizer("$..logLink"),
+                    new HeaderRegexSanitizer("aeg-sas-token"),
+                    new HeaderRegexSanitizer("aeg-sas-key"),
+                    new HeaderRegexSanitizer("aeg-channel-name"),
+                    new BodyKeySanitizer("$..storageContainerUri"),
+                    new BodyKeySanitizer("$..storageContainerReadListSas"),
+                    new BodyKeySanitizer("$..storageContainerWriteSas"),
+                    // "token=(?<token>[^\\u0026]+)($|\\u0026)" // BodyRegex?
+                    // "-----BEGIN PRIVATE KEY-----\\n(.+\\n)*-----END PRIVATE KEY-----\\n" BodyRegex
                 };
 
                 Transforms = new List<ResponseTransform>

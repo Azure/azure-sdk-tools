@@ -18,6 +18,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
+using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -1010,8 +1011,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     new BodyKeySanitizer("$..apiKey"),
                     new HeaderRegexSanitizer("api-key"),
                     new BodyKeySanitizer("$..connectionString"),
-                    new GeneralRegexSanitizer(regex: "Accesskey=(?<key>[^;]+)", groupForReplace: "key"),
-                    new GeneralRegexSanitizer(regex: "Secret=(?<key>[^;]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(regex: "Accesskey=(?<key>[^;\"]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(regex: "Secret=(?<key>[^;\"]+)", groupForReplace: "key"),
                     new HeaderRegexSanitizer("x-ms-encryption-key"),
                     new BodyKeySanitizer("$..sshPassword"),
                     new BodyKeySanitizer("$..aliasSecondaryConnectionString"),
@@ -1023,17 +1024,17 @@ namespace Azure.Sdk.Tools.TestProxy
                     new BodyKeySanitizer("$..runAsPassword"),
                     new BodyKeySanitizer("$..adminPassword"),
                     new BodyKeySanitizer("$..accessSAS"),
-                    // "token": "sv=...ss=...srt=...se=...sp=...sig=" request body
+                    // "token": "sv=...ss=...srt=...se=...sp=...sig=" request body covered by 1052
                     new BodyKeySanitizer("$..WEBSITE_AUTH_ENCRYPTION_KEY"),
                     new BodyKeySanitizer("$..decryptionKey"),
                     // "ServiceBusDlqSupplementaryAuthorization": "SharedAccessSignature sr=...\sig=...se=….skn=….",
                     // "ServiceBusSupplementaryAuthorization": "SharedAccessSignature sr=...sig=...se=...skn=...",
-                    // "RequestBody": "client_id=...grant_type=...client_info=...client_secret=…scope=...",
+                    // "RequestBody": "client_id=...grant_type=...client_info=...client_secret=…scope=...", covered by 1036/1037
                     new BodyKeySanitizer("$..access_token"),
                     new BodyKeySanitizer("$..AccessToken"),
-                    //(client_id=)[^&]+ body regex
-                    //(client_secret=)[^&]+ body regex
-                    //(client_assertion=)[^&]+ body regex
+                    //(client_id=)[^&]+ body regex // disabled, not a secret?
+                    new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\"]+)", groupForReplace: "secret"),
+                    new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\"]+)", groupForReplace: "secret"),
                     // new BodyKeySanitizer("$..targetModelLocation"), disabled, not a secret?
                     new BodyKeySanitizer("$..targetResourceId"),
                     new BodyKeySanitizer("$..urlSource"),
@@ -1048,7 +1049,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     new BodyKeySanitizer("$..inputDataUri"),
                     new BodyKeySanitizer("$..containerUri"),
                     new BodyKeySanitizer("$..sasUri"),
-                    // "(?:\\\\?(sv|sig|se|srt|ss|sp)=)(?<secret>.*)" General?
+                    new BodyRegexSanitizer("(?:\\?(sv|sig|se|srt|ss|sp)=)(?<secret>.*)"),
                     new BodyKeySanitizer("$..id"),
                     new BodyKeySanitizer("$..token"),
                     new BodyKeySanitizer("$..appId"),
@@ -1068,10 +1069,10 @@ namespace Azure.Sdk.Tools.TestProxy
                     new BodyKeySanitizer("$..principalId"),
                     new BodyKeySanitizer("$..clientId"),
                     new BodyKeySanitizer("$..credential"),
-                    // "SupplementaryAuthorization" SB Sas Token, Body?
+                    new HeaderRegexSanitizer("SupplementaryAuthorization"),
                     new BodyKeySanitizer("$.key"),
                     new BodyKeySanitizer("$.value[*].key"),
-                    // "sig=(.*)"
+                    // "sig=(.*)" URI
                     // new HeaderRegexSanitizer("x-ms-encryption-key"), dup
                     new HeaderRegexSanitizer("x-ms-rename-source"),
                     new HeaderRegexSanitizer("x-ms-file-rename-source"),

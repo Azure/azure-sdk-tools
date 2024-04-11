@@ -994,11 +994,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 // TODO
                 // - create an option in sanitizer to get access to 'ignore case' and other regex customizations
                 // - turn commented lines into actual sanitizers after discussion
+                // - add a query param sanitizer
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
                     // basic RecordedTestSanitizer handles Authorization header
                     new RecordedTestSanitizer(),
-                    new BodyKeySanitizer("$..refresh_token"),
 
                     // new defaults begin
                     new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;]+)", groupForReplace: "key"),
@@ -1034,12 +1034,12 @@ namespace Azure.Sdk.Tools.TestProxy
                     //(client_id=)[^&]+ body regex
                     //(client_secret=)[^&]+ body regex
                     //(client_assertion=)[^&]+ body regex
-                    new BodyKeySanitizer("$..targetModelLocation"),
+                    // new BodyKeySanitizer("$..targetModelLocation"), disabled, not a secret?
                     new BodyKeySanitizer("$..targetResourceId"),
                     new BodyKeySanitizer("$..urlSource"),
                     new BodyKeySanitizer("$..azureBlobSource.containerUrl"),
                     new BodyKeySanitizer("$..source"),
-                    new BodyKeySanitizer("$..resourceLocation"),
+                    // new BodyKeySanitizer("$..resourceLocation"), disabled, not a secret?
                     new HeaderRegexSanitizer("Location"),
                     new BodyKeySanitizer("$..to"),
                     new BodyKeySanitizer("$..from"),
@@ -1062,7 +1062,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     new BodyKeySanitizer("$..catalog"),
                     new BodyKeySanitizer("$..lastModifiedBy"),
                     new BodyKeySanitizer("$..managedResourceGroupName"),
-                    new BodyKeySanitizer("$..friendlyName"),
+                    // new BodyKeySanitizer("$..friendlyName"), disabled, not a secret?
                     new BodyKeySanitizer("$..createdBy"),
                     new BodyKeySanitizer("$..tenantId"),
                     new BodyKeySanitizer("$..principalId"),
@@ -1089,6 +1089,29 @@ namespace Azure.Sdk.Tools.TestProxy
                     new BodyKeySanitizer("$..storageContainerWriteSas"),
                     // "token=(?<token>[^\\u0026]+)($|\\u0026)" // BodyRegex?
                     // "-----BEGIN PRIVATE KEY-----\\n(.+\\n)*-----END PRIVATE KEY-----\\n" BodyRegex
+                    new BodyKeySanitizer("$..primaryMasterKey"),
+                    new BodyKeySanitizer("$..primaryReadonlyMasterKey"),
+                    new BodyKeySanitizer("$..secondaryMasterKey"),
+                    new BodyKeySanitizer("$..secondaryReadonlyMasterKey"),
+                    new BodyKeySanitizer("$..password"),
+                    new BodyKeySanitizer("$..certificatePassword"),
+                    new BodyKeySanitizer("$..clientSecret"),
+                    new BodyKeySanitizer("$..keyVaultClientSecret"),
+                    new BodyKeySanitizer("$..accountKey"),
+                    new BodyKeySanitizer("$..authHeader"),
+                    new BodyKeySanitizer("$..httpHeader"),
+                    new BodyKeySanitizer("$..encryptedCredential"),
+                    new BodyKeySanitizer("$..appkey"),
+                    new BodyKeySanitizer("$..functionKey"),
+                    new BodyKeySanitizer("$..atlasKafkaPrimaryEndpoint"),
+                    new BodyKeySanitizer("$..atlasKafkaSecondaryEndpoint"),
+                    new BodyKeySanitizer("$..certificatePassword"),
+                    new BodyKeySanitizer("$..storageAccountPrimaryKey"),
+                    new BodyKeySanitizer("$..privateKey"),
+                    new BodyKeySanitizer("$..fencingClientPassword"),
+                    new BodyKeySanitizer("$..acrToken"),
+                    new BodyKeySanitizer("$..scriptUrlSasToken"),
+                    new BodyKeySanitizer("$..refresh_token"),
                 };
 
                 Transforms = new List<ResponseTransform>

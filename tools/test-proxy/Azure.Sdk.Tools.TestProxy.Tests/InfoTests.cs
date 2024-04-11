@@ -18,6 +18,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class InfoTests
     {
+        private int DefaultExtensionCount { get { return new RecordingHandler(null).Sanitizers.Count; } }
+
         [Fact]
         public void TestReflectionModelBuild()
         {
@@ -79,17 +81,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var model = new ActiveMetadataModel(testRecordingHandler, recordingId);
             var descriptions = model.Descriptions.ToList();
 
-            // we should have exactly 6 if we're counting all the customizations appropriately
-            Assert.True(descriptions.Count == 6);
+            // we should have exactly DefaultExtensionCount + 2 if we're counting all the customizations appropriately
+            Assert.True(descriptions.Count == DefaultExtensionCount + 3);
             Assert.True(model.Matchers.Count() == 1);
-            Assert.True(model.Sanitizers.Count() == 5);
+            Assert.True(model.Sanitizers.Count() == DefaultExtensionCount + 2);
 
             // confirm that the overridden matcher is showing up
-            Assert.True(descriptions[3].ConstructorDetails.Arguments[1].Item2 == "\"ABC123\"");
-            Assert.True(descriptions[4].ConstructorDetails.Arguments[1].Item2 == "\".+?\"");
+            Assert.True(descriptions[DefaultExtensionCount].ConstructorDetails.Arguments[1].Item2 == "\"ABC123\"");
+            Assert.True(descriptions[DefaultExtensionCount + 1].ConstructorDetails.Arguments[1].Item2 == "\".+?\"");
 
             // and finally confirm our sanitizers are what we expect
-            Assert.True(descriptions[5].Name == "CustomDefaultMatcher");
+            Assert.True(descriptions[DefaultExtensionCount + 2].Name == "CustomDefaultMatcher");
         }
     }
 }

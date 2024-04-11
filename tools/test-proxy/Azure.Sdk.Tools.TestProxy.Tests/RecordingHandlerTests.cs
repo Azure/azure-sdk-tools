@@ -28,6 +28,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordingHandlerTests
     {
+        private int DefaultExtensionCount { get { return new RecordingHandler(null).Sanitizers.Count; } }
+
         #region helpers and private test fields
         private HttpContext GenerateHttpRequestContext(string[] headerValueStrings)
         {
@@ -96,10 +98,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (skipsToCheck.HasFlag(CheckSkips.IncludeSanitizers))
             {
-                Assert.Equal(3, handlerForTest.Sanitizers.Count);
+                Assert.Equal(DefaultExtensionCount, handlerForTest.Sanitizers.Count);
                 Assert.IsType<RecordedTestSanitizer>(handlerForTest.Sanitizers[0]);
                 Assert.IsType<BodyKeySanitizer>(handlerForTest.Sanitizers[1]);
-                Assert.IsType<BodyKeySanitizer>(handlerForTest.Sanitizers[2]);
+                Assert.IsType<GeneralRegexSanitizer>(handlerForTest.Sanitizers[2]);
             }
         }
         #endregion

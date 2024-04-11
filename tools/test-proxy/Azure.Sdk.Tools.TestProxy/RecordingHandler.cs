@@ -5,9 +5,11 @@ using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Azure.Sdk.Tools.TestProxy.Vendored;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -34,7 +36,6 @@ namespace Azure.Sdk.Tools.TestProxy
         private const string SkipRecordingHeaderKey = "x-recording-skip";
         private const string SkipRecordingRequestBody = "request-body";
         private const string SkipRecordingRequestResponse = "request-response";
-        private const string placeholder = "sanitized";
 
         public IAssetsStore Store;
         public StoreResolver Resolver;
@@ -986,20 +987,51 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());
                 }
-                
 
+
+
+
+                // TODO
+                // - create an option in sanitizer to get access to 'ignore case' and other regex customizations
+                // - turn commented lines into actual sanitizers after discussion
                 Sanitizers = new List<RecordedTestSanitizer>
                 {
-                    new RecordedTestSanitizer(), // handles authorize header
-                    new BodyKeySanitizer("$..access_token"),
+                    // basic RecordedTestSanitizer handles Authorization header
+                    new RecordedTestSanitizer(),
                     new BodyKeySanitizer("$..refresh_token"),
-                    // new HeaderRegexSanitizer("x-ms-encryption-key", "Sanitized"), left commented for now
-                    new GeneralRegexSanitizer(value: placeholder, regex: "AccountKey=(?<key>[^;]+)", groupForReplace: "key"),
-                    new GeneralRegexSanitizer(value: placeholder, regex: "SharedAccessKey=(?<key>[^;]+)", groupForReplace: "key"),
-                    // TODO: create an option for 'ignore case'
-                    new GeneralRegexSanitizer(value: placeholder, regex: "Accesskey=(?<key>[^;]+)", groupForReplace: "key"),
-                    new GeneralRegexSanitizer(value: placeholder, regex: "accesskey=(?<key>[^;]+)", groupForReplace: "key"),
-                    new HeaderRegexSanitizer("api-key", value: placeholder)
+
+                    // new defaults begin
+                    new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(regex: "AccountKey=(?<key>[^;]+)", groupForReplace: "key"),
+                    // "containerUrl": "<URL>/<Container>?sp=...st=...se=...spr=...sv=...sr=...sig="
+                    new GeneralRegexSanitizer(regex: "accesskey=(?<key>[^;]+)", groupForReplace: "key"),
+                    // "token": "sv=2023-08-03\u0026ss=b\u0026srt=sco\u0026se=2050-12-12T00%3A00%3A00Z\u0026sp=rwdxlacuptf\u0026sig="
+                    new BodyKeySanitizer("$..applicationSecret"),
+                    new BodyKeySanitizer("$..apiKey"),
+                    new HeaderRegexSanitizer("api-key"),
+                    new BodyKeySanitizer("$..connectionString"),
+                    new GeneralRegexSanitizer(regex: "Accesskey=(?<key>[^;]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(regex: "Secret=(?<key>[^;]+)", groupForReplace: "key"),
+                    new HeaderRegexSanitizer("x-ms-encryption-key"),
+                    new BodyKeySanitizer("$..sshPassword"),
+                    new BodyKeySanitizer("$..aliasSecondaryConnectionString"),
+                    new BodyKeySanitizer("$..primaryKey"),
+                    new BodyKeySanitizer("$..secondaryKey"),
+                    new BodyKeySanitizer("$..adminPassword.value"),
+                    new BodyKeySanitizer("$..administratorLoginPassword"),
+                    new BodyKeySanitizer("$..accessToken"),
+                    new BodyKeySanitizer("$..runAsPassword"),
+                    new BodyKeySanitizer("$..adminPassword"),
+                    new BodyKeySanitizer("$..accessSAS"),
+                    // "token": "sv=...ss=...srt=...se=...sp=...sig=" request body
+                    new BodyKeySanitizer("$..WEBSITE_AUTH_ENCRYPTION_KEY"),
+                    new BodyKeySanitizer("$..decryptionKey"),
+                    // "ServiceBusDlqSupplementaryAuthorization": "SharedAccessSignature sr=...\sig=...se=….skn=….",
+                    // "ServiceBusSupplementaryAuthorization": "SharedAccessSignature sr=...sig=...se=...skn=...",
+                    // "RequestBody": "client_id=...grant_type=...client_info=...client_secret=…scope=...",
+                    new BodyKeySanitizer("$..access_token"),
+                    new BodyKeySanitizer("$..AccessToken"),
+                    
                 };
 
                 Transforms = new List<ResponseTransform>

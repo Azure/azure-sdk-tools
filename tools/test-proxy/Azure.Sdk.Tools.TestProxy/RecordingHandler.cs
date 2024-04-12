@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public HttpClient RedirectlessClient;
         public HttpClient RedirectableClient;
 
-        public List<RecordedTestSanitizer> Sanitizers { get; set; }
+        public SanitizerDictionary Sanitizers = new SanitizerDictionary();
 
         public List<ResponseTransform> Transforms { get; set; }
 

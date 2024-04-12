@@ -23,16 +23,17 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public List<ResponseTransform> AdditionalTransforms { get; } = new List<ResponseTransform>();
 
-        public List<RecordedTestSanitizer> AdditionalSanitizers { get; }= new List<RecordedTestSanitizer>();
+        public List<int> AppliedSanitizers { get; } = new List<int>();
+        public List<int> ForRemoval { get; } = new List<int>();
 
         public string SourceRecordingId { get; set; }
 
         public int PlaybackResponseTime { get; set; }
 
-        public void ResetExtensions()
+        public void ResetExtensions(SanitizerDictionary sanitizerDictionary)
         {
             AdditionalTransforms.Clear();
-            AdditionalSanitizers.Clear();
+            AppliedSanitizers.Clear();
             CustomMatcher = null;
             Client = null;
         }

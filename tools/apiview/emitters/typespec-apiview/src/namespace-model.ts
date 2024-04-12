@@ -28,6 +28,7 @@ import {
   ScalarStatementNode,
   TypeReferenceNode,
   JsNamespaceDeclarationNode,
+  DirectiveExpressionNode,
 } from "@typespec/compiler";
 
 export class NamespaceModel {
@@ -125,6 +126,18 @@ export class NamespaceModel {
    */
   shouldEmit(): boolean {
     return ((this.node as NamespaceStatementNode).decorators !== undefined || this.models.size > 0 || this.operations.size > 0 || this.resources.size > 0);
+  }
+
+  collectDirectives(): DirectiveExpressionNode[] | undefined {
+    let directives: DirectiveExpressionNode[] | undefined = [...(this.node.directives ?? [])];
+    let curr: Node = this.node;
+    while (curr.parent !== undefined) {
+        curr = curr.parent;
+        if (curr.directives !== undefined) {
+            directives = directives.concat(curr.directives);
+        }
+    }
+    return directives;
   }
 }
 

@@ -354,7 +354,7 @@ namespace APIViewWeb.Helpers
             }
             else if (activeRevisionReviewCodeFile.CodeFileVersion.Equals("v2"))
             {
-                reviewPageContent.APITree = activeRevisionReviewCodeFile.APITree;
+                reviewPageContent.APIForest = activeRevisionReviewCodeFile.APIForest;
 
                 if (!string.IsNullOrEmpty(diffRevisionId))
                 {
@@ -362,7 +362,7 @@ namespace APIViewWeb.Helpers
                     {
                         diffRevision = await reviewRevisionsManager.GetAPIRevisionAsync(user, diffRevisionId);
                         var diffRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(diffRevisionId, diffRevision.Files[0].FileId);
-                        reviewPageContent.APITree = await CodeFileHelpers.ComputeAPITreeDiff(activeRevisionReviewCodeFile.APITree, diffRevisionRenderableCodeFile.CodeFile.APITree);
+                        reviewPageContent.APIForest = CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionRenderableCodeFile.CodeFile.APIForest);
                     }
                 }
             }

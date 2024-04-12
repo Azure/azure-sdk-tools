@@ -34,7 +34,7 @@ export interface SelectItemModel {
 
 export interface ReviewContent {
   review: Review
-  apiTree: APITreeNode[]
+  apiForest: APITreeNode[]
   apiRevisions: APIRevision[]
   activeAPIRevision: APIRevision
   diffAPIRevision: APIRevision

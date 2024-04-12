@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -122,9 +123,31 @@ namespace APIView.Model
         public string SubKind { get; set; }
         public bool IsHidden { get; set; }
         public bool IsDeprecated { get; set; }
+        public HashSet<string> Tags { get; } = new HashSet<string>(); // Use for hidden and Deprecated
         public Dictionary<string, string> Properties { get; } = new Dictionary<string, string>();
         public List<StructuredToken> TopTokens { get; } = new List<StructuredToken>();
         public List<StructuredToken> BottomTokens { get; } = new List<StructuredToken>();
         public List<APITreeNode> Children { get; } = new List<APITreeNode>();
+
+        public override int GetHashCode()
+        {
+            int hash = 17;
+            hash = hash * 23 + (Name != null ? Name.GetHashCode() : 0);
+            hash = hash * 23 + (Id != null ? Id.GetHashCode() : 0);
+            hash = hash * 23 + (Kind != null ? Kind.GetHashCode() : 0);
+            hash = hash * 23 + (SubKind != null ? SubKind.GetHashCode() : 0);
+            return hash;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+            {
+                return false;
+            }
+
+            var other = (APITreeNode)obj;
+            return Name == other.Name && Id == other.Id && Kind == other.Kind && SubKind == other.SubKind;
+        }
     }
 }

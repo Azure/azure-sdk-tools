@@ -36,7 +36,7 @@ namespace ApiView
 
         public string CodeFileVersion
         {
-            get => this.APITree.Count > 0 ? "v2" : "v1";
+            get => this.APIForest.Count > 0 ? "v2" : "v1";
         }
 
         public string Name { get; set; }
@@ -56,7 +56,7 @@ namespace ApiView
         public string CrossLanguagePackageId { get; set; }
 
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
-        public List<APITreeNode> APITree { get; set; } = new List<APITreeNode>();
+        public List<APITreeNode> APIForest { get; set; } = new List<APITreeNode>();
 
         public List<CodeFileToken[]> LeafSections { get; set; }
 

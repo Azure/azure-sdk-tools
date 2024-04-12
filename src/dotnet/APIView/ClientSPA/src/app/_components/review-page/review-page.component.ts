@@ -94,7 +94,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
           this.reviewContent = response;
           const message: any = {
             directive: ReviewPageWorkerMessageDirective.BuildAPITree,
-            apiTree : this.reviewContent!.apiTree
+            apiTree : this.reviewContent!.apiForest
           };
           this.apiTreeBuilder!.postMessage(message);
         }

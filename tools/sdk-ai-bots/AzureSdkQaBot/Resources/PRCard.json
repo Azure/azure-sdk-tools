@@ -1,0 +1,122 @@
+{
+  "type": "AdaptiveCard",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "${query}",
+      "wrap": true,
+      "style": "heading"
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "Answer based on pull request:",
+              "weight": "Bolder",
+              "wrap": true
+            }
+          ],
+          "width": "97px",
+          "horizontalAlignment": "Left"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "${answer}",
+              "wrap": true
+            }
+          ],
+          "width": "stretch"
+        }
+      ],
+      "horizontalAlignment": "Left",
+      "separator": true
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "Next action for pull request:",
+              "weight": "Bolder",
+              "color": "Accent",
+              "wrap": true
+            }
+          ],
+          "width": "97px",
+          "horizontalAlignment": "Left"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "${action}",
+              "wrap": true
+            }
+          ],
+          "width": "stretch"
+        }
+      ],
+      "horizontalAlignment": "Left",
+      "isVisible": "${!empty(action)}"
+    },
+    {
+      "type": "ColumnSet",
+      "columns": [
+        {
+          "type": "Column",
+          "items": [
+            {
+              "type": "TextBlock",
+              "text": "Review workflow:",
+              "weight": "Bolder",
+              "wrap": true
+            }
+          ],
+          "width": "97px"
+        },
+        {
+          "type": "Column",
+          "items": [
+            {
+              "$data": "${references}",
+              "type": "TextBlock",
+              "text": "${reference}"
+            }
+          ],
+          "width": "stretch"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.Submit",
+      "iconUrl": "https://saazuresdkbot.blob.core.windows.net/resources/LikeIcon.png",
+      "tooltip": "Like",
+      "data": {
+        "vote": "yes"
+      }
+    },
+    {
+      "type": "Action.Submit",
+      "iconUrl": "https://saazuresdkbot.blob.core.windows.net/resources/DislikeIcon.png",
+      "tooltip": "Dislike",
+      "data": {
+        "vote": "no"
+      }
+    }
+  ],
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.6"
+}

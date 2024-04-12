@@ -24,7 +24,7 @@ An `assets.json` takes the form:
 
 ```jsonc
 {
-  "AssetsRepo": "Azure/azure-sdk-assets-integration",
+  "AssetsRepo": "Azure/azure-sdk-assets",
   "AssetsRepoPrefixPath": "python",
   "TagPrefix": "python/core",
   "Tag": "python/core_<10-character-commit-SHA>"
@@ -35,7 +35,7 @@ An `assets.json` takes the form:
 |---|---|
 | AssetsRepo | The full name of the external github repo storing the data. EG: `Azure/azure-sdk-assets` |
 | AssetsRepoPrefixPath | The assets repository may want to place the content under a specific path in the assets repo. The default should be the language that the assets belong to. EG: `python`, `net`, `java` etc. |
-| TagPrefix | `<Language>/<ServiceDirectory>` or `<Language>/<ServiceDirectory>/<Library>` or deeper if things are nested in such a manner. |
+| TagPrefix | `<Language>/<ServiceDirectory>` or `<Language>/<ServiceDirectory>/<Library>` or deeper if things are nested in such a manner. This exists **purely** for ease of recognizing your tags.|
 | Tag | Initially empty until after the first push at which point the tag will be the `<TagPrefix><10-character-commit-SHA>` |
 
 Comments within the assets.json are allowed and _maintained_ by the tooling. Feel free to leave notes to yourself. They will not be eliminated.
@@ -167,6 +167,19 @@ As you run tests in `recording` or `playback` mode, the `test-proxy` automatical
 
 To view the changes before pushing, use one of the one-liners defined below [below](#attempt-to-manually-resolve).
 
+### I'm starting entirely fresh with no recordings, what should I do first?
+
+All new packages in `azure-sdk` must externalize their recordings, so begin by creating an `assets.json` at your package root.
+
+You could...
+
+- **Manually** generate it from the example `assets.json` [further up in this document](#the-assetsjson-and-how-it-enables-external-recordings)
+- Utilize the powershell script `eng/common/testproxy/onboarding/generate-assets-json.ps1` **without** `-InitialPush` flag. [The README is here.](/eng/common/testproxy/onboarding/README.md)
+
+Given the relative lack of complexity present in an `assets.json`, manual generation is recommended _unless recordings already exist_. In which case [this later section has you covered.](#im-a-dev-who-uses-the-test-proxy-currently-how-do-i-externalize-my-recordings)
+
+Once an assets.json with **blank** `Tag` value is present, start your recordings in `Record` mode as normal. Given that there is no tag present in the `assets.json`, the `main` branch will be restored from `azure-sdk-assets`. From there, on successful record-test run, the assets will be in a `test-proxy push`-able state. After that first push, your `tag` will be populated!
+
 ### My tests don't use the test-proxy at all currently, how do I externalize my recordings?
 
 You don't. Your first step is to integrate your test framework with the `test-proxy`.
@@ -189,7 +202,7 @@ Use [the transition script](https://github.com/Azure/azure-sdk-tools/blob/main/e
 
 In summary, once an assets.json is present, the shim _must_ be updated to **actually send** a reference to that assets.json inside the `record/start` or `playback/start` requests!
 
-![assets diagram](../_images/before_after.png)
+![request with and without assets.json](../_images/before_after.png)
 
 ### What does this look like in practice?
 
@@ -205,7 +218,7 @@ One can see the automatically restored assets repos within the `.assets` folder.
 
 The below diagram illustrates how an individual assets.json, language repo, and assets repo relate to each other.
 
-![assets diagram](../_images/organization_of_assets1.png)
+![assets diagram](../_images/organization_of_assets.png)
 
 A user can use the `config` verb to access this the location of their assets on disk! Using assets diagram directly as a reference. we can work an example:
 
@@ -229,7 +242,7 @@ C:/repo/sdk-for-python/>test-proxy push -a sdk/tables/assets.json
 
 So with the above invocation, the _actual_ location of the assets.json would be: `C:/repo/sdk-for-python/sdk/tables/assets.json`.
 
-When calling the tool (not `docker` unfortunately , due to `mount` constraints), _absolute_ paths are also supported. In that case, context directory does not matter at all.
+When calling the tool, _absolute_ paths are also supported. In that case, context directory does not matter at all.
 
 ```text
 test-proxy push -a C:/repo/sdk-for-python/sdk/tables/assets.json
@@ -243,31 +256,6 @@ After running tests in `record` mode.
 
 1. Confirm lack of secrets (as always with recordings).
 2. `test-proxy push <path-to-assets-json>`
-
-> **Important Note** When using `docker` mode with test-proxy push, one will need to invoke the docker container with a couple additional environment variable settings.
-
-Example Docker Push Call
-
-```powershell
-docker run --rm -v "<repo-root>:/srv/testproxy" -e "GIT_TOKEN=<git token>" -e "GIT_COMMIT_OWNER=<git commit owner>" -e "GIT_COMMIT_EMAIL=<git commit email>" azsdkengsys.azurecr.io/engsys/test-proxy:latest test-proxy <proxy-args>
-```
-
-Please note that any proxy arguments that include _paths_ will need to be **relative** when calling the docker container to do the work for you. This is due to the fact that the running container stores its files under an **internal** path representation. The repo root will be mounted under the default context-directory of `/srv/testproxy/` _always_ for the running container, so all paths must be expressed relatively from that root to actually resolve.
-
-```powershell
-# absolute path to assets json
-C:/repo/sdk-for-python/sdk/tables/assets.json
-
-# docker container is run, mounting repo root C:/repo/sdk-for-python/ to /srv/testproxy/. The whole path will no longer align
-# but the relative path from the root of the repo WILL.
-/srv/testproxy/sdk/tables/assets.json
-```
-
-So to make a push work for the above scenario, all one must do is only include the path from the root of the repo.
-
-```powershell
-docker run --rm -v "C:/repo/sdk-for-python:/srv/testproxy"  -e "GIT_TOKEN=myveryrealtoken" -e "GIT_COMMIT_OWNER=scbedd" -e  "GIT_COMMIT_EMAIL=scbedd@microsoft.com" azsdkengsys.azurecr.io/engsys/test-proxy:latest test-proxy push -a sdk/tables/assets.json
-```
 
 #### An additional note about using `test-proxy push` in codespaces
 
@@ -283,7 +271,7 @@ The `azure-sdk` team has chosen to address this difficulty by [applying the foll
 
 > **Note** Codespaces created on **forks** do not magically gain write permissions to `azure-sdk-assets`.
 
-To push from a codespace on a fork, devs will need to set `GIT_TOKEN` themselves to a PAT that has write access to `azure-sdk-assets`. Effectively the same route as if they wanted to use docker.
+To push from a codespace on a fork, devs will need to set `GIT_TOKEN` themselves to a PAT that has write access to `azure-sdk-assets`.
 
 ### I am getting weird errors out of my test-proxy operations
 

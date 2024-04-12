@@ -42,6 +42,28 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Utils
 
         [Category("Utils")]
         [Category("Moniker")]
+        // Case Insensitive Tests
+        [TestCase(MonikerConstants.AzureSdkOwners, $"# AzureSDKOwners:          @fakeOwner1 @fakeOwner2")]
+        [TestCase(MonikerConstants.AzureSdkOwners, $"# azureSdkowners:          @fakeOwner1 @fakeOwner2")]
+        [TestCase(MonikerConstants.PRLabel, $"# prlabel: %Fake Label")]
+        [TestCase(MonikerConstants.PRLabel, $"# PrLabel: %Fake Label")]
+        [TestCase(MonikerConstants.ServiceLabel, $"# serviceLabel: %Fake Label")]
+        [TestCase(MonikerConstants.ServiceLabel, $"# SERVICELABEL: %Fake Label")]
+        [TestCase(MonikerConstants.ServiceOwners, $"# seRvICEowners:")]
+        [TestCase(MonikerConstants.ServiceOwners, $"# serviceOwners:")]
+        public void TestMonikerParsingForMonikerLinesCaseInsensitive(string moniker, string line)
+        {
+            // The MonikerUtils has 2 methods to test for Moniker parsing
+            // 1. ParseMonikerFromLine - returns the moniker if one is found on the line
+            // 2. IsMonikerLine - returns true if the line is a moniker line
+            bool isMonikerLine = MonikerUtils.IsMonikerLine(line);
+            Assert.IsTrue(isMonikerLine, $"IsMonikerLine for '{line}' contains '{moniker}' and should have returned true.");
+            string parsedMoniker = MonikerUtils.ParseMonikerFromLine(line);
+            Assert.That(parsedMoniker, Is.EqualTo(moniker), $"ParseMonikerFromLine for '{line}' should have returned '{moniker}' but returned '{parsedMoniker}'");
+        }
+
+        [Category("Utils")]
+        [Category("Moniker")]
         [TestCase("# just a comment line")]
         // Whitespace line with spaces and tabs
         [TestCase("  \t")]

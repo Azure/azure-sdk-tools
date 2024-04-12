@@ -617,3 +617,22 @@ OR
 ### Actions
 
 - Lock issue conversations
+
+## Enforce max life of issues
+
+### Trigger
+
+- CRON (weekly, Monday at 10am)
+
+### Criteria
+
+- Issue is open
+- Issue was opened > 2 years ago
+- Issue was last updated more than 30 days ago
+
+### Actions
+
+- Close the issue
+- Create the following comment
+  - "Hi @{issueAuthor}, we deeply appreciate your input into this project. Regrettably, this issue has remained inactive for over 2 years, leading us to the decision to close it. We've implemented this policy to maintain the relevance of our issue queue and facilitate easier navigation for new contributors. If you still believe this topic requires attention, please feel free to create a new issue, referencing this one. Thank you for your understanding and ongoing support."
+- Lock issue conversations

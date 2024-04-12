@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             mockGitHubEventClient.CreateSearchIssuesResult(expectedUpdates, scheduledEventPayload.Repository, ItemState.Open);
             await ScheduledEventProcessing.CloseAddressedIssues(mockGitHubEventClient, scheduledEventPayload);
 
-            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(scheduledEventPayload.Repository.Id);
+            var totalUpdates = await mockGitHubEventClient.ProcessPendingScheduledUpdates();
             // Verify the RuleCheck 
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
             if (RuleState.On == ruleState)
@@ -86,7 +86,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             mockGitHubEventClient.CreateSearchIssuesResult(expectedUpdates, scheduledEventPayload.Repository, ItemState.Open);
             await ScheduledEventProcessing.CloseStaleIssues(mockGitHubEventClient, scheduledEventPayload);
 
-            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(scheduledEventPayload.Repository.Id);
+            var totalUpdates = await mockGitHubEventClient.ProcessPendingScheduledUpdates();
             // Verify the RuleCheck 
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
             if (RuleState.On == ruleState)
@@ -128,7 +128,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             mockGitHubEventClient.CreateSearchIssuesResult(expectedUpdates, scheduledEventPayload.Repository, ItemState.Open);
             await ScheduledEventProcessing.CloseStalePullRequests(mockGitHubEventClient, scheduledEventPayload);
 
-            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(scheduledEventPayload.Repository.Id);
+            var totalUpdates = await mockGitHubEventClient.ProcessPendingScheduledUpdates();
             // Verify the RuleCheck 
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
             if (RuleState.On == ruleState)
@@ -173,7 +173,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             mockGitHubEventClient.CreateSearchIssuesResult(expectedUpdates, scheduledEventPayload.Repository, ItemState.Open);
             await ScheduledEventProcessing.IdentifyStalePullRequests(mockGitHubEventClient, scheduledEventPayload);
 
-            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(scheduledEventPayload.Repository.Id);
+            var totalUpdates = await mockGitHubEventClient.ProcessPendingScheduledUpdates();
             // Verify the RuleCheck 
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
             if (RuleState.On == ruleState)
@@ -186,7 +186,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(expectedUpdates / 2, numComments, $"The number of comments should have been {expectedUpdates / 2} but was instead, {numComments}");
 
                 // Verify LabelConstants.NoRecentActivity was added
-                Assert.IsTrue(mockGitHubEventClient.GetGitHubIssuesToUpdate()[0].IssueUpdate.Labels.Contains(LabelConstants.NoRecentActivity), $"rule should have added {LabelConstants.NoRecentActivity} label and did not.");
+                Assert.IsTrue(mockGitHubEventClient.GetGitHubIssuesToUpdate()[0].IssueUpdate.Labels.Contains(TriageLabelConstants.NoRecentActivity), $"rule should have added {TriageLabelConstants.NoRecentActivity} label and did not.");
             }
             else
             {
@@ -218,7 +218,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             mockGitHubEventClient.CreateSearchIssuesResult(expectedUpdates, scheduledEventPayload.Repository, ItemState.Open);
             await ScheduledEventProcessing.IdentifyStaleIssues(mockGitHubEventClient, scheduledEventPayload);
 
-            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(scheduledEventPayload.Repository.Id);
+            var totalUpdates = await mockGitHubEventClient.ProcessPendingScheduledUpdates();
             // Verify the RuleCheck 
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
             if (RuleState.On == ruleState)
@@ -231,7 +231,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(expectedUpdates / 2, numComments, $"The number of comments should have been {expectedUpdates / 2} but was instead, {numComments}");
 
                 // Verify LabelConstants.NoRecentActivity was added
-                Assert.IsTrue(mockGitHubEventClient.GetGitHubIssuesToUpdate()[0].IssueUpdate.Labels.Contains(LabelConstants.NoRecentActivity), $"rule should have added {LabelConstants.NoRecentActivity} label and did not.");
+                Assert.IsTrue(mockGitHubEventClient.GetGitHubIssuesToUpdate()[0].IssueUpdate.Labels.Contains(TriageLabelConstants.NoRecentActivity), $"rule should have added {TriageLabelConstants.NoRecentActivity} label and did not.");
             }
             else
             {
@@ -261,7 +261,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
             mockGitHubEventClient.CreateSearchIssuesResult(expectedUpdates, scheduledEventPayload.Repository, ItemState.Open);
             await ScheduledEventProcessing.LockClosedIssues(mockGitHubEventClient, scheduledEventPayload);
 
-            var totalUpdates = await mockGitHubEventClient.ProcessPendingUpdates(scheduledEventPayload.Repository.Id);
+            var totalUpdates = await mockGitHubEventClient.ProcessPendingScheduledUpdates();
             // Verify the RuleCheck 
             Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
             if (RuleState.On == ruleState)
@@ -269,6 +269,54 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(expectedUpdates, totalUpdates, $"The number of updates should have been {expectedUpdates} but was instead, {totalUpdates}");
                 int numIssuesToLock = mockGitHubEventClient.GetGitHubIssuesToLock().Count;
                 Assert.AreEqual(expectedUpdates, numIssuesToLock, $"The number of issues to lock should have been {expectedUpdates} but was instead, {numIssuesToLock}");
+            }
+            else
+            {
+                Assert.AreEqual(0, totalUpdates, $"{rule} is {ruleState} and should not have produced any updates.");
+            }
+        }
+
+        /// <summary>
+        /// Test the EnforceMaxLifeOfIssues scheduled event.
+        /// Each item returned from the query will have three updates:
+        ///     Issue will be closed
+        ///     Issue will have a comment added
+        ///     Issue will be locked
+        /// </summary>
+        /// <param name="rule">String, RulesConstants for the rule being tested</param>
+        /// <param name="payloadFile">JSon payload file for the event being tested</param>
+        /// <param name="ruleState">Whether or not the rule is on/off</param>
+        [Category("static")]
+        [TestCase(RulesConstants.EnforceMaxLifeOfIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.On)]
+        [TestCase(RulesConstants.EnforceMaxLifeOfIssues, "Tests.JsonEventPayloads/ScheduledEvent_payload.json", RuleState.Off)]
+        public async Task TestEnforceMaxLifeOfIssues(string rule, string payloadFile, RuleState ruleState)
+        {
+            // Need something divisible by 3 Because EnforceMaxLifeOfIssues does 3 updates per issue
+            // creating 100 results should only result in 34 issues being closed and 34 comments created
+            // and 34 issues being locked = 102 expected updates.
+            int expectedUpdates = 102;
+            var mockGitHubEventClient = new MockGitHubEventClient(OrgConstants.ProductHeaderName);
+            mockGitHubEventClient.RulesConfiguration.Rules[rule] = ruleState;
+            var rawJson = TestHelpers.GetTestEventPayload(payloadFile);
+            ScheduledEventGitHubPayload scheduledEventPayload = SimpleJsonSerializer.Deserialize<ScheduledEventGitHubPayload>(rawJson);
+            // Create the fake issues to update. 
+            mockGitHubEventClient.CreateSearchIssuesResult(expectedUpdates, scheduledEventPayload.Repository, ItemState.Open);
+            await ScheduledEventProcessing.EnforceMaxLifeOfIssues(mockGitHubEventClient, scheduledEventPayload);
+
+            var totalUpdates = await mockGitHubEventClient.ProcessPendingScheduledUpdates();
+            // Verify the RuleCheck 
+            Assert.AreEqual(ruleState == RuleState.On, mockGitHubEventClient.RulesConfiguration.RuleEnabled(rule), $"Rule '{rule}' enabled should have been {ruleState == RuleState.On} but RuleEnabled returned {ruleState != RuleState.On}.'");
+            if (RuleState.On == ruleState)
+            {
+                // Create the fake issues to update. 
+                Assert.AreEqual(expectedUpdates, totalUpdates, $"The number of updates should have been {expectedUpdates} but was instead, {totalUpdates}");
+                // There should be expectedUpdates/3 issueUpdates, expectedUpdates/3 comments and expectedUpdates/3 issues to lock
+                int numIssueUpdates = mockGitHubEventClient.GetGitHubIssuesToUpdate().Count;
+                Assert.AreEqual(expectedUpdates / 3, numIssueUpdates, $"The number of issue updates should have been {expectedUpdates / 3} but was instead, {numIssueUpdates}");
+                int numComments = mockGitHubEventClient.GetComments().Count;
+                Assert.AreEqual(expectedUpdates / 3, numComments, $"The number of comments should have been {expectedUpdates / 3} but was instead, {numComments}");
+                int numIssuesToLock = mockGitHubEventClient.GetGitHubIssuesToLock().Count;
+                Assert.AreEqual(expectedUpdates / 3, numIssuesToLock, $"The number of issues to lock should have been {expectedUpdates / 3} but was instead, {numIssuesToLock}");
             }
             else
             {

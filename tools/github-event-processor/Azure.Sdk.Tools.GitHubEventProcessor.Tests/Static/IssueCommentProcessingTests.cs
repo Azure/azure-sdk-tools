@@ -43,9 +43,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 // There should be 2 updates, one label being added and one
                 Assert.AreEqual(2, totalUpdates, $"The number of updates should have been 3 but was instead, {totalUpdates}");
                 // Verify that NeedsTeamAttention was added
-                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamAttention), $"Labels to Add list does not contain {LabelConstants.NeedsTeamAttention}.");
+                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamAttention), $"Labels to Add list does not contain {TriageLabelConstants.NeedsTeamAttention}.");
                 // Verify that NeedsAuthorFeedback was removed
-                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsAuthorFeedback), $"Lables to Remove list does not contain {LabelConstants.NeedsAuthorFeedback}.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NeedsAuthorFeedback), $"Lables to Remove list does not contain {TriageLabelConstants.NeedsAuthorFeedback}.");
             }
             else
             {
@@ -81,7 +81,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
 
                 // Verify that NoRecentActivity is in the remove list
-                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove list does not contain {LabelConstants.NoRecentActivity}.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NoRecentActivity), $"Labels to remove list does not contain {TriageLabelConstants.NoRecentActivity}.");
             }
             else
             {
@@ -123,11 +123,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 Assert.AreEqual(issueUpdate.State, ItemState.Open, $"Issue's State should be {ItemState.Open} but was {issueUpdate.State}");
 
                 // Verify that the NeedsTeamAttention label was added
-                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamAttention), $"Labels to add should contain {LabelConstants.NeedsTeamAttention} and does not.");
+                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamAttention), $"Labels to add should contain {TriageLabelConstants.NeedsTeamAttention} and does not.");
 
                 // Verify that NeedsAuthorFeedback and NoRecentActivity labels were removed
-                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NeedsAuthorFeedback), $"Lables to remove should contain {LabelConstants.NeedsAuthorFeedback} and does not.");
-                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Lables to remove should contain {LabelConstants.NoRecentActivity} and does not.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NeedsAuthorFeedback), $"Lables to remove should contain {TriageLabelConstants.NeedsAuthorFeedback} and does not.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NoRecentActivity), $"Lables to remove should contain {TriageLabelConstants.NoRecentActivity} and does not.");
             }
             else
             {
@@ -216,9 +216,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 // Verify the IssueUpdate's State = ItemState.Open
                 Assert.AreEqual(issueUpdate.State, ItemState.Open, $"IssueUpdate's state should be ItemState.Open and was not.");
                 // IssueAddressed label has been removed
-                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.IssueAddressed), $"Labels to remove should contain {LabelConstants.IssueAddressed} and does not.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.IssueAddressed), $"Labels to remove should contain {TriageLabelConstants.IssueAddressed} and does not.");
                 // NeedsTeamAttention has been added
-                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamAttention), $"Labels to add should contain {LabelConstants.NeedsTeamAttention} and does not.");
+                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamAttention), $"Labels to add should contain {TriageLabelConstants.NeedsTeamAttention} and does not.");
             }
             else
             {
@@ -260,9 +260,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                 // Verify the IssueUpdate's State = ItemState.Open
                 Assert.AreEqual(issueUpdate.State, ItemState.Open, $"IssueUpdate's state should be ItemState.Open and was not.");
                 // IssueAddressed label has been removed
-                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.IssueAddressed), $"Labels to remove should contain {LabelConstants.IssueAddressed} and does not.");
+                Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.IssueAddressed), $"Labels to remove should contain {TriageLabelConstants.IssueAddressed} and does not.");
                 // NeedsTeamAttention has been added
-                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(LabelConstants.NeedsTeamAttention), $"Labels to add should contain {LabelConstants.NeedsTeamAttention} and does not.");
+                Assert.True(mockGitHubEventClient.GetLabelsToAdd().Contains(TriageLabelConstants.NeedsTeamAttention), $"Labels to add should contain {TriageLabelConstants.NeedsTeamAttention} and does not.");
             }
             else
             {

@@ -66,6 +66,24 @@ namespace APIViewWeb.Repositories
         private async Task<HttpResponseMessage> GetFromDevopsAsync(string request)
         {
             var downloadResp = await _devopsClient.GetAsync(request);
+
+
+            if (!downloadResp.IsSuccessStatusCode)
+            {
+                var retryAfter = downloadResp.Headers.GetValues("Retry-After");
+                var rateLimitResource = downloadResp.Headers.GetValues("X-RateLimit-Resource");
+                var rateLimitDelay = downloadResp.Headers.GetValues("X-RateLimit-Delay");
+                var rateLimitLimit = downloadResp.Headers .GetValues("X-RateLimit-Limit");
+                var rateLimitRemaining = downloadResp.Headers.GetValues("X-RateLimit-Remaining");
+                var rateLimitReset = downloadResp.Headers.GetValues("X-RateLimit-Reset");
+
+                var traceMessage = $"request: {request} failed with statusCode: {downloadResp.StatusCode}," +
+                    $"retryAfter: {retryAfter.FirstOrDefault()}, rateLimitResource: {rateLimitResource.FirstOrDefault()}, rateLimitDelay: {rateLimitDelay.FirstOrDefault()}," +
+                    $"rateLimitLimit: {rateLimitLimit.FirstOrDefault()}, rateLimitRemaining: {rateLimitRemaining.FirstOrDefault()}, rateLimitReset: {rateLimitReset.FirstOrDefault()}";
+
+                _telemetryClient.TrackTrace(traceMessage);
+            }
+
             int count = 0;
             int[] waitTimes = new int[] { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256 };
             while ((downloadResp.StatusCode == HttpStatusCode.TooManyRequests || downloadResp.StatusCode == HttpStatusCode.BadRequest) && count < waitTimes.Length)

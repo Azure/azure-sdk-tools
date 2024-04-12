@@ -6,19 +6,44 @@
 @{
     Layout = "Shared/_Layout";
     ViewData["Title"] = Model.ReviewContent.Review.PackageName;
-    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
-    TempData["UserPreference"] = userPreference;
+    TempData["UserPreference"] = Model.UserPreference;
     TempData["LanguageCssSafeName"] = PageModelHelpers.GetLanguageCssSafeName(Model.ReviewContent.Review.Language);
     TempData["Comments"] = Model.Comments;
     ViewBag.HasSections = Model.ReviewContent.PageHasLoadableSections;
 }
 @{
-    var offCanvasClass = " show-offcanvas";
-    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
-        offCanvasClass = String.Empty;
+    var rightOffCanvasClass = " show-right-offcanvas";
+    var leftOffCanvasClass = " show-left-offcanvas";
+    var mainContainerLeftClass = " move-main-content-container-left";
+    var mainContainerRightClass = " move-main-content-container-right";
+    if (Model.UserPreference.HideReviewPageOptions.HasValue && Model.UserPreference.HideReviewPageOptions == true)
+    {
+        rightOffCanvasClass = String.Empty;
+        mainContainerRightClass = String.Empty;
+    }
+    var mainContainerClass = mainContainerLeftClass + mainContainerRightClass;
 }
-<div id="right-offcanvas-menu" class="right-offcanvas@(offCanvasClass)">
-    <div class="offcanvas-menu-content" id="review-offcanvas-menu-content">
+
+<div id="left-offcanvas-menu" class="left-offcanvas@(leftOffCanvasClass)">
+    <div class="left-offcanvas-menu-content" id="left-offcanvas-menu-content">
+        <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="API" active-if="@TempData["page"].Equals("api")"><i class="bi bi-braces"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#apiRevisions-context" aria-controls="apiRevisions-context"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisions"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Conversation" asp-route-id="@Model.ReviewContent.Review.Id"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversations"></i>
+                @if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0)
+                {
+                    var count = (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 10) ? "9+" : $"{Model.ReviewContent.ActiveConversationsInActiveAPIRevision}";
+                    <span class="position-absolute start translate-middle badge rounded-pill bg-danger" id="jump-to-first-comment">
+                        @count
+                        <span class="visually-hidden">unread messages</span>
+                    </span>                }
+            </a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.ReviewContent.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
+        </div>
+    </div>
+</div>
+<div id="right-offcanvas-menu" class="right-offcanvas@(rightOffCanvasClass)">
+    <div class="right-offcanvas-menu-content" id="right-offcanvas-menu-content">
         <p class="h6">
             <a data-bs-toggle="collapse" href="#approveCollapse" aria-expanded="true" aria-controls="approveCollapse">Approval&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
@@ -45,8 +70,8 @@
                         else
                         {
                             var isActiveRevisionAhead = (Model.ReviewContent.DiffAPIRevision == null)? true: Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn;
-                            @if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 
-                                && Model.ReviewContent.ActiveConversationsInSampleRevisions > 0
+                            @if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 
+                                || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
                                 && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
                            && isActiveRevisionAhead)
                             {
@@ -127,7 +152,19 @@
             !(LanguageServiceHelpers.MapLanguageAliases(new List<string> { "Swagger", "TypeSpec" })).Contains(Model.ReviewContent.Review.Language))
             {
                 var reviewIsApproved = Model.ReviewContent.Review.IsApproved;
-                var approver = (reviewIsApproved) ? "azure-sdk" : null;
+                string approver = null;
+                if (reviewIsApproved)
+                {
+                    var changeAction = Model.ReviewContent.Review.ChangeHistory.FirstOrDefault(_ => _.ChangeAction == ReviewChangeAction.Approved);
+                    if (changeAction != null)
+                    {
+                        approver = changeAction.ChangedBy;
+                    }
+                    else
+                    {
+                        approver = "azure-sdk";
+                    }
+                }
 
                 @if (!reviewIsApproved)
                 {
@@ -192,13 +229,14 @@
                 var anyChecked = false;
             }
             <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" asp-page-handler="RequestReviewers" method="post">
+                <input type="hidden" name="apiRevisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
                 <li class="list-group-item">
                         <ul class="list-group list-group-flush">
                             @foreach (var approver in Model.ReviewContent.PreferredApprovers)
                             {
                                 <li class="list-group-item">
                                     <div class="form-check">
-                                    @if (Model.ReviewContent.Review.AssignedReviewers != null && Model.ReviewContent.Review.AssignedReviewers.Where(a => a.AssingedTo == approver).Any())
+                                    @if (Model.ReviewContent.ActiveAPIRevision.AssignedReviewers != null && Model.ReviewContent.ActiveAPIRevision.AssignedReviewers.Where(a => a.AssingedTo == approver).Any())
                                         {
                                             <input class="form-check-input selectReviewerForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox" checked>
                                             <label class="form-check-label" for="@(approver)CheckBox">
@@ -209,7 +247,7 @@
                                         }
                                         else
                                         {
-                                    <input class="form-check-input selectReviewerForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox">
+                                            <input class="form-check-input selectReviewerForRequest" type="checkbox" name="reviewers" value="@approver" id="@(approver)CheckBox">
                                             <label class="form-check-label" for="@(approver)CheckBox">
                                                 <img username="@approver" size="28" width="28" class="comment-icon align-self-start mr-2" />
                                                 @approver
@@ -293,7 +331,7 @@
             }
         }
         <p class="h6">
-            <a data-bs-toggle="collapse" href="#reviewOptionsCollapse" aria-expanded="true" aria-controls="approvalCollapse">Review Options&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+            <a data-bs-toggle="collapse" href="#reviewOptionsCollapse" aria-expanded="true" aria-controls="reviewOptionsCollapse">Review Options&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
         @{
             var reviewOptionsCollapseState = " show";
@@ -328,7 +366,7 @@
             </li>
         </ul>
         <p class="h6">
-            <a data-bs-toggle="collapse" href="#pageSettingsCollapse" aria-expanded="true" aria-controls="approvalCollapse">Page Settings&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+            <a data-bs-toggle="collapse" href="#pageSettingsCollapse" aria-expanded="true" aria-controls="pageSettingsCollapse">Page Settings&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
         </p>
         @{
             var pageSettingsCollapseState = String.Empty;
@@ -341,7 +379,7 @@
         <ul class="list-group collapse mb-3@(pageSettingsCollapseState)" id="pageSettingsCollapse">
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    @if (userPreference.ShowComments == true)
+                    @if (Model.UserPreference.ShowComments == true)
                     {
                         <input class="form-check-input" type="checkbox" role="switch" id="show-comments-checkbox" checked>
                     }
@@ -354,7 +392,7 @@
             </li>
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    @if (userPreference.ShowSystemComments == true)
+                    @if (Model.UserPreference.ShowSystemComments == true)
                     {
                         <input class="form-check-input" type="checkbox" role="switch" id="show-system-comments-checkbox" checked>
                     }
@@ -367,22 +405,22 @@
             </li>
             <li class="list-group-item" id="show-documentation-component">
                 <div class="form-check form-switch">
-                    @if (Model.ShowDocumentation)
+                    @if (Model.ShowDocumentation ?? false)
                     {
-                        <input class="form-check-input show-documentation-checkbox" checked type="checkbox" role="switch" asp-for="@Model.ShowDocumentation" id="showDocumentationSwitch">
+                        <input class="form-check-input show-documentation-checkbox" checked type="checkbox" role="switch" id="showDocumentationSwitch">
                     }
                     else
                     {
-                        <input class="form-check-input show-documentation-checkbox" type="checkbox" role="switch" asp-for="@Model.ShowDocumentation" id="showDocumentationSwitch">                  
+                        <input class="form-check-input show-documentation-checkbox" type="checkbox" role="switch" id="showDocumentationSwitch">                  
                     }
-                    <a class="show-documentation-switch" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !Model.ShowDocumentation, showDiffOnly: Model.ShowDiffOnly, revisionId: Model.ReviewContent.ActiveAPIRevision.Id)>
+                    <a class="show-documentation-switch" asp-all-route-data=@Model.GetRoutingData(diffRevisionId: Model.DiffRevisionId, showDocumentation: !(Model.ShowDocumentation ?? false), showDiffOnly: Model.ShowDiffOnly, revisionId: Model.ReviewContent.ActiveAPIRevision.Id)>
                         <label class="form-check-label" for="showDocumentationSwitch">Show Documentation</label>
                     </a>
                 </div>
             </li>
             <li class="list-group-item" id="show-hidden-api-component">
                 <div class="form-check form-switch">
-                    @if (userPreference.ShowHiddenApis == true)
+                    @if (Model.UserPreference.ShowHiddenApis == true)
                     {
                         <input class="form-check-input" type="checkbox" role="switch" id="show-hidden-api-checkbox" checked>
                     }
@@ -395,7 +433,7 @@
             </li>
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    @if (userPreference.HideLineNumbers == true)
+                    @if (Model.UserPreference.HideLineNumbers == true)
                     {
                         <input class="form-check-input" type="checkbox" role="switch" id="hide-line-numbers">
                     }
@@ -408,7 +446,7 @@
             </li>
             <li class="list-group-item">
                 <div class="form-check form-switch">
-                    @if (userPreference.HideLeftNavigation == true)
+                    @if (Model.UserPreference.HideLeftNavigation == true)
                     {
                         <input class="form-check-input" type="checkbox" role="switch" id="hide-left-navigation">
                     }
@@ -437,145 +475,52 @@
                     </div>
                 </li>
             }
-        </ul>             
+        </ul>
+        <p class="h6">
+            <a data-bs-toggle="collapse" href="#apiRevisionOptionsCollapse" aria-expanded="true" aria-controls="apiRevisionOptionsCollapse">API Revision Options&nbsp;&nbsp;<i class="fa-solid fa-ellipsis"></i></a>
+        </p>
+        @{
+            var apiRevisionOptionsCollapseState = " show";
+            if (Request.Cookies.ContainsKey("apiRevisionOptionsCollapse"))
+            {
+                if (!Request.Cookies["apiRevisionOptionsCollapse"].Equals("shown"))
+                    apiRevisionOptionsCollapseState = String.Empty;
+            }
+        }
+        <ul class="list-group collapse mb-3@(apiRevisionOptionsCollapseState)" id="apiRevisionOptionsCollapse">
+            <li class="list-group-item">
+                <div class="form-check form-switch">
+                    <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" id="reviewViewedForm" method="post" asp-page-handler="ToggleViewed">
+                        <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
+                        @if (Model.ReviewContent.ActiveAPIRevision.ViewedBy.Contains(User.GetGitHubLogin()))
+                        {
+                            <input class="form-check-input" checked type="checkbox" role="switch" id="reviewViewedSwitch">
+                        }
+                        else
+                        {
+                            <input class="form-check-input" type="checkbox" role="switch" id="reviewViewedSwitch">
+                        }
+
+                        <label class="form-check-label" for="reviewViewedSwitch">Mark as Viewed</label>
+                    </form>
+                </div>
+            </li>
+        </ul>
     </div>
 </div>
 
 <div class="container-fluid mx-0 px-0 sub-header-content">
-    <div class="row mx-1 px-0 py-2">
-        <div class="col-md-8">
-            <div class="input-group input-group-sm" id="review-info-bar">
-                <partial name="Shared/_ReviewBadge" model="(Model.ReviewContent.Review, Model.ReviewContent.ActiveAPIRevision)" />
-
-                <span class="input-group-text">Revision:</span>
-                <select id="revision-type-select" aria-label="Revision Type Select">
-                    @foreach (var apiRevisionType in Model.ReviewContent.APIRevisionsGrouped.Keys.Order())
-                    {
-                        if (apiRevisionType == Model.ReviewContent.ActiveAPIRevision.APIRevisionType.ToString())
-                        {
-                            <option selected value="@apiRevisionType">@apiRevisionType</option>
-                        }
-                        else
-                        {
-                            <option value="@apiRevisionType">@apiRevisionType</option>
-                        }
-                    }
-                </select>
-                <select id="revision-select" aria-label="Revision Select">
-                    @{
-
-                        var revisionsToSelectFrom = Model.ReviewContent.APIRevisionsGrouped[Model.ReviewContent.ActiveAPIRevision.APIRevisionType.ToString()];
-                        (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
-                            revisions: revisionsToSelectFrom,
-                            activeRevision: Model.ReviewContent.ActiveAPIRevision,
-                            diffRevision: default(APIRevisionListItemModel),
-                            forDiff: false,
-                            showDocumentation: Model.ShowDocumentation,
-                            showDiffOnly: Model.ShowDiffOnly
-                        );
-                    }
-                    <partial name="Shared/_RevisionSelectPickerPartial" model="revisionSelectModel" />
-                </select>
-
-                @if (@Model.ReviewContent.APIRevisionsGrouped.SelectMany(kvp => kvp.Value).Count() > 1)
-                {
-                    var diffRevisionType = (Model.ReviewContent.APIRevisionsGrouped.ContainsKey("Automatic")) ? "Automatic" : Model.ReviewContent.APIRevisionsGrouped.Keys.First();
-                    @if (Model.ReviewContent.DiffAPIRevision != null)
-                    {
-                        // Diff revision is null if someone reuses an old URL with a deleted revision as  diff revision
-                        // Users copy and shares diff URL to approvers and sometimes they delete and recreate the revision which makes the diff revision null
-                        diffRevisionType = Model.ReviewContent.DiffAPIRevision.APIRevisionType.ToString();
-
-                        var urlValue = @Url.ActionLink("Review", "Assemblies", new
-                        {
-                            id = @Model.ReviewContent.Review.Id,
-                            revisionId = @Model.ReviewContent.ActiveAPIRevision.Id,
-                            diffRevisionId = @Model.DiffRevisionId,
-                            doc = @Model.ShowDocumentation,
-                            diffOnly = @Model.ShowDiffOnly
-                        });
-                        <a class="input-group-text" href="@urlValue">Diff With:</a>
-                    }
-                    else
-                    {
-
-                        var diffRevisionForButton = Model.ReviewContent.APIRevisionsGrouped[diffRevisionType];
-                        var urlValue = @Url.ActionLink("Review", "Assemblies", new
-                        {
-                            id = @Model.ReviewContent.Review.Id,
-                            revisionId = @Model.ReviewContent.ActiveAPIRevision.Id,
-                            diffRevisionId = diffRevisionForButton.First().Id,
-                            doc = @Model.ShowDocumentation,
-                            diffOnly = @Model.ShowDiffOnly
-                        });
-                        <a class="input-group-text" href="@urlValue">Diff:</a>
-                    }
-                    <select id="diff-revision-type-select" aria-label="Revision Type Select">
-                        @foreach (var apiRevisionType in Model.ReviewContent.APIRevisionsGrouped.Keys.Order())
-                        {
-                            if (apiRevisionType == diffRevisionType)
-                            {
-                                <option selected value="@apiRevisionType">@apiRevisionType</option>
-                            }
-                            else
-                            {
-                                <option value="@apiRevisionType">@apiRevisionType</option>
-                            }
-                        }
-                    </select>
-                    <select id="diff-select" aria-label="Diff Select">
-                        @{
-                            var diffRevisionsToSelectFrom = Model.ReviewContent.APIRevisionsGrouped[diffRevisionType].Where(r => r.Id!= Model.ReviewContent.ActiveAPIRevision.Id);
-                            (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) diffRevisionSelectModel = (
-                            revisions: diffRevisionsToSelectFrom,
-                            activeRevision: Model.ReviewContent.ActiveAPIRevision,
-                            diffRevision: Model.ReviewContent.DiffAPIRevision,
-                            forDiff: true,
-                            showDocumentation: Model.ShowDocumentation,
-                            showDiffOnly: Model.ShowDiffOnly
-                            );
-                        }
-                        <partial name="Shared/_RevisionSelectPickerPartial" model="diffRevisionSelectModel" />
-                    </select>
-                }
-                @{
-                    var popOverContent = $"<b>{Model.ReviewContent.ActiveConversationsInActiveAPIRevision}</b> active revision threads.<br><b>{Model.ReviewContent.ActiveConversationsInSampleRevisions}</b> active usage sample threads.<br><b>{Model.ReviewContent.TotalActiveConversiations}</b> total active threads.<br>"
-                    + $"<b>Current Revision:</b> <em>{PageModelHelpers.ResolveRevisionLabel(@Model.ReviewContent.ActiveAPIRevision)}</ em >";
-                    @if (Model.ReviewContent.DiffAPIRevision != null)
-                    {
-                        popOverContent += $"<br><b>Current Diff:</b> <em>{PageModelHelpers.ResolveRevisionLabel(@Model.ReviewContent.DiffAPIRevision)}</em>";
-                    }
-                    @if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0)
-                    {
-                        <button type="button" class="btn btn-outline-secondary" id="jump-to-first-comment">
-                            <i class="far fa-comment-alt"></i>
-                        </button>
-                    }
-                    <button type="button" class="btn btn-info" data-bs-placement="bottom" data-bs-trigger="focus" data-bs-toggle="popover" data-bs-html="true" data-bs-title="Page Info" data-bs-content="@popOverContent" data-bs-custom-class="custom-popover">
-                        <span class="badge">@Model.ReviewContent.ActiveConversationsInActiveAPIRevision / @Model.ReviewContent.TotalActiveConversiations</span>
-                    </button>
-                }
-            </div>
-        </div>
-        <div class="col-md-1">
-        </div>
-        <div class="col-md-3">
-        </div>
+    <div class="row px-3 py-2 border-bottom" id="review-info-bar">
+        <partial name="Shared/_ReviewBadge" model="(Model.ReviewContent.Review, Model.ReviewContent.ActiveAPIRevision, Model.ReviewContent.DiffAPIRevision, Model.UserPreference)" />
     </div>
-
-    <partial name="Shared/_ReviewNavBar" />
 </div>
-@{
-    var mainContainerClass = " move-main-content-container-left";
-    if (userPreference.HideReviewPageOptions.HasValue && userPreference.HideReviewPageOptions == true)
-        mainContainerClass = String.Empty;
-}
-<div class="container-fluid pt-3@(mainContainerClass)" id="review-main-container">
-    <div class="row mx-3 g-2" data-review-id="@Model.ReviewContent.Review.Id" data-revision-id="@Model.ReviewContent.ActiveAPIRevision.Id" data-language="@Model.ReviewContent.Review.Language">
+
+<div class="container-fluid pt-2@(mainContainerClass)" id="review-main-container">
+    <div class="row g-2" data-review-id="@Model.ReviewContent.Review.Id" data-revision-id="@Model.ReviewContent.ActiveAPIRevision.Id" data-language="@Model.ReviewContent.Review.Language">
         @{
             var reviewLeftDisplay = String.Empty;
             var reviewRightSize = "10";
-            if (userPreference.HideLeftNavigation == true)
+            if (Model.UserPreference.HideLeftNavigation == true)
             {
                 reviewLeftDisplay = "d-none";
                 reviewRightSize = "12";
@@ -610,8 +555,27 @@
                     }
                 </tbody>
             </table>
+            <partial name="_CrossLanguageViewPartial" model="@Model.ReviewContent.CrossLanguageViewContent" />
         </div>
     </div>
+    @if (Model.ReviewContent.CrossLanguageViewContent.Any())
+    {
+        <div class="row d-none" id="cross-language-code-lines">
+            @foreach (var language in Model.ReviewContent.CrossLanguageViewContent.Keys)
+            {
+                var reviewcontent = Model.ReviewContent.CrossLanguageViewContent[language];
+                var langId = PageModelHelpers.GetLanguageCssSafeName(language);
+                <table data-language="@langId" data-review-id="@reviewcontent.Review.Id" data-revision-id="@reviewcontent.ActiveAPIRevision.Id">
+                    <tbody>
+                        @foreach (var line in reviewcontent.codeLines)
+                        {
+                            <partial name="_CodeLine" model="@line" />
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    }
 
     <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
         <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
@@ -638,4 +602,16 @@
         </div>
     </form>
     <partial name="_CommentFormPartial" model="@Model.ReviewContent.TaggableUsers" /> 
+</div>
+
+<partial name="Shared/_AddAPIRevisionsPartial" model="Model.ReviewContent.Review" />
+
+<div class="offcanvas offcanvas-end border-start" tabindex="-1" id="apiRevisions-context" aria-labelledby="apiRevisions-context-label">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="apiRevisions-context-label"><a asp-page="Revisions" asp-route-id="@Model.ReviewContent.Review.Id">Revisions</a></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <partial name="Shared/_APIRevisionsPartial" model="(Model.ReviewContent.Review, Model.ReviewContent.APIRevisions, Model.ReviewContent.ActiveAPIRevision, Model.ReviewContent.DiffAPIRevision)" />
+    </div>
 </div>

@@ -32,7 +32,6 @@
 ###########
 /tools/                                @azure/azure-sdk-eng
 /tools/codeowners-utils/               @JimSuplizio
-/tools/github-issues/                  @praveenkuttappan @weshaggard
 /tools/github-event-processor/         @JimSuplizio @benbp
 /tools/github-team-user-store/         @JimSuplizio @weshaggard
 /tools/js-sdk-release-tools/           @qiaozha @MaryGao
@@ -40,12 +39,18 @@
 /tools/perf-automation/                @mikeharder @benbp
 /tools/pipeline-generator/             @weshaggard @benbp
 /tools/pipeline-witness/               @praveenkuttappan @weshaggard
+/tools/sdk-ai-bots/                    @raych1
 /tools/sdk-generation-pipeline/        @weshaggard @praveenkuttappan @maririos
 /tools/sdk-testgen/                    @raych1 @tadelesh
-/tools/stress-cluster/                 @benbp @ckairen
 /tools/test-proxy/                     @scbedd @mikeharder
 /tools/tsp-client/                     @catalinaperalta
 /tools/webhook-router/                 @praveenkuttappan @weshaggard
+
+###########
+# Stress
+###########
+/eng/common/scripts/stress-testing/    @benbp @ckairen @richardpark-msft
+/tools/stress-cluster/                 @benbp @ckairen @richardpark-msft
 
 ###########
 # .NET Client Tools

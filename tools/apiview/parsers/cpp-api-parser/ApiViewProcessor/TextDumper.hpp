@@ -81,8 +81,8 @@ public:
   virtual void AddExternalLinkEnd() override { m_stream << "**LINK**</a>**LINK**"; }
   virtual void AddDeprecatedRangeStart() override { m_stream << "/* ** DEPRECATED **"; }
   virtual void AddDeprecatedRangeEnd() override { m_stream << "/* ** DEPRECATED ** */"; }
-  virtual void AddDiffRangeStart() override { m_stream << "/* ** DIFF **"; }
-  virtual void AddDiffRangeEnd() override { m_stream << " ** DIFF ** */"; }
+  virtual void AddSkipDiffRangeStart() override { m_stream << "/* ** SKIP DIFF **"; }
+  virtual void AddSkipDiffRangeEnd() override { m_stream << " ** SKIP DIFF ** */"; }
 
   void DoDumpHierarchyNode(
       std::shared_ptr<TypeHierarchy::TypeHierarchyNode> const& node,

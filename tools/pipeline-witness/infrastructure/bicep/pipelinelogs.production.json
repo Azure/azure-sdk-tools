@@ -2,11 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "resourceGroupName": {
+      "value": "pipelinelogs"
+    },
     "location": {
       "value": "westus2"
     },
     "storageAccountName": {
-      "value": "pipelinelogs"
+      "value": "azsdkengsyspipelinelogs"
     },
     "kustoClusterName": {
       "value": "azsdkengsys"

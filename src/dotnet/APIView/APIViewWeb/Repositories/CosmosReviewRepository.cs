@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Repositories;
 using Microsoft.Azure.Cosmos;
@@ -21,7 +22,7 @@ namespace APIViewWeb
 
         public CosmosReviewRepository(IConfiguration configuration, CosmosClient cosmosClient)
         {
-            _reviewsContainer = cosmosClient.GetContainer("APIViewV2", "Reviews");
+            _reviewsContainer = cosmosClient.GetContainer(configuration["CosmosDBName"], "Reviews");
             _legacyReviewsContainer = cosmosClient.GetContainer("APIView", "Reviews");
         }
 
@@ -67,6 +68,26 @@ namespace APIViewWeb
             return reviews;
         }
 
+        public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(IEnumerable<string> reviewIds, bool? isClosed = null)
+        {
+            var reviewIdsAsQueryStr = CosmosQueryHelpers.ArrayToQueryString(reviewIds);
+            var queryStringBuilder = new StringBuilder($"SELECT * FROM Reviews r WHERE r.id IN {reviewIdsAsQueryStr}");
+            if (isClosed != null)
+            {
+                queryStringBuilder.Append(" AND r.IsClosed = @isClosed");
+            }
+            var queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+               .WithParameter("@isClosed", isClosed);
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryDefinition);
+            var reviews = new List<ReviewListItemModel>();
+            while (itemQueryIterator.HasMoreResults)
+            {
+                var result = await itemQueryIterator.ReadNextAsync();
+                reviews.AddRange(result.Resource);
+            }
+            return reviews;
+        }
+
         public async Task<LegacyReviewModel> GetLegacyReviewAsync(string reviewId)
         {
             var review = default(LegacyReviewModel);
@@ -97,22 +118,6 @@ namespace APIViewWeb
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryDefinition);
             var result = await itemQueryIterator.ReadNextAsync();
             return result.Resource.FirstOrDefault();    
-        }
-
-        public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAssignedToUser(string userName)
-        {
-            var query = "SELECT * FROM Reviews r WHERE ARRAY_CONTAINS(r.AssignedReviewers, { 'AssingedTo': '" +userName + "' }, true)";
-
-            var reviews = new List<ReviewListItemModel>();
-            var queryDefinition = new QueryDefinition(query).WithParameter("@userName", userName);
-            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryDefinition);
-            while (itemQueryIterator.HasMoreResults)
-            {
-                var result = await itemQueryIterator.ReadNextAsync();
-                reviews.AddRange(result.Resource);
-            }
-
-            return reviews.OrderByDescending(r => r.LastUpdatedOn);
         }
 
         /// <summary>

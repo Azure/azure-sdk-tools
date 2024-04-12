@@ -3,19 +3,17 @@ package com.azure.tools.apiview.processor;
 import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.Analyser;
 import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
-import com.azure.tools.apiview.processor.model.APIListing;
-import com.azure.tools.apiview.processor.model.Diagnostic;
-import com.azure.tools.apiview.processor.model.DiagnosticKind;
-import com.azure.tools.apiview.processor.model.LanguageVariant;
-import com.azure.tools.apiview.processor.model.Token;
+import com.azure.tools.apiview.processor.model.*;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -142,12 +140,12 @@ public class Main {
         final ReviewProperties reviewProperties = getReviewProperties(inputFile);
 
         final String groupId = reviewProperties.getMavenPom().getGroupId();
+        final String artifactId = reviewProperties.getMavenPom().getArtifactId();
 
-        final String reviewName = reviewProperties.getMavenPom().getArtifactId()
-                                      + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
+        final String reviewName = artifactId + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
         System.out.println("  Using '" + reviewName + "' for the review name");
 
-        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + reviewProperties.getMavenPom().getArtifactId();
+        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + artifactId;
         System.out.println("  Using '" + packageName + "' for the package name");
 
         System.out.println("  Using '" + reviewProperties.getMavenPom().getVersion() + "' for the package version");
@@ -167,11 +165,29 @@ public class Main {
         }
         System.out.println("  Using '" + apiListing.getLanguageVariant() + "' for the language variant");
 
-        final Analyser analyser = new JavaASTAnalyser(inputFile, apiListing);
-
         // Read all files within the jar file so that we can create a list of files to analyse
         final List<Path> allFiles = new ArrayList<>();
         try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
+
+            try {
+                // we eagerly load the apiview_properties.json file into an ApiViewProperties object, so that it can
+                // be used throughout the analysis process, as required
+                // the filename is [<artifactid>_]apiview_properties.json
+                String filename = (artifactId != null && !artifactId.isEmpty() ? (artifactId + "_") : "") + "apiview_properties.json";
+                URL apiViewPropertiesFile = fs.getPath("/META-INF/" + filename).toUri().toURL();
+                final ObjectMapper objectMapper = new ObjectMapper();
+                ApiViewProperties properties = objectMapper.readValue(apiViewPropertiesFile, ApiViewProperties.class);
+                apiListing.setApiViewProperties(properties);
+                System.out.println("  Found apiview_properties.json file in jar file");
+                System.out.println("    - Found " + properties.getCrossLanguageDefinitionIds().size() + " cross-language definition IDs");
+            } catch (InvalidFormatException e) {
+                System.out.println("  ERROR: Unable to parse apiview_properties.json file in jar file");
+                e.printStackTrace();
+            } catch (Exception e) {
+                // this is fine, we just won't have any APIView properties to read in
+                System.out.println("  No apiview_properties.json file found in jar file - continuing...");
+            }
+
             fs.getRootDirectories().forEach(root -> {
                 try (Stream<Path> paths = Files.walk(root)) {
                     paths.forEach(allFiles::add);
@@ -182,7 +198,10 @@ public class Main {
             });
 
             // Do the analysis while the filesystem is still represented in memory
+            final Analyser analyser = new JavaASTAnalyser(apiListing);
             analyser.analyse(allFiles);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

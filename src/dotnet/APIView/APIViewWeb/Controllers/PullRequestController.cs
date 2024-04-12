@@ -171,7 +171,7 @@ namespace APIViewWeb.Controllers
                 //Generate combined single comment to update on PR or add a comment stating no API changes.            
                 if (commentOnPR)
                 {
-                    await _pullRequestManager.CreateOrUpdateCommentsOnPR(pullRequests, repoInfo[0], repoInfo[1], prNumber, hostName);
+                    await _pullRequestManager.CreateOrUpdateCommentsOnPR(pullRequests, repoInfo[0], repoInfo[1], prNumber, hostName, commitSha);
                 }
             }
             finally

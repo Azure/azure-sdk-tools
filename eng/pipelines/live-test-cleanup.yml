@@ -31,7 +31,7 @@ parameters:
       - DisplayName: AzureCloud Playground - Resource Cleanup
         SubscriptionConfigurations:
           - $(sub-config-azure-cloud-playground)
-        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments -MaxLifespanDeleteAfterHours 720"
+        AdditionalParameters: "-DeleteNonCompliantGroups -DeleteArmDeployments -MaxLifespanDeleteAfterHours 240"
       # TODO: Disabled this clean-up as the dogfood enviroment is busted and the tests are no longer running
       # see https://github.com/Azure/azure-sdk-for-python/pull/33483 were the tests were disabled.
       # - DisplayName: Dogfood Translation - Resource Cleanup

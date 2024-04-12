@@ -51,9 +51,9 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Constants
         // Codeowners glob is syntactically but doesn't match anything
         public const string GlobHasNoMatchesInRepoPartial = " glob does not have any matches in repository.";
 
-        // Block formatting errors. These errors are specifically around validation blocks. For example, the AzureSdkOwner moniker needs
+        // Block formatting errors. These errors are specifically around validation blocks. For example, the ServiceOwner moniker needs
         // to part of a block that ends in a source path/owners line so it's known what they own.
-        public const string ServiceLabelNeedsOwners = $"{MonikerConstants.ServiceLabel} needs to be followed by, {MonikerConstants.MissingFolder} or {MonikerConstants.ServiceOwners} with owners, or a source path/owner line.";
+        public const string ServiceLabelNeedsOwners = $"{MonikerConstants.ServiceLabel} needs to be part of a block containing {MonikerConstants.AzureSdkOwners} or followed by, {MonikerConstants.MissingFolder} or {MonikerConstants.ServiceOwners} with owners, or part of a block that ends in a source path/owner line.";
         public const string ServiceLabelHasTooManyOwners = $"{MonikerConstants.ServiceLabel} cannot be part of a block with, {MonikerConstants.MissingFolder} or {MonikerConstants.ServiceOwners}, and a source path/owner line.";
         public const string ServiceLabelHasTooManyOwnerMonikers = $"{MonikerConstants.ServiceLabel} cannot be part of a block with both {MonikerConstants.ServiceOwners} and {MonikerConstants.MissingFolder}.";
         public const string MissingServiceLabelPartial = $" needs to be part of a block with a {MonikerConstants.ServiceLabel} entry.";

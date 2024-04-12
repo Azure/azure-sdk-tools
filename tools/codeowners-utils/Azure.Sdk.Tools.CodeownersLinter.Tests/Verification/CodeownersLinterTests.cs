@@ -210,6 +210,8 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Verification
         [TestCase("CodeownersTestFiles/VerifyBlock/ServiceLabelAndSourcePath", 1, 2)]
         [TestCase("CodeownersTestFiles/VerifyBlock/ServiceLabelAndMissingPath", 1, 2)]
         [TestCase("CodeownersTestFiles/VerifyBlock/ServiceLabelAndServiceOwners", 1, 2)]
+        [TestCase("CodeownersTestFiles/VerifyBlock/ServiceLabelAndAzureSdkOwners", 1, 2)]
+        [TestCase("CodeownersTestFiles/VerifyBlock/ServiceLabelAndAzureSdkOwners", 4, 5)]
         [TestCase("CodeownersTestFiles/VerifyBlock/MonikersEndsInSourcePath", 1, 4)]
         // AzureSdkOwners needs to be part of a block that contains ServiceLabel
         [TestCase("CodeownersTestFiles/VerifyBlock/AzureSdkOwnersAndServiceLabel", 3, 3,

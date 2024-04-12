@@ -77,10 +77,37 @@ namespace APIViewWeb.Managers
         /// Retrieve Revisions for a particular Review from the Revisions container in CosmosDb
         /// </summary>
         /// <param name="reviewId"></param> The Reviewid for which the revisions are to be retrieved
+        /// <param name="packageVersion"></param> Optional package version param to return a matching revision for the package version 
+        /// <param name="apiRevisionType"></param> optional API revision type filter
         /// <returns></returns>
-        public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(string reviewId)
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(string reviewId, string packageVersion = "", APIRevisionType apiRevisionType = APIRevisionType.All)
         {
-            return await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+            var apiRevisions = await _apiRevisionsRepository.GetAPIRevisionsAsync(reviewId);
+
+            if (apiRevisionType != APIRevisionType.All)
+                apiRevisions = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType);
+
+            if (!string.IsNullOrEmpty(packageVersion))
+            {                
+                // Check for exact same package version
+                // If exact version is not found in revision then search for same major and minor version and return the latest.
+                var exactMatchRevisions = apiRevisions.Where(r => packageVersion.Equals(r.Files[0].PackageVersion));
+                if (exactMatchRevisions.Any())
+                {
+                    return exactMatchRevisions.OrderByDescending(r => r.CreatedOn);
+                }
+
+                // Check for revisions with matching
+                var versionGroups = packageVersion.Split('.');
+                var majorMinor = $"{versionGroups[0]}.{versionGroups[1]}.";
+                var majorMinorMatchRevisions = apiRevisions.Where(r => !string.IsNullOrEmpty(r.Files[0].PackageVersion) && r.Files[0].PackageVersion.StartsWith(majorMinor));
+                if (majorMinorMatchRevisions.Any())
+                {
+                    return majorMinorMatchRevisions.OrderByDescending(r => r.CreatedOn);
+                }                
+                return majorMinorMatchRevisions;
+            }
+            return apiRevisions;
         }
 
         /// <summary>
@@ -251,7 +278,7 @@ namespace APIViewWeb.Managers
         /// <param name="language"></param>
         /// <param name="awaitComputeDiff"></param>
         /// <returns></returns>
-        public async Task AddAPIRevisionAsync(
+        public async Task<APIRevisionListItemModel> AddAPIRevisionAsync(
             ClaimsPrincipal user,
             string reviewId,
             APIRevisionType apiRevisionType,
@@ -262,7 +289,7 @@ namespace APIViewWeb.Managers
             bool awaitComputeDiff = false)
         {
             var review = await _reviewsRepository.GetReviewAsync(reviewId);
-            await AddAPIRevisionAsync(user, review, apiRevisionType, name, label, fileStream, language, awaitComputeDiff);
+            return await AddAPIRevisionAsync(user, review, apiRevisionType, name, label, fileStream, language, awaitComputeDiff);
         }
 
         /// <summary>
@@ -728,6 +755,74 @@ namespace APIViewWeb.Managers
 
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             return apiRevision;
+        }
+
+        /// <summary>
+        /// Assign reviewers to a review
+        /// </summary>
+        /// <param name="User"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <param name="reviewers"></param>
+        /// <returns></returns>
+        public async Task AssignReviewersToAPIRevisionAsync(ClaimsPrincipal User, string apiRevisionId, HashSet<string> reviewers)
+        {
+            APIRevisionListItemModel apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(apiRevisionId);
+            foreach (var reviewer in reviewers)
+            {
+                if (!apiRevision.AssignedReviewers.Where(x => x.AssingedTo == reviewer).Any())
+                {
+                    var reviewAssignment = new ReviewAssignmentModel()
+                    {
+                        AssingedTo = reviewer,
+                        AssignedBy = User.GetGitHubLogin(),
+                        AssingedOn = DateTime.Now,
+                    };
+                    apiRevision.AssignedReviewers.Add(reviewAssignment);
+                }
+            }
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
+        }
+
+        /// <summary>
+        /// Get Reviews that have been assigned for review to a user
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName)
+        {
+            return await _apiRevisionsRepository.GetAPIRevisionsAssignedToUser(userName);
+        }
+
+        public async Task<APIRevisionListItemModel> UpdateRevisionMetadataAsync(APIRevisionListItemModel revision, string packageVersion, string label, bool setReleaseTag = false)
+        {
+            // Do not update package version metadata once a revision is marked as released
+            // This is to avoid updating metadata when a request is processed with a new version (auto incremented version change) right after a version is released
+            // without any API changes.
+            if (revision.IsReleased)
+                return revision;
+
+            if (packageVersion != null && !packageVersion.Equals(revision.Files[0].PackageVersion))
+            {
+                revision.Files[0].PackageVersion = packageVersion;
+                revision.Label = label;
+            }
+
+            if (setReleaseTag)
+            {
+                revision.IsReleased = true;
+                revision.ReleasedOn = DateTime.UtcNow;
+            }
+            await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+            return revision;
+        }
+
+        /// <summary>
+        /// Get ReviewIds of Language corresponding Review linked by CrossLanguagePackageId
+        /// </summary>
+        /// <param name="crossLanguagePackageId"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<string>> GetReviewIdsOfLanguageCorrespondingReviewAsync(string crossLanguagePackageId) {
+            return await _apiRevisionsRepository.GetReviewIdsOfLanguageCorrespondingReviewAsync(crossLanguagePackageId);
         }
 
         /// <summary>

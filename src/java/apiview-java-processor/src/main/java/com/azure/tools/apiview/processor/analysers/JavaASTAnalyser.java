@@ -1,5 +1,7 @@
 package com.azure.tools.apiview.processor.analysers;
 
+import com.azure.tools.apiview.processor.analysers.models.AnnotationRendererModel;
+import com.azure.tools.apiview.processor.analysers.models.AnnotationRule;
 import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
 import com.azure.tools.apiview.processor.analysers.util.TokenModifier;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
@@ -39,6 +41,7 @@ import com.github.javaparser.ast.expr.Name;
 import com.github.javaparser.ast.expr.NormalAnnotationExpr;
 import com.github.javaparser.ast.modules.ModuleDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
+import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
 import com.github.javaparser.ast.nodeTypes.NodeWithType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
@@ -50,19 +53,10 @@ import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -73,13 +67,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.attemptToFindJavadocComment;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.getPackageName;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isInterfaceType;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPrivateOrPackagePrivate;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isPublicOrProtected;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.isTypeAPublicAPI;
-import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
+import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
+import static com.azure.tools.apiview.processor.analysers.util.MiscUtils.*;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.INDENT;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.NEWLINE;
 import static com.azure.tools.apiview.processor.analysers.util.TokenModifier.NOTHING;
@@ -106,24 +95,38 @@ public class JavaASTAnalyser implements Analyser {
     public static final String MODULE_INFO_KEY = "module-info";
 
     private static final boolean SHOW_JAVADOC = true;
-    private static final Set<String> BLOCKED_ANNOTATIONS =
-        new HashSet<>(Arrays.asList("ServiceMethod", "SuppressWarnings"));
+
+    private static final Map<String, AnnotationRule> ANNOTATION_RULE_MAP;
+    static {
+        /*
+         For some annotations, we want to customise how they are displayed. Sometimes, we don't show them in any
+         circumstance. Other times, we want to show them but not their attributes. This map is used to define these
+         customisations. These rules override the default output that APIView will do, based on the location
+         annotation in the code.
+         */
+        ANNOTATION_RULE_MAP = new HashMap<>();
+        ANNOTATION_RULE_MAP.put("ServiceMethod", new AnnotationRule().setHidden(true));
+        ANNOTATION_RULE_MAP.put("SuppressWarnings", new AnnotationRule().setHidden(true));
+
+        // we always want @Metadata annotations to be fully expanded, but in a condensed form
+        ANNOTATION_RULE_MAP.put("Metadata", new AnnotationRule().setShowProperties(true).setCondensed(true));
+    }
 
     private static final Pattern SPLIT_NEWLINE = Pattern.compile(MiscUtils.LINEBREAK);
 
+    // This is the model that we build up as the AST of all files are analysed. The APIListing is then output as
+    // JSON that can be understood by APIView.
     private final APIListing apiListing;
 
-    private final Map<String, JavadocComment> packageNameToPackageInfoJavaDoc;
+    private final Map<String, JavadocComment> packageNameToPackageInfoJavaDoc = new HashMap<>();
 
     private final Diagnostics diagnostic;
 
-    private int indent;
+    private int indent = 0;
 
-    public JavaASTAnalyser(File inputFile, APIListing apiListing) {
+    public JavaASTAnalyser(APIListing apiListing) {
         this.apiListing = apiListing;
-        this.indent = 0;
-        this.packageNameToPackageInfoJavaDoc = new HashMap<>();
-        this.diagnostic = new Diagnostics();
+        diagnostic = new Diagnostics(apiListing);
     }
 
     @Override
@@ -183,10 +186,6 @@ public class JavaASTAnalyser implements Analyser {
             }
         }
 
-        public CompilationUnit getCompilationUnit() {
-            return compilationUnit;
-        }
-
         public Path getPath() {
             return path;
         }
@@ -209,7 +208,6 @@ public class JavaASTAnalyser implements Analyser {
             // Set up a minimal type solver that only looks at the classes used to run this sample.
             CombinedTypeSolver combinedTypeSolver = new CombinedTypeSolver();
             combinedTypeSolver.add(new ReflectionTypeSolver(false));
-//            combinedTypeSolver.add(new SourceJarTypeSolver(inputFile));
 
             ParserConfiguration parserConfiguration = new ParserConfiguration()
                 .setStoreTokens(true)
@@ -343,7 +341,7 @@ public class JavaASTAnalyser implements Analyser {
                 // we don't care to present test scope dependencies
                 return;
             }
-            String scope = k.equals("") ? "compile" : k;
+            String scope = k.isEmpty() ? "compile" : k;
 
             addToken(makeWhitespace());
             addToken(new Token(COMMENT, "// " + scope + " scope"), NEWLINE);
@@ -510,6 +508,23 @@ public class JavaASTAnalyser implements Analyser {
             addToken(new Token(TYPE_NAME, moduleDeclaration.getNameAsString(), MODULE_INFO_KEY), SPACE);
             addToken(new Token(PUNCTUATION, "{"), NEWLINE);
 
+            // Sometimes an exports or opens statement is conditional, so we need to handle that case
+            // in a single location here, to remove duplication.
+            Consumer<NodeList<Name>> conditionalExportsToOrOpensToConsumer = names -> {
+                if (!names.isEmpty()) {
+                    addToken(new Token(WHITESPACE, " "));
+                    addToken(new Token(KEYWORD, "to"), SPACE);
+
+                    for (int i = 0; i < names.size(); i++) {
+                        addToken(new Token(TYPE_NAME, names.get(i).toString()));
+
+                        if (i < names.size() - 1) {
+                            addToken(new Token(PUNCTUATION, ","), SPACE);
+                        }
+                    }
+                }
+            };
+
             moduleDeclaration.getDirectives().forEach(moduleDirective -> {
                 indent();
                 addToken(makeWhitespace());
@@ -532,43 +547,14 @@ public class JavaASTAnalyser implements Analyser {
                 moduleDirective.ifModuleExportsStmt(d -> {
                     addToken(new Token(KEYWORD, "exports"), SPACE);
                     addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-exports-" + d.getNameAsString())));
-
-                    NodeList<Name> names = d.getModuleNames();
-
-                    if (!names.isEmpty()) {
-                        addToken(new Token(WHITESPACE, " "));
-                        addToken(new Token(KEYWORD, "to"), SPACE);
-
-                        for (int i = 0; i < names.size(); i++) {
-                            addToken(new Token(TYPE_NAME, names.get(i).toString()));
-
-                            if (i < names.size() - 1) {
-                                addToken(new Token(PUNCTUATION, ","), SPACE);
-                            }
-                        }
-                    }
-
+                    conditionalExportsToOrOpensToConsumer.accept(d.getModuleNames());
                     addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
                 moduleDirective.ifModuleOpensStmt(d -> {
                     addToken(new Token(KEYWORD, "opens"), SPACE);
                     addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-opens-" + d.getNameAsString())));
-
-                    NodeList<Name> names = d.getModuleNames();
-                    if (names.size() > 0) {
-                        addToken(new Token(WHITESPACE, " "));
-                        addToken(new Token(KEYWORD, "to"), SPACE);
-
-                        for (int i = 0; i < names.size(); i++) {
-                            addToken(new Token(TYPE_NAME, names.get(i).toString()));
-
-                            if (i < names.size() - 1) {
-                                addToken(new Token(PUNCTUATION, ","), SPACE);
-                            }
-                        }
-                    }
-
+                    conditionalExportsToOrOpensToConsumer.accept(d.getModuleNames());
                     addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 });
 
@@ -694,7 +680,13 @@ public class JavaASTAnalyser implements Analyser {
                 addToken(new Token(DEPRECATED_RANGE_START));
             }
 
-            addToken(new Token(TYPE_NAME, className, classId));
+            // setting the class name. We need to look up to see if the apiview_properties.json file specified a
+            // cross language definition id for this type. If it did, we will use that. The apiview_properties.json
+            // file uses fully-qualified type names and method names, so we need to ensure that it what we are using
+            // when we look for a match.
+            Token typeNameToken = new Token(TYPE_NAME, className, classId);
+            checkForCrossLanguageDefinitionId(typeNameToken, typeDeclaration);
+            addToken(typeNameToken);
 
             if (isDeprecated) {
                 addToken(new Token(DEPRECATED_RANGE_END));
@@ -753,6 +745,25 @@ public class JavaASTAnalyser implements Analyser {
             }
             // open ClassOrInterfaceDeclaration
             addToken(SPACE, new Token(PUNCTUATION, "{"), NEWLINE);
+        }
+
+        /*
+         * This method is used to add 'cross language definition id' to the token if it is defined in the
+         * apiview_properties.json file. This is used most commonly in conjunction with TypeSpec-generated libraries,
+         * so that we may review cross languages with some level of confidence that the types and methods are the same.
+         */
+        private void checkForCrossLanguageDefinitionId(Token typeNameToken, NodeWithSimpleName<?> node) {
+            Optional<String> fqn;
+            if (node instanceof TypeDeclaration) {
+                fqn = ((TypeDeclaration<?>) node).getFullyQualifiedName();
+            } else if (node instanceof CallableDeclaration) {
+                fqn = Optional.of(getNodeFullyQualifiedName((CallableDeclaration<?>) node));
+            } else {
+                fqn = Optional.empty();
+            }
+
+            fqn.flatMap(_fqn -> apiListing.getApiViewProperties().getCrossLanguageDefinitionId(_fqn))
+               .ifPresent(typeNameToken::setCrossLanguageDefinitionId);
         }
 
         private void tokeniseAnnotationMember(AnnotationDeclaration annotationDeclaration) {
@@ -1030,34 +1041,24 @@ public class JavaASTAnalyser implements Analyser {
             final boolean showAnnotationProperties,
             final boolean addNewline) {
             Consumer<AnnotationExpr> consumer = annotation -> {
-                if (addNewline) {
+                // Check the annotation rules map for any overrides
+                final String annotationName = annotation.getName().toString();
+                AnnotationRule annotationRule = ANNOTATION_RULE_MAP.get(annotationName);
+
+                AnnotationRendererModel model = new AnnotationRendererModel(
+                        annotation, nodeWithAnnotations, annotationRule, showAnnotationProperties, addNewline);
+
+                if (model.isHidden()) {
+                    return;
+                }
+
+                if (model.isAddNewline()) {
                     addToken(makeWhitespace());
                 }
 
-                addToken(new Token(TYPE_NAME, "@" + annotation.getName().toString(), makeId(annotation, nodeWithAnnotations)));
-                if (showAnnotationProperties) {
-                    if (annotation instanceof NormalAnnotationExpr) {
-                        addToken(new Token(PUNCTUATION, "("));
-                        NodeList<MemberValuePair> pairs = ((NormalAnnotationExpr) annotation).getPairs();
-                        for (int i = 0; i < pairs.size(); i++) {
-                            MemberValuePair pair = pairs.get(i);
+                renderAnnotation(model).forEach(JavaASTAnalyser.this::addToken);
 
-                            addToken(new Token(TEXT, pair.getNameAsString()));
-                            addToken(new Token(PUNCTUATION, " = "));
-
-                            Expression valueExpr = pair.getValue();
-                            processAnnotationValueExpression(valueExpr);
-
-                            if (i < pairs.size() - 1) {
-                                addToken(new Token(PUNCTUATION, ", "));
-                            }
-                        }
-
-                        addToken(new Token(PUNCTUATION, ")"));
-                    }
-                }
-
-                if (addNewline) {
+                if (model.isAddNewline()) {
                     addNewLine();
                 } else {
                     addToken(new Token(WHITESPACE, " "));
@@ -1068,43 +1069,96 @@ public class JavaASTAnalyser implements Analyser {
                 .stream()
                 .filter(annotationExpr -> {
                     String id = annotationExpr.getName().getIdentifier();
-                    return !BLOCKED_ANNOTATIONS.contains(id) && !id.startsWith("Json");
+                    return !id.startsWith("Json");
                 })
                 .sorted(Comparator.comparing(a -> a.getName().getIdentifier())) // we sort the annotations alphabetically
                 .forEach(consumer);
         }
 
-        private void processAnnotationValueExpression(Expression valueExpr) {
+        private List<Token> renderAnnotation(AnnotationRendererModel m) {
+            final AnnotationExpr a = m.getAnnotation();
+            List<Token> tokens = new ArrayList<>();
+            tokens.add(new Token(TYPE_NAME, "@" + a.getNameAsString(), makeId(a, m.getAnnotationParent())));
+            if (m.isShowProperties()) {
+                if (a instanceof NormalAnnotationExpr) {
+                    tokens.add(new Token(PUNCTUATION, "("));
+                    NodeList<MemberValuePair> pairs = ((NormalAnnotationExpr) a).getPairs();
+                    for (int i = 0; i < pairs.size(); i++) {
+                        MemberValuePair pair = pairs.get(i);
+
+                        // If the pair is a boolean expression, and we are condensed, we only take the name.
+                        // If we are not a boolean expression, and we are condensed, we only take the value.
+                        // If we are not condensed, we take both.
+                        final Expression valueExpr = pair.getValue();
+                        if (m.isCondensed()) {
+                            if (valueExpr.isBooleanLiteralExpr()) {
+                                tokens.add(new Token(MEMBER_NAME, upperCase(pair.getNameAsString())));
+                            } else {
+                                processAnnotationValueExpression(valueExpr, m.isCondensed(), tokens);
+                            }
+                        } else {
+                            tokens.add(new Token(MEMBER_NAME, pair.getNameAsString()));
+                            tokens.add(new Token(PUNCTUATION, " = "));
+
+                            processAnnotationValueExpression(valueExpr, m.isCondensed(), tokens);
+                        }
+
+                        if (i < pairs.size() - 1) {
+                            tokens.add(new Token(PUNCTUATION, ", "));
+                        }
+                    }
+
+                    tokens.add(new Token(PUNCTUATION, ")"));
+                }
+            }
+            return tokens;
+        }
+
+        private void processAnnotationValueExpression(final Expression valueExpr, final boolean condensed, final List<Token> tokens) {
             if (valueExpr.isClassExpr()) {
                 // lookup to see if the type is known about, if so, make it a link, otherwise leave it as text
                 String typeName = valueExpr.getChildNodes().get(0).toString();
                 if (apiListing.getKnownTypes().containsKey(typeName)) {
                     final Token token = new Token(TYPE_NAME, typeName);
                     token.setNavigateToId(apiListing.getKnownTypes().get(typeName));
-                    addToken(token);
+                    tokens.add(token);
                     return;
                 }
             } else if (valueExpr.isArrayInitializerExpr()) {
-                addToken(new Token(PUNCTUATION, "{ "));
+                if (!condensed) {
+                    tokens.add(new Token(PUNCTUATION, "{ "));
+                }
                 for (int i = 0; i < valueExpr.getChildNodes().size(); i++) {
                     Node n = valueExpr.getChildNodes().get(i);
 
                     if (n instanceof Expression) {
-                        processAnnotationValueExpression((Expression) n);
+                        processAnnotationValueExpression((Expression) n, condensed, tokens);
                     } else {
-                        addToken(new Token(TEXT, valueExpr.toString()));
+                        tokens.add(new Token(TEXT, valueExpr.toString()));
                     }
 
                     if (i < valueExpr.getChildNodes().size() - 1) {
-                        addToken(new Token(PUNCTUATION, ", "));
+                        tokens.add(new Token(PUNCTUATION, ", "));
                     }
                 }
-                addToken(new Token(PUNCTUATION, " }"));
+                if (!condensed) {
+                    tokens.add(new Token(PUNCTUATION, " }"));
+                }
                 return;
             }
 
-            // if we fall through to here, just treat it as a string
-            addToken(new Token(TEXT, valueExpr.toString()));
+            // if we fall through to here, just treat it as a string.
+            // If we are in condensed mode, we strip off everything before the last period
+            String value = valueExpr.toString();
+            if (condensed) {
+                int lastPeriod = value.lastIndexOf('.');
+                if (lastPeriod != -1) {
+                    value = value.substring(lastPeriod + 1);
+                }
+                tokens.add(new Token(TEXT, upperCase(value)));
+            } else {
+                tokens.add(new Token(TEXT, value));
+            }
         }
 
         private void getModifiers(NodeList<Modifier> modifiers) {
@@ -1125,7 +1179,9 @@ public class JavaASTAnalyser implements Analyser {
                 addToken(new Token(DEPRECATED_RANGE_START));
             }
 
-            addToken(new Token(MEMBER_NAME, name, definitionId));
+            Token nameToken = new Token(MEMBER_NAME, name, definitionId);
+            checkForCrossLanguageDefinitionId(nameToken, callableDeclaration);
+            addToken(nameToken);
 
             if (isDeprecated) {
                 addToken(new Token(DEPRECATED_RANGE_END));
@@ -1188,7 +1244,7 @@ public class JavaASTAnalyser implements Analyser {
 
         private void getThrowException(CallableDeclaration<?> callableDeclaration) {
             final NodeList<ReferenceType> thrownExceptions = callableDeclaration.getThrownExceptions();
-            if (thrownExceptions.size() == 0) {
+            if (thrownExceptions.isEmpty()) {
                 return;
             }
 
@@ -1425,7 +1481,7 @@ public class JavaASTAnalyser implements Analyser {
                 // convert http/s links to external clickable links
                 Matcher urlMatch = MiscUtils.URL_MATCH.matcher(line2);
                 int currentIndex = 0;
-                while(urlMatch.find(currentIndex) == true) {
+                while(urlMatch.find(currentIndex)) {
                     int start = urlMatch.start();
                     int end = urlMatch.end();
 

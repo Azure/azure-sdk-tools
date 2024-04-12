@@ -17,6 +17,7 @@
   * [all](#all)
   * [sparse](#sparse)
   * [include/exclude](#includeexclude)
+  * [Environment Variable References](#environment-variable-references)
   * [Generated display name](#generated-display-name)
   * [Filters](#filters)
   * [Replace/Modify/Append](#replacemodifyappend-values)
@@ -511,6 +512,29 @@ will be generated, but the full matrix of both include and exclude will be proce
 
 Excludes are processed first, so includes can be used to forcefully add specific combinations to the matrix,
 regardless of exclusions.
+
+### Environment Variable References
+
+The matrix config supports values that reference environment variables and resolves them at
+matrix generation time. This is useful especially in pipeline scenarios where we want to reference
+common values that are defined elsewhere in the environment and/or pipeline config.
+
+Prefix a matrix value with `env:` to trigger an environment variable
+lookup. If the variable does not exist, then the value will resolve to empty string.
+
+For example:
+
+``` yaml
+{
+  "net461_macOS1015": {
+    "framework": "net461",
+    "operatingSystem": "env:OperatingSystem"
+  }
+}
+```
+
+Matrix filters and replace parameters evaluate before environment variables are resolved. Matrix
+display name renames and display name filters evaluate after variables are resolved.
 
 ### Generated display name
 

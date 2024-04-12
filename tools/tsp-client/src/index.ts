@@ -1,16 +1,16 @@
-import { installDependencies } from "./npm.js";
+import { npmCommand, npxCommand } from "./npm.js";
 import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRepoConfig } from "./fs.js";
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, writeFile, cp, readFile } from "node:fs/promises";
+import { mkdir, writeFile, cp, readFile, access, stat, rename } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 import { formatAdditionalDirectories, getAdditionalDirectoryName } from "./utils.js";
 import { resolve } from "node:path";
-import { spawn } from "node:child_process";
+import { config as dotenvConfig } from "dotenv";
 
 
 async function sdkInit(
@@ -42,7 +42,16 @@ async function sdkInit(
     const tspConfigPath = joinPaths(resolvedConfigUrl.path, "tspconfig.yaml");
     await addSpecFiles(cloneDir, tspConfigPath)
     await checkoutCommit(cloneDir, resolvedConfigUrl.commit);
-    const configYaml = parseYaml(joinPaths(cloneDir, tspConfigPath));
+    let data;
+    try {
+      data = await readFile(joinPaths(cloneDir, tspConfigPath), "utf8");
+    } catch (err) {
+      throw new Error(`Could not read tspconfig.yaml at ${tspConfigPath}. Error: ${err}`);
+    }
+    if (!data) {
+      throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
+    }
+    const configYaml = parseYaml(data);
     const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
     if (!serviceDir) {
       throw new Error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
@@ -63,8 +72,18 @@ async function sdkInit(
     return newPackageDir;
   } else {
     // Local directory scenario
-    let configFile = joinPaths(config, "tspconfig.yaml")
-    const data = await readFile(configFile, "utf8");
+    if (!config.endsWith("tspconfig.yaml")) {
+      config = joinPaths(config, "tspconfig.yaml");
+    }
+    let data;
+    try {
+      data = await readFile(config, "utf8");
+    } catch (err) {
+      throw new Error(`Could not read tspconfig.yaml at ${config}`);
+    }
+    if (!data) {
+      throw new Error(`tspconfig.yaml is empty at ${config}`);
+    }
     const configYaml = parseYaml(data);
     const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
     if (!serviceDir) {
@@ -78,8 +97,8 @@ async function sdkInit(
     }
     const newPackageDir = joinPaths(outputDir, serviceDir, packageDir)
     await mkdir(newPackageDir, { recursive: true });
-    configFile = configFile.replaceAll("\\", "/");
-    const matchRes = configFile.match('.*/(?<path>specification/.*)/tspconfig.yaml$')
+    config = config.replaceAll("\\", "/");
+    const matchRes = config.match('.*/(?<path>specification/.*)/tspconfig.yaml$')
     var directory = "";
     if (matchRes) {
       if (matchRes.groups) {
@@ -153,8 +172,19 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     await removeDirectory(cloneDir);
   }
 
-  const emitterPath = joinPaths(repoRoot, "eng", "emitter-package.json");
-  await cp(emitterPath, joinPaths(srcDir, "package.json"), { recursive: true });
+  try {
+    const emitterLockPath = joinPaths(repoRoot, "eng", "emitter-package-lock.json");
+    await cp(emitterLockPath, joinPaths(srcDir, "package-lock.json"), { recursive: true });
+  } catch (err) {
+    Logger.debug(`Ran into the following error when looking for emitter-package-lock.json: ${err}`);
+    Logger.debug("Will attempt look for emitter-package.json...");
+  }
+  try {
+    const emitterPath = joinPaths(repoRoot, "eng", "emitter-package.json");
+    await cp(emitterPath, joinPaths(srcDir, "package.json"), { recursive: true });
+  } catch (err) {
+    throw new Error(`Ran into the following error: ${err}\nTo continue using tsp-client, please provide a valid emitter-package.json file in the eng/ directory of the repository.`);
+  }
 }
 
 
@@ -182,8 +212,22 @@ async function generate({
   const mainFilePath = await discoverMainFile(srcDir);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
   Logger.info("Installing dependencies from npm...");
-  await installDependencies(srcDir);
-
+  const args: string[] = [];
+  try {
+    // Check if package-lock.json exists, if it does, we'll install dependencies through `npm ci`
+    await stat(joinPaths(srcDir, "package-lock.json"));
+    args.push("ci");
+  } catch (err) {
+    // If package-lock.json doesn't exist, we'll attempt to install dependencies through `npm install`
+    args.push("install");
+  }
+  // NOTE: This environment variable should be used for developer testing only. A force
+  // install may ignore any conflicting dependencies and result in unexpected behavior.
+  dotenvConfig({path: resolve(await getRepoRoot(rootUrl), ".env")});
+  if (process.env['TSPCLIENT_FORCE_INSTALL']?.toLowerCase() === "true") {
+    args.push("--force");
+  }
+  await npmCommand(srcDir, args);
   await compileTsp({ emitterPackage: emitter, outputPath: rootUrl, resolvedMainFilePath, saveInputs: noCleanup, additionalEmitterOptions });
 
   if (noCleanup) {
@@ -195,26 +239,43 @@ async function generate({
 }
 
 
-async function convert(readme: string, outputDir: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-      const autorest = spawn("npx", ["autorest", readme, "--openapi-to-typespec", "--use=@autorest/openapi-to-typespec", `--output-folder=${outputDir}`], {
-          cwd: outputDir,
-          stdio: "inherit",
-          shell: true,
-      });
-      autorest.once("exit", (code) => {
-          if (code === 0) {
-              resolve();
-          } else {
-              reject(new Error(`openapi to typespec conversion failed exited with code ${code}`));
-          }
-      });
-      autorest.once("error", (err) => {
-          reject(new Error(`openapi to typespec conversion failed with error: ${err}`));
-      });
-  });
+async function convert(readme: string, outputDir: string, arm?: boolean): Promise<void> {
+  const args = ["autorest", "--openapi-to-typespec", "--csharp=false", `--output-folder="${outputDir}"`, "--use=@autorest/openapi-to-typespec", `"${readme}"`];
+  if (arm) {
+    const generateMetadataCmd = ["autorest", "--csharp", "--max-memory-size=8192", '--use="https://aka.ms/azsdk/openapi-to-typespec-csharp"', `--output-folder="${outputDir}"`, "--mgmt-debug.only-generate-metadata", "--azure-arm", "--skip-csproj", `"${readme}"`];
+    try {
+      await npxCommand(outputDir, generateMetadataCmd);
+    } catch (err) {
+      Logger.error(`Error occurred while attempting to generate ARM metadata: ${err}`);
+      process.exit(1);
+    }
+    try {
+      await rename(joinPaths(outputDir, "metadata.json"), joinPaths(outputDir, "resources.json"));
+    } catch (err) {
+      Logger.error(`Error occurred while attempting to rename metadata.json to resources.json: ${err}`);
+      process.exit(1);
+    }
+    args.push("--isArm");
+  }
+  return await npxCommand(outputDir, args);
 }
 
+async function generateLockFile(rootUrl: string, repoRoot: string) {
+  Logger.info("Generating lock file...");
+  const args: string[] = ["install"];
+  if (process.env['TSPCLIENT_FORCE_INSTALL']?.toLowerCase() === "true") {
+    args.push("--force");
+  }
+  const tempRoot = await createTempDirectory(rootUrl);
+  await cp(joinPaths(repoRoot, "eng", "emitter-package.json"), joinPaths(tempRoot, "package.json"));
+  await npmCommand(tempRoot, args);
+  const lockFile = await stat(joinPaths(tempRoot, "package-lock.json"));
+  if (lockFile.isFile()) {
+    await cp(joinPaths(tempRoot, "package-lock.json"), joinPaths(repoRoot, "eng", "emitter-package-lock.json"));
+  }
+  await removeDirectory(tempRoot);
+  Logger.info(`Lock file generated in ${joinPaths(repoRoot, "eng", "emitter-package-lock.json")}`);
+}
 
 async function main() {
   const options = await getOptions();
@@ -229,9 +290,26 @@ async function main() {
     rootUrl = resolvePath(options.outputDir);
   }
 
+  const repoRoot = await getRepoRoot(rootUrl);
+  try {
+    // FIXME: this is a workaround meanwhile we fix the issue with failing to delete the sparse-spec directory
+    // Tracking issue: https://github.com/Azure/azure-sdk-tools/issues/7636
+    access(joinPaths(repoRoot, "..", "sparse-spec")).then(() => {
+      Logger.debug("Deleting existing sparse-spec directory");
+      removeDirectory(joinPaths(repoRoot, "..", "sparse-spec"));
+    }).catch(() => {});
+  } catch (err) {
+    Logger.debug(`Error occurred while attempting to remove sparse-spec directory: ${err}`);
+  }
+
+  if (options.generateLockFile) {
+    await generateLockFile(rootUrl, repoRoot);
+    return;
+  }
+
   switch (options.command) {
       case "init":
-        const emitter = await getEmitterFromRepoConfig(joinPaths(await getRepoRoot(rootUrl), "eng", "emitter-package.json"));
+        const emitter = await getEmitterFromRepoConfig(joinPaths(repoRoot, "eng", "emitter-package.json"));
         if (!emitter) {
           throw new Error("Couldn't find emitter-package.json in the repo");
         }
@@ -273,7 +351,7 @@ async function main() {
         if (await doesFileExist(readme)) {
           readme = normalizePath(resolve(readme));
         }
-        await convert(readme, rootUrl);
+        await convert(readme, rootUrl, options.arm);
         break;
       default:
         throw new Error(`Unknown command: ${options.command}`);

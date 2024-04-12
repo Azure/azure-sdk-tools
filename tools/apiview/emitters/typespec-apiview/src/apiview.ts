@@ -467,7 +467,7 @@ export class ApiView {
         throw new Error(`Case "EmptyStatement" not implemented`);
       case SyntaxKind.EnumMember:
         obj = node as EnumMemberNode;
-        this.tokenizeDecorators(obj.decorators, false);
+        this.tokenizeDecoratorsAndDirectives(obj.decorators, obj.directives, false);
         this.tokenizeIdentifier(obj.id, "member");
         this.lineMarker(true);
         if (obj.value) {
@@ -732,8 +732,7 @@ export class ApiView {
 
   private tokenizeModelStatement(node: ModelStatementNode) {
     this.namespaceStack.push(node.id.sv);
-    this.tokenizeDirectives(node.directives);
-    this.tokenizeDecorators(node.decorators, false);
+    this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     this.keyword("model", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
     if (node.extends) {
@@ -764,7 +763,7 @@ export class ApiView {
 
   private tokenizeScalarStatement(node: ScalarStatementNode) {
     this.namespaceStack.push(node.id.sv);
-    this.tokenizeDecorators(node.decorators, false);
+    this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     this.keyword("scalar", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
     if (node.extends) {
@@ -778,7 +777,7 @@ export class ApiView {
 
   private tokenizeInterfaceStatement(node: InterfaceStatementNode) {
     this.namespaceStack.push(node.id.sv);
-    this.tokenizeDecorators(node.decorators, false);
+    this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     this.keyword("interface", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
     this.tokenizeTemplateParameters(node.templateParameters);
@@ -794,7 +793,7 @@ export class ApiView {
 
   private tokenizeEnumStatement(node: EnumStatementNode) {
     this.namespaceStack.push(node.id.sv);
-    this.tokenizeDecorators(node.decorators, false);
+    this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     this.keyword("enum", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
     this.beginGroup();
@@ -812,7 +811,7 @@ export class ApiView {
 
   private tokenizeUnionStatement(node: UnionStatementNode) {
     this.namespaceStack.push(node.id.sv);
-    this.tokenizeDecorators(node.decorators, false);
+    this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     this.keyword("union", false, true);
     this.tokenizeIdentifier(node.id, "declaration");
     this.beginGroup();
@@ -832,7 +831,7 @@ export class ApiView {
   }
 
   private tokenizeUnionVariant(node: UnionVariantNode) {
-    this.tokenizeDecorators(node.decorators, false);
+    this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     if (node.id !== undefined) {
       this.tokenizeIdentifier(node.id, "member");
       this.punctuation(":", false, true);
@@ -842,7 +841,7 @@ export class ApiView {
   }
 
   private tokenizeModelProperty(node: ModelPropertyNode, inline: boolean) {
-    this.tokenizeDecorators(node.decorators, inline);
+    this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, inline);
     this.tokenizeIdentifier(node.id, "member");
     this.lineMarker();
     this.punctuation(node.optional ? "?:" : ":", false, true);
@@ -946,7 +945,7 @@ export class ApiView {
 
   private tokenizeOperationStatement(node: OperationStatementNode, suppressOpKeyword: boolean = false) {
     this.namespaceStack.push(node.id.sv);
-    this.tokenizeDecorators(node.decorators, false);
+    this.tokenizeDecoratorsAndDirectives(node.decorators, node.directives, false);
     if (!suppressOpKeyword) {
       this.keyword("op", false, true);
     }
@@ -960,7 +959,7 @@ export class ApiView {
   private tokenizeNamespaceModel(model: NamespaceModel) {
     this.namespaceStack.push(model.name);
     if (model.node.kind === SyntaxKind.NamespaceStatement) {
-        this.tokenizeDecorators(model.node.decorators, false);
+        this.tokenizeDecoratorsAndDirectives(model.node.decorators, model.node.directives, false);
     }
     this.keyword("namespace", false, true);
     this.typeDeclaration(model.name, this.namespaceStack.value(), true);
@@ -991,19 +990,13 @@ export class ApiView {
     this.namespaceStack.pop();
   }
 
-  private tokenizeDirectives(nodes?: readonly DirectiveExpressionNode[]) {
-    if (!nodes) {
-      return;
-    }
-    for (const node of nodes) {
-      this.tokenize(node);
-    }
-  }
-
-  private tokenizeDecorators(nodes: readonly DecoratorExpressionNode[], inline: boolean) {
+  private tokenizeDecoratorsAndDirectives(decorators: readonly DecoratorExpressionNode[] | undefined, directives: readonly DirectiveExpressionNode[] | undefined, inline: boolean) {
     const docDecorators = ["doc", "summary", "example"]
+    for (const directive of directives ?? []) {
+      this.tokenize(directive);
+    }
     // ensure there is no blank line after opening brace for non-inlined decorators
-    if (!inline && nodes.length) {
+    if (!inline && decorators!== undefined && decorators.length) {
       while (this.tokens.length) {
         const item = this.tokens.pop()!;
         if (item.Kind === ApiViewTokenKind.LineIdMarker && item.DefinitionId === "GLOBAL") {
@@ -1020,7 +1013,7 @@ export class ApiView {
       }
     }
     // render each decorator
-    for (const node of nodes) {
+    for (const node of decorators || []) {
       this.namespaceStack.push(generateId(node)!);
       const isDoc = docDecorators.includes((node.target as IdentifierNode).sv)
       if (isDoc) {

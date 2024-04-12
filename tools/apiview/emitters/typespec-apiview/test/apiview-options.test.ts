@@ -82,13 +82,16 @@ describe("apiview-options: tests", () => {
     const diagnostics = await diagnosticsFor(input, {"version": "1"});
     expectDiagnostics(diagnostics, [
       {
+        code: "deprecated"
+      },
+      {
         code: "@azure-tools/typespec-apiview/invalid-option",
         message: `Option "--output-file" cannot be used with multi-service specs unless "--service" is also supplied.`
       },
       {
         code: "@azure-tools/typespec-apiview/invalid-option",
         message: `Option "--version" cannot be used with multi-service specs unless "--service" is also supplied.`
-      }
+      },
     ]);
   });
 

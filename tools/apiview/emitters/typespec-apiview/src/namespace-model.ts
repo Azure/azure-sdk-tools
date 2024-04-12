@@ -124,7 +124,7 @@ export class NamespaceModel {
    * @returns true if there are models, resources or operations
    */
   shouldEmit(): boolean {
-    return (this.models.size > 0 || this.operations.size > 0 || this.resources.size > 0);
+    return ((this.node as NamespaceStatementNode).decorators !== undefined || this.models.size > 0 || this.operations.size > 0 || this.resources.size > 0);
   }
 }
 

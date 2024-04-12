@@ -787,12 +787,13 @@ describe("apiview: tests", () => {
   });
 
   describe("suppressions", () => {
-    it("displays suppressions", async () => {
+    it("suppression on model", async () => {
       const input = `
       #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {  
         #suppress "foo" "bar"
+        @doc("Foo Model")
         model Foo {
           name: string;
         }
@@ -811,5 +812,37 @@ describe("apiview: tests", () => {
       compare(expect, lines, 9);
       validateDefinitionIds(apiview);
     });
+
+    it("suppression on namespace", async () => {
+      const input = `
+      #suppress "deprecated"
+      @TypeSpec.service( { title: "Test", version: "1" } )
+      namespace Azure.Test {  
+        #suppress "foo" "bar"
+        @doc("SubNamespace")
+        namespace SubNamespace {
+          model Blah {
+            name: string;
+          }      
+        }
+      }
+      `;
+      const expect = `
+      namespace Azure.Test {
+      }
+
+      #suppress "foo" "bar"
+      namespace Azure.Test.SubNamespace {
+        model Blah {
+          name: string;
+        }
+      }
+      `;
+      const apiview = await apiViewFor(input, {});
+      const lines = apiViewText(apiview);
+      compare(expect, lines, 9);
+      validateDefinitionIds(apiview);
+    });
+
   });
 });

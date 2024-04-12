@@ -992,26 +992,29 @@ export class ApiView {
 
   private tokenizeDecoratorsAndDirectives(decorators: readonly DecoratorExpressionNode[] | undefined, directives: readonly DirectiveExpressionNode[] | undefined, inline: boolean) {
     const docDecorators = ["doc", "summary", "example"]
+    if ((directives || []).length === 0 && (decorators || []).length === 0) {
+        return;
+    }
     for (const directive of directives ?? []) {
       this.tokenize(directive);
     }
-    // ensure there is no blank line after opening brace for non-inlined decorators
-    if (!inline && decorators!== undefined && decorators.length) {
-      while (this.tokens.length) {
-        const item = this.tokens.pop()!;
-        if (item.Kind === ApiViewTokenKind.LineIdMarker && item.DefinitionId === "GLOBAL") {
-          this.tokens.push(item);
-          this.blankLines(2);
-          break;
-        } else if ([ApiViewTokenKind.Punctuation, ApiViewTokenKind.TypeName].includes(item.Kind)) {
-          this.tokens.push(item);
-          // for now, render with no newlines, per stewardship board request
-          const lineCount = ["{", "("].includes(item.Value!) ? 0 : 0;
-          this.blankLines(lineCount);
-          break;
-        }
-      }
-    }
+    // FIXME: ensure there is no blank line after opening brace for non-inlined decorators
+    // if (!inline && decorators?.length && directives === undefined) {
+    //   while (this.tokens.length) {
+    //     const item = this.tokens.pop()!;
+    //     if (item.Kind === ApiViewTokenKind.LineIdMarker && item.DefinitionId === "GLOBAL") {
+    //       this.tokens.push(item);
+    //       this.blankLines(2);
+    //       break;
+    //     } else if ([ApiViewTokenKind.Punctuation, ApiViewTokenKind.TypeName].includes(item.Kind)) {
+    //       this.tokens.push(item);
+    //       // for now, render with no newlines, per stewardship board request
+    //       const lineCount = ["{", "("].includes(item.Value!) ? 0 : 0;
+    //       this.blankLines(lineCount);
+    //       break;
+    //     }
+    //   }
+    // }
     // render each decorator
     for (const node of decorators || []) {
       this.namespaceStack.push(generateId(node)!);

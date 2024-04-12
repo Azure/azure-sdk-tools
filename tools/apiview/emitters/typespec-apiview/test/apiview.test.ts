@@ -802,6 +802,7 @@ describe("apiview: tests", () => {
       const expect = `
       namespace Azure.Test {
         #suppress "foo" "bar"
+        @doc("Foo Model")
         model Foo {
           name: string;
         }
@@ -832,6 +833,7 @@ describe("apiview: tests", () => {
       }
 
       #suppress "foo" "bar"
+      @doc("SubNamespace")
       namespace Azure.Test.SubNamespace {
         model Blah {
           name: string;
@@ -843,6 +845,5 @@ describe("apiview: tests", () => {
       compare(expect, lines, 9);
       validateDefinitionIds(apiview);
     });
-
   });
 });

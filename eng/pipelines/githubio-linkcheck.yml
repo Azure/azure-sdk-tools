@@ -91,7 +91,7 @@ jobs:
         -inputCacheFile "$(cachefile)"
         -outputCacheFile "$(cachefile)"
         -devOpsLogging: $true
-               
+
   - task: PowerShell@2
     displayName: 'tools link check'
     condition: succeededOrFailed()

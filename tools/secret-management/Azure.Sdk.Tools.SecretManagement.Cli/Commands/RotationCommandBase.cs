@@ -97,7 +97,7 @@ public abstract class RotationCommandBase : Command
             [KeyVaultCertificateStore.MappingKey] = KeyVaultCertificateStore.GetSecretStoreFactory(tokenCredential, logger),
             [ManualActionStore.MappingKey] = ManualActionStore.GetSecretStoreFactory(logger, new ConsoleValueProvider()),
             [ServiceAccountPersonalAccessTokenStore.MappingKey] = ServiceAccountPersonalAccessTokenStore.GetSecretStoreFactory(tokenCredential, new SecretProvider(logger), logger),
-            [ServiceConnectionParameterStore.MappingKey] = ServiceConnectionParameterStore.GetSecretStoreFactory(tokenCredential, logger),
+            [ServiceConnectionParameterStore.MappingKey] = ServiceConnectionParameterStore.GetSecretStoreFactory(tokenCredential, new SecretProvider(logger), logger),
             [AadApplicationSecretStore.MappingKey] = AadApplicationSecretStore.GetSecretStoreFactory(tokenCredential, logger),
             [AzureWebsiteStore.MappingKey] = AzureWebsiteStore.GetSecretStoreFactory(tokenCredential, logger),
             [AadApplicationSecretStore.MappingKey] = AadApplicationSecretStore.GetSecretStoreFactory(tokenCredential, logger),

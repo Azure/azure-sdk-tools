@@ -4775,6 +4775,28 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
         ):
             self.checker.visit_importfrom(import_node)
 
+    def test_disallowed_import_from_extensions(self):
+        """Check that illegal imports raise warnings"""
+        import_node = astroid.extract_node(
+            """
+            from typing import TYPE_CHECKING
+
+            if TYPE_CHECKING:
+                import typing_extensions #@
+            """
+        )
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="no-typing-import-in-type-check",
+                line=5,
+                node=import_node,
+                col_offset=4,
+                end_line=5,
+                end_col_offset=26,
+            )
+        ):
+            self.checker.visit_import(import_node)
+
     def test_allowed_imports(self):
         """Check that allowed imports don't raise warnings."""
         # import not in the blocked list.

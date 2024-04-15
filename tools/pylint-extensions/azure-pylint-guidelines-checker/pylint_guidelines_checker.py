@@ -2724,14 +2724,24 @@ class NoImportTypingFromTypeCheck(BaseChecker):
     }
 
     def visit_importfrom(self, node):
-        """Check that we aren't importing from azure.core.pipeline.transport import HttpResponse."""
-        if isinstance(node.parent, astroid.If) and node.modname == "typing":
+        """Check that we aren't importing from typing under if TYPE_CHECKING."""
+        if isinstance(node.parent, astroid.If) and (node.modname == "typing" or node.modname == "typing_extensions"):
             self.add_message(
                 msgid=f"no-typing-import-in-type-check",
                 node=node,
                 confidence=None,
             )
 
+    def visit_import(self, node):
+        """Check that we aren't importing from typing under if TYPE_CHECKING."""
+        if isinstance(node.parent, astroid.If):
+            for name, _ in node.names:
+                if name == "typing" or name == "typing_extensions":
+                    self.add_message(
+                        msgid=f"no-typing-import-in-type-check",
+                        node=node,
+                        confidence=None,
+                    )
 
 # if a linter is registered in this function then it will be checked with pylint
 def register(linter):

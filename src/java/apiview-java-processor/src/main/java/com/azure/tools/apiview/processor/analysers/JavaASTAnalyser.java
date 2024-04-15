@@ -1527,6 +1527,9 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private Token makeWhitespace() {
+        // Use a byte array with Arrays.fill with empty space (' ') character rather than StringBuilder as StringBuilder
+        // will check that it has sufficient size every time a new character is appended. We know ahead of time the size
+        // needed and can remove all those checks by removing usage of StringBuilder with this simpler pattern.
         byte[] bytes = new byte[indent];
         Arrays.fill(bytes, (byte) ' ');
 

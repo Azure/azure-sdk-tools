@@ -195,9 +195,8 @@ public class Main {
      */
     private static void tryParseApiViewProperties(FileSystem fs, APIListing apiListing, String artifactId) {
         // the filename is [<artifactid>_]apiview_properties.json
-        String filename = (artifactId != null && !artifactId.isEmpty()
-            ? (artifactId + "_") : "") + "apiview_properties.json";
-        String filePath = "/META-INF/" + filename;
+        String artifactName = (artifactId != null && !artifactId.isEmpty()) ? (artifactId + "_") : "";
+        String filePath = "/META-INF/" + artifactName + "apiview_properties.json";
         Path apiviewPropertiesPath = fs.getPath(filePath);
         if (!Files.exists(apiviewPropertiesPath)) {
             System.out.println("  No apiview_properties.json file found in jar file - continuing...");

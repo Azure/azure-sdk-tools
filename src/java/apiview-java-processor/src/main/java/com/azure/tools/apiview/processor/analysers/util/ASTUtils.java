@@ -14,7 +14,6 @@ import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.comments.Comment;
@@ -214,6 +213,14 @@ public final class ASTUtils {
     }
 
     public static String makeId(String fullPath) {
+        // Previously, this used a regex to replace '"' and ' ' with '-', that wasn't necessary. The replacement pattern
+        // is simple and can be replaced with a simple loop. This is a performance optimization.
+        //
+        // The logic is that we iterate over the string, if no replacements are needed we return the original string.
+        // Otherwise, we create a new StringBuilder the size of the string being replaced, as the replacement size is
+        // the same as the search size, and we append the parts of the string that don't need to be replaced, and the
+        // replacement character for the parts that do. At the end of the loop, we append the last part of the string
+        // that doesn't need to be replaced and return the final string.
         if (fullPath == null || fullPath.isEmpty()) {
             return fullPath;
         }

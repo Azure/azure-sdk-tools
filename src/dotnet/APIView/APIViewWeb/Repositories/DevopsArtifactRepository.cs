@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -80,7 +81,11 @@ namespace APIViewWeb.Repositories
 
         private async Task<HttpResponseMessage> GetFromDevopsAsync(string request)
         {
-            var httpClient = new HttpClient();
+            var httpClient = new HttpClient();            
+            var accessToken = await getAccessToken();
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             var maxRetryAttempts = 10;
             var pauseBetweenFailures = TimeSpan.FromSeconds(2);
 

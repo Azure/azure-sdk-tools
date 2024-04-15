@@ -1,5 +1,9 @@
 # Release History
 
+## 0.4.0 (2024-04-15)
+
+- Checker to enforce no importing typing under TYPE_CHECKING block.
+
 ## 0.3.1 (2023-1-16)
 
 - Docstring bug fix where paramtype was being considered for params

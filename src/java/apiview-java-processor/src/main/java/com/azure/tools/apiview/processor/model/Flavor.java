@@ -1,25 +1,35 @@
 package com.azure.tools.apiview.processor.model;
 
 import com.azure.tools.apiview.processor.model.maven.Dependency;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 public enum Flavor {
-    @JsonProperty("azure")
-    AZURE("com.azure"),
-
-    @JsonProperty("generic")
-    GENERIC("io.clientcore"),
-
-    UNKNOWN(null);
+    AZURE("com.azure", "azure"),
+    GENERIC("io.clientcore", "generic"),
+    UNKNOWN(null, "unknown");
 
     private final String packagePrefix;
+    private final String serializationValue;
 
-    private Flavor(String packagePrefix) {
+    Flavor(String packagePrefix, String serializationValue) {
         this.packagePrefix = packagePrefix;
+        this.serializationValue = serializationValue;
     }
 
     public String getPackagePrefix() {
         return packagePrefix;
+    }
+
+    public String getSerializationValue() {
+        return serializationValue;
+    }
+
+    public static Flavor fromSerializationValue(String serializationValue) {
+        for (Flavor flavor : values()) {
+            if (flavor.getSerializationValue().equals(serializationValue)) {
+                return flavor;
+            }
+        }
+        return UNKNOWN;
     }
 
     public static Flavor getFlavor(APIListing apiListing) {
@@ -61,6 +71,4 @@ public enum Flavor {
         // see which count is greatest (and non-zero), and return that flavour. If equal, return unknown
         return azureCount > genericCount ? AZURE : genericCount > azureCount ? GENERIC : UNKNOWN;
     }
-
-
 }

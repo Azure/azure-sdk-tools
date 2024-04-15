@@ -1,19 +1,22 @@
 package com.azure.tools.apiview.processor;
 
-import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonWriter;
 import com.azure.tools.apiview.processor.analysers.Analyser;
+import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
-import com.azure.tools.apiview.processor.model.*;
+import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ApiViewProperties;
+import com.azure.tools.apiview.processor.model.Diagnostic;
+import com.azure.tools.apiview.processor.model.DiagnosticKind;
+import com.azure.tools.apiview.processor.model.LanguageVariant;
+import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.maven.Pom;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -26,17 +29,8 @@ import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
 import static com.azure.tools.apiview.processor.model.TokenKind.LINE_ID_MARKER;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_CREATORS;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_FIELDS;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_GETTERS;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_IS_GETTERS;
 
 public class Main {
-    private static final ObjectWriter WRITER = new ObjectMapper()
-        .disable(AUTO_DETECT_CREATORS, AUTO_DETECT_FIELDS, AUTO_DETECT_GETTERS, AUTO_DETECT_IS_GETTERS)
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-        .writerWithDefaultPrettyPrinter();
-
     // expected argument order:
     // [inputFiles] <outputDirectory>
     public static void main(String[] args) throws IOException {
@@ -133,7 +127,9 @@ public class Main {
         }
 
         // Write out to the filesystem
-        WRITER.writeValue(outputFile, apiListing);
+        try (JsonWriter jsonWriter = JsonProviders.createWriter(Files.newBufferedWriter(outputFile.toPath()))) {
+            apiListing.toJson(jsonWriter);
+        }
     }
 
     private static void processJavaSourcesJar(File inputFile, APIListing apiListing) throws IOException {
@@ -168,25 +164,7 @@ public class Main {
         // Read all files within the jar file so that we can create a list of files to analyse
         final List<Path> allFiles = new ArrayList<>();
         try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
-
-            try {
-                // we eagerly load the apiview_properties.json file into an ApiViewProperties object, so that it can
-                // be used throughout the analysis process, as required
-                // the filename is [<artifactid>_]apiview_properties.json
-                String filename = (artifactId != null && !artifactId.isEmpty() ? (artifactId + "_") : "") + "apiview_properties.json";
-                URL apiViewPropertiesFile = fs.getPath("/META-INF/" + filename).toUri().toURL();
-                final ObjectMapper objectMapper = new ObjectMapper();
-                ApiViewProperties properties = objectMapper.readValue(apiViewPropertiesFile, ApiViewProperties.class);
-                apiListing.setApiViewProperties(properties);
-                System.out.println("  Found apiview_properties.json file in jar file");
-                System.out.println("    - Found " + properties.getCrossLanguageDefinitionIds().size() + " cross-language definition IDs");
-            } catch (InvalidFormatException e) {
-                System.out.println("  ERROR: Unable to parse apiview_properties.json file in jar file");
-                e.printStackTrace();
-            } catch (Exception e) {
-                // this is fine, we just won't have any APIView properties to read in
-                System.out.println("  No apiview_properties.json file found in jar file - continuing...");
-            }
+            tryParseApiViewProperties(fs, apiListing, artifactId);
 
             fs.getRootDirectories().forEach(root -> {
                 try (Stream<Path> paths = Files.walk(root)) {
@@ -201,6 +179,42 @@ public class Main {
             final Analyser analyser = new JavaASTAnalyser(apiListing);
             analyser.analyse(allFiles);
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Attempts to process the {@code apiview_properties.json} file in the jar file, if it exists.
+     * <p>
+     * If the file was found and successfully parsed as {@link ApiViewProperties}, it is set on the {@link APIListing}
+     * object.
+     *
+     * @param fs the {@link FileSystem} representing the jar file
+     * @param apiListing the {@link APIListing} object to set the {@link ApiViewProperties} on
+     * @param artifactId the artifact ID of the jar file
+     */
+    private static void tryParseApiViewProperties(FileSystem fs, APIListing apiListing, String artifactId) {
+        // the filename is [<artifactid>_]apiview_properties.json
+        String artifactName = (artifactId != null && !artifactId.isEmpty()) ? (artifactId + "_") : "";
+        String filePath = "/META-INF/" + artifactName + "apiview_properties.json";
+        Path apiviewPropertiesPath = fs.getPath(filePath);
+        if (!Files.exists(apiviewPropertiesPath)) {
+            System.out.println("  No apiview_properties.json file found in jar file - continuing...");
+            return;
+        }
+
+        try {
+            // we eagerly load the apiview_properties.json file into an ApiViewProperties object, so that it can
+            // be used throughout the analysis process, as required
+            try (JsonReader reader = JsonProviders.createReader(Files.readAllBytes(apiviewPropertiesPath))) {
+                ApiViewProperties properties = ApiViewProperties.fromJson(reader);
+                apiListing.setApiViewProperties(properties);
+                System.out.println("  Found apiview_properties.json file in jar file");
+                System.out.println("    - Found " + properties.getCrossLanguageDefinitionIds().size()
+                    + " cross-language definition IDs");
+            }
+        } catch (IOException e) {
+            System.out.println("  ERROR: Unable to parse apiview_properties.json file in jar file - continuing...");
             e.printStackTrace();
         }
     }

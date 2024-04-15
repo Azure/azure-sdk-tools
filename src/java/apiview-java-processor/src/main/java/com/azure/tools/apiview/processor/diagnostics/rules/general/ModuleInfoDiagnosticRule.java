@@ -11,9 +11,7 @@ import com.github.javaparser.ast.CompilationUnit;
 
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 
@@ -41,27 +39,32 @@ public class ModuleInfoDiagnosticRule implements DiagnosticRule {
                 .min(Comparator.comparingInt(String::length))
                 .orElse("");
 
-        // Check for the presence of module-info
-        Optional<Token> moduleInfoToken = listing.getTokens().stream()
-                .filter(token -> token.getKind().equals(TokenKind.TYPE_NAME))
-                .filter(token -> token.getDefinitionId() != null && token.getDefinitionId().equals(JavaASTAnalyser.MODULE_INFO_KEY))
-                .findFirst();
+        Token moduleInfoToken = null;
+        Set<String> exportsPackages = new HashSet<>();
 
-        // Collect all packages that are exported
-        Set<String> exportsPackages = listing.getTokens().stream()
-                .filter(token -> token.getKind().equals(TokenKind.TYPE_NAME))
-                .filter(token -> token.getDefinitionId() != null && token.getDefinitionId().startsWith("module-info" +
-                        "-exports"))
-                .map(token -> token.getValue())
-                .collect(Collectors.toSet());
+        for (Token token : listing.getTokens()) {
+            if (!TokenKind.TYPE_NAME.equals(token.getKind()) || token.getDefinitionId() == null) {
+                continue;
+            }
 
-        if (!moduleInfoToken.isPresent()) {
+            // Check for the presence of module-info
+            if (token.getDefinitionId().equals(JavaASTAnalyser.MODULE_INFO_KEY) && moduleInfoToken == null) {
+                moduleInfoToken = token;
+            }
+
+            // Collect all packages that are exported
+            if (token.getDefinitionId().startsWith("module-info-exports")) {
+                exportsPackages.add(token.getValue());
+            }
+        }
+
+        if (moduleInfoToken == null) {
             listing.addDiagnostic(new Diagnostic(DiagnosticKind.WARNING, makeId(basePackageName),
                     "This module is missing module-info.java"));
             return;
         }
 
-        String moduleName = moduleInfoToken.get().getValue();
+        String moduleName = moduleInfoToken.getValue();
         if (moduleName != null) {
             // special casing azure-core as the base package doesn't have any classes and hence not included in the
             // list of packages

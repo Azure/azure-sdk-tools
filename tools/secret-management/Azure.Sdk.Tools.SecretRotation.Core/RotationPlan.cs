@@ -108,9 +108,7 @@ public class RotationPlan
 
             DateTimeOffset rotationThresholdDate = this.timeProvider.GetCurrentDateTimeOffset().Add(RotationThreshold);
 
-            DateTimeOffset? warningThresholdDate = WarningThreshold.HasValue
-                ? this.timeProvider.GetCurrentDateTimeOffset().Add(WarningThreshold.Value)
-                : default;
+            DateTimeOffset warningThresholdDate = this.timeProvider.GetCurrentDateTimeOffset().Add(WarningThreshold ?? RotationThreshold / 2);
 
             DateTimeOffset? minExpirationDate = allStates
                 .Where(x => x.ExpirationDate.HasValue)
@@ -120,7 +118,7 @@ public class RotationPlan
 
             if (minExpirationDate == null || minExpirationDate <= invocationTime)
                 state = RotationState.Expired;
-            else if (warningThresholdDate.HasValue && minExpirationDate <= warningThresholdDate)
+            else if (minExpirationDate <= warningThresholdDate)
                 state = RotationState.Warning;
             else if (minExpirationDate <= rotationThresholdDate)
                 state = RotationState.Rotate;

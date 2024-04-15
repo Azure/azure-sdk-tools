@@ -134,6 +134,10 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(IEnumerable<string> reviewIds, bool? isClosed = null)
         {
+            if (reviewIds == null || !reviewIds.Any())
+            {
+                return new List<ReviewListItemModel>();
+            }
             return await _reviewsRepository.GetReviewsAsync(reviewIds, isClosed);
         }
 

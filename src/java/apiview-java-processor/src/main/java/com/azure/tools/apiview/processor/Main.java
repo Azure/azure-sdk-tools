@@ -136,12 +136,12 @@ public class Main {
         final ReviewProperties reviewProperties = getReviewProperties(inputFile);
 
         final String groupId = reviewProperties.getMavenPom().getGroupId();
+        final String artifactId = reviewProperties.getMavenPom().getArtifactId();
 
-        final String reviewName = reviewProperties.getMavenPom().getArtifactId()
-                                      + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
+        final String reviewName = artifactId + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
         System.out.println("  Using '" + reviewName + "' for the review name");
 
-        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + reviewProperties.getMavenPom().getArtifactId();
+        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + artifactId;
         System.out.println("  Using '" + packageName + "' for the package name");
 
         System.out.println("  Using '" + reviewProperties.getMavenPom().getVersion() + "' for the package version");
@@ -164,7 +164,7 @@ public class Main {
         // Read all files within the jar file so that we can create a list of files to analyse
         final List<Path> allFiles = new ArrayList<>();
         try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
-            tryParseApiViewProperties(fs, apiListing);
+            tryParseApiViewProperties(fs, apiListing, artifactId);
 
             fs.getRootDirectories().forEach(root -> {
                 try (Stream<Path> paths = Files.walk(root)) {
@@ -191,9 +191,14 @@ public class Main {
      *
      * @param fs the {@link FileSystem} representing the jar file
      * @param apiListing the {@link APIListing} object to set the {@link ApiViewProperties} on
+     * @param artifactId the artifact ID of the jar file
      */
-    private static void tryParseApiViewProperties(FileSystem fs, APIListing apiListing) {
-        Path apiviewPropertiesPath = fs.getPath("/META-INF/apiview_properties.json");
+    private static void tryParseApiViewProperties(FileSystem fs, APIListing apiListing, String artifactId) {
+        // the filename is [<artifactid>_]apiview_properties.json
+        String filename = (artifactId != null && !artifactId.isEmpty()
+            ? (artifactId + "_") : "") + "apiview_properties.json";
+        String filePath = "/META-INF/" + filename;
+        Path apiviewPropertiesPath = fs.getPath(filePath);
         if (!Files.exists(apiviewPropertiesPath)) {
             System.out.println("  No apiview_properties.json file found in jar file - continuing...");
             return;

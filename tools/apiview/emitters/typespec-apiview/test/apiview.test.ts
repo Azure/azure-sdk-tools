@@ -845,5 +845,26 @@ describe("apiview: tests", () => {
       compare(expect, lines, 9);
       validateDefinitionIds(apiview);
     });
-  });
+
+    it("suppression on operation", async () => {
+        const input = `
+        #suppress "deprecated"
+        @TypeSpec.service( { title: "Test", version: "1" } )
+        namespace Azure.Test {
+            #suppress "foo" "bar"
+            op someOp(): void;
+        }
+        `;
+        const expect = `
+        namespace Azure.Test {
+          #suppress "foo" "bar"
+          op someOp(): void;
+        }
+        `;
+        const apiview = await apiViewFor(input, {});
+        const lines = apiViewText(apiview);
+        compare(expect, lines, 9);
+        validateDefinitionIds(apiview);
+      });
+    });
 });

@@ -631,7 +631,7 @@ export class ApiView {
         this.tokenize((node as ValueOfExpressionNode).target);
         break;
       case SyntaxKind.VoidKeyword:
-        this.keyword("void", true, true);
+        this.keyword("void", true, false);
         break;
       case SyntaxKind.TemplateArgument:
         obj = node as TemplateArgumentNode;

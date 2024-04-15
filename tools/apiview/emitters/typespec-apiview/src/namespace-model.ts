@@ -28,7 +28,6 @@ import {
   ScalarStatementNode,
   TypeReferenceNode,
   JsNamespaceDeclarationNode,
-  DirectiveExpressionNode,
 } from "@typespec/compiler";
 
 export class NamespaceModel {

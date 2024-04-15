@@ -959,7 +959,7 @@ export class ApiView {
   private tokenizeNamespaceModel(model: NamespaceModel) {
     this.namespaceStack.push(model.name);
     if (model.node.kind === SyntaxKind.NamespaceStatement) {
-        this.tokenizeDecoratorsAndDirectives(model.node.decorators, model.collectDirectives(), false);
+        this.tokenizeDecoratorsAndDirectives(model.node.decorators, model.node.directives, false);
     }
     this.keyword("namespace", false, true);
     this.typeDeclaration(model.name, this.namespaceStack.value(), true);

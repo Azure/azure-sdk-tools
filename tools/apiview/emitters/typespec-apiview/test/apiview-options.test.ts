@@ -48,7 +48,6 @@ describe("apiview-options: tests", () => {
       model SomeGlobal {}
     }
 
-    #suppress "deprecated"
     @TypeSpec.service(
       {
         title: "Test";
@@ -62,6 +61,7 @@ describe("apiview-options: tests", () => {
     const apiview = await apiViewFor(input, {
       "include-global-namespace": true
     });
+    // TODO: Update once bug is fixed: https://github.com/microsoft/typespec/issues/3165
     const actual = apiViewText(apiview);
     compare(expect, actual, 1);
   });

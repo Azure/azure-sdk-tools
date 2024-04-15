@@ -613,6 +613,46 @@ describe("apiview: tests", () => {
       validateDefinitionIds(apiview);
     });
   
+    it("templated with empty models", async () =>{
+        const input = `
+        #suppress "deprecated"
+        @TypeSpec.service( { title: "Test", version: "1" } )
+        namespace Azure.Test {
+    
+          op ResourceRead<TResource, TParams>(resource: TResource, params: TParams): TResource;
+    
+          op GetFoo is ResourceRead<{}, {}>;
+  
+          @route("/named")
+          op NamedGetFoo is ResourceRead<
+            TResource = {},
+            TParams = {}
+          >;
+        }`;
+        const expect = `
+        namespace Azure.Test {
+          op GetFoo is ResourceRead<
+            {},
+            {}
+          >;
+  
+          @route("/named")
+          op NamedGetFoo is ResourceRead<
+            TResource = {},
+            TParams = {}
+          >;
+  
+          op ResourceRead<TResource, TParams>(
+            resource: TResource,
+            params: TParams
+          ): TResource;
+        }`;
+        const apiview = await apiViewFor(input, {});
+        const lines = apiViewText(apiview);
+        compare(expect, lines, 9);
+        validateDefinitionIds(apiview);
+    });
+  
     it("with anonymous models", async () =>{
       const input = `
       #suppress "deprecated"

@@ -1,5 +1,17 @@
 # Release History
 
+## 1.0.0-beta.10 (2024-04-15)
+
+### Bugs Fixed
+
+- Downgraded Maven prerequisite version to `3.6.3` to prevent compatibility issues with older versions of Maven.
+
+## 1.0.0-beta.9 (2024-04-15)
+
+### Other Changes
+
+- Updated Maven versions used in the plugin.
+
 ## 1.0.0-beta.8 (2022-08-18)
 
 ### Features Added

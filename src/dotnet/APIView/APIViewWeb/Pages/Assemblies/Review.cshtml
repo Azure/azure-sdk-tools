@@ -537,31 +537,11 @@
                                                 break;
                                         }
                                     }
-
-                            @* <div class="me-3">
-                                <i class="@iconClass"></i>
-                            </div>
-                                        @if (change.ChangeAction.ToString() == "Created")
-                                        {
-                                            <i class="bi bi-plus-circle-fill created status-icon"></i>
-                                        }
-                                        else if (change.ChangeAction.ToString() == "Approved")
-                                        {
-                                            <i class="bi bi-check-circle-fill approved status-icon"></i>
-                                        }
-                                        else if (change.ChangeAction.ToString() == "ApprovalReverted")
-                                        {
-                                            <i class="bi bi-arrow-left-circle-fill approval-reverted status-icon"></i>
-                                        }
-                                        else if (change.ChangeAction.ToString() == "Deleted")
-                                        {
-                                            <i class="bi bi-backspace-fill deleted status-icon"></i>
-                                        }
-                                        else if (change.ChangeAction.ToString() == "UnDeleted")
-                                        {
-                                            <i class="bi bi-plus-circle-fill undeleted status-icon"></i>
-                                        }
-                                    </div> *@                                   
+                                    @if (!string.IsNullOrEmpty(iconClass))
+                                    {
+                                        <i class="@iconClass"></i>
+                                    }
+                                    
                                     <div class="revision-events">
                                         @if (change.ChangeAction.ToString() == "Created")
                                         {

@@ -4792,7 +4792,7 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
                 node=import_node,
                 col_offset=4,
                 end_line=5,
-                end_col_offset=26,
+                end_col_offset=28,
             )
         ):
             self.checker.visit_import(import_node)

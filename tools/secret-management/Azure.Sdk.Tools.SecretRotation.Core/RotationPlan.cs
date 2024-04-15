@@ -26,7 +26,7 @@ public class RotationPlan
         OriginStore = originStore;
         PrimaryStore = primaryStore;
         RotationThreshold = rotationThreshold;
-        WarningThreshold = warningThreshold;
+        WarningThreshold = warningThreshold ?? rotationThreshold / 2;
         RotationPeriod = rotationPeriod;
         RevokeAfterPeriod = revokeAfterPeriod;
         SecondaryStores = new ReadOnlyCollection<SecretStore>(secondaryStores);
@@ -42,7 +42,7 @@ public class RotationPlan
 
     public TimeSpan RotationThreshold { get; }
 
-    public TimeSpan? WarningThreshold { get; }
+    public TimeSpan WarningThreshold { get; }
 
     public TimeSpan RotationPeriod { get; }
 
@@ -108,7 +108,7 @@ public class RotationPlan
 
             DateTimeOffset rotationThresholdDate = this.timeProvider.GetCurrentDateTimeOffset().Add(RotationThreshold);
 
-            DateTimeOffset warningThresholdDate = this.timeProvider.GetCurrentDateTimeOffset().Add(WarningThreshold ?? RotationThreshold / 2);
+            DateTimeOffset warningThresholdDate = this.timeProvider.GetCurrentDateTimeOffset().Add(WarningThreshold);
 
             DateTimeOffset? minExpirationDate = allStates
                 .Where(x => x.ExpirationDate.HasValue)

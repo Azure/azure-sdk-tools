@@ -33,17 +33,18 @@ public class RotationPlanTests
     [TestCase(24, 22, 10, 30, RotationState.Warning)] // primary past warning
     [TestCase(24, 22, 30, 22, RotationState.Warning)] // secondary at warning
     [TestCase(24, 22, 30, 10, RotationState.Warning)] // secondary past warning
+    [TestCase(24, null, 30, 10, RotationState.Warning)] // implicit 12h warning window
     [TestCase(24, 22, 25, 25, RotationState.UpToDate)]
     public async Task GetStatusAsync_ExpectExpirationState(
         int rotateThresholdHours,
-        int warningThresholdHours,
+        int? warningThresholdHours,
         int hoursUntilPrimaryExpires,
         int hoursUntilSecondaryExpires,
         RotationState expectedState)
     {
         DateTimeOffset staticTestTime = DateTimeOffset.Parse("2020-06-01T12:00:00Z");
         TimeSpan rotateThreshold = TimeSpan.FromHours(rotateThresholdHours);
-        TimeSpan warningThreshold = TimeSpan.FromHours(warningThresholdHours);
+        TimeSpan? warningThreshold = warningThresholdHours.HasValue ? TimeSpan.FromHours(warningThresholdHours.Value) : null;
 
         var primaryState = new SecretState
         {

@@ -509,7 +509,7 @@
             </li>
             <li class="list-group-item">
                 <div>
-                    <p class="revision-title">Revision History:</p>
+                    <p class="revision-title">Change History:</p>
                         @foreach (var change in Model.ReviewContent.ActiveAPIRevision.ChangeHistory)
                         {
                             <li class="list-group-item approval-list-group-item">
@@ -541,30 +541,80 @@
                                     {
                                         <i class="@iconClass"></i>
                                     }
-                                    
-                                    <div class="revision-events">
+
+                            @* <div class="me-3">
+                                <i class="@iconClass"></i>
+                            </div>
                                         @if (change.ChangeAction.ToString() == "Created")
                                         {
-                                            <span class="revision-info">Created:</span>
+                                            <i class="bi bi-plus-circle-fill created status-icon"></i>
                                         }
                                         else if (change.ChangeAction.ToString() == "Approved")
                                         {
-                                            <span class="revision-info">Approved:</span>                                                                                           
+                                            <i class="bi bi-check-circle-fill approved status-icon"></i>
                                         }
                                         else if (change.ChangeAction.ToString() == "ApprovalReverted")
                                         {
-                                            <span class="revision-info">Approval Reverted:</span>                                         
+                                            <i class="bi bi-arrow-left-circle-fill approval-reverted status-icon"></i>
                                         }
                                         else if (change.ChangeAction.ToString() == "Deleted")
                                         {
-                                            <span class="revision-info">Deleted:</span>
+                                            <i class="bi bi-backspace-fill deleted status-icon"></i>
                                         }
                                         else if (change.ChangeAction.ToString() == "UnDeleted")
                                         {
-                                            <span class="revision-info">UnDeleted:</span>
+                                            <i class="bi bi-plus-circle-fill undeleted status-icon"></i>
                                         }
-                                        <span class="revision-info">@change.ChangedBy</span><br />
-                                        <span data-bs-toggle="tooltip" title="@change.ChangedOn" date="@(change.ChangedOn.GetValueOrDefault())" class="revision-info"></span>
+                            @{
+                                string iconClass = "";
+                                switch (change.ChangeAction.ToString())
+                                {
+                                    case "Created":
+                                        iconClass = "bi bi-plus-circle-fill created status-icon";
+                                        break;
+                                    case "Approved":
+                                        iconClass = "bi bi-check-circle-fill approved status-icon";
+                                        break;
+                                    case "ApprovalReverted":
+                                        iconClass = "bi bi-arrow-left-circle-fill approval-reverted status-icon";
+                                        break;
+                                    case "Deleted":
+                                        iconClass = "bi bi-backspace-fill deleted status-icon";
+                                        break;
+                                    case "UnDeleted":
+                                        iconClass = "bi bi-plus-circle-fill undeleted status-icon";
+                                        break;
+                                }
+                            }
+
+                            @if (!string.IsNullOrEmpty(iconClass))
+                            {
+                                <i class="@iconClass"></i>
+                            }
+                                    </div> *@                                   
+                                    <div class="revision-events">                               
+                                        @if (change.ChangeAction.ToString() == "Created")
+                                        {
+                                            <span class="revision-info"><small>Created:</small></span>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "Approved")
+                                        {
+                                            <span class="revision-info"><small>Approved:</small></span>                                                                                           
+                                        }
+                                        else if (change.ChangeAction.ToString() == "ApprovalReverted")
+                                        {
+                                            <span class="revision-info"><small>Approval Reverted:</small></span>                                         
+                                        }
+                                        else if (change.ChangeAction.ToString() == "Deleted")
+                                        {
+                                            <span class="revision-info"><small>Deleted:</small></span>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "UnDeleted")
+                                        {
+                                            <span class="revision-info"><small>UnDeleted:</small></span>
+                                        }
+                                        <span class="revision-info"><small>@change.ChangedBy</small></span><br />
+                                        <span data-bs-toggle="tooltip" title="@change.ChangedOn" date="@(change.ChangedOn.GetValueOrDefault())" class="small revision-info"></span>
                                     </div>                                   
                                 </div>
                             </li>

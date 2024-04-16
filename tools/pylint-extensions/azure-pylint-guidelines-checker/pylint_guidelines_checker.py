@@ -2725,7 +2725,7 @@ class NoImportTypingFromTypeCheck(BaseChecker):
 
     def visit_importfrom(self, node):
         """Check that we aren't importing from typing under if TYPE_CHECKING."""
-        if isinstance(node.parent, astroid.If) and node.parent.test.as_string() == "TYPE_CHECKING":
+        if isinstance(node.parent, astroid.If) and "TYPE_CHECKING" in node.parent.as_string():
             if node.modname == "typing" or node.modname == "typing_extensions":
                 self.add_message(
                     msgid=f"no-typing-import-in-type-check",
@@ -2735,7 +2735,7 @@ class NoImportTypingFromTypeCheck(BaseChecker):
 
     def visit_import(self, node):
         """Check that we aren't importing from typing under if TYPE_CHECKING."""
-        if isinstance(node.parent, astroid.If) and node.parent.test.as_string() == "TYPE_CHECKING":
+        if isinstance(node.parent, astroid.If) and "TYPE_CHECKING" in node.parent.as_string():
             for name, _ in node.names:
                 if name == "typing" or name == "typing_extensions":
                     self.add_message(

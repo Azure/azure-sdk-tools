@@ -122,7 +122,7 @@ function buildTokens(tokens: StructuredToken[], id: string, position: string) {
 
 function getTokenNodeIdPart(apiTreeNode: APITreeNode) {
   const kind = apiTreeNode.kind;
-  const subKind = apiTreeNode.subKind;;
+  const subKind = apiTreeNode.properties["SubKind"];
   const id = apiTreeNode.id;
 
   let idPart = kind;

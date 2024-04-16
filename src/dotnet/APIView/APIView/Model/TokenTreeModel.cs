@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using ApiView;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -10,7 +11,7 @@ namespace APIView.Model
         LineBreak = 0,
         NoneBreakingSpace = 1,
         ParameterSeparator = 2,
-        Content = 3,
+        Content = 3
     }
 
 
@@ -18,7 +19,6 @@ namespace APIView.Model
     {
         public string Value { get; set; }
         public string Id { get; set; }
-        public string GroupId { get; set; }
         public StructuredTokenKind Kind { get; set; }
         public Dictionary<string, string> Properties { get; } = new Dictionary<string, string>();
         public HashSet<string> RenderClasses { get; } = new HashSet<string>();
@@ -113,6 +113,11 @@ namespace APIView.Model
             token.Kind = StructuredTokenKind.ParameterSeparator;
             return token;
         }
+
+        public bool Equals(StructuredToken other)
+        {
+            return Value == other.Value && Id == other.Id;
+        }
     }
 
     public class APITreeNode
@@ -120,13 +125,10 @@ namespace APIView.Model
         public string Name { get; set; }
         public string Id { get; set; }
         public string Kind { get; set; }
-        public string SubKind { get; set; }
-        public bool IsHidden { get; set; }
-        public bool IsDeprecated { get; set; }
         public HashSet<string> Tags { get; } = new HashSet<string>(); // Use for hidden and Deprecated
         public Dictionary<string, string> Properties { get; } = new Dictionary<string, string>();
-        public List<StructuredToken> TopTokens { get; } = new List<StructuredToken>();
-        public List<StructuredToken> BottomTokens { get; } = new List<StructuredToken>();
+        public List<StructuredToken> TopTokens { get; set; } = new List<StructuredToken>();
+        public List<StructuredToken> BottomTokens { get; set; } = new List<StructuredToken>();
         public List<APITreeNode> Children { get; } = new List<APITreeNode>();
 
         public override int GetHashCode()
@@ -135,7 +137,6 @@ namespace APIView.Model
             hash = hash * 23 + (Name != null ? Name.GetHashCode() : 0);
             hash = hash * 23 + (Id != null ? Id.GetHashCode() : 0);
             hash = hash * 23 + (Kind != null ? Kind.GetHashCode() : 0);
-            hash = hash * 23 + (SubKind != null ? SubKind.GetHashCode() : 0);
             return hash;
         }
 
@@ -147,7 +148,7 @@ namespace APIView.Model
             }
 
             var other = (APITreeNode)obj;
-            return Name == other.Name && Id == other.Id && Kind == other.Kind && SubKind == other.SubKind;
+            return Name == other.Name && Id == other.Id && Kind == other.Kind;
         }
     }
 }

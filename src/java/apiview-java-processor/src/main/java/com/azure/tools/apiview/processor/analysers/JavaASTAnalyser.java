@@ -530,7 +530,7 @@ public class JavaASTAnalyser implements Analyser {
                     addToken(new Token(KEYWORD, "to"), SPACE);
 
                     for (int i = 0; i < names.size(); i++) {
-                        addToken(new Token(TYPE_NAME, names.get(i).asString()));
+                        addToken(new Token(TYPE_NAME, names.get(i).toString()));
 
                         if (i < names.size() - 1) {
                             addToken(new Token(PUNCTUATION, ","), SPACE);
@@ -585,7 +585,7 @@ public class JavaASTAnalyser implements Analyser {
 
                     NodeList<Name> names = d.getWith();
                     for (int i = 0; i < names.size(); i++) {
-                        addToken(new Token(TYPE_NAME, names.get(i).asString()));
+                        addToken(new Token(TYPE_NAME, names.get(i).toString()));
 
                         if (i < names.size() - 1) {
                             addToken(new Token(PUNCTUATION, ","), SPACE);
@@ -841,7 +841,7 @@ public class JavaASTAnalyser implements Analyser {
                 final NodeList<Modifier> fieldModifiers = fieldDeclaration.getModifiers();
                 // public, protected, static, final
                 for (final Modifier fieldModifier : fieldModifiers) {
-                    addToken(new Token(KEYWORD, fieldModifier.getKeyword().asString()));
+                    addToken(new Token(KEYWORD, fieldModifier.toString()));
                 }
 
                 // field type and name
@@ -1177,7 +1177,7 @@ public class JavaASTAnalyser implements Analyser {
 
         private void getModifiers(NodeList<Modifier> modifiers) {
             for (final Modifier modifier : modifiers) {
-                addToken(new Token(KEYWORD, modifier.getKeyword().asString()));
+                addToken(new Token(KEYWORD, modifier.toString()));
             }
         }
 
@@ -1265,7 +1265,7 @@ public class JavaASTAnalyser implements Analyser {
             addToken(new Token(KEYWORD, "throws"), SPACE);
 
             for (int i = 0, max = thrownExceptions.size(); i < max; i++) {
-                final String exceptionName = thrownExceptions.get(i).getElementType().asString();
+                final String exceptionName = thrownExceptions.get(i).getElementType().toString();
                 final Token throwsToken = new Token(TYPE_NAME, exceptionName);
 
                 // we look up the package name in case it is a custom type in the same library,
@@ -1304,7 +1304,7 @@ public class JavaASTAnalyser implements Analyser {
 
         private void getClassType(Type type) {
             if (type.isPrimitiveType()) {
-                addToken(new Token(TYPE_NAME, type.asPrimitiveType().asString()));
+                addToken(new Token(TYPE_NAME, type.asPrimitiveType().toString()));
             } else if (type.isVoidType()) {
                 addToken(new Token(TYPE_NAME, "void"));
             } else if (type.isReferenceType()) {
@@ -1431,7 +1431,7 @@ public class JavaASTAnalyser implements Analyser {
             compilationUnit.getImports().stream()
                 .map(ImportDeclaration::getName)
                 .forEach(name -> name.getQualifier().ifPresent(packageName ->
-                    apiListing.addPackageTypeMapping(packageName.asString(), name.getIdentifier())));
+                    apiListing.addPackageTypeMapping(packageName.toString(), name.getIdentifier())));
         }
     }
 

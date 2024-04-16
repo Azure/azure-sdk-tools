@@ -66,7 +66,7 @@ public abstract class RotationCommandBase : Command
 
         LogLevel logLevel = verbose ? LogLevel.Trace : LogLevel.Information;
 
-        ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder
+        using ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder
             .AddConsoleFormatter<SimplerConsoleFormatter, ConsoleFormatterOptions>()
             .AddConsole(options => options.FormatterName = SimplerConsoleFormatter.FormatterName)
             .SetMinimumLevel(logLevel));

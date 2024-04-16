@@ -4811,3 +4811,22 @@ class TestCheckNoTypingUnderTypeChecking(pylint.testutils.CheckerTestCase):
         )
         with self.assertNoMessages():
             self.checker.visit_importfrom(importfrom_node)
+
+    def test_allowed_import_else(self):
+        """Check that illegal imports raise warnings"""
+        ima, imb, imc, imd = astroid.extract_node(
+            """
+            if sys.version_info >= (3, 9):
+                from collections.abc import MutableMapping
+            else:
+                from typing import MutableMapping #@
+                import typing #@
+                import typing_extensions #@
+                from typing_extensions import Protocol #@
+            """
+        )
+        with self.assertNoMessages():
+            self.checker.visit_importfrom(ima)
+            self.checker.visit_import(imb)
+            self.checker.visit_import(imc)
+            self.checker.visit_importfrom(imd)

@@ -1,16 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using ApiView;
 using APIView.Model;
 using APIViewWeb.Helpers;
-using FluentAssertions.Equivalency;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using Microsoft.Azure.Cosmos.Core.Collections;
-using Microsoft.VisualStudio.Services.WebPlatform;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -23,6 +15,10 @@ namespace APIViewUnitTests
         List<APITreeNode> apiForestB = new List<APITreeNode>();
         List<APITreeNode> apiForestC = new List<APITreeNode>();
         List<APITreeNode> apiForestD = new List<APITreeNode>();
+
+        List<StructuredToken> beforeTokens = new List<StructuredToken>();
+        List<StructuredToken> afterTokens = new List<StructuredToken>();
+        List<StructuredToken> diffTokens = new List<StructuredToken>();
 
         public CodeFileHelpersTests(ITestOutputHelper output) 
         {
@@ -43,6 +39,8 @@ namespace APIViewUnitTests
             apiForestC.AddRange(this.BuildTestTree(dataListD));
             apiForestD.AddRange(this.BuildTestTree(dataListE));
             apiForestD.AddRange(this.BuildTestTree(dataListF));
+
+            this.BuildTestTokenList();
 
             _output = output;
         }
@@ -111,7 +109,24 @@ namespace APIViewUnitTests
             }
         }
 
-        public List<APITreeNode> BuildTestTree(List<string> data, string parentId = null)
+        [Fact]
+        public void ComputeTokenDiff_Generates_Accurate_Result()
+        {
+            var result = CodeFileHelpers.ComputeTokenDiff(beforeTokens, afterTokens);
+            Assert.Equal(diffTokens.Count, result.Count);
+
+            for (int i = 0; i < diffTokens.Count; i++)
+            {
+                Assert.Equal(diffTokens[i].Value, result[i].Value);
+                Assert.Equal(diffTokens[i].Id, result[i].Id);
+
+                if (diffTokens[i].Properties.ContainsKey(CodeFileHelpers.DIFF_PROPERTY))
+                {
+                    Assert.Equal(diffTokens[i].Properties[CodeFileHelpers.DIFF_PROPERTY], result[i].Properties[CodeFileHelpers.DIFF_PROPERTY]);
+                }
+            }
+        }
+        private List<APITreeNode> BuildTestTree(List<string> data, string parentId = null)
         {
             List<APITreeNode> forest = new List<APITreeNode>();
 
@@ -129,7 +144,101 @@ namespace APIViewUnitTests
             }
             return forest;
         }
+        
 
+        private void BuildTestTokenList()
+        {
+            List<StructuredToken> before = new List<StructuredToken>();
+            List<StructuredToken> after = new List<StructuredToken>();
+            List<StructuredToken> diff = new List<StructuredToken>();
+
+            var valueBefore = "public";
+            var valueAfter = valueBefore;
+            var tokenBefore = new StructuredToken(valueBefore);
+            var tokenAfter = new StructuredToken(valueAfter);
+            var tokenDiff = new StructuredToken(valueAfter);
+            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            before.Add(tokenBefore);
+            before.Add(StructuredToken.CreateSpaceToken());
+            after.Add(tokenAfter);
+            after.Add(StructuredToken.CreateSpaceToken());
+            diff.Add(tokenDiff);
+            diff.Add(StructuredToken.CreateSpaceToken());
+
+            valueBefore = "EnvironmentCredential";
+            valueAfter = valueBefore;
+            tokenBefore = new StructuredToken(valueBefore);
+            tokenAfter = new StructuredToken(valueAfter);
+            tokenDiff = new StructuredToken(valueAfter);
+            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            before.Add(tokenBefore);
+            after.Add(tokenAfter);
+            diff.Add(tokenDiff);
+
+            valueBefore = "(";
+            valueAfter = valueBefore;
+            tokenBefore = new StructuredToken(valueBefore);
+            tokenAfter = new StructuredToken(valueAfter);
+            tokenDiff = new StructuredToken(valueAfter);
+            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            before.Add(tokenBefore);
+            after.Add(tokenAfter);
+            diff.Add(tokenDiff);
+
+            valueBefore = "EnvironmentCredentialOptions";
+            valueAfter = "TokenCredentialOptions";
+            tokenBefore = new StructuredToken(valueBefore);
+            tokenBefore.Id = "Azure.Identity.EnvironmentCredentialOptions";
+            tokenAfter = new StructuredToken(valueAfter);
+            tokenAfter.Id = "Azure.Identity.TokenCredentialOptions";
+            tokenDiff = new StructuredToken(valueBefore);
+            tokenDiff.Id = "Azure.Identity.EnvironmentCredentialOptions";
+            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.REMOVED);
+            diff.Add(tokenDiff);
+            tokenDiff = new StructuredToken(valueAfter);
+            tokenDiff.Id = "Azure.Identity.TokenCredentialOptions";
+            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.ADDED);
+            diff.Add(tokenDiff);
+            diff.Add(StructuredToken.CreateSpaceToken());
+            before.Add(tokenBefore);
+            before.Add(StructuredToken.CreateSpaceToken());
+            after.Add(tokenAfter);
+            after.Add(StructuredToken.CreateSpaceToken());
+
+            valueBefore = "options";
+            valueAfter = valueBefore;
+            tokenBefore = new StructuredToken(valueBefore);
+            tokenAfter = new StructuredToken(valueAfter);
+            tokenDiff = new StructuredToken(valueAfter);
+            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            before.Add(tokenBefore);
+            after.Add(tokenAfter);
+            diff.Add(tokenDiff);
+
+            valueBefore = ")";
+            valueAfter = valueBefore;
+            tokenBefore = new StructuredToken(valueBefore);
+            tokenAfter = new StructuredToken(valueAfter);
+            tokenDiff = new StructuredToken(valueAfter);
+            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            before.Add(tokenBefore);
+            after.Add(tokenAfter);
+            diff.Add(tokenDiff);
+
+            valueBefore = ";";
+            valueAfter = valueBefore;
+            tokenBefore = new StructuredToken(valueBefore);
+            tokenAfter = new StructuredToken(valueAfter);
+            tokenDiff = new StructuredToken(valueAfter);
+            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            before.Add(tokenBefore);
+            after.Add(tokenAfter);
+            diff.Add(tokenDiff);
+
+            this.beforeTokens = before;
+            this.afterTokens = after;
+            this.diffTokens = diff;
+        }
         private List<List<(string id, string diffKind)>> TraverseForest(List<APITreeNode> forest, bool print = false)
         {
             var result = new List<List<(string id, string diffKind)>>();

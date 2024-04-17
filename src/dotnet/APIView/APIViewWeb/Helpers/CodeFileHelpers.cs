@@ -1,10 +1,6 @@
+using APIView.DIff;
 using APIView.Model;
-using DiffPlex;
-using DiffPlex.DiffBuilder;
-using DiffPlex.DiffBuilder.Model;
-using MongoDB.Driver.Core.WireProtocol.Messages;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,23 +9,17 @@ namespace APIViewWeb.Helpers
 {
     public class CodeFileHelpers
     {
-        public const string DIFF_PROPERTY = "DiffKind";
-        public const string UNCHANGED = "Unchanged";
-        public const string ADDED = "Added";
-        public const string REMOVED = "Removed";
-
-        public static List<APITreeNode> ComputeAPIForestDiff(List<APITreeNode> activeAPIRevisionAPIForest, List<APITreeNode> diffAPIRevisionAPIForest)
+        public static List<APITreeNodeForAPI> ComputeAPIForestDiff(List<APITreeNodeForAPI> activeAPIRevisionAPIForest, List<APITreeNodeForAPI> diffAPIRevisionAPIForest)
         {
-            List<APITreeNode> result = new List<APITreeNode>();
-            List<Task> tasks = new List<Task>();
-            ComputeAPITreeDiff(activeAPIRevisionAPIForest, diffAPIRevisionAPIForest, result);
-            return result;
+            List<APITreeNodeForAPI> diffAPITree = new List<APITreeNodeForAPI>();
+            ComputeAPITreeDiff(activeAPIRevisionAPIForest, diffAPIRevisionAPIForest, diffAPITree);
+            return diffAPITree;
         }
 
-        private static void ComputeAPITreeDiff(List<APITreeNode> activeAPIRevisionAPIForest, List<APITreeNode> diffAPIRevisionAPIForest, List<APITreeNode> result)
+        private static void ComputeAPITreeDiff(List<APITreeNodeForAPI> activeAPIRevisionAPIForest, List<APITreeNodeForAPI> diffAPIRevisionAPIForest, List<APITreeNodeForAPI> diffAPITree)
         {           
-            var activeAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNode>(activeAPIRevisionAPIForest);
-            var diffAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNode>(diffAPIRevisionAPIForest);
+            var activeAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNodeForAPI>(activeAPIRevisionAPIForest);
+            var diffAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNodeForAPI>(diffAPIRevisionAPIForest);
 
             var allNodesAtLevelSorted = activeAPIRevisionTreeNodesAtLevel.Union(diffAPIRevisionTreeNodesAtLevel).OrderBy(node => node.Id);
             var unChangedNodesAtLevel = activeAPIRevisionTreeNodesAtLevel.Intersect(diffAPIRevisionTreeNodesAtLevel);
@@ -40,36 +30,39 @@ namespace APIViewWeb.Helpers
             {
                 if (unChangedNodesAtLevel.Contains(node))
                 {
-                    var newEntry = CloneAPITreeNode(node);
-                    newEntry.Properties[DIFF_PROPERTY] = UNCHANGED;
-                    result.Add(newEntry);
+                    var newEntry = CreateAPITreeDiffNode(node, DiffNodeKind.Unchanged);
+                    diffAPITree.Add(newEntry);
                 }
                 else if (removedNodesAtLevel.Contains(node))
                 {
-                   node.Properties[DIFF_PROPERTY] = REMOVED;
-                   result.Add(node);
+                    var newEntry = CreateAPITreeDiffNode(node, DiffNodeKind.Removed);
+                    diffAPITree.Add(newEntry);
                 }
                 else if (addedNodesAtLevel.Contains(node))
                 {
-                    node.Properties[DIFF_PROPERTY] = ADDED;
-                    result.Add(node);
+                    var newEntry = CreateAPITreeDiffNode(node, DiffNodeKind.Added);
+                    diffAPITree.Add(newEntry);
                 }
             }
 
             Parallel.ForEach(unChangedNodesAtLevel, node =>
             {
-                var activeNode = activeAPIRevisionTreeNodesAtLevel.First(n => n.Equals(node));
-                var diffNode = diffAPIRevisionTreeNodesAtLevel.First(n => n.Equals(node));
-                var resultNode = result.First(n => n.Equals(node));
-                //ComputeTokenDiffForNode(activeNode, diffNode, resultNode);
+                var activeAPIRevisionNode = activeAPIRevisionTreeNodesAtLevel.First(n => n.Equals(node));
+                var diffAPIRevisionNode = diffAPIRevisionTreeNodesAtLevel.First(n => n.Equals(node));
+                var diffResultNode = diffAPITree.First(n => n.Equals(node));
 
-                var childrenResult = new List<APITreeNode>();
-                ComputeAPITreeDiff(activeNode.Children, diffNode.Children, childrenResult);
-                resultNode.Children.AddRange(childrenResult);
+                diffResultNode.TopTokens = activeAPIRevisionNode.TopTokens;
+                diffResultNode.BottomTokens = activeAPIRevisionNode.BottomTokens;
+                diffResultNode.TopDiffTokens = diffAPIRevisionNode.TopTokens;
+                diffResultNode.BottomDiffTokens = diffAPIRevisionNode.BottomTokens;
+
+                var childrenResult = new List<APITreeNodeForAPI>();
+                ComputeAPITreeDiff(activeAPIRevisionNode.Children, diffAPIRevisionNode.Children, childrenResult);
+                diffResultNode.Children.AddRange(childrenResult);
             });
         }
 
-        public static void ComputeTokenDiffForNode(APITreeNode activeAPIRevisionTreeNode, APITreeNode diffAPIRevisionTreeNode, APITreeNode resultNode)
+        public static void ComputeTokenDiffForNode(APITreeNodeForAPI activeAPIRevisionTreeNode, APITreeNodeForAPI diffAPIRevisionTreeNode, APITreeNodeForAPI resultNode)
         {
             var activeAPIRevisionTopTokens = new Queue<StructuredToken>(activeAPIRevisionTreeNode.TopTokens);
             var diffAPIRevisionTopTokens = new Queue<StructuredToken>(activeAPIRevisionTreeNode.TopTokens);
@@ -94,28 +87,28 @@ namespace APIViewWeb.Helpers
                 if (i >= activeApiRevisionTokenLine.Count)
                 {
                     var token = diffApiRevisionTokenline[i];
-                    token.Properties[DIFF_PROPERTY] = ADDED;
+                    token.Properties["DiffKind"] = "Added";
                     diffResult.Add(token);
                 }
                 else if (i >= diffApiRevisionTokenline.Count)
                 {
                     var token = activeApiRevisionTokenLine[i];
-                    token.Properties[DIFF_PROPERTY] = REMOVED;
+                    token.Properties["DiffKind"] = "Removed";
                     diffResult.Add(token);
                 }
                 else if (!activeApiRevisionTokenLine[i].Equals(diffApiRevisionTokenline[i]))
                 {
                     var token = activeApiRevisionTokenLine[i];
-                    token.Properties[DIFF_PROPERTY] = REMOVED;
+                    token.Properties["DiffKind"] = "Removed";
                     diffResult.Add(token);
                     token = diffApiRevisionTokenline[i];
-                    token.Properties[DIFF_PROPERTY] = ADDED;
+                    token.Properties["DiffKind"] = "Added";
                     diffResult.Add(token);
                 }
                 else
                 {
                     var token = activeApiRevisionTokenLine[i];
-                    token.Properties[DIFF_PROPERTY] = UNCHANGED;
+                    token.Properties["DiffKind"] = "Unchanged";
                     diffResult.Add(token);
                 }
             }
@@ -123,14 +116,26 @@ namespace APIViewWeb.Helpers
             return diffResult;
         }
 
-        public static APITreeNode CloneAPITreeNode(APITreeNode node)
+        public static APITreeNodeForAPI CreateAPITreeDiffNode(APITreeNodeForAPI node, DiffNodeKind diffKind)
         {
-            return new APITreeNode
+            var result = new APITreeNodeForAPI
             {
                 Name = node.Name,
                 Id = node.Id,
-                Kind    = node.Kind
+                Kind    = node.Kind,
+                Tags = node.Tags,
+                Properties = node.Properties,
+                DiffKind = diffKind
             };
+
+            if (diffKind == DiffNodeKind.Added || diffKind == DiffNodeKind.Removed)
+            {
+                result.TopTokens = node.TopTokens;
+                result.BottomTokens = node.BottomTokens;
+                result.Children = node.Children;
+            }
+
+            return result;
         }
 
         private static void ComputeTokenDiffForNode(Queue<StructuredToken> activeAPIRevisionTokens, Queue<StructuredToken> diffAPIRevisionToken, List<StructuredToken> tokenDiffResult)

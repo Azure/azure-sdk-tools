@@ -65,6 +65,7 @@ public class Main {
         if (!outputDir.exists()) {
             if (!outputDir.mkdirs()) {
                 System.out.printf("Failed to create output directory %s%n", outputDir);
+                System.exit(-1);
             }
         }
 
@@ -276,8 +277,6 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
     private static class ReviewProperties {

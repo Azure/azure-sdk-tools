@@ -71,9 +71,13 @@ namespace ApiView
         
         public static bool IsCollapsibleSectionSSupported(string language) => _collapsibleLanguages.Contains(language);
 
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
             CodeFile codeFile = null;
+            var converter = new StructuredTokenConverter();
+            JsonSerializer.Converters.Add(converter);
 
             using (var streamReader = new StreamReader(stream, leaveOpen: true))
             {

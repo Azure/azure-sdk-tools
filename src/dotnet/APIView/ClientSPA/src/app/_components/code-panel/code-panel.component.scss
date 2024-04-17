@@ -21,6 +21,14 @@
     .code-line {
         display: contents;
     }
+
+    .code-line-added, .token-added {
+        background-color: rgba(255, 0, 0, 0.25);
+    }
+
+    .code-line-removed, .token-removed {
+        background-color: rgba(0, 255, 0, 0.25);
+    }
     
     .code-line-content {
         grid-column: 2;
@@ -54,15 +62,15 @@
         color: var(--primary-color);
     }
 
-    .csComment {
+    .comment {
         color: var(--code-comment);
     }
 
-    .csKeyword {
+    .keyword {
         color: var(--keyword-color);
     }
 
-    .csTypeName {
+    .type-name {
         color: var(--class-color);
     }
 }

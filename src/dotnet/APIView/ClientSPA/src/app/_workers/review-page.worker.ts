@@ -20,12 +20,7 @@ addEventListener('message', ({ data }) => {
   }
 
   if (data.directive === ReviewPageWorkerMessageDirective.BuildTokens) {
-    if (data.position === "top") {
-      buildTokens(data.apiTreeNode.topTokens, data.huskNodeId, data.position);
-    }
-    else {
-      buildTokens(data.apiTreeNode.bottomTokens, data.huskNodeId, data.position);
-    }
+    buildTokens(data.apiTreeNode, data.huskNodeId, data.position);
   }
 });
 
@@ -85,38 +80,12 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
   return treeNode;
 }
 
-function buildTokens(tokens: StructuredToken[], id: string, position: string) {
-  const tokenLine : StructuredToken[] = [];
-  for (let token of tokens) {
-    if (token.kind === "LineBreak") {
-      const createLinesOfTokensMessage : CreateLinesOfTokensMessage =  {
-        directive: ReviewPageWorkerMessageDirective.CreateLineOfTokens,
-        tokenLine : tokenLine,
-        nodeId : id,
-        lineId : createHashFromTokenLine(tokenLine),
-        position : position   
-      };
-
-      postMessage(createLinesOfTokensMessage);
-
-      tokenLine.length = 0;
-    }
-    else {
-      tokenLine.push(token);
-    }
+function buildTokens(apiTreeNode: APITreeNode, id: string, position: string) {
+  if (apiTreeNode.diffKind === "NonDiff") {
+    buildTokensForNonDiffNodes(apiTreeNode, id, position);
   }
-
-  if (tokenLine.length > 0) {
-
-    const createLinesOfTokensMessage : CreateLinesOfTokensMessage =  {
-      directive: ReviewPageWorkerMessageDirective.CreateLineOfTokens,
-      tokenLine : tokenLine,
-      nodeId : id,
-      lineId : createHashFromTokenLine(tokenLine),
-      position : position
-    };
-
-    postMessage(createLinesOfTokensMessage);
+  else {
+    buildTokensForDiffNodes(apiTreeNode, id, position);
   }
 }
 
@@ -144,4 +113,77 @@ function createHashFromTokenLine(tokenLines: StructuredToken[]) {
   const cssId = 'id' + hash.toString();
 
   return cssId;
+}
+
+function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position: string) {
+  const tokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
+
+}
+
+export function ComputeTokenDiff(beforeTokens: any[], afterTokens: any[]) : any[] {
+  const diffResult = [];
+
+  for (let i = 0; i < Math.max(beforeTokens.length, afterTokens.length); i++) {
+    if (i >= beforeTokens.length) {
+      let token = afterTokens[i];
+      token.diffKind = "Added";
+      diffResult.push(token);
+    }
+    else if (i >= afterTokens.length) {
+      let token = beforeTokens[i];
+      token.diffKind = "Removed";
+      diffResult.push(token);
+    }
+    else if ((beforeTokens[i].value !== afterTokens[i].value) || (beforeTokens[i].id !== afterTokens[i].id)) {
+      let token = beforeTokens[i];
+      token.diffKind = "Removed";
+      diffResult.push(token);
+      token = afterTokens[i];
+      token.diffKind = "Added";
+      diffResult.push(token);
+    }
+    else {
+      let token = beforeTokens[i];
+      token.diffKind = "Unchanged";
+      diffResult.push(token);
+    }
+  }
+
+  return diffResult;
+}
+
+function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, position: string)
+{
+  const tokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
+  const tokenLine : StructuredToken[] = [];
+  for (let token of tokens) {
+    if (token.kind === "LineBreak") {
+      const createLinesOfTokensMessage : CreateLinesOfTokensMessage =  {
+        directive: ReviewPageWorkerMessageDirective.CreateLineOfTokens,
+        tokenLine : tokenLine,
+        nodeId : id,
+        lineId : createHashFromTokenLine(tokenLine),
+        position : position   
+      };
+
+      postMessage(createLinesOfTokensMessage);
+
+      tokenLine.length = 0;
+    }
+    else {
+      tokenLine.push(token);
+    }
+  }
+
+  if (tokenLine.length > 0) {
+    const createLinesOfTokensMessage : CreateLinesOfTokensMessage =  {
+      directive: ReviewPageWorkerMessageDirective.CreateLineOfTokens,
+      tokenLine : tokenLine,
+      nodeId : id,
+      lineId : createHashFromTokenLine(tokenLine),
+      position : position
+    };
+
+    postMessage(createLinesOfTokensMessage);
+  }
 }

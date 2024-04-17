@@ -45,6 +45,7 @@ export interface StructuredToken {
   value: string;
   id: string;
   kind: string;
+  diffKind: string;
   properties: { [key: string]: string; }
   renderClasses: Set<string>
 }
@@ -57,7 +58,10 @@ export interface APITreeNode {
   properties: { [key: string]: string; }
   topTokens: StructuredToken[];
   bottomTokens: StructuredToken[];
+  topDiffTokens: StructuredToken[];
+  bottomDiffTokens: StructuredToken[];
   children: APITreeNode[];
+  diffKind: string;
 }
 
 export interface CodeHuskNode {

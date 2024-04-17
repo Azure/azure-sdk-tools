@@ -106,7 +106,13 @@ public class JavaASTAnalyser implements Analyser {
 
     private static final boolean SHOW_JAVADOC = true;
 
+    // Keep a list of indent levels so we don't need to recreate a string each time indenting is done.
+    // Start with an initial set of levels.
+    private static final List<String> INDENT_LEVELS;
+
     private static final Map<String, AnnotationRule> ANNOTATION_RULE_MAP;
+    private static final JavaParserAdapter JAVA_8_PARSER;
+    private static final JavaParserAdapter JAVA_11_PARSER;
     static {
         /*
          For some annotations, we want to customise how they are displayed. Sometimes, we don't show them in any
@@ -120,12 +126,7 @@ public class JavaASTAnalyser implements Analyser {
 
         // we always want @Metadata annotations to be fully expanded, but in a condensed form
         ANNOTATION_RULE_MAP.put("Metadata", new AnnotationRule().setShowProperties(true).setCondensed(true));
-    }
 
-    private static final JavaParserAdapter JAVA_8_PARSER;
-    private static final JavaParserAdapter JAVA_11_PARSER;
-
-    static {
         // Configure JavaParser to use type resolution
         JAVA_8_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
             .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_8)
@@ -134,6 +135,9 @@ public class JavaASTAnalyser implements Analyser {
         JAVA_11_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
             .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11)
             .setDetectOriginalLineSeparator(false)));
+
+        INDENT_LEVELS = new ArrayList<>(Arrays.asList("", makeNewWhitespace(4), makeNewWhitespace(8),
+            makeNewWhitespace(12), makeNewWhitespace(16), makeNewWhitespace(20), makeNewWhitespace(24)));
     }
 
     // This is the model that we build up as the AST of all files are analysed. The APIListing is then output as
@@ -1485,7 +1489,7 @@ public class JavaASTAnalyser implements Analyser {
         // The updated configuration from getDeclarationAsString removes the comment option and hence the toString
         // returns an empty string now. So, here we are using the toString overload that takes a PrintConfiguration
         // to get the old behavior.
-        splitNewLine(javadoc.asString()).forEach(line -> {
+        splitNewLine(javadoc.toString()).forEach(line -> {
             // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
             MiscUtils.wrap(line, 120).forEach(line2 -> {
                 if (line2.contains("&")) {
@@ -1527,11 +1531,6 @@ public class JavaASTAnalyser implements Analyser {
         indentLevel--;
     }
 
-    // Keep a list of indent levels so we don't need to recreate a string each time indenting is done.
-    // Start with an initial set of levels.
-    private static final List<String> INDENT_LEVELS = new ArrayList<>(Arrays.asList("", makeWhitespace(4),
-        makeWhitespace(8), makeWhitespace(12), makeWhitespace(16), makeWhitespace(20), makeWhitespace(24)));
-
     private Token makeWhitespace() {
         // Use a byte array with Arrays.fill with empty space (' ') character rather than StringBuilder as StringBuilder
         // will check that it has sufficient size every time a new character is appended. We know ahead of time the size
@@ -1544,7 +1543,11 @@ public class JavaASTAnalyser implements Analyser {
             return INDENT_LEVELS.get(indentLevel);
         }
 
-        byte[] bytes = new byte[indentLevel * 4];
+        return makeNewWhitespace(indentLevel * 4);
+    }
+
+    private static String makeNewWhitespace(int size) {
+        byte[] bytes = new byte[size];
         Arrays.fill(bytes, (byte) ' ');
 
         return new String(bytes, StandardCharsets.UTF_8);

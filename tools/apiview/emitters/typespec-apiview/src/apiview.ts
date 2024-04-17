@@ -597,6 +597,7 @@ export class ApiView {
         obj = node as TypeReferenceNode;
         isExpanded = this.isTemplateExpanded(obj);
         this.tokenizeIdentifier(obj.target, "reference");
+        // Render the template parameter instantiations
         if (obj.arguments.length) {
           this.punctuation("<", false, false);
           if (isExpanded) {
@@ -609,7 +610,15 @@ export class ApiView {
             if (x !== obj.arguments.length - 1) {
               this.trim(true);
               this.renderPunctuation(",");
+              if (isExpanded) {
+                this.newline();
+              }
             }
+          }
+          if (isExpanded) {
+            this.trim(true);
+            this.newline();
+            this.deindent();
           }
           this.punctuation(">");
         }
@@ -644,10 +653,9 @@ export class ApiView {
         break;
       case SyntaxKind.TemplateArgument:
         obj = node as TemplateArgumentNode;
-        isExpanded = false;//obj.argument.kind === SyntaxKind.ModelExpression;
+        isExpanded = obj.argument.kind === SyntaxKind.ModelExpression && obj.argument.properties.length > 0;
         if (isExpanded) {
-          this.newline();
-          this.indent();
+          this.blankLines(0);
         }
         if (obj.name) {
           this.text(obj.name.sv);
@@ -655,7 +663,6 @@ export class ApiView {
         }
         if (isExpanded) {
           this.tokenizeModelExpressionExpanded(obj.argument as ModelExpressionNode, false, false);
-          this.deindent();
         } else {
           this.tokenize(obj.argument);
         }
@@ -1132,7 +1139,7 @@ export class ApiView {
     return first.argument.kind === SyntaxKind.ModelExpression;
   }
 
-  private tokenizeTemplateParameters(nodes: readonly TemplateParameterDeclarationNode[]) {
+  private tokenizeTemplateParameters(nodes: readonly TemplateParameterDeclarationNode[], isExpanded: boolean = false) {
     if (nodes.length) {
       this.punctuation("<", false, false);
       for (let x = 0; x < nodes.length; x++) {
@@ -1141,6 +1148,10 @@ export class ApiView {
         if (x !== nodes.length - 1) {
           this.renderPunctuation(",");
           this.space();
+        }
+        if (isExpanded) {
+            this.trim(true);
+            this.newline();
         }
       }
       this.punctuation(">");

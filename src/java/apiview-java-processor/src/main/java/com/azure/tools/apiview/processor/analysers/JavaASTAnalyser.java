@@ -106,10 +106,6 @@ public class JavaASTAnalyser implements Analyser {
 
     private static final boolean SHOW_JAVADOC = true;
 
-    // Keep a list of indent levels so we don't need to recreate a string each time indenting is done.
-    // Start with an initial set of levels.
-    private static final List<String> INDENT_LEVELS;
-
     private static final Map<String, AnnotationRule> ANNOTATION_RULE_MAP;
     private static final JavaParserAdapter JAVA_8_PARSER;
     private static final JavaParserAdapter JAVA_11_PARSER;
@@ -135,9 +131,6 @@ public class JavaASTAnalyser implements Analyser {
         JAVA_11_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
             .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11)
             .setDetectOriginalLineSeparator(false)));
-
-        INDENT_LEVELS = new ArrayList<>(Arrays.asList("", makeNewWhitespace(4), makeNewWhitespace(8),
-            makeNewWhitespace(12), makeNewWhitespace(16), makeNewWhitespace(20), makeNewWhitespace(24)));
     }
 
     // This is the model that we build up as the AST of all files are analysed. The APIListing is then output as
@@ -1532,22 +1525,14 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private Token makeWhitespace() {
-        // Use a byte array with Arrays.fill with empty space (' ') character rather than StringBuilder as StringBuilder
-        // will check that it has sufficient size every time a new character is appended. We know ahead of time the size
-        // needed and can remove all those checks by removing usage of StringBuilder with this simpler pattern.
         return new Token(WHITESPACE, makeWhitespace(indentLevel));
     }
 
     private static String makeWhitespace(int indentLevel) {
-        if (indentLevel < INDENT_LEVELS.size()) {
-            return INDENT_LEVELS.get(indentLevel);
-        }
-
-        return makeNewWhitespace(indentLevel * 4);
-    }
-
-    private static String makeNewWhitespace(int size) {
-        byte[] bytes = new byte[size];
+        // Use a byte array with Arrays.fill with empty space (' ') character rather than StringBuilder as StringBuilder
+        // will check that it has sufficient size every time a new character is appended. We know ahead of time the size
+        // needed and can remove all those checks by removing usage of StringBuilder with this simpler pattern.
+        byte[] bytes = new byte[indentLevel * 4];
         Arrays.fill(bytes, (byte) ' ');
 
         return new String(bytes, StandardCharsets.UTF_8);

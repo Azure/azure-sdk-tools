@@ -376,19 +376,6 @@ public class JavaASTAnalyser implements Analyser {
 
             addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
             addToken(new Token(SKIP_DIFF_END));
-
-            // allowed dependencies (in maven-enforcer)
-            //        if (!mavenPom.getAllowedDependencies().isEmpty()) {
-            //            addToken(INDENT, new Token(KEYWORD, "allowed-dependencies"), SPACE);
-            //            addToken(new Token(PUNCTUATION, "{"), NEWLINE);
-            //            indent();
-            //            mavenPom.getAllowedDependencies().stream().forEach(value -> {
-            //                addToken(INDENT, new Token(TEXT, value, value), NEWLINE);
-            //            });
-            //            unindent();
-            //            addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
-            //        }
-
             // close maven
         });
 

@@ -1,6 +1,6 @@
 # Release History
 
-## 0.4.1 (2024-04-16)
+## 0.4.1 (2024-04-17)
 
 - Bug fix for typing under TYPE_CHECKING block.
 

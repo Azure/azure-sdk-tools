@@ -63,12 +63,18 @@ namespace APIViewWeb.Repositories
 
             var connection = await CreateVssConnection();
             var buildClient = connection.GetClient<BuildHttpClient>();
+            string url = null;
             await retryPolicy.ExecuteAsync(async () =>
             {
                 var artifact = await buildClient.GetArtifactAsync(project, int.Parse(buildId), artifactName);
-                return artifact?.Resource?.DownloadUrl;
+                url =  artifact?.Resource?.DownloadUrl;
             });
-            throw new Exception(string.Format("Failed to get download url for artifact {0} in build {1} in project {2}", artifactName, buildId, project));
+
+            if (string.IsNullOrEmpty(url))
+            {
+                throw new Exception(string.Format("Failed to get download url for artifact {0} in build {1} in project {2}", artifactName, buildId, project));
+            }
+            return url;
         }
 
         private async Task<VssConnection> CreateVssConnection()

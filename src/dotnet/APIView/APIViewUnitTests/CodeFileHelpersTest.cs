@@ -11,10 +11,10 @@ namespace APIViewUnitTests
     public class CodeFileHelpersTests
     {
         private readonly ITestOutputHelper _output;
-        List<APITreeNode> apiForestA = new List<APITreeNode>();
-        List<APITreeNode> apiForestB = new List<APITreeNode>();
-        List<APITreeNode> apiForestC = new List<APITreeNode>();
-        List<APITreeNode> apiForestD = new List<APITreeNode>();
+        List<APITreeNodeForAPI> apiForestA = new List<APITreeNodeForAPI>();
+        List<APITreeNodeForAPI> apiForestB = new List<APITreeNodeForAPI>();
+        List<APITreeNodeForAPI> apiForestC = new List<APITreeNodeForAPI>();
+        List<APITreeNodeForAPI> apiForestD = new List<APITreeNodeForAPI>();
 
         List<StructuredToken> beforeTokens = new List<StructuredToken>();
         List<StructuredToken> afterTokens = new List<StructuredToken>();
@@ -120,15 +120,15 @@ namespace APIViewUnitTests
                 Assert.Equal(diffTokens[i].Value, result[i].Value);
                 Assert.Equal(diffTokens[i].Id, result[i].Id);
 
-                if (diffTokens[i].Properties.ContainsKey(CodeFileHelpers.DIFF_PROPERTY))
+                if (diffTokens[i].Properties.ContainsKey("DiffKind"))
                 {
-                    Assert.Equal(diffTokens[i].Properties[CodeFileHelpers.DIFF_PROPERTY], result[i].Properties[CodeFileHelpers.DIFF_PROPERTY]);
+                    Assert.Equal(diffTokens[i].Properties["DiffKind"], result[i].Properties["DiffKind"]);
                 }
             }
         }
-        private List<APITreeNode> BuildTestTree(List<string> data, string parentId = null)
+        private List<APITreeNodeForAPI> BuildTestTree(List<string> data, string parentId = null)
         {
-            List<APITreeNode> forest = new List<APITreeNode>();
+            List<APITreeNodeForAPI> forest = new List<APITreeNodeForAPI>();
 
             foreach (var item in data)
             {
@@ -136,8 +136,8 @@ namespace APIViewUnitTests
 
                 if ((parts.Length == 1 && parentId == null) || (parts.Length > 1 && parts[1] == parentId))
                 {
-                    APITreeNode node = new APITreeNode { Id = parts[0] };
-                    node.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, "NoneDiff");
+                    APITreeNodeForAPI node = new APITreeNodeForAPI { Id = parts[0] };
+                    node.Properties.Add("DiffKind", "NoneDiff");
                     node.Children.AddRange(BuildTestTree(data, node.Id));
                     forest.Add(node);
                 }
@@ -157,7 +157,7 @@ namespace APIViewUnitTests
             var tokenBefore = new StructuredToken(valueBefore);
             var tokenAfter = new StructuredToken(valueAfter);
             var tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            tokenDiff.Properties.Add("DiffKind", "Unchanged");
             before.Add(tokenBefore);
             before.Add(StructuredToken.CreateSpaceToken());
             after.Add(tokenAfter);
@@ -170,7 +170,7 @@ namespace APIViewUnitTests
             tokenBefore = new StructuredToken(valueBefore);
             tokenAfter = new StructuredToken(valueAfter);
             tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            tokenDiff.Properties.Add("DiffKind", "Unchanged");
             before.Add(tokenBefore);
             after.Add(tokenAfter);
             diff.Add(tokenDiff);
@@ -180,7 +180,7 @@ namespace APIViewUnitTests
             tokenBefore = new StructuredToken(valueBefore);
             tokenAfter = new StructuredToken(valueAfter);
             tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            tokenDiff.Properties.Add("DiffKind", "Unchanged");
             before.Add(tokenBefore);
             after.Add(tokenAfter);
             diff.Add(tokenDiff);
@@ -193,11 +193,11 @@ namespace APIViewUnitTests
             tokenAfter.Id = "Azure.Identity.TokenCredentialOptions";
             tokenDiff = new StructuredToken(valueBefore);
             tokenDiff.Id = "Azure.Identity.EnvironmentCredentialOptions";
-            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.REMOVED);
+            tokenDiff.Properties.Add("DiffKind", "Removed");
             diff.Add(tokenDiff);
             tokenDiff = new StructuredToken(valueAfter);
             tokenDiff.Id = "Azure.Identity.TokenCredentialOptions";
-            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.ADDED);
+            tokenDiff.Properties.Add("DiffKind", "Added");
             diff.Add(tokenDiff);
             diff.Add(StructuredToken.CreateSpaceToken());
             before.Add(tokenBefore);
@@ -210,7 +210,7 @@ namespace APIViewUnitTests
             tokenBefore = new StructuredToken(valueBefore);
             tokenAfter = new StructuredToken(valueAfter);
             tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            tokenDiff.Properties.Add("DiffKind", "Unchanged");
             before.Add(tokenBefore);
             after.Add(tokenAfter);
             diff.Add(tokenDiff);
@@ -220,7 +220,7 @@ namespace APIViewUnitTests
             tokenBefore = new StructuredToken(valueBefore);
             tokenAfter = new StructuredToken(valueAfter);
             tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            tokenDiff.Properties.Add("DiffKind", "Unchanged");
             before.Add(tokenBefore);
             after.Add(tokenAfter);
             diff.Add(tokenDiff);
@@ -230,7 +230,7 @@ namespace APIViewUnitTests
             tokenBefore = new StructuredToken(valueBefore);
             tokenAfter = new StructuredToken(valueAfter);
             tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add(CodeFileHelpers.DIFF_PROPERTY, CodeFileHelpers.UNCHANGED);
+            tokenDiff.Properties.Add("DiffKind", "Unchanged");
             before.Add(tokenBefore);
             after.Add(tokenAfter);
             diff.Add(tokenDiff);
@@ -239,7 +239,7 @@ namespace APIViewUnitTests
             this.afterTokens = after;
             this.diffTokens = diff;
         }
-        private List<List<(string id, string diffKind)>> TraverseForest(List<APITreeNode> forest, bool print = false)
+        private List<List<(string id, string diffKind)>> TraverseForest(List<APITreeNodeForAPI> forest, bool print = false)
         {
             var result = new List<List<(string id, string diffKind)>>();
             foreach (var tree in forest)
@@ -251,7 +251,7 @@ namespace APIViewUnitTests
             return result;
         }
 
-        private void TraverseTree(APITreeNode node, List<(string id, string diffKind)> result, bool print = false, int level = 0)
+        private void TraverseTree(APITreeNodeForAPI node, List<(string id, string diffKind)> result, bool print = false, int level = 0)
         {
             if (print)
             { 

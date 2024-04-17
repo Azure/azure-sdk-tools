@@ -100,8 +100,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             {
                 Assert.Equal(DefaultExtensionCount, handlerForTest.Sanitizers.Count);
                 Assert.IsType<RecordedTestSanitizer>(handlerForTest.Sanitizers[0]);
-                Assert.IsType<BodyKeySanitizer>(handlerForTest.Sanitizers[1]);
+                Assert.IsType<GeneralRegexSanitizer>(handlerForTest.Sanitizers[1]);
                 Assert.IsType<GeneralRegexSanitizer>(handlerForTest.Sanitizers[2]);
+                Assert.IsType<BodyKeySanitizer>(handlerForTest.Sanitizers[15]);
+                Assert.IsType<BodyRegexSanitizer>(handlerForTest.Sanitizers[108]);
             }
         }
         #endregion
@@ -444,7 +446,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 var record = RecordSession.Deserialize(doc.RootElement);
                 Assert.Single(record.Entries);
                 var entry = record.Entries.First();
-                Assert.Equal("value", JsonDocument.Parse(entry.Request.Body).RootElement.GetProperty("key").GetString());
+                Assert.Equal("Sanitized", JsonDocument.Parse(entry.Request.Body).RootElement.GetProperty("key").GetString());
                 Assert.Equal(MockHttpHandler.DefaultResponse, Encoding.UTF8.GetString(entry.Response.Body));
             }
             finally

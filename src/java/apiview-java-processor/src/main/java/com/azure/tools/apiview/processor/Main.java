@@ -22,6 +22,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -33,7 +34,7 @@ import static com.azure.tools.apiview.processor.model.TokenKind.LINE_ID_MARKER;
 public class Main {
     // expected argument order:
     // [inputFiles] <outputDirectory>
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         if (args.length != 2) {
             System.out.println("Expected argument order: [comma-separated sources jarFiles] <outputFile>, e.g. /path/to/jarfile.jar ./temp/");
             System.exit(-1);
@@ -43,28 +44,34 @@ public class Main {
         final String[] jarFilesArray = jarFiles.split(",");
 
         final File outputDir = new File(args[1]);
+
+        System.out.println("Running with following configuration:");
+        System.out.printf("  Output directory: '%s'%n", outputDir);
+
+        Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
+    }
+
+    /**
+     * Runs APIView parser and returns the output file path.
+     */
+    public static File run(File jarFile, File outputDir) {
+        System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
+
+        if (!jarFile.exists()) {
+            System.out.printf("Cannot find file '%s'%n", jarFile);
+            System.exit(-1);
+        }
+
         if (!outputDir.exists()) {
             if (!outputDir.mkdirs()) {
                 System.out.printf("Failed to create output directory %s%n", outputDir);
             }
         }
 
-        System.out.println("Running with following configuration:");
-        System.out.printf("  Output directory: '%s'%n", outputDir);
-
-        for (final String jarFile : jarFilesArray) {
-            System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
-
-            final File file = new File(jarFile);
-            if (!file.exists()) {
-                System.out.printf("Cannot find file '%s'%n", file);
-                System.exit(-1);
-            }
-
-            final String jsonFileName = file.getName().substring(0, file.getName().length() - 4) + ".json";
-            final File outputFile = new File(outputDir, jsonFileName);
-            processFile(file, outputFile);
-        }
+        final String jsonFileName = jarFile.getName().substring(0, jarFile.getName().length() - 4) + ".json";
+        final File outputFile = new File(outputDir, jsonFileName);
+        processFile(jarFile, outputFile);
+        return outputFile;
     }
 
     private static ReviewProperties getReviewProperties(File inputFile) {
@@ -104,7 +111,7 @@ public class Main {
         return reviewProperties;
     }
 
-    private static void processFile(final File inputFile, final File outputFile) throws IOException {
+    private static void processFile(final File inputFile, final File outputFile) {
         final APIListing apiListing = new APIListing();
 
         // empty tokens list that we will fill as we process each class file
@@ -126,13 +133,22 @@ public class Main {
                     "that was submitted to APIView was named " + inputFile.getName()));
         }
 
-        // Write out to the filesystem
-        try (JsonWriter jsonWriter = JsonProviders.createWriter(Files.newBufferedWriter(outputFile.toPath()))) {
-            apiListing.toJson(jsonWriter);
+        try {
+            // Write out to the filesystem, make the file if it doesn't exist
+            if (!outputFile.exists()) {
+                if (!outputFile.createNewFile()) {
+                    System.out.printf("Failed to create output file %s%n", outputFile);
+                }
+            }
+            try (JsonWriter jsonWriter = JsonProviders.createWriter(Files.newBufferedWriter(outputFile.toPath()))) {
+                apiListing.toJson(jsonWriter);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    private static void processJavaSourcesJar(File inputFile, APIListing apiListing) throws IOException {
+    private static void processJavaSourcesJar(File inputFile, APIListing apiListing) {
         final ReviewProperties reviewProperties = getReviewProperties(inputFile);
 
         final String groupId = reviewProperties.getMavenPom().getGroupId();

@@ -19,7 +19,7 @@ namespace APIViewWeb.LeanModels
         public ReviewListItemModel Review { get; set; }
         public NavigationItem[] Navigation { get; set; }
         public CodeLineModel[] codeLines { get; set; }
-        public List<APITreeNode> APIForest { get; set; } = new List<APITreeNode>();
+        public List<APITreeNodeForAPI> APIForest { get; set; } = new List<APITreeNodeForAPI>();
         public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; }
         public APIRevisionListItemModel ActiveAPIRevision { get; set; }
         public APIRevisionListItemModel DiffAPIRevision { get; set; }

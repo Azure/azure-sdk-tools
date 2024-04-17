@@ -450,6 +450,7 @@ export class ApiView {
       case SyntaxKind.DirectiveExpression:
         obj = node as DirectiveExpressionNode;
         this.namespaceStack.push(generateId(node)!);
+        this.lineMarker();
         this.keyword(`#${obj.target.sv}`, false, true);
         for (const arg of obj.arguments) {
           switch (arg.kind) {

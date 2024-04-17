@@ -28,6 +28,9 @@ import {
   ScalarStatementNode,
   TypeReferenceNode,
   JsNamespaceDeclarationNode,
+  Directive,
+  DirectiveExpressionNode,
+  StringLiteralNode,
 } from "@typespec/compiler";
 
 export class NamespaceModel {
@@ -227,6 +230,11 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
       name = node.id.sv;
       parentId = generateId(node.parent);
       break;
+    case SyntaxKind.StringLiteral:
+        node = obj as StringLiteralNode;
+        name = node.value;
+        parentId = undefined;
+        break;
     case SyntaxKind.UnionStatement:
       node = obj as UnionStatementNode;
       name = node.id.sv;
@@ -246,6 +254,14 @@ export function generateId(obj: BaseNode | NamespaceModel | undefined): string |
         node = obj as TypeReferenceNode;
         name = generateId(node.target)!;
         parentId = undefined;
+        break;
+    case SyntaxKind.DirectiveExpression:
+        node = obj as DirectiveExpressionNode;
+        name = `#${generateId(node.target)!}`;
+        for (const arg of node.arguments) {
+            name += `_${generateId(arg)}`;
+        }
+        parentId = generateId(node.parent);
         break;
     default:
       return undefined;

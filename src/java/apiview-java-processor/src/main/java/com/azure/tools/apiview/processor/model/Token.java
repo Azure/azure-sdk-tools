@@ -1,21 +1,17 @@
+
 package com.azure.tools.apiview.processor.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonWriter;
 
-public class Token {
-    @JsonProperty("DefinitionId")
+import java.io.IOException;
+
+public class Token implements JsonSerializable<Token> {
     private String definitionId;
-
-    @JsonProperty("NavigateToId")
     private String navigateToId;
-
-    @JsonProperty("Kind")
     private TokenKind kind;
-
-    @JsonProperty("Value")
     private String value;
-
-    @JsonProperty("CrossLanguageDefinitionId")
     private String crossLanguageDefinitionId;
 
     public Token(final TokenKind kind) {
@@ -79,5 +75,55 @@ public class Token {
     @Override
     public String toString() {
         return "Token [definitionId = "+definitionId+", navigateToId = "+navigateToId+", kind = "+kind+", value = "+value+"]";
+    }
+
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        jsonWriter.writeStartObject()
+            .writeStringField("DefinitionId", definitionId)
+            .writeStringField("NavigateToId", navigateToId);
+
+        if (kind != null) {
+            jsonWriter.writeIntField("Kind", kind.getId());
+        }
+
+        return jsonWriter.writeStringField("Value", value)
+            .writeStringField("CrossLanguageDefinitionId", crossLanguageDefinitionId)
+            .writeEndObject();
+    }
+
+    public static Token fromJson(JsonReader jsonReader) throws IOException {
+        return jsonReader.readObject(reader -> {
+            String definitionId = null;
+            String navigateToId = null;
+            TokenKind kind = null;
+            String value = null;
+            String crossLanguageDefinitionId = null;
+
+            while (reader.nextToken() != null) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
+
+                if (fieldName.equals("DefinitionId")) {
+                    definitionId = reader.getString();
+                } else if (fieldName.equals("NavigateToId")) {
+                    navigateToId = reader.getString();
+                } else if (fieldName.equals("Kind")) {
+                    kind = TokenKind.fromId(reader.getInt());
+                } else if (fieldName.equals("Value")) {
+                    value = reader.getString();
+                } else if (fieldName.equals("CrossLanguageDefinitionId")) {
+                    crossLanguageDefinitionId = reader.getString();
+                } else {
+                    reader.skipChildren();
+                }
+            }
+
+            Token token = new Token(kind, value, definitionId);
+            token.setNavigateToId(navigateToId);
+            token.setCrossLanguageDefinitionId(crossLanguageDefinitionId);
+
+            return token;
+        });
     }
 }

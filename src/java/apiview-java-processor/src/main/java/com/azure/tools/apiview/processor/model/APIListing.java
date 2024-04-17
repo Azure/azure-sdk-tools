@@ -1,62 +1,39 @@
 package com.azure.tools.apiview.processor.model;
 
+import com.azure.json.JsonReader;
+import com.azure.json.JsonSerializable;
+import com.azure.json.JsonToken;
+import com.azure.json.JsonWriter;
 import com.azure.tools.apiview.processor.model.maven.Pom;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-public class APIListing {
-    @JsonProperty("Navigation")
+public class APIListing implements JsonSerializable<APIListing> {
     private List<ChildItem> navigation;
-
-    @JsonIgnore
     private ChildItem rootNav;
-
-    @JsonProperty("Name")
     private String name;
-
-    @JsonProperty("Language")
     private String language;
-
-    @JsonProperty("LanguageVariant")
     private LanguageVariant languageVariant;
-
-    @JsonProperty("PackageName")
     private String packageName;
-
-    @JsonProperty("PackageVersion")
     private String packageVersion;
 
     // This string is taken from here:
     // https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIView/Languages/CodeFileBuilder.cs#L50
-    @JsonProperty("VersionString")
     private final String versionString = "21";
-
-    @JsonProperty("Tokens")
     private List<Token> tokens;
-
-    @JsonProperty("Diagnostics")
     private List<Diagnostic> diagnostics;
-
-    @JsonIgnore
     private Map<String, String> knownTypes;
 
     // a map of package names to a list of types within that package
-    @JsonIgnore
     private final Map<String, List<String>> packageNamesToTypesMap;
-
-    @JsonIgnore
     private final Map<String, String> typeToPackageNameMap;
-
-    @JsonIgnore
     private Pom mavenPom;
-
-    @JsonIgnore
     private ApiViewProperties apiViewProperties;
 
     public APIListing() {
@@ -132,7 +109,7 @@ public class APIListing {
 
     @Override
     public String toString() {
-        return "APIListing [rootNav = "+rootNav+", Name = "+ name +", Tokens = "+tokens+"]";
+        return "APIListing [rootNav = " + rootNav + ", Name = " + name + ", Tokens = " + tokens + "]";
     }
 
     /**
@@ -169,5 +146,53 @@ public class APIListing {
 
     public ApiViewProperties getApiViewProperties() {
         return apiViewProperties;
+    }
+
+    @Override
+    public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
+        return jsonWriter.writeStartObject()
+            .writeArrayField("Navigation", navigation, JsonWriter::writeJson)
+            .writeStringField("Name", name)
+            .writeStringField("Language", language)
+            .writeStringField("LanguageVariant", Objects.toString(languageVariant, null))
+            .writeStringField("PackageName", packageName)
+            .writeStringField("PackageVersion", packageVersion)
+            .writeStringField("VersionString", versionString)
+            .writeArrayField("Tokens", tokens, JsonWriter::writeJson)
+            .writeArrayField("Diagnostics", diagnostics, JsonWriter::writeJson)
+            .writeEndObject();
+    }
+
+    public static APIListing fromJson(JsonReader jsonReader) throws IOException {
+        return jsonReader.readObject(reader -> {
+            APIListing apiListing = new APIListing();
+
+            while (reader.nextToken() != JsonToken.END_OBJECT) {
+                String fieldName = reader.getFieldName();
+                reader.nextToken();
+
+                if ("Navigation".equals(fieldName)) {
+                    apiListing.navigation = reader.readArray(ChildItem::fromJson);
+                } else if ("Name".equals(fieldName)) {
+                    apiListing.name = reader.getString();
+                } else if ("Language".equals(fieldName)) {
+                    apiListing.language = reader.getString();
+                } else if ("LanguageVariant".equals(fieldName)) {
+                    apiListing.languageVariant = LanguageVariant.fromString(reader.getString());
+                } else if ("PackageName".equals(fieldName)) {
+                    apiListing.packageName = reader.getString();
+                } else if ("PackageVersion".equals(fieldName)) {
+                    apiListing.packageVersion = reader.getString();
+                } else if ("Tokens".equals(fieldName)) {
+                    apiListing.tokens = reader.readArray(Token::fromJson);
+                } else if ("Diagnostics".equals(fieldName)) {
+                    apiListing.diagnostics = reader.readArray(Diagnostic::fromJson);
+                } else {
+                    reader.skipChildren();
+                }
+            }
+
+            return apiListing;
+        });
     }
 }

@@ -1,8 +1,5 @@
 using System.CommandLine.Invocation;
-using System.Reflection;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.SecretRotation.Configuration;
 using Azure.Sdk.Tools.SecretRotation.Core;
 
@@ -18,93 +15,78 @@ public class StatusCommand : RotationCommandBase
         InvocationContext invocationContext)
     {
         var timeProvider = new TimeProvider();
-        IEnumerable<RotationPlan> plans = rotationConfiguration.GetAllRotationPlans(logger, timeProvider);
+        RotationPlan[] plans = rotationConfiguration.GetAllRotationPlans(logger, timeProvider).ToArray();
 
-        List<(RotationPlan Plan, RotationPlanStatus Status)> statuses = new();
+        logger.LogInformation($"Getting status for {plans.Length} plans");
 
-        foreach (RotationPlan plan in plans)
+        (RotationPlan Plan, RotationPlanStatus Status)[] statuses = await plans
+            .Select(async plan => {
+                logger.LogDebug($"Getting status for plan '{plan.Name}'.");
+                return (plan, await plan.GetStatusAsync());
+            })
+            .LimitConcurrencyAsync(10);
+
+
+        var plansBuyState = statuses.GroupBy(x => x.Status.State)
+            .ToDictionary(x => x.Key, x => x.ToArray());
+
+
+        void LogStatusSection(RotationState state, string header)
         {
-            logger.LogInformation($"Getting status for plan '{plan.Name}'");
-            RotationPlanStatus status = await plan.GetStatusAsync();
-
-            if (logger.IsEnabled(LogLevel.Debug))
-            {
-                var builder = new StringBuilder();
-
-                builder.AppendLine($"  Plan:");
-                builder.AppendLine($"    RotationPeriod: {plan.RotationPeriod}");
-                builder.AppendLine($"    RotationThreshold: {plan.RotationThreshold}");
-                builder.AppendLine($"    RevokeAfterPeriod: {plan.RevokeAfterPeriod}");
-
-                builder.AppendLine($"  Status:");
-                builder.AppendLine($"    ExpirationDate: {status.ExpirationDate}");
-                builder.AppendLine($"    Expired: {status.Expired}");
-                builder.AppendLine($"    ThresholdExpired: {status.ThresholdExpired}");
-                builder.AppendLine($"    RequiresRevocation: {status.RequiresRevocation}");
-                builder.AppendLine($"    Exception: {status.Exception?.Message}");
-
-                logger.LogDebug(builder.ToString());
-            }
-
-
-            statuses.Add((plan, status));
-        }
-
-        var errored = statuses.Where(x => x.Status.Exception is not null).ToArray();
-        var expired = statuses.Except(errored).Where(x => x.Status is { Expired: true }).ToArray();
-        var expiring = statuses.Except(errored).Where(x => x.Status is { Expired: false, ThresholdExpired: true }).ToArray();
-        var upToDate = statuses.Except(errored).Where(x => x.Status is { Expired: false, ThresholdExpired: false }).ToArray();
-
-        var statusBuilder = new StringBuilder();
-
-        void AppendStatusSection(IList<(RotationPlan Plan, RotationPlanStatus Status)> sectionStatuses, string header)
-        {
-            if (!sectionStatuses.Any())
+            if (!plansBuyState.TryGetValue(state, out var matchingPlans))
             {
                 return;
             }
 
-            statusBuilder.AppendLine();
-            statusBuilder.AppendLine(header);
-            foreach ((RotationPlan plan, RotationPlanStatus status) in sectionStatuses)
+            logger.LogInformation($"\n{header}");
+
+            foreach ((RotationPlan plan, RotationPlanStatus status) in matchingPlans)
             {
-                foreach (string line in GetPlanStatusLine(plan, status).Split("\n"))
+                var builder = new StringBuilder();
+                var debugBuilder = new StringBuilder();
+
+                builder.Append($"  {plan.Name} - ");
+                DateTimeOffset? expirationDate = status.ExpirationDate;
+                if (expirationDate.HasValue)
                 {
-                    statusBuilder.Append("  ");
-                    statusBuilder.AppendLine(line);
+                    builder.AppendLine($"{expirationDate} ({FormatTimeSpan(expirationDate.Value.Subtract(DateTimeOffset.UtcNow))})");
                 }
+                else
+                {
+                    builder.AppendLine("no expiration date");
+                }
+
+                debugBuilder.AppendLine($"    Plan:");
+                debugBuilder.AppendLine($"      Rotation Period: {plan.RotationPeriod}");
+                debugBuilder.AppendLine($"      Rotation Threshold: {plan.RotationThreshold}");
+                debugBuilder.AppendLine($"      Warning Threshold: {plan.WarningThreshold}");
+                debugBuilder.AppendLine($"      Revoke After Period: {plan.RevokeAfterPeriod}");
+                debugBuilder.AppendLine($"    Status:");
+                debugBuilder.AppendLine($"      Expiration Date: {status.ExpirationDate}");
+                debugBuilder.AppendLine($"      State: {status.State}");
+                debugBuilder.AppendLine($"      Requires Revocation: {status.RequiresRevocation}");
+
+                if (status.Exception != null)
+                {
+                    builder.AppendLine($"    Exception:");
+                    builder.AppendLine($"      {status.Exception.Message}");
+                }
+
+                logger.LogInformation(builder.ToString());
+                logger.LogDebug(debugBuilder.ToString());
             }
         }
 
-        AppendStatusSection(expired, "Expired:");
-        AppendStatusSection(expiring, "Expiring:");
-        AppendStatusSection(upToDate, "Up-to-date:");
-        AppendStatusSection(errored, "Error reading plan status:");
+        LogStatusSection(RotationState.Expired, "Expired:");
+        LogStatusSection(RotationState.Warning, "Expiring:");
+        LogStatusSection(RotationState.Rotate, "Should Rotate:");
+        LogStatusSection(RotationState.UpToDate, "Up-to-date:");
+        LogStatusSection(RotationState.Error, "Error reading plan status:");
 
-        logger.LogInformation(statusBuilder.ToString());
-
-        if (expired.Any())
+        if (statuses.Any(x => x.Status.State is RotationState.Expired or RotationState.Warning))
         {
             invocationContext.ExitCode = 1;
         }
-    }
-
-    private static string GetPlanStatusLine(RotationPlan plan, RotationPlanStatus status)
-    {
-        if (status.Exception != null)
-        {
-            return $"{plan.Name}:\n  {status.Exception.Message}";
-        }
-
-        DateTimeOffset? expirationDate = status.ExpirationDate;
-
-        DateTimeOffset now = DateTimeOffset.UtcNow;
-
-        string expiration = expirationDate.HasValue
-            ? $"{FormatTimeSpan(expirationDate.Value.Subtract(now))}"
-            : "No expiration date";
-
-        return $"{plan.Name} - {expiration} / ({FormatTimeSpan(plan.RotationPeriod)} @ {FormatTimeSpan(plan.RotationThreshold)})";
     }
 
     private static string FormatTimeSpan(TimeSpan timeSpan)

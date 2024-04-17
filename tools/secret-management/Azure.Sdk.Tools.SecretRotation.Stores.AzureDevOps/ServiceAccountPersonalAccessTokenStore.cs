@@ -1,38 +1,27 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Core;
-using Azure.Identity;
 using Azure.Sdk.Tools.SecretRotation.Azure;
 using Azure.Sdk.Tools.SecretRotation.Configuration;
 using Azure.Sdk.Tools.SecretRotation.Core;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.Services.Client;
-using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.DelegatedAuthorization;
 using Microsoft.VisualStudio.Services.DelegatedAuthorization.Client;
 using Microsoft.VisualStudio.Services.WebApi;
-using AccessToken = Azure.Core.AccessToken;
 
 namespace Azure.Sdk.Tools.SecretRotation.Stores.AzureDevOps;
 
-public class ServiceAccountPersonalAccessTokenStore : SecretStore
+public class ServiceAccountPersonalAccessTokenStore : AzureDevOpsStore
 {
     public const string MappingKey = "Service Account ADO PAT";
-    private const string AzureDevOpsApplicationId = "499b84ac-1321-427f-aa17-267ca6975798";
-    private const string AzureCliApplicationId = "04b07795-8ddb-461a-bbee-02f9e1bf7b46";
 
-    private readonly ILogger logger;
-    private readonly string organization;
     private readonly string patDisplayName;
     private readonly string scopes;
-    private readonly string serviceAccountTenantId;
-    private readonly string serviceAccountName;
-    private readonly Uri serviceAccountPasswordSecret;
     private readonly RevocationAction revocationAction;
-    private readonly TokenCredential tokenCredential;
-    private readonly ISecretProvider secretProvider;
 
-    private ServiceAccountPersonalAccessTokenStore(ILogger logger,
+    private ServiceAccountPersonalAccessTokenStore(
+        ILogger logger,
         string organization,
         string patDisplayName,
         string scopes,
@@ -42,17 +31,18 @@ public class ServiceAccountPersonalAccessTokenStore : SecretStore
         RevocationAction revocationAction,
         TokenCredential tokenCredential,
         ISecretProvider secretProvider)
+        : base(
+            logger,
+            organization,
+            serviceAccountTenantId,
+            serviceAccountName,
+            serviceAccountPasswordSecret,
+            tokenCredential,
+            secretProvider)
     {
-        this.logger = logger;
-        this.organization = organization;
         this.patDisplayName = patDisplayName;
         this.scopes = scopes;
-        this.serviceAccountTenantId = serviceAccountTenantId;
-        this.serviceAccountName = serviceAccountName;
-        this.serviceAccountPasswordSecret = serviceAccountPasswordSecret;
         this.revocationAction = revocationAction;
-        this.tokenCredential = tokenCredential;
-        this.secretProvider = secretProvider;
     }
 
     public override bool CanOriginate => true;
@@ -131,7 +121,8 @@ public class ServiceAccountPersonalAccessTokenStore : SecretStore
 
         PatTokenResult result = await client.CreatePatAsync(new PatTokenCreateRequest { AllOrgs = false, DisplayName = this.patDisplayName, Scope = this.scopes, ValidTo = expirationDate.UtcDateTime });
 
-        if (result.PatTokenError != SessionTokenError.None) {
+        if (result.PatTokenError != SessionTokenError.None)
+        {
             throw new RotationException($"Unable to create PAT: {result.PatTokenError}");
         }
 
@@ -145,17 +136,6 @@ public class ServiceAccountPersonalAccessTokenStore : SecretStore
             ExpirationDate = result.PatToken.ValidTo,
             Tags = { ["AdoPatAuthorizationId"] = authorizationId }
         };
-    }
-
-    private static async Task<AccessToken> GetDevopsBearerTokenAsync(TokenCredential credential)
-    {
-        string[] scopes = { $"{AzureDevOpsApplicationId}/.default" };
-
-        var tokenRequestContext = new TokenRequestContext(scopes, parentRequestId: null);
-
-        AccessToken authenticationResult = await credential.GetTokenAsync(tokenRequestContext, CancellationToken.None);
-
-        return authenticationResult;
     }
 
     public override Func<Task>? GetRevocationActionAsync(SecretState secretState, bool whatIf)
@@ -202,32 +182,6 @@ public class ServiceAccountPersonalAccessTokenStore : SecretStore
                 // ignore "not found" exception on delete
             }
         };
-    }
-
-    private static async Task<VssCredentials> GetVssCredentials(TokenCredential credential)
-    {
-        AccessToken token = await GetDevopsBearerTokenAsync(credential);
-
-        return new VssAadCredential(new VssAadToken("Bearer", token.Token));
-    }
-
-    private async Task<VssConnection> GetConnectionAsync()
-    {
-        this.logger.LogDebug("Getting service account password from secret '{SecretName}'", this.serviceAccountPasswordSecret);
-
-        string serviceAccountPassword = await this.secretProvider.GetSecretValueAsync(this.tokenCredential, this.serviceAccountPasswordSecret);
-
-        this.logger.LogDebug("Getting token and devops client for 'dev.azure.com/{Organization}'", this.organization);
-
-        var serviceAccountCredential = new UsernamePasswordCredential(this.serviceAccountName, serviceAccountPassword, this.serviceAccountTenantId, AzureCliApplicationId);
-
-        VssCredentials vssCredentials = await GetVssCredentials(serviceAccountCredential);
-
-        var connection = new VssConnection(new Uri($"https://vssps.dev.azure.com/{this.organization}"), vssCredentials);
-
-        await connection.ConnectAsync();
-
-        return connection;
     }
 
     private enum RevocationAction

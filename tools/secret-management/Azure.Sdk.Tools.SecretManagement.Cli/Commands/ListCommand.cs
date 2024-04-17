@@ -1,7 +1,6 @@
 using System.CommandLine.Invocation;
-using System.Text.Json;
+using System.Text;
 using Azure.Sdk.Tools.SecretRotation.Configuration;
-using Azure.Sdk.Tools.SecretRotation.Core;
 
 namespace Azure.Sdk.Tools.SecretManagement.Cli.Commands;
 
@@ -16,7 +15,21 @@ public class ListCommand : RotationCommandBase
     {
         foreach (PlanConfiguration plan in rotationConfiguration.PlanConfigurations)
         {
-            Console.WriteLine($"name: {plan.Name} - tags: {string.Join(", ", plan.Tags)}");
+            logger.LogInformation(plan.Name);
+
+            if (logger.IsEnabled(LogLevel.Debug))
+            {
+                var builder = new StringBuilder();
+
+                builder.AppendLine($"  Tags: {string.Join(", ", plan.Tags)}");
+                builder.AppendLine($"  Rotation Period: {plan.RotationPeriod}");
+                builder.AppendLine($"  Rotation Threshold: {plan.RotationThreshold}");
+                builder.AppendLine($"  Warning Threshold: {plan.WarningThreshold}");
+                builder.AppendLine($"  Revoke After Period: {plan.RevokeAfterPeriod}");
+                builder.AppendLine($"  Store Types: {string.Join(", ", plan.StoreConfigurations.Select(s => s.Type).Distinct() )}");
+
+                logger.LogDebug(builder.ToString());
+            }
         }
 
         return Task.CompletedTask;

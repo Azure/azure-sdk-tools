@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.BitSet;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,11 +26,11 @@ public final class SnippetReplacer {
     private static final String JAVADOC_PRE_FENCE = "<pre>";
     private static final String JAVADOC_POST_FENCE = "</pre>";
 
-    static final BitSet VALID_SNIPPET_ID_CHARACTER;
+    static final boolean[] VALID_SNIPPET_ID_CHARACTER;
     static final String[] JAVADOC_CODESNIPPET_REPLACEMENTS;
 
     static {
-        JAVADOC_CODESNIPPET_REPLACEMENTS = new String[256];
+        JAVADOC_CODESNIPPET_REPLACEMENTS = new String[128];
         JAVADOC_CODESNIPPET_REPLACEMENTS['&'] = "&amp;";
         JAVADOC_CODESNIPPET_REPLACEMENTS['\"'] = "&quot;";
         JAVADOC_CODESNIPPET_REPLACEMENTS['>'] = "&gt;";
@@ -43,15 +43,15 @@ public final class SnippetReplacer {
         JAVADOC_CODESNIPPET_REPLACEMENTS['/'] = "&#47;";
         JAVADOC_CODESNIPPET_REPLACEMENTS['\\'] = "&#92;";
 
-        VALID_SNIPPET_ID_CHARACTER = new BitSet(256);
-        VALID_SNIPPET_ID_CHARACTER.set('a', 'z' + 1);
-        VALID_SNIPPET_ID_CHARACTER.set('A', 'Z' + 1);
-        VALID_SNIPPET_ID_CHARACTER.set('0', '9' + 1);
-        VALID_SNIPPET_ID_CHARACTER.set('.');
-        VALID_SNIPPET_ID_CHARACTER.set('#');
-        VALID_SNIPPET_ID_CHARACTER.set('\\');
-        VALID_SNIPPET_ID_CHARACTER.set('-');
-        VALID_SNIPPET_ID_CHARACTER.set('_');
+        VALID_SNIPPET_ID_CHARACTER = new boolean[128];
+        Arrays.fill(VALID_SNIPPET_ID_CHARACTER, 'a', 'z' + 1, true);
+        Arrays.fill(VALID_SNIPPET_ID_CHARACTER, 'A', 'Z' + 1, true);
+        Arrays.fill(VALID_SNIPPET_ID_CHARACTER, '0', '9' + 1, true);
+        VALID_SNIPPET_ID_CHARACTER['.'] = true;
+        VALID_SNIPPET_ID_CHARACTER['#'] = true;
+        VALID_SNIPPET_ID_CHARACTER['\\'] = true;
+        VALID_SNIPPET_ID_CHARACTER['-'] = true;
+        VALID_SNIPPET_ID_CHARACTER['_'] = true;
     }
 
     /**
@@ -262,15 +262,14 @@ public final class SnippetReplacer {
                     String linePrefix = prefixFunction(end, additionalLinePrefix);
 
                     int longestSnippetLine = 0;
-                    StringBuilder snippetIndentationBuilder = new StringBuilder();
-                    for (int i = 0; i < snippetTagIndentation; i++) {
-                        snippetIndentationBuilder.append(" ");
-                    }
-                    String snippetIndentation = snippetIndentationBuilder.toString();
+                    byte[] whitespace = new byte[snippetTagIndentation];
+                    Arrays.fill(whitespace, (byte) ' ');
+                    String snippetIndentation = new String(whitespace);
+
                     for (String snippet : respaceLines(newSnippets.getContent())) {
                         longestSnippetLine = Math.max(longestSnippetLine, snippet.length());
                         String modifiedSnippet = applyReplacements(snippet, replacements);
-                        modifiedSnippets.add(modifiedSnippet.length() == 0
+                        modifiedSnippets.add(modifiedSnippet.isEmpty()
                             ? stripTrailingWhitespace(linePrefix) + lineSep
                             : snippetIndentation + linePrefix + modifiedSnippet + lineSep);
                     }
@@ -279,7 +278,7 @@ public final class SnippetReplacer {
                         updateErrors.add(new CodesnippetLengthError(currentSnippetId, file, longestSnippetLine));
                     }
 
-                    if (preFence != null && preFence.length() > 0) {
+                    if (preFence != null && !preFence.isEmpty()) {
                         modifiedLines.add(linePrefix);
                         modifiedLines.add(preFence);
                         modifiedLines.add(lineSep);
@@ -287,7 +286,7 @@ public final class SnippetReplacer {
 
                     modifiedLines.addAll(modifiedSnippets);
 
-                    if (postFence != null && postFence.length() > 0) {
+                    if (postFence != null && !postFence.isEmpty()) {
                         modifiedLines.add(linePrefix);
                         modifiedLines.add(postFence);
                         modifiedLines.add(lineSep);
@@ -365,15 +364,14 @@ public final class SnippetReplacer {
                     String linePrefix = prefixFunction(end, additionalLinePrefix);
 
                     int longestSnippetLine = 0;
-                    StringBuilder snippetIndentationBuilder = new StringBuilder();
-                    for (int i = 0; i < snippetTagIndentation; i++) {
-                        snippetIndentationBuilder.append(" ");
-                    }
-                    String snippetIndentation = snippetIndentationBuilder.toString();
+                    byte[] whitespace = new byte[snippetTagIndentation];
+                    Arrays.fill(whitespace, (byte) ' ');
+                    String snippetIndentation = new String(whitespace);
+
                     for (String snippet : respaceLines(newSnippets.getContent())) {
                         longestSnippetLine = Math.max(longestSnippetLine, snippet.length());
                         String modifiedSnippet = applyReplacements(snippet, replacements);
-                        modifiedSnippets.add(modifiedSnippet.length() == 0
+                        modifiedSnippets.add(modifiedSnippet.isEmpty()
                             ? stripTrailingWhitespace(linePrefix) + lineSep
                             : snippetIndentation + linePrefix + modifiedSnippet + lineSep);
                     }
@@ -391,7 +389,7 @@ public final class SnippetReplacer {
                 }
             } else {
                 if (inSnippet) {
-                    if (preFence.length() > 0 && postFence.length() > 0) {
+                    if (!preFence.isEmpty() && !postFence.isEmpty()) {
                         if (!line.contains(preFence) && !line.contains(postFence)) {
                             currentSnippetSet.add(line + lineSep);
                         }
@@ -523,11 +521,13 @@ public final class SnippetReplacer {
 
         for (String snippetLine : snippetText) {
             // only look at non-whitespace only strings for the min indent
-            if (snippetLine.trim().length() == 0) {
+            int leadingWhitespace = nextNonWhitespace(snippetLine, 0);
+            if (leadingWhitespace == -1) {
+                // -1 indicates the string is all whitespace
                 continue;
             }
 
-            minWhitespace = Math.min(minWhitespace, leadingWhitespaceCount(snippetLine));
+            minWhitespace = Math.min(minWhitespace, leadingWhitespace);
             if (minWhitespace == 0) {
                 break;
             }
@@ -568,7 +568,7 @@ public final class SnippetReplacer {
 
         for (int i = 0; i < snippetLength; i++) {
             char c = snippet.charAt(i);
-            if (c >= 256) {
+            if (c >= 128) {
                 continue;
             }
 
@@ -653,7 +653,7 @@ public final class SnippetReplacer {
     }
 
     private static int nextNonWhitespace(String str, int offset) {
-        if (str == null || str.length() == 0 || str.length() - 1 == offset) {
+        if (str == null || str.isEmpty() || str.length() - 1 == offset) {
             return -1;
         }
 
@@ -670,7 +670,7 @@ public final class SnippetReplacer {
     }
 
     private static String stripTrailingWhitespace(String str) {
-        if (str == null || str.length() == 0) {
+        if (str == null || str.isEmpty()) {
             return str;
         }
 
@@ -700,7 +700,7 @@ public final class SnippetReplacer {
         int end = start;
         for (; end < strLength; end++) {
             char c = str.charAt(end);
-            if (!VALID_SNIPPET_ID_CHARACTER.get(c)) {
+            if (c >= 128 || !VALID_SNIPPET_ID_CHARACTER[c]) {
                 if (!Character.isWhitespace(c)) {
                     return null;
                 } else {
@@ -713,7 +713,7 @@ public final class SnippetReplacer {
     }
 
     private static SnippetInfo getSnippetDefinition(String str, boolean beginDefinition) {
-        if (str == null || str.length() == 0) {
+        if (str == null || str.isEmpty()) {
             return null;
         }
 
@@ -741,7 +741,7 @@ public final class SnippetReplacer {
     }
 
     private static SnippetInfo getSourceCall(String str, boolean beginSourceCall) {
-        if (str == null || str.length() == 0) {
+        if (str == null || str.isEmpty()) {
             return null;
         }
 
@@ -783,7 +783,7 @@ public final class SnippetReplacer {
     }
 
     private static SnippetInfo getReadmeCall(String str, boolean beginReadmeCall) {
-        if (str == null || str.length() == 0) {
+        if (str == null || str.isEmpty()) {
             return null;
         }
 

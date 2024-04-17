@@ -34,7 +34,7 @@ public abstract class FluentSetterReturnTypeDiagnosticRule implements Diagnostic
         getPublicOrProtectedMethods(type)
                 .filter(method -> method.getNameAsString().startsWith("set"))
                 .forEach(method -> {
-                    if (!method.getType().toString().equals(typeName)) {
+                    if (!method.getType().asString().equals(typeName)) {
                         listing.addDiagnostic(new Diagnostic(
                             ERROR,
                             makeId(method),

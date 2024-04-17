@@ -137,10 +137,10 @@ export class ApiView {
     }
   }
 
-  trim() {
+  trim(trimNewlines: boolean = false) {
     let last = this.tokens[this.tokens.length - 1];
     while (last) {
-      if (last.Kind === ApiViewTokenKind.Whitespace) {
+      if (last.Kind === ApiViewTokenKind.Whitespace || (trimNewlines && last.Kind === ApiViewTokenKind.Newline)) {
         this.tokens.pop();
         last = this.tokens[this.tokens.length - 1];
       } else {
@@ -594,21 +594,6 @@ export class ApiView {
         this.punctuation("]", true, false);
         break;
       case SyntaxKind.TypeReference:
-
-        // if (isExpanded) {
-        //   this.newline();
-        //   this.indent();
-        // }
-        // if (obj.name) {
-        //   this.text(obj.name.sv);
-        //   this.punctuation("=", true, true);
-        // }
-        // if (isExpanded) {
-        //   this.tokenizeModelExpressionExpanded(obj.argument as ModelExpressionNode, false, false);
-        //   this.deindent();
-        // } else {
-        //   this.tokenize(obj.argument);
-        // }
         obj = node as TypeReferenceNode;
         isExpanded = this.isTemplateExpanded(obj);
         this.tokenizeIdentifier(obj.target, "reference");
@@ -622,6 +607,7 @@ export class ApiView {
             const arg = obj.arguments[x];
             this.tokenize(arg);
             if (x !== obj.arguments.length - 1) {
+              this.trim(true);
               this.renderPunctuation(",");
             }
           }
@@ -784,6 +770,7 @@ export class ApiView {
         const propName = this.getNameForNode(prop);
         this.namespaceStack.push(propName);
         this.tokenize(prop);
+        this.trim(true);
         this.punctuation(";", false, false);
         this.namespaceStack.pop();
         this.blankLines(0);
@@ -945,10 +932,11 @@ export class ApiView {
         this.namespaceStack.pop();
         if (isOperationSignature) {
           if (x !== node.properties.length - 1) {
-            this.trim();
+            this.trim(true);
             this.renderPunctuation(",");
           }
         } else {
+          this.trim(true);
           this.renderPunctuation(";");
         }
         this.blankLines(0);

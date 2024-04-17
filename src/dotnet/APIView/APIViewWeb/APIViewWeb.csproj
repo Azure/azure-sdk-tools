@@ -30,7 +30,6 @@
     <PackageReference Include="Azure.Search.Documents" Version="11.5.0-beta.4" />
     <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
     <PackageReference Include="CsvHelper" Version="30.0.1" />
-    <PackageReference Include="DiffPlex" Version="1.7.2" />
     <!-- Adding NU1701 suppression as these three libraries have not updated to more modern versions of .net, although in testing they work as required. -->
     <PackageReference Include="Markdig" Version="0.34.0">
       <NoWarn>NU1701</NoWarn>

@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {  Observable, map, share } from 'rxjs';
 import { AppVersion, UserProfile } from 'src/app/_models/auth_service_models';
-import { environment } from 'src/environments/environment';
 import { ConfigService } from '../config/config.service';
 
 @Injectable({

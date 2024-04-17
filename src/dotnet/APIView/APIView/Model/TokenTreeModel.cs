@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using ApiView;
+using APIView.DIff;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -14,6 +15,13 @@ namespace APIView.Model
         Content = 3
     }
 
+    public enum DiffNodeKind
+    {
+        NoneDiff = 0,
+        Unchanged = 1,
+        Added = 2,
+        Removed = 3
+    }
 
     public class StructuredToken
     {
@@ -125,11 +133,19 @@ namespace APIView.Model
         public string Name { get; set; }
         public string Id { get; set; }
         public string Kind { get; set; }
-        public HashSet<string> Tags { get; } = new HashSet<string>(); // Use for hidden and Deprecated
-        public Dictionary<string, string> Properties { get; } = new Dictionary<string, string>();
+        public HashSet<string> Tags { get; set; } = new HashSet<string>(); // Use for hidden and Deprecated
+        public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
         public List<StructuredToken> TopTokens { get; set; } = new List<StructuredToken>();
         public List<StructuredToken> BottomTokens { get; set; } = new List<StructuredToken>();
-        public List<APITreeNode> Children { get; } = new List<APITreeNode>();
+        public List<APITreeNode> Children { get; set; } = new List<APITreeNode>();
+    }
+
+    public class  APITreeNodeForAPI : APITreeNode
+    {
+        public new List<APITreeNodeForAPI> Children { get; set; } = new List<APITreeNodeForAPI>();
+        public DiffNodeKind DiffKind { get; set; } = DiffNodeKind.NoneDiff;
+        public List<StructuredToken> TopDiffTokens { get; set; } = new List<StructuredToken>();
+        public List<StructuredToken> BottomDiffTokens { get; set; } = new List<StructuredToken>();
 
         public override int GetHashCode()
         {
@@ -147,7 +163,7 @@ namespace APIView.Model
                 return false;
             }
 
-            var other = (APITreeNode)obj;
+            var other = (APITreeNodeForAPI)obj;
             return Name == other.Name && Id == other.Id && Kind == other.Kind;
         }
     }

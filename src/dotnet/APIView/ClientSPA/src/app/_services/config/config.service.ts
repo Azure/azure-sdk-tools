@@ -8,7 +8,10 @@ import { environment } from 'src/environments/environment';
 })
 export class ConfigService {
   private assetsPath : string = environment.assetsPath;
-  private config: any;
+  private config: any = {
+    apiUrl : "api/",
+    webAppUrl : "http://localhost:5000/"
+  };
 
   constructor(private http: HttpClient) { }
 

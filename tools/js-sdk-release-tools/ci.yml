@@ -103,6 +103,10 @@ extends:
                 artifactName: 'drop'
                 targetPath: '$(Build.ArtifactStagingDirectory)'
 
+            - pwsh: |
+                dir -r $(Build.ArtifactStagingDirectory)
+              displayName: Dump artifacts
+
             - script: |
                 echo -e "\e[32m[$(date -u)] LOG: Ensure latest npm is installed"
                 sudo npm install -g npm || { echo 'npm install failed' ; exit 1; }

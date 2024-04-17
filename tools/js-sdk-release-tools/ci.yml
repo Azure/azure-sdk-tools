@@ -66,11 +66,10 @@ extends:
               displayName: 'copy to staging dir'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 
-            - task: PublishBuildArtifacts@1
+            - task: 1ES.PublishPipelineArtifact@1
               inputs:
-                PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+                targetPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
                 ArtifactName: '$(VAR_ARTIFACT_NAME)'
-                publishLocation: 'Container'
 
       - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
         - stage: Release

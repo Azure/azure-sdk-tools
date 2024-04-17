@@ -8,23 +8,28 @@ using Azure.Sdk.Tools.TestProxy.Vendored;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Build.Tasks;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Reflection.Metadata;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -1049,7 +1054,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     new BodyKeySanitizer("$..inputDataUri"),
                     new BodyKeySanitizer("$..containerUri"),
                     new BodyKeySanitizer("$..sasUri"),
-                    new BodyRegexSanitizer("(?:\\?(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]*)", groupForReplace: "secret"),
+                    new BodyRegexSanitizer("(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
                     new BodyKeySanitizer("$..id"),
                     new BodyKeySanitizer("$..token"),
                     new BodyKeySanitizer("$..appId"),
@@ -1113,6 +1118,52 @@ namespace Azure.Sdk.Tools.TestProxy
                     new BodyKeySanitizer("$..acrToken"),
                     new BodyKeySanitizer("$..scriptUrlSasToken"),
                     new BodyKeySanitizer("$..refresh_token"),
+                    new BodyRegexSanitizer("(?<=<UserDelegationKey>).*?(?:<Value>)(.*)(?:</Value>)"),
+                    new BodyRegexSanitizer("(?<=<UserDelegationKey>).*?(?:<SignedTid>)(.*)(?:</SignedTid>)"),
+                    new BodyRegexSanitizer("(?<=<UserDelegationKey>).*?(?:<SignedOid>)(.*)(?:</SignedOid>)"),
+                    new BodyRegexSanitizer("(?:Password=)(.*?)(?:;)"),
+                    new BodyRegexSanitizer("(?:User ID=)(.*?)(?:;)"),
+                    new BodyRegexSanitizer("(?:<PrimaryKey>)(.*)(?:</PrimaryKey>)"),
+                    new BodyRegexSanitizer("(?:<SecondaryKey>)(.*)(?:</SecondaryKey>)"),
+                    new BodyKeySanitizer("$..accountKey"),
+                    new BodyKeySanitizer("$..accountName"),
+                    new BodyKeySanitizer("$..applicationId"),
+                    new BodyKeySanitizer("$..apiKey"),
+                    new BodyKeySanitizer("$..connectionString"),
+                    new BodyKeySanitizer("$..password"),
+                    new BodyKeySanitizer("$..userName"),
+                    new BodyKeySanitizer("$.properties.WEBSITE_AUTH_ENCRYPTION_KEY"),
+                    new BodyKeySanitizer("$.properties.siteConfig.machineKey.decryptionKey"),
+                    new BodyKeySanitizer("$.properties.DOCKER_REGISTRY_SERVER_PASSWORD"),
+                    // General URI sanitizer // we don't have access to the service name 
+                    // General GUID sanitizer // I think sanitizing all guids is overaggressive by a LOT
+                    new HeaderRegexSanitizer("Set-Cookie"),
+                    new HeaderRegexSanitizer("Cookie"),
+                    new BodyRegexSanitizer("<ClientIp>(?<secret>.+)</ClientIp>", groupForReplace: "secret"),
+                    new HeaderRegexSanitizer("client-request-id"),
+                    new BodyKeySanitizer("$..blob_sas_url"),
+                    new BodyKeySanitizer("$..targetResourceRegion"),
+                    new RemoveHeaderSanitizer("Telemetry-Source-Time"),
+                    new RemoveHeaderSanitizer("Message-Id"),
+                    new HeaderRegexSanitizer("MS-CV"),
+                    new HeaderRegexSanitizer("X-Azure-Ref"),
+                    new HeaderRegexSanitizer("x-ms-request-id"),
+                    new HeaderRegexSanitizer("x-ms-client-request-id"),
+                    new HeaderRegexSanitizer("x-ms-content-sha256"),
+                    new HeaderRegexSanitizer("Content-Security-Policy-Report-Only"),
+                    new HeaderRegexSanitizer("Repeatability-First-Sent"),
+                    new HeaderRegexSanitizer("Repeatability-Request-ID"),
+                    new HeaderRegexSanitizer("repeatability-request-id"),
+                    new HeaderRegexSanitizer("repeatability-first-sent"),
+                    // client-request-id -- DUPE OF LINE 140
+                    new HeaderRegexSanitizer("P3P"),
+                    new HeaderRegexSanitizer("x-ms-ests-server"),
+                    new BodyKeySanitizer("$..domain_name"),
+                    new GeneralRegexSanitizer("common/userrealm/(?<realm>[^/\\.]+)"),
+                    new GeneralRegexSanitizer("/identities/(?<realm>[^/?]+)"),
+                    // ACS User ID? too general don't have this information at common level
+                    new BodyKeySanitizer("$..etag"),
+                    new BodyKeySanitizer("$..functionUri")
                 };
 
                 Transforms = new List<ResponseTransform>

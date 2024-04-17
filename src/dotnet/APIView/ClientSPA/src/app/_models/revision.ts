@@ -9,14 +9,6 @@ export enum ReviewPageWorkerMessageDirective {
   CreateLineOfTokens
 }
 
-
-export enum StructuredTokenKind {
-    LineBreak = 0,
-    NoneBreakingSpace = 1,
-    ParameterSeparator = 2,
-    Content = 3,
-}
-
 export interface APIRevision {
   id: string
   reviewId: string
@@ -82,6 +74,7 @@ export interface CreateLinesOfTokensMessage {
   nodeId: string
   lineId: string
   position: string
+  diffKind: string
 }
 
 export interface BuildTokensMessage {

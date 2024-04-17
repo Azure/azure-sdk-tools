@@ -1,7 +1,8 @@
 /// <reference lib="webworker" />
 
-import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective, StructuredTokenKind } from "../_models/revision";
+import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from "../_models/revision";
 import { APITreeNode, StructuredToken } from "../_models/revision";
+import { ComputeTokenDiff } from "../_helpers/worker-helpers";
 
 addEventListener('message', ({ data }) => {
   if (data.directive === ReviewPageWorkerMessageDirective.BuildAPITree) {
@@ -81,7 +82,7 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
 }
 
 function buildTokens(apiTreeNode: APITreeNode, id: string, position: string) {
-  if (apiTreeNode.diffKind === "NonDiff") {
+  if (apiTreeNode.diffKind === "NoneDiff") {
     buildTokensForNonDiffNodes(apiTreeNode, id, position);
   }
   else {
@@ -116,40 +117,64 @@ function createHashFromTokenLine(tokenLines: StructuredToken[]) {
 }
 
 function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position: string) {
-  const tokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
+  const beforeTokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
+  const afterTokens = (position === "top") ? apiTreeNode.topDiffTokens : apiTreeNode.bottomDiffTokens;
 
-}
+  let beforeIndex = 0;
+  let afterIndex = 0;
 
-export function ComputeTokenDiff(beforeTokens: any[], afterTokens: any[]) : any[] {
-  const diffResult = [];
+  while (beforeIndex < beforeTokens.length || afterIndex < afterTokens.length) {
+    const beforeTokenLine : Array<StructuredToken> = [];
+    const afterTokenLine : Array<StructuredToken> = [];
 
-  for (let i = 0; i < Math.max(beforeTokens.length, afterTokens.length); i++) {
-    if (i >= beforeTokens.length) {
-      let token = afterTokens[i];
-      token.diffKind = "Added";
-      diffResult.push(token);
+    while (beforeIndex < beforeTokens.length) {
+      const token = beforeTokens[beforeIndex++];
+      if (token.kind === "LineBreak") {
+        break;
+      }
+      beforeTokenLine.push(token);
     }
-    else if (i >= afterTokens.length) {
-      let token = beforeTokens[i];
-      token.diffKind = "Removed";
-      diffResult.push(token);
+
+    while (afterIndex < afterTokens.length) {
+      const token = afterTokens[afterIndex++];
+      if (token.kind === "LineBreak") {
+        break;
+      }
+      afterTokenLine.push(token);
     }
-    else if ((beforeTokens[i].value !== afterTokens[i].value) || (beforeTokens[i].id !== afterTokens[i].id)) {
-      let token = beforeTokens[i];
-      token.diffKind = "Removed";
-      diffResult.push(token);
-      token = afterTokens[i];
-      token.diffKind = "Added";
-      diffResult.push(token);
+
+    console.log("beforeLine - %o", beforeTokenLine)
+    console.log("afterLine - %o", afterTokenLine)
+    const diffTokenLineResult = ComputeTokenDiff(beforeTokenLine, afterTokenLine) as [StructuredToken[], StructuredToken[], boolean];
+
+    console.log("diffTokenLineResult0 - %o", diffTokenLineResult[0])
+    console.log("diffTokenLineResult1 - %o", diffTokenLineResult[1])
+    console.log("diffTokenLineResult2 - %o", diffTokenLineResult[2])
+    let createLinesOfTokensMessage : CreateLinesOfTokensMessage =  {
+      directive: ReviewPageWorkerMessageDirective.CreateLineOfTokens,
+      tokenLine : diffTokenLineResult[0],
+      nodeId : id,
+      lineId : createHashFromTokenLine(diffTokenLineResult[0]),
+      position : position,
+      diffKind : "Unchanged"
+    };
+
+    if (diffTokenLineResult[2] === true) {
+      console.log("Creating Diff line");
+      createLinesOfTokensMessage.diffKind = "Removed";
+
+      postMessage(createLinesOfTokensMessage);
+
+      createLinesOfTokensMessage.tokenLine = diffTokenLineResult[1];
+      createLinesOfTokensMessage.lineId = createHashFromTokenLine(diffTokenLineResult[1]);
+      createLinesOfTokensMessage.diffKind = "Added";
+
+      postMessage(createLinesOfTokensMessage);
     }
     else {
-      let token = beforeTokens[i];
-      token.diffKind = "Unchanged";
-      diffResult.push(token);
+      postMessage(createLinesOfTokensMessage);
     }
   }
-
-  return diffResult;
 }
 
 function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, position: string)
@@ -163,7 +188,8 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
         tokenLine : tokenLine,
         nodeId : id,
         lineId : createHashFromTokenLine(tokenLine),
-        position : position   
+        position : position,
+        diffKind : "NoneDiff"  
       };
 
       postMessage(createLinesOfTokensMessage);
@@ -181,7 +207,8 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
       tokenLine : tokenLine,
       nodeId : id,
       lineId : createHashFromTokenLine(tokenLine),
-      position : position
+      position : position,
+      diffKind : "NoneDiff"
     };
 
     postMessage(createLinesOfTokensMessage);

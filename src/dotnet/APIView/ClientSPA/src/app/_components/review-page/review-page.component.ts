@@ -13,9 +13,9 @@ import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
   styleUrls: ['./review-page.component.scss']
 })
 export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
-  reviewId = this.route.snapshot.paramMap.get('reviewId');
-  activeApiRevisionId = this.route.snapshot.queryParamMap.get('activeApiRevisionId');
-  diffApiRevisionId = this.route.snapshot.queryParamMap.get('diffApiRevisionId');
+  reviewId : string | null = null;
+  activeApiRevisionId : string | null = null;
+  diffApiRevisionId : string | null = null;
 
   reviewContent : ReviewContent | undefined = undefined;
   reviewComments : CommentItemModel[] | undefined = [];
@@ -31,6 +31,10 @@ export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private commentsService: CommentsService) {}
 
   ngOnInit() {
+    this.reviewId = this.route.snapshot.paramMap.get('reviewId');
+    this.activeApiRevisionId = this.route.snapshot.queryParamMap.get('activeApiRevisionId');
+    this.diffApiRevisionId = this.route.snapshot.queryParamMap.get('diffApiRevisionId');
+
     this.apiTreeBuilder = new Worker(new URL('../../_workers/review-page.worker', import.meta.url));
     this.tokenBuilder = new Worker(new URL('../../_workers/review-page.worker', import.meta.url));
 

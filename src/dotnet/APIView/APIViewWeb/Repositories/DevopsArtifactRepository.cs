@@ -56,11 +56,10 @@ namespace APIViewWeb.Repositories
 
         private async Task<string> getDownloadArtifactUrl(string buildId, string artifactName, string project)
         {
-            var maxRetryAttempts = 5;
             var pauseBetweenFailures = TimeSpan.FromSeconds(2);
             var retryPolicy = Policy
                 .Handle<HttpRequestException>()
-                .WaitAndRetryAsync(maxRetryAttempts, i => pauseBetweenFailures);
+                .WaitAndRetryAsync(5, i => pauseBetweenFailures);
 
             var connection = await CreateVssConnection();
             var buildClient = connection.GetClient<BuildHttpClient>();

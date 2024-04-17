@@ -1,5 +1,9 @@
 # Release History
 
+## 0.4.1 (2024-04-17)
+
+- Bug fix for typing under TYPE_CHECKING block.
+
 ## 0.4.0 (2024-04-15)
 
 - Checker to enforce no importing typing under TYPE_CHECKING block.

@@ -115,7 +115,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 return;
             }
 
-            foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(recordingSession.AdditionalSanitizers))
+            var sanitizers = Sanitizers.GetSanitizers(recordingSession);
+
+            foreach (RecordedTestSanitizer sanitizer in sanitizers)
             {
                 recordingSession.Session.Sanitize(sanitizer);
             }
@@ -201,7 +203,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
 
-            var sanitizers = session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers;
+            var sanitizers = Sanitizers.GetSanitizers(session);
 
             DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
 
@@ -455,7 +457,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
 
-            var sanitizers = session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers;
+            var sanitizers = Sanitizers.GetSanitizers(session);
 
             DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
 
@@ -469,7 +471,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 remove = bool.Parse(removeHeader);
             }
 
-            var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
+            var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, sanitizers, remove);
 
             foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
             {
@@ -995,7 +997,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());
                 }
 
-                Sanitizers.ResetToDefault();
+                Sanitizers.ResetSessionSanitizers();
 
                 Transforms = new List<ResponseTransform>
                 {

@@ -34,7 +34,6 @@ namespace Azure.Sdk.Tools.TestProxy.Models
 
         private List<ActionDescription> _populateFromHandler(RecordingHandler handler, string recordingId)
         {
-            var sanitizers = (IEnumerable<RecordedTestSanitizer>) handler.Sanitizers;
             var transforms = (IEnumerable<ResponseTransform>) handler.Transforms;
             var matcher = handler.Matcher;
 

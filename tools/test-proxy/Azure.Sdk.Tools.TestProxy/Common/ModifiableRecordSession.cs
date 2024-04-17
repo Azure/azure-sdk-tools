@@ -23,8 +23,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public List<ResponseTransform> AdditionalTransforms { get; } = new List<ResponseTransform>();
 
-        public List<int> AppliedSanitizers { get; set; } = new List<int>();
-        public List<int> ForRemoval { get; } = new List<int>();
+        public List<string> AppliedSanitizers { get; set; } = new List<string>();
+        public List<string> ForRemoval { get; } = new List<string>();
 
         public string SourceRecordingId { get; set; }
 
@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public void ResetExtensions(SanitizerDictionary sanitizerDictionary)
         {
             AdditionalTransforms.Clear();
-            AppliedSanitizers = new List<int>();
+            AppliedSanitizers = new List<string>();
             AppliedSanitizers.AddRange(sanitizerDictionary.SessionSanitizers);
             ForRemoval.Clear();
 

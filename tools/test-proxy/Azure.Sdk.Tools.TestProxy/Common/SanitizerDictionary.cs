@@ -1,47 +1,64 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Authentication;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
+    public class RegisteredSanitizer
+    {
+        public string Id { get; set; }
+        public RecordedTestSanitizer Sanitizer { get; set; }
+
+        public RegisteredSanitizer(RecordedTestSanitizer sanitizer, string id)
+        {
+            Id = id;
+            Sanitizer = sanitizer;
+        }
+    }
+
     public class SanitizerDictionary
     {
-        private ConcurrentDictionary<int, RecordedTestSanitizer> Sanitizers;
+        private ConcurrentDictionary<string, RegisteredSanitizer> Sanitizers;
 
         // we have to know which sanitizers are session only
         // so that when we start a new recording we can properly 
         // apply only the sanitizers that have been registered at the global level
-        public List<int> SessionSanitizers = new List<int>();
+        public List<string> SessionSanitizers = new List<string>();
         private int CurrentId = 0;
 
         public SanitizerDictionary() { }
 
-        public List<RecordedTestSanitizer> DefaultSanitizerList = new List<RecordedTestSanitizer>
+        public List<RegisteredSanitizer> DefaultSanitizerList = new List<RegisteredSanitizer>
             {
-                new RecordedTestSanitizer(),
-                new BodyKeySanitizer("$..access_token"),
-                new BodyKeySanitizer("$..refresh_token")
+                new RegisteredSanitizer(
+                    new RecordedTestSanitizer(),
+                    "AZSDK001"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..access_token"),
+                    "AZSDK002"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..refresh_token"),
+                    "AZSDK003"
+                )
             };
 
         public void ResetSessionSanitizers()
         {
-            var defaultSanitizerIds = Enumerable.Range(0, DefaultSanitizerList.Count).ToList();
+            var sessionSanitizers = DefaultSanitizerList.Select(x => x.Id);
 
-            foreach(var id in SessionSanitizers)
+            foreach (var id in SessionSanitizers)
             {
-                if (!defaultSanitizerIds.Contains(id))
+                if (!sessionSanitizers.Contains(id))
                 {
-                    if(Sanitizers.TryRemove(id, out var sanitizer))
+                    if(!Sanitizers.TryRemove(id, out var sanitizer))
                     {
-                        SessionSanitizers.Remove(id);
-                    }
-                    else
-                    {
-                        // todo better error
-                        throw new HttpException(System.Net.HttpStatusCode.BadRequest, "Unable to add sanitizer to global list.");
+                        throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"Unable to properly clean up  a session sanitizer under id {id}.");
                     }
                 }
             }
@@ -57,9 +74,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             var sanitizers = new List<RecordedTestSanitizer>();
             foreach(var id in session.AppliedSanitizers)
             {
-                if (Sanitizers.TryGetValue(id, out RecordedTestSanitizer sanitizer))
+                if (Sanitizers.TryGetValue(id, out RegisteredSanitizer sanitizer))
                 {
-                    sanitizers.Add(sanitizer);
+                    sanitizers.Add(sanitizer.Sanitizer);
                 }
             }
 
@@ -71,21 +88,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             var sanitizers = new List<RecordedTestSanitizer>();
             foreach (var id in SessionSanitizers)
             {
-                if (Sanitizers.TryGetValue(id, out RecordedTestSanitizer sanitizer))
+                if (Sanitizers.TryGetValue(id, out RegisteredSanitizer sanitizer))
                 {
-                    sanitizers.Add(sanitizer);
+                    sanitizers.Add(sanitizer.Sanitizer);
                 }
             }
 
             return sanitizers;
         }
 
-        public bool _register(RecordedTestSanitizer sanitizer, int id)
+        public bool _register(RecordedTestSanitizer sanitizer, string id)
         {
-            if (Sanitizers.TryAdd(id, sanitizer))
+            if (Sanitizers.TryAdd(id, new RegisteredSanitizer(sanitizer, id)))
             {
-                SessionSanitizers.Add(id);
-
                 return true;
             }
             else
@@ -103,9 +118,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <exception cref="HttpException"></exception>
         public bool Register(RecordedTestSanitizer sanitizer)
         {
-            if (_register(sanitizer, CurrentId))
+            var strCurrent = CurrentId.ToString();
+
+            if (_register(sanitizer, strCurrent))
             {
-                SessionSanitizers.Add(CurrentId);
+                SessionSanitizers.Add(strCurrent);
                 CurrentId++;
                 return true;
             }
@@ -121,10 +138,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <exception cref="HttpException"></exception>
         public bool Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer)
         {
-            if (_register(sanitizer, CurrentId))
+            var strCurrent = CurrentId.ToString();
+            if (_register(sanitizer, strCurrent))
             {
-                session.AppliedSanitizers.Add(CurrentId);
-                session.ForRemoval.Add(CurrentId);
+                session.AppliedSanitizers.Add(strCurrent);
+                session.ForRemoval.Add(strCurrent);
 
                 CurrentId++;
                 return true;

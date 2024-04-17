@@ -35,10 +35,6 @@ extends:
           - template: /eng/pipelines/templates/variables/image.yml
           - name: NodeVersion
             value: '18.x'
-          - name: VAR_ARTIFACT_NAME
-            value: 'drop'
-          - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
-            value: $(Build.ArtifactStagingDirectory)
 
         jobs:
           - job: Build
@@ -62,14 +58,14 @@ extends:
               displayName: 'npm pack'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 
-            - script: 'cp azure-tools-js-sdk-release-tools-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+            - script: 'cp azure-tools-js-sdk-release-tools-*.tgz $(Build.ArtifactStagingDirectory)'
               displayName: 'copy to staging dir'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 
             - task: 1ES.PublishPipelineArtifact@1
               inputs:
-                targetPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
-                ArtifactName: '$(VAR_ARTIFACT_NAME)'
+                targetPath: '$(Build.ArtifactStagingDirectory)'
+                ArtifactName: 'drop'
 
       - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
         - stage: Release
@@ -80,10 +76,6 @@ extends:
             - template: /eng/pipelines/templates/variables/image.yml
             - name: NodeVersion
               value: '18.x'
-            - name: VAR_ARTIFACT_NAME
-              value: 'drop'
-            - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
-              value: $(Build.ArtifactStagingDirectory)
 
           jobs:
           - job: approve
@@ -106,12 +98,10 @@ extends:
                 versionSpec: '$(NodeVersion)'
               displayName: 'Install Node.js'
             
-            - task: DownloadBuildArtifacts@0
+            - task: DownloadPipelineArtifact@2
               inputs:
-                buildType: 'current'
-                downloadType: 'single'
-                artifactName: '$(VAR_ARTIFACT_NAME)'
-                downloadPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+                artifactName: 'drop'
+                targetPath: '$(Build.ArtifactStagingDirectory)'
 
             - script: |
                 echo -e "\e[32m[$(date -u)] LOG: Ensure latest npm is installed"
@@ -120,7 +110,7 @@ extends:
 
                 echo -e "\e[32m[$(date -u)] LOG: publish the package"
                 echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc
-                for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARTIFACT_NAME)/*.tgz
+                for file in $(Build.ArtifactStagingDirectory)/drop/*.tgz
                 do
                   echo -e "\e[32m[$(date -u)] LOG: File: $file"
                   npm publish $file --access public || { echo 'publish $file failed' ; exit 1; }

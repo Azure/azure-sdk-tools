@@ -229,8 +229,8 @@ namespace APIViewWeb
                     string [] origins = new string[] { 
                         "https://localhost:4200",
                         "https://spa.apiviewuxtest.com",
-                        "https://spa.apiview.com",
-                        "https://apiview-staging.azurewebsites.net"
+                        "https://spa.apiviewstagingtest.com",
+                        "https://spa.apiview.com"
 
                     };
                     builder.WithOrigins(origins)

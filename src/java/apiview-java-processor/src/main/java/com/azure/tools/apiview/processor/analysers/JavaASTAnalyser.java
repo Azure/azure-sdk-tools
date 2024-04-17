@@ -107,6 +107,8 @@ public class JavaASTAnalyser implements Analyser {
     private static final boolean SHOW_JAVADOC = true;
 
     private static final Map<String, AnnotationRule> ANNOTATION_RULE_MAP;
+    private static final JavaParserAdapter JAVA_8_PARSER;
+    private static final JavaParserAdapter JAVA_11_PARSER;
     static {
         /*
          For some annotations, we want to customise how they are displayed. Sometimes, we don't show them in any
@@ -120,12 +122,7 @@ public class JavaASTAnalyser implements Analyser {
 
         // we always want @Metadata annotations to be fully expanded, but in a condensed form
         ANNOTATION_RULE_MAP.put("Metadata", new AnnotationRule().setShowProperties(true).setCondensed(true));
-    }
 
-    private static final JavaParserAdapter JAVA_8_PARSER;
-    private static final JavaParserAdapter JAVA_11_PARSER;
-
-    static {
         // Configure JavaParser to use type resolution
         JAVA_8_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
             .setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_8)
@@ -144,7 +141,7 @@ public class JavaASTAnalyser implements Analyser {
 
     private final Diagnostics diagnostic;
 
-    private int indent = 0;
+    private int indentLevel = 0;
 
     public JavaASTAnalyser(APIListing apiListing) {
         this.apiListing = apiListing;
@@ -271,13 +268,9 @@ public class JavaASTAnalyser implements Analyser {
         addToken(packageToken, SPACE);
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
 
-        indent();
-
-        scanClasses.stream()
+        indentedBlock(() -> scanClasses.stream()
             .sorted(Comparator.comparing(s -> s.primaryTypeName))
-            .forEach(this::processSingleFile);
-
-        unindent();
+            .forEach(this::processSingleFile));
 
         addToken(new Token(PUNCTUATION, "}"), NEWLINE);
     }
@@ -302,96 +295,90 @@ public class JavaASTAnalyser implements Analyser {
         addToken(makeWhitespace());
         addToken(new Token(KEYWORD, "maven", MAVEN_KEY), SPACE);
         addToken(new Token(PUNCTUATION, "{"), NEWLINE);
-        indent();
 
-        addToken(new Token(SKIP_DIFF_START));
-        // parent
-        String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":" + mavenPom.getParent().getVersion();
-        tokeniseKeyValue("parent", gavStr, "");
+        indentedBlock(() -> {
+            addToken(new Token(SKIP_DIFF_START));
+            // parent
+            String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
+                + mavenPom.getParent().getVersion();
+            tokeniseKeyValue("parent", gavStr, "");
 
-        // properties
-        gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
-        tokeniseKeyValue("properties", gavStr, "");
+            // properties
+            gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
+            tokeniseKeyValue("properties", gavStr, "");
 
-        // configuration
-        boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null &&
-            mavenPom.getJacocoMinBranchCoverage() != null;
-        boolean showCheckStyle = mavenPom.getCheckstyleExcludes() != null &&
-            !mavenPom.getCheckstyleExcludes().isEmpty();
+            // configuration
+            boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null
+                && mavenPom.getJacocoMinBranchCoverage() != null;
+            boolean showCheckStyle = mavenPom.getCheckstyleExcludes() != null && !mavenPom.getCheckstyleExcludes()
+                .isEmpty();
 
-        if (showJacoco || showCheckStyle) {
-            addToken(INDENT, new Token(KEYWORD, "configuration"), SPACE);
-            addToken(new Token(PUNCTUATION, "{"), NEWLINE);
-            indent();
-            if (showCheckStyle) {
-                tokeniseKeyValue("checkstyle-excludes", mavenPom.getCheckstyleExcludes(), "");
-            }
-            if (showJacoco) {
-                addToken(INDENT, new Token(KEYWORD, "jacoco"), SPACE);
+            if (showJacoco || showCheckStyle) {
+                addToken(INDENT, new Token(KEYWORD, "configuration"), SPACE);
                 addToken(new Token(PUNCTUATION, "{"), NEWLINE);
-                indent();
-                tokeniseKeyValue("min-line-coverage", mavenPom.getJacocoMinLineCoverage(), "jacoco");
-                tokeniseKeyValue("min-branch-coverage", mavenPom.getJacocoMinBranchCoverage(), "jacoco");
-                unindent();
+
+                indentedBlock(() -> {
+                    if (showCheckStyle) {
+                        tokeniseKeyValue("checkstyle-excludes", mavenPom.getCheckstyleExcludes(), "");
+                    }
+                    if (showJacoco) {
+                        addToken(INDENT, new Token(KEYWORD, "jacoco"), SPACE);
+                        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+                        indentedBlock(() -> {
+                            tokeniseKeyValue("min-line-coverage", mavenPom.getJacocoMinLineCoverage(), "jacoco");
+                            tokeniseKeyValue("min-branch-coverage", mavenPom.getJacocoMinBranchCoverage(), "jacoco");
+                        });
+                        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
+                    }
+                });
+
                 addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
             }
-            unindent();
+
+            // Maven name
+            tokeniseKeyValue("name", mavenPom.getName(), "");
+
+            // Maven description
+            tokeniseKeyValue("description", mavenPom.getDescription(), "");
+
+            // dependencies
+            addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
+            addToken(new Token(PUNCTUATION, "{"), NEWLINE);
+
+            indentedBlock(() -> {
+                mavenPom.getDependencies()
+                    .stream()
+                    .collect(Collectors.groupingBy(Dependency::getScope))
+                    .forEach((k, v) -> {
+                        if ("test".equals(k)) {
+                            // we don't care to present test scope dependencies
+                            return;
+                        }
+                        String scope = k.isEmpty() ? "compile" : k;
+
+                        addToken(makeWhitespace());
+                        addToken(new Token(COMMENT, "// " + scope + " scope"), NEWLINE);
+
+                        for (int i = 0; i < v.size(); i++) {
+                            Dependency d = v.get(i);
+                            addToken(makeWhitespace());
+                            String gav = d.getGroupId() + ":" + d.getArtifactId() + ":" + d.getVersion();
+                            addToken(new Token(TEXT, gav, gav));
+
+                            if (i < v.size() - 1) {
+                                addNewLine();
+                            }
+                        }
+
+                        addNewLine();
+                    });
+            });
+
             addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
-        }
-
-        // Maven name
-        tokeniseKeyValue("name", mavenPom.getName(), "");
-
-        // Maven description
-        tokeniseKeyValue("description", mavenPom.getDescription(), "");
-
-        // dependencies
-        addToken(INDENT, new Token(KEYWORD, "dependencies"), SPACE);
-        addToken(new Token(PUNCTUATION, "{"), NEWLINE);
-
-        indent();
-        mavenPom.getDependencies().stream().collect(Collectors.groupingBy(Dependency::getScope)).forEach((k, v) -> {
-            if ("test".equals(k)) {
-                // we don't care to present test scope dependencies
-                return;
-            }
-            String scope = k.isEmpty() ? "compile" : k;
-
-            addToken(makeWhitespace());
-            addToken(new Token(COMMENT, "// " + scope + " scope"), NEWLINE);
-
-            for (int i = 0; i < v.size(); i++) {
-                Dependency d = v.get(i);
-                addToken(makeWhitespace());
-                String gav = d.getGroupId() + ":" + d.getArtifactId() + ":" + d.getVersion();
-                addToken(new Token(TEXT, gav, gav));
-
-                if (i < v.size() - 1) {
-                    addNewLine();
-                }
-            }
-
-            addNewLine();
+            addToken(new Token(SKIP_DIFF_END));
+            // close maven
         });
 
-        unindent();
-        addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
-        addToken(new Token(SKIP_DIFF_END));
-
-        // allowed dependencies (in maven-enforcer)
-//        if (!mavenPom.getAllowedDependencies().isEmpty()) {
-//            addToken(INDENT, new Token(KEYWORD, "allowed-dependencies"), SPACE);
-//            addToken(new Token(PUNCTUATION, "{"), NEWLINE);
-//            indent();
-//            mavenPom.getAllowedDependencies().stream().forEach(value -> {
-//                addToken(INDENT, new Token(TEXT, value, value), NEWLINE);
-//            });
-//            unindent();
-//            addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
-//        }
-
-        // close maven
-        unindent();
         addToken(INDENT, new Token(PUNCTUATION, "}"), NEWLINE);
     }
 
@@ -505,9 +492,7 @@ public class JavaASTAnalyser implements Analyser {
                 if (typeDeclaration.getMembers().isEmpty()) {
                     // we have an empty interface declaration, it is probably a marker interface and we will leave a
                     // comment to that effect
-                    indent();
-                    addComment("// This interface is does not declare any API.");
-                    unindent();
+                    indentedBlock(() -> addComment("// This interface is does not declare any API."));
                 }
             }
 
@@ -540,62 +525,66 @@ public class JavaASTAnalyser implements Analyser {
             };
 
             moduleDeclaration.getDirectives().forEach(moduleDirective -> {
-                indent();
-                addToken(makeWhitespace());
+                indentedBlock(() -> {
+                    addToken(makeWhitespace());
 
-                moduleDirective.ifModuleRequiresStmt(d -> {
-                    addToken(new Token(KEYWORD, "requires"), SPACE);
+                    moduleDirective.ifModuleRequiresStmt(d -> {
+                        addToken(new Token(KEYWORD, "requires"), SPACE);
 
-                    if (d.hasModifier(Modifier.Keyword.STATIC)) {
-                        addToken(new Token(KEYWORD, "static"), SPACE);
-                    }
-
-                    if (d.isTransitive()) {
-                        addToken(new Token(KEYWORD, "transitive"), SPACE);
-                    }
-
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-requires-" + d.getNameAsString())));
-                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
-                });
-
-                moduleDirective.ifModuleExportsStmt(d -> {
-                    addToken(new Token(KEYWORD, "exports"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-exports-" + d.getNameAsString())));
-                    conditionalExportsToOrOpensToConsumer.accept(d.getModuleNames());
-                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
-                });
-
-                moduleDirective.ifModuleOpensStmt(d -> {
-                    addToken(new Token(KEYWORD, "opens"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-opens-" + d.getNameAsString())));
-                    conditionalExportsToOrOpensToConsumer.accept(d.getModuleNames());
-                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
-                });
-
-                moduleDirective.ifModuleUsesStmt(d -> {
-                    addToken(new Token(KEYWORD, "uses"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-uses-" + d.getNameAsString())));
-                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
-                });
-
-                moduleDirective.ifModuleProvidesStmt(d -> {
-                    addToken(new Token(KEYWORD, "provides"), SPACE);
-                    addToken(new Token(TYPE_NAME, d.getNameAsString(), makeId(MODULE_INFO_KEY + "-provides-" + d.getNameAsString())), SPACE);
-                    addToken(new Token(KEYWORD, "with"), SPACE);
-
-                    NodeList<Name> names = d.getWith();
-                    for (int i = 0; i < names.size(); i++) {
-                        addToken(new Token(TYPE_NAME, names.get(i).toString()));
-
-                        if (i < names.size() - 1) {
-                            addToken(new Token(PUNCTUATION, ","), SPACE);
+                        if (d.hasModifier(Modifier.Keyword.STATIC)) {
+                            addToken(new Token(KEYWORD, "static"), SPACE);
                         }
-                    }
 
-                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
+                        if (d.isTransitive()) {
+                            addToken(new Token(KEYWORD, "transitive"), SPACE);
+                        }
+
+                        addToken(new Token(TYPE_NAME, d.getNameAsString(),
+                            makeId(MODULE_INFO_KEY + "-requires-" + d.getNameAsString())));
+                        addToken(new Token(PUNCTUATION, ";"), NEWLINE);
+                    });
+
+                    moduleDirective.ifModuleExportsStmt(d -> {
+                        addToken(new Token(KEYWORD, "exports"), SPACE);
+                        addToken(new Token(TYPE_NAME, d.getNameAsString(),
+                            makeId(MODULE_INFO_KEY + "-exports-" + d.getNameAsString())));
+                        conditionalExportsToOrOpensToConsumer.accept(d.getModuleNames());
+                        addToken(new Token(PUNCTUATION, ";"), NEWLINE);
+                    });
+
+                    moduleDirective.ifModuleOpensStmt(d -> {
+                        addToken(new Token(KEYWORD, "opens"), SPACE);
+                        addToken(new Token(TYPE_NAME, d.getNameAsString(),
+                            makeId(MODULE_INFO_KEY + "-opens-" + d.getNameAsString())));
+                        conditionalExportsToOrOpensToConsumer.accept(d.getModuleNames());
+                        addToken(new Token(PUNCTUATION, ";"), NEWLINE);
+                    });
+
+                    moduleDirective.ifModuleUsesStmt(d -> {
+                        addToken(new Token(KEYWORD, "uses"), SPACE);
+                        addToken(new Token(TYPE_NAME, d.getNameAsString(),
+                            makeId(MODULE_INFO_KEY + "-uses-" + d.getNameAsString())));
+                        addToken(new Token(PUNCTUATION, ";"), NEWLINE);
+                    });
+
+                    moduleDirective.ifModuleProvidesStmt(d -> {
+                        addToken(new Token(KEYWORD, "provides"), SPACE);
+                        addToken(new Token(TYPE_NAME, d.getNameAsString(),
+                            makeId(MODULE_INFO_KEY + "-provides-" + d.getNameAsString())), SPACE);
+                        addToken(new Token(KEYWORD, "with"), SPACE);
+
+                        NodeList<Name> names = d.getWith();
+                        for (int i = 0; i < names.size(); i++) {
+                            addToken(new Token(TYPE_NAME, names.get(i).toString()));
+
+                            if (i < names.size() - 1) {
+                                addToken(new Token(PUNCTUATION, ","), SPACE);
+                            }
+                        }
+
+                        addToken(new Token(PUNCTUATION, ";"), NEWLINE);
+                    });
                 });
-
-                unindent();
             });
 
             // close module
@@ -605,49 +594,48 @@ public class JavaASTAnalyser implements Analyser {
         private void getEnumEntries(EnumDeclaration enumDeclaration) {
             final NodeList<EnumConstantDeclaration> enumConstantDeclarations = enumDeclaration.getEntries();
             int size = enumConstantDeclarations.size();
-            indent();
 
-            AtomicInteger counter = new AtomicInteger();
+            indentedBlock(() -> {
+                AtomicInteger counter = new AtomicInteger();
 
-            enumConstantDeclarations.forEach(enumConstantDeclaration -> {
-                visitJavaDoc(enumConstantDeclaration);
+                enumConstantDeclarations.forEach(enumConstantDeclaration -> {
+                    visitJavaDoc(enumConstantDeclaration);
 
-                addToken(makeWhitespace());
+                    addToken(makeWhitespace());
 
-                // annotations
-                getAnnotations(enumConstantDeclaration, false, false);
+                    // annotations
+                    getAnnotations(enumConstantDeclaration, false, false);
 
-                // create a unique id for enum constants by using the fully-qualified constant name
-                // (package, enum name, and enum constant name)
-                final String name = enumConstantDeclaration.getNameAsString();
-                final String definitionId = makeId(enumConstantDeclaration);
-                final boolean isDeprecated = enumConstantDeclaration.isAnnotationPresent("Deprecated");
+                    // create a unique id for enum constants by using the fully-qualified constant name
+                    // (package, enum name, and enum constant name)
+                    final String name = enumConstantDeclaration.getNameAsString();
+                    final String definitionId = makeId(enumConstantDeclaration);
+                    final boolean isDeprecated = enumConstantDeclaration.isAnnotationPresent("Deprecated");
 
-                if (isDeprecated) {
-                    addToken(new Token(DEPRECATED_RANGE_START));
-                }
+                    if (isDeprecated) {
+                        addToken(new Token(DEPRECATED_RANGE_START));
+                    }
 
-                addToken(new Token(MEMBER_NAME, name, definitionId));
+                    addToken(new Token(MEMBER_NAME, name, definitionId));
 
-                if (isDeprecated) {
-                    addToken(new Token(DEPRECATED_RANGE_END));
-                }
+                    if (isDeprecated) {
+                        addToken(new Token(DEPRECATED_RANGE_END));
+                    }
 
-                enumConstantDeclaration.getArguments().forEach(expression -> {
-                    addToken(new Token(PUNCTUATION, "("));
-                    addToken(new Token(TEXT, expression.toString()));
-                    addToken(new Token(PUNCTUATION, ")"));
+                    enumConstantDeclaration.getArguments().forEach(expression -> {
+                        addToken(new Token(PUNCTUATION, "("));
+                        addToken(new Token(TEXT, expression.toString()));
+                        addToken(new Token(PUNCTUATION, ")"));
+                    });
+
+                    if (counter.getAndIncrement() < size - 1) {
+                        addToken(new Token(PUNCTUATION, ","));
+                    } else {
+                        addToken(new Token(PUNCTUATION, ";"));
+                    }
+                    addNewLine();
                 });
-
-                if (counter.getAndIncrement() < size - 1) {
-                    addToken(new Token(PUNCTUATION, ","));
-                } else {
-                    addToken(new Token(PUNCTUATION, ";"));
-                }
-                addNewLine();
             });
-
-            unindent();
         }
 
         private void getTypeDeclaration(TypeDeclaration<?> typeDeclaration) {
@@ -781,113 +769,118 @@ public class JavaASTAnalyser implements Analyser {
         }
 
         private void tokeniseAnnotationMember(AnnotationDeclaration annotationDeclaration) {
-            indent();
-            // Member methods in the annotation declaration
-            NodeList<BodyDeclaration<?>> annotationDeclarationMembers = annotationDeclaration.getMembers();
-            for (BodyDeclaration<?> bodyDeclaration : annotationDeclarationMembers) {
-                Optional<AnnotationMemberDeclaration> annotationMemberDeclarationOptional = bodyDeclaration.toAnnotationMemberDeclaration();
-                if (!annotationMemberDeclarationOptional.isPresent()) {
-                    continue;
+            indentedBlock(() -> {
+                // Member methods in the annotation declaration
+                NodeList<BodyDeclaration<?>> annotationDeclarationMembers = annotationDeclaration.getMembers();
+                for (BodyDeclaration<?> bodyDeclaration : annotationDeclarationMembers) {
+                    Optional<AnnotationMemberDeclaration> annotationMemberDeclarationOptional
+                        = bodyDeclaration.toAnnotationMemberDeclaration();
+                    if (!annotationMemberDeclarationOptional.isPresent()) {
+                        continue;
+                    }
+                    final AnnotationMemberDeclaration annotationMemberDeclaration
+                        = annotationMemberDeclarationOptional.get();
+
+                    addToken(makeWhitespace());
+                    getClassType(annotationMemberDeclaration.getType());
+                    addToken(new Token(WHITESPACE, " "));
+
+                    final String name = annotationMemberDeclaration.getNameAsString();
+                    final String definitionId = makeId(
+                        annotationDeclaration.getFullyQualifiedName().get() + "." + name);
+
+                    addToken(new Token(MEMBER_NAME, name, definitionId));
+                    addToken(new Token(PUNCTUATION, "("));
+                    addToken(new Token(PUNCTUATION, ")"));
+
+                    // default value
+                    final Optional<Expression> defaultValueOptional = annotationMemberDeclaration.getDefaultValue();
+                    if (defaultValueOptional.isPresent()) {
+                        addToken(SPACE, new Token(KEYWORD, "default"), SPACE);
+
+                        final Expression defaultValueExpr = defaultValueOptional.get();
+                        final String value = defaultValueExpr.toString();
+                        addToken(new Token(KEYWORD, value));
+                    }
+
+                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
                 }
-                final AnnotationMemberDeclaration annotationMemberDeclaration = annotationMemberDeclarationOptional.get();
-
-                addToken(makeWhitespace());
-                getClassType(annotationMemberDeclaration.getType());
-                addToken(new Token(WHITESPACE, " "));
-
-                final String name = annotationMemberDeclaration.getNameAsString();
-                final String definitionId = makeId(annotationDeclaration.getFullyQualifiedName().get() + "." + name);
-
-                addToken(new Token(MEMBER_NAME, name, definitionId));
-                addToken(new Token(PUNCTUATION, "("));
-                addToken(new Token(PUNCTUATION, ")"));
-
-                // default value
-                final Optional<Expression> defaultValueOptional = annotationMemberDeclaration.getDefaultValue();
-                if (defaultValueOptional.isPresent()) {
-                    addToken(SPACE, new Token(KEYWORD, "default"), SPACE);
-
-                    final Expression defaultValueExpr = defaultValueOptional.get();
-                    final String value = defaultValueExpr.toString();
-                    addToken(new Token(KEYWORD, value));
-                }
-
-                addToken(new Token(PUNCTUATION, ";"), NEWLINE);
-            }
-            unindent();
+            });
         }
 
         private void tokeniseFields(boolean isInterfaceDeclaration, TypeDeclaration<?> typeDeclaration) {
             final List<? extends FieldDeclaration> fieldDeclarations = typeDeclaration.getFields();
             final String fullPathName = typeDeclaration.getFullyQualifiedName().get();
 
-            indent();
-            for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
-                // By default , interface has public abstract methods if there is no access specifier declared
-                if (isInterfaceDeclaration) {
-                    // no-op - we take all methods in the method
-                } else if (isPrivateOrPackagePrivate(fieldDeclaration.getAccessSpecifier())) {
-                    // Skip if not public API
-                    continue;
-                }
+            indentedBlock(() -> {
+                for (FieldDeclaration fieldDeclaration : fieldDeclarations) {
+                    // By default , interface has public abstract methods if there is no access specifier declared
+                    if (isInterfaceDeclaration) {
+                        // no-op - we take all methods in the method
+                    } else if (isPrivateOrPackagePrivate(fieldDeclaration.getAccessSpecifier())) {
+                        // Skip if not public API
+                        continue;
+                    }
 
-                visitJavaDoc(fieldDeclaration);
+                    visitJavaDoc(fieldDeclaration);
 
-                addToken(makeWhitespace());
+                    addToken(makeWhitespace());
 
-                // Add annotation for field declaration
-                getAnnotations(fieldDeclaration, false, false);
+                    // Add annotation for field declaration
+                    getAnnotations(fieldDeclaration, false, false);
 
-                final NodeList<Modifier> fieldModifiers = fieldDeclaration.getModifiers();
-                // public, protected, static, final
-                for (final Modifier fieldModifier : fieldModifiers) {
-                    addToken(new Token(KEYWORD, fieldModifier.toString()));
-                }
+                    final NodeList<Modifier> fieldModifiers = fieldDeclaration.getModifiers();
+                    // public, protected, static, final
+                    for (final Modifier fieldModifier : fieldModifiers) {
+                        addToken(new Token(KEYWORD, fieldModifier.toString()));
+                    }
 
-                // field type and name
-                final NodeList<VariableDeclarator> variableDeclarators = fieldDeclaration.getVariables();
+                    // field type and name
+                    final NodeList<VariableDeclarator> variableDeclarators = fieldDeclaration.getVariables();
 
-                if (variableDeclarators.size() > 1) {
-                    getType(fieldDeclaration);
+                    if (variableDeclarators.size() > 1) {
+                        getType(fieldDeclaration);
 
-                    for (VariableDeclarator variableDeclarator : variableDeclarators) {
+                        for (VariableDeclarator variableDeclarator : variableDeclarators) {
+                            final String name = variableDeclarator.getNameAsString();
+                            final String definitionId = makeId(fullPathName + "." + variableDeclarator.getName());
+                            addToken(new Token(MEMBER_NAME, name, definitionId));
+                            addToken(new Token(PUNCTUATION, ","), SPACE);
+                        }
+                        apiListing.getTokens().remove(apiListing.getTokens().size() - 1);
+                        apiListing.getTokens().remove(apiListing.getTokens().size() - 1);
+                    } else if (variableDeclarators.size() == 1) {
+                        getType(fieldDeclaration);
+                        final VariableDeclarator variableDeclarator = variableDeclarators.get(0);
                         final String name = variableDeclarator.getNameAsString();
                         final String definitionId = makeId(fullPathName + "." + variableDeclarator.getName());
                         addToken(new Token(MEMBER_NAME, name, definitionId));
-                        addToken(new Token(PUNCTUATION, ","), SPACE);
-                    }
-                    apiListing.getTokens().remove(apiListing.getTokens().size() - 1);
-                    apiListing.getTokens().remove(apiListing.getTokens().size() - 1);
-                } else if (variableDeclarators.size() == 1) {
-                    getType(fieldDeclaration);
-                    final VariableDeclarator variableDeclarator = variableDeclarators.get(0);
-                    final String name = variableDeclarator.getNameAsString();
-                    final String definitionId = makeId(fullPathName + "." + variableDeclarator.getName());
-                    addToken(new Token(MEMBER_NAME, name, definitionId));
 
-                    final Optional<Expression> variableDeclaratorOption = variableDeclarator.getInitializer();
-                    if (variableDeclaratorOption.isPresent()) {
-                        Expression e = variableDeclaratorOption.get();
-                        if (e.isObjectCreationExpr() && e.asObjectCreationExpr().getAnonymousClassBody().isPresent()) {
-                            // no-op because we don't want to include all of the anonymous inner class details
-                        } else {
-                            addToken(SPACE, new Token(PUNCTUATION, "="), SPACE);
-                            addToken(new Token(TEXT, variableDeclaratorOption.get().toString()));
+                        final Optional<Expression> variableDeclaratorOption = variableDeclarator.getInitializer();
+                        if (variableDeclaratorOption.isPresent()) {
+                            Expression e = variableDeclaratorOption.get();
+                            if (e.isObjectCreationExpr() && e.asObjectCreationExpr()
+                                .getAnonymousClassBody()
+                                .isPresent()) {
+                                // no-op because we don't want to include all of the anonymous inner class details
+                            } else {
+                                addToken(SPACE, new Token(PUNCTUATION, "="), SPACE);
+                                addToken(new Token(TEXT, variableDeclaratorOption.get().toString()));
+                            }
                         }
                     }
-                }
 
-                // close the variable declaration
-                addToken(new Token(PUNCTUATION, ";"), NEWLINE);
-            }
-            unindent();
+                    // close the variable declaration
+                    addToken(new Token(PUNCTUATION, ";"), NEWLINE);
+                }
+            });
         }
 
         private void tokeniseConstructorsOrMethods(final TypeDeclaration<?> typeDeclaration,
             final boolean isInterfaceDeclaration,
             final boolean isConstructor,
             final List<? extends CallableDeclaration<?>> callableDeclarations) {
-            indent();
+            indentedBlock(() -> {
 
             if (isConstructor) {
                 // determining if we are looking at a set of constructors that are all private, indicating that the
@@ -900,12 +893,10 @@ public class JavaASTAnalyser implements Analyser {
 
                 if (isAllPrivateOrPackagePrivate) {
                     if (typeDeclaration.isEnumDeclaration()) {
-                        unindent();
                         return;
                     }
 
                     addComment("// This class does not have any public constructors, and is not able to be instantiated using 'new'.");
-                    unindent();
                     return;
                 }
             }
@@ -981,8 +972,7 @@ public class JavaASTAnalyser implements Analyser {
                         addNewLine();
                     });
                 });
-
-            unindent();
+            });
         }
 
         private int sortMethods(CallableDeclaration<?> c1, CallableDeclaration<?> c2) {
@@ -1044,9 +1034,8 @@ public class JavaASTAnalyser implements Analyser {
         private void tokeniseInnerClasses(Stream<TypeDeclaration<?>> innerTypes) {
             innerTypes.forEach(innerType -> {
                 if (innerType.isEnumDeclaration() || innerType.isClassOrInterfaceDeclaration()) {
-                    indent();
-                    new ClassOrInterfaceVisitor(parentNav).visitClassOrInterfaceOrEnumDeclaration(innerType);
-                    unindent();
+                    indentedBlock(() -> new ClassOrInterfaceVisitor(parentNav)
+                        .visitClassOrInterfaceOrEnumDeclaration(innerType));
                 }
             });
         }
@@ -1092,7 +1081,7 @@ public class JavaASTAnalyser implements Analyser {
         private List<Token> renderAnnotation(AnnotationRendererModel m) {
             final AnnotationExpr a = m.getAnnotation();
             List<Token> tokens = new ArrayList<>();
-            tokens.add(new Token(TYPE_NAME, "@" + a.getNameAsString(), makeId(a, m.getAnnotationParent())));
+            tokens.add(new Token(TYPE_NAME, "@" + a.getNameAsString()));
             if (m.isShowProperties()) {
                 if (a instanceof NormalAnnotationExpr) {
                     tokens.add(new Token(PUNCTUATION, "("));
@@ -1404,16 +1393,14 @@ public class JavaASTAnalyser implements Analyser {
         }
 
         private void addDefaultConstructor(TypeDeclaration<?> typeDeclaration) {
-            indent();
-
-            addToken(INDENT, new Token(KEYWORD, "public"), SPACE);
-            final String name = typeDeclaration.getNameAsString();
-            final String definitionId = makeId(typeDeclaration.getNameAsString());
-            addToken(new Token(MEMBER_NAME, name, definitionId));
-            addToken(new Token(PUNCTUATION, "("));
-            addToken(new Token(PUNCTUATION, ")"), NEWLINE);
-
-            unindent();
+            indentedBlock(() -> {
+                addToken(INDENT, new Token(KEYWORD, "public"), SPACE);
+                final String name = typeDeclaration.getNameAsString();
+                final String definitionId = makeId(typeDeclaration.getNameAsString());
+                addToken(new Token(MEMBER_NAME, name, definitionId));
+                addToken(new Token(PUNCTUATION, "("));
+                addToken(new Token(PUNCTUATION, ")"), NEWLINE);
+            });
         }
     }
 
@@ -1482,7 +1469,7 @@ public class JavaASTAnalyser implements Analyser {
         // The updated configuration from getDeclarationAsString removes the comment option and hence the toString
         // returns an empty string now. So, here we are using the toString overload that takes a PrintConfiguration
         // to get the old behavior.
-        splitNewLine(javadoc.asString()).forEach(line -> {
+        splitNewLine(javadoc.toString()).forEach(line -> {
             // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
             MiscUtils.wrap(line, 120).forEach(line2 -> {
                 if (line2.contains("&")) {
@@ -1518,22 +1505,24 @@ public class JavaASTAnalyser implements Analyser {
         addToken(new Token(DOCUMENTATION_RANGE_END));
     }
 
-    private void indent() {
-        indent += 4;
-    }
-
-    private void unindent() {
-        indent = Math.max(indent - 4, 0);
+    private void indentedBlock(Runnable indentedSection) {
+        indentLevel++;
+        indentedSection.run();
+        indentLevel--;
     }
 
     private Token makeWhitespace() {
+        return new Token(WHITESPACE, makeWhitespace(indentLevel));
+    }
+
+    private static String makeWhitespace(int indentLevel) {
         // Use a byte array with Arrays.fill with empty space (' ') character rather than StringBuilder as StringBuilder
         // will check that it has sufficient size every time a new character is appended. We know ahead of time the size
         // needed and can remove all those checks by removing usage of StringBuilder with this simpler pattern.
-        byte[] bytes = new byte[indent];
+        byte[] bytes = new byte[indentLevel * 4];
         Arrays.fill(bytes, (byte) ' ');
 
-        return new Token(WHITESPACE, new String(bytes, StandardCharsets.UTF_8));
+        return new String(bytes, StandardCharsets.UTF_8);
     }
 
     private void addComment(String comment) {

@@ -1,11 +1,11 @@
 <app-nav-bar></app-nav-bar>
 <div class="container-fluid main-container">
     <app-review-info [review]="reviewContent?.review" (revisionsSidePanel)="showRevisionsPanel($event)"></app-review-info>
-    <div class="row">
-        <div class="col-auto" style="width: 65px;">
+    <div style="display: flex;">
+        <div style="width: 65px; margin-right: 10px;">
             <p-menu [model]="sideMenu"></p-menu>
         </div>
-        <div class="col">
+        <div style="flex-grow: 1; min-width: 0;">
             <p-splitter 
             [panelSizes]="[15, 70, 15]" 
             [style]="{ height: 'calc(100vh - 119px)' }">

@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 HttpResponse response = new DefaultHttpContext().Response;
                 await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
 
-                AssertLogs(logger, 4, 8);
+                AssertLogs(logger, 4, 8, 7);
             }
             finally
             {
@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             try
             {
-                AssertLogs(logger, 2, 8);
+                AssertLogs(logger, 2, 8, 12);
             }
             finally
             {
@@ -101,7 +101,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
         }
 
-        private static void AssertLogs(TestLogger logger, int offset, int expectedLength)
+        private static void AssertLogs(TestLogger logger, int offset, int expectedLength, int expectedContentLength)
         {
             Assert.Equal(expectedLength, logger.Logs.Count);
             Assert.Equal(
@@ -118,7 +118,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 logger.Logs[2 + offset].ToString());
             Assert.Equal("URI: [ https://fakeazsdktestaccount.table.core.windows.net/Tables]" +
                          Environment.NewLine + "Headers: [{\"Accept\":[\"application/json;odata=minimalmetadata\"],\"Accept-Encoding\":[\"gzip, deflate\"],\"Authorization\":[\"Sanitized\"],\"Connection\":[\"keep-alive\"]," +
-                         "\"Content-Length\":[\"12\"],\"Content-Type\":[\"application/octet-stream\"],\"DataServiceVersion\":[\"3.0\"],\"Date\":[\"Tue, 18 May 2021 23:27:42 GMT\"]," +
+                         "\"Content-Length\":[\"" + expectedContentLength + "\"],\"Content-Type\":[\"application/octet-stream\"],\"DataServiceVersion\":[\"3.0\"],\"Date\":[\"Tue, 18 May 2021 23:27:42 GMT\"]," +
                          "\"User-Agent\":[\"azsdk-python-data-tables/12.0.0b7 Python/3.8.6 (Windows-10-10.0.19041-SP0)\"],\"x-ms-client-request-id\":[\"Sanitized\"]," +
                          "\"x-ms-date\":[\"Tue, 18 May 2021 23:27:42 GMT\"],\"x-ms-version\":[\"2019-02-02\"]}]" + Environment.NewLine,
                 logger.Logs[3 + offset].ToString());

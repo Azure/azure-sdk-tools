@@ -406,6 +406,11 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     Path = path
                 };
+
+                foreach (RecordedTestSanitizer sanitizer in Sanitizers)
+                {
+                    session.Session.Sanitize(sanitizer);
+                }
             }
 
             if (!PlaybackSessions.TryAdd(id, session))

@@ -74,11 +74,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                _recordingHandler.AddSanitizerToRecording(recordingId, s);
+                _recordingHandler.RegisterSanitizer(s, recordingId);
             }
             else
             {
-                _recordingHandler.Sanitizers.Add(s);
+                _recordingHandler.RegisterSanitizer(s);
             }
         }
 
@@ -101,11 +101,11 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (recordingId != null)
                 {
-                    _recordingHandler.AddSanitizerToRecording(recordingId, sanitizer);
+                    _recordingHandler.RegisterSanitizer(sanitizer, recordingId);
                 }
                 else
                 {
-                    _recordingHandler.Sanitizers.Add(sanitizer);
+                    _recordingHandler.RegisterSanitizer(sanitizer);
                 }
             }
 

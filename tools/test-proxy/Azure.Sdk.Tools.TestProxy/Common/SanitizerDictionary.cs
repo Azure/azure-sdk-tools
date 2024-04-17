@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Authentication;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
@@ -13,8 +14,38 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         // we have to know which sanitizers are session only
         // so that when we start a new recording we can properly 
         // apply only the sanitizers that have been registered at the global level
-        private List<int> SessionSanitizers = new List<int>();
+        public List<int> SessionSanitizers = new List<int>();
         private int CurrentId = 0;
+
+        public SanitizerDictionary() { }
+
+        public List<RecordedTestSanitizer> DefaultSanitizerList = new List<RecordedTestSanitizer>
+            {
+                new RecordedTestSanitizer(),
+                new BodyKeySanitizer("$..access_token"),
+                new BodyKeySanitizer("$..refresh_token")
+            };
+
+        public void ResetSessionSanitizers()
+        {
+            var defaultSanitizerIds = Enumerable.Range(0, DefaultSanitizerList.Count).ToList();
+
+            foreach(var id in SessionSanitizers)
+            {
+                if (!defaultSanitizerIds.Contains(id))
+                {
+                    if(Sanitizers.TryRemove(id, out var sanitizer))
+                    {
+                        SessionSanitizers.Remove(id);
+                    }
+                    else
+                    {
+                        // todo better error
+                        throw new HttpException(System.Net.HttpStatusCode.BadRequest, "Unable to add sanitizer to global list.");
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Get the complete set of sanitizers that apply to this recording/playback session
@@ -35,6 +66,34 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return sanitizers;
         }
 
+        public List<RecordedTestSanitizer> GetSanitizers()
+        {
+            var sanitizers = new List<RecordedTestSanitizer>();
+            foreach (var id in SessionSanitizers)
+            {
+                if (Sanitizers.TryGetValue(id, out RecordedTestSanitizer sanitizer))
+                {
+                    sanitizers.Add(sanitizer);
+                }
+            }
+
+            return sanitizers;
+        }
+
+        public bool _register(RecordedTestSanitizer sanitizer, int id)
+        {
+            if (Sanitizers.TryAdd(id, sanitizer))
+            {
+                SessionSanitizers.Add(id);
+
+                return true;
+            }
+            else
+            {
+                // todo better error
+                throw new HttpException(System.Net.HttpStatusCode.BadRequest, "Unable to add sanitizer to global list.");
+            }
+        }
 
         /// <summary>
         /// Ensuring that session level sanitizers can be identified internally
@@ -44,17 +103,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <exception cref="HttpException"></exception>
         public bool Register(RecordedTestSanitizer sanitizer)
         {
-            if (Sanitizers.TryAdd(CurrentId, sanitizer))
+            if (_register(sanitizer, CurrentId))
             {
                 SessionSanitizers.Add(CurrentId);
-
                 CurrentId++;
                 return true;
             }
-            else
-            {
-                throw new HttpException(System.Net.HttpStatusCode.BadRequest, "Unable to add sanitizer to global list.");
-            }
+            return false;
         }
 
         /// <summary>
@@ -66,7 +121,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <exception cref="HttpException"></exception>
         public bool Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer)
         {
-            if (Sanitizers.TryAdd(CurrentId, sanitizer))
+            if (_register(sanitizer, CurrentId))
             {
                 session.AppliedSanitizers.Add(CurrentId);
                 session.ForRemoval.Add(CurrentId);
@@ -74,10 +129,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 CurrentId++;
                 return true;
             }
-            else
-            {
-                throw new HttpException(System.Net.HttpStatusCode.BadRequest, "Unable to add sanitizer to global list.");
-            }
+
+            return false;
         }
 
         /// <summary>

@@ -870,35 +870,44 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region utility and common-use functions
-        public void AddSanitizerToRecording(string recordingId, RecordedTestSanitizer sanitizer)
+        public void RegisterSanitizer(RecordedTestSanitizer sanitizer, string? recordingId = null)
         {
-            if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
+            if (!string.IsNullOrWhiteSpace(recordingId))
             {
-                lock (playbackSession)
                 {
-                    playbackSession.AdditionalSanitizers.Add(sanitizer);
+                    if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
+                    {
+                        lock (playbackSession)
+                        {
+                            Sanitizers.Register(playbackSession, sanitizer);
+                        }
+                    }
+
+                    if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
+                    {
+                        lock (recordingSession)
+                        {
+                            Sanitizers.Register(recordingSession, sanitizer);
+                        }
+                    }
+
+                    if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
+                    {
+                        lock (inMemSession)
+                        {
+                            Sanitizers.Register(inMemSession, sanitizer);
+                        }
+                    }
+
+                    if (inMemSession == null && recordingSession == null && playbackSession == null)
+                    {
+                        throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
+                    }
                 }
             }
-
-            if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
+            else
             {
-                lock (recordingSession)
-                {
-                    recordingSession.AdditionalSanitizers.Add(sanitizer);
-                }
-            }
-
-            if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
-            {
-                lock (inMemSession)
-                {
-                    inMemSession.AdditionalSanitizers.Add(sanitizer);
-                }
-            }
-
-            if (inMemSession == null && recordingSession == null && playbackSession == null)
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
+                Sanitizers.Register(sanitizer);
             }
         }
 
@@ -929,15 +938,15 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
                 {
-                    playbackSession.ResetExtensions();
+                    playbackSession.ResetExtensions(Sanitizers);
                 }
                 if (RecordingSessions.TryGetValue(recordingId, out var recordSession))
                 {
-                    recordSession.ResetExtensions();
+                    recordSession.ResetExtensions(Sanitizers);
                 }
                 if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
                 {
-                    inMemSession.ResetExtensions();
+                    inMemSession.ResetExtensions(Sanitizers);
                 }
             }
             else
@@ -985,12 +994,8 @@ namespace Azure.Sdk.Tools.TestProxy
 
                     throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());
                 }
-                Sanitizers = new List<RecordedTestSanitizer>
-                {
-                    new RecordedTestSanitizer(),
-                    new BodyKeySanitizer("$..access_token"),
-                    new BodyKeySanitizer("$..refresh_token")
-                };
+
+                Sanitizers.ResetToDefault();
 
                 Transforms = new List<ResponseTransform>
                 {

@@ -72,6 +72,10 @@ export class CodePanelComponent {
               }
             }
 
+            if (token.diffKind === "Added" || token.diffKind === "Removed") {
+              span.classList.add(`token-${token.diffKind.toLowerCase()}`);
+            }
+
             lineContent.appendChild(span);
           }
           
@@ -81,6 +85,9 @@ export class CodePanelComponent {
             lineNumber.textContent = `${this.lineNumberCount}`;
             lineNumber.classList.add('line-number');
             line.classList.add('code-line');
+            if (lineData.diffKind === "Added" || lineData.diffKind === "Removed") {
+              line.classList.add(`code-line-${lineData.diffKind.toLowerCase()}`);
+            }
             lineContent.classList.add('code-line-content');
             lineContent.style.paddingLeft = `${node!.dataset["indent"] as unknown as number * 20}px`;
             lineActions.classList.add('line-actions');

@@ -1101,7 +1101,7 @@ public class JavaASTAnalyser implements Analyser {
         private List<Token> renderAnnotation(AnnotationRendererModel m) {
             final AnnotationExpr a = m.getAnnotation();
             List<Token> tokens = new ArrayList<>();
-            tokens.add(new Token(TYPE_NAME, "@" + a.getNameAsString(), makeId(a, m.getAnnotationParent())));
+            tokens.add(new Token(TYPE_NAME, "@" + a.getNameAsString()));
             if (m.isShowProperties()) {
                 if (a instanceof NormalAnnotationExpr) {
                     tokens.add(new Token(PUNCTUATION, "("));

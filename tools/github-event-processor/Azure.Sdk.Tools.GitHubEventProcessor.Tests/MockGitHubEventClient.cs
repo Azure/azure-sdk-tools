@@ -116,6 +116,25 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
         }
 
         /// <summary>
+        /// The mock ProcessPendingScheduledUpdates just returns the number of updates
+        /// </summary>
+        /// <returns>integer,the number of pending updates that would be processed</returns>
+        public override Task<int> ProcessPendingScheduledUpdates()
+        {
+            int numUpdates = 0;
+            Console.WriteLine($"ProcessPendingScheduledUpdates::ProcessPendingUpdates, number of pending comments = {_gitHubComments.Count}");
+            numUpdates += _gitHubComments.Count;
+
+            Console.WriteLine($"ProcessPendingScheduledUpdates::ProcessPendingUpdates, number of pending IssueUpdates = {_gitHubIssuesToUpdate.Count}");
+            numUpdates += _gitHubIssuesToUpdate.Count;
+
+            Console.WriteLine($"ProcessPendingScheduledUpdates::ProcessPendingUpdates, number of issues to Lock = {_gitHubIssuesToLock.Count}");
+            numUpdates += _gitHubIssuesToLock.Count;
+
+            return Task.FromResult(numUpdates);
+        }
+
+        /// <summary>
         /// IsUserCollaborator override. Returns IsCollaboratorReturn value
         /// </summary>
         /// <param name="repositoryId">The Id of the repository</param>

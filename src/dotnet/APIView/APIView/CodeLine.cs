@@ -7,6 +7,7 @@ namespace ApiView
     {
         public string DisplayString { get; }
         public string ElementId { get; }
+        public string CrossLanguageDefinitionId { get; }
         public string LineClass { get; }
         public int? LineNumber { get; }
         public int? SectionKey { get; }
@@ -15,10 +16,11 @@ namespace ApiView
         public TreeNode<CodeLine> NodeRef { get; }
         public bool IsHiddenApi { get; }
 
-        public CodeLine(string html, string id, string lineClass, int? lineNumber = null, int? sectionKey = null, int indent = 0, bool isDocumentation = false, TreeNode<CodeLine> nodeRef = null, bool isHiddenApi = false)
+        public CodeLine(string html, string id, string crossLangId, string lineClass, int? lineNumber = null, int? sectionKey = null, int indent = 0, bool isDocumentation = false, TreeNode<CodeLine> nodeRef = null, bool isHiddenApi = false)
         {
             this.DisplayString = html;
             this.ElementId = id;
+            this.CrossLanguageDefinitionId = crossLangId;
             this.LineClass = lineClass;
             this.LineNumber = lineNumber;
             this.SectionKey = sectionKey;
@@ -28,10 +30,11 @@ namespace ApiView
             this.IsHiddenApi = isHiddenApi;
         }
 
-        public CodeLine(CodeLine codeLine, string html = null, string id = null, string lineClass = null, int? lineNumber = null, int? sectionKey = null, int indent = 0, bool isDocumentation = false, TreeNode<CodeLine> nodeRef = null, bool isHiddenApi = false)
+        public CodeLine(CodeLine codeLine, string html = null, string id = null, string crossLangId = null, string lineClass = null, int? lineNumber = null, int? sectionKey = null, int indent = 0, bool isDocumentation = false, TreeNode<CodeLine> nodeRef = null, bool isHiddenApi = false)
         {
             this.DisplayString = html ?? codeLine.DisplayString;
             this.ElementId = id ?? codeLine.ElementId;
+            this.CrossLanguageDefinitionId = crossLangId ?? codeLine.CrossLanguageDefinitionId;
             this.LineClass = lineClass ?? codeLine.LineClass;
             this.LineNumber = lineNumber ?? codeLine.LineNumber;
             this.SectionKey = sectionKey ?? codeLine.SectionKey;

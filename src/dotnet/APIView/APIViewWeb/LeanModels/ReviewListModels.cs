@@ -126,6 +126,9 @@ namespace APIViewWeb.LeanModels
         public DateTime CreatedOn { get; set; }
         public DateTime LastUpdatedOn { get; set; }
         public bool IsDeleted { get; set; }
+        public bool IsReleased { get; set; }
+        public DateTime ReleasedOn { get; set; }
+        public HashSet<string> ViewedBy { get; set; } = new HashSet<string>();
     }
 
     public class SamplesRevisionModel

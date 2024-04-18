@@ -11,7 +11,7 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [logging, azuremonitor]
+      exporters: [debug, azuremonitor]
     metrics:
       receivers: [otlp]
       processors: [batch]
@@ -19,10 +19,10 @@ service:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [azuremonitor]
+      exporters: [debug, azuremonitor]
 
 exporters:
-  logging:
-    verbosity: normal
+  debug:
+    verbosity: "${env:OTEL_LOG_LEVEL}"
   azuremonitor:
-#    connection_string: "%APPLICATIONINSIGHTS_CONNECTION_STRING%"
+    connection_string: "${env:APPLICATIONINSIGHTS_CONNECTION_STRING}"

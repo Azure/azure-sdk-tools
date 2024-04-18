@@ -79,7 +79,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             {
                 // The second argument is IssueOrPullRequestNumber which isn't applicable to scheduled events (cron tasks)
                 // since they're not going to be changing a single IssueUpdate like rules processing does.
-                await gitHubEventClient.ProcessPendingUpdates(scheduledEventPayload.Repository.Id);
+                await gitHubEventClient.ProcessPendingScheduledUpdates();
             }
         }
 
@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                 List<string> includeLabels = new List<string>
                 {
-                    LabelConstants.IssueAddressed
+                    TriageLabelConstants.IssueAddressed
                 };
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
@@ -130,6 +130,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         )
                     {
                         Issue issue = result.Items[iCounter++];
+                        // This rule only sets the state
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
                         issueUpdate.State = ItemState.Closed;
                         issueUpdate.StateReason = ItemStateReason.Completed;
@@ -182,8 +183,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                 List<string> includeLabels = new List<string>
                 {
-                    LabelConstants.NeedsAuthorFeedback,
-                    LabelConstants.NoRecentActivity
+                    TriageLabelConstants.NeedsAuthorFeedback,
+                    TriageLabelConstants.NoRecentActivity
                 };
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
@@ -211,6 +212,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         )
                     {
                         Issue issue = result.Items[iCounter++];
+                        // This rule only sets the state
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
                         issueUpdate.State = ItemState.Closed;
                         issueUpdate.StateReason = ItemStateReason.NotPlanned;
@@ -258,7 +260,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                 List<string> includeLabels = new List<string>
                 {
-                    LabelConstants.NoRecentActivity
+                    TriageLabelConstants.NoRecentActivity
                 };
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
@@ -285,6 +287,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         )
                     {
                         Issue issue = result.Items[iCounter++];
+                        // This rule only sets the state
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
                         issueUpdate.State = ItemState.Closed;
                         issueUpdate.StateReason = ItemStateReason.NotPlanned;
@@ -337,7 +340,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                 List<string> excludeLabels = new List<string>
                 {
-                    LabelConstants.NoRecentActivity
+                    TriageLabelConstants.NoRecentActivity
                 };
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
@@ -366,8 +369,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         )
                     {
                         Issue issue = result.Items[iCounter++];
-                        IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
-                        issueUpdate.AddLabel(LabelConstants.NoRecentActivity);
+                        // This rule needs to the full IssueUpdate as it's adding a label
+                        IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false, false);
+                        issueUpdate.AddLabel(TriageLabelConstants.NoRecentActivity);
                         gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
                                                                issue.Number,
                                                                issueUpdate);
@@ -418,11 +422,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                 List<string> includeLabels = new List<string>
                 {
-                    LabelConstants.NeedsAuthorFeedback
+                    TriageLabelConstants.NeedsAuthorFeedback
                 };
                 List<string> excludeLabels = new List<string>
                 {
-                    LabelConstants.NoRecentActivity
+                    TriageLabelConstants.NoRecentActivity
                 };
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
@@ -451,8 +455,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         )
                     {
                         Issue issue = result.Items[iCounter++];
-                        IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
-                        issueUpdate.AddLabel(LabelConstants.NoRecentActivity);
+                        // This rule needs to the full IssueUpdate as it's adding a label
+                        IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false, false);
+                        issueUpdate.AddLabel(TriageLabelConstants.NoRecentActivity);
                         gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
                                                                issue.Number,
                                                                issueUpdate);
@@ -597,6 +602,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         )
                     {
                         Issue issue = result.Items[iCounter++];
+                        // This rule only sets the state
                         IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
                         // Close the issue
                         issueUpdate.State = ItemState.Closed;

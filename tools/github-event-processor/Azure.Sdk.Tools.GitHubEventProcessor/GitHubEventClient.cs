@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using Azure.Sdk.Tools.GitHubEventProcessor.GitHubPayload;
@@ -12,12 +14,13 @@ using Octokit;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor
 {
+    // JRS 
     /// <summary>
     /// GitHubEventClient is a singleton. It holds the GitHubClient and Rules instances as well
     /// as any updates queued during event processing. After all the relevant rules have been processed, 
-    /// a call to ProcessPendingUpdates will process all of the pending updates. This ensures that the 
-    /// individual rules don't need to deal with calls to GitHub and the respective error processing, 
-    /// within the rules, themselves.
+    /// a call to ProcessPendingUpdates or ProcessPendingScheduledUpdates, in the case of scheduled rules
+    /// will process all of the pending updates. This ensures that the individual rules don't need to deal
+    /// with calls to GitHub and the respective error processing, within the rules, themselves.
     /// </summary>
     public class GitHubEventClient
     {
@@ -26,6 +29,13 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         private static readonly string NotAUserPartial = "is not a user";
 
         private static readonly int MaxIssueAssignees = 10;
+
+        // Used when updating a large number of items that could cause a SecondaryRateLimit exception if
+        // too many are done within a minute.
+        private static readonly int OneMinuteInMilliseconds = 60000;
+
+        // This is the maximum number of times certain GitHub API calls will be attempted
+        private static readonly int MaxNumberOfTries = 5;
 
         /// <summary>
         /// Class to store the information needed to create a GitHub Comment on an Issue or PullRequest.
@@ -176,6 +186,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// 1. IssueUpdate
         /// 2. Added Comments
         /// 3. Removed Dismissals
+        /// 4. Adding Assignees
+        /// 5. Add/Remove Labels
         /// </summary>
         /// <param name="repositoryId">The Id of the repository</param>
         /// <param name="issueOrPullRequestNumber">The Issue or PullRequest number if not processing a scheduled task.</param>
@@ -299,6 +311,268 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         }
 
         /// <summary>
+        /// Scheduled Updates are different from Actions updates. Scheduled jobs can cause updates to several hundred issues
+        /// through closing, comment creation and locking or any combination thereof. The reason why this needs to be a
+        /// separate function is because of the per-minute secondary rate limit. There's a cap of 80 content creation updates
+        /// per minute but this per-repository and affects not only Scheduled events but also actions and contentent creation
+        /// through the UI.
+        /// </summary>
+        /// <returns>Integer, the number of update calls made</returns>
+        public virtual async Task<int> ProcessPendingScheduledUpdates()
+        {
+            Console.WriteLine("Processing pending scheduled updates...");
+            int numUpdates = 0;
+            int numExpectedUpdates = ComputeNumberOfExpectedUpdates();
+
+            // The order of processing for pending updates is Comment->Close->Lock
+            // If any update fails, don't process further updates.
+            HashSet<int> itemsToSkip = new HashSet<int>();
+            try
+            {
+                // Process any comments
+                for (int iCounter = 0;iCounter < _gitHubComments.Count;iCounter++)
+                {
+                    numUpdates++;
+                    if (numUpdates % RateLimitConstants.ScheduledUpdatesPerMinuteRateLimit == 0)
+                    {
+                        await Delay("ProcessPendingScheduledUpdates:ScheduledUpdatesPerMinuteRateLimit", OneMinuteInMilliseconds);
+                    }
+                    if (!await CreateGitHubComment(_gitHubComments[iCounter]))
+                    {
+                        if (!itemsToSkip.Contains(_gitHubComments[iCounter].IssueOrPullRequestNumber))
+                        {
+                            itemsToSkip.Add(_gitHubComments[iCounter].IssueOrPullRequestNumber);
+                        }
+                    }
+                }
+
+                // Process any Scheduled task IssueUpdates
+                for (int iCounter = 0; iCounter < _gitHubIssuesToUpdate.Count;iCounter++)
+                {
+                    // If the previous update failed, skip this one.
+                    if (itemsToSkip.Contains(_gitHubIssuesToUpdate[iCounter].IssueOrPRNumber))
+                    {
+                        continue;
+                    }
+                    numUpdates++;
+                    if (numUpdates % RateLimitConstants.ScheduledUpdatesPerMinuteRateLimit == 0)
+                    {
+                        await Delay("ProcessPendingScheduledUpdates:ScheduledUpdatesPerMinuteRateLimit", OneMinuteInMilliseconds);
+                    }
+                    if (!await UpdateGitHubIssue(_gitHubIssuesToUpdate[iCounter]))
+                    {
+                        if (!itemsToSkip.Contains(_gitHubIssuesToUpdate[iCounter].IssueOrPRNumber))
+                        {
+                            itemsToSkip.Add(_gitHubIssuesToUpdate[iCounter].IssueOrPRNumber);
+                        }
+                    }
+                }
+
+                // Process any issue locks last in case the issue is being updated or having a comment added
+                // prior to being locked
+                for (int iCounter = 0; iCounter < _gitHubIssuesToLock.Count; iCounter++)
+                {
+                    // If the previous update failed, skip this one.
+                    if (itemsToSkip.Contains(_gitHubIssuesToLock[iCounter].IssueNumber))
+                    {
+                        continue;
+                    }
+
+                    numUpdates++;
+                    if (numUpdates % RateLimitConstants.ScheduledUpdatesPerMinuteRateLimit == 0)
+                    {
+                        await Delay("ProcessPendingScheduledUpdates:ScheduledUpdatesPerMinuteRateLimit", OneMinuteInMilliseconds);
+                    }
+                    
+                    // In theory, locking should be the last operation and there should be no dupes in the lock list
+                    // but it's better to be safe than sorry.
+                    if (!await LockGitHubIssue(_gitHubIssuesToLock[iCounter]))
+                    {
+                        if (!itemsToSkip.Contains(_gitHubIssuesToLock[iCounter].IssueNumber))
+                        {
+                            itemsToSkip.Add(_gitHubIssuesToLock[iCounter].IssueNumber);
+                        }
+                    }
+                }
+
+                Console.WriteLine("Finished processing pending scheduled updates.");
+            }
+            // For the moment, nothing special is being done when rate limit exceptions are
+            // thrown but keep them separate in case that changes.
+            catch (RateLimitExceededException rateLimitEx)
+            {
+                string message = $"RateLimitExceededException was thrown processing pending updates. Total expected updates={numExpectedUpdates}, number of updates made={numUpdates}.";
+                Console.WriteLine(message);
+                Console.WriteLine(rateLimitEx);
+            }
+            catch (Exception ex)
+            {
+                string message = $"Exception was thrown processing pending updates. Total expected updates={numExpectedUpdates}, number of updates made={numUpdates}.";
+                Console.WriteLine(message);
+                Console.WriteLine(ex);
+            }
+
+            return numUpdates;
+        }
+
+        /// <summary>
+        /// Common "sleep equivalent" function. 
+        /// </summary>
+        /// <param name="reasonForDelay">string, the reason why delay is being called.</param>
+        /// <param name="millisecondsDelay">milliseconds to delay</param>
+        /// <returns></returns>
+        private async Task Delay(string reasonForDelay, int millisecondsDelay)
+        {
+            Console.WriteLine($"delaying for {millisecondsDelay} milliseconds due to: {reasonForDelay}");
+            await Task.Delay(millisecondsDelay);
+        }
+
+        /// <summary>
+        /// Wrapper around Issue.Update with retries.
+        /// </summary>
+        /// <param name="issueToUpdate">GitHubIssueToUpdate instance for the issue to update</param>
+        /// <returns>True if updated, false otherwise.</returns>
+        private async Task<bool> UpdateGitHubIssue(GitHubIssueToUpdate issueToUpdate)
+        {
+            for (int iAttempt = 1; iAttempt <= MaxNumberOfTries; iAttempt++)
+            {
+                try
+                {
+                    await _gitHubClient.Issue.Update(issueToUpdate.RepositoryId,
+                                                     issueToUpdate.IssueOrPRNumber,
+                                                     issueToUpdate.IssueUpdate);
+                    return true;
+
+                }
+                catch (SecondaryRateLimitExceededException secondaryRateLimitEx)
+                {
+                    // These are the status codes that would require a sleep. If this wasn't the last try
+                    // then sleep for 1 minute
+                    if ((secondaryRateLimitEx.HttpResponse.StatusCode == HttpStatusCode.Forbidden ||
+                        secondaryRateLimitEx.HttpResponse.StatusCode == HttpStatusCode.TooManyRequests) &&
+                        iAttempt < MaxNumberOfTries)
+                    {
+                        await Delay($"UpdateGitHubIssue:SecondaryRateLimitExceededException, HttpStatusCode={secondaryRateLimitEx.HttpResponse.StatusCode}", OneMinuteInMilliseconds);
+                    }
+                    else
+                    {
+                        string message = $"UpdateGitHubIssue:SecondaryRateLimitExceededException was thrown and there are no more retries. Issue/PR affected={issueToUpdate.IssueOrPRNumber}.";
+                        Console.WriteLine(message);
+                        Console.WriteLine(secondaryRateLimitEx);
+                    }
+                }
+                catch (ApiValidationException apiValidationEx)
+                {
+                    Console.WriteLine($"UpdateGitHubIssue:ApiValidationException processing IssueUpdate on {issueToUpdate.IssueOrPRNumber}. ApiValidationException={apiValidationEx}");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"UpdateGitHubIssue:Exception processing IssueUpdate on {issueToUpdate.IssueOrPRNumber}. Ex={ex}");
+                    break;
+                }
+
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Wrapper around Issue.CommentCreate with retries.
+        /// </summary>
+        /// <param name="comment">GitHubComment instance with the comment, IssueOrPullRequestNumber and repositoryId</param>
+        /// <returns>True if updated, false otherwise.</returns>
+        private async Task<bool> CreateGitHubComment(GitHubComment comment)
+        {
+            for (int iAttempt=1;iAttempt <= MaxNumberOfTries;iAttempt++)
+            {
+                try
+                {
+                    await _gitHubClient.Issue.Comment.Create(comment.RepositoryId,
+                                                             comment.IssueOrPullRequestNumber,
+                                                             comment.Comment);
+                    return true;
+
+                }
+                catch (SecondaryRateLimitExceededException secondaryRateLimitEx)
+                {
+                    // These are the status codes that would require a sleep. If this wasn't the last try
+                    // then sleep for 1 minute
+                    if ((secondaryRateLimitEx.HttpResponse.StatusCode == HttpStatusCode.Forbidden ||
+                        secondaryRateLimitEx.HttpResponse.StatusCode == HttpStatusCode.TooManyRequests) &&
+                        iAttempt < MaxNumberOfTries)
+                    {
+                        await Delay($"CreateGitHubComment:SecondaryRateLimitExceededException, HttpStatusCode={secondaryRateLimitEx.HttpResponse.StatusCode}", OneMinuteInMilliseconds);
+                    }
+                    else
+                    {
+                        string message = $"CreateGitHubComment:SecondaryRateLimitExceededException was thrown and there are no more retries. Issue/PR affected={comment.IssueOrPullRequestNumber}.";
+                        Console.WriteLine(message);
+                        Console.WriteLine(secondaryRateLimitEx);
+                    }
+                }
+                catch (ApiValidationException apiValidationEx)
+                {
+                    Console.WriteLine($"CreateGitHubComment:ApiValidationException processing comment on {comment.IssueOrPullRequestNumber}. ApiValidationException={apiValidationEx}");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"CreateGitHubComment:Exception processing comment on {comment.IssueOrPullRequestNumber}. Ex={ex}");
+                    break;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Wrapper around Issue.LockUnlock.Lock with retries
+        /// </summary>
+        /// <param name="issueToLock">GitHubIssueToLock instance which contains the repositoryId, issue number and lock reason.</param>
+        /// <returns>True if updated, false otherwise.</returns>
+        private async Task<bool> LockGitHubIssue(GitHubIssueToLock issueToLock)
+        {
+            for (int iAttempt = 1; iAttempt <= MaxNumberOfTries; iAttempt++)
+            {
+                try
+                {
+                    await _gitHubClient.Issue.LockUnlock.Lock(issueToLock.RepositoryId,
+                                                              issueToLock.IssueNumber,
+                                                              issueToLock.LockReason);
+                    return true;
+
+                }
+                catch (SecondaryRateLimitExceededException secondaryRateLimitEx)
+                {
+                    // These are the status codes that would require a sleep. If this wasn't the last try
+                    // then sleep for 1 minute
+                    if ((secondaryRateLimitEx.HttpResponse.StatusCode == HttpStatusCode.Forbidden ||
+                        secondaryRateLimitEx.HttpResponse.StatusCode == HttpStatusCode.TooManyRequests) &&
+                        iAttempt < MaxNumberOfTries)
+                    {
+                        await Delay($"LockGitHubIssue:SecondaryRateLimitExceededException, HttpStatusCode={secondaryRateLimitEx.HttpResponse.StatusCode}", OneMinuteInMilliseconds);
+                    }
+                    else
+                    {
+                        string message = $"LockGitHubIssue:SecondaryRateLimitExceededException was thrown and there are no more retries. Issue affected={issueToLock.IssueNumber}.";
+                        Console.WriteLine(message);
+                        Console.WriteLine(secondaryRateLimitEx);
+                    }
+                }
+                catch (ApiValidationException apiValidationEx)
+                {
+                    Console.WriteLine($"LockGitHubIssue:ApiValidationException processing Lock on {issueToLock.IssueNumber}. ApiValidationException={apiValidationEx}");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"LockGitHubIssue:Exception processing Lock on {issueToLock.IssueNumber}. Ex={ex}");
+                    break;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Compute and output the number of expected updates.
         /// </summary>
         /// <returns>int, the total number of expected updates</returns>
@@ -357,13 +631,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// <param name="prependMessage">Optional message to prepend to the rate limit message.</param>
         public async Task WriteRateLimits(string prependMessage = null)
         {
-            int maxTries = 5;
             // 200 ms. If the rate limits cannot be fetched in 1 second, there's a problem with GitHub.
             // Unlike scheduled events which have a longer back off period, normal event processing cannot
             // delay that long before retrying.
             int sleepDuration = 200;
 
-            for (int tryNumber = 1; tryNumber <= maxTries; tryNumber++)
+            for (int tryNumber = 1; tryNumber <= MaxNumberOfTries; tryNumber++)
             {
                 try
                 {
@@ -382,14 +655,14 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 }
                 catch (Exception ex)
                 {
-                    if (tryNumber == maxTries)
+                    if (tryNumber == MaxNumberOfTries)
                     {
-                        Console.WriteLine($"Exception trying to get RateLimit from GitHub. Number of attempts, {maxTries}, exhausted. Rethrowing.");
+                        Console.WriteLine($"Exception trying to get RateLimit from GitHub. Number of attempts, {MaxNumberOfTries}, exhausted. Rethrowing.");
                         throw;
                     }
                     else
                     {
-                        Console.WriteLine($"Exception trying to get RateLimit from GitHub, attempt number: {tryNumber} of {maxTries}. Waiting {sleepDuration}ms before trying again.");
+                        Console.WriteLine($"Exception trying to get RateLimit from GitHub, attempt number: {tryNumber} of {MaxNumberOfTries}. Waiting {sleepDuration}ms before trying again.");
                         Console.WriteLine($"Exception: {ex}");
                         await Task.Delay(sleepDuration);
                     }
@@ -401,7 +674,11 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// Return the number of updates a scheduled task can make. The Core Rate Limit that GitHub Actions can make is 15000/hour
         /// for enterprise and 1000/hour for non-enterprise. The max number of results that can be retried from SearchIssues is 1000.
         /// The CoreRateLimit is set when WriteRateLimits is called and this is done at the start of processing in Main. If the core
-        /// rate limit is 15000, return 1000, otherwise return 100 which is 1/10th of the hourly limit for non-enterprise repository.
+        /// rate limit is 15000, return 300, otherwise return 100 which is 1/10th of the hourly limit for non-enterprise repository.
+        /// The reason for the 300 limit is that there's a cap of 500 content-generating requests per hour. 300 leaves 200 open for
+        /// Actions processing and other Scheduled events. Most Scheduled events are just playing catch up on items that meet their
+        /// criteria since they last time they ran and typically only have handful of updates. It's new Scheduled events that will
+        /// probably need this.
         /// </summary>
         /// <returns>The number updates a scheduled task can make.</returns>
         public virtual async Task<int> ComputeScheduledTaskUpdateLimit()
@@ -415,9 +692,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                 CoreRateLimit = miscRateLimit.Resources.Core.Limit;
             }
             updateLimit = CoreRateLimit / 10;
-            if (updateLimit > RateLimitConstants.SearchIssuesRateLimit)
+            if (updateLimit > RateLimitConstants.ContentCreationRateLimit)
             {
-                updateLimit = RateLimitConstants.SearchIssuesRateLimit;
+                updateLimit = RateLimitConstants.ContentCreationRateLimit;
             }
             Console.WriteLine($"Setting the scheduled task update limit to: {updateLimit}");
             return updateLimit;
@@ -501,73 +778,81 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
         /// Overloaded convenience function that'll return the IssueUpdate. Actions all make changes to
         /// the same, shared, IssueUpdate because they're processing on the same event. For scheduled 
         /// event processing, there will be multiple, unique IssueUpdates and there won't be a shared one.
+        /// If an issue is only being used for a state change, clear out everything. Anything null, or 0 in
+        /// the case of the Milestone, won't get updated IIssuesClient.Update is called, only the state which
+        /// will be set by the rule. The reason this is necessary is that even though everything on the Issue
+        /// or PR being processed comes from GitHub and the IssueUpdate is created from this, we've seen a
+        /// couple of issues where passing the IssueUpdate back to GitHub causes an ApiValidationException 
+        /// when GitHub is trying to parse the IssueUpdate. This odd considering GitHub is where the information 
+        /// came from to begin with. Clearing things out was already something we do for Actions that just need 
+        /// to change the state and, now, for scheduled events that only change the state.
         /// </summary>
         /// <param name="issue">Octokit.Issue from the event payload</param>
         /// <param name="isProcessingAction">Whether or not actions are being processed. Default is true.</param>
+        /// <param name="isOnlyStateChange">Whether or not this IssueUpdate is only being used to change the issue state (closing/opening). Default is true.</param>
         /// <returns>Octokit.IssueUpdate</returns>
-        public IssueUpdate GetIssueUpdate(Issue issue, bool isProcessingAction = true)
+        public IssueUpdate GetIssueUpdate(Issue issue, bool isProcessingAction = true, bool isOnlyStateChange = true)
         {
+            IssueUpdate tempIssueUpdate = null;
+            if (isOnlyStateChange)
+            {
+                tempIssueUpdate = new IssueUpdate
+                {
+                    Milestone = issue.Milestone == null
+                                    ? new int?()
+                                    : issue.Milestone.Number,
+                    State = null,
+                    Body = null,
+                    Title = null
+                };
+            }
+            else
+            {
+                tempIssueUpdate = issue.ToUpdate();
+            }
+
             if (isProcessingAction)
             {
                 if (null == _issueUpdate)
                 {
-                    // For Actions, the IssueUpdate should only be used to set the state.
-                    // Everything else should be null so it doesn't touch those other fields
-                    // except for the Milestone which, if null, would clear it out if one was
-                    // set. That's the only field to pull from the payload.
-                    _issueUpdate = new IssueUpdate
-                    {
-                        Milestone = issue.Milestone == null
-                                    ? new int?()
-                                    : issue.Milestone.Number,
-                        State = null,
-                        Body = null,
-                        Title = null
-                    };
+                    _issueUpdate = tempIssueUpdate;
                 }
                 return _issueUpdate;
             }
             else
             {
-                return issue.ToUpdate();
+                return tempIssueUpdate;
             }
         }
 
         /// <summary>
-        /// Overloaded convenience function that'll return the IssueUpdate. Actions all make changes to
-        /// the same, shared, IssueUpdate because they're processing on the same event. For scheduled 
-        /// event processing, there will be multiple, unique IssueUpdates and there won't be shared one.
+        /// Overloaded convenience function that'll return the IssueUpdate for a PR. Whether or
+        /// not an Action is being processed is not necessary for this overload because results
+        /// coming back from Search queries are always returned as Issues meaning that this overload
+        /// is always going to be called in Actions processing.
         /// </summary>
         /// <param name="pullRequest">Octokit.PullRequest from the event payload</param>
-        /// <param name="isProcessingAction">Whether or not actions are being processed. Default is true.</param>
         /// <returns>Octokit.IssueUpdate</returns>
-        public IssueUpdate GetIssueUpdate(PullRequest pullRequest, bool isProcessingAction = true)
+        public IssueUpdate GetIssueUpdate(PullRequest pullRequest)
         {
-            if (isProcessingAction)
+            if (null == _issueUpdate)
             {
-                if (null == _issueUpdate)
+                // For Actions, the IssueUpdate should only be used to set the state.
+                // Everything else should be null so it doesn't touch those other fields
+                // except for the Milestone which, if null, would clear it out if one was
+                // set. That's the only field to pull from the payload.
+                _issueUpdate = new IssueUpdate
                 {
-                    // For Actions, the IssueUpdate should only be used to set the state.
-                    // Everything else should be null so it doesn't touch those other fields
-                    // except for the Milestone which, if null, would clear it out if one was
-                    // set. That's the only field to pull from the payload.
-                    _issueUpdate = new IssueUpdate
-                    {
-                        Milestone = pullRequest.Milestone == null
-                                    ? new int?()
-                                    : pullRequest.Milestone.Number,
-                        State = null,
-                        Body = null,
-                        Title = null
-                    };
+                    Milestone = pullRequest.Milestone == null
+                                ? new int?()
+                                : pullRequest.Milestone.Number,
+                    State = null,
+                    Body = null,
+                    Title = null
+                };
 
-                }
-                return _issueUpdate;
             }
-            else
-            {
-                return CreateIssueUpdateForPR(pullRequest);
-            }
+            return _issueUpdate;
         }
 
         /// <summary>
@@ -984,7 +1269,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor
                         Console.WriteLine($"QueryIssues, sleeping for {sleepDuration/61} seconds before retrying.");
                         // Task.Delay over Sleep will push the wait into the IO completion state and unblocks the thread
                         // from the threadpool whereas sleep blocks the thread in the threadpool.
-                        await Task.Delay(tryNumber * sleepDuration);
+                        await Delay($"QueryIssues, sleeping for {tryNumber * sleepDuration / 61} seconds before retrying.",
+                                    tryNumber * sleepDuration);
                     }
                 }
             }

@@ -44,7 +44,18 @@ namespace APIViewWeb.Repositories
         /// <param name="apiRevisionType"></param>
         /// <returns></returns>
         public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAsync(DateTime lastUpdatedOn, APIRevisionType apiRevisionType = APIRevisionType.All);
+        /// <summary>
+        /// Get APIRevisions assigned to a user for review
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <returns></returns>
         public Task<IEnumerable<APIRevisionListItemModel>> GetAPIRevisionsAssignedToUser(string userName);
+        /// <summary>
+        /// Get ReviewIds for review that are linked by crossLanguagePackageId
+        /// </summary>
+        /// <param name="crossLanguagePackageId"></param>
+        /// <returns></returns>
+        public Task<IEnumerable<string>> GetReviewIdsOfLanguageCorrespondingReviewAsync(string crossLanguagePackageId);
 
     }
 }

@@ -244,14 +244,17 @@ export function getDisplayedCommentRows(commentRows: JQuery<HTMLElement>, clearC
  * @returns result dictionary of "reviewId" and "revisionId", if they exist; undefined otherwise
  */
 export function getReviewAndRevisionIdFromUrl(uri) {
-  const regex = /.+(Review|Conversation|Revisions|Samples)\/([a-zA-Z0-9]+)(\?revisionId=([a-zA-Z0-9]+))?/;
+  const regex = /.+(Review|Conversation|Revisions|Samples)\/([a-zA-Z0-9]+)(\/([a-zA-Z0-9]+)|\?revisionId=([a-zA-Z0-9]+))?/;
 
   const match = uri.match(regex);
   const result = {}
 
   if (match) {
     result["reviewId"] = match[2];
-    result["revisionId"] = match[4];  // undefined if latest revision 
+    result["revisionId"] = match[4];  // undefined if latest revision, or searchParam used
+    if (!result["revisionId"]) {
+      result["revisionId"] = match[5];
+    }
   } 
 
   return result;
@@ -262,7 +265,7 @@ export function getCommentsRow(id: string) {
 }
 
 // side effect: creates a comment row if it doesn't already exist
-export function showCommentBox(id: string, classes: string = '', groupNo: string = '', moveFocus: boolean = true) {
+export function showCommentBox(id: string, classes: string = '', crossLangId: string = '',  moveFocus: boolean = true) {
   let commentForm;
   let commentsRow = getCommentsRow(id);
   let commentRowClasses = "comment-row";
@@ -271,9 +274,9 @@ export function showCommentBox(id: string, classes: string = '', groupNo: string
   }
 
   if (commentsRow.length === 0) {
-    commentForm = createCommentForm(groupNo);
+    commentForm = createCommentForm();
     commentsRow =
-      $(`<tr class="${commentRowClasses}" data-line-id="${id}">`)
+      $(`<tr class="${commentRowClasses}" data-line-id="${id}" data-cross-lang-id="${crossLangId}">`)
         .append($("<td colspan=\"3\">")
           .append(commentForm));
 
@@ -282,48 +285,10 @@ export function showCommentBox(id: string, classes: string = '', groupNo: string
   else {
     // there is one or more comment rows - insert form
     let replyArea = $(commentsRow).find(".review-thread-reply");
-    let targetReplyArea = replyArea.first();
-    let firstReplyId = targetReplyArea.attr("data-reply-id");
-    let insertAtBegining = false;
 
-    if (groupNo) {
-      replyArea.siblings(".comment-form").remove();
-      if (Number(groupNo) < Number(firstReplyId)) {
-        insertAtBegining = true;
-      }
-      else {
-        replyArea.each(function (index, value) {
-          let replyId = $(value).attr("data-reply-id");
-
-          if (replyId == groupNo) {
-            targetReplyArea = $(value);
-            return false;
-          }
-
-          if (Number(replyId) > Number(groupNo)) {
-            return false;
-          }
-
-          targetReplyArea = $(value);
-        });
-      }
-    }
-    else {
-      let rowGroupNo = getReplyGroupNo($(targetReplyArea));
-      if (rowGroupNo.length > 0) {
-        insertAtBegining = true;
-      }
-    }
-
-    commentForm = $(targetReplyArea).next();
+    commentForm = $(replyArea).next();
     if (!commentForm.hasClass("comment-form")) {
-      if (insertAtBegining) {
-        let commentThreadContent = $(targetReplyArea).closest(".comment-thread-contents");
-        $(createCommentForm(groupNo)).prependTo(commentThreadContent);
-      }
-      else {
-        commentForm = $(createCommentForm(groupNo)).insertAfter(targetReplyArea);
-      }
+      commentForm = $(createCommentForm()).insertAfter(replyArea);
     }
     replyArea.hide();
     commentForm.show();
@@ -342,20 +307,12 @@ export function showCommentBox(id: string, classes: string = '', groupNo: string
   }
 }
 
-export function createCommentForm(groupNo: string = '') {
-  var commentForm = $("#js-comment-form-template").children().clone();
-  if (groupNo) {
-    commentForm.find("form .new-comment-content").prepend(`<span class="badge badge-pill badge-light mb-2"><small>ROW-${groupNo}</small></span>`);
-  }
-  return commentForm;
+export function createCommentForm() {
+  return $("#js-comment-form-template").children().clone();
 }
 
 export function getDiagnosticsRow(id: string) {
   return $(`.code-diagnostics[data-line-id='${id}']`);
-}
-
-export function getReplyGroupNo(sibling: JQuery<HTMLElement>) {
-  return $(sibling).prevAll("a").first().find("small");
 }
 
 export function getElementId(element: HTMLElement, idName: string = "data-line-id") {

@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             if (gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.ResetPullRequestActivity))
             {
                 if (prCommentPayload.Sender.Type != AccountType.Bot &&
-                    LabelUtils.HasLabel(prCommentPayload.Issue.Labels, LabelConstants.NoRecentActivity))
+                    LabelUtils.HasLabel(prCommentPayload.Issue.Labels, TriageLabelConstants.NoRecentActivity))
                 {
                     if (prCommentPayload.Action == ActionConstants.Created &&
                         prCommentPayload.Issue.State == ItemState.Open &&
@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 
                         if (removeLabel)
                         {
-                            gitHubEventClient.RemoveLabel(LabelConstants.NoRecentActivity);
+                            gitHubEventClient.RemoveLabel(TriageLabelConstants.NoRecentActivity);
                         }
                     }
                 }
@@ -111,7 +111,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 if (prCommentPayload.Action == ActionConstants.Created)
                 {
                     if (prCommentPayload.Issue.State == ItemState.Closed &&
-                        LabelUtils.HasLabel(prCommentPayload.Issue.Labels, LabelConstants.NoRecentActivity) &&
+                        LabelUtils.HasLabel(prCommentPayload.Issue.Labels, TriageLabelConstants.NoRecentActivity) &&
                         CommentUtils.CommentContainsText(prCommentPayload.Comment.Body, CommentConstants.Reopen))
                     {
                         bool reOpen = false;
@@ -130,7 +130,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         if (reOpen)
                         {
                             gitHubEventClient.SetIssueState(prCommentPayload.Issue, ItemState.Open);
-                            gitHubEventClient.RemoveLabel(LabelConstants.NoRecentActivity);
+                            gitHubEventClient.RemoveLabel(TriageLabelConstants.NoRecentActivity);
                         }
                         else
                         {

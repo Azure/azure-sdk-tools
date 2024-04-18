@@ -35,6 +35,7 @@ Central-EngSys,This issue is owned by the Engineering System team.,ffeb77
 Client,This issue points to a problem in the data-plane of the library.,ffeb77
 Cloud Shell,,e99695
 CodeGen,Issues that relate to code generation,e99695
+Code Signing,,e99695
 Cognitive - Anomaly Detector,,e99695
 Cognitive - Bing,,e99695
 Cognitive - Computer Vision,,e99695
@@ -106,6 +107,7 @@ Data Migration,,e99695
 Data Share,,e99695
 DataBox,,e99695
 DataBox Edge,,e99695
+Defender ESAM,,e99695
 Dev Spaces,,e99695
 Device Update,,e99695
 DevOps,,e99695

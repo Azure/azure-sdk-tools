@@ -18,7 +18,9 @@ namespace APIViewWeb
         {
             try
             {
-                return new HtmlString(MarkdownAsHtml(text));
+                string htmlContent = MarkdownAsHtml(text);
+                htmlContent = AddTargetBlankToLinks(htmlContent);
+                return new HtmlString(htmlContent);
             }
             catch
             {
@@ -31,5 +33,10 @@ namespace APIViewWeb
 
         public static string MarkdownAsPlainText(string text) =>
             Markdown.ToPlainText(text ?? "", MarkdownPipeline);
+
+        private static string AddTargetBlankToLinks(string htmlContent)
+        {
+            return System.Text.RegularExpressions.Regex.Replace(htmlContent, "<a(?!.*?target=)(.*?)>", "<a$1 target=\"_blank\" rel=\"noopener noreferrer\">");
+        }
     }
 }

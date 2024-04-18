@@ -77,8 +77,8 @@ html {
     bottom: 0;
     width: 100%;
     white-space: nowrap;
-    height: 40px;
-    line-height: 40px;
+    height: 30px;
+    line-height: 30px;
     z-index: 3;
     background: var(--base-bg-color);
 }
@@ -91,6 +91,11 @@ html {
 .nav-link:hover, .nav-link:focus {
     text-decoration: none;
     color: var(--link-active);
+}
+
+.navbar-brand {
+    padding-top: 0rem;
+    padding-bottom: 0rem;
 }
 
 .rounded-1 {
@@ -144,6 +149,8 @@ input[type="search"]::-webkit-search-cancel-button {
 .main-nav-cst-theme {
     background-color: var(--navbar-bg);
     color: var(--navbar-text);
+    padding-top: 0px;
+    padding-bottom: 0px;
 
     a:hover {
         text-decoration: none;
@@ -193,11 +200,11 @@ input[type="search"]::-webkit-search-cancel-button {
     color: var(--primary-btn-color);
 }
 
-.tooltip.bs-tooltip-right .tooltip-arrow::before {
+.tooltip.bs-tooltip-end .tooltip-arrow::before {
     border-right-color: var(--primary-color) !important;
 }
 
-.tooltip.bs-tooltip-left .tooltip-arrow::before {
+.tooltip.bs-tooltip-start .tooltip-arrow::before {
     border-left-color: var(--primary-color) !important;
 }
 

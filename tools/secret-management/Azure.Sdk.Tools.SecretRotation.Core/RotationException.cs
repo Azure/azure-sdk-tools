@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.SecretRotation.Core;
+namespace Azure.Sdk.Tools.SecretRotation.Core;
 
 public class RotationException : Exception
 {

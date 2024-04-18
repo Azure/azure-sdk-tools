@@ -4,6 +4,7 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -71,9 +72,11 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (!string.IsNullOrWhiteSpace(recordingId))
             {
+
             }
             else
             {
+
             }
         }
 
@@ -85,16 +88,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
             List<string> sanitizers = new List<string>();
 
-            if (!string.IsNullOrWhiteSpace(recordingId))
-            {
-            }
-            else
-            {
-            }
         }
 
         [HttpPost]
-        public void Sanitizers()
+        public async Task Sanitizers()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -111,7 +108,10 @@ namespace Azure.Sdk.Tools.TestProxy
                 sanitizers = _recordingHandler.SanitizerRegistry.GetRegisteredSanitizers();
             }
 
-            // TODO: write the objects to the response
+            var json = JsonSerializer.Serialize(new { Sanitizers = sanitizers });
+            Response.Headers.Add("Content-Type", "application/json");
+
+            await Response.WriteAsync(json);
         }
 
         [HttpPost]
@@ -123,16 +123,21 @@ namespace Azure.Sdk.Tools.TestProxy
 
             RecordedTestSanitizer s = (RecordedTestSanitizer)GetSanitizer(sName, await HttpRequestInteractions.GetBody(Request));
 
+            string registeredSanitizerId;
+
             if (recordingId != null)
             {
-                var registeredSanitizerId = _recordingHandler.RegisterSanitizer(s, recordingId);
+                registeredSanitizerId = _recordingHandler.RegisterSanitizer(s, recordingId);
             }
             else
             {
-                var registeredSanitizerId = _recordingHandler.RegisterSanitizer(s);
+                registeredSanitizerId = _recordingHandler.RegisterSanitizer(s);
             }
 
-            // TODO: write the new sanitizer into the response body
+            var json = JsonSerializer.Serialize(new { Sanitizer = registeredSanitizerId });
+            Response.Headers.Add("Content-Type", "application/json");
+
+            await Response.WriteAsync(json);
         }
 
         [HttpPost]
@@ -157,14 +162,17 @@ namespace Azure.Sdk.Tools.TestProxy
                 if (recordingId != null)
                 {
                     registeredSanitizers.Append(_recordingHandler.RegisterSanitizer(sanitizer, recordingId));
+                    Response.Headers.Add("x-recording-id", recordingId);
                 }
                 else
                 {
                     registeredSanitizers.Append(_recordingHandler.RegisterSanitizer(sanitizer));
                 }
             }
+            var json = JsonSerializer.Serialize(new { Sanitizers = registeredSanitizers });
+            Response.Headers.Add("Content-Type", "application/json");
 
-            // TODO: write the new sanitizerIds into the response body
+            await Response.WriteAsync(json);
         }
 
 

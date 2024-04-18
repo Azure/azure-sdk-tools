@@ -131,6 +131,7 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
   await mkdir(srcDir, { recursive: true });
 
   if (localSpecRepo) {
+    Logger.info("NOTE: A path to a local spec was provided, will generate based off of local files...");
     Logger.debug(`Using local spec directory: ${localSpecRepo}`);
     function filter(src: string): boolean {
       if (src.includes("node_modules")) {
@@ -295,7 +296,7 @@ async function main() {
         const outputDir = await sdkInit({config: options.tspConfig!, outputDir: rootUrl, emitter, commit: options.commit, repo: options.repo, isUrl: options.isUrl});
         Logger.info(`SDK initialized in ${outputDir}`);
         if (!options.skipSyncAndGenerate) {
-          await syncTspFiles(outputDir);
+          await syncTspFiles(outputDir, options.localSpecRepo);
           await generate({ rootUrl: outputDir, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
         }
         break;

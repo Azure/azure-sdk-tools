@@ -1,5 +1,9 @@
 # Release
 
+## 2024-04-19 - 0.5.1
+
+- Support `local-spec-repo` with `init` command.
+
 ## 2024-02-21 - 0.5.0
 
 - Support `emitter-package-lock.json` files.

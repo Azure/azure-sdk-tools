@@ -1,6 +1,6 @@
 # Release
 
-## 2024-04-19 - 0.7.0
+## 2024-04-18 - 0.7.0
 
 - Remove `resources.json` after converting resource manager specifications.
 - Support `local-spec-repo` with `init` command.

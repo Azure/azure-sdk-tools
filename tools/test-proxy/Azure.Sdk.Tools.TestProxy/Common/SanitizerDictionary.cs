@@ -1,11 +1,8 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.CodeAnalysis.Host.Mef;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {

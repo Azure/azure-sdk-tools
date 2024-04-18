@@ -1,7 +1,6 @@
 using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
-using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Azure.Sdk.Tools.TestProxy.Vendored;
@@ -18,7 +17,6 @@ using System.Net.Http;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;

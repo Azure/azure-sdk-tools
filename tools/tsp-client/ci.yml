@@ -98,7 +98,7 @@ extends:
             - bash: |
                 echo -e "\e[32m[$(date -u)] LOG: publish the package"
                 echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc
-                for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/$(VAR_ARTIFACT_NAME)/*.tgz
+                for file in $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/*.tgz
                 do
                   echo -e "\e[32m[$(date -u)] LOG: File: $file"
                   npm publish $file --access public || { echo 'publish $file failed' ; exit 1; }

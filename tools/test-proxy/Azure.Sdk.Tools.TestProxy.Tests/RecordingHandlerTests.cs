@@ -213,7 +213,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Single(sessionSanitizers);
             Assert.IsType<BodyRegexSanitizer>(sessionSanitizers[0]);
             _checkDefaultExtensions(testRecordingHandler, CheckSkips.IncludeMatcher | CheckSkips.IncludeTransforms);
-            Assert.Empty(session.AppliedSanitizers);
+            Assert.Equal(session.AppliedSanitizers, testRecordingHandler.SanitizerRegistry.SessionSanitizers);
             Assert.Empty(session.AdditionalTransforms);
             Assert.Null(session.CustomMatcher);
         }
@@ -234,7 +234,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var session = testRecordingHandler.RecordingSessions.First().Value;
 
             // check that the individual session had reset sanitizers
-            Assert.Empty(testRecordingHandler.SanitizerRegistry.GetSanitizers(session));
+            Assert.Equal(testRecordingHandler.SanitizerRegistry.GetSanitizers(), testRecordingHandler.SanitizerRegistry.GetSanitizers(session));
 
             // stop the recording to clear out the session cache
             testRecordingHandler.StopRecording(recordingId);

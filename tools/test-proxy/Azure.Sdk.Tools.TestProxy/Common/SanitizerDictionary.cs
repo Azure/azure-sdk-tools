@@ -52,7 +52,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             var sessionSanitizers = DefaultSanitizerList.Select(x => x.Id);
 
-            // todo ensure we add as well, just in case something has been removed from the global session sanitizer list
             foreach (var id in SessionSanitizers)
             {
                 if (!sessionSanitizers.Contains(id))

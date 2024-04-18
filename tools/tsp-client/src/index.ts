@@ -3,7 +3,7 @@ import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRe
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, writeFile, cp, readFile, access, stat, rename } from "node:fs/promises";
+import { mkdir, writeFile, cp, readFile, access, stat, rename, unlink } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
@@ -353,6 +353,14 @@ async function main() {
           readme = normalizePath(resolve(readme));
         }
         await convert(readme, rootUrl, options.arm);
+        if (options.arm) {
+          try {
+            await unlink(joinPaths(rootUrl, "resources.json"));
+          } catch (err) {
+            Logger.error(`Error occurred while attempting to delete resources.json: ${err}`);
+            process.exit(1);
+          }
+        }
         break;
       default:
         throw new Error(`Unknown command: ${options.command}`);

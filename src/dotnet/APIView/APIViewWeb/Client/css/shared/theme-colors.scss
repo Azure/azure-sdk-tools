@@ -42,10 +42,10 @@
     --name-color: #{$base-text-color};
     --code-color: #d1377e;
     --code-comment: green;
-    --code-diagnostics-error-color: lightpink;
-    --code-diagnostics-warn-color: lightyellow;
-    --code-diagnostics-info-color: lightblue;
-    --code-added: #cee9d3;
+    --code-diagnostics-error-color: #ffcfad;
+    --code-diagnostics-warn-color: #fff1b5;
+    --code-diagnostics-info-color: #c8e6e5;
+    --code-diagnostics-fatal-color: #f5a3b9;
     --code-removed: #fdcfce;
     --code-delta: #fdefc6;
     /*----SVG-------------------------------------------------*/
@@ -97,10 +97,14 @@
     --name-color: #{$base-text-color};
     --code-color: #db3984;
     --code-comment: green;
-    --code-diagnostics-error-color: darkmagenta;
+    --code-diagnostics-error-color: #d58515;
+    --code-diagnostics-warn-color: #e6d06e;
+    --code-diagnostics-info-color: #a20606;
+    --code-diagnostics-fatal-color: #4703ff;
+    /*    --code-diagnostics-error-color: darkmagenta;
     --code-diagnostics-warn-color: #846007;
     --code-diagnostics-info-color: darkblue;
-    --code-added: #14432d;
+    --code-diagnostics-fatal-color: #4703ff;*/
     --code-removed: #491d24;
     --code-delta: #4c401a;
     /*----SVG-------------------------------------------------*/
@@ -157,6 +161,7 @@
     --code-diagnostics-error-color: #ff4c59;
     --code-diagnostics-warn-color: #e3a710;
     --code-diagnostics-info-color: #5197f0;
+    --code-diagnostics-fatal-color: #994cff;
     --code-added: #345039;
     --code-removed: #5d3837;
     --code-delta: #695b32;

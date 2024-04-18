@@ -110,7 +110,7 @@ export async function getOptions(): Promise<Options> {
 
     if (command === "init") {
       if (!values["tsp-config"]) {
-        Logger.error("tspConfig is required");
+        Logger.error("A tspconfig.yaml is required to initialize a client library");
         printUsage();
         process.exit(1);
       }

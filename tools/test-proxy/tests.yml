@@ -114,7 +114,7 @@ stages:
           displayName: "Use Node 18.x"
 
         - pwsh: |
-            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1
+            git clone https://github.com/$(REPO) $(CLONE_LOCATION) --depth 1 --branch main
           displayName: Clone Repo
 
         - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml

@@ -168,12 +168,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public string Unregister(string sanitizerId)
         {
-
+            return null;
         }
 
         public string Unregister(string sanitizerId, ModifiableRecordSession session)
         {
-
+            return null;
         }
 
         /// <summary>

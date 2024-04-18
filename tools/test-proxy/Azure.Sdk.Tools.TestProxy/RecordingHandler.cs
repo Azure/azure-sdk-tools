@@ -181,7 +181,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             await RestoreAssetsJson(assetsJson, false);
 
-            var session = new ModifiableRecordSession(new RecordSession())
+            var session = new ModifiableRecordSession(new RecordSession(), SanitizerRegistry)
             {
                 Path = !string.IsNullOrWhiteSpace(sessionId) ? (await GetRecordingPath(sessionId, assetsJson)) : String.Empty,
                 Client = null
@@ -373,7 +373,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var id = Guid.NewGuid().ToString();
             DebugLogger.LogTrace($"PLAYBACK START BEGIN {id}.");
 
-            ModifiableRecordSession session;
+            ModifiableRecordSession session = new ModifiableRecordSession(SanitizerRegistry);
 
             if (mode == RecordingType.InMemory)
             {
@@ -396,7 +396,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 using var stream = System.IO.File.OpenRead(path);
                 using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
-                session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement))
+                session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement), SanitizerRegistry)
                 {
                     Path = path
                 };

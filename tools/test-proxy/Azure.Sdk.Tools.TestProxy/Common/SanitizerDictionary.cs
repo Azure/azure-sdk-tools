@@ -5,6 +5,7 @@ using System.Security.Cryptography.X509Certificates;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.CodeAnalysis.Host.Mef;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -30,7 +31,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public List<string> SessionSanitizers = new List<string>();
         private int CurrentId = 0;
 
-        public SanitizerDictionary() { }
+        public SanitizerDictionary() {
+            ResetSessionSanitizers();
+        }
 
         public List<RegisteredSanitizer> DefaultSanitizerList = new List<RegisteredSanitizer>
             {
@@ -50,18 +53,20 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public void ResetSessionSanitizers()
         {
-            var sessionSanitizers = DefaultSanitizerList.Select(x => x.Id);
+            var expectedSanitizers = DefaultSanitizerList;
 
-            foreach (var id in SessionSanitizers)
+            for (int i = 0; i < expectedSanitizers.Count; i++)
             {
-                if (!sessionSanitizers.Contains(id))
+                var id = expectedSanitizers[i].Id;
+                var sanitizer = expectedSanitizers[i].Sanitizer;
+
+                if (!Sanitizers.ContainsKey(id))
                 {
-                    if(!Sanitizers.TryRemove(id, out var sanitizer))
-                    {
-                        throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"Unable to properly clean up  a session sanitizer under id {id}.");
-                    }
+                    _register(sanitizer, id);
                 }
             }
+
+            SessionSanitizers = DefaultSanitizerList.Select(x => x.Id).ToList();
         }
 
         /// <summary>
@@ -119,11 +124,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public bool Register(RecordedTestSanitizer sanitizer)
         {
             var strCurrent = CurrentId.ToString();
+            CurrentId++;
 
             if (_register(sanitizer, strCurrent))
             {
                 SessionSanitizers.Add(strCurrent);
-                CurrentId++;
                 return true;
             }
             return false;
@@ -139,12 +144,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public bool Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer)
         {
             var strCurrent = CurrentId.ToString();
+            CurrentId++;
             if (_register(sanitizer, strCurrent))
             {
                 session.AppliedSanitizers.Add(strCurrent);
                 session.ForRemoval.Add(strCurrent);
 
-                CurrentId++;
                 return true;
             }
 

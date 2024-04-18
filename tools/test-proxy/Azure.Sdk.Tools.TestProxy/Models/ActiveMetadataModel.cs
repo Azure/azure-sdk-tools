@@ -44,13 +44,14 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                 handler.InMemorySessions
             };
 
+            var sanitizers = handler.SanitizerRegistry.GetSanitizers();
             var recordingFound = false;
             if (!string.IsNullOrWhiteSpace(recordingId)){
                 foreach (var sessionDict in searchCollections)
                 { 
                     if (sessionDict.TryGetValue(recordingId, out var session))
                     {
-                        sanitizers = sanitizers.Concat(session.AdditionalSanitizers);
+                        sanitizers = handler.SanitizerRegistry.GetSanitizers(session);
                         transforms = transforms.Concat(session.AdditionalTransforms);
 
                         if (session.CustomMatcher != null)

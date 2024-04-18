@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public HttpClient RedirectlessClient;
         public HttpClient RedirectableClient;
 
-        public SanitizerDictionary Sanitizers = new SanitizerDictionary();
+        public SanitizerDictionary SanitizerRegistry = new SanitizerDictionary();
 
         public List<ResponseTransform> Transforms { get; set; }
 
@@ -115,7 +115,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 return;
             }
 
-            var sanitizers = Sanitizers.GetSanitizers(recordingSession);
+            var sanitizers = SanitizerRegistry.GetSanitizers(recordingSession);
 
             foreach (RecordedTestSanitizer sanitizer in sanitizers)
             {
@@ -203,7 +203,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
 
-            var sanitizers = Sanitizers.GetSanitizers(session);
+            var sanitizers = SanitizerRegistry.GetSanitizers(session);
 
             DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
 
@@ -457,7 +457,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
 
-            var sanitizers = Sanitizers.GetSanitizers(session);
+            var sanitizers = SanitizerRegistry.GetSanitizers(session);
 
             DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
 
@@ -872,7 +872,7 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region utility and common-use functions
-        public void RegisterSanitizer(RecordedTestSanitizer sanitizer, string? recordingId = null)
+        public void RegisterSanitizer(RecordedTestSanitizer sanitizer, string recordingId = null)
         {
             if (!string.IsNullOrWhiteSpace(recordingId))
             {
@@ -881,7 +881,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         lock (playbackSession)
                         {
-                            Sanitizers.Register(playbackSession, sanitizer);
+                            SanitizerRegistry.Register(playbackSession, sanitizer);
                         }
                     }
 
@@ -889,7 +889,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         lock (recordingSession)
                         {
-                            Sanitizers.Register(recordingSession, sanitizer);
+                            SanitizerRegistry.Register(recordingSession, sanitizer);
                         }
                     }
 
@@ -897,7 +897,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         lock (inMemSession)
                         {
-                            Sanitizers.Register(inMemSession, sanitizer);
+                            SanitizerRegistry.Register(inMemSession, sanitizer);
                         }
                     }
 
@@ -909,7 +909,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
-                Sanitizers.Register(sanitizer);
+                SanitizerRegistry.Register(sanitizer);
             }
         }
 
@@ -940,15 +940,15 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
                 {
-                    playbackSession.ResetExtensions(Sanitizers);
+                    playbackSession.ResetExtensions(SanitizerRegistry);
                 }
                 if (RecordingSessions.TryGetValue(recordingId, out var recordSession))
                 {
-                    recordSession.ResetExtensions(Sanitizers);
+                    recordSession.ResetExtensions(SanitizerRegistry);
                 }
                 if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
                 {
-                    inMemSession.ResetExtensions(Sanitizers);
+                    inMemSession.ResetExtensions(SanitizerRegistry);
                 }
             }
             else
@@ -997,7 +997,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());
                 }
 
-                Sanitizers.ResetSessionSanitizers();
+                SanitizerRegistry.ResetSessionSanitizers();
 
                 Transforms = new List<ResponseTransform>
                 {

@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
     public class SanitizerDictionary
     {
-        private ConcurrentDictionary<string, RegisteredSanitizer> Sanitizers;
+        private ConcurrentDictionary<string, RegisteredSanitizer> Sanitizers = new ConcurrentDictionary<string, RegisteredSanitizer>();
 
         // we have to know which sanitizers are session only
         // so that when we start a new recording we can properly 

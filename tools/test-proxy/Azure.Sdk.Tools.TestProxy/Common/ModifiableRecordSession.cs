@@ -14,13 +14,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public ModifiableRecordSession(SanitizerDictionary sanitizerRegistry)
         {
-            this.AppliedSanitizers = [.. sanitizerRegistry.SessionSanitizers];
+            this.AppliedSanitizers = sanitizerRegistry.SessionSanitizers.ToList();
         }
 
         public ModifiableRecordSession(RecordSession session, SanitizerDictionary sanitizerRegistry)
         {
             Session = session;
-            this.AppliedSanitizers = [.. sanitizerRegistry.SessionSanitizers];
+            this.AppliedSanitizers = sanitizerRegistry.SessionSanitizers.ToList();
         }
 
         public string Path { get; set; }

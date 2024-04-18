@@ -76,26 +76,36 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <returns></returns>
         public List<RecordedTestSanitizer> GetSanitizers(ModifiableRecordSession session)
         {
-            var sanitizers = new List<RecordedTestSanitizer>();
-            foreach(var id in session.AppliedSanitizers)
+            return GetRegisteredSanitizers(session).Select(x => x.Sanitizer).ToList();
+        }
+
+        public List<RecordedTestSanitizer> GetSanitizers()
+        {
+            return GetRegisteredSanitizers().Select(x => x.Sanitizer).ToList();
+        }
+
+        public List<RegisteredSanitizer> GetRegisteredSanitizers(ModifiableRecordSession session)
+        {
+            var sanitizers = new List<RegisteredSanitizer>();
+            foreach (var id in session.AppliedSanitizers)
             {
                 if (Sanitizers.TryGetValue(id, out RegisteredSanitizer sanitizer))
                 {
-                    sanitizers.Add(sanitizer.Sanitizer);
+                    sanitizers.Add(sanitizer);
                 }
             }
 
             return sanitizers;
         }
 
-        public List<RecordedTestSanitizer> GetSanitizers()
+        public List<RegisteredSanitizer> GetRegisteredSanitizers()
         {
-            var sanitizers = new List<RecordedTestSanitizer>();
+            var sanitizers = new List<RegisteredSanitizer>();
             foreach (var id in SessionSanitizers)
             {
                 if (Sanitizers.TryGetValue(id, out RegisteredSanitizer sanitizer))
                 {
-                    sanitizers.Add(sanitizer.Sanitizer);
+                    sanitizers.Add(sanitizer);
                 }
             }
 
@@ -121,7 +131,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="sanitizer"></param>
         /// <returns></returns>
         /// <exception cref="HttpException"></exception>
-        public bool Register(RecordedTestSanitizer sanitizer)
+        public string Register(RecordedTestSanitizer sanitizer)
         {
             var strCurrent = CurrentId.ToString();
             CurrentId++;
@@ -129,9 +139,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             if (_register(sanitizer, strCurrent))
             {
                 SessionSanitizers.Add(strCurrent);
-                return true;
+                return strCurrent;
             }
-            return false;
+            return string.Empty;
         }
 
         /// <summary>
@@ -141,7 +151,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <param name="sanitizer"></param>
         /// <returns></returns>
         /// <exception cref="HttpException"></exception>
-        public bool Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer)
+        public string Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer)
         {
             var strCurrent = CurrentId.ToString();
             CurrentId++;
@@ -150,10 +160,20 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 session.AppliedSanitizers.Add(strCurrent);
                 session.ForRemoval.Add(strCurrent);
 
-                return true;
+                return strCurrent;
             }
 
-            return false;
+            return string.Empty;
+        }
+
+        public string Unregister(string sanitizerId)
+        {
+
+        }
+
+        public string Unregister(string sanitizerId, ModifiableRecordSession session)
+        {
+
         }
 
         /// <summary>

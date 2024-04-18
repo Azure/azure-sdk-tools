@@ -872,45 +872,54 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region utility and common-use functions
-        public void RegisterSanitizer(RecordedTestSanitizer sanitizer, string recordingId = null)
+
+        public ModifiableRecordSession GetActiveSession(string recordingId)
+        {
+            if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
+            {
+                return playbackSession;
+            }
+
+            if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
+            {
+                return recordingSession;
+            }
+
+            if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
+            {
+                return inMemSession;
+            }
+
+            throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
+        }
+
+        public string UnregisterSanitizer(string sanitizerId, string recordingId = null)
         {
             if (!string.IsNullOrWhiteSpace(recordingId))
             {
+                var session = GetActiveSession(recordingId);
+
+                lock (session)
                 {
-                    if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
-                    {
-                        lock (playbackSession)
-                        {
-                            SanitizerRegistry.Register(playbackSession, sanitizer);
-                        }
-                    }
-
-                    if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
-                    {
-                        lock (recordingSession)
-                        {
-                            SanitizerRegistry.Register(recordingSession, sanitizer);
-                        }
-                    }
-
-                    if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
-                    {
-                        lock (inMemSession)
-                        {
-                            SanitizerRegistry.Register(inMemSession, sanitizer);
-                        }
-                    }
-
-                    if (inMemSession == null && recordingSession == null && playbackSession == null)
-                    {
-                        throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
-                    }
+                    return SanitizerRegistry.Unregister(sanitizerId, session);
                 }
             }
-            else
+
+            return SanitizerRegistry.Unregister(sanitizerId);
+        }
+
+        public string RegisterSanitizer(RecordedTestSanitizer sanitizer, string recordingId = null)
+        {
+            if (!string.IsNullOrWhiteSpace(recordingId))
             {
-                SanitizerRegistry.Register(sanitizer);
+                var session = GetActiveSession(recordingId);
+
+                lock(session)
+                {
+                    return SanitizerRegistry.Register(session, sanitizer);
+                }
             }
+            return SanitizerRegistry.Register(sanitizer);
         }
 
         public void AddTransformToRecording(string recordingId, ResponseTransform transform)

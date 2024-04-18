@@ -64,6 +64,57 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
+        public void RemoveSanitizer()
+        {
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+
+            if (!string.IsNullOrWhiteSpace(recordingId))
+            {
+            }
+            else
+            {
+            }
+        }
+
+        [HttpPost]
+        public void RemoveSanitizers()
+        {
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+
+            List<string> sanitizers = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(recordingId))
+            {
+            }
+            else
+            {
+            }
+        }
+
+        [HttpPost]
+        public void Sanitizers()
+        {
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
+            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
+
+            List<RegisteredSanitizer> sanitizers;
+
+            if (!string.IsNullOrEmpty(recordingId))
+            {
+                var session = _recordingHandler.GetActiveSession(recordingId);
+                sanitizers = _recordingHandler.SanitizerRegistry.GetRegisteredSanitizers(session);
+            }
+            else
+            {
+                sanitizers = _recordingHandler.SanitizerRegistry.GetRegisteredSanitizers();
+            }
+
+            // TODO: write the objects to the response
+        }
+
+        [HttpPost]
         public async Task AddSanitizer()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
@@ -74,12 +125,14 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (recordingId != null)
             {
-                _recordingHandler.RegisterSanitizer(s, recordingId);
+                var registeredSanitizerId = _recordingHandler.RegisterSanitizer(s, recordingId);
             }
             else
             {
-                _recordingHandler.RegisterSanitizer(s);
+                var registeredSanitizerId = _recordingHandler.RegisterSanitizer(s);
             }
+
+            // TODO: write the new sanitizer into the response body
         }
 
         [HttpPost]
@@ -96,19 +149,22 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, "When bulk adding sanitizers, ensure there is at least one sanitizer added in each batch. Received 0 work items.");
             }
 
+            var registeredSanitizers = new List<string>();
+
             // register them all
             foreach(var sanitizer in workload)
             {
                 if (recordingId != null)
                 {
-                    _recordingHandler.RegisterSanitizer(sanitizer, recordingId);
+                    registeredSanitizers.Append(_recordingHandler.RegisterSanitizer(sanitizer, recordingId));
                 }
                 else
                 {
-                    _recordingHandler.RegisterSanitizer(sanitizer);
+                    registeredSanitizers.Append(_recordingHandler.RegisterSanitizer(sanitizer));
                 }
             }
 
+            // TODO: write the new sanitizerIds into the response body
         }
 
 

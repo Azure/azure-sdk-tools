@@ -173,11 +173,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public string Unregister(string sanitizerId)
         {
+            // session sanitizers are left alone, but removed from SessionSanitizer list
             return null;
         }
 
         public string Unregister(string sanitizerId, ModifiableRecordSession session)
         {
+            // sanitizerId is removed from the session.AppliedSanitizers list
             return null;
         }
 

@@ -917,5 +917,47 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(targetKey, actualTargetKey);
             Assert.Equal(targetString, actualTargetString);
         }
+
+        [Fact]
+        public void RemoveSanitizerErrorsForInvalidId()
+        {
+            // remove sanitizer errors when provided an invalid id
+        }
+
+        [Fact]
+        public void RemoveSanitizerErrorsForMissingId()
+        {
+            // remove sanitizer errors when not provided an id
+        }
+
+        [Fact]
+        public void RemoveSanitizerSucceedsForExistingSessionSanitizer()
+        {
+            // start a recording
+            // remove a session sanitizer
+            // does that work?
+        }
+
+        [Fact]
+        public void RemoveSanitizerSucceedsForAddedRecordingSanitizer()
+        {
+            // start a recording
+            // add two sanitizers to it
+            // remove one
+            // total should be session + the one remainig
+        }
+
+        [Fact]
+        public void GetSanitizersReturnsSessionSanitizers()
+        {
+
+        }
+
+        [Fact]
+        public void GetSanitizersReturnsRecordingSanitizers()
+        {
+
+        }
+
     }
 }

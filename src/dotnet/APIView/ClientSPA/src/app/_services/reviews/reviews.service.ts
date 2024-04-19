@@ -95,5 +95,6 @@ export class ReviewsService {
     if (diffApiRevisionId) {
       params = params.append('diffApiRevisionId', diffApiRevisionId);
     }
-    return this.http.get<ReviewContent>(this.baseUrl + `/${reviewId}/content`, { params: params });
+    return this.http.get<ReviewContent>(this.baseUrl + `/${reviewId}/content`, 
+    { params: params, withCredentials: true });
   }}

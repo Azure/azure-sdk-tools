@@ -1,7 +1,10 @@
-FROM mcr.microsoft.com/powershell
+FROM mcr.microsoft.com/cbl-mariner/base/core:2.0
 
+RUN curl -sSL -O https://packages.microsoft.com/config/rhel/7/packages-microsoft-prod.rpm
+RUN rpm -i packages-microsoft-prod.rpm
+RUN rm packages-microsoft-prod.rpm
+RUN yum install powershell -y
 RUN pwsh -c '$ErrorActionPreference = "Stop"; Install-Module Az -Force';
-RUN apt-get update && apt-get -y install curl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 RUN install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 RUN kubectl version --client

@@ -3,7 +3,7 @@ import { createTempDirectory, removeDirectory, readTspLocation, getEmitterFromRe
 import { Logger, printBanner, enableDebug, printVersion } from "./log.js";
 import { TspLocation, compileTsp, discoverMainFile, resolveTspConfigUrl } from "./typespec.js";
 import { getOptions } from "./options.js";
-import { mkdir, writeFile, cp, readFile, access, stat, rename } from "node:fs/promises";
+import { mkdir, writeFile, cp, readFile, access, stat, rename, unlink } from "node:fs/promises";
 import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } from "./git.js";
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
@@ -130,6 +130,7 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
   await mkdir(srcDir, { recursive: true });
 
   if (localSpecRepo) {
+    Logger.info("NOTE: A path to a local spec was provided, will generate based off of local files...");
     Logger.debug(`Using local spec directory: ${localSpecRepo}`);
     function filter(src: string): boolean {
       if (src.includes("node_modules")) {
@@ -316,7 +317,7 @@ async function main() {
         const outputDir = await sdkInit({config: options.tspConfig!, outputDir: rootUrl, emitter, commit: options.commit, repo: options.repo, isUrl: options.isUrl});
         Logger.info(`SDK initialized in ${outputDir}`);
         if (!options.skipSyncAndGenerate) {
-          await syncTspFiles(outputDir);
+          await syncTspFiles(outputDir, options.localSpecRepo);
           await generate({ rootUrl: outputDir, noCleanup: options.noCleanup, additionalEmitterOptions: options.emitterOptions});
         }
         break;
@@ -352,6 +353,14 @@ async function main() {
           readme = normalizePath(resolve(readme));
         }
         await convert(readme, rootUrl, options.arm);
+        if (options.arm) {
+          try {
+            await unlink(joinPaths(rootUrl, "resources.json"));
+          } catch (err) {
+            Logger.error(`Error occurred while attempting to delete resources.json: ${err}`);
+            process.exit(1);
+          }
+        }
         break;
       default:
         throw new Error(`Unknown command: ${options.command}`);

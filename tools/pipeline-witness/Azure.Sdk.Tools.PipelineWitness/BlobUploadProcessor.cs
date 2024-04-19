@@ -56,10 +56,10 @@ namespace Azure.Sdk.Tools.PipelineWitness
         private readonly BlobContainerClient testResultsContainerClient;
         private readonly BlobContainerClient buildDefinitionsContainerClient;
         private readonly BlobContainerClient buildFailuresContainerClient;
-        private readonly BlobContainerClient pipelineOwnersContainerClient; 
+        private readonly BlobContainerClient pipelineOwnersContainerClient;
         private readonly IOptions<PipelineWitnessSettings> options;
         private readonly Dictionary<string, int?> cachedDefinitionRevisions = new();
-        private readonly IFailureAnalyzer failureAnalyzer;        
+        private readonly IFailureAnalyzer failureAnalyzer;
 
         public BlobUploadProcessor(
             ILogger<BlobUploadProcessor> logger,
@@ -186,7 +186,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             if (build.Definition.Id == options.Value.PipelineOwnersDefinitionId)
             {
-                await UploadPipelineOwnersBlobAsync(account, build, timeline); 
+                await UploadPipelineOwnersBlobAsync(account, build, timeline);
             }
         }
 
@@ -342,7 +342,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                      stringBuilder.AppendLine(contentLine);
                 }
 
-                await blobClient.UploadAsync(new BinaryData(stringBuilder.ToString()));   
+                await blobClient.UploadAsync(new BinaryData(stringBuilder.ToString()));
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
@@ -531,7 +531,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     QueueTime = build.QueueTime,
                     StartTime = build.StartTime,
                     FinishTime = build.FinishTime,
-                    KeepForever = build.KeepForever,
                     LastChangedDate = build.LastChangedDate,
                     LogsId = build.Logs?.Id,
                     LogsType = build.Logs?.Type,

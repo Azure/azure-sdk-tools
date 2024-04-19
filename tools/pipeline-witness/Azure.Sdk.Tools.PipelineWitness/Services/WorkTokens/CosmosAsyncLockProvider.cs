@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
                     new CosmosLockDocument(id, duration),
                     id,
                     partitionKey,
-                    new ItemRequestOptions { IfMatchEtag = response.ETag }, 
+                    new ItemRequestOptions { IfMatchEtag = response.ETag },
                     cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
             {
                 var response = await this.container.CreateItemAsync(
                     new CosmosLockDocument(id, duration),
-                    new PartitionKey(id), 
+                    new PartitionKey(id),
                     cancellationToken: cancellationToken);
 
                 return new CosmosAsyncLock(id, response.ETag, duration, this.container);

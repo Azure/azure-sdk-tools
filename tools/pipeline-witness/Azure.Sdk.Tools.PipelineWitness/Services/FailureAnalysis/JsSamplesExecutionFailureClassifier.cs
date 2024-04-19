@@ -1,15 +1,12 @@
-﻿using Microsoft.TeamFoundation.Build.WebApi;
-using System;
-using System.Collections.Generic;
+using Microsoft.TeamFoundation.Build.WebApi;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
     public class JsSamplesExecutionFailureClassifier : IFailureClassifier
     {
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
             if (context.Build.Definition.Name.StartsWith("js -"))
             {
@@ -26,6 +23,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                     }
                 }
             }
+
+            return Task.CompletedTask;
         }
     }
 }

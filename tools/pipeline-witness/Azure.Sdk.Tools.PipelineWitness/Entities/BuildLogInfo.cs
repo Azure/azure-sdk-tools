@@ -14,7 +14,7 @@
         
         public Guid? RecordId { get; set; }
         
-        public Guid? ParentRecordId { get; set; }        
+        public Guid? ParentRecordId { get; set; }
     }
 }
 

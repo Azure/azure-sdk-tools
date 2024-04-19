@@ -1,16 +1,12 @@
-﻿using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
 using Microsoft.TeamFoundation.Build.WebApi;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
     public class AzuriteInstallFailureClassifier : IFailureClassifier
     {
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
             var failedTasks = from r in context.Timeline.Records
                                 where r.Result == TaskResult.Failed
@@ -25,6 +21,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                     context.AddFailure(failedTask, "Azurite Install");
                 }
             }
+
+            return Task.CompletedTask;
         }
     }
 }

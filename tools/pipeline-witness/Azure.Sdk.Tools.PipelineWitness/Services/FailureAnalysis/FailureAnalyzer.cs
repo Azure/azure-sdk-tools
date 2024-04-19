@@ -1,7 +1,5 @@
 ﻿using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
 using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.VisualStudio.Services.Common;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,7 +27,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 
             if (failures.Count == 0)
             {
-                if (build.Result != BuildResult.Succeeded && 
+                if (build.Result != BuildResult.Succeeded &&
                     build.Result != BuildResult.Canceled)
                 {
                     foreach (var record in timeline.Records.Where(x => x.ParentId.HasValue == false))

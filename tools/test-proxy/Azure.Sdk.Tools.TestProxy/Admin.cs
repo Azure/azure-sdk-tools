@@ -114,6 +114,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var json = JsonSerializer.Serialize(new { Sanitizers = sanitizers });
             Response.Headers.Add("Content-Type", "application/json");
+            Response.ContentLength = json.Length;
 
             await Response.WriteAsync(json);
         }
@@ -140,6 +141,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             var json = JsonSerializer.Serialize(new { Sanitizer = registeredSanitizerId });
             Response.Headers.Add("Content-Type", "application/json");
+            Response.ContentLength = json.Length;
 
             await Response.WriteAsync(json);
         }
@@ -175,6 +177,7 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             var json = JsonSerializer.Serialize(new { Sanitizers = registeredSanitizers });
             Response.Headers.Add("Content-Type", "application/json");
+            Response.ContentLength = json.Length;
 
             await Response.WriteAsync(json);
         }

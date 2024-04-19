@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -412,6 +413,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");
             httpContext.Request.ContentLength = 92;
+            httpContext.Response.Body = new MemoryStream();
 
             var controller = new Admin(testRecordingHandler, _nullLogger)
             {
@@ -422,6 +424,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
             testRecordingHandler.SanitizerRegistry.Clear();
             await controller.AddSanitizer();
+
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            var responseResult = TestHelpers.GenerateStringFromStream(httpContext.Response.Body);
+            Assert.Equal("{\"Sanitizer\":\"1\"}", responseResult);
 
             var result = testRecordingHandler.SanitizerRegistry.GetSanitizers().First();
             Assert.True(result is HeaderRegexSanitizer);

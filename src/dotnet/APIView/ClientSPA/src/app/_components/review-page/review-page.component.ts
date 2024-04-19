@@ -6,13 +6,14 @@ import { CommentItemModel, ReviewContent,  } from 'src/app/_models/review';
 import { APIRevision, CodeHuskNode, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
+import { WorkerService } from 'src/app/_services/worker/worker.service';
 
 @Component({
   selector: 'app-review-page',
   templateUrl: './review-page.component.html',
   styleUrls: ['./review-page.component.scss']
 })
-export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ReviewPageComponent implements OnInit, AfterViewInit {
   reviewId : string | null = null;
   activeApiRevisionId : string | null = null;
   diffApiRevisionId : string | null = null;
@@ -21,22 +22,17 @@ export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
   reviewComments : CommentItemModel[] | undefined = [];
   revisionSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
-  apiTreeBuilder: Worker | undefined = undefined;
-  tokenBuilder: Worker | undefined = undefined;
   apiTreeNodeData: BehaviorSubject<CodeHuskNode | null> = new BehaviorSubject<CodeHuskNode | null>(null);
   tokenLineData: BehaviorSubject<CreateLinesOfTokensMessage | null> = new BehaviorSubject<CreateLinesOfTokensMessage | null>(null);
 
   sideMenu: MenuItem[] | undefined;
 
-  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private commentsService: CommentsService) {}
+  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private commentsService: CommentsService, private workerService: WorkerService) {}
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get('reviewId');
     this.activeApiRevisionId = this.route.snapshot.queryParamMap.get('activeApiRevisionId');
     this.diffApiRevisionId = this.route.snapshot.queryParamMap.get('diffApiRevisionId');
-
-    this.apiTreeBuilder = new Worker(new URL('../../_workers/review-page.worker', import.meta.url));
-    this.tokenBuilder = new Worker(new URL('../../_workers/review-page.worker', import.meta.url));
 
     this.registerWorkerEventHandler();
     this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
@@ -62,20 +58,15 @@ export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  ngOnDestroy() {
-    this.apiTreeBuilder!.terminate();
-    this.tokenBuilder!.terminate();
-  }
-
   registerWorkerEventHandler() {
-    this.apiTreeBuilder!.onmessage = ({ data }) => {
+    this.workerService.onMessageFromApiTreeBuilder().subscribe(data => {
       if (data.directive === ReviewPageWorkerMessageDirective.CreatePageNavigation) {
         this.reviewPageNavigation = data.navTree as TreeNode[];
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.PassToTokenBuilder) {
         data.directive = ReviewPageWorkerMessageDirective.BuildTokens;
-        this.tokenBuilder!.postMessage(data);
+        this.workerService.postToTokenBuilder(data);
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.CreateCodeLineHusk) {
@@ -83,13 +74,13 @@ export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
           this.apiTreeNodeData.next(data.nodeData);
         }
       }
-    };
+    });
 
-    this.tokenBuilder!.onmessage = ({ data }) => {
+    this.workerService.onMessageFromTokenBuilder().subscribe(data => {
       if (data.directive === ReviewPageWorkerMessageDirective.CreateLineOfTokens) {
         this.tokenLineData.next(data);
       }
-    }
+    });
   }
 
   loadReviewContent(reviewId: string, activeApiRevisionId: string | null = null, diffApiRevisionId: string | null = null) {
@@ -100,7 +91,7 @@ export class ReviewPageComponent implements OnInit, OnDestroy, AfterViewInit {
             directive: ReviewPageWorkerMessageDirective.BuildAPITree,
             apiTree : this.reviewContent!.apiForest
           };
-          this.apiTreeBuilder!.postMessage(message);
+          this.workerService.postToApiTreeBuilder(message);
         }
     });
   }

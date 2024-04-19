@@ -27,6 +27,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             return Interlocked.Increment(ref CurrentId);
         }
+
+        public static ulong GetCurrentId()
+        {
+            return CurrentId;
+        }
     }
 
     public class SanitizerDictionary

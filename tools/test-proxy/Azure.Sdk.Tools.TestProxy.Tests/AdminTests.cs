@@ -11,6 +11,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -426,8 +427,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await controller.AddSanitizer();
 
             httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
-            var responseResult = TestHelpers.GenerateStringFromStream(httpContext.Response.Body);
-            Assert.Equal("{\"Sanitizer\":\"1\"}", responseResult);
+
+            var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+            Assert.Equal((int)HttpStatusCode.OK, httpContext.Response.StatusCode);
+            Assert.True(!string.IsNullOrWhiteSpace(response.RootElement.GetProperty("Sanitizer").GetString()));
 
             var result = testRecordingHandler.SanitizerRegistry.GetSanitizers().First();
             Assert.True(result is HeaderRegexSanitizer);

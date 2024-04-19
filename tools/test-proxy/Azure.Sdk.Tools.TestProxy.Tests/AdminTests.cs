@@ -507,6 +507,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var httpContext = new DefaultHttpContext();
             await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"];
+
+            httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-recording-id"] = recordingId;
             httpContext.Request.Headers["x-abstraction-identifier"] = "HeaderRegexSanitizer";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody("{ \"key\": \"Location\", \"value\": \"https://fakeazsdktestaccount.table.core.windows.net/Tables\" }");

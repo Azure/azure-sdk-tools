@@ -1042,7 +1042,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     // "RequestBody": "client_id=...grant_type=...client_info=...client_secret=…scope=...", covered by 1036/1037
                     new BodyKeySanitizer("$..access_token"),
                     new BodyKeySanitizer("$..AccessToken"),
-                    new BodyRegexSanitizer("(client_id=)(?<cid>[^&]+)", groupForReplace: "cid"),
+                    new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&]+)", groupForReplace: "cid"),
                     new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
                     new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
                     // new BodyKeySanitizer("$..targetModelLocation"), disabled, not a secret?

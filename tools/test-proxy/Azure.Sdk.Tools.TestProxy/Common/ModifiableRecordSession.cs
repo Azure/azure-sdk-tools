@@ -12,16 +12,20 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public RecordSession Session { get; }
 
-        public ModifiableRecordSession(SanitizerDictionary sanitizerRegistry)
+        public ModifiableRecordSession(SanitizerDictionary sanitizerRegistry, string sessionId)
         {
             this.AppliedSanitizers = sanitizerRegistry.SessionSanitizers.ToList();
+            this.SessionId = sessionId;
         }
 
-        public ModifiableRecordSession(RecordSession session, SanitizerDictionary sanitizerRegistry)
+        public ModifiableRecordSession(RecordSession session, SanitizerDictionary sanitizerRegistry, string sessionId)
         {
             Session = session;
             this.AppliedSanitizers = sanitizerRegistry.SessionSanitizers.ToList();
+            this.SessionId = sessionId;
         }
+
+        public string SessionId;
 
         public string Path { get; set; }
 

@@ -439,7 +439,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         [Fact]
         public async void TestAddSanitizerWithOddDefaults()
         {
-            // arrange
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
 

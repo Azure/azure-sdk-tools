@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             using var stream = System.IO.File.OpenRead(path);
             using var doc = JsonDocument.Parse(stream);
 
-            return new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement), new SanitizerDictionary());
+            return new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement), new SanitizerDictionary(), Guid.NewGuid().ToString());
         }
 
         public static RecordingHandler LoadRecordSessionIntoInMemoryStore(string path)
@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             using var stream = System.IO.File.OpenRead(path);
             using var doc = JsonDocument.Parse(stream);
             var guid = Guid.NewGuid().ToString();
-            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement), new SanitizerDictionary());
+            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement), new SanitizerDictionary(), Guid.NewGuid().ToString());
 
             RecordingHandler handler = new RecordingHandler(Directory.GetCurrentDirectory());
             handler.InMemorySessions.TryAdd(guid, session);

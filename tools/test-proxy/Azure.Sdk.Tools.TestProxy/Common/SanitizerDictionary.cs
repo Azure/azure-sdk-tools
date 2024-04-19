@@ -27,11 +27,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             return Interlocked.Increment(ref CurrentId);
         }
-
-        public static ulong GetCurrentId()
-        {
-            return CurrentId;
-        }
     }
 
     public class SanitizerDictionary
@@ -178,14 +173,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public string Unregister(string sanitizerId)
         {
-            // session sanitizers are left alone, but removed from SessionSanitizer list
-            return null;
+            if (SessionSanitizers.Contains(sanitizerId))
+            {
+                SessionSanitizers.Remove(sanitizerId);
+                return sanitizerId;
+            }
+
+            throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"The requested sanitizer for removal \"{sanitizerId}\" is not active at the session level.");
         }
 
         public string Unregister(string sanitizerId, ModifiableRecordSession session)
         {
-            // sanitizerId is removed from the session.AppliedSanitizers list
-            return null;
+            if (session.AppliedSanitizers.Contains(sanitizerId))
+            {
+                SessionSanitizers.Remove(sanitizerId);
+                return sanitizerId;
+            }
+
+            throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"The requested sanitizer for removal \"{sanitizerId}\" is not active on recording/playback with id \"{session.SessionId}\".");
         }
 
         /// <summary>

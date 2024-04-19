@@ -64,7 +64,7 @@ class JsLint:
                 cmd = [npm_cmd, 'install', self.module, '--save', '--save-exact']
                 check_call(cmd, tmp_dir_name)
 
-                cmd = [npm_cmd, 'install', 'eslint', '--save-dev']
+                cmd = [npm_cmd, 'install', 'eslint@8.57.0', '--save-dev']
                 check_call(cmd, tmp_dir_name)
 
                 with open(path.join(tmp_dir_name, 'package.json'), encoding='utf-8') as f:

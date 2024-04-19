@@ -70,6 +70,8 @@ namespace Azure.Sdk.Tools.TestProxy
             DebugLogger.LogAdminRequestDetails(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
+            // todo: parse request body
+
             if (!string.IsNullOrWhiteSpace(recordingId))
             {
 
@@ -87,6 +89,8 @@ namespace Azure.Sdk.Tools.TestProxy
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
             List<string> sanitizers = new List<string>();
+
+            // todo: parse request body
 
         }
 

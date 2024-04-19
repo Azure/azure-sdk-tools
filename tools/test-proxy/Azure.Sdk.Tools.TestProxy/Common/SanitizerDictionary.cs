@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 
@@ -18,6 +19,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         }
     }
 
+    public static class IdFactory
+    {
+        private static int CurrentId = 0;
+
+        public static int GetNextId()
+        {
+            return Interlocked.Increment(ref CurrentId);
+        }
+    }
+
     public class SanitizerDictionary
     {
         private ConcurrentDictionary<string, RegisteredSanitizer> Sanitizers = new ConcurrentDictionary<string, RegisteredSanitizer>();
@@ -26,7 +37,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         // so that when we start a new recording we can properly 
         // apply only the sanitizers that have been registered at the global level
         public List<string> SessionSanitizers = new List<string>();
-        private int CurrentId = 0;
 
         public SanitizerDictionary() {
             ResetSessionSanitizers();
@@ -111,6 +121,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public bool _register(RecordedTestSanitizer sanitizer, string id)
         {
+
             if (Sanitizers.TryAdd(id, new RegisteredSanitizer(sanitizer, id)))
             {
                 return true;
@@ -130,8 +141,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <exception cref="HttpException"></exception>
         public string Register(RecordedTestSanitizer sanitizer)
         {
-            var strCurrent = CurrentId.ToString();
-            CurrentId++;
+            var strCurrent = IdFactory.GetNextId().ToString();
 
             if (_register(sanitizer, strCurrent))
             {
@@ -150,8 +160,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <exception cref="HttpException"></exception>
         public string Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer)
         {
-            var strCurrent = CurrentId.ToString();
-            CurrentId++;
+            var strCurrent = IdFactory.GetNextId().ToString();
             if (_register(sanitizer, strCurrent))
             {
                 session.AppliedSanitizers.Add(strCurrent);
@@ -184,7 +193,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 Sanitizers.TryRemove(sanitizerId, out var RemovedSanitizer);
             }
         }
-
         public void Clear()
         {
             foreach(var sanitizerId in SessionSanitizers)

@@ -21,9 +21,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
     public static class IdFactory
     {
-        private static int CurrentId = 0;
+        private static ulong CurrentId = 0;
 
-        public static int GetNextId()
+        public static ulong GetNextId()
         {
             return Interlocked.Increment(ref CurrentId);
         }
@@ -119,9 +119,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return sanitizers;
         }
 
-        public bool _register(RecordedTestSanitizer sanitizer, string id)
+        private bool _register(RecordedTestSanitizer sanitizer, string id)
         {
-
             if (Sanitizers.TryAdd(id, new RegisteredSanitizer(sanitizer, id)))
             {
                 return true;

@@ -1014,7 +1014,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     // new defaults begin
                     new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
                     new GeneralRegexSanitizer(regex: "AccountKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
-                    // "containerUrl": "<URL>/<Container>?sp=...st=...se=...spr=...sv=...sr=...sig="
+                    new BodyKeySanitizer("$..containerUrl"),
                     new GeneralRegexSanitizer(regex: "accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
                     // "token": "sv=2023-08-03\u0026ss=b\u0026srt=sco\u0026se=2050-12-12T00%3A00%3A00Z\u0026sp=rwdxlacuptf\u0026sig="
                     new BodyKeySanitizer("$..applicationSecret"),
@@ -1042,7 +1042,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     // "RequestBody": "client_id=...grant_type=...client_info=...client_secret=…scope=...", covered by 1036/1037
                     new BodyKeySanitizer("$..access_token"),
                     new BodyKeySanitizer("$..AccessToken"),
-                    //(client_id=)[^&]+ body regex // disabled, not a secret?
+                    new BodyRegexSanitizer("(client_id=)(?<cid>[^&]+)", groupForReplace: "cid"),
                     new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
                     new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
                     // new BodyKeySanitizer("$..targetModelLocation"), disabled, not a secret?

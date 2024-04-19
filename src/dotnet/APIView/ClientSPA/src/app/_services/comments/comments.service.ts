@@ -13,6 +13,6 @@ export class CommentsService {
   constructor(private http: HttpClient, private configService: ConfigService) { }
 
   getComments(reviewId: string) : Observable<CommentItemModel[]> {
-    return this.http.get<CommentItemModel[]>(this.baseUrl + `/${reviewId}`);
+    return this.http.get<CommentItemModel[]>(this.baseUrl + `/${reviewId}`, { withCredentials: true });
   }
 }

@@ -9,8 +9,8 @@ export class WorkerService {
   private tokenBuilder : Worker;
 
   constructor() {
-    this.apiTreeBuilder = new Worker(new URL('../../_workers/review-page.worker', import.meta.url));
-    this.tokenBuilder = new Worker(new URL('../../_workers/review-page.worker', import.meta.url));
+    this.apiTreeBuilder = new Worker(new URL('../../_workers/apitree-builder.worker', import.meta.url));
+    this.tokenBuilder = new Worker(new URL('../../_workers/token-builder.worker', import.meta.url));
   }
 
   postToApiTreeBuilder(message: any) {

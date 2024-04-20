@@ -1,16 +1,19 @@
-import { ApplicationRef, ChangeDetectorRef, Component, ElementRef, Injector, Input, ViewChild, ViewContainerRef, } from '@angular/core';
-import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
-import { debounce, finalize } from 'rxjs/operators';
+import { ChangeDetectorRef, Component, ElementRef, Input, ViewChild, ViewContainerRef } from '@angular/core';
+import { BehaviorSubject, fromEvent, Subject, takeUntil } from 'rxjs';
+import { debounceTime, finalize } from 'rxjs/operators';
 import { CommentItemModel } from 'src/app/_models/review';
 import { CodeHuskNode, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
+import { OnInit } from '@angular/core';
+import { AfterViewInit } from '@angular/core';
+import { OnDestroy } from '@angular/core';
 
 @Component({
   selector: 'app-code-panel',
   templateUrl: './code-panel.component.html',
   styleUrls: ['./code-panel.component.scss']
 })
-export class CodePanelComponent {
+export class CodePanelComponent implements AfterViewInit, OnDestroy{
   @Input() apiTreeNodeData: BehaviorSubject<CodeHuskNode | null> = new BehaviorSubject<CodeHuskNode | null>(null);
   @Input() tokenLineData: BehaviorSubject<CreateLinesOfTokensMessage | null> = new BehaviorSubject<CreateLinesOfTokensMessage | null>(null);
   @Input() reviewComments : CommentItemModel[] | undefined = [];
@@ -20,6 +23,7 @@ export class CodePanelComponent {
 
   lineNumberCount : number = 0;
   isLoading: boolean = true;
+  isAppendingTokens: boolean = false;
   codeLineFragments : Map<string, any> = new Map<string, any>();
 
   private destroyApiTreeNode$ = new Subject<void>();
@@ -28,6 +32,11 @@ export class CodePanelComponent {
   constructor(private changeDeterctorRef: ChangeDetectorRef) { }
 
   ngAfterViewInit() {
+    fromEvent(window, 'scroll').pipe(
+      debounceTime(this.isAppendingTokens ? 500 : 0)
+    ).subscribe(() => {
+    });
+    
     this.apiTreeNodeData.pipe(
       takeUntil(this.destroyApiTreeNode$),
       finalize(() => {
@@ -133,10 +142,19 @@ export class CodePanelComponent {
         }
 
         if (lineData.directive === ReviewPageWorkerMessageDirective.AppendTokenLinesToNode) {
-          const apiTreeNode = document.getElementById(nodeId);
-          const nodeFragmentData = this.codeLineFragments.get(nodeId);
-          if (nodeFragmentData.lastLineNumber < 1000) {
-            apiTreeNode!.appendChild(nodeFragmentData.documentFragment!);
+          if (this.codeLineFragments.has(nodeId)) {
+            const apiTreeNode = document.getElementById(nodeId);
+            const nodeFragmentData = this.codeLineFragments.get(nodeId);
+            if (nodeFragmentData.lastLineNumber > 3000)
+            {
+              apiTreeNode!.style.setProperty('content-visibility', 'auto');
+            }
+            
+            this.isAppendingTokens = true;
+            setTimeout(() => {
+              apiTreeNode!.appendChild(nodeFragmentData.documentFragment!);
+              this.isAppendingTokens = false;
+            }, 0);
           }
         }
       }

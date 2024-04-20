@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -65,29 +66,30 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void RemoveSanitizer()
+        public void RemoveSanitizers([FromBody]RemoveSanitizerList sanitizerList)
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
 
-            // todo: parse request body
-            if (!string.IsNullOrWhiteSpace(recordingId))
-            {
+            var removedSanitizers = new List<string>();
+            var exceptionsList = new List<string>();
 
+            foreach(var sanitizerId in sanitizerList.Sanitizers) {
+                try
+                {
+                    _recordingHandler.UnregisterSanitizer(sanitizerId, recordingId);
+                }
+                catch (HttpException ex) {
+                    exceptionsList.Add(ex.Message);
+                }
             }
-            else
+
+            if (exceptionsList.Count > 0)
             {
-
+                var varExceptionMessage = $"Unable to remove up {exceptionsList.Count} sanitizer{(exceptionsList.Count == 1 ? 's' : string.Empty)}. Detailed list follows: \n"
+                    + string.Join("\n", exceptionsList);
+                throw new HttpException(HttpStatusCode.BadRequest, varExceptionMessage);
             }
-        }
-
-        [HttpPost]
-        public void RemoveSanitizers()
-        {
-            DebugLogger.LogAdminRequestDetails(_logger, Request);
-            var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
-
-            List<string> sanitizers = new List<string>();
         }
 
         [HttpPost]

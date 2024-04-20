@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void RemoveSanitizers([FromBody]RemoveSanitizerList sanitizerList)
+        public async Task RemoveSanitizers([FromBody]RemoveSanitizerList sanitizerList)
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -89,6 +89,14 @@ namespace Azure.Sdk.Tools.TestProxy
                 var varExceptionMessage = $"Unable to remove up {exceptionsList.Count} sanitizer{(exceptionsList.Count == 1 ? 's' : string.Empty)}. Detailed list follows: \n"
                     + string.Join("\n", exceptionsList);
                 throw new HttpException(HttpStatusCode.BadRequest, varExceptionMessage);
+            }
+            else
+            {
+                var json = JsonSerializer.Serialize(new { RemovedSanitizers = removedSanitizers });
+                Response.ContentType = "application/json";
+                Response.ContentLength = json.Length;
+
+                await Response.WriteAsync(json);
             }
         }
 

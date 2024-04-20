@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 
+import { ReviewContent } from "../_models/review";
 import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from "../_models/revision";
 import { APITreeNode } from "../_models/revision";
 
@@ -10,19 +11,24 @@ addEventListener('message', ({ data }) => {
     interWorkerPort = data.interWorkerPort;
   }
   else {
-    let navTreeNodes: any[] = [];
-    let treeNodeId : string[] = [];
-  
-    data.forEach((apiTreeNode: APITreeNode) => {
-      navTreeNodes.push(buildAPITree(apiTreeNode as APITreeNode, treeNodeId));
-    });
-  
-    const createNavigationMessage =  {
-      directive: ReviewPageWorkerMessageDirective.CreatePageNavigation,
-      navTree : navTreeNodes
-    };
+    if (data instanceof ArrayBuffer) {
+      let jsonString = new TextDecoder().decode(new Uint8Array(data));
 
-    postMessage(createNavigationMessage);
+      let reviewContent: ReviewContent = JSON.parse(jsonString);
+      let navTreeNodes: any[] = [];
+      let treeNodeId : string[] = [];
+    
+      reviewContent.apiForest.forEach((apiTreeNode: APITreeNode) => {
+        navTreeNodes.push(buildAPITree(apiTreeNode as APITreeNode, treeNodeId));
+      });
+    
+      const createNavigationMessage =  {
+        directive: ReviewPageWorkerMessageDirective.CreatePageNavigation,
+        navTree : navTreeNodes
+      };
+  
+      postMessage(createNavigationMessage);
+    }
   }
 });
 

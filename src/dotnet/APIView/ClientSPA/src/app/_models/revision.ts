@@ -1,12 +1,10 @@
 import { ChangeHistory } from "./review"
 
 export enum ReviewPageWorkerMessageDirective {
-  BuildAPITree,
-  PassToTokenBuilder,
-  BuildTokens,
   CreatePageNavigation,
   CreateCodeLineHusk,
-  CreateLineOfTokens
+  CreateLineOfTokens,
+  AppendTokenLinesToNode
 }
 
 export interface APIRevision {
@@ -77,11 +75,14 @@ export interface CreateLinesOfTokensMessage {
   diffKind: string
 }
 
-export interface BuildTokensMessage {
+export interface AppendTokenLinesToMessage {
   directive: ReviewPageWorkerMessageDirective
+  nodeId: string
+  position: string
+}
+
+export interface BuildTokensMessage {
   apiTreeNode: APITreeNode
   huskNodeId: string
   position: string
 }
-  
-  

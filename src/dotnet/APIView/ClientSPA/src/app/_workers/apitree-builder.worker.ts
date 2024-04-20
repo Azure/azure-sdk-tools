@@ -1,26 +1,34 @@
 /// <reference lib="webworker" />
 
 import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from "../_models/revision";
-import { APITreeNode, StructuredToken } from "../_models/revision";
-import { ComputeTokenDiff } from "../_helpers/worker-helpers";
+import { APITreeNode } from "../_models/revision";
+
+let interWorkerPort : MessagePort;
 
 addEventListener('message', ({ data }) => {
-  if (data.directive === ReviewPageWorkerMessageDirective.BuildAPITree) {
+  if (data.interWorkerPort) {
+    interWorkerPort = data.interWorkerPort;
+  }
+  else {
     let navTreeNodes: any[] = [];
     let treeNodeId : string[] = [];
-
-    data.apiTree.forEach((apiTreeNode: APITreeNode) => {
+  
+    data.forEach((apiTreeNode: APITreeNode) => {
       navTreeNodes.push(buildAPITree(apiTreeNode as APITreeNode, treeNodeId));
     });
-
+  
     const createNavigationMessage =  {
       directive: ReviewPageWorkerMessageDirective.CreatePageNavigation,
       navTree : navTreeNodes
     };
+
     postMessage(createNavigationMessage);
   }
 });
 
+function postMessageToTokenBuilder(message: any) {
+  interWorkerPort.postMessage(message);
+}
 
 function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: number = 0) : any {
   let idPart = getTokenNodeIdPart(apiTreeNode);
@@ -41,12 +49,11 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
   postMessage(createCodeLineHuskMessage);
 
   let buildTokensMessage : BuildTokensMessage =  { 
-    directive: ReviewPageWorkerMessageDirective.PassToTokenBuilder,
     apiTreeNode: apiTreeNode,
     huskNodeId: nodeId,
     position: "top"
   };
-  postMessage(buildTokensMessage);
+  postMessageToTokenBuilder(buildTokensMessage);
 
   let treeNode: any = {
     label: nodeData.name,
@@ -69,7 +76,7 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
     postMessage(createCodeLineHuskMessage);
 
     buildTokensMessage.position = "bottom";
-    postMessage(buildTokensMessage);
+    postMessageToTokenBuilder(buildTokensMessage);
   }
 
   treeNode.children = children;

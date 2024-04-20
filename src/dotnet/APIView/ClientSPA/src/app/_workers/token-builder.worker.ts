@@ -1,14 +1,21 @@
 /// <reference lib="webworker" />
 
-import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from "../_models/revision";
+import { AppendTokenLinesToMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from "../_models/revision";
 import { APITreeNode, StructuredToken } from "../_models/revision";
 import { ComputeTokenDiff } from "../_helpers/worker-helpers";
 
+let interWorkerPort : MessagePort;
+
 addEventListener('message', ({ data }) => {
-  if (data.directive === ReviewPageWorkerMessageDirective.BuildTokens) {
-    buildTokens(data.apiTreeNode, data.huskNodeId, data.position);
+  if (data.interWorkerPort) {
+    interWorkerPort = data.interWorkerPort
+    interWorkerPort.onmessage = handleMessageFromInterWorkerPort;
   }
 });
+
+function handleMessageFromInterWorkerPort({ data }: { data: any }) {
+  buildTokens(data.apiTreeNode, data.huskNodeId, data.position);
+}
 
 function buildTokens(apiTreeNode: APITreeNode, id: string, position: string) {
   if (apiTreeNode.diffKind === "NoneDiff") {
@@ -17,6 +24,13 @@ function buildTokens(apiTreeNode: APITreeNode, id: string, position: string) {
   else {
     buildTokensForDiffNodes(apiTreeNode, id, position);
   }
+
+  const message : AppendTokenLinesToMessage = { 
+    directive : ReviewPageWorkerMessageDirective.AppendTokenLinesToNode,
+    nodeId: id,
+    position: position
+  };
+  postMessage(message);
 }
 
 function createHashFromTokenLine(tokenLines: StructuredToken[]) {
@@ -68,7 +82,6 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
     };
 
     if (diffTokenLineResult[2] === true) {
-      console.log("Creating Diff line");
       createLinesOfTokensMessage.diffKind = "Removed";
 
       postMessage(createLinesOfTokensMessage);

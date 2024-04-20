@@ -64,11 +64,6 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
         this.reviewPageNavigation = data.navTree as TreeNode[];
       }
 
-      if (data.directive === ReviewPageWorkerMessageDirective.PassToTokenBuilder) {
-        data.directive = ReviewPageWorkerMessageDirective.BuildTokens;
-        this.workerService.postToTokenBuilder(data);
-      }
-
       if (data.directive === ReviewPageWorkerMessageDirective.CreateCodeLineHusk) {
         if (data.nodeData) {
           this.apiTreeNodeData.next(data.nodeData);
@@ -77,9 +72,7 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
     });
 
     this.workerService.onMessageFromTokenBuilder().subscribe(data => {
-      if (data.directive === ReviewPageWorkerMessageDirective.CreateLineOfTokens) {
         this.tokenLineData.next(data);
-      }
     });
   }
 
@@ -87,11 +80,8 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
     this.reviewsService.getReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId).subscribe({
       next: (response: ReviewContent) => {
           this.reviewContent = response;
-          const message: any = {
-            directive: ReviewPageWorkerMessageDirective.BuildAPITree,
-            apiTree : this.reviewContent!.apiForest
-          };
-          this.workerService.postToApiTreeBuilder(message);
+          this.workerService.postToApiTreeBuilder(this.reviewContent!.apiForest);
+          this.reviewContent!.apiForest.length = 0; // release memory
         }
     });
   }

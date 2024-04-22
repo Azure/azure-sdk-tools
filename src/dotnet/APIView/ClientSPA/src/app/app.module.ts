@@ -71,9 +71,8 @@ export function initializeApp(configService: ConfigService) {
     SplitterModule,
     TableModule,
     TimeagoModule.forRoot(),
-    ServiceWorkerModule.register('ngsw-worker.js', {
+    ServiceWorkerModule.register('/spa/ngsw-worker.js', {
       enabled: environment.production,
-      scope: '/spa/',
       // Register the ServiceWorker as soon as the application is stable
       // or after 30 seconds (whichever comes first).
       registrationStrategy: 'registerWhenStable:30000'

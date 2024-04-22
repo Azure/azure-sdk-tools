@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 import { ReviewContent } from "../_models/review";
-import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from "../_models/revision";
+import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, ReviewPageWorkerMessageDirective } from "../_models/revision";
 import { APITreeNode } from "../_models/revision";
 
 let interWorkerPort : MessagePort;
@@ -36,6 +36,17 @@ function postMessageToTokenBuilder(message: any) {
   interWorkerPort.postMessage(message);
 }
 
+/**
+ * Walks the API tree depth first. At each node it
+ * - Sends a message to the code-panel component to create a husk for the node content.
+ * - Sends a message t0 the token-builder worker to build the top tokens for the node content.
+ * - Recursively builds the tree for the children of the node.
+ * - Sends a message to the code-panel component to create a husk for the bottom tokens of the node content.
+ * - Sends a message t0 the token-builder worker to build the bottom tokens for the node content.
+ * @param apiTreeNode The current node in the API tree.
+ * @param treeNodeId The id of the current node in the tree.
+ * @param indent The indent level of the current node in the tree.
+ */
 function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: number = 0) : any {
   let idPart = getTokenNodeIdPart(apiTreeNode);
   treeNodeId.push(idPart);
@@ -90,6 +101,10 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
   return treeNode;
 }
 
+/**
+ * Uses the properties of the node to create an Id that is guaranteed to be unique
+ * @param apiTreeNode 
+ */
 function getTokenNodeIdPart(apiTreeNode: APITreeNode) {
   const kind = apiTreeNode.kind;
   const subKind = apiTreeNode.properties["SubKind"];

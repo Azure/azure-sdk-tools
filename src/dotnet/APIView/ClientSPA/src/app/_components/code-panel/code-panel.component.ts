@@ -33,7 +33,7 @@ export class CodePanelComponent implements AfterViewInit, OnDestroy{
 
   ngAfterViewInit() {
     fromEvent(window, 'scroll').pipe(
-      debounceTime(this.isAppendingTokens ? 500 : 0)
+      debounceTime(this.isAppendingTokens ? 1000 : 0)
     ).subscribe(() => {
     });
     
@@ -145,6 +145,7 @@ export class CodePanelComponent implements AfterViewInit, OnDestroy{
           if (this.codeLineFragments.has(nodeId)) {
             const apiTreeNode = document.getElementById(nodeId);
             const nodeFragmentData = this.codeLineFragments.get(nodeId);
+            this.codeLineFragments.delete(nodeId);
             if (nodeFragmentData.lastLineNumber > 3000)
             {
               apiTreeNode!.style.setProperty('content-visibility', 'auto');

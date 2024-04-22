@@ -10,7 +10,7 @@ const routes: Routes = [
      runGuardsAndResolvers: 'always',
      canActivate: [AuthGuard],
      children: [
-      { path: 'review/:reviewId', loadChildren: () => import('./_modules/review-page/review-page.module').then(m => m.ReviewPageModule) },
+      { path: 'review/:reviewId', loadChildren: () => import('./_modules/review-page/review-page.module').then(m => m.ReviewPageModule) }, // Lazy load review page module
      ]
   },
   { path: '**', component: IndexPageComponent, pathMatch: 'full' }

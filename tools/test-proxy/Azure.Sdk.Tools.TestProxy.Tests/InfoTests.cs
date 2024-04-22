@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class InfoTests
     {
-        private int DefaultExtensionCount { get { return new RecordingHandler(null).Sanitizers.Count; } }
+        private int DefaultExtensionCount { get { return new RecordingHandler(null).SanitizerRegistry.GetSanitizers().Count; } }
 
         [Fact]
         public void TestReflectionModelBuild()

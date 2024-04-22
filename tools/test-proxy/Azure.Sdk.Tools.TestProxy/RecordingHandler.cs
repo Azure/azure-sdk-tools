@@ -4,30 +4,22 @@ using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Azure.Sdk.Tools.TestProxy.Vendored;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Build.Tasks;
 using Microsoft.Extensions.Primitives;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
-using System.Net.Sockets;
-using System.Reflection.Metadata;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -407,7 +399,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     Path = path
                 };
 
-                foreach (RecordedTestSanitizer sanitizer in Sanitizers)
+                var sanitizers = SanitizerRegistry.GetSanitizers();
+                foreach (RecordedTestSanitizer sanitizer in sanitizers)
                 {
                     session.Session.Sanitize(sanitizer);
                 }

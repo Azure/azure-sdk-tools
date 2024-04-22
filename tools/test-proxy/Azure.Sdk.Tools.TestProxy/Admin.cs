@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
         [HttpPost]
-        public void RemoveSanitizers([FromBody]RemoveSanitizerList sanitizerList)
+        public async Task RemoveSanitizers([FromBody]RemoveSanitizerList sanitizerList)
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -74,10 +74,16 @@ namespace Azure.Sdk.Tools.TestProxy
             var removedSanitizers = new List<string>();
             var exceptionsList = new List<string>();
 
+            if (sanitizerList.Sanitizers.Count == 0)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "At least one sanitizerId for removal must be provided.");
+            }
+
             foreach(var sanitizerId in sanitizerList.Sanitizers) {
                 try
                 {
-                    _recordingHandler.UnregisterSanitizer(sanitizerId, recordingId);
+                    var removedId = _recordingHandler.UnregisterSanitizer(sanitizerId, recordingId);
+                    removedSanitizers.Add(sanitizerId);
                 }
                 catch (HttpException ex) {
                     exceptionsList.Add(ex.Message);
@@ -86,14 +92,22 @@ namespace Azure.Sdk.Tools.TestProxy
 
             if (exceptionsList.Count > 0)
             {
-                var varExceptionMessage = $"Unable to remove up {exceptionsList.Count} sanitizer{(exceptionsList.Count == 1 ? 's' : string.Empty)}. Detailed list follows: \n"
+                var varExceptionMessage = $"Unable to remove {exceptionsList.Count} sanitizer{(exceptionsList.Count > 1 ? 's' : string.Empty)}. Detailed list follows: \n"
                     + string.Join("\n", exceptionsList);
                 throw new HttpException(HttpStatusCode.BadRequest, varExceptionMessage);
             }
+            else
+            {
+                var json = JsonSerializer.Serialize(new { Removed = removedSanitizers });
+                Response.ContentType = "application/json";
+                Response.ContentLength = json.Length;
+
+                await Response.WriteAsync(json);
+            }
         }
 
-        [HttpPost]
-        public async Task Sanitizers()
+        [HttpGet]
+        public async Task GetSanitizers()
         {
             DebugLogger.LogAdminRequestDetails(_logger, Request);
             var recordingId = RecordingHandler.GetHeader(Request, "x-recording-id", allowNulls: true);
@@ -165,12 +179,14 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (recordingId != null)
                 {
-                    registeredSanitizers.Append(_recordingHandler.RegisterSanitizer(sanitizer, recordingId));
+                    var registeredId = _recordingHandler.RegisterSanitizer(sanitizer, recordingId);
+                    registeredSanitizers.Add(registeredId);
                     Response.Headers.Add("x-recording-id", recordingId);
                 }
                 else
                 {
-                    registeredSanitizers.Append(_recordingHandler.RegisterSanitizer(sanitizer));
+                    var registeredId = _recordingHandler.RegisterSanitizer(sanitizer);
+                    registeredSanitizers.Add(registeredId);
                 }
             }
             var json = JsonSerializer.Serialize(new { Sanitizers = registeredSanitizers });

@@ -516,5 +516,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             CommandResult result = GitHandler.Run($"ls-remote {cloneUrl} --tags {assets.Tag}", workingDirectory);
             return result.StdOut.Trim().Length > 0;
         }
+
+        public static List<T> EnumerateArray<T>(JsonElement element)
+        {
+            List<T> values = new List<T>();
+
+            if (element.ValueKind.ToString() != "Array")
+            {
+                throw new Exception("This test helper is intended for array members only");
+            }
+            else
+            {
+                foreach(var item in element.EnumerateArray())
+                {
+                    values.Add(item.Deserialize<T>());
+                }
+            }
+
+            return values;
+        }
     }
 }

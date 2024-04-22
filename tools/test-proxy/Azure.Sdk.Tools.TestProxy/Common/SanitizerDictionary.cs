@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
@@ -147,7 +148,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 SessionSanitizers.Add(strCurrent);
                 return strCurrent;
             }
-            return string.Empty;
+            throw new HttpException(System.Net.HttpStatusCode.InternalServerError, $"Unable to register global sanitizer id \"{strCurrent}\" with value '{JsonSerializer.Serialize(sanitizer)}'");
         }
 
         /// <summary>
@@ -186,7 +187,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         {
             if (session.AppliedSanitizers.Contains(sanitizerId))
             {
-                SessionSanitizers.Remove(sanitizerId);
+                session.AppliedSanitizers.Remove(sanitizerId);
                 return sanitizerId;
             }
 

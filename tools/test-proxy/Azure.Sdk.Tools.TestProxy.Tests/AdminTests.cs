@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.TestProxy.Transforms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -88,6 +89,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(requestBody);
             httpContext.Request.ContentLength = httpContext.Request.Body.Length;
             testRecordingHandler.SanitizerRegistry.ResetSessionSanitizers();
+            httpContext.Response.Body = new MemoryStream();
 
             var controller = new Admin(testRecordingHandler, _nullLogger)
             {
@@ -101,9 +103,17 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var amendedSessionSanitizers = testRecordingHandler.SanitizerRegistry.GetSanitizers();
 
             Assert.Equal(defaultSessionSanitizers.Count + 2, amendedSessionSanitizers.Count);
-
             Assert.True(amendedSessionSanitizers[defaultSessionSanitizers.Count] is GeneralRegexSanitizer);
             Assert.True(amendedSessionSanitizers[defaultSessionSanitizers.Count + 1] is HeaderRegexSanitizer);
+
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+            Assert.Equal((int)HttpStatusCode.OK, httpContext.Response.StatusCode);
+
+            var prop = response.RootElement.GetProperty("Sanitizers");
+            var returnedSanitizerIds = TestHelpers.EnumerateArray<string>(prop);
+
+            Assert.Equal(2, returnedSanitizerIds.Count);
         }
 
         [Fact]
@@ -929,44 +939,208 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
-        public void RemoveSanitizerErrorsForInvalidId()
+        public async Task RemoveSanitizerErrorsForInvalidIdOnRecording()
         {
-            // remove sanitizer errors when provided an invalid id
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"];
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Response.Body = new MemoryStream();
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var testSet = new RemoveSanitizerList() { Sanitizers = new List<string>() { "0" } };
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+                async () => await controller.RemoveSanitizers(testSet)
+            );
+           
+            Assert.Contains("Unable to remove 1 sanitizer. Detailed list follows: \nThe requested sanitizer for removal \"0\" is not active on recording/playback with id", assertion.Message);
         }
 
         [Fact]
-        public void RemoveSanitizerErrorsForMissingId()
+        public async Task RemoveSanitizerErrorsForInvalidId()
         {
-            // remove sanitizer errors when not provided an id
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Response.Body = new MemoryStream();
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var testSet = new RemoveSanitizerList() { Sanitizers = new List<string>() { "AZSDK00-1" } };
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+                async () => await controller.RemoveSanitizers(testSet)
+            );
+
+            Assert.Equal("Unable to remove 1 sanitizer. Detailed list follows: \nThe requested sanitizer for removal \"AZSDK00-1\" is not active at the session level.", assertion.Message);
         }
 
         [Fact]
-        public void RemoveSanitizerSucceedsForExistingSessionSanitizer()
+        public async Task RemoveSanitizerErrorsForMissingId()
         {
-            // start a recording
-            // remove a session sanitizer
-            // does that work?
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Response.Body = new MemoryStream();
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var testSet = new RemoveSanitizerList() { Sanitizers = new List<string>() {} };
+
+            var assertion = await Assert.ThrowsAsync<HttpException>(
+                async () => await controller.RemoveSanitizers(testSet)
+            );
+
+            Assert.Equal(HttpStatusCode.BadRequest, assertion.StatusCode);
+            Assert.Equal("At least one sanitizerId for removal must be provided.", assertion.Message);
         }
 
         [Fact]
-        public void RemoveSanitizerSucceedsForAddedRecordingSanitizer()
+        public async Task RemoveSanitizerSucceedsForExistingSessionSanitizer()
         {
-            // start a recording
-            // add two sanitizers to it
-            // remove one
-            // total should be session + the one remainig
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            httpContext.Response.Body = new MemoryStream();
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            var expectedSanitizerCount = testRecordingHandler.SanitizerRegistry.GetSanitizers().Count;
+            await controller.RemoveSanitizers(new RemoveSanitizerList() { Sanitizers = new List<string>() { "AZSDK001" } });
+
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+            Assert.Equal((int)HttpStatusCode.OK, httpContext.Response.StatusCode);
+
+            var prop = response.RootElement.GetProperty("Removed");
+            var returnedSanitizerIds = TestHelpers.EnumerateArray<string>(prop);
+
+            Assert.Single(returnedSanitizerIds);
+            Assert.Equal("AZSDK001", returnedSanitizerIds.First());
+
+            Assert.Equal(expectedSanitizerCount - 1, testRecordingHandler.SanitizerRegistry.GetSanitizers().Count);
         }
 
         [Fact]
-        public void GetSanitizersReturnsSessionSanitizers()
+        public async Task RemoveSanitizerSucceedsForAddedRecordingSanitizer()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.SanitizerRegistry.Clear();
+            var httpContext = new DefaultHttpContext();
+            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"];
+            
+            // use returned recordingId to register new sanitizers
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Response.Body = new MemoryStream();
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            var session = testRecordingHandler.GetActiveSession(recordingId);
 
+            var forRemoval = testRecordingHandler.RegisterSanitizer(new HeaderRegexSanitizer("Content-Type"), recordingId);
+            testRecordingHandler.RegisterSanitizer(new HeaderRegexSanitizer("Connection"), recordingId);
+            await controller.RemoveSanitizers(new RemoveSanitizerList() { Sanitizers = new List<string>() { forRemoval } });
+
+            var activeRecordingSanitizers = testRecordingHandler.SanitizerRegistry.GetSanitizers(session);
+
+            Assert.Single(activeRecordingSanitizers);
+            var privateSetting = (string)typeof(HeaderRegexSanitizer).GetField("_targetKey", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(activeRecordingSanitizers.First());
+            Assert.Equal("Connection", privateSetting);
         }
 
         [Fact]
-        public void GetSanitizersReturnsRecordingSanitizers()
+        public async void GetSanitizersReturnsSessionSanitizers()
         {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.RegisterSanitizer(new HeaderRegexSanitizer("Connection"));
 
+            var httpContext = new DefaultHttpContext();
+            httpContext.Response.Body = new MemoryStream();
+
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            await controller.GetSanitizers();
+
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+            Assert.Equal((int)HttpStatusCode.OK, httpContext.Response.StatusCode);
+
+            var prop = response.RootElement.GetProperty("Sanitizers");
+            List<string> foundIds = new List<string>();
+
+            foreach(var i in prop.EnumerateArray())
+            {
+                foundIds.Add(i.GetProperty("Id").GetRawText());
+            }
+
+            Assert.Equal(testRecordingHandler.SanitizerRegistry.DefaultSanitizerList.Count + 1, foundIds.Count);
+        }
+
+        [Fact]
+        public async Task GetSanitizersReturnsRecordingSanitizers()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            testRecordingHandler.SanitizerRegistry.Clear();
+            await testRecordingHandler.StartPlaybackAsync("Test.RecordEntries/oauth_request_with_variables.json", httpContext.Response);
+            var recordingId = httpContext.Response.Headers["x-recording-id"];
+            httpContext.Request.Headers["x-recording-id"] = recordingId;
+            httpContext.Response.Body = new MemoryStream();
+            var controller = new Admin(testRecordingHandler, _nullLogger)
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+
+            testRecordingHandler.RegisterSanitizer(new HeaderRegexSanitizer("Connection"), recordingId);
+            await controller.GetSanitizers();
+
+            httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
+            var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
+            Assert.Equal((int)HttpStatusCode.OK, httpContext.Response.StatusCode);
+
+            var prop = response.RootElement.GetProperty("Sanitizers");
+            List<string> foundIds = new List<string>();
+
+            foreach(var i in prop.EnumerateArray())
+            {
+                foundIds.Add(i.GetProperty("Id").GetRawText());
+            }
+
+            Assert.Single(foundIds);
         }
 
     }

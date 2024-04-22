@@ -59,6 +59,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 )
             };
 
+        /// <summary>
+        /// Used to update the session sanitizers to their default configuration.
+        /// </summary>
         public void ResetSessionSanitizers()
         {
             var expectedSanitizers = DefaultSanitizerList;
@@ -87,11 +90,20 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return GetRegisteredSanitizers(session).Select(x => x.Sanitizer).ToList();
         }
 
+        /// <summary>
+        /// Gets a list of sanitizers that should be applied for the session level.
+        /// </summary>
+        /// <returns></returns>
         public List<RecordedTestSanitizer> GetSanitizers()
         {
             return GetRegisteredSanitizers().Select(x => x.Sanitizer).ToList();
         }
 
+        /// <summary>
+        /// Get the set of registered sanitizers for a specific recording or playback session.
+        /// </summary>
+        /// <param name="session"></param>
+        /// <returns></returns>
         public List<RegisteredSanitizer> GetRegisteredSanitizers(ModifiableRecordSession session)
         {
             var sanitizers = new List<RegisteredSanitizer>();
@@ -106,6 +118,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return sanitizers;
         }
 
+        /// <summary>
+        /// Gets the set of registered sanitizers for the session level.
+        /// </summary>
+        /// <returns></returns>
         public List<RegisteredSanitizer> GetRegisteredSanitizers()
         {
             var sanitizers = new List<RegisteredSanitizer>();
@@ -137,7 +153,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// Ensuring that session level sanitizers can be identified internally
         /// </summary>
         /// <param name="sanitizer"></param>
-        /// <returns></returns>
+        /// <returns>The Id of the newly registered sanitizer.</returns>
         /// <exception cref="HttpException"></exception>
         public string Register(RecordedTestSanitizer sanitizer)
         {
@@ -156,7 +172,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         /// <param name="session"></param>
         /// <param name="sanitizer"></param>
-        /// <returns></returns>
+        /// <returns>The Id of the newly registered sanitizer.</returns>
         /// <exception cref="HttpException"></exception>
         public string Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer)
         {
@@ -172,6 +188,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return string.Empty;
         }
 
+        /// <summary>
+        /// Removes a sanitizer from the global session set.
+        /// </summary>
+        /// <param name="sanitizerId"></param>
+        /// <returns></returns>
+        /// <exception cref="HttpException"></exception>
         public string Unregister(string sanitizerId)
         {
             if (SessionSanitizers.Contains(sanitizerId))
@@ -183,6 +205,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"The requested sanitizer for removal \"{sanitizerId}\" is not active at the session level.");
         }
 
+        /// <summary>
+        /// Removes  a sanitizer from a specific recording or playback session.
+        /// </summary>
+        /// <param name="sanitizerId"></param>
+        /// <param name="session"></param>
+        /// <returns></returns>
+        /// <exception cref="HttpException"></exception>
         public string Unregister(string sanitizerId, ModifiableRecordSession session)
         {
             if (session.AppliedSanitizers.Contains(sanitizerId))
@@ -205,13 +234,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 Sanitizers.TryRemove(sanitizerId, out var RemovedSanitizer);
             }
         }
+
+        /// <summary>
+        /// Not publically available via an API Route, but used to remove all of the active default session sanitizers.
+        /// </summary>
         public void Clear()
         {
-            foreach(var sanitizerId in SessionSanitizers)
-            {
-                Sanitizers.TryRemove(sanitizerId.ToString(), out var RemovedSanitizer);
-            }
-
             SessionSanitizers.Clear();
         }
     }

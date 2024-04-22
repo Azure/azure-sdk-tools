@@ -99,6 +99,7 @@ namespace Azure.Sdk.Tools.TestProxy
             else
             {
                 var json = JsonSerializer.Serialize(new { Removed = removedSanitizers });
+
                 Response.ContentType = "application/json";
                 Response.ContentLength = json.Length;
 

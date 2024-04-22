@@ -654,6 +654,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..functionUri"),
                     "AZSDK149"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..secondaryConnectionString"),
+                    "AZSDK150"
+                ),
+                new RegisteredSanitizer(
+                    new UriRegexSanitizer("REDACTED", regex: "(?<=http://|https://)(?<host>[^/?\\.]+)", groupForReplace: "host"),
+                    "AZSDK151"
                 )
             };
 

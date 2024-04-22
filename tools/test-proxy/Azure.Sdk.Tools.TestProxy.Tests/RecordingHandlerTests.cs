@@ -99,18 +99,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (skipsToCheck.HasFlag(CheckSkips.IncludeSanitizers))
             {
-                // todo: fix these assertions
-                //Assert.Equal(DefaultExtensionCount, handlerForTest.Sanitizers.Count);
-                //Assert.IsType<RecordedTestSanitizer>(handlerForTest.Sanitizers[0]);
-                //Assert.IsType<GeneralRegexSanitizer>(handlerForTest.Sanitizers[1]);
-                //Assert.IsType<GeneralRegexSanitizer>(handlerForTest.Sanitizers[2]);
-                //Assert.IsType<BodyKeySanitizer>(handlerForTest.Sanitizers[15]);
-                //Assert.IsType<BodyRegexSanitizer>(handlerForTest.Sanitizers[108]);
-                //var sessionSanitizers = handlerForTest.SanitizerRegistry.GetSanitizers();
-                //Assert.Equal(3, sessionSanitizers.Count);
-                //Assert.IsType<RecordedTestSanitizer>(sessionSanitizers[0]);
-                //Assert.IsType<BodyKeySanitizer>(sessionSanitizers[1]);
-                //Assert.IsType<BodyKeySanitizer>(sessionSanitizers[2]);
+                
+                var sanitizers = handlerForTest.SanitizerRegistry.GetSanitizers();
+
+                Assert.Equal(DefaultExtensionCount, sanitizers.Count);
+                Assert.IsType<RecordedTestSanitizer>(sanitizers[0]);
+                Assert.IsType<BodyKeySanitizer>(sanitizers[1]);
+                Assert.IsType<BodyKeySanitizer>(sanitizers[2]);
+                Assert.IsType<HeaderRegexSanitizer>(sanitizers[75]);
+                Assert.IsType<BodyRegexSanitizer>(sanitizers[108]);
             }
         }
         #endregion

@@ -25,6 +25,8 @@ function buildTokens(apiTreeNode: APITreeNode, id: string, position: string) {
     buildTokensForDiffNodes(apiTreeNode, id, position);
   }
 
+  // This message is used to signal the code-panel component that the node is ready to be displayed. i.e. all the token lines have been built
+  // The code-panel component will then append the tokens to the node.
   const message : AppendTokenLinesToMessage = { 
     directive : ReviewPageWorkerMessageDirective.AppendTokenLinesToNode,
     nodeId: id,
@@ -43,6 +45,12 @@ function createHashFromTokenLine(tokenLines: StructuredToken[]) {
   return cssId;
 }
 
+/**
+ * Build the tokens for if the node potentially contains diff
+ * @param apiTreeNode 
+ * @param id 
+ * @param position 
+ */
 function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position: string) {
   const beforeTokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
   const afterTokens = (position === "top") ? apiTreeNode.topDiffTokens : apiTreeNode.bottomDiffTokens;
@@ -98,6 +106,12 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
   }
 }
 
+/**
+ * Build the tokens for if the node contains no diff
+ * @param apiTreeNode 
+ * @param id 
+ * @param position 
+ */
 function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, position: string)
 {
   const tokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;

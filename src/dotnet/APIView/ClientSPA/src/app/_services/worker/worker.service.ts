@@ -14,7 +14,7 @@ export class WorkerService {
   constructor() {
     this.apiTreeBuilder = new Worker(new URL('../../_workers/apitree-builder.worker', import.meta.url));
     this.tokenBuilder = new Worker(new URL('../../_workers/token-builder.worker', import.meta.url));
-    this.interWorkerChannel = new MessageChannel();
+    this.interWorkerChannel = new MessageChannel(); // Used to communicate between the two workers
 
     this.apiTreeBuilder.postMessage({ interWorkerPort: this.interWorkerChannel.port1 }, [this.interWorkerChannel.port1]);
     this.tokenBuilder.postMessage({ interWorkerPort: this.interWorkerChannel.port2 }, [this.interWorkerChannel.port2]);

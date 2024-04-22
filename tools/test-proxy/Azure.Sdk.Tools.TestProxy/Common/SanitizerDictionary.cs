@@ -1,0 +1,844 @@
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Sanitizers;
+
+namespace Azure.Sdk.Tools.TestProxy.Common
+{
+    public class RegisteredSanitizer
+    {
+        public string Id { get; set; }
+        public RecordedTestSanitizer Sanitizer { get; set; }
+
+        public RegisteredSanitizer(RecordedTestSanitizer sanitizer, string id)
+        {
+            Id = id;
+            Sanitizer = sanitizer;
+        }
+    }
+
+    public static class IdFactory
+    {
+        private static ulong CurrentId = 0;
+
+        public static ulong GetNextId()
+        {
+            return Interlocked.Increment(ref CurrentId);
+        }
+    }
+
+    public class SanitizerDictionary
+    {
+        private ConcurrentDictionary<string, RegisteredSanitizer> Sanitizers = new ConcurrentDictionary<string, RegisteredSanitizer>();
+
+        // we have to know which sanitizers are session only
+        // so that when we start a new recording we can properly 
+        // apply only the sanitizers that have been registered at the global level
+        public List<string> SessionSanitizers = new List<string>();
+
+        public SanitizerDictionary() {
+            ResetSessionSanitizers();
+        }
+
+        // TODO
+        // - create an option in sanitizer to get access to 'ignore case' and other regex customizations
+        // - turn commented lines into actual sanitizers after discussion
+        // - add a query param sanitizer
+        public List<RegisteredSanitizer> DefaultSanitizerList = new List<RegisteredSanitizer>
+            {
+                // basic RecordedTestSanitizer handles Authorization header
+                new RegisteredSanitizer(
+                    new RecordedTestSanitizer(),
+                    "AZSDK001"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..access_token"),
+                    "AZSDK002"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..refresh_token"),
+                    "AZSDK003"
+                ),
+                new RegisteredSanitizer(
+                    new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new GeneralRegexSanitizer(regex: "AccountKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..containerUrl"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new GeneralRegexSanitizer(regex: "accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                    "AZSDK00X"
+                ),
+                // "token": "sv=2023-08-03\u0026ss=b\u0026srt=sco\u0026se=2050-12-12T00%3A00%3A00Z\u0026sp=rwdxlacuptf\u0026sig="
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..applicationSecret"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..apiKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("api-key"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..connectionString"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new GeneralRegexSanitizer(regex: "Accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new GeneralRegexSanitizer(regex: "Secret=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-encryption-key"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..sshPassword"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..aliasSecondaryConnectionString"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..primaryKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..secondaryKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..adminPassword.value"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..administratorLoginPassword"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..accessToken"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..runAsPassword"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..adminPassword"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..accessSAS"),
+                    "AZSDK00X"
+                ),
+                // "token": "sv=...ss=...srt=...se=...sp=...sig=" request body covered by 1052
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..WEBSITE_AUTH_ENCRYPTION_KEY"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..decryptionKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("ServiceBusDlqSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("ServiceBusSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    "AZSDK00X"
+                ),
+                // "RequestBody": "client_id=...grant_type=...client_info=...client_secret=…scope=...", covered by 1036/1037
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..access_token"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..AccessToken"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&]+)", groupForReplace: "cid"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    "AZSDK00X"
+                ),
+                // new BodyKeySanitizer("$..targetModelLocation"), disabled, not a secret?
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..targetResourceId"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..urlSource"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..azureBlobSource.containerUrl"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..source"),
+                    "AZSDK00X"
+                ),
+                // new BodyKeySanitizer("$..resourceLocation"), disabled, not a secret?
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Location"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..to"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..from"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("subscription-key"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..outputDataUri"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..inputDataUri"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..containerUri"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..sasUri"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..id"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..token"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..appId"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..userId"),
+                    "AZSDK00X"
+                ),
+                // "name" I think this one is too generic, we should probably drop it?
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..id"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..storageAccount"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..resourceGroup"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..guardian"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..scan"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..catalog"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..lastModifiedBy"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..managedResourceGroupName"),
+                    "AZSDK00X"
+                ),
+                // new BodyKeySanitizer("$..friendlyName"), disabled, not a secret?
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..createdBy"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..tenantId"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..principalId"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..clientId"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..credential"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("SupplementaryAuthorization"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$.key"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$.value[*].key"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new UriRegexSanitizer(regex: "sig=(?<sig>[^&]+)", groupForReplace: "sig"),
+                    "AZSDK00X"
+                ),
+                // new HeaderRegexSanitizer("x-ms-encryption-key"), dup
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-rename-source"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-file-rename-source"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-copy-source"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-copy-source-authorization"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-file-rename-source-authorization"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-encryption-key-sha256"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..uploadUrl"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..logLink"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("aeg-sas-token"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("aeg-sas-key"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("aeg-channel-name"),
+                    "AZSDK00X"
+                ),  
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..storageContainerUri"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..storageContainerReadListSas"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..storageContainerWriteSas"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "token=(?<token>[^&]+)($|&)", groupForReplace: "token"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "-----BEGIN PRIVATE KEY-----\\n(?<cert>.+\\n)*-----END PRIVATE KEY-----\\n", groupForReplace: "cert"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..primaryMasterKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..primaryReadonlyMasterKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..secondaryMasterKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..secondaryReadonlyMasterKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..password"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..certificatePassword"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..clientSecret"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..keyVaultClientSecret"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..accountKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..authHeader"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..httpHeader"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..encryptedCredential"),
+                    "AZSDK00X"
+                ),
+                    new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..appkey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..functionKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..atlasKafkaPrimaryEndpoint"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..atlasKafkaSecondaryEndpoint"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..certificatePassword"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..storageAccountPrimaryKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..privateKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..fencingClientPassword"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..acrToken"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..scriptUrlSasToken"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..refresh_token"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<Value>)(?<group>.*)(?:</Value>)", groupForReplace: "group"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedTid>)(?<group>.*)(?:</SignedTid>)", groupForReplace: "group"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedOid>)(?<group>.*)(?:</SignedOid>)", groupForReplace: "group"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?:Password=)(?<pwd>.*?)(?:;)", groupForReplace: "pwd"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?:User ID=)(?<id>.*?)(?:;)", groupForReplace: "id"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?:<PrimaryKey>)(?<key>.*)(?:</PrimaryKey>)", groupForReplace: "key"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?:<SecondaryKey>)(?<key>.*)(?:</SecondaryKey>)", groupForReplace: "key"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..accountKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..accountName"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..applicationId"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..apiKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..connectionString"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..password"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..userName"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$.properties.WEBSITE_AUTH_ENCRYPTION_KEY"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$.properties.siteConfig.machineKey.decryptionKey"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$.properties.DOCKER_REGISTRY_SERVER_PASSWORD"),
+                    "AZSDK00X"
+                ),
+                // General URI sanitizer // we don't have access to the service name 
+                // General GUID sanitizer // I think sanitizing all guids is overaggressive by a LOT
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Set-Cookie"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Cookie"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "<ClientIp>(?<secret>.+)</ClientIp>", groupForReplace: "secret"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("client-request-id"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..blob_sas_url"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..targetResourceRegion"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new RemoveHeaderSanitizer("Telemetry-Source-Time"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new RemoveHeaderSanitizer("Message-Id"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("MS-CV"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("X-Azure-Ref"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-request-id"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-client-request-id"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-content-sha256"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Content-Security-Policy-Report-Only"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Repeatability-First-Sent"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Repeatability-Request-ID"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("repeatability-request-id"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("repeatability-first-sent"),
+                    "AZSDK00X"
+                ),
+                // client-request-id -- DUPE OF LINE 140
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("P3P"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-ests-server"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..domain_name"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new GeneralRegexSanitizer(regex: "common/userrealm/(?<realm>[^/\\.]+)", groupForReplace: "realm"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new GeneralRegexSanitizer(regex: "/identities/(?<realm>[^/?]+)", groupForReplace: "realm"),
+                    "AZSDK00X"
+                ),
+                // ACS User ID? too general don't have this information at common level
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..etag"),
+                    "AZSDK00X"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..functionUri"),
+                    "AZSDK00X"
+                )
+            };
+
+        /// <summary>
+        /// Used to update the session sanitizers to their default configuration.
+        /// </summary>
+        public void ResetSessionSanitizers()
+        {
+            var expectedSanitizers = DefaultSanitizerList;
+
+            for (int i = 0; i < expectedSanitizers.Count; i++)
+            {
+                var id = expectedSanitizers[i].Id;
+                var sanitizer = expectedSanitizers[i].Sanitizer;
+
+                if (!Sanitizers.ContainsKey(id))
+                {
+                    _register(sanitizer, id);
+                }
+            }
+
+            SessionSanitizers = DefaultSanitizerList.Select(x => x.Id).ToList();
+        }
+
+        /// <summary>
+        /// Get the complete set of sanitizers that apply to this recording/playback session
+        /// </summary>
+        /// <param name="session"></param>
+        /// <returns></returns>
+        public List<RecordedTestSanitizer> GetSanitizers(ModifiableRecordSession session)
+        {
+            return GetRegisteredSanitizers(session).Select(x => x.Sanitizer).ToList();
+        }
+
+        /// <summary>
+        /// Gets a list of sanitizers that should be applied for the session level.
+        /// </summary>
+        /// <returns></returns>
+        public List<RecordedTestSanitizer> GetSanitizers()
+        {
+            return GetRegisteredSanitizers().Select(x => x.Sanitizer).ToList();
+        }
+
+        /// <summary>
+        /// Get the set of registered sanitizers for a specific recording or playback session.
+        /// </summary>
+        /// <param name="session"></param>
+        /// <returns></returns>
+        public List<RegisteredSanitizer> GetRegisteredSanitizers(ModifiableRecordSession session)
+        {
+            var sanitizers = new List<RegisteredSanitizer>();
+            foreach (var id in session.AppliedSanitizers)
+            {
+                if (Sanitizers.TryGetValue(id, out RegisteredSanitizer sanitizer))
+                {
+                    sanitizers.Add(sanitizer);
+                }
+            }
+
+            return sanitizers;
+        }
+
+        /// <summary>
+        /// Gets the set of registered sanitizers for the session level.
+        /// </summary>
+        /// <returns></returns>
+        public List<RegisteredSanitizer> GetRegisteredSanitizers()
+        {
+            var sanitizers = new List<RegisteredSanitizer>();
+            foreach (var id in SessionSanitizers)
+            {
+                if (Sanitizers.TryGetValue(id, out RegisteredSanitizer sanitizer))
+                {
+                    sanitizers.Add(sanitizer);
+                }
+            }
+
+            return sanitizers;
+        }
+
+        private bool _register(RecordedTestSanitizer sanitizer, string id)
+        {
+            if (Sanitizers.TryAdd(id, new RegisteredSanitizer(sanitizer, id)))
+            {
+                return true;
+            }
+            else
+            {
+                // todo better error
+                throw new HttpException(System.Net.HttpStatusCode.BadRequest, "Unable to add sanitizer to global list.");
+            }
+        }
+
+        /// <summary>
+        /// Ensuring that session level sanitizers can be identified internally
+        /// </summary>
+        /// <param name="sanitizer"></param>
+        /// <returns>The Id of the newly registered sanitizer.</returns>
+        /// <exception cref="HttpException"></exception>
+        public string Register(RecordedTestSanitizer sanitizer)
+        {
+            var strCurrent = IdFactory.GetNextId().ToString();
+
+            if (_register(sanitizer, strCurrent))
+            {
+                SessionSanitizers.Add(strCurrent);
+                return strCurrent;
+            }
+            throw new HttpException(System.Net.HttpStatusCode.InternalServerError, $"Unable to register global sanitizer id \"{strCurrent}\" with value '{JsonSerializer.Serialize(sanitizer)}'");
+        }
+
+        /// <summary>
+        /// Register a sanitizer the global cache, add it to the set that applies to the session, and ensure we clean up after.
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="sanitizer"></param>
+        /// <returns>The Id of the newly registered sanitizer.</returns>
+        /// <exception cref="HttpException"></exception>
+        public string Register(ModifiableRecordSession session, RecordedTestSanitizer sanitizer)
+        {
+            var strCurrent = IdFactory.GetNextId().ToString();
+            if (_register(sanitizer, strCurrent))
+            {
+                session.AppliedSanitizers.Add(strCurrent);
+                session.ForRemoval.Add(strCurrent);
+
+                return strCurrent;
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Removes a sanitizer from the global session set.
+        /// </summary>
+        /// <param name="sanitizerId"></param>
+        /// <returns></returns>
+        /// <exception cref="HttpException"></exception>
+        public string Unregister(string sanitizerId)
+        {
+            if (SessionSanitizers.Contains(sanitizerId))
+            {
+                SessionSanitizers.Remove(sanitizerId);
+                return sanitizerId;
+            }
+
+            throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"The requested sanitizer for removal \"{sanitizerId}\" is not active at the session level.");
+        }
+
+        /// <summary>
+        /// Removes  a sanitizer from a specific recording or playback session.
+        /// </summary>
+        /// <param name="sanitizerId"></param>
+        /// <param name="session"></param>
+        /// <returns></returns>
+        /// <exception cref="HttpException"></exception>
+        public string Unregister(string sanitizerId, ModifiableRecordSession session)
+        {
+            if (session.AppliedSanitizers.Contains(sanitizerId))
+            {
+                session.AppliedSanitizers.Remove(sanitizerId);
+                return sanitizerId;
+            }
+
+            throw new HttpException(System.Net.HttpStatusCode.BadRequest, $"The requested sanitizer for removal \"{sanitizerId}\" is not active on recording/playback with id \"{session.SessionId}\".");
+        }
+
+        /// <summary>
+        /// Fired at the end of a recording/playback session so that we can clean up the global dictionary.
+        /// </summary>
+        /// <param name="session"></param>
+        public void Cleanup(ModifiableRecordSession session)
+        {
+            foreach(var sanitizerId in session.ForRemoval)
+            {
+                Sanitizers.TryRemove(sanitizerId, out var RemovedSanitizer);
+            }
+        }
+
+        /// <summary>
+        /// Not publically available via an API Route, but used to remove all of the active default session sanitizers.
+        /// </summary>
+        public void Clear()
+        {
+            SessionSanitizers.Clear();
+        }
+    }
+}

@@ -1,7 +1,6 @@
 using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
-using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Azure.Sdk.Tools.TestProxy.Vendored;
@@ -24,7 +23,6 @@ using System.Net.Sockets;
 using System.Reflection.Metadata;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -76,7 +74,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public HttpClient RedirectlessClient;
         public HttpClient RedirectableClient;
 
-        public List<RecordedTestSanitizer> Sanitizers { get; set; }
+        public SanitizerDictionary SanitizerRegistry = new SanitizerDictionary();
 
         public List<ResponseTransform> Transforms { get; set; }
 
@@ -123,7 +121,9 @@ namespace Azure.Sdk.Tools.TestProxy
                 return;
             }
 
-            foreach (RecordedTestSanitizer sanitizer in Sanitizers.Concat(recordingSession.AdditionalSanitizers))
+            var sanitizers = SanitizerRegistry.GetSanitizers(recordingSession);
+
+            foreach (RecordedTestSanitizer sanitizer in sanitizers)
             {
                 recordingSession.Session.Sanitize(sanitizer);
             }
@@ -187,7 +187,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
             await RestoreAssetsJson(assetsJson, false);
 
-            var session = new ModifiableRecordSession(new RecordSession())
+            var session = new ModifiableRecordSession(new RecordSession(), SanitizerRegistry, id)
             {
                 Path = !string.IsNullOrWhiteSpace(sessionId) ? (await GetRecordingPath(sessionId, assetsJson)) : String.Empty,
                 Client = null
@@ -209,7 +209,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
 
-            var sanitizers = session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers;
+            var sanitizers = SanitizerRegistry.GetSanitizers(session);
 
             DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
 
@@ -379,7 +379,7 @@ namespace Azure.Sdk.Tools.TestProxy
             var id = Guid.NewGuid().ToString();
             DebugLogger.LogTrace($"PLAYBACK START BEGIN {id}.");
 
-            ModifiableRecordSession session;
+            ModifiableRecordSession session = new ModifiableRecordSession(SanitizerRegistry, id);
 
             if (mode == RecordingType.InMemory)
             {
@@ -402,7 +402,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
                 using var stream = System.IO.File.OpenRead(path);
                 using var doc = await JsonDocument.ParseAsync(stream).ConfigureAwait(false);
-                session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement))
+                session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement), SanitizerRegistry, id)
                 {
                     Path = path
                 };
@@ -468,7 +468,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active playback session under recording id {recordingId}.");
             }
 
-            var sanitizers = session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers;
+            var sanitizers = SanitizerRegistry.GetSanitizers(session);
 
             DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
 
@@ -482,7 +482,7 @@ namespace Azure.Sdk.Tools.TestProxy
                 remove = bool.Parse(removeHeader);
             }
 
-            var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, session.AdditionalSanitizers.Count > 0 ? Sanitizers.Concat(session.AdditionalSanitizers) : Sanitizers, remove);
+            var match = session.Session.Lookup(entry, session.CustomMatcher ?? Matcher, sanitizers, remove);
 
             foreach (ResponseTransform transform in Transforms.Concat(session.AdditionalTransforms))
             {
@@ -883,36 +883,54 @@ namespace Azure.Sdk.Tools.TestProxy
         #endregion
 
         #region utility and common-use functions
-        public void AddSanitizerToRecording(string recordingId, RecordedTestSanitizer sanitizer)
+
+        public ModifiableRecordSession GetActiveSession(string recordingId)
         {
             if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
             {
-                lock (playbackSession)
-                {
-                    playbackSession.AdditionalSanitizers.Add(sanitizer);
-                }
+                return playbackSession;
             }
 
             if (RecordingSessions.TryGetValue(recordingId, out var recordingSession))
             {
-                lock (recordingSession)
-                {
-                    recordingSession.AdditionalSanitizers.Add(sanitizer);
-                }
+                return recordingSession;
             }
 
             if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
             {
-                lock (inMemSession)
+                return inMemSession;
+            }
+
+            throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
+        }
+
+        public string UnregisterSanitizer(string sanitizerId, string recordingId = null)
+        {
+            if (!string.IsNullOrWhiteSpace(recordingId))
+            {
+                var session = GetActiveSession(recordingId);
+
+                lock (session)
                 {
-                    inMemSession.AdditionalSanitizers.Add(sanitizer);
+                    return SanitizerRegistry.Unregister(sanitizerId, session);
                 }
             }
 
-            if (inMemSession == null && recordingSession == null && playbackSession == null)
+            return SanitizerRegistry.Unregister(sanitizerId);
+        }
+
+        public string RegisterSanitizer(RecordedTestSanitizer sanitizer, string recordingId = null)
+        {
+            if (!string.IsNullOrWhiteSpace(recordingId))
             {
-                throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active session for either record or playback. Check the value being passed and try again.");
+                var session = GetActiveSession(recordingId);
+
+                lock(session)
+                {
+                    return SanitizerRegistry.Register(session, sanitizer);
+                }
             }
+            return SanitizerRegistry.Register(sanitizer);
         }
 
         public void AddTransformToRecording(string recordingId, ResponseTransform transform)
@@ -942,15 +960,15 @@ namespace Azure.Sdk.Tools.TestProxy
             {
                 if (PlaybackSessions.TryGetValue(recordingId, out var playbackSession))
                 {
-                    playbackSession.ResetExtensions();
+                    playbackSession.ResetExtensions(SanitizerRegistry);
                 }
                 if (RecordingSessions.TryGetValue(recordingId, out var recordSession))
                 {
-                    recordSession.ResetExtensions();
+                    recordSession.ResetExtensions(SanitizerRegistry);
                 }
                 if (InMemorySessions.TryGetValue(recordingId, out var inMemSession))
                 {
-                    inMemSession.ResetExtensions();
+                    inMemSession.ResetExtensions(SanitizerRegistry);
                 }
             }
             else
@@ -999,177 +1017,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     throw new HttpException(HttpStatusCode.BadRequest, sb.ToString());
                 }
 
-
-
-
-                // TODO
-                // - create an option in sanitizer to get access to 'ignore case' and other regex customizations
-                // - turn commented lines into actual sanitizers after discussion
-                // - add a query param sanitizer
-                Sanitizers = new List<RecordedTestSanitizer>
-                {
-                    // basic RecordedTestSanitizer handles Authorization header
-                    new RecordedTestSanitizer(),
-
-                    // new defaults begin
-                    new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
-                    new GeneralRegexSanitizer(regex: "AccountKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
-                    new BodyKeySanitizer("$..containerUrl"),
-                    new GeneralRegexSanitizer(regex: "accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
-                    // "token": "sv=2023-08-03\u0026ss=b\u0026srt=sco\u0026se=2050-12-12T00%3A00%3A00Z\u0026sp=rwdxlacuptf\u0026sig="
-                    new BodyKeySanitizer("$..applicationSecret"),
-                    new BodyKeySanitizer("$..apiKey"),
-                    new HeaderRegexSanitizer("api-key"),
-                    new BodyKeySanitizer("$..connectionString"),
-                    new GeneralRegexSanitizer(regex: "Accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
-                    new GeneralRegexSanitizer(regex: "Secret=(?<key>[^;\\\"]+)", groupForReplace: "key"),
-                    new HeaderRegexSanitizer("x-ms-encryption-key"),
-                    new BodyKeySanitizer("$..sshPassword"),
-                    new BodyKeySanitizer("$..aliasSecondaryConnectionString"),
-                    new BodyKeySanitizer("$..primaryKey"),
-                    new BodyKeySanitizer("$..secondaryKey"),
-                    new BodyKeySanitizer("$..adminPassword.value"),
-                    new BodyKeySanitizer("$..administratorLoginPassword"),
-                    new BodyKeySanitizer("$..accessToken"),
-                    new BodyKeySanitizer("$..runAsPassword"),
-                    new BodyKeySanitizer("$..adminPassword"),
-                    new BodyKeySanitizer("$..accessSAS"),
-                    // "token": "sv=...ss=...srt=...se=...sp=...sig=" request body covered by 1052
-                    new BodyKeySanitizer("$..WEBSITE_AUTH_ENCRYPTION_KEY"),
-                    new BodyKeySanitizer("$..decryptionKey"),
-                    new HeaderRegexSanitizer("ServiceBusDlqSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    new HeaderRegexSanitizer("ServiceBusSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    // "RequestBody": "client_id=...grant_type=...client_info=...client_secret=…scope=...", covered by 1036/1037
-                    new BodyKeySanitizer("$..access_token"),
-                    new BodyKeySanitizer("$..AccessToken"),
-                    new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&]+)", groupForReplace: "cid"),
-                    new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    // new BodyKeySanitizer("$..targetModelLocation"), disabled, not a secret?
-                    new BodyKeySanitizer("$..targetResourceId"),
-                    new BodyKeySanitizer("$..urlSource"),
-                    new BodyKeySanitizer("$..azureBlobSource.containerUrl"),
-                    new BodyKeySanitizer("$..source"),
-                    // new BodyKeySanitizer("$..resourceLocation"), disabled, not a secret?
-                    new HeaderRegexSanitizer("Location"),
-                    new BodyKeySanitizer("$..to"),
-                    new BodyKeySanitizer("$..from"),
-                    new HeaderRegexSanitizer("subscription-key"),
-                    new BodyKeySanitizer("$..outputDataUri"),
-                    new BodyKeySanitizer("$..inputDataUri"),
-                    new BodyKeySanitizer("$..containerUri"),
-                    new BodyKeySanitizer("$..sasUri"),
-                    new BodyRegexSanitizer(regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
-                    new BodyKeySanitizer("$..id"),
-                    new BodyKeySanitizer("$..token"),
-                    new BodyKeySanitizer("$..appId"),
-                    new BodyKeySanitizer("$..userId"),
-                    // "name" I think this one is too generic, we should probably drop it?
-                    new BodyKeySanitizer("$..id"),
-                    new BodyKeySanitizer("$..storageAccount"),
-                    new BodyKeySanitizer("$..resourceGroup"),
-                    new BodyKeySanitizer("$..guardian"),
-                    new BodyKeySanitizer("$..scan"),
-                    new BodyKeySanitizer("$..catalog"),
-                    new BodyKeySanitizer("$..lastModifiedBy"),
-                    new BodyKeySanitizer("$..managedResourceGroupName"),
-                    // new BodyKeySanitizer("$..friendlyName"), disabled, not a secret?
-                    new BodyKeySanitizer("$..createdBy"),
-                    new BodyKeySanitizer("$..tenantId"),
-                    new BodyKeySanitizer("$..principalId"),
-                    new BodyKeySanitizer("$..clientId"),
-                    new BodyKeySanitizer("$..credential"),
-                    new HeaderRegexSanitizer("SupplementaryAuthorization"),
-                    new BodyKeySanitizer("$.key"),
-                    new BodyKeySanitizer("$.value[*].key"),
-                    new UriRegexSanitizer(regex: "sig=(?<sig>[^&]+)", groupForReplace: "sig"),
-                    // new HeaderRegexSanitizer("x-ms-encryption-key"), dup
-                    new HeaderRegexSanitizer("x-ms-rename-source"),
-                    new HeaderRegexSanitizer("x-ms-file-rename-source"),
-                    new HeaderRegexSanitizer("x-ms-copy-source"),
-                    new HeaderRegexSanitizer("x-ms-copy-source-authorization"),
-                    new HeaderRegexSanitizer("x-ms-file-rename-source-authorization"),
-                    new HeaderRegexSanitizer("x-ms-encryption-key-sha256"),
-                    new BodyKeySanitizer("$..uploadUrl"),
-                    new BodyKeySanitizer("$..logLink"),
-                    new HeaderRegexSanitizer("aeg-sas-token"),
-                    new HeaderRegexSanitizer("aeg-sas-key"),
-                    new HeaderRegexSanitizer("aeg-channel-name"),
-                    new BodyKeySanitizer("$..storageContainerUri"),
-                    new BodyKeySanitizer("$..storageContainerReadListSas"),
-                    new BodyKeySanitizer("$..storageContainerWriteSas"),
-                    new BodyRegexSanitizer(regex: "token=(?<token>[^&]+)($|&)", groupForReplace: "token"),
-                    new BodyRegexSanitizer(regex: "-----BEGIN PRIVATE KEY-----\\n(?<cert>.+\\n)*-----END PRIVATE KEY-----\\n", groupForReplace: "cert"),
-                    new BodyKeySanitizer("$..primaryMasterKey"),
-                    new BodyKeySanitizer("$..primaryReadonlyMasterKey"),
-                    new BodyKeySanitizer("$..secondaryMasterKey"),
-                    new BodyKeySanitizer("$..secondaryReadonlyMasterKey"),
-                    new BodyKeySanitizer("$..password"),
-                    new BodyKeySanitizer("$..certificatePassword"),
-                    new BodyKeySanitizer("$..clientSecret"),
-                    new BodyKeySanitizer("$..keyVaultClientSecret"),
-                    new BodyKeySanitizer("$..accountKey"),
-                    new BodyKeySanitizer("$..authHeader"),
-                    new BodyKeySanitizer("$..httpHeader"),
-                    new BodyKeySanitizer("$..encryptedCredential"),
-                    new BodyKeySanitizer("$..appkey"),
-                    new BodyKeySanitizer("$..functionKey"),
-                    new BodyKeySanitizer("$..atlasKafkaPrimaryEndpoint"),
-                    new BodyKeySanitizer("$..atlasKafkaSecondaryEndpoint"),
-                    new BodyKeySanitizer("$..certificatePassword"),
-                    new BodyKeySanitizer("$..storageAccountPrimaryKey"),
-                    new BodyKeySanitizer("$..privateKey"),
-                    new BodyKeySanitizer("$..fencingClientPassword"),
-                    new BodyKeySanitizer("$..acrToken"),
-                    new BodyKeySanitizer("$..scriptUrlSasToken"),
-                    new BodyKeySanitizer("$..refresh_token"),
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<Value>)(?<group>.*)(?:</Value>)", groupForReplace: "group"),
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedTid>)(?<group>.*)(?:</SignedTid>)", groupForReplace: "group"),
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedOid>)(?<group>.*)(?:</SignedOid>)", groupForReplace: "group"),
-                    new BodyRegexSanitizer(regex: "(?:Password=)(?<pwd>.*?)(?:;)", groupForReplace: "pwd"),
-                    new BodyRegexSanitizer(regex: "(?:User ID=)(?<id>.*?)(?:;)", groupForReplace: "id"),
-                    new BodyRegexSanitizer(regex: "(?:<PrimaryKey>)(?<key>.*)(?:</PrimaryKey>)", groupForReplace: "key"),
-                    new BodyRegexSanitizer(regex: "(?:<SecondaryKey>)(?<key>.*)(?:</SecondaryKey>)", groupForReplace: "key"),
-                    new BodyKeySanitizer("$..accountKey"),
-                    new BodyKeySanitizer("$..accountName"),
-                    new BodyKeySanitizer("$..applicationId"),
-                    new BodyKeySanitizer("$..apiKey"),
-                    new BodyKeySanitizer("$..connectionString"),
-                    new BodyKeySanitizer("$..password"),
-                    new BodyKeySanitizer("$..userName"),
-                    new BodyKeySanitizer("$.properties.WEBSITE_AUTH_ENCRYPTION_KEY"),
-                    new BodyKeySanitizer("$.properties.siteConfig.machineKey.decryptionKey"),
-                    new BodyKeySanitizer("$.properties.DOCKER_REGISTRY_SERVER_PASSWORD"),
-                    // General URI sanitizer // we don't have access to the service name 
-                    // General GUID sanitizer // I think sanitizing all guids is overaggressive by a LOT
-                    new HeaderRegexSanitizer("Set-Cookie"),
-                    new HeaderRegexSanitizer("Cookie"),
-                    new BodyRegexSanitizer(regex: "<ClientIp>(?<secret>.+)</ClientIp>", groupForReplace: "secret"),
-                    new HeaderRegexSanitizer("client-request-id"),
-                    new BodyKeySanitizer("$..blob_sas_url"),
-                    new BodyKeySanitizer("$..targetResourceRegion"),
-                    new RemoveHeaderSanitizer("Telemetry-Source-Time"),
-                    new RemoveHeaderSanitizer("Message-Id"),
-                    new HeaderRegexSanitizer("MS-CV"),
-                    new HeaderRegexSanitizer("X-Azure-Ref"),
-                    new HeaderRegexSanitizer("x-ms-request-id"),
-                    new HeaderRegexSanitizer("x-ms-client-request-id"),
-                    new HeaderRegexSanitizer("x-ms-content-sha256"),
-                    new HeaderRegexSanitizer("Content-Security-Policy-Report-Only"),
-                    new HeaderRegexSanitizer("Repeatability-First-Sent"),
-                    new HeaderRegexSanitizer("Repeatability-Request-ID"),
-                    new HeaderRegexSanitizer("repeatability-request-id"),
-                    new HeaderRegexSanitizer("repeatability-first-sent"),
-                    // client-request-id -- DUPE OF LINE 140
-                    new HeaderRegexSanitizer("P3P"),
-                    new HeaderRegexSanitizer("x-ms-ests-server"),
-                    new BodyKeySanitizer("$..domain_name"),
-                    new GeneralRegexSanitizer(regex: "common/userrealm/(?<realm>[^/\\.]+)", groupForReplace: "realm"),
-                    new GeneralRegexSanitizer(regex: "/identities/(?<realm>[^/?]+)", groupForReplace: "realm"),
-                    // ACS User ID? too general don't have this information at common level
-                    new BodyKeySanitizer("$..etag"),
-                    new BodyKeySanitizer("$..functionUri")
-                };
+                SanitizerRegistry.ResetSessionSanitizers();
 
                 Transforms = new List<ResponseTransform>
                 {

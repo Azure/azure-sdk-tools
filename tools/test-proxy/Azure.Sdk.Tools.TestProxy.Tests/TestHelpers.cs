@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             using var stream = System.IO.File.OpenRead(path);
             using var doc = JsonDocument.Parse(stream);
 
-            return new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+            return new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement), new SanitizerDictionary(), Guid.NewGuid().ToString());
         }
 
         public static RecordingHandler LoadRecordSessionIntoInMemoryStore(string path)
@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             using var stream = System.IO.File.OpenRead(path);
             using var doc = JsonDocument.Parse(stream);
             var guid = Guid.NewGuid().ToString();
-            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement), new SanitizerDictionary(), Guid.NewGuid().ToString());
 
             RecordingHandler handler = new RecordingHandler(Directory.GetCurrentDirectory());
             handler.InMemorySessions.TryAdd(guid, session);
@@ -515,6 +515,25 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
             CommandResult result = GitHandler.Run($"ls-remote {cloneUrl} --tags {assets.Tag}", workingDirectory);
             return result.StdOut.Trim().Length > 0;
+        }
+
+        public static List<T> EnumerateArray<T>(JsonElement element)
+        {
+            List<T> values = new List<T>();
+
+            if (element.ValueKind.ToString() != "Array")
+            {
+                throw new Exception("This test helper is intended for array members only");
+            }
+            else
+            {
+                foreach(var item in element.EnumerateArray())
+                {
+                    values.Add(item.Deserialize<T>());
+                }
+            }
+
+            return values;
         }
     }
 }

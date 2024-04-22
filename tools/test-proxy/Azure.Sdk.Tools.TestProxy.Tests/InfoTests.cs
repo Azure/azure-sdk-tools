@@ -49,8 +49,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
             var httpContext = new DefaultHttpContext();
-            testRecordingHandler.Sanitizers.Clear();
-            testRecordingHandler.Sanitizers.Add(new GeneralRegexSanitizer(value: "A new value", condition: new ApplyCondition() { UriRegex= ".+/Tables" }));
+            testRecordingHandler.SanitizerRegistry.Clear();
+            testRecordingHandler.SanitizerRegistry.Register(new GeneralRegexSanitizer(value: "A new value", condition: new ApplyCondition() { UriRegex= ".+/Tables" }));
             
             var controller = new Info(testRecordingHandler)
             {
@@ -74,8 +74,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-            testRecordingHandler.AddSanitizerToRecording(recordingId, new UriRegexSanitizer(regex: "ABC123"));
-            testRecordingHandler.AddSanitizerToRecording(recordingId, new BodyRegexSanitizer(regex: ".+?"));
+            testRecordingHandler.RegisterSanitizer(new UriRegexSanitizer(regex: "ABC123"), recordingId);
+            testRecordingHandler.RegisterSanitizer(new BodyRegexSanitizer(regex: ".+?"), recordingId);
             testRecordingHandler.SetMatcherForRecording(recordingId, new CustomDefaultMatcher(compareBodies: false, excludedHeaders: "an-excluded-header"));
 
             var model = new ActiveMetadataModel(testRecordingHandler, recordingId);

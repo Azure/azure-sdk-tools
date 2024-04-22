@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 Assert.True(testRecordingHandler.PlaybackSessions.ContainsKey(recordingId));
                 var entry = testRecordingHandler.PlaybackSessions[recordingId].Session.Entries[0];
                 HttpRequest request = TestHelpers.CreateRequestFromEntry(entry);
-                request.Headers["Authorization"] = "fake-auth-header";
+                request.Headers["Authorization"] = "Sanitized";
 
                 HttpResponse response = new DefaultHttpContext().Response;
                 await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);

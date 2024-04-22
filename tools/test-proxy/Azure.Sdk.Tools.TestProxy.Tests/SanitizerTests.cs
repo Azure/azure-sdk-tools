@@ -125,7 +125,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
 
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            testRecordingHandler.Sanitizers.Clear();
+            testRecordingHandler.SanitizerRegistry.Clear();
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-abstraction-identifier"] = "RegexEntrySanitizer";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
@@ -142,7 +142,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
 
             await controller.AddSanitizer();
-            var sanitizer = testRecordingHandler.Sanitizers[0];
+            var sanitizer = testRecordingHandler.SanitizerRegistry.GetSanitizers()[0];
             Assert.True(sanitizer is RegexEntrySanitizer);
 
 

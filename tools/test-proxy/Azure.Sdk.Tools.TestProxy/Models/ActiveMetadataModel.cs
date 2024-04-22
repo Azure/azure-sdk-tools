@@ -34,7 +34,6 @@ namespace Azure.Sdk.Tools.TestProxy.Models
 
         private List<ActionDescription> _populateFromHandler(RecordingHandler handler, string recordingId)
         {
-            var sanitizers = (IEnumerable<RecordedTestSanitizer>) handler.Sanitizers;
             var transforms = (IEnumerable<ResponseTransform>) handler.Transforms;
             var matcher = handler.Matcher;
 
@@ -45,13 +44,14 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                 handler.InMemorySessions
             };
 
+            var sanitizers = handler.SanitizerRegistry.GetSanitizers();
             var recordingFound = false;
             if (!string.IsNullOrWhiteSpace(recordingId)){
                 foreach (var sessionDict in searchCollections)
                 { 
                     if (sessionDict.TryGetValue(recordingId, out var session))
                     {
-                        sanitizers = sanitizers.Concat(session.AdditionalSanitizers);
+                        sanitizers = handler.SanitizerRegistry.GetSanitizers(session);
                         transforms = transforms.Concat(session.AdditionalTransforms);
 
                         if (session.CustomMatcher != null)

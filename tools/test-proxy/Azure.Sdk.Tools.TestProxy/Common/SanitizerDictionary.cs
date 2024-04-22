@@ -205,7 +205,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 ),
                 // new BodyKeySanitizer("$..resourceLocation"), disabled, not a secret?
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Location"),
+                    new HeaderRegexSanitizer("Location", value: "example.com"),
                     "AZSDK038"
                 ),
                 new RegisteredSanitizer(

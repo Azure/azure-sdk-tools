@@ -357,22 +357,41 @@ code {
 
 .code-diagnostics-fatal {
     background-color: var(--code-diagnostics-fatal-color);
-    border: 1px solid hotpink;
+    /*border: 1px solid hotpink;*/
+}
+.dark-theme .code-diagnostics-fatal p{
+    background-color: var(--code-diagnostics-fatal-color);
+    color: var(--code-diagnostics-text-color);
 }
 
 .code-diagnostics-error {
     background-color: var(--code-diagnostics-error-color);
-    border: 1px solid darkorange;
+    /*border: 1px solid darkorange;*/
+}
+
+.dark-theme .code-diagnostics-error p {
+    background-color: var(--code-diagnostics-error-color);
+    color: var(--code-diagnostics-text-color);
 }
 
 .code-diagnostics-warn {
     background-color: var(--code-diagnostics-warn-color);
-    border: 1px solid gold;
+    /*border: 1px solid gold;*/
+}
+
+.dark-theme .code-diagnostics-warn p {
+    background-color: var(--code-diagnostics-warn-color);
+    color: var(--code-diagnostics-text-color);
 }
 
 .code-diagnostics-info {
     background-color: var(--code-diagnostics-info-color);
-    border: 1px solid aqua;
+    /*border: 1px solid aqua;*/
+}
+
+.dark-theme .code-diagnostics-info p {
+    background-color: var(--code-diagnostics-info-color);
+    color: var(--code-diagnostics-text-color);
 }
 
 .code-diagnostics p {

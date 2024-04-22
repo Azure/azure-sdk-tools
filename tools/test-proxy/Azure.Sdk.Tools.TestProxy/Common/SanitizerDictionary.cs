@@ -65,595 +65,595 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 ),
                 new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
-                "AZSDK00X"
+                    "AZSDK004"
                 ),
                 new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "AccountKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
-                    "AZSDK00X"
+                    "AZSDK005"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..containerUrl"),
-                    "AZSDK00X"
+                    "AZSDK006"
                 ),
                 new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
-                    "AZSDK00X"
+                    "AZSDK007"
                 ),
                 // "token": "sv=2023-08-03\u0026ss=b\u0026srt=sco\u0026se=2050-12-12T00%3A00%3A00Z\u0026sp=rwdxlacuptf\u0026sig="
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..applicationSecret"),
-                    "AZSDK00X"
+                    "AZSDK008"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..apiKey"),
-                    "AZSDK00X"
+                    "AZSDK009"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("api-key"),
-                    "AZSDK00X"
+                    "AZSDK010"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..connectionString"),
-                    "AZSDK00X"
+                    "AZSDK011"
                 ),
                 new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "Accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
-                    "AZSDK00X"
+                    "AZSDK012"
                 ),
                 new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "Secret=(?<key>[^;\\\"]+)", groupForReplace: "key"),
-                    "AZSDK00X"
+                    "AZSDK013"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-encryption-key"),
-                    "AZSDK00X"
+                    "AZSDK014"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..sshPassword"),
-                    "AZSDK00X"
+                    "AZSDK015"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..aliasSecondaryConnectionString"),
-                    "AZSDK00X"
+                    "AZSDK016"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..primaryKey"),
-                    "AZSDK00X"
+                    "AZSDK017"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..secondaryKey"),
-                    "AZSDK00X"
+                    "AZSDK018"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..adminPassword.value"),
-                    "AZSDK00X"
+                    "AZSDK019"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..administratorLoginPassword"),
-                    "AZSDK00X"
+                    "AZSDK020"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..accessToken"),
-                    "AZSDK00X"
+                    "AZSDK021"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..runAsPassword"),
-                    "AZSDK00X"
+                    "AZSDK022"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..adminPassword"),
-                    "AZSDK00X"
+                    "AZSDK023"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..accessSAS"),
-                    "AZSDK00X"
+                    "AZSDK024"
                 ),
                 // "token": "sv=...ss=...srt=...se=...sp=...sig=" request body covered by 1052
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..WEBSITE_AUTH_ENCRYPTION_KEY"),
-                    "AZSDK00X"
+                    "AZSDK025"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..decryptionKey"),
-                    "AZSDK00X"
+                    "AZSDK026"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("ServiceBusDlqSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    "AZSDK00X"
+                    "AZSDK027"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("ServiceBusSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    "AZSDK00X"
+                    "AZSDK028"
                 ),
                 // "RequestBody": "client_id=...grant_type=...client_info=...client_secret=…scope=...", covered by 1036/1037
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..access_token"),
-                    "AZSDK00X"
+                    "AZSDK029"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..AccessToken"),
-                    "AZSDK00X"
+                    "AZSDK030"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&]+)", groupForReplace: "cid"),
-                    "AZSDK00X"
+                    "AZSDK031"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    "AZSDK00X"
+                    "AZSDK032"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    "AZSDK00X"
+                    "AZSDK033"
                 ),
                 // new BodyKeySanitizer("$..targetModelLocation"), disabled, not a secret?
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..targetResourceId"),
-                    "AZSDK00X"
+                    "AZSDK034"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..urlSource"),
-                    "AZSDK00X"
+                    "AZSDK035"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..azureBlobSource.containerUrl"),
-                    "AZSDK00X"
+                    "AZSDK036"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..source"),
-                    "AZSDK00X"
+                    "AZSDK037"
                 ),
                 // new BodyKeySanitizer("$..resourceLocation"), disabled, not a secret?
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("Location"),
-                    "AZSDK00X"
+                    "AZSDK038"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..to"),
-                    "AZSDK00X"
+                    "AZSDK039"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..from"),
-                    "AZSDK00X"
+                    "AZSDK040"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("subscription-key"),
-                    "AZSDK00X"
+                    "AZSDK041"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..outputDataUri"),
-                    "AZSDK00X"
+                    "AZSDK042"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..inputDataUri"),
-                    "AZSDK00X"
+                    "AZSDK043"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..containerUri"),
-                    "AZSDK00X"
+                    "AZSDK044"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..sasUri"),
-                    "AZSDK00X"
+                    "AZSDK045"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
-                    "AZSDK00X"
+                    "AZSDK046"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..id"),
-                    "AZSDK00X"
+                    "AZSDK047"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..token"),
-                    "AZSDK00X"
+                    "AZSDK048"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..appId"),
-                    "AZSDK00X"
+                    "AZSDK049"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..userId"),
-                    "AZSDK00X"
+                    "AZSDK050"
                 ),
                 // "name" I think this one is too generic, we should probably drop it?
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..id"),
-                    "AZSDK00X"
+                    "AZSDK051"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..storageAccount"),
-                    "AZSDK00X"
+                    "AZSDK052"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..resourceGroup"),
-                    "AZSDK00X"
+                    "AZSDK053"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..guardian"),
-                    "AZSDK00X"
+                    "AZSDK054"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..scan"),
-                    "AZSDK00X"
+                    "AZSDK055"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..catalog"),
-                    "AZSDK00X"
+                    "AZSDK056"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..lastModifiedBy"),
-                    "AZSDK00X"
+                    "AZSDK057"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..managedResourceGroupName"),
-                    "AZSDK00X"
+                    "AZSDK058"
                 ),
                 // new BodyKeySanitizer("$..friendlyName"), disabled, not a secret?
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..createdBy"),
-                    "AZSDK00X"
+                    "AZSDK059"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..tenantId"),
-                    "AZSDK00X"
+                    "AZSDK060"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..principalId"),
-                    "AZSDK00X"
+                    "AZSDK061"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..clientId"),
-                    "AZSDK00X"
+                    "AZSDK062"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..credential"),
-                    "AZSDK00X"
+                    "AZSDK063"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("SupplementaryAuthorization"),
-                    "AZSDK00X"
+                    "AZSDK064"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$.key"),
-                    "AZSDK00X"
+                    "AZSDK065"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$.value[*].key"),
-                    "AZSDK00X"
+                    "AZSDK066"
                 ),
                 new RegisteredSanitizer(
                     new UriRegexSanitizer(regex: "sig=(?<sig>[^&]+)", groupForReplace: "sig"),
-                    "AZSDK00X"
+                    "AZSDK067"
                 ),
                 // new HeaderRegexSanitizer("x-ms-encryption-key"), dup
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-rename-source"),
-                    "AZSDK00X"
+                    "AZSDK068"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-file-rename-source"),
-                    "AZSDK00X"
+                    "AZSDK069"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-copy-source"),
-                    "AZSDK00X"
+                    "AZSDK070"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-copy-source-authorization"),
-                    "AZSDK00X"
+                    "AZSDK071"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-file-rename-source-authorization"),
-                    "AZSDK00X"
+                    "AZSDK072"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-encryption-key-sha256"),
-                    "AZSDK00X"
+                    "AZSDK073"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..uploadUrl"),
-                    "AZSDK00X"
+                    "AZSDK074"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..logLink"),
-                    "AZSDK00X"
+                    "AZSDK075"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("aeg-sas-token"),
-                    "AZSDK00X"
+                    "AZSDK076"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("aeg-sas-key"),
-                    "AZSDK00X"
+                    "AZSDK077"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("aeg-channel-name"),
-                    "AZSDK00X"
+                    "AZSDK078"
                 ),  
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..storageContainerUri"),
-                    "AZSDK00X"
+                    "AZSDK079"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..storageContainerReadListSas"),
-                    "AZSDK00X"
+                    "AZSDK080"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..storageContainerWriteSas"),
-                    "AZSDK00X"
+                    "AZSDK081"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "token=(?<token>[^&]+)($|&)", groupForReplace: "token"),
-                    "AZSDK00X"
+                    "AZSDK082"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "-----BEGIN PRIVATE KEY-----\\n(?<cert>.+\\n)*-----END PRIVATE KEY-----\\n", groupForReplace: "cert"),
-                    "AZSDK00X"
+                    "AZSDK083"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..primaryMasterKey"),
-                    "AZSDK00X"
+                    "AZSDK084"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..primaryReadonlyMasterKey"),
-                    "AZSDK00X"
+                    "AZSDK085"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..secondaryMasterKey"),
-                    "AZSDK00X"
+                    "AZSDK086"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..secondaryReadonlyMasterKey"),
-                    "AZSDK00X"
+                    "AZSDK087"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..password"),
-                    "AZSDK00X"
+                    "AZSDK088"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..certificatePassword"),
-                    "AZSDK00X"
+                    "AZSDK089"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..clientSecret"),
-                    "AZSDK00X"
+                    "AZSDK090"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..keyVaultClientSecret"),
-                    "AZSDK00X"
+                    "AZSDK091"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..accountKey"),
-                    "AZSDK00X"
+                    "AZSDK092"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..authHeader"),
-                    "AZSDK00X"
+                    "AZSDK093"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..httpHeader"),
-                    "AZSDK00X"
+                    "AZSDK094"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..encryptedCredential"),
-                    "AZSDK00X"
+                    "AZSDK095"
                 ),
                     new RegisteredSanitizer(
                     new BodyKeySanitizer("$..appkey"),
-                    "AZSDK00X"
+                    "AZSDK096"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..functionKey"),
-                    "AZSDK00X"
+                    "AZSDK097"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..atlasKafkaPrimaryEndpoint"),
-                    "AZSDK00X"
+                    "AZSDK098"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..atlasKafkaSecondaryEndpoint"),
-                    "AZSDK00X"
+                    "AZSDK099"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..certificatePassword"),
-                    "AZSDK00X"
+                    "AZSDK100"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..storageAccountPrimaryKey"),
-                    "AZSDK00X"
+                    "AZSDK101"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..privateKey"),
-                    "AZSDK00X"
+                    "AZSDK102"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..fencingClientPassword"),
-                    "AZSDK00X"
+                    "AZSDK103"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..acrToken"),
-                    "AZSDK00X"
+                    "AZSDK104"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..scriptUrlSasToken"),
-                    "AZSDK00X"
+                    "AZSDK105"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..refresh_token"),
-                    "AZSDK00X"
+                    "AZSDK106"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<Value>)(?<group>.*)(?:</Value>)", groupForReplace: "group"),
-                    "AZSDK00X"
+                    "AZSDK107"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedTid>)(?<group>.*)(?:</SignedTid>)", groupForReplace: "group"),
-                    "AZSDK00X"
+                    "AZSDK108"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedOid>)(?<group>.*)(?:</SignedOid>)", groupForReplace: "group"),
-                    "AZSDK00X"
+                    "AZSDK109"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "(?:Password=)(?<pwd>.*?)(?:;)", groupForReplace: "pwd"),
-                    "AZSDK00X"
+                    "AZSDK110"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "(?:User ID=)(?<id>.*?)(?:;)", groupForReplace: "id"),
-                    "AZSDK00X"
+                    "AZSDK111"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "(?:<PrimaryKey>)(?<key>.*)(?:</PrimaryKey>)", groupForReplace: "key"),
-                    "AZSDK00X"
+                    "AZSDK112"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "(?:<SecondaryKey>)(?<key>.*)(?:</SecondaryKey>)", groupForReplace: "key"),
-                    "AZSDK00X"
+                    "AZSDK113"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..accountKey"),
-                    "AZSDK00X"
+                    "AZSDK114"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..accountName"),
-                    "AZSDK00X"
+                    "AZSDK115"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..applicationId"),
-                    "AZSDK00X"
+                    "AZSDK116"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..apiKey"),
-                    "AZSDK00X"
+                    "AZSDK117"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..connectionString"),
-                    "AZSDK00X"
+                    "AZSDK118"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..password"),
-                    "AZSDK00X"
+                    "AZSDK119"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..userName"),
-                    "AZSDK00X"
+                    "AZSDK121"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$.properties.WEBSITE_AUTH_ENCRYPTION_KEY"),
-                    "AZSDK00X"
+                    "AZSDK122"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$.properties.siteConfig.machineKey.decryptionKey"),
-                    "AZSDK00X"
+                    "AZSDK123"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$.properties.DOCKER_REGISTRY_SERVER_PASSWORD"),
-                    "AZSDK00X"
+                    "AZSDK124"
                 ),
                 // General URI sanitizer // we don't have access to the service name 
                 // General GUID sanitizer // I think sanitizing all guids is overaggressive by a LOT
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("Set-Cookie"),
-                    "AZSDK00X"
+                    "AZSDK125"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("Cookie"),
-                    "AZSDK00X"
+                    "AZSDK126"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "<ClientIp>(?<secret>.+)</ClientIp>", groupForReplace: "secret"),
-                    "AZSDK00X"
+                    "AZSDK127"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("client-request-id"),
-                    "AZSDK00X"
+                    "AZSDK128"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..blob_sas_url"),
-                    "AZSDK00X"
+                    "AZSDK129"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..targetResourceRegion"),
-                    "AZSDK00X"
+                    "AZSDK130"
                 ),
                 new RegisteredSanitizer(
                     new RemoveHeaderSanitizer("Telemetry-Source-Time"),
-                    "AZSDK00X"
+                    "AZSDK131"
                 ),
                 new RegisteredSanitizer(
                     new RemoveHeaderSanitizer("Message-Id"),
-                    "AZSDK00X"
+                    "AZSDK132"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("MS-CV"),
-                    "AZSDK00X"
+                    "AZSDK133"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("X-Azure-Ref"),
-                    "AZSDK00X"
+                    "AZSDK134"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-request-id"),
-                    "AZSDK00X"
+                    "AZSDK135"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-client-request-id"),
-                    "AZSDK00X"
+                    "AZSDK136"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-content-sha256"),
-                    "AZSDK00X"
+                    "AZSDK137"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("Content-Security-Policy-Report-Only"),
-                    "AZSDK00X"
+                    "AZSDK138"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("Repeatability-First-Sent"),
-                    "AZSDK00X"
+                    "AZSDK139"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("Repeatability-Request-ID"),
-                    "AZSDK00X"
+                    "AZSDK140"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("repeatability-request-id"),
-                    "AZSDK00X"
+                    "AZSDK141"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("repeatability-first-sent"),
-                    "AZSDK00X"
+                    "AZSDK142"
                 ),
                 // client-request-id -- DUPE OF LINE 140
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("P3P"),
-                    "AZSDK00X"
+                    "AZSDK143"
                 ),
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-ests-server"),
-                    "AZSDK00X"
+                    "AZSDK144"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..domain_name"),
-                    "AZSDK00X"
+                    "AZSDK145"
                 ),
                 new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "common/userrealm/(?<realm>[^/\\.]+)", groupForReplace: "realm"),
-                    "AZSDK00X"
+                    "AZSDK146"
                 ),
                 new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "/identities/(?<realm>[^/?]+)", groupForReplace: "realm"),
-                    "AZSDK00X"
+                    "AZSDK147"
                 ),
                 // ACS User ID? too general don't have this information at common level
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..etag"),
-                    "AZSDK00X"
+                    "AZSDK148"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..functionUri"),
-                    "AZSDK00X"
+                    "AZSDK149"
                 )
             };
 

@@ -1,4 +1,4 @@
-import { NgModule, APP_INITIALIZER } from '@angular/core';
+import { NgModule, APP_INITIALIZER, isDevMode } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
@@ -6,16 +6,11 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { NavBarComponent } from './_components/shared/nav-bar/nav-bar.component';
 import { IndexPageComponent } from './_components/index-page/index-page.component';
 import { ReviewsListComponent } from './_components/reviews-list/reviews-list.component';
-import { FooterComponent } from './_components/shared/footer/footer.component';
 import { MenubarModule } from 'primeng/menubar';
-import { MenuModule } from 'primeng/menu';
-import { ButtonModule } from 'primeng/button';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
-import { PaginatorModule } from 'primeng/paginator';
 import { TabMenuModule } from 'primeng/tabmenu';
 import { ToolbarModule } from 'primeng/toolbar';
 import { DropdownModule } from 'primeng/dropdown';
@@ -28,7 +23,6 @@ import { LanguageNamesPipe } from './_pipes/language-names.pipe';
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { FileUploadModule } from 'primeng/fileupload';
 import { SplitterModule } from 'primeng/splitter';
-import { VirtualScrollerModule } from 'primeng/virtualscroller';
 import { RevisionsListComponent } from './_components/revisions-list/revisions-list.component';
 import { ApprovalPipe } from './_pipes/approval.pipe';
 import { LastUpdatedOnPipe } from './_pipes/last-updated-on.pipe';
@@ -36,6 +30,8 @@ import { Observable } from 'rxjs';
 import { ConfigService } from './_services/config/config.service';
 import { CookieService } from 'ngx-cookie-service';
 import { SharedAppModule } from './_modules/shared/shared-app.module';
+import { ServiceWorkerModule } from '@angular/service-worker';
+import { environment } from 'src/environments/environment';
 
 export function initializeApp(configService: ConfigService) {
   return (): Observable<any> => {
@@ -75,6 +71,13 @@ export function initializeApp(configService: ConfigService) {
     SplitterModule,
     TableModule,
     TimeagoModule.forRoot(),
+    ServiceWorkerModule.register('ngsw-worker.js', {
+      enabled: environment.production,
+      scope: '/spa/',
+      // Register the ServiceWorker as soon as the application is stable
+      // or after 30 seconds (whichever comes first).
+      registrationStrategy: 'registerWhenStable:30000'
+    }),
   ],
   providers: [
     ConfigService,

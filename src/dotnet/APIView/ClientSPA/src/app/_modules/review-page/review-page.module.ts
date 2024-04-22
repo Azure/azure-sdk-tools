@@ -9,7 +9,6 @@ import { CommentThreadComponent } from 'src/app/_components/shared/comment-threa
 import { EditorModule } from 'primeng/editor';
 import { PanelModule } from 'primeng/panel';
 import { TreeSelectModule } from 'primeng/treeselect';
-import { NavBarComponent } from 'src/app/_components/shared/nav-bar/nav-bar.component';
 import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { MenuModule } from 'primeng/menu';
 import { SplitterModule } from 'primeng/splitter';

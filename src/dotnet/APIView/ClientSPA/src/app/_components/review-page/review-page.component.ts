@@ -79,7 +79,7 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
   loadReviewContent(reviewId: string, activeApiRevisionId: string | null = null, diffApiRevisionId: string | null = null) {
     this.reviewsService.getReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId).subscribe({
       next: (response: ArrayBuffer) => {
-          // Passing ArrayBufer to worker is more perfomant than passing object
+          // Passing ArrayBufer to worker is way faster than passing object
           this.workerService.postToApiTreeBuilder(response);
         }
     });

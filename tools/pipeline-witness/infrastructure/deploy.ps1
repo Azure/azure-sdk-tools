@@ -34,6 +34,12 @@ try {
 
     Write-Host "> az deployment sub create --template-file './bicep/resourceGroup.bicep' --parameters $parametersFile --location $location --name $deploymentName"
     az deployment sub create --template-file './bicep/resourceGroup.bicep' --parameters $parametersFile --location $location --name $deploymentName
+    if($LASTEXITCODE -eq 0) {
+        Write-Host "Deployed resource group"
+    } else {
+        Write-Error "Failed to deploy resource group"
+        exit 1
+    }
 } finally {
     Pop-Location
 }

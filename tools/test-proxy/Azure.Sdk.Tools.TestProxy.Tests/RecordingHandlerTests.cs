@@ -104,10 +104,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
                 Assert.Equal(DefaultExtensionCount, sanitizers.Count);
                 Assert.IsType<RecordedTestSanitizer>(sanitizers[0]);
-                Assert.IsType<BodyKeySanitizer>(sanitizers[1]);
-                Assert.IsType<BodyKeySanitizer>(sanitizers[2]);
-                Assert.IsType<HeaderRegexSanitizer>(sanitizers[75]);
-                Assert.IsType<BodyRegexSanitizer>(sanitizers[108]);
+                Assert.IsType<GeneralRegexSanitizer>(sanitizers[1]);
+                Assert.IsType<GeneralRegexSanitizer>(sanitizers[2]);
+                Assert.IsType<BodyKeySanitizer>(sanitizers[108]);
             }
         }
         #endregion

@@ -359,19 +359,10 @@ code {
     background-color: var(--code-diagnostics-fatal-color);
     /*border: 1px solid hotpink;*/
 }
-.dark-theme .code-diagnostics-fatal p{
-    background-color: var(--code-diagnostics-fatal-color);
-    color: var(--code-diagnostics-text-color);
-}
 
 .code-diagnostics-error {
     background-color: var(--code-diagnostics-error-color);
     /*border: 1px solid darkorange;*/
-}
-
-.dark-theme .code-diagnostics-error p {
-    background-color: var(--code-diagnostics-error-color);
-    color: var(--code-diagnostics-text-color);
 }
 
 .code-diagnostics-warn {
@@ -379,23 +370,37 @@ code {
     /*border: 1px solid gold;*/
 }
 
-.dark-theme .code-diagnostics-warn p {
-    background-color: var(--code-diagnostics-warn-color);
-    color: var(--code-diagnostics-text-color);
-}
-
 .code-diagnostics-info {
     background-color: var(--code-diagnostics-info-color);
     /*border: 1px solid aqua;*/
 }
 
-.dark-theme .code-diagnostics-info p {
-    background-color: var(--code-diagnostics-info-color);
-    color: var(--code-diagnostics-text-color);
-}
-
 .code-diagnostics p {
     margin: 0;
+}
+
+.dark-theme .code-diagnostics p {
+    color: #e6eff7;
+}
+
+.dark-theme .code-diagnostics p a {
+    color: #0d1dfc;
+}
+
+.dark-theme .code-diagnostics p a:active {
+    color: #00CBEB;
+}
+
+.dark-theme .code-diagnostics p a:visited {
+    color: #3d4afd;
+}
+
+.dark-theme .code-diagnostics p a:hover {
+    color: #00CBEB;
+}
+
+.dark-solarized-theme .code-diagnostics p {
+    /*color: #2b2b2b;*/
 }
 
 .code-diagnostics div {
@@ -409,5 +414,4 @@ code {
     color: var(--text-muted-color) !important;
     font-style: italic;
 }
-
 /*---------------------------------------------------------------------*/

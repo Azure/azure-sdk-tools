@@ -11,11 +11,11 @@
             [style]="{ height: 'calc(100vh - 119px)' }">
             <ng-template pTemplate>
                 <div class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel">
-                    <!--<app-review-nav [reviewPageNavigation]="reviewPageNavigation"></app-review-nav>-->
+                    <app-review-nav [reviewPageNavigation]="reviewPageNavigation"></app-review-nav>
                 </div>
             </ng-template>
             <ng-template pTemplate>
-                <div class="col flex align-items-center justify-content-center overflow-auto border review-panel">
+                <div id="code-window" class="col flex align-items-center justify-content-center overflow-auto border review-panel">
                     <app-code-panel [apiTreeNodeData]="apiTreeNodeData" [tokenLineData]="tokenLineData" [reviewComments]="reviewComments"></app-code-panel>
                 </div>
             </ng-template>

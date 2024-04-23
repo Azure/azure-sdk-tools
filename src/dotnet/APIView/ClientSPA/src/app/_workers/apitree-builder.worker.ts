@@ -5,6 +5,7 @@ import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, ReviewPage
 import { APITreeNode } from "../_models/revision";
 
 let interWorkerPort : MessagePort;
+let lastCodeLineHusk : CodeHuskNode;
 
 addEventListener('message', ({ data }) => {
   if (data.interWorkerPort) {
@@ -28,6 +29,13 @@ addEventListener('message', ({ data }) => {
       };
   
       postMessage(createNavigationMessage);
+
+      let createCodeLineHuskMessage : CreateCodeLineHuskMessage =  {
+        directive: ReviewPageWorkerMessageDirective.CreateCodeLineHusk,
+        nodeData: lastCodeLineHusk,
+        isLastHuskNode: true
+      };
+      postMessage(createCodeLineHuskMessage);
     }
   }
 });
@@ -58,10 +66,12 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
     indent: indent,
     position: "top"
   };
+  lastCodeLineHusk = nodeData;
 
   let createCodeLineHuskMessage : CreateCodeLineHuskMessage =  {
     directive: ReviewPageWorkerMessageDirective.CreateCodeLineHusk,
     nodeData: nodeData,
+    isLastHuskNode: false
   };
   postMessage(createCodeLineHuskMessage);
 
@@ -90,6 +100,7 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
   if (apiTreeNode.bottomTokens.length > 0) {
     nodeData.position = "bottom";
     createCodeLineHuskMessage.nodeData = nodeData;
+    lastCodeLineHusk = nodeData;
     postMessage(createCodeLineHuskMessage);
 
     buildTokensMessage.position = "bottom";

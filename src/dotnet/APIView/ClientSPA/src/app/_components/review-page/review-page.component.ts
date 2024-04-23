@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { BehaviorSubject } from 'rxjs';
 import { CommentItemModel, ReviewContent,  } from 'src/app/_models/review';
-import { APIRevision, CodeHuskNode, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { APIRevision, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
@@ -22,7 +22,7 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
   reviewComments : CommentItemModel[] | undefined = [];
   revisionSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
-  apiTreeNodeData: BehaviorSubject<CodeHuskNode | null> = new BehaviorSubject<CodeHuskNode | null>(null);
+  apiTreeNodeData: BehaviorSubject<CreateCodeLineHuskMessage | null> = new BehaviorSubject<CreateCodeLineHuskMessage | null>(null);
   tokenLineData: BehaviorSubject<CreateLinesOfTokensMessage | null> = new BehaviorSubject<CreateLinesOfTokensMessage | null>(null);
 
   sideMenu: MenuItem[] | undefined;
@@ -66,7 +66,7 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
 
       if (data.directive === ReviewPageWorkerMessageDirective.CreateCodeLineHusk) {
         if (data.nodeData) {
-          this.apiTreeNodeData.next(data.nodeData);
+          this.apiTreeNodeData.next(data);
         }
       }
     });

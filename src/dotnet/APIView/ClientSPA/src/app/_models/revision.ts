@@ -64,6 +64,7 @@ export interface CodeHuskNode {
 export interface CreateCodeLineHuskMessage {
   directive: ReviewPageWorkerMessageDirective
   nodeData: CodeHuskNode
+  isLastHuskNode: boolean
 }
 
 export interface CreateLinesOfTokensMessage {

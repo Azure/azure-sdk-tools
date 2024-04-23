@@ -51,14 +51,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new RecordedTestSanitizer(),
                     "AZSDK001"
                 ),
-                new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..access_token"),
-                    "AZSDK002"
-                ),
-                new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..refresh_token"),
-                    "AZSDK003"
-                ),
+
+                // GENERAL REGEX
                 new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "SharedAccessKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
                     "AZSDK004"
@@ -68,28 +62,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK005"
                 ),
                 new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..containerUrl"),
-                    "AZSDK006"
-                ),
-                new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
                     "AZSDK007"
-                ),
-                new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..applicationSecret"),
-                    "AZSDK008"
-                ),
-                new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..apiKey"),
-                    "AZSDK009"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("api-key"),
-                    "AZSDK010"
-                ),
-                new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..connectionString"),
-                    "AZSDK011"
                 ),
                 new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "Accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
@@ -100,8 +74,246 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK013"
                 ),
                 new RegisteredSanitizer(
+                    new GeneralRegexSanitizer(regex: "common/userrealm/(?<realm>[^/\\.]+)", groupForReplace: "realm"),
+                    "AZSDK146"
+                ),
+                new RegisteredSanitizer(
+                    new GeneralRegexSanitizer(regex: "/identities/(?<realm>[^/?]+)", groupForReplace: "realm"),
+                    "AZSDK147"
+                ),
+
+                // URI REGEX
+                new RegisteredSanitizer(
+                    new UriRegexSanitizer(regex: "sig=(?<sig>[^&]+)", groupForReplace: "sig"),
+                    "AZSDK067"
+                ),
+                new RegisteredSanitizer(
+                    new UriRegexSanitizer("REDACTED", regex: "(?<=http://|https://)(?<host>[^/?\\.]+)", groupForReplace: "host"),
+                    "AZSDK151"
+                ),
+                new RegisteredSanitizer(
+                    new UriRegexSanitizer(regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
+                    "AZSDK154"
+                ),
+
+                // REMOVE HEADER
+                new RegisteredSanitizer(
+                    new RemoveHeaderSanitizer("Telemetry-Source-Time"),
+                    "AZSDK131"
+                ),
+                new RegisteredSanitizer(
+                    new RemoveHeaderSanitizer("Message-Id"),
+                    "AZSDK132"
+                ),
+
+                // HEADER REGEX
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("api-key"),
+                    "AZSDK010"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("ServiceBusDlqSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    "AZSDK027"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("ServiceBusSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    "AZSDK028"
+                ),
+                new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-encryption-key"),
                     "AZSDK014"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Location", value: "https://example.com"),
+                    "AZSDK038"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("subscription-key"),
+                    "AZSDK041"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("SupplementaryAuthorization"),
+                    "AZSDK064"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-rename-source"),
+                    "AZSDK068"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-file-rename-source"),
+                    "AZSDK069"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-copy-source"),
+                    "AZSDK070"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-copy-source-authorization"),
+                    "AZSDK071"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-file-rename-source-authorization"),
+                    "AZSDK072"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-encryption-key-sha256"),
+                    "AZSDK073"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("aeg-sas-token"),
+                    "AZSDK076"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("aeg-sas-key"),
+                    "AZSDK077"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("aeg-channel-name"),
+                    "AZSDK078"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Set-Cookie"),
+                    "AZSDK125"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Cookie"),
+                    "AZSDK126"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("client-request-id"),
+                    "AZSDK128"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("MS-CV"),
+                    "AZSDK133"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("X-Azure-Ref"),
+                    "AZSDK134"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-request-id"),
+                    "AZSDK135"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-client-request-id"),
+                    "AZSDK136"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-content-sha256"),
+                    "AZSDK137"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Content-Security-Policy-Report-Only"),
+                    "AZSDK138"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Repeatability-First-Sent"),
+                    "AZSDK139"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Repeatability-Request-ID"),
+                    "AZSDK140"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("repeatability-request-id"),
+                    "AZSDK141"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("repeatability-first-sent"),
+                    "AZSDK142"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("P3P"),
+                    "AZSDK143"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("x-ms-ests-server"),
+                    "AZSDK144"
+                ),
+
+                // BODY REGEX
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&]+)", groupForReplace: "cid"),
+                    "AZSDK031"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    "AZSDK032"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    "AZSDK033"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
+                    "AZSDK046"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "token=(?<token>[^&]+)($|&)", groupForReplace: "token"),
+                    "AZSDK082"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "-----BEGIN PRIVATE KEY-----\\n(?<cert>.+\\n)*-----END PRIVATE KEY-----\\n", groupForReplace: "cert"),
+                    "AZSDK083"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<Value>)(?<group>.*)(?:</Value>)", groupForReplace: "group"),
+                    "AZSDK107"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedTid>)(?<group>.*)(?:</SignedTid>)", groupForReplace: "group"),
+                    "AZSDK108"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedOid>)(?<group>.*)(?:</SignedOid>)", groupForReplace: "group"),
+                    "AZSDK109"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?:Password=)(?<pwd>.*?)(?:;)", groupForReplace: "pwd"),
+                    "AZSDK110"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?:User ID=)(?<id>.*?)(?:;)", groupForReplace: "id"),
+                    "AZSDK111"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?:<PrimaryKey>)(?<key>.*)(?:</PrimaryKey>)", groupForReplace: "key"),
+                    "AZSDK112"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "(?:<SecondaryKey>)(?<key>.*)(?:</SecondaryKey>)", groupForReplace: "key"),
+                    "AZSDK113"
+                ),
+                new RegisteredSanitizer(
+                    new BodyRegexSanitizer(regex: "<ClientIp>(?<secret>.+)</ClientIp>", groupForReplace: "secret"),
+                    "AZSDK127"
+                ),
+
+                // BODY KEY
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..access_token"),
+                    "AZSDK002"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..refresh_token"),
+                    "AZSDK003"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..containerUrl"),
+                    "AZSDK006"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..applicationSecret"),
+                    "AZSDK008"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..apiKey"),
+                    "AZSDK009"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..connectionString"),
+                    "AZSDK011"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..sshPassword"),
@@ -152,14 +364,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK026"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("ServiceBusDlqSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    "AZSDK027"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("ServiceBusSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    "AZSDK028"
-                ),
-                new RegisteredSanitizer(
                     new BodyKeySanitizer("$..access_token"),
                     "AZSDK029"
                 ),
@@ -167,19 +371,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new BodyKeySanitizer("$..AccessToken"),
                     "AZSDK030"
                 ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&]+)", groupForReplace: "cid"),
-                    "AZSDK031"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    "AZSDK032"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
-                    "AZSDK033"
-                ),
-                // new BodyKeySanitizer("$..targetModelLocation"), disabled, not a secret?
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..targetResourceId"),
                     "AZSDK034"
@@ -196,11 +387,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new BodyKeySanitizer("$..source"),
                     "AZSDK037"
                 ),
-                // new BodyKeySanitizer("$..resourceLocation"), disabled, not a secret?
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Location", value: "https://example.com"),
-                    "AZSDK038"
-                ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..to"),
                     "AZSDK039"
@@ -208,10 +394,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..from"),
                     "AZSDK040"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("subscription-key"),
-                    "AZSDK041"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..outputDataUri"),
@@ -228,10 +410,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..sasUri"),
                     "AZSDK045"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
-                    "AZSDK046"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..id"),
@@ -302,44 +480,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK063"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("SupplementaryAuthorization"),
-                    "AZSDK064"
-                ),
-                new RegisteredSanitizer(
                     new BodyKeySanitizer("$.key"),
                     "AZSDK065"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$.value[*].key"),
                     "AZSDK066"
-                ),
-                new RegisteredSanitizer(
-                    new UriRegexSanitizer(regex: "sig=(?<sig>[^&]+)", groupForReplace: "sig"),
-                    "AZSDK067"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-rename-source"),
-                    "AZSDK068"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-file-rename-source"),
-                    "AZSDK069"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-copy-source"),
-                    "AZSDK070"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-copy-source-authorization"),
-                    "AZSDK071"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-file-rename-source-authorization"),
-                    "AZSDK072"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-encryption-key-sha256"),
-                    "AZSDK073"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..uploadUrl"),
@@ -349,18 +495,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new BodyKeySanitizer("$..logLink"),
                     "AZSDK075"
                 ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("aeg-sas-token"),
-                    "AZSDK076"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("aeg-sas-key"),
-                    "AZSDK077"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("aeg-channel-name"),
-                    "AZSDK078"
-                ),  
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..storageContainerUri"),
                     "AZSDK079"
@@ -372,14 +506,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..storageContainerWriteSas"),
                     "AZSDK081"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "token=(?<token>[^&]+)($|&)", groupForReplace: "token"),
-                    "AZSDK082"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "-----BEGIN PRIVATE KEY-----\\n(?<cert>.+\\n)*-----END PRIVATE KEY-----\\n", groupForReplace: "cert"),
-                    "AZSDK083"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..primaryMasterKey"),
@@ -429,7 +555,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new BodyKeySanitizer("$..encryptedCredential"),
                     "AZSDK095"
                 ),
-                    new RegisteredSanitizer(
+                new RegisteredSanitizer(
                     new BodyKeySanitizer("$..appkey"),
                     "AZSDK096"
                 ),
@@ -474,34 +600,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK106"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<Value>)(?<group>.*)(?:</Value>)", groupForReplace: "group"),
-                    "AZSDK107"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedTid>)(?<group>.*)(?:</SignedTid>)", groupForReplace: "group"),
-                    "AZSDK108"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedOid>)(?<group>.*)(?:</SignedOid>)", groupForReplace: "group"),
-                    "AZSDK109"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:Password=)(?<pwd>.*?)(?:;)", groupForReplace: "pwd"),
-                    "AZSDK110"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:User ID=)(?<id>.*?)(?:;)", groupForReplace: "id"),
-                    "AZSDK111"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:<PrimaryKey>)(?<key>.*)(?:</PrimaryKey>)", groupForReplace: "key"),
-                    "AZSDK112"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:<SecondaryKey>)(?<key>.*)(?:</SecondaryKey>)", groupForReplace: "key"),
-                    "AZSDK113"
-                ),
-                new RegisteredSanitizer(
                     new BodyKeySanitizer("$..accountKey"),
                     "AZSDK114"
                 ),
@@ -542,22 +640,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK124"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Set-Cookie"),
-                    "AZSDK125"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Cookie"),
-                    "AZSDK126"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "<ClientIp>(?<secret>.+)</ClientIp>", groupForReplace: "secret"),
-                    "AZSDK127"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("client-request-id"),
-                    "AZSDK128"
-                ),
-                new RegisteredSanitizer(
                     new BodyKeySanitizer("$..blob_sas_url"),
                     "AZSDK129"
                 ),
@@ -566,72 +648,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK130"
                 ),
                 new RegisteredSanitizer(
-                    new RemoveHeaderSanitizer("Telemetry-Source-Time"),
-                    "AZSDK131"
-                ),
-                new RegisteredSanitizer(
-                    new RemoveHeaderSanitizer("Message-Id"),
-                    "AZSDK132"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("MS-CV"),
-                    "AZSDK133"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("X-Azure-Ref"),
-                    "AZSDK134"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-request-id"),
-                    "AZSDK135"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-client-request-id"),
-                    "AZSDK136"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-content-sha256"),
-                    "AZSDK137"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Content-Security-Policy-Report-Only"),
-                    "AZSDK138"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Repeatability-First-Sent"),
-                    "AZSDK139"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Repeatability-Request-ID"),
-                    "AZSDK140"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("repeatability-request-id"),
-                    "AZSDK141"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("repeatability-first-sent"),
-                    "AZSDK142"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("P3P"),
-                    "AZSDK143"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-ests-server"),
-                    "AZSDK144"
-                ),
-                new RegisteredSanitizer(
                     new BodyKeySanitizer("$..domain_name"),
                     "AZSDK145"
-                ),
-                new RegisteredSanitizer(
-                    new GeneralRegexSanitizer(regex: "common/userrealm/(?<realm>[^/\\.]+)", groupForReplace: "realm"),
-                    "AZSDK146"
-                ),
-                new RegisteredSanitizer(
-                    new GeneralRegexSanitizer(regex: "/identities/(?<realm>[^/?]+)", groupForReplace: "realm"),
-                    "AZSDK147"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..etag"),
@@ -646,10 +664,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK150"
                 ),
                 new RegisteredSanitizer(
-                    new UriRegexSanitizer("REDACTED", regex: "(?<=http://|https://)(?<host>[^/?\\.]+)", groupForReplace: "host"),
-                    "AZSDK151"
-                ),
-                new RegisteredSanitizer(
                     new BodyKeySanitizer("$..name"),
                     "AZSDK152"
                 ),
@@ -658,8 +672,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK153"
                 ),
                 new RegisteredSanitizer(
-                    new UriRegexSanitizer(regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
-                    "AZSDK154"
+                    new BodyKeySanitizer("$..targetModelLocation"),
+                    "AZSDK155"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..resourceLocation"),
+                    "AZSDK156"
                 ),
             };
 

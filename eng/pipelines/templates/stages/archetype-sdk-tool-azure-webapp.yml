@@ -46,6 +46,7 @@ stages:
         jobs:
         - ${{ if ne(length(parameters.StagingArmSteps), 0) }}:
           - deployment: PublishArm
+            displayName: Publish ARM
             environment: ${{ parameters.Staging.EnvironmentName }}
             pool:
               name: azsdk-pool-mms-ubuntu-2204-general
@@ -54,7 +55,8 @@ stages:
                 deploy:
                   steps: ${{ parameters.StagingArmSteps }}
                 
-        - deployment: PublishFunction
+        - deployment: PublishApp
+          displayName: Publish App
           environment: ${{ parameters.Staging.EnvironmentName }}
           ${{ if ne(length(parameters.StagingArmSteps), 0) }}:
             dependsOn: PublishArm
@@ -85,6 +87,7 @@ stages:
         jobs:
         - ${{ if ne(length(parameters.ProductionArmSteps), 0) }}:
           - deployment: PublishArm
+            displayName: Publish ARM
             environment: ${{ parameters.Production.EnvironmentName }}
             pool:
               name: azsdk-pool-mms-ubuntu-2204-general
@@ -93,7 +96,8 @@ stages:
                 deploy:
                   steps: ${{ parameters.ProductionArmSteps }}
         
-        - deployment: PublishFunction
+        - deployment: PublishApp
+          displayName: Publish App
           environment: ${{ parameters.Production.EnvironmentName }}
           ${{ if ne(length(parameters.ProductionArmSteps), 0) }}:
             dependsOn: PublishArm

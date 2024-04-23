@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -186,7 +185,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                 {
                     // We extend the lease after half of the lease period has expired.
                     // For a 30 second MessageLeasePeriod, every 15 seconds, we'll set the message to invisible
-                    // for 30 seconds.                    
+                    // for 30 seconds.
                     await Task.Delay(halfLife, cancellationToken);
 
                     this.logger.LogDebug("Extending visibility timeout for message.\n  Queue: {Queue}\n  Message: {MessageId}\n  Pop Receipt: {PopReceipt}\n  Visible in: {VisibleIn}", queueName, messageId, popReceipt, nextVisibleOn - DateTimeOffset.UtcNow);

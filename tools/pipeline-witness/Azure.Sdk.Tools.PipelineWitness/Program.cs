@@ -1,3 +1,4 @@
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +10,10 @@ namespace Azure.Sdk.Tools.PipelineWitness
     {
         public static async Task Main(params string[] args)
         {
+            // per queue storage performance docs, set the default connection limit to >= 100
+            // https://learn.microsoft.com/en-us/azure/storage/queues/storage-performance-checklist#increase-default-connection-limit
+            ServicePointManager.DefaultConnectionLimit = 100;
+            
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.

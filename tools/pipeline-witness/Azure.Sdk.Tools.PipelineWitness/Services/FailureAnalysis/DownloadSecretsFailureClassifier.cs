@@ -1,16 +1,12 @@
-﻿using Microsoft.TeamFoundation.Build.WebApi;
-using System;
-using System.Collections.Generic;
+using Microsoft.TeamFoundation.Build.WebApi;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
     public class DownloadSecretsFailureClassifier : IFailureClassifier
     {
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
             var failedTasks = from r in context.Timeline.Records
                               where r.RecordType == "Task"
@@ -25,6 +21,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                     context.AddFailure(failedTask, "Secrets Failure");
                 }
             }
+
+            return Task.CompletedTask;
         }
     }
 }

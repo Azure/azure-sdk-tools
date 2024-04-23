@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
     public class AzurePipelinesPoolOutageClassifier : IFailureClassifier
     {
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
             var jobs = from r in context.Timeline.Records
                        where r.RecordType == "Job"
@@ -22,6 +19,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                     context.AddFailure(job, "Azure Pipelines Pool Outage");
                 }
             }
+
+            return Task.CompletedTask;
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using Microsoft.ApplicationInsights.Channel;
-using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 
 namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights

@@ -1,4 +1,4 @@
-﻿using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using System.Linq;
 using System.Threading.Tasks;
@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
         private VssConnection vssConnection;
         private BuildHttpClient buildClient;
 
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
             var failedTasks = from r in context.Timeline.Records
                                 where r.Result == TaskResult.Failed
@@ -68,6 +68,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                     context.AddFailure(failedTask, "Cache Failure Other");
                 }
             }
+
+            return Task.CompletedTask;
         }
     }
 }

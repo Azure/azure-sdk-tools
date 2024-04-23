@@ -1,7 +1,4 @@
-﻿using System;
 using System.Linq;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.TeamFoundation.Build.WebApi;
 
@@ -9,7 +6,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
 {
     public class CosmosDbEmulatorStartFailureClassifier : IFailureClassifier
     {
-        public async Task ClassifyAsync(FailureAnalyzerContext context)
+        public Task ClassifyAsync(FailureAnalyzerContext context)
         {
             var failedTasks = from r in context.Timeline.Records
                               where r.RecordType == "Task"
@@ -24,6 +21,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis
                     context.AddFailure(failedTask, "Cosmos DB Emulator Failure");
                 }
             }
+
+            return Task.CompletedTask;
         }
     }
 }

@@ -27,10 +27,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             TelemetryClient telemetryClient,
             IOptionsMonitor<PipelineWitnessSettings> options)
             : base(
-                logger, 
+                logger,
                 telemetryClient,
                 queueServiceClient,
-                options.CurrentValue.BuildCompleteQueueName, 
+                options.CurrentValue.BuildCompleteQueueName,
                 options)
         {
             this.logger = logger;

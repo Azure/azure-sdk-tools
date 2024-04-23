@@ -1,10 +1,9 @@
-import { ChangeDetectorRef, Component, ElementRef, Input, Renderer2, ViewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, ViewChild, ViewContainerRef } from '@angular/core';
 import { BehaviorSubject, fromEvent, Subject, takeUntil } from 'rxjs';
 import { debounceTime, finalize } from 'rxjs/operators';
 import { CommentItemModel } from 'src/app/_models/review';
-import { CodeHuskNode, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
-import { OnInit } from '@angular/core';
 import { AfterViewInit } from '@angular/core';
 import { OnDestroy } from '@angular/core';
 
@@ -14,7 +13,7 @@ import { OnDestroy } from '@angular/core';
   styleUrls: ['./code-panel.component.scss']
 })
 export class CodePanelComponent implements AfterViewInit, OnDestroy{
-  @Input() apiTreeNodeData: BehaviorSubject<CodeHuskNode | null> = new BehaviorSubject<CodeHuskNode | null>(null);
+  @Input() apiTreeNodeData: BehaviorSubject<CreateCodeLineHuskMessage | null> = new BehaviorSubject<CreateCodeLineHuskMessage | null>(null);
   @Input() tokenLineData: BehaviorSubject<CreateLinesOfTokensMessage | null> = new BehaviorSubject<CreateLinesOfTokensMessage | null>(null);
   @Input() reviewComments : CommentItemModel[] | undefined = [];
 
@@ -23,37 +22,35 @@ export class CodePanelComponent implements AfterViewInit, OnDestroy{
 
   lineNumberCount : number = 0;
   isLoading: boolean = true;
-  isUpdatingNode: boolean = false;
   codeLineFragments : Map<string, any> = new Map<string, any>();
-  noOfNodesAppended:  number = 0;
+  lastHuskNodeId :  string | undefined = undefined;
 
   private destroyApiTreeNode$ = new Subject<void>();
   private destroyTokenLineData$ = new Subject<void>();
 
   constructor(private changeDeterctorRef: ChangeDetectorRef) { }
 
-  ngAfterViewInit() {
-    // Debounce Scroll event while code lines are being appended to the DOM
-    fromEvent(window, 'scroll').pipe(
-      debounceTime(this.isUpdatingNode ? 1000 : 0)
-    ).subscribe(() => {
-    });
-    
+  ngAfterViewInit() {   
     this.apiTreeNodeData.pipe(
       takeUntil(this.destroyApiTreeNode$),
       finalize(() => {
         
       })
-    ).subscribe(nodeData => {
-      if (nodeData != null)
+    ).subscribe(data => {
+      if (data?.nodeData != null)
       {
-        const div = document.createElement('div');
-        const id = `${nodeData.id}-${nodeData.position}`;
-        div.id = id;
-        div.classList.add('api-node');
-        div.dataset["indent"] = nodeData.indent.toString();
-        this.codeLinesContainer!.nativeElement.appendChild(div);
-        this.isLoading = false;
+        if (data.isLastHuskNode) {
+          this.lastHuskNodeId = `${data.nodeData.id}-${data.nodeData.position}`;
+        }
+        else {
+          const div = document.createElement('div');
+          const id = `${data.nodeData.id}-${data.nodeData.position}`;
+          div.id = id;
+          div.classList.add('api-node');
+          div.dataset["indent"] = data.nodeData.indent.toString();
+          this.codeLinesContainer!.nativeElement.appendChild(div);
+          this.isLoading = false;
+        }
       }
     });
 
@@ -162,18 +159,10 @@ export class CodePanelComponent implements AfterViewInit, OnDestroy{
           if (this.codeLineFragments.has(nodeId)) {
             const apiTreeNode = document.getElementById(nodeId);
             const codeLineFragment = this.codeLineFragments.get(nodeId);
-
-            if (codeLineFragment.apiTokens) {
-              this.noOfNodesAppended++;
-              setTimeout(() => {
-                apiTreeNode!.appendChild(codeLineFragment.apiTokens);
-                this.codeLineFragments.delete(nodeId);
-                if (this.noOfNodesAppended > 10000) {
-                  apiTreeNode!.style.setProperty('content-visibility', 'auto');
-                }
-                this.isUpdatingNode = false;
-              }, 0);
-            }
+            setTimeout(() => {
+              apiTreeNode!.appendChild(codeLineFragment.apiTokens);
+              apiTreeNode!.setAttribute('content-visibility', 'auto');
+            }, 0);
           }
         }
       }

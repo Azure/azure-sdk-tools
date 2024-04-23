@@ -92,12 +92,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new NormalizedString(config.AssetsRepoLocation);
         }
 
-        public void CheckForSecrets(AssetsConfiguration assetsConfiguration)
+        public async Task CheckForSecrets(GitAssetsConfiguration assetsConfiguration)
         {
-            var secretsDetected = false;
+            var detectedSecrets = await SecretScanner.DiscoverSecrets(assetsConfiguration.AssetsRepoLocation);
 
-
-            if (secretsDetected)
+            if (detectedSecrets.Count > 0)
             {
                 _consoleWrapper.WriteLine("A secret was detected in the pushed code. Please register a sanitizer, re-record, and attempt pushing again. Detailed errors follow: ");
                 Environment.Exit(-1);
@@ -130,7 +129,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                CheckForSecrets(config);
+                await CheckForSecrets(config);
 
                 try
                 {

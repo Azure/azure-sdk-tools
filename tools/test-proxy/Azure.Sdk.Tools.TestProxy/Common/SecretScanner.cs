@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Security.Utilities;
-using static System.Net.WebRequestMethods;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -29,7 +28,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return detectedSecrets;
         }
 
-        public static async Task<string> ReadFile(string filePath)
+        private static async Task<string> ReadFile(string filePath)
         {
             using (StreamReader reader = new StreamReader(filePath))
             {
@@ -37,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-        public static async Task<string> DetectSecrets(string stringContent)
+        private static async Task<string> DetectSecrets(string stringContent)
         {
             await Task.Delay(100);
             return "hah!";

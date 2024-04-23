@@ -3,18 +3,16 @@ using System.Net;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Linq;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Console;
 using System.Collections.Concurrent;
-using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 using Azure.Sdk.tools.TestProxy.Common;
+using Microsoft.Security.Utilities;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -94,6 +92,18 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new NormalizedString(config.AssetsRepoLocation);
         }
 
+        public void CheckForSecrets(AssetsConfiguration assetsConfiguration)
+        {
+            var secretsDetected = false;
+
+
+            if (secretsDetected)
+            {
+                _consoleWrapper.WriteLine("A secret was detected in the pushed code. Please register a sanitizer, re-record, and attempt pushing again. Detailed errors follow: ");
+                Environment.Exit(-1);
+            }
+        }
+
         /// <summary>
         /// Pushes a set of changed files to the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>
@@ -120,6 +130,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
+                CheckForSecrets(config);
+
                 try
                 {
                     string branchGuid = Guid.NewGuid().ToString().Substring(0, 8);

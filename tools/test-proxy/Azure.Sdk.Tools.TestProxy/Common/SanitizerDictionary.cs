@@ -14,10 +14,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public string Id { get; set; }
         public RecordedTestSanitizer Sanitizer { get; set; }
 
-        public RegisteredSanitizer(RecordedTestSanitizer sanitizer, string id)
+        public string Description { get; set; }
+
+        public RegisteredSanitizer(RecordedTestSanitizer sanitizer, string id, string description = null)
         {
             Id = id;
             Sanitizer = sanitizer;
+            Description = description;
         }
     }
 
@@ -47,16 +50,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /*
          * The below list has been grouped and labelled with some room for expansion. As such:
          * 
-         * General sanitizers = 1XXX
-         * Header sanitizers = 2XXX
-         * Body sanitizers = 3XXX
-         * URI, special, any other type = 4XXX
+         * General sanitizers  = 1XXX
+         * Header sanitizers   = 2XXX
+         * Body sanitizers     = 3XXX
+         * URI, special, other = 4XXX
          * 
          * */
 
         public List<RegisteredSanitizer> DefaultSanitizerList = new List<RegisteredSanitizer>
             {
-                #region general
+                #region GeneralRegex
                 // basic RecordedTestSanitizer handles Authorization header
                 new RegisteredSanitizer(
                     new RecordedTestSanitizer(),
@@ -84,14 +87,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 ),
                 new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "common/userrealm/(?<realm>[^/\\.]+)", groupForReplace: "realm"),
-                    "AZSDK1005"
+                    "AZSDK1005",
+                    "ACS Identity leverages these strings to store identity information."
                 ),
                 new RegisteredSanitizer(
                     new GeneralRegexSanitizer(regex: "/identities/(?<realm>[^/?]+)", groupForReplace: "realm"),
-                    "AZSDK1006"
+                    "AZSDK1006",
+                    "ACS Identity leverages these strings to store identity information."
                 ),
                 #endregion
-                #region header
+                #region HeaderRegex
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("api-key"),
                     "AZSDK2001"
@@ -275,9 +280,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3013"
                 ),
             #endregion
-
-            #region BodyKey
-            new RegisteredSanitizer(
+                #region BodyKey
+                new RegisteredSanitizer(
                     new BodyKeySanitizer("$..access_token"),
                     "AZSDK3400"
                 ),
@@ -666,7 +670,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3496"
                 ),
                 #endregion
-
                 #region UriRegex
                 new RegisteredSanitizer(
                     new UriRegexSanitizer(regex: "sig=(?<sig>[^&]+)", groupForReplace: "sig"),
@@ -680,10 +683,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new UriRegexSanitizer(regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
                     "AZSDK4002"
                 ),
-            #endregion
-
-            #region RemoveHeader
-            new RegisteredSanitizer(
+                #endregion
+                #region RemoveHeader
+                new RegisteredSanitizer(
                     new RemoveHeaderSanitizer("Telemetry-Source-Time"),
                     "AZSDK4003"
                 ),
@@ -692,7 +694,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK4004"
                 ),
             #endregion
-
         };
 
         /// <summary>

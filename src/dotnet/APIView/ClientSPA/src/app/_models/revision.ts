@@ -70,7 +70,6 @@ export interface CreateLinesOfTokensMessage {
   directive: ReviewPageWorkerMessageDirective
   tokenLine: StructuredToken[]
   nodeId: string
-  lineId: string
   position: string
   diffKind: string
 }

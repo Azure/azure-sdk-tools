@@ -84,7 +84,6 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
       directive: ReviewPageWorkerMessageDirective.CreateLineOfTokens,
       tokenLine : diffTokenLineResult[0],
       nodeId : id,
-      lineId : createHashFromTokenLine(diffTokenLineResult[0]),
       position : position,
       diffKind : "Unchanged"
     };
@@ -95,7 +94,6 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
       postMessage(createLinesOfTokensMessage);
 
       createLinesOfTokensMessage.tokenLine = diffTokenLineResult[1];
-      createLinesOfTokensMessage.lineId = createHashFromTokenLine(diffTokenLineResult[1]);
       createLinesOfTokensMessage.diffKind = "Added";
 
       postMessage(createLinesOfTokensMessage);
@@ -122,7 +120,6 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
         directive: ReviewPageWorkerMessageDirective.CreateLineOfTokens,
         tokenLine : tokenLine,
         nodeId : id,
-        lineId : createHashFromTokenLine(tokenLine),
         position : position,
         diffKind : "NoneDiff"  
       };
@@ -141,7 +138,6 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
       directive: ReviewPageWorkerMessageDirective.CreateLineOfTokens,
       tokenLine : tokenLine,
       nodeId : id,
-      lineId : createHashFromTokenLine(tokenLine),
       position : position,
       diffKind : "NoneDiff"
     };

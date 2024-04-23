@@ -42,7 +42,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddAzureClients(builder =>
             {
                 builder.UseCredential(provider => provider.GetRequiredService<TokenCredential>());
-                //builder.AddSecretClient(new Uri(settings.KeyVaultUri));
                 builder.AddCosmosServiceClient(new Uri(settings.CosmosAccountUri));
                 builder.AddBlobServiceClient(new Uri(settings.BlobStorageAccountUri));
                 builder.AddQueueServiceClient(new Uri(settings.QueueStorageAccountUri))

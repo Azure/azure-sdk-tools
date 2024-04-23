@@ -38,6 +38,17 @@ stages:
       - stage: Staging
         dependsOn: Build
         jobs:
+        - ${{ if eq(parameters.Staging.ArmJobSteps }}:
+          - deployment: PublishArm
+            environment: ${{ parameters.Staging.EnvironmentName }}
+            pool:
+              name: azsdk-pool-mms-ubuntu-2204-general
+              vmImage: ubuntu-22.04
+            strategy:
+              runOnce:
+                deploy:
+                  steps: ${{ parameters.Staging.ArmJobSteps }}
+                
         - deployment: PublishFunction
           environment: ${{ parameters.Staging.EnvironmentName }}
           pool:
@@ -65,6 +76,17 @@ stages:
       - stage: Production
         dependsOn: Staging
         jobs:
+        - ${{ if eq(parameters.Production.ArmJobSteps }}:
+          - deployment: PublishArm
+            environment: ${{ parameters.Production.EnvironmentName }}
+            pool:
+              name: azsdk-pool-mms-ubuntu-2204-general
+              vmImage: ubuntu-22.04
+            strategy:
+              runOnce:
+                deploy:
+                  steps: ${{ parameters.Production.ArmJobSteps }}
+        
         - deployment: PublishFunction
           environment: ${{ parameters.Production.EnvironmentName }}
           pool:

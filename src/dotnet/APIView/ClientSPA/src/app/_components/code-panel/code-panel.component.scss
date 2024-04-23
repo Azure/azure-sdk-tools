@@ -5,11 +5,6 @@
     width: 500%;
     display: block;
 
-    #code-window {
-        scroll-behavior: smooth;
-        transform: translate3d(0, 0, 0);
-    }
-
     .api-node {
         display: grid;
         --max-cell-width: 0px;

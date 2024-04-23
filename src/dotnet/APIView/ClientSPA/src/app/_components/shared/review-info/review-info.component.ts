@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MenuItem } from 'primeng/api';
-import { DropdownChangeEvent } from 'primeng/dropdown';
 import { Review } from 'src/app/_models/review';
 
 @Component({

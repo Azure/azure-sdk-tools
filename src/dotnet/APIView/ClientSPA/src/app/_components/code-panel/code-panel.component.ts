@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, Input, ViewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, Renderer2, ViewChild, ViewContainerRef } from '@angular/core';
 import { BehaviorSubject, fromEvent, Subject, takeUntil } from 'rxjs';
 import { debounceTime, finalize } from 'rxjs/operators';
 import { CommentItemModel } from 'src/app/_models/review';
@@ -23,8 +23,9 @@ export class CodePanelComponent implements AfterViewInit, OnDestroy{
 
   lineNumberCount : number = 0;
   isLoading: boolean = true;
-  isAppendingTokens: boolean = false;
+  isUpdatingNode: boolean = false;
   codeLineFragments : Map<string, any> = new Map<string, any>();
+  noOfNodesAppended:  number = 0;
 
   private destroyApiTreeNode$ = new Subject<void>();
   private destroyTokenLineData$ = new Subject<void>();
@@ -32,8 +33,9 @@ export class CodePanelComponent implements AfterViewInit, OnDestroy{
   constructor(private changeDeterctorRef: ChangeDetectorRef) { }
 
   ngAfterViewInit() {
+    // Debounce Scroll event while code lines are being appended to the DOM
     fromEvent(window, 'scroll').pipe(
-      debounceTime(this.isAppendingTokens ? 1000 : 0)
+      debounceTime(this.isUpdatingNode ? 1000 : 0)
     ).subscribe(() => {
     });
     
@@ -68,74 +70,89 @@ export class CodePanelComponent implements AfterViewInit, OnDestroy{
           const lineNumber = document.createElement('span');
           const commentButton = document.createElement('span');
           const commentIcon = document.createElement('i');
+
           let commentThreadData : CommentItemModel[] = [];
+          let isDocumentationLine = false;
 
           if (lineData.nodeId && lineData.tokenLine) {
             for (let token of lineData.tokenLine) {
-              const span = document.createElement('span');
-              token.renderClasses.forEach((c: string) => span.classList.add(c));
-              span.textContent = token.value;
+              const tokenSpan = document.createElement('span');
+              token.renderClasses.forEach((c: string) => tokenSpan.classList.add(c));
+              tokenSpan.textContent = token.value;
               if (token.id){
                 const tokenId = token.id;
-                span.setAttribute('data-token-id', tokenId);
-
+                tokenSpan.setAttribute('data-token-id', tokenId);
                 if (this.reviewComments && this.reviewComments.length > 0)
                 {
                   commentThreadData = this.reviewComments.filter(c => c.elementId === tokenId);
                 }
+                commentButton.classList.add('commentable');
+              }
+
+              if ("GroupId" in token.properties) {
+                line.classList.add(`${token.properties["GroupId"]}`);
+                isDocumentationLine = true;
               }
 
               if (token.diffKind === "Added" || token.diffKind === "Removed") {
-                span.classList.add(`token-${token.diffKind.toLowerCase()}`);
+                tokenSpan.classList.add(`token-${token.diffKind.toLowerCase()}`);
               }
 
-              lineContent.appendChild(span);
+              lineContent.appendChild(tokenSpan);
             }
             
             if (lineData.tokenLine.length > 0)
             {
               this.lineNumberCount++;
-              let codeLineFragment : DocumentFragment;
+
+              // Construct DocumentFragment so that we can append all the lines in this node at once
+              let apiTokens : DocumentFragment;
+              let documentationTokens : DocumentFragment;
               if (this.codeLineFragments.has(nodeId)) {
-                codeLineFragment = this.codeLineFragments.get(nodeId)?.documentFragment!;
+                const codeLineFragment = this.codeLineFragments.get(nodeId);
+                apiTokens = codeLineFragment.apiTokens;
+                documentationTokens = codeLineFragment.documentationTokens;
               }
               else {
-                codeLineFragment = document.createDocumentFragment();
+                apiTokens = document.createDocumentFragment();
+                documentationTokens = document.createDocumentFragment();
                 const nodeFragmentData = { 
-                  documentFragment: codeLineFragment,
-                  lastLineNumber: this.lineNumberCount
+                  apiTokens: apiTokens,
+                  documentationTokens: documentationTokens,
                 };
                 this.codeLineFragments.set(nodeId, nodeFragmentData);
               }
               
               lineNumber.textContent = `${this.lineNumberCount}`;
+              document.documentElement.style.setProperty('--max-line-number-width', `${this.lineNumberCount.toString().length}ch`);
               lineNumber.classList.add('line-number');
               line.classList.add('code-line');
               if (lineData.diffKind === "Added" || lineData.diffKind === "Removed") {
                 line.classList.add(`code-line-${lineData.diffKind.toLowerCase()}`);
               }
-              lineContent.classList.add('code-line-content');
+              lineContent.classList.add('code-line-content')
               lineContent.style.paddingLeft = `${apiTreeNode!.dataset["indent"] as unknown as number * 20}px`;
               lineActions.classList.add('line-actions');
               commentIcon.classList.add('bi', 'bi-plus-square-fill');
               commentButton.appendChild(commentIcon);
               commentButton.classList.add('comment-button');
-              if (lineData.position === "top") {
-                commentButton.classList.add('commentable');
-              }
 
               lineActions.appendChild(lineNumber);
               lineActions.appendChild(commentButton);
               line.appendChild(lineActions);
               line.appendChild(lineContent);
-              codeLineFragment!.appendChild(line);
 
-              if (commentThreadData.length > 0)
-              {
-                const commentThreadNode = this.commentThreadRef.createComponent(CommentThreadComponent);
-                commentThreadNode.instance.comments = commentThreadData;
-                codeLineFragment!.appendChild(commentThreadNode.location.nativeElement);
-                // this.changeDeterctorRef.detectChanges();
+              if (isDocumentationLine) {
+                documentationTokens.appendChild(line);
+              }
+              else {
+                apiTokens.appendChild(line);
+                if (commentThreadData.length > 0)
+                {
+                  const commentThreadNode = this.commentThreadRef.createComponent(CommentThreadComponent);
+                  commentThreadNode.instance.comments = commentThreadData;
+                  apiTokens!.appendChild(commentThreadNode.location.nativeElement);
+                }
               }
             }
           }
@@ -144,18 +161,19 @@ export class CodePanelComponent implements AfterViewInit, OnDestroy{
         if (lineData.directive === ReviewPageWorkerMessageDirective.AppendTokenLinesToNode) {
           if (this.codeLineFragments.has(nodeId)) {
             const apiTreeNode = document.getElementById(nodeId);
-            const nodeFragmentData = this.codeLineFragments.get(nodeId);
-            this.codeLineFragments.delete(nodeId);
-            if (nodeFragmentData.lastLineNumber > 3000)
-            {
-              apiTreeNode!.style.setProperty('content-visibility', 'auto');
+            const codeLineFragment = this.codeLineFragments.get(nodeId);
+
+            if (codeLineFragment.apiTokens) {
+              this.noOfNodesAppended++;
+              setTimeout(() => {
+                apiTreeNode!.appendChild(codeLineFragment.apiTokens);
+                this.codeLineFragments.delete(nodeId);
+                if (this.noOfNodesAppended > 10000) {
+                  apiTreeNode!.style.setProperty('content-visibility', 'auto');
+                }
+                this.isUpdatingNode = false;
+              }, 0);
             }
-            
-            this.isAppendingTokens = true;
-            setTimeout(() => {
-              apiTreeNode!.appendChild(nodeFragmentData.documentFragment!);
-              this.isAppendingTokens = false;
-            }, 0);
           }
         }
       }

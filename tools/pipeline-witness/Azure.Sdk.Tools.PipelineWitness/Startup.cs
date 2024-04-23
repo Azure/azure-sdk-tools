@@ -27,9 +27,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
     {
         public static void Configure(WebApplicationBuilder builder)
         {
-            var azureCredential = new DefaultAzureCredential();
-            var settings = new PipelineWitnessSettings();
-            var settingsSection = builder.Configuration.GetSection("PipelineWitness");
+            DefaultAzureCredential azureCredential = new();
+            PipelineWitnessSettings settings = new();
+            IConfigurationSection settingsSection = builder.Configuration.GetSection("PipelineWitness");
             settingsSection.Bind(settings);
 
             builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         private static void AddHostedService<T>(this IServiceCollection services, int instanceCount) where T : class, IHostedService
         {
-            for (var i = 0; i < instanceCount; i++)
+            for (int i = 0; i < instanceCount; i++)
             {
                 services.AddSingleton<IHostedService, T>();
             }
@@ -85,9 +85,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         private static VssConnection CreateVssConnection(IServiceProvider provider)
         {
-            var azureCredential = provider.GetRequiredService<TokenCredential>();
+            TokenCredential azureCredential = provider.GetRequiredService<TokenCredential>();
             TokenRequestContext tokenRequestContext = new(VssAadSettings.DefaultScopes);
-            var token = azureCredential.GetToken(tokenRequestContext, CancellationToken.None);
+            AccessToken token = azureCredential.GetToken(tokenRequestContext, CancellationToken.None);
 
             Uri organizationUrl = new("https://dev.azure.com/azure-sdk");
             VssAadCredential vssCredential = new(new VssAadToken("Bearer", token.Token));

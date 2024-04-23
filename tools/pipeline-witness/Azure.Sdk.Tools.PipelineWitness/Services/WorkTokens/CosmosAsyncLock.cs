@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
         {
             try
             {
-                var response = await this.container.ReplaceItemAsync(
+                ItemResponse<CosmosLockDocument> response = await this.container.ReplaceItemAsync(
                     new CosmosLockDocument(this.id, this.duration),
                     this.id,
                     this.partitionKey,

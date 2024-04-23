@@ -24,29 +24,4 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
             Logs.Add(state);
         }
     }
-
-    public class TestLoggingFactory : ILoggerFactory
-    {
-        private readonly TestLogger logger;
-
-        public TestLoggingFactory(TestLogger logger)
-        {
-            this.logger = logger;
-        }
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void AddProvider(ILoggerProvider provider)
-        {
-            throw new NotImplementedException();
-        }
-
-        public ILogger CreateLogger(string categoryName)
-        {
-            return this.logger;
-        }
-    }
 }

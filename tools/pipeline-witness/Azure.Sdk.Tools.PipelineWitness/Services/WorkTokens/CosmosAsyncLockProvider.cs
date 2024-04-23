@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
 
         public async Task<IAsyncLock> GetLockAsync(string id, TimeSpan duration, CancellationToken cancellationToken)
         {
-            var partitionKey = new PartitionKey(id);
+            PartitionKey partitionKey = new(id);
 
             ItemResponse<CosmosLockDocument> response;
 
@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
                 return await CreateLockAsync(id, duration, cancellationToken);
             }
 
-            var existingLock = response.Resource;
+            CosmosLockDocument existingLock = response.Resource;
 
             if (existingLock.Expiration >= DateTime.UtcNow)
             {
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
         {
             try
             {
-                var response = await this.container.CreateItemAsync(
+                ItemResponse<CosmosLockDocument> response = await this.container.CreateItemAsync(
                     new CosmosLockDocument(id, duration),
                     new PartitionKey(id),
                     cancellationToken: cancellationToken);

@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights.Extensibility.Implementation;
 
 namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
 {
@@ -12,7 +13,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
         {
             if (!string.IsNullOrEmpty(version))
             {
-                var component = telemetry.Context?.Component;
+                ComponentContext component = telemetry.Context?.Component;
 
                 if (component != null)
                 {
@@ -23,9 +24,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
 
         private static string GetVersion()
         {
-            var assembly = typeof(ApplicationVersionTelemetryInitializer).Assembly;
+            Assembly assembly = typeof(ApplicationVersionTelemetryInitializer).Assembly;
 
-            var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            string version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
                 ?? assembly.GetName().Version?.ToString();
 
             return version;

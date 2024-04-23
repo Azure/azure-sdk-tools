@@ -31,21 +31,21 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var processEvery = TimeSpan.FromMinutes(60);
+            TimeSpan processEvery = TimeSpan.FromMinutes(60);
 
             while (true)
             {
-                var stopWatch = Stopwatch.StartNew();
-                var settings = this.options.Value;
+                Stopwatch stopWatch = Stopwatch.StartNew();
+                PipelineWitnessSettings settings = this.options.Value;
 
                 try
                 {
-                    await using var asyncLock = await this.asyncLockProvider.GetLockAsync("UpdateBuildDefinitions", processEvery, stoppingToken);
+                    await using IAsyncLock asyncLock = await this.asyncLockProvider.GetLockAsync("UpdateBuildDefinitions", processEvery, stoppingToken);
 
                     // if there's no asyncLock, this process has alread completed in the last hour
                     if (asyncLock != null)
                     {
-                        foreach (var project in settings.Projects)
+                        foreach (string project in settings.Projects)
                         {
                             await this.runProcessor.UploadBuildDefinitionBlobsAsync(settings.Account, project);
                         }
@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                     this.logger.LogError(ex, "Error processing build definitions");
                 }
 
-                var duration = settings.BuildDefinitionLoopPeriod - stopWatch.Elapsed;
+                TimeSpan duration = settings.BuildDefinitionLoopPeriod - stopWatch.Elapsed;
                 if (duration > TimeSpan.Zero)
                 {
                     await Task.Delay(duration, stoppingToken);

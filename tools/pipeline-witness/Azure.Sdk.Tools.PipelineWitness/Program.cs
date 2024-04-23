@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             // https://learn.microsoft.com/en-us/azure/storage/queues/storage-performance-checklist#increase-default-connection-limit
             ServicePointManager.DefaultConnectionLimit = 100;
 
-            var builder = WebApplication.CreateBuilder(args);
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
             builder.Services.AddControllers();
@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             Startup.Configure(builder);
 
-            var app = builder.Build();
+            WebApplication app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

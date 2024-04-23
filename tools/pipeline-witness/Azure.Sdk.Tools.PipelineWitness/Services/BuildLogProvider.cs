@@ -24,8 +24,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         {
             this.logger.LogTrace("Getting logs for build {BuildId}, log {LogId} from rest api", build.Id, logId);
 
-            var buildHttpClient = this.vssConnection.GetClient<BuildHttpClient>();
-            var response = await buildHttpClient.GetBuildLogLinesAsync(build.Project.Id, build.Id, logId);
+            BuildHttpClient buildHttpClient = this.vssConnection.GetClient<BuildHttpClient>();
+            List<string> response = await buildHttpClient.GetBuildLogLinesAsync(build.Project.Id, build.Id, logId);
 
             this.logger.LogTrace("Received {CharacterCount} characters in {LineCount} lines for build {BuildId}, log {LogId}", response.Sum(x => x.Length), response.Count, build.Id, logId);
 
@@ -36,8 +36,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         {
             this.logger.LogTrace("Getting logs for build {BuildId}, log {LogId} from rest api", buildId, logId);
 
-            var buildHttpClient = this.vssConnection.GetClient<BuildHttpClient>();
-            var stream = await buildHttpClient.GetBuildLogAsync(projectName, buildId, logId);
+            BuildHttpClient buildHttpClient = this.vssConnection.GetClient<BuildHttpClient>();
+            Stream stream = await buildHttpClient.GetBuildLogAsync(projectName, buildId, logId);
 
             return stream;
         }

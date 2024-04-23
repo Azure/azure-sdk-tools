@@ -34,10 +34,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
 
         public BlobUploadProcessorIntegrationTests()
         {
-            var pat = Environment.GetEnvironmentVariable("AZURESDK_DEVOPS_TOKEN");
-            var blobUri = Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS");
+            string pat = Environment.GetEnvironmentVariable("AZURESDK_DEVOPS_TOKEN");
+            string blobUri = Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS");
 
-            if (!string.IsNullOrWhiteSpace(pat) && !string.IsNullOrWhiteSpace(blobUri) )
+            if (!string.IsNullOrWhiteSpace(pat) && !string.IsNullOrWhiteSpace(blobUri))
             {
                 this.visualStudioCredentials = new VssBasicCredential("nobody", pat);
                 this.visualStudioConnection = new VssConnection(new Uri(DEVOPS_PATH), this.visualStudioCredentials);
@@ -47,16 +47,16 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
         [EnvironmentConditionalSkipFact]
         public async Task BasicBlobProcessInvokesSuccessfully()
         {
-            var buildLogProvider = new BuildLogProvider(logger: new NullLogger<BuildLogProvider>(), this.visualStudioConnection);
-            var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS"));
-            var buildHttpClient = this.visualStudioConnection.GetClient<BuildHttpClient>();
-            var testResultsBuiltClient = this.visualStudioConnection.GetClient<TestResultsHttpClient>();
+            BuildLogProvider buildLogProvider = new(logger: new NullLogger<BuildLogProvider>(), this.visualStudioConnection);
+            BlobServiceClient blobServiceClient = new(Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS"));
+            BuildHttpClient buildHttpClient = this.visualStudioConnection.GetClient<BuildHttpClient>();
+            TestResultsHttpClient testResultsBuiltClient = this.visualStudioConnection.GetClient<TestResultsHttpClient>();
 
             List<Build> recentBuilds = await buildHttpClient.GetBuildsAsync(TARGET_PROJECT_ID, definitions: new[] { TARGET_DEFINITION_ID }, resultFilter: BuildResult.Succeeded, statusFilter: BuildStatus.Completed, top: 1, queryOrder: BuildQueryOrder.FinishTimeDescending);
             Assert.True(recentBuilds.Count > 0);
-            var targetBuildId = recentBuilds.First().Id;
+            int targetBuildId = recentBuilds.First().Id;
 
-            BlobUploadProcessor processor = new BlobUploadProcessor(logger: new NullLogger<BlobUploadProcessor>(),
+            BlobUploadProcessor processor = new(logger: new NullLogger<BlobUploadProcessor>(),
                 logProvider: buildLogProvider,
                 blobServiceClient: blobServiceClient,
                 buildClient: buildHttpClient,
@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
         [InlineData(0, 10000, 0)]
         public void TestBatching(int startingNumber, int batchSize, int expectedBatchNumber)
         {
-            var numberOfBatches = BlobUploadProcessor.CalculateBatches(startingNumber, batchSize);
+            int numberOfBatches = BlobUploadProcessor.CalculateBatches(startingNumber, batchSize);
 
             Assert.Equal(expectedBatchNumber, numberOfBatches);
         }

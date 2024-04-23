@@ -92,6 +92,12 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             return new NormalizedString(config.AssetsRepoLocation);
         }
 
+        /// <summary>
+        /// Currently this is written to always scan every file within the repo before pushing. By passing the _results_ of DetectPendingChanges (the set of changed files) 
+        /// as an argument to this function, we can easily short circuit the scan and only scan the CHANGED files.
+        /// </summary>
+        /// <param name="assetsConfiguration"></param>
+        /// <returns></returns>
         public async Task CheckForSecrets(GitAssetsConfiguration assetsConfiguration)
         {
             var detectedSecrets = await SecretScanner.DiscoverSecrets(assetsConfiguration.AssetsRepoLocation);
@@ -99,6 +105,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             if (detectedSecrets.Count > 0)
             {
                 _consoleWrapper.WriteLine("A secret was detected in the pushed code. Please register a sanitizer, re-record, and attempt pushing again. Detailed errors follow: ");
+                foreach (var detection in detectedSecrets)
+                {
+                    _consoleWrapper.WriteLine(detection.ToString());
+                }
                 Environment.Exit(-1);
             }
         }

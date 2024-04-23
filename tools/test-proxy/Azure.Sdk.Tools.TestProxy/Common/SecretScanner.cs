@@ -9,19 +9,22 @@ namespace Azure.Sdk.Tools.TestProxy.Common
     {
         public static SecretMasker SecretMasker = new SecretMasker(WellKnownRegexPatterns.HighConfidenceMicrosoftSecurityModels, generateCorrelatingIds: true);
 
-        public static async Task<List<string>> DiscoverSecrets(string inputDirectory)
+        public static async Task<List<Detection>> DiscoverSecrets(string inputDirectory)
         {
             var files = Directory.GetFiles("", "*", SearchOption.AllDirectories);
-            List<string> detectedSecrets = new List<string>();
+            List<Detection> detectedSecrets = new List<Detection>();
 
             foreach (string filePath in files)
             {
                 var content = await ReadFile(filePath);
-                var fileDetections = await DetectSecrets(content);
+                var fileDetections = DetectSecrets(content);
 
-                if (!string.IsNullOrWhiteSpace(fileDetections))
+                if (fileDetections != null && fileDetections.Count > 0)
                 {
-                    detectedSecrets.Add(fileDetections);
+                    foreach(Detection detection in fileDetections)
+                    {
+                        detectedSecrets.Add(detection);
+                    }
                 }
             }
 
@@ -36,10 +39,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-        private static async Task<string> DetectSecrets(string stringContent)
+        private static ICollection<Detection> DetectSecrets(string stringContent)
         {
-            await Task.Delay(100);
-            return "hah!";
+            return SecretMasker.DetectSecrets(stringContent);
         }
         
     }

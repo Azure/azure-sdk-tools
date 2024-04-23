@@ -34,16 +34,13 @@ extends:
       ResourceName: pipelinewitnessprod-app
     ProductionArmSteps:
       - checkout: self
-      - task: AzurePowershell@5
+      - task: AzureCLI@2
         displayName: 'Deploy ARM Template'
         inputs:
           azureSubscription: Azure SDK Engineering System
-          ScriptType: FilePath
-          ScriptPath: tools/pipeline-witness/infrastructure/deploy.ps1
-          ScriptArguments: '-target production'
-          azurePowerShellVersion: LatestVersion
-          errorActionPreference: stop
-          pwsh: true
+          scriptType: pscore
+          scriptPath: tools/pipeline-witness/infrastructure/deploy.ps1
+          arguments: '-target production'
     Staging:
       EnvironmentName: package-publish
       ResourceGroupName: pipelinewitnessstaging
@@ -51,13 +48,10 @@ extends:
       ResourceName: pipelinewitnessstaging-app
     StagingArmSteps:
       - checkout: self
-      - task: AzurePowershell@5
+      - task: AzureCLI@2
         displayName: 'Deploy ARM Template'
         inputs:
           azureSubscription: Azure SDK Engineering System
-          ScriptType: FilePath
-          ScriptPath: tools/pipeline-witness/infrastructure/deploy.ps1
-          ScriptArguments: '-target staging'
-          azurePowerShellVersion: LatestVersion
-          errorActionPreference: stop
-          pwsh: true
+          scriptType: pscore
+          scriptPath: tools/pipeline-witness/infrastructure/deploy.ps1
+          arguments: '-target staging'

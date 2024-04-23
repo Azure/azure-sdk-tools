@@ -8,6 +8,12 @@ parameters:
 - name: Staging
   type: object
   default: {}
+- name: ProductionArmSteps
+  type: stepList
+  default: []
+- name: StagingArmSteps
+  type: stepList
+  default: []
 
 stages:
     - stage: Build
@@ -38,7 +44,7 @@ stages:
       - stage: Staging
         dependsOn: Build
         jobs:
-        - ${{ if eq(parameters.Staging.ArmJobSteps }}:
+        - ${{ if ne(length(parameters.StagingArmSteps), 0) }}:
           - deployment: PublishArm
             environment: ${{ parameters.Staging.EnvironmentName }}
             pool:
@@ -47,7 +53,7 @@ stages:
             strategy:
               runOnce:
                 deploy:
-                  steps: ${{ parameters.Staging.ArmJobSteps }}
+                  steps: ${{ parameters.StagingArmSteps }}
                 
         - deployment: PublishFunction
           environment: ${{ parameters.Staging.EnvironmentName }}
@@ -76,7 +82,7 @@ stages:
       - stage: Production
         dependsOn: Staging
         jobs:
-        - ${{ if eq(parameters.Production.ArmJobSteps }}:
+        - ${{ if ne(length(parameters.ProductionArmSteps), 0) }}:
           - deployment: PublishArm
             environment: ${{ parameters.Production.EnvironmentName }}
             pool:
@@ -85,7 +91,7 @@ stages:
             strategy:
               runOnce:
                 deploy:
-                  steps: ${{ parameters.Production.ArmJobSteps }}
+                  steps: ${{ parameters.ProductionArmSteps }}
         
         - deployment: PublishFunction
           environment: ${{ parameters.Production.EnvironmentName }}

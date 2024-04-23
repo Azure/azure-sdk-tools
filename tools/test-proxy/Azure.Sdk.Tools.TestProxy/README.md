@@ -463,7 +463,10 @@ Of course, feel free to check any of the [examples](https://github.com/Azure/azu
 
 The test-proxy is a record/playback solution. As a result, there a few concepts that devs will likely recognize from other record/playback solutions:
 
-- A `Sanitizer` is used to remove sensitive information prior to storage. When a request comes in during `playback` mode, `sanitizers` are applied to the request prior to matching to a recording.
+- A `Sanitizer` is used to remove sensitive information prior to storage. Sanitizers are applied...
+  - To the request matching against the recording entries during `playback` mode.
+  - To the recording entries loaded from disk when starting a `playback` session.
+  - To the recording entries _before_ they are saved to disk when stopping a `record` session.
 - `Matchers` are used to retrieve a request/response pair from a previous recording. By default, it functions by comparing `URI`, `Headers`, and `Body`. As of now, only a single matcher can be used when retrieving an entry during playback.
 - A `Transform` is used when a user needs to "transform" a matched recording response with some value from the incoming request. This action is specific to `playback` mode. For instance, the test-proxy has two default `transforms`:
   - `x-ms-client-id` is copied from request and applied to response prior to return.
@@ -550,6 +553,78 @@ In some cases, users need to register a lot (10+) of sanitizers. In this case, g
     }
 ]
 ```
+
+#### Knowing what was added
+
+When `AddSanitizer` or `AddSanitizers` is called, check the response `body` for an array containing the ids of sanitizers that have been registered.
+
+Example response body:
+
+```jsonc
+// POSTS to Admin/AdSanitizer has individual result
+{
+  "Sanitizer": "3"
+}
+```
+
+```jsonc
+// POSTS to Admin/AdSanitizers has multiple results
+{
+  "Sanitizers": ["3", "4", "9"]
+}
+```
+
+#### Removing a sanitizer
+
+Following #8120, sanitizers were given identifiers so that they can be removed. 
+
+- The default `session` sanitizers list can be found in code here.
+- Visiting `http://localhost:5000/Info/Active` on your browser when the proxy is running on your machine will present you with an easy summary of these available sanitizers as well.
+
+When a recording or playback session is begun (`Playback/Start` or `Record/Start`), all the **current** session sanitizers are applied to the recording. Session sanitizers added **after** record or playback has begun do not apply to the prior-started session.
+
+To remove a session-level sanitizer, one only must...
+
+```jsonc
+// request method = `POST`
+// request URI = <proxyUrl>/Admin/RemoveSanitizers
+// request headers =
+{
+  "Content-Type": "application/json",
+  "Content-Length": 36
+}
+// request body =
+{
+  Sanitizers: ["AZSDK002", "AZSDK003"]
+}
+```
+
+On successful request, users will receive a list of the removed identifiers.
+
+```jsonc
+// response body
+{
+  Removed: ["ID1"]
+}
+```
+
+To remove a sanitizer from a specific recording...
+
+```jsonc
+// request method = `POST`
+// request URI = <proxyUrl>/Admin/RemoveSanitizers
+// request headers =
+{
+  "Content-Type": "application/json",
+  "Content-Length": 36,
+  "x-recording-id": "your-recording-id-here"
+}
+// request body =
+{
+  Sanitizers: ["AZSDK002", "AZSDK003"]
+}
+```
+
 
 ### Set a Matcher
 

@@ -14,23 +14,23 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
     {
         public EnhancedBuildHttpClient(Uri baseUrl, VssCredentials credentials)
             : base(baseUrl, credentials)
-        {}
+        { }
 
         public EnhancedBuildHttpClient(Uri baseUrl, VssCredentials credentials, VssHttpRequestSettings settings)
             : base(baseUrl, credentials, settings)
-        {}
+        { }
 
         public EnhancedBuildHttpClient(Uri baseUrl, VssCredentials credentials, params DelegatingHandler[] handlers)
             : base(baseUrl, credentials, handlers)
-        {}
+        { }
 
         public EnhancedBuildHttpClient(Uri baseUrl, VssCredentials credentials, VssHttpRequestSettings settings, params DelegatingHandler[] handlers)
             : base(baseUrl, credentials, settings, handlers)
-        {}
+        { }
 
         public EnhancedBuildHttpClient(Uri baseUrl, HttpMessageHandler pipeline, bool disposeHandler)
             : base(baseUrl, pipeline, disposeHandler)
-        {}
+        { }
 
         public override async Task<Stream> GetArtifactContentZipAsync(
             Guid project,

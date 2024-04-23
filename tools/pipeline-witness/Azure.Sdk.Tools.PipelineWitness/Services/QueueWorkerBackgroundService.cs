@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
     internal abstract class QueueWorkerBackgroundService : BackgroundService
     {
         private const string ActivitySourceName = "Azure.Sdk.Tools.PipelineWitness.Queue";
-        private static readonly ActivitySource activitySource = new ActivitySource(ActivitySourceName);
+        private static readonly ActivitySource activitySource = new(ActivitySourceName);
 
         private readonly ILogger logger;
         private readonly QueueServiceClient queueServiceClient;
@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             this.queueServiceClient = queueServiceClient ?? throw new ArgumentNullException(nameof(options));
             this.options = options ?? throw new ArgumentNullException(nameof(options));
 
-            if(string.IsNullOrWhiteSpace(queueName))
+            if (string.IsNullOrWhiteSpace(queueName))
             {
                 throw new ArgumentException("Parameter cannot be null or whitespace", nameof(queueName));
             }
@@ -55,14 +55,14 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             var queueClient = this.queueServiceClient.GetQueueClient(this.queueName);
             var poisonQueueClient = this.queueServiceClient.GetQueueClient(poisonQueueName);
 
-            await queueClient.CreateIfNotExistsAsync();
-            await poisonQueueClient.CreateIfNotExistsAsync();
+            await queueClient.CreateIfNotExistsAsync(cancellationToken: stoppingToken);
+            await poisonQueueClient.CreateIfNotExistsAsync(cancellationToken: stoppingToken);
 
             while (true)
             {
                 using var loopActivity = activitySource.CreateActivity("MessageLoopIteration", ActivityKind.Internal) ?? new Activity("MessageLoopIteration");
                 loopActivity?.AddBaggage("QueueName", queueClient.Name);
-                
+
                 using var loopOperation = this.telemetryClient.StartOperation<RequestTelemetry>(loopActivity);
 
                 var options = this.options.CurrentValue;
@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                     // We consider a message leased when it's made invisible in the queue and the current process has a
                     // valid PopReceipt for the message. The PopReceipt is used to perform subsequent operations on the
                     // "leased" message.
-                    QueueMessage message = await queueClient.ReceiveMessageAsync(options.MessageLeasePeriod);
+                    QueueMessage message = await queueClient.ReceiveMessageAsync(options.MessageLeasePeriod, stoppingToken);
 
                     if (message == null)
                     {
@@ -92,65 +92,63 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                         });
                     }
 
-                    using (var activity = activitySource.CreateActivity("ProcessMessage", ActivityKind.Internal) ?? new Activity("ProcessMessage"))
+                    using var activity = activitySource.CreateActivity("ProcessMessage", ActivityKind.Internal) ?? new Activity("ProcessMessage");
+                    activity?.AddBaggage("MessageId", message.MessageId);
+
+                    using var operation = this.telemetryClient.StartOperation<RequestTelemetry>(activity);
+
+                    try
                     {
-                        activity?.AddBaggage("MessageId", message.MessageId);
+                        this.logger.LogDebug("The queue returned a message.\n  Queue: {Queue}\n  Message: {MessageId}\n  Dequeue Count: {DequeueCount}\n  Pop Receipt: {PopReceipt}", queueClient.Name, message.MessageId, message.DequeueCount, message.PopReceipt);
 
-                        using var operation = this.telemetryClient.StartOperation<RequestTelemetry>(activity);
+                        using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
 
-                        try
+                        // Because processing a message may take longer than our initial lease period, we want to continually
+                        // renew our lease until processing completes.
+                        var renewTask = RenewMessageLeaseAsync(queueClient, message, cts.Token);
+                        var processTask = SafelyProcessMessageAsync(message, cts.Token);
+
+                        var tasks = new Task[] { renewTask, processTask };
+
+                        Task.WaitAny(tasks, CancellationToken.None);
+
+                        cts.Cancel();
+
+                        Task.WaitAll(tasks, CancellationToken.None);
+
+                        // if the renew task doesn't complete successfully, we can't trust the PopReceipt on the message and must abort.
+                        var latestPopReceipt = await renewTask;
+
+                        if (processTask.IsCompletedSuccessfully && processTask.Result == true)
                         {
-                            this.logger.LogDebug("The queue returned a message.\n  Queue: {Queue}\n  Message: {MessageId}\n  Dequeue Count: {DequeueCount}\n  Pop Receipt: {PopReceipt}", queueClient.Name, message.MessageId, message.DequeueCount, message.PopReceipt);
-
-                            using var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
-
-                            // Because processing a message may take longer than our initial lease period, we want to continually
-                            // renew our lease until processing completes.
-                            var renewTask = RenewMessageLeaseAsync(queueClient, message, cts.Token);
-                            var processTask = SafelyProcessMessageAsync(message, cts.Token);
-
-                            var tasks = new Task[] { renewTask, processTask };
-
-                            Task.WaitAny(tasks, CancellationToken.None);
-
-                            cts.Cancel();
-
-                            Task.WaitAll(tasks, CancellationToken.None);
-
-                            // if the renew task doesn't complete successfully, we can't trust the PopReceipt on the message and must abort.
-                            var latestPopReceipt = await renewTask;
-
-                            if (processTask.IsCompletedSuccessfully && processTask.Result == true)
+                            this.logger.LogDebug("Message processed successfully. Removing message from queue.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", message.MessageId, queueClient.Name, latestPopReceipt);
+                            await queueClient.DeleteMessageAsync(message.MessageId, latestPopReceipt, stoppingToken);
+                            activity?.SetStatus(ActivityStatusCode.Ok);
+                            operation.Telemetry.Success = true;
+                        }
+                        else
+                        {
+                            activity?.SetStatus(ActivityStatusCode.Error);
+                            operation.Telemetry.Success = false;
+                            if (message.DequeueCount > options.MaxDequeueCount)
                             {
-                                this.logger.LogDebug("Message processed successfully. Removing message from queue.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", message.MessageId, queueClient.Name, latestPopReceipt);
+                                this.logger.LogError("Message {MessageId} exceeded maximum dequeue count. Moving to poison queue {QueueName}", message.MessageId, poisonQueueClient.Name);
+                                await poisonQueueClient.SendMessageAsync(message.Body, cancellationToken: stoppingToken);
+                                this.logger.LogDebug("Removing message from queue.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", message.MessageId, queueClient.Name, latestPopReceipt);
                                 await queueClient.DeleteMessageAsync(message.MessageId, latestPopReceipt, stoppingToken);
-                                activity?.SetStatus(ActivityStatusCode.Ok);
-                                operation.Telemetry.Success = true;
                             }
                             else
                             {
-                                activity?.SetStatus(ActivityStatusCode.Error);
-                                operation.Telemetry.Success = false;
-                                if (message.DequeueCount > options.MaxDequeueCount)
-                                {
-                                    this.logger.LogError("Message {MessageId} exceeded maximum dequeue count. Moving to poison queue {QueueName}", message.MessageId, poisonQueueClient.Name);
-                                    await poisonQueueClient.SendMessageAsync(message.Body, cancellationToken: stoppingToken);
-                                    this.logger.LogDebug("Removing message from queue.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", message.MessageId, queueClient.Name, latestPopReceipt);
-                                    await queueClient.DeleteMessageAsync(message.MessageId, latestPopReceipt, stoppingToken);
-                                }
-                                else
-                                {
-                                    this.logger.LogError("Resetting message visibility timeout to {SleepPeriod}.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", options.MessageErrorSleepPeriod, message.MessageId, queueClient.Name, latestPopReceipt);
-                                    await queueClient.UpdateMessageAsync(message.MessageId, latestPopReceipt, message.Body, options.MessageErrorSleepPeriod, cancellationToken: stoppingToken);
-                                }
+                                this.logger.LogError("Resetting message visibility timeout to {SleepPeriod}.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", options.MessageErrorSleepPeriod, message.MessageId, queueClient.Name, latestPopReceipt);
+                                await queueClient.UpdateMessageAsync(message.MessageId, latestPopReceipt, message.Body, options.MessageErrorSleepPeriod, cancellationToken: stoppingToken);
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            this.logger.LogError(ex, "Exception thrown while procesing queue message.");
-                            activity?.SetStatus(ActivityStatusCode.Error);
-                            operation.Telemetry.Success = false;
-                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        this.logger.LogError(ex, "Exception thrown while procesing queue message.");
+                        activity?.SetStatus(ActivityStatusCode.Error);
+                        operation.Telemetry.Success = false;
                     }
                 }
                 catch (Exception ex)

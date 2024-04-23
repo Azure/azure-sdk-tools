@@ -17,18 +17,19 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
 {
     public class BlobUploadProcessorIntegrationTests
     {
-        private VssCredentials VisualStudioCredentials;
-        private VssConnection VisualStudioConnection;
-        private string TARGET_ACCOUNT_ID = "azure-sdk";
-        private Guid TARGET_PROJECT_ID = new Guid("29ec6040-b234-4e31-b139-33dc4287b756");
-        private int TARGET_DEFINITION_ID = 297;
-        private string DEVOPS_PATH = "https://dev.azure.com/azure-sdk";
-        private PipelineWitnessSettings TestSettings = new PipelineWitnessSettings()
+        private const string TARGET_ACCOUNT_ID = "azure-sdk";
+        private const string TARGET_PROJECT_ID = "29ec6040-b234-4e31-b139-33dc4287b756";
+        private const int TARGET_DEFINITION_ID = 297;
+        private const string DEVOPS_PATH = "https://dev.azure.com/azure-sdk";
+
+        private readonly VssCredentials visualStudioCredentials;
+        private readonly VssConnection visualStudioConnection;
+        private readonly PipelineWitnessSettings testSettings = new()
         {
             PipelineOwnersDefinitionId = 5112,
-                PipelineOwnersFilePath = "pipelineOwners/pipelineOwners.json",
-                PipelineOwnersArtifactName = "pipelineOwners"
-            };
+            PipelineOwnersFilePath = "pipelineOwners/pipelineOwners.json",
+            PipelineOwnersArtifactName = "pipelineOwners"
+        };
 
 
         public BlobUploadProcessorIntegrationTests()
@@ -38,18 +39,18 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
 
             if (!string.IsNullOrWhiteSpace(pat) && !string.IsNullOrWhiteSpace(blobUri) )
             {
-                VisualStudioCredentials = new VssBasicCredential("nobody", pat);
-                VisualStudioConnection = new VssConnection(new Uri(DEVOPS_PATH), VisualStudioCredentials);
+                this.visualStudioCredentials = new VssBasicCredential("nobody", pat);
+                this.visualStudioConnection = new VssConnection(new Uri(DEVOPS_PATH), this.visualStudioCredentials);
             }
         }
 
         [EnvironmentConditionalSkipFact]
         public async Task BasicBlobProcessInvokesSuccessfully()
         {
-            var buildLogProvider = new BuildLogProvider(logger: new NullLogger<BuildLogProvider>(), VisualStudioConnection);
+            var buildLogProvider = new BuildLogProvider(logger: new NullLogger<BuildLogProvider>(), this.visualStudioConnection);
             var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS"));
-            var buildHttpClient = VisualStudioConnection.GetClient<BuildHttpClient>();
-            var testResultsBuiltClient = VisualStudioConnection.GetClient<TestResultsHttpClient>();
+            var buildHttpClient = this.visualStudioConnection.GetClient<BuildHttpClient>();
+            var testResultsBuiltClient = this.visualStudioConnection.GetClient<TestResultsHttpClient>();
 
             List<Build> recentBuilds = await buildHttpClient.GetBuildsAsync(TARGET_PROJECT_ID, definitions: new[] { TARGET_DEFINITION_ID }, resultFilter: BuildResult.Succeeded, statusFilter: BuildStatus.Completed, top: 1, queryOrder: BuildQueryOrder.FinishTimeDescending);
             Assert.True(recentBuilds.Count > 0);
@@ -60,10 +61,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
                 blobServiceClient: blobServiceClient,
                 buildClient: buildHttpClient,
                 testResultsClient: testResultsBuiltClient,
-                options: Options.Create<PipelineWitnessSettings>(TestSettings),
-                failureAnalyzer: new PassThroughFailureAnalyzer());
+                options: Options.Create<PipelineWitnessSettings>(this.testSettings));
 
-            await processor.UploadBuildBlobsAsync(TARGET_ACCOUNT_ID, TARGET_PROJECT_ID, targetBuildId);
+            await processor.UploadBuildBlobsAsync(TARGET_ACCOUNT_ID, new Guid(TARGET_PROJECT_ID), targetBuildId);
         }
 
         [Theory]

@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             // per queue storage performance docs, set the default connection limit to >= 100
             // https://learn.microsoft.com/en-us/azure/storage/queues/storage-performance-checklist#increase-default-connection-limit
             ServicePointManager.DefaultConnectionLimit = 100;
-            
+
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.

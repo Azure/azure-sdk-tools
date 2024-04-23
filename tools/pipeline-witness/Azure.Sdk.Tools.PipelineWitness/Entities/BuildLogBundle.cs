@@ -14,15 +14,15 @@ namespace Azure.Sdk.Tools.PipelineWitness
         public int BuildId { get; set; }
 
         public DateTimeOffset StartTime { get; set; }
-    
+
         public DateTimeOffset FinishTime { get; set; }
-    
+
         public DateTimeOffset QueueTime { get; set; }
-        
+
         public int DefinitionId { get; set; }
-        
+
         public string DefinitionPath { get; set; }
-        
+
         public string DefinitionName { get; set; }
 
         public List<BuildLogInfo> TimelineLogs { get; } = new List<BuildLogInfo>();

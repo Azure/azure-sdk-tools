@@ -27,11 +27,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
 
     public class TestLoggingFactory : ILoggerFactory
     {
-        private readonly TestLogger _logger;
+        private readonly TestLogger logger;
 
         public TestLoggingFactory(TestLogger logger)
         {
-            _logger = logger;
+            this.logger = logger;
         }
 
         public void Dispose()
@@ -46,7 +46,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
 
         public ILogger CreateLogger(string categoryName)
         {
-            return _logger;
+            return this.logger;
         }
     }
 }

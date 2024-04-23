@@ -1,12 +1,12 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.PipelineWitness.Configuration;
+using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 using Microsoft.Extensions.Options;
-using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
-using Azure.Sdk.Tools.PipelineWitness.Configuration;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Services
 {
@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         private readonly ILogger<AzurePipelinesBuildDefinitionWorker> logger;
         private readonly BlobUploadProcessor runProcessor;
         private readonly IOptions<PipelineWitnessSettings> options;
-        private IAsyncLockProvider asyncLockProvider;
+        private readonly IAsyncLockProvider asyncLockProvider;
 
         public AzurePipelinesBuildDefinitionWorker(
             ILogger<AzurePipelinesBuildDefinitionWorker> logger,
@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                         }
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     this.logger.LogError(ex, "Error processing build definitions");
                 }

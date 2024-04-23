@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
             var partitionKey = new PartitionKey(id);
 
             ItemResponse<CosmosLockDocument> response;
-            
+
             try
             {
                 response = await this.container.ReadItemAsync<CosmosLockDocument>(id, partitionKey, cancellationToken: cancellationToken);
@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
             {
                 return null;
             }
-            
+
             try
             {
                 response = await this.container.ReplaceItemAsync(

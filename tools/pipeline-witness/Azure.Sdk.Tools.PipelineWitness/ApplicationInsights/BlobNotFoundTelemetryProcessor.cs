@@ -13,13 +13,13 @@ namespace Azure.Sdk.Tools.PipelineWitness.ApplicationInsights
         {
             this.next = next;
         }
-  
+
         public void Process(ITelemetry telemetry)
         {
             if (telemetry is DependencyTelemetry { Success: false, Type: "Azure blob" or "Microsoft.Storage" } blobRequestTelemetry)
             {
                 blobRequestTelemetry.Properties.TryGetValue("Error", out var errorProperty);
-                
+
                 var isNotFound = blobRequestTelemetry.ResultCode is "404" or "409"
                     || (blobRequestTelemetry.ResultCode == "" && errorProperty?.Contains("Status: 404") == true);
 

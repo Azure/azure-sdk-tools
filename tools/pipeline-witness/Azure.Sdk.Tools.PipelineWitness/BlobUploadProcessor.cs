@@ -1,44 +1,44 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
+using Azure.Sdk.Tools.PipelineWitness.Configuration;
+using Azure.Sdk.Tools.PipelineWitness.Services;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.TestManagement.WebApi;
+using Microsoft.VisualStudio.Services.TestResults.WebApi;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
+
 namespace Azure.Sdk.Tools.PipelineWitness
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.IO.Compression;
-    using System.Linq;
-    using System.Net;
-    using System.Text;
-    using System.Text.RegularExpressions;
-    using System.Threading.Tasks;
-
-    using Azure.Sdk.Tools.PipelineWitness.Configuration;
-    using Azure.Sdk.Tools.PipelineWitness.Services;
-    using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
-    using Azure.Storage.Blobs;
-    using Azure.Storage.Blobs.Models;
-
-    using Microsoft.Extensions.Logging;
-    using Microsoft.Extensions.Options;
-    using Microsoft.TeamFoundation.Build.WebApi;
-    using Microsoft.TeamFoundation.TestManagement.WebApi;
-    using Microsoft.VisualStudio.Services.TestResults.WebApi;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
-    using Newtonsoft.Json.Serialization;
-
+    [SuppressMessage("Style", "IDE0037:Use inferred member name", Justification = "Explicit member names are added to json export objects for clarity")]
     public class BlobUploadProcessor
     {
         private const string BuildsContainerName = "builds";
         private const string BuildLogLinesContainerName = "buildloglines";
         private const string BuildTimelineRecordsContainerName = "buildtimelinerecords";
         private const string BuildDefinitionsContainerName = "builddefinitions";
-        private const string BuildFailuresContainerName = "buildfailures";
         private const string PipelineOwnersContainerName = "pipelineowners";
         private const string TestRunsContainerName = "testruns";
         private const string TestResultsContainerName = "testrunresults";
         private const int ApiBatchSize = 10000;
 
         private const string TimeFormat = @"yyyy-MM-dd\THH:mm:ss.fffffff\Z";
-        private static readonly JsonSerializerSettings jsonSettings = new JsonSerializerSettings()
+        private static readonly JsonSerializerSettings jsonSettings = new()
         {
             ContractResolver = new CamelCasePropertyNamesContractResolver(),
             Converters = { new StringEnumConverter(new CamelCaseNamingStrategy()) },
@@ -55,11 +55,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
         private readonly BlobContainerClient testRunsContainerClient;
         private readonly BlobContainerClient testResultsContainerClient;
         private readonly BlobContainerClient buildDefinitionsContainerClient;
-        private readonly BlobContainerClient buildFailuresContainerClient;
         private readonly BlobContainerClient pipelineOwnersContainerClient;
         private readonly IOptions<PipelineWitnessSettings> options;
         private readonly Dictionary<string, int?> cachedDefinitionRevisions = new();
-        private readonly IFailureAnalyzer failureAnalyzer;
 
         public BlobUploadProcessor(
             ILogger<BlobUploadProcessor> logger,
@@ -67,8 +65,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             BlobServiceClient blobServiceClient,
             BuildHttpClient buildClient,
             TestResultsHttpClient testResultsClient,
-            IOptions<PipelineWitnessSettings> options,
-            IFailureAnalyzer failureAnalyzer)
+            IOptions<PipelineWitnessSettings> options)
         {
             if (blobServiceClient == null)
             {
@@ -84,12 +81,10 @@ namespace Azure.Sdk.Tools.PipelineWitness
             this.buildTimelineRecordsContainerClient = blobServiceClient.GetBlobContainerClient(BuildTimelineRecordsContainerName);
             this.buildLogLinesContainerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
             this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
-            this.buildFailuresContainerClient = blobServiceClient.GetBlobContainerClient(BuildFailuresContainerName);
             this.testRunsContainerClient = blobServiceClient.GetBlobContainerClient(TestRunsContainerName);
             this.testResultsContainerClient = blobServiceClient.GetBlobContainerClient(TestResultsContainerName);
             this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
             this.pipelineOwnersContainerClient = blobServiceClient.GetBlobContainerClient(PipelineOwnersContainerName);
-            this.failureAnalyzer = failureAnalyzer;
         }
 
         public async Task UploadBuildBlobsAsync(string account, Guid projectId, int buildId)
@@ -161,30 +156,29 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             if (timeline == null)
             {
-                logger.LogWarning("No timeline available for build {Project}: {BuildId}", build.Project.Name, build.Id);
+                this.logger.LogWarning("No timeline available for build {Project}: {BuildId}", build.Project.Name, build.Id);
             }
             else
             {
                 await UploadTimelineBlobAsync(account, build, timeline);
-                await UploadBuildFailureBlobAsync(account, build, timeline);
             }
 
-            var logs = await buildClient.GetBuildLogsAsync(build.Project.Id, build.Id);
+            var logs = await this.buildClient.GetBuildLogsAsync(build.Project.Id, build.Id);
 
             if (logs == null || logs.Count == 0)
             {
-                logger.LogWarning("No logs available for build {Project}: {BuildId}", build.Project.Name, build.Id);
+                this.logger.LogWarning("No logs available for build {Project}: {BuildId}", build.Project.Name, build.Id);
                 return;
             }
 
-            var buildLogInfos = GetBuildLogInfos(account, build, timeline, logs);
+            var buildLogInfos = GetBuildLogInfos(build, timeline, logs);
 
             foreach (var log in buildLogInfos)
             {
                 await UploadLogLinesBlobAsync(account, build, log);
             }
 
-            if (build.Definition.Id == options.Value.PipelineOwnersDefinitionId)
+            if (build.Definition.Id == this.options.Value.PipelineOwnersDefinitionId)
             {
                 await UploadPipelineOwnersBlobAsync(account, build, timeline);
             }
@@ -298,66 +292,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
             return null;
         }
 
-        private async Task UploadBuildFailureBlobAsync(string account, Build build, Timeline timeline)
-        {
-            try
-            {
-                var blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{timeline.ChangeId}.jsonl";
-                var blobClient = this.buildFailuresContainerClient.GetBlobClient(blobPath);
-
-                if (await blobClient.ExistsAsync())
-                {
-                    this.logger.LogInformation("Skipping existing build failure blob for build {BuildId}", build.Id);
-                    return;
-                }
-
-                var failures = await this.failureAnalyzer.AnalyzeFailureAsync(build, timeline);
-                if (!failures.Any())
-                {
-                    return;
-                }
-
-                this.logger.LogInformation("Creating failure blob for build {DefinitionId} change {ChangeId}", build.Id, timeline.ChangeId);
-
-                var stringBuilder = new StringBuilder();
-
-                foreach (var failure in failures)
-                {
-                    var contentLine = JsonConvert.SerializeObject(new
-                    {
-                        OrganizationName = account,
-                        ProjectId = build.Project.Id,
-                        ProjectName = build.Project.Name,
-                        BuildDefinitionId = build.Definition.Id,
-                        BuildDefinitionName = build.Definition.Name,
-                        BuildId = build.Id,
-                        BuildFinishTime = build.FinishTime,
-                        RecordFinishTime = failure.Record.FinishTime,
-                        ChangeId = timeline.ChangeId,
-                        RecordId = failure.Record.Id,
-                        BuildTimelineId = timeline.Id,
-                        ErrorClassification = failure.Classification,
-                        EtlIngestDate = DateTimeOffset.UtcNow
-                    }, jsonSettings);
-                     stringBuilder.AppendLine(contentLine);
-                }
-
-                await blobClient.UploadAsync(new BinaryData(stringBuilder.ToString()));
-            }
-            catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
-            {
-                this.logger.LogInformation("Ignoring exception from existing failure blob for build {BuildId}", build.Id);
-            }
-            catch (Exception ex)
-            {
-                this.logger.LogError(ex, "Error processing build failure blob for build {BuildId}", build.Id);
-                throw;
-            }
-        }
-
         public async Task UploadBuildDefinitionBlobsAsync(string account, string projectName)
         {
-            var definitions = await buildClient.GetFullDefinitionsAsync2(project: projectName);
+            var definitions = await this.buildClient.GetFullDefinitionsAsync2(project: projectName);
 
             foreach (var definition in definitions)
             {
@@ -371,7 +308,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 this.cachedDefinitionRevisions[cacheKey] = definition.Revision;
             }
         }
-        
+
         private async Task UploadBuildDefinitionBlobAsync(string account, BuildDefinition definition)
         {
             var blobPath = $"{definition.Project.Name}/{definition.Id}-{definition.Revision}.jsonl";
@@ -446,7 +383,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             }
         }
 
-        private List<BuildLogInfo> GetBuildLogInfos(string account, Build build, Timeline timeline, List<BuildLog> logs)
+        private List<BuildLogInfo> GetBuildLogInfos(Build build, Timeline timeline, List<BuildLog> logs)
         {
             var logsById = logs.ToDictionary(l => l.Id);
 
@@ -456,7 +393,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             {
                 var logRecords = timeline.Records.Where(x => x.Log?.Id == log.Id).ToArray();
 
-                if(logRecords.Length > 1)
+                if (logRecords.Length > 1)
                 {
                     this.logger.LogWarning("Found multiple timeline records for build {BuildId}, log {LogId}", build.Id, log.Id);
                 }
@@ -501,7 +438,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         {
             try
             {
-                long changeTime = ((DateTimeOffset)build.LastChangedDate).ToUnixTimeSeconds();
+                var changeTime = ((DateTimeOffset)build.LastChangedDate).ToUnixTimeSeconds();
                 var blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{changeTime}.jsonl";
                 var blobClient = this.buildsContainerClient.GetBlobClient(blobPath);
 
@@ -725,7 +662,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     }
                 }
 
-                logger.LogInformation("Processed {CharacterCount} characters and {LineCount} lines for build {BuildId}, record {RecordId}, log {LogId}", characterCount, lineNumber, build.Id, log.RecordId, log.LogId);
+                this.logger.LogInformation("Processed {CharacterCount} characters and {LineCount} lines for build {BuildId}, record {RecordId}, log {LogId}", characterCount, lineNumber, build.Id, log.RecordId, log.LogId);
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
@@ -737,7 +674,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 throw;
             }
         }
- 
+
         private async Task UploadTestRunBlobsAsync(string account, Build build)
         {
             try
@@ -750,18 +687,18 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
                 var rangeStart = minLastUpdatedDate;
 
-                while(rangeStart < maxLastUpdatedDate)
+                while (rangeStart < maxLastUpdatedDate)
                 {
                     // Ado limits test run queries to a 7 day range, so we'll chunk on 6 days.
                     var rangeEnd = rangeStart.AddDays(6);
-                    if(rangeEnd > maxLastUpdatedDate)
+                    if (rangeEnd > maxLastUpdatedDate)
                     {
                         rangeEnd = maxLastUpdatedDate;
                     }
 
                     do
                     {
-                        var page = await testResultsClient.QueryTestRunsAsync2(
+                        var page = await this.testResultsClient.QueryTestRunsAsync2(
                             build.Project.Id,
                             rangeStart,
                             rangeEnd,
@@ -885,11 +822,11 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 }
 
                 var builder = new StringBuilder();
-                int batchCount = BlobUploadProcessor.CalculateBatches(testRun.TotalTests, batchSize: ApiBatchSize);
+                var batchCount = BlobUploadProcessor.CalculateBatches(testRun.TotalTests, batchSize: ApiBatchSize);
 
-                for(int batchMultiplier = 0; batchMultiplier < batchCount; batchMultiplier++)
+                for (var batchMultiplier = 0; batchMultiplier < batchCount; batchMultiplier++)
                 {
-                    var data = await testResultsClient.GetTestResultsAsync(build.Project.Id, testRun.Id, top: ApiBatchSize, skip: batchMultiplier * ApiBatchSize);
+                    var data = await this.testResultsClient.GetTestResultsAsync(build.Project.Id, testRun.Id, top: ApiBatchSize, skip: batchMultiplier * ApiBatchSize);
 
                     foreach (var record in data)
                     {
@@ -936,7 +873,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             try
             {
-                build = await buildClient.GetBuildAsync(projectId, buildId);
+                build = await this.buildClient.GetBuildAsync(projectId, buildId);
             }
             catch (BuildNotFoundException)
             {

@@ -49,7 +49,6 @@ stages:
             environment: ${{ parameters.Staging.EnvironmentName }}
             pool:
               name: azsdk-pool-mms-ubuntu-2204-general
-              vmImage: ubuntu-22.04
             strategy:
               runOnce:
                 deploy:

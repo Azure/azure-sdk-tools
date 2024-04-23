@@ -3,6 +3,11 @@
         height: calc(100vh - 119px);
     }
 
+    #code-window {
+        scroll-behavior: smooth;
+        transform: translate3d(0, 0, 0);
+    }
+
     .code-window-container {
         max-width: 100%;
         transform: translate3d(0, 0, 0);

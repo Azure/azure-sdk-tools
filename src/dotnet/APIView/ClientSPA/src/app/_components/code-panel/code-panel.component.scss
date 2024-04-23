@@ -3,10 +3,12 @@
     font-size: 14px;
     line-height: 1.5;
     width: 500%;
-    transform: translate3d(0, 0, 0);
     display: block;
 
-    --max-line-number-width: 4ch;
+    #code-window {
+        scroll-behavior: smooth;
+        transform: translate3d(0, 0, 0);
+    }
 
     .api-node {
         display: grid;
@@ -20,6 +22,9 @@
 
     .code-line {
         display: contents;
+        &.documentation {
+            display: none;
+        }
     }
 
     .code-line-added, .token-added {

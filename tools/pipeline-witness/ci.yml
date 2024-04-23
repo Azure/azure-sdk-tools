@@ -33,6 +33,7 @@ extends:
       AzureSubscription: Azure SDK Engineering System
       ResourceName: pipelinewitnessprod-app
     ProductionArmSteps:
+      - checkout: self
       - task: AzurePowershell@5
         displayName: 'Deploy ARM Template'
         inputs:
@@ -49,6 +50,7 @@ extends:
       AzureSubscription: Azure SDK Engineering System
       ResourceName: pipelinewitnessstaging-app
     StagingArmSteps:
+      - checkout: self
       - task: AzurePowershell@5
         displayName: 'Deploy ARM Template'
         inputs:

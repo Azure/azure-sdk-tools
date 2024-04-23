@@ -44,10 +44,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             ResetSessionSanitizers();
         }
 
-        // TODO
-        // - create an option in sanitizer to get access to 'ignore case' and other regex customizations
-        // - turn commented lines into actual sanitizers after discussion
-        // - add a query param sanitizer
         public List<RegisteredSanitizer> DefaultSanitizerList = new List<RegisteredSanitizer>
             {
                 // basic RecordedTestSanitizer handles Authorization header
@@ -79,7 +75,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new GeneralRegexSanitizer(regex: "accesskey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
                     "AZSDK007"
                 ),
-                // "token": "sv=2023-08-03\u0026ss=b\u0026srt=sco\u0026se=2050-12-12T00%3A00%3A00Z\u0026sp=rwdxlacuptf\u0026sig="
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..applicationSecret"),
                     "AZSDK008"
@@ -148,7 +143,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new BodyKeySanitizer("$..accessSAS"),
                     "AZSDK024"
                 ),
-                // "token": "sv=...ss=...srt=...se=...sp=...sig=" request body covered by 1052
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..WEBSITE_AUTH_ENCRYPTION_KEY"),
                     "AZSDK025"
@@ -165,7 +159,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new HeaderRegexSanitizer("ServiceBusSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
                     "AZSDK028"
                 ),
-                // "RequestBody": "client_id=...grant_type=...client_info=...client_secret=…scope=...", covered by 1036/1037
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..access_token"),
                     "AZSDK029"
@@ -256,7 +249,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new BodyKeySanitizer("$..userId"),
                     "AZSDK050"
                 ),
-                // "name" I think this one is too generic, we should probably drop it?
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..id"),
                     "AZSDK051"
@@ -289,7 +281,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new BodyKeySanitizer("$..managedResourceGroupName"),
                     "AZSDK058"
                 ),
-                // new BodyKeySanitizer("$..friendlyName"), disabled, not a secret?
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..createdBy"),
                     "AZSDK059"
@@ -326,7 +317,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new UriRegexSanitizer(regex: "sig=(?<sig>[^&]+)", groupForReplace: "sig"),
                     "AZSDK067"
                 ),
-                // new HeaderRegexSanitizer("x-ms-encryption-key"), dup
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-rename-source"),
                     "AZSDK068"
@@ -551,8 +541,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new BodyKeySanitizer("$.properties.DOCKER_REGISTRY_SERVER_PASSWORD"),
                     "AZSDK124"
                 ),
-                // General URI sanitizer // we don't have access to the service name 
-                // General GUID sanitizer // I think sanitizing all guids is overaggressive by a LOT
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("Set-Cookie"),
                     "AZSDK125"
@@ -625,7 +613,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new HeaderRegexSanitizer("repeatability-first-sent"),
                     "AZSDK142"
                 ),
-                // client-request-id -- DUPE OF LINE 140
                 new RegisteredSanitizer(
                     new HeaderRegexSanitizer("P3P"),
                     "AZSDK143"
@@ -646,7 +633,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new GeneralRegexSanitizer(regex: "/identities/(?<realm>[^/?]+)", groupForReplace: "realm"),
                     "AZSDK147"
                 ),
-                // ACS User ID? too general don't have this information at common level
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..etag"),
                     "AZSDK148"
@@ -662,7 +648,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 new RegisteredSanitizer(
                     new UriRegexSanitizer("REDACTED", regex: "(?<=http://|https://)(?<host>[^/?\\.]+)", groupForReplace: "host"),
                     "AZSDK151"
-                )
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..name"),
+                    "AZSDK152"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..friendlyName"),
+                    "AZSDK153"
+                ),
+                new RegisteredSanitizer(
+                    new UriRegexSanitizer(regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
+                    "AZSDK154"
+                ),
             };
 
         /// <summary>

@@ -57,6 +57,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
          * 
          * */
 
+        private const string EMPTYGUID = "00000000-0000-0000-0000-000000000000";
+
         public List<RegisteredSanitizer> DefaultSanitizerList = new List<RegisteredSanitizer>
             {
                 #region GeneralRegex
@@ -454,7 +456,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3442"
                 ),
                 new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..tenantId"),
+                    new BodyKeySanitizer("$..tenantId", value: EMPTYGUID),
                     "AZSDK3443"
                 ),
                 new RegisteredSanitizer(

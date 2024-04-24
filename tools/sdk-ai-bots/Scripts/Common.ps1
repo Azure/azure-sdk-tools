@@ -182,13 +182,13 @@ function Upload-AzureBlob {
         if (-not (Test-AzCopyInstalled)) {
             if(Download-AzCopy (Get-Location).Path) {
                 $azFilePath = (Get-ChildItem -Recurse |Where-object {$_.Name -eq 'azcopy.exe'} | Select-Object -First 1).FullName
-                $azcopyCmd = "$azFilePath copy  $SourceFile $blobPath"
+                $azcopyCmd = "$azFilePath copy $SourceFile $blobPath"
             }
             else {
                 return $false
             }
         }
-        & $azcopyCmd
+        Invoke-Expression $azcopyCmd
         return $true
     }
     catch {

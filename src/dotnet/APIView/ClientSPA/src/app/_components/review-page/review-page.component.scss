@@ -1,12 +1,6 @@
 :host ::ng-deep {
     .review-panel{
-        height: calc(100vh - 119px);
-    }
-
-    #code-window {
-        scroll-behavior: smooth;
-        contain: size layout paint;
-        transform: translate3d(0, 0, 0);
+        height: calc(100vh - 80px);
     }
 
     .p-sidebar-right {

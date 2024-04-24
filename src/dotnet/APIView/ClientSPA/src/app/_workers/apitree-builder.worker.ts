@@ -1,55 +1,40 @@
 /// <reference lib="webworker" />
 
+import { ComputeTokenDiff } from "../_helpers/worker-helpers";
 import { ReviewContent } from "../_models/review";
-import { BuildTokensMessage, CodeHuskNode, CreateCodeLineHuskMessage, ReviewPageWorkerMessageDirective } from "../_models/revision";
+import { CodeLineData, InsertCodeLineDataMessage, ReviewPageWorkerMessageDirective, StructuredToken } from "../_models/revision";
 import { APITreeNode } from "../_models/revision";
 
-let interWorkerPort : MessagePort;
-let lastCodeLineHusk : CodeHuskNode;
+let insertLineNumber = 0;
 
 addEventListener('message', ({ data }) => {
-  if (data.interWorkerPort) {
-    interWorkerPort = data.interWorkerPort;
-  }
-  else {
-    if (data instanceof ArrayBuffer) {
-      let jsonString = new TextDecoder().decode(new Uint8Array(data));
+  if (data instanceof ArrayBuffer) {
+    let jsonString = new TextDecoder().decode(new Uint8Array(data));
 
-      let reviewContent: ReviewContent = JSON.parse(jsonString);
-      const updateReviewModelMessage = {
-        directive: ReviewPageWorkerMessageDirective.UpdateReviewModel,
-        reviewModel : reviewContent.review
-      };
+    let reviewContent: ReviewContent = JSON.parse(jsonString);
 
-      postMessage(updateReviewModelMessage);
-
-      let navTreeNodes: any[] = [];
-      let treeNodeId : string[] = [];
-    
-      reviewContent.apiForest.forEach((apiTreeNode: APITreeNode) => {
-        navTreeNodes.push(buildAPITree(apiTreeNode as APITreeNode, treeNodeId));
-      });
-    
-      const createNavigationMessage =  {
-        directive: ReviewPageWorkerMessageDirective.CreatePageNavigation,
-        navTree : navTreeNodes
-      };
+    let navTreeNodes: any[] = [];
+    let treeNodeId : string[] = [];
   
-      postMessage(createNavigationMessage);
+    reviewContent.apiForest.forEach((apiTreeNode: APITreeNode) => {
+      navTreeNodes.push(buildAPITree(apiTreeNode as APITreeNode, treeNodeId));
+    });
+  
+    const createNavigationMessage =  {
+      directive: ReviewPageWorkerMessageDirective.CreatePageNavigation,
+      navTree : navTreeNodes
+    };
 
-      let createCodeLineHuskMessage : CreateCodeLineHuskMessage =  {
-        directive: ReviewPageWorkerMessageDirective.CreateCodeLineHusk,
-        nodeData: lastCodeLineHusk,
-        isLastHuskNode: true
-      };
-      postMessage(createCodeLineHuskMessage);
-    }
+    postMessage(createNavigationMessage);
+
+    const updateCodeLineData = {
+      directive: ReviewPageWorkerMessageDirective.UpdateCodeLines
+    };
+
+    postMessage(updateCodeLineData);
   }
 });
 
-function postMessageToTokenBuilder(message: any) {
-  interWorkerPort.postMessage(message);
-}
 
 /**
  * Walks the API tree depth first. At each node it
@@ -63,35 +48,15 @@ function postMessageToTokenBuilder(message: any) {
  * @param indent The indent level of the current node in the tree.
  */
 function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: number = 0) : any {
-  let idPart = getTokenNodeIdPart(apiTreeNode);
-  treeNodeId.push(idPart);
-  const nodeId = treeNodeId.join("-");
+  let nodeId = getTokenNodeIdHash(apiTreeNode, "top");
 
-  let nodeData: CodeHuskNode = {
-    name: apiTreeNode.name,
-    id: nodeId,
-    indent: indent,
-    position: "top"
-  };
-  lastCodeLineHusk = nodeData;
-
-  let createCodeLineHuskMessage : CreateCodeLineHuskMessage =  {
-    directive: ReviewPageWorkerMessageDirective.CreateCodeLineHusk,
-    nodeData: nodeData,
-    isLastHuskNode: false
-  };
-  postMessage(createCodeLineHuskMessage);
-
-  let buildTokensMessage : BuildTokensMessage =  { 
-    apiTreeNode: apiTreeNode,
-    huskNodeId: nodeId,
-    position: "top"
-  };
-  postMessageToTokenBuilder(buildTokensMessage);
+  buildTokens(apiTreeNode, nodeId, "top", indent);
 
   let treeNode: any = {
-    label: nodeData.name,
-    data: nodeData,
+    label: apiTreeNode.name,
+    data: {
+      nodeIndex: insertLineNumber,
+    },
     expanded: true,
     children: []
   }
@@ -105,13 +70,8 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
   });
 
   if (apiTreeNode.bottomTokens.length > 0) {
-    nodeData.position = "bottom";
-    createCodeLineHuskMessage.nodeData = nodeData;
-    lastCodeLineHusk = nodeData;
-    postMessage(createCodeLineHuskMessage);
-
-    buildTokensMessage.position = "bottom";
-    postMessageToTokenBuilder(buildTokensMessage);
+    let nodeId = getTokenNodeIdHash(apiTreeNode, "bottom");
+    buildTokens(apiTreeNode, nodeId, "bottom", indent);
   }
 
   treeNode.children = children;
@@ -123,7 +83,7 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
  * Uses the properties of the node to create an Id that is guaranteed to be unique
  * @param apiTreeNode 
  */
-function getTokenNodeIdPart(apiTreeNode: APITreeNode) {
+function getTokenNodeIdHash(apiTreeNode: APITreeNode, position: string) {
   const kind = apiTreeNode.kind;
   const subKind = apiTreeNode.properties["SubKind"];
   const id = apiTreeNode.id;
@@ -136,5 +96,173 @@ function getTokenNodeIdPart(apiTreeNode: APITreeNode) {
   if (id) {
     idPart = `${idPart}-${id}`;
   }
-  return idPart.toLocaleLowerCase();
+  idPart = `${idPart}-${position}`;
+  return createHashFromString(idPart);
+}
+
+/**
+ * Creates Unique Hash from a string
+ * @param inputString 
+ */
+function createHashFromString(inputString: string) {
+  const hash = inputString.split('').reduce((prevHash, currVal) =>
+    ((prevHash << 5) - prevHash) + currVal.charCodeAt(0), 0);
+
+  const cssId = 'id' + hash.toString();
+
+  return cssId;
+}
+
+function buildTokens(apiTreeNode: APITreeNode, id: string, position: string, indent: number = 0) {
+  if (apiTreeNode.diffKind === "NoneDiff") {
+    buildTokensForNonDiffNodes(apiTreeNode, id, position, indent);
+  }
+  else {
+    buildTokensForDiffNodes(apiTreeNode, id, position, indent);
+  }
+}
+
+/**
+ * Build the tokens for if the node potentially contains diff
+ * @param apiTreeNode 
+ * @param id 
+ * @param position 
+ */
+function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position: string, indent: number = 0) {
+  const beforeTokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
+  const afterTokens = (position === "top") ? apiTreeNode.topDiffTokens : apiTreeNode.bottomDiffTokens;
+
+  let beforeIndex = 0;
+  let afterIndex = 0;
+
+  while (beforeIndex < beforeTokens.length || afterIndex < afterTokens.length) {
+    const beforeTokenLine : Array<StructuredToken> = [];
+    const afterTokenLine : Array<StructuredToken> = [];
+
+    const beforeLineClasses = new Set<string>();
+    const afterLineClasses = new Set<string>();
+
+    while (beforeIndex < beforeTokens.length) {
+      const token = beforeTokens[beforeIndex++];     
+      if (token.kind === "LineBreak") {
+        break;
+      }
+
+      if ("GroupId" in token.properties) {
+        beforeLineClasses.add(token.properties["GroupId"]);
+      }
+      beforeTokenLine.push(token);
+    }
+
+    while (afterIndex < afterTokens.length) {
+      const token = afterTokens[afterIndex++];
+      if (token.kind === "LineBreak") {
+        break;
+      }
+
+      if ("GroupId" in token.properties) {
+        afterLineClasses.add(token.properties["GroupId"]);
+      }
+      afterTokenLine.push(token);
+    }
+
+    const diffTokenLineResult = ComputeTokenDiff(beforeTokenLine, afterTokenLine) as [StructuredToken[], StructuredToken[], boolean];
+
+    let insertLinesOfTokensMessage : InsertCodeLineDataMessage =  {
+      directive: ReviewPageWorkerMessageDirective.InsertCodeLineData,
+      codeLineData: {
+        lineNumber: 0,
+        lineTokens : diffTokenLineResult[0],
+        lineClasses : beforeLineClasses,
+        nodeId : id,
+        indent : indent,
+        diffKind : "Unchanged"
+      } 
+    };
+
+    if (diffTokenLineResult[2] === true) {
+      insertLinesOfTokensMessage.codeLineData.diffKind = "Removed";
+      insertLinesOfTokensMessage.codeLineData.lineClasses = beforeLineClasses;
+      
+      insertLineNumber++;
+      insertLinesOfTokensMessage.codeLineData.lineNumber = insertLineNumber;
+      postMessage(insertLinesOfTokensMessage);
+
+      insertLinesOfTokensMessage.codeLineData.lineTokens = diffTokenLineResult[1];
+      insertLinesOfTokensMessage.codeLineData.diffKind = "Added";
+      insertLinesOfTokensMessage.codeLineData.lineClasses = afterLineClasses;
+
+      insertLineNumber++;
+      insertLinesOfTokensMessage.codeLineData.lineNumber = insertLineNumber;
+      postMessage(insertLinesOfTokensMessage);
+    }
+    else {
+
+      insertLineNumber++;
+      insertLinesOfTokensMessage.codeLineData.lineNumber = insertLineNumber;
+      postMessage(insertLinesOfTokensMessage);
+    }
+  }
+}
+
+/**
+ * Build the tokens for if the node contains no diff
+ * @param apiTreeNode 
+ * @param id 
+ * @param position
+ * @returns noOfLinesInserted
+ */
+function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, position: string, indent: number = 0)
+{
+  const tokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
+  const tokenLine : StructuredToken[] = [];
+  const lineClasses = new Set<string>();
+
+  for (let token of tokens) {
+    if ("GroupId" in token.properties) {
+      lineClasses.add(token.properties["GroupId"]);
+    }
+    
+    if (token.kind === "LineBreak") {
+      const insertLineOfTokensMessage : InsertCodeLineDataMessage =  {
+        directive: ReviewPageWorkerMessageDirective.InsertCodeLineData,
+        codeLineData: {
+          lineNumber: 0,
+          lineTokens : tokenLine,
+          nodeId : id,
+          lineClasses : lineClasses,
+          indent : indent,
+          diffKind : "NoneDiff"
+        } 
+      };
+
+      insertLineNumber++;
+      insertLineOfTokensMessage.codeLineData.lineNumber = insertLineNumber;
+      postMessage(insertLineOfTokensMessage);
+
+      tokenLine.length = 0;
+      lineClasses.clear();
+    }
+    else {
+      tokenLine.push(token);
+    }
+  }
+
+  if (tokenLine.length > 0) {
+    const insertLineOfTokensMessage : InsertCodeLineDataMessage =  {
+      directive: ReviewPageWorkerMessageDirective.InsertCodeLineData,
+      codeLineData: {
+        lineNumber: 0,
+        lineTokens : tokenLine,
+        nodeId : id,
+        lineClasses : lineClasses,
+        indent : indent,
+        diffKind : "NoneDiff"
+      } 
+    };
+
+    insertLineNumber++;
+    insertLineOfTokensMessage.codeLineData.lineNumber = insertLineNumber;
+    postMessage(insertLineOfTokensMessage);
+  }
 }

@@ -17,6 +17,7 @@ import { SharedAppModule } from '../shared/shared-app.module';
 import { ButtonModule } from 'primeng/button';
 import { TimeagoModule } from 'ngx-timeago';
 import { MenubarModule } from 'primeng/menubar';
+import { UiScrollModule  } from 'ngx-ui-scroll' ;
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -42,6 +43,7 @@ const routes: Routes = [
     SidebarModule,
     TimelineModule,
     ButtonModule,
+    UiScrollModule,
     RouterModule.forChild(routes),
     TimeagoModule.forRoot(),
   ]

@@ -2,9 +2,8 @@ import { ChangeHistory } from "./review"
 
 export enum ReviewPageWorkerMessageDirective {
   CreatePageNavigation,
-  CreateCodeLineHusk,
-  CreateLineOfTokens,
-  AppendTokenLinesToNode,
+  InsertCodeLineData,
+  UpdateCodeLines,
   UpdateReviewModel
 }
 
@@ -55,35 +54,16 @@ export interface APITreeNode {
   diffKind: string;
 }
 
-export interface CodeHuskNode {
-  name: string
-  id: string
-  indent: number
-  position: string
-}
-
-export interface CreateCodeLineHuskMessage {
-  directive: ReviewPageWorkerMessageDirective
-  nodeData: CodeHuskNode
-  isLastHuskNode: boolean
-}
-
-export interface CreateLinesOfTokensMessage {
-  directive: ReviewPageWorkerMessageDirective
-  tokenLine: StructuredToken[]
+export interface CodeLineData {
+  lineNumber: number
+  lineTokens: StructuredToken[]
   nodeId: string
-  position: string
+  lineClasses: Set<string>
+  indent: number
   diffKind: string
 }
 
-export interface AppendTokenLinesToMessage {
+export interface InsertCodeLineDataMessage {
   directive: ReviewPageWorkerMessageDirective
-  nodeId: string
-  position: string
-}
-
-export interface BuildTokensMessage {
-  apiTreeNode: APITreeNode
-  huskNodeId: string
-  position: string
+  codeLineData: CodeLineData
 }

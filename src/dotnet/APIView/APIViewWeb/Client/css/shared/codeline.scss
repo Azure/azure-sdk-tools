@@ -403,6 +403,22 @@ code {
     /*color: #2b2b2b;*/
 }
 
+.dark-solarized-theme .code-diagnostics p a {
+    color: #0d1dfc;
+}
+
+.dark-solarized-theme .code-diagnostics p a:visited {
+    color: #3d4afd;
+}
+
+.dark-solarized-theme .code-diagnostics p a:active {
+    color: #00CBEB;
+}
+
+.dark-solarized-theme .code-diagnostics p a:hover {
+    color: #00CBEB;
+}
+
 .code-diagnostics div {
     position: sticky;
     left: 0px;

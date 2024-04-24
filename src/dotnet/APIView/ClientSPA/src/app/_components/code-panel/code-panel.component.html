@@ -2,5 +2,15 @@
 <div *ngIf="isLoading" class="spinner-border m-3" role="status">
     <span class="visually-hidden">Loading...</span>
 </div>
-<div #codeLinesContainer></div>
+<button class="btn btnsm btn-danger" (click)="scrollToIndex(50)">click me</button>
+<div *ngIf="codeLinesDataSource" class="viewport">
+  <div *uiScroll="let item of codeLinesDataSource; let index = index" class="code-line" [ngClass]="getClassObject(item.lineClasses)">
+    <div class="line-actions">
+        <span class="line-number">{{item.lineNumber}}</span>
+    </div>
+    <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
+        <span *ngFor="let token of item.lineTokens" [ngClass]="getClassObject(token.renderClasses)">{{token.value}}</span>
+    </div>
+  </div>
+</div>
 <ng-template #commentThreadRef class="d-none"></ng-template>

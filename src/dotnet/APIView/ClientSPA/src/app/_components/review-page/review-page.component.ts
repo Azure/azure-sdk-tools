@@ -1,9 +1,8 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
-import { BehaviorSubject } from 'rxjs';
-import { CommentItemModel, Review, ReviewContent,  } from 'src/app/_models/review';
-import { APIRevision, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { CommentItemModel, Review } from 'src/app/_models/review';
+import { CodeLineData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
@@ -22,8 +21,8 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
   reviewComments : CommentItemModel[] | undefined = [];
   revisionSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
-  apiTreeNodeData: BehaviorSubject<CreateCodeLineHuskMessage | null> = new BehaviorSubject<CreateCodeLineHuskMessage | null>(null);
-  tokenLineData: BehaviorSubject<CreateLinesOfTokensMessage | null> = new BehaviorSubject<CreateLinesOfTokensMessage | null>(null);
+  codeLineBuffer: CodeLineData[] = [];
+  codeLinesData: CodeLineData[] = [];
 
   sideMenu: MenuItem[] | undefined;
 
@@ -64,19 +63,13 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
         this.reviewPageNavigation = data.navTree as TreeNode[];
       }
 
-      if (data.directive === ReviewPageWorkerMessageDirective.CreateCodeLineHusk) {
-        if (data.nodeData) {
-          this.apiTreeNodeData.next(data);
-        }
+      if (data.directive === ReviewPageWorkerMessageDirective.InsertCodeLineData) {
+        this.codeLineBuffer.push(data.codeLineData);
       }
 
-      if (data.directive === ReviewPageWorkerMessageDirective.UpdateReviewModel) {
-        this.review = data.reviewModel as Review;
+      if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodeLines) {
+        this.codeLinesData = this.codeLineBuffer;
       }
-    });
-
-    this.workerService.onMessageFromTokenBuilder().subscribe(data => {
-        this.tokenLineData.next(data);
     });
   }
 

@@ -1,3 +1,12 @@
 <div class="row my-2">
-    <p-breadcrumb class="max-w-full" [model]="breadCrumbItems" [home]="breadCrumbHome"></p-breadcrumb>
+    <p-menubar>
+        <ng-template pTemplate="start">
+            <img src="{{assetsPath}}/images/{{ review?.language! | languageNames }}-original.svg" width="25" height="25" class="mr-2">
+            <span class="fs-6 ps-2">{{ review?.packageName}}</span>
+        </ng-template>
+        <ng-template pTemplate="end">
+            <input type="checkbox" checked class="btn-check" id="page-right-panel" autocomplete="off">
+            <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="page-right-panel"><i class="fa fa-bars"></i></label>
+        </ng-template>
+    </p-menubar>
 </div>

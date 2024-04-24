@@ -4,7 +4,8 @@ export enum ReviewPageWorkerMessageDirective {
   CreatePageNavigation,
   CreateCodeLineHusk,
   CreateLineOfTokens,
-  AppendTokenLinesToNode
+  AppendTokenLinesToNode,
+  UpdateReviewModel
 }
 
 export interface APIRevision {

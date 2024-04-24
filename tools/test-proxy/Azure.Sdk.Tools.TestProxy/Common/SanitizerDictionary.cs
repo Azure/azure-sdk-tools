@@ -420,10 +420,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3433"
                 ),
                 new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..id"),
-                    "AZSDK3434"
-                ),
-                new RegisteredSanitizer(
                     new BodyKeySanitizer("$..storageAccount"),
                     "AZSDK3435"
                 ),

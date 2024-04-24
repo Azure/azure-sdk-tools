@@ -89,14 +89,23 @@ function Download-AzureBlob {
         if (-not (Test-AzCopyInstalled)) {
             if(Download-AzCopy (Get-Location).Path) {
                 $azFilePath = (Get-ChildItem -Recurse |Where-object {$_.Name -eq 'azcopy.exe'} | Select-Object -First 1).FullName
-                $azcopyCmd = "$azFilePath copy $blobPath $destinationFile"
+                $azcopyCmd = "$azFilePath copy $blobPath $destinationFile --recursive"
             }
             else
             {
                 return $false
             }
         }
+        # If the following command stuck for a long time, it may be caused by the login need to be done manually.
+        # You can run the azcopycmd manually.
+        Write-Host "azcopyCmd: $azcopyCmd"
         Invoke-Expression $azcopyCmd
+        if(Test-Path $destinationFile) {
+            Write-Host "$destinationFile downloaded successfully."
+        }
+        else {
+            Write-Host "$destinationFile doesn't exist."
+        }
         return $true
     }
     catch {

@@ -6,25 +6,13 @@ import { Observable, Subject } from 'rxjs';
 })
 export class WorkerService {
   private apiTreeBuilder : Worker;
-  private tokenBuilder : Worker;
-  private interWorkerChannel : MessageChannel;
   private apiTreeMessages = new Subject<any>();
-  private tokenMessages = new Subject<any>();
 
   constructor() {
     this.apiTreeBuilder = new Worker(new URL('../../_workers/apitree-builder.worker', import.meta.url));
-    this.tokenBuilder = new Worker(new URL('../../_workers/token-builder.worker', import.meta.url));
-    this.interWorkerChannel = new MessageChannel(); // Used to communicate between the two workers
-
-    this.apiTreeBuilder.postMessage({ interWorkerPort: this.interWorkerChannel.port1 }, [this.interWorkerChannel.port1]);
-    this.tokenBuilder.postMessage({ interWorkerPort: this.interWorkerChannel.port2 }, [this.interWorkerChannel.port2]);
 
     this.apiTreeBuilder.onmessage = ({ data }) => {
       this.apiTreeMessages.next(data);
-    };
-
-    this.tokenBuilder.onmessage = ({ data }) => {
-      this.tokenMessages.next(data);
     };
   }
 
@@ -32,15 +20,7 @@ export class WorkerService {
     this.apiTreeBuilder.postMessage(message);
   }
 
-  postToTokenBuilder(message: any) {
-    this.tokenBuilder.postMessage(message);
-  }
-
   onMessageFromApiTreeBuilder(): Observable<any> {
     return this.apiTreeMessages.asObservable();
-  }
-
-  onMessageFromTokenBuilder(): Observable<any> {
-    return this.tokenMessages.asObservable();
   }
 }

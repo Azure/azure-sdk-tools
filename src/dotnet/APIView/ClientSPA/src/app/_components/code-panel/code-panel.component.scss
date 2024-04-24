@@ -2,24 +2,25 @@
     font-family: Consolas, monospace;
     font-size: 14px;
     line-height: 1.5;
-    width: 500%;
     display: block;
 
-    .api-node {
+    .viewport {
+        overflow: auto;
+        height: calc(100vh - 80px);
+    }
+
+    .code-line {
         display: grid;
         --max-cell-width: 0px;
         grid-template-columns: minmax(auto, max-content) 1fr;
+        width: 500% !important;
+        //&.documentation {
+        //    display: none;
+        //}
     }
 
     .comment-thread {
         grid-column:  span 2;
-    }
-
-    .code-line {
-        display: contents;
-        &.documentation {
-            display: none;
-        }
     }
 
     .code-line-added, .token-added {
@@ -36,7 +37,7 @@
 
     .line-number {
         display: inline-block;
-        width: var(--max-line-number-width);
+        min-width: var(--max-line-number-width);
     }
 
     .line-actions {

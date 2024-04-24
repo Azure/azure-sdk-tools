@@ -1,15 +1,22 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Security.Utilities;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
-    public static class SecretScanner
+    public class SecretScanner
     {
-        public static SecretMasker SecretMasker = new SecretMasker(WellKnownRegexPatterns.HighConfidenceMicrosoftSecurityModels, generateCorrelatingIds: true);
+        public SecretMasker SecretMasker = new SecretMasker(
+            WellKnownRegexPatterns.HighConfidenceMicrosoftSecurityModels.Concat(WellKnownRegexPatterns.LowConfidencePotentialSecurityKeys),
+            generateCorrelatingIds: true);
 
-        public static async Task<List<Detection>> DiscoverSecrets(string inputDirectory)
+        public SecretScanner() {
+            
+        }
+
+        public async Task<List<Detection>> DiscoverSecrets(string inputDirectory)
         {
             var files = Directory.GetFiles(inputDirectory, "*", SearchOption.AllDirectories);
             List<Detection> detectedSecrets = new List<Detection>();
@@ -33,7 +40,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return detectedSecrets;
         }
 
-        private static async Task<string> ReadFile(string filePath)
+        private async Task<string> ReadFile(string filePath)
         {
             using (StreamReader reader = new StreamReader(filePath))
             {
@@ -41,7 +48,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             }
         }
 
-        private static ICollection<Detection> DetectSecrets(string stringContent)
+        private ICollection<Detection> DetectSecrets(string stringContent)
         {
             return SecretMasker.DetectSecrets(stringContent);
         }

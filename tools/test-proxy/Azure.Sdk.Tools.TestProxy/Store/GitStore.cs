@@ -39,6 +39,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public static readonly string GIT_COMMIT_OWNER_ENV_VAR = "GIT_COMMIT_OWNER";
         public static readonly string GIT_COMMIT_EMAIL_ENV_VAR = "GIT_COMMIT_EMAIL";
         private bool LocalCacheRefreshed = false;
+        public SecretScanner SecretScanner = new SecretScanner();
 
         public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
 

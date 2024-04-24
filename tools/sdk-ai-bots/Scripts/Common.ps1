@@ -85,7 +85,7 @@ function Download-AzureBlob {
     try {
         $blobPath = "https://$StorageAccountName.blob.core.windows.net/$ContainerName/$BlobName"
         $destinationFile = Join-Path -Path $DestinationPath -ChildPath $BlobName
-        $azcopyCmd = "azcopy copy $blobPath $destinationFile"
+        $azcopyCmd = "azcopy copy $blobPath $destinationFile --recursive"
         if (-not (Test-AzCopyInstalled)) {
             if(Download-AzCopy (Get-Location).Path) {
                 $azFilePath = (Get-ChildItem -Recurse |Where-object {$_.Name -eq 'azcopy.exe'} | Select-Object -First 1).FullName
@@ -105,7 +105,8 @@ function Download-AzureBlob {
             Write-Host "$destinationFile downloaded successfully."
         }
         else {
-            Write-Host "$destinationFile doesn't exist."
+            Write-Error "$destinationFile failed to download."
+            return $false
         }
         return $true
     }

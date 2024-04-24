@@ -92,12 +92,6 @@ if($IncrementalEmbedding -eq $true) {
 
 # Build embeddings
 Write-Host "Building embeddings for enghub documents"
-if(Test-Path $ragChunkPath) {
-  Write-Host "$ragChunkPath already exists"
-}
-else {
-  Write-Host "$ragChunkPath does not exist"
-}
 $env:RAG_CHUNK_PATH = $ragChunkPath
 $env:METADATA_PATH = "$embeddingSourceFolder/metadata_enghub_docs.json"
 $env:DOCUMENT_PATH = $enghubDocsDestFolder

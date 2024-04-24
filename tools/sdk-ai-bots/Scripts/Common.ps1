@@ -31,6 +31,39 @@ function Clone-Repository {
     return $true
 }
 
+function Test-AzCopyInstalled {
+    try {
+        $azcopyCommand = Get-Command azcopy -ErrorAction Stop
+        if ($azcopyCommand) {
+            return $true
+        }
+    }
+    catch {
+        Write-Error "AzCopy is not installed."
+    }
+    return $false
+}
+
+function Download-AzCopy {
+    param (
+        [Parameter(Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [string] $DestinationPath
+    )
+
+    try {
+        $AzCopyUrl = "https://azcopyvnext.azureedge.net/release20220315/azcopy_windows_amd64_10.14.1.zip"
+        $azCopyZip = Join-Path $DestinationPath "azcopy.zip"
+        Invoke-WebRequest -Uri $AzCopyUrl -OutFile $azCopyZip
+        Expand-Archive -Path $azCopyZip -DestinationPath $DestinationPath -Force
+        return $true
+    }
+    catch {
+        Write-Error "Failed to download AzCopy with exception:`n$_"
+    }
+    return $false
+}
+
 function Download-AzureBlob {
     param (
         [Parameter(Position = 0)]
@@ -49,20 +82,21 @@ function Download-AzureBlob {
         [ValidateNotNullOrEmpty()]
         [string] $DestinationPath
     )
-    
-    $storageAccountKey = $env:AZURE_STORAGE_ACCOUNT_KEY
-    if (-not $storageAccountKey) {
-        Write-Error "Please set the environment variable 'AZURE_STORAGE_ACCOUNT_KEY'."
-        return $false
-    }
     try {
-        $context = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $storageAccountKey
-        
-        $blob = Get-AzStorageBlob -Context $context -Container $ContainerName -Blob $BlobName
-        
+        $blobPath = "https://$StorageAccountName.blob.core.windows.net/$ContainerName/$BlobName"
         $destinationFile = Join-Path -Path $DestinationPath -ChildPath $BlobName
-        
-        $blob | Get-AzStorageBlobContent -Destination $destinationFile -Force
+        $azcopyCmd = "azcopy copy $blobPath $destinationFile"
+        if (-not (Test-AzCopyInstalled)) {
+            if(Download-AzCopy (Get-Location).Path) {
+                $azFilePath = (Get-ChildItem -Recurse |Where-object {$_.Name -eq 'azcopy.exe'} | Select-Object -First 1).FullName
+                $azcopyCmd = "$azFilePath copy $blobPath $destinationFile"
+            }
+            else
+            {
+                return $false
+            }
+        }
+        Invoke-Expression $azcopyCmd
         return $true
     }
     catch {
@@ -142,15 +176,19 @@ function Upload-AzureBlob {
         [string] $SourceFile
     )
     
-    $storageAccountKey = $env:AZURE_STORAGE_ACCOUNT_KEY
-    if (-not $storageAccountKey) {
-        Write-Error "Please set the environment variable 'AZURE_STORAGE_ACCOUNT_KEY'."
-        return $false
-    }
     try {
-        $context = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $storageAccountKey
-        
-        $blob = Set-AzStorageBlobContent -Context $context -Container $ContainerName -Blob $BlobName -File $SourceFile -Force
+        $blobPath = "https://$StorageAccountName.blob.core.windows.net/$ContainerName/$BlobName"
+        $azcopyCmd = "azcopy copy $SourceFile $blobPath"
+        if (-not (Test-AzCopyInstalled)) {
+            if(Download-AzCopy (Get-Location).Path) {
+                $azFilePath = (Get-ChildItem -Recurse |Where-object {$_.Name -eq 'azcopy.exe'} | Select-Object -First 1).FullName
+                $azcopyCmd = "$azFilePath copy  $SourceFile $blobPath"
+            }
+            else {
+                return $false
+            }
+        }
+        & $azcopyCmd
         return $true
     }
     catch {

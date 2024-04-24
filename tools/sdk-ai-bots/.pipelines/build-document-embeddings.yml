@@ -35,12 +35,13 @@ stages:
     - template: setup-pipeline.yml
     - checkout: git://internal/_git/azure-sdk-docs-eng.ms
       displayName: 'Checkout azure-sdk-docs-eng.ms repository'
-    - task: Powershell@2
+    - task: AzurePowerShell@5
       inputs:
-        filePath: $(Build.SourcesDirectory)/azure-sdk-tools/tools/sdk-ai-bots/Scripts/Build-EngHubDocEmbeddings.ps1
-        arguments: >
-          -IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"
-        pwsh: true
+        azureSubscription: 'Azure SDK Playground'
+        ScriptType: 'FilePath'
+        ScriptPath: '$(Build.SourcesDirectory)/azure-sdk-tools/tools/sdk-ai-bots/Scripts/Build-EngHubDocEmbeddings.ps1'
+        arguments: '-IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"'
+        azurePowerShellVersion: 'LatestVersion'
         workingDirectory: $(Build.SourcesDirectory)
       displayName: 'Run embeddings build script'
       env:

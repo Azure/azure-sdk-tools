@@ -72,7 +72,7 @@ else {
 
 # Download previous saved embeddings(last_rag_chunks_enghub_docs.json) from Azure Blob Storage
 # Using Azure PowerShell login type for AzCopy.
-# It needs to login with Azure account manually when running the script locally using 'Connect-AzAccount' then 'Set-AzContext' to switch to the correct subscription.
+# When running this script locally, first using 'Connect-AzAccount' then 'Set-AzContext' to switch to the correct subscription
 $env:AZCOPY_AUTO_LOGIN_TYPE="PSCRED"
 $blobName = "last_rag_chunks_enghub_docs.json"
 $destinationPath = $embeddingSourceFolder
@@ -92,6 +92,12 @@ if($IncrementalEmbedding -eq $true) {
 
 # Build embeddings
 Write-Host "Building embeddings for enghub documents"
+if(Test-Path $ragChunkPath) {
+  Write-Host "$ragChunkPath already exists"
+}
+else {
+  Write-Host "$ragChunkPath does not exist"
+}
 $env:RAG_CHUNK_PATH = $ragChunkPath
 $env:METADATA_PATH = "$embeddingSourceFolder/metadata_enghub_docs.json"
 $env:DOCUMENT_PATH = $enghubDocsDestFolder

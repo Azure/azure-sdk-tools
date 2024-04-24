@@ -199,7 +199,9 @@ function Upload-AzureBlob {
                 return $false
             }
         }
-        Invoke-Expression $azcopyCmd
+        Write-Host "azcopyCmd: $azcopyCmd"
+        $azcopyOutput = Invoke-Expression $azcopyCmd
+        Write-Host "azcopyOutput: $azcopyOutput"
         return $true
     }
     catch {

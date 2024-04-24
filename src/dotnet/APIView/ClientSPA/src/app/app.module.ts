@@ -43,7 +43,6 @@ export function initializeApp(configService: ConfigService) {
   declarations: [
     AppComponent,
     IndexPageComponent,
-    LanguageNamesPipe,
     ReviewsListComponent,
     RevisionsListComponent,
     ApprovalPipe,

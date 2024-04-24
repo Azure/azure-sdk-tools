@@ -112,8 +112,8 @@ function Copy-Files([string]$rootFolder, [string]$outputFolder) {
                 New-Item -ItemType Directory -Path $outputFolder
             }
             $newFileName = Join-Path $outputFolder $key
-            Write-Host "Copying file $_ to $newFileName"
-            Copy-Item -Path $_ -Destination $newFileName
+            Write-Debug "Copying file $_ to $newFileName"
+            Copy-Item -Path $_.FullName -Destination $newFileName
         }
     }
 }

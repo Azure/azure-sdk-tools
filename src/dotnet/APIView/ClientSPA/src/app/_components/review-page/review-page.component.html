@@ -1,13 +1,13 @@
 <app-nav-bar></app-nav-bar>
 <div class="container-fluid main-container">
-    <app-review-info [review]="reviewContent?.review" (revisionsSidePanel)="showRevisionsPanel($event)"></app-review-info>
-    <div style="display: flex;">
-        <div style="width: 65px; margin-right: 10px;">
+    <!--<app-review-info [review]="review" (revisionsSidePanel)="showRevisionsPanel($event)"></app-review-info>-->
+    <div class="mt-2" style="display: flex;">
+        <div style="width: 65px; margin-right: 5px;">
             <p-menu [model]="sideMenu"></p-menu>
         </div>
         <div style="flex-grow: 1; min-width: 0;">
             <p-splitter 
-            [panelSizes]="[15, 70, 15]" 
+            [panelSizes]="[10, 70, 20]" 
             [style]="{ height: 'calc(100vh - 119px)' }">
             <ng-template pTemplate>
                 <div class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel">

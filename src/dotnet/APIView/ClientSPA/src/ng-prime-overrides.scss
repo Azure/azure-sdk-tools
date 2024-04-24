@@ -219,6 +219,7 @@ p-contextmenusub {
 }
 
 .p-menubar {
+    border: 1px solid var(--border-color);
     padding: 0.4rem 0.5rem;
     background: var(--base-fg-color);
     color: var(--base-text-color);

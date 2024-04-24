@@ -161,7 +161,7 @@ export class CodePanelComponent implements AfterViewInit, OnDestroy{
             const codeLineFragment = this.codeLineFragments.get(nodeId);
             setTimeout(() => {
               apiTreeNode!.appendChild(codeLineFragment.apiTokens);
-              apiTreeNode!.setAttribute('content-visibility', 'auto');
+              codeLineFragment.apiTokens = null;
             }, 0);
           }
         }

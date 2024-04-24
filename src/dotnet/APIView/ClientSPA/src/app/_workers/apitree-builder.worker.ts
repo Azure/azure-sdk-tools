@@ -16,6 +16,13 @@ addEventListener('message', ({ data }) => {
       let jsonString = new TextDecoder().decode(new Uint8Array(data));
 
       let reviewContent: ReviewContent = JSON.parse(jsonString);
+      const updateReviewModelMessage = {
+        directive: ReviewPageWorkerMessageDirective.UpdateReviewModel,
+        reviewModel : reviewContent.review
+      };
+
+      postMessage(updateReviewModelMessage);
+
       let navTreeNodes: any[] = [];
       let treeNodeId : string[] = [];
     

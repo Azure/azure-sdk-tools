@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { BehaviorSubject } from 'rxjs';
-import { CommentItemModel, ReviewContent,  } from 'src/app/_models/review';
+import { CommentItemModel, Review, ReviewContent,  } from 'src/app/_models/review';
 import { APIRevision, CodeHuskNode, CreateCodeLineHuskMessage, CreateLinesOfTokensMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
@@ -18,7 +18,7 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
   activeApiRevisionId : string | null = null;
   diffApiRevisionId : string | null = null;
 
-  reviewContent : ReviewContent | undefined = undefined;
+  review : Review | undefined = undefined;
   reviewComments : CommentItemModel[] | undefined = [];
   revisionSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
@@ -69,6 +69,10 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
           this.apiTreeNodeData.next(data);
         }
       }
+
+      if (data.directive === ReviewPageWorkerMessageDirective.UpdateReviewModel) {
+        this.review = data.reviewModel as Review;
+      }
     });
 
     this.workerService.onMessageFromTokenBuilder().subscribe(data => {
@@ -88,8 +92,4 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
   showRevisionsPanel(showRevisionsPanel : any){
     this.revisionSidePanel = showRevisionsPanel as boolean;
   }
-
-  onRevisionSelect(revision: APIRevision) {
-    this.reviewContent!.activeAPIRevision = revision;
-  } 
 }

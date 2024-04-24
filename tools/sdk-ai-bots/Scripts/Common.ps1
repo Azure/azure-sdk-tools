@@ -99,7 +99,8 @@ function Download-AzureBlob {
         # If the following command stuck for a long time, it may be caused by the login need to be done manually.
         # You can run the azcopycmd manually.
         Write-Host "azcopyCmd: $azcopyCmd"
-        Invoke-Expression $azcopyCmd
+        $azcopyOutput = Invoke-Expression $azcopyCmd
+        Write-Host "azcopyOutput: $azcopyOutput"
         if(Test-Path $destinationFile) {
             Write-Host "$destinationFile downloaded successfully."
         }

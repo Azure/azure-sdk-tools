@@ -11,9 +11,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public static async Task<List<Detection>> DiscoverSecrets(string inputDirectory)
         {
-            var files = Directory.GetFiles("", "*", SearchOption.AllDirectories);
+            var files = Directory.GetFiles(inputDirectory, "*", SearchOption.AllDirectories);
             List<Detection> detectedSecrets = new List<Detection>();
 
+            var total = 0;
             foreach (string filePath in files)
             {
                 var content = await ReadFile(filePath);
@@ -26,6 +27,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         detectedSecrets.Add(detection);
                     }
                 }
+                total++;
             }
 
             return detectedSecrets;

@@ -52,24 +52,6 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
             await shell.exec('tar -xzf *.tgz');
             await shell.cd(packageFolderPath);
 
-            await shell.mkdir(path.join(packageFolderPath, 'changelog-next'));
-            await shell.cd(path.join(packageFolderPath, 'changelog-next'));
-            await shell.exec(`npm pack ${packageName}@${nextVersion}`);
-            await shell.exec('tar -xzf *.tgz');
-            await shell.cd(packageFolderPath);
-
-            let changeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
-            if(nextVersion){
-                const getLatestDate = getLatestversionDate(npmViewResult, stableVersion);
-                const getNextDate = getNextversionDate(npmViewResult,nextVersion);
-                if (getLatestDate && getNextDate){
-                    if (!compareDate(getLatestDate, getNextDate)){
-                        changeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-next', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
-                    }
-                }
-            } else {
-                return changeLogContent;
-            }
             // only track2 sdk includes sdk-type with value mgmt
             const sdkType = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'package.json'), {encoding: 'utf-8'}))['sdk-type'];
             if (sdkType && sdkType === 'mgmt') {
@@ -79,6 +61,23 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 let apiMdFileNPM: string = path.join(reviewFolder, fs.readdirSync(reviewFolder)[0]);
                 let apiMdFileLocal: string = path.join(packageFolderPath, 'review', fs.readdirSync(path.join(packageFolderPath, 'review'))[0]);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);
+                let changeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+                if(nextVersion){
+                    await shell.mkdir(path.join(packageFolderPath, 'changelog-next'));
+                    await shell.cd(path.join(packageFolderPath, 'changelog-next'));
+                    await shell.exec(`npm pack ${packageName}@${nextVersion}`);
+                    await shell.exec('tar -xzf *.tgz');
+                    await shell.cd(packageFolderPath);
+                    logger.log("Create next folder successfully")
+    
+                    const getLatestDate = getLatestversionDate(npmViewResult, stableVersion);
+                    const getNextDate = getNextversionDate(npmViewResult,nextVersion);
+                    if (getLatestDate && getNextDate){
+                        if (!compareDate(getLatestDate, getNextDate)){
+                            changeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-next', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+                        }
+                    }
+                }
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
                     logger.logError('Cannot generate changelog because the codes of local and npm may be the same.');
                     logger.log('Try to bump a fix version');
@@ -105,7 +104,9 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
             }
         } finally {
             await shell.exec(`rm -r ${path.join(packageFolderPath, 'changelog-temp')}`);
-            await shell.exec(`rm -r ${path.join(packageFolderPath, 'changelog-next')}`);
+            if(nextVersion){
+                await shell.exec(`rm -r ${path.join(packageFolderPath, 'changelog-next')}`);
+            }
             await shell.cd(jsSdkRepoPath);
         }
     }

@@ -16,7 +16,7 @@ namespace APIViewWeb
             WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
-                    config.AddEnvironmentVariables(prefix: "APIVIEW_");                    
+                    config.AddEnvironmentVariables(prefix: "APIVIEW_");                  
                     IConfiguration settings = config.Build();
                     string connectionString = settings.GetValue<string>("APPCONFIG");
                     // Load configuration from Azure App Configuration

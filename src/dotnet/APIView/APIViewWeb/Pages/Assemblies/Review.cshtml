@@ -505,10 +505,73 @@
                     </form>
                 </div>
             </li>
+            <li class="list-group-item">
+                <div>
+                    <p class="small revision-title">Change History:</p>
+                        @foreach (var change in Model.ReviewContent.ActiveAPIRevision.ChangeHistory)
+                        {
+                            <li class="list-group-item approval-list-group-item">
+                                <div class="d-flex align-items-start">
+                                    <div class="me-3">
+                                    @{
+                                        var changeAction = change.ChangeAction.ToString();
+                                        string iconClass = "";
+                                        switch (changeAction)
+                                        {
+                                            case "Created":
+                                                iconClass = "bi bi-plus-circle-fill created status-icon";
+                                                break;
+                                            case "Approved":
+                                                iconClass = "bi bi-check-circle-fill approved status-icon";
+                                                break;
+                                            case "ApprovalReverted":
+                                                iconClass = "bi bi-arrow-left-circle-fill approval-reverted status-icon";
+                                                break;
+                                            case "Deleted":
+                                                iconClass = "bi bi-backspace-fill deleted status-icon";
+                                                break;
+                                            case "UnDeleted":
+                                                iconClass = "bi bi-plus-circle-fill undeleted status-icon";
+                                                break;
+                                        }
+                                    }
+                                                                     
+                                    <div class="revision-events">          
+                                        @if (!string.IsNullOrEmpty(iconClass))
+                                        {
+                                            <i class="@iconClass"></i>
+                                        } 
+                                        @if (change.ChangeAction.ToString() == "Created")
+                                        {
+                                            <span class="small revision-info">Created:</span>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "Approved")
+                                        {
+                                            <span class="small revision-info">Approved:</span>                                                                                           
+                                        }
+                                        else if (change.ChangeAction.ToString() == "ApprovalReverted")
+                                        {
+                                            <span class="small revision-info">Reverted:</span>                                         
+                                        }
+                                        else if (change.ChangeAction.ToString() == "Deleted")
+                                        {
+                                            <span class="small revision-info">Deleted:</span>
+                                        }
+                                        else if (change.ChangeAction.ToString() == "UnDeleted")
+                                        {
+                                            <span class="small revision-info">UnDeleted:</span>
+                                        }
+                                        <span class="small revision-info">@change.ChangedBy</span><br />
+                                        <span data-bs-toggle="tooltip" title="@change.ChangedOn" date="@(change.ChangedOn.GetValueOrDefault())" class="small revision-info"></span>
+                                    </div>                                   
+                                </div>
+                            </li>
+                        }    
+                </div>
+            </li>
         </ul>
     </div>
 </div>
-
 <div class="container-fluid mx-0 px-0 sub-header-content">
     <div class="row px-3 py-2 border-bottom" id="review-info-bar">
         <partial name="Shared/_ReviewBadge" model="(Model.ReviewContent.Review, Model.ReviewContent.ActiveAPIRevision, Model.ReviewContent.DiffAPIRevision, Model.UserPreference)" />

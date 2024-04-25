@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.Services.WebApi;
 using System.Diagnostics;
 using Microsoft.Extensions.Options;
 using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;

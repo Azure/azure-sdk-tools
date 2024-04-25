@@ -22,8 +22,8 @@
     <div class="left-offcanvas-menu-content" id="left-offcanvas-menu-content">
         <div class="btn-group-vertical" role="group" aria-label="Vertical button group">
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Review" asp-route-id="@Model.Review.Id"><i class="bi bi-braces" data-bs-toggle="tooltip" data-bs-placement="right" title="API"></i></a>
-            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Revisions" asp-route-id="@Model.Review.Id"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisons"></i></a>
-            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="API" active-if="@TempData["page"].Equals("conversation")"><i class="bi bi-chat-left-dots"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Revisions" asp-route-id="@Model.Review.Id"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisions"></i></a>
+            <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversations" active-if="@TempData["page"].Equals("conversation")"><i class="bi bi-chat-left-dots"></i></a>
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
         </div>
     </div>

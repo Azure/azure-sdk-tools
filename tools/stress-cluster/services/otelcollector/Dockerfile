@@ -1,8 +1,18 @@
-FROM mcr.microsoft.com/oss/otel/opentelemetry-collector-contrib:0.94.0 as otel
+FROM mcr.microsoft.com/oss/go/microsoft/golang:1.21 as build
+RUN apt update -y && apt upgrade -y && apt install -y build-essential git
 
-FROM busybox:latest as busybox
-COPY --from=otel / /
-ADD ./otel-collector-config.yml /otel-collector-config.yml
+# this lets us build a custom otel-collector image, with a minimal set of 
+# adapters, etc...
+RUN go install go.opentelemetry.io/collector/cmd/builder@latest
+COPY ./otel-builder.yml /otel-builder.yml
+# builds to /tmp/dist
+RUN builder --config=/otel-builder.yml
+
+# this is the actual image we'll upload - it's got a shell so we can
+# run startup.sh but is otherwise pristine.
+FROM mcr.microsoft.com/cbl-mariner/busybox:2.0
+COPY --from=build /tmp/dist/otelcol-custom /otelcol-custom
+COPY ./otel-collector-config.yml /otel-collector-config.yml
 ADD ./startup.sh /startup.sh
 
 EXPOSE 4317

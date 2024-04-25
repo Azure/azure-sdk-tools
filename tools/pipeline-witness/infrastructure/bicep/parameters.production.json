@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westus2"
+    },
+    "appResourceGroupName": {
+      "value": "pipelinewitnessprod"
+    },
+    "cosmosAccountName": {
+      "value": "pipelinewitnessprod"
+    },
+    "webAppName": {
+      "value": "pipelinewitnessprod-app"
+    },
+    "appServicePlanName": {
+      "value": "ASP-pipelinewitnessprod-b6fe"
+    },
+    "appStorageAccountName": {
+      "value": "pipelinewitnessprod"
+    },
+    "logsResourceGroupName": {
+      "value": "pipelinelogs"
+    },
+    "logsStorageAccountName": {
+      "value": "azsdkengsyspipelinelogs"
+    },
+    "kustoClusterName": {
+      "value": "azsdkengsys"
+    },
+    "kustoDatabaseName": {
+      "value": "Pipelines"
+    }
+  }
+}

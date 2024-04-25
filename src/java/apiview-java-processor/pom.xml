@@ -18,15 +18,15 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>2.13.4.2</version>
+      <groupId>com.azure</groupId>
+      <artifactId>azure-json</artifactId>
+      <version>1.1.0</version>
     </dependency>
 
     <dependency>
       <groupId>com.github.javaparser</groupId>
-      <artifactId>javaparser-symbol-solver-core</artifactId>
-      <version>3.24.2</version>
+      <artifactId>javaparser-core</artifactId>
+      <version>3.25.10</version>
     </dependency>
 
     <dependency>
@@ -50,14 +50,14 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>4.0.0</version> <!-- {x-version-update;org.mockito:mockito-core;external_dependency} -->
+      <version>4.11.0</version> <!-- {x-version-update;org.mockito:mockito-core;external_dependency} -->
       <scope>test</scope>
     </dependency>
-      <dependency>
-          <groupId>commons-lang</groupId>
-          <artifactId>commons-lang</artifactId>
-          <version>2.6</version>
-      </dependency>
+    <dependency>
+      <groupId>org.unbescape</groupId>
+      <artifactId>unbescape</artifactId>
+      <version>1.1.6.RELEASE</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -66,7 +66,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.12.1</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
@@ -79,7 +79,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.1.1</version>
+        <version>3.3.0</version>
         <configuration>
           <descriptorRefs>
             <descriptorRef>jar-with-dependencies</descriptorRef>

@@ -39,6 +39,7 @@
 /tools/perf-automation/                @mikeharder @benbp
 /tools/pipeline-generator/             @weshaggard @benbp
 /tools/pipeline-witness/               @praveenkuttappan @weshaggard
+/tools/sdk-ai-bots/                    @raych1
 /tools/sdk-generation-pipeline/        @weshaggard @praveenkuttappan @maririos
 /tools/sdk-testgen/                    @raych1 @tadelesh
 /tools/test-proxy/                     @scbedd @mikeharder

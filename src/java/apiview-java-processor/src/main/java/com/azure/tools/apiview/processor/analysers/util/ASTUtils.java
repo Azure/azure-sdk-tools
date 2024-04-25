@@ -25,14 +25,12 @@ import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
  * Abstract syntax tree (AST) utility methods.
  */
 public final class ASTUtils {
-    private static final Pattern MAKE_ID = Pattern.compile("\"| ");
 
     /**
      * Attempts to get the package name for a compilation unit.
@@ -118,7 +116,9 @@ public final class ASTUtils {
      * @return All public API constructors contained in the type declaration.
      */
     public static Stream<ConstructorDeclaration> getPublicOrProtectedConstructors(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getConstructors().stream()
+        return typeDeclaration.getMembers().stream()
+            .filter(member -> member instanceof ConstructorDeclaration)
+            .map(member -> (ConstructorDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
@@ -139,7 +139,9 @@ public final class ASTUtils {
      * @return All public API methods contained in the type declaration.
      */
     public static Stream<MethodDeclaration> getPublicOrProtectedMethods(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getMethods().stream()
+        return typeDeclaration.getMembers().stream()
+            .filter(member -> member instanceof MethodDeclaration)
+            .map(member -> (MethodDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
@@ -160,7 +162,9 @@ public final class ASTUtils {
      * @return All public API fields contained in the type declaration.
      */
     public static Stream<FieldDeclaration> getPublicOrProtectedFields(TypeDeclaration<?> typeDeclaration) {
-        return typeDeclaration.getFields().stream()
+        return typeDeclaration.getMembers().stream()
+            .filter(member -> member instanceof FieldDeclaration)
+            .map(member -> (FieldDeclaration) member)
             .filter(type -> isPublicOrProtected(type.getAccessSpecifier()));
     }
 
@@ -181,7 +185,7 @@ public final class ASTUtils {
      * @return Whether the access specifier is package-private or private.
      */
     public static boolean isPrivateOrPackagePrivate(AccessSpecifier accessSpecifier) {
-        return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.PACKAGE_PRIVATE);
+        return (accessSpecifier == AccessSpecifier.PRIVATE) || (accessSpecifier == AccessSpecifier.NONE);
     }
 
     public static String makeId(CompilationUnit cu) {
@@ -209,7 +213,44 @@ public final class ASTUtils {
     }
 
     public static String makeId(String fullPath) {
-        return MAKE_ID.matcher(fullPath).replaceAll("-");
+        // Previously, this used a regex to replace '"' and ' ' with '-', that wasn't necessary. The replacement pattern
+        // is simple and can be replaced with a simple loop. This is a performance optimization.
+        //
+        // The logic is that we iterate over the string, if no replacements are needed we return the original string.
+        // Otherwise, we create a new StringBuilder the size of the string being replaced, as the replacement size is
+        // the same as the search size, and we append the parts of the string that don't need to be replaced, and the
+        // replacement character for the parts that do. At the end of the loop, we append the last part of the string
+        // that doesn't need to be replaced and return the final string.
+        if (fullPath == null || fullPath.isEmpty()) {
+            return fullPath;
+        }
+
+        StringBuilder sb = null;
+        int prevStart = 0;
+
+        int length = fullPath.length();
+        for (int i = 0; i < length; i++) {
+            char c = fullPath.charAt(i);
+            if (c == '"' || c == ' ') {
+                if (sb == null) {
+                    sb = new StringBuilder(length);
+                }
+
+                if (prevStart != i) {
+                    sb.append(fullPath, prevStart, i);
+                }
+
+                sb.append('-');
+                prevStart = i + 1;
+            }
+        }
+
+        if (sb == null) {
+            return fullPath;
+        }
+
+        sb.append(fullPath, prevStart, length);
+        return sb.toString();
     }
 
     public static String makeId(AnnotationExpr annotation, NodeWithAnnotations<?> nodeWithAnnotations) {
@@ -333,26 +374,35 @@ public final class ASTUtils {
         return false;
     }
 
-    public static boolean isTypeImplementingInterface(TypeDeclaration type, String interfaceName) {
+    public static boolean isTypeImplementingInterface(TypeDeclaration<?> type, String interfaceName) {
         return type.asClassOrInterfaceDeclaration().getImplementedTypes().stream()
                 .anyMatch(_interface -> _interface.getNameAsString().equals(interfaceName));
     }
 
-    private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
-        if (!nodeOptional.isPresent()) {
+    public static String getNodeFullyQualifiedName(Node node) {
+        if (node == null) {
             return "";
         }
 
-        Node node = nodeOptional.get();
         if (node instanceof TypeDeclaration<?>) {
             TypeDeclaration<?> type = (TypeDeclaration<?>) node;
             return type.getFullyQualifiedName().get();
         } else if (node instanceof CallableDeclaration) {
-            CallableDeclaration callableDeclaration = (CallableDeclaration) node;
-            return getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
+            CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) node;
+            String fqn = getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
+
+            if (callableDeclaration.isConstructorDeclaration()) {
+                fqn += ".ctor";
+            }
+
+            return fqn;
         } else {
             return "";
         }
+    }
+
+    private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
+        return nodeOptional.map(ASTUtils::getNodeFullyQualifiedName).orElse("");
     }
 
     /**

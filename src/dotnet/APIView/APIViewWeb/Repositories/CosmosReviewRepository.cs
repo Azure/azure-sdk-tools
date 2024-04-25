@@ -68,7 +68,7 @@ namespace APIViewWeb
             return reviews;
         }
 
-        public async Task<List<ReviewListItemModel>> GetReviewsAsync(List<string> reviewIds, bool? isClosed = null)
+        public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(IEnumerable<string> reviewIds, bool? isClosed = null)
         {
             var reviewIdsAsQueryStr = CosmosQueryHelpers.ArrayToQueryString(reviewIds);
             var queryStringBuilder = new StringBuilder($"SELECT * FROM Reviews r WHERE r.id IN {reviewIdsAsQueryStr}");

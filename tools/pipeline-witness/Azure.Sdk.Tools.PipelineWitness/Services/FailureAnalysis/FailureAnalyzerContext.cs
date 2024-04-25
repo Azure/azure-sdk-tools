@@ -1,7 +1,6 @@
 ﻿using Azure.Sdk.Tools.PipelineWitness.Entities.AzurePipelines;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.Common;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

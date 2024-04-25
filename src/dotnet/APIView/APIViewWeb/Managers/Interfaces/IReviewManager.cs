@@ -12,6 +12,7 @@ namespace APIViewWeb.Managers
         public Task<(IEnumerable<ReviewListItemModel> Reviews, int TotalCount, int TotalPages, int CurrentPage, int? PreviousPage, int? NextPage)> GetPagedReviewListAsync(
             IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, bool? isApproved, int offset, int limit, string orderBy);
         public Task<ReviewListItemModel> GetReviewAsync(ClaimsPrincipal user, string id);
+        public Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(IEnumerable<string> reviewIds, bool? isClosed = null);
         public Task<LegacyReviewModel> GetLegacyReviewAsync(ClaimsPrincipal user, string id);
         public Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed = true);
         public Task SoftDeleteReviewAsync(ClaimsPrincipal user, string id);

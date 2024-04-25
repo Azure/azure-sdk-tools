@@ -7,6 +7,7 @@ Table of Contents
    * [Prod Cluster](#prod-cluster)
    * [Local Cluster](#local-cluster)
 * [Deploying Stress Test Addons](#deploying-stress-test-addons)
+* [Rotating Cluster Secrets](#rotating-cluster-secrets)
 * [Development](#development)
    * [Bicep templates](#bicep-templates)
    * [Helm templates](#helm-templates)
@@ -124,6 +125,45 @@ Steps for deploying the stress test addons helm chart:
 1. Run azure-sdk-tools\eng\common\scripts\stress-testing\deploy-stress-tests.ps1 script in the [examples](https://github.com/Azure/azure-sdk-tools/tree/main/tools/stress-cluster/chaos/examples) directory, this will update all the nested helm charts (the -SkipLogin parameter can be used to speed up the script or if interactive login isn't supported by the shell).
    1. Run `kubectl get pods -n examples -w` to monitor the status of each pod and look for Running/Completed and make sure there are no errors.
 1. Update all the stress tests' Chart.yaml files across the other repos in the same manner.
+
+# Rotating Cluster Secrets
+
+Each stress cluster provisions one app/service principal with permissions to deploy resources to a subscription. This is used for stress tests that define bicep templates for live resources.
+
+The secret is initialized in the `rg-stress-secrets-<env>` resource group in the subscription. There will be a keyvault named `stress-secrets-<env>` and will have one secret named `public`. This secret takes the format of a .env file like:
+
+```
+AZURE_CLIENT_SECRET=<secret>
+AZURE_TENANT_ID=<tenant id>
+AZURE_CLIENT_ID=<client id>
+AZURE_SUBSCRIPTION_ID=<sub id>
+AZURE_CLIENT_OID=<oid>
+STRESS_CLUSTER_RESOURCE_GROUP=<rg>
+```
+
+During cluster buildout (`provision.ps1`), this is all initialized automatically, however sometimes this secret needs to be rotated on-demand (for expiration or security reasons).
+
+To rotate the secret, find the underlying app registration for the cluster. This will match the `AZURE_CLIENT_ID` of the secret, or you can search in Azure Portal for `stress-provisioner-<env>`. Navigate to the application/app registration page, and click `Certificates & secrets` on the left side. Click `New client secret`, set expiration to 12 months and name/describe it `rbac`. When the secret is created, you will be able to copy the value.
+
+Next, run the following to get the existing .env file secret for the stress cluster:
+
+```
+az keyvault secret show --vault-name stress-secrets-<env> -n public -o tsv --query value > stress-secret
+```
+
+Update the file, replacing the `AZURE_CLIENT_SECRET` value with the new secret value, then run:
+
+```
+az keyvault secret set --vault-name stress-secrets-<env> -n public -f ./stress-secret
+```
+
+To verify the rotation is complete, do a test run of the deployment example. From the root of `azure-sdk-tools`:
+
+```
+eng/common/scripts/stress-testing/deploy-stress-tests.ps1 -Environment <env> -SearchDirectory ./tools/stress-cluster/chaos/examples/stress-deployment-example
+```
+
+Then monitor the stress deployment and make sure the resources deployed successfully in the `init-azure-deployer` init container.
 
 # Development
 

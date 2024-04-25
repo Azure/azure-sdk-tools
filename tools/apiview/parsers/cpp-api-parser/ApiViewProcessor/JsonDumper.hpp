@@ -269,7 +269,7 @@ public:
          {"Value", nullptr},
          {"Kind", TokenKinds::DeprecatedRangeEnd}});
   }
-  virtual void AddDiffRangeStart() override
+  virtual void AddSkipDiffRangeStart() override
   {
     m_json["Tokens"].push_back(
         {{"DefinitionId", nullptr},
@@ -277,7 +277,7 @@ public:
          {"Value", nullptr},
          {"Kind", TokenKinds::SkipDiffRangeStart}});
   }
-  virtual void AddDiffRangeEnd() override
+  virtual void AddSkipDiffRangeEnd() override
   {
     m_json["Tokens"].push_back(
         {{"DefinitionId", nullptr},

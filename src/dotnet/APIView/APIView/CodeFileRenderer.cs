@@ -33,6 +33,7 @@ namespace ApiView
         {
             var stringBuilder = new StringBuilder();
             string currentId = null;
+            string currentCrossLangId = null;
             string currentTableId = null;
             bool isDocumentationRange = false;
             bool isHiddenApiToken = false;
@@ -57,7 +58,7 @@ namespace ApiView
                 switch (token.Kind)
                 {
                     case CodeFileTokenKind.Newline:
-                        CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, isDocumentationRange, isHiddenApiToken);
+                        CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, ref currentCrossLangId, isDocumentationRange, isHiddenApiToken);
                         break;
 
                     case CodeFileTokenKind.DocumentRangeStart:
@@ -97,6 +98,7 @@ namespace ApiView
                     case CodeFileTokenKind.FoldableSectionHeading:
                         nodesInProcess.Push(SectionType.Heading);
                         currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+                        currentCrossLangId = (token.CrossLanguageDefinitionId != null) ? token.CrossLanguageDefinitionId : currentCrossLangId;
                         RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
                         break;
 
@@ -149,7 +151,7 @@ namespace ApiView
                             stringBuilder.Append("</strong></li>");
                             stringBuilder.Append("</ul>");
                             tableColumnCount.Curr = 0;
-                            CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, isDocumentationRange, isHiddenApiToken);
+                            CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, ref currentCrossLangId, isDocumentationRange, isHiddenApiToken);
                         }
                         else
                         {
@@ -186,7 +188,7 @@ namespace ApiView
                         if (tableColumnCount.Curr == 0)
                         {
                             stringBuilder.Append("</ul>");
-                            CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, isDocumentationRange, isHiddenApiToken);
+                            CaptureCodeLine(list, sections, nodesInProcess, ref section, stringBuilder, ref lineNumber, ref leafSectionPlaceHolderNumber, ref currentId, ref currentCrossLangId, isDocumentationRange, isHiddenApiToken);
                         }
                         break;
 
@@ -208,6 +210,7 @@ namespace ApiView
 
                     default:
                         currentId = (token.DefinitionId != null) ? token.DefinitionId : currentId;
+                        currentCrossLangId = (token.CrossLanguageDefinitionId != null) ? token.CrossLanguageDefinitionId : currentCrossLangId;
                         RenderToken(token, stringBuilder, isDeprecatedToken, isHiddenApiToken);
                         break;
                 }
@@ -228,11 +231,11 @@ namespace ApiView
         protected virtual void CloseDocumentationRange(StringBuilder stringBuilder) { }
 
         private void CaptureCodeLine(List<CodeLine> list, Dictionary<int, TreeNode<CodeLine>> sections, Stack<SectionType> nodesInProcess,
-             ref TreeNode<CodeLine> section, StringBuilder stringBuilder, ref int lineNumber, ref int leafSectionPlaceHolderNumber, ref string currentId,
+             ref TreeNode<CodeLine> section, StringBuilder stringBuilder, ref int lineNumber, ref int leafSectionPlaceHolderNumber, ref string currentId, ref string currentCrossLangId,
              bool isDocumentationRange = false, bool isHiddenApiToken = false)
         {
             int? sectionKey = (nodesInProcess.Count > 0 && section == null) ? sections.Count : null;
-            CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange, isHiddenApi: isHiddenApiToken);
+            CodeLine codeLine = new CodeLine(stringBuilder.ToString(), currentId, currentCrossLangId, String.Empty, ++lineNumber, sectionKey, isDocumentation: isDocumentationRange, isHiddenApi: isHiddenApiToken);
             if (leafSectionPlaceHolderNumber != 0)
             {
                 lineNumber += leafSectionPlaceHolderNumber - 1;

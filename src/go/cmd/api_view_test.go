@@ -290,3 +290,11 @@ func TestVars(t *testing.T) {
 	require.EqualValues(t, 2, countSomeChoice)
 	require.True(t, hasHTTPClient)
 }
+
+func Test_getPackageNameFromModPath(t *testing.T) {
+	require.EqualValues(t, "foo", getPackageNameFromModPath("foo"))
+	require.EqualValues(t, "foo", getPackageNameFromModPath("foo/v2"))
+	require.EqualValues(t, "sdk/foo", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo"))
+	require.EqualValues(t, "sdk/foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar"))
+	require.EqualValues(t, "sdk/foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar/v5"))
+}

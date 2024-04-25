@@ -41,6 +41,10 @@
     animation: glow normal 1.5s ease-in-out;
 }
 
+.code-line.cl-active, .code-line tr.cl-active {
+    background: rgba(239,155,15, 0.22);
+}
+
 .code {
     padding: 0px;
     position: relative;
@@ -131,6 +135,48 @@
     text-align: right;
     white-space: nowrap;
     width: auto;
+}
+
+.cl-line-no {
+    color: goldenrod;
+}
+
+.cross-language-panel {
+    .nav-link {
+        color: var(--link-color);
+    }
+
+    .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+        background-color: transparent;
+        box-shadow: var(--box-shadow-left);
+    }
+
+    .nav-pills .nav-link {
+        border-radius: 0;
+    }
+
+    .badge {
+        background-color: var(--link-color);
+        border-color: var(--link-color);
+        color: var(--primary-btn-color);
+    }
+}
+
+
+.cross-language-pills-tab-content {
+    width: 55dvw;
+    margin-right: 5px;
+    max-height: 35dvh;
+    overflow: auto;
+}
+
+.cl-custom-popover {
+    --bs-popover-max-width: 200px;
+    --bs-popover-border-color: var(--bd-violet-bg);
+    --bs-popover-header-bg: var(--bd-violet-bg);
+    --bs-popover-header-color: var(--bs-white);
+    --bs-popover-body-padding-x: 1rem;
+    --bs-popover-body-padding-y: .5rem;
 }
 
 .line-comment-button:hover {

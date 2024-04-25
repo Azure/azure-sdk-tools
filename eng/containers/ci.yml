@@ -3,39 +3,29 @@ parameters:
   type: object
   default:
   - name: mock_attestation
-    pool: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: ubuntu-22.04
     dockerRepo: 'keyvault-mock-attestation'
-    dockerFile: 'tools/keyvault-mock-attestation/Dockerfile'
+    configPath: 'tools/keyvault-mock-attestation'
     stableTags:
     - 'latest'
   - name: stress_watcher
-    pool: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: ubuntu-22.04
     dockerRepo: 'stress/watcher'
-    dockerFile: 'tools/stress-cluster/services/Stress.Watcher/Dockerfile'
+    configPath: 'tools/stress-cluster/services/Stress.Watcher'
     stableTags:
     - 'latest'
   - name: stress_deploy_test_resources
-    pool: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: ubuntu-22.04
     dockerRepo: 'stress/deploy-test-resources'
     prepareScript: tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/prepare.ps1
-    dockerFile: 'tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer/Dockerfile'
+    configPath: 'tools/stress-cluster/cluster/kubernetes/stress-test-addons/images/test-resource-deployer'
     stableTags:
     - 'latest'
   - name: http_fault_injector
-    pool: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: ubuntu-22.04
     dockerRepo: 'stress/httpfaultinjector'
-    dockerFile: 'tools/http-fault-injector/Dockerfile'
+    configPath: 'tools/http-fault-injector'
     stableTags:
     - 'latest'
   - name: otel_collector
-    pool: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: ubuntu-22.04
     dockerRepo: 'stress/otelcollector'
-    dockerFile: 'tools/stress-cluster/services/otelcollector/Dockerfile'
+    configPath: 'tools/stress-cluster/services/otelcollector'
     stableTags:
     - '0.94.0'
 
@@ -70,7 +60,6 @@ variables:
     value: 'azsdkengsys'
   - name: imageTag
     value: $(build.buildid)
-  - template: ../pipelines/templates/variables/globals.yml
 
 extends:
   template: ../pipelines/publish-docker-image.yml

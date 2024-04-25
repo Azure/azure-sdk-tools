@@ -15,7 +15,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace APIViewWeb.Controllers
 {
-    [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
     public class AutoReviewController : Controller
     {
         private readonly IAuthorizationService _authorizationService;
@@ -34,8 +33,11 @@ namespace APIViewWeb.Controllers
             _reviewManager = reviewManager;
         }
 
+        // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
+        // regular CI pipeline will not send this flag in request
+        [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
         [HttpPost]
-        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null)
+        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false)
         {
             if (file != null)
             {
@@ -45,12 +47,24 @@ namespace APIViewWeb.Controllers
                     var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
                         runAnalysis: false, memoryStream: memoryStream);
 
-                    var apiRevision = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
+                    (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
                     if (apiRevision != null)
                     {
-                        apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label);
+                        apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
                         var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
-                        return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
+
+                        if (apiRevision.IsApproved)
+                        {
+                            return Ok(reviewUrl);
+                        }
+                        else if (review.IsApproved)
+                        {
+                            return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
+                        }
+                        else 
+                        {
+                            return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
+                        }
                     }
                 };
             }
@@ -58,22 +72,38 @@ namespace APIViewWeb.Controllers
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
         }
     
-        public async Task<ActionResult> GetReviewStatus(string language, string packageName, string reviewId = null, bool? firstReleaseStatusOnly = null)
+        public async Task<ActionResult> GetReviewStatus(string language, string packageName, string reviewId = null, bool? firstReleaseStatusOnly = null, string packageVersion = null)
         {
-            // This API is used by prepare release script to check if API review for a package is approved or not.
-            // This caller script doesn't have artifact to submit and so it can't check using create review API
-            // So it rely on approval status of latest revision of automatic review for the package
-            // With new restriction of creating automatic review only from master branch or GA version, this should ensure latest revision
-            // is infact the version intended to be released.
+            // This API is used to get approval status of an API review revision. If a package version is passed then it will try to find a revision with exact package version match or revisions with same major and minor version.
+            // If there is no matching revisions then it will return latest automatic revision details.
+            // This is used by prepare release script and build pipeline to verify approval status.
 
             ReviewListItemModel review = await _reviewManager.GetReviewAsync(packageName: packageName, language: language, isClosed: null);
 
             if (review != null)
             {
-                APIRevisionListItemModel latestAutomaticApiRevisions = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic);
+                APIRevisionListItemModel apiRevision = null;
                 
+                if (!string.IsNullOrEmpty(packageVersion))
+                {
+                    var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId: review.Id, packageVersion: packageVersion, apiRevisionType: APIRevisionType.Automatic);
+                    if (apiRevisions.Any())
+                        apiRevision = apiRevisions.FirstOrDefault();
+                }
+
+                if (apiRevision == null)
+                {
+                    apiRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId: review.Id, apiRevisionType: APIRevisionType.Automatic);
+                }
+                
+
+                if(apiRevision == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, "Review is not found for package " + packageName);
+                }
+
                 // Return 200 OK for approved review and 201 for review in pending status
-                if (firstReleaseStatusOnly != true && latestAutomaticApiRevisions != null && latestAutomaticApiRevisions.IsApproved)
+                if (firstReleaseStatusOnly != true && apiRevision != null && apiRevision.IsApproved)
                 {
                     return Ok();
                 }
@@ -87,9 +117,12 @@ namespace APIViewWeb.Controllers
                     return StatusCode(statusCode: StatusCodes.Status202Accepted);
                 }
             }
-            throw new Exception("Review is not found for package " + packageName);
+            return StatusCode(StatusCodes.Status404NotFound, "Review is not found for package " + packageName);
         }
 
+        // setReleaseTag param is set as true when request is originated from release pipeline to tag matching revision as released
+        // regular CI pipeline will not send this flag in request
+        [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
         [HttpGet]
         public async Task<ActionResult> CreateApiReview(
             string buildId,
@@ -101,7 +134,8 @@ namespace APIViewWeb.Controllers
             string packageName,
             bool compareAllRevisions,
             string project,
-            string packageVersion = null
+            string packageVersion = null,
+            bool setReleaseTag = false
             )
         {
             using var memoryStream = new MemoryStream();
@@ -113,18 +147,30 @@ namespace APIViewWeb.Controllers
             {
                 return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
             }
-            var apiRevision = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, compareAllRevisions);
+            (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, compareAllRevisions);
             if (apiRevision != null)
             {
-                apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label);
+                apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
                 var reviewUrl = $"{this.Request.Scheme}://{this.Request.Host}/Assemblies/Review/{apiRevision.ReviewId}?revisionId={apiRevision.Id}";
-                return apiRevision.IsApproved ? Ok(reviewUrl) : StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
+
+                if (apiRevision.IsApproved)
+                {
+                    return Ok(reviewUrl);
+                }
+                else if (review.IsApproved)
+                {
+                    return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
+                }
+                else
+                {
+                    return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
+                }
             }
             // Return internal server error for any unknown error
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
         }
 
-        private async Task<APIRevisionListItemModel> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, bool compareAllRevisions = false)
+        private async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, bool compareAllRevisions = false)
         {
             var createNewRevision = true;
             var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
@@ -151,6 +197,7 @@ namespace APIViewWeb.Controllers
                         while (
                             automaticRevisionsQueue.Any() &&
                             !latestAutomaticAPIRevision.IsApproved &&
+                            !latestAutomaticAPIRevision.IsReleased &&
                             !await _apiRevisionsManager.AreAPIRevisionsTheSame(latestAutomaticAPIRevision, renderedCodeFile) &&
                             !comments.Any(c => latestAutomaticAPIRevision.Id == c.APIRevisionId))
                         {
@@ -168,7 +215,7 @@ namespace APIViewWeb.Controllers
                             {
                                 if (await _apiRevisionsManager.AreAPIRevisionsTheSame(approvedAPIRevision, renderedCodeFile))
                                 {
-                                    return approvedAPIRevision;
+                                    return (review, approvedAPIRevision);
                                 }
                             }
                         }
@@ -205,7 +252,7 @@ namespace APIViewWeb.Controllers
                     }
                 }
             }
-            return apiRevision;
+            return (review, apiRevision);
         }
     }
 }

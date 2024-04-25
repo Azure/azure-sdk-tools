@@ -19,7 +19,8 @@ add_executable(parseTests
     TestCases/ExpressionTests.cpp
     TestCases/UsingNamespace.cpp
     TestCases/DestructorTests.cpp
-    TestCases/DocumentationTests.cpp)
+    TestCases/FriendsTests.cpp
+    TestCases/DocumentationTests.cpp "TestCases/FriendsTests.cpp")
 add_dependencies(parseTests ApiViewProcessor)
 
 target_include_directories(parseTests PRIVATE ${ApiViewProcessor_SOURCE_DIR})

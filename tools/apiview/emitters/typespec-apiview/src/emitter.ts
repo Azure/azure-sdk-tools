@@ -174,13 +174,13 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
               version: versionString,
               serviceTitle: serviceTitle,
               allowed: allowedVersions.join(" | "),
-            },
+            }, 
           })
           return;
         }  
       }      
       const resolvedProgram = resolveProgramForVersion(program, service.type, versionString);
-  
+      
       const apiview = new ApiView(serviceTitle, namespaceString, versionString, options.includeGlobalNamespace);
       apiview.emit(resolvedProgram);
       apiview.resolveMissingTypeReferences();

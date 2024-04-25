@@ -127,6 +127,21 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        ///  GEt Reviews using List of ReviewIds
+        /// </summary>
+        /// <param name="reviewIds"></param>
+        /// <param name="isClosed"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(IEnumerable<string> reviewIds, bool? isClosed = null)
+        {
+            if (reviewIds == null || !reviewIds.Any())
+            {
+                return new List<ReviewListItemModel>();
+            }
+            return await _reviewsRepository.GetReviewsAsync(reviewIds, isClosed);
+        }
+
+        /// <summary>
         /// Get Legacy Reviews from old database
         /// </summary>
         /// <param name="user"></param>

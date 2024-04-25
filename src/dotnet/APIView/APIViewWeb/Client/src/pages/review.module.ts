@@ -735,3 +735,12 @@ export function addApprover(lowerTextSpan: HTMLElement, approvedByText: string, 
       }
     }
   }
+
+  /**
+ * Add event handler for cross language panel button
+ */
+export function addCrossLaguageCloseBtnHandler() {
+    $(".cross-language-panel .btn-close").on("click", function (e: JQuery.ClickEvent) {
+      $(this).closest(".cross-language-panel").addClass("d-none");
+    });
+  }

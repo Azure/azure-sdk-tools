@@ -16,6 +16,7 @@ namespace APIViewWeb.Models
         internal bool? _hideLineNumbers;
         internal bool? _hideLeftNavigation;
         internal bool? _showHiddenApis;
+        internal bool? _showDocumentation;
         internal bool? _hideReviewPageOptions;
         internal bool? _hideIndexPageOptions;
         internal bool? _hideSamplesPageOptions;
@@ -79,6 +80,13 @@ namespace APIViewWeb.Models
         public bool? ShowHiddenApis {
             get => _showHiddenApis ?? false;
             set => _showHiddenApis = value;
+        }
+
+        [Name("ShowDocumentation")]
+        public bool? ShowDocumentation
+        {
+            get => _showDocumentation ?? false;
+            set => _showDocumentation = value;
         }
 
         [Name("HideReviewPageOptions")]

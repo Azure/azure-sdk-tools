@@ -116,6 +116,7 @@ Following configuration is required to connect local debug instance to Azure res
     "Cosmos": {
         "ConnectionString": "<connection string to cosmos db>"
     },
+    "CosmosDBName": "APIViewV2",
     "github-access-token": "",
     "ApiKey": "",
     "PYTHONEXECUTABLEPATH": "<Full path to python executable>",

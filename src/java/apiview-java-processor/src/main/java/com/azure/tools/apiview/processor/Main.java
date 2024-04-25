@@ -1,17 +1,18 @@
 package com.azure.tools.apiview.processor;
 
-import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
+import com.azure.json.JsonProviders;
+import com.azure.json.JsonReader;
+import com.azure.json.JsonWriter;
 import com.azure.tools.apiview.processor.analysers.Analyser;
+import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
 import com.azure.tools.apiview.processor.model.APIListing;
+import com.azure.tools.apiview.processor.model.ApiViewProperties;
 import com.azure.tools.apiview.processor.model.Diagnostic;
 import com.azure.tools.apiview.processor.model.DiagnosticKind;
 import com.azure.tools.apiview.processor.model.LanguageVariant;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.maven.Pom;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,6 +22,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -28,20 +30,11 @@ import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
 import static com.azure.tools.apiview.processor.model.TokenKind.LINE_ID_MARKER;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_CREATORS;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_FIELDS;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_GETTERS;
-import static com.fasterxml.jackson.databind.MapperFeature.AUTO_DETECT_IS_GETTERS;
 
 public class Main {
-    private static final ObjectWriter WRITER = new ObjectMapper()
-        .disable(AUTO_DETECT_CREATORS, AUTO_DETECT_FIELDS, AUTO_DETECT_GETTERS, AUTO_DETECT_IS_GETTERS)
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-        .writerWithDefaultPrettyPrinter();
-
     // expected argument order:
     // [inputFiles] <outputDirectory>
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         if (args.length != 2) {
             System.out.println("Expected argument order: [comma-separated sources jarFiles] <outputFile>, e.g. /path/to/jarfile.jar ./temp/");
             System.exit(-1);
@@ -51,28 +44,35 @@ public class Main {
         final String[] jarFilesArray = jarFiles.split(",");
 
         final File outputDir = new File(args[1]);
-        if (!outputDir.exists()) {
-            if (!outputDir.mkdirs()) {
-                System.out.printf("Failed to create output directory %s%n", outputDir);
-            }
-        }
 
         System.out.println("Running with following configuration:");
         System.out.printf("  Output directory: '%s'%n", outputDir);
 
-        for (final String jarFile : jarFilesArray) {
-            System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
+        Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
+    }
 
-            final File file = new File(jarFile);
-            if (!file.exists()) {
-                System.out.printf("Cannot find file '%s'%n", file);
+    /**
+     * Runs APIView parser and returns the output file path.
+     */
+    public static File run(File jarFile, File outputDir) {
+        System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
+
+        if (!jarFile.exists()) {
+            System.out.printf("Cannot find file '%s'%n", jarFile);
+            System.exit(-1);
+        }
+
+        if (!outputDir.exists()) {
+            if (!outputDir.mkdirs()) {
+                System.out.printf("Failed to create output directory %s%n", outputDir);
                 System.exit(-1);
             }
-
-            final String jsonFileName = file.getName().substring(0, file.getName().length() - 4) + ".json";
-            final File outputFile = new File(outputDir, jsonFileName);
-            processFile(file, outputFile);
         }
+
+        final String jsonFileName = jarFile.getName().substring(0, jarFile.getName().length() - 4) + ".json";
+        final File outputFile = new File(outputDir, jsonFileName);
+        processFile(jarFile, outputFile);
+        return outputFile;
     }
 
     private static ReviewProperties getReviewProperties(File inputFile) {
@@ -112,7 +112,7 @@ public class Main {
         return reviewProperties;
     }
 
-    private static void processFile(final File inputFile, final File outputFile) throws IOException {
+    private static void processFile(final File inputFile, final File outputFile) {
         final APIListing apiListing = new APIListing();
 
         // empty tokens list that we will fill as we process each class file
@@ -134,20 +134,31 @@ public class Main {
                     "that was submitted to APIView was named " + inputFile.getName()));
         }
 
-        // Write out to the filesystem
-        WRITER.writeValue(outputFile, apiListing);
+        try {
+            // Write out to the filesystem, make the file if it doesn't exist
+            if (!outputFile.exists()) {
+                if (!outputFile.createNewFile()) {
+                    System.out.printf("Failed to create output file %s%n", outputFile);
+                }
+            }
+            try (JsonWriter jsonWriter = JsonProviders.createWriter(Files.newBufferedWriter(outputFile.toPath()))) {
+                apiListing.toJson(jsonWriter);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private static void processJavaSourcesJar(File inputFile, APIListing apiListing) throws IOException {
+    private static void processJavaSourcesJar(File inputFile, APIListing apiListing) {
         final ReviewProperties reviewProperties = getReviewProperties(inputFile);
 
         final String groupId = reviewProperties.getMavenPom().getGroupId();
+        final String artifactId = reviewProperties.getMavenPom().getArtifactId();
 
-        final String reviewName = reviewProperties.getMavenPom().getArtifactId()
-                                      + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
+        final String reviewName = artifactId + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
         System.out.println("  Using '" + reviewName + "' for the review name");
 
-        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + reviewProperties.getMavenPom().getArtifactId();
+        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + artifactId;
         System.out.println("  Using '" + packageName + "' for the package name");
 
         System.out.println("  Using '" + reviewProperties.getMavenPom().getVersion() + "' for the package version");
@@ -167,11 +178,11 @@ public class Main {
         }
         System.out.println("  Using '" + apiListing.getLanguageVariant() + "' for the language variant");
 
-        final Analyser analyser = new JavaASTAnalyser(inputFile, apiListing);
-
         // Read all files within the jar file so that we can create a list of files to analyse
         final List<Path> allFiles = new ArrayList<>();
         try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
+            tryParseApiViewProperties(fs, apiListing, artifactId);
+
             fs.getRootDirectories().forEach(root -> {
                 try (Stream<Path> paths = Files.walk(root)) {
                     paths.forEach(allFiles::add);
@@ -182,7 +193,46 @@ public class Main {
             });
 
             // Do the analysis while the filesystem is still represented in memory
+            final Analyser analyser = new JavaASTAnalyser(apiListing);
             analyser.analyse(allFiles);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Attempts to process the {@code apiview_properties.json} file in the jar file, if it exists.
+     * <p>
+     * If the file was found and successfully parsed as {@link ApiViewProperties}, it is set on the {@link APIListing}
+     * object.
+     *
+     * @param fs the {@link FileSystem} representing the jar file
+     * @param apiListing the {@link APIListing} object to set the {@link ApiViewProperties} on
+     * @param artifactId the artifact ID of the jar file
+     */
+    private static void tryParseApiViewProperties(FileSystem fs, APIListing apiListing, String artifactId) {
+        // the filename is [<artifactid>_]apiview_properties.json
+        String artifactName = (artifactId != null && !artifactId.isEmpty()) ? (artifactId + "_") : "";
+        String filePath = "/META-INF/" + artifactName + "apiview_properties.json";
+        Path apiviewPropertiesPath = fs.getPath(filePath);
+        if (!Files.exists(apiviewPropertiesPath)) {
+            System.out.println("  No apiview_properties.json file found in jar file - continuing...");
+            return;
+        }
+
+        try {
+            // we eagerly load the apiview_properties.json file into an ApiViewProperties object, so that it can
+            // be used throughout the analysis process, as required
+            try (JsonReader reader = JsonProviders.createReader(Files.readAllBytes(apiviewPropertiesPath))) {
+                ApiViewProperties properties = ApiViewProperties.fromJson(reader);
+                apiListing.setApiViewProperties(properties);
+                System.out.println("  Found apiview_properties.json file in jar file");
+                System.out.println("    - Found " + properties.getCrossLanguageDefinitionIds().size()
+                    + " cross-language definition IDs");
+            }
+        } catch (IOException e) {
+            System.out.println("  ERROR: Unable to parse apiview_properties.json file in jar file - continuing...");
+            e.printStackTrace();
         }
     }
 
@@ -227,8 +277,6 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 
     private static class ReviewProperties {

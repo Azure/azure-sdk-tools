@@ -226,7 +226,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 #endregion
                 #region BodyRegex
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&]+)", groupForReplace: "cid"),
+                    new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&\\\"]+)", groupForReplace: "cid"),
                     "AZSDK3000"
                 ),
                 new RegisteredSanitizer(
@@ -242,7 +242,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3003"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "token=(?<token>[^&]+)($|&)", groupForReplace: "token"),
+                    new BodyRegexSanitizer(regex: "token=(?<token>[^&\\\"]+)($|&)", groupForReplace: "token"),
                     "AZSDK3004"
                 ),
                 new RegisteredSanitizer(

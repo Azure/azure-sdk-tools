@@ -8,7 +8,7 @@
         <div style="flex-grow: 1; min-width: 0; margin-left: 7px;">
             <p-splitter 
                 [panelSizes]="[10, 70, 20]"
-                [minSizes]="[1, 5, 1]"
+                [minSizes]="[1, 1, 1]"
                 [gutterSize]="6">
                 <ng-template pTemplate>
                     <div class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel">
@@ -17,7 +17,7 @@
                 </ng-template>
                 <ng-template pTemplate>
                     <div class="col flex align-items-center justify-content-center border review-panel">
-                        <app-code-panel [codeLineData]="codeLinesData" [reviewComments]="reviewComments"></app-code-panel>
+                        <app-code-panel [codeLinesData]="codeLinesData" [otherCodePanelData]="otherCodePanelData" [reviewComments]="reviewComments"></app-code-panel>
                     </div>
                 </ng-template>
                 <ng-template pTemplate>

@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { CommentItemModel, Review } from 'src/app/_models/review';
-import { CodeLineData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { CodePanelRowData, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
@@ -21,8 +21,11 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
   reviewComments : CommentItemModel[] | undefined = [];
   revisionSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
-  codeLineBuffer: CodeLineData[] = [];
-  codeLinesData: CodeLineData[] = [];
+
+  codeLinesDataBuffer: CodePanelRowData[] = [];
+  otherCodePanelData: Map<string, CodePanelToggleableData> = new Map<string, CodePanelToggleableData>();
+  codeLinesData: CodePanelRowData[] = [];
+
 
   sideMenu: MenuItem[] | undefined;
 
@@ -64,11 +67,21 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.InsertCodeLineData) {
-        this.codeLineBuffer.push(data.codeLineData);
+        if (data.codePanelRowData.lineClasses.has("documentation")) {
+          if (this.otherCodePanelData.has(data.codePanelRowData.nodeId)) {
+            this.otherCodePanelData.get(data.codePanelRowData.nodeId)?.documentation.push(data.codePanelRowData);
+          } else {
+            this.otherCodePanelData.set(data.codePanelRowData.nodeId, {
+              documentation: [data.codePanelRowData]
+            });
+          }
+        } else {
+          this.codeLinesDataBuffer.push(data.codePanelRowData);
+        }
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodeLines) {
-        this.codeLinesData = this.codeLineBuffer;
+        this.codeLinesData = this.codeLinesDataBuffer;
       }
     });
   }

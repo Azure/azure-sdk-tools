@@ -54,16 +54,22 @@ export interface APITreeNode {
   diffKind: string;
 }
 
-export interface CodeLineData {
-  lineNumber: number
-  lineTokens: StructuredToken[]
+export interface CodePanelRowData {
+  lineNumber?: number
+  lineTokens?: StructuredToken[]
   nodeId: string
   lineClasses: Set<string>
   indent: number
-  diffKind: string
+  diffKind?: string
+  lineSize: number
+  toggleDocumentationClasses?: string
 }
 
-export interface InsertCodeLineDataMessage {
+export interface CodePanelToggleableData {
+  documentation: CodePanelRowData[]
+}
+
+export interface InsertCodePanelRowDataMessage {
   directive: ReviewPageWorkerMessageDirective
-  codeLineData: CodeLineData
+  codePanelRowData: CodePanelRowData
 }

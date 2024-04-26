@@ -2,7 +2,7 @@
 
 import { ComputeTokenDiff } from "../_helpers/worker-helpers";
 import { ReviewContent } from "../_models/review";
-import { CodeLineData, InsertCodeLineDataMessage, ReviewPageWorkerMessageDirective, StructuredToken } from "../_models/revision";
+import { CodePanelRowData, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective, StructuredToken } from "../_models/revision";
 import { APITreeNode } from "../_models/revision";
 
 let insertLineNumber = 0;
@@ -168,38 +168,38 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
 
     const diffTokenLineResult = ComputeTokenDiff(beforeTokenLine, afterTokenLine) as [StructuredToken[], StructuredToken[], boolean];
 
-    let insertLinesOfTokensMessage : InsertCodeLineDataMessage =  {
+    let insertLinesOfTokensMessage : InsertCodePanelRowDataMessage =  {
       directive: ReviewPageWorkerMessageDirective.InsertCodeLineData,
-      codeLineData: {
+      codePanelRowData: {
         lineNumber: 0,
         lineTokens : diffTokenLineResult[0],
         lineClasses : beforeLineClasses,
         nodeId : id,
         indent : indent,
-        diffKind : "Unchanged"
+        diffKind : "Unchanged",
+        lineSize : 21
       } 
     };
 
     if (diffTokenLineResult[2] === true) {
-      insertLinesOfTokensMessage.codeLineData.diffKind = "Removed";
-      insertLinesOfTokensMessage.codeLineData.lineClasses = beforeLineClasses;
+      insertLinesOfTokensMessage.codePanelRowData.diffKind = "Removed";
+      insertLinesOfTokensMessage.codePanelRowData.lineClasses = beforeLineClasses;
       
       insertLineNumber++;
-      insertLinesOfTokensMessage.codeLineData.lineNumber = insertLineNumber;
+      insertLinesOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
       postMessage(insertLinesOfTokensMessage);
 
-      insertLinesOfTokensMessage.codeLineData.lineTokens = diffTokenLineResult[1];
-      insertLinesOfTokensMessage.codeLineData.diffKind = "Added";
-      insertLinesOfTokensMessage.codeLineData.lineClasses = afterLineClasses;
+      insertLinesOfTokensMessage.codePanelRowData.lineTokens = diffTokenLineResult[1];
+      insertLinesOfTokensMessage.codePanelRowData.diffKind = "Added";
+      insertLinesOfTokensMessage.codePanelRowData.lineClasses = afterLineClasses;
 
       insertLineNumber++;
-      insertLinesOfTokensMessage.codeLineData.lineNumber = insertLineNumber;
+      insertLinesOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
       postMessage(insertLinesOfTokensMessage);
     }
     else {
-
       insertLineNumber++;
-      insertLinesOfTokensMessage.codeLineData.lineNumber = insertLineNumber;
+      insertLinesOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
       postMessage(insertLinesOfTokensMessage);
     }
   }
@@ -217,6 +217,7 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
   const tokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
   const tokenLine : StructuredToken[] = [];
   const lineClasses = new Set<string>();
+  let precedingRowData : CodePanelRowData | undefined = undefined;
 
   for (let token of tokens) {
     if ("GroupId" in token.properties) {
@@ -224,20 +225,26 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
     }
     
     if (token.kind === "LineBreak") {
-      const insertLineOfTokensMessage : InsertCodeLineDataMessage =  {
+      const insertLineOfTokensMessage : InsertCodePanelRowDataMessage =  {
         directive: ReviewPageWorkerMessageDirective.InsertCodeLineData,
-        codeLineData: {
+        codePanelRowData: {
           lineNumber: 0,
           lineTokens : tokenLine,
           nodeId : id,
-          lineClasses : lineClasses,
+          lineClasses : new Set(lineClasses), //new set to avoid reference sharing
           indent : indent,
-          diffKind : "NoneDiff"
-        } 
+          diffKind : "NoneDiff",
+          lineSize : 21
+        }
       };
 
       insertLineNumber++;
-      insertLineOfTokensMessage.codeLineData.lineNumber = insertLineNumber;
+      insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
+      lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
+        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-chevron-up show" :
+        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-chevron-up hide";
+
+      precedingRowData = insertLineOfTokensMessage.codePanelRowData;
       postMessage(insertLineOfTokensMessage);
 
       tokenLine.length = 0;
@@ -249,20 +256,29 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
   }
 
   if (tokenLine.length > 0) {
-    const insertLineOfTokensMessage : InsertCodeLineDataMessage =  {
+    const insertLineOfTokensMessage : InsertCodePanelRowDataMessage =  {
       directive: ReviewPageWorkerMessageDirective.InsertCodeLineData,
-      codeLineData: {
+      codePanelRowData: {
         lineNumber: 0,
         lineTokens : tokenLine,
         nodeId : id,
-        lineClasses : lineClasses,
+        lineClasses : new Set(lineClasses), //new set to avoid reference sharing
         indent : indent,
-        diffKind : "NoneDiff"
+        diffKind : "NoneDiff",
+        lineSize : 21
       } 
     };
 
     insertLineNumber++;
-    insertLineOfTokensMessage.codeLineData.lineNumber = insertLineNumber;
+    insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
+    lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
+      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-chevron-up show" :
+      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-chevron-up hide";
+
     postMessage(insertLineOfTokensMessage);
   }
+}
+
+function lineHasDocumentationAbove(precedingLine : CodePanelRowData | undefined, currentLine : CodePanelRowData) : boolean {
+  return precedingLine !== undefined && precedingLine.lineClasses.has("documentation") && !currentLine.lineClasses.has("documentation");
 }

@@ -201,89 +201,92 @@ namespace Azure.Sdk.Tools.TestProxy
                 throw new HttpException(HttpStatusCode.BadRequest, $"There is no active recording session under id {recordingId}.");
             }
 
-            var sanitizers = SanitizerRegistry.GetSanitizers(session);
-
-            DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
-
-            (RecordEntry entry, byte[] requestBody) = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
-
-            var upstreamRequest = CreateUpstreamRequest(incomingRequest, requestBody);
-
-            HttpResponseMessage upstreamResponse = null;
-
-            // The experience around Content-Length is a bit weird in .NET. We're using the .NET native HttpClient class to send our requests. This comes with
-            // some automagic.
-            //
-            // If an incoming request...
-            //    ...has a Content-Length 0 header, and no body. We should send along the Content-Length: 0 header with the upstreamrequest.
-            //    ...has no Content-Length header, and no body. We _should not_ send along the Content-Length: 0 header.
-            //    ...has no Content-Length header, a 0 length body, but a TransferEncoding header with value "chunked". We _should_ allow any other Content headers to stick around.
-            //
-            // The .NET http client is a bit weird about attaching the Content-Length header though. If you HAVE the .Content property defined, a Content-Length
-            // header WILL be added. This is due to the fact that on send, the client considers a populated Client property as having a body, even if it's zero length.
-            if (incomingRequest.ContentLength == null)
+            lock (session)
             {
-                if(!incomingRequest.Headers["Transfer-Encoding"].ToString().Split(' ').Select(x => x.Trim()).Contains("chunked"))
+                var sanitizers = SanitizerRegistry.GetSanitizers(session);
+
+                DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
+
+                (RecordEntry entry, byte[] requestBody) = await CreateEntryAsync(incomingRequest).ConfigureAwait(false);
+
+                var upstreamRequest = CreateUpstreamRequest(incomingRequest, requestBody);
+
+                HttpResponseMessage upstreamResponse = null;
+
+                // The experience around Content-Length is a bit weird in .NET. We're using the .NET native HttpClient class to send our requests. This comes with
+                // some automagic.
+                //
+                // If an incoming request...
+                //    ...has a Content-Length 0 header, and no body. We should send along the Content-Length: 0 header with the upstreamrequest.
+                //    ...has no Content-Length header, and no body. We _should not_ send along the Content-Length: 0 header.
+                //    ...has no Content-Length header, a 0 length body, but a TransferEncoding header with value "chunked". We _should_ allow any other Content headers to stick around.
+                //
+                // The .NET http client is a bit weird about attaching the Content-Length header though. If you HAVE the .Content property defined, a Content-Length
+                // header WILL be added. This is due to the fact that on send, the client considers a populated Client property as having a body, even if it's zero length.
+                if (incomingRequest.ContentLength == null)
                 {
-                    upstreamRequest.Content = null;
+                    if(!incomingRequest.Headers["Transfer-Encoding"].ToString().Split(' ').Select(x => x.Trim()).Contains("chunked"))
+                    {
+                        upstreamRequest.Content = null;
+                    }
                 }
-            }
 
-            if (HandleRedirects)
-            {
-                upstreamResponse = await (session.Client ?? RedirectableClient).SendAsync(upstreamRequest).ConfigureAwait(false);
-            }
-            else
-            {
-                upstreamResponse = await (session.Client ?? RedirectlessClient).SendAsync(upstreamRequest).ConfigureAwait(false);
-            }
-
-            byte[] body = Array.Empty<byte>();
-
-            // HEAD requests do NOT have a body regardless of the value of the Content-Length header
-            if (incomingRequest.Method.ToUpperInvariant() != "HEAD")
-            {
-                body = CompressionUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
-            }
-
-            entry.Response.Body = body.Length == 0 ? null : body;
-            entry.StatusCode = (int)upstreamResponse.StatusCode;
-
-            EntryRecordMode mode = GetRecordMode(incomingRequest);
-
-            if (mode != EntryRecordMode.DontRecord)
-            {
-                lock (session.Session.Entries)
+                if (HandleRedirects)
                 {
-                    session.Session.Entries.Add(entry);
+                    upstreamResponse = await (session.Client ?? RedirectableClient).SendAsync(upstreamRequest).ConfigureAwait(false);
+                }
+                else
+                {
+                    upstreamResponse = await (session.Client ?? RedirectlessClient).SendAsync(upstreamRequest).ConfigureAwait(false);
                 }
 
-                Interlocked.Increment(ref Startup.RequestsRecorded);
-            }
+                byte[] body = Array.Empty<byte>();
 
-            if (mode == EntryRecordMode.RecordWithoutRequestBody)
-            {
-                entry.Request.Body = null;
-            }
-
-            outgoingResponse.StatusCode = (int)upstreamResponse.StatusCode;
-            foreach (var header in upstreamResponse.Headers.Concat(upstreamResponse.Content.Headers))
-            {
-                var values = new StringValues(header.Value.ToArray());
-                outgoingResponse.Headers.Add(header.Key, values);
-                entry.Response.Headers.Add(header.Key, values);
-            }
-
-            outgoingResponse.Headers.Remove("Transfer-Encoding");
-
-            if (entry.Response.Body?.Length > 0)
-            {
-                var bodyData = CompressionUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
-
-                if (entry.Response.Headers.ContainsKey("Content-Length")){
-                    outgoingResponse.ContentLength = bodyData.Length;
+                // HEAD requests do NOT have a body regardless of the value of the Content-Length header
+                if (incomingRequest.Method.ToUpperInvariant() != "HEAD")
+                {
+                    body = CompressionUtilities.DecompressBody((MemoryStream)await upstreamResponse.Content.ReadAsStreamAsync().ConfigureAwait(false), upstreamResponse.Content.Headers);
                 }
-                await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
+
+                entry.Response.Body = body.Length == 0 ? null : body;
+                entry.StatusCode = (int)upstreamResponse.StatusCode;
+
+                EntryRecordMode mode = GetRecordMode(incomingRequest);
+
+                if (mode != EntryRecordMode.DontRecord)
+                {
+                    lock (session.Session.Entries)
+                    {
+                        session.Session.Entries.Add(entry);
+                    }
+
+                    Interlocked.Increment(ref Startup.RequestsRecorded);
+                }
+
+                if (mode == EntryRecordMode.RecordWithoutRequestBody)
+                {
+                    entry.Request.Body = null;
+                }
+
+                outgoingResponse.StatusCode = (int)upstreamResponse.StatusCode;
+                foreach (var header in upstreamResponse.Headers.Concat(upstreamResponse.Content.Headers))
+                {
+                    var values = new StringValues(header.Value.ToArray());
+                    outgoingResponse.Headers.Add(header.Key, values);
+                    entry.Response.Headers.Add(header.Key, values);
+                }
+
+                outgoingResponse.Headers.Remove("Transfer-Encoding");
+
+                if (entry.Response.Body?.Length > 0)
+                {
+                    var bodyData = CompressionUtilities.CompressBody(entry.Response.Body, entry.Response.Headers);
+
+                    if (entry.Response.Headers.ContainsKey("Content-Length")){
+                        outgoingResponse.ContentLength = bodyData.Length;
+                    }
+                    await outgoingResponse.Body.WriteAsync(bodyData).ConfigureAwait(false);
+                }
             }
         }
 

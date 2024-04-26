@@ -6,7 +6,6 @@ using Azure.Identity;
 using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
 using Azure.Sdk.Tools.PipelineWitness.Services;
-using Azure.Sdk.Tools.PipelineWitness.Services.FailureAnalysis;
 using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
 
 using Microsoft.ApplicationInsights.Extensibility;
@@ -28,9 +27,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
     {
         public static void Configure(WebApplicationBuilder builder)
         {
-            var azureCredential = new DefaultAzureCredential();
-            var settings = new PipelineWitnessSettings();
-            var settingsSection = builder.Configuration.GetSection("PipelineWitness");
+            DefaultAzureCredential azureCredential = new();
+            PipelineWitnessSettings settings = new();
+            IConfigurationSection settingsSection = builder.Configuration.GetSection("PipelineWitness");
             settingsSection.Bind(settings);
 
             builder.Services.AddApplicationInsightsTelemetry(builder.Configuration);
@@ -57,26 +56,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<BlobUploadProcessor>();
             builder.Services.AddSingleton<BuildLogProvider>();
-            builder.Services.AddSingleton<IFailureAnalyzer, FailureAnalyzer>();
-            builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CancelledTaskClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CosmosDbEmulatorStartFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, AzurePipelinesPoolOutageClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, PythonPipelineTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JavaScriptLiveTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, TestResourcesDeploymentFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, DotnetPipelineTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JavaPipelineTestFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JsSamplesExecutionFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, JsDevFeedPublishingFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, DownloadSecretsFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, GitCheckoutFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, AzuriteInstallFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, MavenBrokenPipeFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CodeSigningFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, AzureArtifactsServiceUnavailableClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, DnsResolutionFailureClassifier>();
-            builder.Services.AddSingleton<IFailureClassifier, CacheFailureClassifier>();
 
             builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
             builder.Services.AddSingleton<TokenCredential, DefaultAzureCredential>();
@@ -87,7 +66,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         private static void AddHostedService<T>(this IServiceCollection services, int instanceCount) where T : class, IHostedService
         {
-            for (var i = 0; i < instanceCount; i++)
+            for (int i = 0; i < instanceCount; i++)
             {
                 services.AddSingleton<IHostedService, T>();
             }
@@ -107,13 +86,13 @@ namespace Azure.Sdk.Tools.PipelineWitness
         private static VssConnection CreateVssConnection(IServiceProvider provider)
         {
             TokenCredential azureCredential = provider.GetRequiredService<TokenCredential>();
-            TokenRequestContext tokenRequestContext = new (VssAadSettings.DefaultScopes);
+            TokenRequestContext tokenRequestContext = new(VssAadSettings.DefaultScopes);
             AccessToken token = azureCredential.GetToken(tokenRequestContext, CancellationToken.None);
-            
-            Uri organizationUrl = new ("https://dev.azure.com/azure-sdk");
-            VssAadCredential vssCredential = new (new VssAadToken("Bearer", token.Token));
+
+            Uri organizationUrl = new("https://dev.azure.com/azure-sdk");
+            VssAadCredential vssCredential = new(new VssAadToken("Bearer", token.Token));
             VssHttpRequestSettings settings = VssClientHttpRequestSettings.Default.Clone();
-            
+
             return new VssConnection(organizationUrl, vssCredential, settings);
         }
     }

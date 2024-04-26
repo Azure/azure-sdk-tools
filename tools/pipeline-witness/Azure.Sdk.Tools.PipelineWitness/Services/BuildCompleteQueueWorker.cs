@@ -1,3 +1,4 @@
+using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,7 +18,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
     internal class BuildCompleteQueueWorker : QueueWorkerBackgroundService
     {
         private readonly ILogger logger;
-        private readonly TelemetryClient telemetryClient;
         private readonly BlobUploadProcessor runProcessor;
 
         public BuildCompleteQueueWorker(
@@ -35,16 +35,15 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
         {
             this.logger = logger;
             this.runProcessor = runProcessor;
-            this.telemetryClient = telemetryClient;
         }
 
         internal override async Task ProcessMessageAsync(QueueMessage message, CancellationToken cancellationToken)
         {
             this.logger.LogInformation("Processing build.complete event: {MessageText}", message.MessageText);
 
-            var devopsEvent = JObject.Parse(message.MessageText);
+            JObject devopsEvent = JObject.Parse(message.MessageText);
 
-            var buildUrl = devopsEvent["resource"]?.Value<string>("url");
+            string buildUrl = devopsEvent["resource"]?.Value<string>("url");
 
             if (buildUrl == null)
             {
@@ -52,7 +51,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                 return;
             }
 
-            var match = Regex.Match(buildUrl, @"^https://dev.azure.com/(?<account>[\w-]+)/(?<project>[0-9a-fA-F-]+)/_apis/build/Builds/(?<build>\d+)$");
+            Match match = Regex.Match(buildUrl, @"^https://dev.azure.com/(?<account>[\w-]+)/(?<project>[0-9a-fA-F-]+)/_apis/build/Builds/(?<build>\d+)$");
 
             if (!match.Success)
             {
@@ -60,23 +59,23 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                 return;
             }
 
-            var account = match.Groups["account"].Value;
-            var projectIdString = match.Groups["project"].Value;
-            var buildIdString = match.Groups["build"].Value;
+            string account = match.Groups["account"].Value;
+            string projectIdString = match.Groups["project"].Value;
+            string buildIdString = match.Groups["build"].Value;
 
-            if (!System.Guid.TryParse(projectIdString, out var projectId))
+            if (!Guid.TryParse(projectIdString, out Guid projectId))
             {
                 this.logger.LogError("Could not parse project id as a guid '{ProjectId}'", projectIdString);
                 return;
             }
 
-            if (!int.TryParse(buildIdString, out var buildId))
+            if (!int.TryParse(buildIdString, out int buildId))
             {
                 this.logger.LogError("Could not parse build id as a guid '{BuildId}'", buildIdString);
                 return;
             }
 
-            await runProcessor.UploadBuildBlobsAsync(account, projectId, buildId);
+            await this.runProcessor.UploadBuildBlobsAsync(account, projectId, buildId);
         }
     }
 }

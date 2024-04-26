@@ -11,8 +11,8 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
     {
         public EnvironmentConditionalSkipFact()
         {
-            var devopsPat = Environment.GetEnvironmentVariable("AZURESDK_DEVOPS_TOKEN");
-            var blobToken = Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS");
+            string devopsPat = Environment.GetEnvironmentVariable("AZURESDK_DEVOPS_TOKEN");
+            string blobToken = Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS");
 
             // and if we don't, skip this test
             if (string.IsNullOrWhiteSpace(devopsPat) || string.IsNullOrWhiteSpace(blobToken))

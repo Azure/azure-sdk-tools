@@ -37,6 +37,20 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public void SanitizerDecodesUnicodeAmpersandSanitizesClientIdAndSecret()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_encoding.json");
+
+            var clientSan = new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&\\\"]+)", groupForReplace: "cid");
+            var secretSan = new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"]+)", groupForReplace: "secret");
+
+            session.Session.Sanitize(clientSan);
+            session.Session.Sanitize(secretSan);
+
+            Assert.Equal("client_id=Sanitized&grant_type=client_credentials&client_info=1&client_secret=Sanitized&claims=%7B%22access_token=blahblah", Encoding.UTF8.GetString(session.Session.Entries[0].Request.Body));
+        }
+
+        [Fact]
         public void OauthResponseSanitizerCleansNonV2AuthRequest()
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");

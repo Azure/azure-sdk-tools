@@ -2,11 +2,11 @@ import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, Sim
 import { BehaviorSubject, fromEvent, of, Subject, takeUntil } from 'rxjs';
 import { debounceTime, finalize, scan } from 'rxjs/operators';
 import { CommentItemModel } from 'src/app/_models/review';
-import { CodeLineData, InsertCodeLineDataMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { CodePanelRowData, CodePanelToggleableData, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
 import { AfterViewInit } from '@angular/core';
 import { OnDestroy } from '@angular/core';
-import { Datasource, IDatasource, IAdapter } from 'ngx-ui-scroll';
+import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 
 @Component({
   selector: 'app-code-panel',
@@ -14,7 +14,8 @@ import { Datasource, IDatasource, IAdapter } from 'ngx-ui-scroll';
   styleUrls: ['./code-panel.component.scss']
 })
 export class CodePanelComponent implements OnChanges, OnDestroy{
-  @Input() codeLineData: CodeLineData[] = [];
+  @Input() codeLinesData: CodePanelRowData[] = [];
+  @Input() otherCodePanelData: Map<string, CodePanelToggleableData> = new Map<string, CodePanelToggleableData>();
   @Input() reviewComments : CommentItemModel[] | undefined = [];
 
   @ViewChild('commentThreadRef', { read: ViewContainerRef }) commentThreadRef!: ViewContainerRef;
@@ -24,8 +25,9 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   lastHuskNodeId :  string | undefined = undefined;
   codeWindowHeight: string | undefined = undefined;
 
-  codeLinesDataSource: IDatasource | undefined;
-
+  codePanelRowSource: IDatasource | undefined;
+  visibleCodePanelRowData: CodePanelRowData[] = [];
+  
   private destroyApiTreeNode$ = new Subject<void>();
   private destroyTokenLineData$ = new Subject<void>();
 
@@ -36,34 +38,11 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['codeLineData'] && changes['codeLineData'].currentValue.length > 0) {
+    if (changes['codeLinesData'] && changes['codeLinesData'].currentValue.length > 0) {
       this.isLoading = false;
-      this.codeLinesDataSource = new Datasource({
-        get: (index, count, success) => {
-          let data : any = [];
-          if (this.codeLineData.length > 0) {
-            data = this.codeLineData.slice(index - 1, index - 1 + count);
-          }
-          success(data);
-        },
-        settings: {
-          bufferSize: 50,
-          itemSize: 21,
-          minIndex: 1,
-          maxIndex: this.codeLineData.length
-        }
-      });
-      document.documentElement.style.setProperty('--max-line-number-width', `${this.codeLineData[this.codeLineData.length - 1].lineNumber.toString().length}ch`)
+      this.setMaxLineNumberWidth();
+      this.initializeDataSource();
     }
-  }
-
-  scrollToIndex(index: number) {
-    console.log(this.codeLinesDataSource?.adapter);
-    this.codeLinesDataSource?.adapter?.reload();
-    this.codeLinesDataSource?.adapter?.fix({ scrollPosition: index * 21 });
-    //this.codeLinesDataSource?.adapter?.fix({
-    //  scrollPosition: index
-    //});   
   }
 
   //ngAfterViewInit() { 
@@ -188,12 +167,97 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
    // });
  // }
 
+  onCodePanelItemCick(event: Event) {
+    const target = event.target as Element;
+    if (target.classList.contains('toggle-documentation-btn')) {
+      const nodeId = target.closest(".code-line")!.getAttribute('data-node-id');
+      const lineNumber = target.closest('.line-actions')!.querySelector('.line-number')!.textContent;
+      if (target.classList.contains('bi-chevron-up')) {
+        this.toggleNodeDocumentation(nodeId!, lineNumber!, "show");
+        target.classList.remove('bi-chevron-up');
+        target.classList.add('bi-chevron-bar-down');
+      } else {
+
+      }
+      
+    }
+  }
+
   getClassObject(renderClasses: Set<string>) {
     let classObject: { [key: string]: boolean } = {};
     for (let className of Array.from(renderClasses)) {
       classObject[className] = true;
     }
     return classObject;
+  }
+
+  async toggleNodeDocumentation(nodeId: string, lineNumber: string, action: string = "show") {
+    if (action === "show") {
+      const documentationData = this.otherCodePanelData.get(nodeId)?.documentation;
+      await this.codePanelRowSource?.adapter?.relax();
+      await this.insertItemIntoScroller(documentationData!, lineNumber);
+    } else {
+
+    }
+  }
+
+  async insertItemIntoScroller(itemsToInsert: CodePanelRowData[], lineNumber: string) {
+    let preData = [];
+    let nodeIndex = 0;
+    for (let i = 0; i < this.codeLinesData.length; i++) {
+      if (this.codeLinesData[i].lineNumber === parseInt(lineNumber)) {
+        nodeIndex = i;
+        break;
+      }
+      preData.push(this.codeLinesData[i]);
+    }
+    let postData = this.codeLinesData.slice(nodeIndex);
+
+    this.codeLinesData = [
+      ...preData,
+      ...itemsToInsert!,
+      ...postData
+    ];
+
+    await this.codePanelRowSource?.adapter?.insert({
+      beforeIndex: nodeIndex,
+      items: itemsToInsert!
+    });
+  }
+
+  initializeDataSource() : Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.codePanelRowSource = new Datasource({
+        get: (index, count, success) => {
+          let data : any = [];
+          if (this.codeLinesData.length > 0) {
+            data = this.codeLinesData.slice(index, index + count);
+          }
+          success(data);
+        },
+        settings: {
+          bufferSize: 20,
+          padding: 1,
+          itemSize: 21,
+          startIndex : 0,
+          minIndex: 0,
+          maxIndex: this.codeLinesData.length - 1,
+          sizeStrategy: SizeStrategy.Average
+        }
+      });
+
+      if (this.codePanelRowSource && this.codePanelRowSource.adapter) {
+        resolve();
+      }
+    });
+  }
+
+  scrollToIndex(scrollPosition: number) {
+    this.codePanelRowSource?.adapter?.fix({ scrollPosition: scrollPosition });
+  }
+
+  setMaxLineNumberWidth() {
+    document.documentElement.style.setProperty('--max-line-number-width', `${this.codeLinesData[this.codeLinesData.length - 1].lineNumber!.toString().length}ch`)
   }
 
   ngOnDestroy() {

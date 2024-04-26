@@ -19,7 +19,7 @@ variables:
   asch-endpoint: $(azure-search-endpoint)
   asch-index-name: $(azure-search-index-name)
   aoai-embedding-model: $(azure-openai-embedding-model)
-  service-connection-name: $(service-connection-name)
+  azure-subscription-name: $(service-connection-name)
 
 parameters:
 - name: incrementalEmbedding
@@ -38,7 +38,7 @@ stages:
       displayName: 'Checkout azure-sdk-docs-eng.ms repository'
     - task: AzurePowerShell@5
       inputs:
-        azureSubscription: '$(service-connection-name)'
+        azureSubscription: $(azure-subscription-name)
         ScriptType: 'FilePath'
         ScriptPath: '$(Build.SourcesDirectory)/azure-sdk-tools/tools/sdk-ai-bots/Scripts/Build-EngHubDocEmbeddings.ps1'
         arguments: '-IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"'
@@ -64,7 +64,7 @@ stages:
     - template: setup-pipeline.yml
     - task: AzurePowerShell@5
       inputs:
-        azureSubscription: '$(service-connection-name)'
+        azureSubscription: $(azure-subscription-name)
         ScriptType: 'FilePath'
         ScriptPath: $(Build.SourcesDirectory)/tools/sdk-ai-bots/Scripts/Build-TypeSpecAzureDocEmbeddings.ps1
         arguments: '-IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"'
@@ -80,7 +80,7 @@ stages:
         AZURE_SEARCH_KEY: $(azure-search-key)
         AZURE_STORAGE_ACCOUNT_KEY: $(storage-account-key)
         AZURE_STORAGE_ACCOUNT_NAME: $(st-account-name)
-        AZURE_STORAGE_ACCOUNT_CONTAINER: $(st-container-name)        
+        AZURE_STORAGE_ACCOUNT_CONTAINER: $(st-container-name)
 
 - stage: BuildCustomizedDocEmbeddings
   displayName: 'Build Customized Document Embeddings'
@@ -90,7 +90,7 @@ stages:
     - template: setup-pipeline.yml
     - task: AzurePowerShell@5
       inputs:
-        azureSubscription: '$(service-connection-name)'
+        azureSubscription: $(azure-subscription-name)
         ScriptType: 'FilePath'
         ScriptPath: $(Build.SourcesDirectory)/tools/sdk-ai-bots/Scripts/Build-CustomizedDocEmbeddings.ps1
         arguments: '-IncrementalEmbedding "${{ parameters.incrementalEmbedding }}"'

@@ -97,6 +97,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK1006",
                     "ACS Identity leverages these strings to store identity information."
                 ),
+                new RegisteredSanitizer(
+                    new GeneralRegexSanitizer(regex: "(?:[?&](sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
+                    "AZSDK1007",
+                    "Common SAS URL Sanitizer. Applies to all headers, URIs, and text bodies."
+                ),
                 #endregion
                 #region HeaderRegex
                 new RegisteredSanitizer(
@@ -104,124 +109,116 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK2001"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("ServiceBusDlqSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    new HeaderRegexSanitizer("x-ms-encryption-key"),
                     "AZSDK2002"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("ServiceBusSupplementaryAuthorization", regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    new HeaderRegexSanitizer("Location", value: "https://example.com"),
                     "AZSDK2003"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-encryption-key"),
+                    new HeaderRegexSanitizer("subscription-key"),
                     "AZSDK2004"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Location", value: "https://example.com"),
+                    new HeaderRegexSanitizer("SupplementaryAuthorization"),
                     "AZSDK2005"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("subscription-key"),
+                    new HeaderRegexSanitizer("x-ms-rename-source"),
                     "AZSDK2006"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("SupplementaryAuthorization"),
+                    new HeaderRegexSanitizer("x-ms-file-rename-source"),
                     "AZSDK2007"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-rename-source"),
+                    new HeaderRegexSanitizer("x-ms-copy-source"),
                     "AZSDK2008"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-file-rename-source"),
+                    new HeaderRegexSanitizer("x-ms-copy-source-authorization"),
                     "AZSDK2009"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-copy-source"),
+                    new HeaderRegexSanitizer("x-ms-file-rename-source-authorization"),
                     "AZSDK2010"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-copy-source-authorization"),
+                    new HeaderRegexSanitizer("x-ms-encryption-key-sha256"),
                     "AZSDK2011"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-file-rename-source-authorization"),
+                    new HeaderRegexSanitizer("aeg-sas-token"),
                     "AZSDK2012"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-encryption-key-sha256"),
+                    new HeaderRegexSanitizer("aeg-sas-key"),
                     "AZSDK2013"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("aeg-sas-token"),
+                    new HeaderRegexSanitizer("aeg-channel-name"),
                     "AZSDK2014"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("aeg-sas-key"),
+                    new HeaderRegexSanitizer("Set-Cookie"),
                     "AZSDK2015"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("aeg-channel-name"),
+                    new HeaderRegexSanitizer("Cookie"),
                     "AZSDK2016"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Set-Cookie"),
+                    new HeaderRegexSanitizer("client-request-id"),
                     "AZSDK2017"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Cookie"),
+                    new HeaderRegexSanitizer("MS-CV"),
                     "AZSDK2018"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("client-request-id"),
+                    new HeaderRegexSanitizer("X-Azure-Ref"),
                     "AZSDK2019"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("MS-CV"),
+                    new HeaderRegexSanitizer("x-ms-request-id"),
                     "AZSDK2020"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("X-Azure-Ref"),
+                    new HeaderRegexSanitizer("x-ms-client-request-id"),
                     "AZSDK2021"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-request-id"),
+                    new HeaderRegexSanitizer("x-ms-content-sha256"),
                     "AZSDK2022"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-client-request-id"),
+                    new HeaderRegexSanitizer("Content-Security-Policy-Report-Only"),
                     "AZSDK2023"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("x-ms-content-sha256"),
+                    new HeaderRegexSanitizer("Repeatability-First-Sent"),
                     "AZSDK2024"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Content-Security-Policy-Report-Only"),
+                    new HeaderRegexSanitizer("Repeatability-Request-ID"),
                     "AZSDK2025"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Repeatability-First-Sent"),
+                    new HeaderRegexSanitizer("repeatability-request-id"),
                     "AZSDK2026"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("Repeatability-Request-ID"),
+                    new HeaderRegexSanitizer("repeatability-first-sent"),
                     "AZSDK2027"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("repeatability-request-id"),
+                    new HeaderRegexSanitizer("P3P"),
                     "AZSDK2028"
                 ),
                 new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("repeatability-first-sent"),
-                    "AZSDK2029"
-                ),
-                new RegisteredSanitizer(
-                    new HeaderRegexSanitizer("P3P"),
-                    "AZSDK2030"
-                ),
-                new RegisteredSanitizer(
                     new HeaderRegexSanitizer("x-ms-ests-server"),
-                    "AZSDK2031"
+                    "AZSDK2029"
                 ),
                 #endregion
                 #region BodyRegex
@@ -238,48 +235,44 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3002"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
+                    new BodyRegexSanitizer(regex: "token=(?<token>[^&\\\"]+)($|&)", groupForReplace: "token"),
                     "AZSDK3003"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "token=(?<token>[^&\\\"]+)($|&)", groupForReplace: "token"),
+                    new BodyRegexSanitizer(regex: "-----BEGIN PRIVATE KEY-----\\n(?<cert>.+\\n)*-----END PRIVATE KEY-----\\n", groupForReplace: "cert"),
                     "AZSDK3004"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "-----BEGIN PRIVATE KEY-----\\n(?<cert>.+\\n)*-----END PRIVATE KEY-----\\n", groupForReplace: "cert"),
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<Value>)(?<group>.*)(?:</Value>)", groupForReplace: "group"),
                     "AZSDK3005"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<Value>)(?<group>.*)(?:</Value>)", groupForReplace: "group"),
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedTid>)(?<group>.*)(?:</SignedTid>)", groupForReplace: "group"),
                     "AZSDK3006"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedTid>)(?<group>.*)(?:</SignedTid>)", groupForReplace: "group"),
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedOid>)(?<group>.*)(?:</SignedOid>)", groupForReplace: "group"),
                     "AZSDK3007"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedOid>)(?<group>.*)(?:</SignedOid>)", groupForReplace: "group"),
+                    new BodyRegexSanitizer(regex: "(?:Password=)(?<pwd>.*?)(?:;)", groupForReplace: "pwd"),
                     "AZSDK3008"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:Password=)(?<pwd>.*?)(?:;)", groupForReplace: "pwd"),
+                    new BodyRegexSanitizer(regex: "(?:User ID=)(?<id>.*?)(?:;)", groupForReplace: "id"),
                     "AZSDK3009"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:User ID=)(?<id>.*?)(?:;)", groupForReplace: "id"),
+                    new BodyRegexSanitizer(regex: "(?:<PrimaryKey>)(?<key>.*)(?:</PrimaryKey>)", groupForReplace: "key"),
                     "AZSDK3010"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:<PrimaryKey>)(?<key>.*)(?:</PrimaryKey>)", groupForReplace: "key"),
+                    new BodyRegexSanitizer(regex: "(?:<SecondaryKey>)(?<key>.*)(?:</SecondaryKey>)", groupForReplace: "key"),
                     "AZSDK3011"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:<SecondaryKey>)(?<key>.*)(?:</SecondaryKey>)", groupForReplace: "key"),
-                    "AZSDK3012"
-                ),
-                new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "<ClientIp>(?<secret>.+)</ClientIp>", groupForReplace: "secret"),
-                    "AZSDK3013"
+                    "AZSDK3012"
                 ),
             #endregion
                 #region BodyKey
@@ -676,10 +669,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 new RegisteredSanitizer(
                     new UriRegexSanitizer("REDACTED", regex: "(?<=http://|https://)(?<host>[^/?\\.]+)", groupForReplace: "host"),
                     "AZSDK4001"
-                ),
-                new RegisteredSanitizer(
-                    new UriRegexSanitizer(regex: "(?:(sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
-                    "AZSDK4002"
                 ),
                 #endregion
                 #region RemoveHeader

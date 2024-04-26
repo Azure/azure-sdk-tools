@@ -2,11 +2,12 @@
 <div *ngIf="isLoading" class="spinner-border m-3" role="status">
     <span class="visually-hidden">Loading...</span>
 </div>
-<button class="btn btnsm btn-danger" (click)="scrollToIndex(50)">click me</button>
-<div *ngIf="codeLinesDataSource" class="viewport">
-  <div *uiScroll="let item of codeLinesDataSource; let index = index" class="code-line" [ngClass]="getClassObject(item.lineClasses)">
+<!--<button class="btn btnsm btn-danger" (click)="scrollToIndex(50)">click me</button>-->
+<div *ngIf="codePanelRowSource" class="viewport" (click)="onCodePanelItemCick($event)">
+  <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeId" [ngClass]="getClassObject(item.lineClasses)">
     <div class="line-actions">
         <span class="line-number">{{item.lineNumber}}</span>
+        <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
     </div>
     <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
         <span *ngFor="let token of item.lineTokens" [ngClass]="getClassObject(token.renderClasses)">{{token.value}}</span>

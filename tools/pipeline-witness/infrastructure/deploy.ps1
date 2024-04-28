@@ -7,7 +7,7 @@ param(
   [validateSet('production', 'staging', 'test')]
   [string]$target,
 
-  [switch]$replaceRoleAssignments
+  [switch]$removeRoleAssignments
 )
 
 function Invoke([string]$command) {
@@ -79,7 +79,7 @@ try {
     "  App Resource Group: $appResourceGroupName`n" + `
     "  Location: $location`n"
 
-  if ($replaceRoleAssignments) {
+  if ($removeRoleAssignments) {
     RemoveStorageRoleAssignments $subscriptionId $logsResourceGroupName $logsStorageAccountName
     RemoveStorageRoleAssignments $subscriptionId $appResourceGroupName $appStorageAccountName
     RemoveCosmosRoleAssignments $subscriptionId $appResourceGroupName $cosmosAccountName
@@ -89,38 +89,6 @@ try {
   if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to deploy resource groups"
     exit 1
-  }
-
-  if ($target -ne 'production') {
-    $azAdGroupId = az ad group show --group "Azure SDK Engineering System Team" --query id --output tsv
-
-    Write-Host "Granting the Azure SDK Engineering System Team read/write access to cosmos account"
-    Invoke "az cosmosdb sql role assignment create --resource-group '$appResourceGroupName' --account-name '$cosmosAccountName' --scope '/' --role-definition-id '00000000-0000-0000-0000-000000000002' --principal-id '$azAdGroupId' --output none"
-      
-    if ($LASTEXITCODE -ne 0) {
-      Write-Output $output
-      Write-Error "Failed to grant access to cosmos account"
-      exit 1
-    }
-
-    Write-Host "Granting the Azure SDK Engineering System Team access to storage accounts"
-    $scope = "/subscriptions/$subscriptionId/resourceGroups/$logsResourceGroupName/providers/Microsoft.Storage/storageAccounts/$logsStorageAccountName"
-    $output = Invoke "az role assignment create --assignee '$azAdGroupId' --role 'Storage Blob Data Contributor' --scope '$scope' --output none"
-      
-    if ($LASTEXITCODE -ne 0) {
-      Write-Output $output
-      Write-Error "Failed to grant access to logs storage account"
-      exit 1
-    }
-      
-    $scope = "/subscriptions/$subscriptionId/resourceGroups/$appResourceGroupName/providers/Microsoft.Storage/storageAccounts/$appStorageAccountName"
-    $output = Invoke "az role assignment create --assignee '$azAdGroupId' --role 'Storage Queue Data Contributor' --scope '$scope' --output none"
-      
-    if ($LASTEXITCODE -ne 0) {
-      Write-Output $output
-      Write-Error "Failed to grant access to app storage account"
-      exit 1
-    }
   }
 }
 finally {

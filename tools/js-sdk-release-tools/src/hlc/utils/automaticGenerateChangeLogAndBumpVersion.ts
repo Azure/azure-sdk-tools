@@ -78,6 +78,9 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                         }
                     }
                 }
+                if(changeLogContent.includes("https://aka.ms/js-track2-quickstart")){
+                    changeLogContent=changeLogContent.replace("https://aka.ms/js-track2-quickstart","https://aka.ms/azsdk/js/mgmt/quickstart");
+                }
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
                     logger.logError('Cannot generate changelog because the codes of local and npm may be the same.');
                     logger.log('Try to bump a fix version');

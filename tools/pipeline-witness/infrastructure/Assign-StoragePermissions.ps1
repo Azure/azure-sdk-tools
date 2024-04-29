@@ -18,6 +18,7 @@ try {
   $subscriptionName = $target -eq 'test' ? 'Azure SDK Developer Playground' : 'Azure SDK Engineering System'
   Write-Host "Setting subscription to '$subscriptionName'"
   Invoke "az account set --subscription '$subscriptionName' --output none"
+  $subscriptionId = az account show --query id -o tsv
 
   $parametersFile = "./bicep/parameters.$target.json"
   Write-Host "Reading parameters from $parametersFile"
@@ -30,7 +31,7 @@ try {
 
   Write-Host "Adding Azure SDK Engineering System Team RBAC access to storage resources:`n" + `
     "  Blob: $logsResourceGroupName/$logsStorageAccountName`n" + `
-    "  Queue: `n" + `
+    "  Queue: $appResourceGroupName/$appStorageAccountName`n" + `
     "  Cosmos: $appResourceGroupName/$cosmosAccountName`n"
 
   Write-Host "Getting group id for Azure SDK Engineering System Team"

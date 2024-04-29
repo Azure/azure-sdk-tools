@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddHealthChecks();
+            builder.Services.AddHttpLogging(options => { });
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -42,6 +43,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
             app.MapControllers();
 
             app.UseHealthChecks("/");
+
+            app.UseHttpLogging();
 
             await app.RunAsync();
         }

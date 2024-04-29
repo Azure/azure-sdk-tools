@@ -249,14 +249,16 @@ resource kustoDataConnections 'Microsoft.Kusto/Clusters/Databases/DataConnection
     dataFormat: 'JSON'
     blobStorageEventType: 'Microsoft.Storage.BlobCreated'
     databaseRouting: 'Single'
+    managedIdentityResourceId: kustoCluster.id
   }
   dependsOn: [ kustoScriptInvocation ]
 }]
 
-// Assign Storage Blob Data Contributor role for the Web App on the Logs Storage Account
+// Assign roles to the Kusto cluster and App Service
 resource blobContributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: subscription()
-  // This is the Storage Blob Data Contributor role, which is the minimum role permission we can give.
+  // This is the Storage Blob Data Contributor role.
+  // Read, write, and delete Azure Storage containers and blobs
   // See https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage
   name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
 }
@@ -268,5 +270,33 @@ resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
     principalId: appIdentityPrincipalId
     roleDefinitionId: blobContributorRoleDefinition.id
     description: 'Blob Contributor for PipelineWitness'
+  }
+}
+
+resource kustoStorageAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(blobContributorRoleDefinition.id, kustoClusterName, logsStorageAccount.id)
+  scope: logsStorageAccount
+  properties:{
+    principalId: kustoCluster.identity.principalId
+    roleDefinitionId: blobContributorRoleDefinition.id
+    description: 'Blob Contributor for Kusto ingestion'
+  }
+}
+
+resource eventHubsDataReceiverRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+  scope: subscription()
+  // This is the Event Hubs Data Receiver role
+  // Allows receive access to Azure Event Hubs resources.
+  // see https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#analytics
+  name: 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde'
+}
+
+resource kustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(blobContributorRoleDefinition.id, kustoClusterName, eventHubNamespace.id)
+  scope: eventHubNamespace
+  properties:{
+    principalId: kustoCluster.identity.principalId
+    roleDefinitionId: eventHubsDataReceiverRoleDefinition.id
+    description: 'Blob Contributor for Kusto ingestion'
   }
 }

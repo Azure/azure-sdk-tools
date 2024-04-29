@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 
 import { Observable, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/_models/pagination';
-import { Review, ReviewContent } from 'src/app/_models/review';
+import { Review, CodePanelData } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
 

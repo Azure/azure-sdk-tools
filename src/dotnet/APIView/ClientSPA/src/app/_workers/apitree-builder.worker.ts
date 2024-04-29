@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 
 import { ComputeTokenDiff } from "../_helpers/worker-helpers";
-import { ReviewContent } from "../_models/review";
+import { CodePanelData } from "../_models/review";
 import { CodePanelRowData, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective, StructuredToken } from "../_models/revision";
 import { APITreeNode } from "../_models/revision";
 
@@ -11,7 +11,8 @@ addEventListener('message', ({ data }) => {
   if (data instanceof ArrayBuffer) {
     let jsonString = new TextDecoder().decode(new Uint8Array(data));
 
-    let reviewContent: ReviewContent = JSON.parse(jsonString);
+    let reviewContent: CodePanelData = JSON.parse(jsonString);
+    let diagnostics = reviewContent.diagnostics;
 
     let navTreeNodes: any[] = [];
     let treeNodeId : string[] = [];
@@ -241,8 +242,8 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
       insertLineNumber++;
       insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
       lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
-        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-chevron-up show" :
-        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-chevron-up hide";
+        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square show" :
+        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
 
       precedingRowData = insertLineOfTokensMessage.codePanelRowData;
       postMessage(insertLineOfTokensMessage);
@@ -272,8 +273,8 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
     insertLineNumber++;
     insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
     lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
-      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-chevron-up show" :
-      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-chevron-up hide";
+      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square show" :
+      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
 
     postMessage(insertLineOfTokensMessage);
   }

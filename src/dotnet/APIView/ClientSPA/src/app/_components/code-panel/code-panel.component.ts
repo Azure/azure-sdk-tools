@@ -170,16 +170,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   onCodePanelItemCick(event: Event) {
     const target = event.target as Element;
     if (target.classList.contains('toggle-documentation-btn')) {
-      const nodeId = target.closest(".code-line")!.getAttribute('data-node-id');
-      const lineNumber = target.closest('.line-actions')!.querySelector('.line-number')!.textContent;
-      if (target.classList.contains('bi-chevron-up')) {
-        this.toggleNodeDocumentation(nodeId!, lineNumber!, "show");
-        target.classList.remove('bi-chevron-up');
-        target.classList.add('bi-chevron-bar-down');
-      } else {
-
-      }
-      
+      this.toggleNodeDocumentation(target);
     }
   }
 
@@ -191,17 +182,36 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     return classObject;
   }
 
-  async toggleNodeDocumentation(nodeId: string, lineNumber: string, action: string = "show") {
-    if (action === "show") {
-      const documentationData = this.otherCodePanelData.get(nodeId)?.documentation;
-      await this.codePanelRowSource?.adapter?.relax();
-      await this.insertItemIntoScroller(documentationData!, lineNumber);
-    } else {
+  async toggleNodeDocumentation(target: Element) {
+    const nodeId = target.closest(".code-line")!.getAttribute('data-node-id');
+    const lineNumber = target.closest('.line-actions')!.querySelector('.line-number')!.textContent;
 
+    if (target.classList.contains('bi-arrow-up-square')) {
+      const documentationData = this.otherCodePanelData.get(nodeId!)?.documentation;
+      await this.codePanelRowSource?.adapter?.relax();
+      await this.insertItemIntoScroller(documentationData!, lineNumber!, "toggleDocumentationClasses", "bi-arrow-up-square", "bi-arrow-down-square");
+      target.classList.remove('bi-arrow-up-square')
+      target.classList.add('bi-arrow-down-square');
+    } else if (target.classList.contains('bi-arrow-down-square')) {
+      const documentationData = this.otherCodePanelData.get(nodeId!)?.documentation;
+      const lineNumbersOfLinesToRemove = new Set(documentationData!.map(d => d.lineNumber));
+      await this.codePanelRowSource?.adapter?.relax();
+      await this.removeItemFromScroller(lineNumbersOfLinesToRemove, lineNumber!, "toggleDocumentationClasses", "bi-arrow-down-square", "bi-arrow-up-square");
+      target.classList.remove('bi-arrow-down-square')
+      target.classList.add('bi-arrow-up-square');
     }
   }
 
-  async insertItemIntoScroller(itemsToInsert: CodePanelRowData[], lineNumber: string) {
+  toggleLineActionIcon(iconClassToremove: string, iconClassToAdd: string, 
+    codeLineData: CodePanelRowData, codeLineDataProperty: string) : CodePanelRowData {
+    if (codeLineDataProperty === "toggleDocumentationClasses") {
+      codeLineData.toggleDocumentationClasses = codeLineData.toggleDocumentationClasses?.replace(iconClassToremove, iconClassToAdd);
+    }
+    return codeLineData;
+  }
+
+  async insertItemIntoScroller(itemsToInsert: CodePanelRowData[], lineNumber: string, 
+      propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
     let preData = [];
     let nodeIndex = 0;
     for (let i = 0; i < this.codeLinesData.length; i++) {
@@ -213,6 +223,10 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     }
     let postData = this.codeLinesData.slice(nodeIndex);
 
+    if (propertyToChange && iconClassToremove && iconClassToAdd) {
+      postData[0] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, postData[0], propertyToChange);
+    }
+
     this.codeLinesData = [
       ...preData,
       ...itemsToInsert!,
@@ -222,6 +236,30 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     await this.codePanelRowSource?.adapter?.insert({
       beforeIndex: nodeIndex,
       items: itemsToInsert!
+    });
+  }
+
+  async removeItemFromScroller(lineNumbersToRemove: Set<number | undefined>, actionLineNumber: string,
+    propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
+    const indexesToRemove : number[] = [];
+    const filteredCodeLinesData : CodePanelRowData[] = [];
+
+    for (let i = 0; i < this.codeLinesData.length; i++) {
+      let lineNo = this.codeLinesData[i].lineNumber!;
+      if (lineNo === parseInt(actionLineNumber) && propertyToChange && iconClassToremove && iconClassToAdd) {
+        this.codeLinesData[i] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, this.codeLinesData[i], propertyToChange);
+      }
+
+      if (lineNumbersToRemove.size > 0 && lineNumbersToRemove.has(lineNo)) {
+        indexesToRemove.push(i);
+      } else {
+        filteredCodeLinesData.push(this.codeLinesData[i]);
+      }
+    }
+
+    this.codeLinesData = filteredCodeLinesData;
+    await this.codePanelRowSource?.adapter?.remove({
+      indexes: indexesToRemove
     });
   }
 
@@ -236,7 +274,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
           success(data);
         },
         settings: {
-          bufferSize: 20,
+          bufferSize: 50,
           padding: 1,
           itemSize: 21,
           startIndex : 0,

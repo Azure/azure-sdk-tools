@@ -8,11 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using APIViewWeb.Managers.Interfaces;
-using System.Linq;
-using System;
-using APIView;
-using Microsoft.AspNetCore.Authorization;
-using APIViewWeb.Pages.Assemblies;
 using Microsoft.Extensions.Configuration;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
@@ -94,14 +89,29 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId = null,
             [FromQuery] string diffApiRevisionId = null)
         {
-            var review = await _reviewManager.GetReviewAsync(User, reviewId);
+            var result = new ReviewCodePanelData();
+            var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
+            var comments = await _commentsManager.GetCommentsAsync(reviewId);
 
-            var reviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
-                reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
-                reviewRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
-                signalRHubContext: _signalRHubContext, user: User, reviewId: reviewId, revisionId: activeApiRevisionId, diffRevisionId: diffApiRevisionId);
+            var activeRevisionRenderableCodeFile = await _codeFileRepository.GetCodeFileAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId);
+            var activeRevisionReviewCodeFile = activeRevisionRenderableCodeFile.CodeFile;
 
-            return new LeanJsonResult(reviewContent, StatusCodes.Status200OK);
+            if (activeRevisionReviewCodeFile.CodeFileVersion.Equals("v2")) 
+            {
+                result.APIForest = activeRevisionReviewCodeFile.APIForest;
+                result.Diagnostics = activeRevisionReviewCodeFile.Diagnostics;
+                result.Comments = comments;
+
+                if (!string.IsNullOrEmpty(diffApiRevisionId))
+                {
+                    var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
+                    var diffRevisionRenderableCodeFile = await _codeFileRepository.GetCodeFileAsync(diffAPIRevision.Id, diffAPIRevision.Files[0].FileId);
+                    result.APIForest = CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionRenderableCodeFile.CodeFile.APIForest);
+                }
+                return new LeanJsonResult(result, StatusCodes.Status200OK);
+            }
+
+            return new LeanJsonResult("Invalid APIRevision", StatusCodes.Status500InternalServerError);
         }
     }
 }

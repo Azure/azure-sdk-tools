@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,9 +17,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
 {
     internal abstract class QueueWorkerBackgroundService : BackgroundService
     {
-        private const string ActivitySourceName = "Azure.Sdk.Tools.PipelineWitness.Queue";
-        private static readonly ActivitySource activitySource = new(ActivitySourceName);
-
         private readonly ILogger logger;
         private readonly QueueServiceClient queueServiceClient;
         private readonly string queueName;
@@ -61,10 +57,13 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
 
             while (true)
             {
-                using Activity loopActivity = activitySource.CreateActivity("MessageLoopIteration", ActivityKind.Internal) ?? new Activity("MessageLoopIteration");
-                loopActivity?.AddBaggage("QueueName", queueClient.Name);
+                var loopTelementy = new RequestTelemetry
+                { 
+                    Name = "MessageLoopIteration", 
+                    Properties = { ["QueueName"] = queueClient.Name }
+                };
 
-                using IOperationHolder<RequestTelemetry> loopOperation = this.telemetryClient.StartOperation<RequestTelemetry>(loopActivity);
+                using var loopOperation = this.telemetryClient.StartOperation(loopTelementy);
 
                 PipelineWitnessSettings options = this.options.CurrentValue;
 
@@ -93,10 +92,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                         });
                     }
 
-                    using Activity activity = activitySource.CreateActivity("ProcessMessage", ActivityKind.Internal) ?? new Activity("ProcessMessage");
-                    activity?.AddBaggage("MessageId", message.MessageId);
-
-                    using IOperationHolder<RequestTelemetry> operation = this.telemetryClient.StartOperation<RequestTelemetry>(activity);
+                    using IOperationHolder<RequestTelemetry> messageOperation = this.telemetryClient.StartOperation(new RequestTelemetry
+                    {
+                        Name = "ProcessMessage",
+                        Properties = { ["MessageId"] = message.MessageId }
+                    });
 
                     try
                     {
@@ -124,13 +124,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                         {
                             this.logger.LogDebug("Message processed successfully. Removing message from queue.\n  MessageId: {MessageId}\n  Queue: {QueueName}\n  PopReceipt: {PopReceipt}", message.MessageId, queueClient.Name, latestPopReceipt);
                             await queueClient.DeleteMessageAsync(message.MessageId, latestPopReceipt, stoppingToken);
-                            activity?.SetStatus(ActivityStatusCode.Ok);
-                            operation.Telemetry.Success = true;
+                            messageOperation.Telemetry.Success = true;
                         }
                         else
                         {
-                            activity?.SetStatus(ActivityStatusCode.Error);
-                            operation.Telemetry.Success = false;
+                            messageOperation.Telemetry.Success = false;
                             if (message.DequeueCount > options.MaxDequeueCount)
                             {
                                 this.logger.LogError("Message {MessageId} exceeded maximum dequeue count. Moving to poison queue {QueueName}", message.MessageId, poisonQueueClient.Name);
@@ -148,14 +146,14 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                     catch (Exception ex)
                     {
                         this.logger.LogError(ex, "Exception thrown while procesing queue message.");
-                        activity?.SetStatus(ActivityStatusCode.Error);
-                        operation.Telemetry.Success = false;
+                        messageOperation.Telemetry.Success = false;
                     }
                 }
                 catch (Exception ex)
                 {
                     this.logger.LogError(ex, "Exception thrown while procesing message loop.");
                     await Task.Delay(options.MessageErrorSleepPeriod, stoppingToken);
+                    loopOperation.Telemetry.Success = false;
                 }
             }
         }

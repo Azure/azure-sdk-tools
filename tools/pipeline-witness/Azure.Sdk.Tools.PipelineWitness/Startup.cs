@@ -27,7 +27,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
     {
         public static void Configure(WebApplicationBuilder builder)
         {
-            DefaultAzureCredential azureCredential = new();
             PipelineWitnessSettings settings = new();
             IConfigurationSection settingsSection = builder.Configuration.GetSection("PipelineWitness");
             settingsSection.Bind(settings);
@@ -36,7 +35,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             builder.Services.AddApplicationInsightsTelemetryProcessor<BlobNotFoundTelemetryProcessor>();
             builder.Services.AddTransient<ITelemetryInitializer, ApplicationVersionTelemetryInitializer>();
 
-            builder.Services.AddSingleton<TokenCredential>(azureCredential);
+            builder.Services.AddSingleton<TokenCredential, DefaultAzureCredential>();
 
             builder.Services.AddAzureClients(builder =>
             {
@@ -48,17 +47,16 @@ namespace Azure.Sdk.Tools.PipelineWitness
             });
 
             builder.Services.AddSingleton<IAsyncLockProvider>(provider => new CosmosAsyncLockProvider(provider.GetRequiredService<CosmosClient>(), settings.CosmosDatabase, settings.CosmosAsyncLockContainer));
-            builder.Services.AddSingleton(CreateVssConnection);
+            builder.Services.AddTransient(CreateVssConnection);
             builder.Services.AddVssClient<TestResultsHttpClient>();
             builder.Services.AddVssClient<BuildHttpClient>();
 
             builder.Services.AddLogging();
-            builder.Services.AddMemoryCache();
-            builder.Services.AddSingleton<BlobUploadProcessor>();
-            builder.Services.AddSingleton<BuildLogProvider>();
+            builder.Services.AddTransient<BlobUploadProcessor>();
+            builder.Services.AddTransient<Func<BlobUploadProcessor>>(provider => provider.GetRequiredService<BlobUploadProcessor>);
+            builder.Services.AddTransient<BuildLogProvider>();
 
             builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
-            builder.Services.AddSingleton<TokenCredential, DefaultAzureCredential>();
 
             builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
             builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
@@ -80,7 +78,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
         private static IAzureClientBuilder<CosmosClient, CosmosClientOptions> AddCosmosServiceClient<TBuilder>(this TBuilder builder, Uri serviceUri) where TBuilder : IAzureClientFactoryBuilderWithCredential
         {
             return builder.RegisterClientFactory((CosmosClientOptions options, TokenCredential cred) => new CosmosClient(serviceUri.AbsoluteUri, cred, options));
-
         }
 
         private static VssConnection CreateVssConnection(IServiceProvider provider)

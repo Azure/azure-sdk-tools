@@ -15,48 +15,53 @@ export interface Review {
   id: string
   packageName: string
   language: string
-  lastUpdatedOn: string,
-  isDeleted: boolean,
+  lastUpdatedOn: string
+  isDeleted: boolean
   isApproved: boolean
 }
 
 export interface ChangeHistory {
-  changeAction: string;
-  changedBy: string;
-  changedOn: string | null;
-  notes: string;
+  changeAction: string
+  changedBy: string
+  changedOn: string | null
+  notes: string
 }
 
 export interface SelectItemModel {
-  label: string,
+  label: string
   data: string
 }
 
-export interface ReviewContent {
-  review: Review
+export interface CodePanelData {
   apiForest: APITreeNode[]
-  apiRevisions: APIRevision[]
-  activeAPIRevision: APIRevision
-  diffAPIRevision: APIRevision
+  diagnostics: CodeDiagnostic[]
+  comments: CommentItemModel[]
 }
 
+export interface CodeDiagnostic {
+  diagnosticId: string
+  text: string
+  helpLinkUri: string
+  targetId: string
+  level: string
+}
 
 export interface CommentItemModel {
-    id: string;
-    reviewId: string;
-    aPIRevisionId: string;
-    elementId: string;
-    sectionClass: string;
-    commentText: string;
-    crossLanguageId: string;
-    changeHistory: ChangeHistory[];
-    isResolved: boolean;
-    upvotes: string[];
-    taggedUsers: Set<string>;
-    commentType: CommentType;
-    resolutionLocked: boolean;
-    createdBy: string;
-    createdOn: string;
-    lastEditedOn: string | null;
-    isDeleted: boolean;
+    id: string
+    reviewId: string
+    aPIRevisionId: string
+    elementId: string
+    sectionClass: string
+    commentText: string
+    crossLanguageId: string
+    changeHistory: ChangeHistory[]
+    isResolved: boolean
+    upvotes: string[]
+    taggedUsers: Set<string>
+    commentType: CommentType
+    resolutionLocked: boolean
+    createdBy: string
+    createdOn: string
+    lastEditedOn: string | null
+    isDeleted: boolean
 }

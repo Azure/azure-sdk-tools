@@ -19,7 +19,6 @@ namespace APIViewWeb.LeanModels
         public ReviewListItemModel Review { get; set; }
         public NavigationItem[] Navigation { get; set; }
         public CodeLineModel[] codeLines { get; set; }
-        public List<APITreeNodeForAPI> APIForest { get; set; } = new List<APITreeNodeForAPI>();
         public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; }
         public APIRevisionListItemModel ActiveAPIRevision { get; set; }
         public APIRevisionListItemModel DiffAPIRevision { get; set; }
@@ -35,6 +34,7 @@ namespace APIViewWeb.LeanModels
         public bool HasFatalDiagnostics { get; set; }
     }
 
+<<<<<<< HEAD
     public class ReviewBadgeModel
     {
         public ReviewListItemModel Review { get; set; }
@@ -44,5 +44,12 @@ namespace APIViewWeb.LeanModels
         public UserPreferenceModel UserPreference { get; set; }
         public bool? ShowDocumentation { get; set; }
         public bool? ShowDiffOnly { get; set; }
+=======
+    public class ReviewCodePanelData
+    {
+        public IEnumerable<CommentItemModel> Comments { get; set; }
+        public List<APITreeNodeForAPI> APIForest { get; set; } = new List<APITreeNodeForAPI>();
+        public CodeDiagnostic[] Diagnostics { get; set; }
+>>>>>>> 5c591dacb (Show / Hide Documentation)
     }
 }

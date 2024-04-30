@@ -449,11 +449,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3443"
                 ),
                 new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..principalId"),
+                    new BodyKeySanitizer("$..principalId", value: EMPTYGUID),
                     "AZSDK3444"
                 ),
                 new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..clientId"),
+                    new BodyKeySanitizer("$..clientId", value: EMPTYGUID),
                     "AZSDK3445"
                 ),
                 new RegisteredSanitizer(

@@ -75,6 +75,9 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
                 gitCommitId: gitCommitId,
             })
         }
+    } catch (e: any) {
+        logger.logError(e.message);
+        throw e;
     } finally {
         await restoreNodeModules(String(shell.pwd()));
         fs.writeFileSync(outputJsonPath, JSON.stringify(outputJson, null, '  '), { encoding: 'utf-8' });

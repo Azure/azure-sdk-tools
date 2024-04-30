@@ -29,6 +29,8 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public string Path { get; set; }
 
+        public bool IsSanitized { get; set; }
+
         public HttpClient Client { get; set; }
 
         public List<ResponseTransform> AdditionalTransforms { get; } = new List<ResponseTransform>();

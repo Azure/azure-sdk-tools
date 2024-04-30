@@ -51,6 +51,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         [Fact]
+        public void EnsureSASCleanupDoesntOverrunInXML()
+        {
+            var sanitizerDictionary = new SanitizerDictionary();
+            var sessionwithXmlBody = TestHelpers.LoadRecordSession("Test.RecordEntries/xml_body_with_sas_present.json");
+
+            Assert.True(sanitizerDictionary.Sanitizers.TryGetValue("AZSDK1007", out RegisteredSanitizer SASURISanitizer));
+
+            sessionwithXmlBody.Session.Sanitize(SASURISanitizer.Sanitizer);
+
+            Assert.Contains("<CopyProgress>1024/1024</CopyProgress>", Encoding.UTF8.GetString(sessionwithXmlBody.Session.Entries[0].Response.Body));
+        }
+
+        [Fact]
         public void OauthResponseSanitizerCleansNonV2AuthRequest()
         {
             var session = TestHelpers.LoadRecordSession("Test.RecordEntries/oauth_request.json");

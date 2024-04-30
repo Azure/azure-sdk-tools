@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 HttpResponse response = new DefaultHttpContext().Response;
                 await testRecordingHandler.HandlePlaybackRequest(recordingId, request, response);
 
-                AssertLogs(logger, 4, 8, 7);
+                AssertLogs(logger, 4, 8, 12);
             }
             finally
             {

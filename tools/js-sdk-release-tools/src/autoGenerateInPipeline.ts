@@ -75,8 +75,8 @@ async function automationGenerateInPipeline(inputJsonPath: string, outputJsonPat
                 gitCommitId: gitCommitId,
             })
         }
-    } catch (e: any) {
-        logger.logError(e.message);
+    } catch (e) {
+        logger.logError((e as any)?.message);
         throw e;
     } finally {
         await restoreNodeModules(String(shell.pwd()));

@@ -31,15 +31,14 @@
             <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="tooltip" data-bs-placement="right" title="API" active-if="@TempData["page"].Equals("api")"><i class="bi bi-braces"></i></a>
             <a type="button" class="btn btn-lg btn-link mb-2" data-bs-toggle="offcanvas" data-bs-target="#apiRevisions-context" aria-controls="apiRevisions-context"><i class="bi bi-clock-history" data-bs-toggle="tooltip" data-bs-placement="right" title="Revisions"></i></a>
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Conversation" asp-route-id="@Model.ReviewContent.Review.Id"><i class="bi bi-chat-left-dots" data-bs-toggle="tooltip" data-bs-placement="right" title="Conversations"></i>
-                @if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 && Model.ReviewContent.HasFatalDiagnostics)
+                @if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0)
                 {
                     var count = (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 10) ? "9+" : $"{Model.ReviewContent.ActiveConversationsInActiveAPIRevision}";
                     <span class="position-absolute start translate-middle badge rounded-pill bg-danger" id="jump-to-first-comment">
                         @count
                         <span class="visually-hidden">unread messages</span>
-                        <h4>Hello!</h4>
                     </span>                }
-                else if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 && !Model.ReviewContent.HasFatalDiagnostics)
+                else if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0)
                 {
                     var count = (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 10) ? "9+" : $"{Model.ReviewContent.ActiveConversationsInActiveAPIRevision}";
                     <span class="position-absolute start translate-middle badge rounded-pill bg-danger" id="jump-to-first-comment">
@@ -47,11 +46,10 @@
                         <span class="visually-hidden">unread messages</span>
                     </span>
                 }
-                else if (!(Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0) && Model.ReviewContent.HasFatalDiagnostics)
+                else if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0)
                 {
                     var count = (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 10) ? "9+" : $"{Model.ReviewContent.ActiveConversationsInActiveAPIRevision}";
                     <span class="position-absolute start translate-middle badge rounded-pill bg-danger" id="jump-to-first-comment">
-                        <h4>Hola!</h4>
                     </span>
                 }
             </a>
@@ -88,8 +86,25 @@
                         {
                             var isActiveRevisionAhead = (Model.ReviewContent.DiffAPIRevision == null)? true: Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn;
 
+                            @*Convo and Fatal*@
                             @if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 
                                 || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
+                                && Model.ReviewContent.HasFatalDiagnostics
+                                && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
+                           && isActiveRevisionAhead)
+                            {
+                                <span class="small text-muted">Approves the current revision of the API</span>
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#convoFatalModel">
+                                        Approve
+                                    </button>
+                                </div>
+                            }
+
+                            @*Original - Convo not Fatal*@
+                            else if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 
+                                || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
+                                && !Model.ReviewContent.HasFatalDiagnostics
                                 && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
                            && isActiveRevisionAhead)
                             {
@@ -100,6 +115,22 @@
                                     </button>
                                 </div>
                             }
+
+                            @*Fatal not Convo*@
+                            else if (!(Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0
+                           || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
+                           && Model.ReviewContent.HasFatalDiagnostics
+                           && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
+                           && isActiveRevisionAhead)
+                            {
+                                <span class="small text-muted">Approves the current revision of the API</span>
+                                <div class="d-grid gap-2">
+                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#fatalErrorModel">
+                                        Approve
+                                    </button>
+                                </div>
+                            }
+
                             else
                             {
                                 @if (Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
@@ -670,6 +701,31 @@
     
     <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
         <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
+        <div class="modal fade" id="convoFatalModel" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Convo and Fatal Model</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p> There are still active conversations. <br /> Would you like to review these first? </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <a asp-page="Conversation" asp-route-id="@Model.ReviewContent.Review.Id">
+                            <div class="btn btn-outline-secondary">Check Conversations</div>
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            Approve API Anyway
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+        <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
         <div class="modal fade" id="approveModel" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -696,11 +752,11 @@
 
     <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
         <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
-        <div class="modal fade" id="approveModel" tabindex="-1" role="dialog">
+        <div class="modal fade" id="fatalErrorModel" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Approve Review</h5>
+                        <h5 class="modal-title">Fatal Model</h5>
                     </div>
                     <div class="modal-body">
                         <p> There are still active conversations. <br /> Would you like to review these first? </p>

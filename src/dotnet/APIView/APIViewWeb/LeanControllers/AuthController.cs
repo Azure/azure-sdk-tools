@@ -32,8 +32,8 @@ namespace APIViewWeb.LeanControllers
             return new LeanJsonResult(result, StatusCodes.Status200OK);
         }
 
-        [HttpGet]
         [Route("AppVersion")]
+        [HttpGet]
         public ActionResult AppVersion()
         {
             var result = new
@@ -43,8 +43,8 @@ namespace APIViewWeb.LeanControllers
             return new LeanJsonResult(result, StatusCodes.Status200OK);
         }
 
-        [HttpGet]
         [Route("profile")]
+        [HttpGet]
         public async Task<ActionResult<UserProfileModel>> GetUserPreference()
         {
             return await _userProfileManager.TryGetUserProfileAsync(User);

@@ -84,8 +84,8 @@ namespace APIViewWeb.LeanControllers
         ///<param name="activeApiRevisionId"></param>
         /// <param name="diffApiRevisionId"></param>
         ///<returns></returns>
-        [HttpGet]
         [Route("{reviewId}/content")]
+        [HttpGet]
         public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId = null,
             [FromQuery] string diffApiRevisionId = null)
         {

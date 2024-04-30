@@ -98,7 +98,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "ACS Identity leverages these strings to store identity information."
                 ),
                 new RegisteredSanitizer(
-                    new GeneralRegexSanitizer(regex: "(?:[?&](sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
+                    new GeneralRegexSanitizer(regex: "(?:[?&](sv|sig|se|srt|ss|sp|st)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
                     "AZSDK1007",
                     "Common SAS URL Sanitizer. Applies to all headers, URIs, and text bodies."
                 ),

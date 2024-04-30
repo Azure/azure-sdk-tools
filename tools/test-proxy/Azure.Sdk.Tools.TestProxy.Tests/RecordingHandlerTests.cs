@@ -307,7 +307,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var playbackSession = recordingHandler.PlaybackSessions.First();
             var entry = playbackSession.Value.Session.Entries.First();
 
-            Assert.Equal("https://REDACTED.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
+            Assert.Equal("https://login.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
         }
 
         [Fact]
@@ -323,7 +323,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var playbackSession = recordingHandler.PlaybackSessions.First();
             var entry = playbackSession.Value.Session.Entries.First();
 
-            Assert.Equal("https://REDACTED.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
+            Assert.Equal("https://login.microsoftonline.com/12345678-1234-1234-1234-123456789012/oauth2/v2.0/token", entry.RequestUri);
         }
 
         [Fact]

@@ -398,12 +398,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     Path = path
                 };
-
-                var sanitizers = SanitizerRegistry.GetSanitizers();
-                foreach (RecordedTestSanitizer sanitizer in sanitizers)
-                {
-                    session.Session.Sanitize(sanitizer);
-                }
             }
 
             if (!PlaybackSessions.TryAdd(id, session))
@@ -462,6 +456,17 @@ namespace Azure.Sdk.Tools.TestProxy
             }
 
             var sanitizers = SanitizerRegistry.GetSanitizers(session);
+
+            // we don't need to re-sanitize with recording-applicable sanitizers every time. just the very first one
+            if (!session.IsSanitized)
+            {
+                session.IsSanitized = true;
+
+                foreach (RecordedTestSanitizer sanitizer in sanitizers)
+                {
+                    session.Session.Sanitize(sanitizer);
+                }
+            }
 
             DebugLogger.LogRequestDetails(incomingRequest, sanitizers);
 

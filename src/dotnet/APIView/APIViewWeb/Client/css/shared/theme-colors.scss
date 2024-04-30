@@ -108,60 +108,60 @@
     --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
 }
 
-    .dark-solarized-theme {
-        /*----Base Colors-------------------------------------------------*/
-        $base-bg-color: #2b2b2b;
-        --base-bg-color: #{$base-bg-color};
-        --base-fg-color: #{tint-color($base-bg-color, 5%)};
-        $base-text-color: white;
-        --base-text-color: #{$base-text-color};
-        --text-muted-color: #{shade-color($base-text-color, 30%)};
-        $primary-color: #FFBD00;
-        --primary-color: #{$primary-color};
-        $secondary-color: #B7B6B7;
-        --secondary-color: #{$secondary-color};
-        --success-color: #{$success};
-        $info-color: #87B0E6;
-        --info-color: #{$info-color};
-        $warning-color: #D97904;
-        --warning-color: #{$warning-color};
-        $danger-color: #C80C07;
-        --danger-color: #{$danger-color};
-        --border-color: #{tint-color($base-bg-color, 30%)};
-        --primary-btn-color: #{$base-bg-color};
-        /*----Links------------------------------------------------------*/
-        --link-color: #{$primary-color};
-        --link-active: #{tint-color($primary-color, 10%)};
-        --link-visited: #{tint-color($primary-color, 20%)};
-        /*----Shadows and Glows------------------------------------------*/
-        --outer-glow: #{tint-color($primary-color, 80%)};
-        --shadow-color: rgba(#{$gray-100}, .15);
-        --box-shadow: 0 .5rem 1rem #{rgba($gray-100, .15)};
-        --box-shadow-sm: 0 .125rem .25rem #{rgba($gray-100, .075)};
-        --box-shadow-lg: 0 1rem 3rem #{rgba($gray-100, .175)};
-        --box-shadow-inset: inset 0 1px 2px #{rgba($gray-100, .075)};
-        --box-shadow-success: 0 0 0 0.1rem #{rgba($success, 10%)};
-        --box-shadow-link: 0 0 0 0.2rem #{rgba($primary-color, 50%)};
-        --box-shadow-left: -5px 0px 0px 0rem #{rgba($primary-color, 100%)};
-        /*----Nav--------------------------------------------------------*/
-        --navbar-bg: #{tint-color($base-bg-color, 20%)};
-        --navbar-text: #{tint-color($base-text-color, 40%)};
-        --navbar-link-active: #{shade-color($base-text-color, 20%)};
-        --icon-color-filter: invert(0.5);
-        /*----Code Lines-------------------------------------------------*/
-        --keyword-color: #d57c32;
-        --class-color: #ffc66d;
-        --name-color: #{$base-text-color};
-        --code-color: #db3984;
-        --code-comment: #8a9898;
-        --code-diagnostics-error-color: #d18654;
-        --code-diagnostics-warn-color: #d1ba56;
-        --code-diagnostics-info-color: #5da6a3;
-        --code-diagnostics-fatal-color: #d15a74;
-        --code-added: #345039;
-        --code-removed: #5d3837;
-        --code-delta: #695b32;
-        /*----SVG-------------------------------------------------*/
-        --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='dimgray' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
-        --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='dimgray'/%3e%3c/svg%3e");
-    }
+.dark-solarized-theme {
+    /*----Base Colors-------------------------------------------------*/
+    $base-bg-color: #2b2b2b;
+    --base-bg-color: #{$base-bg-color};
+    --base-fg-color: #{tint-color($base-bg-color, 5%)};
+    $base-text-color: white;
+    --base-text-color: #{$base-text-color};
+    --text-muted-color: #{shade-color($base-text-color, 30%)};
+    $primary-color: #FFBD00;
+    --primary-color: #{$primary-color};
+    $secondary-color: #B7B6B7;
+    --secondary-color: #{$secondary-color};
+    --success-color: #{$success};
+    $info-color: #87B0E6;
+    --info-color: #{$info-color};
+    $warning-color: #D97904;
+    --warning-color: #{$warning-color};
+    $danger-color: #C80C07;
+    --danger-color: #{$danger-color};
+    --border-color: #{tint-color($base-bg-color, 30%)};
+    --primary-btn-color: #{$base-bg-color};
+    /*----Links------------------------------------------------------*/
+    --link-color: #{$primary-color};
+    --link-active: #{tint-color($primary-color, 10%)};
+    --link-visited: #{tint-color($primary-color, 20%)};
+    /*----Shadows and Glows------------------------------------------*/
+    --outer-glow: #{tint-color($primary-color, 80%)};
+    --shadow-color: rgba(#{$gray-100}, .15);
+    --box-shadow: 0 .5rem 1rem #{rgba($gray-100, .15)};
+    --box-shadow-sm: 0 .125rem .25rem #{rgba($gray-100, .075)};
+    --box-shadow-lg: 0 1rem 3rem #{rgba($gray-100, .175)};
+    --box-shadow-inset: inset 0 1px 2px #{rgba($gray-100, .075)};
+    --box-shadow-success: 0 0 0 0.1rem #{rgba($success, 10%)};
+    --box-shadow-link: 0 0 0 0.2rem #{rgba($primary-color, 50%)};
+    --box-shadow-left: -5px 0px 0px 0rem #{rgba($primary-color, 100%)};
+    /*----Nav--------------------------------------------------------*/
+    --navbar-bg: #{tint-color($base-bg-color, 20%)};
+    --navbar-text: #{tint-color($base-text-color, 40%)};
+    --navbar-link-active: #{shade-color($base-text-color, 20%)};
+    --icon-color-filter: invert(0.5);
+    /*----Code Lines-------------------------------------------------*/
+    --keyword-color: #d57c32;
+    --class-color: #ffc66d;
+    --name-color: #{$base-text-color};
+    --code-color: #db3984;
+    --code-comment: #8a9898;
+    --code-diagnostics-error-color: #d18654;
+    --code-diagnostics-warn-color: #d1ba56;
+    --code-diagnostics-info-color: #5da6a3;
+    --code-diagnostics-fatal-color: #d15a74;
+    --code-added: #345039;
+    --code-removed: #5d3837;
+    --code-delta: #695b32;
+    /*----SVG-------------------------------------------------*/
+    --svg-check-box: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='dimgray' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    --svg-switch: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='dimgray'/%3e%3c/svg%3e");
+}

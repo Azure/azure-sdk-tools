@@ -355,68 +355,58 @@ code {
     color: #008509 !important;
 }
 
-.code-diagnostics-fatal {
-    background-color: var(--code-diagnostics-fatal-color);
-    /*border: 1px solid hotpink;*/
-}
+$diagnostics: ( 
+    fatal: var(--code-diagnostics-fatal-color), 
+    error: var(--code-diagnostics-error-color), 
+    warn: var(--code-diagnostics-warn-color), 
+    info: var(--code-diagnostics-info-color) );
 
-.code-diagnostics-error {
-    background-color: var(--code-diagnostics-error-color);
-    /*border: 1px solid darkorange;*/
-}
-
-.code-diagnostics-warn {
-    background-color: var(--code-diagnostics-warn-color);
-    /*border: 1px solid gold;*/
-}
-
-.code-diagnostics-info {
-    background-color: var(--code-diagnostics-info-color);
-    /*border: 1px solid aqua;*/
+@each $type, $color in $diagnostics {
+    .code-diagnostics-#{$type} {
+        background-color: $color;
+    }
 }
 
 .code-diagnostics p {
     margin: 0;
 }
 
+.light-theme .code-diagnostics p a{
+    
+    &:active,
+    &:hover {
+        color: #00CBEB;
+    }
+}
+
 .dark-theme .code-diagnostics p {
     color: #e6eff7;
+
+    a {
+        color: #0d1dfc;
+
+        &:visited {
+            color: #3d4afd;
+        }
+
+        &:active,
+        &:hover {
+            color: #00CBEB;
+        }
+    }
 }
 
-.dark-theme .code-diagnostics p a {
+.dark-solarized-theme .code-diagnostics a {
     color: #0d1dfc;
-}
 
-.dark-theme .code-diagnostics p a:active {
-    color: #00CBEB;
-}
+    &:visited {
+        color: #3d4afd;
+    }
 
-.dark-theme .code-diagnostics p a:visited {
-    color: #3d4afd;
-}
-
-.dark-theme .code-diagnostics p a:hover {
-    color: #00CBEB;
-}
-
-.dark-solarized-theme .code-diagnostics p {
-    /*color: #2b2b2b;*/
-}
-
-.dark-solarized-theme .code-diagnostics p a {
-    color: #0d1dfc;
-}
-
-.dark-solarized-theme .code-diagnostics p a:visited {
-    color: #3d4afd;
-}
-
-.dark-solarized-theme .code-diagnostics p a:active {
-    color: #00CBEB;
-}
-
-.dark-solarized-theme .code-diagnostics p a:hover {
-    color: #00CBEB;
+    &:active,
+    &:hover {
+        color: #00CBEB;
+    }
 }
 
 .code-diagnostics div {

@@ -26,8 +26,7 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="reviewId"></param>
         /// <returns></returns>
-        [HttpGet(Name = "GetComments")]
-        [Route("{reviewId}")]
+        [HttpGet("/{reviewId}", Name = "GetComments")]
         public async Task<ActionResult<IEnumerable<CommentItemModel>>> GetCommentsAsync(string reviewId)
         {
             var comments = await _commentsManager.GetCommentsAsync(reviewId);

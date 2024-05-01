@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { CommentItemModel, Review } from 'src/app/_models/review';
@@ -12,7 +12,7 @@ import { WorkerService } from 'src/app/_services/worker/worker.service';
   templateUrl: './review-page.component.html',
   styleUrls: ['./review-page.component.scss']
 })
-export class ReviewPageComponent implements OnInit, AfterViewInit {
+export class ReviewPageComponent implements OnInit {
   reviewId : string | null = null;
   activeApiRevisionId : string | null = null;
   diffApiRevisionId : string | null = null;
@@ -52,14 +52,6 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
     ];
   }
 
-  ngAfterViewInit() {
-    this.commentsService.getComments(this.reviewId!).subscribe({
-      next: (response: CommentItemModel[]) => {
-        this.reviewComments = response;
-      }
-    });
-  }
-
   registerWorkerEventHandler() {
     this.workerService.onMessageFromApiTreeBuilder().subscribe(data => {
       if (data.directive === ReviewPageWorkerMessageDirective.CreatePageNavigation) {
@@ -67,17 +59,30 @@ export class ReviewPageComponent implements OnInit, AfterViewInit {
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.InsertCodeLineData) {
-        if (data.codePanelRowData.lineClasses.has("documentation")) {
+        if (data.codePanelRowData.rowClasses.has("documentation")) {
           if (this.otherCodePanelData.has(data.codePanelRowData.nodeId)) {
             this.otherCodePanelData.get(data.codePanelRowData.nodeId)?.documentation.push(data.codePanelRowData);
           } else {
             this.otherCodePanelData.set(data.codePanelRowData.nodeId, {
-              documentation: [data.codePanelRowData]
+              documentation: [data.codePanelRowData],
+              diagnostics: []
             });
           }
         } else {
           this.codeLinesDataBuffer.push(data.codePanelRowData);
         }
+      }
+
+      if (data.directive === ReviewPageWorkerMessageDirective.InsertDiagnosticsRowData) {
+        if (this.otherCodePanelData.has(data.codePanelRowData.nodeId)) {
+          this.otherCodePanelData.get(data.codePanelRowData.nodeId)?.diagnostics.push(data.codePanelRowData);
+        } else {
+          this.otherCodePanelData.set(data.codePanelRowData.nodeId, {
+            documentation: [],
+            diagnostics: [data.codePanelRowData]
+          });
+        }
+        this.codeLinesDataBuffer.push(data.codePanelRowData);
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodeLines) {

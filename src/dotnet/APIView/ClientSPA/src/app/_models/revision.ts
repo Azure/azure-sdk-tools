@@ -1,10 +1,16 @@
-import { ChangeHistory } from "./review"
+import { ChangeHistory, CodeDiagnostic } from "./review"
 
 export enum ReviewPageWorkerMessageDirective {
   CreatePageNavigation,
   InsertCodeLineData,
   UpdateCodeLines,
-  UpdateReviewModel
+  InsertDiagnosticsRowData
+}
+
+export enum CodePanelRowDatatype {
+  CodeLine,
+  Diagnostics,
+  Comment
 }
 
 export interface APIRevision {
@@ -55,18 +61,21 @@ export interface APITreeNode {
 }
 
 export interface CodePanelRowData {
+  rowType: CodePanelRowDatatype
   lineNumber?: number
   lineTokens?: StructuredToken[]
   nodeId: string
-  lineClasses: Set<string>
-  indent: number
+  rowClasses: Set<string>
+  indent?: number
   diffKind?: string
-  lineSize: number
+  rowSize: number
   toggleDocumentationClasses?: string
+  diagnostics?: CodeDiagnostic
 }
 
 export interface CodePanelToggleableData {
   documentation: CodePanelRowData[]
+  diagnostics: CodeDiagnostic[]
 }
 
 export interface InsertCodePanelRowDataMessage {

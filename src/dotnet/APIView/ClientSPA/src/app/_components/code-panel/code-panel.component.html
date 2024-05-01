@@ -4,14 +4,21 @@
 </div>
 <!--<button class="btn btnsm btn-danger" (click)="scrollToIndex(50)">click me</button>-->
 <div *ngIf="codePanelRowSource" class="viewport" (click)="onCodePanelItemCick($event)">
-  <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeId" [ngClass]="getClassObject(item.lineClasses)">
-    <div class="line-actions">
-        <span class="line-number">{{item.lineNumber}}</span>
-        <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
-    </div>
-    <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
-        <span *ngFor="let token of item.lineTokens" [ngClass]="getClassObject(token.renderClasses)">{{token.value}}</span>
-    </div>
+  <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeId" [ngClass]="getClassObject(item.rowClasses)">
+    <ng-container *ngIf="item.rowType === CodePanelRowDatatype.CodeLine">
+      <div class="line-actions">
+          <span class="line-number">{{item.lineNumber}}</span>
+          <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
+      </div>
+      <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
+          <span *ngFor="let token of item.lineTokens" [ngClass]="getClassObject(token.renderClasses)">{{token.value}}</span>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="item.rowType === CodePanelRowDatatype.Diagnostics">
+      <div>
+        <span>{{ item.diagnostics.text }} <a *ngIf="item.diagnostics.helpLinkUri" href="{{item.diagnostics.helpLinkUri}}" target="_blank">Details</a></span>
+      </div>
+    </ng-container>
   </div>
 </div>
 <ng-template #commentThreadRef class="d-none"></ng-template>

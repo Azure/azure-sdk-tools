@@ -1,18 +1,21 @@
 /// <reference lib="webworker" />
 
 import { ComputeTokenDiff } from "../_helpers/worker-helpers";
-import { CodePanelData } from "../_models/review";
-import { CodePanelRowData, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective, StructuredToken } from "../_models/revision";
+import { CodeDiagnostic, CodePanelData } from "../_models/review";
+import { CodePanelRowData, CodePanelRowDatatype, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective, StructuredToken } from "../_models/revision";
 import { APITreeNode } from "../_models/revision";
 
 let insertLineNumber = 0;
+let diagnostics: CodeDiagnostic[] = [];
+let diagnosticsTargetIds = new Set<string>();
 
 addEventListener('message', ({ data }) => {
   if (data instanceof ArrayBuffer) {
     let jsonString = new TextDecoder().decode(new Uint8Array(data));
 
     let reviewContent: CodePanelData = JSON.parse(jsonString);
-    let diagnostics = reviewContent.diagnostics;
+    diagnostics = reviewContent.diagnostics;
+    diagnosticsTargetIds = new Set<string>(diagnostics.map(diagnostic => diagnostic.targetId));
 
     let navTreeNodes: any[] = [];
     let treeNodeId : string[] = [];
@@ -28,11 +31,13 @@ addEventListener('message', ({ data }) => {
 
     postMessage(createNavigationMessage);
 
-    const updateCodeLineData = {
+    const updateCodeLineDataMessage = {
       directive: ReviewPageWorkerMessageDirective.UpdateCodeLines
     };
 
-    postMessage(updateCodeLineData);
+    postMessage(updateCodeLineDataMessage);
+    diagnostics = [];
+    diagnosticsTargetIds.clear();
   }
 });
 
@@ -49,9 +54,7 @@ addEventListener('message', ({ data }) => {
  * @param indent The indent level of the current node in the tree.
  */
 function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: number = 0) : any {
-  let nodeId = getTokenNodeIdHash(apiTreeNode, "top");
-
-  buildTokens(apiTreeNode, nodeId, "top", indent);
+  buildTokens(apiTreeNode, apiTreeNode.id, "top", indent);
 
   let treeNode: any = {
     label: apiTreeNode.name,
@@ -71,8 +74,7 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
   });
 
   if (apiTreeNode.bottomTokens.length > 0) {
-    let nodeId = getTokenNodeIdHash(apiTreeNode, "bottom");
-    buildTokens(apiTreeNode, nodeId, "bottom", indent);
+    buildTokens(apiTreeNode, apiTreeNode.id, "bottom", indent);
   }
 
   treeNode.children = children;
@@ -172,19 +174,20 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
     let insertLinesOfTokensMessage : InsertCodePanelRowDataMessage =  {
       directive: ReviewPageWorkerMessageDirective.InsertCodeLineData,
       codePanelRowData: {
+        rowType: CodePanelRowDatatype.CodeLine,
         lineNumber: 0,
         lineTokens : diffTokenLineResult[0],
-        lineClasses : beforeLineClasses,
+        rowClasses : beforeLineClasses,
         nodeId : id,
         indent : indent,
         diffKind : "Unchanged",
-        lineSize : 21
+        rowSize : 21
       } 
     };
 
     if (diffTokenLineResult[2] === true) {
       insertLinesOfTokensMessage.codePanelRowData.diffKind = "Removed";
-      insertLinesOfTokensMessage.codePanelRowData.lineClasses = beforeLineClasses;
+      insertLinesOfTokensMessage.codePanelRowData.rowClasses = beforeLineClasses;
       
       insertLineNumber++;
       insertLinesOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
@@ -192,7 +195,7 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
 
       insertLinesOfTokensMessage.codePanelRowData.lineTokens = diffTokenLineResult[1];
       insertLinesOfTokensMessage.codePanelRowData.diffKind = "Added";
-      insertLinesOfTokensMessage.codePanelRowData.lineClasses = afterLineClasses;
+      insertLinesOfTokensMessage.codePanelRowData.rowClasses = afterLineClasses;
 
       insertLineNumber++;
       insertLinesOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
@@ -215,6 +218,7 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
  */
 function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, position: string, indent: number = 0)
 {
+  const nodeId = getTokenNodeIdHash(apiTreeNode, position);
   const tokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
   const tokenLine : StructuredToken[] = [];
   const lineClasses = new Set<string>();
@@ -229,13 +233,14 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
       const insertLineOfTokensMessage : InsertCodePanelRowDataMessage =  {
         directive: ReviewPageWorkerMessageDirective.InsertCodeLineData,
         codePanelRowData: {
+          rowType: CodePanelRowDatatype.CodeLine,
           lineNumber: 0,
           lineTokens : tokenLine,
-          nodeId : id,
-          lineClasses : new Set(lineClasses), //new set to avoid reference sharing
+          nodeId : nodeId,
+          rowClasses : new Set(lineClasses), //new set to avoid reference sharing
           indent : indent,
           diffKind : "NoneDiff",
-          lineSize : 21
+          rowSize : 21
         }
       };
 
@@ -260,13 +265,14 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
     const insertLineOfTokensMessage : InsertCodePanelRowDataMessage =  {
       directive: ReviewPageWorkerMessageDirective.InsertCodeLineData,
       codePanelRowData: {
+        rowType: CodePanelRowDatatype.CodeLine,
         lineNumber: 0,
         lineTokens : tokenLine,
-        nodeId : id,
-        lineClasses : new Set(lineClasses), //new set to avoid reference sharing
+        nodeId : nodeId,
+        rowClasses : new Set(lineClasses), //new set to avoid reference sharing
         indent : indent,
         diffKind : "NoneDiff",
-        lineSize : 21
+        rowSize : 21
       } 
     };
 
@@ -278,8 +284,31 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
 
     postMessage(insertLineOfTokensMessage);
   }
+
+  // Append associated diagnostics rows
+  if (diagnosticsTargetIds.has(id)) {
+    const diagnosticsRows = diagnostics.filter(diagnostic => diagnostic.targetId === id);
+    diagnosticsRows.forEach(diagnostisRow => {
+      const rowSize = 21
+      let rowClasses = ["diagnostics"];
+      rowClasses.push(diagnostisRow.level.toLowerCase());
+      
+      const insertDiagnosticMessage : InsertCodePanelRowDataMessage = {
+        directive: ReviewPageWorkerMessageDirective.InsertDiagnosticsRowData,
+        codePanelRowData: {
+          rowType: CodePanelRowDatatype.Diagnostics,
+          nodeId: nodeId,
+          rowClasses: new Set<string>(rowClasses),
+          rowSize: rowSize,
+          diagnostics: diagnostisRow
+        }
+      };
+      
+      postMessage(insertDiagnosticMessage);
+    });
+  }
 }
 
 function lineHasDocumentationAbove(precedingLine : CodePanelRowData | undefined, currentLine : CodePanelRowData) : boolean {
-  return precedingLine !== undefined && precedingLine.lineClasses.has("documentation") && !currentLine.lineClasses.has("documentation");
+  return precedingLine !== undefined && precedingLine.rowClasses.has("documentation") && !currentLine.rowClasses.has("documentation");
 }

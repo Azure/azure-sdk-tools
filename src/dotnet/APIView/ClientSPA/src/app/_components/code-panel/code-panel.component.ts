@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, Sim
 import { BehaviorSubject, fromEvent, of, Subject, takeUntil } from 'rxjs';
 import { debounceTime, finalize, scan } from 'rxjs/operators';
 import { CommentItemModel } from 'src/app/_models/review';
+import { CodePanelRowDatatype } from 'src/app/_models/revision';
 import { CodePanelRowData, CodePanelToggleableData, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
 import { AfterViewInit } from '@angular/core';
@@ -27,6 +28,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
 
   codePanelRowSource: IDatasource | undefined;
   visibleCodePanelRowData: CodePanelRowData[] = [];
+  CodePanelRowDatatype = CodePanelRowDatatype;
   
   private destroyApiTreeNode$ = new Subject<void>();
   private destroyTokenLineData$ = new Subject<void>();

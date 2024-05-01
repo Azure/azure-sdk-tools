@@ -698,25 +698,109 @@
             }
         </div>
     }
-    
+
+
+    @*reviewPageContent.TotalActiveConversations = comments.Threads.Count(t => !t.IsResolved);
+    reviewPageContent.HasFatalDiagnostics*@
+
+
+    @{
+        var modalId = "";
+        var modalTitle = "";
+        var modalBody = "";
+        var checkboxId = "";
+        var checkboxName = "";
+
+        if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0
+        || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
+        && Model.ReviewContent.HasFatalDiagnostics)
+        {
+            modalId = "convoFatalModel";
+            modalTitle = "Approve Review";
+            modalBody = "Fatal Level Diagnostics Present:";
+            checkboxId = "fatalComboCheck";
+            checkboxName = "fatalComboCheck";
+        }
+        else if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0
+        || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
+        && !Model.ReviewContent.HasFatalDiagnostics)
+        {
+            modalId = "approveModel";
+            modalTitle = "Approve Review";
+            modalBody = "Active Conversations Present:";
+            checkboxId = "overrideConvo";
+            checkboxName = "overrideConvo";
+        }
+        else
+        {
+            modalId = "fatalErrorModel";
+            modalTitle = "Approve Review";
+            modalBody = "Fatal Level Diagnostics Present:";
+            checkboxId = "overrideDiag";
+            checkboxName = "overrideDiag";
+        }
+    }
+
     <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
         <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
-        <div class="modal fade" id="convoFatalModel" tabindex="-1" role="dialog">
+        <div class="modal fade" id="@modalId" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Convo and Fatal Model</h5>
+                        <h5 class="modal-title">@modalTitle</h5>
                     </div>
                     <div class="modal-body">
-                        <p> There are still active conversations. <br /> Would you like to review these first? </p>
+                        <p> @modalBody </p>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="@checkboxId" name="@checkboxName">
+                        <label class="form-check-label" for="@checkboxId">Override and Approve</label>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                         <a asp-page="Conversation" asp-route-id="@Model.ReviewContent.Review.Id">
                             <div class="btn btn-outline-secondary">Check Conversations</div>
                         </a>
-                        <button type="submit" class="btn btn-success">
-                            Approve API Anyway
+                        <button type="submit" class="btn btn-success" id="confirmButton" disabled>
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <partial name="_CommentFormPartial" model="@Model.ReviewContent.TaggableUsers" />
+
+
+    @*<form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+        <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
+        <div class="modal fade" id="convoFatalModel" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Approve Review</h5>
+                    </div>
+                    <div class="modal-body diag-label">
+                        <p> Fatal Level Diagnostics Present: </p>
+                    </div>
+                    <div class="form-check check-diag">
+                        <input type="checkbox" class="form-check-input convo-fatal-checkbox" id="fatalComboCheck" name="fatalComboCheck">
+                        <label class="form-check-label" for="fatalComboCheck">Override and Approve</label>
+                    </div>
+                    <div class="modal-body convo-label combo-check">
+                        <p> Active Conversations Present: </p>
+                    </div>
+                    <div class="form-check convo-check">
+                        <input type="checkbox" class="form-check-input convo-fatal-checkbox" id="convoComboCheck" name="convoComboCheck">
+                        <label class="form-check-label" for="convoComboCheck">Override and Approve</label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <a asp-page="Conversation" asp-route-id="@Model.ReviewContent.Review.Id">
+                            <div class="btn btn-outline-secondary">Check Conversations</div>
+                        </a>
+                        <button type="submit" class="btn btn-success" disabled>
+                            Confirm
                         </button>
                     </div>
                 </div>
@@ -732,49 +816,54 @@
                     <div class="modal-header">
                         <h5 class="modal-title">Approve Review</h5>
                     </div>
-                    <div class="modal-body">
-                        <p> There are still active conversations. <br /> Would you like to review these first? </p>
+                    <div class="modal-body convo-label">
+                        <p> Active Conversations Present: </p>
+                    </div>
+                    <div class="form-check convo-check">
+                        <input type="checkbox" class="form-check-input" id="overrideConvo" name="overrideConvo">
+                        <label class="form-check-label" for="overrideConvo">Override and Approve</label>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                         <a asp-page="Conversation" asp-route-id="@Model.ReviewContent.Review.Id">
                             <div class="btn btn-outline-secondary">Check Conversations</div>
                         </a>
-                        <button type="submit" class="btn btn-success">
-                            Approve API Anyway
+                        <button type="submit" class="btn btn-success" id="confirmButton" disabled>
+                            Confirm
                         </button>
                     </div>
                 </div>
             </div>
         </div>
     </form>
-    <partial name="_CommentFormPartial" model="@Model.ReviewContent.TaggableUsers" />
 
-    <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+    <partial name="_CommentFormPartial" model="@Model.ReviewContent.TaggableUsers" />
+     <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
         <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
         <div class="modal fade" id="fatalErrorModel" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Fatal Model</h5>
+                        <h5 class="modal-title">Approve Review</h5>
                     </div>
-                    <div class="modal-body">
-                        <p> There are still active conversations. <br /> Would you like to review these first? </p>
+                    <div class="modal-body diag-label">
+                        <p> Fatal Level Diagnostics Present: </p>
+                    </div>
+                    <div class="form-check check-diag">
+                        <input type="checkbox" class="form-check-input" id="overrideDiag" name="overrideDiag">
+                        <label class="form-check-label" for="overrideDiag">Override and Approve</label>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <a asp-page="Conversation" asp-route-id="@Model.ReviewContent.Review.Id">
-                            <div class="btn btn-outline-secondary">Check Conversations</div>
-                        </a>
-                        <button type="submit" class="btn btn-success">
-                            Approve API Anyway
+                        <button type="submit" class="btn btn-success" id="confirmButton" disabled>
+                            Confirm
                         </button>
                     </div>
                 </div>
             </div>
         </div>
     </form>
-    <partial name="_CommentFormPartial" model="@Model.ReviewContent.TaggableUsers" />
+    <partial name="_CommentFormPartial" model="@Model.ReviewContent.TaggableUsers" />*@
 </div>
 
 <partial name="Shared/_AddAPIRevisionsPartial" model="Model.ReviewContent.Review" />
@@ -788,3 +877,36 @@
         <partial name="Shared/_APIRevisionsPartial" model="(Model.ReviewContent.Review, Model.ReviewContent.APIRevisions, Model.ReviewContent.ActiveAPIRevision, Model.ReviewContent.DiffAPIRevision)" />
     </div>
 </div>
+
+
+@*write logic to update event listener id by id*@
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var checkbox = document.getElementById('overrideDiag');
+            var confirmButton = document.getElementById('confirmButton');
+
+            checkbox.addEventListener('change', function () {
+                console.log('Checkbox state:', this.checked);
+                confirmButton.disabled = !this.checked;
+            });
+        });
+    </script>
+}
+
+
+@*// Get all checkboxes with the specified class
+const checkboxes = document.querySelectorAll('.checkbox-class');
+
+// Attach event listener to each checkbox
+checkboxes.forEach(checkbox => {
+  checkbox.addEventListener('change', event => {
+    // Handle checkbox change event here
+  });
+});
+
+JQuery??
+// Attach event listener to checkboxes with the specified class
+$('.checkbox-class').on('change', function() {
+  // Handle checkbox change event here
+});*@

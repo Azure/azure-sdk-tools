@@ -87,6 +87,29 @@
     font-size: medium;
 }
 
+.form-check.check-diag {
+    padding-left: 4rem;
+    padding-bottom: 1.5rem;
+}
+
+.modal-body.diag-label {
+    padding-bottom: 0;
+}
+
+.form-check.convo-check {
+    padding-left: 4rem;
+    padding-bottom: 1.5rem;
+}
+
+.modal-body.convo-label {
+    padding-bottom: 0;
+}
+
+.modal-body.convo-label.combo-check {
+    padding-top: 0;
+}
+}
+
 .approval-list-group-item {
     list-style-type: none;
 }

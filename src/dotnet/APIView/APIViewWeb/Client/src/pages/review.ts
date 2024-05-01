@@ -370,3 +370,14 @@ $(() => {
     }
   });
 });
+
+
+
+
+//$("#overrideDiag").on('change', function () {
+//  if ($(this).is(":checked")) {
+//    $("#confirmButton").prop("disabled", false);
+//  } else {
+//    $("#confirmButton").prop("disabled", true);
+//  }
+//});

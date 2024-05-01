@@ -107,10 +107,19 @@
     --name-color: #{$base-text-color};
     --code-color: #db3984;
     --code-comment: green;
-    --code-diagnostics-error-color: #bf6b2e;
-    --code-diagnostics-warn-color: #bd9b00;
-    --code-diagnostics-info-color: #489491;
-    --code-diagnostics-fatal-color: #a10e5f;
+    --code-diagnostics-error-color: #ea868f;
+    --code-diagnostics-error-bg: #2c0b0e;
+    --code-diagnostics-error-border-color: #842029;
+    --code-diagnostics-error-link-color: #ea868f;
+    --code-diagnostics-warn-color: #ffda6a;
+    --code-diagnostics-warn-bg: #332701;
+    --code-diagnostics-warn-border-color: #997404;
+    --code-diagnostics-warn-link-color: #ffda6a;
+    --code-diagnostics-info-color: #6edff6;
+    --code-diagnostics-info-bg: #032830;
+    --code-diagnostics-info-border-color: #087990;
+    --code-diagnostics-info-link-color: #6edff6;
+    --code-added: #14432d;
     --code-removed: #491d24;
     --code-delta: #4c401a;
     /*----SVG-------------------------------------------------*/

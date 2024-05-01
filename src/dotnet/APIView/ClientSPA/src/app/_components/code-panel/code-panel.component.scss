@@ -15,6 +15,46 @@
         --max-cell-width: 0px;
         grid-template-columns: minmax(auto, max-content) 1fr;
         width: 500% !important;
+
+        &.diagnostics {
+            padding-left: 4vw;
+            grid-column:  span 2;
+            width: 70vw;
+
+            &.error {
+                background-color: var(--code-diagnostics-error-bg);
+                color: var(--code-diagnostics-error-color);
+                border-top: 1px solid var(--code-diagnostics-error-border-color);
+                border-bottom: 1px solid var(--code-diagnostics-error-border-color);
+                a {
+                    font-weight: bold;
+                    text-decoration: underline;
+                    color: var(--code-diagnostics-error-link-color);
+                }
+            }
+            &.warning {
+                background-color: var(--code-diagnostics-warn-bg);
+                color: var(--code-diagnostics-warn-color);
+                border-top: 1px solid var(--code-diagnostics-warn-border-color);
+                border-bottom: 1px solid var(--code-diagnostics-warn-border-color);
+                a {
+                    font-weight: bold;
+                    text-decoration: underline;
+                    color: var(--code-diagnostics-warn-link-color);
+                }
+            }
+            &.info {
+                background-color: var(--code-diagnostics-info-bg);
+                color: var(--code-diagnostics-info-color);
+                border-top: 1px solid var(--code-diagnostics-info-border-color);
+                border-bottom: 1px solid var(--code-diagnostics-info-border-color);
+                a {
+                    font-weight: bold;
+                    text-decoration: underline;
+                    color: var(--code-diagnostics-info-link-color);
+                }
+            }
+        }
     }
 
     .comment-thread {

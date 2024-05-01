@@ -4,7 +4,7 @@ trigger:
       - main
       - feature/*
       - release/*
-      - hotfix/*
+      - hotfix/* #test change
   paths:
     include:
       - .azure-pipelines/apiview.yml

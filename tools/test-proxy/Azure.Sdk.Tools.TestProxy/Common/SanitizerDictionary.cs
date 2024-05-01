@@ -58,6 +58,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
          * */
 
         private const string EMPTYGUID = "00000000-0000-0000-0000-000000000000";
+        private const string BASE64ZERO = "MA==";
 
         public List<RegisteredSanitizer> DefaultSanitizerList = new List<RegisteredSanitizer>
             {
@@ -98,7 +99,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "ACS Identity leverages these strings to store identity information."
                 ),
                 new RegisteredSanitizer(
-                    new GeneralRegexSanitizer(regex: "(?:[?&](sv|sig|se|srt|ss|sp)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
+                    new GeneralRegexSanitizer(regex: "(?:[?&](sig)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
                     "AZSDK1007",
                     "Common SAS URL Sanitizer. Applies to all headers, URIs, and text bodies."
                 ),
@@ -243,15 +244,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3004"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<Value>)(?<group>.*)(?:</Value>)", groupForReplace: "group"),
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<Value>)(?<group>.*)(?:</Value>)", groupForReplace: "group", value: BASE64ZERO),
                     "AZSDK3005"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedTid>)(?<group>.*)(?:</SignedTid>)", groupForReplace: "group"),
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedTid>)(?<group>.*)(?:</SignedTid>)", groupForReplace: "group", value: EMPTYGUID),
                     "AZSDK3006"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedOid>)(?<group>.*)(?:</SignedOid>)", groupForReplace: "group"),
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedOid>)(?<group>.*)(?:</SignedOid>)", groupForReplace: "group", value: EMPTYGUID),
                     "AZSDK3007"
                 ),
                 new RegisteredSanitizer(
@@ -659,6 +660,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..resourceLocation"),
                     "AZSDK3496"
+                ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..keyVaultClientId", value: EMPTYGUID),
+                    "AZSDK3497"
                 ),
                 #endregion
                 #region UriRegex

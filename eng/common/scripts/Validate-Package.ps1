@@ -163,6 +163,11 @@ function CreateUpdatePackageWorkItem($pkgInfo)
         $setReleaseState = $false
         $plannedDate = "unknown"
     }
+    $sdkType = $pkgInfo.SDKType;
+    # JS uses "utility" instead of "tool" in package.json
+    if ($sdkType -eq "utility") {
+        $sdkType = "tool"
+    }
         
     # Create or update package work item  
     &$EngCommonScriptsDir/Update-DevOps-Release-WorkItem.ps1 `
@@ -171,7 +176,7 @@ function CreateUpdatePackageWorkItem($pkgInfo)
         -version $versionString `
         -plannedDate $plannedDate `
         -packageRepoPath $pkgInfo.serviceDirectory `
-        -packageType $pkgInfo.SDKType `
+        -packageType $sdkType `
         -packageNewLibrary $pkgInfo.IsNewSDK `
         -serviceName "unknown" `
         -packageDisplayName "unknown" `

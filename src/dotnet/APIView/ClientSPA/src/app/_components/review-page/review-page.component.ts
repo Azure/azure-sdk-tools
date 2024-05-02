@@ -3,7 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { CommentItemModel, Review } from 'src/app/_models/review';
 import { CodePanelRowData, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
-import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
 
@@ -25,11 +24,12 @@ export class ReviewPageComponent implements OnInit {
   codeLinesDataBuffer: CodePanelRowData[] = [];
   otherCodePanelData: Map<string, CodePanelToggleableData> = new Map<string, CodePanelToggleableData>();
   codeLinesData: CodePanelRowData[] = [];
+  apiRevisionPageSize = 20;
 
 
   sideMenu: MenuItem[] | undefined;
 
-  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private commentsService: CommentsService, private workerService: WorkerService) {}
+  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private workerService: WorkerService) {}
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get('reviewId');
@@ -37,6 +37,7 @@ export class ReviewPageComponent implements OnInit {
     this.diffApiRevisionId = this.route.snapshot.queryParamMap.get('diffApiRevisionId');
 
     this.registerWorkerEventHandler();
+    this.loadReview(this.reviewId!);
     this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
 
     this.sideMenu = [
@@ -97,6 +98,14 @@ export class ReviewPageComponent implements OnInit {
           // Passing ArrayBufer to worker is way faster than passing object
           this.workerService.postToApiTreeBuilder(response);
         }
+    });
+  }
+
+  loadReview(reviewId: string) {
+    this.reviewsService.getReview(reviewId).subscribe({
+      next: (review: Review) => {
+        this.review = review;
+      }
     });
   }
 

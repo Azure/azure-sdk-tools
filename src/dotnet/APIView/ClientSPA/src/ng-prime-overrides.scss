@@ -412,3 +412,24 @@ p-contextmenusub {
 .p-button.p-button-icon-only.p-button-rounded {
     border-radius: 50%;
 }
+
+.p-panel {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 1px;
+    background-color: var(--base-fg-color);
+}
+
+.p-panel .p-panel-header {
+    border: none;
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+    cursor: pointer;
+}
+
+.p-panel .p-panel-content {
+    padding: 1.25rem;
+    border: none;
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+}

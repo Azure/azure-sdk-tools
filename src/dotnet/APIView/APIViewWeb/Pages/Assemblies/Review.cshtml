@@ -573,8 +573,18 @@
     </div>
 </div>
 <div class="container-fluid mx-0 px-0 sub-header-content">
-    <div class="row px-3 py-2 border-bottom" id="review-info-bar">
-        <partial name="Shared/_ReviewBadge" model="(Model.ReviewContent.Review, Model.ReviewContent.ActiveAPIRevision, Model.ReviewContent.DiffAPIRevision, Model.UserPreference)" />
+    <div class="row px-3 py-2 border-bottom">
+        @{
+            var reviewBadgeModel = new ReviewBadgeModel();
+            reviewBadgeModel.Review = Model.ReviewContent.Review;
+            reviewBadgeModel.APIRevisions = Model.ReviewContent.APIRevisions;
+            reviewBadgeModel.ActiveAPIRevision = Model.ReviewContent.ActiveAPIRevision;
+            reviewBadgeModel.DiffAPIRevision = Model.ReviewContent.DiffAPIRevision;
+            reviewBadgeModel.UserPreference = Model.UserPreference;
+            reviewBadgeModel.ShowDocumentation = Model.ShowDocumentation;
+            reviewBadgeModel.ShowDiffOnly = Model.ShowDiffOnly;
+        }
+        <partial name="Shared/_ReviewBadge" model="reviewBadgeModel" />
     </div>
 </div>
 

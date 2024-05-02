@@ -191,6 +191,71 @@ namespace APIViewWeb.Pages.Assemblies
         }
 
         /// <summary>
+        /// Get Revisions Partial
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <param name="showDoc"></param>
+        /// <param name="showDiffOnly"></param>
+        /// <returns></returns>
+        public async Task<PartialViewResult> OnGetAPIRevisionsPartialAsync(string reviewId, APIRevisionType apiRevisionType, bool showDoc = false, bool showDiffOnly = false)
+        {
+            var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            revisions = revisions.Where(r => r.APIRevisionType == apiRevisionType).OrderByDescending(c => c.CreatedOn).ToList();
+            (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
+                revisions: revisions,
+                activeRevision: default(APIRevisionListItemModel),
+                diffRevision: default(APIRevisionListItemModel),
+                forDiff: false,
+                showDocumentation: showDoc,
+                showDiffOnly: showDiffOnly
+            );
+            return Partial("_RevisionSelectPickerPartial", revisionSelectModel);
+        }
+
+        /// <summary>
+        /// Get Diff Revisions Partial
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <param name="showDoc"></param>
+        /// <param name="showDiffOnly"></param>
+        /// <returns></returns>
+        public async Task<PartialViewResult> OnGetAPIDiffRevisionsPartialAsync(string reviewId, string apiRevisionId, APIRevisionType apiRevisionType, bool showDoc = false, bool showDiffOnly = false)
+        {
+            var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+            if (apiRevisions.IsNullOrEmpty())
+            {
+                var notifcation = new NotificationModel() { Message = $"This review has no valid apiRevisons", Level = NotificatonLevel.Warning };
+                await _signalRHubContext.Clients.Group(User.GetGitHubLogin()).SendAsync("RecieveNotification", notifcation);
+            }
+
+            APIRevisionListItemModel activeRevision = default(APIRevisionListItemModel);
+
+            if (!Guid.TryParse(apiRevisionId, out _))
+            {
+                activeRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId, apiRevisions);
+            }
+            else
+            {
+                activeRevision = apiRevisions.FirstOrDefault(r => r.Id == apiRevisionId);
+            }
+
+            var revisionsForDiff = apiRevisions.Where(r => r.APIRevisionType == apiRevisionType && r.Id != activeRevision.Id).OrderByDescending(c => c.CreatedOn).ToList();
+
+            (IEnumerable<APIRevisionListItemModel> revisions, APIRevisionListItemModel activeRevision, APIRevisionListItemModel diffRevision, bool forDiff, bool showDocumentation, bool showDiffOnly) revisionSelectModel = (
+                revisions: revisionsForDiff,
+                activeRevision: activeRevision,
+                diffRevision: default(APIRevisionListItemModel),
+                forDiff: true,
+                showDocumentation: showDoc,
+                showDiffOnly: showDiffOnly
+            );
+            return Partial("_RevisionSelectPickerPartial", revisionSelectModel);
+        }
+
+        /// <summary>
         /// Toggle Review State
         /// </summary>
         /// <param name="id"></param>

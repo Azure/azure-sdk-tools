@@ -32,4 +32,15 @@ namespace APIViewWeb.LeanModels
         public ReviewContentModelDirective Directive { get; set; }
         public Dictionary<string, ReviewContentModel> CrossLanguageViewContent { get; set; } = new Dictionary<string, ReviewContentModel>();
     }
+
+    public class ReviewBadgeModel
+    {
+        public ReviewListItemModel Review { get; set; }
+        public IEnumerable<APIRevisionListItemModel> APIRevisions { get; set; }
+        public APIRevisionListItemModel ActiveAPIRevision { get; set; }
+        public APIRevisionListItemModel DiffAPIRevision { get; set; }
+        public UserPreferenceModel UserPreference { get; set; }
+        public bool? ShowDocumentation { get; set; }
+        public bool? ShowDiffOnly { get; set; }
+    }
 }

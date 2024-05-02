@@ -116,7 +116,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(
                 "Request Body Content{\"key\":\"Location\",\"value\":\"https://fakeazsdktestaccount.table.core.windows.net/Tables\"}",
                 logger.Logs[2 + offset].ToString());
-            Assert.Equal("URI: [ https://REDACTED.table.core.windows.net/Tables]" +
+            Assert.Equal("URI: [ https://Sanitized.table.core.windows.net/Tables]" +
                          Environment.NewLine + "Headers: [{\"Accept\":[\"application/json;odata=minimalmetadata\"],\"Accept-Encoding\":[\"gzip, deflate\"],\"Authorization\":[\"Sanitized\"],\"Connection\":[\"keep-alive\"]," +
                          "\"Content-Length\":[\"" + expectedContentLength + "\"],\"Content-Type\":[\"application/octet-stream\"],\"DataServiceVersion\":[\"3.0\"],\"Date\":[\"Tue, 18 May 2021 23:27:42 GMT\"]," +
                          "\"User-Agent\":[\"azsdk-python-data-tables/12.0.0b7 Python/3.8.6 (Windows-10-10.0.19041-SP0)\"],\"x-ms-client-request-id\":[\"Sanitized\"]," +

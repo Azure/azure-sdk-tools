@@ -64,6 +64,10 @@ export class ReviewsService {
       );
   }
 
+  getReview(reviewId: string) : Observable<Review> {
+    return this.http.get<Review>(this.baseUrl + `/${reviewId}`, { withCredentials: true });
+  }
+
   openReviewPage(reviewId: string) {
     window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}`, '_blank');
   }

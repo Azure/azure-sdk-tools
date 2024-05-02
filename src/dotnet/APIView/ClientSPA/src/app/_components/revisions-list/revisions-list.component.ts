@@ -58,7 +58,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     this.createFilters();
     this.createContextMenuItems();
     this.setDetailsIcons();
-    this.loadRevisions(0, this.pageSize * 2, true);
+    this.loadAPIRevisions(0, this.pageSize * 2, true);
     this.authService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.userProfile = userProfile;
@@ -72,7 +72,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         this.toggleShowAPIRevisionsAssignedToMe();
       }
       else {
-        this.loadRevisions(0, this.pageSize * 2, true);
+        this.loadAPIRevisions(0, this.pageSize * 2, true);
       }
       this.showSelectionActions = false;
       this.showDiffButton = false;
@@ -83,7 +83,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
    * Load revision from API
    *  * @param append wheather to add to or replace existing list
    */
-  loadRevisions(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string ="lastUpdatedOn",  sortOrder: number = 1) {
+  loadAPIRevisions(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string ="lastUpdatedOn",  sortOrder: number = 1) {
     let label : string = "";
     let author : string = "";
     let reviewId: string = this.review?.id ?? "";
@@ -185,7 +185,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     this.revisionsService.deleteAPIRevisions(this.review!.id, revisions.map(r => r.id)).subscribe({
       next: (response: any) => {
         if (response) {
-          this.loadRevisions(0, this.pageSize * 2, true);
+          this.loadAPIRevisions(0, this.pageSize * 2, true);
           this.clearActionButtons();
         }
       }
@@ -196,7 +196,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     this.revisionsService.restoreAPIRevisions(this.review!.id, revisions.map(r => r.id)).subscribe({
       next: (response: any) => {
         if (response) {
-          this.loadRevisions(0, this.pageSize * 2, true);
+          this.loadAPIRevisions(0, this.pageSize * 2, true);
           this.clearActionButtons();
         }
       }
@@ -207,7 +207,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     this.revisionsService.deleteAPIRevisions(revision.reviewId, [revision.id]).subscribe({
       next: (response: any) => {
         if (response) {
-          this.loadRevisions(0, this.pageSize * 2, true);
+          this.loadAPIRevisions(0, this.pageSize * 2, true);
           this.clearActionButtons();
         }
       }
@@ -240,7 +240,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     }
     this.showAPIRevisionsAssignedToMe = false;
     this.showDeletedAPIRevisions = false;
-    this.loadRevisions(0, this.pageSize * 2, true);
+    this.loadAPIRevisions(0, this.pageSize * 2, true);
   }
 
   /**
@@ -258,7 +258,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   toggleShowDeletedAPIRevisions() {
     this.showDeletedAPIRevisions = !this.showDeletedAPIRevisions;
     this.showAPIRevisionsAssignedToMe = false;
-    this.loadRevisions(0, this.pageSize * 2, true);
+    this.loadAPIRevisions(0, this.pageSize * 2, true);
   }
 
   /**
@@ -270,7 +270,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     if (this.showAPIRevisionsAssignedToMe) {
       this.review = null;
     }
-    this.loadRevisions(0, this.pageSize * 2, true);
+    this.loadAPIRevisions(0, this.pageSize * 2, true);
   }
 
   updateAPIRevisoinsListDetails() {
@@ -318,7 +318,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       {
         if (this.pagination && this.pagination?.noOfItemsRead! < this.pagination?.totalCount!)
         {
-          this.loadRevisions(this.pagination!.noOfItemsRead, this.pageSize, false, event.filters, this.sortField, this.sortOrder);
+          this.loadAPIRevisions(this.pagination!.noOfItemsRead, this.pageSize, false, event.filters, this.sortField, this.sortOrder);
         }
       }
       event.forceUpdate!();
@@ -329,7 +329,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
    * @param event the Filter event
    */
   onFilter(event: TableFilterEvent) {
-    this.loadRevisions(0, this.pageSize, true, event.filters);
+    this.loadAPIRevisions(0, this.pageSize, true, event.filters);
   }
 
   /**
@@ -356,6 +356,6 @@ export class RevisionsListComponent implements OnInit, OnChanges {
    * @param event the Filter event
    */
   onSort(event: SortEvent) {
-      this.loadRevisions(0, this.pageSize, true, null, event.field, event.order);
+      this.loadAPIRevisions(0, this.pageSize, true, null, event.field, event.order);
     }
 }

@@ -45,7 +45,7 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
-        /// Endpoint used by Client SPA for listing reviews.
+        /// Retrieves a list of reviews grouped by pages
         /// </summary>
         /// <param name="pageParams"></param>
         /// <param name="filterAndSortParams"></param>
@@ -59,7 +59,23 @@ namespace APIViewWeb.LeanControllers
         }
 
         /// <summary>
-        /// Endpoint used by Client SPA for creating reviews.
+        /// Retrieves a review by its id
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <returns></returns>
+        [HttpGet("{reviewId}", Name = "GetReview")]
+        public async Task<ActionResult<ReviewListItemModel>> GetReviewAsync(string reviewId)
+        {
+            var review = await _reviewManager.GetReviewAsync(User, reviewId);
+            if (review != null)
+            {
+                return new LeanJsonResult(review, StatusCodes.Status200OK);
+            }
+            return StatusCode(StatusCodes.Status404NotFound);
+        }
+
+        /// <summary>
+        /// Create a Reviews
         /// </summary>
         /// <param name="reviewCreationParam"></param>
         /// <returns></returns>

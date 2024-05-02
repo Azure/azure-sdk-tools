@@ -236,7 +236,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3002"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "token=(?<token>[^&\\\"]+)($|&)", groupForReplace: "token"),
+                    new BodyRegexSanitizer(regex: "token=(?<token>[^&\\\"]+)", groupForReplace: "token"),
                     "AZSDK3003"
                 ),
                 new RegisteredSanitizer(

@@ -15,10 +15,8 @@ using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 
 namespace Azure.Sdk.Tools.PipelineWitness
@@ -37,24 +35,21 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             builder.Services.AddSingleton<TokenCredential, DefaultAzureCredential>();
 
-            builder.Services.AddAzureClients(builder =>
+            builder.Services.AddAzureClients(azureBuilder =>
             {
-                builder.UseCredential(provider => provider.GetRequiredService<TokenCredential>());
-                builder.AddCosmosServiceClient(new Uri(settings.CosmosAccountUri));
-                builder.AddBlobServiceClient(new Uri(settings.BlobStorageAccountUri));
-                builder.AddQueueServiceClient(new Uri(settings.QueueStorageAccountUri))
+                azureBuilder.UseCredential(provider => provider.GetRequiredService<TokenCredential>());
+                azureBuilder.AddCosmosServiceClient(new Uri(settings.CosmosAccountUri));
+                azureBuilder.AddBlobServiceClient(new Uri(settings.BlobStorageAccountUri));
+                azureBuilder.AddQueueServiceClient(new Uri(settings.QueueStorageAccountUri))
                     .ConfigureOptions(o => o.MessageEncoding = Storage.Queues.QueueMessageEncoding.Base64);
             });
 
             builder.Services.AddSingleton<IAsyncLockProvider>(provider => new CosmosAsyncLockProvider(provider.GetRequiredService<CosmosClient>(), settings.CosmosDatabase, settings.CosmosAsyncLockContainer));
             builder.Services.AddTransient(CreateVssConnection);
-            builder.Services.AddVssClient<TestResultsHttpClient>();
-            builder.Services.AddVssClient<BuildHttpClient>();
 
             builder.Services.AddLogging();
             builder.Services.AddTransient<BlobUploadProcessor>();
             builder.Services.AddTransient<Func<BlobUploadProcessor>>(provider => provider.GetRequiredService<BlobUploadProcessor>);
-            builder.Services.AddTransient<BuildLogProvider>();
 
             builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
 
@@ -70,14 +65,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
             }
         }
 
-        private static void AddVssClient<T>(this IServiceCollection services) where T : class, IVssHttpClient
+        private static void AddCosmosServiceClient<TBuilder>(this TBuilder builder, Uri serviceUri) where TBuilder : IAzureClientFactoryBuilderWithCredential
         {
-            services.AddTransient(provider => provider.GetRequiredService<VssConnection>().GetClient<T>());
-        }
-
-        private static IAzureClientBuilder<CosmosClient, CosmosClientOptions> AddCosmosServiceClient<TBuilder>(this TBuilder builder, Uri serviceUri) where TBuilder : IAzureClientFactoryBuilderWithCredential
-        {
-            return builder.RegisterClientFactory((CosmosClientOptions options, TokenCredential cred) => new CosmosClient(serviceUri.AbsoluteUri, cred, options));
+            builder.RegisterClientFactory((CosmosClientOptions options, TokenCredential cred) => new CosmosClient(serviceUri.AbsoluteUri, cred, options));
         }
 
         private static VssConnection CreateVssConnection(IServiceProvider provider)

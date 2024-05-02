@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                 {
                     await using IAsyncLock asyncLock = await this.asyncLockProvider.GetLockAsync("UpdateBuildDefinitions", processEvery, stoppingToken);
 
-                    // if there's no asyncLock, this process has alread completed in the last hour
+                    // if there's no asyncLock, this process has already completed in the last hour
                     if (asyncLock != null)
                     {
                         BlobUploadProcessor runProcessor = this.runProcessorFactory.Invoke();

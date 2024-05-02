@@ -44,6 +44,7 @@ import com.github.javaparser.ast.modules.ModuleDeclaration;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
 import com.github.javaparser.ast.nodeTypes.NodeWithType;
+import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.ReferenceType;
 import com.github.javaparser.ast.type.Type;
@@ -968,6 +969,22 @@ public class JavaASTAnalyser implements Analyser {
                         // throw exceptions
                         getThrowException(callableDeclaration);
 
+                        // Show the returned latest version from getLatest method of the service version enum type
+                        if(typeDeclaration.isEnumDeclaration() && ((EnumDeclaration) typeDeclaration).getImplementedTypes()
+                                    .stream()
+                                    .anyMatch(implementedType -> implementedType.getName().toString().equals("ServiceVersion"))) {
+
+                            if ((callableDeclaration instanceof MethodDeclaration)
+                                    && callableDeclaration.getNameAsString().equals("getLatest")) {
+                                ((MethodDeclaration) callableDeclaration).getBody()
+                                        .flatMap(blockStmt -> blockStmt.getStatements()
+                                                .stream()
+                                                .filter(Statement::isReturnStmt)
+                                                .findFirst())
+                                        .ifPresent(ret -> addInlineComment("// returns " + ret.getChildNodes().get(0)));
+                            }
+                        }
+
                         // close statements
                         addNewLine();
                     });
@@ -1523,6 +1540,10 @@ public class JavaASTAnalyser implements Analyser {
         Arrays.fill(bytes, (byte) ' ');
 
         return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    private void addInlineComment(String comment) {
+        addToken(SPACE, new Token(COMMENT, comment), NOTHING);
     }
 
     private void addComment(String comment) {

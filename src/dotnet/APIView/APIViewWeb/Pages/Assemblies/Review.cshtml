@@ -73,7 +73,6 @@
         <ul class="list-group collapse mb-3@(approvalCollapseState)" id="approveCollapse">
             <li class="list-group-item text-center">
                 <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
-                    <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
                     @if (Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Approvers.Any())
                     {
                         @if (Model.ReviewContent.ActiveAPIRevision.Approvers.Contains(User.GetGitHubLogin()))
@@ -84,92 +83,48 @@
                         }
                         else
                         {
-                            var isActiveRevisionAhead = (Model.ReviewContent.DiffAPIRevision == null)? true: Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn;
+                            var isActiveRevisionAhead = (Model.ReviewContent.DiffAPIRevision == null) ? true : Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn;
+                            var dataBSTarget = "";
 
-                            @*Convo and Fatal*@
-                            @if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 
-                                || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
+                            if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
                                 && Model.ReviewContent.HasFatalDiagnostics
                                 && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
-                           && isActiveRevisionAhead)
+                                && isActiveRevisionAhead)
                             {
-                                <span class="small text-muted">Approves the current revision of the API</span>
-                                <div class="d-grid gap-2">
-                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#convoFatalModel">
-                                        Approve
-                                    </button>
-                                </div>
+                                dataBSTarget = "#convoFatalModel";
                             }
-
-                            @*Original - Convo not Fatal*@
-                            else if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 
-                                || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
+                            else if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
                                 && !Model.ReviewContent.HasFatalDiagnostics
                                 && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
-                           && isActiveRevisionAhead)
+                                && isActiveRevisionAhead)
                             {
-                                <span class="small text-muted">Approves the current revision of the API</span>
-                                <div class="d-grid gap-2">
-                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModel">
-                                        Approve
-                                    </button>
-                                </div>
+                                dataBSTarget = "#approveModel";
+                            }
+                            else if (!(Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
+                                && Model.ReviewContent.HasFatalDiagnostics
+                                && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
+                                && isActiveRevisionAhead)
+                            {
+                                dataBSTarget = "#fatalErrorModel";
                             }
 
-                            @*Fatal not Convo*@
-                            else if (!(Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0
-                           || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
-                           && Model.ReviewContent.HasFatalDiagnostics
-                           && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
-                           && isActiveRevisionAhead)
-                            {
-                                <span class="small text-muted">Approves the current revision of the API</span>
-                                <div class="d-grid gap-2">
-                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#fatalErrorModel">
-                                        Approve
-                                    </button>
-                                </div>
-                            }
-
-                            else
-                            {
-                                @if (Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
-                               && isActiveRevisionAhead)
-                                {
-                                    <span class="small text-muted">Approves the current revision of the API</span>
-                                    <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-success">Approve</button>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-outline-secondary" disabled>Cannot Approve</button>
-                                    </div>
-                                }
-                            }
+                            <span class="small text-muted">Approves the current revision of the API</span>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="@dataBSTarget">
+                                    Approve
+                                </button>
+                            </div>
                         }
                     }
                     else
                     {
-                        @if (Model.ReviewContent.ActiveAPIRevision.Approvers.Contains(User.GetGitHubLogin()))
-                        {
-                            <div class="d-grid gap-2" data-bs-placement="bottom" data-bs-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
-                                <button type="submit" class="btn btn-outline-secondary" disabled >
-                                    Revert API Approval
-                                </button>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="d-grid gap-2" data-bs-placement="bottom" data-bs-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
-                                <button type="submit" class="btn btn-outline-secondary" disabled>
-                                    Approve API
-                                </button>
-                            </div>
-                        }
+                        <div class="d-grid gap-2" data-bs-placement="bottom" data-bs-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
+                            <button type="submit" class="btn btn-outline-secondary" disabled>
+                                Approve API
+                            </button>
+                        </div>
                     }
-                </form>
+            </form>
                 @{
                     var approvers = Model.ReviewContent.ActiveAPIRevision.Approvers;
                     @if (approvers.Count() > 0)
@@ -739,27 +694,27 @@
                     </div>
                     @if (modalId=="convoFatalModel")
                     {
-                        <div class="modal-body">
+                        <div class="modal-body check-description">
                             <p> Fatal Level Diagnostics Present: </p>
                         </div>
-                        <div class="form-check confirm-approval">
+                        <div class="form-check override-check">
                             <input type="checkbox" class="form-check-input" id="overrideDiag" name="overrideDiag">
                             <label class="form-check-label" for="overrideDiag"> Override and Approve </label>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body check-description">
                             <p> Open Conversations Present: </p>
                         </div>
-                        <div class="form-check confirm-approval">
+                        <div class="form-check override-check">
                             <input type="checkbox" class="form-check-input" id="overrideConvo" name="overrideConvo">
                             <label class="form-check-label" for="overrideConvo"> Override and Approve </label>
                         </div>
                     }
                     else
                     {
-                        <div class="modal-body">
+                        <div class="modal-body check-description">
                             <p> @modalBody </p>
                         </div>
-                        <div class="form-check">
+                        <div class="form-check override-check">
                             <input type="checkbox" class="form-check-input" id="@checkboxId" name="@checkboxName">
                             <label class="form-check-label" for="@checkboxId">Override and Approve</label>
                         </div>
@@ -792,55 +747,65 @@
     </div>
 </div>
 
-@*@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            $('#convoFatalModel, #approveModel, #fatalErrorModel').on('shown.bs.modal', function () {
-                var confirmButton = document.getElementById('confirmButton');
-                var overrideDiag = document.getElementById('overrideDiag');
-                var overrideConvo = document.getElementById('overrideConvo');
 
-                var checkboxes = [overrideDiag, convoFatalCheck, overrideConvo].filter(Boolean); // filter out null values
+@*<form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+    <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
 
-                checkboxes.forEach(function (checkbox) {
-                    checkbox.addEventListener('change', function () {
-                        var bothChecked = convoFatalCheck && overrideDiag.checked;
-                        var overrideDiagChecked = overrideDiag.checked;
-                        var overrideConvoChecked = overrideConvo.checked;
+    @{
+        var issueDict = new Dictionary<string, (string, string, string)>
+        {
+            ["openConvos"] = ("Active Conversations Present:", "overrideConvo", "overrideConvo"),
+            ["fatalDiagnostics"] = ("Fatal Diagnostics Present:", "overrideDiag", "overrideDiag")
+        };
 
-                        confirmButton.disabled = !(bothChecked || overrideDiagChecked || overrideConvoChecked);
-                    });
-                });
-            });
-        });
-    </script>
-}*@
+        List<string> issueList = new List<string>();
+        string modalId = "";
 
+        if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0) && Model.ReviewContent.HasFatalDiagnostics)
+        {
+            modalId = "convoFatalModel";
+            issueList = new List<string> { "openConvos", "fatalDiagnostics" };
+        }
+        else if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0) && !Model.ReviewContent.HasFatalDiagnostics)
+        {
+            modalId = "approveModel";
+            issueList = new List<string> { "openConvos" };
+        }
+        else
+        {
+            modalId = "fatalErrorModel";
+            issueList = new List<string> { "fatalDiagnostics" };
+        }
 
-@*@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            var overrideDiag = document.getElementById('overrideDiag');
-            var convoFatalCheck = document.getElementById('convoFatalCheck');
-            var overrideConvo = document.getElementById('overrideConvo');
-            var confirmButton = document.getElementById('confirmButton');
-
-            var checkboxes = [overrideDiag, convoFatalCheck, overrideConvo];
-
-            checkboxes.forEach(function (checkbox) {
-                checkbox.addEventListener('change', function () {
-                    var bothChecked = overrideDiag.checked && convoFatalCheck.checked;
-                    var overrideDiagChecked = overrideDiag.checked;
-                    var overrideConvoChecked = overrideConvo.checked;
-                    console.log('Both checkboxes or overrideDiag or overrideConvo checked:', bothChecked || overrideDiagChecked || overrideConvoChecked);
-                    confirmButton.disabled = !(bothChecked || overrideDiagChecked || overrideConvoChecked);
-                });
-            });
-        });
-    </script>
-}
-
-
-
-
+        foreach (var issue in issueList)
+        {
+            var (modalBody, checkboxId, checkboxName) = issueDict[issue];
+            <div class="modal fade" id="@modalId" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Approve Review</h5>
+                        </div>
+                        <div class="modal-body check-description">
+                            <p> @modalBody </p>
+                        </div>
+                        <div class="form-check override-check">
+                            <input type="checkbox" class="form-check-input" id="@checkboxId" name="@checkboxName">
+                            <label class="form-check-label" for="@checkboxId">Override and Approve</label>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <a asp-page="Conversation" asp-route-id="@Model.ReviewContent.Review.Id">
+                                <div class="btn btn-outline-secondary">Check Conversations</div>
+                            </a>
+                            <button type="submit" class="btn btn-success" id="confirmButton" disabled>
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</form>
 *@

@@ -87,13 +87,13 @@
     font-size: medium;
 }
 
-.form-check.check-diag {
+.form-check.override-check {
     padding-left: 4rem;
     padding-bottom: 1.5rem;
 }
 
-.modal-body.diag-label {
-    padding-bottom: 0;
+.modal-body.check-description {
+    padding-bottom: .5rem;
 }
 
 .form-check.convo-check {

@@ -18,6 +18,8 @@ import { ButtonModule } from 'primeng/button';
 import { TimeagoModule } from 'ngx-timeago';
 import { MenubarModule } from 'primeng/menubar';
 import { UiScrollModule  } from 'ngx-ui-scroll' ;
+import { PageOptionsSectionComponent } from 'src/app/_components/shared/page-options-section/page-options-section.component';
+import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-options/api-revision-options.component';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -30,6 +32,8 @@ const routes: Routes = [
     ReviewInfoComponent,
     CodePanelComponent,
     CommentThreadComponent,
+    PageOptionsSectionComponent,
+    ApiRevisionOptionsComponent
   ],
   imports: [
     SharedAppModule,

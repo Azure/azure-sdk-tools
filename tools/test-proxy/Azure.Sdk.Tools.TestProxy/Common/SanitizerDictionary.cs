@@ -672,7 +672,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK4000"
                 ),
                 new RegisteredSanitizer(
-                    new UriRegexSanitizer("REDACTED", regex: "(?<=http://|https://)(?<host>[^/?\\.]+)", groupForReplace: "host"),
+                    new UriRegexSanitizer(regex: "(?<=http://|https://)(?<host>[^/?\\.]+)", groupForReplace: "host"),
                     "AZSDK4001"
                 ),
                 #endregion

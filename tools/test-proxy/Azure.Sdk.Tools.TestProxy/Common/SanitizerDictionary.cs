@@ -740,10 +740,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <returns></returns>
         public List<RegisteredSanitizer> GetRegisteredSanitizers(ModifiableRecordSession session)
         {
-            var sanitizers = new List<RegisteredSanitizer>();
-
             lock (session.SanitizerLock)
             {
+                var sanitizers = new List<RegisteredSanitizer>();
+
                 foreach (var id in session.AppliedSanitizers)
                 {
                     if (Sanitizers.TryGetValue(id, out RegisteredSanitizer sanitizer))
@@ -755,9 +755,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         DebugLogger.LogError($"Failed to get a sanitizer with id {id}");
                     }
                 }
-            }
 
-            return sanitizers;
+                return sanitizers;
+            }
         }
 
         /// <summary>
@@ -766,9 +766,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <returns></returns>
         public List<RegisteredSanitizer> GetRegisteredSanitizers()
         {
-            var sanitizers = new List<RegisteredSanitizer>();
             lock (SessionSanitizerLock)
             {
+                var sanitizers = new List<RegisteredSanitizer>();
+
                 foreach (var id in SessionSanitizers)
                 {
                     if (Sanitizers.TryGetValue(id, out RegisteredSanitizer sanitizer))
@@ -776,9 +777,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         sanitizers.Add(sanitizer);
                     }
                 }
-            }
 
-            return sanitizers;
+                return sanitizers;
+            }
         }
 
         private bool _register(RecordedTestSanitizer sanitizer, string id)

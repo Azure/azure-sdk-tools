@@ -310,7 +310,7 @@ namespace APIViewWeb.Helpers
 
                     var activeRevisionTextLines = activeRevisionRenderableCodeFile.RenderText(showDocumentation: showDocumentation);
 
-                    var diffLines = InlineDiff.Compute(diffRevisionTextLines, activeRevisionTextLines, diffRevisionHTMLLines, activeRevisionHtmlLines);
+                    var diffLines = InlineDiff.Compute(activeRevisionTextLines, diffRevisionTextLines, activeRevisionHtmlLines, diffRevisionHTMLLines);
                     var headingsOfSectionsWithDiff = activeRevision.HeadingsOfSectionsWithDiff.ContainsKey(diffRevision.Id) ? activeRevision.HeadingsOfSectionsWithDiff[diffRevision.Id] : new HashSet<int>();
 
                     codeLines = CreateLines(diagnostics: fileDiagnostics, lines: diffLines, comments: comments, showDiffOnly: showDiffOnly,
@@ -437,7 +437,7 @@ namespace APIViewWeb.Helpers
                 {
                     var currentRootNode = activeRevisionRenderableCodeFile.GetCodeLineSectionRoot((int)sectionKeyA);
                     var previousRootNode = diffRevisionRenderableCodeFile.GetCodeLineSectionRoot((int)sectionKeyB);
-                    var diffSectionRoot = apiRevisionsManager.ComputeSectionDiff(previousRootNode, currentRootNode, diffRevisionRenderableCodeFile, activeRevisionRenderableCodeFile);
+                    var diffSectionRoot = apiRevisionsManager.ComputeSectionDiff(currentRootNode, previousRootNode, activeRevisionRenderableCodeFile, diffRevisionRenderableCodeFile);
                     diffLines = activeRevisionRenderableCodeFile.GetDiffCodeLineSection(diffSectionRoot);
                 }
                 else if (sectionKeyA != null)
@@ -447,10 +447,10 @@ namespace APIViewWeb.Helpers
                     var diffRevisionTextLines = new CodeLine[] { };
                     var activeRevisionTextLines = activeRevisionRenderableCodeFile.GetCodeLineSection((int)sectionKeyA, renderType: RenderType.Text);
                     diffLines = InlineDiff.Compute(
-                        diffRevisionTextLines,
                         activeRevisionTextLines,
-                        diffRevisionHtmlLines,
-                        activeRevisionHTMLLines);
+                        diffRevisionTextLines,
+                        activeRevisionHTMLLines,
+                        diffRevisionHtmlLines);
                 }
                 else
                 {
@@ -459,10 +459,10 @@ namespace APIViewWeb.Helpers
                     var diffRevisionTextLines = diffRevisionRenderableCodeFile.GetCodeLineSection((int)sectionKeyB, renderType: RenderType.Text);
                     var currentRevisionTextLines = new CodeLine[] { };
                     diffLines = InlineDiff.Compute(
-                        diffRevisionTextLines,
                         currentRevisionTextLines,
-                        diffRevisionHtmlLines,
-                        activeRevisionHTMLLines);
+                        diffRevisionTextLines,
+                        activeRevisionHTMLLines,
+                        diffRevisionHtmlLines);
                 }
                 
                 var headingsOfSectionsWithDiff = diffRevision.HeadingsOfSectionsWithDiff.ContainsKey(activeRevision.Id) ? 

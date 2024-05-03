@@ -10,7 +10,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
-using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -47,7 +46,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
         };
 
         private readonly ILogger<BlobUploadProcessor> logger;
-        private readonly BuildLogProvider logProvider;
         private readonly TestResultsHttpClient testResultsClient;
         private readonly BuildHttpClient buildClient;
         private readonly BlobContainerClient buildLogLinesContainerClient;
@@ -62,10 +60,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         public BlobUploadProcessor(
             ILogger<BlobUploadProcessor> logger,
-            BuildLogProvider logProvider,
             BlobServiceClient blobServiceClient,
-            BuildHttpClient buildClient,
-            TestResultsHttpClient testResultsClient,
+            VssConnection vssConnection,
             IOptions<PipelineWitnessSettings> options)
         {
             if (blobServiceClient == null)
@@ -75,9 +71,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.options = options ?? throw new ArgumentNullException(nameof(options));
-            this.logProvider = logProvider ?? throw new ArgumentNullException(nameof(logProvider));
-            this.buildClient = buildClient ?? throw new ArgumentNullException(nameof(buildClient));
-            this.testResultsClient = testResultsClient ?? throw new ArgumentNullException(nameof(testResultsClient));
             this.buildsContainerClient = blobServiceClient.GetBlobContainerClient(BuildsContainerName);
             this.buildTimelineRecordsContainerClient = blobServiceClient.GetBlobContainerClient(BuildTimelineRecordsContainerName);
             this.buildLogLinesContainerClient = blobServiceClient.GetBlobContainerClient(BuildLogLinesContainerName);
@@ -86,6 +79,14 @@ namespace Azure.Sdk.Tools.PipelineWitness
             this.testResultsContainerClient = blobServiceClient.GetBlobContainerClient(TestResultsContainerName);
             this.buildDefinitionsContainerClient = blobServiceClient.GetBlobContainerClient(BuildDefinitionsContainerName);
             this.pipelineOwnersContainerClient = blobServiceClient.GetBlobContainerClient(PipelineOwnersContainerName);
+
+            if (vssConnection == null)
+            {
+                throw new ArgumentNullException(nameof(vssConnection));
+            }
+
+            this.buildClient = vssConnection.GetClient<BuildHttpClient>();
+            this.testResultsClient = vssConnection.GetClient<TestResultsHttpClient>();
         }
 
         public async Task UploadBuildBlobsAsync(string account, Guid projectId, int buildId)
@@ -114,33 +115,33 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             if (build.Deleted)
             {
-                this.logger.LogInformation("Skipping deleted build. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                this.logger.LogInformation("Skipping deleted build. Project: {Project}, BuildId: {BuildId}", build.Project?.Name, buildId);
                 skipBuild = true;
             }
 
             if (build.StartTime == null)
             {
-                this.logger.LogWarning("Skipping build with null start time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                this.logger.LogWarning("Skipping build with null start time. Project: {Project}, BuildId: {BuildId}", build.Project?.Name, buildId);
                 skipBuild = true;
             }
 
             // FinishTime is used in blob paths and cannot be null
             if (build.FinishTime == null)
             {
-                this.logger.LogWarning("Skipping build with null finish time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                this.logger.LogWarning("Skipping build with null finish time. Project: {Project}, BuildId: {BuildId}", build.Project?.Name, buildId);
                 skipBuild = true;
             }
 
             // QueueTime is used in blob paths and cannot be null
             if (build.QueueTime == null)
             {
-                this.logger.LogWarning("Skipping build with null queue time. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                this.logger.LogWarning("Skipping build with null queue time. Project: {Project}, BuildId: {BuildId}", build.Project?.Name, buildId);
                 skipBuild = true;
             }
 
             if (build.Definition == null)
             {
-                this.logger.LogWarning("Skipping build with null definition property. Project: {Project}, BuildId: {BuildId}", build.Project.Name, buildId);
+                this.logger.LogWarning("Skipping build with null definition property. Project: {Project}, BuildId: {BuildId}", build.Project?.Name, buildId);
                 skipBuild = true;
             }
 
@@ -217,7 +218,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                         OrganizationName = account,
                         BuildDefinitionId = owner.Key,
                         Owners = owner.Value,
-                        Timestamp = new DateTimeOffset(build.FinishTime.Value).ToUniversalTime(),
+                        Timestamp = new DateTimeOffset(build.FinishTime!.Value).ToUniversalTime(),
                         EtlIngestDate = DateTimeOffset.UtcNow
                     }, jsonSettings);
 
@@ -425,7 +426,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 {
                     LogId = log.Id,
                     LineCount = log.LineCount,
-                    LogCreatedOn = log.CreatedOn.Value,
+                    LogCreatedOn = log.CreatedOn,
                     RecordId = logRecord?.Id,
                     ParentRecordId = logRecord?.ParentId,
                     RecordType = logRecord?.RecordType
@@ -492,7 +493,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     SourceVersion = build.SourceVersion,
                     Status = build.Status,
                     Tags = build.Tags?.Any() == true ? JsonConvert.SerializeObject(build.Tags, jsonSettings) : null,
-                    Url = $"https://dev.azure.com/{account}/{build.Project.Name}/_build/results?buildId={build.Id}",
+                    Url = $"https://dev.azure.com/{account}/{build.Project!.Name}/_build/results?buildId={build.Id}",
                     ValidationResults = build.ValidationResults,
                     EtlIngestDate = DateTime.UtcNow,
                 }, jsonSettings);
@@ -610,12 +611,12 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
                 // Over an open read stream and an open write stream, one line at a time, read, process, and write to
                 // blob storage
-                using (Stream logStream = await this.logProvider.GetLogStreamAsync(build.Project.Name, build.Id, log.LogId))
+                using (Stream logStream = await this.buildClient.GetBuildLogAsync(build.Project.Name, build.Id, log.LogId))
                 using (StreamReader logReader = new(logStream))
                 using (Stream blobStream = await blobClient.OpenWriteAsync(overwrite: true, new BlobOpenWriteOptions()))
                 using (StreamWriter blobWriter = new(blobStream))
                 {
-                    DateTimeOffset lastTimeStamp = log.LogCreatedOn;
+                    DateTimeOffset lastTimeStamp = log.LogCreatedOn ?? build.StartTime!.Value;
 
                     while (true)
                     {
@@ -626,7 +627,6 @@ namespace Azure.Sdk.Tools.PipelineWitness
                             break;
                         }
 
-                        bool isLastLine = logReader.EndOfStream;
                         lineNumber += 1;
                         characterCount += line.Length;
 
@@ -683,8 +683,8 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 string continuationToken = string.Empty;
                 int[] buildIds = new[] { build.Id };
 
-                DateTime minLastUpdatedDate = build.QueueTime.Value.AddHours(-1);
-                DateTime maxLastUpdatedDate = build.FinishTime.Value.AddHours(1);
+                DateTime minLastUpdatedDate = build.QueueTime!.Value.AddHours(-1);
+                DateTime maxLastUpdatedDate = build.FinishTime!.Value.AddHours(1);
 
                 DateTime rangeStart = minLastUpdatedDate;
 
@@ -827,7 +827,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
                 for (int batchMultiplier = 0; batchMultiplier < batchCount; batchMultiplier++)
                 {
-                    List<TestCaseResult> data = await this.testResultsClient.GetTestResultsAsync(build.Project.Id, testRun.Id, top: ApiBatchSize, skip: batchMultiplier * ApiBatchSize);
+                    List<TestCaseResult> data = await this.testResultsClient.GetTestResultsAsync(build.Project!.Id, testRun.Id, top: ApiBatchSize, skip: batchMultiplier * ApiBatchSize);
 
                     foreach (TestCaseResult record in data)
                     {

@@ -13,18 +13,18 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
     public class AzurePipelinesBuildDefinitionWorker : BackgroundService
     {
         private readonly ILogger<AzurePipelinesBuildDefinitionWorker> logger;
-        private readonly BlobUploadProcessor runProcessor;
+        private readonly Func<BlobUploadProcessor> runProcessorFactory;
         private readonly IOptions<PipelineWitnessSettings> options;
         private readonly IAsyncLockProvider asyncLockProvider;
 
         public AzurePipelinesBuildDefinitionWorker(
             ILogger<AzurePipelinesBuildDefinitionWorker> logger,
-            BlobUploadProcessor runProcessor,
+            Func<BlobUploadProcessor> runProcessorFactory,
             IAsyncLockProvider asyncLockProvider,
             IOptions<PipelineWitnessSettings> options)
         {
             this.logger = logger;
-            this.runProcessor = runProcessor;
+            this.runProcessorFactory = runProcessorFactory;
             this.options = options;
             this.asyncLockProvider = asyncLockProvider;
         }
@@ -42,12 +42,13 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
                 {
                     await using IAsyncLock asyncLock = await this.asyncLockProvider.GetLockAsync("UpdateBuildDefinitions", processEvery, stoppingToken);
 
-                    // if there's no asyncLock, this process has alread completed in the last hour
+                    // if there's no asyncLock, this process has already completed in the last hour
                     if (asyncLock != null)
                     {
+                        BlobUploadProcessor runProcessor = this.runProcessorFactory.Invoke();
                         foreach (string project in settings.Projects)
                         {
-                            await this.runProcessor.UploadBuildDefinitionBlobsAsync(settings.Account, project);
+                            await runProcessor.UploadBuildDefinitionBlobsAsync(settings.Account, project);
                         }
                     }
                 }

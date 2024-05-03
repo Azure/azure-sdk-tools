@@ -1,3 +1,86 @@
 <app-page-options-section sectionName="APIRevision Options">
-    <div>Some Dummy Content</div>
+    <div class="py-2">
+        <div class="d-grid gap-4">
+            <span class="p-float-label mb-2">
+                <p-dropdown 
+                [options]="activeApiRevisionsMenu"
+                [(ngModel)]="selectedActiveAPIRevision"
+                placeholder="Active APIRevision"
+                optionLabel="label"
+                inputId="active-api-revision-select"
+                [style]="{'width':'100%'}"
+                [panelStyle]="{'width':'100px'}"
+                [filter]="true"
+                filterBy="resolvedLabel"
+                [resetFilterOnHide]="true"
+                [virtualScroll]="true"
+                [virtualScrollItemSize]="70"
+                scrollHeight="400px"
+                >
+                <ng-template pTemplate="selectedItem">
+                    <div class="flex align-items-center selected-item-content" *ngIf="selectedActiveAPIRevision">
+                        <i class="{{ selectedActiveAPIRevision.typeClass }}"></i>
+                        <span *ngIf="selectedActiveAPIRevision.prNo"> {{ selectedActiveAPIRevision.prNo }}</span>
+                        <span class="badge text-bg-primary ms-2">ver: {{ selectedActiveAPIRevision.version }}</span>
+                        <i class="fas fa-check-circle text-success ms-2" *ngIf="selectedActiveAPIRevision.isApproved"></i>
+                        <span class="ms-2">{{ selectedActiveAPIRevision.creatorBy }}</span>
+                    </div>
+                </ng-template>
+                <ng-template let-apiRevision pTemplate="item">
+                    <div class="flex align-items-center gap-2">
+                        <i class="{{ apiRevision.typeClass }}"></i>
+                        <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
+                        <span class="badge text-bg-primary ms-2">ver: {{ apiRevision.version }}</span>
+                        <i class="fas fa-check-circle text-success ms-2" *ngIf="apiRevision.isApproved"></i>
+                        <span class="ms-2">{{ apiRevision.creatorBy }}</span>
+                        <div class="small"><span class="badge text-bg-info">crt: {{ apiRevision.createdOn | timeago }}</span><span class="badge text-bg-info ms-2">lstUpd: {{ apiRevision | lastUpdatedOn | timeago }}</span></div>
+                        <div>{{ apiRevision.label }}</div>
+                    </div>
+                </ng-template>
+            </p-dropdown>
+                <label for="active-api-revision-select">Active APIRevision</label>
+            </span>
+    
+            <span class="p-float-label">
+                <p-dropdown 
+                [options]="diffApiRevisionsMenu"
+                [(ngModel)]="selectedDiffAPIRevision"
+                placeholder="Diff APIRevision"
+                optionLabel="label"
+                inputId="diff-api-revision-select"
+                [style]="{'width':'100%'}"
+                [panelStyle]="{'width':'100px'}"
+                [filter]="true"
+                filterBy="resolvedLabel"
+                [resetFilterOnHide]="true"
+                [showClear]="true"
+                [virtualScroll]="true"
+                [virtualScrollItemSize]="70"
+                scrollHeight="400px"
+                >
+                <ng-template pTemplate="selectedItem">
+                    <div class="flex align-items-center selected-item-content" *ngIf="selectedDiffAPIRevision">
+                        <i class="{{ selectedDiffAPIRevision.typeClass }}"></i>
+                        <span *ngIf="selectedDiffAPIRevision.prNo"> {{ selectedDiffAPIRevision.prNo }}</span>
+                        <span class="badge text-bg-primary ms-2">ver: {{ selectedDiffAPIRevision.version }}</span>
+                        <i class="fas fa-check-circle text-success ms-2" *ngIf="selectedDiffAPIRevision.isApproved"></i>
+                        <span class="ms-2">{{ selectedDiffAPIRevision.creatorBy }}</span>
+                    </div>
+                </ng-template>
+                <ng-template let-apiRevision pTemplate="item">
+                    <div class="flex align-items-center gap-2">
+                        <i class="{{ apiRevision.typeClass }}"></i>
+                        <span *ngIf="apiRevision.prNo"> {{ apiRevision.prNo }}</span>
+                        <span class="badge text-bg-primary ms-2">ver: {{ apiRevision.version }}</span>
+                        <i class="fas fa-check-circle text-success ms-2" *ngIf="apiRevision.isApproved"></i>
+                        <span class="ms-2">{{ apiRevision.creatorBy }}</span>
+                        <div class="small"><span class="badge text-bg-info">crt: {{ apiRevision.createdOn | timeago }}</span><span class="badge text-bg-info ms-2">lstUpd: {{ apiRevision | lastUpdatedOn | timeago }}</span></div>
+                        <div>{{ apiRevision.label }}</div>
+                    </div>
+                </ng-template>
+            </p-dropdown>
+                <label for="diff-api-revision-select">Diff APIRevision</label>
+            </span>
+        </div>
+    </div>
 </app-page-options-section>

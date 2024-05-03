@@ -10,8 +10,8 @@ namespace APIViewWeb.LeanModels
         ProceedWithPageLoad = 0,
         TryGetlegacyReview,
         ErrorDueToInvalidAPIRevisonProceedWithPageLoad,
-        ErrorDueToInvalidAPIRevisonRedirectToIndexPage
-
+        ErrorDueToInvalidAPIRevisonRedirectToIndexPage,
+        RedirectToSPAUI
     }
 
     public class ReviewContentModel

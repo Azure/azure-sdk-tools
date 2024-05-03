@@ -92,6 +92,12 @@ namespace APIViewWeb.Pages.Assemblies
                 showDocumentation: (ShowDocumentation ?? false), showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                 diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
+            if (ReviewContent.Directive == ReviewContentModelDirective.RedirectToSPAUI)
+            {
+                var uri = $"https://spa.{Request.Host}/review/{id}?activeApiRevisionId={revisionId}";
+                return Redirect(uri);
+            }
+
             if (ReviewContent.Directive == ReviewContentModelDirective.TryGetlegacyReview)
             {
                 // Check if you can get review from legacy data

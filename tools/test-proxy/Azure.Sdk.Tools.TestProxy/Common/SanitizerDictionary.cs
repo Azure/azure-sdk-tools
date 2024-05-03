@@ -590,7 +590,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3478"
                 ),
                 new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..applicationId"),
+                    new BodyKeySanitizer("$..applicationId", value: EMPTYGUID),
                     "AZSDK3479"
                 ),
                 new RegisteredSanitizer(

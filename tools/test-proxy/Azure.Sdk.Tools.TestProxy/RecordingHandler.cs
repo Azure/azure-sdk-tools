@@ -458,13 +458,16 @@ namespace Azure.Sdk.Tools.TestProxy
             var sanitizers = SanitizerRegistry.GetSanitizers(session);
 
             // we don't need to re-sanitize with recording-applicable sanitizers every time. just the very first one
-            if (!session.IsSanitized)
+            lock (session)
             {
-                session.IsSanitized = true;
-
-                foreach (RecordedTestSanitizer sanitizer in sanitizers)
+                if (!session.IsSanitized)
                 {
-                    session.Session.Sanitize(sanitizer);
+                    session.IsSanitized = true;
+
+                    foreach (RecordedTestSanitizer sanitizer in sanitizers)
+                    {
+                        session.Session.Sanitize(sanitizer);
+                    }
                 }
             }
 

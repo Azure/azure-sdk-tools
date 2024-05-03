@@ -111,7 +111,7 @@
                 <i class="{{ badgeClass.get(revision.apiRevisionType) }} me-2"></i>
             </td> 
             <td *ngIf="!showAPIRevisionsAssignedToMe">{{ (revision.createdOn !== null) ? (revision.createdOn | timeago) : "" }}</td>
-            <td *ngIf="!showAPIRevisionsAssignedToMe">{{ (revision.lastUpdatedOn !== null) ? (revision | lastUpdatedOn| timeago) : "" }}</td>
+            <td *ngIf="!showAPIRevisionsAssignedToMe">{{ (revision.lastUpdatedOn !== null) ? (revision | lastUpdatedOn | timeago) : "" }}</td>
             <td *ngIf="showAPIRevisionsAssignedToMe">{{ (revision.assignedReviewers[0].assingedOn !== null) ? (revision.assignedReviewers[0].assingedOn | timeago) : "" }}</td>
             <td *ngIf="showAPIRevisionsAssignedToMe">{{revision.assignedReviewers[0].assignedBy}}</td>
         </tr>

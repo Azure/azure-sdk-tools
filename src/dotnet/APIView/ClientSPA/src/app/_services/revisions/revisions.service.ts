@@ -19,8 +19,8 @@ export class RevisionsService {
   constructor(private http: HttpClient, private configService: ConfigService) { }
 
   getAPIRevisions(noOfItemsRead: number, pageSize: number,
-    reviewId : string, label: string, author: string, 
-    details: string [], sortField: string, sortOrder: number, isDeleted: boolean = false, isAssignedToMe: boolean = false
+    reviewId : string, label: string | undefined = undefined, author: string | undefined = undefined, 
+    details: string [] = [], sortField: string = "lastUpdatedOn", sortOrder: number = 1, isDeleted: boolean = false, isAssignedToMe: boolean = false
     ): Observable<PaginatedResult<APIRevision[]>> {
     let params = new HttpParams();
     params = params.append('noOfItemsRead', noOfItemsRead);

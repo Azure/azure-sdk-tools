@@ -19,13 +19,11 @@ import { SidebarModule } from 'primeng/sidebar';
 import { TimeagoModule } from "ngx-timeago";
 import { ChipModule } from 'primeng/chip';
 import { BadgeModule } from 'primeng/badge';
-import { LanguageNamesPipe } from './_pipes/language-names.pipe';
 import { ContextMenuModule } from 'primeng/contextmenu';
 import { FileUploadModule } from 'primeng/fileupload';
 import { SplitterModule } from 'primeng/splitter';
 import { RevisionsListComponent } from './_components/revisions-list/revisions-list.component';
 import { ApprovalPipe } from './_pipes/approval.pipe';
-import { LastUpdatedOnPipe } from './_pipes/last-updated-on.pipe';
 import { Observable } from 'rxjs';
 import { ConfigService } from './_services/config/config.service';
 import { CookieService } from 'ngx-cookie-service';
@@ -46,7 +44,6 @@ export function initializeApp(configService: ConfigService) {
     ReviewsListComponent,
     RevisionsListComponent,
     ApprovalPipe,
-    LastUpdatedOnPipe
   ],
   imports: [
     SharedAppModule,

@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { CommentItemModel, Review } from 'src/app/_models/review';
-import { CodePanelRowData, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { APIRevision, CodePanelRowData, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
+import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
 
 @Component({
@@ -17,6 +18,7 @@ export class ReviewPageComponent implements OnInit {
   diffApiRevisionId : string | null = null;
 
   review : Review | undefined = undefined;
+  apiRevisions: APIRevision[] = [];
   reviewComments : CommentItemModel[] | undefined = [];
   revisionSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
@@ -24,12 +26,11 @@ export class ReviewPageComponent implements OnInit {
   codeLinesDataBuffer: CodePanelRowData[] = [];
   otherCodePanelData: Map<string, CodePanelToggleableData> = new Map<string, CodePanelToggleableData>();
   codeLinesData: CodePanelRowData[] = [];
-  apiRevisionPageSize = 20;
-
+  apiRevisionPageSize = 50;
 
   sideMenu: MenuItem[] | undefined;
 
-  constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private workerService: WorkerService) {}
+  constructor(private route: ActivatedRoute, private apiRevisionsService: RevisionsService, private reviewsService: ReviewsService, private workerService: WorkerService) {}
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get('reviewId');
@@ -38,6 +39,7 @@ export class ReviewPageComponent implements OnInit {
 
     this.registerWorkerEventHandler();
     this.loadReview(this.reviewId!);
+    this.loadAPIRevisions(0, this.apiRevisionPageSize);
     this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
 
     this.sideMenu = [
@@ -107,6 +109,15 @@ export class ReviewPageComponent implements OnInit {
         this.review = review;
       }
     });
+  }
+
+  loadAPIRevisions(noOfItemsRead : number, pageSize: number) {
+    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!).subscribe({
+      next: (response: any) => {
+        this.apiRevisions = response.result;
+      }
+    });
+
   }
 
   showRevisionsPanel(showRevisionsPanel : any){

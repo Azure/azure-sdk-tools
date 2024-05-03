@@ -387,10 +387,6 @@ namespace APIViewWeb.Helpers
             reviewPageContent.DiffAPIRevision = diffRevision;
             reviewPageContent.TotalActiveConversations = comments.Threads.Count(t => !t.IsResolved);
             reviewPageContent.HasFatalDiagnostics = fileDiagnostics.Any(d => d.Level == APIView.CodeDiagnosticLevel.Fatal);
-
-            //reviewPageContent.HasFatalDiagnsotics = fileDiagnostics.FirstOrDefault(d => d.Level == APIView.CodeDiagnosticLevel.Fatal) != null;
-
-
             reviewPageContent.ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments);
             reviewPageContent.ActiveConversationsInSampleRevisions = comments.Threads.Count(t => t.Comments.FirstOrDefault()?.CommentType == CommentType.SampleRevision);
             reviewPageContent.PreferredApprovers = preferredApprovers;

@@ -370,6 +370,8 @@ $(() => {
     }
   });
 
+  /* MODAL WINDOW BUTTON AVAILABILITY
+--------------------------------------------------------------------------------------------------------------------------------------------------------*/
   $("#overrideDiag, #overrideConvo").on('change', function () {
     var allChecked = true;
     if ($("#overrideDiag").length && $("#overrideConvo").length) {

@@ -665,8 +665,7 @@
     @{
         var (modalId, issueList, issueDict) = PageModelHelpers.GetModalInfo(Model);
     }
-
-    <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+        <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
         <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
 
         <div class="modal fade" id="@modalId" tabindex="-1" role="dialog">
@@ -697,12 +696,10 @@
             </div>
         </div>
     </form>
-
     <partial name="_CommentFormPartial" model="@Model.ReviewContent.TaggableUsers" />
 </div>
 
 <partial name="Shared/_AddAPIRevisionsPartial" model="Model.ReviewContent.Review" />
-
 <div class="offcanvas offcanvas-end border-start" tabindex="-1" id="apiRevisions-context" aria-labelledby="apiRevisions-context-label">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="apiRevisions-context-label"><a asp-page="Revisions" asp-route-id="@Model.ReviewContent.Review.Id">Revisions</a></h5>

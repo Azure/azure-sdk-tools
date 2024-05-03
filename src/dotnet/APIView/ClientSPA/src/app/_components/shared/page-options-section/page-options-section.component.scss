@@ -11,4 +11,8 @@
     .p-icon-wrapper {
         color: var(--link-color);
     }
+
+    .p-panel-toggleable.p-panel-expanded>.p-toggleable-content:not(.ng-animating) {
+        border-top: 1px solid var(--border-color);
+    }
 }

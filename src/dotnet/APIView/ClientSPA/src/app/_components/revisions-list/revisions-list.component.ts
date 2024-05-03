@@ -52,7 +52,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   badgeClass : Map<string, string> = new Map<string, string>();
 
-  constructor(private revisionsService: RevisionsService, private authService: AuthService, private configService: ConfigService) { }
+  constructor(private apiRevisionsService: RevisionsService, private authService: AuthService, private configService: ConfigService) { }
 
   ngOnInit(): void {
     this.createFilters();
@@ -95,7 +95,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       details = (filters.details.value != null) ? filters.details.value.map((item: any) => item.data): details;
     }
 
-    this.revisionsService.getAPIRevisions(noOfItemsRead, pageSize, reviewId, label, author, details, sortField, sortOrder, 
+    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, reviewId, label, author, details, sortField, sortOrder, 
       this.showDeletedAPIRevisions, this.showAPIRevisionsAssignedToMe).subscribe({
       next: (response: any) => {
         if (response.result && response.pagination) {
@@ -170,19 +170,19 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   viewDiffOfSelectedAPIRevisions() {
     if (this.selectedRevisions.length == 2)
     {
-      this.revisionsService.openDiffOfAPIRevisions(this.review!.id, this.selectedRevisions[0].id, this.selectedRevisions[1].id)
+      this.apiRevisionsService.openDiffOfAPIRevisions(this.review!.id, this.selectedRevisions[0].id, this.selectedRevisions[1].id)
     }
   }
   
-  viewRevision(revision: APIRevision) {
+  viewRevision(apiRevision: APIRevision) {
     if (!this.showDeletedAPIRevisions)
     {
-      this.revisionsService.openAPIRevisionPage(this.review!.id, revision.id);
+      this.apiRevisionsService.openAPIRevisionPage(this.review!.id, apiRevision.id);
     }
   }
 
   deleteRevisions(revisions: APIRevision []) {
-    this.revisionsService.deleteAPIRevisions(this.review!.id, revisions.map(r => r.id)).subscribe({
+    this.apiRevisionsService.deleteAPIRevisions(this.review!.id, revisions.map(r => r.id)).subscribe({
       next: (response: any) => {
         if (response) {
           this.loadAPIRevisions(0, this.pageSize * 2, true);
@@ -193,7 +193,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   }
 
   restoreRevisions(revisions: APIRevision []) {
-    this.revisionsService.restoreAPIRevisions(this.review!.id, revisions.map(r => r.id)).subscribe({
+    this.apiRevisionsService.restoreAPIRevisions(this.review!.id, revisions.map(r => r.id)).subscribe({
       next: (response: any) => {
         if (response) {
           this.loadAPIRevisions(0, this.pageSize * 2, true);
@@ -204,7 +204,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   }
 
   deleteRevision(revision: APIRevision) {
-    this.revisionsService.deleteAPIRevisions(revision.reviewId, [revision.id]).subscribe({
+    this.apiRevisionsService.deleteAPIRevisions(revision.reviewId, [revision.id]).subscribe({
       next: (response: any) => {
         if (response) {
           this.loadAPIRevisions(0, this.pageSize * 2, true);

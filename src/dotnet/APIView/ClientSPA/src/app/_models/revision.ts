@@ -19,6 +19,7 @@ export interface APIRevision {
   packageName: string
   language: string
   apiRevisionType: string
+  pullRequestNo: number
   label: string
   resolvedLabel: string
   packageVersion: string

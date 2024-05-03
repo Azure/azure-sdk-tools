@@ -396,7 +396,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3428"
                 ),
                 new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..sasUri"),
+                    new BodyKeySanitizer("$..sasUri", regex: "sig=(?<sig>[^&]+)", groupForReplace: "sig"),
                     "AZSDK3429"
                 ),
                 new RegisteredSanitizer(

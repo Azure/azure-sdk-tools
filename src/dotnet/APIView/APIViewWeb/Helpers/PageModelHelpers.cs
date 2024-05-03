@@ -294,6 +294,13 @@ namespace APIViewWeb.Helpers
 
             var activeRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(activeRevision.Id, activeRevision.Files[0].FileId);
             var activeRevisionReviewCodeFile = activeRevisionRenderableCodeFile.CodeFile;
+
+            if (activeRevisionReviewCodeFile.CodeFileVersion.Equals("v2"))
+            {
+                reviewPageContent.Directive = ReviewContentModelDirective.RedirectToSPAUI;
+                return reviewPageContent;
+            }
+
             var fileDiagnostics = activeRevisionReviewCodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
 
             var activeRevisionHtmlLines = activeRevisionRenderableCodeFile.Render(showDocumentation: showDocumentation);

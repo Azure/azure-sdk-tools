@@ -105,6 +105,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK1007",
                     "Common SAS URL Sanitizer. Applies to all headers, URIs, and text bodies."
                 ),
+                new RegisteredSanitizer(
+                    new GeneralRegexSanitizer(regex: "token=(?<token>[^&\\\"\\s\\n,\\\\])", groupForReplace: "token"),
+                    "AZSDK1008"
+                ),
                 #endregion
                 #region HeaderRegex
                 new RegisteredSanitizer(
@@ -244,10 +248,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"\\s\\n,\\\\]+)", groupForReplace: "secret"),
                     "AZSDK3002"
-                ),
-                new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "token=(?<token>[^&\\\"\\s\\n,\\\\])", groupForReplace: "token"),
-                    "AZSDK3003"
                 ),
                 new RegisteredSanitizer(
                     new BodyRegexSanitizer(regex: "-----BEGIN PRIVATE KEY-----\\n(?<cert>.+\\n)*-----END PRIVATE KEY-----\\n", groupForReplace: "cert"),

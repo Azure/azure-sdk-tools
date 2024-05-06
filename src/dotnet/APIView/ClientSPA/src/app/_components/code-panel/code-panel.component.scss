@@ -108,7 +108,22 @@
         }
     }
 
-    .toggle-documentation-btn.show:hover {
+    .toggle-documentation-btn.can-show:hover {
+        color: inherit;
+    }
+
+    .toggle-user-comments-btn {
+        color: transparent;
+        &.hide {
+            visibility: invisible;
+        }
+
+        &.show {
+            color: inherit;
+        }
+    }
+
+    .toggle-user-comments-btn.can-show:hover {
         color: inherit;
     }
 

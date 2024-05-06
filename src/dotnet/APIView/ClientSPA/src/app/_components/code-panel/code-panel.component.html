@@ -8,6 +8,7 @@
     <ng-container *ngIf="item.rowType === CodePanelRowDatatype.CodeLine">
       <div class="line-actions">
           <span class="line-number">{{item.lineNumber}}</span>
+          <span class="small toggle-user-comments-btn {{item.toggleCommentsClasses}}"></span>
           <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
       </div>
       <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">

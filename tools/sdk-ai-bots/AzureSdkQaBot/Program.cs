@@ -12,6 +12,8 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.Memory.AzureCognitiveSearch;
 using AzureSdkQaBot.Model;
 using Octokit;
+using Azure.Identity;
+using Azure.Security.KeyVault.Certificates;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,9 +23,28 @@ builder.Services.AddHttpContextAccessor();
 
 // Prepare Configuration for ConfigurationBotFrameworkAuthentication
 var config = builder.Configuration.Get<ConfigOptions>()!;
-builder.Configuration["MicrosoftAppType"] = "MultiTenant";
-builder.Configuration["MicrosoftAppId"] = config.BOT_ID;
-builder.Configuration["MicrosoftAppPassword"] = config.BOT_PASSWORD;
+//builder.Configuration["MicrosoftAppType"] = "MultiTenant";
+//builder.Configuration["MicrosoftAppId"] = config.BOT_ID;
+//builder.Configuration["MicrosoftAppPassword"] = config.BOT_PASSWORD;
+
+// Access key vault
+if (string.IsNullOrEmpty(config.KeyVaultUrl))
+{
+    throw new Exception("KeyVaultUrl is not set in the configuration.");
+}
+
+CertificateClient client = new(vaultUri: new Uri(config.KeyVaultUrl), credential: new DefaultAzureCredential());
+
+//Get certificate in X509Certificate format
+if (string.IsNullOrEmpty(config.CertificateName))
+{
+    throw new Exception("CertificateName is not set in the configuration.");
+}
+string certificateName = config.CertificateName;
+var certificate = client.DownloadCertificate(certificateName).Value;
+
+// Create the ClientCredentialsFactory to user certificate authentication
+builder.Services.AddSingleton<ServiceClientCredentialsFactory>((e) => new CertificateServiceClientCredentialsFactory(certificate, config.BOT_ID, "72f988bf-86f1-41af-91ab-2d7cd011db47"));
 
 // Create the Bot Framework Authentication to be used with the Bot Adapter.
 builder.Services.AddSingleton<BotFrameworkAuthentication, ConfigurationBotFrameworkAuthentication>();

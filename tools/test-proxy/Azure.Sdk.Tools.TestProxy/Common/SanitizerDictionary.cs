@@ -39,7 +39,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public ConcurrentDictionary<string, RegisteredSanitizer> Sanitizers = new ConcurrentDictionary<string, RegisteredSanitizer>();
 
         // we have to know which sanitizers are session only
-        // so that when we start a new recording we can properly 
+        // so that when we start a new recording we can properly
         // apply only the sanitizers that have been registered at the global level
         public List<string> SessionSanitizers = new List<string>();
 
@@ -51,12 +51,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         /*
          * The below list has been grouped and labelled with some room for expansion. As such:
-         * 
+         *
          * General sanitizers  = 1XXX
          * Header sanitizers   = 2XXX
          * Body sanitizers     = 3XXX
          * URI, special, other = 4XXX
-         * 
+         *
          * */
 
         private const string EMPTYGUID = "00000000-0000-0000-0000-000000000000";
@@ -101,7 +101,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "ACS Identity leverages these strings to store identity information."
                 ),
                 new RegisteredSanitizer(
-                    new GeneralRegexSanitizer(regex: "(?:[?&](sig)=)(?<secret>[^&\\\"\\s\n,\\\\]*)", groupForReplace: "secret"),
+                    new GeneralRegexSanitizer(regex: "(?:[?&](sig)=)(?<secret>[^&\\\"\\s\\n,\\\\]*)", groupForReplace: "secret"),
                     "AZSDK1007",
                     "Common SAS URL Sanitizer. Applies to all headers, URIs, and text bodies."
                 ),
@@ -226,19 +226,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 #endregion
                 #region BodyRegex
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&\\\"\\s\n,\\\\]+)", groupForReplace: "cid"),
+                    new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&\\\"\\s\\n,\\\\]+)", groupForReplace: "cid"),
                     "AZSDK3000"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"\\s\n,\\\\]+)", groupForReplace: "secret"),
+                    new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"\\s\\n,\\\\]+)", groupForReplace: "secret"),
                     "AZSDK3001"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"\\s\n,\\\\]+)", groupForReplace: "secret"),
+                    new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"\\s\\n,\\\\]+)", groupForReplace: "secret"),
                     "AZSDK3002"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "token=(?<token>[^&\\\"\\s\n,\\\\)", groupForReplace: "token"),
+                    new BodyRegexSanitizer(regex: "token=(?<token>[^&\\\"\\s\\n,\\\\)", groupForReplace: "token"),
                     "AZSDK3003"
                 ),
                 new RegisteredSanitizer(

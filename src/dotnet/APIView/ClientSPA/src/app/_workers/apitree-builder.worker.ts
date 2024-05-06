@@ -1,12 +1,13 @@
 /// <reference lib="webworker" />
 
 import { ComputeTokenDiff } from "../_helpers/worker-helpers";
-import { CodeDiagnostic, CodePanelData } from "../_models/review";
+import { CodeDiagnostic, CodePanelData, CommentItemModel } from "../_models/review";
 import { CodePanelRowData, CodePanelRowDatatype, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective, StructuredToken } from "../_models/revision";
 import { APITreeNode } from "../_models/revision";
 
 let insertLineNumber = 0;
 let diagnostics: CodeDiagnostic[] = [];
+let comments: CommentItemModel[] = [];
 let diagnosticsTargetIds = new Set<string>();
 
 addEventListener('message', ({ data }) => {
@@ -15,6 +16,7 @@ addEventListener('message', ({ data }) => {
 
     let reviewContent: CodePanelData = JSON.parse(jsonString);
     diagnostics = reviewContent.diagnostics;
+    comments = reviewContent.comments;
     diagnosticsTargetIds = new Set<string>(diagnostics.map(diagnostic => diagnostic.targetId));
 
     let navTreeNodes: any[] = [];
@@ -37,6 +39,7 @@ addEventListener('message', ({ data }) => {
 
     postMessage(updateCodeLineDataMessage);
     diagnostics = [];
+    comments = [];
     diagnosticsTargetIds.clear();
   }
 });
@@ -66,9 +69,9 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
   }
 
   let children : any[] = [];
-  apiTreeNode.children.forEach(child => {
+  apiTreeNode.children.forEach((child : APITreeNode) => {
     const childTreeNodes = buildAPITree(child, treeNodeId, indent + 1);
-    if (child.children.length > 0) {
+    if (!Array.from(child.tags).includes("HideFromNavigation")) {
       children.push(childTreeNodes);
     }
   });
@@ -222,7 +225,9 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
   const tokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
   const tokenLine : StructuredToken[] = [];
   const lineClasses = new Set<string>();
+  const tokenIdsInLine = new Set<string>();
   let precedingRowData : CodePanelRowData | undefined = undefined;
+
 
   for (let token of tokens) {
     if ("GroupId" in token.properties) {
@@ -247,20 +252,34 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
       insertLineNumber++;
       insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
       lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
-        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square show" :
+        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
         insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
+      
+      // Collects comments for the line
+      let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = undefined;
+      collectUserCommentsforLine(tokenIdsInLine, nodeId, insertLineOfTokensMessage, insertCommentMessage);
 
       precedingRowData = insertLineOfTokensMessage.codePanelRowData;
       postMessage(insertLineOfTokensMessage);
 
+      // Push comments after pussing the line
+      if (insertCommentMessage) {
+        postMessage(insertCommentMessage);
+      }
+
       tokenLine.length = 0;
       lineClasses.clear();
+      tokenIdsInLine.clear();
     }
     else {
       tokenLine.push(token);
+      if (token.id) {
+        tokenIdsInLine.add(token.id);
+      }
     }
   }
 
+  // Handle any remaining lines
   if (tokenLine.length > 0) {
     const insertLineOfTokensMessage : InsertCodePanelRowDataMessage =  {
       directive: ReviewPageWorkerMessageDirective.InsertCodeLineData,
@@ -279,10 +298,19 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
     insertLineNumber++;
     insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
     lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
-      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square show" :
+      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
       insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
 
+    // Collects comments for the line  
+    let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = undefined;
+    collectUserCommentsforLine(tokenIdsInLine, nodeId, insertLineOfTokensMessage, insertCommentMessage);
+
     postMessage(insertLineOfTokensMessage);
+
+    // Push comments after pussing the line
+    if (insertCommentMessage) {
+      postMessage(insertCommentMessage);
+    }
   }
 
   // Append associated diagnostics rows
@@ -312,3 +340,30 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
 function lineHasDocumentationAbove(precedingLine : CodePanelRowData | undefined, currentLine : CodePanelRowData) : boolean {
   return precedingLine !== undefined && precedingLine.rowClasses.has("documentation") && !currentLine.rowClasses.has("documentation");
 }
+
+function collectUserCommentsforLine(tokenIdsInLine: Set<string>, nodeId: string, insertLineOfTokensMessage : InsertCodePanelRowDataMessage, 
+  insertCommentMessage : InsertCodePanelRowDataMessage | undefined) {
+  if (tokenIdsInLine.size > 0) {
+    insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = "bi bi-chat-right-text can-show";
+    const commentsForLine = comments.filter(comment => tokenIdsInLine.has(comment.elementId));
+    insertCommentMessage = {
+      directive: ReviewPageWorkerMessageDirective.InsertCommentRowData,
+      codePanelRowData: {
+        rowType: CodePanelRowDatatype.Comment,
+        nodeId: nodeId,
+        rowClasses: new Set<string>(["user-comments"]),
+        comments: commentsForLine,
+        rowSize: 21
+      }
+    };
+
+    if (commentsForLine.length > 0) {
+      insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = "bi bi-chat-right-text show";
+    }
+  }
+  else {
+    insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = "bi bi-chat-right-text hide";
+  }
+}
+
+

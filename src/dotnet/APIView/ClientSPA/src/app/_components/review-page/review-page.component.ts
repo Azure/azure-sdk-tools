@@ -68,7 +68,8 @@ export class ReviewPageComponent implements OnInit {
           } else {
             this.otherCodePanelData.set(data.codePanelRowData.nodeId, {
               documentation: [data.codePanelRowData],
-              diagnostics: []
+              diagnostics: [],
+              comments: []
             });
           }
         } else {
@@ -82,10 +83,23 @@ export class ReviewPageComponent implements OnInit {
         } else {
           this.otherCodePanelData.set(data.codePanelRowData.nodeId, {
             documentation: [],
-            diagnostics: [data.codePanelRowData]
+            diagnostics: [data.codePanelRowData],
+            comments: []
           });
         }
         this.codeLinesDataBuffer.push(data.codePanelRowData);
+      }
+
+      if (data.directive === ReviewPageWorkerMessageDirective.InsertCommentRowData) {
+        if (this.otherCodePanelData.has(data.codePanelRowData.nodeId)) {
+          this.otherCodePanelData.get(data.codePanelRowData.nodeId)?.comments.push(data.codePanelRowData);
+        } else {
+          this.otherCodePanelData.set(data.codePanelRowData.nodeId, {
+            documentation: [],
+            diagnostics: [],
+            comments: [data.codePanelRowData]
+          });
+        }
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodeLines) {

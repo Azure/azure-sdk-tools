@@ -1,10 +1,11 @@
-import { ChangeHistory, CodeDiagnostic } from "./review"
+import { ChangeHistory, CodeDiagnostic, CommentItemModel } from "./review"
 
 export enum ReviewPageWorkerMessageDirective {
   CreatePageNavigation,
   InsertCodeLineData,
   UpdateCodeLines,
-  InsertDiagnosticsRowData
+  InsertDiagnosticsRowData,
+  InsertCommentRowData
 }
 
 export enum CodePanelRowDatatype {
@@ -71,12 +72,15 @@ export interface CodePanelRowData {
   diffKind?: string
   rowSize: number
   toggleDocumentationClasses?: string
+  toggleCommentsClasses?: string
   diagnostics?: CodeDiagnostic
+  comments?: CommentItemModel[]
 }
 
 export interface CodePanelToggleableData {
   documentation: CodePanelRowData[]
   diagnostics: CodeDiagnostic[]
+  comments: CommentItemModel[]
 }
 
 export interface InsertCodePanelRowDataMessage {

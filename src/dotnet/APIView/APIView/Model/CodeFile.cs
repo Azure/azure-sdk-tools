@@ -17,6 +17,7 @@ namespace ApiView
         private static readonly JsonSerializer JsonSerializer = new JsonSerializer()
         {
             NullValueHandling = NullValueHandling.Ignore,
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
         };
 
         private string _versionString;

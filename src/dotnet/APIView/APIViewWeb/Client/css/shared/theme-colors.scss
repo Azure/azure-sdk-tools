@@ -21,6 +21,10 @@
     --link-color: #{$primary};
     --link-active: #{shade-color($primary, 20%)};
     --link-visited: #{shade-color($primary, 40%)};
+    /*----Diagnostic Details Link------------------------------------*/
+    --details-link-color: #{$primary};
+    --details-link-active-hover: #00CBEB;
+    --link-visited: #{shade-color($primary, 40%)};
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary, 80%)};
     --shadow-color: rgba(#{$black}, .15);
@@ -76,6 +80,10 @@
     --link-color: #{$primary-color};
     --link-active: #{tint-color($primary-color, 20%)};
     --link-visited: #{tint-color($primary-color, 40%)};
+    /*----Diagnostic Details Link------------------------------------*/
+    --details-link-color: #0d1dfc;
+    --details-link-active-hover: #00CBEB;
+    --details-link-visited: #3d4afd;
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary-color, 80%)};
     --shadow-color: rgba(#{$white}, .15);
@@ -133,6 +141,10 @@
     --link-color: #{$primary-color};
     --link-active: #{tint-color($primary-color, 10%)};
     --link-visited: #{tint-color($primary-color, 20%)};
+    /*----Diagnostic Details Link------------------------------------*/
+    --details-link-color: #0d1dfc;
+    --details-link-active-hover: #00CBEB;
+    --details-link-visited: #3d4afd;
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary-color, 80%)};
     --shadow-color: rgba(#{$gray-100}, .15);

@@ -17,8 +17,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Common;
-using MongoDB.Driver;
-
 using ApiView;
 
 namespace APIViewWeb.Pages.Assemblies
@@ -74,9 +72,6 @@ namespace APIViewWeb.Pages.Assemblies
         [BindProperty(Name = "notificationMessage", SupportsGet = true)]
         public string NotificationMessage { get; set; }
         public UserPreferenceModel UserPreference { get; set; }
-
-
-        public CodeFile APIView { get; set; }
 
         /// <summary>
         /// Handler for loading page

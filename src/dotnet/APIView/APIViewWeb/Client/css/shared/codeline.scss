@@ -371,11 +371,11 @@ $diagnostics: (
     margin: 0;
 }
 
-.light-theme .code-diagnostics p a{
-    
+.light-theme .code-diagnostics p a {
+
     &:active,
     &:hover {
-        color: #00CBEB;
+        color: var(--details-link-active-hover);
     }
 }
 
@@ -383,29 +383,29 @@ $diagnostics: (
     color: #e6eff7;
 
     a {
-        color: #0d1dfc;
+        color: var(--details-link-color);
 
         &:visited {
-            color: #3d4afd;
+            color: var(--details-link-visited);
         }
 
         &:active,
         &:hover {
-            color: #00CBEB;
+            color: var(--details-link-active-hover);
         }
     }
 }
 
 .dark-solarized-theme .code-diagnostics a {
-    color: #0d1dfc;
+    color: var(--details-link-color);
 
     &:visited {
-        color: #3d4afd;
+        color: var(--details-link-visited);
     }
 
     &:active,
     &:hover {
-        color: #00CBEB;
+        color: var(--details-link-active-hover);
     }
 }
 

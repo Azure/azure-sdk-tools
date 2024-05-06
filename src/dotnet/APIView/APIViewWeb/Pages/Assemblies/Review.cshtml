@@ -38,20 +38,6 @@
                         @count
                         <span class="visually-hidden">unread messages</span>
                     </span>                }
-                else if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0)
-                {
-                    var count = (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 10) ? "9+" : $"{Model.ReviewContent.ActiveConversationsInActiveAPIRevision}";
-                    <span class="position-absolute start translate-middle badge rounded-pill bg-danger" id="jump-to-first-comment">
-                        @count
-                        <span class="visually-hidden">unread messages</span>
-                    </span>
-                }
-                else if (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0)
-                {
-                    var count = (Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 10) ? "9+" : $"{Model.ReviewContent.ActiveConversationsInActiveAPIRevision}";
-                    <span class="position-absolute start translate-middle badge rounded-pill bg-danger" id="jump-to-first-comment">
-                    </span>
-                }
             </a>
             <a type="button" class="btn btn-lg btn-link mb-2" asp-page="Samples" asp-route-id="@Model.ReviewContent.Review.Id"><i class="bi bi-puzzle" data-bs-toggle="tooltip" data-bs-placement="right" title="Samples"></i></a>
         </div>

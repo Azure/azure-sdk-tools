@@ -59,3 +59,19 @@
         display: inline-flex;
     }
 }
+
+.shipped-label {
+    display: inline-block;
+    padding: .2em .6em .3em;
+    font-size: small;
+    font-weight: bolder;
+    /*font-size: 75%;
+    font-weight: 700;*/
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: .25em;
+    background-color: green;
+}

@@ -223,6 +223,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new HeaderRegexSanitizer("x-ms-ests-server"),
                     "AZSDK2029"
                 ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("operation-location", value: "https://example.com"),
+                    "AZSDK2030"
+                ),
+                new RegisteredSanitizer(
+                    new HeaderRegexSanitizer("Ocp-Apim-Subscription-Key"),
+                    "AZSDK2031"
+                ),
                 #endregion
                 #region BodyRegex
                 new RegisteredSanitizer(

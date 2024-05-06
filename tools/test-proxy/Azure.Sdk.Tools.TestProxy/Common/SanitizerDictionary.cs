@@ -101,7 +101,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "ACS Identity leverages these strings to store identity information."
                 ),
                 new RegisteredSanitizer(
-                    new GeneralRegexSanitizer(regex: "(?:[?&](sig)=)(?<secret>[^&\\\"\\s]*)", groupForReplace: "secret"),
+                    new GeneralRegexSanitizer(regex: "(?:[?&](sig)=)(?<secret>[^&\\\"\\s\n,\\\\]*)", groupForReplace: "secret"),
                     "AZSDK1007",
                     "Common SAS URL Sanitizer. Applies to all headers, URIs, and text bodies."
                 ),
@@ -226,19 +226,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 #endregion
                 #region BodyRegex
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&\\\"]+)", groupForReplace: "cid"),
+                    new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&\\\"\\s\n,\\\\]+)", groupForReplace: "cid"),
                     "AZSDK3000"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"\\s\n,\\\\]+)", groupForReplace: "secret"),
                     "AZSDK3001"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"]+)", groupForReplace: "secret"),
+                    new BodyRegexSanitizer(regex: "client_assertion=(?<secret>[^&\\\"\\s\n,\\\\]+)", groupForReplace: "secret"),
                     "AZSDK3002"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "token=(?<token>[^&\\\"]+)", groupForReplace: "token"),
+                    new BodyRegexSanitizer(regex: "token=(?<token>[^&\\\"\\s\n,\\\\)", groupForReplace: "token"),
                     "AZSDK3003"
                 ),
                 new RegisteredSanitizer(

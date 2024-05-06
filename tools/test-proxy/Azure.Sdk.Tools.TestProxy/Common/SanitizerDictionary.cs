@@ -101,12 +101,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "ACS Identity leverages these strings to store identity information."
                 ),
                 new RegisteredSanitizer(
-                    new GeneralRegexSanitizer(regex: "(?:[?&](sig)=)(?<secret>[^&\\\"\\s\\n,\\\\]*)", groupForReplace: "secret"),
+                    new GeneralRegexSanitizer(regex: "(?:[?&](sig)=)(?<secret>[^&\\\"\\s\\n,\\\\]+)", groupForReplace: "secret"),
                     "AZSDK1007",
                     "Common SAS URL Sanitizer. Applies to all headers, URIs, and text bodies."
                 ),
                 new RegisteredSanitizer(
-                    new GeneralRegexSanitizer(regex: "token=(?<token>[^&\\\"\\s\\n,\\\\])", groupForReplace: "token"),
+                    new GeneralRegexSanitizer(regex: "token=(?<token>[^&\\\"\\s\\n,\\\\]+)", groupForReplace: "token"),
                     "AZSDK1008"
                 ),
                 #endregion
@@ -254,31 +254,31 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3004"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<Value>)(?<group>.*)(?:</Value>)", groupForReplace: "group", value: BASE64ZERO),
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).+?(?:<Value>)(?<group>.+)(?:</Value>)", groupForReplace: "group", value: BASE64ZERO),
                     "AZSDK3005"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedTid>)(?<group>.*)(?:</SignedTid>)", groupForReplace: "group", value: EMPTYGUID),
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).+?(?:<SignedTid>)(?<group>.+)(?:</SignedTid>)", groupForReplace: "group", value: EMPTYGUID),
                     "AZSDK3006"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).*?(?:<SignedOid>)(?<group>.*)(?:</SignedOid>)", groupForReplace: "group", value: EMPTYGUID),
+                    new BodyRegexSanitizer(regex: "(?<=<UserDelegationKey>).+?(?:<SignedOid>)(?<group>.+)(?:</SignedOid>)", groupForReplace: "group", value: EMPTYGUID),
                     "AZSDK3007"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:Password=)(?<pwd>.*?)(?:;)", groupForReplace: "pwd"),
+                    new BodyRegexSanitizer(regex: "(?:Password=)(?<pwd>.+?)(?:;)", groupForReplace: "pwd"),
                     "AZSDK3008"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:User ID=)(?<id>.*?)(?:;)", groupForReplace: "id"),
+                    new BodyRegexSanitizer(regex: "(?:User ID=)(?<id>.+?)(?:;)", groupForReplace: "id"),
                     "AZSDK3009"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:<PrimaryKey>)(?<key>.*)(?:</PrimaryKey>)", groupForReplace: "key"),
+                    new BodyRegexSanitizer(regex: "(?:<PrimaryKey>)(?<key>.+)(?:</PrimaryKey>)", groupForReplace: "key"),
                     "AZSDK3010"
                 ),
                 new RegisteredSanitizer(
-                    new BodyRegexSanitizer(regex: "(?:<SecondaryKey>)(?<key>.*)(?:</SecondaryKey>)", groupForReplace: "key"),
+                    new BodyRegexSanitizer(regex: "(?:<SecondaryKey>)(?<key>.+)(?:</SecondaryKey>)", groupForReplace: "key"),
                     "AZSDK3011"
                 ),
                 new RegisteredSanitizer(

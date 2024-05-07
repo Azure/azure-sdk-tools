@@ -608,9 +608,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStoretests.AssetsJson
             };
             Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
-            Assets updatedAssets = null;
-            string originalTagPrefix = assets.TagPrefix;
-            string originalTag = assets.Tag;
             var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
             try
             {
@@ -629,7 +626,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 // generate a couple strings that LOOKs like secrets to the secret scanner.
-                var secretType1 = TestHelpers.GenerateString(3) + "7Q~" + TestHelpers.GenerateString(34);
+                var secretType1 = TestHelpers.GenerateString(3) + "8Q~" + TestHelpers.GenerateString(34);
 
                 // place these strings in files for discovery  by the tool
                 TestHelpers.CreateFileWithContent(localFilePath, "secret_type_1.txt", secretType1);
@@ -638,22 +635,18 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 await store.Push(jsonFileLocation);
 
                 // no changes should be committed
-                var pendingChanges = store.DetectPendingChanges(parsedConfiguration);
-                Assert.Equal(1, pendingChanges.Length);
-                
-                // Ensure that the config was updated with the new Tag as part of the push
-                updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
-                Assert.NotEqual(originalTag, updatedAssets.Tag);
+                var pendingChanges = store.DetectPendingChanges(parsedConfiguration).Select(x => Path.Combine(parsedConfiguration.AssetsRepoLocation, x));
+                Assert.Single(pendingChanges);
 
-                // Ensure that the targeted tag is present on the repo
-                TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
-                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
+                // now double check the actual scan results to ensure they are where we expect.
+                var detectedSecrets = await store.SecretScanner.DiscoverSecrets(pendingChanges);
+
+                Assert.Single(detectedSecrets);
+                Assert.Equal("SEC101/156", detectedSecrets[0].Id);
             }
             finally
             {
                 DirectoryHelper.DeleteGitDirectory(testFolder);
-                TestHelpers.CleanupIntegrationTestTag(assets);
-                TestHelpers.CleanupIntegrationTestTag(updatedAssets);
             }
         }
     }

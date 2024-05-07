@@ -1,4 +1,4 @@
-﻿
+
 using System;
 
 namespace Azure.Sdk.Tools.TestProxy.Console
@@ -19,6 +19,10 @@ namespace Azure.Sdk.Tools.TestProxy.Console
         public string ReadLine()
         {
             return System.Console.ReadLine();
+        }
+        public void ResetCursor()
+        {
+            System.Console.SetCursorPosition(0, System.Console.CursorTop);
         }
     }
 }

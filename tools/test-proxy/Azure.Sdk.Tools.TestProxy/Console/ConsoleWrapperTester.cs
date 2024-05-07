@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Azure.Sdk.Tools.TestProxy.Console
 {
@@ -28,14 +28,22 @@ namespace Azure.Sdk.Tools.TestProxy.Console
         {
             _readLineResponse = readLineResponse;
         }
+
         public void Write(string message)
         {
             System.Console.Write(message);
         }
+
         public void WriteLine(string message)
         {
             System.Console.WriteLine(message);
         }
+
+        public void ResetCursor()
+        {
+            // don't need this for testing
+        }
+
         public string ReadLine()
         {
             System.Console.WriteLine($"ReadLine response for test: '{_readLineResponse}'");

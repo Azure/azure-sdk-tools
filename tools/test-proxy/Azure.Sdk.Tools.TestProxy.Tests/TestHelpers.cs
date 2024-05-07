@@ -353,15 +353,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         /// </summary>
         /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
         /// <param name="fileName">The file to be created</param>
-        public static void CreateFileWithContent(string testFolder, string fileName, string textContent)
+        public static void CreateOrUpdateFileWithContent(string testFolder, string fileName, string textContent)
         {
             string fullFileName = Path.Combine(testFolder, fileName);
-
-            if (File.Exists(fullFileName))
-            {
-                string errorString = String.Format("AssetsJsonFileName {0} already exists", fullFileName);
-                throw new ArgumentException(errorString);
-            }
 
             File.WriteAllText(fullFileName, textContent);
         }
@@ -542,7 +536,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             StringBuilder builder = new StringBuilder();
 
-            builder.Length = 0;
             for (int i = 0; i < count; i++)
             {
                 var bytes = RandomNumberGenerator.GetBytes(1);
@@ -551,9 +544,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 _ = builder.Append(ch);
             }
 
-            string result = builder.ToString();
-
-            return result;
+            return builder.ToString();
         }
 
         public static List<T> EnumerateArray<T>(JsonElement element)

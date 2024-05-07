@@ -623,26 +623,33 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
                 // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
-                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
 
                 // generate a couple strings that LOOKs like secrets to the secret scanner.
                 var secretType1 = TestHelpers.GenerateString(3) + "8Q~" + TestHelpers.GenerateString(34);
 
-                // place these strings in files for discovery  by the tool
-                TestHelpers.CreateFileWithContent(localFilePath, "secret_type_1.txt", secretType1);
+                // place an entirely new file with the secret
+                TestHelpers.CreateOrUpdateFileWithContent(localFilePath, "secret_type_1.txt", secretType1);
+
+                // modify an existing file with the secret
+                TestHelpers.CreateOrUpdateFileWithContent(localFilePath, "file2.txt", secretType1);
+
+                // delete a file to ensure that we don't attempt to scan a file that no longer exists
+                File.Delete(Path.Combine(localFilePath, "file5.txt"));
 
                 // Use the built in secretscanner
                 await store.Push(jsonFileLocation);
 
                 // no changes should be committed
                 var pendingChanges = store.DetectPendingChanges(parsedConfiguration).Select(x => Path.Combine(parsedConfiguration.AssetsRepoLocation, x));
-                Assert.Single(pendingChanges);
+                Assert.Equal(2, pendingChanges.Count());
 
-                // now double check the actual scan results to ensure they are where we expect.
+                // now double check the actual scan results to ensure they are where we expect
                 var detectedSecrets = await store.SecretScanner.DiscoverSecrets(pendingChanges);
 
-                Assert.Single(detectedSecrets);
+                Assert.Equal(2, detectedSecrets.Count);
                 Assert.Equal("SEC101/156", detectedSecrets[0].Id);
+                Assert.Equal("SEC101/156", detectedSecrets[1].Id);
             }
             finally
             {

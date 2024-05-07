@@ -40,6 +40,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
                 seen++;
                 Console.WriteLine($"Scanned {filePath}. {seen}/{total}.");
+                Console.ResetCursor();
             }
 
             return detectedSecrets;

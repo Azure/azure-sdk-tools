@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.TestProxy.Console
+namespace Azure.Sdk.Tools.TestProxy.Console
 {
     /// <summary>
     /// IConsoleWrapper is just an interface around Console functions. This is necessary for testing
@@ -9,5 +9,6 @@
         void Write(string message);
         void WriteLine(string message);
         string ReadLine();
+        public void ResetCursor();
     }
 }

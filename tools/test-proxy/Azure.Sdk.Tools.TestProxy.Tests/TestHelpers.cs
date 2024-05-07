@@ -348,6 +348,24 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         /// <summary>
+        /// Create a new file with custom text
+        /// </summary>
+        /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
+        /// <param name="fileName">The file to be created</param>
+        public static void CreateFileWithContent(string testFolder, string fileName, string textContent)
+        {
+            string fullFileName = Path.Combine(testFolder, fileName);
+
+            if (File.Exists(fullFileName))
+            {
+                string errorString = String.Format("AssetsJsonFileName {0} already exists", fullFileName);
+                throw new ArgumentException(errorString);
+            }
+
+            File.WriteAllText(fullFileName, textContent);
+        }
+
+        /// <summary>
         /// This function is used to confirm that the .breadcrumb file under the assets store contains the appropriate
         /// information.
         /// </summary>

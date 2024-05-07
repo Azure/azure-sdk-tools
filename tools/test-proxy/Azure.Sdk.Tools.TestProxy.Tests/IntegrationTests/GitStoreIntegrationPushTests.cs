@@ -624,7 +624,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
-                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+                var parsedConfiguration = await store.ParseConfigurationFile(jsonFileLocation);
                 await _defaultStore.Restore(jsonFileLocation);
 
                 // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
@@ -632,14 +632,22 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 // will be a forward one as expected by git but on Windows this won't result in a usable path.
                 string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
-                // Create a new file with a "secret" present
-                TestHelpers.CreateFileWithInitialVersion(localFilePath, "file6.txt");
+                // generate a couple strings that LOOKs like secrets to the secret scanner.
+                var secretType1 = "";
+                var secretType2 = "";
+
+                // place these strings in files for discovery  by the tool
+                TestHelpers.CreateFileWithContent(localFilePath, "secret_type_1.txt", secretType1);
+                TestHelpers.CreateFileWithContent(localFilePath, "secret_type_2.txt", secretType2);
 
                 // Use the built in secretscanner
                 await store.Push(jsonFileLocation);
 
                 // assert that are still in a pushable state
-                // 
+                var pendingChanges = store.DetectPendingChanges(parsedConfiguration);
+
+                Assert.Equal(2, pendingChanges.Length);
+                
 
                 // Ensure that the config was updated with the new Tag as part of the push
                 updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);

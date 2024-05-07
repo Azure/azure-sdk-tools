@@ -369,4 +369,18 @@ $(() => {
       }
     }
   });
+
+  /* MODAL WINDOW BUTTON AVAILABILITY
+--------------------------------------------------------------------------------------------------------------------------------------------------------*/
+  $("#overrideDiag, #overrideConvo").on('change', function () {
+    var allChecked = true;
+    if ($("#overrideDiag").length && $("#overrideConvo").length) {
+      allChecked = $("#overrideDiag").is(":checked") && $("#overrideConvo").is(":checked");
+    } else if ($("#overrideDiag").length) {
+      allChecked = $("#overrideDiag").is(":checked");
+    } else if ($("#overrideConvo").length) {
+      allChecked = $("#overrideConvo").is(":checked");
+    }
+    $("#confirmButton").prop("disabled", !allChecked);
+  });
 });

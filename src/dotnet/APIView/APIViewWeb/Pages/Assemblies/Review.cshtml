@@ -3,6 +3,7 @@
 @using APIViewWeb.Helpers
 @using APIViewWeb.LeanModels;
 @using APIViewWeb.Models
+@using APIView;
 @{
     Layout = "Shared/_Layout";
     ViewData["Title"] = Model.ReviewContent.Review.PackageName;
@@ -57,11 +58,20 @@
         }
         <ul class="list-group collapse mb-3@(approvalCollapseState)" id="approveCollapse">
             <li class="list-group-item text-center">
+                @{
+                    var isDiffRevisionNullOrHasApprovers = Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Approvers.Any();
+                    var isUserAnApprover = Model.ReviewContent.ActiveAPIRevision.Approvers.Contains(User.GetGitHubLogin());
+                    var isActiveRevisionAhead = Model.ReviewContent.DiffAPIRevision == null ? true : Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn;
+                    var userInApprovers = Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin());
+                    var hasActiveConversations = Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0;
+                    var hasFatalDiagnostics = Model.ReviewContent.HasFatalDiagnostics;
+                }
+
                 <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
                     <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
-                    @if (Model.ReviewContent.DiffAPIRevision == null || Model.ReviewContent.DiffAPIRevision.Approvers.Any())
+                    @if (isDiffRevisionNullOrHasApprovers)
                     {
-                        @if (Model.ReviewContent.ActiveAPIRevision.Approvers.Contains(User.GetGitHubLogin()))
+                        @if (isUserAnApprover)
                         {
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-outline-secondary">Revert API Approval</button>
@@ -69,44 +79,31 @@
                         }
                         else
                         {
-                            var isActiveRevisionAhead = (Model.ReviewContent.DiffAPIRevision == null)? true: Model.ReviewContent.ActiveAPIRevision.CreatedOn > Model.ReviewContent.DiffAPIRevision.CreatedOn;
-                            @if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 
-                                || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0)
-                                && Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
-                           && isActiveRevisionAhead)
+                            var dataBSTarget = Model.GetDataBSTarget(hasActiveConversations, hasFatalDiagnostics, userInApprovers, isActiveRevisionAhead);
+                            if (!string.IsNullOrWhiteSpace(dataBSTarget))
                             {
                                 <span class="small text-muted">Approves the current revision of the API</span>
                                 <div class="d-grid gap-2">
-                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#approveModel">
+                                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="@dataBSTarget">
                                         Approve
                                     </button>
                                 </div>
                             }
                             else
                             {
-                                @if (Model.ReviewContent.PreferredApprovers.Contains(User.GetGitHubLogin())
-                               && isActiveRevisionAhead)
-                                {
-                                    <span class="small text-muted">Approves the current revision of the API</span>
-                                    <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-success">Approve</button>
-                                    </div>
-                                }
-                                else
-                                {
-                                    <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-outline-secondary" disabled>Cannot Approve</button>
-                                    </div>
-                                }
+                                <span class="small text-muted">Approves the current revision of the API</span>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-success">Approve</button>
+                                </div>
                             }
                         }
                     }
                     else
                     {
-                        @if (Model.ReviewContent.ActiveAPIRevision.Approvers.Contains(User.GetGitHubLogin()))
+                        @if (isUserAnApprover)
                         {
                             <div class="d-grid gap-2" data-bs-placement="bottom" data-bs-toggle="tooltip" title="API review cannot be approved when comparing against unapproved revision.">
-                                <button type="submit" class="btn btn-outline-secondary" disabled >
+                                <button type="submit" class="btn btn-outline-secondary" disabled>
                                     Revert API Approval
                                 </button>
                             </div>
@@ -121,6 +118,7 @@
                         }
                     }
                 </form>
+
                 @{
                     var approvers = Model.ReviewContent.ActiveAPIRevision.Approvers;
                     @if (approvers.Count() > 0)
@@ -650,35 +648,44 @@
         </div>
     }
 
-    <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
+    @{
+        var (modalId, issueList, issueDict) = PageModelHelpers.GetModalInfo(Model);
+    }
+        <form asp-resource="@Model.ReviewContent.ActiveAPIRevision" class="form-inline" asp-page-handler="ToggleAPIRevisionApproval" method="post" asp-requirement="@ApproverRequirement.Instance">
         <input type="hidden" name="revisionId" value="@Model.ReviewContent.ActiveAPIRevision.Id" />
-        <div class="modal fade" id="approveModel" tabindex="-1" role="dialog">
+
+        <div class="modal fade" id="@modalId" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Approve Review</h5>
                     </div>
                     <div class="modal-body">
-                        <p> There are still active conversations. <br /> Would you like to review these first? </p>
+                        @foreach (var issue in issueList)
+                        {
+                            var (modalBody, checkboxId, checkboxName) = issueDict[issue];
+                            <p>@modalBody</p>
+                            <div class="form-check override-check">
+                                <input type="checkbox" class="form-check-input" id="@checkboxId" name="@checkboxName">
+                                <label class="form-check-label" for="@checkboxId">Override and Approve</label>
+                            </div>
+                        }
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                         <a asp-page="Conversation" asp-route-id="@Model.ReviewContent.Review.Id">
                             <div class="btn btn-outline-secondary">Check Conversations</div>
                         </a>
-                        <button type="submit" class="btn btn-success">
-                            Approve API Anyway
-                        </button>
+                        <button type="submit" class="btn btn-success" id="confirmButton" disabled>Confirm</button>
                     </div>
                 </div>
             </div>
         </div>
     </form>
-    <partial name="_CommentFormPartial" model="@Model.ReviewContent.TaggableUsers" /> 
+    <partial name="_CommentFormPartial" model="@Model.ReviewContent.TaggableUsers" />
 </div>
 
 <partial name="Shared/_AddAPIRevisionsPartial" model="Model.ReviewContent.Review" />
-
 <div class="offcanvas offcanvas-end border-start" tabindex="-1" id="apiRevisions-context" aria-labelledby="apiRevisions-context-label">
     <div class="offcanvas-header">
         <h5 class="offcanvas-title" id="apiRevisions-context-label"><a asp-page="Revisions" asp-route-id="@Model.ReviewContent.Review.Id">Revisions</a></h5>

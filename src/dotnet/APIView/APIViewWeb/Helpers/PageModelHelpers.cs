@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using APIViewWeb.Pages.Assemblies;
 
 namespace APIViewWeb.Helpers
 {
@@ -385,6 +386,7 @@ namespace APIViewWeb.Helpers
             reviewPageContent.ActiveAPIRevision = activeRevision;
             reviewPageContent.DiffAPIRevision = diffRevision;
             reviewPageContent.TotalActiveConversations = comments.Threads.Count(t => !t.IsResolved);
+            reviewPageContent.HasFatalDiagnostics = fileDiagnostics.Any(d => d.Level == APIView.CodeDiagnosticLevel.Fatal);
             reviewPageContent.ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments);
             reviewPageContent.ActiveConversationsInSampleRevisions = comments.Threads.Count(t => t.Comments.FirstOrDefault()?.CommentType == CommentType.SampleRevision);
             reviewPageContent.PreferredApprovers = preferredApprovers;
@@ -591,6 +593,41 @@ namespace APIViewWeb.Helpers
                 }
             }
             return filteredLines.ToArray();
+        }
+        /// <summary>
+        /// Create and Assign Approval Check Boxes
+        /// </summary>
+        /// <param name="Model"></param>
+        /// <returns></returns>
+
+        public static (string modalId, List<string> issueList, Dictionary<string, (string modalBody, string checkboxId, string checkboxName)> issueDict) GetModalInfo(ReviewPageModel Model)
+        {
+            var issueDict = new Dictionary<string, (string modalBody, string checkboxId, string checkboxName)>
+            {
+                ["openConvos"] = ("Active Conversations Present:", "overrideConvo", "overrideConvo"),
+                ["fatalDiagnostics"] = ("Fatal Diagnostics Present:", "overrideDiag", "overrideDiag")
+            };
+
+            var issueList = new List<string>();
+            string modalId = "";
+
+            if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0) && Model.ReviewContent.HasFatalDiagnostics)
+            {
+                modalId = "convoFatalModel";
+                issueList = new List<string> { "openConvos", "fatalDiagnostics" };
+            }
+            else if ((Model.ReviewContent.ActiveConversationsInActiveAPIRevision > 0 || Model.ReviewContent.ActiveConversationsInSampleRevisions > 0) && !Model.ReviewContent.HasFatalDiagnostics)
+            {
+                modalId = "openConversationModel";
+                issueList = new List<string> { "openConvos" };
+            }
+            else
+            {
+                modalId = "fatalErrorModel";
+                issueList = new List<string> { "fatalDiagnostics" };
+            }
+
+            return (modalId, issueList, issueDict);
         }
     }
 }

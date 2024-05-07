@@ -31,6 +31,7 @@ namespace APIViewWeb.LeanModels
         public string NotificationMessage { get; set; }
         public ReviewContentModelDirective Directive { get; set; }
         public Dictionary<string, ReviewContentModel> CrossLanguageViewContent { get; set; } = new Dictionary<string, ReviewContentModel>();
+        public bool HasFatalDiagnostics { get; set; }
     }
 
     public class ReviewBadgeModel

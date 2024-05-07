@@ -20,7 +20,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             Console = consoleWrapper;
         }
 
-
         public async Task<List<Detection>> DiscoverSecrets(IEnumerable<string> paths)
         {
             List<Detection> detectedSecrets = new List<Detection>();

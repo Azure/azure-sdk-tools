@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Console;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -572,6 +573,80 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
 
                 // Ensure that the targeted tag is present on the repo
                 TestHelpers.CheckExistenceOfTag(updatedAssets, assetRepoRoot);
+                await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
+                TestHelpers.CleanupIntegrationTestTag(assets);
+                TestHelpers.CleanupIntegrationTestTag(updatedAssets);
+            }
+        }
+
+        /// <summary>
+        /// 1. Restore from empty tag
+        /// 2. Add/Delete/Update files which will include a fake secret
+        /// 3. Attempt to push
+        /// 4. Assert that the expected exception is thrown, preventing a secret being pushed upstream
+        /// </summary>
+        /// <param name="inputJson"></param>
+        /// <returns></returns>
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""language/tables"",
+              ""Tag"": """"
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task SecretProtectionPreventsPush(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            Assets updatedAssets = null;
+            string originalTagPrefix = assets.TagPrefix;
+            string originalTag = assets.Tag;
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
+            try
+            {
+                ConsoleWrapper consoleWrapper = new ConsoleWrapper();
+                GitStore store = new GitStore(consoleWrapper);
+                var recordingHandler = new RecordingHandler(testFolder, store);
+
+
+                // Ensure that the Tag was updated
+                Assert.NotEqual(originalTag, assets.Tag);
+
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await _defaultStore.ParseConfigurationFile(jsonFileLocation);
+                await _defaultStore.Restore(jsonFileLocation);
+
+                // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
+                // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
+                // will be a forward one as expected by git but on Windows this won't result in a usable path.
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
+
+                // Create a new file with a "secret" present
+                TestHelpers.CreateFileWithInitialVersion(localFilePath, "file6.txt");
+
+                // Use the built in secretscanner
+                await store.Push(jsonFileLocation);
+
+                // assert that are still in a pushable state
+                // 
+
+                // Ensure that the config was updated with the new Tag as part of the push
+                updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
+                Assert.NotEqual(originalTag, updatedAssets.Tag);
+
+                // Ensure that the targeted tag is present on the repo
+                TestHelpers.CheckExistenceOfTag(updatedAssets, localFilePath);
                 await TestHelpers.CheckBreadcrumbAgainstAssetsJsons(new string[] { jsonFileLocation });
             }
             finally

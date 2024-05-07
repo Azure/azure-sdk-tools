@@ -39,7 +39,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public static readonly string GIT_COMMIT_OWNER_ENV_VAR = "GIT_COMMIT_OWNER";
         public static readonly string GIT_COMMIT_EMAIL_ENV_VAR = "GIT_COMMIT_EMAIL";
         private bool LocalCacheRefreshed = false;
-        public SecretScanner SecretScanner = new SecretScanner();
+        public SecretScanner SecretScanner;
 
         public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
 
@@ -64,15 +64,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public GitStore()
         {
             _consoleWrapper = new ConsoleWrapper();
+            SecretScanner = new SecretScanner(_consoleWrapper);
         }
 
         public GitStore(IConsoleWrapper consoleWrapper)
         {
             _consoleWrapper = consoleWrapper;
-        }
-
-        public GitStore(GitProcessHandler processHandler) {
-            GitHandler = processHandler;
+            SecretScanner = new SecretScanner(consoleWrapper);
         }
 
         #region push, reset, restore, and other asset repo implementations
@@ -94,14 +92,16 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
-        /// Currently this is written to always scan every file within the repo before pushing. By passing the _results_ of DetectPendingChanges (the set of changed files) 
-        /// as an argument to this function, we can easily short circuit the scan and only scan the CHANGED files.
+        /// Scans the changed files, checking for possible secrets. Returns true if secrets are discovered.
         /// </summary>
         /// <param name="assetsConfiguration"></param>
+        /// <param name="pendingChanges"></param>
         /// <returns></returns>
-        public async Task CheckForSecrets(GitAssetsConfiguration assetsConfiguration)
+        public async Task<bool> CheckForSecrets(GitAssetsConfiguration assetsConfiguration, string[] pendingChanges)
         {
-            var detectedSecrets = await SecretScanner.DiscoverSecrets(assetsConfiguration.AssetsRepoLocation);
+            var absolutePaths = pendingChanges.Select(x => Path.Combine(assetsConfiguration.AssetsRepoLocation, x));
+
+            var detectedSecrets = await SecretScanner.DiscoverSecrets(absolutePaths);
 
             if (detectedSecrets.Count > 0)
             {
@@ -110,8 +110,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 {
                     _consoleWrapper.WriteLine(detection.ToString());
                 }
-                Environment.Exit(-1);
             }
+
+            return detectedSecrets.Count > 0;
         }
 
         /// <summary>
@@ -140,7 +141,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                await CheckForSecrets(config);
+                if (!(await CheckForSecrets(config, pendingChanges)))
+                {
+                    Environment.ExitCode = -1;
+                    return;
+                }
 
                 try
                 {

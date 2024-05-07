@@ -618,10 +618,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 GitStore store = new GitStore(consoleWrapper);
                 var recordingHandler = new RecordingHandler(testFolder, store);
 
-
-                // Ensure that the Tag was updated
-                Assert.NotEqual(originalTag, assets.Tag);
-
                 var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
 
                 var parsedConfiguration = await store.ParseConfigurationFile(jsonFileLocation);
@@ -633,22 +629,18 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation.ToString(), parsedConfiguration.AssetsRepoPrefixPath.ToString()));
 
                 // generate a couple strings that LOOKs like secrets to the secret scanner.
-                var secretType1 = "";
-                var secretType2 = "";
+                var secretType1 = TestHelpers.GenerateString(3) + "7Q~" + TestHelpers.GenerateString(34);
 
                 // place these strings in files for discovery  by the tool
                 TestHelpers.CreateFileWithContent(localFilePath, "secret_type_1.txt", secretType1);
-                TestHelpers.CreateFileWithContent(localFilePath, "secret_type_2.txt", secretType2);
 
                 // Use the built in secretscanner
                 await store.Push(jsonFileLocation);
 
-                // assert that are still in a pushable state
+                // no changes should be committed
                 var pendingChanges = store.DetectPendingChanges(parsedConfiguration);
-
-                Assert.Equal(2, pendingChanges.Length);
+                Assert.Equal(1, pendingChanges.Length);
                 
-
                 // Ensure that the config was updated with the new Tag as part of the push
                 updatedAssets = TestHelpers.LoadAssetsFromFile(jsonFileLocation);
                 Assert.NotEqual(originalTag, updatedAssets.Tag);

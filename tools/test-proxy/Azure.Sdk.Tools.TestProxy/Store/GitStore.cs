@@ -100,7 +100,6 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public async Task<bool> CheckForSecrets(GitAssetsConfiguration assetsConfiguration, string[] pendingChanges)
         {
             var absolutePaths = pendingChanges.Select(x => Path.Combine(assetsConfiguration.AssetsRepoLocation, x));
-
             var detectedSecrets = await SecretScanner.DiscoverSecrets(absolutePaths);
 
             if (detectedSecrets.Count > 0)
@@ -141,7 +140,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                if (!(await CheckForSecrets(config, pendingChanges)))
+                if (await CheckForSecrets(config, pendingChanges))
                 {
                     Environment.ExitCode = -1;
                     return;
@@ -375,7 +374,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 // Normally, we'd use Environment.NewLine here but this doesn't work on Windows since its NewLine is \r\n and
                 // Git's NewLine is just \n
-                var individualResults = diffResult.StdOut.Split("\n").Select(x => x.Trim()).ToArray();
+                var individualResults = diffResult.StdOut.Split("\n").Select(x => x.Trim().TrimStart('?').Trim()).Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
                 return individualResults;
             }
 

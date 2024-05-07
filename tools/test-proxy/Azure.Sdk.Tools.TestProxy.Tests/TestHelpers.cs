@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -533,6 +534,26 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
             CommandResult result = GitHandler.Run($"ls-remote {cloneUrl} --tags {assets.Tag}", workingDirectory);
             return result.StdOut.Trim().Length > 0;
+        }
+
+        public static string GenerateString(int count)
+        {
+            char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".ToArray();
+
+            StringBuilder builder = new StringBuilder();
+
+            builder.Length = 0;
+            for (int i = 0; i < count; i++)
+            {
+                var bytes = RandomNumberGenerator.GetBytes(1);
+                int index = bytes[0] % alphabet.Length;
+                char ch = alphabet[index];
+                _ = builder.Append(ch);
+            }
+
+            string result = builder.ToString();
+
+            return result;
         }
 
         public static List<T> EnumerateArray<T>(JsonElement element)

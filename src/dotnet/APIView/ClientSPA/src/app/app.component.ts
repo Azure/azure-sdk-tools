@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostBinding, OnInit } from '@angular/core';
+import { Component, HostBinding, OnInit } from '@angular/core';
 import { AuthService } from './_services/auth/auth.service';
 
 @Component({
@@ -8,7 +8,6 @@ import { AuthService } from './_services/auth/auth.service';
 })
 export class AppComponent  implements OnInit{
   title : string = 'APIView';
-  @HostBinding('class') appTheme : string = 'light-theme';
 
   constructor(private authService: AuthService) { }
 
@@ -19,7 +18,12 @@ export class AppComponent  implements OnInit{
   setAppTheme() {
     this.authService.getUserProfile().subscribe(
       (userProfile) => {
-        this.appTheme = userProfile.preferences.theme
+        const theme = userProfile.preferences.theme;
+        const body = document.body;
+        if (theme !== "light-theme") {
+          body.classList.remove("light-theme");
+          body.classList.add(theme);
+        }
       });
   }
 }

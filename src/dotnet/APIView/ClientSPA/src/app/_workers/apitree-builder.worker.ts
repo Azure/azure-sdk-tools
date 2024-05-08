@@ -256,8 +256,7 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
         insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
       
       // Collects comments for the line
-      let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = undefined;
-      collectUserCommentsforLine(tokenIdsInLine, nodeId, insertLineOfTokensMessage, insertCommentMessage);
+      let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, nodeId, insertLineOfTokensMessage);
 
       precedingRowData = insertLineOfTokensMessage.codePanelRowData;
       postMessage(insertLineOfTokensMessage);
@@ -302,8 +301,7 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
       insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
 
     // Collects comments for the line  
-    let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = undefined;
-    collectUserCommentsforLine(tokenIdsInLine, nodeId, insertLineOfTokensMessage, insertCommentMessage);
+    let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, nodeId, insertLineOfTokensMessage);
 
     postMessage(insertLineOfTokensMessage);
 
@@ -341,29 +339,30 @@ function lineHasDocumentationAbove(precedingLine : CodePanelRowData | undefined,
   return precedingLine !== undefined && precedingLine.rowClasses.has("documentation") && !currentLine.rowClasses.has("documentation");
 }
 
-function collectUserCommentsforLine(tokenIdsInLine: Set<string>, nodeId: string, insertLineOfTokensMessage : InsertCodePanelRowDataMessage, 
-  insertCommentMessage : InsertCodePanelRowDataMessage | undefined) {
+function collectUserCommentsforLine(tokenIdsInLine: Set<string>, nodeId: string, insertLineOfTokensMessage : InsertCodePanelRowDataMessage) : InsertCodePanelRowDataMessage | undefined {
+  let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = undefined;
   if (tokenIdsInLine.size > 0) {
     insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = "bi bi-chat-right-text can-show";
     const commentsForLine = comments.filter(comment => tokenIdsInLine.has(comment.elementId));
-    insertCommentMessage = {
-      directive: ReviewPageWorkerMessageDirective.InsertCommentRowData,
-      codePanelRowData: {
-        rowType: CodePanelRowDatatype.Comment,
-        nodeId: nodeId,
-        rowClasses: new Set<string>(["user-comments"]),
-        comments: commentsForLine,
-        rowSize: 21
-      }
-    };
 
     if (commentsForLine.length > 0) {
+      insertCommentMessage = {
+        directive: ReviewPageWorkerMessageDirective.InsertCommentRowData,
+        codePanelRowData: {
+          rowType: CodePanelRowDatatype.CommentThread,
+          nodeId: nodeId,
+          rowClasses: new Set<string>(["user-comment-thread"]),
+          comments: commentsForLine,
+          rowSize: 21
+        }
+      };
       insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = "bi bi-chat-right-text show";
     }
   }
   else {
     insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = "bi bi-chat-right-text hide";
   }
+  return insertCommentMessage;
 }
 
 

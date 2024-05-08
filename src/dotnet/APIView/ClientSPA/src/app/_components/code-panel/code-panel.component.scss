@@ -17,9 +17,7 @@
         width: 500% !important;
 
         &.diagnostics {
-            padding-left: 4vw;
-            grid-column:  span 2;
-            width: 70vw;
+            padding-left: calc(var(--max-line-number-width) + 50px);
 
             &.error {
                 background-color: var(--code-diagnostics-error-bg);
@@ -55,10 +53,28 @@
                 }
             }
         }
+        
+        &.user-comment-thread {
+            padding-left: calc(var(--max-line-number-width) + 50px);
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+
+            .user-comment-content {
+                width: 1000px;
+                position: sticky;
+                left: calc(var(--max-line-number-width) + 50px)
+            }
+        }
     }
 
-    .comment-thread {
-        grid-column:  span 2;
+    .code-line:hover {
+        .toggle-documentation-btn.can-show {
+            color: inherit;
+        }
+
+        .toggle-user-comments-btn.can-show {
+            color: inherit;
+        } 
     }
 
     .code-line-added, .token-added {
@@ -86,19 +102,13 @@
         padding-right: 5px;
         border-right: 1px solid var(--border-color);
         cursor: pointer;
+        position: sticky;
+        left: 0;
+        background-color: var(--base-fg-color);
 
         span:not(:last-child) {
             margin-right: 5px;
         }
-    }
-
-    .line-actions:hover > .commentable {
-        opacity: 1;
-    }
-
-    .comment-button {
-        opacity: 0;
-        color: var(--primary-color);
     }
 
     .toggle-documentation-btn {
@@ -106,10 +116,6 @@
         &.hide {
             visibility: invisible;
         }
-    }
-
-    .toggle-documentation-btn.can-show:hover {
-        color: inherit;
     }
 
     .toggle-user-comments-btn {
@@ -121,10 +127,6 @@
         &.show {
             color: inherit;
         }
-    }
-
-    .toggle-user-comments-btn.can-show:hover {
-        color: inherit;
     }
 
     .comment {

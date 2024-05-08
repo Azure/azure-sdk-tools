@@ -1,25 +1,47 @@
-<div class="border-top border-bottom p-2 ">
-    <div class="border rounded py-2 col-9">
-        <p-timeline [value]="comments">
-            <ng-template pTemplate="marker" let-comment>
-                <img [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="32" class="user-avartar"/>
-            </ng-template>        
-            <ng-template pTemplate="content" let-comment>
-                <p-panel [toggleable]="false" class="mb-2">
-                    <ng-template pTemplate="header">
-                        <div class="flex align-items-center gap-2">
-                            <span class="fw-bold">{{ comment.createdBy }}</span>
-                            <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
-                        </div>
-                    </ng-template>
-                    <p class="mb-1">
-                        {{ comment.commentText }}
-                    </p>
-                    <ng-template pTemplate="icons">
-                        <p-button icon="bi bi-hand-thumbs-up" [rounded]="true" styleClass="thumbs-up-button"></p-button>
-                    </ng-template>
-                </p-panel>
-            </ng-template>
-        </p-timeline>
+
+<div class="border rounded my-2 py-2">
+    <p-timeline [value]="comments">
+        <ng-template pTemplate="marker" let-comment>
+            <img [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="40" height="40" class="user-avartar"/>
+        </ng-template>        
+        <ng-template pTemplate="content" let-comment>
+            <p-panel [toggleable]="false">
+                <ng-template pTemplate="header">
+                    <div class="flex align-items-center gap-2">
+                        <span class="fw-bold">{{ comment.createdBy }}</span>
+                        <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
+                    </div>
+                </ng-template>
+                <p class="pe-5">
+                    {{ comment.commentText }}
+                </p>
+                <ng-template pTemplate="icons">
+                    <p-menu appendTo="body" [attr.data-comment-id]="comment.id" [model]="getCommentActionMenuContent(comment.id)" [popup]="true" >
+                        <ng-template pTemplate="item" let-item>
+                            <a pRipple class="flex align-items-center p-menuitem-link">
+                                <img src="{{assetsPath}}/images/{{ item?.title! | languageNames }}-original.svg" width="20" height="20" class="me-2">
+                                <span class="ms-2">{{ item.label }}</span>
+                            </a>
+                        </ng-template>
+                    </p-menu>
+                    <button class="p-panel-header-icon p-link">
+                        <span *ngIf="comment.upvotes.length > 0; else noUpVotes" class="bi bi-hand-thumbs-up-fill emoji-active">{{comment.upvotes.length}}</span>
+                        <ng-template #noUpVotes>
+                            <span class="bi bi-hand-thumbs-up"></span>
+                        </ng-template>
+                    </button>
+                    <button class="p-panel-header-icon p-link" (click)="toggleActionMenu($event, comment.id)">
+                        <span class="bi bi-three-dots-vertical"></span>
+                    </button>
+                </ng-template>
+            </p-panel>
+        </ng-template>
+    </p-timeline>
+    <div class="mt-2 d-grid gap-2">
+        <div class="border-top border-bottom ps-4 pe-2 reply-container">
+            <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" class="user-avartar mx-2 my-2"/>
+            <button type="button" class="btn btn-sm border text-muted text-start ms-2 me-4 reply-button">Reply...</button>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm mx-2">Resolve Conversation</button>
     </div>
 </div>

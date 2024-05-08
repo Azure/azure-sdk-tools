@@ -355,23 +355,58 @@ code {
     color: #008509 !important;
 }
 
-.code-diagnostics-error {
-    background-color: var(--code-diagnostics-error-color);
-    border: 1px solid red;
-}
+$diagnostics: ( 
+    fatal: var(--code-diagnostics-fatal-color), 
+    error: var(--code-diagnostics-error-color), 
+    warn: var(--code-diagnostics-warn-color), 
+    info: var(--code-diagnostics-info-color) );
 
-.code-diagnostics-warn {
-    background-color: var(--code-diagnostics-warn-color);
-    border: 1px solid #ffe066;
-}
-
-.code-diagnostics-info {
-    background-color: var(--code-diagnostics-info-color);
-    border: 1px solid blue;
+@each $type, $color in $diagnostics {
+    .code-diagnostics-#{$type} {
+        background-color: $color;
+    }
 }
 
 .code-diagnostics p {
     margin: 0;
+}
+
+.light-theme .code-diagnostics p a {
+
+    &:active,
+    &:hover {
+        color: var(--details-link-active-hover);
+    }
+}
+
+.dark-theme .code-diagnostics p {
+    color: #e6eff7;
+
+    a {
+        color: var(--details-link-color);
+
+        &:visited {
+            color: var(--details-link-visited);
+        }
+
+        &:active,
+        &:hover {
+            color: var(--details-link-active-hover);
+        }
+    }
+}
+
+.dark-solarized-theme .code-diagnostics a {
+    color: var(--details-link-color);
+
+    &:visited {
+        color: var(--details-link-visited);
+    }
+
+    &:active,
+    &:hover {
+        color: var(--details-link-active-hover);
+    }
 }
 
 .code-diagnostics div {
@@ -385,5 +420,4 @@ code {
     color: var(--text-muted-color) !important;
     font-style: italic;
 }
-
 /*---------------------------------------------------------------------*/

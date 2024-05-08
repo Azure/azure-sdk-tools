@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Azure.Sdk.Tools.PipelineWitness
 {
@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
         public long LineCount { get; set; }
 
-        public DateTimeOffset LogCreatedOn { get; set; }
+        public DateTime? LogCreatedOn { get; set; }
 
         public string RecordType { get; set; }
 

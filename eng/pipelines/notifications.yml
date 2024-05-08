@@ -32,6 +32,9 @@ stages:
           PathPrefix: 'go'
         AzDev:
           PathPrefix: 'azure-dev'
+        Public:
+          Project: 'public'
+          PathPrefix: 'notify'
 
     pool:
       name: azsdk-pool-mms-ubuntu-2204-general
@@ -43,7 +46,6 @@ stages:
       DotNetDevOpsFeed: "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json"
 
     steps:
-
       - task: DotNetCoreCLI@2
         displayName: 'Install Notification Creator'
         inputs:

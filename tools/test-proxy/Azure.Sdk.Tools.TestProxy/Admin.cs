@@ -180,7 +180,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     var registeredId = _recordingHandler.RegisterSanitizer(sanitizer, recordingId);
                     registeredSanitizers.Add(registeredId);
-                    Response.Headers.Add("x-recording-id", recordingId);
                 }
                 else
                 {
@@ -188,6 +187,12 @@ namespace Azure.Sdk.Tools.TestProxy
                     registeredSanitizers.Add(registeredId);
                 }
             }
+
+            if (recordingId != null)
+            {
+                Response.Headers.Add("x-recording-id", recordingId);
+            }
+
             var json = JsonSerializer.Serialize(new { Sanitizers = registeredSanitizers });
             Response.ContentType = "application/json";
             Response.ContentLength = json.Length;

@@ -11,7 +11,7 @@ export enum ReviewPageWorkerMessageDirective {
 export enum CodePanelRowDatatype {
   CodeLine,
   Diagnostics,
-  Comment
+  CommentThread
 }
 
 export interface APIRevision {

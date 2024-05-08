@@ -100,6 +100,7 @@ export class ReviewPageComponent implements OnInit {
             comments: [data.codePanelRowData]
           });
         }
+        this.codeLinesDataBuffer.push(data.codePanelRowData);
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodeLines) {

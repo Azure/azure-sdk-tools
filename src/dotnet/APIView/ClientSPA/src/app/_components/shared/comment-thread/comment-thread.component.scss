@@ -1,7 +1,11 @@
 :host ::ng-deep {
+    font-family: var(--font-family);
+
     .user-avartar {
+        border: 2px solid var(--border-color);
         border-radius: 50%;
     }
+
     .p-timeline-event-opposite {
         flex: 0 0 auto !important;
     }
@@ -11,7 +15,16 @@
     }
 
     .p-timeline.p-timeline-vertical .p-timeline-event-connector {
-        width: 1px;
+        width: 2px;
+    }
+    
+    .p-panel {
+        border: none;
+
+        p {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
     }
 
     .p-panel .p-panel-header {
@@ -39,12 +52,16 @@
         color: inherit;
     }
 
-    .thumbs-up-button {
-        color: var(--border-color);
-        background-color: transparent;
-        border: 1px solid var(--border-color-transparent);
-        height: 1.8rem;
-        width: 1.8rem;
+    .emoji-active {
+        color: orange;
     }
 
+    .reply-container {
+        display: flex;
+        align-items: center;
+    }
+      
+    .reply-button {
+        flex-grow: 1;
+    }
 }

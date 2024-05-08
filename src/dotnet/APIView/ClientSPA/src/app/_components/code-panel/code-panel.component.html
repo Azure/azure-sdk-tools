@@ -2,7 +2,6 @@
 <div *ngIf="isLoading" class="spinner-border m-3" role="status">
     <span class="visually-hidden">Loading...</span>
 </div>
-<!--<button class="btn btnsm btn-danger" (click)="scrollToIndex(50)">click me</button>-->
 <div *ngIf="codePanelRowSource" class="viewport" (click)="onCodePanelItemCick($event)">
   <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeId" [ngClass]="getClassObject(item.rowClasses)">
     <ng-container *ngIf="item.rowType === CodePanelRowDatatype.CodeLine">
@@ -20,6 +19,8 @@
         <span>{{ item.diagnostics.text }} <a *ngIf="item.diagnostics.helpLinkUri" href="{{item.diagnostics.helpLinkUri}}" target="_blank">Details</a></span>
       </div>
     </ng-container>
+    <ng-container *ngIf="item.rowType === CodePanelRowDatatype.CommentThread">
+      <app-comment-thread [comments]="item.comments"></app-comment-thread>
+    </ng-container>
   </div>
 </div>
-<ng-template #commentThreadRef class="d-none"></ng-template>

@@ -43,7 +43,7 @@ export function initializeApp(configService: ConfigService) {
     IndexPageComponent,
     ReviewsListComponent,
     RevisionsListComponent,
-    ApprovalPipe,
+    ApprovalPipe
   ],
   imports: [
     SharedAppModule,

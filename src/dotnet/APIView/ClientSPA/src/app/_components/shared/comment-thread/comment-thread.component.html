@@ -12,9 +12,8 @@
                         <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
                     </div>
                 </ng-template>
-                <p class="pe-5">
-                    {{ comment.commentText }}
-                </p>
+                <div [innerHTML]="(comment.commentText | markdownToHtml) | async" class="pe-5">
+                </div>
                 <ng-template pTemplate="icons">
                     <p-menu appendTo="body" [attr.data-comment-id]="comment.id" [model]="getCommentActionMenuContent(comment.id)" [popup]="true" >
                         <ng-template pTemplate="item" let-item>

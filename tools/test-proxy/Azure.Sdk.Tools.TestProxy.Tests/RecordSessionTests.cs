@@ -271,7 +271,9 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 "Body differences:" + Environment.NewLine +
                 "Request and record bodies do not match at index 40:" + Environment.NewLine +
                 "     request: \"e and long.\"" + Environment.NewLine +
-                "     record:  \"e and long but it also doesn't\"" + Environment.NewLine,
+                "     record:  \"e and long but it also doesn't\"" + Environment.NewLine +
+                "Remaining Unmatched Entries:" + Environment.NewLine +
+                " -> http://remote-host" + Environment.NewLine,
                 exception.Message);
         }
 

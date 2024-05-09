@@ -76,6 +76,8 @@ namespace Azure.Sdk.Tools.TestProxy
             DefaultStore = Resolver.ResolveStore(defaultOptions.StoragePlugin ?? "GitStore");
             var assetsJson = string.Empty;
 
+            DebugLogger.ConfigureLoggerVerboseLevel(defaultOptions);
+
             switch (commandObj)
             {
                 case ConfigLocateOptions configOptions:

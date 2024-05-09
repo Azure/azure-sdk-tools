@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -49,7 +49,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <returns>An updated value of the input string, with replacement operations completed if necessary.</returns>
         public static string ReplaceValue(string inputValue, string targetValue, string replacementValue)
         {
-            return inputValue.Replace(targetValue, replacementValue);
+            var result = inputValue.Replace(targetValue, replacementValue);
+
+            DebugLogger.LogVerbose($"String Sanitized Applied:\nBefore: \n{inputValue}\nAfter: \n{result}");
+
+            return result;
         }
 
         /// <summary>
@@ -110,6 +114,11 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             else
             {
                 replacement = rx.Replace(inputValue, replacementValue);
+            }
+
+            if (regex != null)
+            {
+                DebugLogger.LogVerbose($"Regex \"{regex??"N/A"}\" Applied:\nBefore:\n{inputValue}\nAfter:\n{replacement}");
             }
 
             return replacement;

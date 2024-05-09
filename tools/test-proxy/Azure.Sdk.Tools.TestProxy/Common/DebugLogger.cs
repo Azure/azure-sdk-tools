@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.Extensions;
+using Azure.Sdk.Tools.TestProxy.CommandOptions;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -31,12 +32,19 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         // internal for testing
         internal static ILogger Logger { get; set; }
 
+        private static string LogMode { get; set; }
+
         public static void ConfigureLogger(ILoggerFactory factory)
         {
             if (Logger == null && factory != null)
             {
                 Logger = factory.CreateLogger("Azure.Sdk.Tools.TestProxy");
             }
+        }
+
+        public static void ConfigureLoggerVerboseLevel(DefaultOptions defaultOptions)
+        {
+            LogMode = "VerboseSanitizer";
         }
 
         /// <summary>
@@ -214,6 +222,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             sb.AppendLine("Headers: [" + headers + "]");
 
             return sb.ToString();
+        }
+
+        public static void LogVerbose(string output)
+        {
+            // todo: add recognition of modes from startup
+            System.Console.WriteLine(output);
         }
     }
 }

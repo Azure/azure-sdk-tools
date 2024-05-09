@@ -56,12 +56,7 @@
         color: orange;
     }
 
-    .reply-container {
-        display: flex;
-        align-items: center;
-    }
-      
-    .reply-button {
-        flex-grow: 1;
+    .comment-action-btn {
+        border-color: var(--border-color) !important;
     }
 }

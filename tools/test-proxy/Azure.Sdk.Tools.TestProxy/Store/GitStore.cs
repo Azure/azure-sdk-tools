@@ -99,15 +99,17 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <returns></returns>
         public async Task<bool> CheckForSecrets(GitAssetsConfiguration assetsConfiguration, string[] pendingChanges)
         {
-            var absolutePaths = pendingChanges.Select(x => Path.Combine(assetsConfiguration.AssetsRepoLocation, x));
-            var detectedSecrets = await SecretScanner.DiscoverSecrets(absolutePaths);
+            _consoleWrapper.WriteLine($"Detected new recordings. Prior to pushing to destination repo, test-proxy will scan {pendingChanges.Length} files.");
+            var detectedSecrets = await SecretScanner.DiscoverSecrets(assetsConfiguration.AssetsRepoLocation, pendingChanges);
 
             if (detectedSecrets.Count > 0)
             {
-                _consoleWrapper.WriteLine("A secret was detected in the pushed code. Please register a sanitizer, re-record, and attempt pushing again. Detailed errors follow: ");
+                _consoleWrapper.WriteLine("At least one secret was detected in the pushed code. Please register a sanitizer, re-record, and attempt pushing again. Detailed errors follow: ");
                 foreach (var detection in detectedSecrets)
                 {
-                    _consoleWrapper.WriteLine(detection.ToString());
+                    _consoleWrapper.WriteLine($"{detection.Item1}");
+                    _consoleWrapper.WriteLine($"\t{detection.Item2.Id}: {detection.Item2.Name}");
+                    _consoleWrapper.WriteLine($"\tStart: {detection.Item2.Start}, End: {detection.Item2.End}.\n");
                 }
             }
 

@@ -641,15 +641,15 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 await store.Push(jsonFileLocation);
 
                 // no changes should be committed
-                var pendingChanges = store.DetectPendingChanges(parsedConfiguration).Select(x => Path.Combine(parsedConfiguration.AssetsRepoLocation, x));
+                var pendingChanges = store.DetectPendingChanges(parsedConfiguration);
                 Assert.Equal(2, pendingChanges.Count());
 
                 // now double check the actual scan results to ensure they are where we expect
-                var detectedSecrets = await store.SecretScanner.DiscoverSecrets(pendingChanges);
+                var detectedSecrets = await store.SecretScanner.DiscoverSecrets(parsedConfiguration.AssetsRepoLocation, pendingChanges);
 
                 Assert.Equal(2, detectedSecrets.Count);
-                Assert.Equal("SEC101/156", detectedSecrets[0].Id);
-                Assert.Equal("SEC101/156", detectedSecrets[1].Id);
+                Assert.Equal("SEC101/156", detectedSecrets[0].Item2.Id);
+                Assert.Equal("SEC101/156", detectedSecrets[1].Item2.Id);
             }
             finally
             {

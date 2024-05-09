@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Console;
+using Microsoft.Build.Tasks;
 using Microsoft.Security.Utilities;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
@@ -20,37 +22,39 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             Console = consoleWrapper;
         }
 
-        public async Task<List<Detection>> DiscoverSecrets(IEnumerable<string> paths)
+        public async Task<List<Tuple<string, Detection>>> DiscoverSecrets(string assetRepoRoot, IEnumerable<string> relativePaths)
         {
-            List<Detection> detectedSecrets = new List<Detection>();
-            var total = paths.Count();
+            var detectedSecrets = new List<Tuple<string, Detection>>();
+            var total = relativePaths.Count();
             var seen = 0;
-            foreach (string filePath in paths)
+            Console.WriteLine(string.Empty);
+            foreach (string filePath in relativePaths)
             {
-                var content = await ReadFile(filePath);
+                var content = await ReadFile(Path.Combine(assetRepoRoot, filePath));
                 var fileDetections = DetectSecrets(content);
 
                 if (fileDetections != null && fileDetections.Count > 0)
                 {
                     foreach (Detection detection in fileDetections)
                     {
-                        detectedSecrets.Add(detection);
+                        detectedSecrets.Add(Tuple.Create(filePath, detection));
                     }
                 }
                 seen++;
-                Console.WriteLine($"Scanned {filePath}. {seen}/{total}.");
-                Console.ResetCursor();
+                System.Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
             }
+            Console.WriteLine(string.Empty);
 
             return detectedSecrets;
         }
 
-        public async Task<List<Detection>> DiscoverSecrets(string inputDirectory)
+        public async Task<List<Tuple<string, Detection>>> DiscoverSecrets(string inputDirectory)
         {
             var files = Directory.GetFiles(inputDirectory, "*", SearchOption.AllDirectories);
-            List<Detection> detectedSecrets = new List<Detection>();
+            var detectedSecrets = new List<Tuple<string, Detection>>();
 
-            var total = 0;
+            var seen = 0;
+            Console.WriteLine(string.Empty);
             foreach (string filePath in files)
             {
                 var content = await ReadFile(filePath);
@@ -60,12 +64,14 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     foreach(Detection detection in fileDetections)
                     {
-                        detectedSecrets.Add(detection);
+                        detectedSecrets.Add(Tuple.Create(filePath, detection));
                     }
                 }
-                total++;
-                Console.WriteLine($"Scanned {filePath}. {total}/{files.Length}.");
+                seen++;
+                System.Console.Write($"\r\u001b[2KScanned {seen}/{files.Length}.");
             }
+
+            Console.WriteLine(string.Empty);
 
             return detectedSecrets;
         }

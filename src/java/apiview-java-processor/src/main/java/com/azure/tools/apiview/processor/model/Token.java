@@ -1,129 +1,91 @@
-
 package com.azure.tools.apiview.processor.model;
 
-import com.azure.json.JsonReader;
 import com.azure.json.JsonSerializable;
 import com.azure.json.JsonWriter;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class Token implements JsonSerializable<Token> {
-    private String definitionId;
-    private String navigateToId;
-    private TokenKind kind;
+    // The token value which will be displayed.
     private String value;
-    private String crossLanguageDefinitionId;
 
-    public Token(final TokenKind kind) {
-        this(kind, null);
+    // which will be used to navigate and find token on page.
+    private String id;
+
+    // Could be: LineBreak NoneBreakingSpace TabSpace ParameterSeparator Content
+    // All tokens should be content except for spacing tokens.
+    // ParameterSeparator should be used between method or function parameters. Spacing token dont need to have value.
+    private final int structuredTokenKind;
+
+    // Capture any other interesting data here. e.g Use GroupId : documentation to group consecutive tokens.
+    private final Map<String, String> properties;
+
+    // Add css classes for how the tokens will be rendered. To avoid collision between languages use a language prefix
+    // for you classes. e.g csKeyword , jsModule, pyModule
+    private final Set<String> renderClasses;
+
+    public Token(TokenKind tokenKind) {
+        this(tokenKind, null, null);
     }
 
-    public Token(final TokenKind kind, final String value) {
-        this(kind, value, null);
+    public Token(TokenKind tokenKind, String value) {
+        this(tokenKind, value, null);
     }
 
-    public Token(final TokenKind kind, final String value, final String definitionId) {
-        this.kind = kind;
+    public Token(TokenKind tokenKind, String value, String id) {
         this.value = value;
-        this.definitionId = definitionId;
-    }
+        this.id = id;
 
-    public String getDefinitionId() {
-        return definitionId;
-    }
+        if (tokenKind == null) {
+            throw new NullPointerException("tokenKind cannot be null");
+        }
 
-    public void setDefinitionId(String definitionId) {
-        this.definitionId = definitionId;
-    }
-
-    public String getCrossLanguageDefinitionId() {
-        return crossLanguageDefinitionId;
-    }
-
-    /**
-     * This is used to link tokens back to TypeSpec definitions, and therefore, to other languages that have been
-     * generated from the same TypeSpec.
-     */
-    public void setCrossLanguageDefinitionId(String crossLanguageDefinitionId) {
-        this.crossLanguageDefinitionId = crossLanguageDefinitionId;
-    }
-
-    public String getNavigateToId() {
-        return navigateToId;
-    }
-
-    public void setNavigateToId(String navigateToId) {
-        this.navigateToId = navigateToId;
-    }
-
-    public TokenKind getKind() {
-        return kind;
-    }
-
-    public void setKind(TokenKind kind) {
-        this.kind = kind;
+        this.structuredTokenKind = tokenKind.getStructuredTokenKind();
+        this.renderClasses = new HashSet<>(tokenKind.getRenderClasses());
+        this.properties = tokenKind.getProperties();
     }
 
     public String getValue() {
         return value;
     }
 
-    public void setValue(String Value) {
-        this.value = Value;
+    public String getId() {
+        return id;
     }
 
-    @Override
-    public String toString() {
-        return "Token [definitionId = "+definitionId+", navigateToId = "+navigateToId+", kind = "+kind+", value = "+value+"]";
+    public void addRenderClass(String renderClass) {
+        renderClasses.add(renderClass);
     }
 
     @Override
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         jsonWriter.writeStartObject()
-            .writeStringField("DefinitionId", definitionId)
-            .writeStringField("NavigateToId", navigateToId);
+            .writeStringField("Value", value)
+            .writeStringField("Id", id)
+            .writeIntField("Kind", structuredTokenKind);
 
-        if (kind != null) {
-            jsonWriter.writeIntField("Kind", kind.getId());
+        if (properties != null && !properties.isEmpty()) {
+            jsonWriter.writeMapField("Properties", properties, JsonWriter::writeString);
         }
 
-        return jsonWriter.writeStringField("Value", value)
-            .writeStringField("CrossLanguageDefinitionId", crossLanguageDefinitionId)
-            .writeEndObject();
+        if (renderClasses != null && !renderClasses.isEmpty()) {
+            jsonWriter.writeArrayField("RenderClasses", renderClasses, JsonWriter::writeString);
+        }
+
+        return jsonWriter.writeEndObject();
     }
 
-    public static Token fromJson(JsonReader jsonReader) throws IOException {
-        return jsonReader.readObject(reader -> {
-            String definitionId = null;
-            String navigateToId = null;
-            TokenKind kind = null;
-            String value = null;
-            String crossLanguageDefinitionId = null;
-
-            while (reader.nextToken() != null) {
-                String fieldName = reader.getFieldName();
-                reader.nextToken();
-
-                if (fieldName.equals("DefinitionId")) {
-                    definitionId = reader.getString();
-                } else if (fieldName.equals("NavigateToId")) {
-                    navigateToId = reader.getString();
-                } else if (fieldName.equals("Kind")) {
-                    kind = TokenKind.fromId(reader.getInt());
-                } else if (fieldName.equals("Value")) {
-                    value = reader.getString();
-                } else if (fieldName.equals("CrossLanguageDefinitionId")) {
-                    crossLanguageDefinitionId = reader.getString();
-                } else {
-                    reader.skipChildren();
-                }
-            }
-
-            Token token = new Token(kind, value, definitionId);
-            token.setNavigateToId(navigateToId);
-            token.setCrossLanguageDefinitionId(crossLanguageDefinitionId);
-
-            return token;
-        });
+    @Override
+    public String toString() {
+        return "Token{" +
+                "value='" + value + '\'' +
+                ", id='" + id + '\'' +
+                ", structuredTokenKind=" + structuredTokenKind +
+                ", properties=" + properties +
+                ", renderClasses=" + renderClasses +
+                '}';
     }
 }

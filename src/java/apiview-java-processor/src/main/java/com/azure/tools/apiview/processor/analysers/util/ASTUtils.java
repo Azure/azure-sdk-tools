@@ -6,16 +6,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
-import com.github.javaparser.ast.body.BodyDeclaration;
-import com.github.javaparser.ast.body.CallableDeclaration;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.ConstructorDeclaration;
-import com.github.javaparser.ast.body.EnumConstantDeclaration;
-import com.github.javaparser.ast.body.EnumDeclaration;
-import com.github.javaparser.ast.body.FieldDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.TypeDeclaration;
-import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
@@ -194,6 +185,10 @@ public final class ASTUtils {
 
     public static String makeId(TypeDeclaration<?> typeDeclaration) {
         return makeId(typeDeclaration.getFullyQualifiedName().get());
+    }
+
+    public static String makeId(AnnotationMemberDeclaration annotationMemberDeclaration) {
+        return makeId(getNodeFullyQualifiedName(annotationMemberDeclaration.getParentNode()) + "." + annotationMemberDeclaration.getName());
     }
 
     public static String makeId(VariableDeclarator variableDeclarator) {

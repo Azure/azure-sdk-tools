@@ -5,13 +5,9 @@ import com.azure.json.JsonReader;
 import com.azure.json.JsonWriter;
 import com.azure.tools.apiview.processor.analysers.Analyser;
 import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
-import com.azure.tools.apiview.processor.analysers.XMLASTAnalyser;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.ApiViewProperties;
-import com.azure.tools.apiview.processor.model.Diagnostic;
-import com.azure.tools.apiview.processor.model.DiagnosticKind;
 import com.azure.tools.apiview.processor.model.LanguageVariant;
-import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 
 import java.io.File;
@@ -28,8 +24,6 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
-
-import static com.azure.tools.apiview.processor.model.TokenKind.LINE_ID_MARKER;
 
 public class Main {
     // expected argument order:
@@ -115,23 +109,16 @@ public class Main {
     private static void processFile(final File inputFile, final File outputFile) {
         final APIListing apiListing = new APIListing();
 
-        // empty tokens list that we will fill as we process each class file
-        final List<Token> tokens = new ArrayList<>();
-        apiListing.setTokens(tokens);
-
         if (inputFile.getName().endsWith("-sources.jar")) {
             processJavaSourcesJar(inputFile, apiListing);
-        } else if (inputFile.getName().endsWith(".xml")) {
-            // We are *probably* looking at a Maven BOM / POM file, let's analyse it!
-            processXmlFile(inputFile, apiListing);
         } else {
-            apiListing.getTokens().add(new Token(LINE_ID_MARKER, "Error!", "error"));
-            apiListing.addDiagnostic(new Diagnostic(
-                DiagnosticKind.ERROR,
-                "error",
-                "Uploaded files should end with '-sources.jar' or '.xml', " +
-                    "as the APIView tool only works with source jar files, not compiled jar files. The uploaded file " +
-                    "that was submitted to APIView was named " + inputFile.getName()));
+//            apiListing.getTokens().add(new Token(LINE_ID_MARKER, "Error!", "error"));
+//            apiListing.addDiagnostic(new Diagnostic(
+//                DiagnosticKind.ERROR,
+//                "error",
+//                "Uploaded files should end with '-sources.jar' or '.xml', " +
+//                    "as the APIView tool only works with source jar files, not compiled jar files. The uploaded file " +
+//                    "that was submitted to APIView was named " + inputFile.getName()));
         }
 
         try {
@@ -232,49 +219,6 @@ public class Main {
             }
         } catch (IOException e) {
             System.out.println("  ERROR: Unable to parse apiview_properties.json file in jar file - continuing...");
-            e.printStackTrace();
-        }
-    }
-
-    private static void processXmlFile(File inputFile, APIListing apiListing) {
-        final ReviewProperties reviewProperties = new ReviewProperties();
-
-        try (FileInputStream fis = new FileInputStream(inputFile)) {
-            String reviewName;
-            String packageName;
-            String packageVersion;
-            String reviewLanguage;
-
-            try {
-                reviewProperties.setMavenPom(new Pom(fis));
-
-                final String groupId = reviewProperties.getMavenPom().getGroupId();
-                packageName = (groupId.isEmpty() ? "" : groupId + ":") + reviewProperties.getMavenPom().getArtifactId();
-                packageVersion = reviewProperties.getMavenPom().getVersion();
-                reviewName = reviewProperties.getMavenPom().getArtifactId() + " (version " + packageVersion + ")";
-                reviewLanguage = "Java";
-
-                apiListing.setMavenPom(reviewProperties.getMavenPom());
-            } catch (IOException e) {
-                // this is likely to not be a maven pom file
-                reviewName = inputFile.getName();
-                packageName = reviewName;
-                packageVersion = "1.0.0";
-                reviewLanguage = "Xml";
-            }
-
-            System.out.println("  Using '" + reviewName + "' for the review name");
-            System.out.println("  Using '" + packageName + "' for the package name");
-            System.out.println("  Using '" + packageVersion + "' for the package version");
-
-            apiListing.setReviewName(reviewName);
-            apiListing.setPackageName(packageName);
-            apiListing.setPackageVersion(packageVersion);
-            apiListing.setLanguage(reviewLanguage);
-
-            final Analyser analyser = new XMLASTAnalyser(apiListing);
-            analyser.analyse(inputFile.toPath());
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }

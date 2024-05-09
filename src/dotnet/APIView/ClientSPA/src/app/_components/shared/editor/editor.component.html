@@ -1,0 +1,6 @@
+<p-editor [(ngModel)]="content" [style]="{ height: '75px'}" />
+<div class="btn-group mt-2" role="group" aria-label="Comment Action Buttons">
+    <button type="button" class="btn btn-sm btn-outline-success editor-action-btn">Add Comment</button>
+    <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary editor-action-btn" data-bs-toggle="button" aria-pressed="true">Allow Anyone To Resolve</button>
+</div>

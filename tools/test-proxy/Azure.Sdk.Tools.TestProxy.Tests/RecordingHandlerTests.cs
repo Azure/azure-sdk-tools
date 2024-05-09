@@ -29,6 +29,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordingHandlerTests
     {
+        private int DefaultExtensionCount { get { return new RecordingHandler(null).SanitizerRegistry.DefaultSanitizerList.Count; } }
+
         #region helpers and private test fields
         private HttpContext GenerateHttpRequestContext(string[] headerValueStrings)
         {
@@ -97,11 +99,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (skipsToCheck.HasFlag(CheckSkips.IncludeSanitizers))
             {
-                var sessionSanitizers = handlerForTest.SanitizerRegistry.GetSanitizers();
-                Assert.Equal(3, sessionSanitizers.Count);
-                Assert.IsType<RecordedTestSanitizer>(sessionSanitizers[0]);
-                Assert.IsType<BodyKeySanitizer>(sessionSanitizers[1]);
-                Assert.IsType<BodyKeySanitizer>(sessionSanitizers[2]);
+                
+                var sanitizers = handlerForTest.SanitizerRegistry.GetSanitizers();
+
+                Assert.Equal(DefaultExtensionCount, sanitizers.Count);
+                Assert.IsType<RecordedTestSanitizer>(sanitizers[0]);
+                Assert.IsType<GeneralRegexSanitizer>(sanitizers[1]);
+                Assert.IsType<GeneralRegexSanitizer>(sanitizers[2]);
+                Assert.IsType<BodyKeySanitizer>(sanitizers[108]);
             }
         }
         #endregion
@@ -445,7 +450,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 var record = RecordSession.Deserialize(doc.RootElement);
                 Assert.Single(record.Entries);
                 var entry = record.Entries.First();
-                Assert.Equal("value", JsonDocument.Parse(entry.Request.Body).RootElement.GetProperty("key").GetString());
+                Assert.Equal("Sanitized", JsonDocument.Parse(entry.Request.Body).RootElement.GetProperty("key").GetString());
                 Assert.Equal(MockHttpHandler.DefaultResponse, Encoding.UTF8.GetString(entry.Response.Body));
             }
             finally

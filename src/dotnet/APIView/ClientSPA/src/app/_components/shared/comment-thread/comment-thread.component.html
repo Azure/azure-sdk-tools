@@ -5,20 +5,27 @@
             <img [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="40" height="40" class="user-avartar"/>
         </ng-template>        
         <ng-template pTemplate="content" let-comment>
-            <p-panel [toggleable]="false">
+            <p-panel [toggleable]="false" [attr.data-comment-id]="comment.id">
                 <ng-template pTemplate="header">
                     <div class="flex align-items-center gap-2">
                         <span class="fw-bold">{{ comment.createdBy }}</span>
                         <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
                     </div>
                 </ng-template>
-                <div [innerHTML]="(comment.commentText | markdownToHtml) | async" class="pe-5">
+                <div [innerHTML]="(comment.commentText | markdownToHtml) | async" class="pe-5 rendered-comment-content">
+                </div>
+                <div class="mt-2 p-2 d-none edit-editor-container">
+                    <app-editor [content]="comment.commentText" [style]="{ width: '100%'}"></app-editor>
                 </div>
                 <ng-template pTemplate="icons">
-                    <p-menu appendTo="body" [attr.data-comment-id]="comment.id" [model]="getCommentActionMenuContent(comment.id)" [popup]="true" >
+                    <p-menu appendTo="body" [attr.data-menu-id]="comment.id" [model]="getCommentActionMenuContent(comment.id)" [popup]="true" >
+                        <ng-template pTemplate="submenuheader" let-item>
+                            <span *ngIf="item?.label" class="ms-2">{{ item.label }}</span>
+                        </ng-template>
                         <ng-template pTemplate="item" let-item>
-                            <a pRipple class="flex align-items-center p-menuitem-link">
-                                <img src="{{assetsPath}}/images/{{ item?.title! | languageNames }}-original.svg" width="20" height="20" class="me-2">
+                            <a pRipple [attr.data-item-id]="comment.id" class="flex align-items-center p-menuitem-link">
+                                <img *ngIf="item?.title" src="{{assetsPath}}/images/{{ item?.title! | languageNames }}-original.svg" width="25" height="25" class="ms-2">
+                                <i *ngIf="item?.icon" class="ms-2 {{item?.icon}}"></i>
                                 <span class="ms-2">{{ item.label }}</span>
                             </a>
                         </ng-template>
@@ -36,11 +43,14 @@
             </p-panel>
         </ng-template>
     </p-timeline>
+    <div class="border-top border-bottom mt-2 p-2 d-none reply-editor-container">
+        <app-editor [style]="{ width: '100%'}"></app-editor>
+    </div>
     <div class="mt-2 d-grid gap-2">
-        <div class="border-top border-bottom ps-4 pe-2 reply-container">
-            <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" class="user-avartar mx-2 my-2"/>
-            <button type="button" class="btn btn-sm border text-muted text-start ms-2 me-4 reply-button">Reply...</button>
+        <div class="border-top border-bottom reply-button-container p-2" style="display: flex; align-items: center;">
+            <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" height="40" class="user-avartar mx-4"/>
+            <button type="button" style="flex-grow: 1;" class="btn btn-sm border text-muted text-start me-4 reply-button" (click)="showReplyEditor($event)">Reply...</button>
         </div>
-        <button type="button" class="btn btn-outline-secondary btn-sm mx-2">Resolve Conversation</button>
+        <button type="button" class="btn btn-outline-secondary comment-action-btn btn-sm mx-2">Resolve Conversation</button>
     </div>
 </div>

@@ -150,6 +150,19 @@ p-contextmenusub {
     outline-offset: 0.15rem;
 }
 
+.p-editor-container .p-editor-toolbar {
+    background: var(--base-bg-color);
+}
+
+.p-editor-container .p-editor-content .ql-editor {
+    background: var(--base-fg-color);
+    color: var(--base-text-color);
+}
+
+.p-editor-container .p-editor-toolbar.ql-snow, .p-editor-container .p-editor-content.ql-snow {
+    border: 1px solid var(--border-color);
+}
+
 .p-inputtext {
     color: var(--base-text-color);
     background: var(--base-fg-color);
@@ -259,10 +272,9 @@ p-contextmenusub {
 .p-menu .p-menuitem > .p-menuitem-content {
     color: var(--base-text-color);
     background: var(--base-fg-color);
-    transition: box-shadow 0.15s;
-    border-radius: 0;
 
     a {
+        padding: 0.35rem 1rem;
         text-decoration: none;
     }
 }
@@ -285,10 +297,6 @@ p-contextmenusub {
     color: var(--base-text-color);
     background: var(--base-fg-color);
     padding: 0.35rem 1rem
-}
-
-.p-menu .p-menuitem > .p-menuitem-content .p-menuitem-link {
-    padding: 0.35rem 1rem;
 }
 
 .p-multiselect {

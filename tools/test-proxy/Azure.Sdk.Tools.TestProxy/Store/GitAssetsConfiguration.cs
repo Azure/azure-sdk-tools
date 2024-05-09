@@ -127,7 +127,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         {
             var location = Path.Join(ResolveAssetRepoLocation().ToString(), ".git");
 
-            return Directory.Exists(location) | File.Exists(location);
+            return Directory.Exists(location) || File.Exists(location);
         }
     }
 }

@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Console;
 using Microsoft.Build.Tasks;
@@ -22,15 +24,21 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             Console = consoleWrapper;
         }
 
-        public async Task<List<Tuple<string, Detection>>> DiscoverSecrets(string assetRepoRoot, IEnumerable<string> relativePaths)
+        public List<Tuple<string, Detection>> DiscoverSecrets(string assetRepoRoot, IEnumerable<string> relativePaths)
         {
-            var detectedSecrets = new List<Tuple<string, Detection>>();
+            var detectedSecrets = new ConcurrentBag<Tuple<string, Detection>>();
             var total = relativePaths.Count();
             var seen = 0;
             Console.WriteLine(string.Empty);
-            foreach (string filePath in relativePaths)
+
+            var options = new ParallelOptions
             {
-                var content = await ReadFile(Path.Combine(assetRepoRoot, filePath));
+                MaxDegreeOfParallelism = Environment.ProcessorCount
+            };
+
+            Parallel.ForEach(relativePaths, options, (filePath) =>
+            {
+                var content = File.ReadAllText(Path.Combine(assetRepoRoot, filePath));
                 var fileDetections = DetectSecrets(content);
 
                 if (fileDetections != null && fileDetections.Count > 0)
@@ -40,40 +48,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         detectedSecrets.Add(Tuple.Create(filePath, detection));
                     }
                 }
-                seen++;
+
+                Interlocked.Increment(ref seen);
+
                 System.Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
-            }
-            Console.WriteLine(string.Empty);
-
-            return detectedSecrets;
-        }
-
-        public async Task<List<Tuple<string, Detection>>> DiscoverSecrets(string inputDirectory)
-        {
-            var files = Directory.GetFiles(inputDirectory, "*", SearchOption.AllDirectories);
-            var detectedSecrets = new List<Tuple<string, Detection>>();
-
-            var seen = 0;
-            Console.WriteLine(string.Empty);
-            foreach (string filePath in files)
-            {
-                var content = await ReadFile(filePath);
-                var fileDetections = DetectSecrets(content);
-
-                if (fileDetections != null && fileDetections.Count > 0)
-                {
-                    foreach(Detection detection in fileDetections)
-                    {
-                        detectedSecrets.Add(Tuple.Create(filePath, detection));
-                    }
-                }
-                seen++;
-                System.Console.Write($"\r\u001b[2KScanned {seen}/{files.Length}.");
-            }
+            });
 
             Console.WriteLine(string.Empty);
 
-            return detectedSecrets;
+            return detectedSecrets.ToList();
         }
 
         private async Task<string> ReadFile(string filePath)

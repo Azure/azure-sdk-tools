@@ -97,10 +97,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="assetsConfiguration"></param>
         /// <param name="pendingChanges"></param>
         /// <returns></returns>
-        public async Task<bool> CheckForSecrets(GitAssetsConfiguration assetsConfiguration, string[] pendingChanges)
+        public bool CheckForSecrets(GitAssetsConfiguration assetsConfiguration, string[] pendingChanges)
         {
             _consoleWrapper.WriteLine($"Detected new recordings. Prior to pushing to destination repo, test-proxy will scan {pendingChanges.Length} files.");
-            var detectedSecrets = await SecretScanner.DiscoverSecrets(assetsConfiguration.AssetsRepoLocation, pendingChanges);
+            var detectedSecrets = SecretScanner.DiscoverSecrets(assetsConfiguration.AssetsRepoLocation, pendingChanges);
 
             if (detectedSecrets.Count > 0)
             {
@@ -142,7 +142,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
-                if (await CheckForSecrets(config, pendingChanges))
+                if (CheckForSecrets(config, pendingChanges))
                 {
                     Environment.ExitCode = -1;
                     return;

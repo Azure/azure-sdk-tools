@@ -169,10 +169,14 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
    // });
  // }
 
-  onCodePanelItemCick(event: Event) {
+  onCodePanelItemClick(event: Event) {
     const target = event.target as Element;
     if (target.classList.contains('toggle-documentation-btn')) {
       this.toggleNodeDocumentation(target);
+    }
+
+    if (target.classList.contains('toggle-user-comments-btn')) {
+      console.log('toggle-user-comments-btn clicked');
     }
   }
 

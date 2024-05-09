@@ -23,6 +23,7 @@ import { ApiRevisionOptionsComponent } from 'src/app/_components/api-revision-op
 import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule } from '@angular/forms';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
+import { EditorComponent } from 'src/app/_components/shared/editor/editor.component';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -37,7 +38,8 @@ const routes: Routes = [
     CommentThreadComponent,
     PageOptionsSectionComponent,
     ApiRevisionOptionsComponent,
-    MarkdownToHtmlPipe
+    MarkdownToHtmlPipe,
+    EditorComponent
   ],
   imports: [
     SharedAppModule,

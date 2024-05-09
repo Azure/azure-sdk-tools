@@ -2,7 +2,7 @@
 <div *ngIf="isLoading" class="spinner-border m-3" role="status">
     <span class="visually-hidden">Loading...</span>
 </div>
-<div *ngIf="codePanelRowSource" class="viewport" (click)="onCodePanelItemCick($event)">
+<div *ngIf="codePanelRowSource" class="viewport" (click)="onCodePanelItemClick($event)">
   <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeId" [ngClass]="getClassObject(item.rowClasses)">
     <ng-container *ngIf="item.rowType === CodePanelRowDatatype.CodeLine">
       <div class="line-actions">

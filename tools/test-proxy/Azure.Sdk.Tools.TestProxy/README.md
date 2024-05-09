@@ -561,14 +561,14 @@ When `AddSanitizer` or `AddSanitizers` is called, check the response `body` for 
 Example response body:
 
 ```jsonc
-// POSTS to Admin/AdSanitizer has individual result
+// POSTS to Admin/AddSanitizer has individual result
 {
   "Sanitizer": "3"
 }
 ```
 
 ```jsonc
-// POSTS to Admin/AdSanitizers has multiple results
+// POSTS to Admin/AddSanitizers has multiple results
 {
   "Sanitizers": ["3", "4", "9"]
 }

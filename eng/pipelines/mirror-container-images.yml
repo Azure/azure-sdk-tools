@@ -36,11 +36,14 @@ extends:
 
             steps:
               - ${{ each image in parameters.Images }}:
-                - task: Docker@2
+                - task: AzureCLI@2
                   displayName: Login to ${{ split(image.mirror, '.')[0] }}
                   inputs:
-                    command: login
-                    containerRegistry: ${{ split(image.mirror, '.')[0] }}
+                    azureSubscription: "Azure SDK Engineering System"
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az acr login --name ${{ split(image.mirror, '.')[0] }}
                 - task: Powershell@2
                   displayName: Mirror ${{ image.source }} to ${{ image.mirror }}
                   inputs:

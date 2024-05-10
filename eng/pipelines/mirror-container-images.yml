@@ -10,7 +10,7 @@ parameters:
         changes: bash -c "apt update -y && apt upgrade -y"
       - source: ghcr.io/chaos-mesh/chaos-mesh:v2.6.3
         mirror: azsdkengsys.azurecr.io/mirror/chaos-mesh/chaos-mesh:v2.6.3
-        changes: /bin/sh -c "apt-get update && apt-get install -y"
+        changes: sh -c "apt-get update && apt-get install -y"
       - source: ghcr.io/chaos-mesh/chaos-dashboard:v2.6.3
         mirror: azsdkengsys.azurecr.io/mirror/chaos-mesh/chaos-dashboard:v2.6.3
         changes: bash -c "apt update -y && apt upgrade -y"

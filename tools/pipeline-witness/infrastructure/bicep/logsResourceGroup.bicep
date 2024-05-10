@@ -292,7 +292,7 @@ resource eventHubsDataReceiverRoleDefinition 'Microsoft.Authorization/roleDefini
 }
 
 resource kustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
-  name: guid(blobContributorRoleDefinition.id, kustoClusterName, eventHubNamespace.id)
+  name: guid(eventHubsDataReceiverRoleDefinition.id, kustoClusterName, eventHubNamespace.id)
   scope: eventHubNamespace
   properties:{
     principalId: kustoCluster.identity.principalId

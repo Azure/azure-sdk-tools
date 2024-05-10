@@ -159,7 +159,13 @@ namespace GitHubTeamUserStore
         /// <summary>
         /// Upload the data to blob storage. Uses the BlobUriBuilder to get the blob information to created the
         /// Blob clients and upload the data.
-        /// DefaultAzureCredential should work for local and pipeline testing provided both are setup
+        /// Credentials:
+        /// Instead of using DefaultAzureCredential [1] we use ChainedTokenCredential [2] which works
+        /// as DefaultAzureCredential, but most importantly, it excludes ManagedIdentityCredential.
+        /// We do so because there is an undesired managed identity available when we run this
+        /// code in CI/CD pipelines, which takes priority over the desired AzureCliCredential coming
+        /// from the calling AzureCLI@2 task.
+        /// 
         /// Running Locally:
         /// Your user needs to have Storage Blob Data Contributor access. This is done through
         /// https://ms.portal.azure.com/, selecting the azuresdkartifacts storage account, selecting Access Control (IAM)
@@ -178,7 +184,13 @@ namespace GitHubTeamUserStore
         /// <returns></returns>
         public async Task UploadDataToBlobStorage(string rawJson, BlobUriBuilder blobUriBuilder)
         {
-            var cred = new AzureCliCredential();
+            var cred = new ChainedTokenCredential(
+                                new EnvironmentCredential(),
+                                new VisualStudioCredential(),
+                                new AzureCliCredential(),
+                                new AzurePowerShellCredential(),
+                                new InteractiveBrowserCredential()
+                            );
             BlobServiceClient blobServiceClient = new BlobServiceClient(blobUriBuilder.ToUri(), cred);
 
             BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient(blobUriBuilder.BlobContainerName);

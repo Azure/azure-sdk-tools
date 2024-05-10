@@ -35,7 +35,7 @@ stages:
           scriptLocation: inlineScript
           inlineScript: |
             dotnet run -rUri "$(RepoLabelUri)" -tUri "$(TeamUserUri)" -uUri "$(UserOrgUri)" -rlFile "$(RepoListFile)"
-        workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
+          workingDirectory: tools/github-team-user-store/GitHubTeamUserStore/GitHubTeamUserStore
         env:
           GITHUB_TOKEN: $(azuresdkartifacts-azure-sdk-write-teams-github-pat)
 

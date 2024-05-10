@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
+using Azure.Identity;
 using Octokit;
 using GitHubTeamUserStore.Constants;
 
@@ -158,14 +159,28 @@ namespace GitHubTeamUserStore
         /// <summary>
         /// Upload the data to blob storage. Uses the BlobUriBuilder to get the blob information to created the
         /// Blob clients and upload the data.
+        /// DefaultAzureCredential should work for local and pipeline testing provided both are setup
+        /// Running Locally:
+        /// Your user needs to have Storage Blob Data Contributor access. This is done through
+        /// https://ms.portal.azure.com/, selecting the azuresdkartifacts storage account, selecting Access Control (IAM)
+        /// and adding Storage Blob Data Contributor then following the buttons at the bottom to assign this to your user.
+        /// In Visual Studio select Tools-Options and then search for Azure and select Azure Service Authentication and
+        /// authenticate. Once that's done the DefaultAzureCredential will use those creds.
+        /// 
+        /// Running in a pipeline:
+        /// Requires using the AzureCLI or AzurePowerShell task and azure subscription, which was already setup, 
+        /// is 'Azure SDK Artifacts' in both cases the exact line is as follows
+        /// azureSubscription: 'Azure SDK Artifacts'
+        /// The DefaultAzureCredential will use the creds setup in the task
         /// </summary>
         /// <param name="rawJson">The json string, representing the information that will be uploaded to blob storage.</param>
         /// <param name="blobUriBuilder">BlobUriBuilder which contains the blob storage information.</param>
         /// <returns></returns>
-        /// <exception cref="ApplicationException">If there is no AZURE_SDK_TEAM_USER_STORE_SAS in the environment</exception>
         public async Task UploadDataToBlobStorage(string rawJson, BlobUriBuilder blobUriBuilder)
         {
-            BlobServiceClient blobServiceClient = new BlobServiceClient(blobUriBuilder.ToUri());
+            var cred = new DefaultAzureCredential();
+            BlobServiceClient blobServiceClient = new BlobServiceClient(blobUriBuilder.ToUri(), cred);
+
             BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient(blobUriBuilder.BlobContainerName);
             BlobClient blobClient = blobContainerClient.GetBlobClient(blobUriBuilder.BlobName);
             await blobClient.UploadAsync(BinaryData.FromString(rawJson), overwrite: true);

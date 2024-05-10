@@ -178,7 +178,7 @@ namespace GitHubTeamUserStore
         /// <returns></returns>
         public async Task UploadDataToBlobStorage(string rawJson, BlobUriBuilder blobUriBuilder)
         {
-            var cred = new DefaultAzureCredential();
+            var cred = new AzureCliCredential();
             BlobServiceClient blobServiceClient = new BlobServiceClient(blobUriBuilder.ToUri(), cred);
 
             BlobContainerClient blobContainerClient = blobServiceClient.GetBlobContainerClient(blobUriBuilder.BlobContainerName);

@@ -71,22 +71,13 @@ namespace GitHubTeamUserStore
             bool success = false;
             // The team/user list needs to be generated before the user/org data. The reason being is that the User/Org
             // visibility data is generated for the azure-sdk-write team users.
-            // JRS-BEGIN - uncomment when done testing
-            //if (await TeamUserGenerator.GenerateAndStoreTeamUserAndOrgData(gitHubEventClient, teamUserBlobStorageUri, userOrgVisibilityBlobStorageUri))
-            //{
-            //    if (await RepositoryLabelGenerator.GenerateAndStoreRepositoryLabels(gitHubEventClient, repoLabelBlobStorageUri, repositoryListFile))
-            //    {
-            //        success = true;
-            //    }
-            //}
-            // JRS-END - uncomment when done testing
-
-            // JRS-BEGIN - remove when done testing
-            if (await RepositoryLabelGenerator.GenerateAndStoreRepositoryLabels(gitHubEventClient, repoLabelBlobStorageUri, repositoryListFile))
+            if (await TeamUserGenerator.GenerateAndStoreTeamUserAndOrgData(gitHubEventClient, teamUserBlobStorageUri, userOrgVisibilityBlobStorageUri))
             {
-                success = true;
+                if (await RepositoryLabelGenerator.GenerateAndStoreRepositoryLabels(gitHubEventClient, repoLabelBlobStorageUri, repositoryListFile))
+                {
+                    success = true;
+                }
             }
-            // JRS-END - remove when done testing
 
             await gitHubEventClient.WriteRateLimits("RateLimit at end of execution:");
 

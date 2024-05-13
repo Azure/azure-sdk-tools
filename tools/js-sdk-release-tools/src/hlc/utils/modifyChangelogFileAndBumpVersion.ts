@@ -62,8 +62,7 @@ function changeClientFile(packageFolderPath: string, packageVersion: string) {
     })
 }
 
-export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog, changeLogContent: string) {
-    const originalChangeLogContent = changeLogContent;
+export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog, originalChangeLogContent: string) {
     const modifiedChangelogContent = `# Release History
     
 ## ${packageVersion} (${date})

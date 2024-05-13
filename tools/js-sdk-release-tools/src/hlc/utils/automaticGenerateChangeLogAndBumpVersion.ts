@@ -94,7 +94,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                     makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
                     const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
-                    makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent);
+                    makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent,stableVersion);
                     logger.log('Generate changelogs and setting version for track2 release successfully');
                     return changelog;
                 }

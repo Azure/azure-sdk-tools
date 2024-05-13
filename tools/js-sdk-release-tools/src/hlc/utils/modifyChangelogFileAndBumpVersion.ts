@@ -62,10 +62,14 @@ function changeClientFile(packageFolderPath: string, packageVersion: string) {
     })
 }
 
-export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog, originalChangeLogContent: string) {
+export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog, originalChangeLogContent: string, comparedVersion:string) {
+    let pacakgeVersionDetail=`## ${packageVersion} (${date})`;
+    if(packageVersion.includes("beta")){
+        pacakgeVersionDetail +=`\nCompared with version ${comparedVersion}`
+    }
     const modifiedChangelogContent = `# Release History
     
-## ${packageVersion} (${date})
+${pacakgeVersionDetail}
     
 ${changeLog.displayChangeLog()}
     

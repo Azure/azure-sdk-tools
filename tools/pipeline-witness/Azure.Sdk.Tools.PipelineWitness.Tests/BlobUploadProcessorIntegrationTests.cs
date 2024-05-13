@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
-using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using Xunit;
 
@@ -47,20 +45,16 @@ namespace Azure.Sdk.Tools.PipelineWitness.Tests
         [EnvironmentConditionalSkipFact]
         public async Task BasicBlobProcessInvokesSuccessfully()
         {
-            BuildLogProvider buildLogProvider = new(logger: new NullLogger<BuildLogProvider>(), this.visualStudioConnection);
             BlobServiceClient blobServiceClient = new(Environment.GetEnvironmentVariable("AZURESDK_BLOB_CS"));
             BuildHttpClient buildHttpClient = this.visualStudioConnection.GetClient<BuildHttpClient>();
-            TestResultsHttpClient testResultsBuiltClient = this.visualStudioConnection.GetClient<TestResultsHttpClient>();
 
             List<Build> recentBuilds = await buildHttpClient.GetBuildsAsync(TARGET_PROJECT_ID, definitions: new[] { TARGET_DEFINITION_ID }, resultFilter: BuildResult.Succeeded, statusFilter: BuildStatus.Completed, top: 1, queryOrder: BuildQueryOrder.FinishTimeDescending);
             Assert.True(recentBuilds.Count > 0);
             int targetBuildId = recentBuilds.First().Id;
 
             BlobUploadProcessor processor = new(logger: new NullLogger<BlobUploadProcessor>(),
-                logProvider: buildLogProvider,
                 blobServiceClient: blobServiceClient,
-                buildClient: buildHttpClient,
-                testResultsClient: testResultsBuiltClient,
+                vssConnection: this.visualStudioConnection,
                 options: Options.Create<PipelineWitnessSettings>(this.testSettings));
 
             await processor.UploadBuildBlobsAsync(TARGET_ACCOUNT_ID, new Guid(TARGET_PROJECT_ID), targetBuildId);

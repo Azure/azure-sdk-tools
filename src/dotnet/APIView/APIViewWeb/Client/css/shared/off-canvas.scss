@@ -60,14 +60,6 @@
     }
 }
 
-#review-right-offcanvas-toggle, #samples-right-offcanvas-toggle, #revisions-right-offcanvas-toggle {
-    + .btn-sm {
-        padding: 0.05rem 0.4rem;
-        font-size: 0.775rem;
-        border-radius: 0.2rem;
-    }
-}
-
 #apiRevisions-context, #samplesRevisions-context {
     @include offcanvas-context-large
 }

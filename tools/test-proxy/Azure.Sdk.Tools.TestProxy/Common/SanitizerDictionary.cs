@@ -675,6 +675,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new BodyKeySanitizer("$..keyVaultClientId", value: EMPTYGUID),
                     "AZSDK3497"
                 ),
+                new RegisteredSanitizer(
+                    new BodyKeySanitizer("$..storageAccountAccessKey"),
+                    "AZSDK3498"
+                ),
                 #endregion
                 #region UriRegex
                 new RegisteredSanitizer(

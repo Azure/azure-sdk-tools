@@ -121,8 +121,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Pushes a set of changed files to the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
+        /// <param name="ignoreSecretProtection"></param>
         /// <returns></returns>
-        public async Task Push(string pathToAssetsJson) {
+        public async Task Push(string pathToAssetsJson, bool ignoreSecretProtection = false) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
 
             var initialized = IsAssetsRepoInitialized(config);
@@ -145,8 +146,11 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 if (CheckForSecrets(config, pendingChanges))
                 {
-                    Environment.ExitCode = -1;
-                    return;
+                    if (!ignoreSecretProtection)
+                    {
+                        Environment.ExitCode = -1;
+                        return;
+                    }
                 }
 
                 try

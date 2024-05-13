@@ -55,6 +55,11 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
                 getDefaultValue: () => false);
             universalOption.AddAlias("-u");
 
+            var breakGlassOption = new Option<bool>(
+                name: "--breakGlass",
+                description: "Flag; Ignore secret push protection results when pushing.",
+                getDefaultValue: () => false);
+            breakGlassOption.AddAlias("-b");
 
             var collectedArgs = new Argument<string[]>("args")
             {
@@ -92,9 +97,10 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             root.Add(startCommand);
 
             var pushCommand = new Command("push", "Push the assets, referenced by assets.json, into git.");
+            pushCommand.AddOption(breakGlassOption);
             pushCommand.AddOption(assetsJsonPathOption);
             pushCommand.SetHandler(async (pushOpts) => await callback(pushOpts),
-                new PushOptionsBinder(storageLocationOption, storagePluginOption, assetsJsonPathOption)
+                new PushOptionsBinder(storageLocationOption, storagePluginOption, assetsJsonPathOption, breakGlassOption)
             );
             root.Add(pushCommand);
 

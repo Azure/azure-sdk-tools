@@ -11,7 +11,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Given a configuration, push the changes made by the test-proxy into the remote store.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
-        public abstract Task Push(string pathToAssetsJson);
+        /// <param name="ignoreSecretProtection"></param>
+        public abstract Task Push(string pathToAssetsJson, bool ignoreSecretProtection = false);
 
         /// <summary>
         /// Given a configuration, pull any remote resources down into the provided contextPath.

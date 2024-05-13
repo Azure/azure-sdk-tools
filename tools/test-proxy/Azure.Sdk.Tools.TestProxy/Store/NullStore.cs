@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 {
     public class NullStore : IAssetsStore
     {
-        public Task Push(string pathToAssetsJson) { return null; }
+        public Task Push(string pathToAssetsJson, bool ignoreSecretProtection = false) { return null; }
 
         public Task<string> Restore(string pathToAssetsJson) { return null; }
 

@@ -1,7 +1,9 @@
-param storageAccountName string
+param location string
+param logsStorageAccountName string
 param kustoClusterName string
 param kustoDatabaseName string
-param location string
+param webAppName string
+param appIdentityPrincipalId string
 
 var tables = [
   {
@@ -40,9 +42,9 @@ var tables = [
 
 var kustoScript = loadTextContent('../artifacts/merged.kql')
 
-// Storage Account
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
-  name: storageAccountName
+// Storage Account for output blobs
+resource logsStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
+  name: logsStorageAccountName
   location: location
   sku: {
     name: 'Standard_LRS'
@@ -102,19 +104,32 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   }
 }
 
+resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = [for table in tables: {
+  parent: logsStorageAccount::blobServices
+  name: table.container
+  properties: {
+    immutableStorageWithVersioning: {
+      enabled: false
+    }
+    defaultEncryptionScope: '$account-encryption-key'
+    denyEncryptionScopeOverride: false
+    publicAccess: 'None'
+  }
+}]
+
 // Event Grid
 resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
-  name: storageAccountName
+  name: logsStorageAccountName
   location: location
   properties: {
-    source: storageAccount.id
+    source: logsStorageAccount.id
     topicType: 'microsoft.storage.storageaccounts'
   }
 }
 
 // Event Hub
 resource eventHubNamespace 'Microsoft.EventHub/namespaces@2022-01-01-preview' = {
-  name: storageAccountName
+  name: logsStorageAccountName
   location: location
   sku: {
     name: 'Standard'
@@ -185,19 +200,6 @@ resource kustoScriptInvocation 'Microsoft.Kusto/clusters/databases/scripts@2022-
   }
 }
 
-resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = [for table in tables: {
-  parent: storageAccount::blobServices
-  name: table.container
-  properties: {
-    immutableStorageWithVersioning: {
-      enabled: false
-    }
-    defaultEncryptionScope: '$account-encryption-key'
-    denyEncryptionScopeOverride: false
-    publicAccess: 'None'
-  }
-}]
-
 resource eventHubs 'Microsoft.EventHub/namespaces/eventhubs@2022-01-01-preview' = [for (table, i) in tables: {
   parent: eventHubNamespace
   name: table.container
@@ -239,7 +241,7 @@ resource kustoDataConnections 'Microsoft.Kusto/Clusters/Databases/DataConnection
   kind: 'EventGrid'
   properties: {
     ignoreFirstRecord: false
-    storageAccountResourceId: storageAccount.id
+    storageAccountResourceId: logsStorageAccount.id
     eventHubResourceId: eventHubs[i].id
     consumerGroup: '$Default'
     tableName: table.name
@@ -247,6 +249,54 @@ resource kustoDataConnections 'Microsoft.Kusto/Clusters/Databases/DataConnection
     dataFormat: 'JSON'
     blobStorageEventType: 'Microsoft.Storage.BlobCreated'
     databaseRouting: 'Single'
+    managedIdentityResourceId: kustoCluster.id
   }
   dependsOn: [ kustoScriptInvocation ]
 }]
+
+// Assign roles to the Kusto cluster and App Service
+resource blobContributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+  scope: subscription()
+  // This is the Storage Blob Data Contributor role.
+  // Read, write, and delete Azure Storage containers and blobs
+  // See https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage
+  name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+}
+
+resource storageRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(blobContributorRoleDefinition.id, webAppName, logsStorageAccount.id)
+  scope: logsStorageAccount
+  properties:{
+    principalId: appIdentityPrincipalId
+    roleDefinitionId: blobContributorRoleDefinition.id
+    description: 'Blob Contributor for PipelineWitness'
+  }
+}
+
+resource kustoStorageAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(blobContributorRoleDefinition.id, kustoClusterName, logsStorageAccount.id)
+  scope: logsStorageAccount
+  properties:{
+    principalId: kustoCluster.identity.principalId
+    roleDefinitionId: blobContributorRoleDefinition.id
+    description: 'Blob Contributor for Kusto ingestion'
+  }
+}
+
+resource eventHubsDataReceiverRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+  scope: subscription()
+  // This is the Event Hubs Data Receiver role
+  // Allows receive access to Azure Event Hubs resources.
+  // see https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#analytics
+  name: 'a638d3c7-ab3a-418d-83e6-5f17a39d4fde'
+}
+
+resource kustoEventHubsAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(eventHubsDataReceiverRoleDefinition.id, kustoClusterName, eventHubNamespace.id)
+  scope: eventHubNamespace
+  properties:{
+    principalId: kustoCluster.identity.principalId
+    roleDefinitionId: eventHubsDataReceiverRoleDefinition.id
+    description: 'Blob Contributor for Kusto ingestion'
+  }
+}

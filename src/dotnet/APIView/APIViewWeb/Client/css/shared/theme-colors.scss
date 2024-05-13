@@ -21,6 +21,10 @@
     --link-color: #{$primary};
     --link-active: #{shade-color($primary, 20%)};
     --link-visited: #{shade-color($primary, 40%)};
+    /*----Diagnostic Details Link------------------------------------*/
+    --details-link-color: #{$primary};
+    --details-link-active-hover: #00CBEB;
+    --link-visited: #{shade-color($primary, 40%)};
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary, 80%)};
     --shadow-color: rgba(#{$black}, .15);
@@ -42,10 +46,10 @@
     --name-color: #{$base-text-color};
     --code-color: #d1377e;
     --code-comment: green;
-    --code-diagnostics-error-color: lightpink;
-    --code-diagnostics-warn-color: lightyellow;
-    --code-diagnostics-info-color: lightblue;
-    --code-added: #cee9d3;
+    --code-diagnostics-error-color: #ffcfad;
+    --code-diagnostics-warn-color: #ffeea3;
+    --code-diagnostics-info-color: #c8e6e5;
+    --code-diagnostics-fatal-color: #f5a3b9;
     --code-removed: #fdcfce;
     --code-delta: #fdefc6;
     /*----SVG-------------------------------------------------*/
@@ -76,6 +80,10 @@
     --link-color: #{$primary-color};
     --link-active: #{tint-color($primary-color, 20%)};
     --link-visited: #{tint-color($primary-color, 40%)};
+    /*----Diagnostic Details Link------------------------------------*/
+    --details-link-color: #0d1dfc;
+    --details-link-active-hover: #00CBEB;
+    --details-link-visited: #3d4afd;
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary-color, 80%)};
     --shadow-color: rgba(#{$white}, .15);
@@ -97,10 +105,10 @@
     --name-color: #{$base-text-color};
     --code-color: #db3984;
     --code-comment: green;
-    --code-diagnostics-error-color: darkmagenta;
-    --code-diagnostics-warn-color: #846007;
-    --code-diagnostics-info-color: darkblue;
-    --code-added: #14432d;
+    --code-diagnostics-error-color: #bf6b2e;
+    --code-diagnostics-warn-color: #bd9b00;
+    --code-diagnostics-info-color: #489491;
+    --code-diagnostics-fatal-color: #a10e5f;
     --code-removed: #491d24;
     --code-delta: #4c401a;
     /*----SVG-------------------------------------------------*/
@@ -133,6 +141,10 @@
     --link-color: #{$primary-color};
     --link-active: #{tint-color($primary-color, 10%)};
     --link-visited: #{tint-color($primary-color, 20%)};
+    /*----Diagnostic Details Link------------------------------------*/
+    --details-link-color: #0d1dfc;
+    --details-link-active-hover: #00CBEB;
+    --details-link-visited: #3d4afd;
     /*----Shadows and Glows------------------------------------------*/
     --outer-glow: #{tint-color($primary-color, 80%)};
     --shadow-color: rgba(#{$gray-100}, .15);
@@ -154,9 +166,10 @@
     --name-color: #{$base-text-color};
     --code-color: #db3984;
     --code-comment: #8a9898;
-    --code-diagnostics-error-color: #ff4c59;
-    --code-diagnostics-warn-color: #e3a710;
-    --code-diagnostics-info-color: #5197f0;
+    --code-diagnostics-error-color: #d18654;
+    --code-diagnostics-warn-color: #d1ba56;
+    --code-diagnostics-info-color: #5da6a3;
+    --code-diagnostics-fatal-color: #d15a74;
     --code-added: #345039;
     --code-removed: #5d3837;
     --code-delta: #695b32;

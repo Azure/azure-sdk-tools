@@ -3,14 +3,12 @@
 
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
-using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -182,7 +180,6 @@ namespace Azure.Sdk.Tools.TestProxy
                 {
                     var registeredId = _recordingHandler.RegisterSanitizer(sanitizer, recordingId);
                     registeredSanitizers.Add(registeredId);
-                    Response.Headers.Add("x-recording-id", recordingId);
                 }
                 else
                 {
@@ -190,6 +187,12 @@ namespace Azure.Sdk.Tools.TestProxy
                     registeredSanitizers.Add(registeredId);
                 }
             }
+
+            if (recordingId != null)
+            {
+                Response.Headers.Add("x-recording-id", recordingId);
+            }
+
             var json = JsonSerializer.Serialize(new { Sanitizers = registeredSanitizers });
             Response.ContentType = "application/json";
             Response.ContentLength = json.Length;

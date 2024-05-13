@@ -49,38 +49,37 @@ stages:
             templateContext:
               outputs:
                 - output: containerImage
-                  displayName: Push ${{ config.name }}:${{ parameters.ImageTag }}
+                  displayName: Push ${{ config.name }}
                   condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-                  image: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}
-                - ${{ if config.stableTags }}:
-                  - ${{ each stableTag in config.stableTags }}:
-                    - output: containerImage
-                      displayName: Push ${{ config.name }}:${{ stableTag }}
-                      condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-                      image: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}
+                  image: image:tag
+                  remoteImage: 
+                  - ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}
+                  - ${{ if config.stableTags }}:
+                    - ${{ each stableTag in config.stableTags }}:
+                      - ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}
 
           steps:
+            - task: AzureCLI@2
+              displayName: Login to $(containerRegistry)
+              inputs:
+                azureSubscription: "Azure SDK Engineering System"
+                scriptType: pscore
+                scriptLocation: inlineScript
+                inlineScript: |
+                  az acr login --name $(containerRegistry)
+
             - ${{ if config.prepareScript }}:
               - pwsh: |
                   ./${{ config.prepareScript }}
                 displayName: "Run prep script"
+
             - task: 1ES.BuildContainerImage@1
               displayName: Build ${{ config.name }}:${{ parameters.ImageTag }}
               inputs:
-                image: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ parameters.ImageTag }}
+                image: image:tag
                 path: ${{ config.configPath }}
                 enableNetwork: true
                 useBuildKit: true
-            - ${{ if config.stableTags }}:
-              - ${{ each stableTag in config.stableTags }}:
-                - task: 1ES.BuildContainerImage@1
-                  displayName: Build ${{ config.name }}:${{ stableTag }}
-                  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
-                  inputs:
-                    image: ${{ parameters.ContainerRegistry }}.azurecr.io/${{ config.dockerRepo }}:${{ stableTag }}
-                    path: ${{ config.configPath }}
-                    enableNetwork: true
-                    useBuildKit: true
 
       - ${{ if and(parameters.ManifestDeployment, parameters.Publish) }}:
         - ${{ each deployment in parameters.ManifestDeployment }}:

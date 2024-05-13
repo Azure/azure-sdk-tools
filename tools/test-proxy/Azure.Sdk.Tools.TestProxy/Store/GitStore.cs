@@ -40,6 +40,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public static readonly string GIT_COMMIT_EMAIL_ENV_VAR = "GIT_COMMIT_EMAIL";
         private bool LocalCacheRefreshed = false;
         public SecretScanner SecretScanner;
+        public readonly object LocalCacheLock = new object();
 
         public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
 
@@ -549,16 +550,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="config"></param>
         public bool IsAssetsRepoInitialized(GitAssetsConfiguration config)
         {
-            // we have to ensure that multiple threads hitting this same segment of code won't stomp on each other
-            if (!LocalCacheRefreshed)
+            // we have to ensure that multiple threads hitting this same segment of code won't stomp on each other. restore is incredibly important.
+            lock (LocalCacheLock)
             {
-                var breadCrumbQueue = InitTasks.GetOrAdd("breadcrumbload", new TaskQueue());
-                breadCrumbQueue.Enqueue(() =>
+                if (!LocalCacheRefreshed)
                 {
-
                     BreadCrumb.RefreshLocalCache(Assets, config);
                     LocalCacheRefreshed = true;
-                });
+                }
             }
 
             if (Assets.ContainsKey(config.AssetsJsonRelativeLocation.ToString()))

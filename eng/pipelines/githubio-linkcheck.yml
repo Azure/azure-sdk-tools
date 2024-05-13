@@ -113,6 +113,7 @@ jobs:
 
   - task: AzurePowerShell@5
     displayName: 'Upload cache file to blob container'
+    condition: succeededOrFailed()
     inputs:
       azureSubscription: 'Azure SDK Artifacts'
       ScriptType: 'InlineScript'

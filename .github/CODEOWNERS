@@ -21,6 +21,7 @@
 /eng/                                  @azure/azure-sdk-eng
 /eng/common/                           @konrad-jamrozik @weshaggard @benbp
 /eng/common/TestResources/             @benbp @weshaggard @heaths
+/eng/common/README.md                  @weshaggard
 
 ###########
 # CODEOWNERS Linter pipeline
@@ -42,7 +43,7 @@
 /tools/sdk-ai-bots/                    @raych1
 /tools/sdk-generation-pipeline/        @weshaggard @praveenkuttappan @maririos
 /tools/sdk-testgen/                    @raych1 @tadelesh
-/tools/test-proxy/                     @scbedd @mikeharder
+/tools/test-proxy/                     @scbedd @mikeharder @benbp
 /tools/tsp-client/                     @catalinaperalta
 /tools/webhook-router/                 @praveenkuttappan @weshaggard
 

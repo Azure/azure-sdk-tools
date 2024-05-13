@@ -1026,7 +1026,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
 
             var expectedSanitizerCount = testRecordingHandler.SanitizerRegistry.GetSanitizers().Count;
-            await controller.RemoveSanitizers(new RemoveSanitizerList() { Sanitizers = new List<string>() { "AZSDK001" } });
+            await controller.RemoveSanitizers(new RemoveSanitizerList() { Sanitizers = new List<string>() { "AZSDK0000" } });
 
             httpContext.Response.Body.Seek(0, SeekOrigin.Begin);
             var response = await JsonDocument.ParseAsync(httpContext.Response.Body, options: new JsonDocumentOptions() { AllowTrailingCommas = true });
@@ -1036,7 +1036,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var returnedSanitizerIds = TestHelpers.EnumerateArray<string>(prop);
 
             Assert.Single(returnedSanitizerIds);
-            Assert.Equal("AZSDK001", returnedSanitizerIds.First());
+            Assert.Equal("AZSDK0000", returnedSanitizerIds.First());
 
             Assert.Equal(expectedSanitizerCount - 1, testRecordingHandler.SanitizerRegistry.GetSanitizers().Count);
         }

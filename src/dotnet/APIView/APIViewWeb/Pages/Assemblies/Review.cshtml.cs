@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Common;
+using ApiView;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -429,6 +430,35 @@ namespace APIViewWeb.Pages.Assemblies
                 ShowDocumentation = UserPreference.ShowDocumentation;
             }
 
+        }
+
+        /// <summary>
+        /// Get Data for BS Target
+        /// </summary>
+        /// <param name="hasActiveConversations"></param>
+        /// <param name="hasFatalDiagnostics"></param>
+        /// <param name="userInApprovers"></param>
+        /// <param name="isActiveRevisionAhead"></param>
+        /// <returns></returns>
+
+        public string GetDataBSTarget(bool hasActiveConversations, bool hasFatalDiagnostics, bool userInApprovers, bool isActiveRevisionAhead)
+        {
+            if (hasActiveConversations && hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            {
+                return "#convoFatalModel";
+            }
+            else if (hasActiveConversations && !hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            {
+                return "#openConversationModel";
+            }
+            else if (!hasActiveConversations && hasFatalDiagnostics && userInApprovers && isActiveRevisionAhead)
+            {
+                return "#fatalErrorModel";
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
     }
 }

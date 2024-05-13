@@ -14,10 +14,10 @@ export async function backupNodeModules(folder: string) {
 
 export async function restoreNodeModules(folder: string) {
     const nodeModulesPath = path.join(folder, "node_modules_backup");
-    if (!fs.existsSync(nodeModulesPath) || '/' === path.dirname(folder)) {
-        return;
+    if (fs.existsSync(nodeModulesPath)) {
+        logger.logGreen(`rename ${nodeModulesPath} to ${nodeModulesPath.replace('_backup', '')}`);
+        fs.renameSync(nodeModulesPath, `${nodeModulesPath.replace('_backup', '')}`);
     }
-    logger.logGreen(`rename ${nodeModulesPath} to ${nodeModulesPath.replace('_backup', '')}`);
-    fs.renameSync(nodeModulesPath, `${nodeModulesPath.replace('_backup', '')}`);
+    if ('/' === path.dirname(folder)) return;
     await restoreNodeModules(path.dirname(folder));
 }

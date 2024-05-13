@@ -39,11 +39,6 @@ namespace Azure.Sdk.Tools.TestProxy.Console
             System.Console.WriteLine(message);
         }
 
-        public void ResetCursor()
-        {
-            // don't need this for testing
-        }
-
         public string ReadLine()
         {
             System.Console.WriteLine($"ReadLine response for test: '{_readLineResponse}'");

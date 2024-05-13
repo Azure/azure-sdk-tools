@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 Interlocked.Increment(ref seen);
 
-                System.Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
+                Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
             });
 
             Console.WriteLine(string.Empty);

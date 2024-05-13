@@ -20,9 +20,5 @@ namespace Azure.Sdk.Tools.TestProxy.Console
         {
             return System.Console.ReadLine();
         }
-        public void ResetCursor()
-        {
-            System.Console.SetCursorPosition(0, System.Console.CursorTop);
-        }
     }
 }

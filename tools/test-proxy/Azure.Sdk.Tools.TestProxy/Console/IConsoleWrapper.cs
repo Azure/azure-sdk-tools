@@ -9,6 +9,5 @@ namespace Azure.Sdk.Tools.TestProxy.Console
         void Write(string message);
         void WriteLine(string message);
         string ReadLine();
-        public void ResetCursor();
     }
 }

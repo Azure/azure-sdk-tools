@@ -223,4 +223,33 @@ namespace APIView.Model
             return Name == other.Name && Id == other.Id && Kind == other.Kind;
         }
     }
+
+    public class APITreeNodeForAPIComparer : IComparer<APITreeNodeForAPI>
+    {
+        public int Compare(APITreeNodeForAPI x, APITreeNodeForAPI y)
+        {
+            if (x == null)
+            {
+                if (y == null)
+                {
+                    return 0;
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+            else
+            {
+                if (y == null)
+                {
+                    return 1;
+                }
+                else
+                {
+                    return string.Compare(x.Name, y.Name);
+                }
+            }
+        }
+    }
 }

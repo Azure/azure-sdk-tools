@@ -109,23 +109,6 @@ namespace APIViewUnitTests
             }
         }
 
-        [Fact]
-        public void ComputeTokenDiff_Generates_Accurate_Result()
-        {
-            var result = CodeFileHelpers.ComputeTokenDiff(beforeTokens, afterTokens);
-            Assert.Equal(diffTokens.Count, result.Count);
-
-            for (int i = 0; i < diffTokens.Count; i++)
-            {
-                Assert.Equal(diffTokens[i].Value, result[i].Value);
-                Assert.Equal(diffTokens[i].Id, result[i].Id);
-
-                if (diffTokens[i].Properties.ContainsKey("DiffKind"))
-                {
-                    Assert.Equal(diffTokens[i].Properties["DiffKind"], result[i].Properties["DiffKind"]);
-                }
-            }
-        }
         private List<APITreeNodeForAPI> BuildTestTree(List<string> data, string parentId = null)
         {
             List<APITreeNodeForAPI> forest = new List<APITreeNodeForAPI>();

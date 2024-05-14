@@ -1,5 +1,6 @@
 using APIView.DIff;
 using APIView.Model;
+using APIViewWeb.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,15 +20,15 @@ namespace APIViewWeb.Helpers
 
         private static void ComputeAPITreeDiff(List<APITreeNodeForAPI> activeAPIRevisionAPIForest, List<APITreeNodeForAPI> diffAPIRevisionAPIForest, List<APITreeNodeForAPI> diffAPITree)
         {           
-            var activeAPIRevisionTreeNodesAtLevel = new SortedSet<APITreeNodeForAPI>(activeAPIRevisionAPIForest, new APITreeNodeForAPIComparer());
-            var diffAPIRevisionTreeNodesAtLevel = new SortedSet<APITreeNodeForAPI>(diffAPIRevisionAPIForest, new APITreeNodeForAPIComparer());
+            var activeAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNodeForAPI>(activeAPIRevisionAPIForest);
+            var diffAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNodeForAPI>(diffAPIRevisionAPIForest);
 
-            var allNodesAtLevelSorted = activeAPIRevisionTreeNodesAtLevel.Union(diffAPIRevisionTreeNodesAtLevel).OrderBy(node => node.Id);
+            var allNodesAtLevel = activeAPIRevisionAPIForest.InterleavedUnion(diffAPIRevisionAPIForest);
             var unChangedNodesAtLevel = activeAPIRevisionTreeNodesAtLevel.Intersect(diffAPIRevisionTreeNodesAtLevel);
             var removedNodesAtLevel = activeAPIRevisionTreeNodesAtLevel.Except(diffAPIRevisionTreeNodesAtLevel);
             var addedNodesAtLevel = diffAPIRevisionTreeNodesAtLevel.Except(activeAPIRevisionTreeNodesAtLevel);
 
-            foreach (var node in allNodesAtLevelSorted)
+            foreach (var node in allNodesAtLevel)
             {
                 if (unChangedNodesAtLevel.Contains(node))
                 {

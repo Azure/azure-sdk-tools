@@ -24,6 +24,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule } from '@angular/forms';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { EditorComponent } from 'src/app/_components/shared/editor/editor.component';
+import { SelectButtonModule } from 'primeng/selectbutton';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -53,6 +54,7 @@ const routes: Routes = [
     SidebarModule,
     TimelineModule,
     ButtonModule,
+    SelectButtonModule,
     FormsModule,
     UiScrollModule,
     DropdownModule,

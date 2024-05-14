@@ -2,16 +2,14 @@ import {NPMViewResult, StringMap, tr} from "@ts-common/azure-js-dev-tools";
 import {logger} from "./logger";
 const semverInc = require('semver/functions/inc')
 
-export function getVersion(npmViewResult: NPMViewResult,Tag: string) {
+export function getVersion(npmViewResult: NPMViewResult,tag: string) {
     const distTags: StringMap<string> | undefined = npmViewResult['dist-tags'];
-    const Version = distTags && distTags[Tag];
-    return Version;
+    return distTags && distTags[tag];
 }
 
-export function getversionDate(npmViewResult: NPMViewResult, Version : string){
+export function getversionDate(npmViewResult: NPMViewResult, version : string){
     const time: StringMap<string> | undefined = npmViewResult['time'];
-    const VersionDate = time && time[Version];
-    return VersionDate;
+    return time && time[version];
 }
 
 export function getLatestStableVersion(npmViewResult: NPMViewResult) {

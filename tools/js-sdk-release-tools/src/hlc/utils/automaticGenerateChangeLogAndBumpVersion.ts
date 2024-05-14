@@ -63,19 +63,19 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 let originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
                 if(nextVersion){
                     await shell.cd(path.join(packageFolderPath, 'changelog-temp'));
-                    await shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'changelog-next'));
-                    await shell.cd(path.join(packageFolderPath,'changelog-temp', 'changelog-next'));
+                    await shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
+                    await shell.cd(path.join(packageFolderPath,'changelog-temp', 'next'));
                     await shell.exec(`npm pack ${packageName}@${nextVersion}`);
                     await shell.exec('tar -xzf *.tgz');
                     await shell.cd(packageFolderPath);
                     logger.log("Create next folder successfully")
     
-                    const LatestDate = getversionDate(npmViewResult, stableVersion);
-                    const NextDate = getversionDate(npmViewResult,nextVersion);
-                    if (LatestDate && NextDate){
-                        if (LatestDate <= NextDate){
-                            originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath,'changelog-temp', 'changelog-next', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
-                        }
+                    const latestDate = getversionDate(npmViewResult, stableVersion);
+                    const nextDate = getversionDate(npmViewResult,nextVersion);
+                    if (latestDate && nextDate && latestDate <= nextDate){
+                        originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath,'changelog-temp', 'next', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+                        logger.log('Need to keep previous preview changelog');
+                        
                     }
                 }
                 if(originalChangeLogContent.includes("https://aka.ms/js-track2-quickstart")){

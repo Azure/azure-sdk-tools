@@ -66,12 +66,37 @@
             }
         }
 
-        &.added, .token-added {
+        &.added {
             background-color: rgba(0, 255, 0, 0.25);
+            .code-line-content::before {
+                content: '+';
+                left: 0;
+                position: absolute;
+                color: var(--text-muted-color);
+                margin-left: 2px;
+            }
         }
     
-        &.removed, .token-removed {
+        &.removed {
             background-color: rgba(255, 0, 0, 0.25);
+            .code-line-content::before {
+                content: '-';
+                left: 0;
+                position: absolute;
+                color: var(--text-muted-color);
+                margin-left: 2px;
+            }
+        }
+
+        &.added .line-actions, &.removed .line-actions {
+            background-color: var(--diff-change-color) 
+        }
+
+        .diff-change {
+            background-color: var(--diff-change-color);
+            border-radius: 2px;
+            padding-left: 2px;
+            padding-right: 2px;
         }
     }
 
@@ -87,6 +112,7 @@
     
     .code-line-content {
         grid-column: 2;
+        position: relative; 
     }
 
     .line-number {
@@ -105,6 +131,7 @@
         position: sticky;
         left: 0;
         background-color: var(--base-fg-color);
+        z-index: 1000;
 
         span:not(:last-child) {
             margin-right: 5px;

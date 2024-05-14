@@ -164,15 +164,15 @@
             <div class="me-auto">
                 <div class="fw-medium">First Release Aprroval</div>
                 <div class="d-grid gap-2 mt-2">
-                    <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-                        <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" (click)="updateFirstReleaseApproval('Pending')">
-                        <label class="btn btn-outline-primary btn-sm" for="btnradio1">Pending</label>
+                    <div class="btn-group" role="group" aria-label="First Release Approval Select">
+                        <input type="radio" class="btn-check" name="PendingFRAInput" id="PendingFRA" autocomplete="off" (click)="updateFirstReleaseApproval('Pending')">
+                        <label class="btn btn-outline-primary btn-sm" for="PendingFRA">Pending</label>
                         
-                        <input type="radio" #firstReleaseApprovalAllCheck class="btn-check" name="btnradio" id="btnradio2" autocomplete="off" (click)="updateFirstReleaseApproval('All')" checked>
-                        <label class="btn btn-outline-primary btn-sm" for="btnradio2">All</label>
+                        <input type="radio" #firstReleaseApprovalAllCheck class="btn-check" name="AllFRAInput" id="AllFRA" autocomplete="off" (click)="updateFirstReleaseApproval('All')" checked>
+                        <label class="btn btn-outline-primary btn-sm" for="AllFRA">All</label>
                         
-                        <input type="radio" class="btn-check" name="btnradio" id="btnradio3" autocomplete="off" (click)="updateFirstReleaseApproval('Approved')">
-                        <label class="btn btn-outline-primary btn-sm" for="btnradio3">Approved</label>
+                        <input type="radio" class="btn-check" name="ApprovedFRAInput" id="ApprovedFRA" autocomplete="off" (click)="updateFirstReleaseApproval('Approved')">
+                        <label class="btn btn-outline-primary btn-sm" for="ApprovedFRA">Approved</label>
                     </div>
                 </div>
             </div>

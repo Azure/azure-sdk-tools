@@ -43,7 +43,6 @@ export interface StructuredToken {
   value: string;
   id: string;
   kind: string;
-  diffKind: string;
   properties: { [key: string]: string; }
   renderClasses: Set<string>
 }

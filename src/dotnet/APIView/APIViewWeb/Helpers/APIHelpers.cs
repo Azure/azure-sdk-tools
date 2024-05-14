@@ -1,11 +1,11 @@
 using System;
-using System.Text.Json.Serialization;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
-using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace APIViewWeb.Helpers
 {
@@ -90,14 +90,15 @@ namespace APIViewWeb.Helpers
             response.ContentType = !string.IsNullOrEmpty(ContentType) ? ContentType : "application/json";
             response.StatusCode = _statusCode;
 
-            var options = new JsonSerializerOptions
+            var settings = new JsonSerializerSettings
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                ReferenceHandler = ReferenceHandler.IgnoreCycles,
-                Converters = { new JsonStringEnumConverter() }
+                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                Converters = new List<JsonConverter> { new StringEnumConverter() }
             };
 
-            await JsonSerializer.SerializeAsync(response.Body, Value, options);
+            var serializedValue = JsonConvert.SerializeObject(Value, settings);
+            await response.WriteAsync(serializedValue);
         }
     }
     public class PaginationHeader

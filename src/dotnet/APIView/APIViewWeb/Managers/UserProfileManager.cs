@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using APIViewWeb.Models;
@@ -62,5 +63,93 @@ namespace APIViewWeb.Managers
 
             await _UserProfileRepository.UpsertUserProfileAsync(User, UserProfile);
         }
+
+
+
+        public async Task UpdateMicrosoftEmailInUserProfile(ClaimsPrincipal User)
+        {
+            // Extract the Microsoft email from claims
+            var microsoftEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+            if (microsoftEmail != null)
+            {
+                // Call UpdateUserProfile with the extracted email and null for other parameters
+                await UpdateUserProfile(User, microsoftEmail, null, null);
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+        //public async Task UpdateMicrosoftEmailInUserProfile(ClaimsPrincipal User)
+        //{
+        //    var UserProfile = await TryGetUserProfileAsync(User);
+
+        //    if (UserProfile.Email == null)
+        //    {
+        //        var microsoftEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+        //        if (microsoftEmail != null)
+        //        {
+        //            UserProfile.Email = microsoftEmail;
+        //        }
+        //    }
+
+        //    await _UserProfileRepository.UpsertUserProfileAsync(User, UserProfile);
+        //}
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+//public async Task UpdateMicrosoftEmailInUserProfile(ClaimsPrincipal User)
+//{
+//    // Extract the Microsoft email from claims
+//    var microsoftEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+//    if (microsoftEmail != null)
+//    {
+//        // Call UpdateUserProfile with the extracted email and null for other parameters
+//        await UpdateUserProfile(User, microsoftEmail, null, null);
+//    }
+//}
+
+
+
+
+
+
+
+
+//// If the email address is null, get Microsoft email from the claim and update the user profile
+//if (string.IsNullOrEmpty(UserProfile.Email))
+//{
+//    // Get Microsoft email from the claim 
+//    var microsoftEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+//    if (!string.IsNullOrEmpty(microsoftEmail))
+//    {
+//        // Update the email in the user profile
+//        UserProfile.Email = microsoftEmail;
+
+//        // Update the user profile
+//        await _UserProfileRepository.UpsertUserProfileAsync(User, UserProfile);
+//    }
+//}

@@ -13,5 +13,9 @@ namespace APIViewWeb.Managers
         public Task<UserProfileModel> TryGetUserProfileByNameAsync(string UserName);
         public Task UpdateUserPreferences(ClaimsPrincipal User, UserPreferenceModel preferences);
         public Task UpdateUserProfile(ClaimsPrincipal User, string email, HashSet<string> languages, UserPreferenceModel preferences);
+
+
+
+        public Task UpdateMicrosoftEmailInUserProfile(ClaimsPrincipal User);
     }
 }

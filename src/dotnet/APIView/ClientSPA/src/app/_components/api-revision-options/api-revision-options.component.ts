@@ -15,7 +15,20 @@ export class ApiRevisionOptionsComponent implements OnChanges{
   selectedActiveAPIRevision: any;
   selectedDiffAPIRevision: any = null;
 
+  manualIcon = "fa-solid fa-arrow-up-from-bracket";
+  prIcon = "fa-solid fa-code-pull-request";
+  automaticIcon = "fa-solid fa-robot";
+
+  activeApiRevisionsSearchValue: string | undefined = '';
+  diffApiRevisionsSearchValue: string | undefined = '';
   activeApiRevisionsFilterValue: string | undefined = '';
+  diffApiRevisionsFilterValue: string | undefined = '';
+  filterOptions: any[] = [
+    { label: 'All', value: 'all' },
+    { label: 'PR', value: 'Pull Request' },
+    { label: 'Manual', value: 'Manual' },
+    { label: 'Automatic', value: 'Automatic' },
+    { label: 'Released', value: 'Released' }];
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['apiRevisions'] && changes['apiRevisions'].currentValue.length > 0) {
@@ -25,13 +38,13 @@ export class ApiRevisionOptionsComponent implements OnChanges{
         let typeClass = '';
         switch (apiRevision.apiRevisionType) {
           case 'Manual':
-            typeClass = "fa-solid fa-arrow-up-from-bracket";
+            typeClass = this.manualIcon;
             break;
           case 'PullRequest':
-            typeClass = "fa-solid fa-code-pull-request";
+            typeClass = this.prIcon;
             break;
           case 'Automatic':
-            typeClass = "fa-solid fa-robot";
+            typeClass = this.automaticIcon;
             break;
         }
         return {
@@ -52,5 +65,17 @@ export class ApiRevisionOptionsComponent implements OnChanges{
       this.diffApiRevisionsMenu = this.activeApiRevisionsMenu.filter((apiRevision: any) => apiRevision.id !== this.activeRevisionId);
       this.selectedActiveAPIRevision = this.activeApiRevisionsMenu[selectedActiveAPIRevisionindex];
     }
+  }
+
+  apiRevisionSearchFunction(event: KeyboardEvent, options: any) {
+    options.filter(event);
+  }
+
+  apiRevisionFilterFunction(event: any) {
+    console.log('Filter value changed:', event.value);
+  }
+
+  resetApiRevisionFilterFunction(options: any) {
+    options.reset();
   }
 }

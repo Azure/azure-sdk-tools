@@ -11,12 +11,26 @@
                 [style]="{'width':'100%'}"
                 [panelStyle]="{'width':'100px'}"
                 [filter]="true"
-                filterBy="resolvedLabel"
                 [resetFilterOnHide]="true"
                 [virtualScroll]="true"
                 [virtualScrollItemSize]="70"
-                scrollHeight="400px"
-                >
+                scrollHeight="400px">
+                <ng-template pTemplate="filter" let-options="options">
+                    <div class="flex gap-1">
+                        <p-selectButton
+                        class="api-revision-filter-button"
+                        [options]="filterOptions" 
+                        [(ngModel)]="activeApiRevisionsFilterValue" 
+                        (onChange)="apiRevisionFilterFunction($event)"
+                        [style]="{'margin-bottom':'8px'}"></p-selectButton>
+                        <div class="input-group" (click)="$event.stopPropagation()">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" aria-label="APIRevision Filter" placeholder="Filter"
+                            [(ngModel)]="activeApiRevisionsSearchValue" (keyup)="apiRevisionSearchFunction($event, options)">
+                            <button class="btn btn-outline-secondary" type="button"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                    </div>
+                </ng-template>
                 <ng-template pTemplate="selectedItem">
                     <div class="flex align-items-center selected-item-content" *ngIf="selectedActiveAPIRevision">
                         <i class="{{ selectedActiveAPIRevision.typeClass }}"></i>

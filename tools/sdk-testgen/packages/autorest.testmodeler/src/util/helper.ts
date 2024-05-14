@@ -20,7 +20,9 @@ export class Helper {
         const modelerfourOptions = await session.getValue('modelerfour', {});
         if (modelerfourOptions['emit-yaml-tags'] !== false) {
             if (exportExplicitTypes) {
-                (codeModelSchema as any).explicit = (codeModelSchema as any).explicit.concat((codeModelSchema as any).implicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)));
+                (codeModelSchema as any).explicit = (codeModelSchema as any).explicit.concat(
+                    (codeModelSchema as any).implicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)),
+                );
                 (codeModelSchema as any).implicit = (codeModelSchema as any).implicit.filter((t) => !Helper.isExplicitTypes(t.tag, explicitTypes));
                 (codeModelSchema as any).compiledExplicit = (codeModelSchema as any).compiledExplicit.concat(
                     (codeModelSchema as any).compiledImplicit.filter((t) => Helper.isExplicitTypes(t.tag, explicitTypes)),

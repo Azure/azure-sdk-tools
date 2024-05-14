@@ -11,7 +11,6 @@ namespace APIViewWeb.Controllers
     public class AccountController : Controller
     {  
         private readonly UserPreferenceCache _preferenceCache;
-
         public AccountController(UserPreferenceCache preferenceCache)
         {
             _preferenceCache = preferenceCache;

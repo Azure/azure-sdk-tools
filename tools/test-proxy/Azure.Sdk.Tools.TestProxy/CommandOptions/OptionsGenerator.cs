@@ -56,10 +56,9 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             universalOption.AddAlias("-u");
 
             var breakGlassOption = new Option<bool>(
-                name: "--breakGlass",
+                name: "--break-glass",
                 description: "Flag; Ignore secret push protection results when pushing.",
                 getDefaultValue: () => false);
-            breakGlassOption.AddAlias("-b");
 
             var collectedArgs = new Argument<string[]>("args")
             {

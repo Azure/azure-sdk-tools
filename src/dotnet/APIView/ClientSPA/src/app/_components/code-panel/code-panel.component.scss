@@ -65,6 +65,14 @@
                 left: calc(var(--max-line-number-width) + 50px)
             }
         }
+
+        &.added, .token-added {
+            background-color: rgba(0, 255, 0, 0.25);
+        }
+    
+        &.removed, .token-removed {
+            background-color: rgba(255, 0, 0, 0.25);
+        }
     }
 
     .code-line:hover {
@@ -75,14 +83,6 @@
         .toggle-user-comments-btn.can-show {
             color: inherit;
         } 
-    }
-
-    .code-line-added, .token-added {
-        background-color: rgba(255, 0, 0, 0.25);
-    }
-
-    .code-line-removed, .token-removed {
-        background-color: rgba(0, 255, 0, 0.25);
     }
     
     .code-line-content {

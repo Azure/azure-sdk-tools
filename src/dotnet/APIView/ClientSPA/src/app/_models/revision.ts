@@ -48,6 +48,11 @@ export interface StructuredToken {
   renderClasses: Set<string>
 }
 
+export interface DiffLineInProcess {
+  groupId: string | undefined;
+  lineTokens: StructuredToken[];
+}
+
 export interface APITreeNode {
   name: string;
   id: string;

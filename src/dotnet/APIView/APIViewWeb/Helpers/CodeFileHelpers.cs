@@ -2,6 +2,7 @@ using APIView.DIff;
 using APIView.Model;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -45,7 +46,7 @@ namespace APIViewWeb.Helpers
                 }
             }
 
-            Parallel.ForEach(unChangedNodesAtLevel, node =>
+            foreach (var node in unChangedNodesAtLevel)
             {
                 var activeAPIRevisionNode = activeAPIRevisionTreeNodesAtLevel.First(n => n.Equals(node));
                 var diffAPIRevisionNode = diffAPIRevisionTreeNodesAtLevel.First(n => n.Equals(node));
@@ -59,7 +60,7 @@ namespace APIViewWeb.Helpers
                 var childrenResult = new List<APITreeNodeForAPI>();
                 ComputeAPITreeDiff(activeAPIRevisionNode.Children, diffAPIRevisionNode.Children, childrenResult);
                 diffResultNode.Children.AddRange(childrenResult);
-            });
+            };
         }
 
         public static void ComputeTokenDiffForNode(APITreeNodeForAPI activeAPIRevisionTreeNode, APITreeNodeForAPI diffAPIRevisionTreeNode, APITreeNodeForAPI resultNode)

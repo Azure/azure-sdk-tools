@@ -8,18 +8,26 @@ export function ComputeTokenDiff(beforeTokens: any[], afterTokens: any[]) : [any
 
   beforeTokensMap.forEach((value, key) => {
     if (afterTokensMap.has(key)) {
-      diffResultA.push({ ...value, diffKind: 'Unchanged' });
+      diffResultA.push({ ...value });
     } else {
-      diffResultA.push({ ...value, diffKind: 'Removed' });
+      if (afterTokens.length > 0) {
+        diffResultA.push({ ...value, renderClasses: new Set([...value.renderClasses, 'diff-change']) });
+      } else {
+        diffResultA.push({ ...value });
+      }
       hasDiff = true;
     }
   });
 
   afterTokensMap.forEach((value, key) => {
     if (beforeTokensMap.has(key)) {
-      diffResultB.push({ ...value, diffKind: 'Unchanged' });
+      diffResultB.push({ ...value });
     } else {
-      diffResultB.push({ ...value, diffKind: 'Added' });
+      if (beforeTokens.length > 0) {
+        diffResultB.push({ ...value, renderClasses: new Set([...value.renderClasses, 'diff-change']) });
+      } else {
+        diffResultB.push({ ...value });
+      }
       hasDiff = true;
     }
   });

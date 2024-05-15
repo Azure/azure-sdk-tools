@@ -64,33 +64,40 @@ namespace Azure.Sdk.Tools.TestProxy.Sanitizers
                 return body;
             }
 
-            
             if (jsonO != null)
             {
-                foreach (JToken token in jsonO.SelectTokens(_jsonPath))
+                try
                 {
-                    // HasValues is false for tokens with children. We will not apply sanitization if that is the case.
-                    if (!token.HasValues)
+                    foreach (JToken token in jsonO.SelectTokens(_jsonPath))
                     {
-                        var originalValue = token.Value<string>();
-
-                        // regex replacement does not support null
-                        if (originalValue == null)
+                        // HasValues is false for tokens with children. We will not apply sanitization if that is the case.
+                        if (!token.HasValues)
                         {
-                            continue;
-                        }
+                            var originalValue = token.Value<string>();
 
-                        var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regexValue, _groupForReplace);
+                            // regex replacement does not support null
+                            if (originalValue == null)
+                            {
+                                continue;
+                            }
 
-                        // this sanitizer should only apply to actual values
-                        // if we attempt to apply a regex update to a jtoken that has a more complex type, throw
-                        token.Replace(JToken.FromObject(replacement));
+                            var replacement = StringSanitizer.SanitizeValue(originalValue, _newValue, _regexValue, _groupForReplace);
 
-                        if (originalValue != replacement)
-                        {
-                            sanitized = true;
+                            // this sanitizer should only apply to actual values
+                            // if we attempt to apply a regex update to a jtoken that has a more complex type, throw
+                            token.Replace(JToken.FromObject(replacement));
+
+                            if (originalValue != replacement)
+                            {
+                                sanitized = true;
+                            }
                         }
                     }
+                } 
+                catch(Exception e)
+                {
+                    DebugLogger.LogError($"Ran into exception \"{e.Message}\" while attempting to run regex \"{_regexValue}\" against body value \"{body}\"");
+                    return body;
                 }
             }
 

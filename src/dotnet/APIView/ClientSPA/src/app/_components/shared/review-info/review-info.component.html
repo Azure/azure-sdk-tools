@@ -2,7 +2,9 @@
     <p-menubar>
         <ng-template pTemplate="start">
             <img src="{{assetsPath}}/images/{{ review?.language! | languageNames }}-original.svg" width="25" height="25">
-            <span class="fw-semibold ps-2">{{ review?.packageName}}</span>
+            <span class="fw-semibold">{{ review?.packageName}}</span>
+            <i class="fas fa-check-circle text-success mx-2" *ngIf="review?.isApproved"></i>
+            <app-api-revision-options [apiRevisions]="apiRevisions" [activeApiRevisionId]="activeApiRevisionId"></app-api-revision-options>
         </ng-template>
         <ng-template pTemplate="end">
             <input type="checkbox" checked class="btn-check" id="page-right-panel" autocomplete="off">

@@ -12,7 +12,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
         /// <param name="ignoreSecretProtection"></param>
-        public abstract Task Push(string pathToAssetsJson, bool ignoreSecretProtection = false);
+        /// <returns>An integer representing the status of the push command.</returns>
+        public abstract Task<int> Push(string pathToAssetsJson, bool ignoreSecretProtection = false);
 
         /// <summary>
         /// Given a configuration, pull any remote resources down into the provided contextPath.

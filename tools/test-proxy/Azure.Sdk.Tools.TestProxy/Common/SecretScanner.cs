@@ -38,20 +38,25 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             Parallel.ForEach(relativePaths, options, (filePath) =>
             {
-                var content = File.ReadAllText(Path.Combine(assetRepoRoot, filePath));
-                var fileDetections = DetectSecrets(content);
+                var path = Path.Combine(assetRepoRoot, filePath);
 
-                if (fileDetections != null && fileDetections.Count > 0)
+                if (File.Exists(path))
                 {
-                    foreach (Detection detection in fileDetections)
+                    var content = File.ReadAllText(path);
+                    var fileDetections = DetectSecrets(content);
+
+                    if (fileDetections != null && fileDetections.Count > 0)
                     {
-                        detectedSecrets.Add(Tuple.Create(filePath, detection));
+                        foreach (Detection detection in fileDetections)
+                        {
+                            detectedSecrets.Add(Tuple.Create(filePath, detection));
+                        }
                     }
+
+                    Interlocked.Increment(ref seen);
+
+                    Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
                 }
-
-                Interlocked.Increment(ref seen);
-
-                Console.Write($"\r\u001b[2KScanned {seen}/{total}.");
             });
 
             Console.WriteLine(string.Empty);

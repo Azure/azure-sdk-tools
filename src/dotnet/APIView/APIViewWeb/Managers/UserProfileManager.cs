@@ -1,16 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Security.Claims;
-//using System.Threading.Tasks;
-//using APIViewWeb.Models;
-//using APIViewWeb.Repositories;
-//using Microsoft.AspNetCore.Authorization;
-//using Octokit;
-
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,14 +1,25 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+//using System;
+//using System.Collections.Generic;
+//using System.Linq;
+//using System.Security.Claims;
+//using System.Threading.Tasks;
+//using APIViewWeb.Models;
+//using APIViewWeb.Repositories;
+//using Microsoft.AspNetCore.Authorization;
+//using Octokit;
+
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using APIView.Identity;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
-using Octokit;
 
 namespace APIViewWeb.Managers
 {
@@ -63,11 +74,11 @@ namespace APIViewWeb.Managers
             await _UserProfileRepository.UpsertUserProfileAsync(User, UserProfile);
         }
 
-        public async Task UpdateMicrosoftEmailInUserProfile(ClaimsPrincipal User)
+        public async Task SetUserEmailIfNullOrEmpty(ClaimsPrincipal User)
         {
             var UserProfile = await TryGetUserProfileAsync(User);
 
-            if (string.IsNullOrWhiteSpace(UserProfile.Email) || !UserProfile.Email.Contains("@microsoft.com"))
+            if (string.IsNullOrWhiteSpace(UserProfile.Email))
             {
                 var microsoftEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimConstants.Email)?.Value;
 

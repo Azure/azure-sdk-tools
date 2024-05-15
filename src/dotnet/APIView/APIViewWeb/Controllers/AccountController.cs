@@ -9,7 +9,7 @@ namespace APIViewWeb.Controllers
 {
     [AllowAnonymous]
     public class AccountController : Controller
-    {  
+    {
         private readonly UserPreferenceCache _preferenceCache;
         public AccountController(UserPreferenceCache preferenceCache)
         {

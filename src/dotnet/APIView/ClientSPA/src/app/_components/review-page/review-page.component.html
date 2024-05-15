@@ -1,6 +1,9 @@
 <app-nav-bar></app-nav-bar>
 <div #mainContainer class="container-fluid main-container">
-    <app-review-info [review]="review" (revisionsSidePanel)="showRevisionsPanel($event)"></app-review-info>
+    <app-review-info
+        [apiRevisions]="apiRevisions"
+        [activeApiRevisionId]="activeApiRevisionId"
+        [review]="review" (revisionsSidePanel)="showRevisionsPanel($event)"></app-review-info>
     <div class="mt-2" style="display: flex;">
         <div>
             <p-menu [model]="sideMenu"></p-menu>
@@ -22,7 +25,7 @@
                 </ng-template>
                 <ng-template pTemplate>
                     <div class="col flex align-items-center justify-content-center border rounded-end overflow-auto review-panel p-2">
-                        <app-api-revision-options [apiRevisions]="apiRevisions" [activeRevisionId]="activeApiRevisionId"></app-api-revision-options>
+                        
                     </div>
                 </ng-template>
             </p-splitter>

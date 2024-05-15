@@ -608,10 +608,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK3480"
                 ),
                 new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..connectionString"),
-                    "AZSDK3481"
-                ),
-                new RegisteredSanitizer(
                     new BodyKeySanitizer("$..password"),
                     "AZSDK3482"
                 ),

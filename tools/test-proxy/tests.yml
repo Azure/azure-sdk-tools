@@ -8,7 +8,6 @@ stages:
     displayName: "Asset Sync Integration Tests"
     jobs:
     - job: Solution_Integration_Test
-      condition: false
 
       strategy:
         matrix:
@@ -81,7 +80,6 @@ stages:
 
   - stage: RepoUnitTests
     displayName: Repo-Specific Unit Tests
-    condition: false
     dependsOn: []
     jobs:
     - job: Test_JS_Utils

@@ -1,6 +1,19 @@
 :host ::ng-deep {
+    display: inline-block;
+
+    .p-dropdown {
+        border: none;
+        .p-inputtext {
+            padding: 0.0rem 0.5rem;
+        }
+
+        .p-dropdown-clear-icon {
+            right: -1rem;
+        }
+    }
+
     .selected-item-content{
-        max-width: 10dvw;
+        max-width: 20dvw;
     }
 
     .api-revision-filter-button .p-selectbutton {
@@ -14,6 +27,7 @@
         background-color: transparent;
         border: 1px solid var(--link-color);
         color: var(--link-color);
+        font-size: 0.85rem;
     }
 
     .api-revision-filter-button .p-selectbutton .p-button.p-highlight {

@@ -10,12 +10,13 @@ import {logger} from "../../utils/logger";
 import {
     bumpPatchVersion,
     bumpPreviewVersion,
-    getLatestStableVersion,
     getNewVersion,
+    getVersion,
     isBetaVersion
 } from "../../utils/version";
 import {isGeneratedCodeStable} from "./isGeneratedCodeStable";
 import {execSync} from "child_process";
+import { getversionDate } from "../../utils/version";
 
 const fs = require('fs');
 const path = require('path');
@@ -28,7 +29,8 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
     const packageName = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), {encoding: 'utf-8'})).name;
     const npm = new NPMScope({ executionFolderPath: packageFolderPath });
     const npmViewResult: NPMViewResult = await npm.view({ packageName });
-    const stableVersion = getLatestStableVersion(npmViewResult);
+    const stableVersion = getVersion(npmViewResult,"latest");
+    const nextVersion = getVersion(npmViewResult, "next");
 
     if (npmViewResult.exitCode !== 0 || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.log(`Package ${packageName} is first${npmViewResult.exitCode !== 0? ' ': ' stable'} release, generating changelogs and setting version for first${npmViewResult.exitCode !== 0? ' ': ' stable'} release...`);
@@ -48,6 +50,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
             await shell.exec(`npm pack ${packageName}@${stableVersion}`);
             await shell.exec('tar -xzf *.tgz');
             await shell.cd(packageFolderPath);
+
             // only track2 sdk includes sdk-type with value mgmt
             const sdkType = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'package.json'), {encoding: 'utf-8'}))['sdk-type'];
             if (sdkType && sdkType === 'mgmt') {
@@ -57,6 +60,27 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 let apiMdFileNPM: string = path.join(reviewFolder, fs.readdirSync(reviewFolder)[0]);
                 let apiMdFileLocal: string = path.join(packageFolderPath, 'review', fs.readdirSync(path.join(packageFolderPath, 'review'))[0]);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);
+                let originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+                if(nextVersion){
+                    await shell.cd(path.join(packageFolderPath, 'changelog-temp'));
+                    await shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
+                    await shell.cd(path.join(packageFolderPath,'changelog-temp', 'next'));
+                    await shell.exec(`npm pack ${packageName}@${nextVersion}`);
+                    await shell.exec('tar -xzf *.tgz');
+                    await shell.cd(packageFolderPath);
+                    logger.log("Create next folder successfully")
+    
+                    const latestDate = getversionDate(npmViewResult, stableVersion);
+                    const nextDate = getversionDate(npmViewResult,nextVersion);
+                    if (latestDate && nextDate && latestDate <= nextDate){
+                        originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath,'changelog-temp', 'next', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+                        logger.log('Need to keep previous preview changelog');
+                        
+                    }
+                }
+                if(originalChangeLogContent.includes("https://aka.ms/js-track2-quickstart")){
+                    originalChangeLogContent=originalChangeLogContent.replace("https://aka.ms/js-track2-quickstart","https://aka.ms/azsdk/js/mgmt/quickstart");
+                }
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
                     logger.logError('Cannot generate changelog because the codes of local and npm may be the same.');
                     logger.log('Try to bump a fix version');
@@ -70,7 +94,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                     makeChangesForPatchReleasingTrack2(packageFolderPath, newVersion);
                 } else {
                     const newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);
-                    makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog);
+                    makeChangesForReleasingTrack2(packageFolderPath, newVersion, changelog, originalChangeLogContent,stableVersion);
                     logger.log('Generate changelogs and setting version for track2 release successfully');
                     return changelog;
                 }

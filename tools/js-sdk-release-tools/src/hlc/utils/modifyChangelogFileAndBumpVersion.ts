@@ -62,14 +62,14 @@ function changeClientFile(packageFolderPath: string, packageVersion: string) {
     })
 }
 
-export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog) {
-    let originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
-    if(originalChangeLogContent.includes("https://aka.ms/js-track2-quickstart")){
-        originalChangeLogContent=originalChangeLogContent.replace("https://aka.ms/js-track2-quickstart","https://aka.ms/azsdk/js/mgmt/quickstart");
+export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog, originalChangeLogContent: string, comparedVersion:string) {
+    let pacakgeVersionDetail=`## ${packageVersion} (${date})`;
+    if(packageVersion.includes("beta")){
+        pacakgeVersionDetail +=`\nCompared with version ${comparedVersion}`
     }
     const modifiedChangelogContent = `# Release History
     
-## ${packageVersion} (${date})
+${pacakgeVersionDetail}
     
 ${changeLog.displayChangeLog()}
     

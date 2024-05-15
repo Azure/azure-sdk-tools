@@ -121,8 +121,9 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// Pushes a set of changed files to the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
+        /// <param name="ignoreSecretProtection"></param>
         /// <returns></returns>
-        public async Task Push(string pathToAssetsJson) {
+        public async Task<int> Push(string pathToAssetsJson, bool ignoreSecretProtection = false) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
 
             var initialized = IsAssetsRepoInitialized(config);
@@ -132,8 +133,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 _consoleWrapper.WriteLine($"The targeted assets.json \"{config.AssetsJsonRelativeLocation}\" has not been restored prior to attempting push. " +
                     $"Are you certain you're pushing the correct assets.json? Please invoke \'test-proxy restore \"{config.AssetsJsonRelativeLocation}\"\' prior to invoking a push operation.");
 
-                Environment.ExitCode = -1;
-                return;
+                return -1;
             }
 
             SetOrigin(config);
@@ -145,8 +145,10 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             {
                 if (CheckForSecrets(config, pendingChanges))
                 {
-                    Environment.ExitCode = -1;
-                    return;
+                    if (!ignoreSecretProtection)
+                    {
+                        return -1;
+                    }
                 }
 
                 try
@@ -239,6 +241,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             HideOrigin(config);
+            return 0;
         }
 
         /// <summary>

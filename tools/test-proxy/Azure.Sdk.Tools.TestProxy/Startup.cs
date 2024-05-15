@@ -62,11 +62,12 @@ namespace Azure.Sdk.Tools.TestProxy
             Environment.Exit(resultCode);
         }
 
-        private static async Task Run(object commandObj)
+        private static async Task<int> Run(object commandObj)
         {
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
             var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             System.Console.WriteLine($"Running proxy version is Azure.Sdk.Tools.TestProxy {semanticVersion}");
+            int returnCode = 0;
 
             new GitProcessHandler().VerifyGitMinVersion();
             DefaultOptions defaultOptions = (DefaultOptions)commandObj;
@@ -124,6 +125,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 default:
                     throw new ArgumentException($"Unable to parse the argument set: {string.Join(" ", storedArgs)}");
             }
+
+            return returnCode;
         }
 
         private static void StartServer(StartOptions startOptions)

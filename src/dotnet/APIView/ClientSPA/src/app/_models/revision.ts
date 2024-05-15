@@ -29,6 +29,8 @@ export interface APIRevision {
   createdBy: string
   createdOn: string
   lastUpdatedOn: string
+  isReleased: boolean,
+  releasedOn: string,
   isDeleted: boolean
 }
 

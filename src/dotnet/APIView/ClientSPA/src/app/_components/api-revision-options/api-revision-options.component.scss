@@ -10,6 +10,17 @@
         .p-dropdown-clear-icon {
             right: -1rem;
         }
+
+        .p-chip .p-chip-text {
+            margin-top: 0.1rem;
+            margin-bottom: 0.15rem;
+        }
+
+        .p-chip {
+            background-color: var(--base-fg-color);
+            border: 1px solid var(--border-color);
+            margin: 1px;
+        }
     }
 
     .selected-item-content{
@@ -34,4 +45,31 @@
         color: var(--primary-btn-color);
         background-color: var(--link-color);
     }
+    
+    .emphasis-badge {
+        border-radius: 5px;
+        padding: 0px 5px 2px 5px;
+        font-size: smaller;
+        font-weight: bold;
+
+        &.info {
+            background-color: var(--alert-info-bg);
+            color: var(--alert-info-color);
+            border: 1px solid var(--alert-info-border-color);
+        }
+        
+        &.success {
+            background-color: var(--alert-success-bg);
+            color: var(--alert-success-color);
+            border: 1px solid var(--alert-success-border-color);
+        }
+
+        &.secondary {
+            background-color: var(--alert-secondary-bg);
+            color: var(--alert-secondary-color);
+            border: 1px solid var(--alert-secondary-border-color);
+        }
+    }
+
+
 }

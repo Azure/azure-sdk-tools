@@ -12,8 +12,12 @@ export class ReviewNavComponent implements OnChanges {
   isLoading: boolean = true;
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes["reviewPageNavigation"].currentValue.length > 0) {
-      this.isLoading = false;
+    if (changes["reviewPageNavigation"]) {
+      if (changes["reviewPageNavigation"].currentValue.length > 0) {
+        this.isLoading = false;
+      } else {
+        this.isLoading = true;
+      }
     }
   }
 }

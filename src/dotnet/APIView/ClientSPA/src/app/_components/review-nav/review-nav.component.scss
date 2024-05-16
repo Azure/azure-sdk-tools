@@ -11,11 +11,18 @@
     }
 
     .p-tree .p-tree-container .p-treenode .p-treenode-content {
-        display: block;
-        padding: 0.15rem;
+        padding: 0.05rem;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
         border: 0px;
+    }
+    
+    .p-treenode-content:hover{
+        background: var(--dark-overlay);
+    }
+
+    .p-tree-container {
+        padding-left: 0px !important;
     }
 }

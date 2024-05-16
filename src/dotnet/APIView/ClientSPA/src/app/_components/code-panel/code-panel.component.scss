@@ -89,11 +89,11 @@
         }
 
         &.added .line-actions, &.removed .line-actions {
-            background-color: var(--diff-change-color) 
+            background-color: var(--dark-overlay) 
         }
 
         .diff-change {
-            background-color: var(--diff-change-color);
+            background-color: var(--dark-overlay);
             border-radius: 2px;
             padding-left: 2px;
             padding-right: 2px;

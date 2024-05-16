@@ -19,6 +19,8 @@ addEventListener('message', ({ data }) => {
     comments = reviewContent.comments;
     diagnosticsTargetIds = new Set<string>(diagnostics.map(diagnostic => diagnostic.targetId));
 
+    insertLineNumber = 0;
+
     let navTreeNodes: any[] = [];
     let treeNodeId : string[] = [];
   

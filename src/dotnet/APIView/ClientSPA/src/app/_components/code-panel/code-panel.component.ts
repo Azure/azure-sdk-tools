@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
 import { BehaviorSubject, fromEvent, of, Subject, takeUntil } from 'rxjs';
-import { debounceTime, finalize, scan } from 'rxjs/operators';
+import { debounceTime, finalize, scan, take } from 'rxjs/operators';
 import { CommentItemModel } from 'src/app/_models/review';
 import { CodePanelRowDatatype } from 'src/app/_models/revision';
 import { CodePanelRowData, CodePanelToggleableData, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
@@ -26,7 +26,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   lastHuskNodeId :  string | undefined = undefined;
   codeWindowHeight: string | undefined = undefined;
 
-  codePanelRowSource: IDatasource | undefined;
+  codePanelRowSource: IDatasource<CodePanelRowData> | undefined;
   visibleCodePanelRowData: CodePanelRowData[] = [];
   CodePanelRowDatatype = CodePanelRowDatatype;
   
@@ -44,11 +44,15 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
       if (changes['codeLinesData'].currentValue.length > 0) {
         this.setMaxLineNumberWidth();
         this.initializeDataSource().then(() => {
-          this.isLoading = false;
-          this.changeDeterctorRef.detectChanges();
+          this.codePanelRowSource?.adapter?.init$.pipe(take(1)).subscribe(() => {
+            this.isLoading = false;
+          });
+        }).catch((error) => {
+          console.error(error);
         });
       } else {
         this.isLoading = true;
+        this.codePanelRowSource = undefined;
       }
     }
   }
@@ -155,7 +159,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
 
   initializeDataSource() : Promise<void> {
     return new Promise((resolve, reject) => {
-      this.codePanelRowSource = new Datasource({
+      this.codePanelRowSource = new Datasource<CodePanelRowData>({
         get: (index, count, success) => {
           let data : any = [];
           if (this.codeLinesData.length > 0) {
@@ -174,8 +178,10 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
         }
       });
 
-      if (this.codePanelRowSource && this.codePanelRowSource.adapter) {
+      if (this.codePanelRowSource) {
         resolve();
+      } else {
+        reject('Failed to Initialize Datasource');
       }
     });
   }

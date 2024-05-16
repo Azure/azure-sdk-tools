@@ -113,7 +113,7 @@
                 else
                 {
                     var lineNumberClass = $"line-number";
-                    @if (!String.IsNullOrEmpty(Model.CodeLine.CrossLanguageDefinitionId) && PageModelHelpers.IsAPIStubHeader(Model.CodeLine.DisplayString))
+                    @if (!String.IsNullOrEmpty(Model.CodeLine.CrossLanguageDefinitionId))
                     {
                         lineNumberClass = $"{lineNumberClass} cl-line-no";                     }
 

@@ -285,7 +285,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     new BodyRegexSanitizer(regex: "<ClientIp>(?<secret>.+)</ClientIp>", groupForReplace: "secret"),
                     "AZSDK3012"
                 ),
-            #endregion
+                #endregion
                 #region BodyKey
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..access_token"),
@@ -586,10 +586,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..scriptUrlSasToken"),
                     "AZSDK3475"
-                ),
-                new RegisteredSanitizer(
-                    new BodyKeySanitizer("$..refresh_token"),
-                    "AZSDK3476"
                 ),
                 new RegisteredSanitizer(
                     new BodyKeySanitizer("$..accountKey"),

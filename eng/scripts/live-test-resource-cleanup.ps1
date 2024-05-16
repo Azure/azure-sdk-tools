@@ -21,16 +21,8 @@ param (
   [string] $ProvisionerApplicationSecret,
 
   [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-  [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-  [string] $OpensourceApiApplicationId,
-
-  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-  [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-  [string] $OpensourceApiApplicationTenantId,
-
-  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
   [ValidateNotNullOrEmpty()]
-  [string] $OpensourceApiApplicationSecret,
+  [string] $OpensourceApiApplicationToken,
 
   [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
   [Parameter(ParameterSetName = 'Interactive')]
@@ -167,7 +159,7 @@ function AddGithubUsersToAliasCache() {
     $users = Get-Content $GithubAliasCachePath | ConvertFrom-Json -AsHashtable
   } else {
     Write-Host "Retrieving github -> microsoft alias mappings from opensource API."
-    $users = GetAllGithubUsers $OpensourceApiApplicationTenantId $OpensourceApiApplicationId $OpensourceApiApplicationSecret
+    $users = GetAllGithubUsers -Token $OpensourceApiApplicationToken
   }
   if (!$users) {
     Write-Error "Failed to retrieve github -> microsoft alias mappings from opensource api."

@@ -20,36 +20,36 @@
             padding-left: calc(var(--max-line-number-width) + 50px);
 
             &.error {
-                background-color: var(--code-diagnostics-error-bg);
-                color: var(--code-diagnostics-error-color);
-                border-top: 1px solid var(--code-diagnostics-error-border-color);
-                border-bottom: 1px solid var(--code-diagnostics-error-border-color);
+                background-color: var(--alert-error-bg);
+                color: var(--alert-error-color);
+                border-top: 1px solid var(--alert-error-border-color);
+                border-bottom: 1px solid var(--alert-error-border-color);
                 a {
                     font-weight: bold;
                     text-decoration: underline;
-                    color: var(--code-diagnostics-error-link-color);
+                    color: var(--alert-error-link-color);
                 }
             }
             &.warning {
-                background-color: var(--code-diagnostics-warn-bg);
-                color: var(--code-diagnostics-warn-color);
-                border-top: 1px solid var(--code-diagnostics-warn-border-color);
-                border-bottom: 1px solid var(--code-diagnostics-warn-border-color);
+                background-color: var(--alert-warn-bg);
+                color: var(--alert-warn-color);
+                border-top: 1px solid var(--alert-warn-border-color);
+                border-bottom: 1px solid var(--alert-warn-border-color);
                 a {
                     font-weight: bold;
                     text-decoration: underline;
-                    color: var(--code-diagnostics-warn-link-color);
+                    color: var(--alert-warn-link-color);
                 }
             }
             &.info {
-                background-color: var(--code-diagnostics-info-bg);
-                color: var(--code-diagnostics-info-color);
-                border-top: 1px solid var(--code-diagnostics-info-border-color);
-                border-bottom: 1px solid var(--code-diagnostics-info-border-color);
+                background-color: var(--alert-info-bg);
+                color: var(--alert-info-color);
+                border-top: 1px solid var(--alert-info-border-color);
+                border-bottom: 1px solid var(--alert-info-border-color);
                 a {
                     font-weight: bold;
                     text-decoration: underline;
-                    color: var(--code-diagnostics-info-link-color);
+                    color: var(--alert-info-link-color);
                 }
             }
         }

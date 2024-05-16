@@ -356,10 +356,10 @@ code {
 }
 
 $diagnostics: ( 
-    fatal: var(--code-diagnostics-fatal-color), 
-    error: var(--code-diagnostics-error-color), 
-    warn: var(--code-diagnostics-warn-color), 
-    info: var(--code-diagnostics-info-color) );
+    fatal: var(--alert-fatal-color), 
+    error: var(--alert-error-color), 
+    warn: var(--alert-warn-color), 
+    info: var(--alert-info-color) );
 
 @each $type, $color in $diagnostics {
     .code-diagnostics-#{$type} {

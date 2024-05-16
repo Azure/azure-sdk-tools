@@ -59,6 +59,8 @@ namespace APIViewWeb.Pages.Assemblies
             IEnumerable<string> search, IEnumerable<string> languages, IEnumerable<string> state,
             IEnumerable<string> status, int pageNo=1, int pageSize=_defaultPageSize, string sortField=_defaultSortField)
         {
+            await _userProfileManager.SetUserEmailIfNullOrEmpty(User);
+
             if (!search.Any() && !languages.Any() && !state.Any() && !status.Any())
             {
                 UserPreferenceModel userPreference = await _preferenceCache.GetUserPreferences(User);

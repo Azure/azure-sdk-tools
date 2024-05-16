@@ -12,6 +12,7 @@ import { environment } from 'src/environments/environment';
 export class ReviewInfoComponent {
   @Input() apiRevisions: APIRevision[] = [];
   @Input() activeApiRevisionId: string | null = '';
+  @Input() diffApiRevisionId: string | null = '';
   
   @Input() review : Review | undefined = undefined;
   @Output() revisionsSidePanel : EventEmitter<boolean> = new EventEmitter<boolean>();

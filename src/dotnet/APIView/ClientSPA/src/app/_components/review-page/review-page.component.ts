@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Params } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 import { CommentItemModel, Review } from 'src/app/_models/review';
 import { APIRevision, CodePanelRowData, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
@@ -28,11 +29,18 @@ export class ReviewPageComponent implements OnInit {
   codeLinesData: CodePanelRowData[] = [];
   apiRevisionPageSize = 50;
 
+  private destroy$ = new Subject<void>();
+
   sideMenu: MenuItem[] | undefined;
 
-  constructor(private route: ActivatedRoute, private apiRevisionsService: RevisionsService, private reviewsService: ReviewsService, private workerService: WorkerService) {}
+  constructor(private route: ActivatedRoute, private apiRevisionsService: RevisionsService,
+    private reviewsService: ReviewsService, private workerService: WorkerService, private changeDeterctorRef: ChangeDetectorRef) {}
 
   ngOnInit() {
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      this.updateStateBasedOnQueryParams(params);
+    });
+
     this.reviewId = this.route.snapshot.paramMap.get('reviewId');
     this.activeApiRevisionId = this.route.snapshot.queryParamMap.get('activeApiRevisionId');
     this.diffApiRevisionId = this.route.snapshot.queryParamMap.get('diffApiRevisionId');
@@ -55,8 +63,19 @@ export class ReviewPageComponent implements OnInit {
     ];
   }
 
+  updateStateBasedOnQueryParams(params: Params) {
+    this.activeApiRevisionId = params['activeApiRevisionId'];
+    this.diffApiRevisionId = params['diffApiRevisionId'];
+    this.reviewPageNavigation = [];
+    this.codeLinesDataBuffer = [];
+    this.otherCodePanelData = new Map<string, CodePanelToggleableData>();
+    this.codeLinesData = [];
+    this.changeDeterctorRef.detectChanges();
+    this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
+  }
+
   registerWorkerEventHandler() {
-    this.workerService.onMessageFromApiTreeBuilder().subscribe(data => {
+    this.workerService.onMessageFromApiTreeBuilder().pipe(takeUntil(this.destroy$)).subscribe(data => {
       if (data.directive === ReviewPageWorkerMessageDirective.CreatePageNavigation) {
         this.reviewPageNavigation = data.navTree as TreeNode[];
       }
@@ -110,32 +129,39 @@ export class ReviewPageComponent implements OnInit {
   }
 
   loadReviewContent(reviewId: string, activeApiRevisionId: string | null = null, diffApiRevisionId: string | null = null) {
-    this.reviewsService.getReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId).subscribe({
-      next: (response: ArrayBuffer) => {
-          // Passing ArrayBufer to worker is way faster than passing object
-          this.workerService.postToApiTreeBuilder(response);
-        }
-    });
+    this.reviewsService.getReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: (response: ArrayBuffer) => {
+            // Passing ArrayBufer to worker is way faster than passing object
+            this.workerService.postToApiTreeBuilder(response);
+          }
+      });
   }
 
   loadReview(reviewId: string) {
-    this.reviewsService.getReview(reviewId).subscribe({
-      next: (review: Review) => {
-        this.review = review;
-      }
-    });
+    this.reviewsService.getReview(reviewId)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: (review: Review) => {
+          this.review = review;
+        }
+      });
   }
 
   loadAPIRevisions(noOfItemsRead : number, pageSize: number) {
-    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!).subscribe({
-      next: (response: any) => {
-        this.apiRevisions = response.result;
-      }
-    });
-
+    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: (response: any) => {
+          this.apiRevisions = response.result;
+        }
+      });
   }
 
   showRevisionsPanel(showRevisionsPanel : any){
     this.revisionSidePanel = showRevisionsPanel as boolean;
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

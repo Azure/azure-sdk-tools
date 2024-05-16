@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { APIRevision } from 'src/app/_models/revision';
 
 @Component({
@@ -9,6 +10,8 @@ import { APIRevision } from 'src/app/_models/revision';
 export class ApiRevisionOptionsComponent implements OnChanges {
   @Input() apiRevisions: APIRevision[] = [];
   @Input() activeApiRevisionId: string | null = '';
+  @Input() diffApiRevisionId: string | null = '';
+
   activeApiRevisionsMenu: any[] = [];
   diffApiRevisionsMenu: any[] = [];
   selectedActiveAPIRevision: any;
@@ -24,7 +27,7 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   activeApiRevisionsFilterValue: string | undefined = '';
   diffApiRevisionsFilterValue: string | undefined = '';
 
-  activeApiRevisionfilterOptions: any[] = [
+  filterOptions: any[] = [
     { label: 'PR', value: 'PullRequest' },
     { label: 'Manual', value: 'Manual' },
     { label: 'Auto', value: 'Automatic' },
@@ -32,22 +35,26 @@ export class ApiRevisionOptionsComponent implements OnChanges {
     { label: 'Approved', value: 'Approved' },
   ];
 
-  diffApiRevisionfilterOptions: any[] = [
-    { label: 'LatestRelease', value: 'LatestRelease' },
-    { label: 'LatestApproved', value: 'LatestApproved' },
-    { label: 'PR', value: 'PullRequest' },
-    { label: 'Manual', value: 'Manual' },
-    { label: 'Auto', value: 'Automatic' },
-    { label: 'Released', value: 'Released' },
-    { label: 'Approved', value: 'Approved' },
-  ];
+  constructor(private route: ActivatedRoute, private router: Router) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['apiRevisions'] && changes['apiRevisions'].currentValue.length > 0) {
-      const selectedActiveAPIRevisionindex = this.apiRevisions.findIndex((apiRevision: APIRevision) => apiRevision.id === this.activeApiRevisionId);
-      this.activeApiRevisionsMenu = this.mapRevisionToMenu(this.apiRevisions);
-      this.diffApiRevisionsMenu = this.activeApiRevisionsMenu.filter((apiRevision: any) => apiRevision.id !== this.activeApiRevisionId);
-      this.selectedActiveAPIRevision = this.activeApiRevisionsMenu[selectedActiveAPIRevisionindex];
+    if (changes['apiRevisions'] || changes['activeApiRevisionId'] || changes['diffApiRevisionId']) {
+      if (this.apiRevisions.length > 0) {
+        const mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
+
+        this.activeApiRevisionsMenu = mappedApiRevisions.filter((apiRevision: any) => apiRevision.id !== this.diffApiRevisionId);
+        const selectedActiveAPIRevisionindex = this.activeApiRevisionsMenu.findIndex((apiRevision: APIRevision) => apiRevision.id === this.activeApiRevisionId);
+        this.selectedActiveAPIRevision = this.activeApiRevisionsMenu[selectedActiveAPIRevisionindex];
+
+        this.diffApiRevisionsMenu = mappedApiRevisions.filter((apiRevision: any) => apiRevision.id !== this.activeApiRevisionId);
+        const selectedDiffAPIRevisionindex = this.diffApiRevisionsMenu.findIndex((apiRevision: APIRevision) => apiRevision.id === this.diffApiRevisionId);
+        if (selectedDiffAPIRevisionindex >= 0) {
+          this.selectedDiffAPIRevision = this.diffApiRevisionsMenu[selectedDiffAPIRevisionindex];
+        }
+        else {
+          this.selectedDiffAPIRevision = null;
+        }
+      }
     }
   }
 
@@ -62,7 +69,9 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   }
 
   activeApiRevisionChange(event: any) {
-    console.log('Selected API Revision:', event);
+    let newQueryParams = this.getQueryParams()
+    newQueryParams['activeApiRevisionId'] = event.value.id;
+    this.router.navigate([], { queryParams: newQueryParams });
   }
 
   diffApiRevisionSearchFunction(event: KeyboardEvent) {
@@ -76,7 +85,15 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   }
 
   diffApiRevisionChange(event: any) {
-    console.log('Selected API Revision:', event);
+    let newQueryParams = this.getQueryParams()
+    newQueryParams['diffApiRevisionId'] = event.value.id;
+    this.router.navigate([], { queryParams: newQueryParams });
+  }
+
+  diffApiRevisionClear(event: any) {
+    let newQueryParams = this.getQueryParams()
+    newQueryParams['diffApiRevisionId'] = null;
+    this.router.navigate([], { queryParams: newQueryParams });
   }
 
   searchAndFilterDropdown(searchValue : string, filterValue  : string | undefined, dropDownMenu : string) {
@@ -104,7 +121,15 @@ export class ApiRevisionOptionsComponent implements OnChanges {
     if (dropDownMenu === "active") {
       this.activeApiRevisionsMenu = this.mapRevisionToMenu(filtered);
       if (this.selectedActiveAPIRevision && !this.activeApiRevisionsMenu.includes(this.selectedActiveAPIRevision)) {
-        this.activeApiRevisionsMenu.push(this.selectedActiveAPIRevision);
+        this.activeApiRevisionsMenu.unshift(this.selectedActiveAPIRevision);
+      }
+    }
+
+    if (dropDownMenu === "diff") {
+      filtered = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.activeApiRevisionId);
+      this.diffApiRevisionsMenu = this.mapRevisionToMenu(filtered);
+      if (this.selectedDiffAPIRevision && !this.diffApiRevisionsMenu.includes(this.selectedDiffAPIRevision)) {
+        this.diffApiRevisionsMenu.unshift(this.selectedDiffAPIRevision);
       }
     }
   }
@@ -114,6 +139,12 @@ export class ApiRevisionOptionsComponent implements OnChanges {
       this.activeApiRevisionsSearchValue = '';
       this.activeApiRevisionsFilterValue = '';
       this.searchAndFilterDropdown(this.activeApiRevisionsSearchValue, this.activeApiRevisionsFilterValue, "active");
+    }
+
+    if (dropDownMenu === "diff") {
+      this.diffApiRevisionsSearchValue = '';
+      this.diffApiRevisionsFilterValue = '';
+      this.searchAndFilterDropdown(this.diffApiRevisionsSearchValue, this.diffApiRevisionsFilterValue, "diff");
     }
   }
 
@@ -133,9 +164,11 @@ export class ApiRevisionOptionsComponent implements OnChanges {
           break;
       }
       return {
+        id : apiRevision.id,
         resolvedLabel: apiRevision.resolvedLabel,
-        label: (apiRevision.label) ? apiRevision.label : "no label",
+        label: apiRevision.label,
         typeClass: typeClass,
+        apiRevisionType: apiRevision.apiRevisionType,
         version: apiRevision.packageVersion,
         prNo: apiRevision.pullRequestNo,
         createdOn: apiRevision.createdOn,
@@ -149,6 +182,13 @@ export class ApiRevisionOptionsComponent implements OnChanges {
         }
       };
     });
+  }
+
+  getQueryParams() {
+    return this.route.snapshot.queryParamMap.keys.reduce((params: { [key: string]: any; }, key) => {
+      params[key] = this.route.snapshot.queryParamMap.get(key);
+      return params;
+    }, {});
   }
 }
 

@@ -25,6 +25,7 @@ import { FormsModule } from '@angular/forms';
 import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { EditorComponent } from 'src/app/_components/shared/editor/editor.component';
 import { SelectButtonModule } from 'primeng/selectbutton';
+import { ChipModule } from 'primeng/chip';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -45,6 +46,7 @@ const routes: Routes = [
   imports: [
     SharedAppModule,
     CommonModule,
+    ChipModule,
     EditorModule,
     PanelModule,
     TreeSelectModule,

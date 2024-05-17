@@ -19,9 +19,6 @@
 # Eng Sys
 ###########
 /eng/                                  @azure/azure-sdk-eng
-/eng/common/                           @konrad-jamrozik @weshaggard @benbp
-/eng/common/TestResources/             @benbp @weshaggard @heaths
-/eng/common/README.md                  @weshaggard
 
 ###########
 # CODEOWNERS Linter pipeline

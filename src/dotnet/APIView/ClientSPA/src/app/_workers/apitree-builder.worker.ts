@@ -65,6 +65,7 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
     label: apiTreeNode.name,
     data: {
       nodeIndex: insertLineNumber,
+      kind: (apiTreeNode.properties["subKind"]) ? apiTreeNode.properties["subKind"] : apiTreeNode.kind.toLocaleLowerCase()
     },
     expanded: true,
     children: []
@@ -93,7 +94,7 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
  */
 function getTokenNodeIdHash(apiTreeNode: APITreeNode, position: string) {
   const kind = apiTreeNode.kind;
-  const subKind = apiTreeNode.properties["SubKind"];
+  const subKind = apiTreeNode.properties["subKind"];
   const id = apiTreeNode.id;
 
   let idPart = kind;

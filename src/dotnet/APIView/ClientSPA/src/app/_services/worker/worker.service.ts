@@ -6,40 +6,45 @@ import { Observable, Subject } from 'rxjs';
 })
 export class WorkerService {
   private apiTreeBuilder : Worker | null = null;
-  private apiTreeMessages = new Subject<any>();
-  private workerTimeout : any;
+  private apiTreeMessages : Subject<any> = new Subject<any>();
 
   constructor() {
     this.startWorker();
   }
 
-  startWorker() {
-    this.apiTreeBuilder = new Worker(new URL('../../_workers/apitree-builder.worker', import.meta.url));
+  startWorker() : Promise<void> {
+    return new Promise((resolve) => {
+      this.terminateWorker();
+      this.apiTreeMessages = new Subject<any>();
+      this.apiTreeBuilder = new Worker(new URL('../../_workers/apitree-builder.worker', import.meta.url));
 
-    this.apiTreeBuilder.onmessage = ({ data }) => {
-      this.apiTreeMessages.next(data);
-      this.resetWorkerTimeout();
-    };
+      this.apiTreeBuilder.onmessage = ({ data }) => {
+        this.apiTreeMessages?.next(data);
+      };
+
+      this.apiTreeBuilder.onerror = (error) => {
+        console.error('An error occurred in the worker:', error);
+      };
+
+      resolve();
+    });
   }
 
   postToApiTreeBuilder(message: any) {
-    if (!this.apiTreeBuilder) {
-      this.startWorker();
-    }
-
-    this.apiTreeBuilder!.postMessage(message);
-    this.resetWorkerTimeout();
+    this.apiTreeBuilder?.postMessage(message);
   }
 
   onMessageFromApiTreeBuilder(): Observable<any> {
-    return this.apiTreeMessages.asObservable();
+    return this.apiTreeMessages?.asObservable();
   }
 
-  private resetWorkerTimeout() {
-    clearTimeout(this.workerTimeout);
-    this.workerTimeout = setTimeout(() => {
-      this.apiTreeBuilder!.terminate();
+  terminateWorker() {
+    if (this.apiTreeBuilder) {
+      this.apiTreeMessages.complete();
+      this.apiTreeBuilder.onmessage = null;
+      this.apiTreeBuilder.onerror = null;
+      this.apiTreeBuilder.terminate();
       this.apiTreeBuilder = null;
-    }, 5000); // Terminate worker after 5 seconds of inactivity
+    }
   }
 }

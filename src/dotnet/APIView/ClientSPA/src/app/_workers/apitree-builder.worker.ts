@@ -6,6 +6,7 @@ import { CodePanelRowData, CodePanelRowDatatype, DiffLineInProcess, InsertCodePa
 import { APITreeNode } from "../_models/revision";
 
 let insertLineNumber = 0;
+let diffLineNumber = 0;
 let diagnostics: CodeDiagnostic[] = [];
 let comments: CommentItemModel[] = [];
 let diagnosticsTargetIds = new Set<string>();
@@ -20,6 +21,7 @@ addEventListener('message', ({ data }) => {
     diagnosticsTargetIds = new Set<string>(diagnostics.map(diagnostic => diagnostic.targetId));
 
     insertLineNumber = 0;
+    diffLineNumber = 0;
 
     let navTreeNodes: any[] = [];
     let treeNodeId : string[] = [];
@@ -39,10 +41,10 @@ addEventListener('message', ({ data }) => {
       directive: ReviewPageWorkerMessageDirective.UpdateCodeLines
     };
 
-    postMessage(updateCodeLineDataMessage);
     diagnostics = [];
     comments = [];
     diagnosticsTargetIds.clear();
+    postMessage(updateCodeLineDataMessage);
   }
 });
 
@@ -64,7 +66,6 @@ function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: n
   let treeNode: any = {
     label: apiTreeNode.name,
     data: {
-      nodeIndex: insertLineNumber,
       kind: (apiTreeNode.properties["subKind"]) ? apiTreeNode.properties["subKind"] : apiTreeNode.kind.toLocaleLowerCase()
     },
     expanded: true,
@@ -138,10 +139,12 @@ function buildTokens(apiTreeNode: APITreeNode, id: string, position: string, ind
  * @param position 
  */
 function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position: string, indent: number = 0) {
-  const lineGroupOrder = ["documentation"];
+  const lineGroupOrder = ["documentation"]; // Tells you the order in which to build lines
   const nodeId = getTokenNodeIdHash(apiTreeNode, position);
   let beforeTokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
   let afterTokens = (position === "top") ? apiTreeNode.topDiffTokens : apiTreeNode.bottomDiffTokens;
+
+  let precedingRowData : CodePanelRowData | undefined = undefined;
 
   if (apiTreeNode.diffKind === "Added") {
     afterTokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
@@ -172,7 +175,6 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
 
       if ("groupId" in token.properties) {
         beforeLineGroupId = token.properties["groupId"];
-        beforeLineClasses.add(beforeLineGroupId);
       }
       else {
         beforeLineGroupId = undefined;
@@ -197,7 +199,6 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
 
       if ("groupId" in token.properties) {
         afterLineGroupId = token.properties["groupId"];
-        afterLineClasses.add(afterLineGroupId);
       }
       else {
         afterLineGroupId = undefined;
@@ -213,12 +214,15 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
       })
     }
 
+
     if (beforeTokenLines.length > 0 || afterTokenLines.length > 0) {
       let beforeDiffTokens : Array<StructuredToken> = [];
       let afterDiffTokens : Array<StructuredToken> = [];
 
       if (beforeTokenLines.length > 0 && afterTokenLines.length > 0) {
         if (beforeTokenLines[0].groupId === afterTokenLines[0].groupId) {
+          (beforeTokenLines[0].groupId) ? beforeLineClasses.add(beforeTokenLines[0].groupId) : null;
+          (afterTokenLines[0].groupId!) ? afterLineClasses.add(afterTokenLines[0].groupId!) : null;
           beforeDiffTokens = beforeTokenLines.shift()?.lineTokens!;
           afterDiffTokens = afterTokenLines.shift()?.lineTokens!;
         }
@@ -226,29 +230,33 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
           const beforeTokenLineBuildOrder = lineGroupOrder.indexOf(beforeTokenLines[0].groupId!);
           const afterTokenLineBuildOrder = lineGroupOrder.indexOf(afterTokenLines[0].groupId!);
           if ((afterTokenLineBuildOrder < 0) || (beforeTokenLineBuildOrder >= 0 && beforeTokenLineBuildOrder < afterTokenLineBuildOrder)) {
+            (beforeTokenLines[0].groupId) ? beforeLineClasses.add(beforeTokenLines[0].groupId) : null;
             beforeDiffTokens = beforeTokenLines.shift()?.lineTokens!;
           }
           else {
+            (afterTokenLines[0].groupId!) ? afterLineClasses.add(afterTokenLines[0].groupId!) : null;
             afterDiffTokens = afterTokenLines.shift()?.lineTokens!;
           }
         }
       }
       else if(beforeTokenLines.length > 0) {
+        (beforeTokenLines[0].groupId) ? beforeLineClasses.add(beforeTokenLines[0].groupId) : null;
         beforeDiffTokens = beforeTokenLines.shift()?.lineTokens!;
       }
       else {
+        (afterTokenLines[0].groupId!) ? afterLineClasses.add(afterTokenLines[0].groupId!) : null;
         afterDiffTokens = afterTokenLines.shift()?.lineTokens!;
       }
 
       const diffTokenLineResult = ComputeTokenDiff(beforeDiffTokens, afterDiffTokens) as [StructuredToken[], StructuredToken[], boolean];
 
-      let insertLinesOfTokensMessage : InsertCodePanelRowDataMessage =  {
+      let insertLineOfTokensMessage : InsertCodePanelRowDataMessage =  {
         directive: ReviewPageWorkerMessageDirective.InsertCodeLineData,
         codePanelRowData: {
           rowType: CodePanelRowDatatype.CodeLine,
           lineNumber: 0,
           lineTokens : diffTokenLineResult[0],
-          rowClasses : beforeLineClasses,
+          rowClasses : new Set(beforeLineClasses), //new set to avoid reference sharing
           nodeId : nodeId,
           indent : indent,
           diffKind : "Unchanged",
@@ -258,33 +266,51 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
 
       if (diffTokenLineResult[2] === true) {
         if (diffTokenLineResult[0].length > 0) {
-          insertLinesOfTokensMessage.codePanelRowData.diffKind = "Removed";
+          insertLineOfTokensMessage.codePanelRowData.diffKind = "Removed";
           beforeLineClasses.add("removed");
-          insertLinesOfTokensMessage.codePanelRowData.rowClasses = beforeLineClasses;
+          insertLineOfTokensMessage.codePanelRowData.rowClasses = new Set(beforeLineClasses);
           
           insertLineNumber++;
-          insertLinesOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
-          postMessage(insertLinesOfTokensMessage);
+          insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
+          lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
+
+          precedingRowData = insertLineOfTokensMessage.codePanelRowData;
+          postMessage(insertLineOfTokensMessage);
           beforeLineClasses.clear();
         }
 
         if (diffTokenLineResult[1].length > 0) {
-          insertLinesOfTokensMessage.codePanelRowData.lineTokens = diffTokenLineResult[1];
-          insertLinesOfTokensMessage.codePanelRowData.diffKind = "Added";
+          insertLineOfTokensMessage.codePanelRowData.lineTokens = diffTokenLineResult[1];
+          insertLineOfTokensMessage.codePanelRowData.diffKind = "Added";
           afterLineClasses.add("added");
-          insertLinesOfTokensMessage.codePanelRowData.rowClasses = afterLineClasses;
+          insertLineOfTokensMessage.codePanelRowData.rowClasses = new Set(afterLineClasses);
 
           insertLineNumber++;
-          insertLinesOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
-          postMessage(insertLinesOfTokensMessage);
+          diffLineNumber++;
+          insertLineOfTokensMessage.codePanelRowData.lineNumber = diffLineNumber;
+          lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
+          
+          precedingRowData = insertLineOfTokensMessage.codePanelRowData;
+          postMessage(insertLineOfTokensMessage);
           afterLineClasses.clear();
         }
       }
       else {
         if (diffTokenLineResult[0].length > 0) {
           insertLineNumber++;
-          insertLinesOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
-          postMessage(insertLinesOfTokensMessage);
+          diffLineNumber++;
+          insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
+          lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
+
+          precedingRowData = insertLineOfTokensMessage.codePanelRowData;
+          postMessage(insertLineOfTokensMessage);
+          beforeLineClasses.clear();
         }
       }
     }
@@ -329,6 +355,7 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
       };
 
       insertLineNumber++;
+      diffLineNumber++;
       insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
       lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
         insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
@@ -374,6 +401,7 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
     };
 
     insertLineNumber++;
+    diffLineNumber++;
     insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
     lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
       insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :

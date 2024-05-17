@@ -30,6 +30,8 @@ export class ReviewPageComponent implements OnInit {
   apiRevisionPageSize = 50;
 
   private destroy$ = new Subject<void>();
+  private destroyLoadAPIRevision$ : Subject<void>  | null = null;
+  private destroyApiTreeBuilder$ : Subject<void>  | null = null;
 
   sideMenu: MenuItem[] | undefined;
 
@@ -71,11 +73,19 @@ export class ReviewPageComponent implements OnInit {
     this.otherCodePanelData = new Map<string, CodePanelToggleableData>();
     this.codeLinesData = [];
     this.changeDeterctorRef.detectChanges();
-    this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
+    this.workerService.startWorker().then(() => {
+      this.registerWorkerEventHandler();
+      this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
+    });
   }
 
   registerWorkerEventHandler() {
-    this.workerService.onMessageFromApiTreeBuilder().pipe(takeUntil(this.destroy$)).subscribe(data => {
+    // Ensure existing subscription is destroyed
+    this.destroyApiTreeBuilder$?.next();
+    this.destroyApiTreeBuilder$?.complete();
+    this.destroyApiTreeBuilder$ = new Subject<void>();
+
+    this.workerService.onMessageFromApiTreeBuilder().pipe(takeUntil(this.destroyApiTreeBuilder$)).subscribe(data => {
       if (data.directive === ReviewPageWorkerMessageDirective.CreatePageNavigation) {
         this.reviewPageNavigation = data.navTree as TreeNode[];
       }
@@ -124,6 +134,7 @@ export class ReviewPageComponent implements OnInit {
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodeLines) {
         this.codeLinesData = this.codeLinesDataBuffer;
+        this.workerService.terminateWorker();
       }
     });
   }
@@ -148,8 +159,13 @@ export class ReviewPageComponent implements OnInit {
   }
 
   loadAPIRevisions(noOfItemsRead : number, pageSize: number) {
+    // Ensure existing subscription is destroyed
+    this.destroyLoadAPIRevision$?.next();
+    this.destroyLoadAPIRevision$?.complete();
+    this.destroyLoadAPIRevision$ = new Subject<void>();
+
     this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!)
-      .pipe(takeUntil(this.destroy$)).subscribe({
+      .pipe(takeUntil(this.destroyLoadAPIRevision$)).subscribe({
         next: (response: any) => {
           this.apiRevisions = response.result;
         }
@@ -161,7 +177,12 @@ export class ReviewPageComponent implements OnInit {
   }
 
   ngOnDestroy() {
+    this.workerService.terminateWorker();
     this.destroy$.next();
     this.destroy$.complete();
+    this.destroyLoadAPIRevision$?.next();
+    this.destroyLoadAPIRevision$?.complete();
+    this.destroyApiTreeBuilder$?.next();
+    this.destroyApiTreeBuilder$?.complete();
   }
 }

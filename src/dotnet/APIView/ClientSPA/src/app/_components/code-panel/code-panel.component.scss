@@ -75,6 +75,10 @@
                 color: var(--text-muted-color);
                 margin-left: 2px;
             }
+
+            .line-number.first {
+                visibility: hidden;
+            }
         }
     
         &.removed {
@@ -85,6 +89,10 @@
                 position: absolute;
                 color: var(--text-muted-color);
                 margin-left: 2px;
+            }
+
+            .line-number.second {
+                visibility: hidden;
             }
         }
 

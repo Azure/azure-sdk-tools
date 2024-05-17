@@ -18,6 +18,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   @Input() codeLinesData: CodePanelRowData[] = [];
   @Input() otherCodePanelData: Map<string, CodePanelToggleableData> = new Map<string, CodePanelToggleableData>();
   @Input() reviewComments : CommentItemModel[] | undefined = [];
+  @Input() isDiffView: boolean = false;
 
   @ViewChild('commentThreadRef', { read: ViewContainerRef }) commentThreadRef!: ViewContainerRef;
 
@@ -59,7 +60,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
 
   onCodePanelItemClick(event: Event) {
     const target = event.target as Element;
-    if (target.classList.contains('toggle-documentation-btn')) {
+    if (target.classList.contains('toggle-documentation-btn') && !target.classList.contains('hide')) {
       this.toggleNodeDocumentation(target);
     }
 

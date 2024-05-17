@@ -86,7 +86,7 @@ export class ApiRevisionOptionsComponent implements OnChanges {
 
   diffApiRevisionChange(event: any) {
     let newQueryParams = this.getQueryParams()
-    newQueryParams['diffApiRevisionId'] = event.value.id;
+    newQueryParams['diffApiRevisionId'] = event.value?.id;
     this.router.navigate([], { queryParams: newQueryParams });
   }
 

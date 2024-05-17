@@ -1,4 +1,8 @@
 :host ::ng-deep {
+    .a {
+        text-decoration: none;
+    }
+
     .p-tree {
         font-family: Consolas,monospace;
         font-size: 14px;
@@ -10,12 +14,20 @@
         overflow-x: hidden;
     }
 
-    .p-tree .p-tree-container .p-treenode .p-treenode-content {
-        padding: 0.05rem;
-        text-overflow: ellipsis;
+    .p-treenode-label {
         white-space: nowrap;
         overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .p-tree .p-tree-container .p-treenode .p-treenode-content {
+        padding: 0.05rem;
         border: 0px;
+        cursor: pointer;
+
+        .p-tree-toggler {
+            height: 1rem;
+        }
     }
     
     .p-treenode-content:hover{

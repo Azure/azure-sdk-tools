@@ -7,9 +7,31 @@
         background-color: var(--base-bg-color);
         color: var(--base-text-color);
     }
-
-    a {
+    
+    p {
+        color: var(--base-text-color);
+    }
+    
+    a, a:link {
+        color: var(--link-color);
         text-decoration: none;
+    }
+    
+    a:active {
+        color: var(--link-active);
+    }
+    
+    a:hover {
+        color: var(--link-active);
+        text-decoration: underline;
+    }
+    
+    a:visited {
+        color: var(--link-visited);
+    }
+    
+    html {
+        font-size: 14px;
     }
 
     .p-small-size {

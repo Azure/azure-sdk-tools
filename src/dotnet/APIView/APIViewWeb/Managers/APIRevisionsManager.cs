@@ -821,8 +821,8 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="crossLanguagePackageId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<string>> GetReviewIdsOfLanguageCorrespondingReviewAsync(string crossLanguagePackageId) {
-            return await _apiRevisionsRepository.GetReviewIdsOfLanguageCorrespondingReviewAsync(crossLanguagePackageId);
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetLanguageCorrespondingAPIRevisionsAsync(string crossLanguagePackageId) {
+            return await _apiRevisionsRepository.GetLanguageCorrespondingAPIRevisionsAsync(crossLanguagePackageId);
         }
 
         /// <summary>

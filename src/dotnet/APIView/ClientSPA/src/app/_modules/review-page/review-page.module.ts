@@ -27,6 +27,7 @@ import { EditorComponent } from 'src/app/_components/shared/editor/editor.compon
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ChipModule } from 'primeng/chip';
 import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-options/review-page-options.component';
+import { InputSwitchModule } from 'primeng/inputswitch';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -60,6 +61,7 @@ const routes: Routes = [
     ButtonModule,
     SelectButtonModule,
     FormsModule,
+    InputSwitchModule,
     UiScrollModule,
     DropdownModule,
     RouterModule.forChild(routes),

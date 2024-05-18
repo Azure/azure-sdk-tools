@@ -484,3 +484,48 @@ p-contextmenusub {
     background: var(--base-fg-color);
     color: var(--base-text-color);
 }
+
+.p-inputswitch {
+    width: 2.5rem;
+    height: 1.5rem;
+}
+
+.p-inputswitch .p-inputswitch-slider {
+    border-radius: 30px;
+}
+
+.p-inputswitch.p-inputswitch-checked:not(.p-disabled):hover .p-inputswitch-slider {
+    background: var(--link-active);
+}
+
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider:before {
+    transform: translateX(1rem);
+}
+
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
+    background: var(--link-color);
+}
+
+.p-inputswitch .p-inputswitch-slider {
+    background: var(--base-bg-color);
+    border: 1px solid var(--border-color)  ;
+}
+
+.p-inputswitch .p-inputswitch-slider:before {
+    background: #ffffff;
+    width: 1rem;
+    height: 1rem;
+    left: 0.25rem;
+    margin-top: -0.5rem;
+    border-radius: 50%;
+    transition-duration: 0.2s;
+}
+
+.p-hidden-accessible {
+    position: static !important;
+    height: auto !important;
+    width: auto !important;
+    overflow: visible !important;
+    clip: auto !important;
+    margin: 0 !important;
+  }

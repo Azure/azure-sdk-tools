@@ -164,6 +164,9 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
     const beforeLineClasses = new Set<string>();
     const afterLineClasses = new Set<string>();
 
+    const beforeTokenIdsInLine = new Set<string>();
+    const afterTokenIdsInLine = new Set<string>();
+
     let beforeLineGroupId : string | undefined = undefined;
     let afterLineGroupId : string | undefined = undefined;
 
@@ -181,13 +184,18 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
       }
 
       beforeTokenLine.push(token);
+      if (token.id) {
+        beforeTokenIdsInLine.add(token.id);
+      }
     }
 
     if (beforeTokenLine.length > 0 ) {
       beforeTokenLines.push({
         groupId: beforeLineGroupId,
-        lineTokens: beforeTokenLine
-      })
+        lineTokens: beforeTokenLine,
+        tokenIdsInLine: new Set(beforeTokenIdsInLine)
+      });
+      beforeTokenIdsInLine.clear();
     }
 
 
@@ -205,13 +213,18 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
       }
 
       afterTokenLine.push(token);
+      if (token.id) {
+        afterTokenIdsInLine.add(token.id);
+      }
     }
 
     if (afterTokenLine.length > 0) {
       afterTokenLines.push({
         groupId: afterLineGroupId,
-        lineTokens: afterTokenLine
-      })
+        lineTokens: afterTokenLine,
+        tokenIdsInLine: new Set(afterTokenIdsInLine)
+      });
+      afterTokenIdsInLine.clear();
     }
 
 
@@ -219,10 +232,15 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
       let beforeDiffTokens : Array<StructuredToken> = [];
       let afterDiffTokens : Array<StructuredToken> = [];
 
+      let beforeTokenIdsInLine = new Set<string>();
+      let afterTokenIdsInLine = new Set<string>();
+
       if (beforeTokenLines.length > 0 && afterTokenLines.length > 0) {
         if (beforeTokenLines[0].groupId === afterTokenLines[0].groupId) {
           (beforeTokenLines[0].groupId) ? beforeLineClasses.add(beforeTokenLines[0].groupId) : null;
           (afterTokenLines[0].groupId!) ? afterLineClasses.add(afterTokenLines[0].groupId!) : null;
+          beforeTokenIdsInLine = beforeTokenLines[0].tokenIdsInLine;
+          afterTokenIdsInLine = afterTokenLines[0].tokenIdsInLine;
           beforeDiffTokens = beforeTokenLines.shift()?.lineTokens!;
           afterDiffTokens = afterTokenLines.shift()?.lineTokens!;
         }
@@ -231,20 +249,24 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
           const afterTokenLineBuildOrder = lineGroupOrder.indexOf(afterTokenLines[0].groupId!);
           if ((afterTokenLineBuildOrder < 0) || (beforeTokenLineBuildOrder >= 0 && beforeTokenLineBuildOrder < afterTokenLineBuildOrder)) {
             (beforeTokenLines[0].groupId) ? beforeLineClasses.add(beforeTokenLines[0].groupId) : null;
+            beforeTokenIdsInLine = beforeTokenLines[0].tokenIdsInLine;
             beforeDiffTokens = beforeTokenLines.shift()?.lineTokens!;
           }
           else {
             (afterTokenLines[0].groupId!) ? afterLineClasses.add(afterTokenLines[0].groupId!) : null;
+            afterTokenIdsInLine = afterTokenLines[0].tokenIdsInLine;
             afterDiffTokens = afterTokenLines.shift()?.lineTokens!;
           }
         }
       }
       else if(beforeTokenLines.length > 0) {
         (beforeTokenLines[0].groupId) ? beforeLineClasses.add(beforeTokenLines[0].groupId) : null;
+        beforeTokenIdsInLine = beforeTokenLines[0].tokenIdsInLine;
         beforeDiffTokens = beforeTokenLines.shift()?.lineTokens!;
       }
       else {
         (afterTokenLines[0].groupId!) ? afterLineClasses.add(afterTokenLines[0].groupId!) : null;
+        afterTokenIdsInLine = afterTokenLines[0].tokenIdsInLine;
         afterDiffTokens = afterTokenLines.shift()?.lineTokens!;
       }
 
@@ -276,6 +298,9 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
             insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
             insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
 
+          // Collects comments for the line
+          let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(new Set<string>, id, nodeId, insertLineOfTokensMessage);
+
           precedingRowData = insertLineOfTokensMessage.codePanelRowData;
           postMessage(insertLineOfTokensMessage);
           beforeLineClasses.clear();
@@ -293,10 +318,17 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
           lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
             insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
             insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
+
+          // Collects comments for the line
+          let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(afterTokenIdsInLine, id, nodeId, insertLineOfTokensMessage);
           
           precedingRowData = insertLineOfTokensMessage.codePanelRowData;
           postMessage(insertLineOfTokensMessage);
           afterLineClasses.clear();
+
+          if (insertCommentMessage) {
+            postMessage(insertCommentMessage);
+          }
         }
       }
       else {
@@ -308,13 +340,23 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
             insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
             insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
 
+          // Collects comments for the line
+          let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(afterTokenIdsInLine, id, nodeId, insertLineOfTokensMessage);
+
           precedingRowData = insertLineOfTokensMessage.codePanelRowData;
           postMessage(insertLineOfTokensMessage);
           beforeLineClasses.clear();
+
+          if (insertCommentMessage) {
+            postMessage(insertCommentMessage);
+          }
         }
       }
     }
   }
+
+  // Append associated diagnostics rows
+  addDiagnosticRow(id, nodeId);
 }
 
 /**
@@ -324,8 +366,7 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
  * @param position
  * @returns noOfLinesInserted
  */
-function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, position: string, indent: number = 0)
-{
+function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, position: string, indent: number = 0) {
   const nodeId = getTokenNodeIdHash(apiTreeNode, position);
   const tokens = (position === "top") ? apiTreeNode.topTokens : apiTreeNode.bottomTokens;
   const tokenLine : StructuredToken[] = [];
@@ -362,7 +403,7 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
         insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
       
       // Collects comments for the line
-      let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, nodeId, insertLineOfTokensMessage);
+      let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, id, nodeId, insertLineOfTokensMessage);
 
       precedingRowData = insertLineOfTokensMessage.codePanelRowData;
       postMessage(insertLineOfTokensMessage);
@@ -408,7 +449,7 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
       insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
 
     // Collects comments for the line  
-    let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, nodeId, insertLineOfTokensMessage);
+    let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, id, nodeId, insertLineOfTokensMessage);
 
     postMessage(insertLineOfTokensMessage);
 
@@ -419,6 +460,44 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
   }
 
   // Append associated diagnostics rows
+  addDiagnosticRow(id, nodeId);
+}
+
+function lineHasDocumentationAbove(precedingLine : CodePanelRowData | undefined, currentLine : CodePanelRowData) : boolean {
+  return precedingLine !== undefined && precedingLine.rowClasses.has("documentation") && !currentLine.rowClasses.has("documentation");
+}
+
+function collectUserCommentsforLine(tokenIdsInLine: Set<string>, id: string, nodeId: string, insertLineOfTokensMessage : InsertCodePanelRowDataMessage) : InsertCodePanelRowDataMessage | undefined {
+  let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = undefined;
+  let toggleCommentClass = (diagnosticsTargetIds.has(id)) ? "bi bi-chat-right-text show" : "";
+  if (tokenIdsInLine.size > 0) {
+    toggleCommentClass = (!toggleCommentClass) ? "bi bi-chat-right-text can-show" : toggleCommentClass;
+    insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = toggleCommentClass;
+    const commentsForLine = comments.filter(comment => tokenIdsInLine.has(comment.elementId));
+
+    if (commentsForLine.length > 0) {
+      insertCommentMessage = {
+        directive: ReviewPageWorkerMessageDirective.InsertCommentRowData,
+        codePanelRowData: {
+          rowType: CodePanelRowDatatype.CommentThread,
+          nodeId: nodeId,
+          rowClasses: new Set<string>(["user-comment-thread"]),
+          comments: commentsForLine,
+          rowSize: 21
+        }
+      };
+      toggleCommentClass = toggleCommentClass.replace("can-show", "show");
+      insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = toggleCommentClass;
+    }
+  }
+  else {
+    toggleCommentClass = (toggleCommentClass) ? toggleCommentClass.replace("show", "hide") : "bi bi-chat-right-text hide";
+    insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = toggleCommentClass;
+  }
+  return insertCommentMessage;
+}
+
+function addDiagnosticRow(id: string, nodeId: string){
   if (diagnosticsTargetIds.has(id)) {
     const diagnosticsRows = diagnostics.filter(diagnostic => diagnostic.targetId === id);
     diagnosticsRows.forEach(diagnostisRow => {
@@ -436,38 +515,7 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
           diagnostics: diagnostisRow
         }
       };
-      
       postMessage(insertDiagnosticMessage);
     });
   }
-}
-
-function lineHasDocumentationAbove(precedingLine : CodePanelRowData | undefined, currentLine : CodePanelRowData) : boolean {
-  return precedingLine !== undefined && precedingLine.rowClasses.has("documentation") && !currentLine.rowClasses.has("documentation");
-}
-
-function collectUserCommentsforLine(tokenIdsInLine: Set<string>, nodeId: string, insertLineOfTokensMessage : InsertCodePanelRowDataMessage) : InsertCodePanelRowDataMessage | undefined {
-  let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = undefined;
-  if (tokenIdsInLine.size > 0) {
-    insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = "bi bi-chat-right-text can-show";
-    const commentsForLine = comments.filter(comment => tokenIdsInLine.has(comment.elementId));
-
-    if (commentsForLine.length > 0) {
-      insertCommentMessage = {
-        directive: ReviewPageWorkerMessageDirective.InsertCommentRowData,
-        codePanelRowData: {
-          rowType: CodePanelRowDatatype.CommentThread,
-          nodeId: nodeId,
-          rowClasses: new Set<string>(["user-comment-thread"]),
-          comments: commentsForLine,
-          rowSize: 21
-        }
-      };
-      insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = "bi bi-chat-right-text show";
-    }
-  }
-  else {
-    insertLineOfTokensMessage.codePanelRowData.toggleCommentsClasses = "bi bi-chat-right-text hide";
-  }
-  return insertCommentMessage;
 }

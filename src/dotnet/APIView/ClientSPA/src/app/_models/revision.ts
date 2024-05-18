@@ -52,6 +52,7 @@ export interface StructuredToken {
 export interface DiffLineInProcess {
   groupId: string | undefined;
   lineTokens: StructuredToken[];
+  tokenIdsInLine: Set<string>;
 }
 
 export interface APITreeNode {

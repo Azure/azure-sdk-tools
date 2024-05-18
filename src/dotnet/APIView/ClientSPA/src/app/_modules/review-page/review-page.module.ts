@@ -26,6 +26,7 @@ import { MarkdownToHtmlPipe } from 'src/app/_pipes/markdown-to-html.pipe';
 import { EditorComponent } from 'src/app/_components/shared/editor/editor.component';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ChipModule } from 'primeng/chip';
+import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-options/review-page-options.component';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -39,6 +40,7 @@ const routes: Routes = [
     CodePanelComponent,
     CommentThreadComponent,
     PageOptionsSectionComponent,
+    ReviewPageOptionsComponent,
     ApiRevisionOptionsComponent,
     MarkdownToHtmlPipe,
     EditorComponent

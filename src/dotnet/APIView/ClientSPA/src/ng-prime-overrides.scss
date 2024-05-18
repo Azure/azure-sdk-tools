@@ -521,11 +521,11 @@ p-contextmenusub {
     transition-duration: 0.2s;
 }
 
-.p-hidden-accessible {
+p-inputswitch .p-hidden-accessible {
     position: static !important;
     height: auto !important;
     width: auto !important;
     overflow: visible !important;
     clip: auto !important;
     margin: 0 !important;
-  }
+}

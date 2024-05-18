@@ -1,3 +1,28 @@
-<app-page-options-section [sectionName]="{{Page Settings}}">
-
+<app-page-options-section sectionName="Page Settings">
+    <ul class="list-group">
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showComments" />
+            <label class="ms-2">Show Comments</label>
+        </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showSystemComments" />
+            <label class="ms-2">Show System Comments</label>
+        </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showDocumentation" />
+            <label class="ms-2">Show Documentation</label>
+        </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showLineNumber" />
+            <label class="ms-2">Show Line Numbers</label>
+        </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showLeftNavigation" />
+            <label class="ms-2">Show Left navigation</label>
+        </li>
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showOnlyDiff" />
+            <label class="ms-2">Show Only Diff</label>
+        </li>
+    </ul>
 </app-page-options-section>

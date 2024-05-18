@@ -91,7 +91,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
       const documentationData = this.otherCodePanelData.get(nodeId!)?.documentation;
       const lineNumbersOfLinesToRemove = new Set(documentationData!.map(d => d.lineNumber));
       await this.codePanelRowSource?.adapter?.relax();
-      await this.removeItemFromScroller(lineNumbersOfLinesToRemove, lineNumber!, "toggleDocumentationClasses", "bi-arrow-down-square", "bi-arrow-up-square");
+      await this.removeItemFromScroller(lineNumbersOfLinesToRemove, lineNumber!, "toggleDocumentationClasses", "bi-arrow-down-square", "bi-arrow-up-square", "documentation");
       target.classList.remove('bi-arrow-down-square')
       target.classList.add('bi-arrow-up-square');
     }
@@ -135,17 +135,18 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   }
 
   async removeItemFromScroller(lineNumbersToRemove: Set<number | undefined>, actionLineNumber: string,
-    propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
+    propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string, lineClasstoRemove?: string) {
     const indexesToRemove : number[] = [];
     const filteredCodeLinesData : CodePanelRowData[] = [];
 
     for (let i = 0; i < this.codeLinesData.length; i++) {
       let lineNo = this.codeLinesData[i].lineNumber!;
+      let rowClasses = this.codeLinesData[i].rowClasses;
       if (lineNo === parseInt(actionLineNumber) && propertyToChange && iconClassToremove && iconClassToAdd) {
         this.codeLinesData[i] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, this.codeLinesData[i], propertyToChange);
       }
 
-      if (lineNumbersToRemove.size > 0 && lineNumbersToRemove.has(lineNo)) {
+      if (lineNumbersToRemove.size > 0 && lineNumbersToRemove.has(lineNo) && rowClasses.has(lineClasstoRemove!)) {
         indexesToRemove.push(i);
       } else {
         filteredCodeLinesData.push(this.codeLinesData[i]);

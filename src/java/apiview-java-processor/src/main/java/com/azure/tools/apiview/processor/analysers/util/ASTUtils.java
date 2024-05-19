@@ -183,6 +183,23 @@ public final class ASTUtils {
         return makeId(cu.getPrimaryType().get());
     }
 
+    public static String makeId(BodyDeclaration<?> bodyDeclaration) {
+        // switch based on known subtypes
+        if (bodyDeclaration instanceof TypeDeclaration<?>) {
+            return makeId((TypeDeclaration<?>) bodyDeclaration);
+        } else if (bodyDeclaration instanceof AnnotationMemberDeclaration) {
+            return makeId((AnnotationMemberDeclaration) bodyDeclaration);
+        } else if (bodyDeclaration instanceof CallableDeclaration<?>) {
+            return makeId((CallableDeclaration<?>) bodyDeclaration);
+        } else if (bodyDeclaration instanceof FieldDeclaration) {
+            return makeId((FieldDeclaration) bodyDeclaration);
+        } else if (bodyDeclaration instanceof EnumConstantDeclaration) {
+            return makeId((EnumConstantDeclaration) bodyDeclaration);
+        } else {
+            return makeId(bodyDeclaration.toString());
+        }
+    }
+
     public static String makeId(TypeDeclaration<?> typeDeclaration) {
         return makeId(typeDeclaration.getFullyQualifiedName().get());
     }

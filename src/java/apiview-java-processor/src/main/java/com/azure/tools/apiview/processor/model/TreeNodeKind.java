@@ -3,13 +3,33 @@ package com.azure.tools.apiview.processor.model;
 public enum TreeNodeKind {
     ASSEMBLY("Assembly"),     // i.e. a Jar File
     NAMESPACE("Namespace"),   // i.e. a Java package
-    CLASS("Type", "Class"),
-    INTERFACE("Type", "Interface"),
-    ENUM("Type", "Enum"),
+    CLASS("Type", "Class") {
+        @Override
+        public String getTypeDeclarationString() {
+            return "class";
+        }
+    },
+    INTERFACE("Type", "Interface") {
+        @Override
+        public String getTypeDeclarationString() {
+            return "interface";
+        }
+    },
+    ENUM("Type", "Enum") {
+        @Override
+        public String getTypeDeclarationString() {
+            return "enum";
+        }
+    },
     ENUM_CONSTANT("Member", "EnumConstant"),
 
     // Note: This is for the definition of annotations (rather than the use of them)
-    ANNOTATION("Type", "Annotation"),
+    ANNOTATION("Type", "Annotation") {
+        @Override
+        public String getTypeDeclarationString() {
+            return "@annotation";
+        }
+    },
 
     MODULE_INFO("Module-Info"),
     MODULE_REQUIRES("Module-Info", "Module-Requires"),
@@ -43,6 +63,10 @@ public enum TreeNodeKind {
 
     public String getSubKind() {
         return subKind;
+    }
+
+    public String getTypeDeclarationString() {
+        return "UNKNOWN";
     }
 
     public static TreeNodeKind fromName(String name) {

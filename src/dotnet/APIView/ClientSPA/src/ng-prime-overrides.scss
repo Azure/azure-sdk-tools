@@ -512,7 +512,7 @@ p-contextmenusub {
 }
 
 .p-inputswitch .p-inputswitch-slider:before {
-    background: #ffffff;
+    background: var(--base-fg-color);
     width: 1rem;
     height: 1rem;
     left: 0.25rem;

@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { APIRevision } from 'src/app/_models/revision';
 
 @Component({
@@ -69,7 +70,7 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   }
 
   activeApiRevisionChange(event: any) {
-    let newQueryParams = this.getQueryParams()
+    let newQueryParams = getQueryParams(this.route);
     newQueryParams['activeApiRevisionId'] = event.value.id;
     this.router.navigate([], { queryParams: newQueryParams });
   }
@@ -85,14 +86,15 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   }
 
   diffApiRevisionChange(event: any) {
-    let newQueryParams = this.getQueryParams()
+    let newQueryParams = getQueryParams(this.route);
     newQueryParams['diffApiRevisionId'] = event.value?.id;
     this.router.navigate([], { queryParams: newQueryParams });
   }
 
   diffApiRevisionClear(event: any) {
-    let newQueryParams = this.getQueryParams()
+    let newQueryParams = getQueryParams(this.route);
     newQueryParams['diffApiRevisionId'] = null;
+    newQueryParams['onlyDiff'] = null;
     this.router.navigate([], { queryParams: newQueryParams });
   }
 
@@ -182,13 +184,6 @@ export class ApiRevisionOptionsComponent implements OnChanges {
         }
       };
     });
-  }
-
-  getQueryParams() {
-    return this.route.snapshot.queryParamMap.keys.reduce((params: { [key: string]: any; }, key) => {
-      params[key] = this.route.snapshot.queryParamMap.get(key);
-      return params;
-    }, {});
   }
 }
 

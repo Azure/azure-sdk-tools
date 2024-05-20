@@ -10,6 +10,7 @@ let diffLineNumber = 0;
 let diagnostics: CodeDiagnostic[] = [];
 let comments: CommentItemModel[] = [];
 let diagnosticsTargetIds = new Set<string>();
+let onlyDiff = false;
 
 addEventListener('message', ({ data }) => {
   if (data instanceof ArrayBuffer) {
@@ -45,6 +46,10 @@ addEventListener('message', ({ data }) => {
     comments = [];
     diagnosticsTargetIds.clear();
     postMessage(updateCodeLineDataMessage);
+  }
+
+  if (typeof data === "boolean") {
+    onlyDiff = data ?? false;
   }
 });
 
@@ -128,7 +133,12 @@ function buildTokens(apiTreeNode: APITreeNode, id: string, position: string, ind
     buildTokensForNonDiffNodes(apiTreeNode, id, position, indent);
   }
   else {
-    buildTokensForDiffNodes(apiTreeNode, id, position, indent);
+    if (onlyDiff && apiTreeNode.children.length === 0 && apiTreeNode.diffKind !== "Added" && apiTreeNode.diffKind !== "Removed") {
+
+    }
+    else {
+      buildTokensForDiffNodes(apiTreeNode, id, position, indent);
+    }
   }
 }
 
@@ -280,6 +290,8 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
           lineTokens : diffTokenLineResult[0],
           rowClasses : new Set(beforeLineClasses), //new set to avoid reference sharing
           nodeId : nodeId,
+          nodeIdUnHashed: id,
+          tokenPosition: position,
           indent : indent,
           diffKind : "Unchanged",
           rowSize : 21
@@ -299,7 +311,7 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
             insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
 
           // Collects comments for the line
-          let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(new Set<string>, id, nodeId, insertLineOfTokensMessage);
+          let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(new Set<string>, id, position, nodeId, insertLineOfTokensMessage);
 
           precedingRowData = insertLineOfTokensMessage.codePanelRowData;
           postMessage(insertLineOfTokensMessage);
@@ -320,7 +332,7 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
             insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
 
           // Collects comments for the line
-          let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(afterTokenIdsInLine, id, nodeId, insertLineOfTokensMessage);
+          let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(afterTokenIdsInLine, id, position, nodeId, insertLineOfTokensMessage);
           
           precedingRowData = insertLineOfTokensMessage.codePanelRowData;
           postMessage(insertLineOfTokensMessage);
@@ -341,7 +353,7 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
             insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
 
           // Collects comments for the line
-          let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(afterTokenIdsInLine, id, nodeId, insertLineOfTokensMessage);
+          let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(afterTokenIdsInLine, id, position, nodeId, insertLineOfTokensMessage);
 
           precedingRowData = insertLineOfTokensMessage.codePanelRowData;
           postMessage(insertLineOfTokensMessage);
@@ -356,7 +368,7 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
   }
 
   // Append associated diagnostics rows
-  addDiagnosticRow(id, nodeId);
+  addDiagnosticRow(id, position, nodeId);
 }
 
 /**
@@ -388,6 +400,8 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
           lineNumber: 0,
           lineTokens : tokenLine,
           nodeId : nodeId,
+          nodeIdUnHashed: id,
+          tokenPosition: position,
           rowClasses : new Set(lineClasses), //new set to avoid reference sharing
           indent : indent,
           diffKind : "NoneDiff",
@@ -403,7 +417,7 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
         insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
       
       // Collects comments for the line
-      let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, id, nodeId, insertLineOfTokensMessage);
+      let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, id, position, nodeId, insertLineOfTokensMessage);
 
       precedingRowData = insertLineOfTokensMessage.codePanelRowData;
       postMessage(insertLineOfTokensMessage);
@@ -434,6 +448,8 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
         lineNumber: 0,
         lineTokens : tokenLine,
         nodeId : nodeId,
+        nodeIdUnHashed: id,
+        tokenPosition: position,
         rowClasses : new Set(lineClasses), //new set to avoid reference sharing
         indent : indent,
         diffKind : "NoneDiff",
@@ -449,7 +465,7 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
       insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
 
     // Collects comments for the line  
-    let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, id, nodeId, insertLineOfTokensMessage);
+    let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, id, position, nodeId, insertLineOfTokensMessage);
 
     postMessage(insertLineOfTokensMessage);
 
@@ -460,14 +476,14 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
   }
 
   // Append associated diagnostics rows
-  addDiagnosticRow(id, nodeId);
+  addDiagnosticRow(id, position, nodeId);
 }
 
 function lineHasDocumentationAbove(precedingLine : CodePanelRowData | undefined, currentLine : CodePanelRowData) : boolean {
   return precedingLine !== undefined && precedingLine.rowClasses.has("documentation") && !currentLine.rowClasses.has("documentation");
 }
 
-function collectUserCommentsforLine(tokenIdsInLine: Set<string>, id: string, nodeId: string, insertLineOfTokensMessage : InsertCodePanelRowDataMessage) : InsertCodePanelRowDataMessage | undefined {
+function collectUserCommentsforLine(tokenIdsInLine: Set<string>, id: string, position: string, nodeId: string, insertLineOfTokensMessage : InsertCodePanelRowDataMessage) : InsertCodePanelRowDataMessage | undefined {
   let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = undefined;
   let toggleCommentClass = (diagnosticsTargetIds.has(id)) ? "bi bi-chat-right-text show" : "";
   if (tokenIdsInLine.size > 0) {
@@ -481,6 +497,8 @@ function collectUserCommentsforLine(tokenIdsInLine: Set<string>, id: string, nod
         codePanelRowData: {
           rowType: CodePanelRowDatatype.CommentThread,
           nodeId: nodeId,
+          nodeIdUnHashed: id,
+          tokenPosition: position,
           rowClasses: new Set<string>(["user-comment-thread"]),
           comments: commentsForLine,
           rowSize: 21
@@ -497,8 +515,8 @@ function collectUserCommentsforLine(tokenIdsInLine: Set<string>, id: string, nod
   return insertCommentMessage;
 }
 
-function addDiagnosticRow(id: string, nodeId: string){
-  if (diagnosticsTargetIds.has(id)) {
+function addDiagnosticRow(id: string, position: string, nodeId: string){
+  if (diagnosticsTargetIds.has(id) && position !== "bottom") {
     const diagnosticsRows = diagnostics.filter(diagnostic => diagnostic.targetId === id);
     diagnosticsRows.forEach(diagnostisRow => {
       const rowSize = 21
@@ -510,6 +528,8 @@ function addDiagnosticRow(id: string, nodeId: string){
         codePanelRowData: {
           rowType: CodePanelRowDatatype.Diagnostics,
           nodeId: nodeId,
+          nodeIdUnHashed: id,
+          tokenPosition: position,
           rowClasses: new Set<string>(rowClasses),
           rowSize: rowSize,
           diagnostics: diagnostisRow

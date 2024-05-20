@@ -74,6 +74,8 @@ export interface CodePanelRowData {
   lineNumber?: number
   lineTokens?: StructuredToken[]
   nodeId: string
+  nodeIdUnHashed: string
+  tokenPosition: string
   rowClasses: Set<string>
   indent?: number
   diffKind?: string

@@ -30,7 +30,8 @@ export class WorkerService {
     });
   }
 
-  postToApiTreeBuilder(message: any) {
+  postToApiTreeBuilder(message: any, onlyDiff: boolean = false) {
+    this.apiTreeBuilder?.postMessage(onlyDiff);
     this.apiTreeBuilder?.postMessage(message);
   }
 

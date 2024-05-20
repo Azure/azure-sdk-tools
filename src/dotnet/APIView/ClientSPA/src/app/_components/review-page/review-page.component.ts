@@ -1,7 +1,8 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { Subject, Subscription, takeUntil } from 'rxjs';
+import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { CommentItemModel, Review } from 'src/app/_models/review';
 import { APIRevision, CodePanelRowData, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
@@ -17,6 +18,7 @@ export class ReviewPageComponent implements OnInit {
   reviewId : string | null = null;
   activeApiRevisionId : string | null = null;
   diffApiRevisionId : string | null = null;
+  onlyDiff : boolean | null = null;
 
   review : Review | undefined = undefined;
   apiRevisions: APIRevision[] = [];
@@ -26,8 +28,10 @@ export class ReviewPageComponent implements OnInit {
 
   codeLinesDataBuffer: CodePanelRowData[] = [];
   otherCodePanelData: Map<string, CodePanelToggleableData> = new Map<string, CodePanelToggleableData>();
+  onlyDiffBuffer: CodePanelRowData[] = [];
   codeLinesData: CodePanelRowData[] = [];
   apiRevisionPageSize = 50;
+  lastNodeIdUnhashedDiscarded = '';
 
   private destroy$ = new Subject<void>();
   private destroyLoadAPIRevision$ : Subject<void>  | null = null;
@@ -35,7 +39,7 @@ export class ReviewPageComponent implements OnInit {
 
   sideMenu: MenuItem[] | undefined;
 
-  constructor(private route: ActivatedRoute, private apiRevisionsService: RevisionsService,
+  constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDeterctorRef: ChangeDetectorRef) {}
 
   ngOnInit() {
@@ -46,6 +50,7 @@ export class ReviewPageComponent implements OnInit {
     this.reviewId = this.route.snapshot.paramMap.get('reviewId');
     this.activeApiRevisionId = this.route.snapshot.queryParamMap.get('activeApiRevisionId');
     this.diffApiRevisionId = this.route.snapshot.queryParamMap.get('diffApiRevisionId');
+    this.onlyDiff = this.route.snapshot.queryParamMap.get('onlyDiff') === 'true';
 
     this.registerWorkerEventHandler();
     this.loadReview(this.reviewId!);
@@ -68,6 +73,7 @@ export class ReviewPageComponent implements OnInit {
   updateStateBasedOnQueryParams(params: Params) {
     this.activeApiRevisionId = params['activeApiRevisionId'];
     this.diffApiRevisionId = params['diffApiRevisionId'];
+    this.onlyDiff = params['onlyDiff'] === 'true';
     this.reviewPageNavigation = [];
     this.codeLinesDataBuffer = [];
     this.otherCodePanelData = new Map<string, CodePanelToggleableData>();
@@ -102,7 +108,33 @@ export class ReviewPageComponent implements OnInit {
             });
           }
         } else {
-          this.codeLinesDataBuffer.push(data.codePanelRowData);
+          if (this.onlyDiff!) {
+            console.log("rrr", this.onlyDiff!);
+            if (data.codePanelRowData.tokenPosition === 'bottom') {
+              if (this.onlyDiffBuffer.length > 0) {
+                // Remove all row for the current node from the buffer
+                while (this.onlyDiffBuffer.length > 0 && this.onlyDiffBuffer[this.onlyDiffBuffer.length - 1].nodeIdUnHashed === data.codePanelRowData.nodeIdUnHashed) {
+                  let node = this.onlyDiffBuffer.pop();
+                  this.lastNodeIdUnhashedDiscarded = node!.nodeIdUnHashed;
+                }
+              } else {
+                if (this.lastNodeIdUnhashedDiscarded !== data.codePanelRowData.nodeIdUnHashed){
+                  this.codeLinesDataBuffer.push(data.codePanelRowData);
+                }
+              }
+            }
+            else if (data.codePanelRowData.diffKind === 'Removed' || data.codePanelRowData.diffKind === 'Added') {
+              while (this.onlyDiffBuffer.length > 0) {
+                this.codeLinesDataBuffer.push(this.onlyDiffBuffer.shift()!); // Add everything in buffer to the main list
+              }
+              this.codeLinesDataBuffer.push(data.codePanelRowData);
+            }
+            else {
+              this.onlyDiffBuffer.push(data.codePanelRowData);
+            }
+          } else {
+            this.codeLinesDataBuffer.push(data.codePanelRowData);
+          }
         }
       }
 
@@ -144,7 +176,7 @@ export class ReviewPageComponent implements OnInit {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (response: ArrayBuffer) => {
             // Passing ArrayBufer to worker is way faster than passing object
-            this.workerService.postToApiTreeBuilder(response);
+            this.workerService.postToApiTreeBuilder(response, this.onlyDiff!);
           }
       });
   }
@@ -174,6 +206,12 @@ export class ReviewPageComponent implements OnInit {
 
   showRevisionsPanel(showRevisionsPanel : any){
     this.revisionSidePanel = showRevisionsPanel as boolean;
+  }
+
+  handleOnlyDiffEmitter(state: boolean) {
+    let newQueryParams = getQueryParams(this.route);
+    newQueryParams['onlyDiff'] = state;
+    this.router.navigate([], { queryParams: newQueryParams });
   }
 
   ngOnDestroy() {

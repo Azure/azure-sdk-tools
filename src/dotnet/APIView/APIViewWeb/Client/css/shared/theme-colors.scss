@@ -47,6 +47,14 @@
     --name-color: #{$base-text-color};
     --code-color: #d1377e;
     --code-comment: green;
+    --java-doc-color: #8c8c8c;
+    --java-comment-color: #8c8c8c;
+    --java-field-name-color: #871094;
+    --java-method-name-color: #00627A;
+    --java-keyword-color: #0033B3;
+    --java-anotation-name-color: 9E880D;
+    --java-string-literal-color: #067D17;
+    --java-number-color: #1750EB;
     --alert-success-color: #0a3622;
     --alert-success-bg: #d1e7dd;
     --alert-success-border-color: #a3cfbb;
@@ -125,6 +133,14 @@
     --name-color: #{$base-text-color};
     --code-color: #db3984;
     --code-comment: green;
+    --java-doc-color: #629755;
+    --java-comment-color: #808080;
+    --java-field-name-color: #9876AA;
+    --java-method-name-color: #FFC66D;
+    --java-keyword-color: #CC7832;
+    --java-anotation-name-color: #BBB529;
+    --java-string-literal-color: #6A8759;
+    --java-number-color: #6897BB;
     --alert-success-color: #75b798;
     --alert-success-bg: #051b11;
     --alert-success-border-color: #0f5132;
@@ -156,10 +172,10 @@
 
 .dark-solarized-theme {
     /*----Base Colors-------------------------------------------------*/
-    $base-bg-color: #2b2b2b;
+    $base-bg-color: #1a1a1a;
     --base-bg-color: #{$base-bg-color};
-    --base-fg-color: #{tint-color($base-bg-color, 5%)};
-    $base-text-color: white;
+    --base-fg-color: #2b2b2b;
+    $base-text-color: #A9B7C6;
     --base-text-color: #{$base-text-color};
     --text-muted-color: #{shade-color($base-text-color, 30%)};
     $primary-color: #FFBD00;
@@ -206,6 +222,14 @@
     --name-color: #{$base-text-color};
     --code-color: #db3984;
     --code-comment: #8a9898;
+    --java-doc-color: #629755;
+    --java-comment-color: #808080;
+    --java-field-name-color: #9876AA;
+    --java-method-name-color: #FFC66D;
+    --java-keyword-color: #CC7832;
+    --java-anotation-name-color: #BBB529;
+    --java-string-literal-color: #6A8759;
+    --java-number-color: #6897BB;
     --alert-success-color: #75b798;
     --alert-success-bg: #051b11;
     --alert-success-border-color: #0f5132;

@@ -67,11 +67,20 @@ addEventListener('message', ({ data }) => {
  */
 function buildAPITree(apiTreeNode: APITreeNode, treeNodeId : string[], indent: number = 0) : any {
   buildTokens(apiTreeNode, apiTreeNode.id, "top", indent);
+  let navIcon = apiTreeNode.kind.toLocaleLowerCase() + ".png";
+  if ("subKind" in apiTreeNode.properties) {
+    navIcon = apiTreeNode.properties["subKind"].toLocaleLowerCase() + ".png";
+  }
+
+  if ("iconName" in apiTreeNode.properties) {
+    navIcon = apiTreeNode.properties["iconName"].toLocaleLowerCase() + ".svg";
+  }
 
   let treeNode: any = {
     label: apiTreeNode.name,
     data: {
-      kind: (apiTreeNode.properties["subKind"]) ? apiTreeNode.properties["subKind"] : apiTreeNode.kind.toLocaleLowerCase()
+      kind: (apiTreeNode.properties["subKind"]) ? apiTreeNode.properties["subKind"] : apiTreeNode.kind.toLocaleLowerCase(),
+      icon: navIcon,
     },
     expanded: true,
     children: []
@@ -134,7 +143,7 @@ function buildTokens(apiTreeNode: APITreeNode, id: string, position: string, ind
   }
   else {
     if (onlyDiff && apiTreeNode.children.length === 0 && apiTreeNode.diffKind !== "Added" && apiTreeNode.diffKind !== "Removed") {
-
+      return;
     }
     else {
       buildTokensForDiffNodes(apiTreeNode, id, position, indent);
@@ -480,7 +489,7 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
 }
 
 function lineHasDocumentationAbove(precedingLine : CodePanelRowData | undefined, currentLine : CodePanelRowData) : boolean {
-  return precedingLine !== undefined && precedingLine.rowClasses.has("documentation") && !currentLine.rowClasses.has("documentation");
+  return (precedingLine !== undefined && precedingLine.rowClasses?.has("documentation") && !currentLine.rowClasses?.has("documentation")) ?? false;
 }
 
 function collectUserCommentsforLine(tokenIdsInLine: Set<string>, id: string, position: string, nodeId: string, insertLineOfTokensMessage : InsertCodePanelRowDataMessage) : InsertCodePanelRowDataMessage | undefined {

@@ -19,6 +19,8 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   @Input() otherCodePanelData: Map<string, CodePanelToggleableData> = new Map<string, CodePanelToggleableData>();
   @Input() reviewComments : CommentItemModel[] | undefined = [];
   @Input() isDiffView: boolean = false;
+  @Input() language: string | undefined;
+  @Input() languageSafeName: string | undefined;
 
   @ViewChild('commentThreadRef', { read: ViewContainerRef }) commentThreadRef!: ViewContainerRef;
 
@@ -146,7 +148,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
         this.codeLinesData[i] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, this.codeLinesData[i], propertyToChange);
       }
 
-      if (lineNumbersToRemove.size > 0 && lineNumbersToRemove.has(lineNo) && rowClasses.has(lineClasstoRemove!)) {
+      if (lineNumbersToRemove.size > 0 && lineNumbersToRemove.has(lineNo) && rowClasses?.has(lineClasstoRemove!)) {
         indexesToRemove.push(i);
       } else {
         filteredCodeLinesData.push(this.codeLinesData[i]);
@@ -193,7 +195,9 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   }
 
   setMaxLineNumberWidth() {
-    document.documentElement.style.setProperty('--max-line-number-width', `${this.codeLinesData[this.codeLinesData.length - 1].lineNumber!.toString().length}ch`)
+    if (this.codeLinesData[this.codeLinesData.length - 1].lineNumber) {
+      document.documentElement.style.setProperty('--max-line-number-width', `${this.codeLinesData[this.codeLinesData.length - 1].lineNumber!.toString().length}ch`);
+    }
   }
 
   ngOnDestroy() {

@@ -164,15 +164,54 @@
         }
     }
 
-    .comment {
-        color: var(--code-comment);
+    .csharp {
+        .comment {
+            color: var(--code-comment);
+        }
+    
+        .keyword {
+            color: var(--keyword-color);
+        }
+    
+        .type-name {
+            color: var(--class-color);
+        }
     }
 
-    .keyword {
-        color: var(--keyword-color);
+    .java {
+        .javadoc {
+            color: var(--java-doc-color);
+            font-style: italic !important;
+        }
+        
+        .comment {
+            color: var(--java-comment-color);
+            font-style: italic !important;
+        }
+
+        .fieldName, .enumConstant {
+            color: var(--java-field-name-color);
+        }
+        
+        .methodName {
+            color: var(--java-method-name-color);
+        }
+
+        .keyword {
+            color: var(--java-keyword-color);
+        }
+
+        .annotationName {
+            color: var(--java-anotation-name-color);
+        }
+
+        .stringLiteral {
+            color: var(--java-string-literal-color);
+        }
+
+        .number {
+            color: var(--java-number-color);
+        }
     }
 
-    .type-name {
-        color: var(--class-color);
-    }
 }

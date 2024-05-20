@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { Subject, Subscription, takeUntil } from 'rxjs';
+import { getLanguageCssSafeName } from 'src/app/_helpers/component-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { CommentItemModel, Review } from 'src/app/_models/review';
 import { APIRevision, CodePanelRowData, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
@@ -25,6 +26,8 @@ export class ReviewPageComponent implements OnInit {
   reviewComments : CommentItemModel[] | undefined = [];
   revisionSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
+  language: string | undefined;
+  languageSafeName: string | undefined;
 
   codeLinesDataBuffer: CodePanelRowData[] = [];
   otherCodePanelData: Map<string, CodePanelToggleableData> = new Map<string, CodePanelToggleableData>();
@@ -109,13 +112,12 @@ export class ReviewPageComponent implements OnInit {
           }
         } else {
           if (this.onlyDiff!) {
-            console.log("rrr", this.onlyDiff!);
             if (data.codePanelRowData.tokenPosition === 'bottom') {
               if (this.onlyDiffBuffer.length > 0) {
                 // Remove all row for the current node from the buffer
                 while (this.onlyDiffBuffer.length > 0 && this.onlyDiffBuffer[this.onlyDiffBuffer.length - 1].nodeIdUnHashed === data.codePanelRowData.nodeIdUnHashed) {
                   let node = this.onlyDiffBuffer.pop();
-                  this.lastNodeIdUnhashedDiscarded = node!.nodeIdUnHashed;
+                  this.lastNodeIdUnhashedDiscarded = node!.nodeIdUnHashed!;
                 }
               } else {
                 if (this.lastNodeIdUnhashedDiscarded !== data.codePanelRowData.nodeIdUnHashed){
@@ -200,6 +202,10 @@ export class ReviewPageComponent implements OnInit {
       .pipe(takeUntil(this.destroyLoadAPIRevision$)).subscribe({
         next: (response: any) => {
           this.apiRevisions = response.result;
+          if (this.apiRevisions.length > 0) {
+            this.language = this.apiRevisions[0].language;
+            this.languageSafeName = getLanguageCssSafeName(this.language);
+          }
         }
       });
   }

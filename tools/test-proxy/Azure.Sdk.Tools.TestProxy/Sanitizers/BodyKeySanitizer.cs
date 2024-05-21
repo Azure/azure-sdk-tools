@@ -2,8 +2,6 @@ using Azure.Sdk.Tools.TestProxy.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Net;
-using System.Runtime.Serialization;
 
 namespace Azure.Sdk.Tools.TestProxy.Sanitizers
 {

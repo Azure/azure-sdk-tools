@@ -24,13 +24,21 @@ stages:
           displayName: Download and Extract azcopy Zip
 
         - ${{ each c in parameters.containers }}:
-          - pwsh: |
-              $azcopy = $(Resolve-Path "$(Build.BinariesDirectory)/azcopy/azcopy_windows_amd64_*/azcopy.exe")[0]
-              $sourceUrl = "https://$(apiview-prod-storageaccount).blob.core.windows.net/${{c}}$(apiview-production-storage-sas)"
-              $destUrl = "https://$(apiview-staging-storageaccount).blob.core.windows.net/${{c}}$(apiview-staging-storage-sas)"
-              &($azcopy) sc $sourceUrl $destUrl --recursive=true
-            workingDirectory: $(Build.BinariesDirectory)
+          - task: AzurePowerShell@5
             displayName: Copy Blobs in ${{c}}
+            workingDirectory: $(Build.BinariesDirectory)
+            inputs:
+              azureSubscription: 'Azure SDK Engineering System'
+              ScriptType: 'InlineScript'
+              azurePowerShellVersion: LatestVersion
+              pwsh: true
+              Inline: |
+                $azcopy = $(Resolve-Path "$(Build.BinariesDirectory)/azcopy/azcopy_windows_amd64_*/azcopy.exe")[0]
+                $sourceUrl = "https://$(apiview-prod-storageaccount).blob.core.windows.net/${{c}}$(apiview-production-storage-sas)"
+                $destUrl = "https://$(apiview-staging-storageaccount).blob.core.windows.net/${{c}}$(apiview-staging-storage-sas)"
+                &($azcopy) sc $sourceUrl $destUrl --recursive=true
+            env:
+              AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'
 
         - task: UsePythonVersion@0
           displayName: 'Use Python 3.6'

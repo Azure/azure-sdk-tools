@@ -1,9 +1,9 @@
 using System;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure.Core;
-using Azure.Identity;
 using Microsoft.Extensions.Logging;
 using Models.OpenSourcePortal;
 using Newtonsoft.Json;
@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
         /// <param name="credential">The aad token auth class.</param>
         /// <param name="logger">Logger</param>
         public GitHubToAADConverter(
-            ClientSecretCredential credential,
+            TokenCredential credential,
             ILogger<GitHubToAADConverter> logger)
         {
             this.logger = logger;
@@ -30,11 +30,12 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Helpers
                 {
                     "api://2789159d-8d8b-4d13-b90b-ca29c1707afd/.default"
                 };
-                opsAuthToken = credential.GetToken(new TokenRequestContext(scopes)).Token;
+                opsAuthToken = credential.GetToken(new TokenRequestContext(scopes), CancellationToken.None).Token;
             }
             catch (Exception ex)
             {
                 logger.LogError("Failed to generate aad token. " + ex.Message);
+                throw;
             }
             client = new HttpClient();
             client.DefaultRequestHeaders.Add("content_type", "application/json");

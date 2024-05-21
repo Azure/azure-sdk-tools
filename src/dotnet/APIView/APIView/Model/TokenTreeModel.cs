@@ -23,7 +23,7 @@ namespace APIView.Model
     public enum DiffNodeKind
     {
         NoneDiff = 0,
-        Unchanged = 1,
+        Unchanged = 1, // Unchanged means the top level node is the same, the children could still contain diffs.
         Added = 2,
         Removed = 3
     }

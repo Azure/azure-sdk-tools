@@ -1,5 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { InputSwitchOnChangeEvent } from 'primeng/inputswitch';
+import { UserProfile } from 'src/app/_models/auth_service_models';
+import { AuthService } from 'src/app/_services/auth/auth.service';
 
 @Component({
   selector: 'app-review-page-options',
@@ -7,33 +9,47 @@ import { InputSwitchOnChangeEvent } from 'primeng/inputswitch';
   styleUrls: ['./review-page-options.component.scss']
 })
 export class ReviewPageOptionsComponent implements OnInit, OnChanges{
+  @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
-
   @Input() onlyDiffInput: boolean | undefined;
-  @Output() onlyDiffEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
 
-  comments : boolean = true;
-  systemComments: boolean = true;
-  documentation: boolean = true;
-  lineNumber: boolean = true;
-  leftNavigation: boolean = true;
-  onlyDiff : boolean | undefined;
+  @Output() showOnlyDiffEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  
+  
+  showCommentsSwitch : boolean = true;
+  showSystemCommentsSwitch : boolean = true;
+  showDocumentationSwitch : boolean = true;
+  showLineNumberSwitch : boolean = true;
+  showLeftNavigationSwitch : boolean = true;
+  showOnlyDiffSwitch : boolean | undefined;
+
+  constructor(private authService: AuthService) {}
 
   ngOnInit() {
-    this.onlyDiff = this.onlyDiffInput ?? false;
+    this.showOnlyDiffSwitch = this.onlyDiffInput ?? false;
+    this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['onlyDiffInput']) {
-      this.onlyDiff = this.onlyDiffInput ?? this.onlyDiff;
+      this.showOnlyDiffSwitch = this.onlyDiffInput ?? this.showOnlyDiffSwitch;
     }
   }
 
   /**
- * Callback to invoke on row selection.
+ * Callback to on onlyDiff Change
  * @param event the Filter event
  */
-  onOnlyDiffChange(event: InputSwitchOnChangeEvent) {
-    this.onlyDiffEmitter.emit(event.checked);
+  onOnlyDiffSwitchChange(event: InputSwitchOnChangeEvent) {
+    this.showOnlyDiffEmitter.emit(event.checked);
+  }
+
+  /**
+ * Callback to on onlyDiff Change
+ * @param event the Filter event
+ */
+  onCommentsSwitchChange(event: InputSwitchOnChangeEvent) {
+    this.showCommentsEmitter.emit(event.checked);
   }
 }

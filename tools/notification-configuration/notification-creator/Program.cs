@@ -55,8 +55,8 @@ public static class Program
             , dryRun);
 
         var azureCredential = new ChainedTokenCredential(
-            new AzurePowerShellCredential(),
-            new AzureCliCredential()
+            new AzureCliCredential(),
+            new AzurePowerShellCredential()
         );
 
         var notificationConfigurator = new NotificationConfigurator(

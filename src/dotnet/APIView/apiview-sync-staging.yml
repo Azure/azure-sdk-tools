@@ -34,8 +34,8 @@ stages:
               pwsh: true
               Inline: |
                 $azcopy = $(Resolve-Path "$(Build.BinariesDirectory)/azcopy/azcopy_windows_amd64_*/azcopy.exe")[0]
-                $sourceUrl = "https://$(apiview-prod-storageaccount).blob.core.windows.net/${{c}}$(apiview-production-storage-sas)"
-                $destUrl = "https://$(apiview-staging-storageaccount).blob.core.windows.net/${{c}}$(apiview-staging-storage-sas)"
+                $sourceUrl = "https://$(apiview-prod-storageaccount).blob.core.windows.net/${{c}}"
+                $destUrl = "https://$(apiview-staging-storageaccount).blob.core.windows.net/${{c}}"
                 &($azcopy) sc $sourceUrl $destUrl --recursive=true
             env:
               AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'

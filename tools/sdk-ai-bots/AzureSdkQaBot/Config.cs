@@ -5,6 +5,8 @@
         public string? BOT_ID { get; set; }
         public string? BOT_PASSWORD { get; set; }
         public string? GITHUB_TOKEN { get; set; }
+        public string? KeyVaultUrl { get; set; }
+        public string? CertificateName { get; set; }
         public OpenAIConfigOptions? OpenAI { get; set; }
         public AzureConfigOptions? Azure { get; set; }
         public CognitiveSearchOptions? Search { get; set; }

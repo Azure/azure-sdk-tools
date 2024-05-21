@@ -26,7 +26,6 @@ namespace APIViewWeb.Controllers
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IConfiguration _configuration;
-        private readonly IOpenSourceRequestManager _openSourceManager;
         private readonly TelemetryClient _telemetryClient;
         private HashSet<string> _allowedListBotAccounts = new HashSet<string>();
 
@@ -34,14 +33,13 @@ namespace APIViewWeb.Controllers
         
         public PullRequestController(ICodeFileManager codeFileManager, IPullRequestManager pullRequestManager,
             IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager,
-            IConfiguration configuration, IOpenSourceRequestManager openSourceRequestManager, TelemetryClient telemetryClient)
+            IConfiguration configuration, TelemetryClient telemetryClient)
         {
             _codeFileManager = codeFileManager;
             _pullRequestManager = pullRequestManager;
             _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
             _configuration = configuration;
-            _openSourceManager = openSourceRequestManager;
             _telemetryClient = telemetryClient;
 
             var botAllowedList = _configuration["allowedList-bot-github-accounts"];
@@ -139,10 +137,6 @@ namespace APIViewWeb.Controllers
             }
            
             pullRequestModel.Commits.Add(commitSha);
-            //Check if PR owner is part of Azure//Microsoft org in GitHub
-            await ManagerHelpers.AssertPullRequestCreatorPermission(prModel: pullRequestModel, allowedListBotAccounts: _allowedListBotAccounts,
-                openSourceManager: _openSourceManager, telemetryClient: _telemetryClient);
-
 
             try
             {

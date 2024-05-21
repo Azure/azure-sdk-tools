@@ -31,7 +31,9 @@
                         <app-review-page-options
                             [isDiffView]="!!diffApiRevisionId"
                             [onlyDiffInput]="onlyDiff!"
-                            (onlyDiffEmitter)="handleOnlyDiffEmitter($event)"></app-review-page-options>
+                            [userProfile]="userProfile"
+                            (showCommentsEmitter)="handleShowCommentsEmitter($event)"
+                            (showOnlyDiffEmitter)="handleShowOnlyDiffEmitter($event)"></app-review-page-options>
                     </div>
                 </ng-template>
             </p-splitter>

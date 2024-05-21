@@ -4,8 +4,10 @@ import { MenuItem, TreeNode } from 'primeng/api';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { getLanguageCssSafeName } from 'src/app/_helpers/component-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
+import { UserProfile } from 'src/app/_models/auth_service_models';
 import { CommentItemModel, Review } from 'src/app/_models/review';
 import { APIRevision, CodePanelRowData, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { AuthService } from 'src/app/_services/auth/auth.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
@@ -21,6 +23,7 @@ export class ReviewPageComponent implements OnInit {
   diffApiRevisionId : string | null = null;
   onlyDiff : boolean | null = null;
 
+  userProfile : UserProfile | undefined;
   review : Review | undefined = undefined;
   apiRevisions: APIRevision[] = [];
   reviewComments : CommentItemModel[] | undefined = [];
@@ -43,9 +46,15 @@ export class ReviewPageComponent implements OnInit {
   sideMenu: MenuItem[] | undefined;
 
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService,
-    private reviewsService: ReviewsService, private workerService: WorkerService, private changeDeterctorRef: ChangeDetectorRef) {}
+    private reviewsService: ReviewsService, private workerService: WorkerService, private changeDeterctorRef: ChangeDetectorRef,
+    private authService: AuthService) {}
 
   ngOnInit() {
+    this.authService.getUserProfile().subscribe(
+      (userProfile : any) => {
+        this.userProfile = userProfile;
+      });
+
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.updateStateBasedOnQueryParams(params);
     });
@@ -214,10 +223,17 @@ export class ReviewPageComponent implements OnInit {
     this.revisionSidePanel = showRevisionsPanel as boolean;
   }
 
-  handleOnlyDiffEmitter(state: boolean) {
+  handleShowOnlyDiffEmitter(state: boolean) {
     let newQueryParams = getQueryParams(this.route);
     newQueryParams['onlyDiff'] = state;
     this.router.navigate([], { queryParams: newQueryParams });
+  }
+
+  handleShowCommentsEmitter(state: boolean) {
+    // Update User Profile
+    // Set Query Param
+    // Reload Review Content
+    return true;
   }
 
   ngOnDestroy() {

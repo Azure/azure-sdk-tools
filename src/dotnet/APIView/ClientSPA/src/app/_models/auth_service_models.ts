@@ -17,4 +17,10 @@ export interface UserPreferenceModel {
     userName : string
     language : string []
     theme : string
+    hideLineNumbers : boolean
+    hideLeftNavigation: boolean
+    showHiddenApis: boolean
+    showDocumentation: boolean
+    showComments: boolean
+    showSystemComments: boolean
 }

@@ -1,28 +1,28 @@
 <app-page-options-section sectionName="Page Settings">
     <ul class="list-group">
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="comments" />
+            <p-inputSwitch [(ngModel)]="showCommentsSwitch" />
             <label class="ms-2">Comments</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="systemComments" />
+            <p-inputSwitch [(ngModel)]="showSystemCommentsSwitch" />
             <label class="ms-2">System Comments</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="documentation" />
+            <p-inputSwitch [(ngModel)]="showDocumentationSwitch" />
             <label class="ms-2">Documentation</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="lineNumber" />
+            <p-inputSwitch [(ngModel)]="showLineNumberSwitch" />
             <label class="ms-2">Line Numbers</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="leftNavigation" />
+            <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch" />
             <label class="ms-2">Left navigation</label>
         </li>
         <li  *ngIf="isDiffView" class="list-group-item">
-            <p-inputSwitch [(ngModel)]="onlyDiff" 
-            (onChange)="onOnlyDiffChange($event)" />
+            <p-inputSwitch [(ngModel)]="showOnlyDiffSwitch" 
+            (onChange)="onOnlyDiffSwitchChange($event)" />
             <label class="ms-2">Only Diff</label>
         </li>
     </ul>

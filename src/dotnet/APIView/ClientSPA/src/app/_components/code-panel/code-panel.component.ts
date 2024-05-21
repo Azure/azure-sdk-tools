@@ -36,8 +36,6 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   private destroyApiTreeNode$ = new Subject<void>();
   private destroyTokenLineData$ = new Subject<void>();
 
-  constructor(private changeDeterctorRef: ChangeDetectorRef) { }
-
   ngOnInit() {
     this.codeWindowHeight = `${window.innerHeight - 80}`;
   }

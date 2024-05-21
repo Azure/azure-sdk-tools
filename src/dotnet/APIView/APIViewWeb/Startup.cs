@@ -235,7 +235,8 @@ namespace APIViewWeb
                     builder.WithOrigins(origins)
                         .AllowAnyMethod()
                         .AllowAnyHeader()
-                        .AllowCredentials();
+                        .AllowCredentials()
+                        .SetPreflightMaxAge(TimeSpan.FromHours(20));
                 });
             });
             services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();

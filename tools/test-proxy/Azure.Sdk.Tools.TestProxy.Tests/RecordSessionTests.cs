@@ -166,6 +166,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var recordingId = ctx.Response.Headers["x-recording-id"].ToString();
             var session = handler.RecordingSessions[recordingId];
             session.Session.Entries.Add(testEntry);
+            handler.StopRecording(recordingId);
 
             // now load it, did we avoid mangling it?
             var sessionFromDisk = TestHelpers.LoadRecordSession(Path.Combine(testFolder, testName));

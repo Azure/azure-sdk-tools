@@ -1,0 +1,60 @@
+{
+  "Entries": [
+    {
+      "RequestUri": "https://Sanitized.azurecr.io/v2/alpine/manifests/3.17.1",
+      "RequestMethod": "GET",
+      "RequestHeaders": {
+        "Accept": [
+          "application/json",
+          "application/vnd.docker.distribution.manifest.v2+json"
+        ],
+        "Accept-Encoding": "gzip",
+        "Authorization": "Sanitized",
+        "User-Agent": "azsdk-go-azcontainerregistry/v0.2.2 (go1.22.2; Windows_NT)"
+      },
+      "RequestBody": null,
+      "StatusCode": 200,
+      "ResponseHeaders": {
+        "Access-Control-Expose-Headers": [
+          "Docker-Content-Digest",
+          "WWW-Authenticate",
+          "Link",
+          "X-Ms-Correlation-Request-Id"
+        ],
+        "Connection": "keep-alive",
+        "Content-Length": "528",
+        "Content-Type": "application/vnd.docker.distribution.manifest.v2+json",
+        "Date": "Wed, 22 May 2024 20:40:43 GMT",
+        "Docker-Content-Digest": "sha256:93d5a28ff72d288d69b5997b8ba47396d2cbb62a72b5d87cd3351094b5d578a0",
+        "Docker-Distribution-Api-Version": "registry/2.0",
+        "ETag": "\"sha256:93d5a28ff72d288d69b5997b8ba47396d2cbb62a72b5d87cd3351094b5d578a0\"",
+        "Server": "AzureContainerRegistry",
+        "Strict-Transport-Security": [
+          "max-age=31536000; includeSubDomains",
+          "max-age=31536000; includeSubDomains"
+        ],
+        "X-Content-Type-Options": "nosniff",
+        "X-Ms-Client-Request-Id": "",
+        "X-Ms-Correlation-Request-Id": "19affbee-3510-45b1-8248-9dc23982613b",
+        "X-Ms-Request-Id": "Sanitized"
+      },
+      "ResponseBody": {
+        "schemaVersion": 2,
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+        "config": {
+          "mediaType": "application/vnd.docker.container.image.v1+json",
+          "size": 1472,
+          "digest": "sha256:042a816809aac8d0f7d7cacac7965782ee2ecac3f21bcf9f24b1de1a7387b769"
+        },
+        "layers": [
+          {
+            "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+            "size": 3370628,
+            "digest": "sha256:8921db27df2831fa6eaa85321205a2470c669b855f3ec95d5a3c2b46de0442c9"
+          }
+        ]
+      }
+    }
+  ],
+  "Variables": {}
+}

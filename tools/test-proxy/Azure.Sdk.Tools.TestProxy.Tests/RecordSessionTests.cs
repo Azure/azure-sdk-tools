@@ -9,10 +9,14 @@ using System.Linq;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Microsoft.AspNetCore.Http;
+using Microsoft.VisualBasic;
 using Moq;
+using NuGet.ContentModel;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -93,6 +97,81 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Equal(bodyBytes, deserializedRecord.Request.Body);
             Assert.Equal(bodyBytes, deserializedRecord.Response.Body);
+        }
+
+        [Fact]
+        public async Task CanRoundTripDockerDigest()
+        {
+            // get everything organized
+            var sampleExpected = "{\n   \"schemaVersion\": 2,\n   \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",\n   \"config\": {\n      \"mediaType\": \"application/vnd.docker.container.image.v1+json\",\n      \"size\"" +
+                ": 1472,\n      \"digest\": \"sha256:042a816809aac8d0f7d7cacac7965782ee2ecac3f21bcf9f24b1de1a7387b769\"\n   },\n   \"layers\": [\n      {\n         \"mediaType\": \"application/vnd.docker.image.rootfs.diff.tar.gzip\",\n         \"size\"" + "" +
+                ": 3370628,\n         \"digest\": \"sha256:8921db27df2831fa6eaa85321205a2470c669b855f3ec95d5a3c2b46de0442c9\"\n      }\n   ]\n}";
+            var testName = "roundtrip.json";
+            DefaultHttpContext ctx = new DefaultHttpContext();
+            Assets assets = new Assets()
+            {
+                AssetsRepo = "Azure/azure-sdk-assets-integration",
+                AssetsRepoPrefixPath = "pull/scenarios",
+                AssetsRepoId = "",
+                TagPrefix = "language/tables",
+                Tag = "python/tables_fc54d0"
+            };
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+            var testEntry = new RecordEntry()
+            {
+                RequestUri = "https://Sanitized.azurecr.io/v2/alpine/manifests/3.17.1",
+                RequestMethod = RequestMethod.Get,
+                Request = new RequestOrResponse()
+                {
+                    Headers = new SortedDictionary<string, string[]>()
+                    {
+                        { "Accept", new string[]{ "application/json", "application/vnd.docker.distribution.manifest.v2+json" } },
+                        { "Accept-Encoding", new string[]{ "gzip" } },
+                        { "Authorization", new string[]{ "Sanitized" } },
+                        { "User-Agent", new string[]{ "azsdk-go-azcontainerregistry/v0.2.2 (go1.21.6; linux)" } },
+                    },
+                    Body = null,
+                },
+                StatusCode = 200,
+                Response = new RequestOrResponse()
+                {
+                    Headers = new SortedDictionary<string, string[]>()
+                    {
+                        { "Access-Control-Expose-Headers", new string[]{ "Docker-Content-Digest", "WWW-Authenticate", "Link","X-Ms-Correlation-Request-Id" } },
+                        { "Connection", new string[]{ "keep-alive" } },
+                        { "Content-Length", new string[]{ "528" } },
+                        { "Content-Type", new string[]{ "application/vnd.docker.distribution.manifest.v2+json" } },
+                        { "Date", new string[]{ "Fri, 17 May 2024 21:42:34 GMT" } },
+                        { "Docker-Content-Digest", new string[]{ "sha256:93d5a28ff72d288d69b5997b8ba47396d2cbb62a72b5d87cd3351094b5d578a0" } },
+                        { "Docker-Distribution-Api-Version", new string[]{ "registry/2.0" } },
+                        { "ETag", new string[]{ "\"sha256:93d5a28ff72d288d69b5997b8ba47396d2cbb62a72b5d87cd3351094b5d578a0\"" } },
+                        { "Server", new string[]{ "AzureContainerRegistry" } },
+                        { "Strict-Transport-Security", new string[]{ "max-age=31536000; includeSubDomains", "max-age=31536000; includeSubDomains" } },
+                        { "X-Content-Type-Options", new string[]{ "nosniff" } },
+                        { "X-Ms-Client-Request-Id", new string[]{ "" } },
+                        { "X-Ms-Correlation-Request-Id", new string[]{ "caf56438-d3ba-469d-a30c-360a4ff536c1" } },
+                        { "X-Ms-Request-Id", new string[]{ "Sanitized" } },
+                    },
+                    Body = Encoding.UTF8.GetBytes(sampleExpected)
+                },
+            };
+
+            // create the session which will be saved to disk, then save it
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure);
+            var handler = new RecordingHandler(testFolder);
+            await handler.StartRecordingAsync(testName, ctx.Response);
+            var recordingId = ctx.Response.Headers["x-recording-id"].ToString();
+            var session = handler.RecordingSessions[recordingId];
+            session.Session.Entries.Add(testEntry);
+
+            // now load it, did we avoid mangling it?
+            var sessionFromDisk = TestHelpers.LoadRecordSession(Path.Combine(testFolder, testName));
+            var targetEntry = sessionFromDisk.Session.Entries[0];
+            var content = Encoding.UTF8.GetString(targetEntry.Response.Body);
+            Assert.Equal(sampleExpected, content);
         }
 
         [Fact]

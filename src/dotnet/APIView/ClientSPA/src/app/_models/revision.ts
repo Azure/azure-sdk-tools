@@ -10,6 +10,7 @@ export enum ReviewPageWorkerMessageDirective {
 
 export enum CodePanelRowDatatype {
   CodeLine,
+  Documentation,
   Diagnostics,
   CommentThread
 }
@@ -88,11 +89,16 @@ export interface CodePanelRowData {
 
 export interface CodePanelToggleableData {
   documentation: CodePanelRowData[]
-  diagnostics: CodeDiagnostic[]
-  comments: CommentItemModel[]
+  diagnostics: CodePanelRowData[]
+  comments: CodePanelRowData[]
 }
 
 export interface InsertCodePanelRowDataMessage {
   directive: ReviewPageWorkerMessageDirective
   codePanelRowData: CodePanelRowData
+}
+
+export interface ApiTreeBuilderData {
+  onlyDiff: boolean,
+  showDocumentation: boolean,
 }

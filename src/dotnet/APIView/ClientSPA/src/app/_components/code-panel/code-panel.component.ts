@@ -34,6 +34,8 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   private destroyApiTreeNode$ = new Subject<void>();
   private destroyTokenLineData$ = new Subject<void>();
 
+  constructor(private changeDetectorRef: ChangeDetectorRef) { }
+
   ngOnInit() {
     this.codeWindowHeight = `${window.innerHeight - 80}`;
   }
@@ -41,14 +43,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   ngOnChanges(changes: SimpleChanges) {
     if (changes['codeLinesData']) {
       if (changes['codeLinesData'].currentValue.length > 0) {
-        this.setMaxLineNumberWidth();
-        this.initializeDataSource().then(() => {
-          this.codePanelRowSource?.adapter?.init$.pipe(take(1)).subscribe(() => {
-            this.isLoading = false;
-          });
-        }).catch((error) => {
-          console.error(error);
-        });
+        this.loadCodePanelViewPort();
       } else {
         this.isLoading = true;
         this.codePanelRowSource = undefined;
@@ -101,6 +96,44 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     return codeLineData;
   }
 
+  async insertRowTypeIntoScroller(codePanelRowDatatype:  CodePanelRowDatatype) {
+    await this.codePanelRowSource?.adapter?.relax();
+
+    const updatedCodeLinesData : CodePanelRowData[] = [];
+
+    for (let i = 0; i < this.codeLinesData.length; i++) {
+      if (this.codeLinesData[i].rowType === CodePanelRowDatatype.CodeLine &&  this.otherCodePanelData.has(this.codeLinesData[i].nodeId!)) {
+        const nodeData = this.otherCodePanelData.get(this.codeLinesData[i].nodeId!);
+
+        switch (codePanelRowDatatype) {
+          case CodePanelRowDatatype.CommentThread:
+            updatedCodeLinesData.push(this.codeLinesData[i]);
+            updatedCodeLinesData.push(...nodeData?.comments!);
+            break;
+          case CodePanelRowDatatype.Diagnostics:
+            updatedCodeLinesData.push(this.codeLinesData[i]);
+            updatedCodeLinesData.push(...nodeData?.diagnostics!);
+            break;
+          case CodePanelRowDatatype.Documentation:
+            if (this.codeLinesData[i].toggleDocumentationClasses?.includes('bi-arrow-up-square')) {
+              updatedCodeLinesData.push(...nodeData?.documentation!);
+              this.codeLinesData[i].toggleDocumentationClasses = this.codeLinesData[i].toggleDocumentationClasses?.replace('bi-arrow-up-square', 'bi-arrow-down-square');
+            }
+            updatedCodeLinesData.push(this.codeLinesData[i]);
+            break;         
+        }
+      }
+      else {
+        updatedCodeLinesData.push(this.codeLinesData[i]);
+      }
+    }
+    this.isLoading = true;
+    this.codePanelRowSource = undefined
+    this.codeLinesData = updatedCodeLinesData;
+    this.changeDetectorRef.detectChanges();
+    this.loadCodePanelViewPort();
+  }
+
   async insertItemIntoScroller(itemsToInsert: CodePanelRowData[], lineNumber: string, 
       propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
     await this.codePanelRowSource?.adapter?.relax();
@@ -131,7 +164,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
       items: itemsToInsert!
     });
   }
-  
+
   async removeRowTypeFromScroller(codePanelRowDatatype:  CodePanelRowDatatype) {
     await this.codePanelRowSource?.adapter?.relax();
 
@@ -142,6 +175,9 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
         indexesToRemove.push(i);
       }
       else {
+        if (codePanelRowDatatype === CodePanelRowDatatype.Documentation) {
+          this.codeLinesData[i].toggleDocumentationClasses = this.codeLinesData[i].toggleDocumentationClasses?.replace('bi-arrow-down-square', 'bi-arrow-up-square');
+        }
         filteredCodeLinesData.push(this.codeLinesData[i]);
       }
     }
@@ -216,6 +252,17 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     if (this.codeLinesData[this.codeLinesData.length - 1].lineNumber) {
       document.documentElement.style.setProperty('--max-line-number-width', `${this.codeLinesData[this.codeLinesData.length - 1].lineNumber!.toString().length}ch`);
     }
+  }
+
+  private loadCodePanelViewPort() {
+    this.setMaxLineNumberWidth();
+    this.initializeDataSource().then(() => {
+      this.codePanelRowSource?.adapter?.init$.pipe(take(1)).subscribe(() => {
+        this.isLoading = false;
+      });
+    }).catch((error) => {
+      console.error(error);
+    });
   }
 
   ngOnDestroy() {

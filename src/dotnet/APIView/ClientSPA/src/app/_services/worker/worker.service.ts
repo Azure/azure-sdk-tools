@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
+import { ApiTreeBuilderData } from 'src/app/_models/revision';
 
 @Injectable({
   providedIn: 'root'
@@ -30,8 +31,8 @@ export class WorkerService {
     });
   }
 
-  postToApiTreeBuilder(message: any, onlyDiff: boolean = false) {
-    this.apiTreeBuilder?.postMessage(onlyDiff);
+  postToApiTreeBuilder(message: any, data: ApiTreeBuilderData) {
+    this.apiTreeBuilder?.postMessage(data);
     this.apiTreeBuilder?.postMessage(message);
   }
 

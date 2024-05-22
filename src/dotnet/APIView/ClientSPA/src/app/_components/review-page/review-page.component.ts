@@ -1,12 +1,12 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, tap } from 'rxjs';
 import { getLanguageCssSafeName } from 'src/app/_helpers/component-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { UserProfile } from 'src/app/_models/auth_service_models';
 import { CommentItemModel, Review } from 'src/app/_models/review';
-import { APIRevision, CodePanelRowData, CodePanelRowDatatype, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { APIRevision, ApiTreeBuilderData, CodePanelRowData, CodePanelRowDatatype, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { AuthService } from 'src/app/_services/auth/auth.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
@@ -114,6 +114,7 @@ export class ReviewPageComponent implements OnInit {
 
       if (data.directive === ReviewPageWorkerMessageDirective.InsertCodeLineData) {
         if (data.codePanelRowData.rowClasses.has("documentation")) {
+          data.codePanelRowData.rowType = CodePanelRowDatatype.Documentation; // Specify that its a documentation row
           if (this.otherCodePanelData.has(data.codePanelRowData.nodeId)) {
             this.otherCodePanelData.get(data.codePanelRowData.nodeId)?.documentation.push(data.codePanelRowData);
           } else {
@@ -122,6 +123,9 @@ export class ReviewPageComponent implements OnInit {
               diagnostics: [],
               comments: []
             });
+          }
+          if (this.userProfile?.preferences.showDocumentation) {
+            this.codeLinesDataBuffer.push(data.codePanelRowData);
           }
         } else {
           if (this.onlyDiff!) {
@@ -163,7 +167,9 @@ export class ReviewPageComponent implements OnInit {
             comments: []
           });
         }
-        this.codeLinesDataBuffer.push(data.codePanelRowData);
+        if (this.userProfile?.preferences.showSystemComments) {
+          this.codeLinesDataBuffer.push(data.codePanelRowData);
+        }
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.InsertCommentRowData) {
@@ -192,8 +198,12 @@ export class ReviewPageComponent implements OnInit {
     this.reviewsService.getReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId)
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (response: ArrayBuffer) => {
+            const apiTreeBuilderData : ApiTreeBuilderData = {
+              onlyDiff: this.onlyDiff!,
+              showDocumentation: this.userProfile?.preferences.showDocumentation!
+            };
             // Passing ArrayBufer to worker is way faster than passing object
-            this.workerService.postToApiTreeBuilder(response, this.onlyDiff!);
+            this.workerService.postToApiTreeBuilder(response, apiTreeBuilderData);
           }
       });
   }
@@ -239,7 +249,36 @@ export class ReviewPageComponent implements OnInit {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.showComments = state;
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
-    this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.CommentThread);
+    if (userPreferenceModel!.showComments) {
+      this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.CommentThread);
+    }
+    else {
+      this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.CommentThread);
+    }
+  }
+
+  handleShowSystemCommentsEmitter(state: boolean) {
+    let userPreferenceModel = this.userProfile?.preferences;
+    userPreferenceModel!.showSystemComments = state;
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
+    if (userPreferenceModel!.showSystemComments) {
+      this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Diagnostics);
+    }
+    else {
+      this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Diagnostics);
+    }
+  }
+
+  handleShowDocumentationEmitter(state: boolean) {
+    let userPreferenceModel = this.userProfile?.preferences;
+    userPreferenceModel!.showDocumentation = state;
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
+    if (userPreferenceModel!.showDocumentation) {
+      this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Documentation);
+    }
+    else {
+      this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Documentation);
+    }
   }
 
   ngOnDestroy() {

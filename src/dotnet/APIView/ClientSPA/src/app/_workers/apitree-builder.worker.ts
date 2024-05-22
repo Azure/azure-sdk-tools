@@ -3,14 +3,15 @@
 import { ComputeTokenDiff } from "../_helpers/worker-helpers";
 import { CodeDiagnostic, CodePanelData, CommentItemModel } from "../_models/review";
 import { CodePanelRowData, CodePanelRowDatatype, DiffLineInProcess, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective, StructuredToken } from "../_models/revision";
-import { APITreeNode } from "../_models/revision";
+import { APITreeNode, ApiTreeBuilderData } from "../_models/revision";
 
 let insertLineNumber = 0;
 let diffLineNumber = 0;
 let diagnostics: CodeDiagnostic[] = [];
 let comments: CommentItemModel[] = [];
 let diagnosticsTargetIds = new Set<string>();
-let onlyDiff = false;
+let apiTreeBuilderData : ApiTreeBuilderData | undefined = undefined;
+let toggleDocumentationClassPart = "bi-arrow-up-square";
 
 addEventListener('message', ({ data }) => {
   if (data instanceof ArrayBuffer) {
@@ -45,11 +46,13 @@ addEventListener('message', ({ data }) => {
     diagnostics = [];
     comments = [];
     diagnosticsTargetIds.clear();
+    apiTreeBuilderData = undefined;
     postMessage(updateCodeLineDataMessage);
-  }
-
-  if (typeof data === "boolean") {
-    onlyDiff = data ?? false;
+  } else {
+    apiTreeBuilderData = data;
+    if (apiTreeBuilderData?.showDocumentation) {
+      toggleDocumentationClassPart = "bi-arrow-down-square";
+    }
   }
 });
 
@@ -142,7 +145,7 @@ function buildTokens(apiTreeNode: APITreeNode, id: string, position: string, ind
     buildTokensForNonDiffNodes(apiTreeNode, id, position, indent);
   }
   else {
-    if (onlyDiff && apiTreeNode.children.length === 0 && apiTreeNode.diffKind !== "Added" && apiTreeNode.diffKind !== "Removed") {
+    if (apiTreeBuilderData?.onlyDiff && apiTreeNode.children.length === 0 && apiTreeNode.diffKind !== "Added" && apiTreeNode.diffKind !== "Removed") {
       return;
     }
     else {
@@ -316,8 +319,8 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
           insertLineNumber++;
           insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
           lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
-            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
-            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} can-show` :
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
 
           // Collects comments for the line
           let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(new Set<string>, id, position, nodeId, insertLineOfTokensMessage);
@@ -337,8 +340,8 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
           diffLineNumber++;
           insertLineOfTokensMessage.codePanelRowData.lineNumber = diffLineNumber;
           lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
-            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
-            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} can-show` :
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
 
           // Collects comments for the line
           let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(afterTokenIdsInLine, id, position, nodeId, insertLineOfTokensMessage);
@@ -358,8 +361,8 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
           diffLineNumber++;
           insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
           lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
-            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
-            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} can-show` :
+            insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
 
           // Collects comments for the line
           let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(afterTokenIdsInLine, id, position, nodeId, insertLineOfTokensMessage);
@@ -422,8 +425,8 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
       diffLineNumber++;
       insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
       lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
-        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
-        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
+        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} can-show` :
+        insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
       
       // Collects comments for the line
       let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, id, position, nodeId, insertLineOfTokensMessage);
@@ -470,8 +473,8 @@ function buildTokensForNonDiffNodes(apiTreeNode: APITreeNode, id: string, positi
     diffLineNumber++;
     insertLineOfTokensMessage.codePanelRowData.lineNumber = insertLineNumber;
     lineHasDocumentationAbove(precedingRowData, insertLineOfTokensMessage.codePanelRowData) ?
-      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square can-show" :
-      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = "bi bi-arrow-up-square hide";
+      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} can-show` :
+      insertLineOfTokensMessage.codePanelRowData.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
 
     // Collects comments for the line  
     let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(tokenIdsInLine, id, position, nodeId, insertLineOfTokensMessage);

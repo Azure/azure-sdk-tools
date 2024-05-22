@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/@angular/service-worker/config/schema.json",
-  "index": "/index.html",
+  "index": "/spa/index.html",
   "assetGroups": [
     {
       "name": "app",
@@ -31,13 +31,16 @@
     {
       "name": "revisioncontent",
       "urls": [
-        "/api/reviews/**/content"
+        "https://apiviewstagingtest.com/api/reviews/**/content",
+        "https://apiviewuxtest.com/api/reviews/**/content",
+        "https://apiview.com/api/reviews/**/content"
       ],
       "cacheConfig": {
         "maxSize": 50,
         "maxAge": "1d",
         "strategy": "performance"
-      }
+      },
+      "version": 2
     }
   ]
 }

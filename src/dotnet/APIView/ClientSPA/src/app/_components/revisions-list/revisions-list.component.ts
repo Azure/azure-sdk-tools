@@ -5,9 +5,9 @@ import { UserProfile } from 'src/app/_models/auth_service_models';
 import { Pagination } from 'src/app/_models/pagination';
 import { FirstReleaseApproval, Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
-import { AuthService } from 'src/app/_services/auth/auth.service';
 import { ConfigService } from 'src/app/_services/config/config.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 
 @Component({
   selector: 'app-revisions-list',
@@ -52,14 +52,14 @@ export class RevisionsListComponent implements OnInit, OnChanges {
 
   badgeClass : Map<string, string> = new Map<string, string>();
 
-  constructor(private apiRevisionsService: RevisionsService, private authService: AuthService, private configService: ConfigService) { }
+  constructor(private apiRevisionsService: RevisionsService, private userProfileService: UserProfileService, private configService: ConfigService) { }
 
   ngOnInit(): void {
     this.createFilters();
     this.createContextMenuItems();
     this.setDetailsIcons();
     this.loadAPIRevisions(0, this.pageSize * 2, true);
-    this.authService.getUserProfile().subscribe(
+    this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.userProfile = userProfile;
       });

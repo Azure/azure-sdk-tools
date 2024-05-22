@@ -1,16 +1,18 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
-import { Subject, Subscription, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { getLanguageCssSafeName } from 'src/app/_helpers/component-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { UserProfile } from 'src/app/_models/auth_service_models';
 import { CommentItemModel, Review } from 'src/app/_models/review';
-import { APIRevision, CodePanelRowData, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { APIRevision, CodePanelRowData, CodePanelRowDatatype, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { AuthService } from 'src/app/_services/auth/auth.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
+import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
+import { CodePanelComponent } from '../code-panel/code-panel.component';
 
 @Component({
   selector: 'app-review-page',
@@ -18,6 +20,8 @@ import { WorkerService } from 'src/app/_services/worker/worker.service';
   styleUrls: ['./review-page.component.scss']
 })
 export class ReviewPageComponent implements OnInit {
+  @ViewChild(CodePanelComponent) codePanelComponent!: CodePanelComponent;
+
   reviewId : string | null = null;
   activeApiRevisionId : string | null = null;
   diffApiRevisionId : string | null = null;
@@ -47,10 +51,10 @@ export class ReviewPageComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDeterctorRef: ChangeDetectorRef,
-    private authService: AuthService) {}
+    private userProfileService: UserProfileService) {}
 
   ngOnInit() {
-    this.authService.getUserProfile().subscribe(
+    this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.userProfile = userProfile;
       });
@@ -172,7 +176,9 @@ export class ReviewPageComponent implements OnInit {
             comments: [data.codePanelRowData]
           });
         }
-        this.codeLinesDataBuffer.push(data.codePanelRowData);
+        if (this.userProfile?.preferences.showComments) {
+          this.codeLinesDataBuffer.push(data.codePanelRowData);
+        }
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodeLines) {
@@ -230,10 +236,10 @@ export class ReviewPageComponent implements OnInit {
   }
 
   handleShowCommentsEmitter(state: boolean) {
-    // Update User Profile
-    // Set Query Param
-    // Reload Review Content
-    return true;
+    let userPreferenceModel = this.userProfile?.preferences;
+    userPreferenceModel!.showComments = state;
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
+    this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.CommentThread);
   }
 
   ngOnDestroy() {

@@ -22,8 +22,6 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   @Input() language: string | undefined;
   @Input() languageSafeName: string | undefined;
 
-  @ViewChild('commentThreadRef', { read: ViewContainerRef }) commentThreadRef!: ViewContainerRef;
-
   lineNumberCount : number = 0;
   isLoading: boolean = true;
   lastHuskNodeId :  string | undefined = undefined;
@@ -83,14 +81,12 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
 
     if (target.classList.contains('bi-arrow-up-square')) {
       const documentationData = this.otherCodePanelData.get(nodeId!)?.documentation;
-      await this.codePanelRowSource?.adapter?.relax();
       await this.insertItemIntoScroller(documentationData!, lineNumber!, "toggleDocumentationClasses", "bi-arrow-up-square", "bi-arrow-down-square");
       target.classList.remove('bi-arrow-up-square')
       target.classList.add('bi-arrow-down-square');
     } else if (target.classList.contains('bi-arrow-down-square')) {
       const documentationData = this.otherCodePanelData.get(nodeId!)?.documentation;
       const lineNumbersOfLinesToRemove = new Set(documentationData!.map(d => d.lineNumber));
-      await this.codePanelRowSource?.adapter?.relax();
       await this.removeItemFromScroller(lineNumbersOfLinesToRemove, lineNumber!, "toggleDocumentationClasses", "bi-arrow-down-square", "bi-arrow-up-square", "documentation");
       target.classList.remove('bi-arrow-down-square')
       target.classList.add('bi-arrow-up-square');
@@ -107,6 +103,8 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
 
   async insertItemIntoScroller(itemsToInsert: CodePanelRowData[], lineNumber: string, 
       propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
+    await this.codePanelRowSource?.adapter?.relax();
+
     let preData = [];
     let nodeIndex = 0;
     for (let i = 0; i < this.codeLinesData.length; i++) {
@@ -133,9 +131,31 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
       items: itemsToInsert!
     });
   }
+  
+  async removeRowTypeFromScroller(codePanelRowDatatype:  CodePanelRowDatatype) {
+    await this.codePanelRowSource?.adapter?.relax();
+
+    const indexesToRemove : number[] = [];
+    let filteredCodeLinesData : CodePanelRowData[] = [];
+    for (let i = 0; i < this.codeLinesData.length; i++) {
+      if (this.codeLinesData[i].rowType === codePanelRowDatatype) {
+        indexesToRemove.push(i);
+      }
+      else {
+        filteredCodeLinesData.push(this.codeLinesData[i]);
+      }
+    }
+
+    this.codeLinesData = filteredCodeLinesData;
+    await this.codePanelRowSource?.adapter?.remove({
+      indexes: indexesToRemove
+    });
+  }
 
   async removeItemFromScroller(lineNumbersToRemove: Set<number | undefined>, actionLineNumber: string,
     propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string, lineClasstoRemove?: string) {
+    await this.codePanelRowSource?.adapter?.relax();
+
     const indexesToRemove : number[] = [];
     const filteredCodeLinesData : CodePanelRowData[] = [];
 

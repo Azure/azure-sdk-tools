@@ -3,7 +3,7 @@ import { MenuItem, MenuItemCommandEvent } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { UserProfile } from 'src/app/_models/auth_service_models';
 import { CommentItemModel } from 'src/app/_models/review';
-import { AuthService } from 'src/app/_services/auth/auth.service';
+import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -24,10 +24,10 @@ export class CommentThreadComponent {
   menuItemAllUsers: MenuItem[] = [];
   menuItemsLoggedInUsers: MenuItem[] = [];
 
-  constructor(private authService: AuthService) { }
+  constructor(private userProfileService: UserProfileService) { }
 
   ngOnInit(): void {
-    this.authService.getUserProfile().subscribe(
+    this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.userProfile = userProfile;
       });

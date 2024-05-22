@@ -1,12 +1,9 @@
 using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
-using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.LeanControllers
@@ -41,13 +38,6 @@ namespace APIViewWeb.LeanControllers
                 Hash = Startup.VersionHash
             };
             return new LeanJsonResult(result, StatusCodes.Status200OK);
-        }
-
-        [Route("profile")]
-        [HttpGet]
-        public async Task<ActionResult<UserProfileModel>> GetUserPreference()
-        {
-            return await _userProfileManager.TryGetUserProfileAsync(User);
         }
     }
 }

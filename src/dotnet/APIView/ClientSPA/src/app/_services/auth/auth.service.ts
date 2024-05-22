@@ -22,15 +22,4 @@ export class AuthService {
   appVersion() : Observable<AppVersion> {
     return this.http.get<AppVersion>(this.baseUrl + "/appversion", { withCredentials: true });
   }
-
-  getUserProfile() : Observable<UserProfile> {
-    if (this._userProfileObservable){
-      return this._userProfileObservable;
-    }
-    else
-    {
-      this._userProfileObservable = this.http.get<UserProfile>(this.baseUrl + "/profile", { withCredentials: true }).pipe(share());
-      return this._userProfileObservable;
-    }
-  }
 }

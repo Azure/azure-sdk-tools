@@ -1,7 +1,8 @@
 <app-page-options-section sectionName="Page Settings">
     <ul class="list-group">
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showCommentsSwitch" />
+            <p-inputSwitch [(ngModel)]="showCommentsSwitch"
+            (onChange)="onCommentsSwitchChange($event)" />
             <label class="ms-2">Comments</label>
         </li>
         <li class="list-group-item">

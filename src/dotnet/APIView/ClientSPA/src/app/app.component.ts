@@ -1,5 +1,5 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
-import { AuthService } from './_services/auth/auth.service';
+import { UserProfileService } from './_services/user-profile/user-profile.service';
 
 @Component({
   selector: 'app-root',
@@ -9,14 +9,14 @@ import { AuthService } from './_services/auth/auth.service';
 export class AppComponent  implements OnInit{
   title : string = 'APIView';
 
-  constructor(private authService: AuthService) { }
+  constructor(private userProfileService: UserProfileService) { }
 
   ngOnInit(): void {
     this.setAppTheme();
   }
 
   setAppTheme() {
-    this.authService.getUserProfile().subscribe(
+    this.userProfileService.getUserProfile().subscribe(
       (userProfile) => {
         const theme = userProfile.preferences.theme;
         const body = document.body;

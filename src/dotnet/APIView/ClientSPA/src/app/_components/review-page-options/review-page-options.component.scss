@@ -1,0 +1,9 @@
+:host ::ng-deep {
+    .p-panel .p-panel-content {
+        padding: 0;
+    }
+
+    .list-group-item {
+        border: none;
+    }
+}

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UserProfile } from 'src/app/_models/auth_service_models';
-import { AuthService } from 'src/app/_services/auth/auth.service';
 import { ConfigService } from 'src/app/_services/config/config.service';
+import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -15,10 +15,10 @@ export class NavBarComponent implements OnInit {
   logoutPageWebAppUrl : string  = this.configService.webAppUrl + "Account/Logout"
   assetsPath : string = environment.assetsPath;
 
-  constructor(private authService: AuthService, private configService: ConfigService) { }
+  constructor(private userProfileService: UserProfileService, private configService: ConfigService) { }
 
   ngOnInit(): void {
-    this.authService.getUserProfile().subscribe(
+    this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.profilePageWebAppUrl = this.configService.webAppUrl + "Assemblies/profile/" + userProfile.userName;
       });

@@ -5,23 +5,25 @@
             (onChange)="onCommentsSwitchChange($event)" />
             <label class="ms-2">Comments</label>
         </li>
-        <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showSystemCommentsSwitch" />
+        <li class="list-group-item border-top">
+            <p-inputSwitch [(ngModel)]="showSystemCommentsSwitch"
+            (onChange)="onShowSystemCommentsSwitchChange($event)" />
             <label class="ms-2">System Comments</label>
         </li>
-        <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showDocumentationSwitch" />
+        <li class="list-group-item border-top">
+            <p-inputSwitch [(ngModel)]="showDocumentationSwitch"
+            (onChange)="onShowDocumentationSwitchChange($event)" />
             <label class="ms-2">Documentation</label>
         </li>
-        <li class="list-group-item">
+        <li class="list-group-item border-top">
             <p-inputSwitch [(ngModel)]="showLineNumberSwitch" />
             <label class="ms-2">Line Numbers</label>
         </li>
-        <li class="list-group-item">
+        <li class="list-group-item border-top">
             <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch" />
             <label class="ms-2">Left navigation</label>
         </li>
-        <li  *ngIf="isDiffView" class="list-group-item">
+        <li  *ngIf="isDiffView" class="list-group-item border-top">
             <p-inputSwitch [(ngModel)]="showOnlyDiffSwitch" 
             (onChange)="onOnlyDiffSwitchChange($event)" />
             <label class="ms-2">Only Diff</label>

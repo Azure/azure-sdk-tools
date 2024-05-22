@@ -4,7 +4,7 @@
 </div>
 <div *ngIf="codePanelRowSource" class="viewport {{languageSafeName!}}" (click)="onCodePanelItemClick($event)">
   <div *uiScroll="let item of codePanelRowSource; let index = index" class="code-line" [attr.data-node-id]="item.nodeId" [ngClass]="getClassObject(item.rowClasses)">
-    <ng-container *ngIf="item.rowType === CodePanelRowDatatype.CodeLine">
+    <ng-container *ngIf="item.rowType === CodePanelRowDatatype.CodeLine || item.rowType === CodePanelRowDatatype.Documentation">
       <div class="line-actions">
           <span class="line-number first">{{item.lineNumber}}</span>
           <span *ngIf="isDiffView" class="line-number second">{{item.lineNumber}}</span>

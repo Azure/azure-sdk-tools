@@ -32,6 +32,8 @@
                             [isDiffView]="!!diffApiRevisionId"
                             [onlyDiffInput]="onlyDiff!"
                             [userProfile]="userProfile"
+                            (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
+                            (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
                             (showCommentsEmitter)="handleShowCommentsEmitter($event)"
                             (showOnlyDiffEmitter)="handleShowOnlyDiffEmitter($event)"></app-review-page-options>
                     </div>

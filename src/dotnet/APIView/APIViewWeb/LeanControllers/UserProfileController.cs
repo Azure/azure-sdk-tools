@@ -24,7 +24,13 @@ namespace APIViewWeb.LeanControllers
         [HttpGet]
         public async Task<ActionResult<UserProfileModel>> GetUserPreference()
         {
-            return await _userProfileManager.TryGetUserProfileAsync(User);
+            var userProfile = await _userProfileManager.TryGetUserProfileAsync(User);
+            var preference = await _userPreferenceCache.GetUserPreferences(User);
+            if (preference != null)
+            {
+                userProfile.Preferences = preference;
+            }
+            return userProfile;
         }
 
         [Route("preference")]

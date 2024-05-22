@@ -8,23 +8,15 @@ import { UserPreferenceModel, UserProfile } from 'src/app/_models/auth_service_m
   providedIn: 'root'
 })
 export class UserProfileService {
-  private _userProfileObservable : Observable<UserProfile> | undefined;
   baseUrl : string =  this.configService.apiUrl + "userprofile";
 
   constructor(private http: HttpClient, private configService: ConfigService) { }
 
   getUserProfile() : Observable<UserProfile> {
-    if (this._userProfileObservable){
-      return this._userProfileObservable;
-    }
-    else
-    {
-      this._userProfileObservable = this.http.get<UserProfile>(this.baseUrl, { withCredentials: true }).pipe(share());
-      return this._userProfileObservable;
-    }
+    return this.http.get<UserProfile>(this.baseUrl, { withCredentials: true });
   }
 
-  updateUserPrefernece(userPreferenceModel : UserPreferenceModel) : Observable<any> { 
+  updateUserPrefernece(userPreferenceModel : UserPreferenceModel) : Observable<any> {   
     return this.http.put(this.baseUrl + "/preference", userPreferenceModel, { withCredentials: true });
   }
 }

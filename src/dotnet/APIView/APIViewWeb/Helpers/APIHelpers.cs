@@ -73,6 +73,16 @@ namespace APIViewWeb.Helpers
     public class LeanJsonResult : JsonResult
     {
         private readonly int _statusCode;
+        private static readonly JsonSerializerSettings _settings = new JsonSerializerSettings
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            Converters = new List<JsonConverter> { new StringEnumConverter() },
+            NullValueHandling = NullValueHandling.Ignore,
+            DefaultValueHandling = DefaultValueHandling.Ignore,
+            Formatting = Formatting.None
+        };
+
         public LeanJsonResult(object value, int statusCode) : base(value)
         {
             _statusCode = statusCode;
@@ -90,14 +100,7 @@ namespace APIViewWeb.Helpers
             response.ContentType = !string.IsNullOrEmpty(ContentType) ? ContentType : "application/json";
             response.StatusCode = _statusCode;
 
-            var settings = new JsonSerializerSettings
-            {
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                Converters = new List<JsonConverter> { new StringEnumConverter() }
-            };
-
-            var serializedValue = JsonConvert.SerializeObject(Value, settings);
+            var serializedValue = JsonConvert.SerializeObject(Value, _settings);
             await response.WriteAsync(serializedValue);
         }
     }

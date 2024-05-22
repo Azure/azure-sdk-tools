@@ -22,8 +22,10 @@ export class PageOptionsSectionComponent implements OnInit{
     if (this.cookieService.check(this.sectionStateCookieKey)) {
       this.collapsed = this.cookieService.get(this.sectionStateCookieKey).toLocaleLowerCase() === 'true';
     } else {
-      this.cookieService.set(this.sectionStateCookieKey, this.collapsedInput!.toString());
-      this.collapsed = this.collapsedInput!;
+      if (this.collapsedInput) {
+        this.cookieService.set(this.sectionStateCookieKey, this.collapsedInput!.toString());
+        this.collapsed = this.collapsedInput!;
+      }
     }
   }
 

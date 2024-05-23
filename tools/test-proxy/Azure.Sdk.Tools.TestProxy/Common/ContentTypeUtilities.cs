@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 #nullable disable
@@ -22,6 +22,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             // Default is technically US-ASCII, but will default to UTF-8 which is a superset.
             const string appFormUrlEncoded = "application/x-www-form-urlencoded";
+            const string dockerManifest = "application/vnd.docker.distribution.manifest.v2";
 
             if (contentType == null)
             {
@@ -40,16 +41,22 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
             }
 
-            if (contentType.StartsWith(textContentTypePrefix, StringComparison.OrdinalIgnoreCase) ||
-                contentType.EndsWith(jsonSuffix, StringComparison.OrdinalIgnoreCase) ||
-                contentType.EndsWith(xmlSuffix, StringComparison.OrdinalIgnoreCase) ||
-                contentType.EndsWith(urlEncodedSuffix, StringComparison.OrdinalIgnoreCase) ||
-                contentType.StartsWith(appJsonPrefix, StringComparison.OrdinalIgnoreCase) ||
-                contentType.StartsWith(appFormUrlEncoded, StringComparison.OrdinalIgnoreCase))
+
+            if (
+                    (
+                        contentType.StartsWith(textContentTypePrefix, StringComparison.OrdinalIgnoreCase) ||
+                        contentType.EndsWith(jsonSuffix, StringComparison.OrdinalIgnoreCase) ||
+                        contentType.EndsWith(xmlSuffix, StringComparison.OrdinalIgnoreCase) ||
+                        contentType.EndsWith(urlEncodedSuffix, StringComparison.OrdinalIgnoreCase) ||
+                        contentType.StartsWith(appJsonPrefix, StringComparison.OrdinalIgnoreCase) ||
+                        contentType.StartsWith(appFormUrlEncoded, StringComparison.OrdinalIgnoreCase)
+                    ) && !contentType.Contains(dockerManifest)
+                )
             {
                 encoding = Encoding.UTF8;
                 return true;
             }
+
 
             encoding = null;
             return false;

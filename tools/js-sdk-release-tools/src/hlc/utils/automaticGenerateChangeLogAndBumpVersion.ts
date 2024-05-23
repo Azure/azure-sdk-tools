@@ -21,7 +21,6 @@ import { getversionDate } from "../../utils/version";
 import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
-import { exit } from "process";
 
 enum CodeGenLevel {
     Classic = 'Classic',

@@ -145,12 +145,7 @@ function buildTokens(apiTreeNode: APITreeNode, id: string, position: string, ind
     buildTokensForNonDiffNodes(apiTreeNode, id, position, indent);
   }
   else {
-    if (apiTreeBuilderData?.onlyDiff && apiTreeNode.children.length === 0 && apiTreeNode.diffKind !== "Added" && apiTreeNode.diffKind !== "Removed") {
-      return;
-    }
-    else {
-      buildTokensForDiffNodes(apiTreeNode, id, position, indent);
-    }
+    buildTokensForDiffNodes(apiTreeNode, id, position, indent);
   }
 }
 
@@ -326,7 +321,11 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
           let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(new Set<string>, id, position, nodeId, insertLineOfTokensMessage);
 
           precedingRowData = insertLineOfTokensMessage.codePanelRowData;
-          postMessage(insertLineOfTokensMessage);
+
+          if (!(apiTreeBuilderData?.onlyDiff && apiTreeNode.children.length === 0 && insertLineOfTokensMessage.codePanelRowData.diffKind !== "Added" && insertLineOfTokensMessage.codePanelRowData.diffKind !== "Removed")) {
+            postMessage(insertLineOfTokensMessage);
+          }
+          
           beforeLineClasses.clear();
         }
 
@@ -347,11 +346,15 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
           let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(afterTokenIdsInLine, id, position, nodeId, insertLineOfTokensMessage);
           
           precedingRowData = insertLineOfTokensMessage.codePanelRowData;
-          postMessage(insertLineOfTokensMessage);
+          if (!(apiTreeBuilderData?.onlyDiff && apiTreeNode.children.length === 0 && insertLineOfTokensMessage.codePanelRowData.diffKind !== "Added" && insertLineOfTokensMessage.codePanelRowData.diffKind !== "Removed")) {
+            postMessage(insertLineOfTokensMessage);
+          }
           afterLineClasses.clear();
 
           if (insertCommentMessage) {
-            postMessage(insertCommentMessage);
+            if (!(apiTreeBuilderData?.onlyDiff && apiTreeNode.children.length === 0 && insertLineOfTokensMessage.codePanelRowData.diffKind !== "Added" && insertLineOfTokensMessage.codePanelRowData.diffKind !== "Removed")) {
+              postMessage(insertLineOfTokensMessage);
+            }
           }
         }
       }
@@ -368,11 +371,15 @@ function buildTokensForDiffNodes(apiTreeNode: APITreeNode, id: string, position:
           let insertCommentMessage : InsertCodePanelRowDataMessage | undefined = collectUserCommentsforLine(afterTokenIdsInLine, id, position, nodeId, insertLineOfTokensMessage);
 
           precedingRowData = insertLineOfTokensMessage.codePanelRowData;
-          postMessage(insertLineOfTokensMessage);
+          if (!(apiTreeBuilderData?.onlyDiff && apiTreeNode.children.length === 0 && insertLineOfTokensMessage.codePanelRowData.diffKind !== "Added" && insertLineOfTokensMessage.codePanelRowData.diffKind !== "Removed")) {
+            postMessage(insertLineOfTokensMessage);
+          }
           beforeLineClasses.clear();
 
           if (insertCommentMessage) {
-            postMessage(insertCommentMessage);
+            if (!(apiTreeBuilderData?.onlyDiff && apiTreeNode.children.length === 0 && insertLineOfTokensMessage.codePanelRowData.diffKind !== "Added" && insertLineOfTokensMessage.codePanelRowData.diffKind !== "Removed")) {
+              postMessage(insertLineOfTokensMessage);
+            }
           }
         }
       }

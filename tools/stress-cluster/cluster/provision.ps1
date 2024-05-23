@@ -141,7 +141,9 @@ function DeployClusterResources([hashtable]$params)
         --parameters groupName=$STRESS_CLUSTER_RESOURCE_GROUP `
         --parameters updateNodes=$UpdateNodes
 
-    SetEnvOutputs $params
+    if (!$WhatIfPreference) {
+        SetEnvOutputs $params
+    }
 
     Write-Host "Importing cluster credentials"
     RunSupportingWhatIfFlag "--only-show-errors" az aks get-credentials `

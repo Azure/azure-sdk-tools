@@ -38,14 +38,14 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                 handler.InMemorySessions
             };
 
-            var sanitizers = handler.SanitizerRegistry.GetSanitizers();
+            var sanitizers = handler.SanitizerRegistry.GetRegisteredSanitizers();
             var recordingFound = false;
             if (!string.IsNullOrWhiteSpace(recordingId)){
                 foreach (var sessionDict in searchCollections)
                 { 
                     if (sessionDict.TryGetValue(recordingId, out var session))
                     {
-                        sanitizers = handler.SanitizerRegistry.GetSanitizers(session);
+                        sanitizers = handler.SanitizerRegistry.GetRegisteredSanitizers(session);
                         transforms = transforms.Concat(session.AdditionalTransforms);
 
                         if (session.CustomMatcher != null)
@@ -70,9 +70,10 @@ namespace Azure.Sdk.Tools.TestProxy.Models
             descriptions.AddRange(sanitizers.Select(x => new ActionDescription()
             {
                 ActionType = MetaDataType.Sanitizer,
-                Name = x.GetType().Name,
-                ConstructorDetails = GetInstanceDetails(x),
-                Description = GetClassDocComment(x.GetType(), docXML)
+                Name = x.Sanitizer.GetType().Name,
+                SanitizerId = x.Id,
+                ConstructorDetails = GetInstanceDetails(x.Sanitizer),
+                Description = GetClassDocComment(x.Sanitizer.GetType(), docXML)
             }));
 
             descriptions.AddRange(handler.Transforms.Select(x => new ActionDescription()

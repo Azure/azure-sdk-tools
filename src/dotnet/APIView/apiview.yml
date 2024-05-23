@@ -95,6 +95,11 @@ stages:
             displayName: "Build Client SPA assets"
 
           - script: |
+              npx workbox-cli generateSW workbox-config.js
+            workingDirectory: $(SPAClientProjectDirectory)
+            displayName: "Configure Service Worker"
+
+          - script: |
               npm install
             workingDirectory: $(TypeScriptGeneratorDirectory)
             displayName: "Install npm packages typescript generator"

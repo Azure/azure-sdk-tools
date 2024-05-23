@@ -11,7 +11,7 @@ module.exports = {
     swDest: '../APIViewWeb/wwwroot/spa/sw.js',
     runtimeCaching: [
       {
-        urlPattern: /^https:\/\/apiviewstagingtest\.com\/api\/reviews\/.*\/content\/.*$/,
+        urlPattern: "https://apiviewstagingtest.com/api/reviews/*/content**",
         handler: 'CacheFirst',
         options: {
           cacheName: 'revisioncontent',
@@ -20,29 +20,7 @@ module.exports = {
             maxAgeSeconds: 24 * 60 * 60, // 1 day
           },
         },
-      },
-      {
-        urlPattern: /^https:\/\/apiviewuxtest\.com\/api\/reviews\/.*\/content\/.*$/,
-        handler: 'CacheFirst',
-        options: {
-          cacheName: 'revisioncontent',
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 24 * 60 * 60, // 1 day
-          },
-        },
-      },
-      {
-        urlPattern: /^https:\/\/apiview\.com\/api\/reviews\/.*\/content\/.*$/,
-        handler: 'CacheFirst',
-        options: {
-          cacheName: 'revisioncontent',
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 24 * 60 * 60, // 1 day
-          },
-        },
-      },
+      }
     ],
     skipWaiting: true,
     clientsClaim: true,

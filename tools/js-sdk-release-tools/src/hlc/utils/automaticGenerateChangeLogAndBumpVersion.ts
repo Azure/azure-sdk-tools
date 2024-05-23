@@ -128,7 +128,6 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 logger.log('Generate changelogs and setting version for migrating track1 to track2 successfully');
             }
         } finally {
-            shell.rm('-r', `${path.join(packageFolderPath, 'changelog-temp')}`);
             shell.cd(jsSdkRepoPath);
         }
     }

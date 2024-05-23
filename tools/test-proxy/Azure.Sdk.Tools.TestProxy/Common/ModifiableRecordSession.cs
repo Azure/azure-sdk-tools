@@ -14,14 +14,20 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public ModifiableRecordSession(SanitizerDictionary sanitizerRegistry, string sessionId)
         {
-            this.AppliedSanitizers = sanitizerRegistry.SessionSanitizers.ToList();
+            lock(sanitizerRegistry.SessionSanitizerLock)
+            {
+                this.AppliedSanitizers = sanitizerRegistry.SessionSanitizers.ToList();
+            }
             this.SessionId = sessionId;
         }
 
         public ModifiableRecordSession(RecordSession session, SanitizerDictionary sanitizerRegistry, string sessionId)
         {
             Session = session;
-            this.AppliedSanitizers = sanitizerRegistry.SessionSanitizers.ToList();
+            lock (sanitizerRegistry.SessionSanitizerLock)
+            {
+                this.AppliedSanitizers = sanitizerRegistry.SessionSanitizers.ToList();
+            }
             this.SessionId = sessionId;
         }
 
@@ -29,9 +35,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public string Path { get; set; }
 
+        public bool IsSanitized { get; set; }
+
         public HttpClient Client { get; set; }
 
         public List<ResponseTransform> AdditionalTransforms { get; } = new List<ResponseTransform>();
+
+        public readonly object SanitizerLock = new object();
 
         public List<string> AppliedSanitizers { get; set; } = new List<string>();
         public List<string> ForRemoval { get; } = new List<string>();
@@ -42,13 +52,16 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public void ResetExtensions(SanitizerDictionary sanitizerDictionary)
         {
-            AdditionalTransforms.Clear();
-            AppliedSanitizers = new List<string>();
-            AppliedSanitizers.AddRange(sanitizerDictionary.SessionSanitizers);
-            ForRemoval.Clear();
+            lock (SanitizerLock)
+            {
+                AdditionalTransforms.Clear();
+                AppliedSanitizers = new List<string>();
+                AppliedSanitizers.AddRange(sanitizerDictionary.SessionSanitizers);
+                ForRemoval.Clear();
 
-            CustomMatcher = null;
-            Client = null;
+                CustomMatcher = null;
+                Client = null;
+            }
         }
     }
 }

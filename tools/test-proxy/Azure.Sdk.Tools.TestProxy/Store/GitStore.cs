@@ -3,18 +3,16 @@ using System.Net;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Linq;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Console;
 using System.Collections.Concurrent;
-using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 using Azure.Sdk.tools.TestProxy.Common;
+using Microsoft.Security.Utilities;
 
 namespace Azure.Sdk.Tools.TestProxy.Store
 {
@@ -41,6 +39,8 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public static readonly string GIT_COMMIT_OWNER_ENV_VAR = "GIT_COMMIT_OWNER";
         public static readonly string GIT_COMMIT_EMAIL_ENV_VAR = "GIT_COMMIT_EMAIL";
         private bool LocalCacheRefreshed = false;
+        public SecretScanner SecretScanner;
+        public readonly object LocalCacheLock = new object();
 
         public GitStoreBreadcrumb BreadCrumb = new GitStoreBreadcrumb();
 
@@ -65,15 +65,13 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         public GitStore()
         {
             _consoleWrapper = new ConsoleWrapper();
+            SecretScanner = new SecretScanner(_consoleWrapper);
         }
 
         public GitStore(IConsoleWrapper consoleWrapper)
         {
             _consoleWrapper = consoleWrapper;
-        }
-
-        public GitStore(GitProcessHandler processHandler) {
-            GitHandler = processHandler;
+            SecretScanner = new SecretScanner(consoleWrapper);
         }
 
         #region push, reset, restore, and other asset repo implementations
@@ -95,11 +93,37 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         }
 
         /// <summary>
+        /// Scans the changed files, checking for possible secrets. Returns true if secrets are discovered.
+        /// </summary>
+        /// <param name="assetsConfiguration"></param>
+        /// <param name="pendingChanges"></param>
+        /// <returns></returns>
+        public bool CheckForSecrets(GitAssetsConfiguration assetsConfiguration, string[] pendingChanges)
+        {
+            _consoleWrapper.WriteLine($"Detected new recordings. Prior to pushing to destination repo, test-proxy will scan {pendingChanges.Length} files.");
+            var detectedSecrets = SecretScanner.DiscoverSecrets(assetsConfiguration.AssetsRepoLocation, pendingChanges);
+
+            if (detectedSecrets.Count > 0)
+            {
+                _consoleWrapper.WriteLine("At least one secret was detected in the pushed code. Please register a sanitizer, re-record, and attempt pushing again. Detailed errors follow: ");
+                foreach (var detection in detectedSecrets)
+                {
+                    _consoleWrapper.WriteLine($"{detection.Item1}");
+                    _consoleWrapper.WriteLine($"\t{detection.Item2.Id}: {detection.Item2.Name}");
+                    _consoleWrapper.WriteLine($"\tStart: {detection.Item2.Start}, End: {detection.Item2.End}.\n");
+                }
+            }
+
+            return detectedSecrets.Count > 0;
+        }
+
+        /// <summary>
         /// Pushes a set of changed files to the assets repo. Honors configuration of assets.json passed into it.
         /// </summary>
         /// <param name="pathToAssetsJson"></param>
+        /// <param name="ignoreSecretProtection"></param>
         /// <returns></returns>
-        public async Task Push(string pathToAssetsJson) {
+        public async Task<int> Push(string pathToAssetsJson, bool ignoreSecretProtection = false) {
             var config = await ParseConfigurationFile(pathToAssetsJson);
 
             var initialized = IsAssetsRepoInitialized(config);
@@ -109,8 +133,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
                 _consoleWrapper.WriteLine($"The targeted assets.json \"{config.AssetsJsonRelativeLocation}\" has not been restored prior to attempting push. " +
                     $"Are you certain you're pushing the correct assets.json? Please invoke \'test-proxy restore \"{config.AssetsJsonRelativeLocation}\"\' prior to invoking a push operation.");
 
-                Environment.ExitCode = -1;
-                return;
+                return -1;
             }
 
             SetOrigin(config);
@@ -120,6 +143,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (pendingChanges.Length > 0)
             {
+                if (CheckForSecrets(config, pendingChanges))
+                {
+                    if (!ignoreSecretProtection)
+                    {
+                        return -1;
+                    }
+                }
+
                 try
                 {
                     string branchGuid = Guid.NewGuid().ToString().Substring(0, 8);
@@ -210,6 +241,7 @@ namespace Azure.Sdk.Tools.TestProxy.Store
             }
 
             HideOrigin(config);
+            return 0;
         }
 
         /// <summary>
@@ -346,9 +378,19 @@ namespace Azure.Sdk.Tools.TestProxy.Store
 
             if (!string.IsNullOrWhiteSpace(diffResult.StdOut))
             {
-                // Normally, we'd use Environment.NewLine here but this doesn't work on Windows since its NewLine is \r\n and
-                // Git's NewLine is just \n
-                var individualResults = diffResult.StdOut.Split("\n").Select(x => x.Trim()).ToArray();
+                /* 
+                 * Normally, we'd use Environment.NewLine here but this doesn't work on Windows since its NewLine is \r\n and Git's NewLine is just \n
+                 * 
+                 * The output from git status porcelain will include two possible additional values
+                 * " ?? path/to/file" -> File that is new
+                 * " M path/to/file" -> File that is modified
+                 * " D path/to/file" -> File that is deleted
+                */
+                var individualResults = diffResult.StdOut.Split("\n")
+                    // strim the leading space, the characters for ADDED or MODIFIED, and the space after them
+                    .Select(x => x.Trim().TrimStart('?', 'M').Trim())
+                    // exclude empty paths or paths that have been DELETED
+                    .Where(x => !string.IsNullOrWhiteSpace(x) && !x.StartsWith("D")).ToArray();
                 return individualResults;
             }
 
@@ -511,16 +553,14 @@ namespace Azure.Sdk.Tools.TestProxy.Store
         /// <param name="config"></param>
         public bool IsAssetsRepoInitialized(GitAssetsConfiguration config)
         {
-            // we have to ensure that multiple threads hitting this same segment of code won't stomp on each other
-            if (!LocalCacheRefreshed)
+            // we have to ensure that multiple threads hitting this same segment of code won't stomp on each other. restore is incredibly important.
+            lock (LocalCacheLock)
             {
-                var breadCrumbQueue = InitTasks.GetOrAdd("breadcrumbload", new TaskQueue());
-                breadCrumbQueue.Enqueue(() =>
+                if (!LocalCacheRefreshed)
                 {
-
                     BreadCrumb.RefreshLocalCache(Assets, config);
                     LocalCacheRefreshed = true;
-                });
+                }
             }
 
             if (Assets.ContainsKey(config.AssetsJsonRelativeLocation.ToString()))

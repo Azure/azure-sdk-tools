@@ -14,23 +14,23 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
     {
         public EnhancedBuildHttpClient(Uri baseUrl, VssCredentials credentials)
             : base(baseUrl, credentials)
-        {}
+        { }
 
         public EnhancedBuildHttpClient(Uri baseUrl, VssCredentials credentials, VssHttpRequestSettings settings)
             : base(baseUrl, credentials, settings)
-        {}
+        { }
 
         public EnhancedBuildHttpClient(Uri baseUrl, VssCredentials credentials, params DelegatingHandler[] handlers)
             : base(baseUrl, credentials, handlers)
-        {}
+        { }
 
         public EnhancedBuildHttpClient(Uri baseUrl, VssCredentials credentials, VssHttpRequestSettings settings, params DelegatingHandler[] handlers)
             : base(baseUrl, credentials, settings, handlers)
-        {}
+        { }
 
         public EnhancedBuildHttpClient(Uri baseUrl, HttpMessageHandler pipeline, bool disposeHandler)
             : base(baseUrl, pipeline, disposeHandler)
-        {}
+        { }
 
         public override async Task<Stream> GetArtifactContentZipAsync(
             Guid project,
@@ -39,7 +39,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             object userState = null,
             CancellationToken cancellationToken = default)
         {
-            var artifact = await base.GetArtifactAsync(project, buildId, artifactName, userState, cancellationToken);
+            BuildArtifact artifact = await base.GetArtifactAsync(project, buildId, artifactName, userState, cancellationToken);
             return await GetArtifactContentZipAsync(artifact, cancellationToken);
         }
 
@@ -50,19 +50,19 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services
             object userState = null,
             CancellationToken cancellationToken = default)
         {
-            var artifact = await base.GetArtifactAsync(project, buildId, artifactName, userState, cancellationToken);
+            BuildArtifact artifact = await base.GetArtifactAsync(project, buildId, artifactName, userState, cancellationToken);
             return await GetArtifactContentZipAsync(artifact, cancellationToken);
         }
 
         private async Task<Stream> GetArtifactContentZipAsync(BuildArtifact artifact, CancellationToken cancellationToken)
         {
-            var downloadUrl = artifact?.Resource?.DownloadUrl;
+            string downloadUrl = artifact?.Resource?.DownloadUrl;
             if (string.IsNullOrWhiteSpace(downloadUrl))
             {
                 throw new InvalidArtifactDataException("Artifact contained no download url");
             }
 
-            var responseStream = await Client.GetStreamAsync(downloadUrl, cancellationToken);
+            Stream responseStream = await Client.GetStreamAsync(downloadUrl, cancellationToken);
             return responseStream;
         }
     }

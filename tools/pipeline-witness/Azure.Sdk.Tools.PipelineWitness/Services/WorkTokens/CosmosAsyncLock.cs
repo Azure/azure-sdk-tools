@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
                 {
                     await this.container.DeleteItemAsync<CosmosLockDocument>(this.id, this.partitionKey, new ItemRequestOptions { IfMatchEtag = this.etag });
                 }
-                catch(CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
                 {
                 }
             }
@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
         {
             try
             {
-                var response = await this.container.ReplaceItemAsync(
+                ItemResponse<CosmosLockDocument> response = await this.container.ReplaceItemAsync(
                     new CosmosLockDocument(this.id, this.duration),
                     this.id,
                     this.partitionKey,
@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
                     return true;
                 }
             }
-            catch (CosmosException ex) when(ex.StatusCode == HttpStatusCode.Conflict)
+            catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.Conflict)
             {
             }
 

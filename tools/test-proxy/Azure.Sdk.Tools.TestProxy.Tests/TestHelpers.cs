@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -348,6 +349,18 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         /// <summary>
+        /// Create a new file with custom text
+        /// </summary>
+        /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
+        /// <param name="fileName">The file to be created</param>
+        public static void CreateOrUpdateFileWithContent(string testFolder, string fileName, string textContent)
+        {
+            string fullFileName = Path.Combine(testFolder, fileName);
+
+            File.WriteAllText(fullFileName, textContent);
+        }
+
+        /// <summary>
         /// This function is used to confirm that the .breadcrumb file under the assets store contains the appropriate
         /// information.
         /// </summary>
@@ -515,6 +528,23 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
             CommandResult result = GitHandler.Run($"ls-remote {cloneUrl} --tags {assets.Tag}", workingDirectory);
             return result.StdOut.Trim().Length > 0;
+        }
+
+        public static string GenerateString(int count)
+        {
+            char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".ToArray();
+
+            StringBuilder builder = new StringBuilder();
+
+            for (int i = 0; i < count; i++)
+            {
+                var bytes = RandomNumberGenerator.GetBytes(1);
+                int index = bytes[0] % alphabet.Length;
+                char ch = alphabet[index];
+                _ = builder.Append(ch);
+            }
+
+            return builder.ToString();
         }
 
         public static List<T> EnumerateArray<T>(JsonElement element)

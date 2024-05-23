@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using APIViewWeb.Repositories;
 using APIViewWeb.Models;
 
-
 namespace APIViewWeb.Controllers
 {
     [AllowAnonymous]

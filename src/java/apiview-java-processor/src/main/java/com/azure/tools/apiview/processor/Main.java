@@ -7,6 +7,7 @@ import com.azure.tools.apiview.processor.analysers.Analyser;
 import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.ApiViewProperties;
+import com.azure.tools.apiview.processor.model.Language;
 import com.azure.tools.apiview.processor.model.LanguageVariant;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 
@@ -152,7 +153,7 @@ public class Main {
         apiListing.setReviewName(reviewName);
         apiListing.setPackageName(packageName);
         apiListing.setPackageVersion(reviewProperties.getMavenPom().getVersion());
-        apiListing.setLanguage("Java");
+        apiListing.setLanguage(Language.JAVA);
         apiListing.setMavenPom(reviewProperties.getMavenPom());
 
         if(groupId.contains("spring")) {

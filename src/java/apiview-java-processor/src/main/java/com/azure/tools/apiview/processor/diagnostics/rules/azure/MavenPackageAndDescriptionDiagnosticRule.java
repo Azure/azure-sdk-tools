@@ -105,6 +105,6 @@ public final class MavenPackageAndDescriptionDiagnosticRule implements Diagnosti
     }
 
     private static String getId(String key, Object value) {
-        return MiscUtils.tokeniseKeyValue(key, value).getId();
+        return MiscUtils.tokeniseMavenKeyValue(key, value).getId();
     }
 }

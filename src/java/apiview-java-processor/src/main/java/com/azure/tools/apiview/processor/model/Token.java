@@ -10,10 +10,10 @@ import java.util.Set;
 
 public class Token implements JsonSerializable<Token> {
     // The token value which will be displayed.
-    private String value;
+    private final String value;
 
     // which will be used to navigate and find token on page.
-    private String id;
+    private final String id;
 
     // Could be: LineBreak NoneBreakingSpace TabSpace ParameterSeparator Content
     // All tokens should be content except for spacing tokens.
@@ -27,9 +27,9 @@ public class Token implements JsonSerializable<Token> {
     // for you classes. e.g csKeyword , jsModule, pyModule
     private final Set<String> renderClasses;
 
-    public Token(TokenKind tokenKind) {
-        this(tokenKind, null, null);
-    }
+//    public Token(TokenKind tokenKind) {
+//        this(tokenKind, null, null);
+//    }
 
     public Token(TokenKind tokenKind, String value) {
         this(tokenKind, value, null);

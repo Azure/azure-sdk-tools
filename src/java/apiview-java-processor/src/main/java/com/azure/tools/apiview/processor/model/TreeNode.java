@@ -10,6 +10,8 @@ import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
 
 public class TreeNode implements JsonSerializable<TreeNode> {
     private static final String TAG_HIDE_FROM_NAVIGATION = "HideFromNavigation";
+    private static final String PROPERTY_ICON_NAME = "IconName";
+    private static final String PROPERTY_SUBKIND = "SubKind";
 
     // The name of the tree node which will be used for page navigation.
     private final String name;
@@ -37,6 +39,11 @@ public class TreeNode implements JsonSerializable<TreeNode> {
     // Node immediate descendants.
     private final List<TreeNode> children;
 
+    private boolean isHideFromNavigation = false;
+
+    // Using this to customise output based on language, flavor, etc
+    private APIListing apiListing;
+
     /**
      * Used for things we don't want to show in the left navigation,
      * and for which we don't want to attach any JavaDoc.
@@ -56,7 +63,7 @@ public class TreeNode implements JsonSerializable<TreeNode> {
         this.children = new ArrayList<>();
 
         if (kind.getSubKind() != null && !kind.getSubKind().isEmpty()) {
-            addProperty("SubKind", kind.getSubKind());
+            addProperty(PROPERTY_SUBKIND, kind.getSubKind());
         }
     }
 
@@ -90,6 +97,15 @@ public class TreeNode implements JsonSerializable<TreeNode> {
 
     public List<TreeNode> getChildren() {
         return Collections.unmodifiableList(children);
+    }
+
+    // we smuggle this through all tree nodes, so that we can use it in the renderer for icon selection
+    void setApiListing(APIListing apiListing) {
+        this.apiListing = apiListing;
+        if (kind != null && !isHideFromNavigation) {
+            addProperty(PROPERTY_ICON_NAME, kind.getIconName(apiListing));
+        }
+        children.forEach(child -> child.setApiListing(apiListing));
     }
 
     public void addTag(String tag) {
@@ -142,11 +158,14 @@ public class TreeNode implements JsonSerializable<TreeNode> {
      */
     public TreeNode addChild(TreeNode child) {
         children.add(child);
+        child.setApiListing(apiListing);
         return this;
     }
 
     public TreeNode hideFromNavigation() {
         addTag(TAG_HIDE_FROM_NAVIGATION);
+        this.isHideFromNavigation = true;
+        this.properties.remove(PROPERTY_ICON_NAME);
         return this;
     }
 

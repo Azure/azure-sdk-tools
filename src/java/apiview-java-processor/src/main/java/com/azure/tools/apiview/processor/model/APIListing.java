@@ -15,7 +15,7 @@ public class APIListing implements JsonSerializable<APIListing> {
     private static final String versionString = "26";
 
     private String name;
-    private String language;
+    private Language language;
     private LanguageVariant languageVariant;
     private String packageName;
     private String packageVersion;
@@ -44,6 +44,9 @@ public class APIListing implements JsonSerializable<APIListing> {
     }
 
     public void addTreeNode(TreeNode node) {
+        if (node != null) {
+            node.setApiListing(this);
+        }
         this.apiForest.add(node);
     }
 
@@ -59,11 +62,11 @@ public class APIListing implements JsonSerializable<APIListing> {
         return Collections.unmodifiableList(diagnostics);
     }
 
-    public String getLanguage() {
+    public Language getLanguage() {
         return language;
     }
 
-    public void setLanguage(final String language) {
+    public void setLanguage(final Language language) {
         this.language = language;
     }
 
@@ -133,7 +136,7 @@ public class APIListing implements JsonSerializable<APIListing> {
             // Version?
             .writeStringField("VersionString", versionString)
             .writeStringField("Name", name)
-            .writeStringField("Language", language);
+            .writeStringField("Language", language.toString());
 
         if (languageVariant == null || languageVariant == LanguageVariant.DEFAULT) {
             jsonWriter.writeStringField("LanguageVariant", "");

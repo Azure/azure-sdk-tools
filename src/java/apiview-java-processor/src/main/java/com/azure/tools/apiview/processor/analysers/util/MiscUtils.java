@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.azure.tools.apiview.processor.model.TokenKind.MAVEN_VALUE;
 import static com.azure.tools.apiview.processor.model.TokenKind.TEXT;
 
 /**
@@ -32,8 +33,8 @@ public final class MiscUtils {
      * @param value The value.
      * @return A token representing the key-value pair.
      */
-    public static Token tokeniseKeyValue(String key, Object value) {
-        return tokeniseKeyValue(key, value, null);
+    public static Token tokeniseMavenKeyValue(String key, Object value) {
+        return tokeniseMavenKeyValue(key, value, null);
     }
 
     /**
@@ -44,9 +45,9 @@ public final class MiscUtils {
      * @param prefix The definition identifier prefix.
      * @return A token representing the key-value pair.
      */
-    public static Token tokeniseKeyValue(String key, Object value, String prefix) {
+    public static Token tokeniseMavenKeyValue(String key, Object value, String prefix) {
         prefix = prefix == null || prefix.isEmpty() ? "" : prefix + "-";
-        return new Token(TEXT, value == null ? "<default value>" : value.toString(), prefix + key + "-" + value);
+        return new Token(MAVEN_VALUE, value == null ? "<default value>" : value.toString(), prefix + key + "-" + value);
     }
 
     private static void wrapLine(String line, int lineLength, List<String> collector) {

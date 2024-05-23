@@ -12,32 +12,43 @@ public enum TokenKind {
     PUNCTUATION(CONTENT, "punctuation"),
     KEYWORD(CONTENT, "keyword"),
 
-    // use this if there are no visible tokens with ID on the line but you still want to be able to leave a comment for it
-//    LINE_ID_MARKER(5),
-
     TYPE_NAME(CONTENT, "typeName"),
-    MEMBER_NAME(CONTENT, "memberName"),
+//    MEMBER_NAME(CONTENT, "memberName"),
     STRING_LITERAL(CONTENT, "stringLiteral"),
+    NUMBER(CONTENT, "number"),
 //    LITERAL(CONTENT, "literal"),
 
-    JAVADOC(CONTENT, "comment", "javadoc") {
-        final Map<String, String> propertiesMap = new HashMap<>();
-        {
-            propertiesMap.put("GroupId", "documentation");
-        }
+    PACKAGE_NAME(CONTENT, "typeName", "packageName"),
+    MODULE_NAME(CONTENT, "typeName", "moduleName"),
 
-        @Override
-        public Map<String, String> getProperties() {
-            return propertiesMap;
+    ENUM_TYPE(CONTENT, "typeName", "enumType"),
+    ENUM_CONSTANT(CONTENT, "typeName", "enumConstant"),
+
+    ANNOTATION_NAME(CONTENT, "typeName", "annotationName"),
+    ANNOTATION_PARAMETER_NAME(CONTENT, "typeName", "annotationParameterName"),
+    ANNOTATION_PARAMETER_VALUE(CONTENT, "typeName", "annotationParameterValue"),
+
+    RETURN_TYPE(CONTENT, "typeName", "returnType"),
+    PARAMETER_TYPE(CONTENT, "typeName", "parameterType"),
+    PARAMETER_NAME(CONTENT, "parameterName"),
+    EXTENDS_TYPE(CONTENT, "typeName", "extendsType"),
+    IMPLEMENTS_TYPE(CONTENT, "typeName", "implementsType"),
+
+    METHOD_NAME(CONTENT, "memberName", "methodName"),
+    FIELD_NAME(CONTENT, "memberName", "fieldName"),
+
+    MAVEN_KEY(CONTENT, "keyword", "mavenKey"),
+    MAVEN_VALUE(CONTENT, "mavenValue"),
+    MAVEN_DEPENDENCY(CONTENT, "mavenValue", "dependency"),
+
+    JAVADOC(CONTENT, "comment", "javadoc") {
+        @Override public Map<String, String> getProperties() {
+            return Map.of("GroupId", "documentation");
         }
     },
 
     // comment is a single line comment
     COMMENT(CONTENT, "comment");
-
-    // documentation is JavaDoc that can be hidden or shown in the UI with a checkbox
-//    DOCUMENTATION_RANGE_START(CONTENT),
-//    DOCUMENTATION_RANGE_END(CONTENT);
 
     // for types and members that are marked as deprecated
 //    DEPRECATED_RANGE_START(13),
@@ -69,9 +80,7 @@ public enum TokenKind {
 
         if (renderClasses != null) {
             this.renderClasses = new LinkedHashSet<>();
-            for (String renderClass : renderClasses) {
-                this.renderClasses.add(renderClass);
-            }
+            this.renderClasses.addAll(Arrays.asList(renderClasses));
         }
     }
 
@@ -86,19 +95,6 @@ public enum TokenKind {
     public Map<String, String> getProperties() {
         return Collections.emptyMap();
     }
-
-//    public int getId() {
-//        return id;
-//    }
-//
-//    public static TokenKind fromId(int id) {
-//        for (TokenKind kind : TokenKind.values()) {
-//            if (kind.id == id) {
-//                return kind;
-//            }
-//        }
-//        return null;
-//    }
 
     enum StructuredTokenKind {
         CONTENT(0),

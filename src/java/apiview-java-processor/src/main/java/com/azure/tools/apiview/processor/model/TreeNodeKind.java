@@ -1,8 +1,8 @@
 package com.azure.tools.apiview.processor.model;
 
 public enum TreeNodeKind {
-    ASSEMBLY("Assembly"),     // i.e. a Jar File
-    NAMESPACE("Namespace"),   // i.e. a Java package
+    ASSEMBLY("Assembly", null),     // i.e. a Jar File
+    NAMESPACE("Namespace", null),   // i.e. a Java package
     CLASS("Type", "Class") {
         @Override
         public String getTypeDeclarationString() {
@@ -47,7 +47,6 @@ public enum TreeNodeKind {
     private final String name;
     private final String subKind;
 
-
     TreeNodeKind(String name) {
         this(name, null);
     }
@@ -65,16 +64,12 @@ public enum TreeNodeKind {
         return subKind;
     }
 
-    public String getTypeDeclarationString() {
-        return "UNKNOWN";
+    public String getIconName(APIListing apiListing) {
+        String iconName = subKind != null && !subKind.isEmpty() ? subKind : name;
+        return apiListing.getLanguage() + "-" + iconName.toLowerCase();
     }
 
-    public static TreeNodeKind fromName(String name) {
-        for (TreeNodeKind typeKind : TreeNodeKind.values()) {
-            if (typeKind.getName().equals(name)) {
-                return typeKind;
-            }
-        }
-        return null;
+    public String getTypeDeclarationString() {
+        return "UNKNOWN";
     }
 }

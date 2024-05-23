@@ -268,40 +268,26 @@ public final class ASTUtils {
     public static String makeId(AnnotationExpr annotation, NodeWithAnnotations<?> nodeWithAnnotations) {
         String annotationContext = getAnnotationContext(nodeWithAnnotations);
 
-        String idSuffix;
-
-        if (annotationContext == null || annotationContext.isEmpty()) {
-            idSuffix = "-L" + annotation.getBegin().orElseThrow(RuntimeException::new).line;
-        } else {
+        String idSuffix = "";
+        if (annotationContext != null && !annotationContext.isEmpty()) {
             idSuffix = "-" + annotationContext;
         }
         return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + idSuffix);
     }
 
     private static String getAnnotationContext(NodeWithAnnotations<?> nodeWithAnnotations) {
-        if (nodeWithAnnotations == null) {
-            return "";
-        }
-        if (nodeWithAnnotations instanceof MethodDeclaration) {
-            MethodDeclaration methodDeclaration = (MethodDeclaration) nodeWithAnnotations;
-            // use the method declaration string instead of method name as there can be overloads
-            return methodDeclaration.getDeclarationAsString(true, true, true);
-        } else if (nodeWithAnnotations instanceof ClassOrInterfaceDeclaration) {
-            ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) nodeWithAnnotations;
-            return classOrInterfaceDeclaration.getNameAsString();
-        } else if (nodeWithAnnotations instanceof EnumDeclaration) {
-            EnumDeclaration enumDeclaration = (EnumDeclaration) nodeWithAnnotations;
-            return enumDeclaration.getNameAsString();
-        } else if (nodeWithAnnotations instanceof EnumConstantDeclaration) {
-            EnumConstantDeclaration enumValueDeclaration = (EnumConstantDeclaration) nodeWithAnnotations;
-            return enumValueDeclaration.getNameAsString();
-        } else if (nodeWithAnnotations instanceof ConstructorDeclaration) {
-            ConstructorDeclaration constructorDeclaration = (ConstructorDeclaration) nodeWithAnnotations;
-            // use the constructor declaration string instead of the name as there can be overloads
-            return constructorDeclaration.getDeclarationAsString(true, true, true);
-        } else {
-            return "";
-        }
+        return switch (nodeWithAnnotations) {
+            case MethodDeclaration methodDeclaration ->
+                // use the method declaration string instead of method name as there can be overloads
+                methodDeclaration.getDeclarationAsString(true, true, true);
+            case ClassOrInterfaceDeclaration classOrInterfaceDeclaration -> classOrInterfaceDeclaration.getNameAsString();
+            case EnumDeclaration enumDeclaration -> enumDeclaration.getNameAsString();
+            case EnumConstantDeclaration enumConstantDeclaration -> enumConstantDeclaration.getNameAsString();
+            case ConstructorDeclaration constructorDeclaration ->
+                // use the constructor declaration string instead of the name as there can be overloads
+                constructorDeclaration.getDeclarationAsString(true, true, true);
+            case null, default -> "";
+        };
     }
 
     /**
@@ -325,8 +311,7 @@ public final class ASTUtils {
         final boolean isInterfaceType = isInterfaceType(type);
 //        final boolean isNestedType = type.isNestedType();
 
-        if (parentNode instanceof ClassOrInterfaceDeclaration) {
-            ClassOrInterfaceDeclaration parentClass = (ClassOrInterfaceDeclaration) parentNode;
+        if (parentNode instanceof ClassOrInterfaceDeclaration parentClass) {
             boolean isInPublicParent = isPublicOrProtected(parentClass.getAccessSpecifier());
             boolean isParentAnInterface = isInterfaceType(parentClass);
 
@@ -396,11 +381,9 @@ public final class ASTUtils {
             return "";
         }
 
-        if (node instanceof TypeDeclaration<?>) {
-            TypeDeclaration<?> type = (TypeDeclaration<?>) node;
+        if (node instanceof TypeDeclaration<?> type) {
             return type.getFullyQualifiedName().get();
-        } else if (node instanceof CallableDeclaration) {
-            CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) node;
+        } else if (node instanceof CallableDeclaration<?> callableDeclaration) {
             String fqn = getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
 
             if (callableDeclaration.isConstructorDeclaration()) {
@@ -435,11 +418,9 @@ public final class ASTUtils {
      * Optional#empty()}.
      */
     public static Optional<JavadocComment> attemptToFindJavadocComment(BodyDeclaration<?> bodyDeclaration) {
-        if (!(bodyDeclaration instanceof NodeWithJavadoc<?>)) {
+        if (!(bodyDeclaration instanceof NodeWithJavadoc<?> nodeWithJavadoc)) {
             return Optional.empty();
         }
-
-        NodeWithJavadoc<?> nodeWithJavadoc = (NodeWithJavadoc<?>) bodyDeclaration;
 
         // BodyDeclaration has a Javadoc.
         if (nodeWithJavadoc.getJavadocComment().isPresent()) {

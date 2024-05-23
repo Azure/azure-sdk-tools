@@ -85,16 +85,16 @@ extends:
                 inputs:
                   versionSpec: '$(NodeVersion)'
                 displayName: 'Use NodeJS $(NodeVersion)'
-          
-              - script: |
-                  npm install -g @angular/cli@16.1.8
-                workingDirectory: $(SPAClientProjectDirectory)
-                displayName: "Install Angular CLI"
 
               - task: GoTool@0
                 inputs:
                   version: '$(GoVersion)'
                 displayName: "Use Go $(GoVersion)"
+          
+              - script: |
+                  npm install -g @angular/cli@16.1.8
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Install Angular CLI"
 
               - script: |
                   npm install
@@ -115,6 +115,11 @@ extends:
                   npm run-script build
                 workingDirectory: $(SPAClientProjectDirectory)
                 displayName: "Build Client SPA assets"
+
+              - script: |
+                  npx workbox-cli generateSW workbox-config.js
+                workingDirectory: $(SPAClientProjectDirectory)
+                displayName: "Configure Service Worker"
 
               - script: |
                   npm install

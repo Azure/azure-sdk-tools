@@ -44,9 +44,7 @@
               "node_modules/bootstrap/dist/js/bootstrap.min.js",
               "node_modules/quill/dist/quill.js"
             ],
-            "webWorkerTsConfig": "tsconfig.worker.json",
-            "serviceWorker": true,
-            "ngswConfigPath": "ngsw-config.json"
+            "webWorkerTsConfig": "tsconfig.worker.json"
           },
           "configurations": {
             "production": {

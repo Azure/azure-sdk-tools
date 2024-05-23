@@ -28,7 +28,6 @@ import { Observable } from 'rxjs';
 import { ConfigService } from './_services/config/config.service';
 import { CookieService } from 'ngx-cookie-service';
 import { SharedAppModule } from './_modules/shared/shared-app.module';
-import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from 'src/environments/environment';
 
 export function initializeApp(configService: ConfigService) {
@@ -66,13 +65,7 @@ export function initializeApp(configService: ConfigService) {
     SidebarModule,
     SplitterModule,
     TableModule,
-    TimeagoModule.forRoot(),
-    ServiceWorkerModule.register('/spa/ngsw-worker.js', {
-      enabled: environment.production,
-      // Register the ServiceWorker as soon as the application is stable
-      // or after 30 seconds (whichever comes first).
-      registrationStrategy: 'registerWhenStable:30000'
-    }),
+    TimeagoModule.forRoot()
   ],
   providers: [
     ConfigService,

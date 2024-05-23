@@ -75,7 +75,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     "AZSDK1000"
                 ),
                 new RegisteredSanitizer(
-                    new GeneralRegexSanitizer(regex: "AccountKey=(?<key>[^;\\\"]+)", groupForReplace: "key"),
+                    new GeneralRegexSanitizer(regex: "AccountKey=(?<key>[^;\\\"]+)", value: BASE64ZERO, groupForReplace: "key"),
                     "AZSDK1001"
                 ),
                 new RegisteredSanitizer(

@@ -82,78 +82,6 @@ function RunOrExitOnFailure()
     }
 }
 
-function DeployStaticResources([hashtable]$params)
-{
-    Write-Host "Deploying static resources"
-
-    $formattedTags = $params.tags.GetEnumerator() | ForEach-Object { "'$($_.Name)=$($_.Value)'" }
-    $formattedTags = $formattedTags -join ' '
-
-    RunOrExitOnFailure az group create `
-        -n $params.staticTestKeyvaultGroup `
-        -l $params.clusterLocation `
-        --subscription $params.subscriptionId `
-        --tags $formattedTags
-
-    $kv = Run az keyvault show `
-        -n $params.staticTestKeyvaultName `
-        -g $params.staticTestKeyvaultGroup `
-        --subscription $params.subscriptionId
-    if (!$kv) {
-        RunOrExitOnFailure az keyvault create `
-            -n $params.staticTestKeyvaultName `
-            -g $params.staticTestKeyvaultGroup `
-            --subscription $params.subscriptionId
-    }
-
-    $values = GetEnvValues
-    if ($values.provisionerAppId.$Environment) {
-        $preExistingProvisionerApp = Run az ad sp show -o json --id $values.provisionerAppId.$Environment
-        if ($preExistingProvisionerApp) {
-            Write-Host "Found pre-existing provisioner application '$($values.provisionerAppId.$Environment)'"
-            return
-        } else {
-            Write-Host "Failed to find provisioner application '$($values.provisionerAppId.$Environment)'"
-        }
-    }
-
-    $spName = "stress-provisioner-$($params.groupSuffix)"
-    Write-Host "Creating new provisioner application '$spName'."
-
-    $sp = RunOrExitOnFailure az ad sp create-for-rbac `
-        -o json `
-        -n $spName `
-        --role Owner `
-        --scopes "/subscriptions/$($params.subscriptionId)"
-    $spInfo = $sp | ConvertFrom-Json
-    # Force check to see if the service principal was succesfully created and propagated
-    $oid = (RunOrExitOnFailure az ad sp show -o json --id $spInfo.appId | ConvertFrom-Json).id
-
-    $credentials = @{
-        AZURE_CLIENT_ID = $spInfo.appId
-        AZURE_CLIENT_SECRET = $spInfo.password
-        AZURE_CLIENT_OID = $oid
-        AZURE_TENANT_ID = $spInfo.tenant
-        AZURE_SUBSCRIPTION_ID = $params.subscriptionId
-        STRESS_CLUSTER_RESOURCE_GROUP = $STRESS_CLUSTER_RESOURCE_GROUP
-    }
-
-    # Powershell on windows does not play nicely passing strings with newlines as secret values
-    # to the Azure CLI keyvault command, so use a file here instead.
-    $envFile = Join-Path ([System.IO.Path]::GetTempPath()) "/static.env"
-    $dotenv = $credentials.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)`n" }
-    (-join $dotenv) | Out-File $envFile
-    Run az keyvault secret set --vault-name $params.staticTestKeyvaultName --file $envFile -n $STATIC_TEST_DOTENV_NAME
-    if (Test-Path $envFile) {
-        Remove-Item -Force $envFile
-    }
-    if ($LASTEXITCODE) {
-        exit $LASTEXITCODE
-    }
-
-    SetEnvProvisioner $spInfo
-}
-
 function GetEnvValues()
 {
     $values = ConvertFrom-Yaml -Ordered (Get-Content -Raw $VALUES_FILE)
@@ -165,13 +93,6 @@ function SetEnvValues([object]$values)
     $values | ConvertTo-Yaml | Out-File $VALUES_FILE
     Write-Warning "Update https://aka.ms/azsdk/stress/dashboard link page with new dashboard link: $($outputs.DASHBOARD_LINK.value)"
     Write-Warning "$VALUES_FILE has been updated and must be checked in."
-}
-
-function SetEnvProvisioner([object]$provisioner)
-{
-    $values = GetEnvValues
-    $values.provisionerAppId.$Environment = $provisioner.appId
-    SetEnvValues $values
 }
 
 function SetEnvOutputs([hashtable]$params)
@@ -190,11 +111,19 @@ function SetEnvOutputs([hashtable]$params)
     $values.debugStorageKeySecretName.$Environment = $outputs.DEBUG_STORAGE_KEY_SECRET_NAME.value
     $values.debugStorageAccountSecretName.$Environment = $outputs.DEBUG_STORAGE_ACCOUNT_SECRET_NAME.value
     $values.debugFileShareName.$Environment = $outputs.DEBUG_FILESHARE_NAME.value
-    $values.staticTestSecretsKeyvaultName.$Environment = $outputs.STATIC_TEST_SECRETS_KEYVAULT.value
     $values.clusterTestSecretsKeyvaultName.$Environment = $outputs.CLUSTER_TEST_SECRETS_KEYVAULT.value
     $values.secretProviderIdentity.$Environment = $outputs.SECRET_PROVIDER_CLIENT_ID.value
-    $values.subscription.$Environment = $STATIC_TEST_DOTENV_NAME
+    $values.infraWorkloadAppServiceAccountName.$Environment = $outputs.INFRA_WORKLOAD_APP_SERVICE_ACCOUNT_NAME.value
+    $values.infraWorkloadAppClientId.$Environment = $outputs.INFRA_WORKLOAD_APP_CLIENT_ID.value
+    $values.infraWorkloadAppObjectId.$Environment = $outputs.INFRA_WORKLOAD_APP_OBJECT_ID.value
+    $values.workloadAppIssuer.$Environment = $outputs.WORKLOAD_APP_ISSUER.value
+    $values.clusterGroup.$Environment = $outputs.RESOURCE_GROUP.value
+    $values.subscriptionId.$Environment = $outputs.SUBSCRIPTION_ID.value
     $values.tenantId.$Environment = $outputs.TENANT_ID.value
+
+    # The workload apps can be found in the stress resource group as Managed Identity types
+    $clientNames = ($outputs.WORKLOAD_APPS.value | ConvertFrom-Json -AsHashtable).name -join ','
+    $values.workloadAppClientNamePool.$Environment = $clientNames
 
     SetEnvValues $values
 }
@@ -212,7 +141,9 @@ function DeployClusterResources([hashtable]$params)
         --parameters groupName=$STRESS_CLUSTER_RESOURCE_GROUP `
         --parameters updateNodes=$UpdateNodes
 
-    SetEnvOutputs $params
+    if (!$WhatIfPreference) {
+        SetEnvOutputs $params
+    }
 
     Write-Host "Importing cluster credentials"
     RunSupportingWhatIfFlag "--only-show-errors" az aks get-credentials `
@@ -245,7 +176,8 @@ function DeployHelmResources()
     Run kubectl create namespace $Namespace --dry-run=client -o yaml | kubectl apply -f -
 
     # Skip installing chaos mesh charts in development mode (i.e. when testing stress watcher only).
-    $deployChaosMesh = "$(!$Development)".ToLower()
+    #$deployChaosMesh = "$(!$Development)".ToLower()
+    $deployChaosMesh = "false"
 
     RunSupportingWhatIfFlag "--dry-run" helm upgrade --install stress-infra `
         -n $Namespace `
@@ -315,7 +247,6 @@ function main()
     if (!$Development) {
         $params = LoadEnvParams
         $STRESS_CLUSTER_RESOURCE_GROUP = "rg-stress-cluster-$($params.groupSuffix)"
-        DeployStaticResources $params
         DeployClusterResources $params
         RegisterAKSFeatures $STRESS_CLUSTER_RESOURCE_GROUP $params.clusterName
     }

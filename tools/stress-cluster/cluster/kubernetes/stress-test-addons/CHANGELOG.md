@@ -1,5 +1,15 @@
 # Release History
 
+## 0.3.2 (2024-05-15)
+
+### Features Added
+
+Add support for AKS workload identity auth mechanism
+
+### Breaking Changes
+
+Tests must use WorkloadIdentityCredential or DefaultAzureCredential. Any tests leveraging EnvironmentCredential and/or service principal password auth will no longer work.
+
 ## 0.3.1 (2024-01-17)
 
 ### Features Added

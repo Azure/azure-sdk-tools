@@ -17,12 +17,6 @@
     "monitoringLocation": {
       "value": "centralus"
     },
-    "staticTestKeyvaultName": {
-      "value": "stress-secrets-prod"
-    },
-    "staticTestKeyvaultGroup": {
-      "value": "rg-stress-secrets-prod"
-    },
     "defaultAgentPoolMinNodes": {
       "value": 2
     },

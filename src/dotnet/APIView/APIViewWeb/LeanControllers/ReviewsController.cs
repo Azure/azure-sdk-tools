@@ -102,7 +102,7 @@ namespace APIViewWeb.LeanControllers
         ///<returns></returns>
         [Route("{reviewId}/content")]
         [HttpGet]
-        public async Task<ActionResult<ReviewContentModel>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId = null,
+        public async Task<ActionResult<ReviewCodePanelData>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId = null,
             [FromQuery] string diffApiRevisionId = null)
         {
             var result = new ReviewCodePanelData();

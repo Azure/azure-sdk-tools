@@ -17,15 +17,11 @@ import {
 import {isGeneratedCodeStable} from "./isGeneratedCodeStable";
 import {execSync} from "child_process";
 import { getversionDate } from "../../utils/version";
+import { CodeGenLevel } from "../../common/types"
 
 import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
-
-enum CodeGenLevel {
-    Classic = 'Classic',
-    Modular = 'Modular',
-};
 
 function getCodeGenLevel(parametersPath: string) : CodeGenLevel {
     const exist = shell.test('-e', parametersPath);

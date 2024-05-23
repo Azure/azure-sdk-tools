@@ -18,7 +18,6 @@ parameters:
 steps:
 - task: AzurePowerShell@5
   displayName: 'Generate APIView Token files'
-  continueOnError: false
   inputs:
     azureSubscription: 'Azure SDK Engineering System'
     ScriptType: 'FilePath'

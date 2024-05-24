@@ -1,3 +1,7 @@
+import fs from 'fs';
+import path from 'path';
+import shell from 'shelljs';
+
 import {extractExportAndGenerateChangelog, readSourceAndExtractMetaData} from "../../changelog/extractMetaData";
 import {Changelog, changelogGenerator} from "../../changelog/changelogGenerator";
 import {NPMScope, NPMViewResult} from "@ts-common/azure-js-dev-tools";
@@ -14,33 +18,18 @@ import {
     getVersion,
     isBetaVersion
 } from "../../utils/version";
-import {isGeneratedCodeStable} from "./isGeneratedCodeStable";
 import {execSync} from "child_process";
 import { getversionDate } from "../../utils/version";
-import { CodeGenLevel } from "../../common/types"
-
-import fs from 'fs';
-import path from 'path';
-import shell from 'shelljs';
-
-function getCodeGenLevel(parametersPath: string) : CodeGenLevel {
-    const exist = shell.test('-e', parametersPath);
-    const level = exist ? CodeGenLevel.Classic : CodeGenLevel.Modular;
-    console.log(`CodeGen Level: ${level} detected`);
-    return level;
-}
+import { ApiVersionType } from "../../common/types"
+import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
-    const parametersPath = path.join(packageFolderPath, 'src', 'models', 'parameters.ts');
     const packageJsonPath = path.join(packageFolderPath, 'package.json');
-
-    const codeGenLevel = getCodeGenLevel(parametersPath);
-    let isStableRelease = codeGenLevel == CodeGenLevel.Classic ?
-        isGeneratedCodeStable(parametersPath): true;
-
-    const packageJson = await fs.promises.readFile(packageJsonPath, {encoding: 'utf-8'});
+    const ApiType = getApiVersionType(packageFolderPath);
+    const isStableRelease = ApiType != ApiVersionType.Preview;
+    const packageJson = fs.readFileSync(packageJsonPath, { encoding: 'utf-8' });
     const packageName = JSON.parse(packageJson).name;
     const npm = new NPMScope({ executionFolderPath: packageFolderPath });
     const npmViewResult: NPMViewResult = await npm.view({ packageName });

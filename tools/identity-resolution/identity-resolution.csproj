@@ -11,7 +11,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Services.Notifications.WebApi" Version="19.239.0-preview" />
     <PackageReference Include="Microsoft.VisualStudio.Services.InteractiveClient" Version="19.239.0-preview" />
     <PackageReference Include="YamlDotNet" Version="6.1.1" />
-    <PackageReference Include="Azure.Identity" Version="1.10.2" />
+    <PackageReference Include="Azure.Identity" Version="1.11.0" />
   </ItemGroup>
 
   <ItemGroup>

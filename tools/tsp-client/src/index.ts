@@ -290,22 +290,6 @@ async function main() {
   }
 
   const repoRoot = await getRepoRoot(rootUrl);
-  try {
-    // FIXME: this is a workaround meanwhile we fix the issue with failing to delete the sparse-spec directory
-    // Tracking issue: https://github.com/Azure/azure-sdk-tools/issues/7636
-    const baseDir = joinPaths(repoRoot, "..");
-    const sparseSpecDirs = (await readdir(baseDir))
-    .filter((item) => stat(joinPaths(baseDir, item))
-    .then((stat) => stat.isDirectory()))
-    .filter((dir) => dir.startsWith("sparse-spec"));
-    Logger.info(`Found sparse-spec directories: ${sparseSpecDirs}`);
-    for (const dir of sparseSpecDirs) {
-      Logger.debug(`Deleting ${dir}`);
-      await removeDirectory(joinPaths(baseDir, dir));
-    }
-  } catch (err) {
-    Logger.debug(`Error occurred while attempting to remove sparse-spec directory: ${err}`);
-  }
 
   if (options.generateLockFile) {
     await generateLockFile(rootUrl, repoRoot);

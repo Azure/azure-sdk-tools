@@ -99,6 +99,21 @@ namespace APIViewWeb.LeanModels
     public class CodePanelData
     {
         public List<CodePanelRowData> Rows { get; set; } = new List<CodePanelRowData>();
+        public List<NavigationTreeNode> NavigationTree { get; set; } = new List<NavigationTreeNode>();
         public Dictionary<string, CodePanelNodeMetaData> NodeMetaData { get; set; } = new Dictionary<string, CodePanelNodeMetaData>();
+    }
+
+    public class NavigationTreeNodeData
+    {
+        public string Kind { get; set; }
+        public string Icon { get; set; }
+    }
+
+    public class NavigationTreeNode
+    {
+        public string Label { get; set; }
+        public NavigationTreeNodeData Data { get; set; }
+        public bool Expanded { get; set; }
+        public List<NavigationTreeNode> Children { get; set; } = new List<NavigationTreeNode>();
     }
 }

@@ -105,24 +105,30 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<CodePanelData>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId = null,
             [FromQuery] string diffApiRevisionId = null)
         {
-            var result = new CodePanelData();
             var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
             var comments = await _commentsManager.GetCommentsAsync(reviewId);
 
             var activeRevisionRenderableCodeFile = await _codeFileRepository.GetCodeFileAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId);
             var activeRevisionReviewCodeFile = activeRevisionRenderableCodeFile.CodeFile;
 
+            var result = new CodePanelData();
+
             if (activeRevisionReviewCodeFile.CodeFileVersion.Equals("v2")) 
             {
-                result.APIForest = activeRevisionReviewCodeFile.APIForest;
-                result.Diagnostics = activeRevisionReviewCodeFile.Diagnostics;
-                result.Comments = comments;
+                var codePanelRawData = new CodePanelRawData()
+                {
+                    APIForest = activeRevisionReviewCodeFile.APIForest,
+                    Diagnostics = activeRevisionReviewCodeFile.Diagnostics,
+                    Comments = comments,
+                };
+
+                result = CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
 
                 if (!string.IsNullOrEmpty(diffApiRevisionId))
                 {
                     var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
                     var diffRevisionRenderableCodeFile = await _codeFileRepository.GetCodeFileAsync(diffAPIRevision.Id, diffAPIRevision.Files[0].FileId);
-                    result.APIForest = CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionRenderableCodeFile.CodeFile.APIForest);
+                    //CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionRenderableCodeFile.CodeFile.APIForest);
                 }
                 return new LeanJsonResult(result, StatusCodes.Status200OK);
             }

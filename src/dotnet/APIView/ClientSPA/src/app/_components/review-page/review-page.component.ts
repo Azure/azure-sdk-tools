@@ -6,7 +6,7 @@ import { getLanguageCssSafeName } from 'src/app/_helpers/component-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { UserProfile } from 'src/app/_models/auth_service_models';
 import { CommentItemModel, Review } from 'src/app/_models/review';
-import { APIRevision, ApiTreeBuilderData, CodePanelRowData, CodePanelRowDatatype, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
+import { APIRevision, ApiTreeBuilderData, CodePanelData, CodePanelRowData, CodePanelRowDatatype, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { AuthService } from 'src/app/_services/auth/auth.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
@@ -36,10 +36,8 @@ export class ReviewPageComponent implements OnInit {
   language: string | undefined;
   languageSafeName: string | undefined;
 
-  codeLinesDataBuffer: CodePanelRowData[] = [];
-  otherCodePanelData: Map<string, CodePanelToggleableData> = new Map<string, CodePanelToggleableData>();
-  onlyDiffBuffer: CodePanelRowData[] = [];
-  codeLinesData: CodePanelRowData[] = [];
+  codePanelData: CodePanelData | null = null;
+  codePanelRowData: CodePanelRowData[] = [];
   apiRevisionPageSize = 50;
   lastNodeIdUnhashedDiscarded = '';
 
@@ -64,14 +62,9 @@ export class ReviewPageComponent implements OnInit {
     });
 
     this.reviewId = this.route.snapshot.paramMap.get('reviewId');
-    this.activeApiRevisionId = this.route.snapshot.queryParamMap.get('activeApiRevisionId');
-    this.diffApiRevisionId = this.route.snapshot.queryParamMap.get('diffApiRevisionId');
-    this.onlyDiff = this.route.snapshot.queryParamMap.get('onlyDiff') === 'true';
 
-    this.registerWorkerEventHandler();
     this.loadReview(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
-    this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
 
     this.sideMenu = [
       {
@@ -91,9 +84,8 @@ export class ReviewPageComponent implements OnInit {
     this.diffApiRevisionId = params['diffApiRevisionId'];
     this.onlyDiff = params['onlyDiff'] === 'true';
     this.reviewPageNavigation = [];
-    this.codeLinesDataBuffer = [];
-    this.otherCodePanelData = new Map<string, CodePanelToggleableData>();
-    this.codeLinesData = [];
+    this.codePanelRowData = [];
+    this.codePanelData = null;
     this.changeDeterctorRef.detectChanges();
     this.workerService.startWorker().then(() => {
       this.registerWorkerEventHandler();
@@ -112,83 +104,12 @@ export class ReviewPageComponent implements OnInit {
         this.reviewPageNavigation = data.navTree as TreeNode[];
       }
 
-      if (data.directive === ReviewPageWorkerMessageDirective.InsertCodeLineData) {
-        if (data.codePanelRowData.rowClasses.has("documentation")) {
-          data.codePanelRowData.rowType = CodePanelRowDatatype.Documentation; // Specify that its a documentation row
-          if (this.otherCodePanelData.has(data.codePanelRowData.nodeId)) {
-            this.otherCodePanelData.get(data.codePanelRowData.nodeId)?.documentation.push(data.codePanelRowData);
-          } else {
-            this.otherCodePanelData.set(data.codePanelRowData.nodeId, {
-              documentation: [data.codePanelRowData],
-              diagnostics: [],
-              comments: []
-            });
-          }
-          if (this.userProfile?.preferences.showDocumentation) {
-            this.codeLinesDataBuffer.push(data.codePanelRowData);
-          }
-        } else {
-          if (this.onlyDiff!) {
-            if (data.codePanelRowData.tokenPosition === 'bottom') {
-              if (this.onlyDiffBuffer.length > 0) {
-                // Remove all row for the current node from the buffer
-                while (this.onlyDiffBuffer.length > 0 && this.onlyDiffBuffer[this.onlyDiffBuffer.length - 1].nodeIdUnHashed === data.codePanelRowData.nodeIdUnHashed) {
-                  let node = this.onlyDiffBuffer.pop();
-                  this.lastNodeIdUnhashedDiscarded = node!.nodeIdUnHashed!;
-                }
-              } else {
-                if (this.lastNodeIdUnhashedDiscarded !== data.codePanelRowData.nodeIdUnHashed){
-                  this.codeLinesDataBuffer.push(data.codePanelRowData);
-                }
-              }
-            }
-            else if (data.codePanelRowData.diffKind === 'Removed' || data.codePanelRowData.diffKind === 'Added') {
-              while (this.onlyDiffBuffer.length > 0) {
-                this.codeLinesDataBuffer.push(this.onlyDiffBuffer.shift()!); // Add everything in buffer to the main list
-              }
-              this.codeLinesDataBuffer.push(data.codePanelRowData);
-            }
-            else {
-              this.onlyDiffBuffer.push(data.codePanelRowData);
-            }
-          } else {
-            this.codeLinesDataBuffer.push(data.codePanelRowData);
-          }
-        }
+      if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelData) {
+        this.codePanelData = data.payload as CodePanelData;
       }
 
-      if (data.directive === ReviewPageWorkerMessageDirective.InsertDiagnosticsRowData) {
-        if (this.otherCodePanelData.has(data.codePanelRowData.nodeId)) {
-          this.otherCodePanelData.get(data.codePanelRowData.nodeId)?.diagnostics.push(data.codePanelRowData);
-        } else {
-          this.otherCodePanelData.set(data.codePanelRowData.nodeId, {
-            documentation: [],
-            diagnostics: [data.codePanelRowData],
-            comments: []
-          });
-        }
-        if (this.userProfile?.preferences.showSystemComments) {
-          this.codeLinesDataBuffer.push(data.codePanelRowData);
-        }
-      }
-
-      if (data.directive === ReviewPageWorkerMessageDirective.InsertCommentRowData) {
-        if (this.otherCodePanelData.has(data.codePanelRowData.nodeId)) {
-          this.otherCodePanelData.get(data.codePanelRowData.nodeId)?.comments.push(data.codePanelRowData);
-        } else {
-          this.otherCodePanelData.set(data.codePanelRowData.nodeId, {
-            documentation: [],
-            diagnostics: [],
-            comments: [data.codePanelRowData]
-          });
-        }
-        if (this.userProfile?.preferences.showComments) {
-          this.codeLinesDataBuffer.push(data.codePanelRowData);
-        }
-      }
-
-      if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodeLines) {
-        this.codeLinesData = this.codeLinesDataBuffer;
+      if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
+        this.codePanelRowData = data.payload as CodePanelRowData[];
         this.workerService.terminateWorker();
       }
     });

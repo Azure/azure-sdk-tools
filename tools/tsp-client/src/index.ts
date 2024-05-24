@@ -153,11 +153,19 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
     }
   } else {
     const cloneDir = joinPaths(repoRoot, "..", "sparse-spec");
-    await mkdir(cloneDir, { recursive: true });
-    Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
-    Logger.debug(`Cloning repo to ${cloneDir}`);
-    await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
-    await sparseCheckout(cloneDir);
+    try {
+        // Check if sparse-spec directory exists, if it does we'll skip creating the directory and initializing the sparse-checkout
+        await access(cloneDir);
+    } catch (err) {
+        // If sparse-spec directory doesn't exist, we'll create the directory, clone the repo and initialize the sparse-checkout
+        Logger.debug(`Could not access an existing sparse-spec directory: ${err}`);
+        Logger.debug(`Created temporary sparse-checkout directory ${cloneDir}`);
+        await mkdir(cloneDir, { recursive: true });
+        Logger.debug(`Cloning repo to ${cloneDir}`);
+        await cloneRepo(tempRoot, cloneDir, `https://github.com/${tspLocation.repo}.git`);
+        await sparseCheckout(cloneDir);
+    }
+    // Add the directories we want to checkout
     await addSpecFiles(cloneDir, tspLocation.directory)
     for (const dir of tspLocation.additionalDirectories ?? []) {
       Logger.info(`Processing additional directory: ${dir}`);
@@ -169,8 +177,18 @@ async function syncTspFiles(outputDir: string, localSpecRepo?: string) {
       Logger.info(`Syncing additional directory: ${dir}`);
       await cp(joinPaths(cloneDir, dir), joinPaths(tempRoot, getAdditionalDirectoryName(dir)), { recursive: true });
     }
-    Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
-    await removeDirectory(cloneDir);
+    // TODO: Instead of leaving the whole sparse-checkout dir, we could simply delete the service directory here when the 
+    // environment variable is set
+    if (process.env['TSPCLIENT_SAVE_SPARSE_SPEC']?.toLowerCase() === "true") {
+        await removeDirectory(joinPaths(cloneDir, tspLocation.directory))
+        for (const dir of tspLocation.additionalDirectories ?? []) {
+            Logger.info(`Processing additional directory: ${dir}`);
+            await removeDirectory(joinPaths(cloneDir, dir));
+        }
+    } else {
+        Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
+        await removeDirectory(cloneDir);
+    }
   }
 
   try {
@@ -292,16 +310,6 @@ async function main() {
   }
 
   const repoRoot = await getRepoRoot(rootUrl);
-  try {
-    // FIXME: this is a workaround meanwhile we fix the issue with failing to delete the sparse-spec directory
-    // Tracking issue: https://github.com/Azure/azure-sdk-tools/issues/7636
-    access(joinPaths(repoRoot, "..", "sparse-spec")).then(() => {
-      Logger.debug("Deleting existing sparse-spec directory");
-      removeDirectory(joinPaths(repoRoot, "..", "sparse-spec"));
-    }).catch(() => {});
-  } catch (err) {
-    Logger.debug(`Error occurred while attempting to remove sparse-spec directory: ${err}`);
-  }
 
   if (options.generateLockFile) {
     await generateLockFile(rootUrl, repoRoot);

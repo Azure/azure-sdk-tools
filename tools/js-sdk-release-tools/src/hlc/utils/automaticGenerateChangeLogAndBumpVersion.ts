@@ -22,6 +22,7 @@ import {execSync} from "child_process";
 import { getversionDate } from "../../utils/version";
 import { ApiVersionType } from "../../common/types"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
+import { getApiReviewPath } from '../../common/utils';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     const jsSdkRepoPath = String(shell.pwd());
@@ -61,9 +62,9 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
             if (sdkType && sdkType === 'mgmt') {
                 logger.log(`Package ${packageName} released before is track2 sdk`);
                 logger.log('Generating changelog by comparing api.md...');
-                const reviewFolder = path.join(packageFolderPath, 'changelog-temp', 'package', 'review');
-                let apiMdFileNPM: string = path.join(reviewFolder, fs.readdirSync(reviewFolder)[0]);
-                let apiMdFileLocal: string = path.join(packageFolderPath, 'review', fs.readdirSync(path.join(packageFolderPath, 'review'))[0]);
+                const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
+                const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
+                const apiMdFileLocal = getApiReviewPath(packageFolderPath);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);
                 let originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
                 if(nextVersion){

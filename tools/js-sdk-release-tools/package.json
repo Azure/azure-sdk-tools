@@ -3,6 +3,7 @@
   "version": "2.7.10",
   "description": "",
   "scripts": {
+    "dev2": "nodemon src/changelogToolCli.ts ../../../test/networkanalytics/arm-networkanalytics",
     "dev": "nodemon src/changelogToolCli.ts",
     "start": "node dist/changelogToolCli.js",
     "debug": "node --inspect-brk dist/changelogToolCli.js",

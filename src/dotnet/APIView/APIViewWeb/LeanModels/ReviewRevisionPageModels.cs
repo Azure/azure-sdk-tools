@@ -24,7 +24,7 @@ namespace APIViewWeb.LeanModels
         CommentThread
     }
 
-    public enum LinesOfTokensPosition
+    public enum RowOfTokensPosition
     {
         Top,
         Bottom
@@ -75,7 +75,7 @@ namespace APIViewWeb.LeanModels
         public List<StructuredToken> RowOfTokens { get; set; } = new List<StructuredToken>();
         public string NodeId { get; set; }
         public string NodeIdHashed { get; set; }
-        public LinesOfTokensPosition linesOfTokensPosition { get; set; }
+        public RowOfTokensPosition RowOfTokensPosition { get; set; }
         public HashSet<string> RowClasses { get; set; } = new HashSet<string>();
         public int? Indent { get; set; }
         public DiffKind DiffKind { get; set; }
@@ -92,17 +92,16 @@ namespace APIViewWeb.LeanModels
         public List<CodePanelRowData> Diagnostics { get; set; } = new List<CodePanelRowData>();
         public List<CodePanelRowData> CodeLines { get; set; } = new List<CodePanelRowData>();
         public List<CodePanelRowData> CommentThread { get; set; } = new List<CodePanelRowData>();
+        public NavigationTreeNode NavigationTreeNode { get; set; }
         public string ParentNodeId { get; set; }
-        public Dictionary<int, string> ChildrenNodeIdsInOrder { get; set; } = new Dictionary<int, string>();
+        public SortedDictionary<int, string> ChildrenNodeIdsInOrder { get; set; } = new SortedDictionary<int, string>();
         public bool IsDiffNode { get; set; }
         public bool IsDiffInDescendants { get; set; }
-        public bool IsClosingNode { get; set; }
+        public string BottomTokenNodeIdHash { get; set; }
     }
 
     public class CodePanelData
     {
-        public List<CodePanelRowData> Rows { get; set; } = new List<CodePanelRowData>();
-        public List<NavigationTreeNode> NavigationTree { get; set; } = new List<NavigationTreeNode>();
         public Dictionary<string, CodePanelNodeMetaData> NodeMetaData { get; set; } = new Dictionary<string, CodePanelNodeMetaData>();
     }
 
@@ -117,6 +116,5 @@ namespace APIViewWeb.LeanModels
         public string Label { get; set; }
         public NavigationTreeNodeData Data { get; set; }
         public bool Expanded { get; set; }
-        public List<NavigationTreeNode> Children { get; set; } = new List<NavigationTreeNode>();
     }
 }

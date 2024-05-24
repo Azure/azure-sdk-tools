@@ -32,12 +32,6 @@ export interface SelectItemModel {
   data: string
 }
 
-export interface CodePanelData {
-  apiForest: APITreeNode[]
-  diagnostics: CodeDiagnostic[]
-  comments: CommentItemModel[]
-}
-
 export interface CodeDiagnostic {
   diagnosticId: string
   text: string

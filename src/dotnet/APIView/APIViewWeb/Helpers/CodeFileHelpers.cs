@@ -13,16 +13,13 @@ namespace APIViewWeb.Helpers
         public static CodePanelData GenerateCodePanelDataAsync(CodePanelRawData codePanelRawData)
         {
             var codePanelData = new CodePanelData();
-            var navigationTree = new List<NavigationTreeNode>();
 
             for (int idx = 0; idx < codePanelRawData.APIForest.Count; idx++)
             {
                 var node = codePanelRawData.APIForest[idx];
-                BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node, navigationTree: navigationTree, 
+                BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node, 
                     parentNodeIdHashed: "root", nodePositionAtLevel: idx);
             };
-
-            codePanelData.NavigationTree = navigationTree;
 
             return codePanelData;
         }
@@ -102,59 +99,98 @@ namespace APIViewWeb.Helpers
             return result;
         }
 
-        private static void BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, List<NavigationTreeNode> navigationTree, string parentNodeIdHashed, int nodePositionAtLevel, int indent = 0)
+        private static void BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, string parentNodeIdHashed, int nodePositionAtLevel, int indent = 0)
         {
-            var nodeIdHashed = GetTokenNodeIdHash(apiTreeNode, LinesOfTokensPosition.Top);
-            codePanelData.NodeMetaData[nodeIdHashed].ParentNodeId = parentNodeIdHashed;
-            codePanelData.NodeMetaData[nodeIdHashed].IsClosingNode = false;
-            codePanelData.NodeMetaData[parentNodeIdHashed].ChildrenNodeIdsInOrder.Add(nodePositionAtLevel, nodeIdHashed);
+            var nodeIdHashed = GetTokenNodeIdHash(apiTreeNode, RowOfTokensPosition.Top);
 
-            BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, LinesOfTokensPosition.Top, indent);
-
-            // Set Navigation Icons
-            var navIcon = apiTreeNode.Kind.ToLower();
-            if (apiTreeNode.Properties.ContainsKey("SubKind"))
+            if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
             {
-                navIcon = apiTreeNode.Properties["SubKind"].ToLower();
+                codePanelData.NodeMetaData[nodeIdHashed].ParentNodeId = parentNodeIdHashed;
             }
-
-            if (apiTreeNode.Properties.ContainsKey("IconName"))
+            else
             {
-                navIcon = apiTreeNode.Properties["IconName"].ToLower();
-            }
-
-            var navTreeNode = new NavigationTreeNode()
-            {
-                Label = apiTreeNode.Name,
-                Data = new NavigationTreeNodeData()
+                codePanelData.NodeMetaData[nodeIdHashed] = new CodePanelNodeMetaData()
                 {
-                    Kind = apiTreeNode.Properties.ContainsKey("SubKind") ? apiTreeNode.Properties["SubKind"] : apiTreeNode.Properties["SubKind"],
-                    Icon = navIcon,
-                },
-                Expanded = true,
-            };
+                    ParentNodeId = parentNodeIdHashed
+                };
+            }
+
+            if (codePanelData.NodeMetaData.ContainsKey(parentNodeIdHashed))
+            {
+                codePanelData.NodeMetaData[parentNodeIdHashed].ChildrenNodeIdsInOrder.Add(nodePositionAtLevel, nodeIdHashed);
+            }
+            else
+            {
+                codePanelData.NodeMetaData[parentNodeIdHashed] = new CodePanelNodeMetaData();
+                codePanelData.NodeMetaData[parentNodeIdHashed].ChildrenNodeIdsInOrder.Add(nodePositionAtLevel, nodeIdHashed);
+            }
+            
+            BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, RowOfTokensPosition.Top, indent);
 
             if (!apiTreeNode.Tags.Contains("HideFromNavigation"))
             {
-                navigationTree.Add(navTreeNode);
+                var navIcon = apiTreeNode.Kind.ToLower();
+                if (apiTreeNode.Properties.ContainsKey("SubKind"))
+                {
+                    navIcon = apiTreeNode.Properties["SubKind"].ToLower();
+                }
+
+                if (apiTreeNode.Properties.ContainsKey("IconName"))
+                {
+                    navIcon = apiTreeNode.Properties["IconName"].ToLower();
+                }
+
+                var navTreeNode = new NavigationTreeNode()
+                {
+                    Label = apiTreeNode.Name,
+                    Data = new NavigationTreeNodeData()
+                    {
+                        Kind = apiTreeNode.Properties.ContainsKey("SubKind") ? apiTreeNode.Properties["SubKind"] : apiTreeNode.Kind.ToLower(),
+                        Icon = navIcon,
+                    },
+                    Expanded = true,
+                };
+
+                if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
+                {
+                    codePanelData.NodeMetaData[nodeIdHashed].NavigationTreeNode = navTreeNode;
+                }
+                else 
+                {
+                    codePanelData.NodeMetaData[nodeIdHashed] = new CodePanelNodeMetaData()
+                    {
+                        NavigationTreeNode = navTreeNode
+                    };
+                }
             }
 
             for (int idx = 0; idx < apiTreeNode.Children.Count; idx++) {
                 var node = apiTreeNode.Children[idx];
-                BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node, navigationTree: navTreeNode.Children, 
+                BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node, 
                     parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: idx, indent: indent + 1);
             };
 
             if (apiTreeNode.BottomTokens.Any())
             {
-                nodeIdHashed = GetTokenNodeIdHash(apiTreeNode, LinesOfTokensPosition.Bottom);
-                codePanelData.NodeMetaData[nodeIdHashed].ParentNodeId = parentNodeIdHashed;
-                codePanelData.NodeMetaData[nodeIdHashed].IsClosingNode = true;
-                BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, LinesOfTokensPosition.Bottom, indent);
+                var bottomNodeIdHashed = GetTokenNodeIdHash(apiTreeNode, RowOfTokensPosition.Bottom);
+                codePanelData.NodeMetaData[nodeIdHashed].BottomTokenNodeIdHash = bottomNodeIdHashed;
+                if (codePanelData.NodeMetaData.ContainsKey(bottomNodeIdHashed))
+                {
+                    codePanelData.NodeMetaData[bottomNodeIdHashed].ParentNodeId = parentNodeIdHashed;
+                }
+                else
+                {
+                    codePanelData.NodeMetaData[bottomNodeIdHashed] = new CodePanelNodeMetaData()
+                    {
+                        ParentNodeId = parentNodeIdHashed,
+                    };
+                }
+
+                BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, bottomNodeIdHashed, RowOfTokensPosition.Bottom, indent);
             }
         }
 
-        private static void BuildNodeTokens(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, string nodeIdHashed, LinesOfTokensPosition linesOfTokensPosition, int indent)
+        private static void BuildNodeTokens(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
         {
             if (apiTreeNode.DiffKind == DiffKind.NoneDiff)
             {
@@ -165,9 +201,9 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        private static void BuildTokensForNonDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, string nodeIdHashed, LinesOfTokensPosition linesOfTokensPosition, int indent)
+        private static void BuildTokensForNonDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
         {
-            var tokensInNode = (linesOfTokensPosition == LinesOfTokensPosition.Top) ? apiTreeNode.TopTokens : apiTreeNode.BottomTokens;
+            var tokensInNode = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokens : apiTreeNode.BottomTokens;
 
             var tokensInRow = new List<StructuredToken>();
             var rowClasses = new HashSet<string>();
@@ -182,8 +218,12 @@ namespace APIViewWeb.Helpers
 
                 if (token.Kind == StructuredTokenKind.LineBreak)
                 {
-                    InsertCodePanelRowData(codePanelData: codePanelData, codePanelRawData: codePanelRawData, tokensInRow: tokensInRow,
-                        rowClasses: rowClasses, tokenIdsInRow: tokenIdsInRow, nodeIdHashed: nodeIdHashed, nodeId: apiTreeNode.Id, indent: indent, linesOfTokensPosition: linesOfTokensPosition);
+                    InsertCodePanelRowData(codePanelData: codePanelData, codePanelRawData: codePanelRawData, tokensInRow: new List<StructuredToken>(tokensInRow),
+                        rowClasses: new HashSet<string>(rowClasses), tokenIdsInRow: new HashSet<string>(tokenIdsInRow), nodeIdHashed: nodeIdHashed, nodeId: apiTreeNode.Id, indent: indent, linesOfTokensPosition: linesOfTokensPosition);
+
+                    tokensInRow.Clear();
+                    rowClasses.Clear();
+                    tokenIdsInRow.Clear();
                 }
                 else 
                 {
@@ -197,14 +237,18 @@ namespace APIViewWeb.Helpers
 
             if (tokensInRow.Any())
             {
-                InsertCodePanelRowData(codePanelData: codePanelData, codePanelRawData: codePanelRawData, tokensInRow: tokensInRow,
-                    rowClasses: rowClasses, tokenIdsInRow: tokenIdsInRow, nodeIdHashed: nodeIdHashed, nodeId: apiTreeNode.Id, indent: indent, linesOfTokensPosition: linesOfTokensPosition);
+                InsertCodePanelRowData(codePanelData: codePanelData, codePanelRawData: codePanelRawData, tokensInRow: new List<StructuredToken>(tokensInRow),
+                    rowClasses: new HashSet<string>(rowClasses), tokenIdsInRow: new HashSet<string>(tokenIdsInRow), nodeIdHashed: nodeIdHashed, nodeId: apiTreeNode.Id, indent: indent, linesOfTokensPosition: linesOfTokensPosition);
+
+                tokensInRow.Clear();
+                rowClasses.Clear();
+                tokenIdsInRow.Clear();
             }
 
             AddDiagnoasticRow(codePanelData, codePanelRawData, apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition);
         }
 
-        private static string GetTokenNodeIdHash(APITreeNodeForAPI apiTreeNode, LinesOfTokensPosition linesOfTokensPosition)
+        private static string GetTokenNodeIdHash(APITreeNodeForAPI apiTreeNode, RowOfTokensPosition linesOfTokensPosition)
         {
             var idPart = apiTreeNode.Kind;
 
@@ -227,14 +271,14 @@ namespace APIViewWeb.Helpers
             return cssId;
         }
 
-        private static CodePanelRowData CollectUserCommentsForRow(CodePanelRawData codePanelRawData, HashSet<string> tokenIdsInRow, string nodeId, string nodeIdHashed, LinesOfTokensPosition linesOfTokensPosition, CodePanelRowData codePanelRowData)
+        private static CodePanelRowData CollectUserCommentsForRow(CodePanelRawData codePanelRawData, HashSet<string> tokenIdsInRow, string nodeId, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, CodePanelRowData codePanelRowData)
         {
             var commentRowData = new CodePanelRowData();
             var toggleCommentClass = (codePanelRawData.Diagnostics.Any(d => d.TargetId == nodeId)) ? "bi bi-chat-right-text show" : "";
 
             if (tokenIdsInRow.Any())
             {
-                toggleCommentClass = (!String.IsNullOrWhiteSpace(toggleCommentClass)) ? "bi bi-chat-right-text can-show" : toggleCommentClass;
+                toggleCommentClass = (String.IsNullOrWhiteSpace(toggleCommentClass)) ? "bi bi-chat-right-text can-show" : toggleCommentClass;
                 codePanelRowData.ToggleCommentsClasses = toggleCommentClass;
 
                 var commentsForRow = codePanelRawData.Comments.Where(c => tokenIdsInRow.Contains(c.ElementId));
@@ -243,13 +287,12 @@ namespace APIViewWeb.Helpers
                     commentRowData.Type = CodePanelRowDatatype.CommentThread;
                     commentRowData.NodeIdHashed = nodeIdHashed;
                     commentRowData.NodeId = nodeId;
-                    commentRowData.linesOfTokensPosition = linesOfTokensPosition;
+                    commentRowData.RowOfTokensPosition = linesOfTokensPosition;
                     commentRowData.RowClasses.Add("user-comment-thread");
                     commentRowData.Comments = commentsForRow.ToList();
+                    toggleCommentClass = toggleCommentClass.Replace("can-show", "show");
+                    codePanelRowData.ToggleCommentsClasses = toggleCommentClass;
                 }
-
-                toggleCommentClass = toggleCommentClass.Replace("can-show", "show");
-                codePanelRowData.ToggleCommentsClasses = toggleCommentClass;
             }
             else
             {
@@ -260,7 +303,7 @@ namespace APIViewWeb.Helpers
         }
 
         private static void InsertCodePanelRowData(CodePanelData codePanelData, CodePanelRawData codePanelRawData, List<StructuredToken> tokensInRow,
-            HashSet<string> rowClasses, HashSet<string> tokenIdsInRow, string nodeIdHashed, string nodeId, int indent, LinesOfTokensPosition linesOfTokensPosition)
+            HashSet<string> rowClasses, HashSet<string> tokenIdsInRow, string nodeIdHashed, string nodeId, int indent, RowOfTokensPosition linesOfTokensPosition)
         {
             var rowData = new CodePanelRowData()
             {
@@ -268,7 +311,7 @@ namespace APIViewWeb.Helpers
                 RowOfTokens = tokensInRow,
                 NodeIdHashed = nodeIdHashed,
                 NodeId = nodeId,
-                linesOfTokensPosition = linesOfTokensPosition,
+                RowOfTokensPosition = linesOfTokensPosition,
                 Indent = indent,
                 DiffKind = DiffKind.NoneDiff,
             };
@@ -286,32 +329,30 @@ namespace APIViewWeb.Helpers
                 codePanelData.NodeMetaData[nodeIdHashed].CodeLines.Add(rowData);
             }
 
-            if (commentsForRow != default(CodePanelRowData))
+            if (commentsForRow.Type == CodePanelRowDatatype.CommentThread && commentsForRow.Comments.Any())
             {
                 codePanelData.NodeMetaData[nodeIdHashed].CommentThread.Add(commentsForRow);
             }
-
-            tokensInRow.Clear();
-            rowClasses.Clear();
-            tokenIdsInRow.Clear();
         }
 
-        private static void AddDiagnoasticRow(CodePanelData codePanelData, CodePanelRawData codePanelRawData, string nodeId, string nodeIdHashed, LinesOfTokensPosition linesOfTokensPosition)
+        private static void AddDiagnoasticRow(CodePanelData codePanelData, CodePanelRawData codePanelRawData, string nodeId, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition)
         {
-            if (codePanelRawData.Diagnostics.Any(d => d.TargetId == nodeId) && linesOfTokensPosition != LinesOfTokensPosition.Bottom)
+            if (codePanelRawData.Diagnostics.Any(d => d.TargetId == nodeId) && linesOfTokensPosition != RowOfTokensPosition.Bottom)
             {
                 var diagnosticsForRow = codePanelRawData.Diagnostics.Where(d => d.TargetId == nodeId);
-                foreach (var diagnosticRow in diagnosticsForRow)
+                foreach (var diagnostic in diagnosticsForRow)
                 {
+
                     var rowData = new CodePanelRowData()
                     {
                         Type = CodePanelRowDatatype.Diagnostics,
                         NodeIdHashed = nodeIdHashed,
                         NodeId = nodeId,
-                        linesOfTokensPosition = linesOfTokensPosition,
-                        Diagnostics = diagnosticRow
+                        RowOfTokensPosition = linesOfTokensPosition,
+                        Diagnostics = diagnostic,
+                        RowClasses = new HashSet<string>() { "diagnostic", diagnostic.Level.ToString().ToLower() }
                     };
-                    codePanelData.NodeMetaData[nodeIdHashed].CommentThread.Add(rowData);
+                    codePanelData.NodeMetaData[nodeIdHashed].Diagnostics.Add(rowData);
                 }
             }
         }

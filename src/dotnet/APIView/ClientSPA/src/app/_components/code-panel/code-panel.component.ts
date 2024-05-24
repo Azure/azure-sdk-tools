@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, Sim
 import { BehaviorSubject, fromEvent, of, Subject, takeUntil } from 'rxjs';
 import { debounceTime, finalize, scan, take } from 'rxjs/operators';
 import { CommentItemModel } from 'src/app/_models/review';
-import { CodePanelRowDatatype } from 'src/app/_models/revision';
+import { CodePanelData, CodePanelRowDatatype } from 'src/app/_models/revision';
 import { CodePanelRowData, CodePanelToggleableData, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
 import { AfterViewInit } from '@angular/core';
@@ -15,8 +15,8 @@ import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
   styleUrls: ['./code-panel.component.scss']
 })
 export class CodePanelComponent implements OnChanges, OnDestroy{
-  @Input() codeLinesData: CodePanelRowData[] = [];
-  @Input() otherCodePanelData: Map<string, CodePanelToggleableData> = new Map<string, CodePanelToggleableData>();
+  @Input() codePanelRowData: CodePanelRowData[] = [];
+  @Input() codePanelData: CodePanelData | null = null;
   @Input() reviewComments : CommentItemModel[] | undefined = [];
   @Input() isDiffView: boolean = false;
   @Input() language: string | undefined;
@@ -28,7 +28,6 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   codeWindowHeight: string | undefined = undefined;
 
   codePanelRowSource: IDatasource<CodePanelRowData> | undefined;
-  visibleCodePanelRowData: CodePanelRowData[] = [];
   CodePanelRowDatatype = CodePanelRowDatatype;
   
   private destroyApiTreeNode$ = new Subject<void>();
@@ -41,8 +40,8 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['codeLinesData']) {
-      if (changes['codeLinesData'].currentValue.length > 0) {
+    if (changes['codePanelRowData']) {
+      if (changes['codePanelRowData'].currentValue.length > 0) {
         this.loadCodePanelViewPort();
       } else {
         this.isLoading = true;
@@ -75,12 +74,12 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     const lineNumber = target.closest('.line-actions')!.querySelector('.line-number')!.textContent;
 
     if (target.classList.contains('bi-arrow-up-square')) {
-      const documentationData = this.otherCodePanelData.get(nodeId!)?.documentation;
+      const documentationData = this.codePanelData?.nodeMetaData[nodeId!]?.documentation;
       await this.insertItemIntoScroller(documentationData!, lineNumber!, "toggleDocumentationClasses", "bi-arrow-up-square", "bi-arrow-down-square");
       target.classList.remove('bi-arrow-up-square')
       target.classList.add('bi-arrow-down-square');
     } else if (target.classList.contains('bi-arrow-down-square')) {
-      const documentationData = this.otherCodePanelData.get(nodeId!)?.documentation;
+      const documentationData = this.codePanelData?.nodeMetaData[nodeId!]?.documentation;
       const lineNumbersOfLinesToRemove = new Set(documentationData!.map(d => d.lineNumber));
       await this.removeItemFromScroller(lineNumbersOfLinesToRemove, lineNumber!, "toggleDocumentationClasses", "bi-arrow-down-square", "bi-arrow-up-square", "documentation");
       target.classList.remove('bi-arrow-down-square')
@@ -101,35 +100,35 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
 
     const updatedCodeLinesData : CodePanelRowData[] = [];
 
-    for (let i = 0; i < this.codeLinesData.length; i++) {
-      if (this.codeLinesData[i].rowType === CodePanelRowDatatype.CodeLine &&  this.otherCodePanelData.has(this.codeLinesData[i].nodeId!)) {
-        const nodeData = this.otherCodePanelData.get(this.codeLinesData[i].nodeId!);
+    for (let i = 0; i < this.codePanelRowData.length; i++) {
+      if (this.codePanelRowData[i].type === CodePanelRowDatatype.CodeLine &&  this.codePanelRowData[i].nodeId! in this.codePanelData?.nodeMetaData!) {
+        const nodeData = this.codePanelData?.nodeMetaData[this.codePanelRowData[i].nodeId!];
 
         switch (codePanelRowDatatype) {
           case CodePanelRowDatatype.CommentThread:
-            updatedCodeLinesData.push(this.codeLinesData[i]);
-            updatedCodeLinesData.push(...nodeData?.comments!);
+            updatedCodeLinesData.push(this.codePanelRowData[i]);
+            updatedCodeLinesData.push(...nodeData?.commentThread!);
             break;
           case CodePanelRowDatatype.Diagnostics:
-            updatedCodeLinesData.push(this.codeLinesData[i]);
+            updatedCodeLinesData.push(this.codePanelRowData[i]);
             updatedCodeLinesData.push(...nodeData?.diagnostics!);
             break;
           case CodePanelRowDatatype.Documentation:
-            if (this.codeLinesData[i].toggleDocumentationClasses?.includes('bi-arrow-up-square')) {
+            if (this.codePanelRowData[i].toggleDocumentationClasses?.includes('bi-arrow-up-square')) {
               updatedCodeLinesData.push(...nodeData?.documentation!);
-              this.codeLinesData[i].toggleDocumentationClasses = this.codeLinesData[i].toggleDocumentationClasses?.replace('bi-arrow-up-square', 'bi-arrow-down-square');
+              this.codePanelRowData[i].toggleDocumentationClasses = this.codePanelRowData[i].toggleDocumentationClasses?.replace('bi-arrow-up-square', 'bi-arrow-down-square');
             }
-            updatedCodeLinesData.push(this.codeLinesData[i]);
+            updatedCodeLinesData.push(this.codePanelRowData[i]);
             break;         
         }
       }
       else {
-        updatedCodeLinesData.push(this.codeLinesData[i]);
+        updatedCodeLinesData.push(this.codePanelRowData[i]);
       }
     }
     this.isLoading = true;
     this.codePanelRowSource = undefined
-    this.codeLinesData = updatedCodeLinesData;
+    this.codePanelRowData = updatedCodeLinesData;
     this.changeDetectorRef.detectChanges();
     this.loadCodePanelViewPort();
   }
@@ -140,20 +139,20 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
 
     let preData = [];
     let nodeIndex = 0;
-    for (let i = 0; i < this.codeLinesData.length; i++) {
-      if (this.codeLinesData[i].lineNumber === parseInt(lineNumber)) {
+    for (let i = 0; i < this.codePanelRowData.length; i++) {
+      if (this.codePanelRowData[i].lineNumber === parseInt(lineNumber)) {
         nodeIndex = i;
         break;
       }
-      preData.push(this.codeLinesData[i]);
+      preData.push(this.codePanelRowData[i]);
     }
-    let postData = this.codeLinesData.slice(nodeIndex);
+    let postData = this.codePanelRowData.slice(nodeIndex);
 
     if (propertyToChange && iconClassToremove && iconClassToAdd) {
       postData[0] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, postData[0], propertyToChange);
     }
 
-    this.codeLinesData = [
+    this.codePanelRowData = [
       ...preData,
       ...itemsToInsert!,
       ...postData
@@ -170,19 +169,19 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
 
     const indexesToRemove : number[] = [];
     let filteredCodeLinesData : CodePanelRowData[] = [];
-    for (let i = 0; i < this.codeLinesData.length; i++) {
-      if (this.codeLinesData[i].rowType === codePanelRowDatatype) {
+    for (let i = 0; i < this.codePanelRowData.length; i++) {
+      if (this.codePanelRowData[i].type === codePanelRowDatatype) {
         indexesToRemove.push(i);
       }
       else {
         if (codePanelRowDatatype === CodePanelRowDatatype.Documentation) {
-          this.codeLinesData[i].toggleDocumentationClasses = this.codeLinesData[i].toggleDocumentationClasses?.replace('bi-arrow-down-square', 'bi-arrow-up-square');
+          this.codePanelRowData[i].toggleDocumentationClasses = this.codePanelRowData[i].toggleDocumentationClasses?.replace('bi-arrow-down-square', 'bi-arrow-up-square');
         }
-        filteredCodeLinesData.push(this.codeLinesData[i]);
+        filteredCodeLinesData.push(this.codePanelRowData[i]);
       }
     }
 
-    this.codeLinesData = filteredCodeLinesData;
+    this.codePanelRowData = filteredCodeLinesData;
     await this.codePanelRowSource?.adapter?.remove({
       indexes: indexesToRemove
     });
@@ -195,21 +194,21 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     const indexesToRemove : number[] = [];
     const filteredCodeLinesData : CodePanelRowData[] = [];
 
-    for (let i = 0; i < this.codeLinesData.length; i++) {
-      let lineNo = this.codeLinesData[i].lineNumber!;
-      let rowClasses = this.codeLinesData[i].rowClasses;
+    for (let i = 0; i < this.codePanelRowData.length; i++) {
+      let lineNo = this.codePanelRowData[i].lineNumber!;
+      let rowClasses = this.codePanelRowData[i].rowClasses;
       if (lineNo === parseInt(actionLineNumber) && propertyToChange && iconClassToremove && iconClassToAdd) {
-        this.codeLinesData[i] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, this.codeLinesData[i], propertyToChange);
+        this.codePanelRowData[i] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, this.codePanelRowData[i], propertyToChange);
       }
 
       if (lineNumbersToRemove.size > 0 && lineNumbersToRemove.has(lineNo) && rowClasses?.has(lineClasstoRemove!)) {
         indexesToRemove.push(i);
       } else {
-        filteredCodeLinesData.push(this.codeLinesData[i]);
+        filteredCodeLinesData.push(this.codePanelRowData[i]);
       }
     }
 
-    this.codeLinesData = filteredCodeLinesData;
+    this.codePanelRowData = filteredCodeLinesData;
     await this.codePanelRowSource?.adapter?.remove({
       indexes: indexesToRemove
     });
@@ -220,8 +219,8 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
       this.codePanelRowSource = new Datasource<CodePanelRowData>({
         get: (index, count, success) => {
           let data : any = [];
-          if (this.codeLinesData.length > 0) {
-            data = this.codeLinesData.slice(index, index + count);
+          if (this.codePanelRowData.length > 0) {
+            data = this.codePanelRowData.slice(index, index + count);
           }
           success(data);
         },
@@ -231,7 +230,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
           itemSize: 21,
           startIndex : 0,
           minIndex: 0,
-          maxIndex: this.codeLinesData.length - 1,
+          maxIndex: this.codePanelRowData.length - 1,
           sizeStrategy: SizeStrategy.Average
         }
       });
@@ -249,8 +248,8 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   }
 
   setMaxLineNumberWidth() {
-    if (this.codeLinesData[this.codeLinesData.length - 1].lineNumber) {
-      document.documentElement.style.setProperty('--max-line-number-width', `${this.codeLinesData[this.codeLinesData.length - 1].lineNumber!.toString().length}ch`);
+    if (this.codePanelRowData[this.codePanelRowData.length - 1].lineNumber) {
+      document.documentElement.style.setProperty('--max-line-number-width', `${this.codePanelRowData[this.codePanelRowData.length - 1].lineNumber!.toString().length}ch`);
     }
   }
 

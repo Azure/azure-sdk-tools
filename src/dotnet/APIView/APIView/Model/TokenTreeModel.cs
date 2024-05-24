@@ -20,7 +20,7 @@ namespace APIView.Model
         Url = 5
     }
 
-    public enum DiffNodeKind
+    public enum DiffKind
     {
         NoneDiff = 0,
         Unchanged = 1, // Unchanged means the top level node is the same, the children could still contain diffs.
@@ -199,7 +199,7 @@ namespace APIView.Model
     public class  APITreeNodeForAPI : APITreeNode
     {
         public new List<APITreeNodeForAPI> Children { get; set; } = new List<APITreeNodeForAPI>();
-        public DiffNodeKind DiffKind { get; set; } = DiffNodeKind.NoneDiff;
+        public DiffKind DiffKind { get; set; } = DiffKind.NoneDiff;
         public List<StructuredToken> TopDiffTokens { get; set; } = new List<StructuredToken>();
         public List<StructuredToken> BottomDiffTokens { get; set; } = new List<StructuredToken>();
 

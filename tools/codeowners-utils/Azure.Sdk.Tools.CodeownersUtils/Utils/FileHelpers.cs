@@ -77,13 +77,12 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
                     // HttpRequestException means the request failed due to an underlying issue such as network connectivity,
                     // DNS failure, server certificate validation or timeout.
                     Console.WriteLine($"GetUrlContents attempt number {attempts}. HttpRequestException trying to fetch {url}. Exception message = {httpReqEx.Message}");
-  
                 }
 
                 // Skip retries on a NotFound response
                 if (response?.StatusCode == HttpStatusCode.NotFound)
                 {
-                    return null;
+                    break;
                 }
 
                 if (attempts < maxRetries)
@@ -93,7 +92,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
                 attempts++;
             }
             // This will only get hit if the final retry is non-OK status code
-            throw new FileLoadException($"Unable to fetch {url} after {maxRetries}. See above for status codes for each attempt.");
+            throw new FileLoadException($"Unable to fetch {url} after {attempts} attempts. See above for status codes for each attempt.");
         }
     }
 }

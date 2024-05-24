@@ -56,6 +56,9 @@ parameters:
         Pool: $(MACPOOL)
         Image: $(MACVMIMAGE)
         Os: macOS
+  - name: TestAzureSubscription  # Azure service connection to use for running tests
+    type: string
+    default: 'Azure SDK Engineering System'
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -169,13 +172,18 @@ extends:
 
                 - ${{ parameters.TestPreSteps }}
 
-                - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
+                - task: AzureCLI@2
                   displayName: 'Test'
-                  workingDirectory: '${{ coalesce(parameters.TestDirectory, parameters.ToolDirectory) }}'
-                  env:
-                    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-                    DOTNET_CLI_TELEMETRY_OPTOUT: 1
-                    DOTNET_MULTILEVEL_LOOKUP: 0
+                  inputs:
+                    azureSubscription: ${{ parameters.TestAzureSubscription }}
+                    scriptType: 'pscore'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = '1'
+                      $env:DOTNET_CLI_TELEMETRY_OPTOUT = '1'
+                      $env:DOTNET_MULTILEVEL_LOOKUP = '0'
+                      dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx
+                    workingDirectory: '${{ coalesce(parameters.TestDirectory, parameters.ToolDirectory) }}'
 
                 - ${{ parameters.TestPostSteps }}
 

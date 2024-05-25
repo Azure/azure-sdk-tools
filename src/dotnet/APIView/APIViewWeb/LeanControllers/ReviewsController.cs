@@ -11,6 +11,7 @@ using APIViewWeb.Managers.Interfaces;
 using Microsoft.Extensions.Configuration;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using System.Diagnostics;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -122,7 +123,12 @@ namespace APIViewWeb.LeanControllers
                     Comments = comments,
                 };
 
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+
                 result = CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+
+                stopwatch.Stop();
 
                 if (!string.IsNullOrEmpty(diffApiRevisionId))
                 {

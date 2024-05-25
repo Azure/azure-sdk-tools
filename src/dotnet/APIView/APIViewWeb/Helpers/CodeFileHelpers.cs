@@ -350,7 +350,7 @@ namespace APIViewWeb.Helpers
                         NodeId = nodeId,
                         RowOfTokensPosition = linesOfTokensPosition,
                         Diagnostics = diagnostic,
-                        RowClasses = new HashSet<string>() { "diagnostic", diagnostic.Level.ToString().ToLower() }
+                        RowClasses = new HashSet<string>() { "diagnostics", diagnostic.Level.ToString().ToLower() }
                     };
                     codePanelData.NodeMetaData[nodeIdHashed].Diagnostics.Add(rowData);
                 }

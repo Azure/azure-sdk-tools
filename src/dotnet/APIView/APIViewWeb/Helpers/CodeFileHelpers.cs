@@ -2,9 +2,11 @@
 using APIView.Model;
 using APIViewWeb.Extensions;
 using APIViewWeb.LeanModels;
+using Microsoft.VisualStudio.Services.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace APIViewWeb.Helpers
 {
@@ -14,12 +16,11 @@ namespace APIViewWeb.Helpers
         {
             var codePanelData = new CodePanelData();
 
-            for (int idx = 0; idx < codePanelRawData.APIForest.Count; idx++)
+            Parallel.ForEach(codePanelRawData.APIForest, (node, state, localIndex) =>
             {
-                var node = codePanelRawData.APIForest[idx];
                 BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node, 
-                    parentNodeIdHashed: "root", nodePositionAtLevel: idx);
-            };
+                    parentNodeIdHashed: "root", nodePositionAtLevel: (int)localIndex);
+            });
 
             return codePanelData;
         }
@@ -109,20 +110,18 @@ namespace APIViewWeb.Helpers
             }
             else
             {
-                codePanelData.NodeMetaData[nodeIdHashed] = new CodePanelNodeMetaData()
-                {
-                    ParentNodeId = parentNodeIdHashed
-                };
+                codePanelData.NodeMetaData.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                codePanelData.NodeMetaData[nodeIdHashed].ParentNodeId = parentNodeIdHashed;
             }
 
             if (codePanelData.NodeMetaData.ContainsKey(parentNodeIdHashed))
             {
-                codePanelData.NodeMetaData[parentNodeIdHashed].ChildrenNodeIdsInOrder.Add(nodePositionAtLevel, nodeIdHashed);
+                codePanelData.NodeMetaData[parentNodeIdHashed].ChildrenNodeIdsInOrder.TryAdd(nodePositionAtLevel, nodeIdHashed);
             }
             else
             {
                 codePanelData.NodeMetaData[parentNodeIdHashed] = new CodePanelNodeMetaData();
-                codePanelData.NodeMetaData[parentNodeIdHashed].ChildrenNodeIdsInOrder.Add(nodePositionAtLevel, nodeIdHashed);
+                codePanelData.NodeMetaData[parentNodeIdHashed].ChildrenNodeIdsInOrder.TryAdd(nodePositionAtLevel, nodeIdHashed);
             }
             
             BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, RowOfTokensPosition.Top, indent);
@@ -157,18 +156,16 @@ namespace APIViewWeb.Helpers
                 }
                 else 
                 {
-                    codePanelData.NodeMetaData[nodeIdHashed] = new CodePanelNodeMetaData()
-                    {
-                        NavigationTreeNode = navTreeNode
-                    };
+                    codePanelData.NodeMetaData.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                    codePanelData.NodeMetaData[nodeIdHashed].NavigationTreeNode = navTreeNode;
                 }
             }
 
-            for (int idx = 0; idx < apiTreeNode.Children.Count; idx++) {
-                var node = apiTreeNode.Children[idx];
+            Parallel.ForEach(apiTreeNode.Children, (node, state, localIndex) =>
+            { 
                 BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node, 
-                    parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: idx, indent: indent + 1);
-            };
+                    parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: (int)localIndex, indent: indent + 1);
+            });
 
             if (apiTreeNode.BottomTokens.Any())
             {
@@ -180,10 +177,8 @@ namespace APIViewWeb.Helpers
                 }
                 else
                 {
-                    codePanelData.NodeMetaData[bottomNodeIdHashed] = new CodePanelNodeMetaData()
-                    {
-                        ParentNodeId = parentNodeIdHashed,
-                    };
+                    codePanelData.NodeMetaData.TryAdd(bottomNodeIdHashed, new CodePanelNodeMetaData());
+                    codePanelData.NodeMetaData[bottomNodeIdHashed].ParentNodeId = parentNodeIdHashed;
                 }
 
                 BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, bottomNodeIdHashed, RowOfTokensPosition.Bottom, indent);
@@ -321,17 +316,41 @@ namespace APIViewWeb.Helpers
 
             if (rowData.Type == CodePanelRowDatatype.Documentation)
             {
-                codePanelData.NodeMetaData[nodeIdHashed].Documentation.Add(rowData);
+                if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
+                {
+                    codePanelData.NodeMetaData[nodeIdHashed].Documentation.Add(rowData);
+                }
+                else 
+                {
+                    codePanelData.NodeMetaData.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                    codePanelData.NodeMetaData[nodeIdHashed].Documentation.Add(rowData);
+                } 
             }
 
             if (rowData.Type == CodePanelRowDatatype.CodeLine)
             {
-                codePanelData.NodeMetaData[nodeIdHashed].CodeLines.Add(rowData);
+                if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
+                {
+                    codePanelData.NodeMetaData[nodeIdHashed].CodeLines.Add(rowData);
+                }
+                else
+                {
+                    codePanelData.NodeMetaData.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                    codePanelData.NodeMetaData[nodeIdHashed].CodeLines.Add(rowData);
+                }
             }
 
             if (commentsForRow.Type == CodePanelRowDatatype.CommentThread && commentsForRow.Comments.Any())
             {
-                codePanelData.NodeMetaData[nodeIdHashed].CommentThread.Add(commentsForRow);
+                if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
+                {
+                    codePanelData.NodeMetaData[nodeIdHashed].CommentThread.Add(commentsForRow);
+                }
+                else
+                {
+                    codePanelData.NodeMetaData.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                    codePanelData.NodeMetaData[nodeIdHashed].CommentThread.Add(commentsForRow);
+                }
             }
         }
 

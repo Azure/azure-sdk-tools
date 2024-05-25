@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using ApiView;
 using APIView;
@@ -94,7 +95,7 @@ namespace APIViewWeb.LeanModels
         public List<CodePanelRowData> CommentThread { get; set; } = new List<CodePanelRowData>();
         public NavigationTreeNode NavigationTreeNode { get; set; }
         public string ParentNodeId { get; set; }
-        public SortedDictionary<int, string> ChildrenNodeIdsInOrder { get; set; } = new SortedDictionary<int, string>();
+        public ConcurrentDictionary<int, string> ChildrenNodeIdsInOrder { get; set; } = new ConcurrentDictionary<int, string>();
         public bool IsDiffNode { get; set; }
         public bool IsDiffInDescendants { get; set; }
         public string BottomTokenNodeIdHash { get; set; }
@@ -102,7 +103,7 @@ namespace APIViewWeb.LeanModels
 
     public class CodePanelData
     {
-        public Dictionary<string, CodePanelNodeMetaData> NodeMetaData { get; set; } = new Dictionary<string, CodePanelNodeMetaData>();
+        public ConcurrentDictionary<string, CodePanelNodeMetaData> NodeMetaData { get; set; } = new ConcurrentDictionary<string, CodePanelNodeMetaData>();
     }
 
     public class NavigationTreeNodeData

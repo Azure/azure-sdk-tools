@@ -3,6 +3,7 @@ using APIView.Model;
 using APIViewWeb.Extensions;
 using APIViewWeb.LeanModels;
 using Microsoft.VisualStudio.Services.Common;
+using NuGet.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -78,7 +79,7 @@ namespace APIViewWeb.Helpers
             };
         }
 
-        public static APITreeNodeForAPI CreateAPITreeDiffNode(APITreeNodeForAPI node, DiffKind diffKind)
+        private static APITreeNodeForAPI CreateAPITreeDiffNode(APITreeNodeForAPI node, DiffKind diffKind)
         {
             var result = new APITreeNodeForAPI
             {
@@ -192,7 +193,8 @@ namespace APIViewWeb.Helpers
                 BuildTokensForNonDiffNodes(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, linesOfTokensPosition, indent);
             }
             else
-            { 
+            {
+                BuildTokensForDiffNodes(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, linesOfTokensPosition, indent);
             }
         }
 
@@ -243,6 +245,185 @@ namespace APIViewWeb.Helpers
             AddDiagnoasticRow(codePanelData, codePanelRawData, apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition);
         }
 
+        private static void BuildTokensForDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
+        {
+            var lineGroupBuildOrder = new List<string>() { "documentation" };
+            var beforeTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokens : apiTreeNode.BottomTokens;
+            var afterTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopDiffTokens : apiTreeNode.BottomDiffTokens;
+
+            if (apiTreeNode.DiffKind == DiffKind.Added)
+            {
+                afterTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokens : apiTreeNode.BottomTokens;
+                beforeTokens = new List<StructuredToken>();
+            }
+
+            var beforeTokensInProcess = new Queue<DiffLineInProcess>();
+            var afterTokensInProcess = new Queue<DiffLineInProcess>();
+
+            int beforeIndex = 0;
+            int afterIndex = 0;
+
+            while (beforeIndex < beforeTokens.Count || afterIndex < afterTokens.Count || beforeTokensInProcess.Count > 0 || afterTokensInProcess.Count > 0)
+            {
+                var beforeTokenRow = new List<StructuredToken>();
+                var afterTokenRow = new List<StructuredToken>();
+
+                var beforeRowClasses = new HashSet<string>();
+                var afterRowClasses = new HashSet<string>();
+
+                var beforeTokenIdsInRow = new HashSet<string>();
+                var afterTokenIdsInRow = new HashSet<string>();
+
+                var beforeRowGroupId = string.Empty;
+                var afterRowGroupId = string.Empty;
+
+                while (beforeIndex < beforeTokens.Count)
+                {
+                    var token = beforeTokens[beforeIndex++];
+                    if (token.Kind == StructuredTokenKind.LineBreak)
+                    {
+                        break;
+                    }
+
+                    if (token.Properties.ContainsKey("GroupId"))
+                    {
+                        beforeRowGroupId = token.Properties["GroupId"];
+                    }
+                    else
+                    {
+                        beforeRowGroupId = string.Empty;
+                    }
+                    beforeTokenRow.Add(token);
+                    if (!String.IsNullOrWhiteSpace(token.Id))
+                    {
+                        beforeTokenIdsInRow.Add(token.Id);
+                    }
+                }
+
+                if (beforeTokenRow.Count > 0)
+                {
+                    beforeTokensInProcess.Enqueue(new DiffLineInProcess() 
+                    {
+                        GroupId = beforeRowGroupId,
+                        RowOfTokens = beforeTokenRow,
+                        TokenIdsInRow = new HashSet<string>(beforeTokenIdsInRow)
+                    });
+                    beforeTokenIdsInRow.Clear();
+                }
+
+                while (afterIndex < afterTokens.Count)
+                {
+                    var token = afterTokens[afterIndex++];
+                    if (token.Kind == StructuredTokenKind.LineBreak)
+                    {
+                        break;
+                    }
+
+                    if (token.Properties.ContainsKey("GroupId"))
+                    {
+                        afterRowGroupId = token.Properties["GroupId"];
+                    }
+                    else
+                    {
+                        afterRowGroupId = string.Empty;
+                    }
+                    afterTokenRow.Add(token);
+                    if (!String.IsNullOrWhiteSpace(token.Id))
+                    {
+                        afterTokenIdsInRow.Add(token.Id);
+                    }   
+                }
+
+                if (afterTokenRow.Count > 0)
+                {
+                    afterTokensInProcess.Enqueue(new DiffLineInProcess() 
+                    {
+                        GroupId = afterRowGroupId,
+                        RowOfTokens = afterTokenRow,
+                        TokenIdsInRow = new HashSet<string>(afterTokenIdsInRow)
+                    });
+                    afterTokenIdsInRow.Clear();
+                }
+
+                if (beforeTokensInProcess.Count > 0 || afterTokensInProcess.Count > 0)
+                {
+                    var beforeDiffTokens = new List<StructuredToken>();
+                    var afterDiffTokens = new List<StructuredToken>();
+
+                    var beforeTokenIdsInDiffRow = new HashSet<string>();
+                    var afterTokenIdsInDiffRow = new HashSet<string>();
+
+                    if (beforeTokensInProcess.Count > 0 && afterTokensInProcess.Count > 0)
+                    {
+                        if (beforeTokensInProcess.Peek().GroupId == afterTokensInProcess.Peek().GroupId)
+                        {
+                            if (!String.IsNullOrWhiteSpace(beforeTokensInProcess.Peek().GroupId))
+                            {
+                                beforeRowClasses.Add(beforeTokensInProcess.Peek().GroupId);
+                            }
+
+                            if (!String.IsNullOrWhiteSpace(afterTokensInProcess.Peek().GroupId))
+                            {
+                                afterRowClasses.Add(afterTokensInProcess.Peek().GroupId);
+                            }
+
+                            beforeTokenIdsInRow = beforeTokensInProcess.Peek().TokenIdsInRow;
+                            afterTokenIdsInRow = afterTokensInProcess.Peek().TokenIdsInRow;
+                            beforeDiffTokens = beforeTokensInProcess.Dequeue().RowOfTokens;
+                            afterDiffTokens = afterTokensInProcess.Dequeue().RowOfTokens;
+                        }
+                        else
+                        {
+                            var beforeTokenRowBuildOrder = lineGroupBuildOrder.IndexOf(beforeTokensInProcess.Peek().GroupId);
+                            var afterTokenRowBuildOrder = lineGroupBuildOrder.IndexOf(afterTokensInProcess.Peek().GroupId);
+                            if ((afterTokenRowBuildOrder < 0) || (beforeTokenRowBuildOrder >= 0 && beforeTokenRowBuildOrder < afterTokenRowBuildOrder))
+                            {
+                                if (!String.IsNullOrWhiteSpace(beforeTokensInProcess.Peek().GroupId))
+                                {
+                                    beforeRowClasses.Add(beforeTokensInProcess.Peek().GroupId);
+                                }
+                                beforeTokenIdsInRow = beforeTokensInProcess.Peek().TokenIdsInRow;
+                                beforeDiffTokens = beforeTokensInProcess.Dequeue().RowOfTokens;
+                            }
+                            else
+                            {
+                                if (!String.IsNullOrWhiteSpace(afterTokensInProcess.Peek().GroupId))
+                                {
+                                    afterRowClasses.Add(afterTokensInProcess.Peek().GroupId);
+                                }
+                                afterTokenIdsInRow = afterTokensInProcess.Peek().TokenIdsInRow;
+                                afterDiffTokens = afterTokensInProcess.Dequeue().RowOfTokens;
+                            }
+                        }
+                    }
+                    else if (beforeTokensInProcess.Count > 0)
+                    {
+                        if (!String.IsNullOrWhiteSpace(beforeTokensInProcess.Peek().GroupId))
+                        {
+                            beforeRowClasses.Add(beforeTokensInProcess.Peek().GroupId);
+                        }
+                        beforeTokenIdsInRow = beforeTokensInProcess.Peek().TokenIdsInRow;
+                        beforeDiffTokens = beforeTokensInProcess.Dequeue().RowOfTokens;
+                    }
+                    else
+                    {
+                        if (!String.IsNullOrWhiteSpace(afterTokensInProcess.Peek().GroupId))
+                        {
+                            afterRowClasses.Add(afterTokensInProcess.Peek().GroupId);
+                        }
+                        afterTokenIdsInRow = afterTokensInProcess.Peek().TokenIdsInRow;
+                        afterDiffTokens = afterTokensInProcess.Dequeue().RowOfTokens;   
+                    }
+
+                    var diffTokenRowResult = ComputeTokenDiff(beforeDiffTokens, afterDiffTokens);
+                }
+            }   
+
+
+
+
+        }
+        
         private static string GetTokenNodeIdHash(APITreeNodeForAPI apiTreeNode, RowOfTokensPosition linesOfTokensPosition)
         {
             var idPart = apiTreeNode.Kind;
@@ -374,6 +555,65 @@ namespace APIViewWeb.Helpers
                     codePanelData.NodeMetaData[nodeIdHashed].Diagnostics.Add(rowData);
                 }
             }
+        }
+
+        public static (List<StructuredToken>, List<StructuredToken>, bool) ComputeTokenDiff(List<StructuredToken> beforeTokens, List<StructuredToken> afterTokens)
+        {
+            var diffResultA = new List<StructuredToken>();
+            var diffResultB = new List<StructuredToken>();
+            bool hasDiff = false;
+
+            var beforeTokensMap = beforeTokens.Select((token, index) => new { Key = $"{token.Id}{token.Value}{index}", Value = token })
+                                              .ToDictionary(x => x.Key, x => x.Value);
+
+            var afterTokensMap = afterTokens.Select((token, index) => new { Key = $"{token.Id}{token.Value}{index}", Value = token })
+                                            .ToDictionary(x => x.Key, x => x.Value);
+
+            foreach (var pair in beforeTokensMap)
+            {
+                if (afterTokensMap.ContainsKey(pair.Key))
+                {
+                    diffResultA.Add(new StructuredToken(pair.Value));
+                }
+                else
+                {
+                    if (afterTokens.Count > 0)
+                    {
+                        var token = new StructuredToken(pair.Value);
+                        token.RenderClasses.Add("diff-change");
+                        diffResultA.Add(token);
+                    }
+                    else
+                    {
+                        diffResultA.Add(new StructuredToken(pair.Value));
+                    }
+                    hasDiff = true;
+                }
+            }
+
+            foreach (var pair in afterTokensMap)
+            {
+                if (beforeTokensMap.ContainsKey(pair.Key))
+                {
+                    diffResultB.Add(new StructuredToken(pair.Value));
+                }
+                else
+                {
+                    if (beforeTokens.Count > 0)
+                    {
+                        var token = new StructuredToken(pair.Value);
+                        token.RenderClasses.Add("diff-change");
+                        diffResultB.Add(token);
+                    }
+                    else
+                    {
+                        diffResultB.Add(new StructuredToken(pair.Value));
+                    }
+                    hasDiff = true;
+                }
+            }
+
+            return (diffResultA, diffResultB, hasDiff);
         }
     }
 }

@@ -118,4 +118,11 @@ namespace APIViewWeb.LeanModels
         public NavigationTreeNodeData Data { get; set; }
         public bool Expanded { get; set; }
     }
+
+    public class DiffLineInProcess
+    {
+        public string GroupId { get; set; }
+        public List<StructuredToken> RowOfTokens { get; set; } = new List<StructuredToken>();
+        public HashSet<string> TokenIdsInRow { get; set; } = new HashSet<string>();
+    }
 }

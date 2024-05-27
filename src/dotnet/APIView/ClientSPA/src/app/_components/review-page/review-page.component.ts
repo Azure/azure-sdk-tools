@@ -104,12 +104,12 @@ export class ReviewPageComponent implements OnInit {
         this.reviewPageNavigation = data.navTree as TreeNode[];
       }
 
-      if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelData) {
-        this.codePanelData = data.payload as CodePanelData;
-      }
-
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
         this.codePanelRowData = data.payload as CodePanelRowData[];
+      }
+
+      if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelData) {
+        this.codePanelData = data.payload as CodePanelData;
         this.workerService.terminateWorker();
       }
     });

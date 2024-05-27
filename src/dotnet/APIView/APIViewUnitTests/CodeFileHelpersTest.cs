@@ -16,9 +16,13 @@ namespace APIViewUnitTests
         List<APITreeNodeForAPI> apiForestC = new List<APITreeNodeForAPI>();
         List<APITreeNodeForAPI> apiForestD = new List<APITreeNodeForAPI>();
 
-        List<StructuredToken> beforeTokens = new List<StructuredToken>();
-        List<StructuredToken> afterTokens = new List<StructuredToken>();
-        List<StructuredToken> diffTokens = new List<StructuredToken>();
+        List<StructuredToken> beforeTokensA = new List<StructuredToken>();
+        List<StructuredToken> afterTokensA = new List<StructuredToken>();
+        List<StructuredToken> beforeTokensB = new List<StructuredToken>();
+        List<StructuredToken> diffTokenResultA = new List<StructuredToken>();
+        List<StructuredToken> diffTokenResultB = new List<StructuredToken>();
+        List<StructuredToken> diffTokenResultC = new List<StructuredToken>();
+        List<StructuredToken> diffTokenResultD = new List<StructuredToken>();
 
         public CodeFileHelpersTests(ITestOutputHelper output) 
         {
@@ -109,6 +113,25 @@ namespace APIViewUnitTests
             }
         }
 
+        [Fact]
+        public void ComputeTokenDiff_Generates_Accurate_TokenDiff()
+        {
+            var diffResult = CodeFileHelpers.ComputeTokenDiff(beforeTokensA, afterTokensA);
+            CompareDiffResult(diffResult.Before, diffTokenResultA);
+            CompareDiffResult(diffResult.After, diffTokenResultB);
+            Assert.True(diffResult.HasDiff);
+
+            diffResult = CodeFileHelpers.ComputeTokenDiff(beforeTokensA, beforeTokensA);
+            CompareDiffResult(diffResult.Before, diffTokenResultC);
+            CompareDiffResult(diffResult.After, diffTokenResultC);
+            Assert.False(diffResult.HasDiff);
+
+            diffResult = CodeFileHelpers.ComputeTokenDiff(beforeTokensB, beforeTokensB);
+            CompareDiffResult(diffResult.Before, diffTokenResultD);
+            CompareDiffResult(diffResult.After, diffTokenResultD);
+            Assert.False(diffResult.HasDiff);
+        }
+
         private List<APITreeNodeForAPI> BuildTestTree(List<string> data, string parentId = null)
         {
             List<APITreeNodeForAPI> forest = new List<APITreeNodeForAPI>();
@@ -131,97 +154,72 @@ namespace APIViewUnitTests
 
         private void BuildTestTokenList()
         {
-            List<StructuredToken> before = new List<StructuredToken>();
-            List<StructuredToken> after = new List<StructuredToken>();
-            List<StructuredToken> diff = new List<StructuredToken>();
+            this.beforeTokensA = new List<StructuredToken>()
+            {
+                new StructuredToken() { Value = "A", Id = "1" },
+                new StructuredToken() { Value = "B", Id = "2" },
+                new StructuredToken() { Value = "D", Id = "4" },
+                new StructuredToken() { Value = "F", Id = "6" },
+                new StructuredToken() { Value = "G", Id = "7" }
+            };
+            
+            this.afterTokensA = new List<StructuredToken>()
+            {
+                new StructuredToken() { Value = "A", Id = "1" },
+                new StructuredToken() { Value = "C", Id = "3" },
+                new StructuredToken() { Value = "D", Id = "4" },
+                new StructuredToken() { Value = "G", Id = "7" }
+            };
 
-            var valueBefore = "public";
-            var valueAfter = valueBefore;
-            var tokenBefore = new StructuredToken(valueBefore);
-            var tokenAfter = new StructuredToken(valueAfter);
-            var tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add("DiffKind", "Unchanged");
-            before.Add(tokenBefore);
-            before.Add(StructuredToken.CreateSpaceToken());
-            after.Add(tokenAfter);
-            after.Add(StructuredToken.CreateSpaceToken());
-            diff.Add(tokenDiff);
-            diff.Add(StructuredToken.CreateSpaceToken());
+            this.diffTokenResultA = new List<StructuredToken>()
+            {
+                new StructuredToken() { Value = "A", Id = "1"  },
+                new StructuredToken() { Value = "B", Id = "2", RenderClasses = new HashSet<string>(){ "diff-change" } },
+                new StructuredToken() { Value = "D", Id = "4" },
+                new StructuredToken() { Value = "F", Id = "6", RenderClasses = new HashSet<string>(){ "diff-change" } },
+                new StructuredToken() { Value = "G", Id = "7", RenderClasses = new HashSet<string>(){ "diff-change" } }
+            };
 
-            valueBefore = "EnvironmentCredential";
-            valueAfter = valueBefore;
-            tokenBefore = new StructuredToken(valueBefore);
-            tokenAfter = new StructuredToken(valueAfter);
-            tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add("DiffKind", "Unchanged");
-            before.Add(tokenBefore);
-            after.Add(tokenAfter);
-            diff.Add(tokenDiff);
+            this.diffTokenResultB = new List<StructuredToken>()
+            {
+                new StructuredToken() { Value = "A", Id = "1"  },
+                new StructuredToken() { Value = "C", Id = "3", RenderClasses = new HashSet<string>(){ "diff-change" } },
+                new StructuredToken() { Value = "D", Id = "4" },
+                new StructuredToken() { Value = "G", Id = "7", RenderClasses = new HashSet<string>(){ "diff-change" } }
+            };
 
-            valueBefore = "(";
-            valueAfter = valueBefore;
-            tokenBefore = new StructuredToken(valueBefore);
-            tokenAfter = new StructuredToken(valueAfter);
-            tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add("DiffKind", "Unchanged");
-            before.Add(tokenBefore);
-            after.Add(tokenAfter);
-            diff.Add(tokenDiff);
+            this.diffTokenResultC = new List<StructuredToken>()
+            {
+                new StructuredToken() { Value = "A", Id = "1" },
+                new StructuredToken() { Value = "B", Id = "2" },
+                new StructuredToken() { Value = "D", Id = "4" },
+                new StructuredToken() { Value = "F", Id = "6" },
+                new StructuredToken() { Value = "G", Id = "7" }
+            };
 
-            valueBefore = "EnvironmentCredentialOptions";
-            valueAfter = "TokenCredentialOptions";
-            tokenBefore = new StructuredToken(valueBefore);
-            tokenBefore.Id = "Azure.Identity.EnvironmentCredentialOptions";
-            tokenAfter = new StructuredToken(valueAfter);
-            tokenAfter.Id = "Azure.Identity.TokenCredentialOptions";
-            tokenDiff = new StructuredToken(valueBefore);
-            tokenDiff.Id = "Azure.Identity.EnvironmentCredentialOptions";
-            tokenDiff.Properties.Add("DiffKind", "Removed");
-            diff.Add(tokenDiff);
-            tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Id = "Azure.Identity.TokenCredentialOptions";
-            tokenDiff.Properties.Add("DiffKind", "Added");
-            diff.Add(tokenDiff);
-            diff.Add(StructuredToken.CreateSpaceToken());
-            before.Add(tokenBefore);
-            before.Add(StructuredToken.CreateSpaceToken());
-            after.Add(tokenAfter);
-            after.Add(StructuredToken.CreateSpaceToken());
+            this.beforeTokensB = new List<StructuredToken>()
+            {
+                new StructuredToken() { Value = "namespace" },
+                new StructuredToken() { Value = " " },
+                new StructuredToken() { Value = "Azure", Id = "Azure" },
+                new StructuredToken() { Value = "." },
+                new StructuredToken() { Value = "Identity", Id = "Azure.Identity" },
+                new StructuredToken() { Value = " " },
+                new StructuredToken() { Value = "{" }
+            };
 
-            valueBefore = "options";
-            valueAfter = valueBefore;
-            tokenBefore = new StructuredToken(valueBefore);
-            tokenAfter = new StructuredToken(valueAfter);
-            tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add("DiffKind", "Unchanged");
-            before.Add(tokenBefore);
-            after.Add(tokenAfter);
-            diff.Add(tokenDiff);
-
-            valueBefore = ")";
-            valueAfter = valueBefore;
-            tokenBefore = new StructuredToken(valueBefore);
-            tokenAfter = new StructuredToken(valueAfter);
-            tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add("DiffKind", "Unchanged");
-            before.Add(tokenBefore);
-            after.Add(tokenAfter);
-            diff.Add(tokenDiff);
-
-            valueBefore = ";";
-            valueAfter = valueBefore;
-            tokenBefore = new StructuredToken(valueBefore);
-            tokenAfter = new StructuredToken(valueAfter);
-            tokenDiff = new StructuredToken(valueAfter);
-            tokenDiff.Properties.Add("DiffKind", "Unchanged");
-            before.Add(tokenBefore);
-            after.Add(tokenAfter);
-            diff.Add(tokenDiff);
-
-            this.beforeTokens = before;
-            this.afterTokens = after;
-            this.diffTokens = diff;
+            this.diffTokenResultD = new List<StructuredToken>()
+            {
+                new StructuredToken() { Value = "namespace" },
+                new StructuredToken() { Value = " " },
+                new StructuredToken() { Value = "Azure", Id = "Azure" },
+                new StructuredToken() { Value = "." },
+                new StructuredToken() { Value = "Identity", Id = "Azure.Identity" },
+                new StructuredToken() { Value = " " },
+                new StructuredToken() { Value = "{" }
+            };          
         }
+
         private List<List<(string id, string diffKind)>> TraverseForest(List<APITreeNodeForAPI> forest, bool print = false)
         {
             var result = new List<List<(string id, string diffKind)>>();
@@ -254,6 +252,19 @@ namespace APIViewUnitTests
             foreach (var child in node.Children)
             {
                 TraverseTree(child, result, print, level + 1);
+            }
+        }
+
+        private void CompareDiffResult(List<StructuredToken> result, List<StructuredToken> expected)
+        {
+            Assert.Equal(result.Count, expected.Count);
+            for (int i = 0; i < expected.Count; i++)
+            {
+                Assert.Equal(result[i].Id, expected[i].Id);
+                Assert.Equal(result[i].Kind, expected[i].Kind);
+                Assert.Equal(result[i].Value, expected[i].Value);
+                Assert.Equal(result[i].Properties, expected[i].Properties);
+                Assert.Equal(result[i].RenderClasses, expected[i].RenderClasses);
             }
         }
     }

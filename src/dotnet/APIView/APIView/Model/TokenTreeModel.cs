@@ -77,8 +77,8 @@ namespace APIView.Model
         public string Value { get; set; } = string.Empty;
         public string Id { get; set; }
         public StructuredTokenKind Kind { get; set; }
-        public Dictionary<string, string> Properties { get; } = new Dictionary<string, string>();
-        public HashSet<string> RenderClasses { get; } = new HashSet<string>();
+        public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
+        public HashSet<string> RenderClasses { get; set; } = new HashSet<string>();
 
         public StructuredToken()
         {
@@ -89,6 +89,21 @@ namespace APIView.Model
         {
             Value = value;
             Kind = StructuredTokenKind.Content;
+        }
+
+        public StructuredToken(StructuredToken token)
+        {
+            Value = token.Value;
+            Id = token.Id;
+            Kind = token.Kind;
+            foreach (var property in token.Properties)
+            {
+                Properties.Add(property.Key, property.Value);
+            }
+            foreach (var renderClass in token.RenderClasses)
+            {
+                RenderClasses.Add(renderClass);
+            }
         }
 
         public static StructuredToken CreateLineBreakToken()
@@ -182,25 +197,6 @@ namespace APIView.Model
             token.RenderClasses.Add("string-literal");
             return token;
         }
-    }
-
-    public class StructuredTokenForAPI : StructuredToken
-    {
-        public StructuredTokenForAPI(StructuredToken token)
-        {
-            Value = token.Value;
-            Id = token.Id;
-            Kind = token.Kind;
-            foreach (var property in token.Properties)
-            {
-                Properties.Add(property.Key, property.Value);
-            }
-            foreach (var renderClass in token.RenderClasses)
-            {
-                RenderClasses.Add(renderClass);
-            }
-        }
-        public DiffKind DiffKind { get; set; }
     }
 
     public class APITreeNode

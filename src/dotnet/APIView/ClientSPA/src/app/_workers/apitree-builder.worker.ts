@@ -9,6 +9,7 @@ let codePanelData: CodePanelData | null = null;
 let codePanelRowData: CodePanelRowData[] = [];
 let apiTreeBuilderData: ApiTreeBuilderData | null = null;
 let lineNumber: number = 0;
+let diffLineNumber: number = 0;
 let toggleDocumentationClassPart = "bi-arrow-up-square";
 
 addEventListener('message', ({ data }) => {
@@ -16,18 +17,19 @@ addEventListener('message', ({ data }) => {
     let jsonString = new TextDecoder().decode(new Uint8Array(data));
 
     codePanelData = JSON.parse(jsonString);
-    const codePanelDataMessage : InsertCodePanelRowDataMessage = {
-      directive: ReviewPageWorkerMessageDirective.UpdateCodePanelData,
-      payload: codePanelData
-    };
-    postMessage(codePanelDataMessage);
-
+    
     buildCodePanelRows("root");
     const codePanelRowDataMessage : InsertCodePanelRowDataMessage = {
       directive: ReviewPageWorkerMessageDirective.UpdateCodePanelRowData,
       payload: codePanelRowData
     };
     postMessage(codePanelRowDataMessage);
+
+    const codePanelDataMessage : InsertCodePanelRowDataMessage = {
+      directive: ReviewPageWorkerMessageDirective.UpdateCodePanelData,
+      payload: codePanelData
+    };
+    postMessage(codePanelDataMessage);
 
     codePanelData = null;
     codePanelRowData = [];
@@ -43,17 +45,18 @@ addEventListener('message', ({ data }) => {
 
 function buildCodePanelRows(nodeIdHashed: string) {
   const node = codePanelData?.nodeMetaData[nodeIdHashed]!;
-  if (apiTreeBuilderData?.showDocumentation) {
-    node.documentation.forEach((doc, index) => {
-      appendToggleDocumentationClass(node, doc, index);
-      doc.lineNumber = ++lineNumber;
+
+  node.documentation.forEach((doc, index) => {
+    appendToggleDocumentationClass(node, doc, index);
+    setLineNumber(doc);
+    if (apiTreeBuilderData?.showDocumentation) {
       codePanelRowData.push(doc);
-    });
-  }
+    }
+  });
 
   node.codeLines.forEach((codeLine, index) => {
     appendToggleDocumentationClass(node, codeLine, index);
-    codeLine.lineNumber = lineNumber++;
+    setLineNumber(codeLine);
     codePanelRowData.push(codeLine);
   });
 
@@ -71,7 +74,7 @@ function buildCodePanelRows(nodeIdHashed: string) {
     let bottomTokenNode = codePanelData?.nodeMetaData[node.bottomTokenNodeIdHash]!;
     bottomTokenNode.codeLines.forEach((codeLine, index) => {
       appendToggleDocumentationClass(node, codeLine, index);
-      codeLine.lineNumber = lineNumber++;
+      setLineNumber(codeLine);
       codePanelRowData.push(codeLine);
     });
   }
@@ -82,5 +85,19 @@ function appendToggleDocumentationClass(node: CodePanelNodeMetaData, codePanelRo
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} can-show`;
   } else {
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
+  }
+}
+
+function setLineNumber(row: CodePanelRowData) {
+  if (row.diffKind === "Removed") {
+    row.lineNumber = ++lineNumber;
+  } else if (row.diffKind === "Added") {
+    lineNumber++;
+    diffLineNumber++;
+    row.lineNumber = diffLineNumber;
+  } else {
+    lineNumber++;
+    diffLineNumber++;
+    row.lineNumber = lineNumber;
   }
 }

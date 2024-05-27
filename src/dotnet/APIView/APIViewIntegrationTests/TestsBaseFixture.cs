@@ -132,7 +132,7 @@ namespace APIViewIntegrationTests
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 apiRevisionsManager: APIRevisionManager, commentManager: CommentsManager, codeFileRepository: BlobCodeFileRepository,
                 commentsRepository: CommentRepository, languageServices: languageService, signalRHubContext: signalRHubContextMoq.Object,
-                telemetryClient: telemetryClient.Object);
+                telemetryClient: telemetryClient.Object, codeFileManager: CodeFileManager);
 
             TestDataPath = _config["TestPkgPath"];
         }

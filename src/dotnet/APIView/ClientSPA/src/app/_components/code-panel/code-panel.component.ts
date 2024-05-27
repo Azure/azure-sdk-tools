@@ -101,8 +101,8 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     const updatedCodeLinesData : CodePanelRowData[] = [];
 
     for (let i = 0; i < this.codePanelRowData.length; i++) {
-      if (this.codePanelRowData[i].type === CodePanelRowDatatype.CodeLine &&  this.codePanelRowData[i].nodeId! in this.codePanelData?.nodeMetaData!) {
-        const nodeData = this.codePanelData?.nodeMetaData[this.codePanelRowData[i].nodeId!];
+      if (this.codePanelRowData[i].type === "CodeLine" &&  this.codePanelRowData[i].nodeIdHashed! in this.codePanelData?.nodeMetaData!) {
+        const nodeData = this.codePanelData?.nodeMetaData[this.codePanelRowData[i].nodeIdHashed!];
 
         switch (codePanelRowDatatype) {
           case CodePanelRowDatatype.CommentThread:
@@ -196,7 +196,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
 
     for (let i = 0; i < this.codePanelRowData.length; i++) {
       let lineNo = this.codePanelRowData[i].lineNumber!;
-      let rowClasses = this.codePanelRowData[i].rowClasses;
+      let rowClasses = new Set<string>(this.codePanelRowData[i].rowClasses);
       if (lineNo === parseInt(actionLineNumber) && propertyToChange && iconClassToremove && iconClassToAdd) {
         this.codePanelRowData[i] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, this.codePanelRowData[i], propertyToChange);
       }

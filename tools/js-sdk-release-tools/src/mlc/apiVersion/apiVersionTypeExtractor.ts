@@ -1,9 +1,10 @@
-import { Project, ScriptTarget, SyntaxKind } from "ts-morph";
+import { SourceFile, SyntaxKind } from "ts-morph";
 import shell from 'shelljs';
 import path from 'path';
 
 import { ApiVersionType } from "../../common/types"
 import { IApiVersionTypeExtractor } from "../../common/interfaces";
+import { getTsSourceFile } from "../../common/utils";
 
 const findRestClientPath = (packageRoot: string): string => {
     const restPath = path.join(packageRoot, 'src/rest/');
@@ -22,12 +23,7 @@ const matchPattern = (text: string, pattern: RegExp): string | undefined => {
 }
 
 const findApiVersionInRestClient = (clientPath: string): string | undefined => {
-    const target = ScriptTarget.ES2015;
-    const compilerOptions = { target };
-    const project = new Project({ compilerOptions });
-    project.addSourceFileAtPath(clientPath);
-    const sourceFile = project.getSourceFile(clientPath);
-
+    const sourceFile = getTsSourceFile(clientPath);
     const createClientFunction = sourceFile?.getFunction("createClient");
     if (!createClientFunction) throw new Error("Function 'createClient' not found.");
 
@@ -51,11 +47,28 @@ const getApiVersionTypeFromRestClient: IApiVersionTypeExtractor = (packageRoot: 
     return ApiVersionType.None;
 };
 
-// TODO: not implemented: need a example
+const findApiVersionsInOperations = (sourceFile: SourceFile | undefined): Array<string> | undefined => {
+    const interfaces = sourceFile?.getInterfaces();
+    const interfacesWithApiVersion = interfaces?.filter(itf => itf.getProperty('"api-version"'));
+    const apiVersions = interfacesWithApiVersion?.map(itf => {
+        const property = itf.getMembers()
+            .filter(m => {
+                const defaultValue = m.getChildrenOfKind(SyntaxKind.StringLiteral)[0];
+                return defaultValue && defaultValue.getText() === '"api-version"';
+            })[0];
+        const apiVersion = property.getChildrenOfKind(SyntaxKind.LiteralType)[0].getText();
+        return apiVersion;
+    });
+    return apiVersions;
+}
+
 const getApiVersionTypeFromOperations: IApiVersionTypeExtractor = (packageRoot: string): ApiVersionType => {
-    console.log('findApiVersionFromOperations')
     const paraPath = path.join(packageRoot, 'src/rest/parameters.ts');
-    return ApiVersionType.Stable;
+    const sourceFile = getTsSourceFile(paraPath);
+    const apiVersions = findApiVersionsInOperations(sourceFile);
+    if (!apiVersions) return ApiVersionType.None;
+    const previewVersions = apiVersions.filter(v => v.indexOf("-preview") >= 0);
+    return previewVersions.length > 0 ? ApiVersionType.Preview : ApiVersionType.Stable;
 };
 
 // TODO: add unit test

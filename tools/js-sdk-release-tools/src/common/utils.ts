@@ -3,7 +3,8 @@ import path from 'path';
 import fs from 'fs';
 
 import { SDKType } from './types'
-import {logger} from "../utils/logger";
+import { logger } from "../utils/logger";
+import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 
 export function getClassicClientParametersPath(packageRoot: string): string {
     return path.join(packageRoot, 'src', 'models', 'parameters.ts');
@@ -35,5 +36,12 @@ export function getApiReviewPath(packageRoot: string): string {
             // only one xxx.api.md
             return path.join(packageRoot, 'review', fs.readdirSync(reviewDir)[0]);
     }
+}
 
+export function getTsSourceFile(filePath: string): SourceFile | undefined {
+    const target = ScriptTarget.ES2015;
+    const compilerOptions = { target };
+    const project = new Project({ compilerOptions });
+    project.addSourceFileAtPath(filePath);
+    return project.getSourceFile(filePath);
 }

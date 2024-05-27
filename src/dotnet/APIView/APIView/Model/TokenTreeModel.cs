@@ -184,6 +184,25 @@ namespace APIView.Model
         }
     }
 
+    public class StructuredTokenForAPI : StructuredToken
+    {
+        public StructuredTokenForAPI(StructuredToken token)
+        {
+            Value = token.Value;
+            Id = token.Id;
+            Kind = token.Kind;
+            foreach (var property in token.Properties)
+            {
+                Properties.Add(property.Key, property.Value);
+            }
+            foreach (var renderClass in token.RenderClasses)
+            {
+                RenderClasses.Add(renderClass);
+            }
+        }
+        public DiffKind DiffKind { get; set; }
+    }
+
     public class APITreeNode
     {
         public string Name { get; set; }

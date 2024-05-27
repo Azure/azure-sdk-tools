@@ -123,19 +123,14 @@ namespace APIViewWeb.LeanControllers
                     Comments = comments,
                 };
 
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-
-                result = CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
-
-                stopwatch.Stop();
-
                 if (!string.IsNullOrEmpty(diffApiRevisionId))
                 {
                     var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
                     var diffRevisionRenderableCodeFile = await _codeFileRepository.GetCodeFileAsync(diffAPIRevision.Id, diffAPIRevision.Files[0].FileId);
-                    //CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionRenderableCodeFile.CodeFile.APIForest);
+                    codePanelRawData.APIForest = CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionRenderableCodeFile.CodeFile.APIForest);
                 }
+
+                result = CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
                 return new LeanJsonResult(result, StatusCodes.Status200OK);
             }
 

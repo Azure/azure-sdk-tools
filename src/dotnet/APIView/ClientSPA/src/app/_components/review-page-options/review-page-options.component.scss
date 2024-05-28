@@ -1,9 +1,17 @@
 :host ::ng-deep {
+
     .p-panel .p-panel-content {
         padding: 0;
     }
 
     .list-group-item {
         border: none;
+    }
+
+    .p-dropdown {
+        border: none;
+        .p-inputtext {
+            padding: 0.0rem 0.5rem;
+        }
     }
 }

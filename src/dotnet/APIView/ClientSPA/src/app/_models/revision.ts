@@ -120,7 +120,7 @@ export interface InsertCodePanelRowDataMessage {
 }
 
 export interface ApiTreeBuilderData {
-  onlyDiff: boolean,
+  diffStyle: string,
   showDocumentation: boolean, 
 }
 

@@ -22,16 +22,14 @@ import {execSync} from "child_process";
 import { getversionDate } from "../../utils/version";
 import { ApiVersionType } from "../../common/types"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
-import { getApiReviewPath } from '../../common/utils';
+import { getApiReviewPath, getNpmPackageName } from '../../common/utils';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
-    const packageJsonPath = path.join(packageFolderPath, 'package.json');
     const ApiType = getApiVersionType(packageFolderPath);
     const isStableRelease = ApiType != ApiVersionType.Preview;
-    const packageJson = fs.readFileSync(packageJsonPath, { encoding: 'utf-8' });
-    const packageName = JSON.parse(packageJson).name;
+    const packageName = getNpmPackageName(packageFolderPath);
     const npm = new NPMScope({ executionFolderPath: packageFolderPath });
     const npmViewResult: NPMViewResult = await npm.view({ packageName });
     const stableVersion = getVersion(npmViewResult,"latest");

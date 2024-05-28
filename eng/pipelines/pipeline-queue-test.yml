@@ -23,7 +23,7 @@ jobs:
               -Organization "azure-sdk" `
               -Project "public" `
               -DefinitionId "$(ToolsCODEOWNERSLinterId)" `
-              -AccessToken $accessToken
+              -BearerToken $accessToken
 
       # # This task is going to become obsolete once the PATs go away
       # # the queueing PAT will be gone first but there's another PAT

@@ -2,11 +2,12 @@
 
 import { ComputeTokenDiff } from "../_helpers/worker-helpers";
 import { CodeDiagnostic, CommentItemModel } from "../_models/review";
-import { CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype, DiffLineInProcess, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective, StructuredToken } from "../_models/revision";
+import { CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype, DiffLineInProcess, InsertCodePanelRowDataMessage, NavigationTreeNode, ReviewPageWorkerMessageDirective, StructuredToken } from "../_models/revision";
 import { APITreeNode, ApiTreeBuilderData, CodePanelData } from "../_models/revision";
 
 let codePanelData: CodePanelData | null = null;
 let codePanelRowData: CodePanelRowData[] = [];
+let navigationTree : NavigationTreeNode [] = [];
 let apiTreeBuilderData: ApiTreeBuilderData | null = null;
 let lineNumber: number = 0;
 let diffLineNumber: number = 0;
@@ -18,12 +19,18 @@ addEventListener('message', ({ data }) => {
 
     codePanelData = JSON.parse(jsonString);
     
-    buildCodePanelRows("root");
+    buildCodePanelRows("root", navigationTree);
     const codePanelRowDataMessage : InsertCodePanelRowDataMessage = {
       directive: ReviewPageWorkerMessageDirective.UpdateCodePanelRowData,
       payload: codePanelRowData
     };
     postMessage(codePanelRowDataMessage);
+
+    const navigationTreeMessage : InsertCodePanelRowDataMessage = {
+      directive: ReviewPageWorkerMessageDirective.CreatePageNavigation,
+      payload: navigationTree
+    };
+    postMessage(navigationTreeMessage);
 
     const codePanelDataMessage : InsertCodePanelRowDataMessage = {
       directive: ReviewPageWorkerMessageDirective.UpdateCodePanelData,
@@ -43,8 +50,13 @@ addEventListener('message', ({ data }) => {
   }
 });
 
-function buildCodePanelRows(nodeIdHashed: string) {
+function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTreeNode []) {
   const node = codePanelData?.nodeMetaData[nodeIdHashed]!;
+
+  let navigationChildren = navigationTree;
+  if (node.navigationTreeNode) {
+    navigationChildren = node.navigationTreeNode.children;
+  }
 
   node.documentation.forEach((doc, index) => {
     appendToggleDocumentationClass(node, doc, index);
@@ -66,8 +78,12 @@ function buildCodePanelRows(nodeIdHashed: string) {
   let orderIndex = 0;
   while (orderIndex in node.childrenNodeIdsInOrder) {
     let childNodeIdHashed = node.childrenNodeIdsInOrder[orderIndex];
-    buildCodePanelRows(childNodeIdHashed);
+    buildCodePanelRows(childNodeIdHashed, navigationChildren);
     orderIndex++;
+  }
+
+  if (node.navigationTreeNode) {
+    navigationTree.push(node.navigationTreeNode);
   }
 
   if (node.bottomTokenNodeIdHash) {
@@ -81,7 +97,7 @@ function buildCodePanelRows(nodeIdHashed: string) {
 }
 
 function appendToggleDocumentationClass(node: CodePanelNodeMetaData, codePanelRow: CodePanelRowData, index: number) {
-  if (node.documentation.length > 0 && codePanelRow.type === CodePanelRowDatatype.CodeLine && index == 0) {
+  if (node.documentation.length > 0 && codePanelRow.type === CodePanelRowDatatype.CodeLine && index == 0 && codePanelRow.rowOfTokensPosition === "Top") {
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} can-show`;
   } else {
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;

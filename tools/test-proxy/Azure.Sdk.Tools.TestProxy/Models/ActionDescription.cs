@@ -24,6 +24,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
         public string Name;
         public string Description;
         public CtorDescription ConstructorDetails;
+        public string SanitizerId;
 
         public ActionDescription() { }
 

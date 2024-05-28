@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 using System.IO;
-using Azure.Sdk.Tools.TestProxy.Common;
 
 namespace Azure.Sdk.Tools.TestProxy.Models
 {
@@ -107,7 +106,7 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                         }
                     }
 
-                    arguments.Add(new Tuple<string, string>(field.Name, propValue));
+                    arguments.Add(new Tuple<string, string>(GetFriendlyFieldName(field.Name), propValue));
                 }
             }
 
@@ -116,6 +115,31 @@ namespace Azure.Sdk.Tools.TestProxy.Models
                 Description = String.Empty,
                 Arguments = arguments
             };
+        }
+
+        public static Dictionary<string, string> FieldNameMapping = new Dictionary<string, string>()
+        {
+            { "_jsonPath", "jsonPath" },
+            { "_value", "value" },
+            { "_regex", "regex" },
+            { "_groupForReplace", "groupForReplace" },
+            { "_condition", "condition" },
+            { "_target", "target" },
+            { "_key", "key" },
+            { "_method", "method" },
+            { "_newValue", "value" },
+            { "_resetAfterFirst", "resetAfterFirst" },
+            { "_regexValue", "regex" }
+        };
+
+        public string GetFriendlyFieldName(string fieldName)
+        {
+            if (!string.IsNullOrWhiteSpace(fieldName) && FieldNameMapping.ContainsKey(fieldName))
+            {
+                return FieldNameMapping[fieldName];
+            }
+
+            return fieldName;
         }
 
         public string GetClassDocComment(Type type, XmlDocument docCommentXml)

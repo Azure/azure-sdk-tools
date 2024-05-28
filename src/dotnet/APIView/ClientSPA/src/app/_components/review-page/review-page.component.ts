@@ -25,7 +25,7 @@ export class ReviewPageComponent implements OnInit {
   reviewId : string | null = null;
   activeApiRevisionId : string | null = null;
   diffApiRevisionId : string | null = null;
-  onlyDiff : boolean | null = null;
+  diffStyle : string | null = null;
 
   userProfile : UserProfile | undefined;
   review : Review | undefined = undefined;
@@ -82,7 +82,7 @@ export class ReviewPageComponent implements OnInit {
   updateStateBasedOnQueryParams(params: Params) {
     this.activeApiRevisionId = params['activeApiRevisionId'];
     this.diffApiRevisionId = params['diffApiRevisionId'];
-    this.onlyDiff = params['onlyDiff'] === 'true';
+    this.diffStyle = params['diffStyle'];
     this.reviewPageNavigation = [];
     this.codePanelRowData = [];
     this.codePanelData = null;
@@ -120,7 +120,7 @@ export class ReviewPageComponent implements OnInit {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (response: ArrayBuffer) => {
             const apiTreeBuilderData : ApiTreeBuilderData = {
-              onlyDiff: this.onlyDiff!,
+              diffStyle: this.diffStyle!,
               showDocumentation: this.userProfile?.preferences.showDocumentation!
             };
             // Passing ArrayBufer to worker is way faster than passing object
@@ -160,9 +160,9 @@ export class ReviewPageComponent implements OnInit {
     this.revisionSidePanel = showRevisionsPanel as boolean;
   }
 
-  handleShowOnlyDiffEmitter(state: boolean) {
+  handleDiffStyleEmitter(state: string) {
     let newQueryParams = getQueryParams(this.route);
-    newQueryParams['onlyDiff'] = state;
+    newQueryParams['diffStyle'] = state;
     this.router.navigate([], { queryParams: newQueryParams });
   }
 

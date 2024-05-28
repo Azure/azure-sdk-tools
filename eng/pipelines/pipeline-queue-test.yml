@@ -25,20 +25,20 @@ jobs:
               -DefinitionId "$(ToolsCODEOWNERSLinterId)" `
               -AccessToken $accessToken
 
-      # This task is going to become obsolete once the PATs go away
-      # the queueing PAT will be gone first but there's another PAT
-      # for queuing docs and this task is just testing the pipeline
-      # scripts. This task will need to be commented out or removed.
-      - task: PowerShell@2
-        displayName: Test Queue Pipeline with PAT
-        inputs:
-          pwsh: true
-          filePath: eng/common/scripts/Queue-Pipeline.ps1
-          arguments: >
-            -Organization "azure-sdk"
-            -Project "public"
-            -DefinitionId "$(ToolsCODEOWNERSLinterId)"
-            -AuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
+      # # This task is going to become obsolete once the PATs go away
+      # # the queueing PAT will be gone first but there's another PAT
+      # # for queuing docs and this task is just testing the pipeline
+      # # scripts. This task will need to be commented out or removed.
+      # - task: PowerShell@2
+      #   displayName: Test Queue Pipeline with PAT
+      #   inputs:
+      #     pwsh: true
+      #     filePath: eng/common/scripts/Queue-Pipeline.ps1
+      #     arguments: >
+      #       -Organization "azure-sdk"
+      #       -Project "public"
+      #       -DefinitionId "$(ToolsCODEOWNERSLinterId)"
+      #       -AuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
 
       - task: PowerShell@2
         displayName: Test Retain pipeline run

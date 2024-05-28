@@ -28,5 +28,14 @@
             (onChange)="onOnlyDiffSwitchChange($event)" />
             <label class="ms-2">Only Diff</label>
         </li>
+        <li class="list-group-item border-top">
+            <span class="p-float-label mb-2">
+                <p-dropdown 
+                [style]="{'width':'100%'}"
+                [options]="diffStyleOptions" 
+                [(ngModel)]="selectedDiffStyle"
+                optionLabel="label" />
+            </span>
+        </li>
     </ul>
 </app-page-options-section>

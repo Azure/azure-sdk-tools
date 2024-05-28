@@ -62,6 +62,7 @@ export async function generateChangelog(packagePath) {
                 generateChangelogForFirstRelease(packagePath, version);
             } else {
                 const npmPackageRoot = path.join(packagePath, 'changelog-temp', 'package');
+                // TODO: error out if it's comparing between RLC and HLC or Modular api layer and HLC
                 const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
                 const apiMdFileLocal = getApiReviewPath(packagePath);
                 const changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);

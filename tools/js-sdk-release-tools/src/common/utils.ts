@@ -13,7 +13,7 @@ export function getClassicClientParametersPath(packageRoot: string): string {
 export function getSDKType(packageRoot: string): SDKType {
     const paraPath = getClassicClientParametersPath(packageRoot);
     const exist = shell.test('-e', paraPath);
-    const type = exist ? SDKType.HLC : SDKType.MLC;
+    const type = exist ? SDKType.HighLevelClient : SDKType.ModularClient;
     logger.logInfo(`SDK type: ${type} detected in ${packageRoot}`);
     return type;
 }
@@ -29,13 +29,13 @@ export function getApiReviewPath(packageRoot: string): string {
     const sdkType = getSDKType(packageRoot);
     const reviewDir = path.join(packageRoot, 'review');
     switch (sdkType) {
-        case SDKType.MLC:
+        case SDKType.ModularClient:
             const npmPackageName = getNpmPackageName(packageRoot);
             const packageName = npmPackageName.substring("@azure/".length);
             const apiViewFileName = `${packageName}.api.md`;
             return path.join(packageRoot, 'review', apiViewFileName);
-        case SDKType.HLC:
-        case SDKType.RLC:
+        case SDKType.HighLevelClient:
+        case SDKType.RestLevelClient:
         default:
             // only one xxx.api.md
             return path.join(packageRoot, 'review', fs.readdirSync(reviewDir)[0]);

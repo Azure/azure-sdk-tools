@@ -1,7 +1,7 @@
 export enum SDKType {
-    HLC = 'HLC',
-    RLC = 'RLC',
-    MLC = 'MLC',
+    HighLevelClient = 'HighLevelClient',
+    RestLevelClient = 'RestLevelClient',
+    ModularClient = 'ModularClient',
 };
 
 export enum ApiVersionType {

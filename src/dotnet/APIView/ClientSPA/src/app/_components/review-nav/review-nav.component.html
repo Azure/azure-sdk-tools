@@ -3,7 +3,7 @@
 </div>
 <p-tree *ngIf="!isLoading && reviewPageNavigation.length > 0" [value]="reviewPageNavigation">
     <ng-template let-node pTemplate="default">
-        <img class="me-2" src="{{assetsPath}}/images/{{ node.data.icon }}" width="14" height="14">
+        <img class="me-2" src="{{assetsPath}}/images/{{ node.data.icon }}.png" width="14" height="14">
         <a>{{ node.label }}</a>
     </ng-template>
 </p-tree>

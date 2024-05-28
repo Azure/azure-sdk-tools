@@ -29,6 +29,10 @@
             height: 1rem;
         }
     }
+
+    p-treenode ul {
+        padding-left: 1rem;
+    }
     
     .p-treenode-content:hover{
         background: var(--dark-overlay);

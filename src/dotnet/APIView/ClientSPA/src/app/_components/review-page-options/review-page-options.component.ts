@@ -11,9 +11,9 @@ import { AuthService } from 'src/app/_services/auth/auth.service';
 export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
-  @Input() onlyDiffInput: boolean | undefined;
+  @Input() diffStyleInput: string | undefined;
 
-  @Output() showOnlyDiffEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showSystemCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showDocumentationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -24,25 +24,24 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   showDocumentationSwitch : boolean = true;
   showLineNumberSwitch : boolean = true;
   showLeftNavigationSwitch : boolean = true;
-  showOnlyDiffSwitch : boolean | undefined;
 
   diffStyleOptions : any[] = [
-    { label: 'Full Diff', value: "FullDiff" },
-    { label: 'Only Nodes with Diff', value: "OnlyNodesWithDiff" },
-    { label: 'Only Trees with Diff', value: "OnlyTreesWithDiff"}
+    { label: 'Full Diff', value: "full" },
+    { label: 'Only Trees', value: "trees"},
+    { label: 'Only Nodes', value: "nodes" }
   ];
-  selectedDiffStyle : string = "FullDiff";
+  selectedDiffStyle : string = this.diffStyleOptions[0];
 
   ngOnInit() {
-    this.showOnlyDiffSwitch = this.onlyDiffInput ?? false;
+    this.setSelectedDiffStyle();
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;
     this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? true;
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? false;
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['onlyDiffInput']) {
-      this.showOnlyDiffSwitch = this.onlyDiffInput ?? this.showOnlyDiffSwitch;
+    if (changes['diffStyleInput']) {
+      this.setSelectedDiffStyle();
     }
 
     if (changes['userProfile']) {
@@ -56,8 +55,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
  * Callback to on onlyDiff Change
  * @param event the Filter event
  */
-  onOnlyDiffSwitchChange(event: InputSwitchOnChangeEvent) {
-    this.showOnlyDiffEmitter.emit(event.checked);
+  onDiffStyleChange(event: any) {
+    this.diffStyleEmitter.emit(event.value.value);
   }
 
   /**
@@ -82,5 +81,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   */
   onShowDocumentationSwitchChange(event: InputSwitchOnChangeEvent) {
     this.showDocumentationEmitter.emit(event.checked);
+  }
+
+  setSelectedDiffStyle() {
+    const inputDiffStyle = this.diffStyleOptions.find(option => option.value === this.diffStyleInput);
+    this.selectedDiffStyle = (inputDiffStyle) ? inputDiffStyle : this.selectedDiffStyle;
   }
 }

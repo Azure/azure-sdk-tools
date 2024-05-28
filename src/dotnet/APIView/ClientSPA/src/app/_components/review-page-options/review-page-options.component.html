@@ -23,19 +23,14 @@
             <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch" />
             <label class="ms-2">Left navigation</label>
         </li>
-        <li  *ngIf="isDiffView" class="list-group-item border-top">
-            <p-inputSwitch [(ngModel)]="showOnlyDiffSwitch" 
-            (onChange)="onOnlyDiffSwitchChange($event)" />
-            <label class="ms-2">Only Diff</label>
-        </li>
-        <li class="list-group-item border-top">
-            <span class="p-float-label mb-2">
-                <p-dropdown 
-                [style]="{'width':'100%'}"
+        <li *ngIf="isDiffView" class="list-group-item border-top">
+            <label class="small mx-1 fw-semibold" for="diff-style-select">Diff Style :</label>
+            <p-dropdown 
+                (onChange)="onDiffStyleChange($event)"
                 [options]="diffStyleOptions" 
                 [(ngModel)]="selectedDiffStyle"
+                inputId="diff-style-select"
                 optionLabel="label" />
-            </span>
         </li>
     </ul>
 </app-page-options-section>

@@ -102,22 +102,25 @@
                                     {
                                         int indexA = Model.SampleLines.Count() - Math.Abs(revision.Key.sampleRevisionNumber - skipped);
                                         int indexB = int.Parse(thread.Comments.First().ElementId.Split("-").Last()) - 1;
-                                        @if (thread.Comments.Any())
+                                        if (Model.SampleLines.Count() > indexA && Model.SampleLines.ElementAt(indexA).Count() > indexB)
                                         {
-                                            var elementId = thread.LineId;
+                                            @if (thread.Comments.Any())
+                                            {
+                                                var elementId = thread.LineId;
 
-                                            <tr class="code-line">
-                                                <td class="code p-2" style="word-break: break-all;">
-                                                    <a class="comment-url" asp-page="Samples"
-                                                        asp-route-id=@Model.Review.Id
-                                                        asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
-                                                        asp-fragment=@Uri.EscapeDataString(elementId)>
-                                                        @Html.Raw(Model.SampleLines.ElementAt(indexA).ElementAt(indexB))
-                                                    </a>
-                                                </td>
-                                            </tr>
+                                                <tr class="code-line">
+                                                    <td class="code p-2" style="word-break: break-all;">
+                                                        <a class="comment-url" asp-page="Samples"
+                                                            asp-route-id=@Model.Review.Id
+                                                            asp-route-revisionId=@thread.Comments.First().ElementId.Split("-").First()
+                                                            asp-fragment=@Uri.EscapeDataString(elementId)>
+                                                            @Html.Raw(Model.SampleLines.ElementAt(indexA).ElementAt(indexB))
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            }
+                                            <partial name="_CommentThreadPartial" model="@thread" />
                                         }
-                                        <partial name="_CommentThreadPartial" model="@thread" />
                                     }
                                 </table>
                             </div>

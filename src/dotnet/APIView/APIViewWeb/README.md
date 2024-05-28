@@ -54,3 +54,25 @@ You can rename a swagger file as mentioned below and upload it to APIView if you
 TypeSpec API revision is generated automatically from a pull request and this should be good enough in most scenarios. You can also generate API revision manually for a TypeSpec package by providing URL path to TypeSpec package specification root path.
 1. Click and `Create Review` and select TypeSpec from language dropdown.
 2. Provide URL to typespec project root path.
+
+
+
+## Fatal (Level 4) Diagnostic
+
+### Introduction
+
+In version "X.Y.Z" of APIView, we have introduced a new diagnostic level: Fatal (Level 4). This level captures the most critical issues requiring immediate intervention. Issues at this level are considered to be blocking and must be resolved or overridden before the API revision can be approved.
+
+### Usage Instructions
+
+1. Defining Fatal Diagnostics:
+  - Diagnostic levels are defined in the `CodeDiagnosticLevel` enum.
+  - Within your language context, dentify conditions that qualify as Fatal.
+  - Update your diagnostic logic to trigger a Fatal (Level 4) for these conditions.
+
+2. Handling Fatal Diagnostics:
+  - Implement handling mechanisms to respond correctly when a Fatal diagnostic is encountered (e.g., logging, alerting, halting execution).
+
+3. Bootstrap Modal for Fatal Diagnostics:
+  - When attempting to approve a revision with a Fatal diagnostic, a Bootstrap modal will be triggered.
+  - The modal will state "Fatal Diagnostics Present" and provide a checkbox which must be clicked to override the diagnostic, enable the Confirm button and continue the Approval process.

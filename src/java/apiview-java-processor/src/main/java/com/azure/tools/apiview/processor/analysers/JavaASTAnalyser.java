@@ -14,6 +14,7 @@ import com.github.javaparser.ast.comments.*;
 import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.modules.*;
 import com.github.javaparser.ast.nodeTypes.*;
+import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.type.*;
 import org.unbescape.html.HtmlEscape;
 
@@ -1136,6 +1137,24 @@ public class JavaASTAnalyser implements Analyser {
 
                 if (i < max - 1) {
                     node.addTopToken(PUNCTUATION, ",").addSpace();
+                }
+            }
+        }
+
+        // FIXME this is a bit hacky - it would be nice to have 'MethodRule' like we do for Annotations.
+        // we want to special-case here for methods called `getLatest()` which are within a class that implements the
+        // `ServiceVersion` interface. We want to add a comment to the method to indicate that it is a special method
+        // that is used to get the latest version of a service.
+        Node parentNode = callableDeclaration.getParentNode().orElse(null);
+        if (callableDeclaration instanceof MethodDeclaration m) {
+            if (callableDeclaration.getNameAsString().equals("getLatest")) {
+                if (parentNode instanceof EnumDeclaration d) {
+                    if (d.getImplementedTypes().stream().anyMatch(implementedType -> implementedType.getName().toString().equals("ServiceVersion"))) {
+                        m.getBody().flatMap(blockStmt -> blockStmt.getStatements().stream()
+                                    .filter(Statement::isReturnStmt)
+                                    .findFirst())
+                            .ifPresent(ret -> node.addTopToken(COMMENT, "// returns " + ret.getChildNodes().get(0)));
+                    }
                 }
             }
         }

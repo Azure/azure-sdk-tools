@@ -22,7 +22,7 @@ export function getAdditionalDirectoryName(dir: string): string {
     return finalDirName;
 }
 
-export async function makeSparseSpecPath(repoRoot:string): Promise<string> {
+export async function makeSparseSpecDir(repoRoot: string): Promise<string> {
     const spareSpecPath = joinPaths(repoRoot, "..", `sparse-spec${randomUUID()}`);
     await mkdir(spareSpecPath, { recursive: true });
     return spareSpecPath;

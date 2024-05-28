@@ -111,6 +111,7 @@ export interface NavigationTreeNode {
   label: string;
   data: NavigationTreeNodeData;
   expanded: boolean;
+  children: NavigationTreeNode [];
 }
 
 export interface InsertCodePanelRowDataMessage {

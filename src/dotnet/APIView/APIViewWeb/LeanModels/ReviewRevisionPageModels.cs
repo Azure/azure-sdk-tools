@@ -117,6 +117,7 @@ namespace APIViewWeb.LeanModels
         public string Label { get; set; }
         public NavigationTreeNodeData Data { get; set; }
         public bool Expanded { get; set; }
+        public List<NavigationTreeNode> Children { get; set; } = new List<NavigationTreeNode>();
     }
 
     public class DiffLineInProcess

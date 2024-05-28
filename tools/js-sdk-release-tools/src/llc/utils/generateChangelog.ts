@@ -74,7 +74,7 @@ export async function generateChangelog(packagePath) {
                 }
             }
 
-        } catch (e) {
+        } catch (e: any) {
           logger.logError(`Generate changelog failed: ${e.message}`);
         } finally {
             fs.rmSync(path.join(packagePath, 'changelog-temp'), { recursive: true, force: true });

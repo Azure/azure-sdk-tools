@@ -8,6 +8,7 @@ using APIViewWeb.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
+using Azure.Identity;
 
 namespace APIViewIntegrationTests.RepositoryTests
 {
@@ -27,7 +28,7 @@ namespace APIViewIntegrationTests.RepositoryTests
             _cosmosDBname = "CosmosReviewRepositoryTestsDB";
             config["CosmosDBName"] = _cosmosDBname;
 
-            _cosmosClient = new CosmosClient(config["Cosmos:ConnectionString"]);
+            _cosmosClient = new CosmosClient(config["CosmosEndpoint"], new DefaultAzureCredential());
             var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync(config["CosmosDBName"]).Result;
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id").Wait();
 

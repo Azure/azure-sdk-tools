@@ -9,6 +9,7 @@ using ApiView;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -17,12 +18,12 @@ namespace APIViewWeb
 {
     public class BlobCodeFileRepository : IBlobCodeFileRepository
     {
-        private BlobContainerClient _container;
         private readonly IMemoryCache _cache;
+        private BlobServiceClient _serviceClient;
 
         public BlobCodeFileRepository(IConfiguration configuration, IMemoryCache cache)
         {
-            _container = new BlobContainerClient(configuration["Blob:ConnectionString"], "codefiles");
+            _serviceClient = new BlobServiceClient(new Uri(configuration["StorageAccountUrl"]), new DefaultAzureCredential());
             _cache = cache;
         }
 
@@ -84,7 +85,8 @@ namespace APIViewWeb
             {
                 key = revisionId + "/" + codeFileId;
             }
-            return _container.GetBlobClient(key);
+            var container = _serviceClient.GetBlobContainerClient("codefiles");
+            return container.GetBlobClient(key);
         }
     }
 }

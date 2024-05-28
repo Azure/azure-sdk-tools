@@ -34,6 +34,7 @@ using Microsoft.OpenApi.Models;
 using System.IO;
 using Microsoft.Azure.Cosmos;
 using APIViewWeb.Managers.Interfaces;
+using Azure.Identity;
 
 namespace APIViewWeb
 {
@@ -235,7 +236,7 @@ namespace APIViewWeb
             services.AddSingleton<IAuthorizationHandler, SamplesRevisionOwnerRequirementHandler>();
             services.AddSingleton<CosmosClient>(x =>
             {
-                return new CosmosClient(Configuration["Cosmos:ConnectionString"]);
+                return new CosmosClient(Configuration["CosmosEndpoint"], new DefaultAzureCredential());
             });
 
             services.AddHostedService<ReviewBackgroundHostedService>();

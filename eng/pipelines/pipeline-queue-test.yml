@@ -1,0 +1,57 @@
+trigger: none
+
+pr: none
+
+jobs:
+  - job: Run
+    pool:
+      name: azsdk-pool-mms-ubuntu-2204-general
+      vmImage: ubuntu-22.04
+    variables:
+      ToolsCODEOWNERSLinterId: 6597
+    steps:
+      - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
+      - task: AzureCLI@2
+        displayName: Test Authenticate to OpenSource API and queue pipeline
+        inputs:
+          azureSubscription: opensource-api-connection
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $accessToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv
+            eng/common/scripts/Queue-Pipeline.ps1 `
+              -Organization "azure-sdk" `
+              -Project "public" `
+              -DefinitionId "$(ToolsCODEOWNERSLinterId)" `
+              -BearerToken $accessToken
+
+      # # This task is going to become obsolete once the PATs go away
+      # # the queueing PAT will be gone first but there's another PAT
+      # # for queuing docs and this task is just testing the pipeline
+      # # scripts. This task will need to be commented out or removed.
+      # - task: PowerShell@2
+      #   displayName: Test Queue Pipeline with PAT
+      #   inputs:
+      #     pwsh: true
+      #     filePath: eng/common/scripts/Queue-Pipeline.ps1
+      #     arguments: >
+      #       -Organization "azure-sdk"
+      #       -Project "public"
+      #       -DefinitionId "$(ToolsCODEOWNERSLinterId)"
+      #       -AuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
+
+      - task: PowerShell@2
+        displayName: Test Retain pipeline run
+        env:
+          SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        inputs:
+          pwsh: true
+          filePath: $(Build.SourcesDirectory)/eng/common/scripts/Add-RetentionLease.ps1
+          arguments: >
+            -Organization azure-sdk
+            -Project $(System.TeamProject)
+            -DefinitionId $(System.DefinitionId)
+            -RunId $(Build.BuildId)
+            -DaysValid 7
+            -AccessToken $env:SYSTEM_ACCESSTOKEN
+            -Debug

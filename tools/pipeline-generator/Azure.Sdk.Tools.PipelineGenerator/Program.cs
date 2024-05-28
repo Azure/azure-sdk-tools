@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PipelineGenerator.Conventions;
 using PipelineGenerator.CommandParserOptions;
+using Microsoft.TeamFoundation.Build.WebApi;
 
 namespace PipelineGenerator
 {
@@ -44,6 +45,7 @@ namespace PipelineGenerator
                         g.Prefix,
                         g.Path,
                         g.Patvar,
+                        g.ProductCatalogTokenEnvVar,
                         g.Endpoint,
                         g.Repository,
                         g.Branch,
@@ -56,6 +58,8 @@ namespace PipelineGenerator
                         g.Destroy,
                         g.NoSchedule,
                         g.SetManagedVariables,
+                        g.SetPipelineClassification,
+                        g.ForcePipelineClassification,
                         g.OverwriteTriggers,
                         cancellationTokenSource.Token
                     );
@@ -128,6 +132,7 @@ namespace PipelineGenerator
             string prefix,
             string path,
             string patvar,
+            string productCatalogTokenEnvVar,
             string endpoint,
             string repository,
             string branch,
@@ -140,6 +145,8 @@ namespace PipelineGenerator
             bool destroy,
             bool noSchedule,
             bool setManagedVariables,
+            bool setPipelineClassification,
+            bool forcePipelineClassification,
             bool overwriteTriggers,
             CancellationToken cancellationToken)
         {
@@ -155,6 +162,7 @@ namespace PipelineGenerator
                     organization,
                     project,
                     patvar,
+                    productCatalogTokenEnvVar,
                     endpoint,
                     repository,
                     branch,
@@ -165,6 +173,8 @@ namespace PipelineGenerator
                     whatIf,
                     noSchedule,
                     setManagedVariables,
+                    setPipelineClassification,
+                    forcePipelineClassification,
                     overwriteTriggers
                     );
 
@@ -184,9 +194,11 @@ namespace PipelineGenerator
                     return ExitCondition.DuplicateComponentsFound;
                 }
 
+                var definitions = new List<BuildDefinition>();
+
                 foreach (var component in components)
                 {
-                    logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
+                    this.logger.LogInformation("Processing component '{0}' in '{1}'.", component.Name, component.Path);
                     if (destroy)
                     {
                         var definition = await pipelineConvention.DeleteDefinitionAsync(component, cancellationToken);
@@ -194,6 +206,7 @@ namespace PipelineGenerator
                     else
                     {
                         var definition = await pipelineConvention.CreateOrUpdateDefinitionAsync(component, cancellationToken);
+                        definitions.Add(definition);
 
                         if (open)
                         {
@@ -202,12 +215,13 @@ namespace PipelineGenerator
                     }
                 }
 
-                return ExitCondition.Success;
+                await pipelineConvention.UpdatePipelineClassifications(definitions);
 
+                return ExitCondition.Success;
             }
             catch (Exception ex)
             {
-                logger.LogCritical(ex, "BOOM! Something went wrong, try running with --debug.");
+                logger.LogCritical(ex, "Something went wrong, try running with --debug.");
                 return ExitCondition.Exception;
             }
         }
@@ -260,7 +274,8 @@ namespace PipelineGenerator
                 }
             }
 
-            if (duplicates.Count > 0) {
+            if (duplicates.Count > 0)
+            {
                 logger.LogError("Found multiple pipeline definitions that will result in name collisions. This can happen when nested directory names are the same.");
                 logger.LogError("Suggested fix: add a 'variant' to the yaml filename, e.g. 'sdk/keyvault/internal/ci.yml' => 'sdk/keyvault/internal/ci.keyvault.yml'");
                 var paths = duplicates.Select(d => $"'{d.RelativeYamlPath}'");

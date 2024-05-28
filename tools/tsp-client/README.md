@@ -56,6 +56,7 @@ Convert an existing swagger specification to a TypeSpec project. This command sh
                             an existing emitter-package.json                    [boolean]
   -h, --help                Show help                                           [boolean]
   --local-spec-repo         Path to local repository with the TypeSpec project  [string]
+  --no-prompt               Skip prompting for output directory confirmation    [boolean]
   --save-inputs             Don't clean up the temp directory after generation  [boolean]
   --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
   --swagger-readme          Path or url to swagger readme file                  [string]

@@ -49,6 +49,12 @@
     },
     "appInsightConnectionString": {
       "value": "${{SECRET_APP_INSIGHT_CONNECTION_STRING}}"
+    },
+    "keyVaultUrl": {
+      "value": "${{KEYVAULT_URL}}"
+    },
+    "certificateName": {
+      "value": "${{CERTIFICATE_NAME}}"
     }
   }
 }

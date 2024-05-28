@@ -61,6 +61,9 @@ export async function getOptions(): Promise<Options> {
       ["local-spec-repo"]: {
         type: "string",
       },
+      ["no-prompt"]: {
+        type: "boolean",
+      },
       ["save-inputs"]: {
         type: "boolean",
       },
@@ -72,7 +75,7 @@ export async function getOptions(): Promise<Options> {
       },
       arm: {
         type: "boolean",
-      }
+      },
     },
   });
   if (values.help) {
@@ -142,8 +145,12 @@ export async function getOptions(): Promise<Options> {
   }
   outputDir = resolvePath(process.cwd(), outputDir);
 
+  let noPrompt = false;
+  if (values["no-prompt"]) {
+    noPrompt = true;
+  }
   let useOutputDir;
-  if (process.stdin.isTTY) {
+  if (process.stdin.isTTY && !noPrompt) {
     // Ask user is this is the correct output directory
     const prompt = PromptSync();
     useOutputDir = prompt("Use output directory '" + outputDir + "'? (y/n) ", "y");

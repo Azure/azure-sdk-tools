@@ -1,4 +1,5 @@
 {{ $ctx := fromYaml (include "stress-test-addons.util.mergeStressContext" (list . (dict "Scenario" "watcher") )) }}
+{{- $addons := get .Values "stress-test-addons" -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,7 +17,9 @@ spec:
       namespace: {{ .Release.Namespace }}
       labels:
         app: stress-watcher
+        azure.workload.identity/use: "true"
     spec:
+      serviceAccountName: {{ get $addons.infraWorkloadAppServiceAccountName $addons.env }}
       nodeSelector:
         sku: 'system'
       initContainers:
@@ -27,12 +30,16 @@ spec:
       - name: stresswatcher
         imagePullPolicy: Always
         image: azsdkengsys.azurecr.io/stress/watcher:{{ .Values.tag }}
-        command: ["dotnet", "Stress.Watcher.dll"]
+        command: ["sh", "-c"]
+        args:
+          - >
+            az login --federated-token "$(cat $AZURE_FEDERATED_TOKEN_FILE)" --service-principal -u $AZURE_CLIENT_ID -t $AZURE_TENANT_ID;
+            ./Stress.Watcher \
+              --workload-app-issuer "{{ get $addons.workloadAppIssuer $addons.env }}" \
+              --workload-app-pool "{{ get $addons.workloadAppClientNamePool $addons.env }}"
         {{- include "stress-test-addons.container-env" $ctx | nindent 8 }}
       volumes:
         # Volume template for mounting secrets
         {{- include "stress-test-addons.env-volumes" $ctx | nindent 8 }}
         # Volume template for mounting azure file share for debugging
         {{- include "stress-test-addons.debug-file-volumes" $ctx | nindent 8 }}
-
-{{- include "stress-test-addons.static-secrets" . }}

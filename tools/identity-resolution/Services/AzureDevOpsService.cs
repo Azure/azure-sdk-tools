@@ -9,11 +9,12 @@ using Microsoft.VisualStudio.Services.Notifications.WebApi.Clients;
 using Microsoft.VisualStudio.Services.Notifications.WebApi;
 using System;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.Client;
 using Microsoft.VisualStudio.Services.Identity.Client;
 using System.Threading;
 using System.Linq;
 using MicrosoftIdentityAlias = Microsoft.VisualStudio.Services.Identity;
+using Azure.Core;
 
 namespace Azure.Sdk.Tools.NotificationConfiguration.Services
 {
@@ -27,9 +28,9 @@ namespace Azure.Sdk.Tools.NotificationConfiguration.Services
         private Dictionary<Type, VssHttpClientBase> clientCache = new Dictionary<Type, VssHttpClientBase>();
         private SemaphoreSlim clientCacheSemaphore = new SemaphoreSlim(1);
 
-        public static AzureDevOpsService CreateAzureDevOpsService(string token, string url, ILogger<AzureDevOpsService> logger)
+        public static AzureDevOpsService CreateAzureDevOpsService(TokenCredential tokenCredential, string url, ILogger<AzureDevOpsService> logger)
         {
-            var devOpsCreds = new VssBasicCredential("nobody", token);
+            var devOpsCreds = new VssAzureIdentityCredential(tokenCredential);
             var devOpsConnection = new VssConnection(new Uri(url), devOpsCreds);
             var result = new AzureDevOpsService(devOpsConnection, logger);
 

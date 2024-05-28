@@ -85,6 +85,16 @@ stages:
     # Register the dogfood environment to clean up any custom subscriptions in it
     - template: /eng/common/TestResources/setup-environments.yml
 
+    - task: AzureCLI@2
+      displayName: Authenticate to OpenSource API
+      inputs:
+        azureSubscription: opensource-api-connection
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          $jwt_accessToken = az account get-access-token --resource "api://2789159d-8d8b-4d13-b90b-ca29c1707afd" --query "accessToken" --output tsv
+          Write-Host "##vso[task.setvariable variable=opensource-api-token;isSecret=true]$jwt_accessToken"
+
     - ${{ each subscription in parameters.Subscriptions }}:
       - template: ./live-test-cleanup-template.yml
         parameters:

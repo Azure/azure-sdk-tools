@@ -96,7 +96,7 @@ export async function generateRLCInPipeline(options: {
                         }
                         match = regexToExtractAutorestConfig.exec(options.autorestConfig);
                     }
-                } catch (e) {
+                } catch (e: any) {
                     logger.logError(`Encounter error when parsing autorestConfig from PR comment: \nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
                     throw e;
                 }
@@ -178,7 +178,7 @@ export async function generateRLCInPipeline(options: {
             logger.logGreen('------------------------------------------------------------');
             try {
                 execSync(cmd, {stdio: 'inherit', cwd: path.dirname(autorestConfigFilePath)});
-            } catch (e) {
+            } catch (e: any) {
                 throw new Error(`An error occurred while generating codes for readme file: "${options.readmeMd}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);
             }
         }
@@ -243,7 +243,7 @@ export async function generateRLCInPipeline(options: {
             }
             addApiViewInfo(outputPackageInfo, packagePath, relativePackagePath);
         }
-    } catch (e) {
+    } catch (e: any) {
         logger.logError('Error:');
         if (options.typespecProject) {
             logger.logError(`An error occurred while run build for typespec project: "${options.typespecProject}":\nErr: ${e}\nStderr: "${e.stderr}"\nStdout: "${e.stdout}"\nErrorStack: "${e.stack}"`);

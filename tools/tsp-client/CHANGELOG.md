@@ -1,5 +1,9 @@
 # Release
 
+## 2024-05-20 - 0.7.1
+
+- Added `--no-prompt` flag to skip the output directory confirmation prompt.
+
 ## 2024-04-18 - 0.7.0
 
 - Remove `resources.json` after converting resource manager specifications.

@@ -54,23 +54,20 @@ stages:
           arguments: 'install --global --add-source "$(DotNetDevOpsFeed)" --version "$(NotificationsCreatorVersion)" "Azure.Sdk.Tools.NotificationConfiguration"'
           workingDirectory: '$(Agent.BuildDirectory)'
 
-      - pwsh: |
-          notification-creator `
-            --organization $(Organization) `
-            --project $(Project) `
-            --path-prefix "\$(PathPrefix)" `
-            --token-variable-name DEVOPS_TOKEN `
-            --aad-app-id-var OPENSOURCE_AAD_APP_ID `
-            --aad-app-secret-var OPENSOURCE_AAD_APP_SECRET `
-            --aad-tenant-var OPENSOURCE_AAD_TENANT_ID `
-            --selection-strategy Scheduled `
-            $(AdditionalParameters)
+      - task: AzureCLI@2
         displayName: 'Run Team/Notification Creator'
+        inputs:
+          azureSubscription: 'opensource-api-connection'
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: 
+            notification-creator `
+              --organization $(Organization) `
+              --project $(Project) `
+              --path-prefix "\$(PathPrefix)" `
+              --selection-strategy Scheduled `
+              $(AdditionalParameters)
         env:
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
           DOTNET_CLI_TELEMETRY_OPTOUT: 1
           DOTNET_MULTILEVEL_LOOKUP: 0
-          DEVOPS_TOKEN: $(azure-sdk-notification-tools-pat)
-          OPENSOURCE_AAD_APP_ID: $(opensource-aad-app-id)
-          OPENSOURCE_AAD_APP_SECRET: $(opensource-aad-secret)
-          OPENSOURCE_AAD_TENANT_ID: $(opensource-aad-tenant-id)

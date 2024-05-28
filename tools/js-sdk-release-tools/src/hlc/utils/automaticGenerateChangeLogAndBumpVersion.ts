@@ -1,3 +1,7 @@
+import fs from 'fs';
+import path from 'path';
+import shell from 'shelljs';
+
 import {extractExportAndGenerateChangelog, readSourceAndExtractMetaData} from "../../changelog/extractMetaData";
 import {Changelog, changelogGenerator} from "../../changelog/changelogGenerator";
 import {NPMScope, NPMViewResult} from "@ts-common/azure-js-dev-tools";
@@ -14,19 +18,18 @@ import {
     getVersion,
     isBetaVersion
 } from "../../utils/version";
-import {isGeneratedCodeStable} from "./isGeneratedCodeStable";
 import {execSync} from "child_process";
 import { getversionDate } from "../../utils/version";
-
-const fs = require('fs');
-const path = require('path');
+import { ApiVersionType } from "../../common/types"
+import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
+import { getApiReviewPath, getNpmPackageName } from '../../common/utils';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
-    const shell = require('shelljs');
     const jsSdkRepoPath = String(shell.pwd());
     packageFolderPath = path.join(jsSdkRepoPath, packageFolderPath);
-    const isStableRelease = isGeneratedCodeStable(path.join(packageFolderPath, 'src', 'models', 'parameters.ts'));
-    const packageName = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), {encoding: 'utf-8'})).name;
+    const ApiType = getApiVersionType(packageFolderPath);
+    const isStableRelease = ApiType != ApiVersionType.Preview;
+    const packageName = getNpmPackageName(packageFolderPath);
     const npm = new NPMScope({ executionFolderPath: packageFolderPath });
     const npmViewResult: NPMViewResult = await npm.view({ packageName });
     const stableVersion = getVersion(npmViewResult,"latest");
@@ -45,29 +48,31 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
         const usedVersions = npmViewResult['versions'];
         // in our rule, we always compare to stableVersion. But here wo should pay attention to the some stableVersion which contains beta, which means the package has not been GA.
         try {
-            await shell.mkdir(path.join(packageFolderPath, 'changelog-temp'));
-            await shell.cd(path.join(packageFolderPath, 'changelog-temp'));
-            await shell.exec(`npm pack ${packageName}@${stableVersion}`);
-            await shell.exec('tar -xzf *.tgz');
-            await shell.cd(packageFolderPath);
+            shell.mkdir(path.join(packageFolderPath, 'changelog-temp'));
+            shell.cd(path.join(packageFolderPath, 'changelog-temp'));
+            shell.exec(`npm pack ${packageName}@${stableVersion}`);
+            const files = shell.ls('*.tgz');
+            shell.exec(`tar -xzf ${files[0]}`);
+            shell.cd(packageFolderPath);
 
             // only track2 sdk includes sdk-type with value mgmt
             const sdkType = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'package.json'), {encoding: 'utf-8'}))['sdk-type'];
             if (sdkType && sdkType === 'mgmt') {
                 logger.log(`Package ${packageName} released before is track2 sdk`);
                 logger.log('Generating changelog by comparing api.md...');
-                const reviewFolder = path.join(packageFolderPath, 'changelog-temp', 'package', 'review');
-                let apiMdFileNPM: string = path.join(reviewFolder, fs.readdirSync(reviewFolder)[0]);
-                let apiMdFileLocal: string = path.join(packageFolderPath, 'review', fs.readdirSync(path.join(packageFolderPath, 'review'))[0]);
+                const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
+                const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
+                const apiMdFileLocal = getApiReviewPath(packageFolderPath);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);
                 let originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
                 if(nextVersion){
-                    await shell.cd(path.join(packageFolderPath, 'changelog-temp'));
-                    await shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
-                    await shell.cd(path.join(packageFolderPath,'changelog-temp', 'next'));
-                    await shell.exec(`npm pack ${packageName}@${nextVersion}`);
-                    await shell.exec('tar -xzf *.tgz');
-                    await shell.cd(packageFolderPath);
+                    shell.cd(path.join(packageFolderPath, 'changelog-temp'));
+                    shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
+                    shell.cd(path.join(packageFolderPath,'changelog-temp', 'next'));
+                    shell.exec(`npm pack ${packageName}@${nextVersion}`);
+                    const files = shell.ls('*.tgz');
+                    shell.exec(`tar -xzf ${files[0]}`);
+                    shell.cd(packageFolderPath);
                     logger.log("Create next folder successfully")
     
                     const latestDate = getversionDate(npmViewResult, stableVersion);
@@ -106,8 +111,8 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 logger.log('Generate changelogs and setting version for migrating track1 to track2 successfully');
             }
         } finally {
-            await shell.exec(`rm -r ${path.join(packageFolderPath, 'changelog-temp')}`);
-            await shell.cd(jsSdkRepoPath);
+            shell.rm('-r', `${path.join(packageFolderPath, 'changelog-temp')}`);
+            shell.cd(jsSdkRepoPath);
         }
     }
 }

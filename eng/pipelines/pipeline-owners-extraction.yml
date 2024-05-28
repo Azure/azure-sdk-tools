@@ -49,7 +49,7 @@ stages:
       - task: AzureCLI@2
         displayName: Run Pipeline Owners Extractor
         inputs:
-          azureSubscription: 'Azure SDK Engineering System'
+          azureSubscription: 'opensource-api-connection'
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: pipeline-owners-extractor --output "$(OutputPath)"

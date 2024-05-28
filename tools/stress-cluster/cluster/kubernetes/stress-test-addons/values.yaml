@@ -31,16 +31,44 @@ secretProviderIdentity:
   pg: 0a7293d6-c5fa-47e7-a142-ef40bf6b6764
   prod: c5454d90-811d-4d37-b685-f48d6f689aa3
   dev: ""
+provisionerAppId:
+  pg: e3fdf864-b936-4279-b787-55adc0f9984a
+  prod: 5d3c637e-07b7-4b29-83d9-87eb050dfdfb
+  dev: ""
+infraWorkloadAppServiceAccountName:
+  pg: workload-svc
+  prod: workload-svc
+  dev: ""
+infraWorkloadAppClientId:
+  pg: fb633f50-31c7-42af-9640-7651ab7cf69a
+  prod: daa992f7-ce2c-4ab5-8b51-b06e99caae1a
+  dev: ""
+infraWorkloadAppObjectId:
+  pg: 135cb549-37ce-4379-8738-39b981753256
+  prod: 9c705bcc-3878-4694-a34f-b1c0139315d6
+  dev: ""
+workloadAppClientNamePool:
+  pg: stress-app-workload-pg-0,stress-app-workload-pg-1,stress-app-workload-pg-2,stress-app-workload-pg-3,stress-app-workload-pg-4
+  prod: stress-app-workload-prod-0,stress-app-workload-prod-1,stress-app-workload-prod-2,stress-app-workload-prod-3,stress-app-workload-prod-4
+  dev: 
+workloadAppIssuer:
+  pg: https://westus3.oic.prod-aks.azure.com/72f988bf-86f1-41af-91ab-2d7cd011db47/c8b9b4a1-dee9-44e2-93d2-33fc5342ed26/
+  prod: https://westus2.oic.prod-aks.azure.com/72f988bf-86f1-41af-91ab-2d7cd011db47/5588aa6f-60c3-4504-8d1a-bbfda356780a/
+  dev: 
+clusterGroup:
+  pg: rg-stress-cluster-pg
+  prod: rg-stress-cluster-prod
+  dev: 
 subscription:
   pg: public
   prod: public
   dev: public
+subscriptionId:
+  pg: faa080af-c1d8-40ad-9cce-e1a450ca5b57
+  prod: 2cd617ea-1866-46b1-90e3-fffb087ebf9b
+  dev: 
 tenantId:
   pg: 72f988bf-86f1-41af-91ab-2d7cd011db47
   prod: 72f988bf-86f1-41af-91ab-2d7cd011db47
-  dev: ""
-provisionerAppId:
-  pg: e3fdf864-b936-4279-b787-55adc0f9984a
-  prod: 5d3c637e-07b7-4b29-83d9-87eb050dfdfb
   dev: ""
 

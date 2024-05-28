@@ -101,7 +101,7 @@ export class ReviewPageComponent implements OnInit {
 
     this.workerService.onMessageFromApiTreeBuilder().pipe(takeUntil(this.destroyApiTreeBuilder$)).subscribe(data => {
       if (data.directive === ReviewPageWorkerMessageDirective.CreatePageNavigation) {
-        this.reviewPageNavigation = data.navTree as TreeNode[];
+        this.reviewPageNavigation = data.payload as TreeNode[];
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {

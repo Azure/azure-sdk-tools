@@ -4,6 +4,7 @@ import {NPMScope} from "@ts-common/azure-js-dev-tools";
 import {logger} from "../../utils/logger";
 import {getLatestStableVersion} from "../../utils/version";
 import {extractExportAndGenerateChangelog} from "../../changelog/extractMetaData";
+import { getApiReviewPath } from "../../common/utils";
 
 const shell = require('shelljs');
 const todayDate = new Date();
@@ -60,8 +61,10 @@ export async function generateChangelog(packagePath) {
                 logger.logWarn("The latest package released in NPM doesn't contain review folder, so generate changelog same as first release");
                 generateChangelogForFirstRelease(packagePath, version);
             } else {
-                let apiMdFileNPM = path.join(tempReviewFolder, fs.readdirSync(tempReviewFolder)[0]);
-                let apiMdFileLocal = path.join(packagePath, 'review', fs.readdirSync(path.join(packagePath, 'review'))[0]);
+                const npmPackageRoot = path.join(packagePath, 'changelog-temp', 'package');
+                // TODO: error out if it's comparing between RLC and HLC or Modular api layer and HLC
+                const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
+                const apiMdFileLocal = getApiReviewPath(packagePath);
                 const changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
                     logger.logError('Cannot generate changelog because the codes of local and npm may be the same.');

@@ -26,6 +26,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   showLeftNavigationSwitch : boolean = true;
   showOnlyDiffSwitch : boolean | undefined;
 
+  diffStyleOptions : any[] = [
+    { label: 'Full Diff', value: "FullDiff" },
+    { label: 'Only Nodes with Diff', value: "OnlyNodesWithDiff" },
+    { label: 'Only Trees with Diff', value: "OnlyTreesWithDiff"}
+  ];
+  selectedDiffStyle : string = "FullDiff";
+
   ngOnInit() {
     this.showOnlyDiffSwitch = this.onlyDiffInput ?? false;
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;

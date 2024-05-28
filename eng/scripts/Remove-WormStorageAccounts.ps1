@@ -59,7 +59,7 @@ foreach ($group in $groups) {
                 # Use AzRm cmdlet as deletion will only work through ARM with the immutability policies defined on the blobs
                 $ctx | Get-AzStorageContainer | % { Remove-AzRmStorageContainer -Name $_.Name -StorageAccountName $ctx.StorageAccountName -ResourceGroupName $group.ResourceGroupName -Force }
             } catch {
-                Write-Warning "Container removal failed but trying to ignore and still delete the storage account."
+                Write-Warning "Container removal failed. Ignoring the error and trying to delete the storage account."
                 Write-Warning $_
             }
             Remove-AzStorageAccount -StorageAccountName $account.StorageAccountName -ResourceGroupName $account.ResourceGroupName -Force

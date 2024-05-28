@@ -103,7 +103,7 @@ namespace APIViewWeb.Helpers
 
         private static void BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, string parentNodeIdHashed, int nodePositionAtLevel, int indent = 0)
         {
-            var nodeIdHashed = GetTokenNodeIdHash(apiTreeNode, RowOfTokensPosition.Top);
+            var nodeIdHashed = GetTokenNodeIdHash(codePanelData, apiTreeNode, RowOfTokensPosition.Top);
 
             if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
             {
@@ -170,7 +170,7 @@ namespace APIViewWeb.Helpers
 
             if (apiTreeNode.BottomTokens.Any())
             {
-                var bottomNodeIdHashed = GetTokenNodeIdHash(apiTreeNode, RowOfTokensPosition.Bottom);
+                var bottomNodeIdHashed = GetTokenNodeIdHash(codePanelData, apiTreeNode, RowOfTokensPosition.Bottom);
                 codePanelData.NodeMetaData[nodeIdHashed].BottomTokenNodeIdHash = bottomNodeIdHashed;
                 if (codePanelData.NodeMetaData.ContainsKey(bottomNodeIdHashed))
                 {
@@ -417,25 +417,27 @@ namespace APIViewWeb.Helpers
 
                     var diffTokenRowResult = ComputeTokenDiff(beforeDiffTokens, afterDiffTokens);
 
-                    var rowData = new CodePanelRowData()
+                    if (nodeIdHashed == "id-863566259" && diffTokenRowResult.HasDiff)
                     {
-                        Type = (beforeRowClasses.Contains("documentation")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
-                        RowOfTokens = diffTokenRowResult.Before,
-                        NodeIdHashed = nodeIdHashed,
-                        NodeId = apiTreeNode.Id,
-                        RowClasses = new HashSet<string>(beforeRowClasses),
-                        RowOfTokensPosition = linesOfTokensPosition,
-                        Indent = indent,
-                        DiffKind = DiffKind.Unchanged
-                    };
+                        Console.WriteLine();
+                    }
 
                     if (diffTokenRowResult.HasDiff)
                     {
                         if (diffTokenRowResult.Before.Count > 0)
                         {
-                            rowData.DiffKind = DiffKind.Removed;
                             beforeRowClasses.Add("removed");
-                            rowData.RowClasses = new HashSet<string>(beforeRowClasses);
+                            var rowData = new CodePanelRowData()
+                            {
+                                Type = (beforeRowClasses.Contains("documentation")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
+                                RowOfTokens = diffTokenRowResult.Before,
+                                NodeIdHashed = nodeIdHashed,
+                                NodeId = apiTreeNode.Id,
+                                RowClasses = new HashSet<string>(beforeRowClasses),
+                                RowOfTokensPosition = linesOfTokensPosition,
+                                Indent = indent,
+                                DiffKind = DiffKind.Removed
+                            };
 
                             // Collects comments for the line, needed to set correct icons
                             var commentsForRow = CollectUserCommentsForRow(codePanelRawData, new HashSet<string>(), apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition, rowData);
@@ -446,11 +448,18 @@ namespace APIViewWeb.Helpers
 
                         if (diffTokenRowResult.After.Count > 0)
                         {
-                            rowData.Type = (afterRowClasses.Contains("documentation")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine;
-                            rowData.RowOfTokens = diffTokenRowResult.After;
-                            rowData.DiffKind = DiffKind.Added;
                             afterRowClasses.Add("added");
-                            rowData.RowClasses = new HashSet<string>(afterRowClasses);
+                            var rowData = new CodePanelRowData()
+                            {
+                                Type = (afterRowClasses.Contains("documentation")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
+                                RowOfTokens = diffTokenRowResult.After,
+                                NodeIdHashed = nodeIdHashed,
+                                NodeId = apiTreeNode.Id,
+                                RowClasses = new HashSet<string>(afterRowClasses),
+                                RowOfTokensPosition = linesOfTokensPosition,
+                                Indent = indent,
+                                DiffKind = DiffKind.Added
+                            };
 
                             var commentsForRow = CollectUserCommentsForRow(codePanelRawData, afterTokenIdsInDiffRow, apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition, rowData);
                             InsertCodePanelRowData(codePanelData: codePanelData, rowData: rowData, nodeIdHashed: nodeIdHashed, commentsForRow: commentsForRow);
@@ -459,7 +468,19 @@ namespace APIViewWeb.Helpers
                     }
                     else
                     {
-                        if (diffTokenRowResult.Before.Count > 0) {
+                        if (diffTokenRowResult.Before.Count > 0) 
+                        {
+                            var rowData = new CodePanelRowData()
+                            {
+                                Type = (beforeRowClasses.Contains("documentation")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
+                                RowOfTokens = diffTokenRowResult.Before,
+                                NodeIdHashed = nodeIdHashed,
+                                NodeId = apiTreeNode.Id,
+                                RowClasses = new HashSet<string>(beforeRowClasses),
+                                RowOfTokensPosition = linesOfTokensPosition,
+                                Indent = indent,
+                                DiffKind = DiffKind.Unchanged
+                            };
                             var commentsForRow = CollectUserCommentsForRow(codePanelRawData, beforeTokenIdsInDiffRow, apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition, rowData);
                             InsertCodePanelRowData(codePanelData: codePanelData, rowData: rowData, nodeIdHashed: nodeIdHashed, commentsForRow: commentsForRow);
                             beforeRowClasses.Clear();
@@ -471,17 +492,25 @@ namespace APIViewWeb.Helpers
             AddDiagnoasticRow(codePanelData: codePanelData, codePanelRawData: codePanelRawData, nodeId: apiTreeNode.Id, nodeIdHashed: nodeIdHashed, linesOfTokensPosition: linesOfTokensPosition);
         }
         
-        private static string GetTokenNodeIdHash(APITreeNodeForAPI apiTreeNode, RowOfTokensPosition linesOfTokensPosition)
+        private static string GetTokenNodeIdHash(CodePanelData codePanelData, APITreeNodeForAPI apiTreeNode, RowOfTokensPosition linesOfTokensPosition)
         {
             var idPart = apiTreeNode.Kind;
+            int uniqueId = 0;
 
             if (apiTreeNode.Properties.ContainsKey("SubKind"))
             {
                 idPart = $"{idPart}-{apiTreeNode.Properties["SubKind"]}";
             }
             idPart = $"{idPart}-{apiTreeNode.Id}";
+            idPart = $"{idPart}-{apiTreeNode.DiffKind}";
             idPart = $"{idPart}-{linesOfTokensPosition.ToString()}";
-            return CreateHashFromString(idPart);
+            var hash = CreateHashFromString(idPart);
+            while (codePanelData.NodeMetaData.ContainsKey(hash))
+            {
+                uniqueId++;
+                hash = CreateHashFromString($"{idPart}-{uniqueId}");
+            }
+            return hash;
         }
 
         private static string CreateHashFromString(string inputString)

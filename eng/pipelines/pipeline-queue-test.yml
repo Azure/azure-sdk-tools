@@ -21,7 +21,7 @@ jobs:
             $accessToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv
             eng/common/scripts/Queue-Pipeline.ps1 `
               -Organization "azure-sdk" `
-              -Project "internal" `
+              -Project "public" `
               -DefinitionId "$(ToolsCODEOWNERSLinterId)" `
               -AccessToken $accessToken
 
@@ -36,7 +36,7 @@ jobs:
           filePath: eng/common/scripts/Queue-Pipeline.ps1
           arguments: >
             -Organization "azure-sdk"
-            -Project "internal"
+            -Project "public"
             -DefinitionId "$(ToolsCODEOWNERSLinterId)"
             -AuthToken "$(azuresdk-azure-sdk-devops-build-queuing-pat)"
 

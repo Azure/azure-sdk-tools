@@ -19,7 +19,7 @@ jobs:
           scriptLocation: inlineScript
           inlineScript: |
             $accessToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv
-            /eng/common/scripts/Queue-Pipeline.ps1 `
+            eng/common/scripts/Queue-Pipeline.ps1 `
               -Organization "azure-sdk" `
               -Project "internal" `
               -DefinitionId "$(ToolsCODEOWNERSLinterId)" `

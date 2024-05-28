@@ -108,32 +108,30 @@ public class TreeNode implements JsonSerializable<TreeNode> {
         children.forEach(child -> child.setApiListing(apiListing));
     }
 
-    public void addTag(String tag) {
+    public TreeNode addTag(String tag) {
         tags.add(tag);
+        return this;
     }
 
-    public void addProperty(String key, String value) {
+    public TreeNode addProperty(String key, String value) {
         properties.put(key, value);
+        return this;
     }
 
     public TreeNode addSpace() {
-        topTokens.add(new Token(WHITESPACE, " "));
-        return this;
+       return addTopToken(new Token(WHITESPACE, " "));
     }
 
     public TreeNode addNewline() {
-        topTokens.add(new Token(TokenKind.NEW_LINE, "\n"));
-        return this;
+        return addTopToken(new Token(TokenKind.NEW_LINE, "\n"));
     }
 
     public TreeNode addTopToken(TokenKind kind, String value) {
-        topTokens.add(new Token(kind, value));
-        return this;
+        return addTopToken(new Token(kind, value));
     }
 
     public TreeNode addTopToken(TokenKind kind, String value, String id) {
-        topTokens.add(new Token(kind, value, id));
-        return this;
+        return addTopToken(new Token(kind, value, id));
     }
 
     public TreeNode addTopToken(Token token) {
@@ -142,8 +140,7 @@ public class TreeNode implements JsonSerializable<TreeNode> {
     }
 
     public TreeNode addBottomToken(TokenKind kind, String value) {
-        bottomTokens.add(new Token(kind, value));
-        return this;
+        return addBottomToken(new Token(kind, value));
     }
 
     public TreeNode addBottomToken(Token token) {
@@ -180,37 +177,26 @@ public class TreeNode implements JsonSerializable<TreeNode> {
             jsonWriter.writeStringField("Id", id);
         }
 
-        if (tags != null && !tags.isEmpty()) {
+        if (!tags.isEmpty()) {
             jsonWriter.writeArrayField("Tags", tags, JsonWriter::writeString);
         }
 
-        if (properties != null && !properties.isEmpty()) {
+        if (!properties.isEmpty()) {
             jsonWriter.writeMapField("Properties", properties, JsonWriter::writeString);
         }
 
-        if (topTokens != null && !topTokens.isEmpty()) {
+        if (!topTokens.isEmpty()) {
             jsonWriter.writeArrayField("TopTokens", topTokens, JsonWriter::writeJson);
         }
 
-        if (children != null && !children.isEmpty()) {
+        if (!children.isEmpty()) {
             jsonWriter.writeArrayField("Children", children, JsonWriter::writeJson);
         }
 
-        if (bottomTokens != null && !bottomTokens.isEmpty()) {
+        if (!bottomTokens.isEmpty()) {
             jsonWriter.writeArrayField("BottomTokens", bottomTokens, JsonWriter::writeJson);
         }
 
         return jsonWriter.writeEndObject();
-    }
-
-    @Override
-    public String toString() {
-        return "TreeNode{" +
-                "name='" + name + '\'' +
-                ", id='" + id + '\'' +
-                ", kind=" + kind +
-                ", tags=" + tags +
-                ", properties=" + properties +
-                '}';
     }
 }

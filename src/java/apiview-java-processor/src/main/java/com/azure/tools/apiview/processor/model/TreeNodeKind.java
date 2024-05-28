@@ -3,33 +3,13 @@ package com.azure.tools.apiview.processor.model;
 public enum TreeNodeKind {
     ASSEMBLY("Assembly", null),     // i.e. a Jar File
     NAMESPACE("Namespace", null),   // i.e. a Java package
-    CLASS("Type", "Class") {
-        @Override
-        public String getTypeDeclarationString() {
-            return "class";
-        }
-    },
-    INTERFACE("Type", "Interface") {
-        @Override
-        public String getTypeDeclarationString() {
-            return "interface";
-        }
-    },
-    ENUM("Type", "Enum") {
-        @Override
-        public String getTypeDeclarationString() {
-            return "enum";
-        }
-    },
+    CLASS("Type", "Class", "class"),
+    INTERFACE("Type", "Interface", "interface"),
+    ENUM("Type", "Enum", "enum"),
     ENUM_CONSTANT("Member", "EnumConstant"),
 
     // Note: This is for the definition of annotations (rather than the use of them)
-    ANNOTATION("Type", "Annotation") {
-        @Override
-        public String getTypeDeclarationString() {
-            return "@annotation";
-        }
-    },
+    ANNOTATION("Type", "Annotation", "@annotation"),
 
     MODULE_INFO("Module-Info"),
     MODULE_REQUIRES("Module-Info", "Module-Requires"),
@@ -46,14 +26,20 @@ public enum TreeNodeKind {
 
     private final String name;
     private final String subKind;
+    private final String typeDeclarationString;
 
     TreeNodeKind(String name) {
         this(name, null);
     }
 
     TreeNodeKind(String name, String subKind) {
+        this(name, subKind, null);
+    }
+
+    TreeNodeKind(String name, String subKind, String typeDeclarationString) {
         this.name = name;
         this.subKind = subKind;
+        this.typeDeclarationString = typeDeclarationString == null ? "UNKNOWN" : typeDeclarationString;
     }
 
     public String getName() {
@@ -70,6 +56,6 @@ public enum TreeNodeKind {
     }
 
     public String getTypeDeclarationString() {
-        return "UNKNOWN";
+        return typeDeclarationString;
     }
 }

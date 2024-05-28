@@ -132,19 +132,13 @@ public class APIListing implements JsonSerializable<APIListing> {
 
     @Override
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
-        jsonWriter.writeStartObject()
+        return jsonWriter.writeStartObject()
             // Version?
             .writeStringField("VersionString", versionString)
             .writeStringField("Name", name)
-            .writeStringField("Language", language.toString());
-
-        if (languageVariant == null || languageVariant == LanguageVariant.DEFAULT) {
-            jsonWriter.writeStringField("LanguageVariant", "");
-        } else {
-            jsonWriter.writeStringField("LanguageVariant", languageVariant.toString());
-        }
-
-        return jsonWriter.writeStringField("PackageName", packageName)
+            .writeStringField("Language", language.toString())
+            .writeStringField("LanguageVariant", languageVariant.toString())
+            .writeStringField("PackageName", packageName)
             .writeStringField("PackageVersion", packageVersion)
             // ServiceName?
             // PackageDisplayName?

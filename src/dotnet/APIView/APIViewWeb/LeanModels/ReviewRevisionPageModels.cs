@@ -94,10 +94,10 @@ namespace APIViewWeb.LeanModels
         public List<CodePanelRowData> CodeLines { get; set; } = new List<CodePanelRowData>();
         public List<CodePanelRowData> CommentThread { get; set; } = new List<CodePanelRowData>();
         public NavigationTreeNode NavigationTreeNode { get; set; }
-        public string ParentNodeId { get; set; }
+        public string ParentNodeIdHashed { get; set; }
         public ConcurrentDictionary<int, string> ChildrenNodeIdsInOrder { get; set; } = new ConcurrentDictionary<int, string>();
-        public bool IsDiffNode { get; set; }
-        public bool IsDiffInDescendants { get; set; }
+        public bool IsNodeWithDiff { get; set; }
+        public bool IsNodeWithDiffInDescendants { get; set; }
         public string BottomTokenNodeIdHash { get; set; }
     }
 

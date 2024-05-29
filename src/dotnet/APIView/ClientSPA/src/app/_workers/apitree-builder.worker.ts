@@ -9,6 +9,7 @@ let codePanelData: CodePanelData | null = null;
 let codePanelRowData: CodePanelRowData[] = [];
 let navigationTree : NavigationTreeNode [] = [];
 let apiTreeBuilderData: ApiTreeBuilderData | null = null;
+let diffBuffer: CodePanelRowData[] = [];
 let lineNumber: number = 0;
 let diffLineNumber: number = 0;
 let toggleDocumentationClassPart = "bi-arrow-up-square";
@@ -40,6 +41,8 @@ addEventListener('message', ({ data }) => {
 
     codePanelData = null;
     codePanelRowData = [];
+    navigationTree = [];
+    diffBuffer = [];
     apiTreeBuilderData = null;
   }
   else {
@@ -53,15 +56,38 @@ addEventListener('message', ({ data }) => {
 function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTreeNode []) {
   const node = codePanelData?.nodeMetaData[nodeIdHashed]!;
 
+  let buildNode = true;
+  let buildChildren = true;
+  let addNodeToBuffer = false
+ 
+  if (nodeIdHashed !== "root" && (apiTreeBuilderData?.diffStyle === "trees" || apiTreeBuilderData?.diffStyle === "nodes") && !node.isNodeWithDiffInDescendants) {
+    buildNode = false;
+    buildChildren = false;
+  }
+
+  if (!buildNode && Object.keys(node.childrenNodeIdsInOrder).length === 0 && 
+    (apiTreeBuilderData?.diffStyle !== "nodes" || node.isNodeWithDiff)) {
+    buildNode = true;
+  }
+
+  if (!node.isNodeWithDiff && apiTreeBuilderData?.diffStyle === "nodes" && Object.keys(node.childrenNodeIdsInOrder).length === 0) {
+    addNodeToBuffer = true;
+  }
+
   let navigationChildren = navigationTree;
   if (node.navigationTreeNode) {
     navigationChildren = node.navigationTreeNode.children;
   }
 
+  if (Object.keys(node.childrenNodeIdsInOrder).length === 0 && node.isNodeWithDiff) {
+    codePanelRowData.push(...diffBuffer);
+    diffBuffer = [];
+  }
+
   node.documentation.forEach((doc, index) => {
     appendToggleDocumentationClass(node, doc, index);
     setLineNumber(doc);
-    if (apiTreeBuilderData?.showDocumentation) {
+    if (buildNode && apiTreeBuilderData?.showDocumentation) {
       codePanelRowData.push(doc);
     }
   });
@@ -69,29 +95,46 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   node.codeLines.forEach((codeLine, index) => {
     appendToggleDocumentationClass(node, codeLine, index);
     setLineNumber(codeLine);
-    codePanelRowData.push(codeLine);
+    if (buildNode) {
+      codePanelRowData.push(codeLine);
+    }
+    if (addNodeToBuffer) {
+      diffBuffer.push(codeLine);
+      addJustDiffBuffer();
+    }
   });
 
-  codePanelRowData.push(...node.diagnostics);
-  codePanelRowData.push(...node.commentThread);
-
-  let orderIndex = 0;
-  while (orderIndex in node.childrenNodeIdsInOrder) {
-    let childNodeIdHashed = node.childrenNodeIdsInOrder[orderIndex];
-    buildCodePanelRows(childNodeIdHashed, navigationChildren);
-    orderIndex++;
+  if (buildNode) {
+    codePanelRowData.push(...node.diagnostics);
+  }
+  if (buildNode) {
+    codePanelRowData.push(...node.commentThread);
+  }
+  
+  if (buildChildren) {
+    let orderIndex = 0;
+    while (orderIndex in node.childrenNodeIdsInOrder) {
+      let childNodeIdHashed = node.childrenNodeIdsInOrder[orderIndex];
+      buildCodePanelRows(childNodeIdHashed, navigationChildren);
+      orderIndex++;
+    }
   }
 
-  if (node.navigationTreeNode) {
+  if (buildNode && node.navigationTreeNode) {
     navigationTree.push(node.navigationTreeNode);
-  }
+  }  
 
   if (node.bottomTokenNodeIdHash) {
+    codePanelRowData.push(...diffBuffer);
+    diffBuffer = [];
+
     let bottomTokenNode = codePanelData?.nodeMetaData[node.bottomTokenNodeIdHash]!;
     bottomTokenNode.codeLines.forEach((codeLine, index) => {
       appendToggleDocumentationClass(node, codeLine, index);
       setLineNumber(codeLine);
-      codePanelRowData.push(codeLine);
+      if (buildNode) {
+        codePanelRowData.push(codeLine);
+      }
     });
   }
 }
@@ -115,5 +158,11 @@ function setLineNumber(row: CodePanelRowData) {
     lineNumber++;
     diffLineNumber++;
     row.lineNumber = lineNumber;
+  }
+}
+
+function addJustDiffBuffer() {
+  if (diffBuffer.length > 3) {
+    diffBuffer.shift();
   }
 }

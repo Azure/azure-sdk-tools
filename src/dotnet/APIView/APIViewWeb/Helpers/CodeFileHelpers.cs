@@ -107,12 +107,12 @@ namespace APIViewWeb.Helpers
 
             if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
             {
-                codePanelData.NodeMetaData[nodeIdHashed].ParentNodeId = parentNodeIdHashed;
+                codePanelData.NodeMetaData[nodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
             }
             else
             {
                 codePanelData.NodeMetaData.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                codePanelData.NodeMetaData[nodeIdHashed].ParentNodeId = parentNodeIdHashed;
+                codePanelData.NodeMetaData[nodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
             }
 
             if (codePanelData.NodeMetaData.ContainsKey(parentNodeIdHashed))
@@ -174,12 +174,12 @@ namespace APIViewWeb.Helpers
                 codePanelData.NodeMetaData[nodeIdHashed].BottomTokenNodeIdHash = bottomNodeIdHashed;
                 if (codePanelData.NodeMetaData.ContainsKey(bottomNodeIdHashed))
                 {
-                    codePanelData.NodeMetaData[bottomNodeIdHashed].ParentNodeId = parentNodeIdHashed;
+                    codePanelData.NodeMetaData[bottomNodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
                 }
                 else
                 {
                     codePanelData.NodeMetaData.TryAdd(bottomNodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaData[bottomNodeIdHashed].ParentNodeId = parentNodeIdHashed;
+                    codePanelData.NodeMetaData[bottomNodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
                 }
 
                 BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, bottomNodeIdHashed, RowOfTokensPosition.Bottom, indent);
@@ -417,13 +417,17 @@ namespace APIViewWeb.Helpers
 
                     var diffTokenRowResult = ComputeTokenDiff(beforeDiffTokens, afterDiffTokens);
 
-                    if (nodeIdHashed == "id-863566259" && diffTokenRowResult.HasDiff)
-                    {
-                        Console.WriteLine();
-                    }
-
                     if (diffTokenRowResult.HasDiff)
                     {
+                        codePanelData.NodeMetaData[nodeIdHashed].IsNodeWithDiff = true;
+                        var parentNodeIdHashed = codePanelData.NodeMetaData[nodeIdHashed].ParentNodeIdHashed;
+                        while (parentNodeIdHashed != "root" && codePanelData.NodeMetaData.ContainsKey(parentNodeIdHashed))
+                        {
+                            var parentNode = codePanelData.NodeMetaData[parentNodeIdHashed];
+                            parentNode.IsNodeWithDiffInDescendants = true;
+                            parentNodeIdHashed = parentNode.ParentNodeIdHashed;
+                        }
+
                         if (diffTokenRowResult.Before.Count > 0)
                         {
                             beforeRowClasses.Add("removed");

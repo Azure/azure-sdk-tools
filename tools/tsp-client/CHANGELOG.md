@@ -1,5 +1,9 @@
 # Release
 
+## 2024-05-29 - 0.8.0
+
+- Create unique directories for sparse spec checkout.
+
 ## 2024-05-20 - 0.7.1
 
 - Added `--no-prompt` flag to skip the output directory confirmation prompt.

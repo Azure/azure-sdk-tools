@@ -13,7 +13,9 @@ namespace ApiView
     {
         private static HashSet<string> AllowedAssemblies = new HashSet<string>(new[]
         {
-            "Microsoft.Bcl.AsyncInterfaces"
+            "Microsoft.Bcl.AsyncInterfaces",
+            "System.ClientModel"
+
         }, StringComparer.InvariantCultureIgnoreCase);
 
         public static IAssemblySymbol GetCompilation(string file)

@@ -1,6 +1,6 @@
 # Release
 
-## Unreleased - 0.8.0
+## 2024-05-29 - 0.8.0
 
 - Create unique directories for sparse spec checkout.
 

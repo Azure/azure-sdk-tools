@@ -91,10 +91,10 @@ export interface CodePanelNodeMetaData {
   codeLines: CodePanelRowData[];
   commentThread: CodePanelRowData[];
   navigationTreeNode: NavigationTreeNode;
-  parentNodeId: string;
+  parentNodeIdHashed: string;
   childrenNodeIdsInOrder: { [key: number]: string };
-  isDiffNode: boolean;
-  isDiffInDescendants: boolean;
+  isNodeWithDiff: boolean;
+  isNodeWithDiffInDescendants: boolean;
   bottomTokenNodeIdHash: string;
 }
 

@@ -11,10 +11,10 @@ namespace APIViewUnitTests
     public class CodeFileHelpersTests
     {
         private readonly ITestOutputHelper _output;
-        List<APITreeNodeForAPI> apiForestA = new List<APITreeNodeForAPI>();
-        List<APITreeNodeForAPI> apiForestB = new List<APITreeNodeForAPI>();
-        List<APITreeNodeForAPI> apiForestC = new List<APITreeNodeForAPI>();
-        List<APITreeNodeForAPI> apiForestD = new List<APITreeNodeForAPI>();
+        List<APITreeNode> apiForestA = new List<APITreeNode>();
+        List<APITreeNode> apiForestB = new List<APITreeNode>();
+        List<APITreeNode> apiForestC = new List<APITreeNode>();
+        List<APITreeNode> apiForestD = new List<APITreeNode>();
 
         List<StructuredToken> beforeTokensA = new List<StructuredToken>();
         List<StructuredToken> afterTokensA = new List<StructuredToken>();
@@ -132,9 +132,9 @@ namespace APIViewUnitTests
             Assert.False(diffResult.HasDiff);
         }
 
-        private List<APITreeNodeForAPI> BuildTestTree(List<string> data, string parentId = null)
+        private List<APITreeNode> BuildTestTree(List<string> data, string parentId = null)
         {
-            List<APITreeNodeForAPI> forest = new List<APITreeNodeForAPI>();
+            List<APITreeNode> forest = new List<APITreeNode>();
 
             foreach (var item in data)
             {
@@ -142,7 +142,7 @@ namespace APIViewUnitTests
 
                 if ((parts.Length == 1 && parentId == null) || (parts.Length > 1 && parts[1] == parentId))
                 {
-                    APITreeNodeForAPI node = new APITreeNodeForAPI { Id = parts[0] };
+                    APITreeNode node = new APITreeNode { Id = parts[0] };
                     node.Properties.Add("DiffKind", "NoneDiff");
                     node.Children.AddRange(BuildTestTree(data, node.Id));
                     forest.Add(node);
@@ -220,7 +220,7 @@ namespace APIViewUnitTests
             };          
         }
 
-        private List<List<(string id, string diffKind)>> TraverseForest(List<APITreeNodeForAPI> forest, bool print = false)
+        private List<List<(string id, string diffKind)>> TraverseForest(List<APITreeNode> forest, bool print = false)
         {
             var result = new List<List<(string id, string diffKind)>>();
             foreach (var tree in forest)
@@ -232,7 +232,7 @@ namespace APIViewUnitTests
             return result;
         }
 
-        private void TraverseTree(APITreeNodeForAPI node, List<(string id, string diffKind)> result, bool print = false, int level = 0)
+        private void TraverseTree(APITreeNode node, List<(string id, string diffKind)> result, bool print = false, int level = 0)
         {
             if (print)
             { 

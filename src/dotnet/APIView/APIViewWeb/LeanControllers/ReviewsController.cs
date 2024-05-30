@@ -109,8 +109,7 @@ namespace APIViewWeb.LeanControllers
             var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
             var comments = await _commentsManager.GetCommentsAsync(reviewId);
 
-            var activeRevisionRenderableCodeFile = await _codeFileRepository.GetCodeFileAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId);
-            var activeRevisionReviewCodeFile = activeRevisionRenderableCodeFile.CodeFile;
+            var activeRevisionReviewCodeFile = await _codeFileRepository.GetBinaryCodeFileAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId);
 
             var result = new CodePanelData();
 
@@ -126,8 +125,8 @@ namespace APIViewWeb.LeanControllers
                 if (!string.IsNullOrEmpty(diffApiRevisionId))
                 {
                     var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
-                    var diffRevisionRenderableCodeFile = await _codeFileRepository.GetCodeFileAsync(diffAPIRevision.Id, diffAPIRevision.Files[0].FileId);
-                    codePanelRawData.APIForest = CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionRenderableCodeFile.CodeFile.APIForest);
+                    var diffRevisionReviewCodeFile = await _codeFileRepository.GetBinaryCodeFileAsync(diffAPIRevision.Id, diffAPIRevision.Files[0].FileId);
+                    codePanelRawData.APIForest = CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionReviewCodeFile.APIForest);
                 }
 
                 result = CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);

@@ -57,7 +57,7 @@ namespace ApiView
         public string CrossLanguagePackageId { get; set; }
 
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
-        public List<APITreeNodeForAPI> APIForest { get; set; } = new List<APITreeNodeForAPI>();
+        public List<APITreeNode> APIForest { get; set; } = new List<APITreeNode>();
 
         public List<CodeFileToken[]> LeafSections { get; set; }
 

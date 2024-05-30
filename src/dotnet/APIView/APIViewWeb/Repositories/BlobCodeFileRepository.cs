@@ -10,8 +10,11 @@ using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Azure.Storage.Blobs;
+using MessagePack;
+using MessagePack.Resolvers;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using MongoDB.Libmongocrypt;
 
 namespace APIViewWeb
 {
@@ -42,6 +45,7 @@ namespace APIViewWeb
             }
 
             var info = await client.DownloadAsync();
+
             codeFile = new RenderedCodeFile(await CodeFile.DeserializeAsync(info.Value.Content));
 
             if (updateCache)
@@ -52,6 +56,14 @@ namespace APIViewWeb
             }            
 
             return codeFile;
+        }
+
+        public async Task<CodeFile> GetBinaryCodeFileAsync(string revisionId, string codeFileId)
+        {
+            var client = GetBlobClient(revisionId, $"{codeFileId}.msgpack", out var key);
+            var info = await client.DownloadAsync();
+            var options = MessagePackSerializerOptions.Standard.WithResolver(ContractlessStandardResolver.Instance);
+            return await MessagePackSerializer.DeserializeAsync<CodeFile>(info.Value.Content, options);
         }
 
         public async Task UpsertCodeFileAsync(string revisionId, string codeFileId, CodeFile codeFile)

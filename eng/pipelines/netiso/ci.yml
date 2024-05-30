@@ -13,4 +13,20 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            Write-Host SUCCESS
+            $GROUP = "bebroder-test-netiso"
+            $ACCOUNT = "bebrodernetisoopen"
+            $CONTAINER = "test"
+            $BLOB = "test"
+            Write-Host "Getting key for open account"
+            $KEY = az storage account keys list --resource-group $GROUP --account-name $ACCOUNT --query '[0].value' -o tsv
+            Write-Host "Downloading blob from open account"
+            az storage blob download  --account-name $ACCOUNT --account-key $KEY --container-name $CONTAINER --file testdataopen --name $BLOB -o tsv
+            Write-Host "Printing data from open account"
+            cat testdataopen
+            $ACCOUNT = "bebrodernetisotest2"
+            Write-Host "Getting key from net iso account"
+            $KEY = az storage account keys list --resource-group $GROUP --account-name $ACCOUNT --query '[0].value' -o tsv
+            Write-Host "Downloading blob from net iso account"
+            az storage blob download  --account-name $ACCOUNT --account-key $KEY --container-name $CONTAINER --file testdata --name $BLOB -o tsv
+            Write-Host "Printing data from net iso account"
+            cat testdata

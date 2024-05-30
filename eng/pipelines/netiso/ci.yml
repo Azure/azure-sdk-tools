@@ -1,0 +1,16 @@
+jobs:
+  - job: testnetiso
+    pool:
+      name: bebroder-test-netiso
+    displayName: test-netiso
+    steps:
+      - checkout: self
+      - task: AzureCLI@2
+        displayName: NetIso
+        inputs:
+          azureSubscription: azure-sdk-tests
+          azurePowerShellVersion: LatestVersion
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            Write-Host SUCCESS

@@ -65,7 +65,7 @@ namespace APIViewWeb.LeanModels
     public class CodePanelRawData
     {
         public IEnumerable<CommentItemModel> Comments { get; set; }
-        public List<APITreeNodeForAPI> APIForest { get; set; } = new List<APITreeNodeForAPI>();
+        public List<APITreeNode> APIForest { get; set; } = new List<APITreeNode>();
         public CodeDiagnostic[] Diagnostics { get; set; }
     }
 

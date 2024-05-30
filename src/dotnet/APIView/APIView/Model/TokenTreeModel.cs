@@ -209,11 +209,6 @@ namespace APIView.Model
         public List<StructuredToken> TopTokens { get; set; } = new List<StructuredToken>();
         public List<StructuredToken> BottomTokens { get; set; } = new List<StructuredToken>();
         public List<APITreeNode> Children { get; set; } = new List<APITreeNode>();
-    }
-
-    public class  APITreeNodeForAPI : APITreeNode
-    {
-        public new List<APITreeNodeForAPI> Children { get; set; } = new List<APITreeNodeForAPI>();
         public DiffKind DiffKind { get; set; } = DiffKind.NoneDiff;
         public List<StructuredToken> TopDiffTokens { get; set; } = new List<StructuredToken>();
         public List<StructuredToken> BottomDiffTokens { get; set; } = new List<StructuredToken>();
@@ -234,7 +229,7 @@ namespace APIView.Model
                 return false;
             }
 
-            var other = (APITreeNodeForAPI)obj;
+            var other = (APITreeNode)obj;
             return Name == other.Name && Id == other.Id && Kind == other.Kind;
         }
     }

@@ -26,17 +26,17 @@ namespace APIViewWeb.Helpers
             return codePanelData;
         }
 
-        public static List<APITreeNodeForAPI> ComputeAPIForestDiff(List<APITreeNodeForAPI> activeAPIRevisionAPIForest, List<APITreeNodeForAPI> diffAPIRevisionAPIForest)
+        public static List<APITreeNode> ComputeAPIForestDiff(List<APITreeNode> activeAPIRevisionAPIForest, List<APITreeNode> diffAPIRevisionAPIForest)
         {
-            List<APITreeNodeForAPI> diffAPITree = new List<APITreeNodeForAPI>();
+            List<APITreeNode> diffAPITree = new List<APITreeNode>();
             ComputeAPITreeDiff(activeAPIRevisionAPIForest, diffAPIRevisionAPIForest, diffAPITree);
             return diffAPITree;
         }
 
-        private static void ComputeAPITreeDiff(List<APITreeNodeForAPI> activeAPIRevisionAPIForest, List<APITreeNodeForAPI> diffAPIRevisionAPIForest, List<APITreeNodeForAPI> diffAPITree)
+        private static void ComputeAPITreeDiff(List<APITreeNode> activeAPIRevisionAPIForest, List<APITreeNode> diffAPIRevisionAPIForest, List<APITreeNode> diffAPITree)
         {           
-            var activeAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNodeForAPI>(activeAPIRevisionAPIForest);
-            var diffAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNodeForAPI>(diffAPIRevisionAPIForest);
+            var activeAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNode>(activeAPIRevisionAPIForest);
+            var diffAPIRevisionTreeNodesAtLevel = new HashSet<APITreeNode>(diffAPIRevisionAPIForest);
 
             var allNodesAtLevel = activeAPIRevisionAPIForest.InterleavedUnion(diffAPIRevisionAPIForest);
             var unChangedNodesAtLevel = activeAPIRevisionTreeNodesAtLevel.Intersect(diffAPIRevisionTreeNodesAtLevel);
@@ -73,15 +73,15 @@ namespace APIViewWeb.Helpers
                 diffResultNode.TopDiffTokens = diffAPIRevisionNode.TopTokens;
                 diffResultNode.BottomDiffTokens = diffAPIRevisionNode.BottomTokens;
 
-                var childrenResult = new List<APITreeNodeForAPI>();
+                var childrenResult = new List<APITreeNode>();
                 ComputeAPITreeDiff(activeAPIRevisionNode.Children, diffAPIRevisionNode.Children, childrenResult);
                 diffResultNode.Children.AddRange(childrenResult);
             };
         }
 
-        private static APITreeNodeForAPI CreateAPITreeDiffNode(APITreeNodeForAPI node, DiffKind diffKind)
+        private static APITreeNode CreateAPITreeDiffNode(APITreeNode node, DiffKind diffKind)
         {
-            var result = new APITreeNodeForAPI
+            var result = new APITreeNode
             {
                 Name = node.Name,
                 Id = node.Id,
@@ -101,7 +101,7 @@ namespace APIViewWeb.Helpers
             return result;
         }
 
-        private static void BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, string parentNodeIdHashed, int nodePositionAtLevel, int indent = 0)
+        private static void BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string parentNodeIdHashed, int nodePositionAtLevel, int indent = 0)
         {
             var nodeIdHashed = GetTokenNodeIdHash(codePanelData, apiTreeNode, RowOfTokensPosition.Top);
 
@@ -186,7 +186,7 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        private static void BuildNodeTokens(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
+        private static void BuildNodeTokens(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
         {
             if (apiTreeNode.DiffKind == DiffKind.NoneDiff)
             {
@@ -198,7 +198,7 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        private static void BuildTokensForNonDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
+        private static void BuildTokensForNonDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
         {
             var tokensInNode = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokens : apiTreeNode.BottomTokens;
 
@@ -245,7 +245,7 @@ namespace APIViewWeb.Helpers
             AddDiagnoasticRow(codePanelData, codePanelRawData, apiTreeNode.Id, nodeIdHashed, linesOfTokensPosition);
         }
 
-        private static void BuildTokensForDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNodeForAPI apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
+        private static void BuildTokensForDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
         {
             var lineGroupBuildOrder = new List<string>() { "documentation" };
             var beforeTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokens : apiTreeNode.BottomTokens;
@@ -496,7 +496,7 @@ namespace APIViewWeb.Helpers
             AddDiagnoasticRow(codePanelData: codePanelData, codePanelRawData: codePanelRawData, nodeId: apiTreeNode.Id, nodeIdHashed: nodeIdHashed, linesOfTokensPosition: linesOfTokensPosition);
         }
         
-        private static string GetTokenNodeIdHash(CodePanelData codePanelData, APITreeNodeForAPI apiTreeNode, RowOfTokensPosition linesOfTokensPosition)
+        private static string GetTokenNodeIdHash(CodePanelData codePanelData, APITreeNode apiTreeNode, RowOfTokensPosition linesOfTokensPosition)
         {
             var idPart = apiTreeNode.Kind;
             int uniqueId = 0;

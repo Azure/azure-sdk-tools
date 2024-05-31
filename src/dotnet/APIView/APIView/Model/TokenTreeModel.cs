@@ -69,13 +69,67 @@ namespace APIView.Model
         }
     }
 
+    [JsonObject("st")]
     public class StructuredToken
     {
+        private HashSet<string> _tags;
+        private HashSet<string> _renderClasses;
+        private Dictionary<string, string> _properties;
+
+        [JsonProperty("v")]
         public string Value { get; set; } = string.Empty;
+        [JsonProperty("i")]
         public string Id { get; set; }
+        [JsonProperty("k")]
         public StructuredTokenKind Kind { get; set; }
-        public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
-        public HashSet<string> RenderClasses { get; set; } = new HashSet<string>();
+        [JsonProperty("t")]
+        public HashSet<string> Tags 
+        {   
+            get 
+            {
+                if (_tags == null)
+                {
+                    _tags = new HashSet<string>();
+                }
+                return _tags;
+            }
+            set 
+            {
+                _tags = value;
+            } 
+        }
+        [JsonProperty("p")]
+        public Dictionary<string, string> Properties
+        {
+            get
+            {
+                if (_properties == null)
+                {
+                    _properties = new Dictionary<string, string>();
+                }
+                return _properties;
+            }
+            set
+            {
+                _properties = value;
+            }
+        }
+        [JsonProperty("rc")]
+        public HashSet<string> RenderClasses
+        {
+            get
+            {
+                if (_renderClasses == null)
+                {
+                    _renderClasses = new HashSet<string>();
+                }
+                return _renderClasses;
+            }
+            set
+            {
+                _renderClasses = value;
+            }
+        }
 
         public StructuredToken()
         {
@@ -99,7 +153,7 @@ namespace APIView.Model
             }
             foreach (var renderClass in token.RenderClasses)
             {
-                RenderClasses.Add(renderClass);
+                token.RenderClasses.Add(renderClass);
             }
         }
 
@@ -196,18 +250,35 @@ namespace APIView.Model
         }
     }
 
+    [JsonObject("at")]
+
     public class APITreeNode
     {
+        [JsonProperty("n")]
         public string Name { get; set; }
+        [JsonProperty("i")]
         public string Id { get; set; }
+        [JsonProperty("k")]
         public string Kind { get; set; }
-        public HashSet<string> Tags { get; set; } = new HashSet<string>(); // Use for hidden and Deprecated
+        [JsonProperty("t")]
+        public HashSet<string> Tags { get; set; }= new HashSet<string>();
+        [JsonProperty("p")]
         public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
+
+        [JsonProperty("tt")]
         public List<StructuredToken> TopTokens { get; set; } = new List<StructuredToken>();
+
+        [JsonProperty("bt")]
         public List<StructuredToken> BottomTokens { get; set; } = new List<StructuredToken>();
+
+        [JsonProperty("c")]
         public List<APITreeNode> Children { get; set; } = new List<APITreeNode>();
+        [JsonProperty("dk")]
         public DiffKind DiffKind { get; set; } = DiffKind.NoneDiff;
+        [JsonProperty("tdt")]
         public List<StructuredToken> TopDiffTokens { get; set; } = new List<StructuredToken>();
+
+        [JsonProperty("bdt")]
         public List<StructuredToken> BottomDiffTokens { get; set; } = new List<StructuredToken>();
 
         public override int GetHashCode()

@@ -12,7 +12,7 @@
           <span class="small toggle-documentation-btn {{item.toggleDocumentationClasses}}"></span>
       </div>
       <div class="code-line-content" [style.padding-left.px]="(item.indent * 20)">
-          <span *ngFor="let token of item.rowOfTokens" [ngClass]="getClassObject(token.renderClasses)">{{token.value}}</span>
+          <span *ngFor="let token of item.rowOfTokens" [ngClass]="getClassObject(token.renderClasses)" [innerHTML]="token.value"></span>
       </div>
     </ng-container>
     <ng-container *ngIf="item.type === 'Diagnostics'">

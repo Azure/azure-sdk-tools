@@ -208,17 +208,6 @@ namespace APIViewWeb.Helpers
 
             foreach (var token in tokensInNode)
             {
-                if (token.Kind == StructuredTokenKind.NoneBreakingSpace)
-                {
-                    token.Value = "&nbsp;";
-                }
-
-                if (token.Kind == StructuredTokenKind.ParameterSeparator)
-                {
-                    token.Value = "&nbsp;";
-                }
-                
-
                 if (token.Properties.ContainsKey("GroupId"))
                 {
                     rowClasses.Add(token.Properties["GroupId"]);
@@ -292,16 +281,6 @@ namespace APIViewWeb.Helpers
                 {
                     var token = beforeTokens[beforeIndex++];
 
-                    if (token.Kind == StructuredTokenKind.NoneBreakingSpace)
-                    {
-                        token.Value = "&nbsp;";
-                    }
-
-                    if (token.Kind == StructuredTokenKind.ParameterSeparator)
-                    {
-                        token.Value = "&nbsp;";
-                    }
-
                     if (token.Kind == StructuredTokenKind.LineBreak)
                     {
                         break;
@@ -336,16 +315,6 @@ namespace APIViewWeb.Helpers
                 while (afterIndex < afterTokens.Count)
                 {
                     var token = afterTokens[afterIndex++];
-
-                    if (token.Kind == StructuredTokenKind.NoneBreakingSpace)
-                    {
-                        token.Value = "&nbsp;";
-                    }
-
-                    if (token.Kind == StructuredTokenKind.ParameterSeparator)
-                    {
-                        token.Value = "&nbsp;";
-                    }
 
                     if (token.Kind == StructuredTokenKind.LineBreak)
                     {

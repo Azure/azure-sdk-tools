@@ -14,7 +14,7 @@ namespace ApiView
 {
     public class CodeFile
     {
-        private static readonly JsonSerializer JsonSerializer = new JsonSerializer()
+        private static readonly JsonSerializer _serializer = new JsonSerializer()
         {
             NullValueHandling = NullValueHandling.Ignore,
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore
@@ -78,14 +78,14 @@ namespace ApiView
         {
             CodeFile codeFile = null;
             var converter = new StructuredTokenConverter();
-            JsonSerializer.Converters.Add(converter);
+            _serializer.Converters.Add(converter);
 
             using (var streamReader = new StreamReader(stream, leaveOpen: true))
             {
                 using (var jsonReader = new JsonTextReader(streamReader))
                 {
                     jsonReader.SupportMultipleContent = true;
-                    codeFile =  JsonSerializer.Deserialize<CodeFile>(jsonReader);
+                    codeFile = _serializer.Deserialize<CodeFile>(jsonReader);
                 }
             }
 
@@ -167,7 +167,7 @@ namespace ApiView
             {
                 using (var jsonWriter = new JsonTextWriter(streamWriter))
                 {
-                    JsonSerializer.Serialize(jsonWriter, this);
+                    _serializer.Serialize(jsonWriter, this);
                     await jsonWriter.FlushAsync();
                 }
             }

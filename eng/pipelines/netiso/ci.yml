@@ -13,8 +13,8 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            $GROUP = "bebroder-test-netiso"
-            $ACCOUNT = "bebrodernetisoopen"
+            $GROUP = "bebroder-test-netiso-open"
+            $ACCOUNT = "bebrodernetisoopen1"
             $CONTAINER = "test"
             $BLOB = "test"
             Write-Host "Getting key for open account"
@@ -23,7 +23,8 @@ jobs:
             az storage blob download  --account-name $ACCOUNT --account-key $KEY --container-name $CONTAINER --file testdataopen --name $BLOB -o tsv
             Write-Host "Printing data from open account"
             cat testdataopen
-            $ACCOUNT = "bebrodernetisotest2"
+            $GROUP = "bebroder-test-netiso-closed"
+            $ACCOUNT = "bebrodernetisoclosed1"
             Write-Host "Getting key from net iso account"
             $KEY = az storage account keys list --resource-group $GROUP --account-name $ACCOUNT --query '[0].value' -o tsv
             Write-Host "Downloading blob from net iso account"

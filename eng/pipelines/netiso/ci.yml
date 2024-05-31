@@ -13,8 +13,9 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            $GROUP = "bebroder-test-netiso-open-3"
-            $ACCOUNT = "bebrodernetisoopen3"
+            az account set -s "Azure SDK Test Resources"
+            $GROUP = "bebroder-test-netiso-open-4"
+            $ACCOUNT = "bebrodernetisoopen4"
             $CONTAINER = "test"
             $BLOB = "test"
             Write-Host "Getting key for open account"

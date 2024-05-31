@@ -13,6 +13,10 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
+            Write-Host "Internet!"
+            $url = "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/README.md"
+            Invoke-WebRequest $url -OutFile README.md
+            cat README.md
             az account set -s "Azure SDK Test Resources"
             $GROUP = "bebroder-test-netiso-open-4"
             $ACCOUNT = "bebrodernetisoopen4"

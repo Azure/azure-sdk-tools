@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
+using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -85,7 +86,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 throw new ArgumentNullException(nameof(vssConnection));
             }
 
-            this.buildClient = vssConnection.GetClient<BuildHttpClient>();
+            this.buildClient = vssConnection.GetClient<EnhancedBuildHttpClient>();
             this.testResultsClient = vssConnection.GetClient<TestResultsHttpClient>();
         }
 

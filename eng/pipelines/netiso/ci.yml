@@ -13,8 +13,8 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            $GROUP = "bebroder-test-netiso-open-2"
-            $ACCOUNT = "bebrodernetisoopen2"
+            $GROUP = "bebroder-test-netiso-open-3"
+            $ACCOUNT = "bebrodernetisoopen3"
             $CONTAINER = "test"
             $BLOB = "test"
             Write-Host "Getting key for open account"

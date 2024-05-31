@@ -13,6 +13,8 @@ import { RevisionsService } from 'src/app/_services/revisions/revisions.service'
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
+import { HandleApiError } from 'src/app/_helpers/service-helpers';
+import { ConfigService } from 'src/app/_services/config/config.service';
 
 @Component({
   selector: 'app-review-page',
@@ -49,7 +51,7 @@ export class ReviewPageComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDeterctorRef: ChangeDetectorRef,
-    private userProfileService: UserProfileService) {}
+    private userProfileService: UserProfileService, private configService: ConfigService) {}
 
   ngOnInit() {
     this.userProfileService.getUserProfile().subscribe(
@@ -119,13 +121,16 @@ export class ReviewPageComponent implements OnInit {
     this.reviewsService.getReviewContent(reviewId, activeApiRevisionId, diffApiRevisionId)
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (response: ArrayBuffer) => {
-            const apiTreeBuilderData : ApiTreeBuilderData = {
-              diffStyle: this.diffStyle!,
-              showDocumentation: this.userProfile?.preferences.showDocumentation!
-            };
-            // Passing ArrayBufer to worker is way faster than passing object
-            this.workerService.postToApiTreeBuilder(response, apiTreeBuilderData);
-          }
+          const apiTreeBuilderData : ApiTreeBuilderData = {
+            diffStyle: this.diffStyle!,
+            showDocumentation: this.userProfile?.preferences.showDocumentation!
+          };
+          // Passing ArrayBufer to worker is way faster than passing object
+          this.workerService.postToApiTreeBuilder(response, apiTreeBuilderData);
+        },
+        error: (error: any) => {
+          HandleApiError(error, this.configService);
+        }
       });
   }
 
@@ -134,6 +139,9 @@ export class ReviewPageComponent implements OnInit {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (review: Review) => {
           this.review = review;
+        },
+        error: (error: any) => {
+          HandleApiError(error, this.configService);
         }
       });
   }
@@ -152,6 +160,9 @@ export class ReviewPageComponent implements OnInit {
             this.language = this.apiRevisions[0].language;
             this.languageSafeName = getLanguageCssSafeName(this.language);
           }
+        },
+        error: (error: any) => {
+          HandleApiError(error, this.configService);
         }
       });
   }

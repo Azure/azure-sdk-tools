@@ -13,7 +13,7 @@ import { RevisionsService } from 'src/app/_services/revisions/revisions.service'
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
-import { HandleApiError } from 'src/app/_helpers/service-helpers';
+import { HandleRedirectDueToExpiredCredentials } from 'src/app/_helpers/service-helpers';
 import { ConfigService } from 'src/app/_services/config/config.service';
 
 @Component({
@@ -129,7 +129,7 @@ export class ReviewPageComponent implements OnInit {
           this.workerService.postToApiTreeBuilder(response, apiTreeBuilderData);
         },
         error: (error: any) => {
-          HandleApiError(error, this.configService);
+          HandleRedirectDueToExpiredCredentials(error, this.configService);
         }
       });
   }
@@ -141,7 +141,7 @@ export class ReviewPageComponent implements OnInit {
           this.review = review;
         },
         error: (error: any) => {
-          HandleApiError(error, this.configService);
+          HandleRedirectDueToExpiredCredentials(error, this.configService);
         }
       });
   }
@@ -162,7 +162,7 @@ export class ReviewPageComponent implements OnInit {
           }
         },
         error: (error: any) => {
-          HandleApiError(error, this.configService);
+          HandleRedirectDueToExpiredCredentials(error, this.configService);
         }
       });
   }

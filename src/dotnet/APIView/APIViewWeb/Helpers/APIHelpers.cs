@@ -79,6 +79,7 @@ namespace APIViewWeb.Helpers
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             Converters = new List<JsonConverter> { new StringEnumConverter() },
             NullValueHandling = NullValueHandling.Ignore,
+            DefaultValueHandling = DefaultValueHandling.Ignore,
             Formatting = Formatting.None
         };
 

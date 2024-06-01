@@ -127,7 +127,7 @@ namespace APIViewWeb.Helpers
             
             BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, RowOfTokensPosition.Top, indent);
 
-            if (!apiTreeNode.Tags.Contains("HideFromNavigation"))
+            if (!apiTreeNode.Tags.Contains("HideFromNav"))
             {
                 var navIcon = apiTreeNode.Kind.ToLower();
                 if (apiTreeNode.Properties.ContainsKey("SubKind"))

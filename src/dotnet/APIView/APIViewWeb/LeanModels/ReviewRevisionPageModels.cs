@@ -73,52 +73,24 @@ namespace APIViewWeb.LeanModels
     [JsonObject("cprd")]
     public class CodePanelRowData
     {
-        private List<StructuredToken> _rowOfTokens;
-        private HashSet<string> _rowClasses;
-        private List<CommentItemModel> _comments;
-
         [JsonProperty("t")]
         public CodePanelRowDatatype Type { get; set; }
         [JsonProperty("ln")]
         public int? LineNumber { get; set; }
+        [JsonIgnore]
+        public List<StructuredToken> RowOfTokens { get; set; } = new List<StructuredToken>();
         [JsonProperty("rot")]
-        public List<StructuredToken> RowOfTokens
-        {
-            get
-            {
-                if (_rowOfTokens == null)
-                {
-                    _rowOfTokens = new List<StructuredToken>();
-                }
-                return _rowOfTokens;
-            }
-            set
-            {
-                _rowOfTokens = value;
-            }
-        }
+        public List<StructuredToken> RowOfTokensSerialized => RowOfTokens.Count > 0 ? RowOfTokens : null;
         [JsonProperty("ni")]
         public string NodeId { get; set; }
         [JsonProperty("nih")]
         public string NodeIdHashed { get; set; }
         [JsonProperty("rotp")]
         public RowOfTokensPosition RowOfTokensPosition { get; set; }
+        [JsonIgnore]
+        public HashSet<string> RowClasses { get; set; } = new HashSet<string>();
         [JsonProperty("rc")]
-        public HashSet<string> RowClasses
-        {
-            get
-            {
-                if (_rowClasses == null)
-                {
-                    _rowClasses = new HashSet<string>();
-                }
-                return _rowClasses;
-            }
-            set
-            {
-                _rowClasses = value;
-            }
-        }
+        public HashSet<string> RowClassesSerialized => RowClasses.Count > 0 ? RowClasses : null;
         [JsonProperty("i")]
         public int? Indent { get; set; }
         [JsonProperty("dk")]
@@ -131,117 +103,40 @@ namespace APIViewWeb.LeanModels
         public string ToggleCommentsClasses { get; set; }
         [JsonProperty("d")]
         public CodeDiagnostic Diagnostics { get; set; }
+        [JsonIgnore]
+        public List<CommentItemModel> Comments { get; set; } = new List<CommentItemModel>();
         [JsonProperty("c")]
-        public List<CommentItemModel> Comments
-        {
-            get
-            {
-                if (_comments == null)
-                {
-                    _comments = new List<CommentItemModel>();
-                }
-                return _comments;
-            }
-            set
-            {
-                _comments = value;
-            }
-        }
+        public List<CommentItemModel> CommentsSerialized => Comments.Count > 0 ? Comments : null;
+
     }
 
     [JsonObject("cprmd")]
     public class CodePanelNodeMetaData
     {
-        private List<CodePanelRowData> _documentation;
-        private List<CodePanelRowData> _diagnostics;
-        private List<CodePanelRowData> _codeLines;
-        private List<CodePanelRowData> _commentThread;
-        private ConcurrentDictionary<int, string> _childrenNodeIdsInOrder;
-
+        [JsonIgnore]
+        public List<CodePanelRowData> Documentation { get; set; } = new List<CodePanelRowData>();
         [JsonProperty("doc")]
-        public List<CodePanelRowData> Documentation
-        {
-            get
-            {
-                if (_documentation == null)
-                {
-                    _documentation = new List<CodePanelRowData>();
-                }
-                return _documentation;
-            }
-            set
-            {
-                _documentation = value;
-            }
-        }
+        public List<CodePanelRowData> DocumentationSerialized => Documentation.Count > 0 ? Documentation : null;
+        [JsonIgnore]
+        public List<CodePanelRowData> Diagnostics { get; set; } = new List<CodePanelRowData>();
         [JsonProperty("d")]
-        public List<CodePanelRowData> Diagnostics
-        {
-            get
-            {
-                if (_diagnostics == null)
-                {
-                    _diagnostics = new List<CodePanelRowData>();
-                }
-                return _diagnostics;
-            }
-            set
-            {
-                _diagnostics = value;
-            }
-        }
+        public List<CodePanelRowData> DiagnosticsSerialized => Diagnostics.Count > 0 ? Diagnostics : null;
+        [JsonIgnore]
+        public List<CodePanelRowData> CodeLines { get; set; } = new List<CodePanelRowData>();
         [JsonProperty("cl")]
-        public List<CodePanelRowData> CodeLines
-        {
-            get
-            {
-                if (_codeLines == null)
-                {
-                    _codeLines = new List<CodePanelRowData>();
-                }
-                return _codeLines;
-            }
-            set
-            {
-                _codeLines = value;
-            }
-        }
+        public List<CodePanelRowData> CodeLinesSerialized => CodeLines.Count > 0 ? CodeLines : null;
+        [JsonIgnore]
+        public List<CodePanelRowData> CommentThread { get; set; } = new List<CodePanelRowData>();
         [JsonProperty("ct")]
-        public List<CodePanelRowData> CommentThread
-        {
-            get
-            {
-                if (_commentThread == null)
-                {
-                    _commentThread = new List<CodePanelRowData>();
-                }
-                return _commentThread;
-            }
-            set
-            {
-                _commentThread = value;
-            }
-        }
+        public List<CodePanelRowData> CommentThreadSerialized => CommentThread.Count > 0 ? CommentThread : null;
         [JsonProperty("ntn")]
         public NavigationTreeNode NavigationTreeNode { get; set; }
         [JsonProperty("pnih")]
         public string ParentNodeIdHashed { get; set; }
+        [JsonIgnore]
+        public ConcurrentDictionary<int, string> ChildrenNodeIdsInOrder { get; set; } = new ConcurrentDictionary<int, string>();
         [JsonProperty("cniio")]
-        public ConcurrentDictionary<int, string> ChildrenNodeIdsInOrder
-        {
-            get
-            {
-                if (_childrenNodeIdsInOrder == null)
-                {
-                    _childrenNodeIdsInOrder = new ConcurrentDictionary<int, string>();
-                }
-                return _childrenNodeIdsInOrder;
-            }
-            set
-            {
-                _childrenNodeIdsInOrder = value;
-            }
-        }
+        public ConcurrentDictionary<int, string> ChildrenNodeIdsInOrderSerialized => ChildrenNodeIdsInOrder.Count > 0 ? ChildrenNodeIdsInOrder : null;
         [JsonProperty("inwd")]
         public bool IsNodeWithDiff { get; set; }
         [JsonProperty("inwdid")]
@@ -253,8 +148,10 @@ namespace APIViewWeb.LeanModels
     [JsonObject("cpd")]
     public class CodePanelData
     {
-        [JsonProperty("nmd")]
+        [JsonIgnore]
         public ConcurrentDictionary<string, CodePanelNodeMetaData> NodeMetaData { get; set; } = new ConcurrentDictionary<string, CodePanelNodeMetaData>();
+        [JsonProperty("nmd")]
+        public ConcurrentDictionary<string, CodePanelNodeMetaData> NodeMetaDataSerialized => NodeMetaData.Count > 0 ? NodeMetaData : null;
     }
 
     [JsonObject("ntnd")]
@@ -269,28 +166,15 @@ namespace APIViewWeb.LeanModels
 
     public class NavigationTreeNode
     {
-        private List<NavigationTreeNode> _children;
         [JsonProperty("l")]
         public string Label { get; set; }
         public NavigationTreeNodeData Data { get; set; }
         [JsonProperty("d")]
         public bool Expanded { get; set; }
+        [JsonIgnore]
+        public List<NavigationTreeNode> Children { get; set; } = new List<NavigationTreeNode>();
         [JsonProperty("c")]
-        public List<NavigationTreeNode> Children
-        {
-            get
-            {
-                if (_children == null)
-                {
-                    _children = new List<NavigationTreeNode>();
-                }
-                return _children;
-            }
-            set
-            {
-                _children = value;
-            }
-        }
+        public List<NavigationTreeNode> ChildrenSerialized => Children.Count > 0 ? Children : null;
     }
 
     public class DiffLineInProcess

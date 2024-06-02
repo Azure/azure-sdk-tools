@@ -247,7 +247,7 @@ namespace APIViewWeb.Helpers
 
         private static void BuildTokensForDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
         {
-            var lineGroupBuildOrder = new List<string>() { "documentation" };
+            var lineGroupBuildOrder = new List<string>() { "doc" };
             var beforeTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokens : apiTreeNode.BottomTokens;
             var afterTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopDiffTokens : apiTreeNode.BottomDiffTokens;
 
@@ -435,7 +435,7 @@ namespace APIViewWeb.Helpers
                             beforeRowClasses.Add("removed");
                             var rowData = new CodePanelRowData()
                             {
-                                Type = (beforeRowClasses.Contains("documentation")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
+                                Type = (beforeRowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
                                 RowOfTokens = diffTokenRowResult.Before,
                                 NodeIdHashed = nodeIdHashed,
                                 NodeId = apiTreeNode.Id,
@@ -457,7 +457,7 @@ namespace APIViewWeb.Helpers
                             afterRowClasses.Add("added");
                             var rowData = new CodePanelRowData()
                             {
-                                Type = (afterRowClasses.Contains("documentation")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
+                                Type = (afterRowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
                                 RowOfTokens = diffTokenRowResult.After,
                                 NodeIdHashed = nodeIdHashed,
                                 NodeId = apiTreeNode.Id,
@@ -478,7 +478,7 @@ namespace APIViewWeb.Helpers
                         {
                             var rowData = new CodePanelRowData()
                             {
-                                Type = (beforeRowClasses.Contains("documentation")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
+                                Type = (beforeRowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
                                 RowOfTokens = diffTokenRowResult.Before,
                                 NodeIdHashed = nodeIdHashed,
                                 NodeId = apiTreeNode.Id,
@@ -565,7 +565,7 @@ namespace APIViewWeb.Helpers
         {
             var rowData = new CodePanelRowData()
             {
-                Type = (rowClasses.Contains("documentation")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
+                Type = (rowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
                 RowOfTokens = tokensInRow,
                 NodeIdHashed = nodeIdHashed,
                 RowClasses = new HashSet<string>(rowClasses),

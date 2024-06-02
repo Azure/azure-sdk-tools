@@ -1,4 +1,4 @@
-import { APITreeNode, APIRevision } from "./revision"
+import { Type, Expose } from 'class-transformer';
 
 export enum FirstReleaseApproval {
   Approved,
@@ -20,11 +20,11 @@ export interface Review {
   isApproved: boolean
 }
 
-export interface ChangeHistory {
-  changeAction: string
-  changedBy: string
-  changedOn: string | null
-  notes: string
+export class ChangeHistory {
+  @Expose({ name: 'ca' }) changeAction: string = '';
+  @Expose({ name: 'cb' }) changedBy: string = '';
+  @Expose({ name: 'co' }) changedOn: string | null = null;
+  @Expose({ name: 'n' }) notes: string = '';
 }
 
 export interface SelectItemModel {
@@ -32,30 +32,30 @@ export interface SelectItemModel {
   data: string
 }
 
-export interface CodeDiagnostic {
-  diagnosticId: string
-  text: string
-  helpLinkUri: string
-  targetId: string
-  level: string
+export class CodeDiagnostic {
+  @Expose({ name: 'di' }) diagnosticId: string = '';
+  @Expose({ name: 't' }) text: string = '';
+  @Expose({ name: 'hlu' }) helpLinkUri: string = '';
+  @Expose({ name: 'ti' }) targetId: string = '';
+  @Expose({ name: 'l' }) level: string = '';
 }
 
-export interface CommentItemModel {
-    id: string
-    reviewId: string
-    aPIRevisionId: string
-    elementId: string
-    sectionClass: string
-    commentText: string
-    crossLanguageId: string
-    changeHistory: ChangeHistory[]
-    isResolved: boolean
-    upvotes: string[]
-    taggedUsers: Set<string>
-    commentType: CommentType
-    resolutionLocked: boolean
-    createdBy: string
-    createdOn: string
-    lastEditedOn: string | null
-    isDeleted: boolean
+export class CommentItemModel {
+  @Expose({ name: 'id' }) id: string = '';
+  @Expose({ name: 'ri' }) reviewId: string = '';
+  @Expose({ name: 'ari' }) aPIRevisionId: string = '';
+  @Expose({ name: 'ei' }) elementId: string = '';
+  @Expose({ name: 'sc' }) sectionClass: string = '';
+  @Expose({ name: 'ct' }) commentText: string = '';
+  @Expose({ name: 'cli' }) crossLanguageId: string = '';
+  @Expose({ name: 'ch' }) @Type(() => ChangeHistory) changeHistory: ChangeHistory[] = [];
+  @Expose({ name: 'ir' }) isResolved: boolean = false;
+  @Expose({ name: 'uv' }) upvotes: string[] = [];
+  @Expose({ name: 'tu' }) @Type(() => String) taggedUsers: Set<string> = new Set<string>();
+  @Expose({ name: 'cty' }) commentType: CommentType = CommentType.APIRevision;
+  @Expose({ name: 'rl' }) resolutionLocked: boolean = false;
+  @Expose({ name: 'cb' }) createdBy: string = '';
+  @Expose({ name: 'co' }) createdOn: string = '';
+  @Expose({ name: 'leo' }) lastEditedOn: string | null = null;
+  @Expose({ name: 'idl' }) isDeleted: boolean = false;
 }

@@ -47,11 +47,8 @@ namespace APIViewWeb.LeanModels
 
     public abstract class ChangeHistoryModel
     {
-        [JsonProperty("cb")]
         public string ChangedBy { get; set; }
-        [JsonProperty("co")]
         public DateTime? ChangedOn { get; set; }
-        [JsonProperty("n")]
         public string Notes { get; set; }
     }
 
@@ -72,7 +69,6 @@ namespace APIViewWeb.LeanModels
 
     public class CommentChangeHistoryModel : ChangeHistoryModel
     {
-        [JsonProperty("ca")]
         public CommentChangeAction ChangeAction { get; set; }
     }
 }

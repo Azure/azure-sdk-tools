@@ -76,44 +76,52 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   let navigationChildren = navigationTree;
   if (node.navigationTreeNode) {
+    if (!node.navigationTreeNode.children) {
+      node.navigationTreeNode.children = [];
+    }
     navigationChildren = node.navigationTreeNode.children;
   }
 
-  if (Object.keys(node.childrenNodeIdsInOrder).length === 0 && node.isNodeWithDiff) {
+  if (node.childrenNodeIdsInOrder && Object.keys(node.childrenNodeIdsInOrder).length === 0 && node.isNodeWithDiff) {
     codePanelRowData.push(...diffBuffer);
     diffBuffer = [];
   }
 
-  node.documentation.forEach((doc, index) => {
-    appendToggleDocumentationClass(node, doc, index);
-    setLineNumber(doc);
-    if (buildNode && apiTreeBuilderData?.showDocumentation) {
-      codePanelRowData.push(doc);
-    }
-  });
+  if (node.documentation) {
+    node.documentation.forEach((doc, index) => {
+      appendToggleDocumentationClass(node, doc, index);
+      setLineNumber(doc);
+      if (buildNode && apiTreeBuilderData?.showDocumentation) {
+        codePanelRowData.push(doc);
+      }
+    });
+  }
 
-  node.codeLines.forEach((codeLine, index) => {
-    appendToggleDocumentationClass(node, codeLine, index);
-    setLineNumber(codeLine);
-    if (buildNode) {
-      codePanelRowData.push(codeLine);
-    }
-    if (addNodeToBuffer) {
-      diffBuffer.push(codeLine);
-      addJustDiffBuffer();
-    }
-  });
+  if (node.codeLines) {
+    node.codeLines.forEach((codeLine, index) => {
+      appendToggleDocumentationClass(node, codeLine, index);
+      setLineNumber(codeLine);
+      if (buildNode) {
+        codePanelRowData.push(codeLine);
+      }
+      if (addNodeToBuffer) {
+        diffBuffer.push(codeLine);
+        addJustDiffBuffer();
+      }
+    });
+  }
 
-  if (buildNode) {
+  if (buildNode && node.diagnostics) {
     codePanelRowData.push(...node.diagnostics);
   }
-  if (buildNode) {
+
+  if (buildNode && node.commentThread) {
     codePanelRowData.push(...node.commentThread);
   }
   
   if (buildChildren) {
     let orderIndex = 0;
-    while (orderIndex in node.childrenNodeIdsInOrder) {
+    while (node.childrenNodeIdsInOrder && orderIndex in node.childrenNodeIdsInOrder) {
       let childNodeIdHashed = node.childrenNodeIdsInOrder[orderIndex];
       buildCodePanelRows(childNodeIdHashed, navigationChildren);
       orderIndex++;
@@ -129,18 +137,20 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     diffBuffer = [];
 
     let bottomTokenNode = codePanelData?.nodeMetaData[node.bottomTokenNodeIdHash]!;
-    bottomTokenNode.codeLines.forEach((codeLine, index) => {
-      appendToggleDocumentationClass(node, codeLine, index);
-      setLineNumber(codeLine);
-      if (buildNode) {
-        codePanelRowData.push(codeLine);
-      }
-    });
+    if (bottomTokenNode.codeLines) {
+      bottomTokenNode.codeLines.forEach((codeLine, index) => {
+        appendToggleDocumentationClass(node, codeLine, index);
+        setLineNumber(codeLine);
+        if (buildNode) {
+          codePanelRowData.push(codeLine);
+        }
+      });
+    }
   }
 }
 
 function appendToggleDocumentationClass(node: CodePanelNodeMetaData, codePanelRow: CodePanelRowData, index: number) {
-  if (node.documentation.length > 0 && codePanelRow.type === CodePanelRowDatatype.CodeLine && index == 0 && codePanelRow.rowOfTokensPosition === "Top") {
+  if (node.documentation && node.documentation.length > 0 && codePanelRow.type === CodePanelRowDatatype.CodeLine && index == 0 && codePanelRow.rowOfTokensPosition === "Top") {
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} can-show`;
   } else {
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;

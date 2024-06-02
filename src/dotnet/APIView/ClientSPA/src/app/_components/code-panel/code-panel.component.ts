@@ -63,8 +63,10 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
 
   getClassObject(renderClasses: Set<string>) {
     let classObject: { [key: string]: boolean } = {};
-    for (let className of Array.from(renderClasses)) {
-      classObject[className] = true;
+    if (renderClasses) {
+      for (let className of Array.from(renderClasses)) {
+        classObject[className] = true;
+      }
     }
     return classObject;
   }

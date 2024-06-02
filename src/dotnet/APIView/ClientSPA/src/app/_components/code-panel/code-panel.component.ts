@@ -83,7 +83,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     } else if (target.classList.contains('bi-arrow-down-square')) {
       const documentationData = this.codePanelData?.nodeMetaData[nodeId!]?.documentation;
       const lineNumbersOfLinesToRemove = new Set(documentationData!.map(d => d.lineNumber));
-      await this.removeItemFromScroller(lineNumbersOfLinesToRemove, lineNumber!, "toggleDocumentationClasses", "bi-arrow-down-square", "bi-arrow-up-square", "documentation");
+      await this.removeItemFromScroller(lineNumbersOfLinesToRemove, lineNumber!, "toggleDocumentationClasses", "bi-arrow-down-square", "bi-arrow-up-square", "doc");
       target.classList.remove('bi-arrow-down-square')
       target.classList.add('bi-arrow-up-square');
     }
@@ -109,15 +109,21 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
         switch (codePanelRowDatatype) {
           case CodePanelRowDatatype.CommentThread:
             updatedCodeLinesData.push(this.codePanelRowData[i]);
-            updatedCodeLinesData.push(...nodeData?.commentThread!);
+            if (nodeData?.commentThread) {
+              updatedCodeLinesData.push(...nodeData?.commentThread);
+            }
             break;
           case CodePanelRowDatatype.Diagnostics:
             updatedCodeLinesData.push(this.codePanelRowData[i]);
-            updatedCodeLinesData.push(...nodeData?.diagnostics!);
+            if (nodeData?.diagnostics) {
+              updatedCodeLinesData.push(...nodeData?.diagnostics);
+            }
             break;
           case CodePanelRowDatatype.Documentation:
             if (this.codePanelRowData[i].toggleDocumentationClasses?.includes('bi-arrow-up-square')) {
-              updatedCodeLinesData.push(...nodeData?.documentation!);
+              if (nodeData?.documentation) {
+                updatedCodeLinesData.push(...nodeData?.documentation);
+              }
               this.codePanelRowData[i].toggleDocumentationClasses = this.codePanelRowData[i].toggleDocumentationClasses?.replace('bi-arrow-up-square', 'bi-arrow-down-square');
             }
             updatedCodeLinesData.push(this.codePanelRowData[i]);

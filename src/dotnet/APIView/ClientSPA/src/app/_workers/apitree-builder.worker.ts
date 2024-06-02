@@ -1,9 +1,7 @@
 /// <reference lib="webworker" />
 import 'reflect-metadata';
-import { ComputeTokenDiff } from "../_helpers/worker-helpers";
-import { CodeDiagnostic, CommentItemModel } from "../_models/review";
-import { CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype, DiffLineInProcess, InsertCodePanelRowDataMessage, NavigationTreeNode, ReviewPageWorkerMessageDirective, StructuredToken } from "../_models/revision";
-import { APITreeNode, ApiTreeBuilderData, CodePanelData } from "../_models/revision";
+import { CodePanelNodeMetaData, CodePanelRowData, CodePanelRowDatatype, InsertCodePanelRowDataMessage, NavigationTreeNode, ReviewPageWorkerMessageDirective } from "../_models/revision";
+import { ApiTreeBuilderData, CodePanelData } from "../_models/revision";
 import { plainToClass } from 'class-transformer';
 
 let codePanelData: CodePanelData | null = null;
@@ -58,6 +56,7 @@ addEventListener('message', ({ data }) => {
 function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTreeNode []) {
   const rawNode = codePanelData?.nodeMetaData[nodeIdHashed]!;
   const node = plainToClass(CodePanelNodeMetaData, rawNode);
+  codePanelData!.nodeMetaData[nodeIdHashed] = node;
 
   let buildNode = true;
   let buildChildren = true;
@@ -115,11 +114,11 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   }
 
   if (buildNode && node.diagnostics) {
-    console.log(JSON.stringify(node.diagnostics));
     codePanelRowData.push(...node.diagnostics);
   }
 
   if (buildNode && node.commentThread) {
+    console.log("cmt", node.commentThread);
     codePanelRowData.push(...node.commentThread);
   }
   
@@ -142,6 +141,8 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
     let bottomTokenRawNode = codePanelData?.nodeMetaData[node.bottomTokenNodeIdHash]!;
     let bottomTokenNode = plainToClass(CodePanelNodeMetaData, bottomTokenRawNode);
+    codePanelData!.nodeMetaData[node.bottomTokenNodeIdHash] = bottomTokenNode;
+
     if (bottomTokenNode.codeLines) {
       bottomTokenNode.codeLines.forEach((codeLine, index) => {
         appendToggleDocumentationClass(node, codeLine, index);

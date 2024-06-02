@@ -19,15 +19,10 @@ namespace APIView
             HelpLinkUri = helpLinkUri;
             Level = level;
         }
-        [JsonProperty("di")]
         public string DiagnosticId { get; set; }
-        [JsonProperty("t")]
         public string Text { get; set; }
-        [JsonProperty("hlu")]
         public string HelpLinkUri { get; set; }
-        [JsonProperty("ti")]
         public string TargetId { get; set; }
-        [JsonProperty("l")]
         public CodeDiagnosticLevel Level { get; set; }
     }
 }

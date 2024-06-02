@@ -100,8 +100,11 @@ namespace APIView.Model
         public string Id { get; set; }
         [JsonProperty("k")]
         public StructuredTokenKind Kind { get; set; }
+        [JsonIgnore]
         public HashSet<string> Tags { get; set; } = new HashSet<string>();
+        [JsonIgnore]
         public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
+        [JsonIgnore]
         public HashSet<string> RenderClasses { get; set; } = new HashSet<string>();
         
         public StructuredToken()
@@ -227,24 +230,62 @@ namespace APIView.Model
 
     public class APITreeNode
     {
+        [JsonProperty("t")]
+        private HashSet<string> _tagsForSerializer
+        {
+            get { return Tags.Count > 0 ? Tags : null; }
+            set { Tags = value ?? new HashSet<string>(); }
+        }
+
+        [JsonProperty("p")]
+        private Dictionary<string, string> _propertiesForSerializer
+        {
+            get { return Properties.Count > 0 ? Properties : null; }
+            set { Properties = value ?? new Dictionary<string, string>(); }
+        }
+
+        [JsonProperty("tt")]
+        private List<StructuredToken> _topTokensForSerializer
+        {
+            get { return TopTokens.Count > 0 ? TopTokens : null; }
+            set { TopTokens = value ?? new List<StructuredToken>(); }
+        }
+
+        [JsonProperty("bt")]
+        private List<StructuredToken> _bottomTokensForSerializer
+        {
+            get { return BottomTokens.Count > 0 ? BottomTokens : null; }
+            set { BottomTokens = value ?? new List<StructuredToken>(); }
+        }
+
+        [JsonProperty("c")]
+        private List<APITreeNode> _childrenForSerializer
+        {
+            get { return Children.Count > 0 ? Children : null; }
+            set { Children = value ?? new List<APITreeNode>(); }
+        }
+
         [JsonProperty("n")]
         public string Name { get; set; }
         [JsonProperty("i")]
         public string Id { get; set; }
         [JsonProperty("k")]
         public string Kind { get; set; }
-        [JsonProperty("t")]
+        [JsonIgnore]
         public HashSet<string> Tags { get; set; } = new HashSet<string>();
-        [JsonProperty("p")]
+        [JsonIgnore]
         public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
-        [JsonProperty("tt")]
+        [JsonIgnore]
         public List<StructuredToken> TopTokens { get; set; } = new List<StructuredToken>();
-        [JsonProperty("bt")]
+        [JsonIgnore]
         public List<StructuredToken> BottomTokens { get; set; } = new List<StructuredToken>();
-        [JsonProperty("c")]
+        [JsonIgnore]
         public List<APITreeNode> Children { get; set; } = new List<APITreeNode>();
+        [JsonIgnore]
         public DiffKind DiffKind { get; set; } = DiffKind.NoneDiff;
+        [JsonIgnore]
         public List<StructuredToken> TopDiffTokens { get; set; } = new List<StructuredToken>();
+        [JsonIgnore]
         public List<StructuredToken> BottomDiffTokens { get; set; } = new List<StructuredToken>();
 
         public override int GetHashCode()

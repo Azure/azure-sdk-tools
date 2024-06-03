@@ -174,6 +174,7 @@ namespace APIViewWeb.Helpers
                     Label = apiTreeNode.Name,
                     Data = new NavigationTreeNodeData()
                     {
+                        NodeIdHashed = nodeIdHashed,
                         Kind = apiTreeNode.Properties.ContainsKey("SubKind") ? apiTreeNode.Properties["SubKind"] : apiTreeNode.Kind.ToLower(),
                         Icon = navIcon,
                     },

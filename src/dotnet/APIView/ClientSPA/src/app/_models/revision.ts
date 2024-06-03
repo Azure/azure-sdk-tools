@@ -92,6 +92,7 @@ export class CodePanelRowData {
 }
 
 export class NavigationTreeNodeData {
+  @Expose({ name: 'nih' }) nodeIdHashed: string = '';
   @Expose({ name: 'k' }) kind: string = '';
   @Expose({ name: 'i' }) icon: string = '';
 }

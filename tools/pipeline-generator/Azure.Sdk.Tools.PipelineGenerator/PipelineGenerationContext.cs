@@ -1,4 +1,4 @@
-﻿using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.TeamFoundation.Core.WebApi;
@@ -20,7 +20,6 @@ namespace PipelineGenerator
     {
         private string organization;
         private string project;
-        private string patvar;
         private string endpoint;
         private string agentPool;
         private int[] variableGroups;
@@ -30,7 +29,6 @@ namespace PipelineGenerator
             ILogger logger,
             string organization,
             string project,
-            string patvar,
             string endpoint,
             string repository,
             string branch,
@@ -46,7 +44,6 @@ namespace PipelineGenerator
             this.logger = logger;
             this.organization = organization;
             this.project = project;
-            this.patvar = patvar;
             this.endpoint = endpoint;
             this.Repository = repository;
             this.Branch = branch;
@@ -77,18 +74,9 @@ namespace PipelineGenerator
             if (cachedConnection == null)
             {
                 VssCredentials credentials;
-                if (string.IsNullOrWhiteSpace(patvar))
-                {
-                    var azureTokenProvider = new AzureServiceTokenProvider();
-                    var authenticationResult = await azureTokenProvider.GetAuthenticationResultAsync("499b84ac-1321-427f-aa17-267ca6975798");
-                    credentials = new VssAadCredential(new VssAadToken(authenticationResult.TokenType, authenticationResult.AccessToken));
-                }
-                else
-                {
-                    var pat = Environment.GetEnvironmentVariable(patvar);
-                    credentials = new VssBasicCredential("nobody", pat);
-                }
-
+                var azureTokenProvider = new AzureServiceTokenProvider();
+                var authenticationResult = await azureTokenProvider.GetAuthenticationResultAsync("499b84ac-1321-427f-aa17-267ca6975798");
+                credentials = new VssAadCredential(new VssAadToken(authenticationResult.TokenType, authenticationResult.AccessToken));
                 cachedConnection = new VssConnection(new Uri(organization), credentials);
             }
 

@@ -116,114 +116,131 @@ jobs:
   - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
     parameters:
       WorkingDirectory: $(Pipeline.Workspace)/$(RepositoryName)
-  - script: >
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
-      --organization azure-sdk
-      --project public
-      --prefix $(Prefix)
-      --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
-      --endpoint Azure
-      --repository Azure/$(RepositoryName)
-      --convention ci
-      --agentpool Hosted
-      --branch refs/heads/$(DefaultBranch)
-      --set-managed-variables
-      --patvar PATVAR
-      --debug
+
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'opensource-api-connection'
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript:
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
+        --organization azure-sdk `
+        --project public `
+        --prefix $(Prefix) `
+        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
+        --endpoint Azure `
+        --repository Azure/$(RepositoryName) `
+        --convention ci `
+        --agentpool Hosted `
+        --branch refs/heads/$(DefaultBranch) `
+        --set-managed-variables `
+        --debug `
     displayName: 'Generate public pipelines for: $(RepositoryName)'
-    env:
-      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
-  - script: >
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
-      --organization azure-sdk
-      --project internal
-      --prefix $(Prefix)
-      --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
-      --endpoint Azure
-      --repository Azure/$(RepositoryName)
-      --convention up
-      --agentpool Hosted
-      --branch refs/heads/$(DefaultBranch)
-      --set-managed-variables
-      --patvar PATVAR
-      --debug
-      --variablegroups $(InternalVariableGroups) $(TestVariableGroups)
+
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'opensource-api-connection'
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript:
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
+        --organization azure-sdk `
+        --project internal `
+        --prefix $(Prefix) `
+        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
+        --endpoint Azure `
+        --repository Azure/$(RepositoryName) `
+        --convention up `
+        --agentpool Hosted `
+        --branch refs/heads/$(DefaultBranch) `
+        --set-managed-variables `
+        --debug `
+        --variablegroups $(InternalVariableGroups) $(TestVariableGroups)
     displayName: 'Generate internal pipelines for: $(RepositoryName)'
-    env:
-      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
-  - script: >
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
-      --organization azure-sdk
-      --project internal
-      --prefix $(Prefix)
-      --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
-      --endpoint Azure
-      --repository Azure/$(RepositoryName)
-      --convention tests
-      --agentpool Hosted
-      --branch refs/heads/$(DefaultBranch)
-      --set-managed-variables
-      --patvar PATVAR
-      --debug
-      --variablegroups $(TestVariableGroups)
+
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'opensource-api-connection'
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript:
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
+        --organization azure-sdk `
+        --project internal `
+        --prefix $(Prefix) `
+        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
+        --endpoint Azure `
+        --repository Azure/$(RepositoryName) `
+        --convention tests `
+        --agentpool Hosted `
+        --branch refs/heads/$(DefaultBranch) `
+        --set-managed-variables `
+        --debug `
+        --variablegroups $(TestVariableGroups)
     displayName: 'Generate test pipelines for: $(RepositoryName)'
     condition: and(succeeded(), ne(variables['TestVariableGroups'],''))
-    env:
-      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
-  - script: >
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
-      --organization azure-sdk
-      --project internal
-      --prefix $(Prefix)
-      --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
-      --endpoint Azure
-      --repository Azure/$(RepositoryName)
-      --convention testsweekly
-      --agentpool Hosted
-      --branch refs/heads/$(DefaultBranch)
-      --set-managed-variables
-      --patvar PATVAR
-      --debug
-      --variablegroups $(TestVariableGroups)
+
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'opensource-api-connection'
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript:
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
+        --organization azure-sdk `
+        --project internal `
+        --prefix $(Prefix) `
+        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
+        --endpoint Azure `
+        --repository Azure/$(RepositoryName) `
+        --convention testsweekly `
+        --agentpool Hosted `
+        --branch refs/heads/$(DefaultBranch) `
+        --set-managed-variables `
+        --debug `
+        --variablegroups $(TestVariableGroups)
     displayName: 'Generate weekly test pipelines (multi-cloud) for: $(RepositoryName)'
     condition: and(succeeded(), ne(variables['TestVariableGroups'],''))
-    env:
-      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
-  - script: >
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
-      --organization azure-sdk
-      --project internal
-      --prefix $(Prefix)
-      --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
-      --endpoint Azure
-      --repository Azure/$(RepositoryName)
-      --convention upweekly
-      --agentpool Hosted
-      --branch refs/heads/$(DefaultBranch)
-      --set-managed-variables
-      --patvar PATVAR
-      --debug
-      --variablegroups $(InternalVariableGroups) $(TestVariableGroups)
+
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'opensource-api-connection'
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript:
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
+        --organization azure-sdk `
+        --project internal `
+        --prefix $(Prefix) `
+        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
+        --endpoint Azure `
+        --repository Azure/$(RepositoryName) `
+        --convention upweekly `
+        --agentpool Hosted `
+        --branch refs/heads/$(DefaultBranch) `
+        --set-managed-variables `
+        --debug `
+        --variablegroups $(InternalVariableGroups) $(TestVariableGroups)
     displayName: 'Generate weekly unified test pipelines (multi-cloud) for: $(RepositoryName)'
     condition: and(succeeded(), ne(variables['GenerateUnifiedWeekly'],''))
-    env:
-      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
 
-  # - script: >
-  #     $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
-  #     --organization azure-sdk
-  #     --project internal
-  #     --prefix $(Prefix)-pr
-  #     --devopspath "\$(Prefix)\pr"
-  #     --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
-  #     --endpoint Azure
-  #     --repository Azure/$(RepositoryName)-pr
-  #     --convention ci
-  #     --agentpool Hosted
-  #     --branch refs/heads/ $(DefaultBranch)
-  #     --set-managed-variables
-  #     --patvar PATVAR
-  #     --debug
+  # - task: AzureCLI@2
+  #   inputs:
+  #     azureSubscription: 'opensource-api-connection'
+  #     scriptType: pscore
+  #     scriptLocation: inlineScript
+  #     inlineScript:
+  #       $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
+  #       --organization azure-sdk `
+  #       --project internal `
+  #       --prefix $(Prefix)-pr `
+  #       --devopspath "\$(Prefix)\pr" `
+  #       --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
+  #       --endpoint Azure `
+  #       --repository Azure/$(RepositoryName)-pr `
+  #       --convention ci `
+  #       --agentpool Hosted `
+  #       --branch refs/heads/ $(DefaultBranch) `
+  #       --set-managed-variables `
+  #       --debug
   #   displayName: 'Generate internal pipelines for: $(RepositoryName)-pr'
-  #   env:
-  #     PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)

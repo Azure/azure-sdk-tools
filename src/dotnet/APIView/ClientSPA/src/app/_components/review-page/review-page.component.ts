@@ -37,6 +37,7 @@ export class ReviewPageComponent implements OnInit {
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
   languageSafeName: string | undefined;
+  navTreeNodeIdHashed : string | undefined;
 
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
@@ -211,6 +212,10 @@ export class ReviewPageComponent implements OnInit {
     else {
       this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Documentation);
     }
+  }
+
+  handleNavTreeNodeEmmitter(nodeIdHashed: string) {
+    this.navTreeNodeIdHashed = nodeIdHashed;
   }
 
   ngOnDestroy() {

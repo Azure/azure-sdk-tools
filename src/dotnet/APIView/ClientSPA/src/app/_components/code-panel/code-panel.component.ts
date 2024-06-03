@@ -1,11 +1,9 @@
 import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
-import { BehaviorSubject, fromEvent, of, Subject, takeUntil } from 'rxjs';
-import { debounceTime, finalize, scan, take } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { CommentItemModel } from 'src/app/_models/review';
 import { CodePanelData, CodePanelRowDatatype } from 'src/app/_models/revision';
-import { CodePanelRowData, CodePanelToggleableData, InsertCodePanelRowDataMessage, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
-import { CommentThreadComponent } from '../shared/comment-thread/comment-thread.component';
-import { AfterViewInit } from '@angular/core';
+import { CodePanelRowData } from 'src/app/_models/revision';
 import { OnDestroy } from '@angular/core';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 
@@ -21,6 +19,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   @Input() isDiffView: boolean = false;
   @Input() language: string | undefined;
   @Input() languageSafeName: string | undefined;
+  @Input() navTreeNodIdHashed: string | undefined;
 
   lineNumberCount : number = 0;
   isLoading: boolean = true;
@@ -47,6 +46,10 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
         this.isLoading = true;
         this.codePanelRowSource = undefined;
       }
+    }
+
+    if (changes['navTreeNodIdHashed']) {
+      this.scrollToNode(this.navTreeNodIdHashed!);
     }
   }
 
@@ -251,8 +254,11 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     });
   }
 
-  scrollToIndex(scrollPosition: number) {
-    this.codePanelRowSource?.adapter?.fix({ scrollPosition: scrollPosition });
+  scrollToNode(nodeIdHashed: string) {
+    const nodeIndex = this.codePanelRowData.findIndex((row) => row.nodeIdHashed === nodeIdHashed);
+    if (nodeIndex > -1) {
+      this.codePanelRowSource?.adapter?.reload(nodeIndex);
+    }
   }
 
   setMaxLineNumberWidth() {

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { TreeNode } from 'primeng/api';
 import { environment } from 'src/environments/environment';
 
@@ -9,6 +9,9 @@ import { environment } from 'src/environments/environment';
 })
 export class ReviewNavComponent implements OnChanges {
   @Input() reviewPageNavigation: TreeNode[] = [];
+
+  @Output() navTreeNodeIdEmitter : EventEmitter<string> = new EventEmitter<string>();
+
 
   isLoading: boolean = true;
   assetsPath : string = environment.assetsPath;
@@ -21,5 +24,9 @@ export class ReviewNavComponent implements OnChanges {
         this.isLoading = true;
       }
     }
+  }
+
+  handleNavNodeClick(event: TreeNode) {
+    this.navTreeNodeIdEmitter.emit(event.data.nodeIdHashed);
   }
 }

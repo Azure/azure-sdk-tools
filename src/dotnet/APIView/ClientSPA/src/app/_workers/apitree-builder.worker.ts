@@ -118,7 +118,6 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   }
 
   if (buildNode && node.commentThread) {
-    console.log("cmt", node.commentThread);
     codePanelRowData.push(...node.commentThread);
   }
   

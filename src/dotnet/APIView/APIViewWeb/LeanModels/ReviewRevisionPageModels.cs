@@ -166,6 +166,8 @@ namespace APIViewWeb.LeanModels
         public string Kind { get; set; }
         [JsonProperty("i")]
         public string Icon { get; set; }
+        [JsonProperty("nih")]
+        public string NodeIdHashed { get; set; }
     }
 
     public class NavigationTreeNode

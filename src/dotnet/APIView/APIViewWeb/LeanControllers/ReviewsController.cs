@@ -129,7 +129,7 @@ namespace APIViewWeb.LeanControllers
                     codePanelRawData.APIForest = CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionReviewCodeFile.APIForest);
                 }
 
-                result = CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
+                result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
                 return new LeanJsonResult(result, StatusCodes.Status200OK);
             }
 

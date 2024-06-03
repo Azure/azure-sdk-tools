@@ -2,26 +2,35 @@
 using APIView.Model;
 using APIViewWeb.Extensions;
 using APIViewWeb.LeanModels;
-using Microsoft.VisualStudio.Services.Common;
-using NuGet.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace APIViewWeb.Helpers
 {
     public class CodeFileHelpers
     {
-        public static CodePanelData GenerateCodePanelDataAsync(CodePanelRawData codePanelRawData)
+        private static int _processorCount = Environment.ProcessorCount;
+        private static SemaphoreSlim _semaphore = new SemaphoreSlim(_processorCount);
+        private static List<Task> _tasks = new List<Task>();
+
+        public static async Task<CodePanelData> GenerateCodePanelDataAsync(CodePanelRawData codePanelRawData)
         {
             var codePanelData = new CodePanelData();
 
-            Parallel.ForEach(codePanelRawData.APIForest, (node, state, localIndex) =>
+            for (int idx = 0; idx < codePanelRawData.APIForest.Count; idx++)
             {
-                BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node, 
-                    parentNodeIdHashed: "root", nodePositionAtLevel: (int)localIndex);
-            });
+                var node = codePanelRawData.APIForest[idx];
+                await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node, 
+                    parentNodeIdHashed: "root", nodePositionAtLevel: idx);
+            };
+
+            if (_processorCount > 1)
+            {
+                await Task.WhenAll(_tasks);
+            }
 
             return codePanelData;
         }
@@ -101,7 +110,7 @@ namespace APIViewWeb.Helpers
             return result;
         }
 
-        private static void BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string parentNodeIdHashed, int nodePositionAtLevel, int indent = 0)
+        private static async Task BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string parentNodeIdHashed, int nodePositionAtLevel, int indent = 0)
         {
             var nodeIdHashed = GetTokenNodeIdHash(codePanelData, apiTreeNode, RowOfTokensPosition.Top);
 
@@ -124,8 +133,28 @@ namespace APIViewWeb.Helpers
                 codePanelData.NodeMetaData[parentNodeIdHashed] = new CodePanelNodeMetaData();
                 codePanelData.NodeMetaData[parentNodeIdHashed].ChildrenNodeIdsInOrder.TryAdd(nodePositionAtLevel, nodeIdHashed);
             }
-            
-            BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, RowOfTokensPosition.Top, indent);
+
+            if (_processorCount > 1) // Take advantage of multi-core processors
+            {
+                await _semaphore.WaitAsync();
+                var task = Task.Run(() =>
+                {
+                    try
+                    {
+                        BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, RowOfTokensPosition.Top, indent);
+                    }
+                    finally
+                    {
+                        _semaphore.Release();
+                    }
+                });
+                _tasks.Add(task);
+            }
+            else
+            {
+                BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, nodeIdHashed, RowOfTokensPosition.Top, indent);
+            }
+
 
             if (!apiTreeNode.Tags.Contains("HideFromNav"))
             {
@@ -162,11 +191,12 @@ namespace APIViewWeb.Helpers
                 }
             }
 
-            Parallel.ForEach(apiTreeNode.Children, (node, state, localIndex) =>
-            { 
-                BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node, 
-                    parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: (int)localIndex, indent: indent + 1);
-            });
+            for (int idx = 0; idx < apiTreeNode.Children.Count; idx++)
+            {
+                var node = apiTreeNode.Children[idx];
+                await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node,
+                    parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: idx, indent: indent + 1);       
+            };
 
             if (apiTreeNode.BottomTokens.Any())
             {

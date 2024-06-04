@@ -134,7 +134,7 @@ jobs:
         --agentpool Hosted `
         --branch refs/heads/$(DefaultBranch) `
         --set-managed-variables `
-        --debug `
+        --debug
     displayName: 'Generate public pipelines for: $(RepositoryName)'
 
   - task: AzureCLI@2
@@ -224,23 +224,3 @@ jobs:
     displayName: 'Generate weekly unified test pipelines (multi-cloud) for: $(RepositoryName)'
     condition: and(succeeded(), ne(variables['GenerateUnifiedWeekly'],''))
 
-  # - task: AzureCLI@2
-  #   inputs:
-  #     azureSubscription: 'opensource-api-connection'
-  #     scriptType: pscore
-  #     scriptLocation: inlineScript
-  #     inlineScript:
-  #       $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
-  #       --organization azure-sdk `
-  #       --project internal `
-  #       --prefix $(Prefix)-pr `
-  #       --devopspath "\$(Prefix)\pr" `
-  #       --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
-  #       --endpoint Azure `
-  #       --repository Azure/$(RepositoryName)-pr `
-  #       --convention ci `
-  #       --agentpool Hosted `
-  #       --branch refs/heads/ $(DefaultBranch) `
-  #       --set-managed-variables `
-  #       --debug
-  #   displayName: 'Generate internal pipelines for: $(RepositoryName)-pr'

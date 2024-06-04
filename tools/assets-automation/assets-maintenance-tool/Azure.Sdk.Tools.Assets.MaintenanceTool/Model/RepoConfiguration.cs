@@ -25,10 +25,17 @@ public class RepoConfiguration
     /// need to go further back then that when examining the SHAs in the language repos. There is no possibility of an
     /// assets.json past this date!
     /// </summary>
-    public DateTime ScanStartDate { get; set; } = DateTime.Parse("2022-12-01");
+    public DateTime ScanStartDate { get; set; } = DateTime.Parse("2023-12-01");
 
     /// <summary>
     /// The set of branches that we will examine. Defaults to just 'main'.
     /// </summary>
     public List<string> Branches { get; set; } = new List<string> { "main" };
+
+    /// <summary>
+    /// The folder patterns that are used to filter the repo. Functionally, these strings
+    /// will be combined with **/assets.json while searching for assets. Non-presence indicates
+    /// the intent to scan the entire repository.
+    /// </summary>
+    public List<string> ScanFolders { get; set; } = new List<string>{};
 }

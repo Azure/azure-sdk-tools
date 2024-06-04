@@ -1,0 +1,34 @@
+{
+  "LanguageRepos": [
+    {
+      "LanguageRepo": "Azure/azure-sdk-for-java",
+      "ScanFolders": [
+        "sdk/containerregistry"
+      ]
+    },
+    {
+      "LanguageRepo": "Azure/azure-sdk-for-python",
+      "ScanFolders": [
+        "sdk/containerregistry"
+      ]
+    },
+    {
+      "LanguageRepo": "Azure/azure-sdk-for-go",
+      "ScanFolders": [
+        "sdk/containers"
+      ]
+    },
+    {
+      "LanguageRepo": "Azure/azure-sdk-for-net",
+      "ScanFolders": [
+        "sdk/containerregistry"
+      ]
+    },
+    {
+      "LanguageRepo": "Azure/azure-sdk-for-js",
+      "ScanFolders": [
+        "sdk/containerregistry"
+      ]
+    },
+  ]
+}

@@ -100,7 +100,7 @@ public class AssetsScanner
                 var commitsOnBranch = GetBranchCommits(targetRepoUri, branch, config.ScanStartDate, workingDirectory);
                 var unretrievedCommits = ResolveUnhandledCommits(commitsOnBranch, previousOutput);
 
-                results.AddRange(GetAssetsResults(config.LanguageRepo, unretrievedCommits, workingDirectory));
+                results.AddRange(GetAssetsResults(config.LanguageRepo, unretrievedCommits, workingDirectory, config.ScanFolders));
 
                 if (previousOutput != null)
                 {
@@ -207,7 +207,7 @@ public class AssetsScanner
     /// Find all assets.jsons beneath a targeted folder.
     /// </summary>
     /// <returns>AssetsResults for each discovered assets.json, populating other metadata as necessary.</returns>
-    private List<AssetsResult> ScanDirectory(string repo, string commit, string workingDirectory)
+    private List<AssetsResult> ScanDirectory(string repo, string commit, string workingDirectory, List<string> scanFolders)
     {
         Matcher matcher = new();
         List<AssetsResult> locatedAssets = new List<AssetsResult>();
@@ -233,14 +233,14 @@ public class AssetsScanner
     /// Walks a set of targeted commits, extracting all available assets.jsons from each.
     /// </summary>
     /// <returns>A list of AssetsResults reflecting all discovered assets.jsons from each targeted commit.</returns>
-    private List<AssetsResult> GetAssetsResults(string repo, List<string> commits, string workingDirectory)
+    private List<AssetsResult> GetAssetsResults(string repo, List<string> commits, string workingDirectory, List<string> folderGlobs)
     {
         var allResults = new List<AssetsResult>();
         foreach (var commit in commits)
         {
             handler.Run($"checkout {commit}", workingDirectory);
             Cleanup(workingDirectory);
-            allResults.AddRange(ScanDirectory(repo, commit, workingDirectory));
+            allResults.AddRange(ScanDirectory(repo, commit, workingDirectory, folderGlobs));
         }
 
         return allResults;

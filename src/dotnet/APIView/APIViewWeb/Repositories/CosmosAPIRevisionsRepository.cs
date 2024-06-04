@@ -258,19 +258,19 @@ namespace APIViewWeb
         /// </summary>
         /// <param name="crossLanguagePackageId"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<string>> GetReviewIdsOfLanguageCorrespondingReviewAsync(string crossLanguagePackageId)
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetLanguageCorrespondingAPIRevisionsAsync(string crossLanguagePackageId)
         {
-            var query = $"SELECT DISTINCT VALUE c.ReviewId FROM c WHERE ARRAY_LENGTH(c.Files) > 0 AND c.Files[0].CrossLanguagePackageId = '{crossLanguagePackageId}'";
+            var query = $"SELECT DISTINCT c.id, c.ReviewId FROM c WHERE ARRAY_LENGTH(c.Files) > 0 AND ARRAY_CONTAINS(c.Files, {{ \"CrossLanguagePackageId\": \"{crossLanguagePackageId}\" }}, true)";
 
-            var reviewIds = new List<string>();
+            var apiRevisions = new List<APIRevisionListItemModel>();
             var queryDefinition = new QueryDefinition(query);
-            var itemQueryIterator = _apiRevisionContainer.GetItemQueryIterator<string>(queryDefinition);
+            var itemQueryIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);
             while (itemQueryIterator.HasMoreResults)
             {
                 var result = await itemQueryIterator.ReadNextAsync();
-                reviewIds.AddRange(result.Resource);
+                apiRevisions.AddRange(result.Resource);
             }
-            return reviewIds;
+            return apiRevisions;
         }
     }
 }

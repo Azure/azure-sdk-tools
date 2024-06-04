@@ -270,6 +270,7 @@ namespace ApiView
                 list.Add(codeLine);
             }
             currentId = null;
+            currentCrossLangId = null;
             stringBuilder.Clear();
         }
     }

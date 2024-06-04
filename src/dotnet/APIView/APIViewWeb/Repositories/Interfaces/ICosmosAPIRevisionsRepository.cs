@@ -55,7 +55,7 @@ namespace APIViewWeb.Repositories
         /// </summary>
         /// <param name="crossLanguagePackageId"></param>
         /// <returns></returns>
-        public Task<IEnumerable<string>> GetReviewIdsOfLanguageCorrespondingReviewAsync(string crossLanguagePackageId);
+        public Task<IEnumerable<APIRevisionListItemModel>> GetLanguageCorrespondingAPIRevisionsAsync(string crossLanguagePackageId);
 
     }
 }

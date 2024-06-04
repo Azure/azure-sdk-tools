@@ -139,18 +139,17 @@ namespace APIViewWeb.Pages.Assemblies
 
             if (!String.IsNullOrEmpty(ReviewContent.ActiveAPIRevision.Files.First().CrossLanguagePackageId))
             {
-                var correspondingReviewId = await _apiRevisionsManager.GetReviewIdsOfLanguageCorrespondingReviewAsync(ReviewContent.ActiveAPIRevision.Files.First().CrossLanguagePackageId);
-                var correspondingReviews = await _reviewManager.GetReviewsAsync(reviewIds: correspondingReviewId.Where(_ => _ != id).ToList(), isClosed: false);
-                foreach (var review in correspondingReviews)
+                var correspondingAPIRevisions = await _apiRevisionsManager.GetLanguageCorrespondingAPIRevisionsAsync(ReviewContent.ActiveAPIRevision.Files.First().CrossLanguagePackageId);
+                foreach (var apiRevision in correspondingAPIRevisions)
                 {
                     var reviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
                         reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
                         reviewRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
-                        signalRHubContext: _signalRHubContext, user: User, review: review, revisionId: null, diffRevisionId: null,
+                        signalRHubContext: _signalRHubContext, user: User, review: null, reviewId: apiRevision.ReviewId, revisionId: apiRevision.Id, diffRevisionId: null,
                         showDocumentation: (ShowDocumentation ?? false), showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
                         diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
-                    ReviewContent.CrossLanguageViewContent.Add(review.Language, reviewContent);
+                    ReviewContent.CrossLanguageViewContent.Add(reviewContent.Review.Language, reviewContent);
                 }
             }
 

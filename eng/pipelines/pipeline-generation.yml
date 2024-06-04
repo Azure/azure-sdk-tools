@@ -115,7 +115,7 @@ jobs:
       dotnet pack
       dotnet tool install --global --prerelease --add-source ../../../artifacts/packages/Debug Azure.Sdk.Tools.PipelineGenerator
     displayName: 'Build and install pipeline-generator from sources'
-    workingDirectory: $(Pipeline.Workspace)/tools/pipeline-generator/Azure.Sdk.Tools.PipelineGenerator
+    workingDirectory: tools/pipeline-generator/Azure.Sdk.Tools.PipelineGenerator
 
   - script: |
       git clone https://github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)

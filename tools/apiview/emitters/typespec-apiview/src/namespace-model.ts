@@ -28,7 +28,6 @@ import {
   ScalarStatementNode,
   TypeReferenceNode,
   JsNamespaceDeclarationNode,
-  Directive,
   DirectiveExpressionNode,
   StringLiteralNode,
 } from "@typespec/compiler";

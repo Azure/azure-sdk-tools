@@ -43,62 +43,104 @@ import {
   ValueOfExpressionNode,
 } from "@typespec/compiler";
 import { ApiViewDiagnostic, ApiViewDiagnosticLevel } from "./diagnostic.js";
-import { ApiViewNavigation } from "./navigation.js";
 import { generateId, NamespaceModel } from "./namespace-model.js";
 import { LIB_VERSION } from "./version.js";
 
 const WHITESPACE = " ";
 
-export const enum ApiViewTokenKind {
-  Text = 0,
-  Newline = 1,
-  Whitespace = 2,
-  Punctuation = 3,
-  Keyword = 4,
-  LineIdMarker = 5, // use this if there are no visible tokens with ID on the line but you still want to be able to leave a comment for it
-  TypeName = 6,
-  MemberName = 7,
-  StringLiteral = 8,
-  Literal = 9,
-  Comment = 10,
-  DocumentRangeStart = 11,
-  DocumentRangeEnd = 12,
-  DeprecatedRangeStart = 13,
-  DeprecatedRangeEnd = 14,
-  SkipDiffRangeStart = 15,
-  SkipDiffRangeEnd = 16,
+/** Supported render classes for APIView v2.
+ *  You can add custom ones but need to provide CSS to EngSys.
+ */
+export const enum RenderClass {
+  text,
+  keyword,
+  punctuation,
+  literal,
+  comment,
+  typeName = "type-name",
+  memberName = "member-name",
+  stringLiteral = "string-literal",
 }
 
-export interface ApiViewToken {
-  Kind: ApiViewTokenKind;
-  Value?: string;
-  DefinitionId?: string;
-  NavigateToId?: string;
-  CrossLanguageDefinitionId?: string;
+/** Tags supported by APIView v2 */
+export enum Tag {
+  /** Show item as deprecated. */
+  deprecated,
+  /** Hide item from APIView. */
+  hidden,
+  /** Hide item from APIView Navigation. */
+  hideFromNav,
+  /** Ignore differences in this item when calculating diffs. */
+  skipDiff
+}
+
+export const enum TokenLocation {
+  /** ApiTreeNode.TopTokens. Most tokens will go here. */
+  top,
+  /** ApiTreeNode.BottomTokens. Useful for closing braces. */
+  bottom,
+}
+
+/**
+ * Describes the type of structured token.
+ */
+export const enum StructuredTokenKind {
+  content = 0,
+  lineBreak = 1,
+  nonBreakingSpace = 2,
+  tabSpace = 3,
+  parameterSeparator = 4,
+  url = 5,
+}
+
+/**
+ * New-style structured APIView token.
+ */
+export interface StructuredToken {
+  value?: string;
+  id: string;
+  kind: StructuredTokenKind;
+  tags?: Set<string>;
+  properties: Map<string, string>;
+  renderClasses: Set<string>;
+}
+
+/**
+ * New-style structured APIView node.
+ */
+export interface ApiTreeNode {
+  _kind: "ApiTreeNode",
+  name: string;
+  id: string;
+  kind: string;
+  tags?: Set<string>;
+  properties: Map<string, string>;
+  topTokens: StructuredToken[];
+  bottomTokens: StructuredToken[];
+  children: ApiTreeNode[];
 }
 
 export interface ApiViewDocument {
-  Name: string;
-  PackageName: string;
-  Tokens: ApiViewToken[];
-  Navigation: ApiViewNavigation[];
-  Diagnostics: ApiViewDiagnostic[];
-  VersionString: string;
-  Language: string;
-  CrossLanguagePackageId: string | undefined;
+  _kind: "ApiViewDocument",
+  name: string;
+  packageName: string;
+  tokens: null;
+  apiForest: ApiTreeNode[] | null;
+  navigation: null;
+  diagnostics: ApiViewDiagnostic[];
+  versionString: string;
+  language: string;
+  crossLanguagePackageId: string | undefined;
 }
 
 export class ApiView {
   name: string;
   packageName: string;
   crossLanguagePackageId: string | undefined;
-  tokens: ApiViewToken[] = [];
-  navigationItems: ApiViewNavigation[] = [];
+  nodes: ApiTreeNode[] = [];
   diagnostics: ApiViewDiagnostic[] = [];
   versionString: string;
 
-  indentString: string = "";
-  indentSize: number = 2;
   namespaceStack = new NamespaceStack();
   typeDeclarations = new Set<string>();
   includeGlobalNamespace: boolean;
@@ -112,53 +154,42 @@ export class ApiView {
     this.emitHeader();
   }
 
-  token(kind: ApiViewTokenKind, value?: string, lineId?: string, navigateToId?: string) {
-    this.tokens.push({
-      Kind: kind,
-      Value: value,
-      DefinitionId: lineId,
-      NavigateToId: navigateToId,
-    });
-  }
-
-  indent() {
-    this.trim();
-    this.indentString = WHITESPACE.repeat(this.indentString.length + this.indentSize);
-    if (this.indentString.length) {
-      this.tokens.push({ Kind: ApiViewTokenKind.Whitespace, Value: this.indentString });
+  token(node: ApiTreeNode, location: TokenLocation, kind: StructuredTokenKind, lineId: string, renderClasses: RenderClass[], value?: string, tags?: Tag[]) {
+    const token: StructuredToken = {
+      kind: kind,
+      value: value,
+      id: lineId,
+      tags: tags ? new Set([...tags.toString()]) : undefined,
+      properties: new Map<string, string>(),
+      renderClasses: new Set<string>([...renderClasses.toString()]),
+    };
+    if (location === TokenLocation.top) {
+      node.topTokens.push(token);
+    } else {
+      node.bottomTokens.push(token);
     }
   }
 
-  deindent() {
-    this.trim();
-    this.indentString = WHITESPACE.repeat(this.indentString.length - this.indentSize);
-    if (this.indentString.length) {
-      this.tokens.push({ Kind: ApiViewTokenKind.Whitespace, Value: this.indentString });
-    }
-  }
-
-  trim(trimNewlines: boolean = false) {
-    let last = this.tokens[this.tokens.length - 1];
-    while (last) {
-      if (last.Kind === ApiViewTokenKind.Whitespace || (trimNewlines && last.Kind === ApiViewTokenKind.Newline)) {
-        this.tokens.pop();
-        last = this.tokens[this.tokens.length - 1];
-      } else {
-        return;
+  child(parent: ApiTreeNode | ApiViewDocument, name: string, id: string, tags?: Tag[]) {
+    const child: ApiTreeNode = {
+      _kind: "ApiTreeNode",
+      name: name,
+      id: id,
+      kind: "",
+      tags: tags ? new Set([...tags.toString()]) : undefined,
+      properties: new Map<string, string>(),
+      topTokens: [],
+      bottomTokens: [],
+      children: []
+    };
+    if (parent._kind === "ApiViewDocument") {
+      if (parent.apiForest === null) {
+        parent.apiForest = [];
       }
+      parent.apiForest.push(child);
+    } else if (parent._kind === "ApiTreeNode") {
+      parent.children.push(child);
     }
-  }
-
-  beginGroup() {
-    this.punctuation("{", true, false);
-    this.blankLines(0);
-    this.indent();
-  }
-
-  endGroup() {
-    this.blankLines(0);
-    this.deindent();
-    this.punctuation("}");
   }
 
   whitespace(count: number = 1) {
@@ -182,9 +213,6 @@ export class ApiView {
     this.tokens.push({
       Kind: ApiViewTokenKind.Newline,
     });
-    if (this.indentString.length) {
-      this.tokens.push({ Kind: ApiViewTokenKind.Whitespace, Value: this.indentString });
-    }
   }
 
   blankLines(count: number) {
@@ -320,10 +348,6 @@ export class ApiView {
     this.diagnostics.push(new ApiViewDiagnostic(message, targetId, level));
   }
 
-  navigation(item: ApiViewNavigation) {
-    this.navigationItems.push(item);
-  }
-
   shouldEmitNamespace(name: string): boolean {
     if (name === "" && this.includeGlobalNamespace) {
       return true;
@@ -359,7 +383,6 @@ export class ApiView {
       const nsModel = new NamespaceModel(namespaceName, ns, program);
       if (nsModel.shouldEmit()) {
         this.tokenizeNamespaceModel(nsModel);
-        this.buildNavigation(nsModel);
       }
     }
   }
@@ -1151,8 +1174,8 @@ export class ApiView {
           this.space();
         }
         if (isExpanded) {
-            this.trim(true);
-            this.newline();
+          this.trim(true);
+          this.newline();
         }
       }
       this.punctuation(">");
@@ -1174,11 +1197,6 @@ export class ApiView {
     } else {
       this.tokenize(node.returnType);
     }
-  }
-
-  private buildNavigation(ns: NamespaceModel) {
-    this.namespaceStack.reset();
-    this.navigation(new ApiViewNavigation(ns, this.namespaceStack));
   }
 
   private getNameForNode(node: BaseNode | NamespaceModel): string {
@@ -1206,8 +1224,9 @@ export class ApiView {
     return {
       Name: this.name,
       PackageName: this.packageName,
-      Tokens: this.tokens,
-      Navigation: this.navigationItems,
+      Tokens: null,
+      APIForest: this.tokens,
+      Navigation: null,
       Diagnostics: this.diagnostics,
       VersionString: this.versionString,
       Language: "TypeSpec",

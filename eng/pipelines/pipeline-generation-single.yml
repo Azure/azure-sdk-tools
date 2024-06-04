@@ -29,22 +29,23 @@ jobs:
   - script: |
       git clone --filter=blob:none --branch $(Branch) https://$(azuresdk-github-pat)@github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
     displayName: 'Clone repository: $(RepositoryName)'
-  - script: >
-      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
-      --organization $(DevOpsOrg)
-      --project $(DevOpsProject)
-      --prefix $(Prefix)
-      --devopspath "$(DevOpsPath)"
-      --path $(PathFilter)
-      --endpoint Azure
-      --repository Azure/$(RepositoryName)
-      --convention $(PipelineConvention)
-      --agentpool Hosted
-      --branch refs/heads/$(Branch)
-      --patvar PATVAR
-      --debug
-      $(AdditionalOptions)
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'opensource-api-connection'
+      scriptType: pscore
+      scriptLocation: inlineScript
+      inlineScript:
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
+        --organization $(DevOpsOrg) `
+        --project $(DevOpsProject) `
+        --prefix $(Prefix) `
+        --devopspath "$(DevOpsPath)" `
+        --path $(PathFilter) `
+        --endpoint Azure `
+        --repository Azure/$(RepositoryName) `
+        --convention $(PipelineConvention) `
+        --agentpool Hosted `
+        --branch refs/heads/$(Branch) `
+        --debug `
+        $(AdditionalOptions)
     displayName: 'Generate pipeline'
-    env:
-      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
-

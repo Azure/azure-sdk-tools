@@ -80,6 +80,7 @@ namespace PipelineGenerator
                 );
                 var devopsCredential = new VssAzureIdentityCredential(azureCredential);
                 cachedConnection = new VssConnection(new Uri(organization), devopsCredential);
+                await cachedConnection.ConnectAsync();
             }
 
             return cachedConnection;

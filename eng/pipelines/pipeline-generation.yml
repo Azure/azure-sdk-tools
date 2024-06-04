@@ -111,6 +111,13 @@ jobs:
   steps:
 #  - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
 
+  - name: Build and install pipeline-generator from sources
+    run: |
+      dotnet pack
+      dotnet tool install --global --prerelease --add-source ../../../artifacts/packages/Debug Azure.Sdk.Tools.PipelineGenerator
+    shell: bash
+    workingDirectory: $(Pipeline.Workspace)/tools/pipeline-generator/Azure.Sdk.Tools.PipelineGenerator
+
   - script: |
       git clone https://github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
     displayName: 'Clone repository: $(RepositoryName)'
@@ -124,7 +131,7 @@ jobs:
       scriptType: pscore
       scriptLocation: inlineScript
       inlineScript:
-        dotnet run generate `
+        pipeline-generator generate generate `
         --organization azure-sdk `
         --project public `
         --prefix $(Prefix) `
@@ -136,7 +143,6 @@ jobs:
         --branch refs/heads/$(DefaultBranch) `
         --set-managed-variables `
         --debug
-      workingDirectory: $(Pipeline.Workspace)/tools/pipeline-generator/Azure.Sdk.Tools.PipelineGenerator
     displayName: 'Generate public pipelines for: $(RepositoryName)'
 
   # - task: AzureCLI@2

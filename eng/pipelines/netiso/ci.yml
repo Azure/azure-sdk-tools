@@ -13,8 +13,8 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            $ITERATION = "1e"
-            $GROUP = "bebroder-test-netiso-storage-$ITERATION"
+            $ITERATION = "2"
+            $GROUP = "bebroder-test-netiso-storage"
             $OPENACCOUNT = "bebrodernetisoopen$ITERATION"
             $CLOSEDACCOUNT = "bebrodernetisoclosed$ITERATION"
             $CROSSREGIONACCOUNT = "bebrodernetisocross$ITERATION"

@@ -67,12 +67,12 @@ In version "X.Y.Z" of APIView, we have introduced a new diagnostic level: Fatal 
 
 1. Defining Fatal Diagnostics:
   - Diagnostic levels are defined in the `CodeDiagnosticLevel` enum.
-  - Within your language context, dentify conditions that qualify as Fatal.
-  - Update your diagnostic logic to trigger a Fatal (Level 4) for these conditions.
+  - Within your language context, identify conditions that qualify as Fatal.
+  - Update parser logic to add Level 4 Fatal diagnostics for those conditions.
 
 2. Handling Fatal Diagnostics:
   - Implement handling mechanisms to respond correctly when a Fatal diagnostic is encountered (e.g., logging, alerting, halting execution).
 
-3. Bootstrap Modal for Fatal Diagnostics:
-  - When attempting to approve a revision with a Fatal diagnostic, a Bootstrap modal will be triggered.
-  - The modal will state "Fatal Diagnostics Present" and provide a checkbox which must be clicked to override the diagnostic, enable the Confirm button and continue the Approval process.
+3. Dialogue Box for Fatal Diagnostics:
+  - When attempting to approve a revision with a Fatal diagnostic, a dialogue box will be triggered.
+  - The dialogue box will state "Fatal Diagnostics Present" and provide a checkbox which must be clicked to override the diagnostic, enable the Confirm button and continue the Approval process.

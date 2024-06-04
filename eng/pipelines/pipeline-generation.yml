@@ -136,7 +136,7 @@ jobs:
         --branch refs/heads/$(DefaultBranch) `
         --set-managed-variables `
         --debug
-    workingDirectory: tools/pipeline-generator/Azure.Sdk.Tools.PipelineGenerator
+      workingDirectory: tools/pipeline-generator/Azure.Sdk.Tools.PipelineGenerator
     displayName: 'Generate public pipelines for: $(RepositoryName)'
 
   # - task: AzureCLI@2

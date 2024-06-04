@@ -44,189 +44,186 @@ jobs:
           ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
           ${{ parameters.APIReview_AutoCreate_Configurations }}
         TestVariableGroups: '${{ parameters.Secrets_for_Resource_Provisioner }}'
-      # Android:
-      #   RepositoryName: azure-sdk-for-android
-      #   Prefix: android
-      #   InternalVariableGroups: >-
-      #     ${{ parameters.AzureSDK_Maven_Release_Pipeline_Secrets }}
-      #     ${{ parameters.Release_Secrets_for_GitHub }}
-      #     ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     ${{ parameters.APIReview_AutoCreate_Configurations }}
-      # JavaScript:
-      #   RepositoryName: azure-sdk-for-js
-      #   Prefix: js
-      #   InternalVariableGroups: >-
-      #     ${{ parameters.NPM_Registry_Authentication }}
-      #     ${{ parameters.Release_Secrets_for_GitHub }}
-      #     ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #   TestVariableGroups: '${{ parameters.Secrets_for_Resource_Provisioner }}'
-      # Python:
-      #   RepositoryName: azure-sdk-for-python
-      #   Prefix: python
-      #   InternalVariableGroups: >-
-      #     ${{ parameters.Release_Secrets_for_GitHub }}
-      #     ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #   TestVariableGroups: '${{ parameters.Secrets_for_Resource_Provisioner }}'
-      # Net:
-      #   RepositoryName: azure-sdk-for-net
-      #   Prefix: net
-      #   InternalVariableGroups: >-
-      #     ${{ parameters.AzureSDK_Nuget_Release_Pipeline_Secrets }}
-      #     ${{ parameters.Release_Secrets_for_GitHub }}
-      #     ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #   TestVariableGroups: '${{ parameters.Secrets_for_Resource_Provisioner }}'
-      # Cpp:
-      #   RepositoryName: azure-sdk-for-cpp
-      #   Prefix: cpp
-      #   # Resource Provisioner is in InternalVariableGroups and not TestVariableGroups because C++ includes live tests in the unified pipelines
-      #   InternalVariableGroups: >-
-      #     ${{ parameters.Release_Secrets_for_GitHub }}
-      #     ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #     ${{ parameters.Secrets_for_Resource_Provisioner }}
-      #     ${{ parameters.Cache_Secrets_for_CPP }}
-      # iOS:
-      #   RepositoryName: azure-sdk-for-ios
-      #   Prefix: ios
-      #   # Resource Provisioner is in InternalVariableGroups and not TestVariableGroups because iOS includes live tests in the unified pipelines
-      #   InternalVariableGroups: >-
-      #     ${{ parameters.Release_Secrets_for_GitHub }}
-      #     ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #     ${{ parameters.Secrets_for_Resource_Provisioner }}
-      #     ${{ parameters.AzureSDK_CocoaPods_Release_Pipeline_Secrets}}
-      # Go:
-      #   RepositoryName: azure-sdk-for-go
-      #   Prefix: go
-      #   # Resource Provisioner is in InternalVariableGroups and not TestVariableGroups because Go includes live tests in the unified pipelines
-      #   InternalVariableGroups: >-
-      #     ${{ parameters.Release_Secrets_for_GitHub }}
-      #     ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
-      #     ${{ parameters.APIReview_AutoCreate_Configurations }}
-      #     ${{ parameters.Secrets_for_Resource_Provisioner }}
-      #   GenerateUnifiedWeekly: true
+      Android:
+        RepositoryName: azure-sdk-for-android
+        Prefix: android
+        InternalVariableGroups: >-
+          ${{ parameters.AzureSDK_Maven_Release_Pipeline_Secrets }}
+          ${{ parameters.Release_Secrets_for_GitHub }}
+          ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          ${{ parameters.APIReview_AutoCreate_Configurations }}
+      JavaScript:
+        RepositoryName: azure-sdk-for-js
+        Prefix: js
+        InternalVariableGroups: >-
+          ${{ parameters.NPM_Registry_Authentication }}
+          ${{ parameters.Release_Secrets_for_GitHub }}
+          ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          ${{ parameters.APIReview_AutoCreate_Configurations }}
+        TestVariableGroups: '${{ parameters.Secrets_for_Resource_Provisioner }}'
+      Python:
+        RepositoryName: azure-sdk-for-python
+        Prefix: python
+        InternalVariableGroups: >-
+          ${{ parameters.Release_Secrets_for_GitHub }}
+          ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          ${{ parameters.APIReview_AutoCreate_Configurations }}
+        TestVariableGroups: '${{ parameters.Secrets_for_Resource_Provisioner }}'
+      Net:
+        RepositoryName: azure-sdk-for-net
+        Prefix: net
+        InternalVariableGroups: >-
+          ${{ parameters.AzureSDK_Nuget_Release_Pipeline_Secrets }}
+          ${{ parameters.Release_Secrets_for_GitHub }}
+          ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          ${{ parameters.APIReview_AutoCreate_Configurations }}
+        TestVariableGroups: '${{ parameters.Secrets_for_Resource_Provisioner }}'
+      Cpp:
+        RepositoryName: azure-sdk-for-cpp
+        Prefix: cpp
+        # Resource Provisioner is in InternalVariableGroups and not TestVariableGroups because C++ includes live tests in the unified pipelines
+        InternalVariableGroups: >-
+          ${{ parameters.Release_Secrets_for_GitHub }}
+          ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          ${{ parameters.APIReview_AutoCreate_Configurations }}
+          ${{ parameters.Secrets_for_Resource_Provisioner }}
+          ${{ parameters.Cache_Secrets_for_CPP }}
+      iOS:
+        RepositoryName: azure-sdk-for-ios
+        Prefix: ios
+        # Resource Provisioner is in InternalVariableGroups and not TestVariableGroups because iOS includes live tests in the unified pipelines
+        InternalVariableGroups: >-
+          ${{ parameters.Release_Secrets_for_GitHub }}
+          ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          ${{ parameters.APIReview_AutoCreate_Configurations }}
+          ${{ parameters.Secrets_for_Resource_Provisioner }}
+          ${{ parameters.AzureSDK_CocoaPods_Release_Pipeline_Secrets}}
+      Go:
+        RepositoryName: azure-sdk-for-go
+        Prefix: go
+        # Resource Provisioner is in InternalVariableGroups and not TestVariableGroups because Go includes live tests in the unified pipelines
+        InternalVariableGroups: >-
+          ${{ parameters.Release_Secrets_for_GitHub }}
+          ${{ parameters.Release_Secrets_for_GitHubIO_Publishing }}
+          ${{ parameters.APIReview_AutoCreate_Configurations }}
+          ${{ parameters.Secrets_for_Resource_Provisioner }}
+        GenerateUnifiedWeekly: true
   steps:
-#  - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
-
-  - script: |
-      dotnet pack
-      dotnet tool install --global --prerelease --add-source ../../../artifacts/packages/Debug Azure.Sdk.Tools.PipelineGenerator
-    displayName: 'Build and install pipeline-generator from sources'
-    workingDirectory: tools/pipeline-generator/Azure.Sdk.Tools.PipelineGenerator
-
+  - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
   - script: |
       git clone https://github.com/azure/$(RepositoryName) $(Pipeline.Workspace)/$(RepositoryName)
     displayName: 'Clone repository: $(RepositoryName)'
   - template: /eng/common/pipelines/templates/steps/set-default-branch.yml
     parameters:
       WorkingDirectory: $(Pipeline.Workspace)/$(RepositoryName)
-
-  - task: AzureCLI@2
-    inputs:
-      azureSubscription: 'opensource-api-connection'
-      scriptType: pscore
-      scriptLocation: inlineScript
-      inlineScript:
-        pipeline-generator generate generate `
-        --organization azure-sdk `
-        --project public `
-        --prefix $(Prefix) `
-        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
-        --endpoint Azure `
-        --repository Azure/$(RepositoryName) `
-        --convention ci `
-        --agentpool Hosted `
-        --branch refs/heads/$(DefaultBranch) `
-        --set-managed-variables `
-        --debug
+  - script: >
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+      --organization azure-sdk
+      --project public
+      --prefix $(Prefix)
+      --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
+      --endpoint Azure
+      --repository Azure/$(RepositoryName)
+      --convention ci
+      --agentpool Hosted
+      --branch refs/heads/$(DefaultBranch)
+      --set-managed-variables
+      --patvar PATVAR
+      --debug
     displayName: 'Generate public pipelines for: $(RepositoryName)'
+    env:
+      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
+  - script: >
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+      --organization azure-sdk
+      --project internal
+      --prefix $(Prefix)
+      --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
+      --endpoint Azure
+      --repository Azure/$(RepositoryName)
+      --convention up
+      --agentpool Hosted
+      --branch refs/heads/$(DefaultBranch)
+      --set-managed-variables
+      --patvar PATVAR
+      --debug
+      --variablegroups $(InternalVariableGroups) $(TestVariableGroups)
+    displayName: 'Generate internal pipelines for: $(RepositoryName)'
+    env:
+      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
+  - script: >
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+      --organization azure-sdk
+      --project internal
+      --prefix $(Prefix)
+      --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
+      --endpoint Azure
+      --repository Azure/$(RepositoryName)
+      --convention tests
+      --agentpool Hosted
+      --branch refs/heads/$(DefaultBranch)
+      --set-managed-variables
+      --patvar PATVAR
+      --debug
+      --variablegroups $(TestVariableGroups)
+    displayName: 'Generate test pipelines for: $(RepositoryName)'
+    condition: and(succeeded(), ne(variables['TestVariableGroups'],''))
+    env:
+      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
+  - script: >
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+      --organization azure-sdk
+      --project internal
+      --prefix $(Prefix)
+      --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
+      --endpoint Azure
+      --repository Azure/$(RepositoryName)
+      --convention testsweekly
+      --agentpool Hosted
+      --branch refs/heads/$(DefaultBranch)
+      --set-managed-variables
+      --patvar PATVAR
+      --debug
+      --variablegroups $(TestVariableGroups)
+    displayName: 'Generate weekly test pipelines (multi-cloud) for: $(RepositoryName)'
+    condition: and(succeeded(), ne(variables['TestVariableGroups'],''))
+    env:
+      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
+  - script: >
+      $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+      --organization azure-sdk
+      --project internal
+      --prefix $(Prefix)
+      --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
+      --endpoint Azure
+      --repository Azure/$(RepositoryName)
+      --convention upweekly
+      --agentpool Hosted
+      --branch refs/heads/$(DefaultBranch)
+      --set-managed-variables
+      --patvar PATVAR
+      --debug
+      --variablegroups $(InternalVariableGroups) $(TestVariableGroups)
+    displayName: 'Generate weekly unified test pipelines (multi-cloud) for: $(RepositoryName)'
+    condition: and(succeeded(), ne(variables['GenerateUnifiedWeekly'],''))
+    env:
+      PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)
 
-  # - task: AzureCLI@2
-  #   inputs:
-  #     azureSubscription: 'opensource-api-connection'
-  #     scriptType: pscore
-  #     scriptLocation: inlineScript
-  #     inlineScript:
-  #       $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
-  #       --organization azure-sdk `
-  #       --project internal `
-  #       --prefix $(Prefix) `
-  #       --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
-  #       --endpoint Azure `
-  #       --repository Azure/$(RepositoryName) `
-  #       --convention up `
-  #       --agentpool Hosted `
-  #       --branch refs/heads/$(DefaultBranch) `
-  #       --set-managed-variables `
-  #       --debug `
-  #       --variablegroups $(InternalVariableGroups) $(TestVariableGroups)
-  #   displayName: 'Generate internal pipelines for: $(RepositoryName)'
-
-  # - task: AzureCLI@2
-  #   inputs:
-  #     azureSubscription: 'opensource-api-connection'
-  #     scriptType: pscore
-  #     scriptLocation: inlineScript
-  #     inlineScript:
-  #       $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
-  #       --organization azure-sdk `
-  #       --project internal `
-  #       --prefix $(Prefix) `
-  #       --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
-  #       --endpoint Azure `
-  #       --repository Azure/$(RepositoryName) `
-  #       --convention tests `
-  #       --agentpool Hosted `
-  #       --branch refs/heads/$(DefaultBranch) `
-  #       --set-managed-variables `
-  #       --debug `
-  #       --variablegroups $(TestVariableGroups)
-  #   displayName: 'Generate test pipelines for: $(RepositoryName)'
-  #   condition: and(succeeded(), ne(variables['TestVariableGroups'],''))
-
-  # - task: AzureCLI@2
-  #   inputs:
-  #     azureSubscription: 'opensource-api-connection'
-  #     scriptType: pscore
-  #     scriptLocation: inlineScript
-  #     inlineScript:
-  #       $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
-  #       --organization azure-sdk `
-  #       --project internal `
-  #       --prefix $(Prefix) `
-  #       --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
-  #       --endpoint Azure `
-  #       --repository Azure/$(RepositoryName) `
-  #       --convention testsweekly `
-  #       --agentpool Hosted `
-  #       --branch refs/heads/$(DefaultBranch) `
-  #       --set-managed-variables `
-  #       --debug `
-  #       --variablegroups $(TestVariableGroups)
-  #   displayName: 'Generate weekly test pipelines (multi-cloud) for: $(RepositoryName)'
-  #   condition: and(succeeded(), ne(variables['TestVariableGroups'],''))
-
-  # - task: AzureCLI@2
-  #   inputs:
-  #     azureSubscription: 'opensource-api-connection'
-  #     scriptType: pscore
-  #     scriptLocation: inlineScript
-  #     inlineScript:
-  #       $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
-  #       --organization azure-sdk `
-  #       --project internal `
-  #       --prefix $(Prefix) `
-  #       --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
-  #       --endpoint Azure `
-  #       --repository Azure/$(RepositoryName) `
-  #       --convention upweekly `
-  #       --agentpool Hosted `
-  #       --branch refs/heads/$(DefaultBranch) `
-  #       --set-managed-variables `
-  #       --debug `
-  #       --variablegroups $(InternalVariableGroups) $(TestVariableGroups)
-  #   displayName: 'Generate weekly unified test pipelines (multi-cloud) for: $(RepositoryName)'
-  #   condition: and(succeeded(), ne(variables['GenerateUnifiedWeekly'],''))
+  # - script: >
+  #     $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+  #     --organization azure-sdk
+  #     --project internal
+  #     --prefix $(Prefix)-pr
+  #     --devopspath "\$(Prefix)\pr"
+  #     --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
+  #     --endpoint Azure
+  #     --repository Azure/$(RepositoryName)-pr
+  #     --convention ci
+  #     --agentpool Hosted
+  #     --branch refs/heads/ $(DefaultBranch)
+  #     --set-managed-variables
+  #     --patvar PATVAR
+  #     --debug
+  #   displayName: 'Generate internal pipelines for: $(RepositoryName)-pr'
+  #   env:
+  #     PATVAR: $(azuresdk-azure-sdk-devops-pipeline-generation-pat)

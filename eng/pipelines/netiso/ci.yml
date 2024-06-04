@@ -21,6 +21,8 @@ jobs:
             $CONTAINER = "test"
             $BLOB = "test"
 
+            Write-Host "test data" > testdata
+
             az account set -s "Azure SDK Test Resources"
 
             Write-Host "Getting key for open account open"
@@ -29,6 +31,8 @@ jobs:
             az storage blob download  --account-name $OPENACCOUNT --account-key $KEY --container-name $CONTAINER --file testdataopen --name $BLOB -o tsv
             Write-Host "Printing data from open account"
             cat testdataopen
+            Write-Host "testing upload to open account"
+            az storage blob upload --account-name $OPENACCOUNT --account-key $KEY --container-name $CONTAINER --file testdata --name $BLOB --overwrite
 
             Write-Host "Getting key from net iso account closed"
             $KEY = az storage account keys list --resource-group $GROUP --account-name $CLOSEDACCOUNT --query '[0].value' -o tsv
@@ -36,6 +40,8 @@ jobs:
             az storage blob download  --account-name $CLOSEDACCOUNT --account-key $KEY --container-name $CONTAINER --file testdataclosed --name $BLOB -o tsv
             Write-Host "Printing data from net iso account closed"
             cat testdataclosed
+            Write-Host "testing upload to closed account"
+            az storage blob upload --account-name $CLOSEDACCOUNT --account-key $KEY --container-name $CONTAINER --file testdata --name $BLOB --overwrite
 
             Write-Host "Getting key from net iso account cross"
             $KEY = az storage account keys list --resource-group $GROUP --account-name $CROSSREGIONACCOUNT --query '[0].value' -o tsv
@@ -43,3 +49,5 @@ jobs:
             az storage blob download  --account-name $CROSSREGIONACCOUNT --account-key $KEY --container-name $CONTAINER --file testdatacross --name $BLOB -o tsv
             Write-Host "Printing data from net iso account cross"
             cat testdatacross
+            Write-Host "testing upload to cross account"
+            az storage blob upload --account-name $CROSSREGIONACCOUNT --account-key $KEY --container-name $CONTAINER --file testdata --name $BLOB --overwrite

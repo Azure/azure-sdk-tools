@@ -111,11 +111,10 @@ jobs:
   steps:
 #  - template: /eng/common/pipelines/templates/steps/install-pipeline-generation.yml
 
-  - name: Build and install pipeline-generator from sources
-    run: |
+  - script: |
       dotnet pack
       dotnet tool install --global --prerelease --add-source ../../../artifacts/packages/Debug Azure.Sdk.Tools.PipelineGenerator
-    shell: bash
+    displayName: 'Build and install pipeline-generator from sources'
     workingDirectory: $(Pipeline.Workspace)/tools/pipeline-generator/Azure.Sdk.Tools.PipelineGenerator
 
   - script: |

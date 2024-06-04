@@ -1,3 +1,4 @@
+using Azure.Identity;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -73,15 +74,12 @@ namespace PipelineGenerator
         {
             if (cachedConnection == null)
             {
-                // JRS-REMOVE NEXT LINE
-                Console.WriteLine("*****Start Authentication*****");
-                VssCredentials credentials;
-                var azureTokenProvider = new AzureServiceTokenProvider();
-                var authenticationResult = await azureTokenProvider.GetAuthenticationResultAsync("499b84ac-1321-427f-aa17-267ca6975798");
-                credentials = new VssAadCredential(new VssAadToken(authenticationResult.TokenType, authenticationResult.AccessToken));
-                cachedConnection = new VssConnection(new Uri(organization), credentials);
-                // JRS-REMOVE NEXT LINE
-                Console.WriteLine("*****Finish Authentication*****");
+                var azureCredential = new ChainedTokenCredential(
+                    new AzureCliCredential(),
+                    new AzurePowerShellCredential()
+                );
+                var devopsCredential = new VssAzureIdentityCredential(azureCredential);
+                cachedConnection = new VssConnection(new Uri(organization), devopsCredential);
             }
 
             return cachedConnection;

@@ -13,26 +13,33 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            Write-Host "Internet!"
-            $url = "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/README.md"
-            Invoke-WebRequest $url -OutFile README.md
-            cat README.md
-            az account set -s "Azure SDK Test Resources"
-            $GROUP = "bebroder-test-netiso-open-4"
-            $ACCOUNT = "bebrodernetisoopen4"
+            $ITERATION = "1e"
+            $GROUP = "bebroder-test-netiso-storage-$ITERATION"
+            $OPENACCOUNT = "bebrodernetisoopen$ITERATION"
+            $CLOSEDACCOUNT = "bebrodernetisoclosed$ITERATION"
+            $CROSSREGIONACCOUNT = "bebrodernetisocross$ITERATION"
             $CONTAINER = "test"
             $BLOB = "test"
-            Write-Host "Getting key for open account"
-            $KEY = az storage account keys list --resource-group $GROUP --account-name $ACCOUNT --query '[0].value' -o tsv
+
+            az account set -s "Azure SDK Test Resources"
+
+            Write-Host "Getting key for open account open"
+            $KEY = az storage account keys list --resource-group $GROUP --account-name $OPENACCOUNT --query '[0].value' -o tsv
             Write-Host "Downloading blob from open account"
-            az storage blob download  --account-name $ACCOUNT --account-key $KEY --container-name $CONTAINER --file testdataopen --name $BLOB -o tsv
+            az storage blob download  --account-name $OPENACCOUNT --account-key $KEY --container-name $CONTAINER --file testdataopen --name $BLOB -o tsv
             Write-Host "Printing data from open account"
             cat testdataopen
-            $GROUP = "bebroder-test-netiso-closed-4"
-            $ACCOUNT = "bebrodernetisoclosed4"
-            Write-Host "Getting key from net iso account"
-            $KEY = az storage account keys list --resource-group $GROUP --account-name $ACCOUNT --query '[0].value' -o tsv
-            Write-Host "Downloading blob from net iso account"
-            az storage blob download  --account-name $ACCOUNT --account-key $KEY --container-name $CONTAINER --file testdata --name $BLOB -o tsv
-            Write-Host "Printing data from net iso account"
-            cat testdata
+
+            Write-Host "Getting key from net iso account closed"
+            $KEY = az storage account keys list --resource-group $GROUP --account-name $CLOSEDACCOUNT --query '[0].value' -o tsv
+            Write-Host "Downloading blob from net iso account closed"
+            az storage blob download  --account-name $CLOSEDACCOUNT --account-key $KEY --container-name $CONTAINER --file testdataclosed --name $BLOB -o tsv
+            Write-Host "Printing data from net iso account closed"
+            cat testdataclosed
+
+            Write-Host "Getting key from net iso account cross"
+            $KEY = az storage account keys list --resource-group $GROUP --account-name $CROSSREGIONACCOUNT --query '[0].value' -o tsv
+            Write-Host "Downloading blob from net iso account cross"
+            az storage blob download  --account-name $CROSSREGIONACCOUNT --account-key $KEY --container-name $CONTAINER --file testdatacross --name $BLOB -o tsv
+            Write-Host "Printing data from net iso account cross"
+            cat testdatacross

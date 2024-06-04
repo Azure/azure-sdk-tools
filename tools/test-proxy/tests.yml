@@ -162,6 +162,12 @@ stages:
         CLONE_LOCATION: "$(Agent.BuildDirectory)/net_repo"
 
       steps:
+        - task: UseDotNet@2 # About UseDotNet@2 task: 
+          displayName: "Install .NET 8"
+          retryCountOnTaskFailure: 3
+          inputs:
+            version: "8.x"
+
         - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
         - pwsh: |

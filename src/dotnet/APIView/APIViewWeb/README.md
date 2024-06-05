@@ -61,7 +61,7 @@ TypeSpec API revision is generated automatically from a pull request and this sh
 
 ### Introduction
 
-In version "X.Y.Z" of APIView, we have introduced a new diagnostic level: Fatal (Level 4). This level captures the most critical issues requiring immediate intervention. Issues at this level are considered to be blocking and must be resolved or overridden before the API revision can be approved.
+APIView has introduced a new diagnostic level: Fatal (Level 4). This level captures the most critical issues requiring immediate intervention. Issues at this level are considered to be blocking and must be resolved or overridden before the API revision can be approved.
 
 ### Usage Instructions
 

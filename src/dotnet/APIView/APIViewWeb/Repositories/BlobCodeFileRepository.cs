@@ -60,10 +60,12 @@ namespace APIViewWeb
 
         public async Task<CodeFile> GetBinaryCodeFileAsync(string revisionId, string codeFileId)
         {
-            var client = GetBlobClient(revisionId, $"{codeFileId}.msgpack", out var key);
+            var client = GetBlobClient(revisionId, codeFileId, out var key);
             var info = await client.DownloadAsync();
-            var options = MessagePackSerializerOptions.Standard.WithResolver(ContractlessStandardResolver.Instance);
-            return await MessagePackSerializer.DeserializeAsync<CodeFile>(info.Value.Content, options);
+            var msgPackOptions = MessagePackSerializerOptions.Standard.WithResolver(CompositeResolver.Create(
+                StandardResolverAllowPrivate.Instance, ContractlessStandardResolver.Instance))
+                .WithCompression(MessagePackCompression.Lz4Block);
+            return await MessagePackSerializer.DeserializeAsync<CodeFile>(info.Value.Content, msgPackOptions);
         }
 
         public async Task UpsertCodeFileAsync(string revisionId, string codeFileId, CodeFile codeFile)

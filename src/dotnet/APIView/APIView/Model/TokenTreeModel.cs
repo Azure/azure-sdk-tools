@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using MessagePack;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Newtonsoft.Json;
@@ -69,9 +70,11 @@ namespace APIView.Model
         }
     }
 
+    [MessagePackObject]
     [JsonObject("st")]
     public class StructuredToken
     {
+        [Key(3)]
         [JsonProperty("t")]
         private HashSet<string> _tagsForSerializer
         {
@@ -79,6 +82,7 @@ namespace APIView.Model
             set { Tags = value ?? new HashSet<string>(); }
         }
 
+        [Key(4)]
         [JsonProperty("p")]
         private Dictionary<string, string> _propertiesForSerializer
         {
@@ -86,6 +90,7 @@ namespace APIView.Model
             set { Properties = value ?? new Dictionary<string, string>(); }
         }
 
+        [Key(5)]
         [JsonProperty("rc")]
         private HashSet<string> _renderClassesForSerializer
         {
@@ -93,17 +98,27 @@ namespace APIView.Model
             set { RenderClasses = value ?? new HashSet<string>(); }
         }
 
-
+        [Key(0)]
         [JsonProperty("v")]
         public string Value { get; set; } = string.Empty;
+
+        [Key(1)]
         [JsonProperty("i")]
         public string Id { get; set; }
+
+        [Key(2)]
         [JsonProperty("k")]
         public StructuredTokenKind Kind { get; set; }
+
+        [IgnoreMember]
         [JsonIgnore]
         public HashSet<string> Tags { get; set; } = new HashSet<string>();
+
+        [IgnoreMember]
         [JsonIgnore]
         public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
+
+        [IgnoreMember]
         [JsonIgnore]
         public HashSet<string> RenderClasses { get; set; } = new HashSet<string>();
         
@@ -226,10 +241,12 @@ namespace APIView.Model
         }
     }
 
+    [MessagePackObject]
     [JsonObject("at")]
 
     public class APITreeNode
     {
+        [Key(3)]
         [JsonProperty("t")]
         private HashSet<string> _tagsForSerializer
         {
@@ -237,6 +254,7 @@ namespace APIView.Model
             set { Tags = value ?? new HashSet<string>(); }
         }
 
+        [Key(4)]
         [JsonProperty("p")]
         private Dictionary<string, string> _propertiesForSerializer
         {
@@ -244,6 +262,7 @@ namespace APIView.Model
             set { Properties = value ?? new Dictionary<string, string>(); }
         }
 
+        [Key(5)]
         [JsonProperty("tt")]
         private List<StructuredToken> _topTokensForSerializer
         {
@@ -251,6 +270,7 @@ namespace APIView.Model
             set { TopTokens = value ?? new List<StructuredToken>(); }
         }
 
+        [Key(6)]
         [JsonProperty("bt")]
         private List<StructuredToken> _bottomTokensForSerializer
         {
@@ -258,6 +278,7 @@ namespace APIView.Model
             set { BottomTokens = value ?? new List<StructuredToken>(); }
         }
 
+        [Key(7)]
         [JsonProperty("c")]
         private List<APITreeNode> _childrenForSerializer
         {
@@ -265,26 +286,47 @@ namespace APIView.Model
             set { Children = value ?? new List<APITreeNode>(); }
         }
 
+        [Key(0)]
         [JsonProperty("n")]
         public string Name { get; set; }
+
+        [Key(1)]
         [JsonProperty("i")]
         public string Id { get; set; }
+
+        [Key(2)]
         [JsonProperty("k")]
         public string Kind { get; set; }
+
+        [IgnoreMember]
         [JsonIgnore]
         public HashSet<string> Tags { get; set; } = new HashSet<string>();
+
+        [IgnoreMember]
         [JsonIgnore]
         public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
+
+        [IgnoreMember]
         [JsonIgnore]
         public List<StructuredToken> TopTokens { get; set; } = new List<StructuredToken>();
+
+        [IgnoreMember]
         [JsonIgnore]
         public List<StructuredToken> BottomTokens { get; set; } = new List<StructuredToken>();
+
+        [IgnoreMember]
         [JsonIgnore]
         public List<APITreeNode> Children { get; set; } = new List<APITreeNode>();
+
+        [IgnoreMember]
         [JsonIgnore]
         public DiffKind DiffKind { get; set; } = DiffKind.NoneDiff;
+
+        [IgnoreMember]
         [JsonIgnore]
         public List<StructuredToken> TopDiffTokens { get; set; } = new List<StructuredToken>();
+
+        [IgnoreMember]
         [JsonIgnore]
         public List<StructuredToken> BottomDiffTokens { get; set; } = new List<StructuredToken>();
 

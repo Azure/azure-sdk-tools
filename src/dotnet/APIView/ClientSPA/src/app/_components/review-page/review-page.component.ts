@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
-import { Subject, takeUntil, tap } from 'rxjs';
+import { Subject, take, takeUntil, tap } from 'rxjs';
 import { getLanguageCssSafeName } from 'src/app/_helpers/component-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { UserProfile } from 'src/app/_models/auth_service_models';
@@ -216,6 +216,10 @@ export class ReviewPageComponent implements OnInit {
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {
     this.navTreeNodeIdHashed = nodeIdHashed;
+  }
+
+  handleMarkedAsViewEmitter(state: boolean) {
+    this.apiRevisionsService.toggleAPIRevisionViewedByForUser(this.activeApiRevisionId!, state).pipe(take(1)).subscribe();
   }
 
   ngOnDestroy() {

@@ -28,7 +28,6 @@ import { Observable } from 'rxjs';
 import { ConfigService } from './_services/config/config.service';
 import { CookieService } from 'ngx-cookie-service';
 import { SharedAppModule } from './_modules/shared/shared-app.module';
-import { environment } from 'src/environments/environment';
 
 export function initializeApp(configService: ConfigService) {
   return (): Observable<any> => {

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using APIViewWeb.Managers.Interfaces;
-using System.Collections.Generic;
+using System;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -62,6 +62,30 @@ namespace APIViewWeb.LeanControllers
             {
                 await _apiRevisionsManager.RestoreAPIRevisionAsync(user: User, reviewId: deleteParams.reviewId, revisionId: apiRevisionId);
             }
+        }
+
+        /// <summary>
+        /// Endpoint used by Client SPA toggling ViewdBy property
+        /// </summary>
+        /// <param name="apiRevisionId"></param>
+        /// <param name="state"></param> true = viewed, false = not viewed
+        /// <returns></returns>
+        [HttpPost("{apiRevisionId}/toggleViewedBy", Name = "ToggleViewedBy")]
+        public async Task ToggleViewedByAsync(string apiRevisionId, [FromQuery] bool state)
+        {
+            string userName = User.GetGitHubLogin();
+            var apiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId);
+
+            if (state)
+            {
+                apiRevision.ViewedBy.Add(userName);
+            }
+            else 
+            {
+                apiRevision.ViewedBy.Remove(userName);
+            }
+
+            await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
         }
     }
 }

@@ -25,7 +25,7 @@ public class RepoConfiguration
     /// need to go further back then that when examining the SHAs in the language repos. There is no possibility of an
     /// assets.json past this date!
     /// </summary>
-    public DateTime ScanStartDate { get; set; } = DateTime.Parse("2023-12-01");
+    public DateTime ScanStartDate { get; set; } = DateTime.Parse("2024-06-01");
 
     /// <summary>
     /// The set of branches that we will examine. Defaults to just 'main'.

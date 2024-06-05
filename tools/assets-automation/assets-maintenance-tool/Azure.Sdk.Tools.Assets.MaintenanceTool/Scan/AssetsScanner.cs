@@ -33,14 +33,14 @@ public class AssetsScanner
     /// </summary>
     /// <param name="config"></param>
     /// <returns>A set of results which combines any previous output with a new scan.</returns>
-    public AssetsResultSet Scan(RunConfiguration config)
+    public AssetsResultSet Scan(RunConfiguration config, string workDirectory)
     {
         var resultSet = new List<AssetsResult>();
         AssetsResultSet? existingResults = ParseExistingResults();
 
         Parallel.ForEach(config.LanguageRepos, repoConfig =>
         {
-            resultSet.AddRange(ScanRepo(repoConfig, existingResults));
+            resultSet.AddRange(ScanRepo(repoConfig, existingResults, workDirectory));
         });
 
         return new AssetsResultSet(resultSet);
@@ -75,7 +75,7 @@ public class AssetsScanner
     /// <param name="config"></param>
     /// <param name="previousOutput"></param>
     /// <returns></returns>
-    private List<AssetsResult> ScanRepo(RepoConfiguration config, AssetsResultSet? previousOutput)
+    private List<AssetsResult> ScanRepo(RepoConfiguration config, AssetsResultSet? previousOutput, string workDirectory)
     {
         string? envOverride = Environment.GetEnvironmentVariable(GitTokenEnvVar);
         var authString = string.Empty;
@@ -85,7 +85,7 @@ public class AssetsScanner
         }
 
         var targetRepoUri = $"https://{authString}github.com/{config.LanguageRepo}.git";
-        var workingDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var workingDirectory = Path.Combine(workDirectory, config.LanguageRepo.Replace("/", "_"));
         var results = new List<AssetsResult>();
 
         try
@@ -319,7 +319,11 @@ public class AssetsScanner
     {
         using (var stream = System.IO.File.OpenWrite(ResultsFile))
         {
-            stream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(newResults.Results)));
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            stream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(newResults.Results, options: options)));
         }
     }
 }

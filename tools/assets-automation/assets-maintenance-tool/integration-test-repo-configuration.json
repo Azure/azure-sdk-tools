@@ -29,6 +29,6 @@
       "ScanFolders": [
         "sdk/containerregistry"
       ]
-    },
+    }
   ]
 }

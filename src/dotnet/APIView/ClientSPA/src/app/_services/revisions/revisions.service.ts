@@ -5,7 +5,6 @@ import { Observable, map } from 'rxjs';
 
 import { PaginatedResult } from 'src/app/_models/pagination';
 import { APIRevision } from 'src/app/_models/revision';
-import { environment } from 'src/environments/environment';
 import { ConfigService } from '../config/config.service';
 
 
@@ -93,6 +92,23 @@ export class RevisionsService {
     return this.http.put<any>(this.baseUrl + '/restore', data,
     { 
       headers: headers, 
+      withCredentials: true,
+      observe: 'response'
+    });
+  }
+
+  toggleAPIRevisionViewedByForUser(apiRevisionId: string, state: boolean) : Observable<any> {
+    let params = new HttpParams();
+    params = params.append('state', state.toString());
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+   
+    return this.http.post<any>(this.baseUrl + `/${apiRevisionId}/toggleViewedBy`, {},
+    { 
+      headers: headers,
+      params: params,
       withCredentials: true,
       observe: 'response'
     });

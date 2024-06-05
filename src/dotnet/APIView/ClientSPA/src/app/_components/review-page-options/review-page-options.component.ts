@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { InputSwitchOnChangeEvent } from 'primeng/inputswitch';
 import { UserProfile } from 'src/app/_models/auth_service_models';
-import { AuthService } from 'src/app/_services/auth/auth.service';
 
 @Component({
   selector: 'app-review-page-options',
@@ -17,6 +16,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showSystemCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showDocumentationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() markedAsViewEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   
   
   showCommentsSwitch : boolean = true;
@@ -24,6 +24,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   showDocumentationSwitch : boolean = true;
   showLineNumberSwitch : boolean = true;
   showLeftNavigationSwitch : boolean = true;
+  markedAsViewSwitch : boolean = false;
 
   diffStyleOptions : any[] = [
     { label: 'Full Diff', value: "full" },
@@ -60,7 +61,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   }
 
   /**
- * Callback to on commentSwitch Change
+ * Callback for commentSwitch Change
  * @param event the Filter event
  */
   onCommentsSwitchChange(event: InputSwitchOnChangeEvent) {
@@ -68,7 +69,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   }
 
    /**
-  * Callback to on systemCommentSwitch Change
+  * Callback for systemCommentSwitch Change
   * @param event the Filter event
   */
   onShowSystemCommentsSwitchChange(event: InputSwitchOnChangeEvent) {
@@ -76,11 +77,19 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   }
 
   /**
-  * Callback to on showDocumentationSwitch Change
+  * Callback for showDocumentationSwitch Change
   * @param event the Filter event
   */
   onShowDocumentationSwitchChange(event: InputSwitchOnChangeEvent) {
     this.showDocumentationEmitter.emit(event.checked);
+  }
+
+  /**
+  * Callback for markedAsViewSwitch Change
+  * @param event the Filter event
+  */
+  onMarkedAsViewedSwitchChange(event: InputSwitchOnChangeEvent) {
+    this.markedAsViewEmitter.emit(event.checked);
   }
 
   setSelectedDiffStyle() {

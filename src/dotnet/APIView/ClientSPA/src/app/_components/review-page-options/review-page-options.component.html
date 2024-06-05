@@ -34,3 +34,13 @@
         </li>
     </ul>
 </app-page-options-section>
+
+<app-page-options-section sectionName="API Revision Options">
+    <ul class="list-group">
+        <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="markedAsViewSwitch"
+            (onChange)="onMarkedAsViewedSwitchChange($event)" />
+            <label class="ms-2">Mark As Viewed</label>
+        </li>
+    </ul>
+</app-page-options-section>

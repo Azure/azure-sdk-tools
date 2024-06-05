@@ -1,3 +1,6 @@
-<p-panel header="{{sectionName}}" [collapsed]="collapsed" [toggleable]="true" toggler="header" (collapsedChange)="onCollapseChange($event)">
+<p-panel 
+    header="{{sectionName}}" [collapsed]="collapsed" 
+    [toggleable]="true" toggler="header" (collapsedChange)="onCollapseChange($event)"
+    [style]="{'margin-bottom':'8px'}">
     <ng-content></ng-content>
 </p-panel>

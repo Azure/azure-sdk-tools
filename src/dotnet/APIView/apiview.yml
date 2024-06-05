@@ -376,7 +376,7 @@ extends:
                         DeploymentType: zipDeploy
 
           - ${{ if eq(parameters.Version, 'staging') }}:
-            - deployment: Publish to Staging
+            - deployment: Publish Test UI
               environment: 'package-publish'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general

@@ -64,7 +64,7 @@ namespace APIViewWeb
             var info = await client.DownloadAsync();
             var msgPackOptions = MessagePackSerializerOptions.Standard.WithResolver(CompositeResolver.Create(
                 StandardResolverAllowPrivate.Instance, ContractlessStandardResolver.Instance))
-                .WithCompression(MessagePackCompression.Lz4Block);
+                .WithCompression(MessagePackCompression.None);
             return await MessagePackSerializer.DeserializeAsync<CodeFile>(info.Value.Content, msgPackOptions);
         }
 

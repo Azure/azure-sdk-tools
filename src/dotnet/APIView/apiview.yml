@@ -293,7 +293,8 @@ extends:
 
           jobs:
           - ${{ if eq(parameters.Version, 'prod') }}:
-            - deployment: Publish to Prod
+            - deployment: Publish_to_Prod
+              displayName: Publish to Pod
               environment: 'package-publish'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
@@ -333,7 +334,8 @@ extends:
 
 
           - ${{ if eq(parameters.Version, 'staging') }}:
-            - deployment: Publish to Staging
+            - deployment: Publish_to_Staging
+              displayName: Publish to Staging
               environment: 'package-publish'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
@@ -376,7 +378,8 @@ extends:
                         DeploymentType: zipDeploy
 
           - ${{ if eq(parameters.Version, 'staging') }}:
-            - deployment: Publish Test UI
+            - deployment: Publish_Test_UI
+              displayName: Publish Test UI
               environment: 'package-publish'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general

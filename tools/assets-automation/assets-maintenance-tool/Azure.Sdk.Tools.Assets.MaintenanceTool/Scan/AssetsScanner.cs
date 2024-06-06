@@ -88,33 +88,27 @@ public class AssetsScanner
         var workingDirectory = Path.Combine(workDirectory, config.LanguageRepo.Replace("/", "_"));
         var results = new List<AssetsResult>();
 
-        try
+        if (!Directory.Exists(workingDirectory))
         {
-            if (!Directory.Exists(workingDirectory))
+            Directory.CreateDirectory(workingDirectory);
+        }
+
+        foreach (var branch in config.Branches)
+        {
+            var commitsOnBranch = GetBranchCommits(targetRepoUri, branch, config.ScanStartDate, workingDirectory);
+            var unretrievedCommits = ResolveUnhandledCommits(commitsOnBranch, previousOutput);
+
+            results.AddRange(GetAssetsResults(config.LanguageRepo, unretrievedCommits, workingDirectory, config.ScanFolders));
+
+            if (previousOutput != null)
             {
-                Directory.CreateDirectory(workingDirectory);
-            }
-
-            foreach (var branch in config.Branches)
-            {
-                var commitsOnBranch = GetBranchCommits(targetRepoUri, branch, config.ScanStartDate, workingDirectory);
-                var unretrievedCommits = ResolveUnhandledCommits(commitsOnBranch, previousOutput);
-
-                results.AddRange(GetAssetsResults(config.LanguageRepo, unretrievedCommits, workingDirectory, config.ScanFolders));
-
-                if (previousOutput != null)
+                foreach (var commit in commitsOnBranch.Where(commit => !unretrievedCommits.Contains(commit)))
                 {
-                    foreach (var commit in commitsOnBranch.Where(commit => !unretrievedCommits.Contains(commit)))
-                    {
-                        results.AddRange(previousOutput.ByOriginSHA[commit]);
-                    }
+                    results.AddRange(previousOutput.ByOriginSHA[commit]);
                 }
             }
         }
-        finally
-        {
-            CleanupWorkingDirectory(workingDirectory);
-        }
+        
 
         return results;
     }
@@ -123,9 +117,10 @@ public class AssetsScanner
     /// Clones a specific branch, then returns all commit shas newer than our targeted date.
     /// </summary>
     /// <returns>A list of commits (limited to after a startdate) from the targeted branch.</returns>
-    private List<string> GetBranchCommits(string uri, string branch, DateTime since, string workingDirectory)
+    private List<string> GetBranchCommits(string uri, string branch, string since, string workingDirectory)
     {
         var commitSHAs = new List<string>();
+
         try
         {
             // if git is already initialized, we just need to checkout a specific branch
@@ -141,7 +136,15 @@ public class AssetsScanner
                 Cleanup(workingDirectory);
             }
 
-            var tagResult = handler.Run($"log --since={since.ToString("yyyy-MM-dd")} --format=format:%H", workingDirectory);
+            CommandResult tagResult;
+            if (since == "latest")
+            {
+                tagResult = handler.Run($"log -n 1 --format=format:%H", workingDirectory);
+            }
+            else
+            {
+                tagResult = handler.Run($"log --since={since} --format=format:%H", workingDirectory);
+            }
             commitSHAs.AddRange(tagResult.StdOut.Split(Environment.NewLine).Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)));
         }
         catch (GitProcessException gitException)

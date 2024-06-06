@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             var config = RunConfiguration;
             config.LanguageRepos.RemoveAt(0);
             config.LanguageRepos.First().Branches.RemoveAt(1);
-            var results = scanner.Scan(config);
+            var results = scanner.Scan(config, Directory.GetCurrentDirectory());
 
             Assert.IsNotNull(results);
             Assert.That(results.Results.Count(), Is.EqualTo(3));
@@ -112,7 +112,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             var scanner = new AssetsScanner(TestDirectory);
             var config = RunConfiguration;
             config.LanguageRepos.RemoveAt(0);
-            var results = scanner.Scan(config);
+            var results = scanner.Scan(config, TestDirectory);
 
             Assert.IsNotNull(results);
             Assert.That(results.Results.Count(), Is.EqualTo(6));

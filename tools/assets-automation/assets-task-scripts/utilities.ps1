@@ -12,15 +12,41 @@ function Create-If-Not-Exists {
     return $Path
 }
 
+<#
+.SYNOPSIS
+Retrieve a specific tag from an assets repo and store it on disk within the work directory.
+
+.DESCRIPTION
+Clones a specific tag from an assets repo (defaults to azure-sdk-assets) and stores it on disk
+within the work directory under a folder with pattern:
+
+.results <-- this should be WorkDirectory arg
+    tags/
+        <tagname>/
+            <tagged repo contents>
+        <tagname>/
+            <tagged repo contents>
+        <tagname>/
+            <tagged repo contents>
+        ...
+  
+Returns the location of the folder after the work is complete.
+
+.PARAMETER Tag
+The tag to retrieve from the assets repo.
+
+.PARAMETER WorkDirectory
+The path to the .results directory within which this script will operate.
+
+.PARAMETER TargetRepo
+Defaults to "Azure/azure-sdk-assets". This is the repo that will be cloned from.
+#>
 function Get-AssetsRepoSlice {
     param(
-        # the assets repo tag
         [Parameter(Mandatory=$true)]
         [string]$Tag,
-        # WorkDirectory should be targeted at the .results folder
         [Parameter(Mandatory=$true)]
         [string]$WorkDirectory,
-        # the target repo to clone, we will default to the assets repo, but will support others just in case
         [string]$TargetRepo = "Azure/azure-sdk-assets"
     )
     $CloneUri = "https://github.com/$TargetRepo.git"

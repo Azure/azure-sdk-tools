@@ -165,7 +165,7 @@ namespace APIViewWeb
             string tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             SourceCacheContext cache = new SourceCacheContext();
             SourceRepository repository = NuGet.Protocol.Core.Types.Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
-
+try{
             FindPackageByIdResource resource = await repository.GetResourceAsync<FindPackageByIdResource>().ConfigureAwait(false);
             foreach (var dep in dependencyInfos)
             {
@@ -191,6 +191,7 @@ namespace APIViewWeb
                     }
                 }
             }
+}
             return tempFolder;
         }
     }

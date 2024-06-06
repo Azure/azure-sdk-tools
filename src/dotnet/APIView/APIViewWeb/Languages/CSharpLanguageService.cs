@@ -165,33 +165,38 @@ namespace APIViewWeb
             string tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             SourceCacheContext cache = new SourceCacheContext();
             SourceRepository repository = NuGet.Protocol.Core.Types.Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
-try{
-            FindPackageByIdResource resource = await repository.GetResourceAsync<FindPackageByIdResource>().ConfigureAwait(false);
-            foreach (var dep in dependencyInfos)
+            try
             {
-                using (MemoryStream packageStream = new MemoryStream())
+                FindPackageByIdResource resource = await repository.GetResourceAsync<FindPackageByIdResource>().ConfigureAwait(false);
+                foreach (var dep in dependencyInfos)
                 {
-                    if (await resource.CopyNupkgToStreamAsync(
-                    dep.Name,
-                    new NuGetVersion(dep.Version),
-                    packageStream,
-                    cache,
-                    NullLogger.Instance,
-                    CancellationToken.None))
+                    using (MemoryStream packageStream = new MemoryStream())
                     {
-                        using PackageArchiveReader reader = new PackageArchiveReader(packageStream);
-                        NuspecReader nuspec = reader.NuspecReader;
-                        var file = reader.GetFiles().FirstOrDefault(f => f.EndsWith(dep.Name + ".dll"));
-                        if (file != null)
+                        if (await resource.CopyNupkgToStreamAsync(
+                        dep.Name,
+                        new NuGetVersion(dep.Version),
+                        packageStream,
+                        cache,
+                        NullLogger.Instance,
+                        CancellationToken.None))
                         {
-                            var fileInfo = new FileInfo(file);
-                            var path = Path.Combine(tempFolder, dep.Name, fileInfo.Name);
-                            var tmp = reader.ExtractFile(file, path, NullLogger.Instance);
+                            using PackageArchiveReader reader = new PackageArchiveReader(packageStream);
+                            NuspecReader nuspec = reader.NuspecReader;
+                            var file = reader.GetFiles().FirstOrDefault(f => f.EndsWith(dep.Name + ".dll"));
+                            if (file != null)
+                            {
+                                var fileInfo = new FileInfo(file);
+                                var path = Path.Combine(tempFolder, dep.Name, fileInfo.Name);
+                                var tmp = reader.ExtractFile(file, path, NullLogger.Instance);
+                            }
                         }
                     }
                 }
             }
-}
+            finally
+            {
+                cache.Dispose();
+            }
             return tempFolder;
         }
     }

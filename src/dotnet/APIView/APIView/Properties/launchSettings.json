@@ -2,11 +2,7 @@
   "profiles": {
     "TypeList": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\chriss\\nuget\\Azure.Core.1.40.0-alpha.20240523.1.nupkg\" C:\\Users\\chriss\\Desktop\\"
-    },
-    "WSL": {
-      "commandName": "WSL2",
-      "distributionName": ""
+      "commandLineArgs": "..\\..\\..\\TestLibrary\\Debug\\netcoreapp2.1\\TestLibrary.dll"
     }
   }
 }

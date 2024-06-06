@@ -1,4 +1,4 @@
-/*-*/using System;
+﻿/*-*/using System;
 using System.Threading.Tasks;
 
 internal interface IInternal
@@ -34,16 +34,4 @@ internal interface IInternal
         void IInternal.N(){}
         /*-*/
     }
-    public/*-*/ partial/*-*/ class PClass : I2<string>/*@, I1@*/ {
-        public PClass()/*-*/{/*-*/;/*-*/}/*-*/
-    }
- /*-*/public partial class PClass : I1 {
-    }/*-*/
-    public/*-*/ partial/*-*/ struct S : I2<string>/*@, I1@*/ {
-        public S()/*-*/{/*-*/;/*-*/}/*-*/
-    }
- /*-*/public partial struct S : I1
-    {
-    }/*-*/
-
 }

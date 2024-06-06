@@ -32,6 +32,7 @@ export class ReviewPageComponent implements OnInit {
   userProfile : UserProfile | undefined;
   review : Review | undefined = undefined;
   apiRevisions: APIRevision[] = [];
+  activeAPIRevision : APIRevision | undefined = undefined;
   reviewComments : CommentItemModel[] | undefined = [];
   revisionSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
@@ -160,6 +161,8 @@ export class ReviewPageComponent implements OnInit {
           if (this.apiRevisions.length > 0) {
             this.language = this.apiRevisions[0].language;
             this.languageSafeName = getLanguageCssSafeName(this.language);
+
+            this.activeAPIRevision = this.apiRevisions.filter(x => x.id === this.activeApiRevisionId)[0];
           }
         },
         error: (error: any) => {
@@ -218,7 +221,7 @@ export class ReviewPageComponent implements OnInit {
     this.navTreeNodeIdHashed = nodeIdHashed;
   }
 
-  handleMarkedAsViewEmitter(state: boolean) {
+  handleMarkAsViewedEmitter(state: boolean) {
     this.apiRevisionsService.toggleAPIRevisionViewedByForUser(this.activeApiRevisionId!, state).pipe(take(1)).subscribe();
   }
 

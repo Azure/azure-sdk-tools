@@ -1,7 +1,7 @@
 jobs:
   - job: testnetiso
     pool:
-      name: bebroder-test-netiso
+      name: bebroder-test-netiso-wus2
     displayName: test-netiso
     steps:
       - checkout: self
@@ -13,13 +13,17 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            $ITERATION = "3"
-            $GROUP = "bebroder-test-netiso-storage"
+            $ITERATION = "5"
+            $GROUP = "bebroder-test-netiso-multi"
             $OPENACCOUNT = "bebrodernetisoopen$ITERATION"
             $CLOSEDACCOUNT = "bebrodernetisoclosed$ITERATION"
             $CROSSREGIONACCOUNT = "bebrodernetisocross$ITERATION"
             $CONTAINER = "test"
             $BLOB = "test"
+
+            $OPENCOSMOSACCOUNT = "bebrodernetisoopen$ITERATION"
+            $CLOSEDCOSMOSACCOUNT = "bebrodernetisoclosed$ITERATION"
+            $CROSSREGIONCOSMOSACCOUNT = "bebrodernetisocross$ITERATION"
 
             Write-Host "test data" > testdata
 
@@ -51,3 +55,29 @@ jobs:
             cat testdatacross
             Write-Host "testing upload to cross account"
             az storage blob upload --account-name $CROSSREGIONACCOUNT --account-key $KEY --container-name $CONTAINER --file testdata --name $BLOB --overwrite
+
+            Write-Host "Getting mongo shell"
+            wget https://downloads.mongodb.com/compass/mongosh-2.2.6-linux-x64.tgz
+            tar -xzf ./mongosh-2.2.6-linux-x64.tgz
+
+            Write-Host "Getting creds for open account"
+            OPEN_KEYS=$(az cosmosdb keys list --resource-group $GROUP --name $OPENCOSMOSACCOUNT --output tsv --query primaryMasterKey)
+            OPEN_PRIMARY_KEY=$(echo $OPEN_KEYS | cut -f1)
+            OPEN_CONNECTION_STRING="mongodb://${OPENCOSMOSACCOUNT}:${OPEN_PRIMARY_KEY}@${OPENCOSMOSACCOUNT}.mongo.cosmos.azure.com:10255/test?ssl=true&replicaSet=globaldb"
+            Write-Host "Running mongo query"
+            ./mongosh-2.2.6-linux-x64/bin/mongosh $OPEN_CONNECTION_STRING --eval "db.test.find().pretty()"
+
+            Write-Host "Getting creds for closed account"
+            CLOSED_KEYS=$(az cosmosdb keys list --resource-group $GROUP --name $CLOSEDCOSMOSACCOUNT --output tsv --query primaryMasterKey)
+            CLOSED_PRIMARY_KEY=$(echo $CLOSED_KEYS | cut -f1)
+            CLOSED_CONNECTION_STRING="mongodb://${CLOSEDCOSMOSACCOUNT}:${CLOSED_PRIMARY_KEY}@${CLOSEDCOSMOSACCOUNT}.mongo.cosmos.azure.com:10255/test?ssl=true&replicaSet=globaldb"
+            Write-Host "Running mongo query"
+            ./mongosh-2.2.6-linux-x64/bin/mongosh $CLOSED_CONNECTION_STRING --eval "db.test.find().pretty()"
+
+            Write-Host "Getting creds for cross account"
+            CROSSREGION_KEYS=$(az cosmosdb keys list --resource-group $GROUP --name $CROSSREGIONCOSMOSACCOUNT --output tsv --query primaryMasterKey)
+            CROSSREGION_PRIMARY_KEY=$(echo $CROSSREGION_KEYS | cut -f1)
+            CROSSREGION_CONNECTION_STRING="mongodb://${CROSSREGIONCOSMOSACCOUNT}:${CROSSREGION_PRIMARY_KEY}@${CROSSREGIONCOSMOSACCOUNT}.mongo.cosmos.azure.com:10255/test?ssl=true&replicaSet=globaldb"
+            Write-Host "Running mongo query"
+            ./mongosh-2.2.6-linux-x64/bin/mongosh $CROSSREGION_CONNECTION_STRING --eval "db.test.find().pretty()"
+

@@ -45,19 +45,22 @@ parameters:
 steps:
 - checkout: self
 
-- task: PowerShell@2
+- task: AzureCLI@2
   displayName: Create Package Work Item
   inputs:
-    pwsh: true
-    filePath: $(Build.SourcesDirectory)/eng/scripts/Create-Package-WorkItem.ps1
-    arguments: >
-      -PackageLanguage "$(Language)"
-      -ServiceName "$(ServiceName)"
-      -PackageDisplayName "$(PackageDisplayName)"
-      -PackageName "$(PackageName)"
-      -PackageVersion "$(PackageVersion)"
-      -ReleaseDate "$(ReleaseDate)"
-      -RelatedWorkItemId "$(RelatedWorkItemId)"
-      -Tag "$(Tag)"
-      -WorkingDir "$(Pipeline.Workspace)"
-      -Devops_pat "$(azuresdk-azure-sdk-devops-release-work-item-pat)"
+    azureSubscription: opensource-api-connection
+    scriptType: pscore
+    scriptLocation: inlineScript
+    inlineScript: |
+      $accessToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv
+      $(Build.SourcesDirectory)/eng/scripts/Create-Package-WorkItem.ps1 `
+        -PackageLanguage "$(Language)" `
+        -ServiceName "$(ServiceName)" `
+        -PackageDisplayName "$(PackageDisplayName)" `
+        -PackageName "$(PackageName)" `
+        -PackageVersion "$(PackageVersion)" `
+        -ReleaseDate "$(ReleaseDate)" `
+        -RelatedWorkItemId "$(RelatedWorkItemId)" `
+        -Tag "$(Tag)" `
+        -WorkingDir "$(Pipeline.Workspace)" `
+        -AccessToken $accessToken

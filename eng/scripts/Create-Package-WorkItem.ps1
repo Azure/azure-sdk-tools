@@ -16,7 +16,7 @@ param (
   [string]$Tag = "",
   [string]$WorkingDir = ".",
   [string]$PackageRootPath = "",
-  [string]$Devops_pat = $env:DEVOPS_PAT
+  [string]$AccessToken = $null
 )
 
 Set-StrictMode -Version 3
@@ -62,7 +62,7 @@ try
         exit 1
     }
 
-    # Create or update package work item  
+    # Create or update package work item
     &$EngCommonScriptsDir/Update-DevOps-Release-WorkItem.ps1 `
     -language $PackageLanguage `
     -packageName $PackageName `
@@ -75,7 +75,7 @@ try
     -packageDisplayName $PackageDisplayName `
     -relatedWorkItemId $RelatedWorkItemId `
     -tag $Tag `
-    -devops_pat $Devops_pat
+    -accessToken $AccessToken
 }
 finally {
     Pop-Location

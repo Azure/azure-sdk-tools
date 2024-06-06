@@ -34,8 +34,8 @@ export async function readTspLocation(rootDir: string): Promise<TspLocation> {
       }
 
       // Normalize the directory path and remove trailing slash
-      let normalizedDir = normalizePath(tspLocation.directory)
-      tspLocation.directory = normalizedDir.endsWith("/") ? normalizedDir.slice(0, -1) : normalizedDir;
+      tspLocation.directory = normalizeDirectory(tspLocation.directory);
+      tspLocation.additionalDirectories = tspLocation.additionalDirectories.map(normalizeDirectory);
 
       return tspLocation;
     }
@@ -63,4 +63,9 @@ export async function getEmitterFromRepoConfig(emitterPath: string): Promise<str
     }
   }
   throw new Error("Could not find emitter package");
+}
+
+export function normalizeDirectory(directory: string): string {
+    let normalizedDir = normalizePath(directory);
+    return normalizedDir.endsWith("/") ? normalizedDir.slice(0, -1) : normalizedDir;
 }

@@ -1,7 +1,7 @@
 
 :host ::ng-deep {
     .p-panel.p-panel-toggleable .p-panel-header {
-        padding: 0.05rem 0.5rem;
+        padding: 0;
     }
 
     .p-panel .p-panel-header .p-panel-title {
@@ -10,9 +10,5 @@
 
     .p-icon-wrapper {
         color: var(--link-color);
-    }
-
-    .p-panel-toggleable.p-panel-expanded>.p-toggleable-content:not(.ng-animating) {
-        border-top: 1px solid var(--border-color);
     }
 }

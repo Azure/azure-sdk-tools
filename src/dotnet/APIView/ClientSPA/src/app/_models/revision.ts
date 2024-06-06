@@ -33,6 +33,7 @@ export interface APIRevision {
   isReleased: boolean,
   releasedOn: string,
   isDeleted: boolean,
+  approvers: string[],
   viewedBy: string[]
 }
 

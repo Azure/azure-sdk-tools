@@ -12,11 +12,15 @@
         width: 2px;
     }
 
+    .p-timeline-event {
+        overflow: hidden;
+    }
+
     .p-panel .p-panel-content {
         padding: 0;
     }
 
-    .list-group-item {
+    .p-panel {
         border: none;
     }
 

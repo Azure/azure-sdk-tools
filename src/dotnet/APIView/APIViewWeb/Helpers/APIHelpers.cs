@@ -3,9 +3,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json.Serialization;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace APIViewWeb.Helpers
 {
@@ -73,13 +72,14 @@ namespace APIViewWeb.Helpers
     public class LeanJsonResult : JsonResult
     {
         private readonly int _statusCode;
-        private static readonly JsonSerializerSettings _settings = new JsonSerializerSettings
+ 
+        private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
         {
-            ContractResolver = new CamelCasePropertyNamesContractResolver(),
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-            Converters = new List<JsonConverter> { new StringEnumConverter() },
-            NullValueHandling = NullValueHandling.Ignore,
-            Formatting = Formatting.None
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            ReferenceHandler = ReferenceHandler.IgnoreCycles,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            WriteIndented = false,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
         };
 
         public LeanJsonResult(object value, int statusCode) : base(value)
@@ -99,7 +99,7 @@ namespace APIViewWeb.Helpers
             response.ContentType = !string.IsNullOrEmpty(ContentType) ? ContentType : "application/json";
             response.StatusCode = _statusCode;
 
-            var serializedValue = JsonConvert.SerializeObject(Value, _settings);
+            var serializedValue = JsonSerializer.Serialize(Value, _serializerOptions);
             await response.WriteAsync(serializedValue);
         }
     }

@@ -18,6 +18,7 @@ addEventListener('message', ({ data }) => {
     let jsonString = new TextDecoder().decode(new Uint8Array(data));
 
     codePanelData = JSON.parse(jsonString);
+    console.log(codePanelData);
     
     buildCodePanelRows("root", navigationTree);
     const codePanelRowDataMessage : InsertCodePanelRowDataMessage = {
@@ -155,7 +156,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 }
 
 function appendToggleDocumentationClass(node: CodePanelNodeMetaData, codePanelRow: CodePanelRowData, index: number) {
-  if (node.documentation && node.documentation.length > 0 && codePanelRow.type === CodePanelRowDatatype.CodeLine && index == 0 && codePanelRow.rowOfTokensPosition === "Top") {
+  if (node.documentation && node.documentation.length > 0 && codePanelRow.type === CodePanelRowDatatype.CodeLine && index == 0 && codePanelRow.rowOfTokensPosition === "top") {
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} can-show`;
   } else {
     codePanelRow.toggleDocumentationClasses = `bi ${toggleDocumentationClassPart} hide`;
@@ -163,9 +164,9 @@ function appendToggleDocumentationClass(node: CodePanelNodeMetaData, codePanelRo
 }
 
 function setLineNumber(row: CodePanelRowData) {
-  if (row.diffKind === "Removed") {
+  if (row.diffKind === "removed") {
     row.lineNumber = ++lineNumber;
-  } else if (row.diffKind === "Added") {
+  } else if (row.diffKind === "added") {
     lineNumber++;
     diffLineNumber++;
     row.lineNumber = diffLineNumber;

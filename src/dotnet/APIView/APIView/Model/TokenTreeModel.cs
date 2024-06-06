@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using MessagePack;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace APIView.Model
 {
@@ -26,7 +25,7 @@ namespace APIView.Model
         Removed = 3
     }
 
-    public class StructuredTokenConverter : JsonConverter
+    public class StructuredTokenConverter : JsonConverter<StructuredToken>
     {
         private readonly string _parameterSeparator;
 
@@ -35,21 +34,10 @@ namespace APIView.Model
             _parameterSeparator = parameterSeparator;
         }
 
-        public override bool CanConvert(Type objectType)
+        public override StructuredToken Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return objectType == typeof(StructuredToken);
-        }
-
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            JToken t = JToken.FromObject(value);
-            t.WriteTo(writer);
-        }
-
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            JObject jObject = JObject.Load(reader);
-            StructuredToken myObject = jObject.ToObject<StructuredToken>();
+            var jObject = JsonDocument.ParseValue(ref reader).RootElement;
+            var myObject = JsonSerializer.Deserialize<StructuredToken>(jObject.GetRawText());
 
             switch (myObject.Kind)
             {
@@ -68,63 +56,58 @@ namespace APIView.Model
             }
             return myObject;
         }
+
+        public override void Write(Utf8JsonWriter writer, StructuredToken value, JsonSerializerOptions options)
+        {
+            JsonSerializer.Serialize(writer, value, options);
+        }
     }
 
-    [MessagePackObject]
-    [JsonObject("st")]
     public class StructuredToken
     {
-        [Key(3)]
-        [JsonProperty("t")]
-        private HashSet<string> _tagsForSerializer
+        [JsonPropertyName("t")]
+        public HashSet<string> _tagsForSerializer
         {
             get { return Tags.Count > 0 ? Tags : null; }
             set { Tags = value ?? new HashSet<string>(); }
         }
 
-        [Key(4)]
-        [JsonProperty("p")]
-        private Dictionary<string, string> _propertiesForSerializer
+        [JsonPropertyName("p")]
+        public Dictionary<string, string> _propertiesForSerializer
         {
             get { return Properties.Count > 0 ? Properties : null; }
             set { Properties = value ?? new Dictionary<string, string>(); }
         }
 
-        [Key(5)]
-        [JsonProperty("rc")]
-        private HashSet<string> _renderClassesForSerializer
+        [JsonPropertyName("rc")]
+        public HashSet<string> _renderClassesForSerializer
         {
             get { return RenderClasses.Count > 0 ? RenderClasses : null; }
             set { RenderClasses = value ?? new HashSet<string>(); }
         }
 
-        [Key(0)]
-        [JsonProperty("v")]
+        [JsonPropertyName("v")]
         public string Value { get; set; } = string.Empty;
 
-        [Key(1)]
-        [JsonProperty("i")]
+        [JsonPropertyName("i")]
         public string Id { get; set; }
 
-        [Key(2)]
-        [JsonProperty("k")]
+        [JsonPropertyName("k")]
         public StructuredTokenKind Kind { get; set; }
 
-        [IgnoreMember]
         [JsonIgnore]
         public HashSet<string> Tags { get; set; } = new HashSet<string>();
 
-        [IgnoreMember]
         [JsonIgnore]
         public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
 
-        [IgnoreMember]
         [JsonIgnore]
         public HashSet<string> RenderClasses { get; set; } = new HashSet<string>();
         
         public StructuredToken()
         {
-            new StructuredToken(string.Empty);
+            Value = string.Empty;
+            Kind = StructuredTokenKind.Content;
         }
 
         public StructuredToken(string value)
@@ -241,92 +224,73 @@ namespace APIView.Model
         }
     }
 
-    [MessagePackObject]
-    [JsonObject("at")]
-
     public class APITreeNode
     {
-        [Key(3)]
-        [JsonProperty("t")]
-        private HashSet<string> _tagsForSerializer
+        [JsonPropertyName("t")]
+        public HashSet<string> _tagsForSerializer
         {
             get { return Tags.Count > 0 ? Tags : null; }
             set { Tags = value ?? new HashSet<string>(); }
         }
 
-        [Key(4)]
-        [JsonProperty("p")]
-        private Dictionary<string, string> _propertiesForSerializer
+        [JsonPropertyName("p")]
+        public Dictionary<string, string> _propertiesForSerializer
         {
             get { return Properties.Count > 0 ? Properties : null; }
             set { Properties = value ?? new Dictionary<string, string>(); }
         }
 
-        [Key(5)]
-        [JsonProperty("tt")]
-        private List<StructuredToken> _topTokensForSerializer
+        [JsonPropertyName("tt")]
+        public List<StructuredToken> _topTokensForSerializer
         {
             get { return TopTokens.Count > 0 ? TopTokens : null; }
             set { TopTokens = value ?? new List<StructuredToken>(); }
         }
 
-        [Key(6)]
-        [JsonProperty("bt")]
-        private List<StructuredToken> _bottomTokensForSerializer
+        [JsonPropertyName("bt")]
+        public List<StructuredToken> _bottomTokensForSerializer
         {
             get { return BottomTokens.Count > 0 ? BottomTokens : null; }
             set { BottomTokens = value ?? new List<StructuredToken>(); }
         }
 
-        [Key(7)]
-        [JsonProperty("c")]
-        private List<APITreeNode> _childrenForSerializer
+        [JsonPropertyName("c")]
+        public List<APITreeNode> _childrenForSerializer
         {
             get { return Children.Count > 0 ? Children : null; }
             set { Children = value ?? new List<APITreeNode>(); }
         }
 
-        [Key(0)]
-        [JsonProperty("n")]
+        [JsonPropertyName("n")]
         public string Name { get; set; }
 
-        [Key(1)]
-        [JsonProperty("i")]
+        [JsonPropertyName("i")]
         public string Id { get; set; }
 
-        [Key(2)]
-        [JsonProperty("k")]
+        [JsonPropertyName("k")]
         public string Kind { get; set; }
 
-        [IgnoreMember]
         [JsonIgnore]
         public HashSet<string> Tags { get; set; } = new HashSet<string>();
 
-        [IgnoreMember]
         [JsonIgnore]
         public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
 
-        [IgnoreMember]
         [JsonIgnore]
         public List<StructuredToken> TopTokens { get; set; } = new List<StructuredToken>();
 
-        [IgnoreMember]
         [JsonIgnore]
         public List<StructuredToken> BottomTokens { get; set; } = new List<StructuredToken>();
 
-        [IgnoreMember]
         [JsonIgnore]
         public List<APITreeNode> Children { get; set; } = new List<APITreeNode>();
 
-        [IgnoreMember]
         [JsonIgnore]
         public DiffKind DiffKind { get; set; } = DiffKind.NoneDiff;
 
-        [IgnoreMember]
         [JsonIgnore]
         public List<StructuredToken> TopDiffTokens { get; set; } = new List<StructuredToken>();
 
-        [IgnoreMember]
         [JsonIgnore]
         public List<StructuredToken> BottomDiffTokens { get; set; } = new List<StructuredToken>();
 

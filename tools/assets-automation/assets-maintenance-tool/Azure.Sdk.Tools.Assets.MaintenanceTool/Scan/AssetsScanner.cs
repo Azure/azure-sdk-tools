@@ -108,7 +108,6 @@ public class AssetsScanner
                 }
             }
         }
-        
 
         return results;
     }
@@ -214,7 +213,20 @@ public class AssetsScanner
     {
         Matcher matcher = new();
         List<AssetsResult> locatedAssets = new List<AssetsResult>();
-        matcher.AddIncludePatterns(new[] { "**/assets.json" });
+
+        if (scanFolders.Count > 0)
+        {
+            foreach (string folder in scanFolders)
+            {
+
+                matcher.AddIncludePatterns(new[] { Path.Combine(folder, "**/assets.json") });
+            }
+        }
+        else
+        {
+            matcher.AddIncludePatterns(new[] { "**/assets.json" });
+        }
+        
         IEnumerable<string> assetsJsons = matcher.GetResultsInFullPath(workingDirectory);
 
         foreach (var assetsJson in assetsJsons)

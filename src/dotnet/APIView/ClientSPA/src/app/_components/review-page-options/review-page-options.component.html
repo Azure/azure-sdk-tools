@@ -1,3 +1,30 @@
+<app-page-options-section sectionName="Approval">
+    <ul class="list-group">
+        <li class="list-group-item text-center">
+            <span *ngIf="!activeAPIRevisionIsApprovedByCurrentUser" class="small text-muted">Approve this API Revision</span>
+            <div *ngIf="!activeAPIRevisionIsApprovedByCurrentUser; else elseBlock" class="d-grid gap-2">
+                <button class="btn btn-success" type="button">Approve</button>
+            </div>
+            <ng-template #elseBlock>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-secondary" type="button">Revert API Approval</button>
+                </div>
+            </ng-template>
+            <span class="small text-muted mt-1">{{activeAPIRevisionApprovalMessage}}</span>
+        </li>
+        <li class="list-group-item">
+            <span class="small text-muted">Approves the current revision of the API</span>
+            <div class="d-grid gap-2">
+                <button class="btn btn-success" type="button">Approved</button>
+            </div>
+        </li>
+    </ul>
+</app-page-options-section>
+
+<app-page-options-section sectionName="Request Reviewers">
+
+</app-page-options-section>
+
 <app-page-options-section sectionName="Page Settings">
     <ul class="list-group">
         <li class="list-group-item">
@@ -5,25 +32,25 @@
             (onChange)="onCommentsSwitchChange($event)" />
             <label class="ms-2">Comments</label>
         </li>
-        <li class="list-group-item border-top">
+        <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showSystemCommentsSwitch"
             (onChange)="onShowSystemCommentsSwitchChange($event)" />
             <label class="ms-2">System Comments</label>
         </li>
-        <li class="list-group-item border-top">
+        <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showDocumentationSwitch"
             (onChange)="onShowDocumentationSwitchChange($event)" />
             <label class="ms-2">Documentation</label>
         </li>
-        <li class="list-group-item border-top">
+        <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showLineNumberSwitch" />
             <label class="ms-2">Line Numbers</label>
         </li>
-        <li class="list-group-item border-top">
+        <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch" />
             <label class="ms-2">Left navigation</label>
         </li>
-        <li *ngIf="isDiffView" class="list-group-item border-top">
+        <li *ngIf="isDiffView" class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Diff Style :</label>
             <p-dropdown 
                 (onChange)="onDiffStyleChange($event)"
@@ -42,9 +69,11 @@
             (onChange)="onMarkedAsViewedSwitchChange($event)" />
             <label class="ms-2">Mark As Viewed</label>
         </li>
-        <li class="list-group-item border-top">
-            <h6 class="text-decoration-underline">Change History</h6>
-        </li>
+    </ul>
+</app-page-options-section>
+
+<app-page-options-section sectionName="Change History">
+    <ul class="list-group">
         <li class="list-group-item change-history">
             <p-timeline [value]="activeAPIRevision?.changeHistory">
                 <ng-template pTemplate="marker" let-changeHistory>
@@ -59,7 +88,7 @@
                     <div class="p-text-secondary small">{{ changeHistory.changedOn | timeago }}</div>
                 </ng-template>
                 <ng-template pTemplate="opposite" let-changeHistory>
-                    <div class="p-text-primary">{{ changeHistory.changeAction }}</div>
+                    <div class="p-text-primary">{{ changeHistory.changeAction | titlecase }}</div>
                 </ng-template>
             </p-timeline>
         </li>

@@ -18,7 +18,6 @@ addEventListener('message', ({ data }) => {
     let jsonString = new TextDecoder().decode(new Uint8Array(data));
 
     codePanelData = JSON.parse(jsonString);
-    console.log(codePanelData);
     
     buildCodePanelRows("root", navigationTree);
     const codePanelRowDataMessage : InsertCodePanelRowDataMessage = {

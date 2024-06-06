@@ -27,6 +27,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   showLeftNavigationSwitch : boolean = true;
   markedAsViewSwitch : boolean = false;
 
+  activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
+  activeAPIRevisionApprovalMessage: string = '';
+  activeAPIRevisionApprovalClass: string = '';
+
+  firstReleaseApprovalMessage: string = '';
+
   diffStyleOptions : any[] = [
     { label: 'Full Diff', value: "full" },
     { label: 'Only Trees', value: "trees"},
@@ -38,7 +44,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     'created': 'bi bi-plus-circle-fill created',
     'approved': 'bi bi-check-circle-fill approved',
     'approvalReverted': 'bi bi-arrow-left-circle-fill approval-reverted',
-    'deleted': 'bi bi-backspace-fill deleted',
+    'deleted': 'bi bi-trash3-fill deleted',
     'unDeleted': 'bi bi-plus-circle-fill undeleted'
   };
 
@@ -61,7 +67,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     }
     
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
-      this.markedAsViewSwitch = (this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!)) ? true : false;
+      this.markedAsViewSwitch = this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!);
+      this.activeAPIRevisionIsApprovedByCurrentUser = this.activeAPIRevision!.approvers.includes(this.userProfile?.userName!);
+      this.activeAPIRevisionApprovalMessage = !this.activeAPIRevision?.isApproved ? 'Approved By:' : 'APIRevision Approval Pending';
     }
   }
 

@@ -29,6 +29,7 @@ jobs:
 
             az account set -s "Azure SDK Developer Playground"
 
+            Write-Host "===================================================================================================="
             Write-Host "Getting key for open account open"
             $KEY = az storage account keys list --resource-group $GROUP --account-name $OPENACCOUNT --query '[0].value' -o tsv
             Write-Host "Downloading blob from open account"
@@ -38,6 +39,7 @@ jobs:
             Write-Host "testing upload to open account"
             az storage blob upload --account-name $OPENACCOUNT --account-key $KEY --container-name $CONTAINER --file testdata --name $BLOB --overwrite
 
+            Write-Host "===================================================================================================="
             Write-Host "Getting key from net iso account closed"
             $KEY = az storage account keys list --resource-group $GROUP --account-name $CLOSEDACCOUNT --query '[0].value' -o tsv
             Write-Host "Downloading blob from net iso account closed"
@@ -47,6 +49,7 @@ jobs:
             Write-Host "testing upload to closed account"
             az storage blob upload --account-name $CLOSEDACCOUNT --account-key $KEY --container-name $CONTAINER --file testdata --name $BLOB --overwrite
 
+            Write-Host "===================================================================================================="
             Write-Host "Getting key from net iso account cross"
             $KEY = az storage account keys list --resource-group $GROUP --account-name $CROSSREGIONACCOUNT --query '[0].value' -o tsv
             Write-Host "Downloading blob from net iso account cross"
@@ -56,10 +59,15 @@ jobs:
             Write-Host "testing upload to cross account"
             az storage blob upload --account-name $CROSSREGIONACCOUNT --account-key $KEY --container-name $CONTAINER --file testdata --name $BLOB --overwrite
 
-            # Write-Host "Getting mongo shell"
+            Write-Host "===================================================================================================="
             # https://downloads.mongodb.com/compass/mongodb-mongosh_2.2.6_amd64.deb | Out-Null
             # sudo dpkg -i ./mongodb-mongosh_2.2.6_amd64.deb
+            Write-Host "Getting mongo shell"
+            wget https://github.com/mongodb-js/mongosh/releases/download/v2.2.6/mongodb-mongosh-shared-openssl3_2.2.6_amd64.deb
+            sudo apt remove mongodb-mongosh -y
+            sudo dpkg -i mongodb-mongosh-shared-openssl3_2.2.6_amd64.deb
 
+            Write-Host "===================================================================================================="
             Write-Host "Getting creds for open account"
             $OPEN_KEYS = az cosmosdb keys list --resource-group $GROUP --name $OPENCOSMOSACCOUNT --output tsv --query primaryMasterKey
             $OPEN_PRIMARY_KEY = echo $OPEN_KEYS | cut -f1
@@ -67,6 +75,7 @@ jobs:
             Write-Host "Running mongo query"
             mongosh $OPEN_CONNECTION_STRING --eval "db.test.find().pretty()"
 
+            Write-Host "===================================================================================================="
             Write-Host "Getting creds for closed account"
             $CLOSED_KEYS = az cosmosdb keys list --resource-group $GROUP --name $CLOSEDCOSMOSACCOUNT --output tsv --query primaryMasterKey
             $CLOSED_PRIMARY_KEY = echo $CLOSED_KEYS | cut -f1
@@ -74,10 +83,12 @@ jobs:
             Write-Host "Running mongo query"
             mongosh $CLOSED_CONNECTION_STRING --eval "db.test.find().pretty()"
 
+            Write-Host "===================================================================================================="
             Write-Host "Getting creds for cross account"
             $CROSSREGION_KEYS = az cosmosdb keys list --resource-group $GROUP --name $CROSSREGIONCOSMOSACCOUNT --output tsv --query primaryMasterKey
             $CROSSREGION_PRIMARY_KEY = echo $CROSSREGION_KEYS | cut -f1
             $CROSSREGION_CONNECTION_STRING = "mongodb://${CROSSREGIONCOSMOSACCOUNT}:${CROSSREGION_PRIMARY_KEY}@${CROSSREGIONCOSMOSACCOUNT}.mongo.cosmos.azure.com:10255/test?ssl=true&replicaSet=globaldb"
             Write-Host "Running mongo query"
             mongosh $CROSSREGION_CONNECTION_STRING --eval "db.test.find().pretty()"
+
 

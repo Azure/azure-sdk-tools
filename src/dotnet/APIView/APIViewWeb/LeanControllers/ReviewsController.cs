@@ -109,15 +109,7 @@ namespace APIViewWeb.LeanControllers
             var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
             var comments = await _commentsManager.GetCommentsAsync(reviewId);
 
-            var stopWatch1 = new Stopwatch();
-            stopWatch1.Start();
-            var activeRevisionReviewCodeFileRegular = (await _codeFileRepository.GetCodeFileAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId + ".json", false)).CodeFile;
-            stopWatch1.Stop();
-
-            var stopWatch2 = new Stopwatch();
-            stopWatch2.Start();
-            var activeRevisionReviewCodeFile = await _codeFileRepository.GetBinaryCodeFileAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId + ".msgpack");
-            stopWatch2.Stop();
+            var activeRevisionReviewCodeFile = (await _codeFileRepository.GetCodeFileAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId, false)).CodeFile;
 
             var result = new CodePanelData();
 

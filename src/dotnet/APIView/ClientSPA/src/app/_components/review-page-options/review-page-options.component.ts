@@ -35,11 +35,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   selectedDiffStyle : string = this.diffStyleOptions[0];
 
   changeHistoryIcons : any = {
-    'Created': 'bi bi-plus-circle-fill created',
-    'Approved': 'bi bi-check-circle-fill approved',
-    'ApprovalReverted': 'bi bi-arrow-left-circle-fill approval-reverted',
-    'Deleted': 'bi bi-backspace-fill deleted',
-    'UnDeleted': 'bi bi-plus-circle-fill undeleted'
+    'created': 'bi bi-plus-circle-fill created',
+    'approved': 'bi bi-check-circle-fill approved',
+    'approvalReverted': 'bi bi-arrow-left-circle-fill approval-reverted',
+    'deleted': 'bi bi-backspace-fill deleted',
+    'unDeleted': 'bi bi-plus-circle-fill undeleted'
   };
 
   ngOnInit() {
@@ -61,7 +61,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     }
     
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
-      console.log(this.activeAPIRevision);
       this.markedAsViewSwitch = (this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!)) ? true : false;
     }
   }

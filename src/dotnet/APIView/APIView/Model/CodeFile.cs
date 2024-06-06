@@ -3,21 +3,22 @@
 
 using APIView;
 using APIView.Model;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace ApiView
 {
     public class CodeFile
     {
-        private static readonly JsonSerializer _serializer = new JsonSerializer()
+        private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
         {
-            NullValueHandling = NullValueHandling.Ignore,
-            ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            AllowTrailingCommas = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            Converters = { new StructuredTokenConverter() }
         };
 
         private string _versionString;
@@ -76,18 +77,7 @@ namespace ApiView
         public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            CodeFile codeFile = null;
-            var converter = new StructuredTokenConverter();
-            _serializer.Converters.Add(converter);
-
-            using (var streamReader = new StreamReader(stream, leaveOpen: true))
-            {
-                using (var jsonReader = new JsonTextReader(streamReader))
-                {
-                    jsonReader.SupportMultipleContent = true;
-                    codeFile = _serializer.Deserialize<CodeFile>(jsonReader);
-                }
-            }
+            CodeFile codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(stream, _serializerOptions);
 
             if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language))
                 hasSections = true;
@@ -163,14 +153,7 @@ namespace ApiView
 
         public async Task SerializeAsync(Stream stream)
         {
-            using (var streamWriter = new StreamWriter(stream, leaveOpen: true))
-            {
-                using (var jsonWriter = new JsonTextWriter(streamWriter))
-                {
-                    _serializer.Serialize(jsonWriter, this);
-                    await jsonWriter.FlushAsync();
-                }
-            }
+            await JsonSerializer.SerializeAsync(stream, this, _serializerOptions);
         }
     }
 }

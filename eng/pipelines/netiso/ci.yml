@@ -73,8 +73,7 @@ jobs:
             $OPEN_PRIMARY_KEY = echo $OPEN_KEYS | cut -f1
             $OPEN_CONNECTION_STRING = "mongodb://${OPENCOSMOSACCOUNT}:${OPEN_PRIMARY_KEY}@${OPENCOSMOSACCOUNT}.mongo.cosmos.azure.com:10255/test?ssl=true&replicaSet=globaldb"
             Write-Host "Running mongo query"
-            mongosh $OPEN_CONNECTION_STRING --eval "db.test.find().pretty()"
-            docker run -p 28000:27017 mongo:latest bash -c "mongosh $OPEN_CONNECTION_STRING --eval 'db.test.find().pretty()'"
+            docker run -p 28000:27017 mongo:latest bash -c "mongosh '$OPEN_CONNECTION_STRING' --eval 'db.test.find().pretty()'"
 
             Write-Host "===================================================================================================="
             Write-Host "Getting creds for closed account"
@@ -82,8 +81,7 @@ jobs:
             $CLOSED_PRIMARY_KEY = echo $CLOSED_KEYS | cut -f1
             $CLOSED_CONNECTION_STRING = "mongodb://${CLOSEDCOSMOSACCOUNT}:${CLOSED_PRIMARY_KEY}@${CLOSEDCOSMOSACCOUNT}.mongo.cosmos.azure.com:10255/test?ssl=true&replicaSet=globaldb"
             Write-Host "Running mongo query"
-            mongosh $CLOSED_CONNECTION_STRING --eval "db.test.find().pretty()"
-            docker run -p 28000:27017 mongo:latest bash -c "mongosh $CLOSED_CONNECTION_STRING --eval 'db.test.find().pretty()'"
+            docker run -p 28000:27017 mongo:latest bash -c "mongosh '$CLOSED_CONNECTION_STRING' --eval 'db.test.find().pretty()'"
 
             Write-Host "===================================================================================================="
             Write-Host "Getting creds for cross account"
@@ -91,4 +89,4 @@ jobs:
             $CROSSREGION_PRIMARY_KEY = echo $CROSSREGION_KEYS | cut -f1
             $CROSSREGION_CONNECTION_STRING = "mongodb://${CROSSREGIONCOSMOSACCOUNT}:${CROSSREGION_PRIMARY_KEY}@${CROSSREGIONCOSMOSACCOUNT}.mongo.cosmos.azure.com:10255/test?ssl=true&replicaSet=globaldb"
             Write-Host "Running mongo query"
-            docker run -p 28000:27017 mongo:latest bash -c "mongosh $CROSSREGION_CONNECTION_STRING --eval 'db.test.find().pretty()'"
+            docker run -p 28000:27017 mongo:latest bash -c "mongosh '$CROSSREGION_CONNECTION_STRING' --eval 'db.test.find().pretty()'"

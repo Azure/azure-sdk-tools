@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { InputSwitchOnChangeEvent } from 'primeng/inputswitch';
 import { UserProfile } from 'src/app/_models/auth_service_models';
+import { APIRevision } from 'src/app/_models/revision';
 
 @Component({
   selector: 'app-review-page-options',
@@ -11,13 +12,13 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
   @Input() diffStyleInput: string | undefined;
+  @Input() activeAPIRevision : APIRevision | undefined = undefined;
 
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showSystemCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showDocumentationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() markedAsViewEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  
+  @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   
   showCommentsSwitch : boolean = true;
   showSystemCommentsSwitch : boolean = true;
@@ -32,6 +33,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     { label: 'Only Nodes', value: "nodes" }
   ];
   selectedDiffStyle : string = this.diffStyleOptions[0];
+
+  changeHistoryIcons : any = {
+    'Created': 'bi bi-plus-circle-fill created',
+    'Approved': 'bi bi-check-circle-fill approved',
+    'ApprovalReverted': 'bi bi-arrow-left-circle-fill approval-reverted',
+    'Deleted': 'bi bi-backspace-fill deleted',
+    'UnDeleted': 'bi bi-plus-circle-fill undeleted'
+  };
 
   ngOnInit() {
     this.setSelectedDiffStyle();
@@ -49,6 +58,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
       this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
       this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
+    }
+    
+    if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
+      console.log(this.activeAPIRevision);
+      this.markedAsViewSwitch = (this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!)) ? true : false;
     }
   }
 
@@ -89,7 +103,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   * @param event the Filter event
   */
   onMarkedAsViewedSwitchChange(event: InputSwitchOnChangeEvent) {
-    this.markedAsViewEmitter.emit(event.checked);
+    this.markAsViewedEmitter.emit(event.checked);
   }
 
   setSelectedDiffStyle() {

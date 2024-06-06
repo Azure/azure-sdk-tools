@@ -1,5 +1,5 @@
 import { Type, Expose } from 'class-transformer';
-import { CodeDiagnostic, CommentItemModel } from "./review"
+import { ChangeHistory, CodeDiagnostic, CommentItemModel } from "./review"
 
 export enum ReviewPageWorkerMessageDirective {
   CreatePageNavigation,
@@ -24,6 +24,7 @@ export interface APIRevision {
   label: string
   resolvedLabel: string
   packageVersion: string
+  changeHistory: ChangeHistory[]
   assignedReviewers: AssignedReviewer[]
   isApproved: boolean
   createdBy: string
@@ -31,7 +32,8 @@ export interface APIRevision {
   lastUpdatedOn: string
   isReleased: boolean,
   releasedOn: string,
-  isDeleted: boolean
+  isDeleted: boolean,
+  viewedBy: string[]
 }
 
 

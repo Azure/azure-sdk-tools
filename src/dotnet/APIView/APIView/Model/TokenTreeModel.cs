@@ -127,7 +127,7 @@ namespace APIView.Model
             }
             foreach (var renderClass in token.RenderClasses)
             {
-                token.RenderClasses.Add(renderClass);
+                RenderClasses.Add(renderClass);
             }
         }
 

@@ -94,7 +94,7 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   diffApiRevisionClear(event: any) {
     let newQueryParams = getQueryParams(this.route);
     newQueryParams['diffApiRevisionId'] = null;
-    newQueryParams['onlyDiff'] = null;
+    newQueryParams['diffStyle'] = null;
     this.router.navigate([], { queryParams: newQueryParams });
   }
 

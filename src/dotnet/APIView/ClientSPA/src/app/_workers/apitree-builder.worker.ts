@@ -67,12 +67,12 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     buildChildren = false;
   }
 
-  if (!buildNode && Object.keys(node.childrenNodeIdsInOrder).length === 0 && 
+  if (!buildNode && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && 
     (apiTreeBuilderData?.diffStyle !== "nodes" || node.isNodeWithDiff)) {
     buildNode = true;
   }
 
-  if (!node.isNodeWithDiff && apiTreeBuilderData?.diffStyle === "nodes" && Object.keys(node.childrenNodeIdsInOrder).length === 0) {
+  if (!node.isNodeWithDiff && apiTreeBuilderData?.diffStyle === "nodes" && (!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0)) {
     addNodeToBuffer = true;
   }
 
@@ -84,7 +84,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     navigationChildren = node.navigationTreeNode.children;
   }
 
-  if (node.childrenNodeIdsInOrder && Object.keys(node.childrenNodeIdsInOrder).length === 0 && node.isNodeWithDiff) {
+  if ((!node.childrenNodeIdsInOrder || Object.keys(node.childrenNodeIdsInOrder).length === 0) && node.isNodeWithDiff) {
     codePanelRowData.push(...diffBuffer);
     diffBuffer = [];
   }

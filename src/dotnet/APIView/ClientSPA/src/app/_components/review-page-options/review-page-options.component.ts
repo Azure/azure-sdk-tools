@@ -115,6 +115,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
 
   setSelectedDiffStyle() {
     const inputDiffStyle = this.diffStyleOptions.find(option => option.value === this.diffStyleInput);
-    this.selectedDiffStyle = (inputDiffStyle) ? inputDiffStyle : this.selectedDiffStyle;
+    this.selectedDiffStyle = (inputDiffStyle) ? inputDiffStyle : this.diffStyleOptions[0];
   }
 }

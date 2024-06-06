@@ -12,15 +12,22 @@ The output will be a list of links directly to individual files on github that m
 This will enable easy access to the test recordings that are affected by a change in the SDK, and will help to identify
 which tests need to be updated.
 
+PreReqs:
+    - Azure.Sdk.Tools.Assets.MaintenanceTool must be available on the PATH
+    - git is available on the PATH
+    - Running powershell core
+
 .PARAMETER ConfigFilePath
 The query configuration file, which contains targeted repos, branches, and paths.
 #>
 
 param(
-    [string]$ConfigFilePath
+    [string]$ConfigFilePath,
+    [string]$SearchString = "application/vnd.docker.distribution.manifest.v2+json"
 )
 
 Set-StrictMode -Version 4
+$ErrorActionPreference = "Stop"
 . $PSScriptRoot\utilities.ps1
 
 if (!(Test-Path $ConfigFilePath -PathType Leaf)) {
@@ -29,12 +36,24 @@ if (!(Test-Path $ConfigFilePath -PathType Leaf)) {
 }
 
 $ResultsFolder = Create-If-Not-Exists "$PSScriptRoot\.results"
+$ScanOutputJson = Join-Path $ResultsFolder "output.json"
 
 try {
     Push-Location $ResultsFolder
-    Azure.Sdk.Tools.Assets.MaintenanceTool scan --config $ConfigFilePath
+
+    if (!(Test-Path $ScanOutputJson)) {
+        Azure.Sdk.Tools.Assets.MaintenanceTool scan --config $ConfigFilePath
+    }
+    else {
+        Write-Host "Skipping scan, using cached results"
+    }
 }
 finally {
     Pop-Location
 }
 
+$DiscoveredAssets = Get-Content $ScanOutputJson | ConvertFrom-Json 
+
+foreach ($asset in $DiscoveredAssets) {
+    $TagFolder = Get-AssetsRepoSlice -Tag $asset.Tag -WorkDirectory $ResultsFolder
+}

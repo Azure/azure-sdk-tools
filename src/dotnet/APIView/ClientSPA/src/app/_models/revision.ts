@@ -8,10 +8,10 @@ export enum ReviewPageWorkerMessageDirective {
 }
 
 export enum CodePanelRowDatatype {
-  CodeLine = "CodeLine",
-  Documentation = "Documentation",
-  Diagnostics = "Diagnostics",
-  CommentThread = "CommentThread"
+  CodeLine = "codeLine",
+  Documentation = "documentation",
+  Diagnostics = "diagnostics",
+  CommentThread = "commentThread"
 }
 
 export interface APIRevision {

@@ -15,12 +15,12 @@
           <span *ngFor="let token of item.rowOfTokens" [ngClass]="getClassObject(token.renderClasses)">{{token.value}}</span>
       </div>
     </ng-container>
-    <ng-container *ngIf="item.type === 'Diagnostics'">
+    <ng-container *ngIf="item.type === CodePanelRowDatatype.Diagnostics">
       <div>
         <span>{{ item.diagnostics.text }} <a *ngIf="item.diagnostics.helpLinkUri" href="{{item.diagnostics.helpLinkUri}}" target="_blank">Details</a></span>
       </div>
     </ng-container>
-    <ng-container *ngIf="item.type === 'CommentThread'">
+    <ng-container *ngIf="item.type === CodePanelRowDatatype.CommentThread">
       <app-comment-thread [comments]="item.comments"></app-comment-thread>
     </ng-container>
   </div>

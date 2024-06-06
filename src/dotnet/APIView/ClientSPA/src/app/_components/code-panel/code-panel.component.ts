@@ -106,7 +106,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     const updatedCodeLinesData : CodePanelRowData[] = [];
 
     for (let i = 0; i < this.codePanelRowData.length; i++) {
-      if (this.codePanelRowData[i].type === "CodeLine" &&  this.codePanelRowData[i].nodeIdHashed! in this.codePanelData?.nodeMetaData!) {
+      if (this.codePanelRowData[i].type === CodePanelRowDatatype.CodeLine &&  this.codePanelRowData[i].nodeIdHashed! in this.codePanelData?.nodeMetaData!) {
         const nodeData = this.codePanelData?.nodeMetaData[this.codePanelRowData[i].nodeIdHashed!];
 
         switch (codePanelRowDatatype) {

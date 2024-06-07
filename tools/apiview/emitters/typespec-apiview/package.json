@@ -1,6 +1,6 @@
 {
   "name": "@azure-tools/typespec-apiview",
-  "version": "0.4.8",
+  "version": "0.5.0",
   "author": "Microsoft Corporation",
   "description": "Library for emitting APIView token files from TypeSpec",
   "homepage": "https://github.com/Azure/azure-sdk-tools",

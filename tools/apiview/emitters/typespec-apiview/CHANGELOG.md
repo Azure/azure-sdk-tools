@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.5.0 (TBD)
+Convert parser to use APIView v2 Code File Model.
+
 ## Version 0.4.8 (04-18-2024)
 Display suppressions in APIView.
 Resolve visual anomalies.

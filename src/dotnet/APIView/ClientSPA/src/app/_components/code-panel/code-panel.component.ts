@@ -20,6 +20,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   @Input() language: string | undefined;
   @Input() languageSafeName: string | undefined;
   @Input() navTreeNodIdHashed: string | undefined;
+  @Input() hideLineNumbers: boolean = false;
 
   lineNumberCount : number = 0;
   isLoading: boolean = true;

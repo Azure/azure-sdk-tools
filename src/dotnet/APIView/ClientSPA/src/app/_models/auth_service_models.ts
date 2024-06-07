@@ -23,4 +23,5 @@ export interface UserPreferenceModel {
     showDocumentation: boolean
     showComments: boolean
     showSystemComments: boolean
+    HideLeftNavigation: boolean
 }

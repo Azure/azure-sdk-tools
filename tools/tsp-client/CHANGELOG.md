@@ -1,6 +1,6 @@
 # Release
 
-## 2024-06-06 - 0.8.1
+## 2024-06-07 - 0.8.1
 
 - Normalize and clean up the directory property in tsp-location.yaml.
 

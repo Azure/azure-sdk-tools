@@ -66,6 +66,6 @@ export async function getEmitterFromRepoConfig(emitterPath: string): Promise<str
 }
 
 export function normalizeDirectory(directory: string): string {
-    let normalizedDir = normalizePath(directory);
+    const normalizedDir = normalizePath(directory);
     return normalizedDir.endsWith("/") ? normalizedDir.slice(0, -1) : normalizedDir;
 }

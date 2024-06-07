@@ -63,6 +63,12 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             TestDirectory = workingDirectory;
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            Directory.Delete(TestDirectory, true);
+        }
+
         [Test]
         [GitTokenSkip]
         public void TestBasicScanSingleBranch()

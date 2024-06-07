@@ -109,6 +109,7 @@ jobs:
             arguments: >
               -RepoId "${{ repo }}"
               -BranchRegex "^(increment-package-version-|fluent-lite-generation-|auto-update-|version-increment-build-|post-release-automation-|restapi_auto_|t2-).*$"
+              -LastCommitOlderThan ((Get-Date).AddDays(-1))
               -AuthToken $(azuresdk-github-pat)
               -WhatIf:$${{parameters.WhatIfPreference}}
 

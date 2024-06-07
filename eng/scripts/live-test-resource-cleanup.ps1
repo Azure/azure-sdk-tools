@@ -21,16 +21,8 @@ param (
   [string] $ProvisionerApplicationSecret,
 
   [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-  [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-  [string] $OpensourceApiApplicationId,
-
-  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
-  [ValidatePattern('^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$')]
-  [string] $OpensourceApiApplicationTenantId,
-
-  [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
   [ValidateNotNullOrEmpty()]
-  [string] $OpensourceApiApplicationSecret,
+  [string] $OpensourceApiApplicationToken,
 
   [Parameter(ParameterSetName = 'Provisioner', Mandatory = $true)]
   [Parameter(ParameterSetName = 'Interactive')]
@@ -167,20 +159,21 @@ function AddGithubUsersToAliasCache() {
     $users = Get-Content $GithubAliasCachePath | ConvertFrom-Json -AsHashtable
   } else {
     Write-Host "Retrieving github -> microsoft alias mappings from opensource API."
-    $users = GetAllGithubUsers $OpensourceApiApplicationTenantId $OpensourceApiApplicationId $OpensourceApiApplicationSecret
+    $users = GetAllGithubUsers -Token $OpensourceApiApplicationToken
   }
   if (!$users) {
     Write-Error "Failed to retrieve github -> microsoft alias mappings from opensource api."
     exit 1
   }
+  Write-Host "Found $($users.Count) users"
   foreach ($user in $users) {
-    if ($user.aad.alias) {
+    if ($user -and $user.aad.alias) {
       $OwnerAliasCache[$user.aad.alias] = $true
     }
-    if ($user.aad.userPrincipalName) {
+    if ($user -and $user.aad.userPrincipalName) {
       $OwnerAliasCache[$user.aad.userPrincipalName] = $true
     }
-    if ($user.github.login) {
+    if ($user -and $user.github.login) {
       $OwnerAliasCache[$user.github.login] = $true
     }
   }
@@ -334,11 +327,14 @@ function HasDeleteLock([object]$ResourceGroup) {
 }
 
 function DeleteArmDeployments([object]$ResourceGroup) {
-  if (!$DeleteArmDeployments) {
+  if (!$DeleteArmDeployments -or !$ResourceGroup) {
     return
   }
-  $toDelete = @(Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName `
-              | Where-Object { $_ -and ($_.Outputs?.Count -or $_.Parameters?.ContainsKey('testApplicationSecret')) })
+  $toDelete = @()
+  try {
+    $toDelete = @(Get-AzResourceGroupDeployment -ResourceGroupName $ResourceGroup.ResourceGroupName `
+                | Where-Object { $_ -and ($_.Outputs?.Count -or $_.Parameters?.ContainsKey('testApplicationSecret')) })
+  } catch {}
   if (!$toDelete -or !$toDelete.Count) {
     return
   }

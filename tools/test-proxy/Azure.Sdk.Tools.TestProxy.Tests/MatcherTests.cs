@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Matchers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -298,6 +298,50 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             playbackContext.Features.Get<IHttpRequestFeature>().RawTarget = path + queryString;
             await testRecordingHandler.HandlePlaybackRequest(recordingId, playbackContext.Request, playbackContext.Response);
             Assert.Equal("WESTUS:20210909T204819Z:f9a33867-6efc-4748-b322-303b2b933466", playbackContext.Response.Headers["x-ms-routing-request-id"].ToString());
+        }
+
+
+        [Fact]
+        public async Task EncodedUriAmpersandWorksCrossplat()
+        {
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            testRecordingHandler.Matcher = new CustomDefaultMatcher(ignoreQueryOrdering: true);
+            var playbackContext = new DefaultHttpContext();
+            var targetFile = "Test.RecordEntries/request_with_encoded_ampersand.json";
+            var body = "{\"x-recording-file\":\"" + targetFile + "\"}";
+            playbackContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            playbackContext.Request.ContentLength = body.Length;
+
+            var controller = new Playback(testRecordingHandler, new NullLoggerFactory())
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = playbackContext
+                }
+            };
+            await controller.Start();
+            var recordingId = playbackContext.Response.Headers["x-recording-id"].ToString();
+
+            playbackContext.Request.Headers.Clear();
+            playbackContext.Response.Headers.Clear();
+            playbackContext.Request.Method = "GET";
+
+            var requestHeaders = new Dictionary<string, string>(){
+                { "x-recording-id", recordingId },
+                { "x-recording-upstream-base-uri", "https://REDACTED" }
+            };
+            foreach (var kvp in requestHeaders)
+            {
+                playbackContext.Request.Headers.Add(kvp.Key, kvp.Value);
+            }
+            var queryString = "?api-version=1.0&year=2023&basinId=AL&govId=5";
+            var path = "/weather/tropical/storms/json";
+            playbackContext.Request.Host = new HostString("https://localhost:5001");
+            playbackContext.Features.Get<IHttpRequestFeature>().RawTarget = path + queryString;
+            await testRecordingHandler.HandlePlaybackRequest(recordingId, playbackContext.Request, playbackContext.Response);
+
+            Assert.Equal("Ref A: 980665086A12483993E2782EDFC9F29A Ref B: STBEDGE0106 Ref C: 2023-07-19T22:52:17Z", playbackContext.Response.Headers["X-MSEdge-Ref"].ToString());
+            Assert.Equal(200, playbackContext.Response.StatusCode);
         }
     }
 }

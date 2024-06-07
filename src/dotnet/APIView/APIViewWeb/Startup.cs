@@ -27,17 +27,12 @@ using APIView.Identity;
 using APIViewWeb.Managers;
 using APIViewWeb.Hubs;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using APIViewWeb.LeanControllers;
 using APIViewWeb.MiddleWare;
 using Microsoft.OpenApi.Models;
 using System.IO;
 using Microsoft.Azure.Cosmos;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json;
-using System.Collections.Generic;
-using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;
 
 namespace APIViewWeb
@@ -117,7 +112,6 @@ namespace APIViewWeb
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
-            services.AddSingleton<IOpenSourceRequestManager, OpenSourceRequestManager>();
             services.AddSingleton<IAICommentsManager, AICommentsManager>();
             services.AddSingleton<UserPreferenceCache>();
 
@@ -247,6 +241,7 @@ namespace APIViewWeb
             services.AddHostedService<PullRequestBackgroundHostedService>();
             services.AddHostedService<LinesWithDiffBackgroundHostedService>();
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
+
             services.AddControllersWithViews()
                 .AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve)
                 .PartManager.ApplicationParts.Add(new AssemblyPart(typeof(BaseApiController).Assembly));

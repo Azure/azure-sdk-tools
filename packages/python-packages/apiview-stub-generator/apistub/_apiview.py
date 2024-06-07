@@ -12,7 +12,7 @@ from ._version import VERSION
 from ._diagnostic import Diagnostic
 from ._metadata_map import MetadataMap
 
-JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName", "Language", "PackageVersion"]
+JSON_FIELDS = ["Name", "Version", "VersionString", "Navigation", "Tokens", "Diagnostics", "PackageName", "Language", "PackageVersion", "CrossLanguagePackageId"]
 
 HEADER_TEXT = "# Package is parsed using apiview-stub-generator(version:{0}), Python version: {1}".format(VERSION, platform.python_version())
 TYPE_NAME_REGEX = re.compile(r"(~?[a-zA-Z\d._]+)")
@@ -54,6 +54,7 @@ class ApiView:
         self.package_name = pkg_name
         self.package_version = pkg_version
         self.metadata_map = metadata_map or MetadataMap("")
+        self.cross_language_package_id = self.metadata_map.cross_language_package_id
         self.add_token(Token("", TokenKind.SkipDiffRangeStart))
         self.add_literal(HEADER_TEXT)
         self.add_line_marker("GLOBAL")

@@ -14,12 +14,6 @@
     "clusterLocation": {
       "value": "westus3"
     },
-    "staticTestKeyvaultName": {
-      "value": "stress-secrets-pg"
-    },
-    "staticTestKeyvaultGroup": {
-      "value": "rg-stress-secrets-pg"
-    },
     "defaultAgentPoolMinNodes": {
       "value": 6
     },

@@ -1,0 +1,84 @@
+@using APIViewWeb.Helpers
+@using APIViewWeb.LeanModels;
+@using APIViewWeb.Pages.Assemblies
+@model (ReviewListItemModel review, IEnumerable<SamplesRevisionModel> samplesRevisions, SamplesRevisionModel activeSamplesRevision)
+<div class="row g-4">
+    <div class="col mx-3">
+        <form>
+            <div class="d-grid gap-2">
+                @if (Model.activeSamplesRevision != null)
+                {
+                    <button type="button" class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#upload-samples-context" aria-controls="upload-samples-context">Add Samples Revision</button>
+                }
+                else 
+                {
+                    <div class="btn-group invisible" role="group" aria-label="Samples Revisions Select"> @*Added for asthetics*@
+                        <input type="checkbox" class="btn-check" id="manual-apirevisions-check" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="manual-apirevisions-check">Manual</label>
+
+                        <input type="checkbox" class="btn-check" id="automatic-apirevisions-check" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="automatic-apirevisions-check">Automatic</label>
+
+                        <input type="checkbox" class="btn-check" id="pullrequest-apirevisions-check" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="pullrequest-apirevisions-check">Pull Request</label>
+                    </div>
+                }
+                @if (Model.samplesRevisions.Any())
+                {
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fa-solid fa-magnifying-glass"></i></span>
+                        <input type="search" placeholder="Search.." class="form-control" id="samplesRevisions-search" aria-label="samplesrevision search">
+                    </div>
+                }
+            </div>
+        </form>
+
+        <div class="samples-revisions revisions-list-container p-2">
+            @foreach (var samplesRevision in Model.samplesRevisions)
+            {
+                <div class="card my-2" data-id="@samplesRevision.Id">
+                    <img username="@samplesRevision.CreatedBy" size="105" aria-label="GitHub User Avatar" />
+                    <div class="card-body">
+                        <h6 class="card-title">@samplesRevision.Title</h6>
+                        @if (User.GetGitHubLogin() == samplesRevision.CreatedBy)
+                        {
+                            <div class="input-group input-group-sm mb-1 edit-revision-label d-none">
+                                <input type="text" class="form-control" value="@samplesRevision.Title" aria-label="Edit Samples Revision Label">
+                                <button class="input-group-text enter-rename"><i class="bi bi-check"></i></button>
+                                <button class="input-group-text cancel-rename"><i class="bi bi-x"></i></button>
+                            </div>
+                        }
+                        <p class="card-subtitle mb-1 text-body-secondary"><b>Created: </b><span date="@samplesRevision.CreatedOn"></span> , <b>By: </b>@samplesRevision.CreatedBy</p>
+                    </div>
+                    <div class="revision-actions">
+                        <div class="btn-group animate__animated animate__fadeIn" role="group" aria-label="Samples Revision action buttons">
+                            @if (Model.activeSamplesRevision != null)
+                            {
+                                @if (samplesRevision.Id != Model.activeSamplesRevision.Id)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-primary make-active" data-bs-toggle="tooltip" title="Make Active"><i class="bi bi-puzzle"></i></button>
+                                }
+                            }
+                            @if (User.GetGitHubLogin() == samplesRevision.CreatedBy)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-primary rename" data-bs-toggle="tooltip" title="Rename"><i class="bi bi-pencil-square"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-primary delete" data-bs-toggle="tooltip" title="Delete"><i class="bi bi-x-circle text-danger"></i></button>
+                            }
+                        </div>
+                    </div>
+                    <div class="revision-indicator-checks animate__animated animate__slideInLeft">
+                        @if (Model.activeSamplesRevision != null)
+                        {
+                            @if (samplesRevision.Id == Model.activeSamplesRevision.Id)
+                            {
+                                <i class="bi bi-puzzle active-rev mr-1"></i>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<partial name="Shared/_AddSamplesRevisionsPartial" model="@Model.review" />

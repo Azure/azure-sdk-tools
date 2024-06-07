@@ -33,12 +33,16 @@
 </div>
 
 @{
-    var offCanvasClass = " show-offcanvas";
+    var offCanvasClass = " show-right-offcanvas";
+    var mainContainerClass = " move-main-content-container-left";
     if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
+    {
         offCanvasClass = String.Empty;
+        mainContainerClass = string.Empty;
+    }
 }
 <div id="right-offcanvas-menu" class="right-offcanvas@(offCanvasClass)">
-    <div class="offcanvas-menu-content" id="index-offcanvas-menu-content">
+    <div class="right-offcanvas-menu-content" id="index-offcanvas-menu-content">
         <p class="h6">Filters</p>
         <div class="input-group input-group-sm mb-2">
             <span class="input-group-text">Languages</span>
@@ -66,11 +70,6 @@
         <hr class="border">
     </div>
 </div>
-@{
-    var mainContainerClass = " move-main-content-container-left";
-    if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
-        mainContainerClass = String.Empty;
-}
 
 <div class="container-fluid mb-5@(mainContainerClass)" id="index-main-container">
     <div class="modal fade" id="uploadModel" tabindex="-1" role="dialog">

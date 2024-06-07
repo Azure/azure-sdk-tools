@@ -2,12 +2,12 @@
     OrganizationName: string,
     ProjectId: string,
     ProjectName: string,
-    BuildDefinitionId: int,
+    BuildDefinitionId: long,
     BuildDefinitionPath: string,
     BuildDefinitionName: string,
-    BuildId: int,
+    BuildId: long,
     TestRunId: int,
-    TestCaseId: int, 
+    TestCaseId: int,
     TestCaseReferenceId: int,
     TestCaseTitle: string,
     Outcome: string,
@@ -19,9 +19,9 @@
     StartedDate: datetime,
     CompletedDate: datetime,
     EtlIngestDate: datetime
-)
+) with (folder='', docstring='')
 
-.alter table TestRunResult ingestion json mapping 'TestRunResult_mapping' ```[
+.create-or-alter table TestRunResult ingestion json mapping 'TestRunResult_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
     { "column": "ProjectName", "path": "$['projectName']" },

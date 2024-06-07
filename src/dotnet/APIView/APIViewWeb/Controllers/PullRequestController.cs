@@ -26,7 +26,6 @@ namespace APIViewWeb.Controllers
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IConfiguration _configuration;
-        private readonly IOpenSourceRequestManager _openSourceManager;
         private readonly TelemetryClient _telemetryClient;
         private HashSet<string> _allowedListBotAccounts = new HashSet<string>();
 
@@ -34,14 +33,13 @@ namespace APIViewWeb.Controllers
         
         public PullRequestController(ICodeFileManager codeFileManager, IPullRequestManager pullRequestManager,
             IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager,
-            IConfiguration configuration, IOpenSourceRequestManager openSourceRequestManager, TelemetryClient telemetryClient)
+            IConfiguration configuration, TelemetryClient telemetryClient)
         {
             _codeFileManager = codeFileManager;
             _pullRequestManager = pullRequestManager;
             _reviewManager = reviewManager;
             _apiRevisionsManager = apiRevisionsManager;
             _configuration = configuration;
-            _openSourceManager = openSourceRequestManager;
             _telemetryClient = telemetryClient;
 
             var botAllowedList = _configuration["allowedList-bot-github-accounts"];
@@ -63,7 +61,8 @@ namespace APIViewWeb.Controllers
             string codeFile = null,
             string baselineCodeFile = null,
             bool commentOnPR = true,
-            string language = null)
+            string language = null,
+            string project = "internal")
         {
             if (!ValidateInputParams())
             {
@@ -80,7 +79,7 @@ namespace APIViewWeb.Controllers
                     repoName: repoName, packageName: packageName,
                     prNumber: pullRequestNumber, hostName: this.Request.Host.ToUriComponent(),
                     codeFileName: codeFile, baselineCodeFileName: baselineCodeFile,
-                    commentOnPR: commentOnPR, language: language);
+                    commentOnPR: commentOnPR, language: language, project: project);
 
                 return !string.IsNullOrEmpty(reviewUrl) ? StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl) : StatusCode(statusCode: StatusCodes.Status208AlreadyReported);
             }
@@ -102,7 +101,7 @@ namespace APIViewWeb.Controllers
             string baselineCodeFileName = null,
             bool commentOnPR = true,
             string language = null,
-            string project = "public")
+            string project = "internal")
         {
             language = LanguageServiceHelpers.MapLanguageAlias(language: language);
             var requestTelemetry = new RequestTelemetry { Name = "Detecting API changes for PR: " + prNumber };
@@ -138,10 +137,6 @@ namespace APIViewWeb.Controllers
             }
            
             pullRequestModel.Commits.Add(commitSha);
-            //Check if PR owner is part of Azure//Microsoft org in GitHub
-            await ManagerHelpers.AssertPullRequestCreatorPermission(prModel: pullRequestModel, allowedListBotAccounts: _allowedListBotAccounts,
-                openSourceManager: _openSourceManager, telemetryClient: _telemetryClient);
-
 
             try
             {
@@ -171,7 +166,7 @@ namespace APIViewWeb.Controllers
                 //Generate combined single comment to update on PR or add a comment stating no API changes.            
                 if (commentOnPR)
                 {
-                    await _pullRequestManager.CreateOrUpdateCommentsOnPR(pullRequests, repoInfo[0], repoInfo[1], prNumber, hostName);
+                    await _pullRequestManager.CreateOrUpdateCommentsOnPR(pullRequests, repoInfo[0], repoInfo[1], prNumber, hostName, commitSha);
                 }
             }
             finally

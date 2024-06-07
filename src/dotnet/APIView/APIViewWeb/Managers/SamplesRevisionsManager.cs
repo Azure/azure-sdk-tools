@@ -87,6 +87,13 @@ namespace APIViewWeb.Managers
             return await UpsertSamplesRevisionsAsync(user, reviewId, sample, revisionTitle, FileName);
         }
 
+        public async Task UpdateSamplesRevisionTitle(string reviewId, string sampleId, string newTitle)
+        {
+            var samplesRevision = await _samplesRevisionsRepository.GetSamplesRevisionAsync(reviewId, sampleId);
+            samplesRevision.Title = newTitle;
+            await _samplesRevisionsRepository.UpsertSamplesRevisionAsync(samplesRevision);
+        }
+
         public async Task DeleteSamplesRevisionAsync(ClaimsPrincipal user, string reviewId, string sampleId)
         {
             var samplesRevision = await _samplesRevisionsRepository.GetSamplesRevisionAsync(reviewId, sampleId);

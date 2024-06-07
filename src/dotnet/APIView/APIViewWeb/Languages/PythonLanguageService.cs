@@ -17,7 +17,7 @@ namespace APIViewWeb
         private readonly TelemetryClient _telemetryClient;
         public override string Name { get; } = "Python";
         public override string[] Extensions { get; } = { ".whl" };
-        public override string VersionString { get; } = "0.3.10";
+        public override string VersionString { get; } = "0.3.12";
         public override string ProcessName => _pythonExecutablePath;
 
         public PythonLanguageService(IConfiguration configuration, TelemetryClient telemetryClient)

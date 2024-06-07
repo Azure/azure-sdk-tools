@@ -2,11 +2,11 @@
 steps:
   - task: NodeTool@0
     inputs:
-      versionSpec: "16.15"
+      versionSpec: "18.x"
     displayName: "Install Node.js"
   - task: GoTool@0
     inputs:
-      version: '1.16.7'
+      version: '1.22.1'
     displayName: "Install Go"
   - script: |
       npm install -g "@microsoft/rush"

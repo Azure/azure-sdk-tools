@@ -23,10 +23,10 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
 
         public async Task<IAsyncLock> GetLockAsync(string id, TimeSpan duration, CancellationToken cancellationToken)
         {
-            var partitionKey = new PartitionKey(id);
+            PartitionKey partitionKey = new(id);
 
             ItemResponse<CosmosLockDocument> response;
-            
+
             try
             {
                 response = await this.container.ReadItemAsync<CosmosLockDocument>(id, partitionKey, cancellationToken: cancellationToken);
@@ -36,20 +36,20 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
                 return await CreateLockAsync(id, duration, cancellationToken);
             }
 
-            var existingLock = response.Resource;
+            CosmosLockDocument existingLock = response.Resource;
 
             if (existingLock.Expiration >= DateTime.UtcNow)
             {
                 return null;
             }
-            
+
             try
             {
                 response = await this.container.ReplaceItemAsync(
                     new CosmosLockDocument(id, duration),
                     id,
                     partitionKey,
-                    new ItemRequestOptions { IfMatchEtag = response.ETag }, 
+                    new ItemRequestOptions { IfMatchEtag = response.ETag },
                     cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -68,9 +68,9 @@ namespace Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens
         {
             try
             {
-                var response = await this.container.CreateItemAsync(
+                ItemResponse<CosmosLockDocument> response = await this.container.CreateItemAsync(
                     new CosmosLockDocument(id, duration),
-                    new PartitionKey(id), 
+                    new PartitionKey(id),
                     cancellationToken: cancellationToken);
 
                 return new CosmosAsyncLock(id, response.ETag, duration, this.container);

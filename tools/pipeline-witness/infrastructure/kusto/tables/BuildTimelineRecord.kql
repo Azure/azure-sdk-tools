@@ -33,9 +33,9 @@
     Type: string,
     Issues: string,
     EtlIngestDate: datetime
-)
+) with (folder='', docstring='')
 
-.alter table BuildTimelineRecord ingestion json mapping 'BuildTimelineRecord_mapping' ```[
+.create-or-alter table BuildTimelineRecord ingestion json mapping 'BuildTimelineRecord_mapping' ```[
     { "column": "OrganizationName", "path": "$['organizationName']" },
     { "column": "ProjectId", "path": "$['projectId']" },
     { "column": "ProjectName", "path": "$['projectName']" },

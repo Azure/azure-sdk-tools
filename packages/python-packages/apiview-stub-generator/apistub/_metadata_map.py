@@ -20,6 +20,7 @@ class MetadataMap:
         if not mapping_path:
             if pkg_path.endswith(".whl") or pkg_path.endswith(".zip"):
                 self.cross_language_map = {}
+                self.cross_language_package_id = ""
                 return
             mapping_path = os.path.join(pkg_path, MAPPING_FILE_NAME)
 
@@ -27,6 +28,8 @@ class MetadataMap:
             with open(mapping_path, "r") as json_file:
                 mapping = json.load(json_file)
                 self.cross_language_map = mapping.get("CrossLanguageDefinitionId", {})
+                self.cross_language_package_id = mapping.get("CrossLanguagePackageId", "")
         except OSError:
             self.cross_language_map = {}
+            self.cross_language_package_id = ""
             return

@@ -39,7 +39,7 @@ This tool will analyze an azure-sdk* CODEOWNERS file, including our specific bra
 
 - **Owners**
   - Users and Teams are verified to have write permissions.
-  - Users are also verified to be Public members of Azure. This documented in the [azure-sdk onboarding docs for acess](https://eng.ms/docs/products/azure-developer-experience/onboard/access). This is necessary for tooling in order to be able to determine Azure org membership for a given user. This cannot be done if the user's Azure membership is private and the tooling will process them as if they weren't a member of Azure.
+  - Users are also verified to be Public members of Azure. This documented in the [azure-sdk onboarding docs for access](https://eng.ms/docs/products/azure-developer-experience/onboard/access). This is necessary for tooling in order to be able to determine Azure org membership for a given user. This cannot be done if the user's Azure membership is private and the tooling will process them as if they weren't a member of Azure.
   - Malformed team entries, entries missing the prepended org `@Azure/` can be detected but only if they're child teams of azure-sdk-write.
 - **Labels**
   - Whether or not the label exists in a particular repository.

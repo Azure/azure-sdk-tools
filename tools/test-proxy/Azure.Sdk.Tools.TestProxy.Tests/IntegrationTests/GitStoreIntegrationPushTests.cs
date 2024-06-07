@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Console;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -579,6 +580,80 @@ namespace Azure.Sdk.Tools.TestProxy.Tests.IntegrationTests
                 DirectoryHelper.DeleteGitDirectory(testFolder);
                 TestHelpers.CleanupIntegrationTestTag(assets);
                 TestHelpers.CleanupIntegrationTestTag(updatedAssets);
+            }
+        }
+
+        /// <summary>
+        /// 1. Restore from empty tag
+        /// 2. Add/Delete/Update files which will include a fake secret
+        /// 3. Attempt to push
+        /// 4. Assert that the expected exception is thrown, preventing a secret being pushed upstream
+        /// </summary>
+        /// <param name="inputJson"></param>
+        /// <returns></returns>
+        [EnvironmentConditionalSkipTheory]
+        [InlineData(
+        @"{
+              ""AssetsRepo"": ""Azure/azure-sdk-assets-integration"",
+              ""AssetsRepoPrefixPath"": ""pull/scenarios"",
+              ""AssetsRepoId"": """",
+              ""TagPrefix"": ""language/tables"",
+              ""Tag"": """"
+        }")]
+        [Trait("Category", "Integration")]
+        public async Task SecretProtectionPreventsPush(string inputJson)
+        {
+            var folderStructure = new string[]
+            {
+                GitStoretests.AssetsJson
+            };
+            Assets assets = JsonSerializer.Deserialize<Assets>(inputJson);
+            var testFolder = TestHelpers.DescribeTestFolder(assets, folderStructure, isPushTest: true);
+            try
+            {
+                ConsoleWrapper consoleWrapper = new ConsoleWrapper();
+                GitStore store = new GitStore(consoleWrapper);
+                var recordingHandler = new RecordingHandler(testFolder, store);
+
+                var jsonFileLocation = Path.Join(testFolder, GitStoretests.AssetsJson);
+
+                var parsedConfiguration = await store.ParseConfigurationFile(jsonFileLocation);
+                await _defaultStore.Restore(jsonFileLocation);
+
+                // Calling Path.GetFullPath of the Path.Combine will ensure any directory separators are normalized for
+                // the OS the test is running on. The reason being is that AssetsRepoPrefixPath, if there's a separator,
+                // will be a forward one as expected by git but on Windows this won't result in a usable path.
+                string localFilePath = Path.GetFullPath(Path.Combine(parsedConfiguration.AssetsRepoLocation, parsedConfiguration.AssetsRepoPrefixPath));
+
+                // generate a couple strings that LOOKs like secrets to the secret scanner.
+                var secretType1 = TestHelpers.GenerateString(3) + "8Q~" + TestHelpers.GenerateString(34);
+
+                // place an entirely new file with the secret
+                TestHelpers.CreateOrUpdateFileWithContent(localFilePath, "secret_type_1.txt", secretType1);
+
+                // modify an existing file with the secret
+                TestHelpers.CreateOrUpdateFileWithContent(localFilePath, "file2.txt", secretType1);
+
+                // delete a file to ensure that we don't attempt to scan a file that no longer exists
+                File.Delete(Path.Combine(localFilePath, "file5.txt"));
+
+                // Use the built in secretscanner
+                await store.Push(jsonFileLocation);
+
+                // no changes should be committed
+                var pendingChanges = store.DetectPendingChanges(parsedConfiguration);
+                Assert.Equal(2, pendingChanges.Count());
+
+                // now double check the actual scan results to ensure they are where we expect
+                var detectedSecrets = store.SecretScanner.DiscoverSecrets(parsedConfiguration.AssetsRepoLocation, pendingChanges);
+
+                Assert.Equal(2, detectedSecrets.Count);
+                Assert.Equal("SEC101/156", detectedSecrets[0].Item2.Id);
+                Assert.Equal("SEC101/156", detectedSecrets[1].Item2.Id);
+            }
+            finally
+            {
+                DirectoryHelper.DeleteGitDirectory(testFolder);
             }
         }
     }

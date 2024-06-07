@@ -1,5 +1,17 @@
 # Release History
 
+## Version 0.4.8 (04-18-2024)
+Display suppressions in APIView.
+Resolve visual anomalies.
+
+## Version 0.4.7 (03-22-2024)
+Support TypeSpec string templates.
+Fix display issue with templated aliases.
+Ensure alias statements end with semicolon.
+
+## Version 0.4.6 (03-08-2024)
+Support CrossLanguagePackageId.
+
 ## Version 0.4.5 (01-29-2024)
 Support named template arguments.
 Support unnamed unions.

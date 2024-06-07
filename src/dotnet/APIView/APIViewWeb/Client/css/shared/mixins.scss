@@ -22,14 +22,31 @@
     box-shadow: var(--box-shadow-sm);
 }
 
-@mixin fixed-page-heights {
-    height: calc(100vh - 190px);
-    overflow-y: auto;
-}
-
 @mixin main-content-container {
     transition: margin-right .5s;
     width: auto;
+}
+
+@mixin review-offcanvas-menu-content {
+    min-height: calc(100vh - 100px);
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    margin-top: 85px;
+}
+
+@mixin review-approval-border {
+    border: solid 2px var(--success-color);
+    box-shadow: var(--box-shadow-success);
+}
+
+@mixin offcanvas-context-large {
+    width: 50dvw;
+    background-color: var(--base-bg-color);
+}
+
+@mixin offcanvas-context-small {
+    width: 30dvw;
+    background-color: var(--base-bg-color);
 }
 
 @mixin placeholder {

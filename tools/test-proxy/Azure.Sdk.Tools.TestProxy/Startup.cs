@@ -62,11 +62,12 @@ namespace Azure.Sdk.Tools.TestProxy
             Environment.Exit(resultCode);
         }
 
-        private static async Task Run(object commandObj)
+        private static async Task<int> Run(object commandObj)
         {
             var assembly = System.Reflection.Assembly.GetExecutingAssembly();
             var semanticVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
             System.Console.WriteLine($"Running proxy version is Azure.Sdk.Tools.TestProxy {semanticVersion}");
+            int returnCode = 0;
 
             new GitProcessHandler().VerifyGitMinVersion();
             DefaultOptions defaultOptions = (DefaultOptions)commandObj;
@@ -124,6 +125,8 @@ namespace Azure.Sdk.Tools.TestProxy
                 default:
                     throw new ArgumentException($"Unable to parse the argument set: {string.Join(" ", storedArgs)}");
             }
+
+            return returnCode;
         }
 
         private static void StartServer(StartOptions startOptions)
@@ -147,10 +150,14 @@ namespace Azure.Sdk.Tools.TestProxy
                     {
                         loggingBuilder.ClearProviders();
                         loggingBuilder.AddConfiguration(hostBuilder.Configuration.GetSection("Logging"));
-                        loggingBuilder.AddConsole(options =>
+                        if (!startOptions.UniversalOutput)
                         {
-                            options.LogToStandardErrorThreshold = startOptions.UniversalOutput ? LogLevel.None : LogLevel.Error;
-                        }).AddSimpleConsole(options =>
+                            loggingBuilder.AddConsole(options =>
+                            {
+                                options.LogToStandardErrorThreshold = LogLevel.Error;
+                            });
+                        }
+                        loggingBuilder.AddSimpleConsole(options =>
                         {
                             options.TimestampFormat = "[HH:mm:ss] ";
                         });

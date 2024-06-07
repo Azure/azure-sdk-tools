@@ -1,10 +1,3 @@
-resources:
-  repositories:
-    - repository: azure-sdk-build-tools
-      type: git
-      name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20230829.1
-
 parameters:
   - name: ToolDirectory
     type: string
@@ -45,154 +38,180 @@ parameters:
   - name: RequireStrongNames
     type: boolean
     default: true
+  - name: Use1ESOfficial
+    type: boolean
+    default: false
+  - name: TestMatrix
+    type: object
+    default:
+      - name: Windows
+        Pool: $(WINDOWSPOOL)
+        Image: $(WINDOWSVMIMAGE)
+        Os: windows
+      - name: Linux
+        Pool: $(LINUXPOOL)
+        Image: $(LINUXVMIMAGE)
+        Os: linux
+      - name: Mac
+        Pool: $(MACPOOL)
+        Image: $(MACVMIMAGE)
+        Os: macOS
 
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: ${{ parameters.Use1ESOfficial }}
+    stages:
+      - stage: BuildTestAndPackage
 
-variables:
-  - template: ../variables/globals.yml
-  - name: Warn
-    ${{ if parameters.NoWarn }}:
-      value: ''
-    ${{ if not(parameters.NoWarn) }}:
-      value: -warnaserror
-  # A path to directory to contain the output of "dotnet pack" call,
-  # to be consumed as input by "publish" task.
-  - name: packagesToPublishDir
-    value: $(Build.ArtifactStagingDirectory)/packages
-
-stages:
-  - stage: BuildTestAndPackage
-
-    pool:
-      name: azsdk-pool-mms-ubuntu-2204-general
-      vmImage: ubuntu-22.04
-
-    jobs:
-      - job: BuildAndPackage
-        displayName: Build and Package
-
-        steps:
-          - template: /eng/pipelines/templates/steps/install-dotnet.yml
-
-          - script: 'dotnet pack /p:ArtifactsPackagesDir=$(packagesToPublishDir) $(Warn) -c Release'
-            displayName: 'Build and Package'
-            workingDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
-            env:
-              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-              DOTNET_CLI_TELEMETRY_OPTOUT: 1
-              DOTNET_MULTILEVEL_LOOKUP: 0
-
-          # This step creates "$(packagesToPublishDir)" directory if it doesn't exist.
-          # This step is necessary since migration to net6.0. This is because since net6.0,
-          # in case the "Build and Package" above would not output any packages to this directory,
-          # the "Publish to packages artifact" step below would fail on missing directory.
-          - pwsh: |
-              if (!(Test-Path -PathType container "$(packagesToPublishDir)")) {
-                New-Item -ItemType Directory -Path "$(packagesToPublishDir)"
-                Write-Host "Created directory ""$(packagesToPublishDir)"""
-              } else {
-                Write-Host "Directory ""$(packagesToPublishDir)"" already exists. Nothing to do."
-                Write-Host "Directory ""$(packagesToPublishDir)"" contents:"
-                Get-ChildItem $(packagesToPublishDir) | ForEach-Object { Write-Host $_ }
-              }
-            displayName: Create dir for packages to publish or list its contents
-
-          - publish: $(packagesToPublishDir)
-            displayName: Publish to packages artifact
-            artifact: packages
-            condition: succeededOrFailed()
-
-      - ${{ if ne(length(parameters.StandaloneExeMatrix), 0) }}:
-        - job: Produce_Executables
-
-          strategy:
-            matrix:
-              linux:
-                imageName: 'ubuntu-22.04'
-                poolName: 'azsdk-pool-mms-ubuntu-2204-general'
-                artifactName: 'linux_windows'
-              mac:
-                imageName: 'macos-11'
-                poolName: 'Azure Pipelines'
-                artifactName: 'mac'
-
-          pool:
-            name: $(poolName)
-            vmImage: $(imageName)
-
-          steps:
-            - template: /eng/pipelines/templates/steps/install-dotnet.yml
-
-            - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
-              parameters:
-                StagingDirectory: $(Build.ArtifactStagingDirectory)
-                BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
-                TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
-
-      - job: Test
-
-        strategy:
-          matrix:
-            Windows:
-              Pool: azsdk-pool-mms-win-2022-general
-              Image: windows-2022
-            Linux:
-              Pool: azsdk-pool-mms-ubuntu-2204-general
-              Image: ubuntu-22.04
-            Mac:
-              Pool: Azure Pipelines
-              Image: macos-11
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+          - name: Warn
+            ${{ if parameters.NoWarn }}:
+              value: ''
+            ${{ if not(parameters.NoWarn) }}:
+              value: -warnaserror
+          # A path to directory to contain the output of "dotnet pack" call,
+          # to be consumed as input by "publish" task.
+          - name: packagesToPublishDir
+            value: $(Build.ArtifactStagingDirectory)/packages
 
         pool:
-          name: $(Pool)
-          vmImage: $(Image)
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
 
-        steps:
-          - template: /eng/pipelines/templates/steps/install-dotnet.yml
+        jobs:
+          - job: BuildAndPackage
+            displayName: Build and Package
 
-          - ${{ parameters.TestPreSteps }}
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  displayName: Publish to packages artifact
+                  condition: succeededOrFailed()
+                  artifactName: packages
+                  targetPath: $(packagesToPublishDir)
 
-          - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
-            displayName: 'Test'
-            workingDirectory: '${{ coalesce(parameters.TestDirectory, parameters.ToolDirectory) }}'
-            env:
-              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-              DOTNET_CLI_TELEMETRY_OPTOUT: 1
-              DOTNET_MULTILEVEL_LOOKUP: 0
+            steps:
+              - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
-          - ${{ parameters.TestPostSteps }}
+              - script: 'dotnet pack /p:ArtifactsPackagesDir=$(packagesToPublishDir) $(Warn) -c Release'
+                displayName: 'Build and Package'
+                workingDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
+                env:
+                  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+                  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+                  DOTNET_MULTILEVEL_LOOKUP: 0
 
-          - task: PublishTestResults@2
-            condition: succeededOrFailed()
-            inputs:
-              testResultsFiles: '**/*.trx'
-              testRunTitle: $(System.JobDisplayName)
-              testResultsFormat: 'VSTest'
-              mergeTestResults: true
+              # This step creates "$(packagesToPublishDir)" directory if it doesn't exist.
+              # This step is necessary since migration to net6.0. This is because since net6.0,
+              # in case the "Build and Package" above would not output any packages to this directory,
+              # the "Publish to packages artifact" step below would fail on missing directory.
+              - pwsh: |
+                  if (!(Test-Path -PathType container "$(packagesToPublishDir)")) {
+                    New-Item -ItemType Directory -Path "$(packagesToPublishDir)"
+                    Write-Host "Created directory ""$(packagesToPublishDir)"""
+                  } else {
+                    Write-Host "Directory ""$(packagesToPublishDir)"" already exists. Nothing to do."
+                    Write-Host "Directory ""$(packagesToPublishDir)"" contents:"
+                    Get-ChildItem $(packagesToPublishDir) | ForEach-Object { Write-Host $_ }
+                  }
+                displayName: Create dir for packages to publish or list its contents
 
-      - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
-        - template: /eng/pipelines/publish-docker-image.yml
+          - ${{ if ne(length(parameters.StandaloneExeMatrix), 0) }}:
+            - job: Produce_Executables_linux
+
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+
+              steps:
+                - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+                - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
+                  parameters:
+                    StagingDirectory: $(Build.ArtifactStagingDirectory)
+                    BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
+                    TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
+
+            - job: Produce_Executables_mac
+
+              pool:
+                name: $(MACPOOL)
+                vmImage: $(MACVMIMAGE)
+                os: macOS
+
+              steps:
+                - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+                - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
+                  parameters:
+                    StagingDirectory: $(Build.ArtifactStagingDirectory)
+                    BuildMatrix: ${{ parameters.StandaloneExeMatrix }}
+                    TargetDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
+
+          - ${{ each test in parameters.TestMatrix }}:
+            - job: Test_${{ test.name }}
+
+              pool:
+                ${{ if eq(test.os, 'macOS') }}:
+                  vmImage: ${{ test.Image }}
+                ${{ else }}:
+                  image: ${{ test.Image }}
+                name: ${{ test.Pool }}
+                os: ${{ test.Os }}
+
+              steps:
+                - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+                - ${{ parameters.TestPreSteps }}
+
+                - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
+                  displayName: 'Test'
+                  workingDirectory: '${{ coalesce(parameters.TestDirectory, parameters.ToolDirectory) }}'
+                  env:
+                    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+                    DOTNET_CLI_TELEMETRY_OPTOUT: 1
+                    DOTNET_MULTILEVEL_LOOKUP: 0
+
+                - ${{ parameters.TestPostSteps }}
+
+                - task: PublishTestResults@2
+                  condition: succeededOrFailed()
+                  inputs:
+                    testResultsFiles: '**/*.trx'
+                    testRunTitle: $(System.JobDisplayName)
+                    testResultsFormat: 'VSTest'
+                    mergeTestResults: true
+
+          - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
+            - template: /eng/pipelines/publish-docker-image-isolated.yml
+              parameters:
+                DockerDeployments: ${{ parameters.DockerDeployments }}
+                Publish: false
+                ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
+
+      - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+        - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
           parameters:
-            DockerDeployments: ${{ parameters.DockerDeployments }}
-            Publish: false
-            ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
+            # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
+            DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+            ExeMatrix: ${{ parameters.StandaloneExeMatrix }}
+            ShouldPublishExecutables: ${{ parameters.ReleaseBinaries }}
+            ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
+            RequireStrongNames: ${{ parameters.RequireStrongNames }}
+            Use1ESTemplate: true
 
-  - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
-      parameters:
-        # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
-        DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
-        ExeMatrix: ${{ parameters.StandaloneExeMatrix }}
-        ShouldPublishExecutables: ${{ parameters.ReleaseBinaries }}
-        ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
-        RequireStrongNames: ${{ parameters.RequireStrongNames }}
-
-  - ${{if and(not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - stage: PublishDockerImages
-      displayName: Publish Docker Images
-      dependsOn: BuildTestAndPackage
-      jobs:
-        - template: /eng/pipelines/publish-docker-image.yml
-          parameters:
-            DockerDeployments: ${{ parameters.DockerDeployments }}
-            ManifestDeployment: ${{ parameters.ManifestDeployment }}
-            ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
+      - ${{if and(not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+        - stage: PublishDockerImages
+          displayName: Publish Docker Images
+          dependsOn: BuildTestAndPackage
+          jobs:
+            - template: /eng/pipelines/publish-docker-image-isolated.yml
+              parameters:
+                DockerDeployments: ${{ parameters.DockerDeployments }}
+                ManifestDeployment: ${{ parameters.ManifestDeployment }}
+                ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"

@@ -13,6 +13,8 @@ RUN dotnet dev-certs https
 EXPOSE 7777
 EXPOSE 7778
 
+ENV ASPNETCORE_URLS=http://+:7777;https://+:7778
+
 ENTRYPOINT [ "/root/.dotnet/tools/http-fault-injector" ]
 
 

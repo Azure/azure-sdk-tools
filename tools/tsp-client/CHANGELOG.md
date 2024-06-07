@@ -1,5 +1,30 @@
 # Release
 
+## 2024-05-29 - 0.8.0
+
+- Create unique directories for sparse spec checkout.
+
+## 2024-05-20 - 0.7.1
+
+- Added `--no-prompt` flag to skip the output directory confirmation prompt.
+
+## 2024-04-18 - 0.7.0
+
+- Remove `resources.json` after converting resource manager specifications.
+- Support `local-spec-repo` with `init` command.
+
+## 2024-03-19 - 0.6.0
+
+- Support swagger to TypeSpec conversion for ARM specifications using the `--arm` flag. Example usage: `tsp-client convert --swagger-readme <path to your readme> --arm`
+- Support `--generate-lock-file` flag to generate an `emitter-package-lock.json` file in the `eng/` directory based on the `emitter-package.json`. Example usage: `tsp-client --generate-lock-file`
+
+## 2024-02-21 - 0.5.0
+
+- Support `emitter-package-lock.json` files.
+- Use `npm ci` in case a package-lock.json file exists in the TempTypeSpecFiles directory.
+- Renamed `installDependencies` function to `npmCommand`.
+- `npmCommand` function takes a list of arguments and supports running various npm commands.
+
 ## 2024-02-06 - 0.4.1
 
 - Fix tspconfig.yaml file processing when a url is passed to the `init` command.

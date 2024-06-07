@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using ApiView;
 using APIView;
 using APIView.DIff;
-using Newtonsoft.Json.Serialization;
 
 namespace APIViewWeb.Models
 {
@@ -13,7 +12,9 @@ namespace APIViewWeb.Models
     {
         public CodeLineModel(DiffLineKind kind, CodeLine codeLine, CommentThreadModel commentThread,
             CodeDiagnostic[] diagnostics, int lineNumber, int[] documentedByLines = null,
-            bool isDiffView = false, int? diffSectionId = null, int? otherLineSectionKey = null, HashSet<int> headingsOfSectionsWithDiff = null, bool isSubHeadingWithDiffInSection = false)
+            bool isDiffView = false, int? diffSectionId = null, int? otherLineSectionKey = null, 
+            HashSet<int> headingsOfSectionsWithDiff = null, bool isSubHeadingWithDiffInSection = false,
+            string language = null)
         {
             CodeLine = codeLine;
             CommentThread = commentThread;
@@ -26,12 +27,13 @@ namespace APIViewWeb.Models
             OtherLineSectionKey = otherLineSectionKey;
             HeadingsOfSectionsWithDiff = headingsOfSectionsWithDiff ?? new HashSet<int>();
             IsSubHeadingWithDiffInSection = isSubHeadingWithDiffInSection;
+            Language = language;
         }
 
         public CodeLineModel(CodeLineModel codeLineModel, DiffLineKind kind = DiffLineKind.Unchanged, CodeLine codeLine = default(CodeLine),
             CommentThreadModel commentThread = default(CommentThreadModel), CodeDiagnostic[] diagnostics = null,
             int lineNumber = default(int), int[] documentedByLines = null, bool isDiffView = false, int? diffSectionId = null,
-            int? otherLineSectionKey = null, HashSet<int> headingsOfSectionsWithDiff = null, bool isSubHeadingWithDiffInSection = false)
+            int? otherLineSectionKey = null, HashSet<int> headingsOfSectionsWithDiff = null, bool isSubHeadingWithDiffInSection = false, string language = null)
         {
             CodeLine = (codeLine.Equals(default(CodeLine))) ? codeLineModel.CodeLine : codeLine;
             CommentThread = commentThread ?? codeLineModel.CommentThread;
@@ -44,6 +46,7 @@ namespace APIViewWeb.Models
             OtherLineSectionKey = otherLineSectionKey ?? codeLineModel.OtherLineSectionKey;
             HeadingsOfSectionsWithDiff = headingsOfSectionsWithDiff ?? codeLineModel.HeadingsOfSectionsWithDiff;
             IsSubHeadingWithDiffInSection = (!isSubHeadingWithDiffInSection) ? codeLineModel.IsSubHeadingWithDiffInSection : isSubHeadingWithDiffInSection;
+            Language = language ?? codeLineModel.Language;
         }
 
         public CodeLine CodeLine { get; }
@@ -57,5 +60,6 @@ namespace APIViewWeb.Models
         public int? OtherLineSectionKey { get; }
         public HashSet<int> HeadingsOfSectionsWithDiff { get; }
         public bool IsSubHeadingWithDiffInSection { get; }
+        public string Language { get; }
     }
 }

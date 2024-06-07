@@ -94,7 +94,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                                                                     List<string> codeownersFile)
         {
             CodeownersEntry codeownersEntry = new CodeownersEntry();
-            // If the block ends with a source path/owner line then any owner moniker line that are empty
+            // If the block ends with a source path/owner line then any owner moniker lines that are empty
             // will be set to the same list as the source owners.
             bool endsWithSourceOwnerLine = ParsingUtils.IsSourcePathOwnerLine(codeownersFile[endBlockLineNumber]);
             // These are used in the case where the AzureSdkOwners and/or ServiceOwners are empty and part of a

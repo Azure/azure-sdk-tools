@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     // There should be one update, the no-recent-activity label removed
                     Assert.AreEqual(1, totalUpdates, $"The number of updates should have been 1 but was instead, {totalUpdates}");
                     // Verify that NeedsAuthorFeedback was removed
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove should contain {LabelConstants.NoRecentActivity} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NoRecentActivity), $"Labels to remove should contain {TriageLabelConstants.NoRecentActivity} and does not.");
                 }
                 else
                 {
@@ -105,7 +105,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                     // State = ItemState.Open
                     Assert.AreEqual(issueUpdate.State, ItemState.Open, $"IssueUpdate's state should be {ItemState.Open} and was not.");
                     // Verify that NoRecentActivity was removed
-                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(LabelConstants.NoRecentActivity), $"Labels to remove should contain {LabelConstants.NoRecentActivity} and does not.");
+                    Assert.True(mockGitHubEventClient.GetLabelsToRemove().Contains(TriageLabelConstants.NoRecentActivity), $"Labels to remove should contain {TriageLabelConstants.NoRecentActivity} and does not.");
                 }
                 else
                 {

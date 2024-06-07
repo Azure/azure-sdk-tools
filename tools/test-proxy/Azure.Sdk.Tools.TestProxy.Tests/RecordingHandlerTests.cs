@@ -23,11 +23,14 @@ using Azure.Core;
 using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Store;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordingHandlerTests
     {
+        private int DefaultExtensionCount { get { return new RecordingHandler(null).SanitizerRegistry.DefaultSanitizerList.Count; } }
+
         #region helpers and private test fields
         private HttpContext GenerateHttpRequestContext(string[] headerValueStrings)
         {
@@ -96,10 +99,14 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             if (skipsToCheck.HasFlag(CheckSkips.IncludeSanitizers))
             {
-                Assert.Equal(3, handlerForTest.Sanitizers.Count);
-                Assert.IsType<RecordedTestSanitizer>(handlerForTest.Sanitizers[0]);
-                Assert.IsType<BodyKeySanitizer>(handlerForTest.Sanitizers[1]);
-                Assert.IsType<BodyKeySanitizer>(handlerForTest.Sanitizers[2]);
+                
+                var sanitizers = handlerForTest.SanitizerRegistry.GetSanitizers();
+
+                Assert.Equal(DefaultExtensionCount, sanitizers.Count);
+                Assert.IsType<RecordedTestSanitizer>(sanitizers[0]);
+                Assert.IsType<GeneralRegexSanitizer>(sanitizers[1]);
+                Assert.IsType<GeneralRegexSanitizer>(sanitizers[2]);
+                Assert.IsType<BodyKeySanitizer>(sanitizers[108]);
             }
         }
         #endregion
@@ -166,7 +173,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
             // act
-            testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
+            testRecordingHandler.SanitizerRegistry.Register(new BodyRegexSanitizer("sanitized", ".*"));
             testRecordingHandler.Matcher = new BodilessMatcher();
             testRecordingHandler.Transforms.Add(new ApiVersionTransform());
             testRecordingHandler.SetDefaultExtensions();
@@ -182,7 +189,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
 
             // act
-            testRecordingHandler.Sanitizers.Clear();
+            testRecordingHandler.SanitizerRegistry.Clear();
             testRecordingHandler.Matcher = null;
             testRecordingHandler.Transforms.Clear();
             testRecordingHandler.SetDefaultExtensions();
@@ -199,18 +206,19 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await testRecordingHandler.StartRecordingAsync("recordingings/cool.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-
-            testRecordingHandler.Sanitizers.Clear();
-            testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
-            testRecordingHandler.AddSanitizerToRecording(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
+            testRecordingHandler.SanitizerRegistry.Clear();
+            testRecordingHandler.SanitizerRegistry.Register(new BodyRegexSanitizer("sanitized", ".*"));
+            testRecordingHandler.RegisterSanitizer(new GeneralRegexSanitizer("sanitized", ".*"), recordingId);
             testRecordingHandler.SetDefaultExtensions(recordingId);
             var session = testRecordingHandler.RecordingSessions.First().Value;
+            var recordingSanitizers = testRecordingHandler.SanitizerRegistry.GetSanitizers(session);
+            var sessionSanitizers = testRecordingHandler.SanitizerRegistry.GetSanitizers();
 
             // session sanitizer is still set to a single one
-            Assert.Single(testRecordingHandler.Sanitizers);
-            Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.Sanitizers[0]);
+            Assert.Single(sessionSanitizers);
+            Assert.IsType<BodyRegexSanitizer>(sessionSanitizers[0]);
             _checkDefaultExtensions(testRecordingHandler, CheckSkips.IncludeMatcher | CheckSkips.IncludeTransforms);
-            Assert.Empty(session.AdditionalSanitizers);
+            Assert.Equal(session.AppliedSanitizers, testRecordingHandler.SanitizerRegistry.SessionSanitizers);
             Assert.Empty(session.AdditionalTransforms);
             Assert.Null(session.CustomMatcher);
         }
@@ -223,22 +231,22 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await testRecordingHandler.StartRecordingAsync("recordingings/cool.json", httpContext.Response);
             var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
 
-            testRecordingHandler.Sanitizers.Clear();
-            testRecordingHandler.Sanitizers.Add(new BodyRegexSanitizer("sanitized", ".*"));
+            testRecordingHandler.SanitizerRegistry.Clear();
+            testRecordingHandler.SanitizerRegistry.Register(new BodyRegexSanitizer("sanitized", ".*"));
             testRecordingHandler.Transforms.Clear();
-            testRecordingHandler.AddSanitizerToRecording(recordingId, new GeneralRegexSanitizer("sanitized", ".*"));
+            testRecordingHandler.RegisterSanitizer(new GeneralRegexSanitizer("sanitized", ".*"), recordingId);
             testRecordingHandler.SetDefaultExtensions(recordingId);
             var session = testRecordingHandler.RecordingSessions.First().Value;
 
             // check that the individual session had reset sanitizers
-            Assert.Empty(session.AdditionalSanitizers);
+            Assert.Equal(testRecordingHandler.SanitizerRegistry.GetSanitizers(), testRecordingHandler.SanitizerRegistry.GetSanitizers(session));
 
             // stop the recording to clear out the session cache
             testRecordingHandler.StopRecording(recordingId);
 
             // then verify that the session level is NOT reset.
-            Assert.Single(testRecordingHandler.Sanitizers);
-            Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.Sanitizers.First());
+            Assert.Single(testRecordingHandler.SanitizerRegistry.GetSanitizers());
+            Assert.IsType<BodyRegexSanitizer>(testRecordingHandler.SanitizerRegistry.GetSanitizers().First());
         }
 
         [Fact]
@@ -442,7 +450,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 var record = RecordSession.Deserialize(doc.RootElement);
                 Assert.Single(record.Entries);
                 var entry = record.Entries.First();
-                Assert.Equal("value", JsonDocument.Parse(entry.Request.Body).RootElement.GetProperty("key").GetString());
+                Assert.Equal("Sanitized", JsonDocument.Parse(entry.Request.Body).RootElement.GetProperty("key").GetString());
                 Assert.Equal(MockHttpHandler.DefaultResponse, Encoding.UTF8.GetString(entry.Response.Body));
             }
             finally

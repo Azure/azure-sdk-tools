@@ -218,7 +218,6 @@ public class AssetsScanner
         {
             foreach (string folder in scanFolders)
             {
-
                 matcher.AddIncludePatterns(new[] { Path.Combine(folder, "**/assets.json") });
             }
         }

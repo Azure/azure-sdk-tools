@@ -2,7 +2,7 @@ import { mkdir, rm, stat, readFile, access } from "node:fs/promises";
 import { Logger } from "./log.js";
 import { parse as parseYaml } from "yaml";
 import { TspLocation } from "./typespec.js";
-import { joinPaths, resolvePath } from "@typespec/compiler";
+import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 
 export async function ensureDirectory(path: string) {
   await mkdir(path, { recursive: true });
@@ -32,6 +32,11 @@ export async function readTspLocation(rootDir: string): Promise<TspLocation> {
       if (!tspLocation.additionalDirectories) {
         tspLocation.additionalDirectories = [];
       }
+
+      // Normalize the directory path and remove trailing slash
+      tspLocation.directory = normalizeDirectory(tspLocation.directory);
+      tspLocation.additionalDirectories = tspLocation.additionalDirectories.map(normalizeDirectory);
+
       return tspLocation;
     }
     throw new Error("Could not find tsp-location.yaml");
@@ -58,4 +63,9 @@ export async function getEmitterFromRepoConfig(emitterPath: string): Promise<str
     }
   }
   throw new Error("Could not find emitter package");
+}
+
+export function normalizeDirectory(directory: string): string {
+    const normalizedDir = normalizePath(directory);
+    return normalizedDir.endsWith("/") ? normalizedDir.slice(0, -1) : normalizedDir;
 }

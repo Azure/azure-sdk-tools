@@ -33,14 +33,14 @@ public class AssetsScanner
     /// </summary>
     /// <param name="config"></param>
     /// <returns>A set of results which combines any previous output with a new scan.</returns>
-    public AssetsResultSet Scan(RunConfiguration config, string workDirectory)
+    public AssetsResultSet Scan(RunConfiguration config)
     {
         var resultSet = new List<AssetsResult>();
         AssetsResultSet? existingResults = ParseExistingResults();
 
         Parallel.ForEach(config.LanguageRepos, repoConfig =>
         {
-            resultSet.AddRange(ScanRepo(repoConfig, existingResults, workDirectory));
+            resultSet.AddRange(ScanRepo(repoConfig, existingResults));
         });
 
         return new AssetsResultSet(resultSet);
@@ -75,7 +75,7 @@ public class AssetsScanner
     /// <param name="config"></param>
     /// <param name="previousOutput"></param>
     /// <returns></returns>
-    private List<AssetsResult> ScanRepo(RepoConfiguration config, AssetsResultSet? previousOutput, string workDirectory)
+    private List<AssetsResult> ScanRepo(RepoConfiguration config, AssetsResultSet? previousOutput)
     {
         string? envOverride = Environment.GetEnvironmentVariable(GitTokenEnvVar);
         var authString = string.Empty;
@@ -85,7 +85,7 @@ public class AssetsScanner
         }
 
         var targetRepoUri = $"https://{authString}github.com/{config.LanguageRepo}.git";
-        var workingDirectory = Path.Combine(workDirectory, config.LanguageRepo.Replace("/", "_"));
+        var workingDirectory = Path.Combine(WorkingDirectory, config.LanguageRepo.Replace("/", "_"));
         var results = new List<AssetsResult>();
 
         if (!Directory.Exists(workingDirectory))
@@ -290,7 +290,7 @@ public class AssetsScanner
     /// This is necessary because certain `.pack` files created by git cannot be deleted without
     /// adjusting these permissions.
     /// </summary>
-    private void SetPermissionsAndDelete(string gitfolder)
+    public static void SetPermissionsAndDelete(string gitfolder)
     {
         File.SetAttributes(gitfolder, FileAttributes.Normal);
 
@@ -315,7 +315,7 @@ public class AssetsScanner
     /// The .git folder's .pack files can be super finicky to delete from code.
     /// This function abstracts the necessary permissions update and cleans that folder for us.
     /// </summary>
-    private void CleanupWorkingDirectory(string workingDirectory)
+    public static void CleanupGitDirectory(string workingDirectory)
     {
         var gitDir = Path.Combine(workingDirectory, ".git");
 

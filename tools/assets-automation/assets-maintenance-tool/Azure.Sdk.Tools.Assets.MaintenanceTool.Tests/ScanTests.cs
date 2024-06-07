@@ -63,12 +63,6 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             TestDirectory = workingDirectory;
         }
 
-        [TearDown]
-        public void TearDown()
-        {
-            Directory.Delete(TestDirectory, true);
-        }
-
         [Test]
         [GitTokenSkip]
         public void TestBasicScanSingleBranch()
@@ -77,7 +71,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             var config = RunConfiguration;
             config.LanguageRepos.RemoveAt(0);
             config.LanguageRepos.First().Branches.RemoveAt(1);
-            var results = scanner.Scan(config, Directory.GetCurrentDirectory());
+            var results = scanner.Scan(config);
 
             Assert.IsNotNull(results);
             Assert.That(results.Results.Count(), Is.EqualTo(3));
@@ -112,7 +106,7 @@ namespace Azure.Sdk.Tools.Assets.MaintenanceTool.Tests
             var scanner = new AssetsScanner(TestDirectory);
             var config = RunConfiguration;
             config.LanguageRepos.RemoveAt(0);
-            var results = scanner.Scan(config, TestDirectory);
+            var results = scanner.Scan(config);
 
             Assert.IsNotNull(results);
             Assert.That(results.Results.Count(), Is.EqualTo(6));

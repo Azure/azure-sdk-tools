@@ -27,7 +27,7 @@ public class RepoConfiguration
     /// 
     /// If provided with "latest" argument, only the most recent commit on each considered branch will be included.
     /// </summary>
-    public string ScanStartDate { get; set; } = "2024-06-01";
+    public string ScanStartDate { get; set; } = "2022-12-01";
 
     /// <summary>
     /// The set of branches that we will examine. Defaults to just 'main'.

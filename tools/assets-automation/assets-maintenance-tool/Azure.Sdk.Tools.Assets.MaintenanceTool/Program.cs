@@ -53,7 +53,7 @@ public class Program
             case BaseOptions configOptions:
                 AssetsScanner scanner = new AssetsScanner();
                 var runConfig = new RunConfiguration(configOptions.ConfigLocation);
-                AssetsResultSet results = scanner.Scan(runConfig, Directory.GetCurrentDirectory());
+                AssetsResultSet results = scanner.Scan(runConfig);
                 scanner.Save(results);
 
                 break;

@@ -15,6 +15,7 @@ import { buildVersionProjections, getVersion } from "@typespec/versioning";
 import path from "path";
 import { ApiView } from "./apiview.js";
 import { ApiViewEmitterOptions, reportDiagnostic } from "./lib.js";
+import { ApiViewDocument } from "./apiview-document.js";
 
 export interface ResolvedApiViewEmitterOptions {
   emitterOutputDir: string;
@@ -49,7 +50,7 @@ function resolveNamespaceString(namespace: Namespace): string | undefined {
 }
 
 // TODO: Up-level this logic?
-function resolveAllowedVersions(program: Program, service: Service): string[] {  
+function resolveAllowedVersions(program: Program, service: Service): string[] {
   const allowed: string[] = [];
   const serviceVersion = service.version;
   const versions = getVersion(program, service.type)?.getVersions();
@@ -108,15 +109,18 @@ function resolveProgramForVersion(program: Program, namespace: Namespace, versio
  * `--service` option is specified. Single-service specs need not pass this option.
  */
 function validateMultiServiceOptions(program: Program, services: Service[], options: ResolvedApiViewEmitterOptions) {
-  for (const [name, val] of [["output-file", options.outputFile], ["version", options.version]]) {
+  for (const [name, val] of [
+    ["output-file", options.outputFile],
+    ["version", options.version],
+  ]) {
     if (val && !options.service && services.length > 1) {
       reportDiagnostic(program, {
         code: "invalid-option",
         target: NoTarget,
         format: {
-          name: name!
-        }
-      })
+          name: name!,
+        },
+      });
     }
   }
 }
@@ -128,14 +132,14 @@ function applyServiceFilter(program: Program, services: Service[], options: Reso
   if (!options.service) {
     return services;
   }
-  const filtered = services.filter( (x) => x.title === options.service);
+  const filtered = services.filter((x) => x.title === options.service);
   if (!filtered.length) {
     reportDiagnostic(program, {
       code: "invalid-service",
       target: NoTarget,
       format: {
-        value: options.service
-      }
+        value: options.service,
+      },
     });
   }
   return filtered;
@@ -149,20 +153,20 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
     if (!services.length) {
       reportDiagnostic(program, {
         code: "no-services-found",
-        target: NoTarget
-      })
+        target: NoTarget,
+      });
       return;
     }
     // applies the default "apiview.json" filename if not provided and there's only a single service
     if (services.length === 1) {
-      options.outputFile = options.outputFile ?? "apiview.json"
+      options.outputFile = options.outputFile ?? "apiview.json";
     }
     validateMultiServiceOptions(program, services, options);
     services = applyServiceFilter(program, services, options);
 
     for (const service of services) {
       const versionString = options.version ?? service.version;
-      const namespaceString = resolveNamespaceString(service.type) ?? "Unknown"
+      const namespaceString = resolveNamespaceString(service.type) ?? "Unknown";
       const serviceTitle = service.title ? service.title : namespaceString;
       const allowedVersions = resolveAllowedVersions(program, service);
       if (versionString) {
@@ -174,16 +178,16 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
               version: versionString,
               serviceTitle: serviceTitle,
               allowed: allowedVersions.join(" | "),
-            }, 
-          })
+            },
+          });
           return;
-        }  
-      }      
+        }
+      }
       const resolvedProgram = resolveProgramForVersion(program, service.type, versionString);
-      
+
       const apiview = new ApiView(serviceTitle, namespaceString, versionString, options.includeGlobalNamespace);
       apiview.emit(resolvedProgram);
-      apiview.resolveMissingTypeReferences();
+      resolveMissingTypeReferences(apiview);
 
       if (!program.compilerOptions.noEmit && !program.hasError()) {
         const outputFolder = path.dirname(options.emitterOutputDir);
@@ -192,9 +196,18 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
         const outputPath = resolvePath(outputFolder, outputFile);
         await emitFile(program, {
           path: outputPath,
-          content: JSON.stringify(apiview.asApiViewDocument()) + "\n"
-        });  
-      }    
+          content: `${new ApiViewDocument(apiview).asString()}\n`,
+        });
+      }
     }
   }
+}
+
+function resolveMissingTypeReferences(apiView: ApiView) {
+  // FIXME: Need to update this logic for the new tree structure.
+  //   for (const token of this.tokens) {
+  //     if (token.Kind === ApiViewTokenKind.TypeName && token.NavigateToId === "__MISSING__") {
+  //       token.NavigateToId = definitionIdFor(token.Value!, this.packageName);
+  //     }
+  //   }
 }

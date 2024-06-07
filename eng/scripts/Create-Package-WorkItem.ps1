@@ -15,8 +15,7 @@ param (
   [string]$RelatedWorkItemId,
   [string]$Tag = "",
   [string]$WorkingDir = ".",
-  [string]$PackageRootPath = "",
-  [string]$AccessToken = $null
+  [string]$PackageRootPath = ""
 )
 
 Set-StrictMode -Version 3
@@ -74,8 +73,7 @@ try
     -serviceName $ServiceName `
     -packageDisplayName $PackageDisplayName `
     -relatedWorkItemId $RelatedWorkItemId `
-    -tag $Tag `
-    -accessToken $AccessToken
+    -tag $Tag
 }
 finally {
     Pop-Location

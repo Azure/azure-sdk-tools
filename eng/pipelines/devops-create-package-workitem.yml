@@ -52,7 +52,6 @@ steps:
     scriptType: pscore
     scriptLocation: inlineScript
     inlineScript: |
-      $accessToken = az account get-access-token --resource "499b84ac-1321-427f-aa17-267ca6975798" --query "accessToken" --output tsv
       $(Build.SourcesDirectory)/eng/scripts/Create-Package-WorkItem.ps1 `
         -PackageLanguage "$(Language)" `
         -ServiceName "$(ServiceName)" `
@@ -62,5 +61,4 @@ steps:
         -ReleaseDate "$(ReleaseDate)" `
         -RelatedWorkItemId "$(RelatedWorkItemId)" `
         -Tag "$(Tag)" `
-        -WorkingDir "$(Pipeline.Workspace)" `
-        -AccessToken $accessToken
+        -WorkingDir "$(Pipeline.Workspace)"

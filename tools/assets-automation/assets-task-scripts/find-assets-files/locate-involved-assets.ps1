@@ -47,6 +47,7 @@ try {
 
     if (!(Test-Path $ScanOutputJson)) {
         Azure.Sdk.Tools.Assets.MaintenanceTool scan --config $ConfigFilePath
+        if ($LASTEXITCODE) { exit $LASTEXITCODE }
     }
     else {
         Write-Host "Skipping scan, using cached results"

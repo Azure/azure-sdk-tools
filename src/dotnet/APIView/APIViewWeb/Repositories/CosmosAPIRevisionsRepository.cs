@@ -70,6 +70,11 @@ namespace APIViewWeb
                 queryStringBuilder.Append($" AND ARRAY_CONTAINS(c.AssignedReviewers, {{ 'AssingedTo': '{ user.GetGitHubLogin() }' }}, true)");
             }
 
+            if (filterAndSortParams.WithTreeStyleTokens)
+            {
+                queryStringBuilder.Append(" AND c.Files[0].ParserStyle = 'Tree'");
+            }
+
             if (filterAndSortParams.Details != null && filterAndSortParams.Details.Count() > 0)
             {
                 queryStringBuilder.Append(" AND (");
@@ -126,10 +131,10 @@ namespace APIViewWeb
 
             switch (filterAndSortParams.SortField)
             {
-                case "created":
+                case "createdOn":
                     queryStringBuilder.Append($" ORDER BY c.CreatedOn");
                     break;
-                case "updated":
+                case "lastUpdatedOn":
                     queryStringBuilder.Append($" ORDER BY c.LastUpdatedOn");
                     break;
                 default:

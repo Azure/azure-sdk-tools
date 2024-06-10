@@ -3,6 +3,7 @@ using APIView.Model;
 using APIViewWeb.Extensions;
 using APIViewWeb.LeanModels;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -14,7 +15,8 @@ namespace APIViewWeb.Helpers
     {
         private static int _processorCount = Environment.ProcessorCount;
         private static SemaphoreSlim _semaphore = new SemaphoreSlim(_processorCount);
-        private static List<Task> _tasks = new List<Task>();
+        private static ConcurrentBag<Task> _tasks = new ConcurrentBag<Task>();
+
 
         public static async Task<CodePanelData> GenerateCodePanelDataAsync(CodePanelRawData codePanelRawData)
         {

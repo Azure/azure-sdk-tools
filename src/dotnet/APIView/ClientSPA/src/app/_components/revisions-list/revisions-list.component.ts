@@ -83,7 +83,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
    * Load revision from API
    *  * @param append wheather to add to or replace existing list
    */
-  loadAPIRevisions(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string ="lastUpdatedOn",  sortOrder: number = 1) {
+  loadAPIRevisions(noOfItemsRead : number, pageSize: number, resetReviews = false, filters: any = null, sortField: string = "lastUpdatedOn",  sortOrder: number = 1) {
     let label : string = "";
     let author : string = "";
     let reviewId: string = this.review?.id ?? "";

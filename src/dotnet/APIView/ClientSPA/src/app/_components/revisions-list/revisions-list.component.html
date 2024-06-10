@@ -62,7 +62,7 @@
             <th style="width:25%">APIRevision - Label</th>
             <th style="width:19%">Author</th>
             <th style="width:15%">Details</th>
-            <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="created" style="width:15%">Created<p-sortIcon class="ms-2" field="lastUpdated"></p-sortIcon></th>
+            <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="createdOn" style="width:15%">Created<p-sortIcon class="ms-2" field="createdOn"></p-sortIcon></th>
             <th *ngIf="!showAPIRevisionsAssignedToMe" pSortableColumn="lastUpdatedOn" style="width:15%">Updated<p-sortIcon class="ms-2" field="lastUpdatedOn"></p-sortIcon></th>
             <th *ngIf="showAPIRevisionsAssignedToMe" style="width:15%">RequestedOn</th>            
             <th *ngIf="showAPIRevisionsAssignedToMe"  style="width:15%">RequestedBy</th>

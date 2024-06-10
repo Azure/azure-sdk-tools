@@ -17,7 +17,11 @@ namespace ApiView
         private static readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions
         {
             AllowTrailingCommas = true,
-            ReadCommentHandling = JsonCommentHandling.Skip,
+            ReadCommentHandling = JsonCommentHandling.Skip
+        };
+
+        private static readonly JsonSerializerOptions _deSerializerOptions = new JsonSerializerOptions
+        {
             Converters = { new StructuredTokenConverter() }
         };
 
@@ -34,11 +38,6 @@ namespace ApiView
             get => _versionString ?? Version.ToString();
 #pragma warning restore 618
             set => _versionString = value;
-        }
-
-        public string CodeFileVersion
-        {
-            get => this.APIForest.Count > 0 ? "v2" : "v1";
         }
 
         public string Name { get; set; }
@@ -77,7 +76,7 @@ namespace ApiView
         public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            CodeFile codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(stream, _serializerOptions);
+            CodeFile codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(stream, _deSerializerOptions);
 
             if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language))
                 hasSections = true;

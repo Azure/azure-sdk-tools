@@ -72,23 +72,19 @@
     </ul>
 </app-page-options-section>
 
-<app-page-options-section sectionName="Change History">
+<app-page-options-section sectionName="Change History" [collapsedInput]="true">
     <ul class="list-group">
         <li class="list-group-item change-history">
             <p-timeline [value]="activeAPIRevision?.changeHistory">
                 <ng-template pTemplate="marker" let-changeHistory>
-                    <span 
-                        class="flex w-2rem h-2rem align-items-center justify-content-center text-white border-circle z-1 shadow-1" 
-                        [style]="{ 'background-color': changeHistory.color }">
-                            <i [class]="changeHistoryIcons[changeHistory.changeAction]"></i>
+                    <span [style]="{ 'background-color': changeHistory.color }">
+                        <i [class]="changeHistoryIcons[changeHistory.changeAction]"></i>
                     </span>
                 </ng-template>
                 <ng-template pTemplate="content" let-changeHistory>
-                    <div class="p-text-primary small">{{ changeHistory.changedBy }}</div>
+                    <div class="p-text-primary small">{{ changeHistory.changeAction | titlecase }}</div>
+                    <div class="p-text-secondary small">{{ changeHistory.changedBy }}</div>
                     <div class="p-text-secondary small">{{ changeHistory.changedOn | timeago }}</div>
-                </ng-template>
-                <ng-template pTemplate="opposite" let-changeHistory>
-                    <div class="p-text-primary">{{ changeHistory.changeAction | titlecase }}</div>
                 </ng-template>
             </p-timeline>
         </li>

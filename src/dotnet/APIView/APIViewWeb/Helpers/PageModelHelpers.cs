@@ -289,22 +289,20 @@ namespace APIViewWeb.Helpers
                     reviewPageContent.Directive = ReviewContentModelDirective.ErrorDueToInvalidAPIRevisonRedirectToIndexPage;
                     return reviewPageContent;
                 }
-            } 
-            var comments = await commentManager.GetReviewCommentsAsync(review.Id);
+            }
 
-            var activeRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(activeRevision.Id, activeRevision.Files[0].FileId);
-            var activeRevisionReviewCodeFile = activeRevisionRenderableCodeFile.CodeFile;
-
-            if (activeRevisionReviewCodeFile.CodeFileVersion.Equals("v2"))
+            if (!String.IsNullOrEmpty(activeRevision.Files[0].ParserStyle) && activeRevision.Files[0].ParserStyle.Equals("Tree"))
             {
                 reviewPageContent.Directive = ReviewContentModelDirective.RedirectToSPAUI;
+                reviewPageContent.ActiveAPIRevision = activeRevision;
                 return reviewPageContent;
             }
 
+            var comments = await commentManager.GetReviewCommentsAsync(review.Id);
+            var activeRevisionRenderableCodeFile = await codeFileRepository.GetCodeFileAsync(activeRevision.Id, activeRevision.Files[0].FileId);
+            var activeRevisionReviewCodeFile = activeRevisionRenderableCodeFile.CodeFile;
             var fileDiagnostics = activeRevisionReviewCodeFile.Diagnostics ?? Array.Empty<CodeDiagnostic>();
-
             var activeRevisionHtmlLines = activeRevisionRenderableCodeFile.Render(showDocumentation: showDocumentation);
-
             var codeLines = new CodeLineModel[0];
             var getCodeLines = false;
 

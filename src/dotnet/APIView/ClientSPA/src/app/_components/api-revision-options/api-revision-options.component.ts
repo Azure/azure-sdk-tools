@@ -13,6 +13,7 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   @Input() activeApiRevisionId: string | null = '';
   @Input() diffApiRevisionId: string | null = '';
 
+  mappedApiRevisions: any[] = [];
   activeApiRevisionsMenu: any[] = [];
   diffApiRevisionsMenu: any[] = [];
   selectedActiveAPIRevision: any;
@@ -29,11 +30,11 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   diffApiRevisionsFilterValue: string | undefined = '';
 
   filterOptions: any[] = [
-    { label: 'PR', value: 'PullRequest' },
-    { label: 'Manual', value: 'Manual' },
-    { label: 'Auto', value: 'Automatic' },
-    { label: 'Released', value: 'Released' },
-    { label: 'Approved', value: 'Approved' },
+    { label: 'Approved', value: 'approved' },
+    { label: 'Released', value: 'released' },
+    { label: 'Auto', icon: this.automaticIcon, value: 'automatic' },
+    { label: 'PR', icon: this.prIcon, value: 'pullRequest' },
+    { label: 'Manual', icon: this.manualIcon, value: 'manual' }
   ];
 
   constructor(private route: ActivatedRoute, private router: Router) {}
@@ -41,13 +42,14 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['apiRevisions'] || changes['activeApiRevisionId'] || changes['diffApiRevisionId']) {
       if (this.apiRevisions.length > 0) {
-        const mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
+        let mappedApiRevisions = this.mapRevisionToMenu(this.apiRevisions);
+        this.mappedApiRevisions = this.identifyAndProcessSpecialAPIRevisions(mappedApiRevisions);
 
-        this.activeApiRevisionsMenu = mappedApiRevisions.filter((apiRevision: any) => apiRevision.id !== this.diffApiRevisionId);
+        this.activeApiRevisionsMenu = this.mappedApiRevisions.filter((apiRevision: any) => apiRevision.id !== this.diffApiRevisionId);
         const selectedActiveAPIRevisionindex = this.activeApiRevisionsMenu.findIndex((apiRevision: APIRevision) => apiRevision.id === this.activeApiRevisionId);
         this.selectedActiveAPIRevision = this.activeApiRevisionsMenu[selectedActiveAPIRevisionindex];
 
-        this.diffApiRevisionsMenu = mappedApiRevisions.filter((apiRevision: any) => apiRevision.id !== this.activeApiRevisionId);
+        this.diffApiRevisionsMenu = this.mappedApiRevisions.filter((apiRevision: any) => apiRevision.id !== this.activeApiRevisionId);
         const selectedDiffAPIRevisionindex = this.diffApiRevisionsMenu.findIndex((apiRevision: APIRevision) => apiRevision.id === this.diffApiRevisionId);
         if (selectedDiffAPIRevisionindex >= 0) {
           this.selectedDiffAPIRevision = this.diffApiRevisionsMenu[selectedDiffAPIRevisionindex];
@@ -99,17 +101,17 @@ export class ApiRevisionOptionsComponent implements OnChanges {
   }
 
   searchAndFilterDropdown(searchValue : string, filterValue  : string | undefined, dropDownMenu : string) {
-    let filtered = this.apiRevisions.filter((apiRevision: APIRevision) => {
+    let filtered = this.mappedApiRevisions.filter((apiRevision: APIRevision) => {
       switch (filterValue) {
-        case 'PullRequest':
-          return apiRevision.apiRevisionType === 'PullRequest';
-        case 'Manual':
-          return apiRevision.apiRevisionType === 'Manual';
-        case 'Automatic':
-          return apiRevision.apiRevisionType === 'Automatic';
-        case 'Released':
+        case 'pullRequest':
+          return apiRevision.apiRevisionType === 'pullRequest';
+        case 'manual':
+          return apiRevision.apiRevisionType === 'manual';
+        case 'automatic':
+          return apiRevision.apiRevisionType === 'automatic';
+        case 'released':
           return apiRevision.isReleased;
-        case 'Approved':
+        case 'approved':
           return apiRevision.isApproved;
         default:
           return true;
@@ -121,7 +123,7 @@ export class ApiRevisionOptionsComponent implements OnChanges {
     });
 
     if (dropDownMenu === "active") {
-      this.activeApiRevisionsMenu = this.mapRevisionToMenu(filtered);
+      this.activeApiRevisionsMenu = filtered;
       if (this.selectedActiveAPIRevision && !this.activeApiRevisionsMenu.includes(this.selectedActiveAPIRevision)) {
         this.activeApiRevisionsMenu.unshift(this.selectedActiveAPIRevision);
       }
@@ -129,7 +131,7 @@ export class ApiRevisionOptionsComponent implements OnChanges {
 
     if (dropDownMenu === "diff") {
       filtered = filtered.filter((apiRevision: APIRevision) => apiRevision.id !== this.activeApiRevisionId);
-      this.diffApiRevisionsMenu = this.mapRevisionToMenu(filtered);
+      this.diffApiRevisionsMenu = filtered
       if (this.selectedDiffAPIRevision && !this.diffApiRevisionsMenu.includes(this.selectedDiffAPIRevision)) {
         this.diffApiRevisionsMenu.unshift(this.selectedDiffAPIRevision);
       }
@@ -155,13 +157,13 @@ export class ApiRevisionOptionsComponent implements OnChanges {
       .map((apiRevision: APIRevision) => {
       let typeClass = '';
       switch (apiRevision.apiRevisionType) {
-        case 'Manual':
+        case 'manual':
           typeClass = this.manualIcon;
           break;
-        case 'PullRequest':
+        case 'pullRequest':
           typeClass = this.prIcon;
           break;
-        case 'Automatic':
+        case 'automatic':
           typeClass = this.automaticIcon;
           break;
       }
@@ -179,11 +181,81 @@ export class ApiRevisionOptionsComponent implements OnChanges {
         isApproved: apiRevision.isApproved,
         isReleased: apiRevision.isReleased,
         releasedOn: apiRevision.releasedOn,
+        isLatestGA : false,
+        isLatestApproved : false,
+        isLatestMain : false,
+        isLatestReleased : false,
         command: () => {
-          console.log('Selected API Blah:', apiRevision.label);
         }
       };
     });
+  }
+
+  identifyAndProcessSpecialAPIRevisions(mappedApiRevisions: any []) {
+    const result = [];
+    const semVarRegex = /(?<major>0|[1-9]\d*)\.(?<minor>0|[1-9]\d*)\.(?<patch>0|[1-9]\d*)(?:(?<presep>-?)(?<prelabel>[a-zA-Z]+)(?:(?<prenumsep>\.?)(?<prenumber>[0-9]{1,8})(?:(?<buildnumsep>\.?)(?<buildnumber>\d{1,3}))?)?)?/;
+
+    let latestGAApiRevision : any = null;
+    let latestApprovedApiRevision : any = null;
+    let currentMainApiRevision : any = null;
+    let latestReleasedApiRevision : any = null;
+
+    while (mappedApiRevisions.length > 0) {
+      let apiRevision = mappedApiRevisions.shift();
+
+      if (latestGAApiRevision === null) {
+        let versionParts = apiRevision.version.match(semVarRegex);
+        if (versionParts.groups?.prelabel === undefined && versionParts.groups?.prenumber === undefined &&
+          versionParts.groups?.prenumsep === undefined && versionParts.groups?.presep === undefined) {
+            apiRevision.isLatestGA = true;
+            latestGAApiRevision = apiRevision;
+            continue;
+        }
+      }
+
+      if (latestApprovedApiRevision === null) {
+        if (apiRevision.isApproved) {
+          apiRevision.isLatestApproved = true;
+          latestApprovedApiRevision = apiRevision;
+          continue;
+        }
+      }
+
+      if (currentMainApiRevision === null) {
+        if (apiRevision.apiRevisionType === 'Automatic') {
+          apiRevision.isLatestMain = true;
+          currentMainApiRevision = apiRevision;
+          continue;
+        }
+      }
+
+      if (latestReleasedApiRevision === null) {
+        if (apiRevision.isReleased) {
+          apiRevision.isLatestReleased = true;
+          latestReleasedApiRevision = apiRevision;
+          continue;
+        }
+      }
+      result.push(apiRevision);
+    }
+
+    if (latestGAApiRevision) {
+      result.unshift(latestGAApiRevision);
+    }
+
+    if (latestApprovedApiRevision) {
+      result.unshift(latestApprovedApiRevision);
+    }
+
+    if (currentMainApiRevision) {
+      result.unshift(currentMainApiRevision);
+    }
+
+    if (latestReleasedApiRevision) {
+      result.unshift(latestReleasedApiRevision);
+    }
+
+    return result;
   }
 }
 

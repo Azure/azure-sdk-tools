@@ -37,6 +37,7 @@ namespace APIViewWeb.Helpers
         public string Label { get; set; }
         public string Author { get; set; }
         public string ReviewId { get; set; }
+        public bool WithTreeStyleTokens { get; set; }
         public IEnumerable<string> Details { get; set; }
     }
 

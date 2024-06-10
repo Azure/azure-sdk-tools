@@ -154,14 +154,14 @@ export class ReviewPageComponent implements OnInit {
     this.destroyLoadAPIRevision$?.complete();
     this.destroyLoadAPIRevision$ = new Subject<void>();
 
-    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!)
+    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!, undefined, undefined, 
+      undefined, "createdOn", undefined, undefined, undefined, true)
       .pipe(takeUntil(this.destroyLoadAPIRevision$)).subscribe({
         next: (response: any) => {
           this.apiRevisions = response.result;
           if (this.apiRevisions.length > 0) {
             this.language = this.apiRevisions[0].language;
             this.languageSafeName = getLanguageCssSafeName(this.language);
-
             this.activeAPIRevision = this.apiRevisions.filter(x => x.id === this.activeApiRevisionId)[0];
           }
         },

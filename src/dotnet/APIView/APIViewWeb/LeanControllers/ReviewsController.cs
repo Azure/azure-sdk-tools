@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using System.Diagnostics;
+using System;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -107,14 +108,15 @@ namespace APIViewWeb.LeanControllers
             [FromQuery] string diffApiRevisionId = null)
         {
             var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
-            var comments = await _commentsManager.GetCommentsAsync(reviewId);
 
-            var activeRevisionReviewCodeFile = (await _codeFileRepository.GetCodeFileAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId, false)).CodeFile;
-
-            var result = new CodePanelData();
-
-            if (activeRevisionReviewCodeFile.CodeFileVersion.Equals("v2")) 
+            if (!String.IsNullOrEmpty(activeAPIRevision.Files[0].ParserStyle) && activeAPIRevision.Files[0].ParserStyle.Equals("Tree"))
             {
+                var comments = await _commentsManager.GetCommentsAsync(reviewId);
+
+                var activeRevisionReviewCodeFile = (await _codeFileRepository.GetCodeFileAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId, false)).CodeFile;
+
+                var result = new CodePanelData();
+
                 var codePanelRawData = new CodePanelRawData()
                 {
                     APIForest = activeRevisionReviewCodeFile.APIForest,

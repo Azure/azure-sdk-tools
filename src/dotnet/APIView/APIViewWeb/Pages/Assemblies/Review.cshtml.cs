@@ -94,7 +94,7 @@ namespace APIViewWeb.Pages.Assemblies
 
             if (ReviewContent.Directive == ReviewContentModelDirective.RedirectToSPAUI)
             {
-                var uri = $"https://spa.{Request.Host}/review/{id}?activeApiRevisionId={revisionId}";
+                var uri = $"https://spa.{Request.Host}/review/{id}?activeApiRevisionId={ReviewContent.ActiveAPIRevision.Id}";
                 return Redirect(uri);
             }
 

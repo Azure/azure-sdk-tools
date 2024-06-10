@@ -51,7 +51,7 @@ steps:
     pwsh: true
     filePath: $(Build.SourcesDirectory)/eng/scripts/Create-Package-WorkItem.ps1
     arguments: >
-      -Language "$(Language)"
+      -PackageLanguage "$(Language)"
       -ServiceName "$(ServiceName)"
       -PackageDisplayName "$(PackageDisplayName)"
       -PackageName "$(PackageName)"

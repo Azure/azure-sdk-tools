@@ -43,13 +43,14 @@
             <label class="ms-2">Documentation</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showLineNumberSwitch"
-            (onChange)="onShowLineNumberSwitchChange($event)" />
+            <p-inputSwitch [(ngModel)]="showLineNumbersSwitch"
+            (onChange)="onShowLineNumbersSwitchChange($event)" />
             <label class="ms-2">Line Numbers</label>
+
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="hideLeftNavigationSwitch"
-            (onChange)="onHideLeftNavigationSwitchChange($event)" />
+            <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch"
+            (onChange)="onShowLeftNavigationSwitchChange($event)" />
             <label class="ms-2">Left navigation</label>
         </li>
         <li *ngIf="isDiffView" class="list-group-item">

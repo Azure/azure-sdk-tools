@@ -15,7 +15,7 @@
                 [minSizes]="[1, 1, 1]"
                 [gutterSize]="6">
                 <ng-template pTemplate>
-                    <div *ngIf="!hideLeftNavigation" class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel">
+                    <div *ngIf="!showLeftNavigation" class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel">
                         <app-review-nav [reviewPageNavigation]="reviewPageNavigation"
                         (navTreeNodeIdEmitter)="handleNavTreeNodeEmmitter($event)"></app-review-nav>
                     </div>
@@ -26,7 +26,7 @@
                             [language]="language" [languageSafeName]="languageSafeName"
                             [reviewComments]="reviewComments" [isDiffView]="!!diffApiRevisionId" 
                             [navTreeNodIdHashed]="navTreeNodeIdHashed"
-                            [hideLineNumbers] = "hideLineNumbers"></app-code-panel>
+                            [hideLineNumbers]="hideLineNumbers"></app-code-panel>
                     </div>
                 </ng-template>
                 <ng-template pTemplate>
@@ -42,7 +42,7 @@
                             (diffStyleEmitter)="handleDiffStyleEmitter($event)"
                             (markAsViewedEmitter)="handleMarkAsViewedEmitter($event)"
                             (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
-                            (hideLeftNavigationEmitter)="handleHideLeftNavigationEmitter($event)"></app-review-page-options>
+                            (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)"></app-review-page-options>
                     </div>
                 </ng-template>
             </p-splitter>

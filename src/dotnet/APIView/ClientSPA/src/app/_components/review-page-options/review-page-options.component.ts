@@ -20,15 +20,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Output() showDocumentationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
-  @Output() hideLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   
   showCommentsSwitch : boolean = true;
   showSystemCommentsSwitch : boolean = true;
   showDocumentationSwitch : boolean = true;
-  showLineNumberSwitch : boolean = true;
-  // showLeftNavigationSwitch : boolean = true;
+  showLineNumbersSwitch : boolean = true;
   markedAsViewSwitch : boolean = false;
-  hideLeftNavigationSwitch : boolean = false;
+  showLeftNavigationSwitch : boolean = false;
 
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
   activeAPIRevisionApprovalMessage: string = '';
@@ -56,8 +55,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;
     this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? true;
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? false;
-    this.showLineNumberSwitch = this.userProfile?.preferences.hideLineNumbers ?? false;
-    this.hideLeftNavigationSwitch = this.userProfile?.preferences.hideLeftNavigation ?? false;
+    this.showLineNumbersSwitch = this.userProfile?.preferences.hideLineNumbers ?? false;
+    this.showLeftNavigationSwitch = this.userProfile?.preferences.hideLeftNavigation ?? true;
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -69,8 +68,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
       this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
       this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
-      this.showLineNumberSwitch = this.userProfile?.preferences.hideLineNumbers ?? this.showLineNumberSwitch;
-      this.hideLeftNavigationSwitch = this.userProfile?.preferences.hideLeftNavigation ?? this.hideLeftNavigationSwitch;
+      this.showLineNumbersSwitch = this.userProfile?.preferences.hideLineNumbers ?? this.showLineNumbersSwitch;
+      this.showLeftNavigationSwitch = this.userProfile?.preferences.hideLeftNavigation ?? this.showLeftNavigationSwitch;
     }
     
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
@@ -124,7 +123,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
    * Callback for showLineNumberSwitch Change
    * @param event the Filter event
    */
-  onShowLineNumberSwitchChange(event: InputSwitchOnChangeEvent) {
+  onShowLineNumbersSwitchChange(event: InputSwitchOnChangeEvent) {
     this.showLineNumbersEmitter.emit(event.checked);
   }
 
@@ -132,8 +131,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
    * Callback for hideLeftNavigationSwitch Change
    * @param event the Filter event
    */
-  onHideLeftNavigationSwitchChange(event: InputSwitchOnChangeEvent) {
-    this.hideLeftNavigationEmitter.emit(event.checked);
+  onShowLeftNavigationSwitchChange(event: InputSwitchOnChangeEvent) {
+    this.showLeftNavigationEmitter.emit(event.checked);
   }
 
   setSelectedDiffStyle() {

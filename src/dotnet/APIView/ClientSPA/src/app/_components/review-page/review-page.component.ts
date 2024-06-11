@@ -40,7 +40,7 @@ export class ReviewPageComponent implements OnInit {
   languageSafeName: string | undefined;
   navTreeNodeIdHashed : string | undefined;
   hideLineNumbers : boolean = false;
-  hideLeftNavigation : boolean = true;
+  showLeftNavigation : boolean = true;
 
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
@@ -221,15 +221,15 @@ export class ReviewPageComponent implements OnInit {
 
   handleShowLineNumbersEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
-    userPreferenceModel!.hideLineNumbers = !state;
-    this.hideLineNumbers = !state;
+    userPreferenceModel!.hideLineNumbers = state;
+    this.hideLineNumbers = state;
     this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
   }
 
-  handleHideLeftNavigationEmitter(state: boolean) {
+  handleShowLeftNavigationEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.hideLeftNavigation = !state;
-    this.hideLeftNavigation = !state;
+    this.showLeftNavigation = !state;
     this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
   }
 

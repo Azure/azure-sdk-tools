@@ -221,14 +221,14 @@ export class ReviewPageComponent implements OnInit {
 
   handleShowLineNumbersEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
-    userPreferenceModel!.hideLineNumbers = state;
+    userPreferenceModel!.hideLineNumbers = !state;
     this.hideLineNumbers = state;
     this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
   }
 
   handleShowLeftNavigationEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
-    userPreferenceModel!.hideLeftNavigation = !state;
+    userPreferenceModel!.hideLeftNavigation = state;
     this.showLeftNavigation = !state;
     this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
   }

@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param (
   [Parameter(Mandatory = $true)]
-  [string]$Language,
+  [string]$PackageLanguage,
   [Parameter(Mandatory = $true)]
   [string]$ServiceName,
   [Parameter(Mandatory = $true)]
@@ -38,10 +38,10 @@ function Get-Repo-Name($language)
 }
 
 
-$repoName = Get-Repo-Name $language
+$repoName = Get-Repo-Name $PackageLanguage
 if (!$repoName)
 {
-    Write-Error "GitHub repo name is not found for language [$language]. Failed to find package root path."
+    Write-Error "GitHub repo name is not found for language [$PackageLanguage]. Failed to find package root path."
     exit 1
 }
 
@@ -64,7 +64,7 @@ try
 
     # Create or update package work item  
     &$EngCommonScriptsDir/Update-DevOps-Release-WorkItem.ps1 `
-    -language $Language `
+    -language $PackageLanguage `
     -packageName $PackageName `
     -version $PackageVersion `
     -plannedDate $ReleaseDate `

@@ -60,7 +60,7 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     }
 
     if (target.classList.contains('toggle-user-comments-btn')) {
-      console.log('toggle-user-comments-btn clicked');
+      this.toggleNodeComments(target);
     }
   }
 
@@ -74,19 +74,41 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     return classObject;
   }
 
+  toggleNodeComments(target: Element) {
+    const nodeIdHashed = target.closest('.code-line')!.getAttribute('data-node-id');
+    const existingCommentThread = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.commentThread;
+    const exisitngCodeLine = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.codeLines[0];
+    
+    if (!existingCommentThread || existingCommentThread.length === 0) {
+      const commentThreadRow = new CodePanelRowData();
+      commentThreadRow.type = CodePanelRowDatatype.CommentThread;
+      commentThreadRow.nodeId = exisitngCodeLine?.nodeId!;
+      commentThreadRow.nodeIdHashed = exisitngCodeLine?.nodeIdHashed!;
+      commentThreadRow.rowClasses = new Set<string>(['user-comment-thread']);
+      commentThreadRow.showReplyTextBox = true;
+      this.codePanelData!.nodeMetaData[nodeIdHashed!].commentThread = [commentThreadRow];
+      this.insertItemsIntoScroller([commentThreadRow], nodeIdHashed!, true);
+    }
+    else {
+      for (let i = 0; i < this.codePanelRowData.length; i++) {
+        if (this.codePanelRowData[i].nodeIdHashed === nodeIdHashed && this.codePanelRowData[i].type === CodePanelRowDatatype.CommentThread) {
+          this.codePanelRowData[i].showReplyTextBox = true;
+          break;
+        }
+      }
+    }
+  }
+
   async toggleNodeDocumentation(target: Element) {
-    const nodeId = target.closest(".code-line")!.getAttribute('data-node-id');
-    const lineNumber = target.closest('.line-actions')!.querySelector('.line-number')!.textContent;
+    const nodeIdHashed = target.closest(".code-line")!.getAttribute('data-node-id');
 
     if (target.classList.contains('bi-arrow-up-square')) {
-      const documentationData = this.codePanelData?.nodeMetaData[nodeId!]?.documentation;
-      await this.insertItemIntoScroller(documentationData!, lineNumber!, "toggleDocumentationClasses", "bi-arrow-up-square", "bi-arrow-down-square");
+      const documentationData = this.codePanelData?.nodeMetaData[nodeIdHashed!]?.documentation;
+      await this.insertItemsIntoScroller(documentationData!, nodeIdHashed!, false, "toggleDocumentationClasses", "bi-arrow-up-square", "bi-arrow-down-square");
       target.classList.remove('bi-arrow-up-square')
       target.classList.add('bi-arrow-down-square');
     } else if (target.classList.contains('bi-arrow-down-square')) {
-      const documentationData = this.codePanelData?.nodeMetaData[nodeId!]?.documentation;
-      const lineNumbersOfLinesToRemove = new Set(documentationData!.map(d => d.lineNumber));
-      await this.removeItemFromScroller(lineNumbersOfLinesToRemove, lineNumber!, "toggleDocumentationClasses", "bi-arrow-down-square", "bi-arrow-up-square", "doc");
+      await this.removeItemsFromScroller(nodeIdHashed!, CodePanelRowDatatype.Documentation, "toggleDocumentationClasses", "bi-arrow-down-square", "bi-arrow-up-square");
       target.classList.remove('bi-arrow-down-square')
       target.classList.add('bi-arrow-up-square');
     }
@@ -144,18 +166,26 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     this.loadCodePanelViewPort();
   }
 
-  async insertItemIntoScroller(itemsToInsert: CodePanelRowData[], lineNumber: string, 
+  async insertItemsIntoScroller(itemsToInsert: CodePanelRowData[], nodeIdhashed: string, insertAfterNodeIdhashed : boolean = false, 
       propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
     await this.codePanelRowSource?.adapter?.relax();
 
     let preData = [];
     let nodeIndex = 0;
-    for (let i = 0; i < this.codePanelRowData.length; i++) {
-      if (this.codePanelRowData[i].lineNumber === parseInt(lineNumber)) {
-        nodeIndex = i;
+    let targetNodeIdHashed = null;
+
+    while (nodeIndex < this.codePanelRowData.length) {
+      if (this.codePanelRowData[nodeIndex].nodeIdHashed === nodeIdhashed) {
+        targetNodeIdHashed = nodeIdhashed;
+        if (!insertAfterNodeIdhashed) {
+          break;
+        }
+      }
+      if (targetNodeIdHashed && insertAfterNodeIdhashed && this.codePanelRowData[nodeIndex].nodeIdHashed != targetNodeIdHashed) {
         break;
       }
-      preData.push(this.codePanelRowData[i]);
+      preData.push(this.codePanelRowData[nodeIndex]);
+      nodeIndex++;
     }
     let postData = this.codePanelRowData.slice(nodeIndex);
 
@@ -198,23 +228,21 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     });
   }
 
-  async removeItemFromScroller(lineNumbersToRemove: Set<number | undefined>, actionLineNumber: string,
-    propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string, lineClasstoRemove?: string) {
+  async removeItemsFromScroller(nodeIdHashed: string, codePanelRowDatatype:  CodePanelRowDatatype,
+    propertyToChange?: string, iconClassToremove?: string, iconClassToAdd?: string) {
     await this.codePanelRowSource?.adapter?.relax();
 
     const indexesToRemove : number[] = [];
     const filteredCodeLinesData : CodePanelRowData[] = [];
 
     for (let i = 0; i < this.codePanelRowData.length; i++) {
-      let lineNo = this.codePanelRowData[i].lineNumber!;
-      let rowClasses = new Set<string>(this.codePanelRowData[i].rowClasses);
-      if (lineNo === parseInt(actionLineNumber) && propertyToChange && iconClassToremove && iconClassToAdd) {
-        this.codePanelRowData[i] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, this.codePanelRowData[i], propertyToChange);
-      }
-
-      if (lineNumbersToRemove.size > 0 && lineNumbersToRemove.has(lineNo) && rowClasses?.has(lineClasstoRemove!)) {
+      if (this.codePanelRowData[i].nodeIdHashed === nodeIdHashed && this.codePanelRowData[i].type === codePanelRowDatatype) {
+        if (propertyToChange && iconClassToremove && iconClassToAdd) {
+          this.codePanelRowData[i] = this.toggleLineActionIcon(iconClassToremove, iconClassToAdd, this.codePanelRowData[i], propertyToChange);
+        }
         indexesToRemove.push(i);
-      } else {
+      }
+      else {
         filteredCodeLinesData.push(this.codePanelRowData[i]);
       }
     }
@@ -264,6 +292,24 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   setMaxLineNumberWidth() {
     if (this.codePanelRowData[this.codePanelRowData.length - 1].lineNumber) {
       document.documentElement.style.setProperty('--max-line-number-width', `${this.codePanelRowData[this.codePanelRowData.length - 1].lineNumber!.toString().length}ch`);
+    }
+  }
+
+  handleCancelCommentActionEmitter(nodeIdHashed: string) {
+    const commentThread = this.codePanelData?.nodeMetaData[nodeIdHashed]?.commentThread
+    if (commentThread && commentThread.length > 0) {
+      if (!commentThread[0].comments || commentThread[0].comments.length === 0) {
+        this.removeItemsFromScroller(nodeIdHashed, CodePanelRowDatatype.CommentThread);
+        this.codePanelData!.nodeMetaData[nodeIdHashed].commentThread = [];
+      }
+      else {
+        for (let i = 0; i < this.codePanelRowData.length; i++) {
+          if (this.codePanelRowData[i].nodeIdHashed === nodeIdHashed && this.codePanelRowData[i].type === CodePanelRowDatatype.CommentThread) {
+            this.codePanelRowData[i].showReplyTextBox = false;
+            break;
+          }
+        }
+      }
     }
   }
 

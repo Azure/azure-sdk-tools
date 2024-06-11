@@ -92,6 +92,7 @@ export class CodePanelRowData {
   @Expose({ name: 'tcc' }) toggleCommentsClasses: string = '';
   @Expose({ name: 'd' }) @Type(() => CodeDiagnostic) diagnostics: CodeDiagnostic = new CodeDiagnostic();
   @Expose({ name: 'c' }) @Type(() => CommentItemModel) comments: CommentItemModel[] = [];
+  showReplyTextBox: boolean = false;
 }
 
 export class NavigationTreeNodeData {

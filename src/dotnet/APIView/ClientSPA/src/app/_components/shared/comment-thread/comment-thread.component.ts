@@ -1,8 +1,9 @@
-import { Component, ElementRef, Injector, Input, QueryList, Renderer2, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Injector, Input, Output, QueryList, Renderer2, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
 import { MenuItem, MenuItemCommandEvent } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { UserProfile } from 'src/app/_models/auth_service_models';
 import { CommentItemModel } from 'src/app/_models/review';
+import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
 
@@ -15,7 +16,11 @@ import { environment } from 'src/environments/environment';
   },
 })
 export class CommentThreadComponent {
+  @Input() nodeIdHashed : string = '';
   @Input() comments: CommentItemModel[] | undefined = [];
+  @Input() showReplyTextBox: boolean = false;
+  @Output() cancelCommentActionEmitter : EventEmitter<string> = new EventEmitter<string>();
+
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   
   userProfile : UserProfile | undefined;
@@ -24,7 +29,7 @@ export class CommentThreadComponent {
   menuItemAllUsers: MenuItem[] = [];
   menuItemsLoggedInUsers: MenuItem[] = [];
 
-  constructor(private userProfileService: UserProfileService) { }
+  constructor(private userProfileService: UserProfileService, private commentsService: CommentsService) { }
 
   ngOnInit(): void {
     this.userProfileService.getUserProfile().subscribe(
@@ -78,7 +83,7 @@ export class CommentThreadComponent {
   getCommentActionMenuContent(commentId: string) {
     const comment = this.comments?.find(comment => comment.id === commentId);
     const menu : MenuItem[] = [];
-    if (true) { //(comment && this.userProfile?.userName === comment.createdBy)) {
+    if (comment && this.userProfile?.userName === comment.createdBy) {
       menu.push(...this.menuItemsLoggedInUsers);
     }
     menu.push(...this.menuItemAllUsers);
@@ -120,20 +125,41 @@ export class CommentThreadComponent {
   }
 
   showReplyEditor(event: Event) {
-    const target = event.target as Element;
-    const replyButtonContainer = target.closest(".reply-button-container") as Element;
-    const replyEditorContainer = (replyButtonContainer.parentElement as Element).previousSibling as Element;
-    replyButtonContainer.classList.add("d-none");
-    replyEditorContainer.classList.remove("d-none");
+    this.showReplyTextBox = true;
   }
 
   showEditEditor = (event: MenuItemCommandEvent) => {
     const target = (event.originalEvent?.target as Element).closest("a") as Element;
     const commentId = target.getAttribute("data-item-id");
-    const commentPanel = document.querySelector(`p-panel[data-comment-id="${commentId}"]`) as Element;
-    const renderedCommentContent = commentPanel.querySelector(".rendered-comment-content") as Element;
-    const editEditor = commentPanel.querySelector(".edit-editor-container") as Element;
-    renderedCommentContent.classList.add("d-none");
-    editEditor.classList.remove("d-none");
+    this.comments!.find(comment => comment.id === commentId)!.isInEditMode = true;
+  }
+
+  cancelCommentAction(event: Event) {
+    const target = event.target as Element;
+    const replyEditorContainer = target.closest(".reply-editor-container") as Element;
+    if (replyEditorContainer) {
+      this.showReplyTextBox = false;
+      this.cancelCommentActionEmitter.emit(this.nodeIdHashed);
+    } else {
+      const panel = target.closest("p-panel") as Element;
+      const commentId = panel.getAttribute("data-comment-id");
+      this.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
+    }
+  }
+
+  saveCommentAction(event: Event) {
+    const target = event.target as Element;
+    const replyEditorContainer = target.closest(".reply-editor-container") as Element;
+    if (replyEditorContainer) {
+      this.showReplyTextBox = false;
+    } else {
+      const panel = target.closest("p-panel") as Element;
+      const commentId = panel.getAttribute("data-comment-id");
+
+
+
+      
+      this.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
+    }
   }
 }

@@ -59,4 +59,5 @@ export class CommentItemModel {
   createdOn: string = '';
   lastEditedOn: string | null = null;
   isDeleted: boolean = false;
+  isInEditMode: boolean = false;
 }

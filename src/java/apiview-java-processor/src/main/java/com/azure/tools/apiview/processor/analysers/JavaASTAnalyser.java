@@ -353,31 +353,6 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void possiblyAddNavigationLink(Token token, Node node) {
-//        // look in our set of scanElements for the typeDeclaration, and if we find it,
-//        // we can add a link to it on the given token
-//        final String nodeFullyQualifiedName = getNodeFullyQualifiedName(node);
-//
-////        // we do not need to add the NavigateToId to the token, if the token represents the current node
-////        if (nodeFullyQualifiedName.equals(token.getId())) {
-////            return;
-////        }
-//
-//        // Check if the node is a reference to a type, not a type declaration itself
-//        if (node instanceof ClassOrInterfaceType) {
-//            scanElements.stream()
-//                    .filter(scanElement -> scanElement.elementType == ScanElementType.CLASS)
-//                    .map(scanElement -> (ScanClass) scanElement)
-//                    .filter(scanClass -> scanClass.fullyQualifiedName.equals(getNodeFullyQualifiedName(node)))
-//                    .findFirst()
-//                    .ifPresentOrElse(scanClass -> {
-////                        System.out.println(" + Found class for " + nodeFullyQualifiedName);
-//                        token.addProperty(PROPERTY_NAVIGATE_TO_ID, makeId(node));
-////                    System.out.println("Adding navigation link for " + nodeFullyQualifiedName + " to " + token);
-//                    }, () -> {
-////                    System.out.println(" - Could not find class for " + nodeFullyQualifiedName);
-//                    });
-//        }
-
         if (node instanceof ClassOrInterfaceType classOrInterfaceType) {
             String shortName = classOrInterfaceType.getNameAsString();
 
@@ -387,17 +362,6 @@ public class JavaASTAnalyser implements Analyser {
                 // when we defined the token that we want to link to
                 String fullyQualifiedName = shortClassNameToFullyQualfiedNameMap.get(shortName);
                 token.addProperty(PROPERTY_NAVIGATE_TO_ID, fullyQualifiedName);
-
-                // Look in our set of scanElements for the typeDeclaration
-//                scanElements.stream()
-//                        .filter(scanElement -> scanElement.elementType == ScanElementType.CLASS)
-//                        .map(scanElement -> (ScanClass) scanElement)
-//                        .filter(scanClass -> scanClass.fullyQualifiedName.equals(fullyQualifiedName))
-//                        .findFirst()
-//                        .ifPresent(scanClass -> {
-//                            // If we find it, add a link to it on the given token
-//                            token.addProperty(PROPERTY_NAVIGATE_TO_ID, fullyQualifiedName);
-//                        });
             }
         }
     }

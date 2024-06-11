@@ -310,7 +310,6 @@ public final class ASTUtils {
 
         // otherwise there are more rules we want to consider...
         final boolean isInterfaceType = isInterfaceType(type);
-//        final boolean isNestedType = type.isNestedType();
 
         if (parentNode instanceof ClassOrInterfaceDeclaration parentClass) {
             boolean isInPublicParent = isPublicOrProtected(parentClass.getAccessSpecifier());
@@ -420,25 +419,8 @@ public final class ASTUtils {
             return getNodeFullyQualifiedName(node.getParentNode().orElse(null)) + "." + nodeWithSimpleName.getNameAsString();
         }
 
-        if (node instanceof ArrayType arrayType) {
-//            if (arrayType.getComponentType() instanceof ClassOrInterfaceType classOrInterfaceType) {
-//                return classOrInterfaceType.getNameAsString() + "[]";
-//            } else {
-//                throw new IllegalArgumentException("Unsupported component type for ArrayType: " + arrayType.getComponentType().getClass().getName());
-//            }
-            return ""; // FIXME
-        }
-
         if (node instanceof SimpleName simpleName) {
             return simpleName.getIdentifier();
-        }
-
-        if (node instanceof WildcardType wildcardType) {
-//            StringBuilder sb = new StringBuilder("?");
-//            wildcardType.getExtendedType().ifPresent(extendedType -> sb.append(" extends ").append(getNodeFullyQualifiedName(extendedType)));
-//            wildcardType.getSuperType().ifPresent(superType -> sb.append(" super ").append(getNodeFullyQualifiedName(superType)));
-//            return sb.toString();
-            return ""; // FIXME
         }
 
         if (node instanceof PrimitiveType pt) {

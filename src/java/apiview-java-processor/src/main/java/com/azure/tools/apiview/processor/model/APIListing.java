@@ -24,8 +24,6 @@ public class APIListing implements JsonSerializable<APIListing> {
     private final List<Diagnostic> diagnostics;
     private final Map<String, String> knownTypes;
 
-    // a map of package names to a list of types within that package
-//    private final Map<String, List<String>> packageNamesToTypesMap;
     private final Map<String, String> typeToPackageNameMap;
     private Pom mavenPom;
     private ApiViewProperties apiViewProperties;
@@ -33,7 +31,6 @@ public class APIListing implements JsonSerializable<APIListing> {
     public APIListing() {
         this.diagnostics = new ArrayList<>();
         this.knownTypes = new HashMap<>();
-//        this.packageNamesToTypesMap = new HashMap<>();
         this.typeToPackageNameMap = new HashMap<>();
         this.apiForest = new ArrayList<>();
         this.apiViewProperties = new ApiViewProperties();
@@ -105,10 +102,6 @@ public class APIListing implements JsonSerializable<APIListing> {
 //        packageNamesToTypesMap.computeIfAbsent(packageName, name -> new ArrayList<>()).add(typeName);
         typeToPackageNameMap.put(typeName, packageName);
     }
-
-//    public Map<String, List<String>> getPackageNamesToTypesMap() {
-//        return packageNamesToTypesMap;
-//    }
 
     public Map<String, String> getTypeToPackageNameMap() {
         return typeToPackageNameMap;

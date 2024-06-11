@@ -55,10 +55,6 @@ public class Token implements JsonSerializable<Token> {
         return structuredTokenKind;
     }
 
-//    public String getValue() {
-//        return value;
-//    }
-
     public Token addValue(String value) {
         this.value.add(value);
         return this;

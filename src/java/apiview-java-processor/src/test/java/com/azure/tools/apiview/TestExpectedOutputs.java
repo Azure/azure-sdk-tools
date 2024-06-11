@@ -27,8 +27,8 @@ public class TestExpectedOutputs {
         // for the file in the inputs directory. To prevent clogging up the repository with source jars, it is
         // preferable to download the source jars from known-good places.
         return Stream.of(
-//                ""
-            "https://repo1.maven.org/maven2/com/azure/azure-core/1.48.0/azure-core-1.48.0-sources.jar"
+                ""
+//            "https://repo1.maven.org/maven2/com/azure/azure-core/1.48.0/azure-core-1.48.0-sources.jar"
 //                "https://repo1.maven.org/maven2/com/azure/azure-communication-chat/1.5.0/azure-communication-chat-1.5.0-sources.jar",
 //                "https://repo1.maven.org/maven2/com/azure/azure-security-keyvault-keys/4.8.2/azure-security-keyvault-keys-4.8.2-sources.jar",
 //                "https://repo1.maven.org/maven2/com/azure/azure-data-appconfiguration/1.6.0/azure-data-appconfiguration-1.6.0-sources.jar",

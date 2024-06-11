@@ -1,11 +1,3 @@
-parameters:
-  - name: Version
-    type: string
-    default: 'staging'
-    values:
-      - 'prod'
-      - 'staging'
-
 trigger:
   branches:
     include:
@@ -287,53 +279,11 @@ extends:
           #         mergeTestResults: true
 
       - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal'))}}:
-        - stage: Publish
-          displayName: Publish
+        - stage: Staging_Publish
+          displayName: Pre-Prod
           dependsOn: Build
 
           jobs:
-          - ${{ if eq(parameters.Version, 'prod') }}:
-            - deployment: Publish_to_Prod
-              displayName: Publish to Pod
-              environment: 'package-publish'
-              pool:
-                name: azsdk-pool-mms-ubuntu-2004-general
-                image: azsdk-pool-mms-ubuntu-2004-1espt
-                os: linux
-
-              strategy:
-                runOnce:
-                  deploy:
-                    steps:
-                    - checkout: self
-
-                    - download: current
-                      artifact: APIView
-                      timeoutInMinutes: 5
-
-                    - task: AzureRmWebAppDeployment@4
-                      displayName: 'Deploy Azure App Service'
-                      inputs:
-                        azureSubscription: 'APIView prod deployment'
-                        appType: 'webApp'
-                        WebAppName: 'APIView'
-                        deployToSlotOrASE: true
-                        ResourceGroupName: apiview
-                        SlotName: staging
-                        ScriptType: 'Inline Script'
-                        packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
-                        InlineScript: |
-                          @echo off
-                          echo Installing npm packages
-                          call npm install --prefix D:\home\site\wwwroot --force
-                          call npm run-script build --prefix D:\home\site\wwwroot --force
-                          call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
-                          call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.3 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
-                        enableCustomDeployment: true
-                        DeploymentType: zipDeploy
-
-
-          - ${{ if eq(parameters.Version, 'staging') }}:
             - deployment: Publish_to_Staging
               displayName: Publish to Staging
               environment: 'package-publish'
@@ -377,7 +327,11 @@ extends:
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
 
-          - ${{ if eq(parameters.Version, 'staging') }}:
+        - stage: Test_UI_Publish
+          displayName: Publish Test UI
+          dependsOn: Build
+
+          jobs:
             - deployment: Publish_Test_UI
               displayName: Publish Test UI
               environment: 'package-publish'
@@ -402,3 +356,47 @@ extends:
                         azureSubscription: 'APIViewUI-Instance-deployment-connection'
                         WebAppName: apiviewuat
                         packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
+
+        - stage: Production_Publish
+          displayName: Prod
+          dependsOn: Staging_Publish
+
+          jobs:
+            - deployment: Publish_to_Prod
+              displayName: Publish to Prod
+              environment: 'package-publish'
+              pool:
+                name: azsdk-pool-mms-ubuntu-2004-general
+                image: azsdk-pool-mms-ubuntu-2004-1espt
+                os: linux
+
+              strategy:
+                runOnce:
+                  deploy:
+                    steps:
+                    - checkout: self
+
+                    - download: current
+                      artifact: APIView
+                      timeoutInMinutes: 5
+
+                    - task: AzureRmWebAppDeployment@4
+                      displayName: 'Deploy Azure App Service'
+                      inputs:
+                        azureSubscription: 'APIView prod deployment'
+                        appType: 'webApp'
+                        WebAppName: 'APIView'
+                        deployToSlotOrASE: true
+                        ResourceGroupName: apiview
+                        SlotName: staging
+                        ScriptType: 'Inline Script'
+                        packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
+                        InlineScript: |
+                          @echo off
+                          echo Installing npm packages
+                          call npm install --prefix D:\home\site\wwwroot --force
+                          call npm run-script build --prefix D:\home\site\wwwroot --force
+                          call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
+                          call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.3 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+                        enableCustomDeployment: true
+                        DeploymentType: zipDeploy

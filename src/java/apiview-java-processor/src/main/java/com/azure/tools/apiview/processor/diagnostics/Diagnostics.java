@@ -87,6 +87,7 @@ public class Diagnostics {
         rules.add(new ServiceVersionDiagnosticRule());
         rules.add(new ExpandableEnumDiagnosticRule("ExpandableStringEnum"));
         rules.add(new MavenPackageAndDescriptionDiagnosticRule());
+        rules.add(new MissingEqualsAndHashCodeDiagnosticRule("(.+\\.)?models(\\..+)?"));
 
         // common APIs for all builders (below we will do rules for http or amqp builders)
         rules.add(new RequiredBuilderMethodsDiagnosticRule(null)
@@ -114,6 +115,7 @@ public class Diagnostics {
         rules.add(new MissingAnnotationsDiagnosticRule(GENERIC.getPackagePrefix()));
         rules.add(new ClientCoreFluentSetterReturnTypeDiagnosticRule());
         rules.add(new ExpandableEnumDiagnosticRule("ExpandableEnum"));
+        rules.add(new MissingEqualsAndHashCodeDiagnosticRule("(.+\\.)?models(\\..+)?"));
 
         // common APIs for all builders (below we will do rules for http or amqp builders)
         rules.add(new RequiredBuilderMethodsDiagnosticRule(null)

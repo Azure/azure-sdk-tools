@@ -10,8 +10,14 @@ import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
+import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
+import com.github.javaparser.ast.type.ArrayType;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.PrimitiveType;
+import com.github.javaparser.ast.type.WildcardType;
 
 import java.util.Collections;
 import java.util.List;
@@ -183,21 +189,16 @@ public final class ASTUtils {
         return makeId(cu.getPrimaryType().get());
     }
 
-    public static String makeId(BodyDeclaration<?> bodyDeclaration) {
+    public static String makeId(Node node) {
         // switch based on known subtypes
-        if (bodyDeclaration instanceof TypeDeclaration<?>) {
-            return makeId((TypeDeclaration<?>) bodyDeclaration);
-        } else if (bodyDeclaration instanceof AnnotationMemberDeclaration) {
-            return makeId((AnnotationMemberDeclaration) bodyDeclaration);
-        } else if (bodyDeclaration instanceof CallableDeclaration<?>) {
-            return makeId((CallableDeclaration<?>) bodyDeclaration);
-        } else if (bodyDeclaration instanceof FieldDeclaration) {
-            return makeId((FieldDeclaration) bodyDeclaration);
-        } else if (bodyDeclaration instanceof EnumConstantDeclaration) {
-            return makeId((EnumConstantDeclaration) bodyDeclaration);
-        } else {
-            return makeId(bodyDeclaration.toString());
-        }
+        return switch (node) {
+            case TypeDeclaration<?> td -> makeId(td);
+            case AnnotationMemberDeclaration amd -> makeId(amd);
+            case CallableDeclaration<?> cd -> makeId(cd);
+            case FieldDeclaration fd -> makeId(fd);
+            case EnumConstantDeclaration ecd -> makeId(ecd);
+            case null, default -> makeId(node.toString());
+        };
     }
 
     public static String makeId(TypeDeclaration<?> typeDeclaration) {
@@ -378,22 +379,73 @@ public final class ASTUtils {
 
     public static String getNodeFullyQualifiedName(Node node) {
         if (node == null) {
-            return "";
+            throw new NullPointerException("node cannot be null");
+        }
+
+        if (node instanceof CompilationUnit cu) {
+            String packageName = cu.getPackageDeclaration()
+                    .map(PackageDeclaration::getNameAsString)
+                    .orElse("");
+            String typeName = cu.getPrimaryType()
+                    .map(NodeWithSimpleName::getNameAsString)
+                    .orElse("");
+            return packageName.isEmpty() ? typeName : packageName + "." + typeName;
         }
 
         if (node instanceof TypeDeclaration<?> type) {
-            return type.getFullyQualifiedName().get();
-        } else if (node instanceof CallableDeclaration<?> callableDeclaration) {
-            String fqn = getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
-
-            if (callableDeclaration.isConstructorDeclaration()) {
-                fqn += ".ctor";
-            }
-
-            return fqn;
-        } else {
-            return "";
+            return type.getFullyQualifiedName().orElse("");
         }
+
+        if (node instanceof CallableDeclaration<?> callableDeclaration) {
+            return getNodeFullyQualifiedName(callableDeclaration.getParentNode().orElse(null)) + "." + callableDeclaration.getSignature();
+        }
+
+        if (node instanceof FieldDeclaration fieldDeclaration) {
+            return getNodeFullyQualifiedName(fieldDeclaration.getParentNode().orElse(null)) + "." + fieldDeclaration.getVariables().get(0).getNameAsString();
+        }
+
+        if (node instanceof EnumConstantDeclaration enumConstantDeclaration) {
+            return getNodeFullyQualifiedName(enumConstantDeclaration.getParentNode().orElse(null)) + "." + enumConstantDeclaration.getNameAsString();
+        }
+
+        if (node instanceof ClassOrInterfaceType classOrInterfaceType) {
+            if (classOrInterfaceType.getScope().isPresent()) {
+                return getNodeFullyQualifiedName(classOrInterfaceType.getScope().get()) + "." + classOrInterfaceType.getNameAsString();
+            } else {
+                return classOrInterfaceType.getNameAsString();
+            }
+        }
+
+        if (node instanceof NodeWithSimpleName<?> nodeWithSimpleName) {
+            return getNodeFullyQualifiedName(node.getParentNode().orElse(null)) + "." + nodeWithSimpleName.getNameAsString();
+        }
+
+        if (node instanceof ArrayType arrayType) {
+//            if (arrayType.getComponentType() instanceof ClassOrInterfaceType classOrInterfaceType) {
+//                return classOrInterfaceType.getNameAsString() + "[]";
+//            } else {
+//                throw new IllegalArgumentException("Unsupported component type for ArrayType: " + arrayType.getComponentType().getClass().getName());
+//            }
+            return ""; // FIXME
+        }
+
+        if (node instanceof SimpleName simpleName) {
+            return simpleName.getIdentifier();
+        }
+
+        if (node instanceof WildcardType wildcardType) {
+//            StringBuilder sb = new StringBuilder("?");
+//            wildcardType.getExtendedType().ifPresent(extendedType -> sb.append(" extends ").append(getNodeFullyQualifiedName(extendedType)));
+//            wildcardType.getSuperType().ifPresent(superType -> sb.append(" super ").append(getNodeFullyQualifiedName(superType)));
+//            return sb.toString();
+            return ""; // FIXME
+        }
+
+        if (node instanceof PrimitiveType pt) {
+            return pt.toString();
+        }
+
+        throw new IllegalArgumentException("Unsupported node type: " + node.getClass().getName());
     }
 
     private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {

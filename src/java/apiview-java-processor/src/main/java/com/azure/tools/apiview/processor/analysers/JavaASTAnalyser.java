@@ -1,6 +1,7 @@
 package com.azure.tools.apiview.processor.analysers;
 
 import com.azure.tools.apiview.processor.analysers.models.*;
+import com.azure.tools.apiview.processor.analysers.util.APIListingValidator;
 import com.azure.tools.apiview.processor.analysers.util.MiscUtils;
 import com.azure.tools.apiview.processor.diagnostics.Diagnostics;
 import com.azure.tools.apiview.processor.model.*;
@@ -35,6 +36,7 @@ import java.util.stream.Stream;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.*;
 import static com.azure.tools.apiview.processor.analysers.util.MiscUtils.upperCase;
 import static com.azure.tools.apiview.processor.model.TokenKind.*;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
 
 public class JavaASTAnalyser implements Analyser {
 
@@ -43,15 +45,10 @@ public class JavaASTAnalyser implements Analyser {
      * Constants
      *
      **********************************************************************************************/
-    public static final String PROPERTY_MODULE_NAME = "module-name";
-    public static final String PROPERTY_MODULE_EXPORTS = "module-exports";
-    public static final String PROPERTY_MODULE_REQUIRES = "module-requires";
-    public static final String PROPERTY_MODULE_OPENS = "module-opens";
+
 
     public static final String MAVEN_KEY = "Maven";
     public static final String MODULE_INFO_KEY = "module-info";
-
-    private static final String RENDER_CLASS_DEPRECATED = "deprecated";
 
     private static final Map<String, AnnotationRule> ANNOTATION_RULE_MAP;
     private static final JavaParserAdapter JAVA_8_PARSER;
@@ -64,15 +61,15 @@ public class JavaASTAnalyser implements Analyser {
          annotation in the code.
          */
         ANNOTATION_RULE_MAP = new HashMap<>();
-        ANNOTATION_RULE_MAP.put("ServiceMethod", new AnnotationRule().setHidden(true));
-        ANNOTATION_RULE_MAP.put("SuppressWarnings", new AnnotationRule().setHidden(true));
+        ANNOTATION_RULE_MAP.put(ANNOTATION_SERVICE_METHOD, new AnnotationRule().setHidden(true));
+        ANNOTATION_RULE_MAP.put(ANNOTATION_SUPPRESS_WARNINGS, new AnnotationRule().setHidden(true));
 
         // Retention and Target annotations are always useful to see fully-expanded
-        ANNOTATION_RULE_MAP.put("Retention", new AnnotationRule().setShowOnNewline(true).setShowProperties(true));
-        ANNOTATION_RULE_MAP.put("Target", new AnnotationRule().setShowOnNewline(true).setShowProperties(true));
+        ANNOTATION_RULE_MAP.put(ANNOTATION_RETENTION, new AnnotationRule().setShowOnNewline(true).setShowProperties(true));
+        ANNOTATION_RULE_MAP.put(ANNOTATION_TARGET, new AnnotationRule().setShowOnNewline(true).setShowProperties(true));
 
         // we always want @Metadata annotations to be fully expanded, but in a condensed form
-        ANNOTATION_RULE_MAP.put("Metadata", new AnnotationRule().setShowProperties(true).setCondensed(true));
+        ANNOTATION_RULE_MAP.put(ANNOTATION_METADATA, new AnnotationRule().setShowProperties(true).setCondensed(true));
 
         // Configure JavaParser to use type resolution
         JAVA_8_PARSER = JavaParserAdapter.of(new JavaParser(new ParserConfiguration()
@@ -99,6 +96,10 @@ public class JavaASTAnalyser implements Analyser {
     private final TreeNode libraryRootNode;
     private TreeNode rootPackageNode;
 
+    // a set of all elements discovered before we begin processing them
+    private Set<ScanElement> scanElements;
+
+    private final Map<String,String> shortClassNameToFullyQualfiedNameMap = new HashMap<>();
 
     /************************************************************************************************
      *
@@ -131,17 +132,28 @@ public class JavaASTAnalyser implements Analyser {
          * Then build a map of all known types and package names and a map of package names to navigation items.
          * Finally, tokenize each file.
          */
-        allFiles.stream()
+        scanElements = allFiles.stream()
             .filter(this::filterFilePaths)
             .map(this::scanForTypes)
             .filter(Optional::isPresent)
             .map(Optional::get)
+            .collect(Collectors.toSet());
+
+        scanElements.stream()
+            .filter(scanElement -> scanElement.elementType == ScanElementType.CLASS)
+            .map(scanElement -> (ScanClass) scanElement)
+            .forEach(scanClass -> shortClassNameToFullyQualfiedNameMap.put(scanClass.primaryTypeName, scanClass.fullyQualifiedName));
+
+        scanElements.stream()
             .collect(Collectors.groupingBy(e -> e.packageName, TreeMap::new, Collectors.toList()))
             .forEach(this::processPackage);
 
         // we conclude by doing a final pass over all diagnostics to enable them to do any final analysis based on
         // the already-executed individual scans
         diagnostic.scanFinal(apiListing);
+
+        // validate the model
+        APIListingValidator.validate(apiListing);
     }
 
 
@@ -153,6 +165,7 @@ public class JavaASTAnalyser implements Analyser {
      **********************************************************************************************/
 
     private enum ScanElementType {
+        MODULE_INFO,
         CLASS,
         PACKAGE,
         POM;
@@ -182,10 +195,12 @@ public class JavaASTAnalyser implements Analyser {
     // together all useful properties that were identified so that they can form part of the analysis.
     private static class ScanClass extends ScanElement {
         final String primaryTypeName;
+        final String fullyQualifiedName;
 
         public ScanClass(Path path, CompilationUnit compilationUnit) {
             super(path, compilationUnit, ScanElementType.CLASS);
             this.primaryTypeName = compilationUnit != null ? compilationUnit.getPrimaryTypeName().orElse("") : "";
+            this.fullyQualifiedName = getNodeFullyQualifiedName(compilationUnit);
         }
     }
 
@@ -215,7 +230,9 @@ public class JavaASTAnalyser implements Analyser {
             return Optional.of(new ScanElement(path, null, ScanElementType.POM));
         }
         try {
-            CompilationUnit compilationUnit = path.endsWith("module-info.java")
+            boolean isModuleInfo = path.endsWith("module-info.java");
+
+            CompilationUnit compilationUnit = isModuleInfo
                 ? JAVA_11_PARSER.parse(Files.newBufferedReader(path))
                 : JAVA_8_PARSER.parse(Files.newBufferedReader(path));
 
@@ -227,7 +244,9 @@ public class JavaASTAnalyser implements Analyser {
                     .forEach(name -> name.getQualifier().ifPresent(packageName ->
                             apiListing.addPackageTypeMapping(packageName.toString(), name.getIdentifier())));
 
-            if (path.endsWith("package-info.java")) {
+            if (isModuleInfo) {
+                return Optional.of(new ScanElement(path, compilationUnit, ScanElementType.MODULE_INFO));
+            } else if (path.endsWith("package-info.java")) {
                 return Optional.of(new ScanElement(path, compilationUnit, ScanElementType.PACKAGE));
             } else {
                 return Optional.of(new ScanClass(path, compilationUnit));
@@ -328,8 +347,58 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void possiblyDeprecate(Token token, NodeWithAnnotations<?> n) {
-        if (n.isAnnotationPresent("Deprecated")) {
-            token.addRenderClass(RENDER_CLASS_DEPRECATED);
+        if (n.isAnnotationPresent(ANNOTATION_DEPRECATED)) {
+            token.addRenderClass(RenderClass.DEPRECATED);
+        }
+    }
+
+    private void possiblyAddNavigationLink(Token token, Node node) {
+//        // look in our set of scanElements for the typeDeclaration, and if we find it,
+//        // we can add a link to it on the given token
+//        final String nodeFullyQualifiedName = getNodeFullyQualifiedName(node);
+//
+////        // we do not need to add the NavigateToId to the token, if the token represents the current node
+////        if (nodeFullyQualifiedName.equals(token.getId())) {
+////            return;
+////        }
+//
+//        // Check if the node is a reference to a type, not a type declaration itself
+//        if (node instanceof ClassOrInterfaceType) {
+//            scanElements.stream()
+//                    .filter(scanElement -> scanElement.elementType == ScanElementType.CLASS)
+//                    .map(scanElement -> (ScanClass) scanElement)
+//                    .filter(scanClass -> scanClass.fullyQualifiedName.equals(getNodeFullyQualifiedName(node)))
+//                    .findFirst()
+//                    .ifPresentOrElse(scanClass -> {
+////                        System.out.println(" + Found class for " + nodeFullyQualifiedName);
+//                        token.addProperty(PROPERTY_NAVIGATE_TO_ID, makeId(node));
+////                    System.out.println("Adding navigation link for " + nodeFullyQualifiedName + " to " + token);
+//                    }, () -> {
+////                    System.out.println(" - Could not find class for " + nodeFullyQualifiedName);
+//                    });
+//        }
+
+        if (node instanceof ClassOrInterfaceType classOrInterfaceType) {
+            String shortName = classOrInterfaceType.getNameAsString();
+
+            // Check if the short name exists in the map
+            if (shortClassNameToFullyQualfiedNameMap.containsKey(shortName)) {
+                // If it does, get the fully qualified name from the map. This is also the ID we should have used
+                // when we defined the token that we want to link to
+                String fullyQualifiedName = shortClassNameToFullyQualfiedNameMap.get(shortName);
+                token.addProperty(PROPERTY_NAVIGATE_TO_ID, fullyQualifiedName);
+
+                // Look in our set of scanElements for the typeDeclaration
+//                scanElements.stream()
+//                        .filter(scanElement -> scanElement.elementType == ScanElementType.CLASS)
+//                        .map(scanElement -> (ScanClass) scanElement)
+//                        .filter(scanClass -> scanClass.fullyQualifiedName.equals(fullyQualifiedName))
+//                        .findFirst()
+//                        .ifPresent(scanClass -> {
+//                            // If we find it, add a link to it on the given token
+//                            token.addProperty(PROPERTY_NAVIGATE_TO_ID, fullyQualifiedName);
+//                        });
+            }
         }
     }
 
@@ -344,19 +413,19 @@ public class JavaASTAnalyser implements Analyser {
     private void tokeniseMavenPom(Pom mavenPom) {
         TreeNode mavenNode = addChild(rootPackageNode, MAVEN_KEY, MAVEN_KEY, TreeNodeKind.MAVEN);
 
-        mavenNode.addTopToken(TokenKind.MAVEN_KEY, "maven", MAVEN_KEY).addSpace()
+        mavenNode.addTag(TAG_SKIP_DIFF)
+                .addTopToken(TokenKind.MAVEN_KEY, "maven").addSpace()
                 .addTopToken(PUNCTUATION, "{")
                 .addBottomToken(PUNCTUATION, "}");
 
-//            addToken(new Token(SKIP_DIFF_START));
         // parent
         String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
                 + mavenPom.getParent().getVersion();
-        tokeniseKeyValue(mavenNode, "parent", gavStr, "");
+        tokeniseMavenKeyValue(mavenNode, "parent", gavStr);
 
         // properties
         gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
-        tokeniseKeyValue(mavenNode, "properties", gavStr, "");
+        tokeniseMavenKeyValue(mavenNode, "properties", gavStr);
 
         // configuration
         boolean showJacoco = mavenPom.getJacocoMinLineCoverage() != null
@@ -372,7 +441,7 @@ public class JavaASTAnalyser implements Analyser {
                     .addBottomToken(PUNCTUATION, "}");
 
             if (showCheckStyle) {
-                tokeniseKeyValue(configurationNode, "checkstyle-excludes", mavenPom.getCheckstyleExcludes(), "");
+                tokeniseMavenKeyValue(configurationNode, "checkstyle-excludes", mavenPom.getCheckstyleExcludes());
             }
             if (showJacoco) {
                 TreeNode jacocoNode = addChild(configurationNode, "jacoco", "jacoco", TreeNodeKind.MAVEN);
@@ -380,16 +449,16 @@ public class JavaASTAnalyser implements Analyser {
                         .hideFromNavigation().addSpace()
                         .addTopToken(PUNCTUATION, "{");
 
-                tokeniseKeyValue(jacocoNode, "min-line-coverage", mavenPom.getJacocoMinLineCoverage(), "jacoco");
-                tokeniseKeyValue(jacocoNode, "min-branch-coverage", mavenPom.getJacocoMinBranchCoverage(), "jacoco");
+                tokeniseMavenKeyValue(jacocoNode, "min-line-coverage", mavenPom.getJacocoMinLineCoverage());
+                tokeniseMavenKeyValue(jacocoNode, "min-branch-coverage", mavenPom.getJacocoMinBranchCoverage());
             }
         }
 
         // Maven name
-        tokeniseKeyValue(mavenNode, "name", mavenPom.getName(), "");
+        tokeniseMavenKeyValue(mavenNode, "name", mavenPom.getName());
 
         // Maven description
-        tokeniseKeyValue(mavenNode, "description", mavenPom.getDescription(), "");
+        tokeniseMavenKeyValue(mavenNode, "description", mavenPom.getDescription());
 
         // dependencies
         TreeNode dependenciesNode = addChild(mavenNode,"dependencies", "dependencies", TreeNodeKind.MAVEN);
@@ -409,24 +478,31 @@ public class JavaASTAnalyser implements Analyser {
                     }
                     String scope = k.isEmpty() ? "compile" : k;
 
-                    dependenciesNode.addChild(new TreeNode(scope, scope, TreeNodeKind.MAVEN)
-                            .addTopToken(COMMENT, "// " + scope + " scope"));
+//                    dependenciesNode.addChild(new TreeNode(scope, scope, TreeNodeKind.MAVEN)
+//                            .addTopToken(COMMENT, "// " + scope + " scope"));
+                    dependenciesNode.addNewline()
+                            .addTopToken(COMMENT, "// " + scope + " scope");
 
                     for (Dependency d : v) {
                         String gav = d.getGroupId() + ":" + d.getArtifactId() + ":" + d.getVersion();
-                        dependenciesNode.addChild(new TreeNode(gav, gav, TreeNodeKind.MAVEN)
-                                .addTopToken(MAVEN_DEPENDENCY, gav, gav));
+//                        dependenciesNode.addChild(new TreeNode(gav, gav, TreeNodeKind.MAVEN)
+//                                .addTopToken(MAVEN_DEPENDENCY, gav, gav));
+                        dependenciesNode.addNewline()
+                                .addTopToken(MAVEN_DEPENDENCY, gav, gav);
                     }
                 });
-//
-//            addToken(new Token(SKIP_DIFF_END));
     }
 
-    private void tokeniseKeyValue(TreeNode parentNode, String key, Object value, String linkPrefix) {
-        parentNode.addChild(TreeNode.createHiddenNode()
-                .addTopToken(TokenKind.MAVEN_KEY, key)
+    private void tokeniseMavenKeyValue(TreeNode parentNode, String key, Object value) {
+//        parentNode.addChild(TreeNode.createHiddenNode()
+//                .addTopToken(TokenKind.MAVEN_KEY, key)
+//                .addTopToken(PUNCTUATION, ":").addSpace()
+//                .addTopToken(MiscUtils.tokeniseMavenKeyValue(key, value, linkPrefix)));
+        // add the key value as a new token on a newline
+        parentNode.addNewline()
+                .addTopToken(TokenKind.MAVEN_KEY, key).addSpace()
                 .addTopToken(PUNCTUATION, ":").addSpace()
-                .addTopToken(MiscUtils.tokeniseMavenKeyValue(key, value, linkPrefix)));
+                .addTopToken(MiscUtils.tokeniseMavenKeyValue(key, value));
     }
 
 
@@ -580,6 +656,7 @@ public class JavaASTAnalyser implements Analyser {
                     return;
                 }
 
+                // FIXME getKnownTypes is...icky
                 final String id = makeId(typeDeclaration);
                 definitionNode = new TreeNode(typeDeclaration.getNameAsString(), id, getTreeNodeKind(typeDeclaration));
                 apiListing.getKnownTypes().put(typeDeclaration.getFullyQualifiedName().orElse(""), id);
@@ -589,7 +666,7 @@ public class JavaASTAnalyser implements Analyser {
                     definitionNode = new TreeNode(fieldDeclaration.toString(), makeId(fieldDeclaration), TreeNodeKind.FIELD)
                             .hideFromNavigation();
             case CallableDeclaration<?> callableDeclaration ->
-                    definitionNode = new TreeNode(callableDeclaration.toString(), makeId(callableDeclaration), TreeNodeKind.METHOD)
+                    definitionNode = new TreeNode(callableDeclaration.getNameAsString(), makeId(callableDeclaration), TreeNodeKind.METHOD)
                             .hideFromNavigation();
             case null, default -> {
                 System.out.println("Unknown definition type: " + definition.getClass().getName());
@@ -615,10 +692,12 @@ public class JavaASTAnalyser implements Analyser {
         if (definition instanceof TypeDeclaration<?> typeDeclaration) {
             definitionNode.addTopToken(KEYWORD, kind.getTypeDeclarationString()).addSpace();
 
-            Token typeNameToken = new Token(TYPE_NAME, typeDeclaration.getNameAsString(), makeId(typeDeclaration));
+            // Note that it is not necessary to specify the ID here, as it is already specified on the TreeNode
+            Token typeNameToken = new Token(TYPE_NAME, typeDeclaration.getNameAsString());
+            possiblyAddNavigationLink(typeNameToken, typeDeclaration);
             possiblyDeprecate(typeNameToken, typeDeclaration);
 
-//            checkForCrossLanguageDefinitionId(typeNameToken, typeDeclaration);
+            checkForCrossLanguageDefinitionId(definitionNode, typeDeclaration);
             definitionNode.addTopToken(typeNameToken);
         }
 
@@ -627,11 +706,11 @@ public class JavaASTAnalyser implements Analyser {
             visitTypeParameters(d.getTypeParameters(), definitionNode);
         }
 
-        // Add type for definition
+        // Add type for definition - this is the return type for methods
         visitType(definition, definitionNode, RETURN_TYPE);
 
         if (definition instanceof FieldDeclaration fieldDeclaration) {
-            // For Fields - we add the field name and type
+            // For Fields - we add the field type and name
             visitDeclarationNameAndVariables(fieldDeclaration, definitionNode);
             definitionNode.addTopToken(PUNCTUATION, ";");
         } else if (definition instanceof CallableDeclaration<?> n) {
@@ -696,8 +775,8 @@ public class JavaASTAnalyser implements Analyser {
                 if (d.getMembers().isEmpty()) {
                     // we have an empty interface declaration, it is probably a marker interface and we will leave a
                     // comment to that effect
-                    definitionNode.addChild(TreeNode.createHiddenNode()
-                            .addTopToken(COMMENT, "// This interface does not declare any API."));
+                    definitionNode.addNewline()
+                            .addTopToken(COMMENT, "// This interface does not declare any API.");
                 }
             }
         }
@@ -721,9 +800,9 @@ public class JavaASTAnalyser implements Analyser {
             // create a unique id for enum constants by using the fully-qualified constant name
             // (package, enum name, and enum constant name)
             final String name = enumConstantDeclaration.getNameAsString();
-            final String definitionId = makeId(enumConstantDeclaration);
 
-            Token enumToken = new Token(ENUM_CONSTANT, name, definitionId);
+            // Note we do not place the id here, rather it goes on the treeNode
+            Token enumToken = new Token(ENUM_CONSTANT, name);
             enumConstantNode.addTopToken(enumToken);
             possiblyDeprecate(enumToken, enumConstantDeclaration);
 
@@ -748,26 +827,17 @@ public class JavaASTAnalyser implements Analyser {
         });
     }
 
-//
-//        /*
-//         * This method is used to add 'cross language definition id' to the token if it is defined in the
-//         * apiview_properties.json file. This is used most commonly in conjunction with TypeSpec-generated libraries,
-//         * so that we may review cross languages with some level of confidence that the types and methods are the same.
-//         */
-//        private void checkForCrossLanguageDefinitionId(Token typeNameToken, NodeWithSimpleName<?> node) {
-//            Optional<String> fqn;
-//            if (node instanceof TypeDeclaration) {
-//                fqn = ((TypeDeclaration<?>) node).getFullyQualifiedName();
-//            } else if (node instanceof CallableDeclaration) {
-//                fqn = Optional.of(getNodeFullyQualifiedName((CallableDeclaration<?>) node));
-//            } else {
-//                fqn = Optional.empty();
-//            }
-//
-//            fqn.flatMap(_fqn -> apiListing.getApiViewProperties().getCrossLanguageDefinitionId(_fqn))
-//               .ifPresent(typeNameToken::setCrossLanguageDefinitionId);
-//        }
-//
+    /*
+     * This method is used to add 'cross language definition id' to the token if it is defined in the
+     * apiview_properties.json file. This is used most commonly in conjunction with TypeSpec-generated libraries,
+     * so that we may review cross languages with some level of confidence that the types and methods are the same.
+     */
+    private void checkForCrossLanguageDefinitionId(TreeNode treeNode, Node node) {
+        final String fqn = getNodeFullyQualifiedName(node);
+        apiListing.getApiViewProperties().getCrossLanguageDefinitionId(fqn)
+            .ifPresent(crossLangId -> treeNode.addProperty(PROPERTY_CROSS_LANGUAGE_ID, crossLangId));
+    }
+
     private void visitAnnotationMember(AnnotationDeclaration annotationDeclaration, final TreeNode parentNode) {
         // Member methods in the annotation declaration
         NodeList<BodyDeclaration<?>> annotationDeclarationMembers = annotationDeclaration.getMembers();
@@ -788,7 +858,7 @@ public class JavaASTAnalyser implements Analyser {
             visitClassType(annotationMemberDeclaration.getType(), annotationMemberNode, RETURN_TYPE);
             annotationMemberNode.addSpace();
 
-            annotationMemberNode.addTopToken(METHOD_NAME, annotationMemberDeclaration.getNameAsString(), makeId(annotationMemberDeclaration));
+            annotationMemberNode.addTopToken(METHOD_NAME, annotationMemberDeclaration.getNameAsString());
             annotationMemberNode.addTopToken(PUNCTUATION, "()");
 
             // default value
@@ -842,8 +912,8 @@ public class JavaASTAnalyser implements Analyser {
                     return;
                 }
 
-                parentNode.addChild(TreeNode.createHiddenNode()
-                    .addTopToken(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'."));
+                parentNode.addNewline()
+                    .addTopToken(COMMENT, "// This class does not have any public constructors, and is not able to be instantiated using 'new'.");
                 return;
             }
         }
@@ -871,7 +941,8 @@ public class JavaASTAnalyser implements Analyser {
             .forEach((groupName, group) -> {
                 if (showGroupings && !group.isEmpty()) {
                     // we group inside the APIView each of the groups, so that we can visualise their operations more clearly
-                    parentNode.addChild(TreeNode.createHiddenNode().addTopToken(COMMENT, "// " + groupName + ":"));
+                    parentNode.addNewline()
+                            .addTopToken(COMMENT, "// " + groupName + ":");
                 }
                 group.forEach(callableDeclaration -> visitDefinition(callableDeclaration, parentNode));
             });
@@ -911,7 +982,7 @@ public class JavaASTAnalyser implements Analyser {
         if (variables.size() > 1) {
             for (int i = 0; i < variables.size(); i++) {
                 final VariableDeclarator variableDeclarator = variables.get(i);
-                Token token = new Token(FIELD_NAME, variableDeclarator.getNameAsString(), makeId(variableDeclarator));
+                Token token = new Token(FIELD_NAME, variableDeclarator.getNameAsString());
                 definitionNode.addTopToken(token);
                 possiblyDeprecate(token, fieldDeclaration);
 
@@ -921,7 +992,7 @@ public class JavaASTAnalyser implements Analyser {
             }
         } else if (variables.size() == 1) {
             final VariableDeclarator variableDeclarator = variables.get(0);
-            Token token = new Token(FIELD_NAME, variableDeclarator.getNameAsString(), makeId(variableDeclarator));
+            Token token = new Token(FIELD_NAME, variableDeclarator.getNameAsString());
             definitionNode.addTopToken(token);
             possiblyDeprecate(token, fieldDeclaration);
 
@@ -1075,7 +1146,6 @@ public class JavaASTAnalyser implements Analyser {
 
     private void renderAnnotation(AnnotationRendererModel m, TreeNode node) {
         final AnnotationExpr a = m.getAnnotation();
-//        List<Token> tokens = new ArrayList<>();
         node.addTopToken(ANNOTATION_NAME, "@" + a.getNameAsString());
         if (m.isShowProperties()) {
             if (a instanceof NormalAnnotationExpr d) {
@@ -1117,12 +1187,9 @@ public class JavaASTAnalyser implements Analyser {
     private void visitDeclarationNameAndParameters(CallableDeclaration<?> callableDeclaration,
                                                    NodeList<Parameter> parameters,
                                                    TreeNode node) {
-        // create an unique definition id
         String name = callableDeclaration.getNameAsString();
-        final String definitionId = makeId(callableDeclaration);
-
-        Token nameToken = new Token(METHOD_NAME, name, definitionId);
-//            checkForCrossLanguageDefinitionId(nameToken, callableDeclaration);
+        Token nameToken = new Token(METHOD_NAME, name);
+        checkForCrossLanguageDefinitionId(node, callableDeclaration);
         node.addTopToken(nameToken);
         possiblyDeprecate(nameToken, callableDeclaration);
 
@@ -1136,7 +1203,7 @@ public class JavaASTAnalyser implements Analyser {
                 node.addTopToken(PARAMETER_NAME, parameter.getNameAsString());
 
                 if (i < max - 1) {
-                    node.addTopToken(PUNCTUATION, ",").addSpace();
+                    node.addTopToken(PUNCTUATION, ",").addTopToken(PARAMETER_SEPARATOR, " ");
                 }
             }
         }
@@ -1180,7 +1247,6 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void visitGenericTypeParameter(TypeParameter typeParameter, TreeNode node) {
-        // set navigateToId
         node.addTopToken(new Token(TYPE_NAME, typeParameter.getNameAsString()));
 
         // get type bounds
@@ -1275,6 +1341,7 @@ public class JavaASTAnalyser implements Analyser {
                 final String typeName = node.toString();
                 final Token token = new Token(kind, typeName);
                 parentNode.addTopToken(token);
+                possiblyAddNavigationLink(token, node);
             }
             return;
         }
@@ -1362,39 +1429,66 @@ public class JavaASTAnalyser implements Analyser {
             return;
         }
 
-        Stream.of(str.split("\n")).forEach(line -> {
-            // we want to wrap our javadocs so that they are easier to read, so we wrap at 120 chars
-            MiscUtils.wrap(line, 120).forEach(line2 -> {
-                if (line2.contains("&")) {
-                    line2 = HtmlEscape.unescapeHtml(line2);
-                }
+        Token javaDocToken = new Token(JAVADOC, null).addTag(TAG_SKIP_DIFF);
 
-                // convert http/s links to external clickable links
-                Matcher urlMatch = MiscUtils.URL_MATCH.matcher(line2);
+        Stream.of(str.split("\n")).forEach(line -> {
+            if (line.contains("&")) {
+                line = HtmlEscape.unescapeHtml(line);
+            }
+
+            // convert http/s links to external clickable links
+            if (JAVADOC_EXTRACT_LINKS) {
+                Matcher urlMatch = MiscUtils.URL_MATCH.matcher(line);
                 int currentIndex = 0;
-                while(urlMatch.find(currentIndex)) {
+                while (urlMatch.find(currentIndex)) {
                     int start = urlMatch.start();
                     int end = urlMatch.end();
 
                     // if the current search index != start of match, there was text between two hyperlinks
-                    if(currentIndex != start) {
-                        String betweenValue = line2.substring(currentIndex, start);
-                        parentNode.addTopToken(JAVADOC, betweenValue);
+                    if (currentIndex != start) {
+                        String betweenValue = line.substring(currentIndex, start);
+
+                        if (JAVADOC_COMBINE_INTO_SINGLE_TOKEN) {
+                            javaDocToken.addValue(betweenValue);
+                        } else {
+                            parentNode.addTopToken(new Token(JAVADOC, betweenValue).addTag(TAG_SKIP_DIFF));
+                        }
                     }
 
-                    String matchedValue = line2.substring(start, end);
-//                    addToken(new Token(EXTERNAL_LINK_START, matchedValue)); // TODO
-                    parentNode.addTopToken(JAVADOC, matchedValue);
-//                    addToken(new Token(EXTERNAL_LINK_END));
+                    String matchedValue = line.substring(start, end);
+
+
+                    if (JAVADOC_COMBINE_INTO_SINGLE_TOKEN) {
+                        javaDocToken.addValue(matchedValue);
+                    } else {
+                        parentNode.addTopToken(new Token(URL, matchedValue)
+                                .addProperty(PROPERTY_URL_LINK_TEXT, matchedValue)
+                                .addTag(TAG_SKIP_DIFF));
+                    }
+
                     currentIndex = end;
                 }
-                // end of line will be anything between the end of the last found link, and the end of the string
-                String finalValue = line2.substring(currentIndex);
-                parentNode.addTopToken(JAVADOC, finalValue);
 
-                parentNode.addNewline();
-            });
+                // end of line will be anything between the end of the last found link, and the end of the string
+                String finalValue = line.substring(currentIndex);
+
+                if (JAVADOC_COMBINE_INTO_SINGLE_TOKEN) {
+                    javaDocToken.addValue(finalValue);
+                } else {
+                    parentNode.addTopToken(new Token(JAVADOC, finalValue).addTag(TAG_SKIP_DIFF)).addNewline();
+                }
+            } else {
+                if (JAVADOC_COMBINE_INTO_SINGLE_TOKEN) {
+                    javaDocToken.addValue(line);
+                } else {
+                    parentNode.addTopToken(new Token(JAVADOC, line).addTag(TAG_SKIP_DIFF)).addNewline();
+                }
+            }
         });
+
+        if (JAVADOC_COMBINE_INTO_SINGLE_TOKEN) {
+            parentNode.addTopToken(javaDocToken);
+        }
     }
 
     // Note: Returns the CHILD node that was added, not the parent node (which is what TreeNode.addChild does).

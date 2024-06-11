@@ -9,73 +9,52 @@ public enum TokenKind {
     TEXT(CONTENT),
     NEW_LINE(LINE_BREAK),
     WHITESPACE(NONE_BREAKING_SPACE),
-    PUNCTUATION(CONTENT, "punctuation"),
-    KEYWORD(CONTENT, "keyword"),
+    PARAMETER_SEPARATOR(StructuredTokenKind.PARAMETER_SEPARATOR),
+    PUNCTUATION(CONTENT, RenderClass.PUNCTUATION),
+    KEYWORD(CONTENT, RenderClass.KEYWORD),
 
-    TYPE_NAME(CONTENT, "typeName"),
-//    MEMBER_NAME(CONTENT, "memberName"),
-    STRING_LITERAL(CONTENT, "stringLiteral"),
-    NUMBER(CONTENT, "number"),
-//    LITERAL(CONTENT, "literal"),
+    TYPE_NAME(CONTENT, RenderClass.TYPE_NAME),
+    STRING_LITERAL(CONTENT, RenderClass.STRING_LITERAL),
+    NUMBER(CONTENT, RenderClass.NUMBER),
 
-    PACKAGE_NAME(CONTENT, "typeName", "packageName"),
-    MODULE_NAME(CONTENT, "typeName", "moduleName"),
+    PACKAGE_NAME(CONTENT, RenderClass.TYPE_NAME, RenderClass.PACKAGE_NAME),
+    MODULE_NAME(CONTENT, RenderClass.TYPE_NAME, RenderClass.MODULE_NAME),
 
-    ENUM_TYPE(CONTENT, "typeName", "enumType"),
-    ENUM_CONSTANT(CONTENT, "typeName", "enumConstant"),
+    ENUM_TYPE(CONTENT, RenderClass.TYPE_NAME, RenderClass.ENUM_TYPE),
+    ENUM_CONSTANT(CONTENT, RenderClass.TYPE_NAME, RenderClass.ENUM_CONSTANT),
 
-    ANNOTATION_NAME(CONTENT, "typeName", "annotationName"),
-    ANNOTATION_PARAMETER_NAME(CONTENT, "typeName", "annotationParameterName"),
-    ANNOTATION_PARAMETER_VALUE(CONTENT, "typeName", "annotationParameterValue"),
+    ANNOTATION_NAME(CONTENT, RenderClass.TYPE_NAME, RenderClass.ANNOTATION_NAME),
+    ANNOTATION_PARAMETER_NAME(CONTENT, RenderClass.TYPE_NAME, RenderClass.ANNOTATION_PARAMETER_NAME),
+    ANNOTATION_PARAMETER_VALUE(CONTENT, RenderClass.TYPE_NAME, RenderClass.ANNOTATION_PARAMETER_VALUE),
 
-    RETURN_TYPE(CONTENT, "typeName", "returnType"),
-    PARAMETER_TYPE(CONTENT, "typeName", "parameterType"),
-    PARAMETER_NAME(CONTENT, "parameterName"),
-    EXTENDS_TYPE(CONTENT, "typeName", "extendsType"),
-    IMPLEMENTS_TYPE(CONTENT, "typeName", "implementsType"),
+    RETURN_TYPE(CONTENT, RenderClass.TYPE_NAME, RenderClass.RETURN_TYPE),
+    PARAMETER_TYPE(CONTENT, RenderClass.TYPE_NAME, RenderClass.PARAMETER_TYPE),
+    PARAMETER_NAME(CONTENT, RenderClass.PARAMETER_NAME),
+    EXTENDS_TYPE(CONTENT, RenderClass.TYPE_NAME, RenderClass.EXTENDS_TYPE),
+    IMPLEMENTS_TYPE(CONTENT, RenderClass.TYPE_NAME, RenderClass.IMPLEMENTS_TYPE),
 
-    METHOD_NAME(CONTENT, "memberName", "methodName"),
-    FIELD_NAME(CONTENT, "memberName", "fieldName"),
+    METHOD_NAME(CONTENT, RenderClass.MEMBER_NAME, RenderClass.METHOD_NAME),
+    FIELD_NAME(CONTENT, RenderClass.MEMBER_NAME, RenderClass.FIELD_NAME),
 
-    MAVEN_KEY(CONTENT, "keyword", "mavenKey"),
-    MAVEN_VALUE(CONTENT, "mavenValue"),
-    MAVEN_DEPENDENCY(CONTENT, "mavenValue", "dependency"),
+    MAVEN_KEY(CONTENT, RenderClass.KEYWORD, RenderClass.MAVEN_KEY),
+    MAVEN_VALUE(CONTENT, RenderClass.MAVEN_VALUE),
+    MAVEN_DEPENDENCY(CONTENT, RenderClass.MAVEN_VALUE, RenderClass.MAVEN_DEPENDENCY),
 
-    JAVADOC(CONTENT, "comment", "javadoc") {
+    JAVADOC(CONTENT, RenderClass.COMMENT, RenderClass.JAVADOC) {
         @Override public Map<String, String> getProperties() {
-            return Map.of("GroupId", "documentation");
+            return Map.of("GroupId", "doc");
         }
     },
 
     // comment is a single line comment
-    COMMENT(CONTENT, "comment");
+    COMMENT(CONTENT, RenderClass.COMMENT),
 
-    // for types and members that are marked as deprecated
-//    DEPRECATED_RANGE_START(13),
-//    DEPRECATED_RANGE_END(14),
+    URL(StructuredTokenKind.URL);
 
-    // for any metadata that should not be compared when checking diff
-//    SKIP_DIFF_START(15),
-//    SKIP_DIFF_END(16),
-
-    // for external links
-//    EXTERNAL_LINK_START(28),
-//    EXTERNAL_LINK_END(29);
-
-//    private static final TokenKind[] VALUES;
-//
-//    static {
-//        VALUES = new TokenKind[30];
-//        for (TokenKind kind : TokenKind.values()) {
-//            VALUES[kind.id] = kind;
-//        }
-//    }
-
-//    private final int id;
     private final StructuredTokenKind structuredTokenKind;
-    private Set<String> renderClasses;
+    private Set<RenderClass> renderClasses;
 
-    TokenKind(StructuredTokenKind structuredTokenKind, String... renderClasses) {
+    TokenKind(StructuredTokenKind structuredTokenKind, RenderClass... renderClasses) {
         this.structuredTokenKind = structuredTokenKind;
 
         if (renderClasses != null) {
@@ -84,11 +63,11 @@ public enum TokenKind {
         }
     }
 
-    public int getStructuredTokenKind() {
-        return structuredTokenKind.id;
+    public StructuredTokenKind getStructuredTokenKind() {
+        return structuredTokenKind;
     }
 
-    public Set<String> getRenderClasses() {
+    public Set<RenderClass> getRenderClasses() {
         return renderClasses;
     }
 
@@ -96,7 +75,7 @@ public enum TokenKind {
         return Collections.emptyMap();
     }
 
-    enum StructuredTokenKind {
+    public enum StructuredTokenKind {
         CONTENT(0),
         LINE_BREAK(1),
         NONE_BREAKING_SPACE(2),

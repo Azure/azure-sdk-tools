@@ -9,8 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static com.azure.tools.apiview.processor.analysers.JavaASTAnalyser.MODULE_INFO_KEY;
-import static com.azure.tools.apiview.processor.analysers.JavaASTAnalyser.PROPERTY_MODULE_NAME;
-import static com.azure.tools.apiview.processor.analysers.JavaASTAnalyser.PROPERTY_MODULE_EXPORTS;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
 import static com.azure.tools.apiview.processor.analysers.util.ASTUtils.makeId;
 
 

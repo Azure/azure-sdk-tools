@@ -7,11 +7,9 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
+import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
 
 public class TreeNode implements JsonSerializable<TreeNode> {
-    private static final String TAG_HIDE_FROM_NAVIGATION = "HideFromNavigation";
-    private static final String PROPERTY_ICON_NAME = "IconName";
-    private static final String PROPERTY_SUBKIND = "SubKind";
 
     // The name of the tree node which will be used for page navigation.
     private final String name;
@@ -44,18 +42,10 @@ public class TreeNode implements JsonSerializable<TreeNode> {
     // Using this to customise output based on language, flavor, etc
     private APIListing apiListing;
 
-    /**
-     * Used for things we don't want to show in the left navigation,
-     * and for which we don't want to attach any JavaDoc.
-     */
-    public static TreeNode createHiddenNode() {
-        return new TreeNode(null, null, TreeNodeKind.UNKNOWN).hideFromNavigation();
-    }
-
     public TreeNode(String name, String id, TreeNodeKind kind) {
         this.name = name;
         this.kind = Objects.requireNonNull(kind);
-        this.id = id;
+        this.id = Objects.requireNonNull(id);
         this.tags = new LinkedHashSet<>();
         this.properties = new LinkedHashMap<>();
         this.topTokens = new ArrayList<>();
@@ -170,33 +160,40 @@ public class TreeNode implements JsonSerializable<TreeNode> {
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         jsonWriter.writeStartObject();
 
-        jsonWriter.writeStringField("Name", name)
-                  .writeStringField("Kind", kind.getName());
+        jsonWriter.writeStringField(JSON_NAME_NAME, name)
+                  .writeStringField(JSON_NAME_KIND, kind.getName());
 
         if (id != null) {
-            jsonWriter.writeStringField("Id", id);
+            jsonWriter.writeStringField(JSON_NAME_ID, id);
         }
 
         if (!tags.isEmpty()) {
-            jsonWriter.writeArrayField("Tags", tags, JsonWriter::writeString);
+            jsonWriter.writeArrayField(JSON_NAME_TAGS, tags, JsonWriter::writeString);
         }
 
         if (!properties.isEmpty()) {
-            jsonWriter.writeMapField("Properties", properties, JsonWriter::writeString);
+            jsonWriter.writeMapField(JSON_NAME_PROPERTIES, properties, JsonWriter::writeString);
         }
 
         if (!topTokens.isEmpty()) {
-            jsonWriter.writeArrayField("TopTokens", topTokens, JsonWriter::writeJson);
+            jsonWriter.writeArrayField(JSON_NAME_TOP_TOKENS, topTokens, JsonWriter::writeJson);
         }
 
         if (!children.isEmpty()) {
-            jsonWriter.writeArrayField("Children", children, JsonWriter::writeJson);
+            jsonWriter.writeArrayField(JSON_NAME_CHILDREN, children, JsonWriter::writeJson);
         }
 
         if (!bottomTokens.isEmpty()) {
-            jsonWriter.writeArrayField("BottomTokens", bottomTokens, JsonWriter::writeJson);
+            jsonWriter.writeArrayField(JSON_NAME_BOTTOM_TOKENS, bottomTokens, JsonWriter::writeJson);
         }
 
         return jsonWriter.writeEndObject();
+    }
+
+    @Override
+    public String toString() {
+        return "TreeNode{" +
+                "name='" + name + '\'' +
+                '}';
     }
 }

@@ -11,21 +11,22 @@ import com.azure.tools.apiview.processor.model.Language;
 import com.azure.tools.apiview.processor.model.LanguageVariant;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
+import java.util.zip.GZIPOutputStream;
 
 public class Main {
+    // If true, we will output two files - a standard .json file, as well as a gzipped .json.tgz file
+    private static final boolean GZIP_OUTPUT = true;
+
     // expected argument order:
     // [inputFiles] <outputDirectory>
     public static void main(String[] args) {
@@ -46,9 +47,11 @@ public class Main {
     }
 
     /**
-     * Runs APIView parser and returns the output file path.
+     * Runs APIView parser and returns the output file path as an array. The first value in the array is the
+     * JSON file. If there are multiple outputs (i.e. gzipping is enabled), the second value in the array is the
+     * gzipped file.
      */
-    public static File run(File jarFile, File outputDir) {
+    public static File[] run(File jarFile, File outputDir) {
         System.out.printf("  Processing input .jar file: '%s'%n", jarFile);
 
         if (!jarFile.exists()) {
@@ -63,10 +66,23 @@ public class Main {
             }
         }
 
-        final String jsonFileName = jarFile.getName().substring(0, jarFile.getName().length() - 4) + ".json";
-        final File outputFile = new File(outputDir, jsonFileName);
-        processFile(jarFile, outputFile);
-        return outputFile;
+        final String outputFileName = jarFile.getName().substring(0, jarFile.getName().length() - 4) + ".json";
+        final Optional<APIListing> apiListing = processFile(jarFile);
+
+        if (apiListing.isPresent()) {
+            File[] files = new File[GZIP_OUTPUT ? 2 : 1];
+            files[0] = new File(outputDir, outputFileName);
+            writeApiListingToFile(apiListing.get(), files[0], false);
+
+            if (GZIP_OUTPUT) {
+                files[1] = new File(outputDir, outputFileName + ".tgz");
+                writeApiListingToFile(apiListing.get(), files[1], true);
+            }
+
+            return files;
+        }
+
+        return new File[] { };
     }
 
     private static ReviewProperties getReviewProperties(File inputFile) {
@@ -106,34 +122,15 @@ public class Main {
         return reviewProperties;
     }
 
-    private static void processFile(final File inputFile, final File outputFile) {
+    private static Optional<APIListing> processFile(final File inputFile) {
         final APIListing apiListing = new APIListing();
 
         if (inputFile.getName().endsWith("-sources.jar")) {
             processJavaSourcesJar(inputFile, apiListing);
-        } else {
-//            apiListing.getTokens().add(new Token(LINE_ID_MARKER, "Error!", "error"));
-//            apiListing.addDiagnostic(new Diagnostic(
-//                DiagnosticKind.ERROR,
-//                "error",
-//                "Uploaded files should end with '-sources.jar' or '.xml', " +
-//                    "as the APIView tool only works with source jar files, not compiled jar files. The uploaded file " +
-//                    "that was submitted to APIView was named " + inputFile.getName()));
+            return Optional.of(apiListing);
         }
 
-        try {
-            // Write out to the filesystem, make the file if it doesn't exist
-            if (!outputFile.exists()) {
-                if (!outputFile.createNewFile()) {
-                    System.out.printf("Failed to create output file %s%n", outputFile);
-                }
-            }
-            try (JsonWriter jsonWriter = JsonProviders.createWriter(Files.newBufferedWriter(outputFile.toPath()))) {
-                apiListing.toJson(jsonWriter);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return Optional.empty();
     }
 
     private static void processJavaSourcesJar(File inputFile, APIListing apiListing) {
@@ -183,6 +180,27 @@ public class Main {
             final Analyser analyser = new JavaASTAnalyser(apiListing);
             analyser.analyse(allFiles);
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void writeApiListingToFile(APIListing apiListing, File outputFile, boolean gzipOutput) {
+        try {
+            // Write out to the filesystem, make the file if it doesn't exist
+            if (!outputFile.exists()) {
+                if (!outputFile.createNewFile()) {
+                    System.out.printf("Failed to create output file %s%n", outputFile);
+                }
+            }
+
+            OutputStream fileStream = Files.newOutputStream(outputFile.toPath());
+            OutputStream gzipStream = gzipOutput ? new GZIPOutputStream(fileStream) : fileStream;
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(gzipStream, StandardCharsets.UTF_8));
+            try (JsonWriter jsonWriter = JsonProviders.createWriter(writer)) {
+                apiListing.toJson(jsonWriter);
+            }
+            System.out.println("Output written to file: " + outputFile);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

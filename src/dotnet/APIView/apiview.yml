@@ -286,7 +286,6 @@ extends:
           jobs:
             - deployment: Publish_to_Staging
               displayName: Publish to Staging
-              environment: 'package-publish'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt
@@ -335,6 +334,7 @@ extends:
           jobs:
             - deployment: Publish_Test_UI
               displayName: Publish Test UI
+              environment: 'package-publish'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt

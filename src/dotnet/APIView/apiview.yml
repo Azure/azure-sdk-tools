@@ -284,47 +284,44 @@ extends:
           dependsOn: Build
 
           jobs:
-            - deployment: Publish_to_Staging
+            - job: Publish_to_Staging
               displayName: Publish to Staging
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt
                 os: linux
 
-              strategy:
-                runOnce:
-                  deploy:
-                    steps:
-                    - checkout: self
+              steps:
+              - checkout: self
 
-                    - download: current
-                      artifact: APIView
-                      timeoutInMinutes: 5
+              - download: current
+                artifact: APIView
+                timeoutInMinutes: 5
 
-                    - task: FileTransform@1
-                      displayName: 'Update Angular Config for Environment'
-                      inputs:
-                        folderPath: '$(Pipeline.Workspace)/APIView/**/APIViewWeb.zip'
-                        fileType: json
-                        targetFiles: wwwroot/spa/assets/config.json
+              - task: FileTransform@1
+                displayName: 'Update Angular Config for Environment'
+                inputs:
+                  folderPath: '$(Pipeline.Workspace)/APIView/**/APIViewWeb.zip'
+                  fileType: json
+                  targetFiles: wwwroot/spa/assets/config.json
 
-                    - task: AzureRmWebAppDeployment@4
-                      displayName: 'Deploy Azure App Service'
-                      inputs:
-                        azureSubscription: 'APIview staging resource group'
-                        appType: 'webApp'
-                        WebAppName: 'apiviewstaging'
-                        packageForLinux: '$(Pipeline.Workspace)/APIView/**/APIViewWeb.zip'
-                        ScriptType: 'Inline Script'
-                        InlineScript: |
-                          @echo off
-                          echo Installing npm packages
-                          call npm install --prefix D:\home\site\wwwroot --force
-                          call npm run-script build --prefix D:\home\site\wwwroot --force
-                          call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
-                          call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.2 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
-                        enableCustomDeployment: true
-                        DeploymentType: zipDeploy
+              - task: AzureRmWebAppDeployment@4
+                displayName: 'Deploy Azure App Service'
+                inputs:
+                  azureSubscription: 'APIview staging resource group'
+                  appType: 'webApp'
+                  WebAppName: 'apiviewstaging'
+                  packageForLinux: '$(Pipeline.Workspace)/APIView/**/APIViewWeb.zip'
+                  ScriptType: 'Inline Script'
+                  InlineScript: |
+                    @echo off
+                    echo Installing npm packages
+                    call npm install --prefix D:\home\site\wwwroot --force
+                    call npm run-script build --prefix D:\home\site\wwwroot --force
+                    call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
+                    call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.2 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+                  enableCustomDeployment: true
+                  DeploymentType: zipDeploy
       
       - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Test_UI_Publish

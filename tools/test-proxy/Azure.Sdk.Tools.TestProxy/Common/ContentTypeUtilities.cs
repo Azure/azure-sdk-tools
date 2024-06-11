@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             // Default is technically US-ASCII, but will default to UTF-8 which is a superset.
             const string appFormUrlEncoded = "application/x-www-form-urlencoded";
-            const string dockerManifest = "application/vnd.docker.distribution.manifest.v2";
+            const string dockerManifest = "application/vnd.docker.distribution.manifest.v";
 
             if (contentType == null)
             {
@@ -40,7 +40,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     return true;
                 }
             }
-
 
             if (
                     (

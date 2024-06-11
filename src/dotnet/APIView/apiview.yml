@@ -278,7 +278,7 @@ extends:
           #         testResultsFormat: 'VSTest'
           #         mergeTestResults: true
 
-      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal'))}}:
+      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
         - stage: Staging_Publish
           displayName: Pre-Prod
           dependsOn: Build
@@ -326,7 +326,8 @@ extends:
                           call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.2 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
-
+      
+      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
@@ -334,7 +335,6 @@ extends:
           jobs:
             - deployment: Publish_Test_UI
               displayName: Publish Test UI
-              environment: 'package-publish'
               pool:
                 name: azsdk-pool-mms-ubuntu-2004-general
                 image: azsdk-pool-mms-ubuntu-2004-1espt

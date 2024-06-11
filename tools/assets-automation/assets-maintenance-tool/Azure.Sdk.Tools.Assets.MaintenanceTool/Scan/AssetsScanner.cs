@@ -85,35 +85,28 @@ public class AssetsScanner
         }
 
         var targetRepoUri = $"https://{authString}github.com/{config.LanguageRepo}.git";
-        var workingDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var workingDirectory = Path.Combine(WorkingDirectory, config.LanguageRepo.Replace("/", "_"));
         var results = new List<AssetsResult>();
 
-        try
+        if (!Directory.Exists(workingDirectory))
         {
-            if (!Directory.Exists(workingDirectory))
+            Directory.CreateDirectory(workingDirectory);
+        }
+
+        foreach (var branch in config.Branches)
+        {
+            var commitsOnBranch = GetBranchCommits(targetRepoUri, branch, config.ScanStartDate, workingDirectory);
+            var unretrievedCommits = ResolveUnhandledCommits(commitsOnBranch, previousOutput);
+
+            results.AddRange(GetAssetsResults(config.LanguageRepo, unretrievedCommits, workingDirectory, config.ScanFolders));
+
+            if (previousOutput != null)
             {
-                Directory.CreateDirectory(workingDirectory);
-            }
-
-            foreach (var branch in config.Branches)
-            {
-                var commitsOnBranch = GetBranchCommits(targetRepoUri, branch, config.ScanStartDate, workingDirectory);
-                var unretrievedCommits = ResolveUnhandledCommits(commitsOnBranch, previousOutput);
-
-                results.AddRange(GetAssetsResults(config.LanguageRepo, unretrievedCommits, workingDirectory));
-
-                if (previousOutput != null)
+                foreach (var commit in commitsOnBranch.Where(commit => !unretrievedCommits.Contains(commit)))
                 {
-                    foreach (var commit in commitsOnBranch.Where(commit => !unretrievedCommits.Contains(commit)))
-                    {
-                        results.AddRange(previousOutput.ByOriginSHA[commit]);
-                    }
+                    results.AddRange(previousOutput.ByOriginSHA[commit]);
                 }
             }
-        }
-        finally
-        {
-            CleanupWorkingDirectory(workingDirectory);
         }
 
         return results;
@@ -123,9 +116,10 @@ public class AssetsScanner
     /// Clones a specific branch, then returns all commit shas newer than our targeted date.
     /// </summary>
     /// <returns>A list of commits (limited to after a startdate) from the targeted branch.</returns>
-    private List<string> GetBranchCommits(string uri, string branch, DateTime since, string workingDirectory)
+    private List<string> GetBranchCommits(string uri, string branch, string since, string workingDirectory)
     {
         var commitSHAs = new List<string>();
+
         try
         {
             // if git is already initialized, we just need to checkout a specific branch
@@ -141,7 +135,15 @@ public class AssetsScanner
                 Cleanup(workingDirectory);
             }
 
-            var tagResult = handler.Run($"log --since={since.ToString("yyyy-MM-dd")} --format=format:%H", workingDirectory);
+            CommandResult tagResult;
+            if (since == "latest")
+            {
+                tagResult = handler.Run($"log -n 1 --format=format:%H", workingDirectory);
+            }
+            else
+            {
+                tagResult = handler.Run($"log --since={since} --format=format:%H", workingDirectory);
+            }
             commitSHAs.AddRange(tagResult.StdOut.Split(Environment.NewLine).Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)));
         }
         catch (GitProcessException gitException)
@@ -207,11 +209,23 @@ public class AssetsScanner
     /// Find all assets.jsons beneath a targeted folder.
     /// </summary>
     /// <returns>AssetsResults for each discovered assets.json, populating other metadata as necessary.</returns>
-    private List<AssetsResult> ScanDirectory(string repo, string commit, string workingDirectory)
+    private List<AssetsResult> ScanDirectory(string repo, string commit, string workingDirectory, List<string> scanFolders)
     {
         Matcher matcher = new();
         List<AssetsResult> locatedAssets = new List<AssetsResult>();
-        matcher.AddIncludePatterns(new[] { "**/assets.json" });
+
+        if (scanFolders.Count > 0)
+        {
+            foreach (string folder in scanFolders)
+            {
+                matcher.AddIncludePatterns(new[] { Path.Combine(folder, "**/assets.json") });
+            }
+        }
+        else
+        {
+            matcher.AddIncludePatterns(new[] { "**/assets.json" });
+        }
+        
         IEnumerable<string> assetsJsons = matcher.GetResultsInFullPath(workingDirectory);
 
         foreach (var assetsJson in assetsJsons)
@@ -233,14 +247,14 @@ public class AssetsScanner
     /// Walks a set of targeted commits, extracting all available assets.jsons from each.
     /// </summary>
     /// <returns>A list of AssetsResults reflecting all discovered assets.jsons from each targeted commit.</returns>
-    private List<AssetsResult> GetAssetsResults(string repo, List<string> commits, string workingDirectory)
+    private List<AssetsResult> GetAssetsResults(string repo, List<string> commits, string workingDirectory, List<string> folderGlobs)
     {
         var allResults = new List<AssetsResult>();
         foreach (var commit in commits)
         {
             handler.Run($"checkout {commit}", workingDirectory);
             Cleanup(workingDirectory);
-            allResults.AddRange(ScanDirectory(repo, commit, workingDirectory));
+            allResults.AddRange(ScanDirectory(repo, commit, workingDirectory, folderGlobs));
         }
 
         return allResults;
@@ -275,7 +289,7 @@ public class AssetsScanner
     /// This is necessary because certain `.pack` files created by git cannot be deleted without
     /// adjusting these permissions.
     /// </summary>
-    private void SetPermissionsAndDelete(string gitfolder)
+    public static void SetPermissionsAndDelete(string gitfolder)
     {
         File.SetAttributes(gitfolder, FileAttributes.Normal);
 
@@ -300,7 +314,7 @@ public class AssetsScanner
     /// The .git folder's .pack files can be super finicky to delete from code.
     /// This function abstracts the necessary permissions update and cleans that folder for us.
     /// </summary>
-    private void CleanupWorkingDirectory(string workingDirectory)
+    public static void CleanupGitDirectory(string workingDirectory)
     {
         var gitDir = Path.Combine(workingDirectory, ".git");
 
@@ -319,7 +333,11 @@ public class AssetsScanner
     {
         using (var stream = System.IO.File.OpenWrite(ResultsFile))
         {
-            stream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(newResults.Results)));
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            stream.Write(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(newResults.Results, options: options)));
         }
     }
 }

@@ -1,5 +1,9 @@
 # Release
 
+## 2024-06-07 - 0.8.1
+
+- Normalize and clean up the directory property in tsp-location.yaml.
+
 ## 2024-05-29 - 0.8.0
 
 - Create unique directories for sparse spec checkout.

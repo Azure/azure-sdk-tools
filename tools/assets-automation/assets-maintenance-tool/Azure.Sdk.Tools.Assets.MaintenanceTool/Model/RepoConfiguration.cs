@@ -24,11 +24,20 @@ public class RepoConfiguration
     /// almost arbitrarily. Official test-proxy began supported external assets in late November of 2022, so we don't
     /// need to go further back then that when examining the SHAs in the language repos. There is no possibility of an
     /// assets.json past this date!
+    /// 
+    /// If provided with "latest" argument, only the most recent commit on each considered branch will be included.
     /// </summary>
-    public DateTime ScanStartDate { get; set; } = DateTime.Parse("2022-12-01");
+    public string ScanStartDate { get; set; } = "2022-12-01";
 
     /// <summary>
     /// The set of branches that we will examine. Defaults to just 'main'.
     /// </summary>
     public List<string> Branches { get; set; } = new List<string> { "main" };
+
+    /// <summary>
+    /// The folder patterns that are used to filter the repo. Functionally, these strings
+    /// will be combined with **/assets.json while searching for assets. Non-presence indicates
+    /// the intent to scan the entire repository.
+    /// </summary>
+    public List<string> ScanFolders { get; set; } = new List<string>{};
 }

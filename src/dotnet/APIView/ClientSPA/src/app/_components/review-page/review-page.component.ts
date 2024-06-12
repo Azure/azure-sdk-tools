@@ -39,6 +39,7 @@ export class ReviewPageComponent implements OnInit {
   language: string | undefined;
   languageSafeName: string | undefined;
   navTreeNodeIdHashed : string | undefined;
+  hideLineNumbers : boolean = true;
 
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
@@ -215,6 +216,18 @@ export class ReviewPageComponent implements OnInit {
     else {
       this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Documentation);
     }
+  }
+
+  handleShowLineNumbersEmitter(state: boolean) {
+    let userPreferenceModel = this.userProfile?.preferences;
+    userPreferenceModel!.hideLineNumbers = state;
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
+  }
+
+  handleShowLeftNavigationEmitter(state: boolean) {
+    let userPreferenceModel = this.userProfile?.preferences;
+    userPreferenceModel!.hideLeftNavigation = state;
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
   }
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {

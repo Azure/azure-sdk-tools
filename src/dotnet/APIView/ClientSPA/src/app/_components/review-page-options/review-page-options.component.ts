@@ -53,6 +53,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;
     this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? true;
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? false;
+    this.showLineNumberSwitch = this.userProfile?.preferences.hideLineNumbers ?? true;
+    this.showLeftNavigationSwitch = this.userProfile?.preferences.hideLeftNavigation ?? true;
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -64,6 +66,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
       this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
       this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
+      this.showLineNumberSwitch = this.userProfile?.preferences.hideLineNumbers ?? this.showLineNumberSwitch;
+      this.showLeftNavigationSwitch = this.userProfile?.preferences.hideLeftNavigation ?? this.showLeftNavigationSwitch;
     }
     
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
@@ -104,6 +108,22 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   onShowDocumentationSwitchChange(event: InputSwitchOnChangeEvent) {
     this.showDocumentationEmitter.emit(event.checked);
   }
+
+    /**
+ * Callback for commentSwitch Change
+ * @param event the Filter event
+ */
+    onShowLineNumbersSwitchChange(event: InputSwitchOnChangeEvent) {
+      this.showCommentsEmitter.emit(event.checked);
+    }
+
+    /**
+ * Callback for commentSwitch Change
+ * @param event the Filter event
+ */
+    onShowLeftNavigationSwitchChange(event: InputSwitchOnChangeEvent) {
+      this.showCommentsEmitter.emit(event.checked);
+    }
 
   /**
   * Callback for markedAsViewSwitch Change

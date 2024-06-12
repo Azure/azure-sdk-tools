@@ -23,8 +23,10 @@
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CommentThread">
       <app-comment-thread [comments]="item.comments"
         [showReplyTextBox]="item.showReplyTextBox"
+        [nodeId]="item.nodeId"
         [nodeIdHashed]="item.nodeIdHashed"
-        (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"></app-comment-thread>
+        (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
+        (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"></app-comment-thread>
     </ng-container>
   </div>
 </div>

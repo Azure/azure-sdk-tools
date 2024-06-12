@@ -41,7 +41,7 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="deleteParams"></param>
         /// <returns></returns>
-        [HttpPut("/delete", Name = "DeleteAPIRevisions")]
+        [HttpPut("delete", Name = "DeleteAPIRevisions")]
         public async Task DeleteAPIRevisionsAsync([FromBody] APIRevisionSoftDeleteParam deleteParams)
         {
             foreach (var apiRevisionId in deleteParams.apiRevisionIds)
@@ -55,7 +55,7 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="deleteParams"></param>
         /// <returns></returns>
-        [HttpPut("/restore", Name = "RestoreAPIRevisions")]
+        [HttpPut("restore", Name = "RestoreAPIRevisions")]
         public async Task RestoreAPIRevisionsAsync([FromBody] APIRevisionSoftDeleteParam deleteParams)
         {
             foreach (var apiRevisionId in deleteParams.apiRevisionIds)

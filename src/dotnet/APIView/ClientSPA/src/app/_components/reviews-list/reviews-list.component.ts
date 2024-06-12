@@ -336,7 +336,7 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
           `Use <code>api-extractor</code> to generate a <a href="https://api-extractor.com/pages/setup/generating_docs/">docModel file</a>`,
           `Upload generated api.json file`
         ];
-        this.acceptedFilesForReviewUpload = ".json";
+        this.acceptedFilesForReviewUpload = ".api.json";
         this.createReviewForm.get('selectedFile')?.enable();
         this.createReviewForm.get('filePath')?.disable();
         break;
@@ -381,7 +381,7 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
         this.createReviewInstruction = [
           `Upload JSON API review token file.`
         ];
-        this.acceptedFilesForReviewUpload = ".json";
+        this.acceptedFilesForReviewUpload = ".json, .tgz";
         this.createReviewForm.get('selectedFile')?.enable();
         this.createReviewForm.get('filePath')?.disable();
         break;

@@ -13,6 +13,8 @@ using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using System.Diagnostics;
 using System;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -27,12 +29,13 @@ namespace APIViewWeb.LeanControllers
         public readonly UserPreferenceCache _preferenceCache;
         private readonly ICosmosUserProfileRepository _userProfileRepository;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly IWebHostEnvironment _env;
 
         public ReviewsController(ILogger<ReviewsController> logger,
             IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
             ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
             IConfiguration configuration, UserPreferenceCache preferenceCache,
-            ICosmosUserProfileRepository userProfileRepository, IHubContext<SignalRHub> signalRHub)
+            ICosmosUserProfileRepository userProfileRepository, IHubContext<SignalRHub> signalRHub, IWebHostEnvironment env)
         {
             _logger = logger;
             _apiRevisionsManager = reviewRevisionsManager;
@@ -43,6 +46,7 @@ namespace APIViewWeb.LeanControllers
             _preferenceCache = preferenceCache;
             _userProfileRepository = userProfileRepository;
             _signalRHubContext = signalRHub;
+            _env = env;
 
         }
 
@@ -113,7 +117,7 @@ namespace APIViewWeb.LeanControllers
             {
                 var comments = await _commentsManager.GetCommentsAsync(reviewId);
 
-                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId, false);
+                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId, _env.IsProduction());
 
                 var result = new CodePanelData();
 
@@ -127,7 +131,7 @@ namespace APIViewWeb.LeanControllers
                 if (!string.IsNullOrEmpty(diffApiRevisionId))
                 {
                     var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
-                    var diffRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(diffAPIRevision.Id, diffAPIRevision.Files[0].FileId);
+                    var diffRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(diffAPIRevision.Id, diffAPIRevision.Files[0].FileId, _env.IsProduction());
                     codePanelRawData.APIForest = CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionReviewCodeFile.APIForest);
                 }
 

@@ -114,7 +114,7 @@ namespace APIViewWeb.Helpers
 
         private static async Task BuildAPITree(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string parentNodeIdHashed, int nodePositionAtLevel, int indent = 0)
         {
-            var nodeIdHashed = GetTokenNodeIdHash(codePanelData, apiTreeNode, RowOfTokensPosition.Top);
+            var nodeIdHashed = GetTokenNodeIdHash(apiTreeNode, RowOfTokensPosition.Top, parentNodeIdHashed);
 
             if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
             {
@@ -203,7 +203,7 @@ namespace APIViewWeb.Helpers
 
             if (apiTreeNode.BottomTokens.Any())
             {
-                var bottomNodeIdHashed = GetTokenNodeIdHash(codePanelData, apiTreeNode, RowOfTokensPosition.Bottom);
+                var bottomNodeIdHashed = GetTokenNodeIdHash(apiTreeNode, RowOfTokensPosition.Bottom, parentNodeIdHashed);
                 codePanelData.NodeMetaData[nodeIdHashed].BottomTokenNodeIdHash = bottomNodeIdHashed;
                 if (codePanelData.NodeMetaData.ContainsKey(bottomNodeIdHashed))
                 {
@@ -531,10 +531,9 @@ namespace APIViewWeb.Helpers
             AddDiagnoasticRow(codePanelData: codePanelData, codePanelRawData: codePanelRawData, nodeId: apiTreeNode.Id, nodeIdHashed: nodeIdHashed, linesOfTokensPosition: linesOfTokensPosition);
         }
         
-        private static string GetTokenNodeIdHash(CodePanelData codePanelData, APITreeNode apiTreeNode, RowOfTokensPosition linesOfTokensPosition)
+        private static string GetTokenNodeIdHash(APITreeNode apiTreeNode, RowOfTokensPosition linesOfTokensPosition, string parentNodeIdHash)
         {
             var idPart = apiTreeNode.Kind;
-            int uniqueId = 0;
 
             if (apiTreeNode.Properties.ContainsKey("SubKind"))
             {
@@ -544,22 +543,14 @@ namespace APIViewWeb.Helpers
             idPart = $"{idPart}-{apiTreeNode.DiffKind}";
             idPart = $"{idPart}-{linesOfTokensPosition.ToString()}";
             var hash = CreateHashFromString(idPart);
-            while (codePanelData.NodeMetaData.ContainsKey(hash))
-            {
-                uniqueId++;
-                hash = CreateHashFromString($"{idPart}-{uniqueId}");
-            }
-            return hash;
+            return hash + parentNodeIdHash.Replace("nId", "").Replace("root", ""); // Apend the parent node Id to ensure uniqueness
         }
 
         private static string CreateHashFromString(string inputString)
         {
-            int hash = inputString.Aggregate(0, (prevHash, currVal) =>
-                ((prevHash << 5) - prevHash) + currVal);
-
-            string cssId = "id" + hash.ToString();
-
-            return cssId;
+            int hash = HashCode.Combine(inputString);
+            string nodeIdhashed = "nId" + hash.ToString();
+            return nodeIdhashed;
         }
 
         private static CodePanelRowData CollectUserCommentsForRow(CodePanelRawData codePanelRawData, HashSet<string> tokenIdsInRow, string nodeId, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, CodePanelRowData codePanelRowData)

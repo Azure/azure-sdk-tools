@@ -228,6 +228,7 @@ namespace APIViewWeb.Managers
             file.PackageName = codeFile.PackageName;
             file.PackageVersion = codeFile.PackageVersion;
             file.CrossLanguagePackageId = codeFile.CrossLanguagePackageId;
+            file.ParserStyle = (codeFile.APIForest.Count > 0) ? "Tree" : null;
         }
     }
 }

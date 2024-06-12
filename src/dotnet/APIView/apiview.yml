@@ -298,13 +298,6 @@ extends:
                 artifact: APIView
                 timeoutInMinutes: 5
 
-              - task: FileTransform@1
-                displayName: 'Update Angular Config for Environment'
-                inputs:
-                  folderPath: '$(Pipeline.Workspace)/APIView/**/APIViewWeb.zip'
-                  fileType: json
-                  targetFiles: wwwroot/spa/assets/config.json
-
               - task: AzureRmWebAppDeployment@4
                 displayName: 'Deploy Azure App Service'
                 inputs:

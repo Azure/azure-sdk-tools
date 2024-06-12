@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
@@ -52,6 +53,26 @@ namespace APIViewWeb
                 .SetValue(codeFile);
             }            
 
+            return codeFile;
+        }
+
+        public async Task<CodeFile> GetCodeFileWithCompressionAsync(string revisionId, string codeFileId, bool updateCache = true)
+        {
+            var client = GetBlobClient(revisionId, codeFileId, out var key);
+
+            if (_cache.TryGetValue<CodeFile>(key, out var codeFile))
+            {
+                return codeFile;
+            }
+            var info = await client.DownloadAsync();
+            using var gzipStream = new GZipStream(info.Value.Content, CompressionMode.Decompress);
+            codeFile = await CodeFile.DeserializeAsync(gzipStream);
+            if (updateCache)
+            {
+                using var _ = _cache.CreateEntry(key)
+                    .SetSlidingExpiration(TimeSpan.FromMinutes(10))
+                    .SetValue(codeFile);
+            }
             return codeFile;
         }
 

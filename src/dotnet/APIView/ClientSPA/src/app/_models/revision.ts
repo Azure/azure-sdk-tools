@@ -45,15 +45,10 @@ export interface AssignedReviewer {
 }
 
 export class StructuredToken {
-  @Expose({ name: 'v' })
   value: string = '';
-  @Expose({ name: 'i' })
   id: string = '';
-  @Expose({ name: 'k' })
   kind: string = '';
-  @Expose({ name: 'p' })
   properties: { [key: string]: string; } = {};
-  @Expose({ name: 'rc' })
   renderClasses: Set<string> = new Set();
 }
 
@@ -78,63 +73,51 @@ export interface APITreeNode {
 }
 
 export class CodePanelRowData {
-  @Expose({ name: 't' }) type: string = '';
-  @Expose({ name: 'ln' }) lineNumber: number = 0;
-  @Expose({ name: 'rot' }) @Type(() => StructuredToken) rowOfTokens: StructuredToken[] = [];
-  @Expose({ name: 'ni' }) nodeId: string = '';
-  @Expose({ name: 'nih' }) nodeIdHashed: string = '';
-  @Expose({ name: 'rotp' }) rowOfTokensPosition: string = '';
-  @Expose({ name: 'rc' }) @Type(() => String) rowClasses: Set<string> = new Set<string>();
-  @Expose({ name: 'i' }) indent: number = 0;
-  @Expose({ name: 'dk' }) diffKind: string = '';
-  @Expose({ name: 'rs' }) rowSize: number = 21;
-  @Expose({ name: 'rdc' }) toggleDocumentationClasses: string = '';
-  @Expose({ name: 'tcc' }) toggleCommentsClasses: string = '';
-  @Expose({ name: 'd' }) @Type(() => CodeDiagnostic) diagnostics: CodeDiagnostic = new CodeDiagnostic();
-  @Expose({ name: 'c' }) @Type(() => CommentItemModel) comments: CommentItemModel[] = [];
+  type: string = '';
+  lineNumber: number = 0;
+  @Type(() => StructuredToken) rowOfTokens: StructuredToken[] = [];
+  nodeId: string = '';
+  nodeIdHashed: string = '';
+  rowOfTokensPosition: string = '';
+  @Type(() => String) rowClasses: Set<string> = new Set<string>();
+  indent: number = 0;
+  diffKind: string = '';
+  rowSize: number = 21;
+  toggleDocumentationClasses: string = '';
+  toggleCommentsClasses: string = '';
+  @Type(() => CodeDiagnostic) diagnostics: CodeDiagnostic = new CodeDiagnostic();
+  @Type(() => CommentItemModel) comments: CommentItemModel[] = [];
   showReplyTextBox: boolean = false;
 }
 
 export class NavigationTreeNodeData {
-  @Expose({ name: 'nih' }) nodeIdHashed: string = '';
-  @Expose({ name: 'k' }) kind: string = '';
-  @Expose({ name: 'i' }) icon: string = '';
+  nodeIdHashed: string = '';
+  kind: string = '';
+  icon: string = '';
 }
 
 export class NavigationTreeNode {
-  @Expose({ name: 'l' }) label: string = '';
-  @Expose({ name: 'd' }) @Type(() => NavigationTreeNodeData) data: NavigationTreeNodeData = new NavigationTreeNodeData();
-  @Expose({ name: 'e' }) expanded: boolean = false;
-  @Expose({ name: 'c' }) @Type(() => NavigationTreeNode) children: NavigationTreeNode[] = [];
+  label: string = '';
+  @Type(() => NavigationTreeNodeData) data: NavigationTreeNodeData = new NavigationTreeNodeData();
+  expanded: boolean = false;
+  @Type(() => NavigationTreeNode) children: NavigationTreeNode[] = [];
 }
 
 export class CodePanelNodeMetaData {
-  @Expose({ name: 'doc' }) @Type(() => CodePanelRowData) documentation: CodePanelRowData[] = [];
-  @Expose({ name: 'd' }) @Type(() => CodePanelRowData) diagnostics: CodePanelRowData[] = [];
-  @Expose({ name: 'cl' }) @Type(() => CodePanelRowData) codeLines: CodePanelRowData[] = [];
-  @Expose({ name: 'ct' }) @Type(() => CodePanelRowData) commentThread: CodePanelRowData[] = [];
-  @Expose({ name: 'ntn' }) @Type(() => NavigationTreeNode) navigationTreeNode: NavigationTreeNode = new NavigationTreeNode();
-  @Expose({ name: 'pnih' }) parentNodeIdHashed: string = '';
-  @Expose({ name: 'cniio' }) childrenNodeIdsInOrder: { [key: number]: string } = {};
-  @Expose({ name: 'inwd' }) isNodeWithDiff: boolean = false;
-  @Expose({ name: 'inwdid' }) isNodeWithDiffInDescendants: boolean = false;
-  @Expose({ name: 'btnih' }) bottomTokenNodeIdHash: string = '';
+  @Type(() => CodePanelRowData) documentation: CodePanelRowData[] = [];
+  @Type(() => CodePanelRowData) diagnostics: CodePanelRowData[] = [];
+  @Type(() => CodePanelRowData) codeLines: CodePanelRowData[] = [];
+  @Type(() => CodePanelRowData) commentThread: CodePanelRowData[] = [];
+  @Type(() => NavigationTreeNode) navigationTreeNode: NavigationTreeNode = new NavigationTreeNode();
+  parentNodeIdHashed: string = '';
+  childrenNodeIdsInOrder: { [key: number]: string } = {};
+  isNodeWithDiff: boolean = false;
+  isNodeWithDiffInDescendants: boolean = false;
+  bottomTokenNodeIdHash: string = '';
 }
 
 export interface CodePanelData {
   nodeMetaData: { [key: string]: CodePanelNodeMetaData };
-}
-
-export interface NavigationTreeNodeData {
-  kind: string;
-  icon: string;
-}
-
-export interface NavigationTreeNode {
-  label: string;
-  data: NavigationTreeNodeData;
-  expanded: boolean;
-  children: NavigationTreeNode [];
 }
 
 export interface InsertCodePanelRowDataMessage {

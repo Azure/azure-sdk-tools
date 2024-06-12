@@ -113,7 +113,7 @@ namespace APIViewWeb.LeanControllers
             {
                 var comments = await _commentsManager.GetCommentsAsync(reviewId);
 
-                var activeRevisionReviewCodeFile = (await _codeFileRepository.GetCodeFileAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId, false)).CodeFile;
+                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(activeAPIRevision.Id, activeAPIRevision.Files[0].FileId, false);
 
                 var result = new CodePanelData();
 
@@ -127,7 +127,7 @@ namespace APIViewWeb.LeanControllers
                 if (!string.IsNullOrEmpty(diffApiRevisionId))
                 {
                     var diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
-                    var diffRevisionReviewCodeFile = (await _codeFileRepository.GetCodeFileAsync(diffAPIRevision.Id, diffAPIRevision.Files[0].FileId)).CodeFile;
+                    var diffRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileWithCompressionAsync(diffAPIRevision.Id, diffAPIRevision.Files[0].FileId);
                     codePanelRawData.APIForest = CodeFileHelpers.ComputeAPIForestDiff(activeRevisionReviewCodeFile.APIForest, diffRevisionReviewCodeFile.APIForest);
                 }
 

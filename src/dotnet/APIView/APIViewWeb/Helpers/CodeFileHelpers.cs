@@ -79,14 +79,14 @@ namespace APIViewWeb.Helpers
                 var diffAPIRevisionNode = diffAPIRevisionTreeNodesAtLevel.First(n => n.Equals(node));
                 var diffResultNode = diffAPITree.First(n => n.Equals(node));
 
-                diffResultNode.TopTokens = activeAPIRevisionNode.TopTokens;
-                diffResultNode.BottomTokens = activeAPIRevisionNode.BottomTokens;
-                diffResultNode.TopDiffTokens = diffAPIRevisionNode.TopTokens;
-                diffResultNode.BottomDiffTokens = diffAPIRevisionNode.BottomTokens;
+                diffResultNode.TopTokensObj = activeAPIRevisionNode.TopTokensObj;
+                diffResultNode.BottomTokensObj = activeAPIRevisionNode.BottomTokensObj;
+                diffResultNode.TopDiffTokens = diffAPIRevisionNode.TopTokensObj;
+                diffResultNode.BottomDiffTokens = diffAPIRevisionNode.BottomTokensObj;
 
                 var childrenResult = new List<APITreeNode>();
-                ComputeAPITreeDiff(activeAPIRevisionNode.Children, diffAPIRevisionNode.Children, childrenResult);
-                diffResultNode.Children.AddRange(childrenResult);
+                ComputeAPITreeDiff(activeAPIRevisionNode.ChildrenObj, diffAPIRevisionNode.ChildrenObj, childrenResult);
+                diffResultNode.ChildrenObj.AddRange(childrenResult);
             };
         }
 
@@ -97,16 +97,16 @@ namespace APIViewWeb.Helpers
                 Name = node.Name,
                 Id = node.Id,
                 Kind    = node.Kind,
-                Tags = node.Tags,
-                Properties = node.Properties,
+                TagsObj = node.TagsObj,
+                PropertiesObj = node.PropertiesObj,
                 DiffKind = diffKind
             };
 
             if (diffKind == DiffKind.Added || diffKind == DiffKind.Removed)
             {
-                result.TopTokens = node.TopTokens;
-                result.BottomTokens = node.BottomTokens;
-                result.Children = node.Children;
+                result.TopTokensObj = node.TopTokensObj;
+                result.BottomTokensObj = node.BottomTokensObj;
+                result.ChildrenObj = node.ChildrenObj;
             }
 
             return result;
@@ -116,24 +116,24 @@ namespace APIViewWeb.Helpers
         {
             var nodeIdHashed = GetTokenNodeIdHash(apiTreeNode, RowOfTokensPosition.Top, parentNodeIdHashed);
 
-            if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
+            if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
             {
-                codePanelData.NodeMetaData[nodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
+                codePanelData.NodeMetaDataObj[nodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
             }
             else
             {
-                codePanelData.NodeMetaData.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                codePanelData.NodeMetaData[nodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
+                codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                codePanelData.NodeMetaDataObj[nodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
             }
 
-            if (codePanelData.NodeMetaData.ContainsKey(parentNodeIdHashed))
+            if (codePanelData.NodeMetaDataObj.ContainsKey(parentNodeIdHashed))
             {
-                codePanelData.NodeMetaData[parentNodeIdHashed].ChildrenNodeIdsInOrder.TryAdd(nodePositionAtLevel, nodeIdHashed);
+                codePanelData.NodeMetaDataObj[parentNodeIdHashed].ChildrenNodeIdsInOrderObj.TryAdd(nodePositionAtLevel, nodeIdHashed);
             }
             else
             {
-                codePanelData.NodeMetaData[parentNodeIdHashed] = new CodePanelNodeMetaData();
-                codePanelData.NodeMetaData[parentNodeIdHashed].ChildrenNodeIdsInOrder.TryAdd(nodePositionAtLevel, nodeIdHashed);
+                codePanelData.NodeMetaDataObj[parentNodeIdHashed] = new CodePanelNodeMetaData();
+                codePanelData.NodeMetaDataObj[parentNodeIdHashed].ChildrenNodeIdsInOrderObj.TryAdd(nodePositionAtLevel, nodeIdHashed);
             }
 
             if (_processorCount > 1) // Take advantage of multi-core processors
@@ -158,17 +158,17 @@ namespace APIViewWeb.Helpers
             }
 
 
-            if (!apiTreeNode.Tags.Contains("HideFromNav"))
+            if (!apiTreeNode.TagsObj.Contains("HideFromNav"))
             {
                 var navIcon = apiTreeNode.Kind.ToLower();
-                if (apiTreeNode.Properties.ContainsKey("SubKind"))
+                if (apiTreeNode.PropertiesObj.ContainsKey("SubKind"))
                 {
-                    navIcon = apiTreeNode.Properties["SubKind"].ToLower();
+                    navIcon = apiTreeNode.PropertiesObj["SubKind"].ToLower();
                 }
 
-                if (apiTreeNode.Properties.ContainsKey("IconName"))
+                if (apiTreeNode.PropertiesObj.ContainsKey("IconName"))
                 {
-                    navIcon = apiTreeNode.Properties["IconName"].ToLower();
+                    navIcon = apiTreeNode.PropertiesObj["IconName"].ToLower();
                 }
 
                 var navTreeNode = new NavigationTreeNode()
@@ -177,42 +177,42 @@ namespace APIViewWeb.Helpers
                     Data = new NavigationTreeNodeData()
                     {
                         NodeIdHashed = nodeIdHashed,
-                        Kind = apiTreeNode.Properties.ContainsKey("SubKind") ? apiTreeNode.Properties["SubKind"] : apiTreeNode.Kind.ToLower(),
+                        Kind = apiTreeNode.PropertiesObj.ContainsKey("SubKind") ? apiTreeNode.PropertiesObj["SubKind"] : apiTreeNode.Kind.ToLower(),
                         Icon = navIcon,
                     },
                     Expanded = true,
                 };
 
-                if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
+                if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
                 {
-                    codePanelData.NodeMetaData[nodeIdHashed].NavigationTreeNode = navTreeNode;
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].NavigationTreeNode = navTreeNode;
                 }
                 else 
                 {
-                    codePanelData.NodeMetaData.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaData[nodeIdHashed].NavigationTreeNode = navTreeNode;
+                    codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].NavigationTreeNode = navTreeNode;
                 }
             }
 
-            for (int idx = 0; idx < apiTreeNode.Children.Count; idx++)
+            for (int idx = 0; idx < apiTreeNode.ChildrenObj.Count; idx++)
             {
-                var node = apiTreeNode.Children[idx];
+                var node = apiTreeNode.ChildrenObj[idx];
                 await BuildAPITree(codePanelData: codePanelData, codePanelRawData: codePanelRawData, apiTreeNode: node,
                     parentNodeIdHashed: nodeIdHashed, nodePositionAtLevel: idx, indent: indent + 1);       
             };
 
-            if (apiTreeNode.BottomTokens.Any())
+            if (apiTreeNode.BottomTokensObj.Any())
             {
                 var bottomNodeIdHashed = GetTokenNodeIdHash(apiTreeNode, RowOfTokensPosition.Bottom, parentNodeIdHashed);
-                codePanelData.NodeMetaData[nodeIdHashed].BottomTokenNodeIdHash = bottomNodeIdHashed;
-                if (codePanelData.NodeMetaData.ContainsKey(bottomNodeIdHashed))
+                codePanelData.NodeMetaDataObj[nodeIdHashed].BottomTokenNodeIdHash = bottomNodeIdHashed;
+                if (codePanelData.NodeMetaDataObj.ContainsKey(bottomNodeIdHashed))
                 {
-                    codePanelData.NodeMetaData[bottomNodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
+                    codePanelData.NodeMetaDataObj[bottomNodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
                 }
                 else
                 {
-                    codePanelData.NodeMetaData.TryAdd(bottomNodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaData[bottomNodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
+                    codePanelData.NodeMetaDataObj.TryAdd(bottomNodeIdHashed, new CodePanelNodeMetaData());
+                    codePanelData.NodeMetaDataObj[bottomNodeIdHashed].ParentNodeIdHashed = parentNodeIdHashed;
                 }
 
                 BuildNodeTokens(codePanelData, codePanelRawData, apiTreeNode, bottomNodeIdHashed, RowOfTokensPosition.Bottom, indent);
@@ -233,7 +233,7 @@ namespace APIViewWeb.Helpers
 
         private static void BuildTokensForNonDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
         {
-            var tokensInNode = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokens : apiTreeNode.BottomTokens;
+            var tokensInNode = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokensObj : apiTreeNode.BottomTokensObj;
 
             var tokensInRow = new List<StructuredToken>();
             var rowClasses = new HashSet<string>();
@@ -241,9 +241,9 @@ namespace APIViewWeb.Helpers
 
             foreach (var token in tokensInNode)
             {
-                if (token.Properties.ContainsKey("GroupId"))
+                if (token.PropertiesObj.ContainsKey("GroupId"))
                 {
-                    rowClasses.Add(token.Properties["GroupId"]);
+                    rowClasses.Add(token.PropertiesObj["GroupId"]);
                 }
 
                 if (token.Kind == StructuredTokenKind.LineBreak)
@@ -281,12 +281,12 @@ namespace APIViewWeb.Helpers
         private static void BuildTokensForDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
         {
             var lineGroupBuildOrder = new List<string>() { "doc" };
-            var beforeTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokens : apiTreeNode.BottomTokens;
+            var beforeTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokensObj : apiTreeNode.BottomTokensObj;
             var afterTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopDiffTokens : apiTreeNode.BottomDiffTokens;
 
             if (apiTreeNode.DiffKind == DiffKind.Added)
             {
-                afterTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokens : apiTreeNode.BottomTokens;
+                afterTokens = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokensObj : apiTreeNode.BottomTokensObj;
                 beforeTokens = new List<StructuredToken>();
             }
 
@@ -319,9 +319,9 @@ namespace APIViewWeb.Helpers
                         break;
                     }
 
-                    if (token.Properties.ContainsKey("GroupId"))
+                    if (token.PropertiesObj.ContainsKey("GroupId"))
                     {
-                        beforeRowGroupId = token.Properties["GroupId"];
+                        beforeRowGroupId = token.PropertiesObj["GroupId"];
                     }
                     else
                     {
@@ -354,9 +354,9 @@ namespace APIViewWeb.Helpers
                         break;
                     }
 
-                    if (token.Properties.ContainsKey("GroupId"))
+                    if (token.PropertiesObj.ContainsKey("GroupId"))
                     {
-                        afterRowGroupId = token.Properties["GroupId"];
+                        afterRowGroupId = token.PropertiesObj["GroupId"];
                     }
                     else
                     {
@@ -454,11 +454,11 @@ namespace APIViewWeb.Helpers
 
                     if (diffTokenRowResult.HasDiff)
                     {
-                        codePanelData.NodeMetaData[nodeIdHashed].IsNodeWithDiff = true;
-                        var parentNodeIdHashed = codePanelData.NodeMetaData[nodeIdHashed].ParentNodeIdHashed;
-                        while (parentNodeIdHashed != "root" && codePanelData.NodeMetaData.ContainsKey(parentNodeIdHashed))
+                        codePanelData.NodeMetaDataObj[nodeIdHashed].IsNodeWithDiff = true;
+                        var parentNodeIdHashed = codePanelData.NodeMetaDataObj[nodeIdHashed].ParentNodeIdHashed;
+                        while (parentNodeIdHashed != "root" && codePanelData.NodeMetaDataObj.ContainsKey(parentNodeIdHashed))
                         {
-                            var parentNode = codePanelData.NodeMetaData[parentNodeIdHashed];
+                            var parentNode = codePanelData.NodeMetaDataObj[parentNodeIdHashed];
                             parentNode.IsNodeWithDiffInDescendants = true;
                             parentNodeIdHashed = parentNode.ParentNodeIdHashed;
                         }
@@ -469,10 +469,10 @@ namespace APIViewWeb.Helpers
                             var rowData = new CodePanelRowData()
                             {
                                 Type = (beforeRowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
-                                RowOfTokens = diffTokenRowResult.Before,
+                                RowOfTokensObj = diffTokenRowResult.Before,
                                 NodeIdHashed = nodeIdHashed,
                                 NodeId = apiTreeNode.Id,
-                                RowClasses = new HashSet<string>(beforeRowClasses),
+                                RowClassesObj = new HashSet<string>(beforeRowClasses),
                                 RowOfTokensPosition = linesOfTokensPosition,
                                 Indent = indent,
                                 DiffKind = DiffKind.Removed
@@ -491,10 +491,10 @@ namespace APIViewWeb.Helpers
                             var rowData = new CodePanelRowData()
                             {
                                 Type = (afterRowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
-                                RowOfTokens = diffTokenRowResult.After,
+                                RowOfTokensObj = diffTokenRowResult.After,
                                 NodeIdHashed = nodeIdHashed,
                                 NodeId = apiTreeNode.Id,
-                                RowClasses = new HashSet<string>(afterRowClasses),
+                                RowClassesObj = new HashSet<string>(afterRowClasses),
                                 RowOfTokensPosition = linesOfTokensPosition,
                                 Indent = indent,
                                 DiffKind = DiffKind.Added
@@ -512,10 +512,10 @@ namespace APIViewWeb.Helpers
                             var rowData = new CodePanelRowData()
                             {
                                 Type = (beforeRowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
-                                RowOfTokens = diffTokenRowResult.Before,
+                                RowOfTokensObj = diffTokenRowResult.Before,
                                 NodeIdHashed = nodeIdHashed,
                                 NodeId = apiTreeNode.Id,
-                                RowClasses = new HashSet<string>(beforeRowClasses),
+                                RowClassesObj = new HashSet<string>(beforeRowClasses),
                                 RowOfTokensPosition = linesOfTokensPosition,
                                 Indent = indent,
                                 DiffKind = DiffKind.Unchanged
@@ -535,9 +535,9 @@ namespace APIViewWeb.Helpers
         {
             var idPart = apiTreeNode.Kind;
 
-            if (apiTreeNode.Properties.ContainsKey("SubKind"))
+            if (apiTreeNode.PropertiesObj.ContainsKey("SubKind"))
             {
-                idPart = $"{idPart}-{apiTreeNode.Properties["SubKind"]}";
+                idPart = $"{idPart}-{apiTreeNode.PropertiesObj["SubKind"]}";
             }
             idPart = $"{idPart}-{apiTreeNode.Id}";
             idPart = $"{idPart}-{apiTreeNode.DiffKind}";
@@ -570,8 +570,8 @@ namespace APIViewWeb.Helpers
                     commentRowData.NodeIdHashed = nodeIdHashed;
                     commentRowData.NodeId = nodeId;
                     commentRowData.RowOfTokensPosition = linesOfTokensPosition;
-                    commentRowData.RowClasses.Add("user-comment-thread");
-                    commentRowData.Comments = commentsForRow.ToList();
+                    commentRowData.RowClassesObj.Add("user-comment-thread");
+                    commentRowData.CommentsObj = commentsForRow.ToList();
                     toggleCommentClass = toggleCommentClass.Replace("can-show", "show");
                     codePanelRowData.ToggleCommentsClasses = toggleCommentClass;
                 }
@@ -590,9 +590,9 @@ namespace APIViewWeb.Helpers
             var rowData = new CodePanelRowData()
             {
                 Type = (rowClasses.Contains("doc")) ? CodePanelRowDatatype.Documentation : CodePanelRowDatatype.CodeLine,
-                RowOfTokens = tokensInRow,
+                RowOfTokensObj = tokensInRow,
                 NodeIdHashed = nodeIdHashed,
-                RowClasses = new HashSet<string>(rowClasses),
+                RowClassesObj = new HashSet<string>(rowClasses),
                 NodeId = nodeId,
                 RowOfTokensPosition = linesOfTokensPosition,
                 Indent = indent,
@@ -609,40 +609,40 @@ namespace APIViewWeb.Helpers
         {
             if (rowData.Type == CodePanelRowDatatype.Documentation)
             {
-                if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
+                if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
                 {
-                    codePanelData.NodeMetaData[nodeIdHashed].Documentation.Add(rowData);
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Add(rowData);
                 }
                 else
                 {
-                    codePanelData.NodeMetaData.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaData[nodeIdHashed].Documentation.Add(rowData);
+                    codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Add(rowData);
                 }
             }
 
             if (rowData.Type == CodePanelRowDatatype.CodeLine)
             {
-                if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
+                if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
                 {
-                    codePanelData.NodeMetaData[nodeIdHashed].CodeLines.Add(rowData);
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Add(rowData);
                 }
                 else
                 {
-                    codePanelData.NodeMetaData.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaData[nodeIdHashed].CodeLines.Add(rowData);
+                    codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Add(rowData);
                 }
             }
 
-            if (commentsForRow != null && commentsForRow.Type == CodePanelRowDatatype.CommentThread && commentsForRow.Comments.Any())
+            if (commentsForRow != null && commentsForRow.Type == CodePanelRowDatatype.CommentThread && commentsForRow.CommentsObj.Any())
             {
-                if (codePanelData.NodeMetaData.ContainsKey(nodeIdHashed))
+                if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
                 {
-                    codePanelData.NodeMetaData[nodeIdHashed].CommentThread.Add(commentsForRow);
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.Add(commentsForRow);
                 }
                 else
                 {
-                    codePanelData.NodeMetaData.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaData[nodeIdHashed].CommentThread.Add(commentsForRow);
+                    codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.Add(commentsForRow);
                 }
             }
         }
@@ -662,9 +662,9 @@ namespace APIViewWeb.Helpers
                         NodeId = nodeId,
                         RowOfTokensPosition = linesOfTokensPosition,
                         Diagnostics = diagnostic,
-                        RowClasses = new HashSet<string>() { "diagnostics", diagnostic.Level.ToString().ToLower() }
+                        RowClassesObj = new HashSet<string>() { "diagnostics", diagnostic.Level.ToString().ToLower() }
                     };
-                    codePanelData.NodeMetaData[nodeIdHashed].Diagnostics.Add(rowData);
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].DiagnosticsObj.Add(rowData);
                 }
             }
         }
@@ -692,7 +692,7 @@ namespace APIViewWeb.Helpers
                     if (afterTokens.Count > 0)
                     {
                         var token = new StructuredToken(pair.Value);
-                        token.RenderClasses.Add("diff-change");
+                        token.RenderClassesObj.Add("diff-change");
                         diffResultA.Add(token);
                     }
                     else
@@ -714,7 +714,7 @@ namespace APIViewWeb.Helpers
                     if (beforeTokens.Count > 0)
                     {
                         var token = new StructuredToken(pair.Value);
-                        token.RenderClasses.Add("diff-change");
+                        token.RenderClassesObj.Add("diff-change");
                         diffResultB.Add(token);
                     }
                     else

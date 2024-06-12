@@ -31,6 +31,7 @@ addEventListener('message', ({ data }) => {
       directive: ReviewPageWorkerMessageDirective.CreatePageNavigation,
       payload: navigationTree
     };
+
     postMessage(navigationTreeMessage);
 
     const codePanelDataMessage : InsertCodePanelRowDataMessage = {
@@ -54,9 +55,7 @@ addEventListener('message', ({ data }) => {
 });
 
 function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTreeNode []) {
-  const rawNode = codePanelData?.nodeMetaData[nodeIdHashed]!;
-  const node = plainToClass(CodePanelNodeMetaData, rawNode);
-  codePanelData!.nodeMetaData[nodeIdHashed] = node;
+  const node = codePanelData?.nodeMetaData[nodeIdHashed]!;
 
   let buildNode = true;
   let buildChildren = true;

@@ -1,11 +1,8 @@
-using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
-using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -20,10 +17,13 @@ namespace APIViewWeb.LeanControllers
         private readonly IReviewManager _reviewManager;
         private readonly INotificationManager _notificationManager;
 
-        public CommentsController(ILogger<CommentsController> logger, ICommentsManager commentManager)
+        public CommentsController(ILogger<CommentsController> logger,
+            ICommentsManager commentManager, IReviewManager reviewManager, INotificationManager notificationManager)
         {
             _logger = logger;
             _commentsManager = commentManager;
+            _reviewManager = reviewManager;
+            _notificationManager = notificationManager;
         }
 
         /// <summary>

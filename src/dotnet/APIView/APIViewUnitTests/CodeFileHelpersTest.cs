@@ -143,8 +143,8 @@ namespace APIViewUnitTests
                 if ((parts.Length == 1 && parentId == null) || (parts.Length > 1 && parts[1] == parentId))
                 {
                     APITreeNode node = new APITreeNode { Id = parts[0] };
-                    node.Properties.Add("DiffKind", "NoneDiff");
-                    node.Children.AddRange(BuildTestTree(data, node.Id));
+                    node.PropertiesObj.Add("DiffKind", "NoneDiff");
+                    node.ChildrenObj.AddRange(BuildTestTree(data, node.Id));
                     forest.Add(node);
                 }
             }
@@ -174,18 +174,18 @@ namespace APIViewUnitTests
             this.diffTokenResultA = new List<StructuredToken>()
             {
                 new StructuredToken() { Value = "A", Id = "1"  },
-                new StructuredToken() { Value = "B", Id = "2", RenderClasses = new HashSet<string>(){ "diff-change" } },
+                new StructuredToken() { Value = "B", Id = "2", RenderClassesObj = new HashSet<string>(){ "diff-change" } },
                 new StructuredToken() { Value = "D", Id = "4" },
-                new StructuredToken() { Value = "F", Id = "6", RenderClasses = new HashSet<string>(){ "diff-change" } },
-                new StructuredToken() { Value = "G", Id = "7", RenderClasses = new HashSet<string>(){ "diff-change" } }
+                new StructuredToken() { Value = "F", Id = "6", RenderClassesObj = new HashSet<string>(){ "diff-change" } },
+                new StructuredToken() { Value = "G", Id = "7", RenderClassesObj = new HashSet<string>(){ "diff-change" } }
             };
 
             this.diffTokenResultB = new List<StructuredToken>()
             {
                 new StructuredToken() { Value = "A", Id = "1"  },
-                new StructuredToken() { Value = "C", Id = "3", RenderClasses = new HashSet<string>(){ "diff-change" } },
+                new StructuredToken() { Value = "C", Id = "3", RenderClassesObj = new HashSet<string>(){ "diff-change" } },
                 new StructuredToken() { Value = "D", Id = "4" },
-                new StructuredToken() { Value = "G", Id = "7", RenderClasses = new HashSet<string>(){ "diff-change" } }
+                new StructuredToken() { Value = "G", Id = "7", RenderClassesObj = new HashSet<string>(){ "diff-change" } }
             };
 
             this.diffTokenResultC = new List<StructuredToken>()
@@ -248,8 +248,8 @@ namespace APIViewUnitTests
 
                 _output.WriteLine(output);
             }
-            result.Add((node.Id, node.Properties["DiffKind"]));
-            foreach (var child in node.Children)
+            result.Add((node.Id, node.PropertiesObj["DiffKind"]));
+            foreach (var child in node.ChildrenObj)
             {
                 TraverseTree(child, result, print, level + 1);
             }
@@ -263,8 +263,8 @@ namespace APIViewUnitTests
                 Assert.Equal(result[i].Id, expected[i].Id);
                 Assert.Equal(result[i].Kind, expected[i].Kind);
                 Assert.Equal(result[i].Value, expected[i].Value);
-                Assert.Equal(result[i].Properties, expected[i].Properties);
-                Assert.Equal(result[i].RenderClasses, expected[i].RenderClasses);
+                Assert.Equal(result[i].PropertiesObj, expected[i].PropertiesObj);
+                Assert.Equal(result[i].RenderClassesObj, expected[i].RenderClassesObj);
             }
         }
     }

@@ -15,7 +15,7 @@
                 <div *ngIf="!comment.isInEditMode" [innerHTML]="(comment.commentText | markdownToHtml) | async" class="pe-5 rendered-comment-content">
                 </div>
                 <div *ngIf="comment.isInEditMode" class="mt-2 p-2 edit-editor-container">
-                    <app-editor [content]="comment.commentText" [style]="{ width: '100%'}"></app-editor>
+                    <app-editor [content]="comment.commentText" [editorId]="comment.id" [style]="{ width: '100%'}"></app-editor>
                     <div class="btn-group mt-2" role="group" aria-label="Comment Action Buttons">
                         <button type="button" class="btn btn-sm btn-outline-success editor-action-btn" (click)="saveCommentAction($event)">Save</button>
                         <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
@@ -48,11 +48,19 @@
         </ng-template>
     </p-timeline>
     <div *ngIf="showReplyTextBox" class="border-top border-bottom mt-2 p-2 reply-editor-container">
-        <app-editor [style]="{ width: '100%'}"></app-editor>
+        <app-editor editorId="replyEditor" [style]="{ width: '100%'}"></app-editor>
         <div class="btn-group mt-2" role="group" aria-label="Comment Action Buttons">
             <button type="button" class="btn btn-sm btn-outline-success editor-action-btn" (click)="saveCommentAction($event)">Add Comment</button>
             <button type="button" class="btn btn-sm btn-outline-danger editor-action-btn" (click)="cancelCommentAction($event)">Cancel</button>
-            <button type="button" class="btn btn-sm btn-outline-secondary active editor-action-btn" data-bs-toggle="button" aria-pressed="true">Allow Anyone To Resolve</button>
+            <button 
+                type="button" 
+                class="btn btn-sm btn-outline-secondary editor-action-btn" 
+                [class.active]="allowAnyOneToResolve" 
+                data-bs-toggle="button" 
+                [attr.aria-pressed]="allowAnyOneToResolve" 
+                (click)="toggleAllowAnyOneToResolve()">
+                Allow Anyone To Resolve
+            </button>
         </div>
     </div>
     <div class="mt-2 d-grid gap-2">

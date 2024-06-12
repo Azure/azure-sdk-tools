@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-editor',
@@ -7,6 +7,9 @@ import { AfterViewInit, Component, Input } from '@angular/core';
 })
 export class EditorComponent {
   @Input() content: string = '';
-  allowAnyOneToResolve : boolean = true;
+  @Input() editorId: string = '';
+
+  getEditorContent() : string {
+    return this.content;
+  }  
 }
- 

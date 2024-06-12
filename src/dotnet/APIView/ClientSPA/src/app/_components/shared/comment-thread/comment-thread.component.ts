@@ -1,11 +1,11 @@
-import { Component, ElementRef, EventEmitter, Injector, Input, Output, QueryList, Renderer2, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
+import { Component, EventEmitter, Input, Output, QueryList, ViewChildren } from '@angular/core';
 import { MenuItem, MenuItemCommandEvent } from 'primeng/api';
 import { Menu } from 'primeng/menu';
 import { UserProfile } from 'src/app/_models/auth_service_models';
 import { CommentItemModel } from 'src/app/_models/review';
-import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { environment } from 'src/environments/environment';
+import { EditorComponent } from '../editor/editor.component';
 
 @Component({
   selector: 'app-comment-thread',
@@ -16,20 +16,24 @@ import { environment } from 'src/environments/environment';
   },
 })
 export class CommentThreadComponent {
+  @Input() nodeId: string = '';
   @Input() nodeIdHashed : string = '';
   @Input() comments: CommentItemModel[] | undefined = [];
   @Input() showReplyTextBox: boolean = false;
   @Output() cancelCommentActionEmitter : EventEmitter<string> = new EventEmitter<string>();
+  @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
+  @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
   
   userProfile : UserProfile | undefined;
   commentEditText: string | undefined;
   assetsPath : string = environment.assetsPath;
   menuItemAllUsers: MenuItem[] = [];
   menuItemsLoggedInUsers: MenuItem[] = [];
+  allowAnyOneToResolve : boolean = true;
 
-  constructor(private userProfileService: UserProfileService, private commentsService: CommentsService) { }
+  constructor(private userProfileService: UserProfileService) { }
 
   ngOnInit(): void {
     this.userProfileService.getUserProfile().subscribe(
@@ -97,6 +101,10 @@ export class CommentThreadComponent {
     }
   }
 
+  toggleAllowAnyOneToResolve() {
+    this.allowAnyOneToResolve = !this.allowAnyOneToResolve;
+  }
+
   createGitHubIsuue(title : string) {
     let repo = "";
     switch (title) {
@@ -150,16 +158,33 @@ export class CommentThreadComponent {
   saveCommentAction(event: Event) {
     const target = event.target as Element;
     const replyEditorContainer = target.closest(".reply-editor-container") as Element;
-    if (replyEditorContainer) {
-      this.showReplyTextBox = false;
-    } else {
-      const panel = target.closest("p-panel") as Element;
-      const commentId = panel.getAttribute("data-comment-id");
 
-
-
-      
-      this.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
-    }
+      if (replyEditorContainer) {
+        const replyEditor = this.editor.find(e => e.editorId === "replyEditor");
+        const content = replyEditor?.getEditorContent();
+        this.saveCommentActionEmitter.emit(
+          { 
+            nodeId: this.nodeId,
+            nodeIdHashed: this.nodeIdHashed,
+            commentText: content,
+            allowAnyOneToResolve: this.allowAnyOneToResolve
+          }
+        );
+        this.showReplyTextBox = false;
+      } else {
+        const panel = target.closest("p-panel") as Element;
+        const commentId = panel.getAttribute("data-comment-id");
+        const replyEditor = this.editor.find(e => e.editorId === commentId);
+        const content = replyEditor?.getEditorContent();
+        this.saveCommentActionEmitter.emit(
+          { 
+            nodeId: this.nodeId,
+            nodeIdHashed: this.nodeIdHashed,
+            commentId: commentId,
+            commentText: content
+          }
+        );
+        this.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
+      }
   }
 }

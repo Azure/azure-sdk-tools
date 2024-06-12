@@ -1,18 +1,19 @@
 import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
 import { Subject } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { CommentItemModel } from 'src/app/_models/review';
+import { CommentItemModel, CommentType } from 'src/app/_models/review';
 import { CodePanelData, CodePanelRowDatatype } from 'src/app/_models/revision';
 import { CodePanelRowData } from 'src/app/_models/revision';
 import { OnDestroy } from '@angular/core';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
+import { CommentsService } from 'src/app/_services/comments/comments.service';
 
 @Component({
   selector: 'app-code-panel',
   templateUrl: './code-panel.component.html',
   styleUrls: ['./code-panel.component.scss']
 })
-export class CodePanelComponent implements OnChanges, OnDestroy{
+export class CodePanelComponent implements OnChanges{
   @Input() codePanelRowData: CodePanelRowData[] = [];
   @Input() codePanelData: CodePanelData | null = null;
   @Input() reviewComments : CommentItemModel[] | undefined = [];
@@ -20,6 +21,8 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
   @Input() language: string | undefined;
   @Input() languageSafeName: string | undefined;
   @Input() navTreeNodIdHashed: string | undefined;
+  @Input() reviewId: string | undefined;
+  @Input() activeApiRevisionId: string | undefined;
 
   lineNumberCount : number = 0;
   isLoading: boolean = true;
@@ -28,11 +31,8 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
 
   codePanelRowSource: IDatasource<CodePanelRowData> | undefined;
   CodePanelRowDatatype = CodePanelRowDatatype;
-  
-  private destroyApiTreeNode$ = new Subject<void>();
-  private destroyTokenLineData$ = new Subject<void>();
 
-  constructor(private changeDetectorRef: ChangeDetectorRef) { }
+  constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService) { }
 
   ngOnInit() {
     this.codeWindowHeight = `${window.innerHeight - 80}`;
@@ -313,6 +313,25 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     }
   }
 
+  handleSaveCommentActionEmitter(data: any) {
+    if (data.commentId) {
+      this.commentsService.updateComment(this.reviewId!, data.commentId, data.commentText).pipe(take(1)).subscribe(
+        // Update nodeMetaData[nodeIdHashed!]?.commentThread
+        // Update codePanelRowData
+        // Replace commentThread in codePanelRowSource
+      );
+    }
+    else {
+      console.log(data);
+      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, data.nodeId, data.commentText, CommentType.APIRevision, data.allowAnyOneToResolve)
+        .pipe(take(1)).subscribe(
+          // Update nodeMetaData[nodeIdHashed!]?.commentThread
+          // Update codePanelRowData
+          // Replace commentThread in codePanelRowSource
+        );
+    }
+  }
+
   private loadCodePanelViewPort() {
     this.setMaxLineNumberWidth();
     this.initializeDataSource().then(() => {
@@ -322,12 +341,5 @@ export class CodePanelComponent implements OnChanges, OnDestroy{
     }).catch((error) => {
       console.error(error);
     });
-  }
-
-  ngOnDestroy() {
-    this.destroyApiTreeNode$.next();
-    this.destroyApiTreeNode$.complete();
-    this.destroyTokenLineData$.next();
-    this.destroyTokenLineData$.complete();
   }
 }

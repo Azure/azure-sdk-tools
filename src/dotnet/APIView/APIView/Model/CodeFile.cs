@@ -6,8 +6,10 @@ using APIView.Model;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace ApiView
@@ -20,9 +22,14 @@ namespace ApiView
             ReadCommentHandling = JsonCommentHandling.Skip
         };
 
-        private static readonly JsonSerializerOptions _deSerializerOptions = new JsonSerializerOptions
+        private static readonly JsonSerializerOptions _treeStyleParserDeserializerOptions = new JsonSerializerOptions
         {
             Converters = { new StructuredTokenConverter() }
+        };
+
+        private static readonly JsonSerializerOptions _treeStyleParserSerializerOptions = new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         };
 
         private string _versionString;
@@ -73,10 +80,18 @@ namespace ApiView
         public static bool IsCollapsibleSectionSSupported(string language) => _collapsibleLanguages.Contains(language);
 
 #pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-        public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false)
+        public static async Task<CodeFile> DeserializeAsync(Stream stream, bool hasSections = false, bool useTreeStyleParserDeserializerOptions = false)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            CodeFile codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(stream, _deSerializerOptions);
+            CodeFile codeFile = null;
+            if (useTreeStyleParserDeserializerOptions)
+            {
+                codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(stream, _treeStyleParserDeserializerOptions);
+            }
+            else
+            {
+                codeFile = await JsonSerializer.DeserializeAsync<CodeFile>(stream, _serializerOptions);
+            }
 
             if (hasSections == false && codeFile.LeafSections == null && IsCollapsibleSectionSSupported(codeFile.Language))
                 hasSections = true;
@@ -152,7 +167,23 @@ namespace ApiView
 
         public async Task SerializeAsync(Stream stream)
         {
-            await JsonSerializer.SerializeAsync(stream, this, _serializerOptions);
+            if (this.APIForest.Count > 0)
+            {
+                using (var tempStream = new MemoryStream())
+                {
+                    await JsonSerializer.SerializeAsync(tempStream, this, _treeStyleParserSerializerOptions);
+                    tempStream.Position = 0;
+
+                    using (var compressionStream = new GZipStream(stream, CompressionMode.Compress, leaveOpen: true))
+                    {
+                        await tempStream.CopyToAsync(compressionStream);
+                    }
+                }
+            }
+            else
+            {
+                await JsonSerializer.SerializeAsync(stream, this, _serializerOptions);
+            }
         }
     }
 }

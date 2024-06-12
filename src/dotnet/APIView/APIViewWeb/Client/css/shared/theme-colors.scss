@@ -47,12 +47,14 @@
     --name-color: #{$base-text-color};
     --code-color: #d1377e;
     --code-comment: green;
+    --literal-color: #008509;
+    --enum-color: #8700BD;
     --java-doc-color: #8c8c8c;
     --java-comment-color: #8c8c8c;
     --java-field-name-color: #871094;
     --java-method-name-color: #00627A;
     --java-keyword-color: #0033B3;
-    --java-anotation-name-color: 9E880D;
+    --java-anotation-name-color: #9E880D;
     --java-string-literal-color: #067D17;
     --java-number-color: #1750EB;
     --alert-success-color: #0a3622;

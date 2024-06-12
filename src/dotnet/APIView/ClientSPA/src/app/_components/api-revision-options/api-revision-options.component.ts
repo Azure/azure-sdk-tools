@@ -204,12 +204,15 @@ export class ApiRevisionOptionsComponent implements OnChanges {
       let apiRevision = mappedApiRevisions.shift();
 
       if (latestGAApiRevision === null) {
-        let versionParts = apiRevision.version.match(semVarRegex);
-        if (versionParts.groups?.prelabel === undefined && versionParts.groups?.prenumber === undefined &&
-          versionParts.groups?.prenumsep === undefined && versionParts.groups?.presep === undefined) {
-            apiRevision.isLatestGA = true;
-            latestGAApiRevision = apiRevision;
-            continue;
+        if (apiRevision.version) {
+          let versionParts = apiRevision.version.match(semVarRegex);
+
+          if (versionParts.groups?.prelabel === undefined && versionParts.groups?.prenumber === undefined &&
+            versionParts.groups?.prenumsep === undefined && versionParts.groups?.presep === undefined) {
+              apiRevision.isLatestGA = true;
+              latestGAApiRevision = apiRevision;
+              continue;
+          }
         }
       }
 

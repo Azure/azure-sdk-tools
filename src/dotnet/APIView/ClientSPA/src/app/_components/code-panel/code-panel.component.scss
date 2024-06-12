@@ -121,6 +121,7 @@
     .code-line-content {
         grid-column: 2;
         position: relative; 
+        white-space: pre;
     }
 
     .line-number {
@@ -164,19 +165,30 @@
         }
     }
 
-    .csharp {
-        .comment {
-            color: var(--code-comment);
-        }
-    
-        .keyword {
-            color: var(--keyword-color);
-        }
-    
-        .tname {
-            color: var(--class-color);
-        }
+    .comment {
+        color: var(--code-comment);
     }
+
+    .keyword {
+        color: var(--keyword-color);
+    }
+
+    .tname {
+        color: var(--class-color);
+    }
+
+    .mname {
+        color: var(--name-color);
+    }
+
+    .enum {
+        color: var(--enum-color);
+    }
+
+    .literal .sliteral {
+        color: var(--literal-color);
+    }
+
 
     .java {
         .javadoc {

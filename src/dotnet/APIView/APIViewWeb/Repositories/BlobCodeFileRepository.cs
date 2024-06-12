@@ -66,7 +66,7 @@ namespace APIViewWeb
             }
             var info = await client.DownloadAsync();
             using var gzipStream = new GZipStream(info.Value.Content, CompressionMode.Decompress);
-            codeFile = await CodeFile.DeserializeAsync(gzipStream);
+            codeFile = await CodeFile.DeserializeAsync(gzipStream, useTreeStyleParserDeserializerOptions: true);
             if (updateCache)
             {
                 using var _ = _cache.CreateEntry(key)

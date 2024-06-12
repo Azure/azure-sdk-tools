@@ -342,7 +342,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     this.showDiffButton = (value.length == 2) ? true : false;
     let canDelete = (value.length > 0)? true : false;
     for (const revision of value) {
-      if (revision.createdBy != this.userProfile?.userName || revision.apiRevisionType != "Manual")
+      if (revision.createdBy != this.userProfile?.userName || revision.apiRevisionType != "manual")
       {
         canDelete = false;
         break;

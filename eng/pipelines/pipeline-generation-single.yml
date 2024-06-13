@@ -34,18 +34,18 @@ jobs:
       azureSubscription: 'opensource-api-connection'
       scriptType: pscore
       scriptLocation: inlineScript
-      inlineScript:
-        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
-        --organization $(DevOpsOrg) `
-        --project $(DevOpsProject) `
-        --prefix $(Prefix) `
-        --devopspath "$(DevOpsPath)" `
-        --path $(PathFilter) `
-        --endpoint Azure `
-        --repository Azure/$(RepositoryName) `
-        --convention $(PipelineConvention) `
-        --agentpool Hosted `
-        --branch refs/heads/$(Branch) `
-        --debug `
+      inlineScript: >
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+        --organization $(DevOpsOrg)
+        --project $(DevOpsProject)
+        --prefix $(Prefix)
+        --devopspath "$(DevOpsPath)"
+        --path $(PathFilter)
+        --endpoint Azure
+        --repository Azure/$(RepositoryName)
+        --convention $(PipelineConvention)
+        --agentpool Hosted
+        --branch refs/heads/$(Branch)
+        --debug
         $(AdditionalOptions)
     displayName: 'Generate pipeline'

@@ -122,18 +122,18 @@ jobs:
       azureSubscription: 'opensource-api-connection'
       scriptType: pscore
       scriptLocation: inlineScript
-      inlineScript:
-        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
-        --organization azure-sdk `
-        --project public `
-        --prefix $(Prefix) `
-        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
-        --endpoint Azure `
-        --repository Azure/$(RepositoryName) `
-        --convention ci `
-        --agentpool Hosted `
-        --branch refs/heads/$(DefaultBranch) `
-        --set-managed-variables `
+      inlineScript: >
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+        --organization azure-sdk
+        --project public
+        --prefix $(Prefix)
+        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
+        --endpoint Azure
+        --repository Azure/$(RepositoryName)
+        --convention ci
+        --agentpool Hosted
+        --branch refs/heads/$(DefaultBranch)
+        --set-managed-variables
         --debug
     displayName: 'Generate public pipelines for: $(RepositoryName)'
 
@@ -142,19 +142,19 @@ jobs:
       azureSubscription: 'opensource-api-connection'
       scriptType: pscore
       scriptLocation: inlineScript
-      inlineScript:
-        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
-        --organization azure-sdk `
-        --project internal `
-        --prefix $(Prefix) `
-        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
-        --endpoint Azure `
-        --repository Azure/$(RepositoryName) `
-        --convention up `
-        --agentpool Hosted `
-        --branch refs/heads/$(DefaultBranch) `
-        --set-managed-variables `
-        --debug `
+      inlineScript: >
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+        --organization azure-sdk
+        --project internal
+        --prefix $(Prefix)
+        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
+        --endpoint Azure
+        --repository Azure/$(RepositoryName)
+        --convention up
+        --agentpool Hosted
+        --branch refs/heads/$(DefaultBranch)
+        --set-managed-variables
+        --debug
         --variablegroups $(InternalVariableGroups) $(TestVariableGroups)
     displayName: 'Generate internal pipelines for: $(RepositoryName)'
 
@@ -163,19 +163,19 @@ jobs:
       azureSubscription: 'opensource-api-connection'
       scriptType: pscore
       scriptLocation: inlineScript
-      inlineScript:
-        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
-        --organization azure-sdk `
-        --project internal `
-        --prefix $(Prefix) `
-        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
-        --endpoint Azure `
-        --repository Azure/$(RepositoryName) `
-        --convention tests `
-        --agentpool Hosted `
-        --branch refs/heads/$(DefaultBranch) `
-        --set-managed-variables `
-        --debug `
+      inlineScript: >
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+        --organization azure-sdk
+        --project internal
+        --prefix $(Prefix)
+        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
+        --endpoint Azure
+        --repository Azure/$(RepositoryName)
+        --convention tests
+        --agentpool Hosted
+        --branch refs/heads/$(DefaultBranch)
+        --set-managed-variables
+        --debug
         --variablegroups $(TestVariableGroups)
     displayName: 'Generate test pipelines for: $(RepositoryName)'
     condition: and(succeeded(), ne(variables['TestVariableGroups'],''))
@@ -185,19 +185,19 @@ jobs:
       azureSubscription: 'opensource-api-connection'
       scriptType: pscore
       scriptLocation: inlineScript
-      inlineScript:
-        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
-        --organization azure-sdk `
-        --project internal `
-        --prefix $(Prefix) `
-        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
-        --endpoint Azure `
-        --repository Azure/$(RepositoryName) `
-        --convention testsweekly `
-        --agentpool Hosted `
-        --branch refs/heads/$(DefaultBranch) `
-        --set-managed-variables `
-        --debug `
+      inlineScript: >
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+        --organization azure-sdk
+        --project internal
+        --prefix $(Prefix)
+        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
+        --endpoint Azure
+        --repository Azure/$(RepositoryName)
+        --convention testsweekly
+        --agentpool Hosted
+        --branch refs/heads/$(DefaultBranch)
+        --set-managed-variables
+        --debug
         --variablegroups $(TestVariableGroups)
     displayName: 'Generate weekly test pipelines (multi-cloud) for: $(RepositoryName)'
     condition: and(succeeded(), ne(variables['TestVariableGroups'],''))
@@ -207,19 +207,19 @@ jobs:
       azureSubscription: 'opensource-api-connection'
       scriptType: pscore
       scriptLocation: inlineScript
-      inlineScript:
-        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate `
-        --organization azure-sdk `
-        --project internal `
-        --prefix $(Prefix) `
-        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk `
-        --endpoint Azure `
-        --repository Azure/$(RepositoryName) `
-        --convention upweekly `
-        --agentpool Hosted `
-        --branch refs/heads/$(DefaultBranch) `
-        --set-managed-variables `
-        --debug `
+      inlineScript: >
+        $(Pipeline.Workspace)/pipeline-generator/pipeline-generator generate
+        --organization azure-sdk
+        --project internal
+        --prefix $(Prefix)
+        --path $(Pipeline.Workspace)/$(RepositoryName)/sdk
+        --endpoint Azure
+        --repository Azure/$(RepositoryName)
+        --convention upweekly
+        --agentpool Hosted
+        --branch refs/heads/$(DefaultBranch)
+        --set-managed-variables
+        --debug
         --variablegroups $(InternalVariableGroups) $(TestVariableGroups)
     displayName: 'Generate weekly unified test pipelines (multi-cloud) for: $(RepositoryName)'
     condition: and(succeeded(), ne(variables['GenerateUnifiedWeekly'],''))

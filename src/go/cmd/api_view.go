@@ -106,11 +106,11 @@ func recursiveSortNavigation(n Navigation) {
 		recursiveSortNavigation(nn)
 	}
 	slices.SortFunc(n.ChildItems, func(a Navigation, b Navigation) int {
-		aa, err := a.MarshalJSON()
+		aa, err := json.Marshal(a)
 		if err != nil {
 			panic(err)
 		}
-		bb, err := b.MarshalJSON()
+		bb, err := json.Marshal(b)
 		if err != nil {
 			panic(err)
 		}

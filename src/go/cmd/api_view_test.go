@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -297,4 +298,20 @@ func Test_getPackageNameFromModPath(t *testing.T) {
 	require.EqualValues(t, "sdk/foo", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo"))
 	require.EqualValues(t, "sdk/foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar"))
 	require.EqualValues(t, "sdk/foo/bar", getPackageNameFromModPath("github.com/Azure/azure-sdk-for-go/sdk/foo/bar/v5"))
+}
+
+func TestDeterministicOutput(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		review1, err := createReview(filepath.Clean("testdata/test_multi_recursive_alias"))
+		require.NoError(t, err)
+		review2, err := createReview(filepath.Clean("testdata/test_multi_recursive_alias"))
+		require.NoError(t, err)
+
+		output1, err := json.MarshalIndent(review1, "", " ")
+		require.NoError(t, err)
+		output2, err := json.MarshalIndent(review2, "", " ")
+		require.NoError(t, err)
+
+		require.EqualValues(t, string(output1), string(output2))
+	}
 }

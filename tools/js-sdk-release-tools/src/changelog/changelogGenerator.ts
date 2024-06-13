@@ -159,21 +159,36 @@ export class Changelog {
     }
 }
 
+// todo: special rules for HLC convert to Modular, will use a more generic method to replace
+function getRenamedOperationFromToMap(from: TSExportedMetaData, to: TSExportedMetaData):  {[id:string]: string} {
+    const map : {[id:string]: string} = {};
+    for (const fromName in from.operationInterface) {
+        const operationIndex = fromName.indexOf("Operations");
+        const toName = operationIndex >= 0 ? fromName.substring(0, operationIndex) : fromName + "Operations";
+        map[fromName] = toName;
+    }
+    return map;
+}
+
 const findAddedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
+    const newToOldMap = getRenamedOperationFromToMap(metaDataNew, metaDataOld);
     const addOperationGroup: string[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(operationGroup => {
-        if (!metaDataOld.operationInterface[operationGroup]) {
+        const oldName = newToOldMap[operationGroup];
+        if (!metaDataOld.operationInterface[oldName]) {
             addOperationGroup.push('Added operation group ' + operationGroup);
         }
     });
     return addOperationGroup;
 };
 
-const findAddedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
+const findAddedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {    
+    const newToOldMap = getRenamedOperationFromToMap(metaDataNew, metaDataOld);
     const addOperation: string[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(operationGroup => {
-        if (metaDataOld.operationInterface[operationGroup]) {
-            const operationGroupFromOld = metaDataOld.operationInterface[operationGroup] as InterfaceDeclaration;
+        const oldName = newToOldMap[operationGroup];
+        if (metaDataOld.operationInterface[oldName]) {
+            const operationGroupFromOld = metaDataOld.operationInterface[oldName] as InterfaceDeclaration;
             const operationGroupFromNew = metaDataNew.operationInterface[operationGroup] as InterfaceDeclaration;
             operationGroupFromNew.methods.forEach(mNew => {
                 let find = false;
@@ -438,9 +453,11 @@ const findAddedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExpor
 
 
 const findRemovedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
+    const oldToNew = getRenamedOperationFromToMap(metaDataOld, metaDataNew);
     const removedOperationGroup: string[] = [];
     Object.keys(metaDataOld.operationInterface).forEach(operationGroup => {
-        if (!metaDataNew.operationInterface[operationGroup]) {
+        const newName = oldToNew[operationGroup];
+        if (!metaDataNew.operationInterface[newName]) {
             removedOperationGroup.push('Removed operation group ' + operationGroup);
         }
     });
@@ -448,11 +465,13 @@ const findRemovedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew:
 };
 
 const findRemovedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
+    const oldToNew = getRenamedOperationFromToMap(metaDataOld, metaDataNew);
     const removedOperation: string[] = [];
     Object.keys(metaDataOld.operationInterface).forEach(operationGroup => {
-        if (metaDataNew.operationInterface[operationGroup]) {
+        const newName = oldToNew[operationGroup];
+        if (metaDataNew.operationInterface[newName]) {
             const operationGroupFromOld = metaDataOld.operationInterface[operationGroup] as InterfaceDeclaration;
-            const operationGroupFromNew = metaDataNew.operationInterface[operationGroup] as InterfaceDeclaration;
+            const operationGroupFromNew = metaDataNew.operationInterface[newName] as InterfaceDeclaration;
             operationGroupFromOld.methods.forEach(mOld => {
                 let find = false;
                 operationGroupFromNew.methods.forEach(mNew => {

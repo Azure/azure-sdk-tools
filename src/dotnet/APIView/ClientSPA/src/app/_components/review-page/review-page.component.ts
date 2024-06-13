@@ -39,7 +39,8 @@ export class ReviewPageComponent implements OnInit {
   language: string | undefined;
   languageSafeName: string | undefined;
   navTreeNodeIdHashed : string | undefined;
-  hideLineNumbers : boolean = true;
+  hideLineNumbers : boolean = false;
+  showLeftNavigation : boolean = true;
 
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
@@ -185,7 +186,7 @@ export class ReviewPageComponent implements OnInit {
   handleShowCommentsEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.showComments = state;
-    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
+    this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
     if (userPreferenceModel!.showComments) {
       this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.CommentThread);
     }
@@ -197,7 +198,7 @@ export class ReviewPageComponent implements OnInit {
   handleShowSystemCommentsEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.showSystemComments = state;
-    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
+    this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
     if (userPreferenceModel!.showSystemComments) {
       this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Diagnostics);
     }
@@ -209,7 +210,7 @@ export class ReviewPageComponent implements OnInit {
   handleShowDocumentationEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.showDocumentation = state;
-    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
+    this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
     if (userPreferenceModel!.showDocumentation) {
       this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Documentation);
     }
@@ -220,14 +221,17 @@ export class ReviewPageComponent implements OnInit {
 
   handleShowLineNumbersEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
-    userPreferenceModel!.hideLineNumbers = state;
-    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
+    userPreferenceModel!.hideLineNumbers = !state;
+    // this.hideLineNumbers = state;
+    this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
   }
 
   handleShowLeftNavigationEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
+
     userPreferenceModel!.hideLeftNavigation = state;
-    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
+    // this.showLeftNavigation = !state;
+    this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
   }
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {

@@ -19,12 +19,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Output() showSystemCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showDocumentationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+
   
   showCommentsSwitch : boolean = true;
   showSystemCommentsSwitch : boolean = true;
   showDocumentationSwitch : boolean = true;
   showLineNumberSwitch : boolean = true;
-  showLeftNavigationSwitch : boolean = true;
+  showLeftNavigationSwitch : boolean = false;
   markedAsViewSwitch : boolean = false;
 
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
@@ -53,7 +56,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;
     this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? true;
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? false;
-    this.showLineNumberSwitch = this.userProfile?.preferences.hideLineNumbers ?? true;
+    this.showLineNumberSwitch = this.userProfile?.preferences.hideLineNumbers ?? false;
     this.showLeftNavigationSwitch = this.userProfile?.preferences.hideLeftNavigation ?? true;
   }
 
@@ -114,7 +117,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
  * @param event the Filter event
  */
     onShowLineNumbersSwitchChange(event: InputSwitchOnChangeEvent) {
-      this.showCommentsEmitter.emit(event.checked);
+      this.showLineNumbersEmitter.emit(event.checked);
     }
 
     /**
@@ -122,7 +125,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
  * @param event the Filter event
  */
     onShowLeftNavigationSwitchChange(event: InputSwitchOnChangeEvent) {
-      this.showCommentsEmitter.emit(event.checked);
+      this.showLeftNavigationEmitter.emit(event.checked);
     }
 
   /**

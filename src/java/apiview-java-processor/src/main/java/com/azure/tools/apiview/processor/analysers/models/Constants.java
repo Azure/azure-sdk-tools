@@ -6,11 +6,11 @@ public class Constants {
      * Mode Flags
      ************************************************************************************/
 
-    /** Short names were a short-lived idea to reduce output size, before gzip support was added, kept here for posterity. */
-    public static final boolean JSON_USE_SHORT_NAMES = true;
+    /** If true, we will output two files - a standard .json file, as well as a gzipped .json.tgz file. */
+    public static final boolean GZIP_OUTPUT = true;
 
-    /** Creates a more succinct output - JavaDoc is grouped into separate values within the same token. */
-    public static final boolean JAVADOC_COMBINE_INTO_SINGLE_TOKEN = false;
+    /** Short names were a short-lived idea to reduce output size, before gzip support was added, kept here for posterity. */
+    public static final boolean JSON_USE_SHORT_NAMES = false;
 
     /** Converts links within JavaDoc to hyperlinks, but can result in unintended links. */
     public static final boolean JAVADOC_EXTRACT_LINKS = false;
@@ -77,15 +77,21 @@ public class Constants {
      * JSON output names
      ************************************************************************************/
 
-    public static final String JSON_NAME_NAME = JSON_USE_SHORT_NAMES ? "n" : "name";
-    public static final String JSON_NAME_ID = JSON_USE_SHORT_NAMES ? "i" : "id";
-    public static final String JSON_NAME_KIND = JSON_USE_SHORT_NAMES ? "k" : "kind";
-    public static final String JSON_NAME_TAGS = JSON_USE_SHORT_NAMES ? "t" : "tags";
-    public static final String JSON_NAME_PROPERTIES = JSON_USE_SHORT_NAMES ? "p" : "properties";
-    public static final String JSON_NAME_TOP_TOKENS = JSON_USE_SHORT_NAMES ? "tt" : "topTokens";
-    public static final String JSON_NAME_BOTTOM_TOKENS = JSON_USE_SHORT_NAMES ? "bt" : "bottomTokens";
-    public static final String JSON_NAME_CHILDREN = JSON_USE_SHORT_NAMES ? "c" : "children";
-    public static final String JSON_NAME_VALUE = JSON_USE_SHORT_NAMES ? "v" : "value";
-    public static final String JSON_NAME_GROUP_VALUE = JSON_USE_SHORT_NAMES ? "gv" : "groupValue";
-    public static final String JSON_NAME_RENDER_CLASSES = JSON_USE_SHORT_NAMES ? "rc" : "renderClasses";
+    public static final String JSON_NAME_VERSION_STRING = JSON_USE_SHORT_NAMES ? "vs" : "VersionString";
+    public static final String JSON_NAME_LANGUAGE = JSON_USE_SHORT_NAMES ? "l" : "Language";
+    public static final String JSON_NAME_LANGUAGE_VARIANT = JSON_USE_SHORT_NAMES ? "lv" : "LanguageVariant";
+    public static final String JSON_NAME_PACKAGE_NAME = JSON_USE_SHORT_NAMES ? "pn" : "PackageName";
+    public static final String JSON_NAME_PACKAGE_VERSION = JSON_USE_SHORT_NAMES ? "pv" : "PackageVersion";
+    public static final String JSON_NAME_API_FOREST = JSON_USE_SHORT_NAMES ? "af" : "APIForest";
+    public static final String JSON_NAME_DIAGNOSTICS = JSON_USE_SHORT_NAMES ? "d" : "Diagnostics";
+    public static final String JSON_NAME_NAME = JSON_USE_SHORT_NAMES ? "n" : "Name";
+    public static final String JSON_NAME_ID = JSON_USE_SHORT_NAMES ? "i" : "Id";
+    public static final String JSON_NAME_KIND = JSON_USE_SHORT_NAMES ? "k" : "Kind";
+    public static final String JSON_NAME_TAGS = JSON_USE_SHORT_NAMES ? "t" : "Tags";
+    public static final String JSON_NAME_PROPERTIES = JSON_USE_SHORT_NAMES ? "p" : "Properties";
+    public static final String JSON_NAME_TOP_TOKENS = JSON_USE_SHORT_NAMES ? "tt" : "TopTokens";
+    public static final String JSON_NAME_BOTTOM_TOKENS = JSON_USE_SHORT_NAMES ? "bt" : "BottomTokens";
+    public static final String JSON_NAME_CHILDREN = JSON_USE_SHORT_NAMES ? "c" : "Children";
+    public static final String JSON_NAME_VALUE = JSON_USE_SHORT_NAMES ? "v" : "Value";
+    public static final String JSON_NAME_RENDER_CLASSES = JSON_USE_SHORT_NAMES ? "rc" : "RenderClasses";
 }

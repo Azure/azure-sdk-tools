@@ -3,6 +3,7 @@ package com.azure.tools.apiview.processor.analysers.util;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.Token;
 import com.azure.tools.apiview.processor.model.TreeNode;
+import com.azure.tools.apiview.processor.model.TreeNodeKind;
 
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +24,18 @@ public class APIListingValidator {
         validateTokenList(node.getTopTokens(), ids);
         validateTokenList(node.getBottomTokens(), ids);
         node.getChildren().forEach(childNode -> validateTreeNode(childNode, ids));
+
+        // Validate TreeNode name
+        String name = node.getName();
+        if (name == null || name.isEmpty()) {
+            throw new IllegalStateException("TreeNode name cannot be null or empty for node: " + node);
+        }
+
+        // Validate TreeNode kind
+        TreeNodeKind kind = node.getKind();
+        if (kind == null || kind.getName().isEmpty()) {
+            throw new IllegalStateException("TreeNode kind cannot be null or empty for node: " + node);
+        }
 
         // Validate TreeNode ID
         String id = node.getId();

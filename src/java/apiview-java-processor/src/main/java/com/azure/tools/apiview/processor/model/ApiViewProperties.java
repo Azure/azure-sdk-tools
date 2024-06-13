@@ -1,11 +1,12 @@
 package com.azure.tools.apiview.processor.model;
 
-import com.azure.json.JsonReader;
-import com.azure.json.JsonSerializable;
-import com.azure.json.JsonToken;
-import com.azure.json.JsonWriter;
+import com.azure.json.*;
+import com.azure.tools.apiview.processor.model.maven.Pom;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +21,43 @@ public class ApiViewProperties implements JsonSerializable<ApiViewProperties> {
 
     // This is a map of model names and methods to their TypeSpec definition IDs.
     private Map<String, String> crossLanguageDefinitionIds = new HashMap<>();
+
+    ApiViewProperties() { }
+
+    /**
+     * Attempts to process the {@code apiview_properties.json} file in the jar file, if it exists.
+     *
+     * @param fs the {@link FileSystem} representing the jar file
+     */
+    public static Optional<ApiViewProperties> fromSourcesJarFile(FileSystem fs, Pom pom) {
+        // the filename is [<artifactid>_]apiview_properties.json
+        final String artifactId = pom.getArtifactId();
+        final String artifactName = (artifactId != null && !artifactId.isEmpty()) ? (artifactId + "_") : "";
+        final String filePath = "/META-INF/" + artifactName + "apiview_properties.json";
+        final Path apiviewPropertiesPath = fs.getPath(filePath);
+
+        if (!Files.exists(apiviewPropertiesPath)) {
+            System.out.println("  No apiview_properties.json file found in jar file - continuing...");
+            return Optional.empty();
+        }
+
+        try {
+            // we eagerly load the apiview_properties.json file into an ApiViewProperties object, so that it can
+            // be used throughout the analysis process, as required
+            try (JsonReader reader = JsonProviders.createReader(Files.readAllBytes(apiviewPropertiesPath))) {
+                final ApiViewProperties properties = ApiViewProperties.fromJson(reader);
+                System.out.println("  Found apiview_properties.json file in jar file");
+                System.out.println("    - Found " + properties.getCrossLanguageDefinitionIds().size()
+                        + " cross-language definition IDs");
+                return Optional.of(properties);
+            }
+        } catch (IOException e) {
+            System.out.println("  ERROR: Unable to parse apiview_properties.json file in jar file - continuing...");
+            e.printStackTrace();
+        }
+
+        return Optional.empty();
+    }
 
     /**
      * Cross Languages Definition ID is used to map from a model name or a method name to a TypeSpec definition ID. This

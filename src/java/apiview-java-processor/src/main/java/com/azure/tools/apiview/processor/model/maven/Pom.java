@@ -13,38 +13,91 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
-public class Pom implements MavenGAV {
-    private Gav gav;
-    private Gav parent;
+/**
+ * This represents an entire Maven POM file, consisting of the GAV, parent GAV, dependencies, and other metadata.
+ */
+public class Pom {
+    private final Gav gav;
+    private final Gav parent;
 
-    private String name;
-    private String description;
+    private final String name;
+    private final String description;
 
-    private List<Dependency> dependencies;
+    private final List<Dependency> dependencies;
 
-    private Float jacocoMinLineCoverage;
-    private Float jacocoMinBranchCoverage;
+    private final Float jacocoMinLineCoverage;
+    private final Float jacocoMinBranchCoverage;
 
-    private String checkstyleExcludes;
+    private final String checkstyleExcludes;
 
-    private boolean fileExists;
+    private final boolean fileExists;
 
     // These are the dependencies specifies in the maven-enforcer that are allowed
-    private List<String> allowedDependencies;
+    private final List<String> allowedDependencies;
 
-    public Pom(final String groupId, final String artifactId, final String version, boolean fileExists) {
-        this.gav = new Gav(groupId, artifactId, version);
-        this.fileExists = fileExists;
+    public static Pom fromSourcesJarFile(File sourcesJarFile) {
+        Pom pom = null;
+        final String filename = sourcesJarFile.getName();
+        int i = 0;
+        while (i < filename.length() && !Character.isDigit(filename.charAt(i))) {
+            i++;
+        }
+
+        String artifactId = filename.substring(0, i - 1);
+        String packageVersion = filename.substring(i, filename.indexOf("-sources.jar"));
+
+        // we will firstly try to get the artifact ID from the maven file inside the jar file...if it exists
+        try (final JarFile jarFile = new JarFile(sourcesJarFile)) {
+            final Enumeration<JarEntry> enumOfJar = jarFile.entries();
+            while (enumOfJar.hasMoreElements()) {
+                final JarEntry entry = enumOfJar.nextElement();
+                final String fullPath = entry.getName();
+
+                // use the pom.xml of this artifact only
+                // shaded jars can contain a pom.xml file each for every shaded dependencies
+                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(artifactId + "/pom.xml")) {
+                    pom = new Pom(jarFile.getInputStream(entry));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // if we can't get the maven details out of the Jar file, we will just use the filename itself...
+        if (pom == null) {
+            // we failed to read it from the maven pom file, we will just take the file name without any extension
+            pom = new Pom("", artifactId, packageVersion, false);
+        }
+
+        return pom;
     }
 
-    public Pom(InputStream pomFileStream) throws IOException {
+    private Pom(final String groupId, final String artifactId, final String version, boolean fileExists) {
+        this.gav = new Gav(groupId, artifactId, version);
+        this.fileExists = fileExists;
         this.dependencies = new ArrayList<>();
         this.allowedDependencies = new ArrayList<>();
+        this.parent = null;
+        this.name = null;
+        this.description = null;
+        this.jacocoMinLineCoverage = null;
+        this.jacocoMinBranchCoverage = null;
+        this.checkstyleExcludes = null;
+    }
+
+    private Pom(InputStream pomFileStream) throws IOException {
+        this.dependencies = new ArrayList<>();
+        this.allowedDependencies = new ArrayList<>();
+        this.fileExists = true;
 
         try {
             // use xpath to get the artifact ID

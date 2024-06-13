@@ -1,10 +1,8 @@
 package com.azure.tools.apiview.processor;
 
-import com.azure.json.JsonProviders;
-import com.azure.json.JsonReader;
-import com.azure.json.JsonWriter;
 import com.azure.tools.apiview.processor.analysers.Analyser;
 import com.azure.tools.apiview.processor.analysers.JavaASTAnalyser;
+import com.azure.tools.apiview.processor.analysers.models.Constants;
 import com.azure.tools.apiview.processor.model.APIListing;
 import com.azure.tools.apiview.processor.model.ApiViewProperties;
 import com.azure.tools.apiview.processor.model.Language;
@@ -12,20 +10,14 @@ import com.azure.tools.apiview.processor.model.LanguageVariant;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.stream.Stream;
-import java.util.zip.GZIPOutputStream;
 
 public class Main {
-    // If true, we will output two files - a standard .json file, as well as a gzipped .json.tgz file
-    private static final boolean GZIP_OUTPUT = true;
 
     // expected argument order:
     // [inputFiles] <outputDirectory>
@@ -70,56 +62,19 @@ public class Main {
         final Optional<APIListing> apiListing = processFile(jarFile);
 
         if (apiListing.isPresent()) {
-            File[] files = new File[GZIP_OUTPUT ? 2 : 1];
+            File[] files = new File[Constants.GZIP_OUTPUT ? 2 : 1];
             files[0] = new File(outputDir, outputFileName);
-            writeApiListingToFile(apiListing.get(), files[0], false);
+            apiListing.get().toFile(files[0], false);
 
-            if (GZIP_OUTPUT) {
+            if (Constants.GZIP_OUTPUT) {
                 files[1] = new File(outputDir, outputFileName + ".tgz");
-                writeApiListingToFile(apiListing.get(), files[1], true);
+                apiListing.get().toFile(files[1], true);
             }
 
             return files;
         }
 
         return new File[] { };
-    }
-
-    private static ReviewProperties getReviewProperties(File inputFile) {
-        final ReviewProperties reviewProperties = new ReviewProperties();
-        final String filename = inputFile.getName();
-        int i = 0;
-        while (i < filename.length() && !Character.isDigit(filename.charAt(i))) {
-            i++;
-        }
-
-        String artifactId = filename.substring(0, i - 1);
-        String packageVersion = filename.substring(i, filename.indexOf("-sources.jar"));
-
-        // we will firstly try to get the artifact ID from the maven file inside the jar file...if it exists
-        try (final JarFile jarFile = new JarFile(inputFile)) {
-            final Enumeration<JarEntry> enumOfJar = jarFile.entries();
-            while (enumOfJar.hasMoreElements()) {
-                final JarEntry entry = enumOfJar.nextElement();
-                final String fullPath = entry.getName();
-
-                // use the pom.xml of this artifact only
-                // shaded jars can contain a pom.xml file each for every shaded dependencies
-                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(artifactId + "/pom.xml")) {
-                    reviewProperties.setMavenPom(new Pom(jarFile.getInputStream(entry)));
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // if we can't get the maven details out of the Jar file, we will just use the filename itself...
-        if (reviewProperties.getMavenPom() == null) {
-            // we failed to read it from the maven pom file, we will just take the file name without any extension
-            reviewProperties.setMavenPom(new Pom("", artifactId, packageVersion, false));
-        }
-
-        return reviewProperties;
     }
 
     private static Optional<APIListing> processFile(final File inputFile) {
@@ -134,28 +89,27 @@ public class Main {
     }
 
     private static void processJavaSourcesJar(File inputFile, APIListing apiListing) {
-        final ReviewProperties reviewProperties = getReviewProperties(inputFile);
+        final Pom mavenPom = Pom.fromSourcesJarFile(inputFile);
+        final String groupId = mavenPom.getGroupId();
+        final String artifactId = mavenPom.getArtifactId();
 
-        final String groupId = reviewProperties.getMavenPom().getGroupId();
-        final String artifactId = reviewProperties.getMavenPom().getArtifactId();
-
-        final String reviewName = artifactId + " (version " + reviewProperties.getMavenPom().getVersion() + ")";
+        final String reviewName = artifactId + " (version " + mavenPom.getVersion() + ")";
         System.out.println("  Using '" + reviewName + "' for the review name");
 
         final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + artifactId;
         System.out.println("  Using '" + packageName + "' for the package name");
 
-        System.out.println("  Using '" + reviewProperties.getMavenPom().getVersion() + "' for the package version");
+        System.out.println("  Using '" + mavenPom.getVersion() + "' for the package version");
 
         apiListing.setReviewName(reviewName);
         apiListing.setPackageName(packageName);
-        apiListing.setPackageVersion(reviewProperties.getMavenPom().getVersion());
+        apiListing.setPackageVersion(mavenPom.getVersion());
         apiListing.setLanguage(Language.JAVA);
-        apiListing.setMavenPom(reviewProperties.getMavenPom());
+        apiListing.setMavenPom(mavenPom);
 
-        if(groupId.contains("spring")) {
+        if (groupId.contains("spring")) {
             apiListing.setLanguageVariant(LanguageVariant.SPRING);
-        } else if(groupId.contains("android")) {
+        } else if (groupId.contains("android")) {
             apiListing.setLanguageVariant(LanguageVariant.ANDROID);
         } else {
             apiListing.setLanguageVariant(LanguageVariant.DEFAULT);
@@ -165,7 +119,7 @@ public class Main {
         // Read all files within the jar file so that we can create a list of files to analyse
         final List<Path> allFiles = new ArrayList<>();
         try (FileSystem fs = FileSystems.newFileSystem(inputFile.toPath(), Main.class.getClassLoader())) {
-            tryParseApiViewProperties(fs, apiListing, artifactId);
+            ApiViewProperties.fromSourcesJarFile(fs, mavenPom).ifPresent(apiListing::setApiViewProperties);
 
             fs.getRootDirectories().forEach(root -> {
                 try (Stream<Path> paths = Files.walk(root)) {
@@ -181,75 +135,6 @@ public class Main {
             analyser.analyse(allFiles);
         } catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    private static void writeApiListingToFile(APIListing apiListing, File outputFile, boolean gzipOutput) {
-        try {
-            // Write out to the filesystem, make the file if it doesn't exist
-            if (!outputFile.exists()) {
-                if (!outputFile.createNewFile()) {
-                    System.out.printf("Failed to create output file %s%n", outputFile);
-                }
-            }
-
-            OutputStream fileStream = Files.newOutputStream(outputFile.toPath());
-            OutputStream gzipStream = gzipOutput ? new GZIPOutputStream(fileStream) : fileStream;
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(gzipStream, StandardCharsets.UTF_8));
-            try (JsonWriter jsonWriter = JsonProviders.createWriter(writer)) {
-                apiListing.toJson(jsonWriter);
-            }
-            System.out.println("Output written to file: " + outputFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Attempts to process the {@code apiview_properties.json} file in the jar file, if it exists.
-     * <p>
-     * If the file was found and successfully parsed as {@link ApiViewProperties}, it is set on the {@link APIListing}
-     * object.
-     *
-     * @param fs the {@link FileSystem} representing the jar file
-     * @param apiListing the {@link APIListing} object to set the {@link ApiViewProperties} on
-     * @param artifactId the artifact ID of the jar file
-     */
-    private static void tryParseApiViewProperties(FileSystem fs, APIListing apiListing, String artifactId) {
-        // the filename is [<artifactid>_]apiview_properties.json
-        String artifactName = (artifactId != null && !artifactId.isEmpty()) ? (artifactId + "_") : "";
-        String filePath = "/META-INF/" + artifactName + "apiview_properties.json";
-        Path apiviewPropertiesPath = fs.getPath(filePath);
-        if (!Files.exists(apiviewPropertiesPath)) {
-            System.out.println("  No apiview_properties.json file found in jar file - continuing...");
-            return;
-        }
-
-        try {
-            // we eagerly load the apiview_properties.json file into an ApiViewProperties object, so that it can
-            // be used throughout the analysis process, as required
-            try (JsonReader reader = JsonProviders.createReader(Files.readAllBytes(apiviewPropertiesPath))) {
-                ApiViewProperties properties = ApiViewProperties.fromJson(reader);
-                apiListing.setApiViewProperties(properties);
-                System.out.println("  Found apiview_properties.json file in jar file");
-                System.out.println("    - Found " + properties.getCrossLanguageDefinitionIds().size()
-                    + " cross-language definition IDs");
-            }
-        } catch (IOException e) {
-            System.out.println("  ERROR: Unable to parse apiview_properties.json file in jar file - continuing...");
-            e.printStackTrace();
-        }
-    }
-
-    private static class ReviewProperties {
-        private Pom mavenPom;
-
-        public void setMavenPom(Pom pom) {
-            this.mavenPom = pom;
-        }
-
-        public Pom getMavenPom() {
-            return mavenPom;
         }
     }
 }

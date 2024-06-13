@@ -13,7 +13,7 @@ import static com.azure.tools.apiview.processor.model.TokenKind.StructuredTokenK
 public class Token implements JsonSerializable<Token> {
 
     // The token value which will be displayed.
-    private final List<String> value;
+    private final String value;
 
     // which will be used to navigate and find token on page.
     private final String id;
@@ -38,7 +38,7 @@ public class Token implements JsonSerializable<Token> {
     }
 
     public Token(TokenKind tokenKind, String value, String id) {
-        this.value = value == null ? new ArrayList<>() : new ArrayList<>(Collections.singletonList(value));
+        this.value = value;
         this.id = id;
         this.tags = new HashSet<>();
 
@@ -53,11 +53,6 @@ public class Token implements JsonSerializable<Token> {
 
     public StructuredTokenKind getKind() {
         return structuredTokenKind;
-    }
-
-    public Token addValue(String value) {
-        this.value.add(value);
-        return this;
     }
 
     public String getId() {
@@ -88,11 +83,7 @@ public class Token implements JsonSerializable<Token> {
         // Small file size optimisation - don't write the value if the structured token is formatting token kind.
         // (The renderer knows to place a single space, newline, etc in its place).
         if (!EnumSet.of(LINE_BREAK, NONE_BREAKING_SPACE, TAB_SPACE, PARAMETER_SEPARATOR).contains(structuredTokenKind)) {
-            if (value.size() == 1) {
-                jsonWriter.writeStringField(JSON_NAME_VALUE, value.getFirst());
-            } else {
-                jsonWriter.writeArrayField(JSON_NAME_GROUP_VALUE, value, JsonWriter::writeString);
-            }
+            jsonWriter.writeStringField(JSON_NAME_VALUE, value);
         }
 
         if (properties != null && !properties.isEmpty()) {

@@ -1,15 +1,22 @@
 package com.azure.tools.apiview.processor.model;
 
+import com.azure.json.JsonProviders;
 import com.azure.json.JsonSerializable;
 import com.azure.json.JsonWriter;
+import com.azure.tools.apiview.processor.analysers.models.Constants;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
+
+import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
 
 public class APIListing implements JsonSerializable<APIListing> {
     private static final String versionString = "26";
@@ -127,16 +134,37 @@ public class APIListing implements JsonSerializable<APIListing> {
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         return jsonWriter.writeStartObject()
             // Version?
-            .writeStringField("VersionString", versionString)
-            .writeStringField("Name", name)
-            .writeStringField("Language", language.toString())
-            .writeStringField("LanguageVariant", languageVariant.toString())
-            .writeStringField("PackageName", packageName)
-            .writeStringField("PackageVersion", packageVersion)
+            .writeStringField(JSON_NAME_VERSION_STRING, versionString)
+            .writeStringField(JSON_NAME_NAME, name)
+            .writeStringField(JSON_NAME_LANGUAGE, language.toString())
+            .writeStringField(JSON_NAME_LANGUAGE_VARIANT, languageVariant.toString())
+            .writeStringField(JSON_NAME_PACKAGE_NAME, packageName)
+            .writeStringField(JSON_NAME_PACKAGE_VERSION, packageVersion)
             // ServiceName?
             // PackageDisplayName?
-            .writeArrayField("APIForest", apiForest, JsonWriter::writeJson)
-            .writeArrayField("Diagnostics", diagnostics, JsonWriter::writeJson)
+            .writeArrayField(JSON_NAME_API_FOREST, apiForest, JsonWriter::writeJson)
+            .writeArrayField(JSON_NAME_DIAGNOSTICS, diagnostics, JsonWriter::writeJson)
             .writeEndObject();
+    }
+
+    public void toFile(File outputFile, boolean gzipOutput) {
+        try {
+            // Write out to the filesystem, make the file if it doesn't exist
+            if (!outputFile.exists()) {
+                if (!outputFile.createNewFile()) {
+                    System.out.printf("Failed to create output file %s%n", outputFile);
+                }
+            }
+
+            OutputStream fileStream = Files.newOutputStream(outputFile.toPath());
+            OutputStream outputStream = gzipOutput ? new GZIPOutputStream(fileStream) : fileStream;
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+            try (JsonWriter jsonWriter = JsonProviders.createWriter(writer)) {
+                toJson(jsonWriter);
+            }
+            System.out.println("Output written to file: " + outputFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

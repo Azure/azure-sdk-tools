@@ -258,6 +258,9 @@ public class JavaASTAnalyser implements Analyser {
     }
 
     private void processPackage(String packageName, List<ScanElement> scanElements) {
+        final boolean isRootPackage = packageName.isEmpty();
+        packageName = isRootPackage ? "<root package>" : packageName;
+
         final TreeNode packageNode = addChild(libraryRootNode, packageName, makeId("package-"+packageName), TreeNodeKind.NAMESPACE);
 
         // lets see if we have javadoc for this packageName
@@ -270,8 +273,8 @@ public class JavaASTAnalyser implements Analyser {
 
         packageNode.addTopToken(KEYWORD, "package").addSpace();
 
-        if (packageName.isEmpty()) {
-            packageNode.hideFromNavigation().addTopToken(PACKAGE_NAME, "<root package>").addSpace().addTopToken(PUNCTUATION, "{");
+        if (isRootPackage) {
+            packageNode.hideFromNavigation().addTopToken(PACKAGE_NAME, packageName).addSpace().addTopToken(PUNCTUATION, "{");
             this.rootPackageNode = packageNode;
 
             // look for the maven pom.xml file, and put that in first, in the root package
@@ -444,14 +447,18 @@ public class JavaASTAnalyser implements Analyser {
 
 //                    dependenciesNode.addChild(new TreeNode(scope, scope, TreeNodeKind.MAVEN)
 //                            .addTopToken(COMMENT, "// " + scope + " scope"));
-                    dependenciesNode.addNewline()
+                    dependenciesNode
+                            .addNewline()
+                            .addTabSpace()
                             .addTopToken(COMMENT, "// " + scope + " scope");
 
                     for (Dependency d : v) {
                         String gav = d.getGroupId() + ":" + d.getArtifactId() + ":" + d.getVersion();
 //                        dependenciesNode.addChild(new TreeNode(gav, gav, TreeNodeKind.MAVEN)
 //                                .addTopToken(MAVEN_DEPENDENCY, gav, gav));
-                        dependenciesNode.addNewline()
+                        dependenciesNode
+                                .addNewline()
+                                .addTabSpace()
                                 .addTopToken(MAVEN_DEPENDENCY, gav, gav);
                     }
                 });
@@ -464,6 +471,7 @@ public class JavaASTAnalyser implements Analyser {
 //                .addTopToken(MiscUtils.tokeniseMavenKeyValue(key, value, linkPrefix)));
         // add the key value as a new token on a newline
         parentNode.addNewline()
+                .addTabSpace()
                 .addTopToken(TokenKind.MAVEN_KEY, key).addSpace()
                 .addTopToken(PUNCTUATION, ":").addSpace()
                 .addTopToken(MiscUtils.tokeniseMavenKeyValue(key, value));
@@ -1393,8 +1401,6 @@ public class JavaASTAnalyser implements Analyser {
             return;
         }
 
-        Token javaDocToken = new Token(JAVADOC, null).addTag(TAG_SKIP_DIFF);
-
         Stream.of(str.split("\n")).forEach(line -> {
             if (line.contains("&")) {
                 line = HtmlEscape.unescapeHtml(line);
@@ -1411,48 +1417,24 @@ public class JavaASTAnalyser implements Analyser {
                     // if the current search index != start of match, there was text between two hyperlinks
                     if (currentIndex != start) {
                         String betweenValue = line.substring(currentIndex, start);
-
-                        if (JAVADOC_COMBINE_INTO_SINGLE_TOKEN) {
-                            javaDocToken.addValue(betweenValue);
-                        } else {
-                            parentNode.addTopToken(new Token(JAVADOC, betweenValue).addTag(TAG_SKIP_DIFF));
-                        }
+                        parentNode.addTopToken(new Token(JAVADOC, betweenValue).addTag(TAG_SKIP_DIFF));
                     }
 
                     String matchedValue = line.substring(start, end);
-
-
-                    if (JAVADOC_COMBINE_INTO_SINGLE_TOKEN) {
-                        javaDocToken.addValue(matchedValue);
-                    } else {
-                        parentNode.addTopToken(new Token(URL, matchedValue)
-                                .addProperty(PROPERTY_URL_LINK_TEXT, matchedValue)
-                                .addTag(TAG_SKIP_DIFF));
-                    }
+                    parentNode.addTopToken(new Token(URL, matchedValue)
+                            .addProperty(PROPERTY_URL_LINK_TEXT, matchedValue)
+                            .addTag(TAG_SKIP_DIFF));
 
                     currentIndex = end;
                 }
 
                 // end of line will be anything between the end of the last found link, and the end of the string
                 String finalValue = line.substring(currentIndex);
-
-                if (JAVADOC_COMBINE_INTO_SINGLE_TOKEN) {
-                    javaDocToken.addValue(finalValue);
-                } else {
-                    parentNode.addTopToken(new Token(JAVADOC, finalValue).addTag(TAG_SKIP_DIFF)).addNewline();
-                }
+                parentNode.addTopToken(new Token(JAVADOC, finalValue).addTag(TAG_SKIP_DIFF)).addNewline();
             } else {
-                if (JAVADOC_COMBINE_INTO_SINGLE_TOKEN) {
-                    javaDocToken.addValue(line);
-                } else {
-                    parentNode.addTopToken(new Token(JAVADOC, line).addTag(TAG_SKIP_DIFF)).addNewline();
-                }
+                parentNode.addTopToken(new Token(JAVADOC, line).addTag(TAG_SKIP_DIFF)).addNewline();
             }
         });
-
-        if (JAVADOC_COMBINE_INTO_SINGLE_TOKEN) {
-            parentNode.addTopToken(javaDocToken);
-        }
     }
 
     // Note: Returns the CHILD node that was added, not the parent node (which is what TreeNode.addChild does).

@@ -6,6 +6,7 @@ import com.azure.json.JsonWriter;
 import java.io.IOException;
 import java.util.*;
 
+import static com.azure.tools.apiview.processor.model.TokenKind.TAB_SPACE;
 import static com.azure.tools.apiview.processor.model.TokenKind.WHITESPACE;
 import static com.azure.tools.apiview.processor.analysers.models.Constants.*;
 
@@ -43,7 +44,11 @@ public class TreeNode implements JsonSerializable<TreeNode> {
     private APIListing apiListing;
 
     public TreeNode(String name, String id, TreeNodeKind kind) {
-        this.name = name;
+        this.name = Objects.requireNonNull(name);
+        if (name.isEmpty()) {
+            throw new IllegalArgumentException("name cannot be empty");
+        }
+
         this.kind = Objects.requireNonNull(kind);
         this.id = Objects.requireNonNull(id);
         this.tags = new LinkedHashSet<>();
@@ -109,7 +114,11 @@ public class TreeNode implements JsonSerializable<TreeNode> {
     }
 
     public TreeNode addSpace() {
-       return addTopToken(new Token(WHITESPACE, " "));
+       return addTopToken(new Token(WHITESPACE, ""));
+    }
+
+    public TreeNode addTabSpace() {
+        return addTopToken(new Token(TAB_SPACE, ""));
     }
 
     public TreeNode addNewline() {

@@ -1,0 +1,80 @@
+{
+  "name": "Required PullRequest Checks - Full",
+  "target": "branch",
+  "source_type": "Repository",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "exclude": [],
+      "include": [
+        "~DEFAULT_BRANCH"
+      ]
+    }
+  },
+  "rules": [
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": false,
+        "required_status_checks": [
+          {
+            "context": "Automated merging requirements met"
+          },
+          {
+            "context": "Breaking Change(Cross-Version)"
+          },
+          {
+            "context": "license/cla"
+          },
+          {
+            "context": "Swagger BreakingChange"
+          },
+          {
+            "context": "Swagger Lint(RPaaS)"
+          },
+          {
+            "context": "Swagger LintDiff"
+          },
+          {
+            "context": "Swagger ModelValidation"
+          },
+          {
+            "context": "Swagger PrettierCheck"
+          },
+          {
+            "context": "Swagger SemanticValidation"
+          },
+          {
+            "context": "Swagger SpellCheck"
+          },
+          {
+            "context": "SDK azure-sdk-for-go"
+          },
+          {
+            "context": "TypeSpec Requirement (resource-manager)"
+          },
+          {
+            "context": "TypeSpec Validation"
+          }
+        ]
+      }
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 3028359,
+      "actor_type": "Team",
+      "bypass_mode": "always"
+    },
+    {
+      "actor_id": 10313102,
+      "actor_type": "Team",
+      "bypass_mode": "always"
+    },
+    {
+      "actor_id": 1,
+      "actor_type": "OrganizationAdmin",
+      "bypass_mode": "always"
+    }
+  ]
+}

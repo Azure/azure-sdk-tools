@@ -117,6 +117,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
  * @param event the Filter event
  */
     onShowLineNumbersSwitchChange(event: InputSwitchOnChangeEvent) {
+      console.log('LineNumber item clicked:', event);
       this.showLineNumbersEmitter.emit(event.checked);
     }
 
@@ -125,6 +126,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
  * @param event the Filter event
  */
     onShowLeftNavigationSwitchChange(event: InputSwitchOnChangeEvent) {
+      console.log('LeftNav item clicked:', event);
       this.showLeftNavigationEmitter.emit(event.checked);
     }
 

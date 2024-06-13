@@ -46,6 +46,9 @@ export class ReviewPageComponent implements OnInit {
   codePanelRowData: CodePanelRowData[] = [];
   apiRevisionPageSize = 50;
   lastNodeIdUnhashedDiscarded = '';
+  panelSizes = [15, 75, 15];
+  panelMinSizes = [1, 1, 1];
+
 
   private destroy$ = new Subject<void>();
   private destroyLoadAPIRevision$ : Subject<void>  | null = null;
@@ -222,16 +225,17 @@ export class ReviewPageComponent implements OnInit {
   handleShowLineNumbersEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.hideLineNumbers = !state;
-    // this.hideLineNumbers = state;
-    this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
+    console.log('LineNumber state after handling:', state);
+    // this.showLineNumbers = state;
+    this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe(() => {this.showLineNumbers = state});
   }
 
   handleShowLeftNavigationEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
-
     userPreferenceModel!.hideLeftNavigation = state;
+    console.log('LeftNav state after handling:', state);
     // this.showLeftNavigation = !state;
-    this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
+    this.userProfileService.updateUserPreference(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe(() => {this.showLeftNavigation = state});
   }
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {

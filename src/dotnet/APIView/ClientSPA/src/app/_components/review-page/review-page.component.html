@@ -11,10 +11,10 @@
         </div>
         <div style="flex-grow: 1; min-width: 0; margin-left: 7px;">
             <p-splitter 
-                [panelSizes]="[15, 70, 15]"
-                [minSizes]="[1, 1, 1]"
+                [panelSizes]="showLeftNavigation ? [15, 75, 15] : [0, 90, 15]"
+                [minSizes]="panelMinSizes"
                 [gutterSize]="6">
-                <ng-template pTemplate>
+                <ng-template *ngIf="showLeftNavigation" pTemplate>
                     <div class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel">
                         <app-review-nav [reviewPageNavigation]="reviewPageNavigation"
                         (navTreeNodeIdEmitter)="handleNavTreeNodeEmmitter($event)"></app-review-nav>

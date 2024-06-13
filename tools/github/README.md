@@ -10,8 +10,6 @@ This area is focused on the management of the Azure SDK GitHub repositories, con
 
 ## Structure
 
-## Structure
-
 * **root**  
   _The root contains the scripts used for repository management and their associated data._
 

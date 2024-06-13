@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -74,6 +75,22 @@ func createReview(pkgDir string) (PackageReview, error) {
 		})
 		diagnostics = append(diagnostics, p.diagnostics...)
 	}
+
+	slices.SortFunc(diagnostics, func(a Diagnostic, b Diagnostic) int {
+		targetCmp := strings.Compare(a.TargetID, b.TargetID)
+		if targetCmp != 0 {
+			return targetCmp
+		}
+		// if the target IDs are the same then fall back to the text.
+		// this accounts for cases where there are multiple diagnostics
+		// for the same target ID.
+		return strings.Compare(a.Text, b.Text)
+	})
+
+	for _, n := range nav {
+		recursiveSortNavigation(n)
+	}
+
 	return PackageReview{
 		Diagnostics: diagnostics,
 		Language:    "Go",
@@ -82,4 +99,21 @@ func createReview(pkgDir string) (PackageReview, error) {
 		Tokens:      *tokenList,
 		PackageName: m.PackageName,
 	}, nil
+}
+
+func recursiveSortNavigation(n Navigation) {
+	for _, nn := range n.ChildItems {
+		recursiveSortNavigation(nn)
+	}
+	slices.SortFunc(n.ChildItems, func(a Navigation, b Navigation) int {
+		aa, err := a.MarshalJSON()
+		if err != nil {
+			panic(err)
+		}
+		bb, err := b.MarshalJSON()
+		if err != nil {
+			panic(err)
+		}
+		return strings.Compare(string(aa), string(bb))
+	})
 }

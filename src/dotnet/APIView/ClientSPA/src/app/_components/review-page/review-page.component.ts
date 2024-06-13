@@ -39,7 +39,7 @@ export class ReviewPageComponent implements OnInit {
   language: string | undefined;
   languageSafeName: string | undefined;
   navTreeNodeIdHashed : string | undefined;
-  hideLineNumbers : boolean = false;
+  showLineNumbers : boolean = false;
   showLeftNavigation : boolean = true;
 
   codePanelData: CodePanelData | null = null;

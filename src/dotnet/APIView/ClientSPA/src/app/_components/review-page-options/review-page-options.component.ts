@@ -27,7 +27,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   showSystemCommentsSwitch : boolean = true;
   showDocumentationSwitch : boolean = true;
   showLineNumberSwitch : boolean = true;
-  showLeftNavigationSwitch : boolean = false;
+  showLeftNavigationSwitch : boolean = true;
   markedAsViewSwitch : boolean = false;
 
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
@@ -56,7 +56,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;
     this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? true;
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? false;
-    this.showLineNumberSwitch = this.userProfile?.preferences.hideLineNumbers ?? false;
+    this.showLineNumberSwitch = !(this.userProfile?.preferences.hideLineNumbers ?? false);
     this.showLeftNavigationSwitch = this.userProfile?.preferences.hideLeftNavigation ?? true;
   }
 
@@ -69,7 +69,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
       this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
       this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
-      this.showLineNumberSwitch = this.userProfile?.preferences.hideLineNumbers ?? this.showLineNumberSwitch;
+      this.showLineNumberSwitch = !(this.userProfile?.preferences.hideLineNumbers) ?? this.showLineNumberSwitch;
       this.showLeftNavigationSwitch = this.userProfile?.preferences.hideLeftNavigation ?? this.showLeftNavigationSwitch;
     }
     

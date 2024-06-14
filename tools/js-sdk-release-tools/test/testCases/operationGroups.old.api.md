@@ -4,13 +4,10 @@
 
 ```ts
 // @public (undocumented)
-export interface DataProductsCatalogsOperations {
-    // (undocumented)
-    get: (subscriptionId: string, resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalog>;
-    // (undocumented)
-    listByResourceXXXGroup: (subscriptionId: string, resourceGroupName: string, options?: DataProductsCatalogsListByResourceGroupOptionalParams) => PagedAsyncIterableIterator<DataProductsCatalog>;
-    // (undocumented)
-    listBySubscription: (subscriptionId: string, options?: DataProductsCatalogsListBySubscriptionOptionalParams) => PagedAsyncIterableIterator<DataProductsCatalog>;
+export interface DataProductsCatalogs {
+    get(resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams): Promise<DataProductsCatalogsGetResponse>;
+    listByResourceGroup(resourceGroupName: string, options?: DataProductsCatalogsListByResourceGroupOptionalParams): PagedAsyncIterableIterator<DataProductsCatalog>;
+    listBySubscription(options?: DataProductsCatalogsListBySubscriptionOptionalParams): PagedAsyncIterableIterator<DataProductsCatalog>;
 }
 
 // (No @packageDocumentation comment for this package)

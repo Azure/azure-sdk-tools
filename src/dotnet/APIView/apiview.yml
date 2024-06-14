@@ -305,6 +305,12 @@ extends:
           displayName: Pre-Prod
           dependsOn: Build
 
+          variables:
+            - name: 'apiUrl'
+              value: 'https://apiviewstagingtest.com/api/'
+            - name: 'webAppUrl'
+              value: 'https://apiviewstagingtest.com/'
+
           jobs:
             - job: Publish_to_Staging
               displayName: Publish to Staging
@@ -319,6 +325,13 @@ extends:
               - download: current
                 artifact: APIView
                 timeoutInMinutes: 5
+
+              - task: FileTransform@1
+                displayName: 'Update Angular Config for Environment'
+                inputs:
+                  folderPath: '$(System.DefaultWorkingDirectory)/**/APIView/APIViewWeb.zip'
+                  fileType: json
+                  targetFiles: wwwroot/spa/assets/config.json
 
               - task: AzureRmWebAppDeployment@4
                 displayName: 'Deploy Azure App Service'
@@ -342,6 +355,12 @@ extends:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
+
+          variables:
+            - name: 'apiUrl'
+              value: 'https://apiviewuxtest.com/api/'
+            - name: 'webAppUrl'
+              value: 'https://apiviewuxtest.com/'
 
           jobs:
             - deployment: Publish_Test_UI
@@ -372,6 +391,12 @@ extends:
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish
+
+          variables:
+            - name: 'apiUrl'
+              value: 'https://apiview.com/api/'
+            - name: 'webAppUrl'
+              value: 'https://apiview.com/'
 
           jobs:
             - deployment: Publish_to_Prod

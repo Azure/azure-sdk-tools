@@ -14,6 +14,7 @@ namespace APIViewWeb.LeanModels
 
     public class CommentItemModel
     {
+        [JsonProperty("id")]
         public string Id { get; set; } = IdHelper.GenerateId();
         public string ReviewId { get; set; }
         public string APIRevisionId { get; set; }

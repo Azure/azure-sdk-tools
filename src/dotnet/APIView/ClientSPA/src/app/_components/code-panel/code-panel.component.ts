@@ -1,10 +1,8 @@
 import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
-import { Subject } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { CommentItemModel, CommentType } from 'src/app/_models/review';
 import { CodePanelData, CodePanelRowDatatype } from 'src/app/_models/revision';
 import { CodePanelRowData } from 'src/app/_models/revision';
-import { OnDestroy } from '@angular/core';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 
@@ -253,6 +251,21 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
+  async updateItemInScroller(updateData: CodePanelRowData) {
+    this.codePanelRowData.filter(row => row.nodeIdHashed === updateData.nodeIdHashed &&
+      row.type === updateData.type)[0] = updateData;
+
+    await this.codePanelRowSource?.adapter?.relax();
+    await this.codePanelRowSource?.adapter?.update({
+      predicate: ({ $index, data, element}) => {
+        if (data.nodeIdHashed === updateData.nodeIdHashed && data.type === updateData.type) {
+          return [updateData];
+        }
+        return true;
+      }
+    });
+  }
+
   initializeDataSource() : Promise<void> {
     return new Promise((resolve, reject) => {
       this.codePanelRowSource = new Datasource<CodePanelRowData>({
@@ -317,24 +330,27 @@ export class CodePanelComponent implements OnChanges{
     if (data.commentId) {
       this.commentsService.updateComment(this.reviewId!, data.commentId, data.commentText).pipe(take(1)).subscribe({
         next: (response: any) => {
-          console.log(response);
+          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments.filter(c => c.id === data.commentId)[0].commentText = data.commentText;
+          this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]);
         },
         error: (error: any) => {
           
         }
-      }
-        // Update nodeMetaData[nodeIdHashed!]?.commentThread
-        // Update codePanelRowData
-        // Replace commentThread in codePanelRowSource
-      );
+      });
     }
     else {
-      console.log(data);
       this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, data.nodeId, data.commentText, CommentType.APIRevision, data.allowAnyOneToResolve)
-        .pipe(take(1)).subscribe(
-          // Update nodeMetaData[nodeIdHashed!]?.commentThread
-          // Update codePanelRowData
-          // Replace commentThread in codePanelRowSource
+        .pipe(take(1)).subscribe({
+            next: (response: CommentItemModel) => {
+              const comments = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments;
+              comments.push(response);
+              this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments = [...comments]
+              this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]);
+            },
+            error: (error: any) => {
+              
+            }
+          }
         );
     }
   }

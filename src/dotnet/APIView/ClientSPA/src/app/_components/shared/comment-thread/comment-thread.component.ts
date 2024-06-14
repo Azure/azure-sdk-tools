@@ -159,32 +159,32 @@ export class CommentThreadComponent {
     const target = event.target as Element;
     const replyEditorContainer = target.closest(".reply-editor-container") as Element;
 
-      if (replyEditorContainer) {
-        const replyEditor = this.editor.find(e => e.editorId === "replyEditor");
-        const content = replyEditor?.getEditorContent();
-        this.saveCommentActionEmitter.emit(
-          { 
-            nodeId: this.nodeId,
-            nodeIdHashed: this.nodeIdHashed,
-            commentText: content,
-            allowAnyOneToResolve: this.allowAnyOneToResolve
-          }
-        );
-        this.showReplyTextBox = false;
-      } else {
-        const panel = target.closest("p-panel") as Element;
-        const commentId = panel.getAttribute("data-comment-id");
-        const replyEditor = this.editor.find(e => e.editorId === commentId);
-        const content = replyEditor?.getEditorContent();
-        this.saveCommentActionEmitter.emit(
-          { 
-            nodeId: this.nodeId,
-            nodeIdHashed: this.nodeIdHashed,
-            commentId: commentId,
-            commentText: content
-          }
-        );
-        this.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
-      }
+    if (replyEditorContainer) {
+      const replyEditor = this.editor.find(e => e.editorId === "replyEditor");
+      const content = replyEditor?.getEditorContent();
+      this.saveCommentActionEmitter.emit(
+        { 
+          nodeId: this.nodeId,
+          nodeIdHashed: this.nodeIdHashed,
+          commentText: content,
+          allowAnyOneToResolve: this.allowAnyOneToResolve
+        }
+      );
+      this.showReplyTextBox = false;
+    } else {
+      const panel = target.closest("p-panel") as Element;
+      const commentId = panel.getAttribute("data-comment-id");
+      const replyEditor = this.editor.find(e => e.editorId === commentId);
+      const content = replyEditor?.getEditorContent();
+      this.saveCommentActionEmitter.emit(
+        { 
+          nodeId: this.nodeId,
+          nodeIdHashed: this.nodeIdHashed,
+          commentId: commentId,
+          commentText: content
+        }
+      );
+      this.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
+    }
   }
 }

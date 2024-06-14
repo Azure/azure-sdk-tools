@@ -1,6 +1,9 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { remark }  from 'remark';
-import html from 'remark-html';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import remarkRehype from 'remark-rehype';
+import rehypeRaw from 'rehype-raw';
+import rehypeStringify from 'rehype-stringify';
 
 @Pipe({
   name: 'markdownToHtml'
@@ -8,16 +11,18 @@ import html from 'remark-html';
 export class MarkdownToHtmlPipe implements PipeTransform {
   transform(markdown: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      remark()
-        .use(html)
-        .process(markdown, (err, file) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(String(file));
-          }
-        });
+      unified()
+      .use(remarkParse)
+      .use(remarkRehype, { allowDangerousHtml: true })
+      .use(rehypeRaw)
+      .use(rehypeStringify) 
+      .process(markdown)
+      .then((file) => {
+        resolve(String(file));
+      })
+      .catch((err) => {
+        reject(err);
+      });
     });
   }
-
 }

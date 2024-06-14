@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Verification
                 {
                     if (isSourcePathOwnerLine)
                     {
-                        errorStrings.Add($"{ErrorMessageConstants.PathEntryMissingOwnersPartialStart}{line.Trim()}{ErrorMessageConstants.PathEntryMissingOwnersPartialEnd}");
+                        errorStrings.Add(string.Format(ErrorMessageConstants.PathEntryMissingOwners, line.Trim()));
                     }
                     else
                     {

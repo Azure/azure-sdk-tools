@@ -43,8 +43,10 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Verification
         // AzureSdkOwners, with no owner defined is legal for a block that ends in a source path/owner line.
         [TestCase($"# {MonikerConstants.AzureSdkOwners}:", false, false)]
         // Source path/owner line with no owners should complain
-        // JRS - need to change this error
-        [TestCase($"/sdk/SomePath", true, true, $"{ErrorMessageConstants.PathEntryMissingOwnersPartialStart}/sdk/SomePath{ErrorMessageConstants.PathEntryMissingOwnersPartialEnd}")]
+        // ATTENTION: If ErrorMessageConstants.PathEntryMissingOwners changes, this error needs to change by hand.
+        // The reason being is that string.Format(ErrorMessageConstants.PathEntryMissingOwners, "/sdk/SomePath")
+        // can't be in a TestCase declaration, only a constant.
+        [TestCase($"/sdk/SomePath", true, true, "Path entry, /sdk/SomePath, is missing owners")]
         // AzureSdkOwners, with no owner defined is not legal if the block doesn't end in a source path/owner line.
         [TestCase($"# {MonikerConstants.AzureSdkOwners}:", true, false, ErrorMessageConstants.NoOwnersDefined)]
         // At this point whether or not the line is a moniker or source path/owner line is irrelevant.

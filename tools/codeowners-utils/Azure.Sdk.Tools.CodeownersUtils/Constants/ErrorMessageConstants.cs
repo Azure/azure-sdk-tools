@@ -23,6 +23,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Constants
         public const string InvalidTeamPartial = " is an invalid team. Ensure the team exists and has write permissions.";
         public const string InvalidUserPartial = " is an invalid user. Ensure the user exists, is public member of Azure and has write permissions.";
         public const string MalformedTeamEntryPartial = " is a malformed team entry and should start with '@Azure/'.";
+        public const string PathEntryMissingOwners = "Path entry, {0}, is missing owners";
         public const string PathEntryMissingOwnersPartialStart = "Path entry, ";
         public const string PathEntryMissingOwnersPartialEnd = ", is missing owners";
         public const string NoOwnersDefined = "There are no owners defined for CODEOWNERS entry.";

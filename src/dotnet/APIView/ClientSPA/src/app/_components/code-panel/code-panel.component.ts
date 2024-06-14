@@ -315,7 +315,14 @@ export class CodePanelComponent implements OnChanges{
 
   handleSaveCommentActionEmitter(data: any) {
     if (data.commentId) {
-      this.commentsService.updateComment(this.reviewId!, data.commentId, data.commentText).pipe(take(1)).subscribe(
+      this.commentsService.updateComment(this.reviewId!, data.commentId, data.commentText).pipe(take(1)).subscribe({
+        next: (response: any) => {
+          console.log(response);
+        },
+        error: (error: any) => {
+          
+        }
+      }
         // Update nodeMetaData[nodeIdHashed!]?.commentThread
         // Update codePanelRowData
         // Replace commentThread in codePanelRowSource

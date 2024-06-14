@@ -26,7 +26,8 @@
         [nodeId]="item.nodeId"
         [nodeIdHashed]="item.nodeIdHashed"
         (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
-        (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"></app-comment-thread>
+        (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
+        (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"></app-comment-thread>
     </ng-container>
   </div>
 </div>

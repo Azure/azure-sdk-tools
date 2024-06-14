@@ -22,6 +22,7 @@ export class CommentThreadComponent {
   @Input() showReplyTextBox: boolean = false;
   @Output() cancelCommentActionEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
+  @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
@@ -45,7 +46,7 @@ export class CommentThreadComponent {
       label: '',
       items: [
         { label: 'Edit', icon: 'bi bi-pencil-square', command: (event) => this.showEditEditor(event) },
-        { label: 'Delete', icon: 'bi bi-trash', command: () => {} },
+        { label: 'Delete', icon: 'bi bi-trash', command: (event) => this.deleteComment(event) },
         { separator: true }
       ]
     });
@@ -134,6 +135,12 @@ export class CommentThreadComponent {
 
   showReplyEditor(event: Event) {
     this.showReplyTextBox = true;
+  }
+
+  deleteComment(event: MenuItemCommandEvent) {
+    const target = (event.originalEvent?.target as Element).closest("a") as Element;
+    const commentId = target.getAttribute("data-item-id");
+    this.deleteCommentActionEmitter.emit({ nodeIdHashed: this.nodeIdHashed, commentId: commentId });
   }
 
   showEditEditor = (event: MenuItemCommandEvent) => {

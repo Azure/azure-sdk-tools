@@ -1,8 +1,9 @@
 import * as openapiToolsCommon from "@azure-tools/openapi-tools-common";
 import { FunctionDeclaration, TypescriptParser } from "parse-ts-to-ast";
-import {ClassDeclaration, EnumDeclaration, InterfaceDeclaration, TypeAliasDeclaration} from "parse-ts-to-ast";
-import {changelogGenerator} from "./changelogGenerator";
-import {logger} from "../utils/logger";
+import { ClassDeclaration, EnumDeclaration, InterfaceDeclaration, TypeAliasDeclaration } from "parse-ts-to-ast";
+import { changelogGenerator } from "./changelogGenerator";
+import { logger } from "../utils/logger";
+import { SDKType } from "../common/types";
 
 export class TSExportedMetaData {
     public typeAlias = {};
@@ -37,10 +38,14 @@ const extractMetaData = async (code: string, metaData: TSExportedMetaData) => {
             metaData.enums[declartion.name] = declartion;
         } else if (declartion instanceof ClassDeclaration) {
             metaData.classes[declartion.name] = declartion;
+            // for new typespec-typescript generated api view, it uses prop: () => {} instead of func(): type {}, so we can only tell by interface whether end with "Operations"
         } else if (declartion instanceof InterfaceDeclaration) {
             if (declartion.properties.length === 0 && declartion.methods.length > 0) {
                 metaData.operationInterface[declartion.name] = declartion;
-            } else {
+            } else if (declartion.name.endsWith("Operations")) {
+                metaData.operationInterface[declartion.name] = declartion;
+            }
+            else {
                 metaData.modelInterface[declartion.name] = declartion;
             }
         } else if (declartion instanceof FunctionDeclaration) {
@@ -59,10 +64,12 @@ export const readSourceAndExtractMetaData = async (mdFilePath: string) => {
 };
 
 
-export const extractExportAndGenerateChangelog = async (mdFilePathOld: string, mdFilePathNew: string) => {
+export const extractExportAndGenerateChangelog = async (mdFilePathOld: string, mdFilePathNew: string,
+    oldSdkType: SDKType, newSdkType: SDKType
+) => {
     const metaDataOld = await readSourceAndExtractMetaData(mdFilePathOld);
     const metaDataNew = await readSourceAndExtractMetaData(mdFilePathNew);
-    const changeLog = changelogGenerator(metaDataOld, metaDataNew);
+    const changeLog = changelogGenerator(metaDataOld, metaDataNew, oldSdkType, newSdkType);
     logger.log(changeLog.displayChangeLog());
     return changeLog;
 };

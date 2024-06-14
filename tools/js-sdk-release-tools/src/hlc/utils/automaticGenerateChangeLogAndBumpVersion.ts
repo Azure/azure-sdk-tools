@@ -2,15 +2,15 @@ import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
 
-import {extractExportAndGenerateChangelog, readSourceAndExtractMetaData} from "../../changelog/extractMetaData";
-import {Changelog, changelogGenerator} from "../../changelog/changelogGenerator";
-import {NPMScope, NPMViewResult} from "@ts-common/azure-js-dev-tools";
+import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
+import { Changelog } from "../../changelog/changelogGenerator";
+import { NPMScope, NPMViewResult } from "@ts-common/azure-js-dev-tools";
 import {
     makeChangesForFirstRelease,
     makeChangesForMigrateTrack1ToTrack2, makeChangesForPatchReleasingTrack2,
     makeChangesForReleasingTrack2
 } from "./modifyChangelogFileAndBumpVersion";
-import {logger} from "../../utils/logger";
+import { logger } from "../../utils/logger";
 import {
     bumpPatchVersion,
     bumpPreviewVersion,
@@ -18,11 +18,11 @@ import {
     getVersion,
     isBetaVersion
 } from "../../utils/version";
-import {execSync} from "child_process";
+import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version";
 import { ApiVersionType } from "../../common/types"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
-import { getApiReviewPath, getNpmPackageName } from '../../common/utils';
+import { getApiReviewPath, getNpmPackageName, getSDKType } from '../../common/utils';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     const jsSdkRepoPath = String(shell.pwd());
@@ -63,9 +63,9 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 const npmPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'package');
                 const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
                 const apiMdFileLocal = getApiReviewPath(packageFolderPath);
-                const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);
-                let originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
-                if(nextVersion){
+                const oldSDKType = getSDKType(npmPackageRoot);
+                const newSDKType = getSDKType(packageFolderPath);
+                const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
                     shell.cd(path.join(packageFolderPath, 'changelog-temp'));
                     shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
                     shell.cd(path.join(packageFolderPath,'changelog-temp', 'next'));

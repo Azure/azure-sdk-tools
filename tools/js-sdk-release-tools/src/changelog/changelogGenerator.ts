@@ -7,6 +7,7 @@ import {
 import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/IntersectionDeclaration";
 import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration";
 import { TSExportedMetaData } from "./extractMetaData";
+import { SDKType } from "../common/types";
 
 export class Changelog {
     // features
@@ -60,7 +61,7 @@ export class Changelog {
             this.typeAliasParamChangeRequired.length > 0 ||
             this.removedEnum.length > 0 ||
             this.removedEnumValue.length > 0;
-            this.removedFunction.length > 0;
+        this.removedFunction.length > 0;
     }
 
     public get hasFeature() {
@@ -75,7 +76,7 @@ export class Changelog {
             this.typeAliasAddParam.length > 0 ||
             this.addedEnum.length > 0 ||
             this.addedEnumValue.length > 0;
-            this.addedFunction.length > 0;
+        this.addedFunction.length > 0;
     }
 
     public getBreakingChangeItems(): string[] {
@@ -160,8 +161,8 @@ export class Changelog {
 }
 
 // todo: special rules for HLC convert to Modular, will use a more generic method to replace
-function getRenamedOperationFromToMap(from: TSExportedMetaData, to: TSExportedMetaData):  {[id:string]: string} {
-    const map : {[id:string]: string} = {};
+function getRenamedOperationFromToMap(from: TSExportedMetaData): { [id: string]: string } {
+    const map: { [id: string]: string } = {};
     for (const fromName in from.operationInterface) {
         const operationIndex = fromName.indexOf("Operations");
         const toName = operationIndex >= 0 ? fromName.substring(0, operationIndex) : fromName + "Operations";
@@ -170,11 +171,13 @@ function getRenamedOperationFromToMap(from: TSExportedMetaData, to: TSExportedMe
     return map;
 }
 
-const findAddedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const newToOldMap = getRenamedOperationFromToMap(metaDataNew, metaDataOld);
+const findAddedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
+    oldSdkType: SDKType, newSdkType: SDKType
+): string[] => {
+    const newToOldMap = getRenamedOperationFromToMap(metaDataNew);
     const addOperationGroup: string[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(operationGroup => {
-        const oldName = newToOldMap[operationGroup];
+        const oldName = oldSdkType === newSdkType ? operationGroup : newToOldMap[operationGroup];
         if (!metaDataOld.operationInterface[oldName]) {
             addOperationGroup.push('Added operation group ' + operationGroup);
         }
@@ -182,27 +185,25 @@ const findAddedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: T
     return addOperationGroup;
 };
 
-const findAddedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {    
-    const newToOldMap = getRenamedOperationFromToMap(metaDataNew, metaDataOld);
+function getAllMethodNameInInterface(interface_: InterfaceDeclaration): Array<string> {
+    const nameFromMethods = interface_.methods.map(m => m.name);
+    const nameFromProperties = interface_.properties.map(m => m.name);
+    return [...nameFromMethods, ...nameFromProperties];
+}
+
+const findAddedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
+    oldSdkType: SDKType, newSdkType: SDKType
+): string[] => {
+    const newToOldMap = getRenamedOperationFromToMap(metaDataNew);
     const addOperation: string[] = [];
-    Object.keys(metaDataNew.operationInterface).forEach(operationGroup => {
-        const oldName = newToOldMap[operationGroup];
-        if (metaDataOld.operationInterface[oldName]) {
-            const operationGroupFromOld = metaDataOld.operationInterface[oldName] as InterfaceDeclaration;
-            const operationGroupFromNew = metaDataNew.operationInterface[operationGroup] as InterfaceDeclaration;
-            operationGroupFromNew.methods.forEach(mNew => {
-                let find = false;
-                operationGroupFromOld.methods.forEach(mOld => {
-                    if (mOld.name === mNew.name) {
-                        find = true;
-                        return;
-                    }
-                });
-                if (!find) {
-                    addOperation.push('Added operation ' + operationGroup + '.' + mNew.name);
-                }
-            })
-        }
+    Object.keys(metaDataNew.operationInterface).forEach(newOperationGroup => {
+        const oldOperationGroup = oldSdkType === newSdkType ? newOperationGroup : newToOldMap[newOperationGroup];
+        const newInterfaceMethodNames = getAllMethodNameInInterface(metaDataNew.operationInterface[newOperationGroup]);
+        const oldInterfaceNameMethods = getAllMethodNameInInterface(metaDataOld.operationInterface[oldOperationGroup]);
+        newInterfaceMethodNames
+            .filter(newOpName => !oldInterfaceNameMethods.includes(newOpName))
+            .forEach(newOpName => { addOperation.push('Added operation ' + newOperationGroup + '.' + newOpName); });
+        return true;
     });
     return addOperation;
 };
@@ -452,11 +453,13 @@ const findAddedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExpor
 };
 
 
-const findRemovedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const oldToNew = getRenamedOperationFromToMap(metaDataOld, metaDataNew);
+const findRemovedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
+    oldSdkType: SDKType, newSdkType: SDKType
+): string[] => {
+    const oldToNew = getRenamedOperationFromToMap(metaDataOld);
     const removedOperationGroup: string[] = [];
     Object.keys(metaDataOld.operationInterface).forEach(operationGroup => {
-        const newName = oldToNew[operationGroup];
+        const newName = oldSdkType === newSdkType ? operationGroup : oldToNew[operationGroup];
         if (!metaDataNew.operationInterface[newName]) {
             removedOperationGroup.push('Removed operation group ' + operationGroup);
         }
@@ -464,27 +467,20 @@ const findRemovedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew:
     return removedOperationGroup;
 };
 
-const findRemovedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
-    const oldToNew = getRenamedOperationFromToMap(metaDataOld, metaDataNew);
+const findRemovedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
+    oldSdkType: SDKType, newSdkType: SDKType
+): string[] => {
+    const oldToNew = getRenamedOperationFromToMap(metaDataOld);
     const removedOperation: string[] = [];
-    Object.keys(metaDataOld.operationInterface).forEach(operationGroup => {
-        const newName = oldToNew[operationGroup];
-        if (metaDataNew.operationInterface[newName]) {
-            const operationGroupFromOld = metaDataOld.operationInterface[operationGroup] as InterfaceDeclaration;
-            const operationGroupFromNew = metaDataNew.operationInterface[newName] as InterfaceDeclaration;
-            operationGroupFromOld.methods.forEach(mOld => {
-                let find = false;
-                operationGroupFromNew.methods.forEach(mNew => {
-                    if (mOld.name === mNew.name) {
-                        find = true;
-                        return;
-                    }
-                });
-                if (!find) {
-                    removedOperation.push('Removed operation ' + operationGroup + '.' + mOld.name);
-                }
-            })
-        }
+
+    Object.keys(metaDataOld.operationInterface).forEach(oldOperationGroup => {
+        const newOperationGroup = oldSdkType === newSdkType ? oldOperationGroup : oldToNew[oldOperationGroup];
+        const newInterfaceMethodNames = getAllMethodNameInInterface(metaDataOld.operationInterface[oldOperationGroup]);
+        const oldInterfaceNameMethods = getAllMethodNameInInterface(metaDataNew.operationInterface[newOperationGroup]);
+        oldInterfaceNameMethods
+            .filter(oldOpName => !newInterfaceMethodNames.includes(oldOpName))
+            .forEach(oldOpName => { removedOperation.push('Removed operation ' + oldOperationGroup + '.' + oldOpName); });
+        return true;
     });
     return removedOperation;
 };
@@ -1032,12 +1028,18 @@ const findRemovedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExp
 };
 
 
-export const changelogGenerator = (metaDataOld: TSExportedMetaData, metadataNew: TSExportedMetaData): Changelog => {
+export const changelogGenerator = (
+    metaDataOld: TSExportedMetaData, metadataNew: TSExportedMetaData,
+    oldSdkType: SDKType, newSdkType: SDKType): Changelog => {
+    if (!oldSdkType || !newSdkType) {
+        throw new Error(`SDK type is not valid. Old SDK type: ${oldSdkType}, New SDK type: ${newSdkType}`);
+    }
+
     const changLog = new Changelog();
 
     // features
-    changLog.addedOperationGroup = findAddedOperationGroup(metaDataOld, metadataNew);
-    changLog.addedOperation = findAddedOperation(metaDataOld, metadataNew);
+    changLog.addedOperationGroup = findAddedOperationGroup(metaDataOld, metadataNew, oldSdkType, newSdkType);
+    changLog.addedOperation = findAddedOperation(metaDataOld, metadataNew, oldSdkType, newSdkType);
     changLog.addedInterface = findAddedInterface(metaDataOld, metadataNew);
     changLog.addedClass = findAddedClass(metaDataOld, metadataNew);
     changLog.addedTypeAlias = findAddedTypeAlias(metaDataOld, metadataNew);
@@ -1050,8 +1052,8 @@ export const changelogGenerator = (metaDataOld: TSExportedMetaData, metadataNew:
     changLog.addedFunction = findAddedFunction(metaDataOld, metadataNew);
 
     // breaking changes
-    changLog.removedOperationGroup = findRemovedOperationGroup(metaDataOld, metadataNew);
-    changLog.removedOperation = findRemovedOperation(metaDataOld, metadataNew);
+    changLog.removedOperationGroup = findRemovedOperationGroup(metaDataOld, metadataNew, oldSdkType, newSdkType);
+    changLog.removedOperation = findRemovedOperation(metaDataOld, metadataNew, oldSdkType, newSdkType);
     changLog.operationSignatureChange = findOperationSignatureChange(metaDataOld, metadataNew);
     changLog.deletedClass = findDeletedClass(metaDataOld, metadataNew);
     changLog.classSignatureChange = findClassSignatureChange(metaDataOld, metadataNew);

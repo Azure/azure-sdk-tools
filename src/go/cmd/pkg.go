@@ -9,12 +9,13 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"golang.org/x/exp/slices"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"unicode"
+
+	"golang.org/x/exp/slices"
 )
 
 // diagnostic messages

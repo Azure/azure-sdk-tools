@@ -288,7 +288,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Verification
             {
                 // Verify the source path and owners
                 directoryUtils.VerifySourcePathEntry(line, errorStrings);
-                Owners.VerifyOwners(ownerData, line, true, errorStrings);
+                Owners.VerifyOwners(ownerData, line, isSourcePathOwnerLine, true, errorStrings);
             }
             else
             {
@@ -307,7 +307,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Verification
                         case MonikerConstants.MissingFolder:
                         case MonikerConstants.ServiceOwners:
                         case MonikerConstants.AzureSdkOwners:
-                            Owners.VerifyOwners(ownerData, line, expectOwnersIfMoniker, errorStrings);
+                            Owners.VerifyOwners(ownerData, line, isSourcePathOwnerLine, expectOwnersIfMoniker, errorStrings);
                             break;
                         default:
                             // This shouldn't get here unless someone adds a new moniker and forgets to add it to the switch statement

@@ -59,7 +59,7 @@ match the reference.
 Within working Java code, we have a snippet definition. The string after the `BEGIN:` or `END:` comments is an 
 identifier that can be referenced from Javadocs or READMEs.
 
-```
+```java
 public ConfigurationClient createSyncConfigurationClient() {
     String connectionString = getConnectionString();
     // BEGIN: com.azure.data.applicationconfig.configurationclient.instantiation
@@ -77,8 +77,9 @@ The above example defines a code snippet of identifier `com.azure.data.applicati
 
 Within a javadoc comment, a snippet is referenced by a matching pair html comments.
 
-```
+```java
 ...
+/*
  * <p><strong>Instantiating a synchronous Configuration Client</strong></p>
  * 
  * <!-- src_embed com.azure.core.http.rest.pagedflux.instantiation -->
@@ -94,8 +95,9 @@ public final class ConfigurationClient {
 ```
 
 After update runs:
-```
+```java
 ...
+/*
  * <p><strong>Instantiating a synchronous Configuration Client</strong></p>
  * 
  * <!-- src_embed com.azure.core.http.rest.pagedflux.instantiation -->

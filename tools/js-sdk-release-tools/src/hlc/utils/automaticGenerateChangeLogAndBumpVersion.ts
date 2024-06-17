@@ -66,6 +66,8 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 const oldSDKType = getSDKType(npmPackageRoot);
                 const newSDKType = getSDKType(packageFolderPath);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
+                let originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+                if(nextVersion){
                     shell.cd(path.join(packageFolderPath, 'changelog-temp'));
                     shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
                     shell.cd(path.join(packageFolderPath,'changelog-temp', 'next'));

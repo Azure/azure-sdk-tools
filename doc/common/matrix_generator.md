@@ -175,7 +175,7 @@ Example:
   "operatingSystem": [
     "windows-2022",
     "ubuntu-22.04",
-    "macos-11"
+    "macos-latest"
   ],
   "framework": [
     "net461",
@@ -526,7 +526,7 @@ For example:
 
 ``` yaml
 {
-  "net461_macOS1015": {
+  "net461_macOSlatest": {
     "framework": "net461",
     "operatingSystem": "env:OperatingSystem"
   }
@@ -542,9 +542,9 @@ In the matrix job output that azure pipelines consumes, the format is a map of m
 
 ``` yaml
 {
-  "net461_macOS1015": {
+  "net461_macOSlatest": {
     "framework": "net461",
-    "operatingSystem": "macos-11"
+    "operatingSystem": "macos-latest"
   },
   "net60_ubuntu2204": {
     "framework": "net6.0",
@@ -697,7 +697,7 @@ Given a matrix like below with `JavaTestVersion` marked as a non-sparse paramete
     "Agent": {
       "windows-2022": { "OSVmImage": "windows-2022", "Pool": "azsdk-pool-mms-win-2022-general" },
       "ubuntu-2204": { "OSVmImage": "ubuntu-22.04", "Pool": "azsdk-pool-mms-ubuntu-2204-general" },
-      "macos-11": { "OSVmImage": "macos-11", "Pool": "Azure Pipelines" }
+      "macos-latest": { "OSVmImage": "macos-latest", "Pool": "Azure Pipelines" }
     },
     "JavaTestVersion": [ "1.8", "1.11" ],
     "AZURE_TEST_HTTP_CLIENTS": "netty",

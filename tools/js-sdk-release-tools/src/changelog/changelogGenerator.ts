@@ -161,7 +161,7 @@ export class Changelog {
 }
 
 // todo: special rules for HLC convert to Modular, will use a more generic method to replace
-function getRenamedOperationFromToMap(from: TSExportedMetaData): { [id: string]: string } {
+function getRenamedOperationGroupFromToMap(from: TSExportedMetaData): { [id: string]: string } {
     const map: { [id: string]: string } = {};
     for (const fromName in from.operationInterface) {
         const operationIndex = fromName.lastIndexOf("Operations");
@@ -174,7 +174,7 @@ function getRenamedOperationFromToMap(from: TSExportedMetaData): { [id: string]:
 const findAddedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
     oldSdkType: SDKType, newSdkType: SDKType
 ): string[] => {
-    const newToOldMap = getRenamedOperationFromToMap(metaDataNew);
+    const newToOldMap = getRenamedOperationGroupFromToMap(metaDataNew);
     const addOperationGroup: string[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(operationGroup => {
         const oldName = oldSdkType === newSdkType ? operationGroup : newToOldMap[operationGroup];
@@ -194,7 +194,7 @@ function getAllMethodNameInInterface(interface_: InterfaceDeclaration): Array<st
 const findAddedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
     oldSdkType: SDKType, newSdkType: SDKType
 ): string[] => {
-    const newToOldMap = getRenamedOperationFromToMap(metaDataNew);
+    const newToOldMap = getRenamedOperationGroupFromToMap(metaDataNew);
     const addOperation: string[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(newOperationGroup => {
         const oldOperationGroup = oldSdkType === newSdkType ? newOperationGroup : newToOldMap[newOperationGroup];
@@ -456,7 +456,7 @@ const findAddedFunction = (metaDataOld: TSExportedMetaData, metaDataNew: TSExpor
 const findRemovedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
     oldSdkType: SDKType, newSdkType: SDKType
 ): string[] => {
-    const oldToNew = getRenamedOperationFromToMap(metaDataOld);
+    const oldToNew = getRenamedOperationGroupFromToMap(metaDataOld);
     const removedOperationGroup: string[] = [];
     Object.keys(metaDataOld.operationInterface).forEach(operationGroup => {
         const newName = oldSdkType === newSdkType ? operationGroup : oldToNew[operationGroup];
@@ -470,7 +470,7 @@ const findRemovedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew:
 const findRemovedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
     oldSdkType: SDKType, newSdkType: SDKType
 ): string[] => {
-    const oldToNew = getRenamedOperationFromToMap(metaDataOld);
+    const oldToNew = getRenamedOperationGroupFromToMap(metaDataOld);
     const removedOperation: string[] = [];
 
     Object.keys(metaDataOld.operationInterface).forEach(oldOperationGroup => {

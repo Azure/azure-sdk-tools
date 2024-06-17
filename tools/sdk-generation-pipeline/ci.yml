@@ -49,7 +49,7 @@ extends:
     BuildStages:
       - stage: Build
         variables:
-        - template: ../../eng/pipelines/templates/variables/image.yml
+          - template: ../../eng/pipelines/templates/variables/image.yml
         jobs:
           - job: Build
             pool:
@@ -126,7 +126,7 @@ extends:
       - stage: Test
         dependsOn: Build
         variables:
-        - template: ../../eng/pipelines/templates/variables/image.yml
+          - template: ../../eng/pipelines/templates/variables/image.yml
         condition: succeeded()
         jobs:
           - job: UnitTestForCli

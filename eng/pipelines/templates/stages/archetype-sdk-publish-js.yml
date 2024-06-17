@@ -1,5 +1,5 @@
 parameters:
-- name: BuildStage
+- name: BuildStages
   type: object
   default: []
 - name: BuildStageName
@@ -14,7 +14,7 @@ extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
     stages:
-      - ${{ parameters.BuildStage }}
+      - ${{ parameters.BuildStages }}
 
       # only include if running on `internal` build with manual queue, otherwise never include
       - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal'))}}:

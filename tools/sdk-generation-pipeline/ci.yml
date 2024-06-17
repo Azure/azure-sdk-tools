@@ -46,84 +46,80 @@ pool:
   vmImage: "ubuntu-20.04"
   
 extends:
-  template: /eng/eng/pipelines/templates/stages/archetype-sdk-tools-js.yml
+  template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
   parameters:
-    BuildStageName: Build
+    BuildStageName: Test
     ArtifactName: packages
-    BuildStage:
-      stage: Build
-      jobs:
-        - job: Build
-          steps:
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '$(NodeVersion)'
-            displayName: 'Install Node.js'
+    BuildStages:
+      - stage: Build
+        jobs:
+          - job: Build
+            steps:
+            - task: NodeTool@0
+              inputs:
+                versionSpec: '$(NodeVersion)'
+              displayName: 'Install Node.js'
 
-          - bash: |
-              npm install -g @microsoft/rush
-              npm install -g typescript@4.6.2
-            displayName: 'Install dependencies'
+            - bash: |
+                npm install -g @microsoft/rush
+                npm install -g typescript@4.6.2
+              displayName: 'Install dependencies'
 
-          - script: |
-              rush update
-            displayName: 'rush update'
-            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+            - script: |
+                rush update
+              displayName: 'rush update'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
-          - script: |
-              rushx lint
-            displayName: 'Lint @azure-tools/sdk-generation-lib'
-            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
+            - script: |
+                rushx lint
+              displayName: 'Lint @azure-tools/sdk-generation-lib'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
 
-          - script: |
-              rushx lint
-            displayName: 'Lint @azure-tools/sdk-generation-cli'
-            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
+            - script: |
+                rushx lint
+              displayName: 'Lint @azure-tools/sdk-generation-cli'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
 
-          - script: |
-              rush build
-            displayName: 'rush build'
-            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+            - script: |
+                rush build
+              displayName: 'rush build'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
-          - script: |
-              rushx pack
-            displayName: 'Pack @azure-tools/sdk-generation-lib'
-            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
+            - script: |
+                rushx pack
+              displayName: 'Pack @azure-tools/sdk-generation-lib'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
 
-          - script: |
-              rushx pack
-            displayName: 'Pack @azure-tools/sdk-generation-cli'
-            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
+            - script: |
+                rushx pack
+              displayName: 'Pack @azure-tools/sdk-generation-cli'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
 
-          - script: |
-              mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages
-              cp azure-tools-sdk-generation-lib-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages/
-            displayName: 'Copy @azure-tools/sdk-generation-lib to staging dir'
-            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
+            - script: |
+                mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages
+                cp azure-tools-sdk-generation-lib-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages/
+              displayName: 'Copy @azure-tools/sdk-generation-lib to staging dir'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-lib
 
-          - task: PublishBuildArtifacts@1
-            displayName: 'Publish packages'
-            inputs:
-              PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages'
-              ArtifactName: '$(VAR_ARTIFACT_NAME)'
-              publishLocation: 'Container'
+            - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
+              parameters:
+                ArtifactName: '$(VAR_ARTIFACT_NAME)'
+                ArtifactPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/packages'
 
-          - script: 'docker build -t sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) .'
-            displayName: 'Build docker image'
-            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+            - script: 'docker build -t sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) .'
+              displayName: 'Build docker image'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
-          - script: |
-              mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images
-              docker image save sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) -o $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images/image.tar
-            displayName: 'Save docker image'
-            workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
+            - script: |
+                mkdir -p $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images
+                docker image save sdkgeneration.azurecr.io/sdk-generation:$(Build.BuildId) -o $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images/image.tar
+              displayName: 'Save docker image'
+              workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline
 
-          - task: PublishBuildArtifacts@1
-            displayName: 'Publish docker image'
-            inputs:
-              PathtoPublish: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images'
-              ArtifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
-              publishLocation: 'Container'
+            - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
+              parameters:
+                ArtifactName: '$(VAR_DOCKER_IMAGE_ARTIFACT_NAME)'
+                ArtifactPath: '$(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)/docker-images'
 
       - stage: Test
         dependsOn: Build

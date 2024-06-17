@@ -40,11 +40,13 @@ variables:
     value: 'dockerImages'
   - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
     value: $(Build.ArtifactStagingDirectory)
+  - template: ../../eng/pipelines/templates/variables/image.yml
 
 pool:
-  name: "azsdk-pool-mms-ubuntu-2004-general"
-  vmImage: "ubuntu-20.04"
-  
+  name: "$(LINUXPOOL)"
+  image: "$(LINUXVMIMAGE)"
+  os: linux
+
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
   parameters:
@@ -54,6 +56,7 @@ extends:
       - stage: Build
         jobs:
           - job: Build
+
             steps:
             - task: NodeTool@0
               inputs:

@@ -40,7 +40,6 @@ variables:
     value: 'dockerImages'
   - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
     value: $(Build.ArtifactStagingDirectory)
-  - template: ../../eng/pipelines/templates/variables/image.yml
 
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
@@ -49,6 +48,8 @@ extends:
     ArtifactName: packages
     BuildStages:
       - stage: Build
+        variables:
+        - template: ../../eng/pipelines/templates/variables/image.yml
         jobs:
           - job: Build
             pool:
@@ -124,6 +125,8 @@ extends:
 
       - stage: Test
         dependsOn: Build
+        variables:
+        - template: ../../eng/pipelines/templates/variables/image.yml
         condition: succeeded()
         jobs:
           - job: UnitTestForCli

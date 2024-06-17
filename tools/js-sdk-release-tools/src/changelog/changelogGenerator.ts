@@ -164,8 +164,8 @@ export class Changelog {
 function getRenamedOperationFromToMap(from: TSExportedMetaData): { [id: string]: string } {
     const map: { [id: string]: string } = {};
     for (const fromName in from.operationInterface) {
-        const operationIndex = fromName.indexOf("Operations");
-        const toName = operationIndex >= 0 ? fromName.substring(0, operationIndex) : fromName + "Operations";
+        const operationIndex = fromName.lastIndexOf("Operations");
+        const toName = operationIndex >= 1 ? fromName.substring(0, operationIndex) : fromName + "Operations";
         map[fromName] = toName;
     }
     return map;

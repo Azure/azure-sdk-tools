@@ -4,8 +4,9 @@
 
 ```ts
 // @public (undocumented)
-export interface DataProductsCatalogs {
-    get_NEW(resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams): Promise<DataProductsCatalogsGetResponse>;
+export interface DataProductsCatalogsOperations {
+    // (undocumented)
+    get: (subscriptionId: string, resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalog>;
 }
 
 // (No @packageDocumentation comment for this package)

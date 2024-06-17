@@ -5,9 +5,7 @@
 ```ts
 	// @public (undocumented)
 export interface DataProductsCatalogs {
-    get(resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams): Promise<DataProductsCatalogsGetResponse>;
     listByResourceGroup(resourceGroupName: string, options?: DataProductsCatalogsListByResourceGroupOptionalParams): PagedAsyncIterableIterator<DataProductsCatalog>;
-    listBySubscription(options?: DataProductsCatalogsListBySubscriptionOptionalParams): PagedAsyncIterableIterator<DataProductsCatalog>;
 }
 
 // (No @packageDocumentation comment for this package)

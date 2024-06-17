@@ -6,11 +6,7 @@
 // @public (undocumented)
 export interface DataProductsCatalogsOperations {
     // (undocumented)
-    get: (subscriptionId: string, resourceGroupName: string, options?: DataProductsCatalogsGetOptionalParams) => Promise<DataProductsCatalog>;
-    // (undocumented)
     listByResourceGroup_NEW: (subscriptionId: string, resourceGroupName: string, options?: DataProductsCatalogsListByResourceGroupOptionalParams) => PagedAsyncIterableIterator<DataProductsCatalog>;
-    // (undocumented)
-    listBySubscription: (subscriptionId: string, options?: DataProductsCatalogsListBySubscriptionOptionalParams) => PagedAsyncIterableIterator<DataProductsCatalog>;
 }
 // (No @packageDocumentation comment for this package)
 ```

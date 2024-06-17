@@ -26,38 +26,37 @@ extends:
     BuildStageName: InstallAndBuild
     ArtifactName: drop
     BuildStages:
-      stages:
-        - stage: InstallAndBuild
-          variables:
-            - template: /eng/pipelines/templates/variables/globals.yml
-            - template: /eng/pipelines/templates/variables/image.yml
-            - name: NodeVersion
-              value: '18.x'
-            - name: VAR_ARTIFACT_NAME
-              value: 'drop'
-            - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
-              value: $(Build.ArtifactStagingDirectory)
-          jobs:
-            - job: Build_Linux
-              pool:
-                name: $(LINUXPOOL)
-                image: $(LINUXVMIMAGE)
-                os: linux
-              steps:
-                - template: /tools/tsp-client/build-tsp-client.yml
-                  parameters:
-                    Publish: true
-            - job: Build_Windows
-              pool:
-                name: $(WINDOWSPOOL)
-                image: $(WINDOWSVMIMAGE)
-                os: windows
-              steps:
-                - template: /tools/tsp-client/build-tsp-client.yml
-            - job: Build_Mac
-              pool:
-                name: $(MACPOOL)
-                vmImage: $(MACVMIMAGE)
-                os: macOS
-              steps:
-                - template: /tools/tsp-client/build-tsp-client.yml
+      - stage: InstallAndBuild
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+          - name: NodeVersion
+            value: '18.x'
+          - name: VAR_ARTIFACT_NAME
+            value: 'drop'
+          - name: VAR_BUILD_ARTIFACT_STAGING_DIRECTORY
+            value: $(Build.ArtifactStagingDirectory)
+        jobs:
+          - job: Build_Linux
+            pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+            steps:
+              - template: /tools/tsp-client/build-tsp-client.yml
+                parameters:
+                  Publish: true
+          - job: Build_Windows
+            pool:
+              name: $(WINDOWSPOOL)
+              image: $(WINDOWSVMIMAGE)
+              os: windows
+            steps:
+              - template: /tools/tsp-client/build-tsp-client.yml
+          - job: Build_Mac
+            pool:
+              name: $(MACPOOL)
+              vmImage: $(MACVMIMAGE)
+              os: macOS
+            steps:
+              - template: /tools/tsp-client/build-tsp-client.yml

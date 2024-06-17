@@ -199,11 +199,11 @@ const findAddedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExpo
     Object.keys(metaDataNew.operationInterface).forEach(newOperationGroup => {
         const oldOperationGroup = oldSdkType === newSdkType ? newOperationGroup : newToOldMap[newOperationGroup];
         const newInterfaceMethodNames = getAllMethodNameInInterface(metaDataNew.operationInterface[newOperationGroup]);
-        const oldInterfaceNameMethods = getAllMethodNameInInterface(metaDataOld.operationInterface[oldOperationGroup]);
+        const oldInterfaceMethodNames = getAllMethodNameInInterface(metaDataOld.operationInterface[oldOperationGroup]);
         newInterfaceMethodNames
-            .filter(newOpName => !oldInterfaceNameMethods.includes(newOpName))
+            .filter(newOpName => !oldInterfaceMethodNames.includes(newOpName))
             .forEach(newOpName => { addOperation.push('Added operation ' + newOperationGroup + '.' + newOpName); });
-        return true;
+        return;
     });
     return addOperation;
 };
@@ -475,9 +475,9 @@ const findRemovedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
 
     Object.keys(metaDataOld.operationInterface).forEach(oldOperationGroup => {
         const newOperationGroup = oldSdkType === newSdkType ? oldOperationGroup : oldToNew[oldOperationGroup];
-        const newInterfaceMethodNames = getAllMethodNameInInterface(metaDataOld.operationInterface[oldOperationGroup]);
-        const oldInterfaceNameMethods = getAllMethodNameInInterface(metaDataNew.operationInterface[newOperationGroup]);
-        oldInterfaceNameMethods
+        const newInterfaceMethodNames = getAllMethodNameInInterface(metaDataNew.operationInterface[newOperationGroup]);
+        const oldInterfaceMethodNames = getAllMethodNameInInterface(metaDataOld.operationInterface[oldOperationGroup]);
+        oldInterfaceMethodNames
             .filter(oldOpName => !newInterfaceMethodNames.includes(oldOpName))
             .forEach(oldOpName => { removedOperation.push('Removed operation ' + oldOperationGroup + '.' + oldOpName); });
         return true;

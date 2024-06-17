@@ -35,6 +35,11 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         public int BuildCompleteWorkerCount { get; set; } = 1;
 
         /// <summary>
+        /// Gets or sets whether the build definition worker is enabled
+        /// </summary>
+        public bool BuildDefinitionWorkerEnabled { get; set; } = true;
+
+        /// <summary>
         /// Gets or sets the name of the GitHub actions queue
         /// </summary>
         public string GitHubActionRunsQueueName { get; set; }

@@ -14,6 +14,9 @@
     "webAppName": {
       "value": "pipelinewitnesstest-app"
     },
+    "keyVaultName": {
+      "value": "pipelinewitnesstest"
+    },
     "appServicePlanName": {
       "value": "ASP-pipelinewitnesstest-ab12"
     },

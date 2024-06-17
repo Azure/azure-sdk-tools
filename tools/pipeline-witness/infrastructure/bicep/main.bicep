@@ -5,6 +5,7 @@ param location string
 param appResourceGroupName string
 param appServicePlanName string
 param webAppName string
+param keyVaultName string
 param cosmosAccountName string
 param appStorageAccountName string
 param devOpsEventHubNamespaceName string
@@ -28,6 +29,7 @@ module pipelineWitness 'appResourceGroup.bicep' = {
     location: location
     appServicePlanName: appServicePlanName
     webAppName: webAppName
+    keyVaultName: keyVaultName
     cosmosAccountName: cosmosAccountName
     appStorageAccountName: appStorageAccountName
   }

@@ -18,6 +18,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showSystemCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showDocumentationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   
   showCommentsSwitch : boolean = true;
@@ -53,6 +54,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;
     this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? true;
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? false;
+    if (this.userProfile?.preferences.hideLeftNavigation != undefined) {
+      this.showLeftNavigationSwitch = !(this.userProfile?.preferences.hideLeftNavigation);
+    } else {
+      this.showLeftNavigationSwitch = false;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -64,6 +70,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
       this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
       this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
+      if (this.userProfile?.preferences.hideLeftNavigation != undefined) {
+        this.showLeftNavigationSwitch = !(this.userProfile?.preferences.hideLeftNavigation);
+      } else {
+        this.showLeftNavigationSwitch = false;
+      }
     }
     
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
@@ -103,6 +114,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   */
   onShowDocumentationSwitchChange(event: InputSwitchOnChangeEvent) {
     this.showDocumentationEmitter.emit(event.checked);
+  }
+
+  /**
+  * Callback for showLeftnavigationSwitch Change
+  * @param event the Filter event
+  */
+  onShowLeftNavigationSwitchChange(event: InputSwitchOnChangeEvent) {
+    this.showLeftNavigationEmitter.emit(event.checked);
   }
 
   /**

@@ -373,6 +373,7 @@ export class CodePanelComponent implements OnChanges{
       }
     });
   }
+
   private loadCodePanelViewPort() {
     this.setMaxLineNumberWidth();
     this.initializeDataSource().then(() => {

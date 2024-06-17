@@ -47,8 +47,9 @@
             <label class="ms-2">Line Numbers</label>
         </li>
         <li class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch" />
-            <label class="ms-2">Left navigation</label>
+            <p-inputSwitch [(ngModel)]="showLeftNavigationSwitch"
+            (onChange)="onShowLeftNavigationSwitchChange($event)" />
+            <label class="ms-2">Left Navigation</label>
         </li>
         <li *ngIf="isDiffView" class="list-group-item">
             <label class="small mx-1 fw-semibold" for="diff-style-select">Diff Style :</label>

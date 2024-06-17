@@ -10,14 +10,15 @@
             <p-menu [model]="sideMenu"></p-menu>
         </div>
         <div style="flex-grow: 1; min-width: 0; margin-left: 7px;">
-            <p-splitter 
-                [panelSizes]="[15, 70, 15]"
-                [minSizes]="[1, 1, 1]"
-                [gutterSize]="6">
+            <p-splitter
+                [panelSizes]="panelSizes"
+                [minSizes]="minSizes"
+                [gutterSize]="6" (onResizeEnd)="handleSplitterResizeEnd($event)">
                 <ng-template pTemplate>
                     <div class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel">
-                        <app-review-nav [reviewPageNavigation]="reviewPageNavigation"
-                        (navTreeNodeIdEmitter)="handleNavTreeNodeEmmitter($event)"></app-review-nav>
+                        <app-review-nav *ngIf="showLeftNavigation" 
+                            [reviewPageNavigation]="reviewPageNavigation"
+                            (navTreeNodeIdEmitter)="handleNavTreeNodeEmmitter($event)"></app-review-nav>
                     </div>
                 </ng-template>
                 <ng-template pTemplate>
@@ -39,6 +40,7 @@
                             (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
                             (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
                             (showCommentsEmitter)="handleShowCommentsEmitter($event)"
+                            (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)"
                             (diffStyleEmitter)="handleDiffStyleEmitter($event)"
                             (markAsViewedEmitter)="handleMarkAsViewedEmitter($event)"></app-review-page-options>
                     </div>

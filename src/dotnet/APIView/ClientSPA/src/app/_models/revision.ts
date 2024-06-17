@@ -127,7 +127,9 @@ export interface InsertCodePanelRowDataMessage {
 
 export interface ApiTreeBuilderData {
   diffStyle: string,
-  showDocumentation: boolean, 
+  showDocumentation: boolean,
+  showComments: boolean,
+  showSystemComments: boolean
 }
 
 export interface CodePanelToggleableData {

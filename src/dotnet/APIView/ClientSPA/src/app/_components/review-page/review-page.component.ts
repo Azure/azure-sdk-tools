@@ -7,7 +7,6 @@ import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { UserProfile } from 'src/app/_models/auth_service_models';
 import { CommentItemModel, Review } from 'src/app/_models/review';
 import { APIRevision, ApiTreeBuilderData, CodePanelData, CodePanelRowData, CodePanelRowDatatype, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
-import { AuthService } from 'src/app/_services/auth/auth.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
@@ -40,6 +39,10 @@ export class ReviewPageComponent implements OnInit {
   languageSafeName: string | undefined;
   navTreeNodeIdHashed : string | undefined;
 
+  showLeftNavigation : boolean = true;
+  panelSizes = [15, 70, 15];
+  minSizes = [0.1, 1, 1];
+
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
   apiRevisionPageSize = 50;
@@ -52,13 +55,18 @@ export class ReviewPageComponent implements OnInit {
   sideMenu: MenuItem[] | undefined;
 
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService,
-    private reviewsService: ReviewsService, private workerService: WorkerService, private changeDeterctorRef: ChangeDetectorRef,
+    private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
     private userProfileService: UserProfileService, private configService: ConfigService) {}
 
   ngOnInit() {
     this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.userProfile = userProfile;
+        if (this.userProfile?.preferences.hideLeftNavigation) {
+          this.showLeftNavigation = false;
+          this.panelSizes = [0.1, 84, 15];
+          this.minSizes = [0.1, 1, 1];
+        }
       });
 
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
@@ -90,7 +98,7 @@ export class ReviewPageComponent implements OnInit {
     this.reviewPageNavigation = [];
     this.codePanelRowData = [];
     this.codePanelData = null;
-    this.changeDeterctorRef.detectChanges();
+    this.changeDetectorRef.detectChanges();
     this.workerService.startWorker().then(() => {
       this.registerWorkerEventHandler();
       this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
@@ -125,7 +133,9 @@ export class ReviewPageComponent implements OnInit {
         next: (response: ArrayBuffer) => {
           const apiTreeBuilderData : ApiTreeBuilderData = {
             diffStyle: this.diffStyle!,
-            showDocumentation: this.userProfile?.preferences.showDocumentation!
+            showDocumentation: this.userProfile?.preferences.showDocumentation!,
+            showComments: this.userProfile?.preferences.showComments!,
+            showSystemComments: this.userProfile?.preferences.showSystemComments!
           };
           // Passing ArrayBufer to worker is way faster than passing object
           this.workerService.postToApiTreeBuilder(response, apiTreeBuilderData);
@@ -184,37 +194,81 @@ export class ReviewPageComponent implements OnInit {
   handleShowCommentsEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.showComments = state;
-    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
-    if (userPreferenceModel!.showComments) {
-      this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.CommentThread);
-    }
-    else {
-      this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.CommentThread);
-    }
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (respons: any) => {
+        if (userPreferenceModel!.showComments) {
+          this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.CommentThread);
+        }
+        else {
+          this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.CommentThread);
+        }
+      }
+    });
   }
 
   handleShowSystemCommentsEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.showSystemComments = state;
-    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
-    if (userPreferenceModel!.showSystemComments) {
-      this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Diagnostics);
-    }
-    else {
-      this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Diagnostics);
-    }
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (respons: any) => {
+        if (userPreferenceModel!.showSystemComments) {
+          this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Diagnostics);
+        }
+        else {
+          this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Diagnostics);
+        }
+      }
+    });
   }
 
   handleShowDocumentationEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.showDocumentation = state;
-    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe();
-    if (userPreferenceModel!.showDocumentation) {
-      this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Documentation);
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (respons: any) => {
+        if (userPreferenceModel!.showDocumentation) {
+          this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Documentation);
+        }
+        else {
+          this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Documentation);
+        }
+      }
+    });
+  }
+
+  handleShowLeftNavigationEmitter(state: boolean) {
+    this.userProfile!.preferences.hideLeftNavigation = !state
+    this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe();
+    if (state) {
+      this.showLeftNavigation = true;
+      this.panelSizes = [15, 70, 15];
+      this.minSizes = [0.1, 1, 1];
     }
     else {
-      this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Documentation);
+      this.showLeftNavigation = false;
+      this.panelSizes = [0.1, 85, 15];
+      this.minSizes = [0.1, 1];
     }
+  }
+
+  handleSplitterResizeEnd(event: any) {
+    console.log(event.sizes);
+    if (event.sizes[0] > 1) {
+      this.userProfile!.preferences.hideLeftNavigation = false;
+    } else {
+      this.userProfile!.preferences.hideLeftNavigation = true;
+    }
+    this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe();
+    this.showLeftNavigation = !this.userProfile!.preferences.hideLeftNavigation;
+
+    // need this to trigger change detection
+    const userProfile : UserProfile = {
+      userName: this.userProfile!.userName,
+      email: this.userProfile!.email,
+      languages: this.userProfile!.languages,
+      preferences: this.userProfile!.preferences
+    };
+    this.userProfile = userProfile;
   }
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {

@@ -112,11 +112,11 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
     });
   }
 
-  if (buildNode && node.diagnostics) {
+  if (buildNode && node.diagnostics && apiTreeBuilderData?.showSystemComments) {
     codePanelRowData.push(...node.diagnostics);
   }
 
-  if (buildNode && node.commentThread) {
+  if (buildNode && node.commentThread && apiTreeBuilderData?.showComments) {
     codePanelRowData.push(...node.commentThread);
   }
   

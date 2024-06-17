@@ -42,11 +42,6 @@ variables:
     value: $(Build.ArtifactStagingDirectory)
   - template: ../../eng/pipelines/templates/variables/image.yml
 
-pool:
-  name: "$(LINUXPOOL)"
-  image: "$(LINUXVMIMAGE)"
-  os: linux
-
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
   parameters:
@@ -56,7 +51,10 @@ extends:
       - stage: Build
         jobs:
           - job: Build
-
+            pool:
+              name: "$(LINUXPOOL)"
+              image: "$(LINUXVMIMAGE)"
+              os: linux
             steps:
             - task: NodeTool@0
               inputs:
@@ -129,6 +127,10 @@ extends:
         condition: succeeded()
         jobs:
           - job: UnitTestForCli
+            pool:
+              name: "$(LINUXPOOL)"
+              image: "$(LINUXVMIMAGE)"
+              os: linux
             displayName: Unit Test For Cli Package
             condition: always()
             steps:
@@ -159,6 +161,10 @@ extends:
                 workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-generation-pipeline/packages/sdk-generation-cli
 
           - job: IntegrationTest
+            pool:
+              name: "$(LINUXPOOL)"
+              image: "$(LINUXVMIMAGE)"
+              os: linux
             condition: always()
             displayName: Integration Test for
             strategy:

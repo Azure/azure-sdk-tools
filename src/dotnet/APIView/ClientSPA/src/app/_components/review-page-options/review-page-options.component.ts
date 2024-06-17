@@ -54,7 +54,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;
     this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? true;
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? false;
-    this.showLineNumbersSwitch = !(this.userProfile?.preferences.showDocumentation ?? false);
+    if (this.userProfile?.preferences.hideLineNumbers){
+      this.showLineNumbersSwitch = false;
+   }
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -66,7 +68,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
       this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
       this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
-      this.showLineNumbersSwitch = !(this.userProfile?.preferences.hideLineNumbers ?? true);
+      if (this.userProfile?.preferences.hideLineNumbers){
+        this.showLineNumbersSwitch = false;
+     }
     }
     
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {

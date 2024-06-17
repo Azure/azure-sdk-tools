@@ -60,6 +60,10 @@ export class ReviewPageComponent implements OnInit {
     this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.userProfile = userProfile;
+        console.log('userProfile', userProfile)
+        if(this.userProfile?.preferences.hideLineNumbers) {
+          this.showLineNumbers = false;
+        }
       });
 
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
@@ -222,7 +226,7 @@ export class ReviewPageComponent implements OnInit {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.hideLineNumbers = state;
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.showLineNumbers = !state;
+      this.showLineNumbers = state;
     });
     }
 

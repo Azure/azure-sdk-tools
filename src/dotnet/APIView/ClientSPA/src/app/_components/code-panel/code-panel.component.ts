@@ -21,6 +21,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() navTreeNodIdHashed: string | undefined;
   @Input() reviewId: string | undefined;
   @Input() activeApiRevisionId: string | undefined;
+  @Input() showLineNumbers: boolean = false;
 
   lineNumberCount : number = 0;
   isLoading: boolean = true;

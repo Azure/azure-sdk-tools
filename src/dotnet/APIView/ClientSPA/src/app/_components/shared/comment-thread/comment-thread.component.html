@@ -1,6 +1,8 @@
-
-<div class="border rounded my-2 py-2">
-    <p-timeline [value]="comments">
+<div *ngIf="codePanelRowData!.isResolvedCommentThread" class="resolution-info">
+    <small class="d-flex align-items-center">This thread is marked resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}&nbsp;Resolved</span></small>
+</div>
+<div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded" class="border rounded {{spacingBasedOnResolvedState}} py-2">
+    <p-timeline [value]="codePanelRowData!.comments">
         <ng-template pTemplate="marker" let-comment>
             <img [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="40" height="40" class="user-avartar"/>
         </ng-template>        
@@ -47,7 +49,7 @@
             </p-panel>
         </ng-template>
     </p-timeline>
-    <div *ngIf="showReplyTextBox" class="border-top border-bottom mt-2 p-2 reply-editor-container">
+    <div *ngIf="(codePanelRowData!.showReplyTextBox)" class="border-top border-bottom mt-2 p-2 reply-editor-container">
         <app-editor editorId="replyEditor" [style]="{ width: '100%'}"></app-editor>
         <div class="btn-group mt-2" role="group" aria-label="Comment Action Buttons">
             <button type="button" class="btn btn-sm btn-outline-success editor-action-btn" (click)="saveCommentAction($event)">Add Comment</button>
@@ -64,10 +66,10 @@
         </div>
     </div>
     <div class="mt-2 d-grid gap-2">
-        <div *ngIf="!showReplyTextBox" class="border-top border-bottom reply-button-container p-2" style="display: flex; align-items: center;">
+        <div *ngIf="!(codePanelRowData!.showReplyTextBox)" class="border-top border-bottom reply-button-container p-2" style="display: flex; align-items: center;">
             <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" height="40" class="user-avartar mx-4"/>
             <button type="button" style="flex-grow: 1;" class="btn btn-sm border text-muted text-start me-4 reply-button" (click)="showReplyEditor($event)">Reply...</button>
         </div>
-        <button *ngIf="comments?.length! > 0" type="button" class="btn btn-outline-secondary comment-action-btn btn-sm mx-2">Resolve Conversation</button>
+        <button *ngIf="codePanelRowData!.comments?.length! > 0" type="button" (click)="handleThreadResolutionButtonClick(resolveThreadButtonText)" class="btn btn-outline-secondary comment-action-btn btn-sm mx-2">{{resolveThreadButtonText}} Conversation</button>
     </div>
 </div>

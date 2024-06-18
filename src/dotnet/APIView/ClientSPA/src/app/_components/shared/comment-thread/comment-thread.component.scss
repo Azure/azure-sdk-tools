@@ -63,4 +63,14 @@
     .editor-action-btn {
         border-color: var(--border-color) !important;
     }
+
+    .resolution-info {
+        margin-bottom: 1px;
+    }
+
+    .resolved-toggler {
+        color: var(--primary-color);
+        font-weight: bolder;
+        cursor: pointer;
+    }
 }

@@ -90,6 +90,7 @@ namespace APIViewWeb.LeanModels
         [JsonIgnore]
         public List<CommentItemModel> CommentsObj { get; set; } = new List<CommentItemModel>();
         public List<CommentItemModel> Comments => CommentsObj.Count > 0 ? CommentsObj : null;
+        public bool IsResolvedCommentThread { get; set; }
 
     }
 

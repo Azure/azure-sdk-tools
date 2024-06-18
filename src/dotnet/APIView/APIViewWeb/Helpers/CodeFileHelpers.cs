@@ -574,6 +574,7 @@ namespace APIViewWeb.Helpers
                     commentRowData.CommentsObj = commentsForRow.ToList();
                     toggleCommentClass = toggleCommentClass.Replace("can-show", "show");
                     codePanelRowData.ToggleCommentsClasses = toggleCommentClass;
+                    commentRowData.IsResolvedCommentThread = commentsForRow.Any(c => c.IsResolved);
                 }
             }
             else

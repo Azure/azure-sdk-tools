@@ -5,6 +5,7 @@ import { CodePanelData, CodePanelRowDatatype } from 'src/app/_models/revision';
 import { CodePanelRowData } from 'src/app/_models/revision';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
+import { UserProfile } from 'src/app/_models/auth_service_models';
 
 @Component({
   selector: 'app-code-panel',
@@ -21,6 +22,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() navTreeNodIdHashed: string | undefined;
   @Input() reviewId: string | undefined;
   @Input() activeApiRevisionId: string | undefined;
+  @Input() userProfile : UserProfile | undefined;
 
   lineNumberCount : number = 0;
   isLoading: boolean = true;
@@ -329,12 +331,9 @@ export class CodePanelComponent implements OnChanges{
   handleSaveCommentActionEmitter(data: any) {
     if (data.commentId) {
       this.commentsService.updateComment(this.reviewId!, data.commentId, data.commentText).pipe(take(1)).subscribe({
-        next: (response: any) => {
+        next: () => {
           this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments.filter(c => c.id === data.commentId)[0].commentText = data.commentText;
           this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]);
-        },
-        error: (error: any) => {
-          
         }
       });
     }
@@ -346,9 +345,6 @@ export class CodePanelComponent implements OnChanges{
               comments.push(response);
               this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments = [...comments]
               this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]);
-            },
-            error: (error: any) => {
-              
             }
           }
         );
@@ -357,7 +353,7 @@ export class CodePanelComponent implements OnChanges{
 
   handleDeleteCommentActionEmitter(data: any) {
     this.commentsService.deleteComment(this.reviewId!, data.commentId).pipe(take(1)).subscribe({
-      next: (response: any) => {
+      next: () => {
         const comments = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments;
         this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments = comments.filter(c => c.id !== data.commentId);
 
@@ -367,11 +363,29 @@ export class CodePanelComponent implements OnChanges{
         } else {
           this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]);
         }
-      },
-      error: (error: any) => {
-        
       }
     });
+  }
+
+  handleCommentResolutionActionEmitter(data: any) {
+    if (data.action === "Resolve") {
+      this.commentsService.resolveComments(this.reviewId!, data.elementId).pipe(take(1)).subscribe({
+        next: () => {
+          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].isResolvedCommentThread = true;
+          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].commentThreadIsResolvedBy = this.userProfile?.userName!;
+          this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]});
+        }
+      });
+    }
+    if (data.action === "Unresolve") {
+      this.commentsService.unresolveComments(this.reviewId!, data.elementId).pipe(take(1)).subscribe({
+        next: () => {
+          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].isResolvedCommentThread = false;
+          this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].commentThreadIsResolvedBy = '';
+          this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]});
+        }
+      });
+    }
   }
 
   private loadCodePanelViewPort() {

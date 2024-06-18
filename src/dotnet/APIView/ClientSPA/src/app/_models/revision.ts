@@ -88,6 +88,8 @@ export class CodePanelRowData {
   @Type(() => CodeDiagnostic) diagnostics: CodeDiagnostic = new CodeDiagnostic();
   @Type(() => CommentItemModel) comments: CommentItemModel[] = [];
   showReplyTextBox: boolean = false;
+  isResolvedCommentThread: boolean = false;
+  commentThreadIsResolvedBy: string = '';
 }
 
 export class NavigationTreeNodeData {

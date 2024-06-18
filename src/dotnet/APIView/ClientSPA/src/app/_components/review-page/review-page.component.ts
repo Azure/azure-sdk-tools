@@ -226,7 +226,7 @@ export class ReviewPageComponent implements OnInit {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.hideLineNumbers = !state;
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.showLineNumbers = userPreferenceModel!.hideLineNumbers;
+      this.showLineNumbers = !userPreferenceModel!.hideLineNumbers;
     });
     }
 

@@ -30,7 +30,7 @@
                             [language]="language" [languageSafeName]="languageSafeName"
                             [reviewComments]="reviewComments" [isDiffView]="!!diffApiRevisionId"
                             [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
-                            [navTreeNodIdHashed]="navTreeNodeIdHashed" [userProfile]="userProfile"></app-code-panel>
+                            [navTreeNodIdHashed]="navTreeNodeIdHashed" [userProfile]="userProfile" [showLineNumbers]="showLineNumbers"></app-code-panel>
                     </div>
                 </ng-template>
                 <ng-template pTemplate>
@@ -45,7 +45,8 @@
                             (showCommentsEmitter)="handleShowCommentsEmitter($event)"
                             (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)"
                             (diffStyleEmitter)="handleDiffStyleEmitter($event)"
-                            (markAsViewedEmitter)="handleMarkAsViewedEmitter($event)"></app-review-page-options>
+                            (markAsViewedEmitter)="handleMarkAsViewedEmitter($event)"
+                            (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"></app-review-page-options>
                     </div>
                 </ng-template>
             </p-splitter>

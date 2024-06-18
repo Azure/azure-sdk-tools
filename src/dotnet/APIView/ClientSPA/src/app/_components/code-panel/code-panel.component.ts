@@ -23,6 +23,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() reviewId: string | undefined;
   @Input() activeApiRevisionId: string | undefined;
   @Input() userProfile : UserProfile | undefined;
+  @Input() showLineNumbers: boolean = true;
 
   lineNumberCount : number = 0;
   isLoading: boolean = true;

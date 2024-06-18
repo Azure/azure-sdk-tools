@@ -20,13 +20,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Output() showDocumentationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   
   showCommentsSwitch : boolean = true;
   showSystemCommentsSwitch : boolean = true;
   showDocumentationSwitch : boolean = true;
-  showLineNumberSwitch : boolean = true;
   showLeftNavigationSwitch : boolean = true;
   markedAsViewSwitch : boolean = false;
+  showLineNumbersSwitch : boolean = true;
 
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
   activeAPIRevisionApprovalMessage: string = '';
@@ -54,10 +55,17 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;
     this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? true;
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? false;
+
     if (this.userProfile?.preferences.hideLeftNavigation != undefined) {
       this.showLeftNavigationSwitch = !(this.userProfile?.preferences.hideLeftNavigation);
     } else {
       this.showLeftNavigationSwitch = false;
+    }
+
+    if (this.userProfile?.preferences.hideLineNumbers){
+      this.showLineNumbersSwitch = false;
+    } else {
+      this.showLineNumbersSwitch = true;
     }
   }
 
@@ -70,10 +78,17 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? this.showCommentsSwitch;
       this.showSystemCommentsSwitch = this.userProfile?.preferences.showSystemComments ?? this.showSystemCommentsSwitch;
       this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
+
       if (this.userProfile?.preferences.hideLeftNavigation != undefined) {
         this.showLeftNavigationSwitch = !(this.userProfile?.preferences.hideLeftNavigation);
       } else {
         this.showLeftNavigationSwitch = false;
+      }
+      
+      if (this.userProfile?.preferences.hideLineNumbers){
+        this.showLineNumbersSwitch = false;
+      } else {
+        this.showLineNumbersSwitch = true;
       }
     }
     
@@ -130,6 +145,14 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   */
   onMarkedAsViewedSwitchChange(event: InputSwitchOnChangeEvent) {
     this.markAsViewedEmitter.emit(event.checked);
+  }
+
+  /**
+   * Callback for showLineNumbersSwitch Change
+   * @param event the Filter event
+   */
+  onShowLineNumbersSwitchChange(event: InputSwitchOnChangeEvent) {
+    this.showLineNumbersEmitter.emit(event.checked);
   }
 
   setSelectedDiffStyle() {

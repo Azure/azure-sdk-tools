@@ -38,6 +38,7 @@ export class ReviewPageComponent implements OnInit {
   language: string | undefined;
   languageSafeName: string | undefined;
   navTreeNodeIdHashed : string | undefined;
+  showLineNumbers : boolean = true;
 
   showLeftNavigation : boolean = true;
   showPageOptions : boolean = true;
@@ -71,6 +72,10 @@ export class ReviewPageComponent implements OnInit {
         if (this.userProfile?.preferences.hideReviewPageOptions) {
           this.showPageOptions = false;
           this.updateRightPanelSize();
+        }
+        
+        if(this.userProfile?.preferences.hideLineNumbers) {
+          this.showLineNumbers = false;
         }
       });
 
@@ -317,6 +322,14 @@ export class ReviewPageComponent implements OnInit {
       }
     });
   }
+
+  handleShowLineNumbersEmitter(state: boolean) {
+    let userPreferenceModel = this.userProfile?.preferences;
+    userPreferenceModel!.hideLineNumbers = !state;
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.showLineNumbers = !userPreferenceModel!.hideLineNumbers;
+    });
+    }
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {
     this.navTreeNodeIdHashed = nodeIdHashed;

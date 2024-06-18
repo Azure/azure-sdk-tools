@@ -56,6 +56,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? false;
     if (this.userProfile?.preferences.hideLineNumbers){
       this.showLineNumbersSwitch = false;
+   } else {
+    this.showLineNumbersSwitch = true;
    }
   }
 
@@ -70,6 +72,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
       this.showDocumentationSwitch = this.userProfile?.preferences.showDocumentation ?? this.showDocumentationSwitch;
       if (this.userProfile?.preferences.hideLineNumbers){
         this.showLineNumbersSwitch = false;
+     } else {
+      this.showLineNumbersSwitch = true;
      }
     }
     

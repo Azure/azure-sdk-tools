@@ -224,9 +224,9 @@ export class ReviewPageComponent implements OnInit {
 
   handleShowLineNumbersEmitter(state: boolean) {
     let userPreferenceModel = this.userProfile?.preferences;
-    userPreferenceModel!.hideLineNumbers = state;
+    userPreferenceModel!.hideLineNumbers = !state;
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe(() => {
-      this.showLineNumbers = state;
+      this.showLineNumbers = userPreferenceModel!.hideLineNumbers;
     });
     }
 

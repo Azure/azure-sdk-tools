@@ -73,7 +73,7 @@ export class ReviewPageComponent implements OnInit {
           this.showPageOptions = false;
           this.updateRightPanelSize();
         }
-        
+
         if(this.userProfile?.preferences.hideLineNumbers) {
           this.showLineNumbers = false;
         }
@@ -143,9 +143,9 @@ export class ReviewPageComponent implements OnInit {
         next: (response: ArrayBuffer) => {
           const apiTreeBuilderData : ApiTreeBuilderData = {
             diffStyle: this.diffStyle!,
-            showDocumentation: this.userProfile?.preferences.showDocumentation!,
-            showComments: this.userProfile?.preferences.showComments!,
-            showSystemComments: this.userProfile?.preferences.showSystemComments!
+            showDocumentation: this.userProfile?.preferences.showDocumentation ?? false,
+            showComments: this.userProfile?.preferences.showComments ?? true,
+            showSystemComments: this.userProfile?.preferences.showSystemComments ??true
           };
           // Passing ArrayBufer to worker is way faster than passing object
           this.workerService.postToApiTreeBuilder(response, apiTreeBuilderData);

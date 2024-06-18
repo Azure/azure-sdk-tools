@@ -22,6 +22,7 @@ export class CommentThreadComponent {
   @Output() saveCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() deleteCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentResolutionActionEmitter : EventEmitter<any> = new EventEmitter<any>();
+  @Output() commentUpvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
@@ -62,6 +63,10 @@ export class CommentThreadComponent {
       items: [{
           title: "csharp",
           label: ".NET",
+          state: {
+            repo: "azure-sdk-for-net",
+            language: "C#"
+          }
         },
         {
           title: "java",
@@ -220,6 +225,16 @@ export class CommentThreadComponent {
       );
       this.codePanelRowData!.comments!.find(comment => comment.id === commentId)!.isInEditMode = false;
     }
+  }
+
+  toggleUpVoteAction(event: Event) {
+    const target = (event.target as Element).closest("button") as Element;
+    const commentId = target.getAttribute("data-btn-id");
+    this.commentUpvoteActionEmitter.emit(
+      { nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
+        commentId: commentId 
+      }
+    );
   }
 
   toggleResolvedCommentExpandState() {

@@ -389,6 +389,22 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
+  handleCommentUpvoteActionEmitter(data: any){
+    this.commentsService.toggleCommentUpVote(this.reviewId!, data.commentId).pipe(take(1)).subscribe({
+      next: () => {
+        const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0].comments.find(c => c.id === data.commentId);
+        if (comment) {
+          if (comment.upvotes.includes(this.userProfile?.userName!)) {
+            comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
+          } else {
+            comment.upvotes.push(this.userProfile?.userName!);
+          }
+          this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[0]);
+        }
+      }
+    });
+  }
+
   private loadCodePanelViewPort() {
     this.setMaxLineNumberWidth();
     this.initializeDataSource().then(() => {

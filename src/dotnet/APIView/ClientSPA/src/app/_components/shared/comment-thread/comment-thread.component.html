@@ -36,7 +36,7 @@
                             </a>
                         </ng-template>
                     </p-menu>
-                    <button class="p-panel-header-icon p-link">
+                    <button [attr.data-btn-id]="comment.id" (click)="toggleUpVoteAction($event)" class="p-panel-header-icon p-link">
                         <span *ngIf="comment.upvotes.length > 0; else noUpVotes" class="bi bi-hand-thumbs-up-fill emoji-active">{{comment.upvotes.length}}</span>
                         <ng-template #noUpVotes>
                             <span class="bi bi-hand-thumbs-up"></span>

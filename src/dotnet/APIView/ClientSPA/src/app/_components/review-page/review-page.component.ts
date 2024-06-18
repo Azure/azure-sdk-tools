@@ -39,6 +39,7 @@ export class ReviewPageComponent implements OnInit {
   language: string | undefined;
   languageSafeName: string | undefined;
   navTreeNodeIdHashed : string | undefined;
+  showLineNumbers : boolean = true;
 
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
@@ -59,6 +60,9 @@ export class ReviewPageComponent implements OnInit {
     this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.userProfile = userProfile;
+        if(this.userProfile?.preferences.hideLineNumbers) {
+          this.showLineNumbers = false;
+        }
       });
 
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
@@ -216,6 +220,14 @@ export class ReviewPageComponent implements OnInit {
       this.codePanelComponent?.removeRowTypeFromScroller(CodePanelRowDatatype.Documentation);
     }
   }
+
+  handleShowLineNumbersEmitter(state: boolean) {
+    let userPreferenceModel = this.userProfile?.preferences;
+    userPreferenceModel!.hideLineNumbers = !state;
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.showLineNumbers = !userPreferenceModel!.hideLineNumbers;
+    });
+    }
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {
     this.navTreeNodeIdHashed = nodeIdHashed;

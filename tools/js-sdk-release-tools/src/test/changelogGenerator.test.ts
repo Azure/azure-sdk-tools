@@ -29,7 +29,7 @@ test("HLC -> Modular: Rename", async () => {
         "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW"
     );
     expect(changelog.removedOperation[0]).toBe(
-        "Removed operation DataProductsCatalogs.listByResourceGroup_NEW"
+        "Removed operation DataProductsCatalogs.listByResourceGroup"
     );
 });
 
@@ -59,7 +59,7 @@ test("HLC -> HLC: Change Op", async () => {
         "Added operation DataProductsCatalogs.get_NEW"
     );
     expect(changelog.removedOperation[0]).toBe(
-        "Removed operation DataProductsCatalogs.get_NEW"
+        "Removed operation DataProductsCatalogs.get"
     );
 });
 
@@ -89,6 +89,6 @@ test("Modular -> Modular: Change Op", async () => {
         "Added operation DataProductsCatalogsOperations.listByResourceGroup_NEW"
     );
     expect(changelog.removedOperation[0]).toBe(
-        "Removed operation DataProductsCatalogsOperations.listByResourceGroup_NEW"
+        "Removed operation DataProductsCatalogsOperations.listByResourceGroup"
     );
 });

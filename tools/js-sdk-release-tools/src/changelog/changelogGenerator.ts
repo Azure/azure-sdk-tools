@@ -8,6 +8,7 @@ import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/Inte
 import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration";
 import { TSExportedMetaData } from "./extractMetaData";
 import { SDKType } from "../common/types";
+import { logger } from "../utils/logger";
 
 export class Changelog {
     // features
@@ -485,25 +486,57 @@ const findRemovedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
     return removedOperation;
 };
 
-const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData): string[] => {
+const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataNew: TSExportedMetaData,
+    oldSdkType: SDKType, newSdkType: SDKType): string[] => {
+    const newToOld = getRenamedOperationGroupFromToMap(metaDataNew);
     const operationSignatureChange: string[] = [];
-    Object.keys(metaDataNew.operationInterface).forEach(operationGroup => {
-        if (metaDataOld.operationInterface[operationGroup]) {
-            const operationGroupFromOld = metaDataOld.operationInterface[operationGroup] as InterfaceDeclaration;
-            const operationGroupFromNew = metaDataNew.operationInterface[operationGroup] as InterfaceDeclaration;
+    Object.keys(metaDataNew.operationInterface).forEach(newOperationGroup => {
+        const oldOperationGroup = oldSdkType === newSdkType ? newOperationGroup : newToOld[newOperationGroup];
+        if (oldSdkType === SDKType.HighLevelClient && newSdkType === SDKType.ModularClient) {
+            const operationGroupFromOld = metaDataOld.operationInterface[oldOperationGroup] as InterfaceDeclaration;
+            const operationGroupFromNew = metaDataNew.operationInterface[newOperationGroup] as InterfaceDeclaration;
+            const oldOpNames = operationGroupFromOld.properties.map(p => p.name);
+            const newOpNames = operationGroupFromNew.methods.map(m => m.name);
+            const newOpNameSet = new Set<string>(newOpNames);
+            const unchangeOperationNames = oldOpNames.filter(opName => newOpNameSet.has(opName)).map(opName => opName);
+            logger.logWarn(`${unchangeOperationNames} operation names aren't changed, but signature may change, please check manually.`);
+            // todo
+            return;
+        }
+        
+        if (oldSdkType === SDKType.ModularClient && newSdkType === SDKType.ModularClient) {
+            const operationGroupFromOld = metaDataOld.operationInterface[oldOperationGroup] as InterfaceDeclaration;
+            const operationGroupFromNew = metaDataNew.operationInterface[newOperationGroup] as InterfaceDeclaration;
+            const oldOpNames = operationGroupFromOld.properties.map(p => p.name);
+            const newOpNames = operationGroupFromNew.properties.map(m => m.name);
+            const newOpNameSet = new Set<string>(newOpNames);
+            const unchangeOperationNames = oldOpNames.filter(opName => newOpNameSet.has(opName)).map(opName => opName);
+            operationGroupFromOld.properties.forEach(pOld => {
+                const pNew = operationGroupFromNew.properties.find(v => v.name === pOld.name);
+                if (!pNew) { return; }
+                // todo
+            });
+            // TODO
+            return;
+        }
+
+        // oldSdkType === SDKType.HighLevelClient && newSdkType === SDKType.HighLevelClient
+        if (metaDataOld.operationInterface[oldOperationGroup]) {
+            const operationGroupFromOld = metaDataOld.operationInterface[oldOperationGroup] as InterfaceDeclaration;
+            const operationGroupFromNew = metaDataNew.operationInterface[newOperationGroup] as InterfaceDeclaration;
             operationGroupFromNew.methods.forEach(mNew => {
                 operationGroupFromOld.methods.forEach(mOld => {
                     if (mOld.name === mNew.name) {
                         const parametersOld = mOld.parameters;
                         const parametersNew = mNew.parameters;
                         if (parametersNew.length !== parametersOld.length) {
-                            operationSignatureChange.push('Operation ' + operationGroup + '.' + mNew.name + ' has a new signature');
+                            operationSignatureChange.push('Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature');
                         } else {
                             for (let index = 0; index < parametersNew.length; index++) {
                                 const pOld = parametersOld[index];
                                 const pNew = parametersNew[index];
                                 if (pOld.type !== pNew.type || pOld.isOptional !== pNew.isOptional) {
-                                    operationSignatureChange.push('Operation ' + operationGroup + '.' + mNew.name + ' has a new signature');
+                                    operationSignatureChange.push('Operation ' + newOperationGroup + '.' + mNew.name + ' has a new signature');
                                     return;
                                 }
                             }
@@ -1054,7 +1087,7 @@ export const changelogGenerator = (
     // breaking changes
     changLog.removedOperationGroup = findRemovedOperationGroup(metaDataOld, metadataNew, oldSdkType, newSdkType);
     changLog.removedOperation = findRemovedOperation(metaDataOld, metadataNew, oldSdkType, newSdkType);
-    changLog.operationSignatureChange = findOperationSignatureChange(metaDataOld, metadataNew);
+    changLog.operationSignatureChange = findOperationSignatureChange(metaDataOld, metadataNew, oldSdkType, newSdkType);
     changLog.deletedClass = findDeletedClass(metaDataOld, metadataNew);
     changLog.classSignatureChange = findClassSignatureChange(metaDataOld, metadataNew);
     changLog.interfaceParamDelete = findInterfaceParamDelete(metaDataOld, metadataNew);

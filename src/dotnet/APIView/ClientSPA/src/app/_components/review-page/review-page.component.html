@@ -4,7 +4,10 @@
         [apiRevisions]="apiRevisions"
         [activeApiRevisionId]="activeApiRevisionId"
         [diffApiRevisionId]="diffApiRevisionId"
-        [review]="review" (revisionsSidePanel)="showRevisionsPanel($event)"></app-review-info>
+        [userProfile]="userProfile"
+        [review]="review"
+        (revisionsSidePanel)="showRevisionsPanel($event)"
+        (pageOptionsEmitter)="handlePageOptionsEmitter($event)"></app-review-info>
     <div class="mt-2" style="display: flex;">
         <div>
             <p-menu [model]="sideMenu"></p-menu>
@@ -15,8 +18,8 @@
                 [minSizes]="minSizes"
                 [gutterSize]="6" (onResizeEnd)="handleSplitterResizeEnd($event)">
                 <ng-template pTemplate>
-                    <div class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel">
-                        <app-review-nav *ngIf="showLeftNavigation" 
+                    <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel">
+                        <app-review-nav
                             [reviewPageNavigation]="reviewPageNavigation"
                             (navTreeNodeIdEmitter)="handleNavTreeNodeEmmitter($event)"></app-review-nav>
                     </div>
@@ -31,7 +34,7 @@
                     </div>
                 </ng-template>
                 <ng-template pTemplate>
-                    <div class="col flex align-items-center justify-content-center border rounded-end overflow-auto review-panel px-3">
+                    <div *ngIf="showPageOptions" class="col flex align-items-center justify-content-center border rounded-end overflow-auto review-panel px-3">
                         <app-review-page-options
                             [isDiffView]="!!diffApiRevisionId"
                             [diffStyleInput]="diffStyle!"

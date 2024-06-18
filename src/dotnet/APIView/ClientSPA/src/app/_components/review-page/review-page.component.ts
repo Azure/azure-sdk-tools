@@ -40,8 +40,9 @@ export class ReviewPageComponent implements OnInit {
   navTreeNodeIdHashed : string | undefined;
 
   showLeftNavigation : boolean = true;
+  showPageOptions : boolean = true;
   panelSizes = [15, 70, 15];
-  minSizes = [0.1, 1, 1];
+  minSizes = [0.1, 1, 0.1];
 
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
@@ -64,8 +65,12 @@ export class ReviewPageComponent implements OnInit {
         this.userProfile = userProfile;
         if (this.userProfile?.preferences.hideLeftNavigation) {
           this.showLeftNavigation = false;
-          this.panelSizes = [0.1, 84, 15];
-          this.minSizes = [0.1, 1, 1];
+          this.updateLeftPanelSize();
+        }
+
+        if (this.userProfile?.preferences.hideReviewPageOptions) {
+          this.showPageOptions = false;
+          this.updateRightPanelSize();
         }
       });
 
@@ -185,6 +190,15 @@ export class ReviewPageComponent implements OnInit {
     this.revisionSidePanel = showRevisionsPanel as boolean;
   }
 
+  handlePageOptionsEmitter(showPageOptions: boolean) {
+    this.userProfile!.preferences.hideReviewPageOptions = !showPageOptions;
+    this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.updateRightPanelSize();
+      }
+    });
+  }
+
   handleDiffStyleEmitter(state: string) {
     let newQueryParams = getQueryParams(this.route);
     newQueryParams['diffStyle'] = state;
@@ -195,7 +209,7 @@ export class ReviewPageComponent implements OnInit {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.showComments = state;
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (respons: any) => {
+      next: () => {
         if (userPreferenceModel!.showComments) {
           this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.CommentThread);
         }
@@ -210,7 +224,7 @@ export class ReviewPageComponent implements OnInit {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.showSystemComments = state;
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (respons: any) => {
+      next: () => {
         if (userPreferenceModel!.showSystemComments) {
           this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Diagnostics);
         }
@@ -225,7 +239,7 @@ export class ReviewPageComponent implements OnInit {
     let userPreferenceModel = this.userProfile?.preferences;
     userPreferenceModel!.showDocumentation = state;
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (respons: any) => {
+      next: () => {
         if (userPreferenceModel!.showDocumentation) {
           this.codePanelComponent?.insertRowTypeIntoScroller(CodePanelRowDatatype.Documentation);
         }
@@ -238,37 +252,70 @@ export class ReviewPageComponent implements OnInit {
 
   handleShowLeftNavigationEmitter(state: boolean) {
     this.userProfile!.preferences.hideLeftNavigation = !state
-    this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe();
-    if (state) {
-      this.showLeftNavigation = true;
-      this.panelSizes = [15, 70, 15];
-      this.minSizes = [0.1, 1, 1];
-    }
-    else {
+    this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.updateLeftPanelSize();
+      }
+    });
+  }
+
+  updateLeftPanelSize() {
+    const panelSize = new Array(3);
+    if (this.userProfile!.preferences.hideLeftNavigation) {
       this.showLeftNavigation = false;
-      this.panelSizes = [0.1, 85, 15];
-      this.minSizes = [0.1, 1];
+      panelSize[0] = 0.1;
+    } else {
+      this.showLeftNavigation = true;
+      panelSize[0] = 15;
     }
+    panelSize[2] = this.panelSizes[2];
+    panelSize[1] = 100 - (panelSize[0] + panelSize[2]);
+    this.panelSizes = panelSize;
+  }
+
+  updateRightPanelSize() {
+    const panelSize = new Array(3);
+    if  (this.userProfile!.preferences.hideReviewPageOptions) {
+      this.showPageOptions = false;
+      panelSize[2] = 0.1;
+    } else {
+      this.showPageOptions = true;
+      panelSize[2] = 15;
+    }
+    panelSize[0] = this.panelSizes[0];
+    panelSize[1] = 100 - (panelSize[0] + panelSize[2]);
+    this.panelSizes = panelSize;
   }
 
   handleSplitterResizeEnd(event: any) {
-    console.log(event.sizes);
-    if (event.sizes[0] > 1) {
+    if (event.sizes[0] > 5) {
       this.userProfile!.preferences.hideLeftNavigation = false;
     } else {
       this.userProfile!.preferences.hideLeftNavigation = true;
+      this.updateLeftPanelSize();
     }
-    this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe();
-    this.showLeftNavigation = !this.userProfile!.preferences.hideLeftNavigation;
 
-    // need this to trigger change detection
-    const userProfile : UserProfile = {
-      userName: this.userProfile!.userName,
-      email: this.userProfile!.email,
-      languages: this.userProfile!.languages,
-      preferences: this.userProfile!.preferences
-    };
-    this.userProfile = userProfile;
+    if (event.sizes[2] > 5) {
+      this.userProfile!.preferences.hideReviewPageOptions = false;
+    } else {
+      this.userProfile!.preferences.hideReviewPageOptions = true;
+      this.updateRightPanelSize();
+    }
+    this.userProfileService.updateUserPrefernece(this.userProfile!.preferences).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        this.showLeftNavigation = !this.userProfile!.preferences.hideLeftNavigation;
+        this.showPageOptions = !this.userProfile!.preferences.hideReviewPageOptions;
+
+        // need this to trigger change detection
+        const userProfile : UserProfile = {
+          userName: this.userProfile!.userName,
+          email: this.userProfile!.email,
+          languages: this.userProfile!.languages,
+          preferences: this.userProfile!.preferences
+        };
+        this.userProfile = userProfile;
+      }
+    });
   }
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {

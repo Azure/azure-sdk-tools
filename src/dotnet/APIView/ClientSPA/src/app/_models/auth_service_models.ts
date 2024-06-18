@@ -17,6 +17,7 @@ export interface UserPreferenceModel {
     userName : string
     language : string []
     theme : string
+    hideReviewPageOptions : boolean
     hideLineNumbers : boolean
     hideLeftNavigation: boolean
     showHiddenApis: boolean

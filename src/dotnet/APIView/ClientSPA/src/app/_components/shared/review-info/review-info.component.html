@@ -10,7 +10,7 @@
             </app-api-revision-options>
         </ng-template>
         <ng-template pTemplate="end">
-            <input type="checkbox" checked class="btn-check" id="page-right-panel" autocomplete="off">
+            <input type="checkbox" (change)="onRightPanelCheckChange($event)" [(ngModel)]="showPageOptions" class="btn-check" id="page-right-panel" autocomplete="off">
             <label class="btn btn-sm btn-outline-primary float-end" accesskey="m" for="page-right-panel"><i class="fa fa-bars"></i></label>
         </ng-template>
     </p-menubar>

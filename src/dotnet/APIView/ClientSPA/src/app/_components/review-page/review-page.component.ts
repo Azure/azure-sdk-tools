@@ -60,7 +60,6 @@ export class ReviewPageComponent implements OnInit {
     this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.userProfile = userProfile;
-        console.log('userProfile', userProfile)
         if(this.userProfile?.preferences.hideLineNumbers) {
           this.showLineNumbers = false;
         }

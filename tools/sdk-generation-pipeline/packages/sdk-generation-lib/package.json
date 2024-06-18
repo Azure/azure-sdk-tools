@@ -40,13 +40,13 @@
     "memory-fs": "^0.5.0",
     "mongodb": "^3.6.10",
     "node-yaml": "^3.2.0",
-    "typeorm": "^0.2.37",
+    "typeorm": "^0.3.20",
     "winston": "3.7.2"
   },
   "devDependencies": {
     "@types/node": "^16.11.7",
     "copyfiles": "^2.4.1",
-    "rimraf": "^3.0.2",
+    "rimraf": "^5.0.7",
     "jest": "~26.6.3",
     "ts-jest": "~26.5.4",
     "@types/jest": "^25.2.1",

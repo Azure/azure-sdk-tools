@@ -62,11 +62,10 @@ The automation will delete all resource groups in managed subscriptions multiple
 
 - The resource group starts with a valid alias (see alias [rules](#alias-rules)), followed by an optional hyphen and extra characters.
     - Valid resource group name examples: `myalias`, `myalias-test-foobar` for `myalias@microsoft.com` or `github.com/myalias`
-- The resource group contains a tag with the name `Owners` where the value is a csv formatted string that contains at
-  least one valid Microsoft or Github alias (see alias [rules](#alias-rules)).
+- The resource group contains tag(s) with the name `Owner` where the value is a valid Microsoft or Github alias (see alias [rules](#alias-rules)).
     - This convention should only be used when it is not possible to name the resource group with an alias
         (for example, inner groups auto-created by a resource provider like AKS).
-    - Valid owner tag examples: `Owners: myalias`, `Owners: myalias,anotheralias,lastalias`
+    - Valid owner tag examples (NOTE you can have multiple owner tags): `Owner: myalias`, `Owners: anotheralias`
 - The resource group contains a tag with the name `DeleteAfter` and an [ISO8601 formatted date value](https://www.iso.org/iso-8601-date-and-time-format.html)
   (see below for examples), where the date is greater than the current date.
     - If the `DeleteAfter` value is in the past at the time the cleanup pipeline runs, it will be deleted.

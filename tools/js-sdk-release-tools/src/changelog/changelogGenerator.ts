@@ -459,10 +459,10 @@ const findRemovedOperationGroup = (metaDataOld: TSExportedMetaData, metaDataNew:
 ): string[] => {
     const oldToNew = getRenamedOperationGroupFromToMap(metaDataOld);
     const removedOperationGroup: string[] = [];
-    Object.keys(metaDataOld.operationInterface).forEach(operationGroup => {
-        const newName = oldSdkType === newSdkType ? operationGroup : oldToNew[operationGroup];
-        if (!metaDataNew.operationInterface[newName]) {
-            removedOperationGroup.push('Removed operation group ' + operationGroup);
+    Object.keys(metaDataOld.operationInterface).forEach(oldOperationGroup => {
+        const newOperationGroup = oldSdkType === newSdkType ? oldOperationGroup : oldToNew[oldOperationGroup];
+        if (!metaDataNew.operationInterface[newOperationGroup]) {
+            removedOperationGroup.push('Removed operation group ' + oldOperationGroup);
         }
     });
     return removedOperationGroup;
@@ -500,7 +500,6 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
             const newOpNameSet = new Set<string>(newOpNames);
             const unchangeOperationNames = oldOpNames.filter(opName => newOpNameSet.has(opName)).map(opName => opName);
             logger.logWarn(`${unchangeOperationNames} operation names aren't changed, but signature may change, please check manually.`);
-            // todo
             return;
         }
         
@@ -511,12 +510,7 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
             const newOpNames = operationGroupFromNew.properties.map(m => m.name);
             const newOpNameSet = new Set<string>(newOpNames);
             const unchangeOperationNames = oldOpNames.filter(opName => newOpNameSet.has(opName)).map(opName => opName);
-            operationGroupFromOld.properties.forEach(pOld => {
-                const pNew = operationGroupFromNew.properties.find(v => v.name === pOld.name);
-                if (!pNew) { return; }
-                // todo
-            });
-            // TODO
+            logger.logWarn(`${unchangeOperationNames} operation names aren't changed, but signature may change, please check manually.`);
             return;
         }
 

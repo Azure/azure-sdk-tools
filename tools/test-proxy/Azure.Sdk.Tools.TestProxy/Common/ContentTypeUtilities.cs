@@ -5,7 +5,6 @@
 
 using System;
 using System.Text;
-using Microsoft.AspNetCore.Razor.Language.Intermediate;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {

@@ -1,4 +1,5 @@
-import {NPMViewResult, StringMap, tr} from "@ts-common/azure-js-dev-tools";
+import {NPMViewResult} from "../deps/azure-js-dev-tools/lib/npm";
+import {StringMap} from "../deps/azure-js-dev-tools/lib/common";
 import {logger} from "./logger";
 const semverInc = require('semver/functions/inc')
 

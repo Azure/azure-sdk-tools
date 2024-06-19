@@ -4,7 +4,7 @@ import shell from 'shelljs';
 
 import {extractExportAndGenerateChangelog, readSourceAndExtractMetaData} from "../../changelog/extractMetaData";
 import {Changelog, changelogGenerator} from "../../changelog/changelogGenerator";
-import {NPMScope, NPMViewResult} from "@ts-common/azure-js-dev-tools";
+import {NPMScope, NPMViewResult} from "../../deps/azure-js-dev-tools/lib/npm";
 import {
     makeChangesForFirstRelease,
     makeChangesForMigrateTrack1ToTrack2, makeChangesForPatchReleasingTrack2,

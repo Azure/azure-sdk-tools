@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import {logger} from "../../utils/logger";
-import {NPMScope} from "@ts-common/azure-js-dev-tools";
+import {NPMScope} from "../../deps/azure-js-dev-tools/lib/npm";
 import {getLatestStableVersion} from "../../utils/version";
 const readline = require('readline');
 

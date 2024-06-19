@@ -64,7 +64,7 @@ extends:
               displayName: 'copy to staging dir'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 
-            - template: /eng/pipelines/templates/steps/publish-1es-artifact.yml
+            - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
               parameters:
                 ArtifactName: drop
                 ArtifactPath: $(Build.ArtifactStagingDirectory)

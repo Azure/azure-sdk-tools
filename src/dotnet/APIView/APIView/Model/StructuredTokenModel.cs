@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace APIView.TreeToken
 {
+    
     /// <summary>
     /// Represents the type of a structured token.
     /// All tokens should be content except for spacing tokens and url.
@@ -23,7 +24,7 @@ namespace APIView.TreeToken
         /// <summary>
         /// Regular single space.
         /// </summary>
-        NoneBreakingSpace = 2,
+        NonBreakingSpace = 2,
         /// <summary>
         /// 4 NonBreakingSpaces.
         /// </summary>
@@ -44,6 +45,52 @@ namespace APIView.TreeToken
 
     public class StructuredToken
     {
+        /// <summary>
+        /// Property key to indicate that a range of tokens is a group
+        /// </summary>
+        public static string GROUP_ID = "GroupId";
+        /// <summary>
+        /// Property key to indicate id to be navigated to when a token is clicked.
+        /// </summary>
+        public static string NAVIGATE_TO_ID = "NavigateToId";
+        /// <summary>
+        /// Property value that marks a token as documentation
+        /// </summary>
+        public static string DOCUMENTATION = "doc";
+        /// <summary>
+        /// Style class for text
+        /// </summary>
+        public static string TEXT = "text";
+        /// <summary>
+        /// Style class for keyword
+        /// </summary>
+        public static string KEYWORD = "keyword";
+        /// <summary>
+        /// Style class for literal
+        /// </summary>
+        public static string LITERAL = "literal";
+        /// <summary>
+        /// Style class for member-name
+        /// </summary>
+        public static string MEMBER_NAME = "mname";
+        /// <summary>
+        /// Style class for punctuation
+        /// </summary>
+        public static string PUNCTUATION = "punc";
+        /// <summary>
+        /// Style class for string-literal
+        /// </summary>
+        public static string STRING_LITERAL = "sliteral";
+        /// <summary>
+        /// Style class for type-name
+        /// </summary>
+        public static string TYPE_NAME = "tname";
+        /// <summary>
+        /// Style class for comment
+        /// </summary>
+        public static string COMMENT = "comment";
+
+
         /// <summary>
         /// Token Id.
         /// Previously known as DefinitionId.
@@ -169,7 +216,7 @@ namespace APIView.TreeToken
         public static StructuredToken CreateSpaceToken()
         {
             var token = new StructuredToken();
-            token.Kind = StructuredTokenKind.NoneBreakingSpace;
+            token.Kind = StructuredTokenKind.NonBreakingSpace;
             return token;
         }
 
@@ -187,14 +234,14 @@ namespace APIView.TreeToken
             {
                 token.Id = id;
             }
-            token.RenderClassesObj.Add("text");
+            token.RenderClassesObj.Add(TEXT);
             return token;
         }
 
         public static StructuredToken CreateKeywordToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClassesObj.Add("keyword");
+            token.RenderClassesObj.Add(KEYWORD);
             return token;
         }
 
@@ -211,7 +258,7 @@ namespace APIView.TreeToken
         public static StructuredToken CreatePunctuationToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClassesObj.Add("punc");
+            token.RenderClassesObj.Add(PUNCTUATION);
             return token;
         }
 
@@ -223,28 +270,28 @@ namespace APIView.TreeToken
         public static StructuredToken CreateTypeNameToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClassesObj.Add("tname");
+            token.RenderClassesObj.Add(TYPE_NAME);
             return token;
         }
 
         public static StructuredToken CreateMemberNameToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClassesObj.Add("mname");
+            token.RenderClassesObj.Add(MEMBER_NAME);
             return token;
         }
 
         public static StructuredToken CreateLiteralToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClassesObj.Add("literal");
+            token.RenderClassesObj.Add(LITERAL);
             return token;
         }
 
         public static StructuredToken CreateStringLiteralToken(string value)
         {
             var token = new StructuredToken(value);
-            token.RenderClassesObj.Add("sliteral");
+            token.RenderClassesObj.Add(STRING_LITERAL);
             return token;
         }
     }

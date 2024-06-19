@@ -1,13 +1,47 @@
 using System.Collections.Generic;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace APIView.TreeToken
 {
     public class APITreeNode
     {
+        /// <summary>
+        /// Indicates a node is an assembly kind
+        /// </summary>
+        public static string ASSEMBLY = "Assembly";
+        /// <summary>
+        /// Indicates a node is a InternalsVisibleTo kind
+        /// </summary>
+        public static string INTERNALS_VISIBLE_TO = "InternalsVisibleTo";
+        /// <summary>
+        /// Indicates a node is a Dependencies kind
+        /// </summary>
+        public static string DEPENDENCIES = "Dependencies";
+        /// <summary>
+        /// Indicates a node is a Namespace kind
+        /// </summary>
+        public static string NAMESPACE = "Namespace";
+        /// <summary>
+        /// Indicates a node is a Type kind
+        /// </summary>
+        public static string TYPE = "Type";
+        /// <summary>
+        /// Indicates a node is a Member kind
+        /// </summary>
+        public static string MEMBER = "Member";
+        /// <summary>
+        /// Indicates a node is hidden
+        /// </summary>
+        public static string HIDDEN = "Hidden";
+        /// <summary>
+        /// Indicates that a node should be hidden from Navigation
+        /// </summary>
+        public static string HIDE_FROM_NAV = "HideFromNav";
+        /// <summary>
+        /// Property key to use to make a nodes kind more specific.
+        /// </summary>
+        public static string SUB_KIND = "SubKind";
+
         /// <summary>
         /// Id of the node, which should be unique at the node level. i.e. unique among its siblings.
         /// This was previously represented by the DefinitionId for the main Token of the node.

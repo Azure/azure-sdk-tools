@@ -77,7 +77,7 @@ namespace CSharpAPIParser.TreeToken
             }
 
             var apiTreeNode = new APITreeNode();
-            apiTreeNode.Kind = "Assembly";
+            apiTreeNode.Kind = APITreeNode.ASSEMBLY;
             apiTreeNode.Id = assemblySymbol.Name;
             apiTreeNode.Name = assemblySymbol.Name + ".dll";
             
@@ -130,7 +130,7 @@ namespace CSharpAPIParser.TreeToken
             if (assemblyAttributes != null && assemblyAttributes.Any())
             {
                 var apiTreeNode = new APITreeNode();
-                apiTreeNode.Kind = apiTreeNode.Name = apiTreeNode.Id = "InternalsVisibleTo";
+                apiTreeNode.Kind = apiTreeNode.Name = apiTreeNode.Id = APITreeNode.INTERNALS_VISIBLE_TO;
                 apiTreeNode.TopTokensObj.Add(StructuredToken.CreateTextToken(value: "Exposes internals to:"));
                 apiTreeNode.TopTokensObj.Add(StructuredToken.CreateLineBreakToken());
 
@@ -158,7 +158,7 @@ namespace CSharpAPIParser.TreeToken
             if (dependencies != null && dependencies.Any())
             {
                 var apiTreeNode = new APITreeNode();
-                apiTreeNode.Kind = apiTreeNode.Name = apiTreeNode.Id = "Dependencies";
+                apiTreeNode.Kind = apiTreeNode.Name = apiTreeNode.Id = APITreeNode.DEPENDENCIES;
 
                 apiTreeNode.TopTokensObj.Add(StructuredToken.CreateLineBreakToken());
                 apiTreeNode.TopTokensObj.Add(StructuredToken.CreateTextToken(value: "Dependencies:"));
@@ -183,11 +183,11 @@ namespace CSharpAPIParser.TreeToken
             var apiTreeNode = new APITreeNode();
             apiTreeNode.Id = namespaceSymbol.GetId();
             apiTreeNode.Name = namespaceSymbol.ToDisplayString();
-            apiTreeNode.Kind = "Namespace";
+            apiTreeNode.Kind = APITreeNode.NAMESPACE;
 
             if (isHidden)
             {
-                apiTreeNode.TagsObj.Add("Hidden");
+                apiTreeNode.TagsObj.Add(APITreeNode.HIDDEN);
             }
             
             apiTreeNode.TopTokensObj.Add(StructuredToken.CreateKeywordToken(SyntaxKind.NamespaceKeyword));
@@ -238,14 +238,14 @@ namespace CSharpAPIParser.TreeToken
 
             bool isHidden = IsHiddenFromIntellisense(namedType);
             var apiTreeNode = new APITreeNode();
-            apiTreeNode.Kind = "Type";
-            apiTreeNode.PropertiesObj.Add("SubKind", namedType.TypeKind.ToString().ToLowerInvariant());
+            apiTreeNode.Kind = APITreeNode.TYPE;
+            apiTreeNode.PropertiesObj.Add(APITreeNode.SUB_KIND, namedType.TypeKind.ToString().ToLowerInvariant());
             apiTreeNode.Id = namedType.GetId();
             apiTreeNode.Name = namedType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
 
             if (isHidden && !inHiddenScope)
             {
-                apiTreeNode.TagsObj.Add("Hidden");
+                apiTreeNode.TagsObj.Add(APITreeNode.HIDDEN);
             }
 
             BuildDocumentation(apiTreeNode.TopTokensObj, namedType);
@@ -334,7 +334,7 @@ namespace CSharpAPIParser.TreeToken
                 {
                     var docToken = new StructuredToken("// " + line.Trim());
                     docToken.RenderClassesObj.Add("comment");
-                    docToken.PropertiesObj.Add("GroupId", "doc");
+                    docToken.PropertiesObj.Add(StructuredToken.GROUP_ID, StructuredToken.DOCUMENTATION);
                     tokenList.Add(docToken);
                     tokenList.Add(StructuredToken.CreateLineBreakToken());
                 }
@@ -405,15 +405,15 @@ namespace CSharpAPIParser.TreeToken
         {
             bool isHidden = IsHiddenFromIntellisense(member);
             var apiTreeNode = new APITreeNode();
-            apiTreeNode.Kind = "Member";
-            apiTreeNode.PropertiesObj.Add("SubKind", member.Kind.ToString());
+            apiTreeNode.Kind = APITreeNode.MEMBER;
+            apiTreeNode.PropertiesObj.Add(APITreeNode.SUB_KIND, member.Kind.ToString());
             apiTreeNode.Id = member.GetId();
             apiTreeNode.Name = member.ToDisplayString();
-            apiTreeNode.TagsObj.Add("HideFromNav");
+            apiTreeNode.TagsObj.Add(APITreeNode.HIDE_FROM_NAV);
 
             if (isHidden && !inHiddenScope)
             {
-                apiTreeNode.TagsObj.Add("Hidden");
+                apiTreeNode.TagsObj.Add(APITreeNode.HIDDEN);
             }
 
             BuildDocumentation(apiTreeNode.TopTokensObj, member);
@@ -706,7 +706,7 @@ namespace CSharpAPIParser.TreeToken
 
             if (!String.IsNullOrWhiteSpace(navigateToId))
             {
-                token.PropertiesObj.Add("NavigateToId", navigateToId!);
+                token.PropertiesObj.Add(StructuredToken.NAVIGATE_TO_ID, navigateToId!);
             }
             
             return token;

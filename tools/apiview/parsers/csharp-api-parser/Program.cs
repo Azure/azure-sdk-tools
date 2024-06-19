@@ -102,7 +102,7 @@ static void HandlePackageFileParsing(Stream stream, FileInfo packageFilePath, Di
         }
         var parsedFileName = string.IsNullOrEmpty(outputFileName) ? assemblySymbol.Name : outputFileName;
         var treeTokenCodeFile = new CSharpAPIParser.TreeToken.CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies);
-        var gzipJsonTokenFilePath = Path.Combine(OutputDirectory.FullName, $"{parsedFileName}");
+        var gzipJsonTokenFilePath = Path.Combine(OutputDirectory.FullName, $"{parsedFileName}.json.tgz");
 
 
         var options = new JsonSerializerOptions()

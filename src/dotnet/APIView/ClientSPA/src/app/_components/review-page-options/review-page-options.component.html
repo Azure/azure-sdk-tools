@@ -48,6 +48,16 @@
     </ul>
 </app-page-options-section>
 
+<app-page-options-section *ngIf="activeAPIRevision?.apiRevisionType === 'pullRequest'" sectionName="Associated Pull Requests">
+    <ul class="list-group">
+        <li *ngFor="let prData of associatedPRs" class="list-group-item">
+            <a href="https://github.com/{{prData.repoName}}/pull/{{prData.prNumber}}" target="_blank">
+                {{ prData.repoName }}/{{ prData.prNumber }}
+            </a>
+        </li>
+    </ul>
+</app-page-options-section>
+
 <app-page-options-section sectionName="Page Settings">
     <ul class="list-group">
         <li class="list-group-item">
@@ -66,11 +76,6 @@
             <label class="ms-2">Documentation</label>
         </li>
         <li *ngIf="hasHiddenAPIs" class="list-group-item">
-            <p-inputSwitch [(ngModel)]="showHiddenAPISwitch"
-            (onChange)="onShowHiddenAPISwitchChange($event)" />
-            <label class="ms-2">Hidden APIs</label>
-        </li>
-        <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showHiddenAPISwitch"
             (onChange)="onShowHiddenAPISwitchChange($event)" />
             <label class="ms-2">Hidden APIs</label>

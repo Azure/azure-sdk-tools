@@ -44,6 +44,7 @@ export class ReviewPageComponent implements OnInit {
   conversiationInfo : any | undefined = undefined;
   hasFatalDiagnostics : boolean = false;
   hasHiddenAPIs : boolean = false;
+  associatedPRs: {prNumber: number, repoName: string}[] = [];
 
   showLeftNavigation : boolean = true;
   showPageOptions : boolean = true;
@@ -83,7 +84,7 @@ export class ReviewPageComponent implements OnInit {
           this.showLineNumbers = false;
         }
       });
-
+  
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const navigationState = this.router.getCurrentNavigation()?.extras.state;
       if (!navigationState || !navigationState['skipStateUpdate']) {
@@ -217,10 +218,23 @@ export class ReviewPageComponent implements OnInit {
             if (this.diffApiRevisionId) {
               this.diffAPIRevision = this.apiRevisions.filter(x => x.id === this.diffApiRevisionId)[0];
             }
+            if (this.activeAPIRevision?.apiRevisionType === 'pullRequest') {
+              this.loadAssociatedPullRequestData(this.reviewId!, this.activeApiRevisionId!);
+            }
           }
         }
       });
   }
+
+  loadAssociatedPullRequestData(reviewId: string, activeApiRevisionId: string) {
+    this.apiRevisionsService.getAssociatedPullRequest(reviewId, activeApiRevisionId)
+    .subscribe(response => {
+      this.associatedPRs = response.map(pr => ({
+        prNumber: pr.pullRequestNumber, 
+        repoName: pr.repoName
+      }));
+    });
+}
 
   showRevisionsPanel(showRevisionsPanel : any){
     this.revisionSidePanel = showRevisionsPanel as boolean;

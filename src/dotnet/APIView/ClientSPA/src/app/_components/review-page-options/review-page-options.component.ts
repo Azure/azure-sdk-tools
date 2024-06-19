@@ -24,6 +24,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() conversiationInfo : any | undefined = undefined;
   @Input() hasFatalDiagnostics : boolean = false;
   @Input() hasHiddenAPIs : boolean = false;
+  @Input() associatedPRs: {prNumber: number, repoName: string}[] = [];
 
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();

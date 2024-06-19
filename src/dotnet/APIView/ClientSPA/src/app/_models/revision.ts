@@ -142,3 +142,20 @@ export interface CodePanelToggleableData {
   diagnostics: CodePanelRowData[]
   comments: CodePanelRowData[]
 }
+
+export interface PullRequestModel {
+  id: string;
+  reviewId: string;
+  apiRevisionId: string;
+  baselineAPIRevisionId: string;
+  pullRequestNumber: number;
+  commits: string[];
+  repoName: string;
+  filePath: string;
+  isOpen: boolean;
+  createdBy: string;
+  packageName: string;
+  language: string;
+  assignee: string;
+  isDeleted: boolean;
+}

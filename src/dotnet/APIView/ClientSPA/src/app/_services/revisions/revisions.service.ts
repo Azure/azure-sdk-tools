@@ -6,6 +6,7 @@ import { Observable, map } from 'rxjs';
 import { PaginatedResult } from 'src/app/_models/pagination';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
+import { PullRequestModel } from 'src/app/_models/revision';
 
 
 @Injectable({
@@ -132,5 +133,9 @@ export class RevisionsService {
 
   openAPIRevisionPage(reviewId: string, activeAPIRevisionId: string) {
     window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}?revisionId=${activeAPIRevisionId}`, '_blank');
+  }
+
+  getAssociatedPullRequest(reviewId: string, activeApiRevisionId: string) : Observable<PullRequestModel[]> {
+    return this.http.get<PullRequestModel[]>(`${this.baseUrl}/${reviewId}/${activeApiRevisionId}/associatedPullRequest`);
   }
 }

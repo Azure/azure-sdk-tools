@@ -6,9 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using APIViewWeb.Managers.Interfaces;
-using System;
 using APIViewWeb.Managers;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -17,15 +15,15 @@ namespace APIViewWeb.LeanControllers
         private readonly ILogger<APIRevisionsController> _logger;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly IReviewManager _reviewManager;
-
+        private readonly IPullRequestManager _pullRequestManager;
 
         public APIRevisionsController(ILogger<APIRevisionsController> logger,
-            IReviewManager reviewManager,
-            IAPIRevisionsManager apiRevisionsManager)
+            IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, IPullRequestManager pullRequestManager)
         {
             _logger = logger;
             _apiRevisionsManager = apiRevisionsManager;
             _reviewManager = reviewManager;
+            _pullRequestManager = pullRequestManager;
         }
 
         /// <summary>
@@ -110,6 +108,20 @@ namespace APIViewWeb.LeanControllers
                 await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
             }
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Endpoint used by Client SPA for getting associated Pull Request
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <returns></returns>
+        /// 
+        [HttpGet("{reviewId}/{apiRevisionId}/associatedPullRequest", Name = "GetAssociatedPullRequest")]
+        public async Task<IActionResult> GetAssociatedPullRequestAsync([FromRoute] string reviewId, [FromRoute] string apiRevisionId)
+        {
+            var pullRequests = await _pullRequestManager.GetPullRequestsModelAsync(reviewId, apiRevisionId);
+            return new LeanJsonResult(pullRequests, StatusCodes.Status200OK);
         }
     }
 }

@@ -1,3 +1,3 @@
-[submodule "tools/js-sdk-release-tools/deps/azure-js-dev-tools"]
-	path = tools/js-sdk-release-tools/deps/azure-js-dev-tools
+[submodule "tools/js-sdk-release-tools/src/deps/azure-js-dev-tools"]
+	path = tools/js-sdk-release-tools/src/deps/azure-js-dev-tools
 	url = https://github.com/ts-common/azure-js-dev-tools

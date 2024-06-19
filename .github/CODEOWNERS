@@ -32,7 +32,7 @@
 /tools/codeowners-utils/               @JimSuplizio
 /tools/github-event-processor/         @JimSuplizio @benbp @jsquire @ronniegeraghty
 /tools/github-team-user-store/         @JimSuplizio @weshaggard
-/tools/js-sdk-release-tools/           @qiaozha @MaryGao @wanlwanl
+/tools/js-sdk-release-tools/           @qiaozha @MaryGao @wanl
 /tools/mock-service-host/              @raych1 @tadelesh
 /tools/perf-automation/                @mikeharder @benbp
 /tools/pipeline-generator/             @weshaggard @benbp

@@ -6,21 +6,18 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.PackageDeclaration;
-import com.github.javaparser.ast.body.BodyDeclaration;
-import com.github.javaparser.ast.body.CallableDeclaration;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.body.ConstructorDeclaration;
-import com.github.javaparser.ast.body.EnumConstantDeclaration;
-import com.github.javaparser.ast.body.EnumDeclaration;
-import com.github.javaparser.ast.body.FieldDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.TypeDeclaration;
-import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
 import com.github.javaparser.ast.expr.AnnotationExpr;
+import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.nodeTypes.NodeWithAnnotations;
 import com.github.javaparser.ast.nodeTypes.NodeWithJavadoc;
+import com.github.javaparser.ast.nodeTypes.NodeWithSimpleName;
+import com.github.javaparser.ast.type.ArrayType;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
+import com.github.javaparser.ast.type.PrimitiveType;
+import com.github.javaparser.ast.type.WildcardType;
 
 import java.util.Collections;
 import java.util.List;
@@ -192,8 +189,24 @@ public final class ASTUtils {
         return makeId(cu.getPrimaryType().get());
     }
 
+    public static String makeId(Node node) {
+        // switch based on known subtypes
+        return switch (node) {
+            case TypeDeclaration<?> td -> makeId(td);
+            case AnnotationMemberDeclaration amd -> makeId(amd);
+            case CallableDeclaration<?> cd -> makeId(cd);
+            case FieldDeclaration fd -> makeId(fd);
+            case EnumConstantDeclaration ecd -> makeId(ecd);
+            case null, default -> makeId(node.toString());
+        };
+    }
+
     public static String makeId(TypeDeclaration<?> typeDeclaration) {
         return makeId(typeDeclaration.getFullyQualifiedName().get());
+    }
+
+    public static String makeId(AnnotationMemberDeclaration annotationMemberDeclaration) {
+        return makeId(getNodeFullyQualifiedName(annotationMemberDeclaration.getParentNode()) + "." + annotationMemberDeclaration.getName());
     }
 
     public static String makeId(VariableDeclarator variableDeclarator) {
@@ -256,40 +269,26 @@ public final class ASTUtils {
     public static String makeId(AnnotationExpr annotation, NodeWithAnnotations<?> nodeWithAnnotations) {
         String annotationContext = getAnnotationContext(nodeWithAnnotations);
 
-        String idSuffix;
-
-        if (annotationContext == null || annotationContext.isEmpty()) {
-            idSuffix = "-L" + annotation.getBegin().orElseThrow(RuntimeException::new).line;
-        } else {
+        String idSuffix = "";
+        if (annotationContext != null && !annotationContext.isEmpty()) {
             idSuffix = "-" + annotationContext;
         }
         return makeId(getNodeFullyQualifiedName(annotation.getParentNode()) + "." + annotation.getNameAsString() + idSuffix);
     }
 
     private static String getAnnotationContext(NodeWithAnnotations<?> nodeWithAnnotations) {
-        if (nodeWithAnnotations == null) {
-            return "";
-        }
-        if (nodeWithAnnotations instanceof MethodDeclaration) {
-            MethodDeclaration methodDeclaration = (MethodDeclaration) nodeWithAnnotations;
-            // use the method declaration string instead of method name as there can be overloads
-            return methodDeclaration.getDeclarationAsString(true, true, true);
-        } else if (nodeWithAnnotations instanceof ClassOrInterfaceDeclaration) {
-            ClassOrInterfaceDeclaration classOrInterfaceDeclaration = (ClassOrInterfaceDeclaration) nodeWithAnnotations;
-            return classOrInterfaceDeclaration.getNameAsString();
-        } else if (nodeWithAnnotations instanceof EnumDeclaration) {
-            EnumDeclaration enumDeclaration = (EnumDeclaration) nodeWithAnnotations;
-            return enumDeclaration.getNameAsString();
-        } else if (nodeWithAnnotations instanceof EnumConstantDeclaration) {
-            EnumConstantDeclaration enumValueDeclaration = (EnumConstantDeclaration) nodeWithAnnotations;
-            return enumValueDeclaration.getNameAsString();
-        } else if (nodeWithAnnotations instanceof ConstructorDeclaration) {
-            ConstructorDeclaration constructorDeclaration = (ConstructorDeclaration) nodeWithAnnotations;
-            // use the constructor declaration string instead of the name as there can be overloads
-            return constructorDeclaration.getDeclarationAsString(true, true, true);
-        } else {
-            return "";
-        }
+        return switch (nodeWithAnnotations) {
+            case MethodDeclaration methodDeclaration ->
+                // use the method declaration string instead of method name as there can be overloads
+                methodDeclaration.getDeclarationAsString(true, true, true);
+            case ClassOrInterfaceDeclaration classOrInterfaceDeclaration -> classOrInterfaceDeclaration.getNameAsString();
+            case EnumDeclaration enumDeclaration -> enumDeclaration.getNameAsString();
+            case EnumConstantDeclaration enumConstantDeclaration -> enumConstantDeclaration.getNameAsString();
+            case ConstructorDeclaration constructorDeclaration ->
+                // use the constructor declaration string instead of the name as there can be overloads
+                constructorDeclaration.getDeclarationAsString(true, true, true);
+            case null, default -> "";
+        };
     }
 
     /**
@@ -311,10 +310,8 @@ public final class ASTUtils {
 
         // otherwise there are more rules we want to consider...
         final boolean isInterfaceType = isInterfaceType(type);
-//        final boolean isNestedType = type.isNestedType();
 
-        if (parentNode instanceof ClassOrInterfaceDeclaration) {
-            ClassOrInterfaceDeclaration parentClass = (ClassOrInterfaceDeclaration) parentNode;
+        if (parentNode instanceof ClassOrInterfaceDeclaration parentClass) {
             boolean isInPublicParent = isPublicOrProtected(parentClass.getAccessSpecifier());
             boolean isParentAnInterface = isInterfaceType(parentClass);
 
@@ -381,24 +378,56 @@ public final class ASTUtils {
 
     public static String getNodeFullyQualifiedName(Node node) {
         if (node == null) {
-            return "";
+            throw new NullPointerException("node cannot be null");
         }
 
-        if (node instanceof TypeDeclaration<?>) {
-            TypeDeclaration<?> type = (TypeDeclaration<?>) node;
-            return type.getFullyQualifiedName().get();
-        } else if (node instanceof CallableDeclaration) {
-            CallableDeclaration<?> callableDeclaration = (CallableDeclaration<?>) node;
-            String fqn = getNodeFullyQualifiedName(node.getParentNode()) + "." + callableDeclaration.getNameAsString();
+        if (node instanceof CompilationUnit cu) {
+            String packageName = cu.getPackageDeclaration()
+                    .map(PackageDeclaration::getNameAsString)
+                    .orElse("");
+            String typeName = cu.getPrimaryType()
+                    .map(NodeWithSimpleName::getNameAsString)
+                    .orElse("");
+            return packageName.isEmpty() ? typeName : packageName + "." + typeName;
+        }
 
-            if (callableDeclaration.isConstructorDeclaration()) {
-                fqn += ".ctor";
+        if (node instanceof TypeDeclaration<?> type) {
+            return type.getFullyQualifiedName().orElse("");
+        }
+
+        if (node instanceof CallableDeclaration<?> callableDeclaration) {
+            return getNodeFullyQualifiedName(callableDeclaration.getParentNode().orElse(null)) + "." + callableDeclaration.getSignature();
+        }
+
+        if (node instanceof FieldDeclaration fieldDeclaration) {
+            return getNodeFullyQualifiedName(fieldDeclaration.getParentNode().orElse(null)) + "." + fieldDeclaration.getVariables().get(0).getNameAsString();
+        }
+
+        if (node instanceof EnumConstantDeclaration enumConstantDeclaration) {
+            return getNodeFullyQualifiedName(enumConstantDeclaration.getParentNode().orElse(null)) + "." + enumConstantDeclaration.getNameAsString();
+        }
+
+        if (node instanceof ClassOrInterfaceType classOrInterfaceType) {
+            if (classOrInterfaceType.getScope().isPresent()) {
+                return getNodeFullyQualifiedName(classOrInterfaceType.getScope().get()) + "." + classOrInterfaceType.getNameAsString();
+            } else {
+                return classOrInterfaceType.getNameAsString();
             }
-
-            return fqn;
-        } else {
-            return "";
         }
+
+        if (node instanceof NodeWithSimpleName<?> nodeWithSimpleName) {
+            return getNodeFullyQualifiedName(node.getParentNode().orElse(null)) + "." + nodeWithSimpleName.getNameAsString();
+        }
+
+        if (node instanceof SimpleName simpleName) {
+            return simpleName.getIdentifier();
+        }
+
+        if (node instanceof PrimitiveType pt) {
+            return pt.toString();
+        }
+
+        throw new IllegalArgumentException("Unsupported node type: " + node.getClass().getName());
     }
 
     private static String getNodeFullyQualifiedName(Optional<Node> nodeOptional) {
@@ -423,11 +452,9 @@ public final class ASTUtils {
      * Optional#empty()}.
      */
     public static Optional<JavadocComment> attemptToFindJavadocComment(BodyDeclaration<?> bodyDeclaration) {
-        if (!(bodyDeclaration instanceof NodeWithJavadoc<?>)) {
+        if (!(bodyDeclaration instanceof NodeWithJavadoc<?> nodeWithJavadoc)) {
             return Optional.empty();
         }
-
-        NodeWithJavadoc<?> nodeWithJavadoc = (NodeWithJavadoc<?>) bodyDeclaration;
 
         // BodyDeclaration has a Javadoc.
         if (nodeWithJavadoc.getJavadocComment().isPresent()) {

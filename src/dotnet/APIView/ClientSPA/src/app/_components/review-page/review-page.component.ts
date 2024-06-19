@@ -39,6 +39,7 @@ export class ReviewPageComponent implements OnInit {
   languageSafeName: string | undefined;
   navTreeNodeIdHashed : string | undefined;
   showLineNumbers : boolean = true;
+  preferedApprovers : string[] = [];
 
   showLeftNavigation : boolean = true;
   showPageOptions : boolean = true;
@@ -86,6 +87,7 @@ export class ReviewPageComponent implements OnInit {
     this.reviewId = this.route.snapshot.paramMap.get('reviewId');
 
     this.loadReview(this.reviewId!);
+    this.loadPreferedApprovers(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
 
     this.sideMenu = [
@@ -149,9 +151,6 @@ export class ReviewPageComponent implements OnInit {
           };
           // Passing ArrayBufer to worker is way faster than passing object
           this.workerService.postToApiTreeBuilder(response, apiTreeBuilderData);
-        },
-        error: (error: any) => {
-          HandleRedirectDueToExpiredCredentials(error, this.configService);
         }
       });
   }
@@ -161,9 +160,15 @@ export class ReviewPageComponent implements OnInit {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (review: Review) => {
           this.review = review;
-        },
-        error: (error: any) => {
-          HandleRedirectDueToExpiredCredentials(error, this.configService);
+        }
+      });
+  }
+
+  loadPreferedApprovers(reviewId: string) {
+    this.reviewsService.getPreferedApprovers(reviewId)
+      .pipe(takeUntil(this.destroy$)).subscribe({
+        next: (preferedApprovers: string[]) => {
+          this.preferedApprovers = preferedApprovers;
         }
       });
   }

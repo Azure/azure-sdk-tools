@@ -15,6 +15,7 @@ using System.Diagnostics;
 using System;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -78,6 +79,14 @@ namespace APIViewWeb.LeanControllers
                 return new LeanJsonResult(review, StatusCodes.Status200OK);
             }
             return StatusCode(StatusCodes.Status404NotFound);
+        }
+
+        [HttpGet("{reviewId}/preferredApprovers", Name = "PreferredApprovers")]
+        public async Task<ActionResult<HashSet<string>>> GetPreferredApproversAsync(string reviewId)
+        {
+            var review = await _reviewManager.GetReviewAsync(User, reviewId);
+            HashSet<string> preferredApprovers = await PageModelHelpers.GetPreferredApprovers(_configuration, _preferenceCache, _userProfileRepository, User, review);
+            return new LeanJsonResult(preferredApprovers, StatusCodes.Status200OK);
         }
 
         /// <summary>

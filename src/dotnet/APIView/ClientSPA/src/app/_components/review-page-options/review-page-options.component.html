@@ -21,7 +21,36 @@
     </ul>
 </app-page-options-section>
 
-<app-page-options-section sectionName="Request Reviewers">
+<app-page-options-section sectionName="Request Reviewers" [collapsedInput]="false">
+    <p-multiSelect 
+        [options]="preferedApprovers" 
+        [(ngModel)]="selectedApprovers" 
+        placeholder="Request Reviewers"
+        [style]="{'width':'100%'}">
+            <ng-template let-approver pTemplate="selectedItems">
+                <div *ngIf="approver && approver.length > 0" class="inline-flex align-items-center gap-2 px-1">
+                    <span>{{ approver }},</span>
+                </div>
+                <div *ngIf="!approver || approver.length === 0">Select Reviewers</div>
+            </ng-template>
+            <ng-template let-approver pTemplate="item">
+                <div class="flex align-items-center gap-2">
+                    <img 
+                        src="https://github.com/{{ approver }}.png?size=30"
+                        class="me-2 rounded"
+                        style="width: 30px" />
+                    <span>{{ approver }}</span>
+                </div>
+            </ng-template>
+            <ng-template let-approver pTemplate="footer">
+                <div class="py-2 px-3">
+                    <b>
+                    {{ selectedApprovers ? selectedApprovers.length : 0 }}
+                    </b> 
+                    item{{ (selectedApprovers ? selectedApprovers.length : 0) > 1 ? 's' : '' }} selected.
+                </div>
+            </ng-template>
+    </p-multiSelect>
 
 </app-page-options-section>
 

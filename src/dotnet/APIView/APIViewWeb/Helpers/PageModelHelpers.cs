@@ -356,39 +356,7 @@ namespace APIViewWeb.Helpers
             reviewPageContent.codeLines = codeLines;
             reviewPageContent.ActiveConversationsInActiveAPIRevision = ComputeActiveConversationsInActiveRevision(activeRevisionHtmlLines, comments);
 
-            HashSet<string> preferredApprovers = new HashSet<string>();
-            var approverConfig = configuration["approvers"];
-            if (!string.IsNullOrEmpty(approverConfig))
-            {
-                foreach (var username in approverConfig.Split(","))
-                {
-                    if (username.Equals(userId))
-                    {
-                        var userCache = preferenceCache.GetUserPreferences(user).Result;
-                        var langs = userCache.ApprovedLanguages.ToHashSet();
-                        if (!langs.Any())
-                        {
-                            UserProfileModel userProfile = await userProfileRepository.TryGetUserProfileAsync(username);
-                            langs = userProfile.Languages;
-                            userCache.ApprovedLanguages = langs;
-                            preferenceCache.UpdateUserPreference(userCache, user);
-                        }
-                        if (langs.Contains(review.Language) || !langs.Any())
-                        {
-                            preferredApprovers.Add(username);
-                        }
-                    }
-                    else
-                    {
-                        UserProfileModel userProfile = await userProfileRepository.TryGetUserProfileAsync(username);
-                        var langs = userProfile.Languages;
-                        if (langs.Contains(review.Language) || !langs.Any())
-                        {
-                            preferredApprovers.Add(username);
-                        }
-                    }
-                }
-            }
+            HashSet<string> preferredApprovers = await GetPreferredApprovers(configuration, preferenceCache, userProfileRepository, user, review);
 
             reviewPageContent.Review = review;
             reviewPageContent.Navigation = activeRevisionRenderableCodeFile.CodeFile.Navigation;
@@ -642,6 +610,54 @@ namespace APIViewWeb.Helpers
             }
 
             return (modalId, issueList, issueDict);
+        }
+
+        /// <summary>
+        /// GetPreferred Approvers
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <param name="preferenceCache"></param>
+        /// <param name="userProfileRepository"></param>
+        /// <param name="user"></param>
+        /// <param name="review"></param>
+        /// <returns></returns>
+        public static async Task<HashSet<string>> GetPreferredApprovers(IConfiguration configuration, UserPreferenceCache preferenceCache, 
+            ICosmosUserProfileRepository userProfileRepository, ClaimsPrincipal user, ReviewListItemModel review)
+        {
+            HashSet<string> preferredApprovers = new HashSet<string>();
+            var approverConfig = configuration["approvers"];
+            if (!string.IsNullOrEmpty(approverConfig))
+            {
+                foreach (var username in approverConfig.Split(","))
+                {
+                    if (username.Equals(user.GetGitHubLogin()))
+                    {
+                        var userCache = preferenceCache.GetUserPreferences(user).Result;
+                        var langs = userCache.ApprovedLanguages.ToHashSet();
+                        if (!langs.Any())
+                        {
+                            UserProfileModel userProfile = await userProfileRepository.TryGetUserProfileAsync(username);
+                            langs = userProfile.Languages;
+                            userCache.ApprovedLanguages = langs;
+                            preferenceCache.UpdateUserPreference(userCache, user);
+                        }
+                        if (langs.Contains(review.Language) || !langs.Any())
+                        {
+                            preferredApprovers.Add(username);
+                        }
+                    }
+                    else
+                    {
+                        UserProfileModel userProfile = await userProfileRepository.TryGetUserProfileAsync(username);
+                        var langs = userProfile.Languages;
+                        if (langs.Contains(review.Language) || !langs.Any())
+                        {
+                            preferredApprovers.Add(username);
+                        }
+                    }
+                }
+            }
+            return preferredApprovers;
         }
     }
 }

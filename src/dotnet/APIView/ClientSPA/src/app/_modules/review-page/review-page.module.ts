@@ -28,6 +28,7 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { ChipModule } from 'primeng/chip';
 import { ReviewPageOptionsComponent } from 'src/app/_components/review-page-options/review-page-options.component';
 import { InputSwitchModule } from 'primeng/inputswitch';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 const routes: Routes = [
   { path: '', component: ReviewPageComponent }
@@ -55,6 +56,7 @@ const routes: Routes = [
     TreeSelectModule,
     MenuModule,
     MenubarModule,
+    MultiSelectModule,
     SplitterModule,
     SidebarModule,
     TimelineModule,

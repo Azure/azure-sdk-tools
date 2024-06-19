@@ -13,6 +13,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() isDiffView: boolean = false;
   @Input() diffStyleInput: string | undefined;
   @Input() activeAPIRevision : APIRevision | undefined = undefined;
+  @Input() preferedApprovers: string[] = [];
 
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -34,6 +35,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   activeAPIRevisionApprovalClass: string = '';
 
   firstReleaseApprovalMessage: string = '';
+
+  selectedApprovers: string[] = [];
 
   diffStyleOptions : any[] = [
     { label: 'Full Diff', value: "full" },

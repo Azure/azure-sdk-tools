@@ -68,6 +68,10 @@ export class ReviewsService {
     return this.http.get<Review>(this.baseUrl + `/${reviewId}`, { withCredentials: true });
   }
 
+  getPreferedApprovers(reviewId: string) : Observable<string[]> {
+    return this.http.get<string[]>(this.baseUrl + `/${reviewId}/preferredApprovers`, { withCredentials: true });
+  }
+
   openReviewPage(reviewId: string) {
     window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}`, '_blank');
   }

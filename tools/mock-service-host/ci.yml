@@ -51,7 +51,7 @@ extends:
           steps:
             - template: /tools/mock-service-host/build-steps.yml
               parameters:
-                Publish: true
+                PublishArtifact: true
                 NodeVersion: $(NodeVersion)
 
         - job: Test_Windows
@@ -62,7 +62,7 @@ extends:
           steps:
             - template: /tools/mock-service-host/build-steps.yml
               parameters:
-                Publish: false
+                PublishArtifact: false
                 NodeVersion: $(NodeVersion)
 
         - job: Test_Mac
@@ -73,5 +73,5 @@ extends:
           steps:
             - template: /tools/mock-service-host/build-steps.yml
               parameters:
-                Publish: true
+                PublishArtifact: true
                 NodeVersion: $(NodeVersion)

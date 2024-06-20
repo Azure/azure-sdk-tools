@@ -26,9 +26,11 @@ pr:
       - tools/js-sdk-release-tools
 
 extends:
-  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
   parameters:
-    stages:
+    BuildStageName: InstallAndBuild
+    ArtifactName: drop
+    BuildStages:
       - stage: InstallAndBuild
         variables:
           - template: /eng/pipelines/templates/variables/globals.yml
@@ -62,59 +64,7 @@ extends:
               displayName: 'copy to staging dir'
               workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
 
-            - task: 1ES.PublishPipelineArtifact@1
-              inputs:
-                targetPath: '$(Build.ArtifactStagingDirectory)'
-                ArtifactName: 'drop'
-
-      - ${{if ne(variables['Build.Reason'], 'PullRequest')}}:
-        - stage: Release
-          dependsOn: InstallAndBuild
-          condition: succeeded()
-          variables:
-            - template: /eng/pipelines/templates/variables/globals.yml
-            - template: /eng/pipelines/templates/variables/image.yml
-            - name: NodeVersion
-              value: '18.x'
-
-          jobs:
-          - job: approve
-            pool: server
-            steps:
-            - task: ManualValidation@0
-              inputs:
-                notifyUsers: 'Click to approve if it''s an expected public release.'
-
-          - job: release
-            dependsOn: approve
-            condition: and(succeeded(), ne(variables['USER_SKIP_PUBLIC_RELEASE'], 'true'))
-            pool:
-              name: $(LINUXNEXTPOOL)
-              image: $(LINUXNEXTVMIMAGE)
-              os: linux
-            steps:
-            - task: NodeTool@0
-              inputs:
-                versionSpec: '$(NodeVersion)'
-              displayName: 'Install Node.js'
-            
-            - task: DownloadPipelineArtifact@2
-              inputs:
-                artifactName: 'drop'
-                targetPath: '$(Build.ArtifactStagingDirectory)'
-
-            - script: |
-                echo -e "\e[32m[$(date -u)] LOG: Ensure latest npm is installed"
-                sudo npm install -g npm || { echo 'npm install failed' ; exit 1; }
-                sudo npm install -g pnpm || { echo 'pnpm install failed' ; exit 1; }
-
-                echo -e "\e[32m[$(date -u)] LOG: publish the package"
-                echo "//registry.npmjs.org/:_authToken=$(azure-sdk-npm-token)" >> ~/.npmrc
-                for file in $(Build.ArtifactStagingDirectory)/*.tgz
-                do
-                  echo -e "\e[32m[$(date -u)] LOG: File: $file"
-                  npm publish $file --access public || { echo 'publish $file failed' ; exit 1; }
-                done
-                rm ~/.npmrc || { echo 'rm ~/.npmrc failed' ; exit 1; }
-              displayName: Publish
-              workingDirectory: $(System.DefaultWorkingDirectory)/tools/js-sdk-release-tools
+            - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
+              parameters:
+                ArtifactName: drop
+                ArtifactPath: $(Build.ArtifactStagingDirectory)

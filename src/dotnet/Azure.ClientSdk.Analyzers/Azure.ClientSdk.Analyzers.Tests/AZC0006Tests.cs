@@ -44,6 +44,41 @@ namespace RandomNamespace
         }
 
         [Fact]
+        public async Task AZC0006NotProducedForEquivalentOneWithoutEndpoint()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClientOptions : Azure.Core.ClientOptions { }
+
+    public class SomeClient
+    {
+        public SomeClient() {}
+        public SomeClient(System.Uri endpoint, SomeClientOptions options) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
+        public async Task AZC0006NotProducedForEquivalentOneWithParameterAndWithoutEndpoint()
+        {
+            const string code = @"
+namespace RandomNamespace
+{
+    public class SomeClientOptions : Azure.Core.ClientOptions { }
+
+    public class SomeClient
+    {
+        protected SomeClient() {}
+        public SomeClient(string someAuth) {}
+        public SomeClient(System.Uri endpoint, string someAuth, SomeClientOptions options) {}
+    }
+}";
+            await Verifier.VerifyAnalyzerAsync(code);
+        }
+
+        [Fact]
         public async Task AZC0006NotProducedForClientsWithoutOptionsCtorWithArguments()
         {
             const string code = @"

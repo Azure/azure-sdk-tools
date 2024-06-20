@@ -104,6 +104,26 @@ namespace Azure.ClientSdk.Analyzers
             });
         }
 
+        protected static IMethodSymbol FindMethod(IEnumerable<IMethodSymbol> methodSymbols, ImmutableArray<ITypeParameterSymbol> genericParameters, ImmutableArray<IParameterSymbol> parameters, Func<IParameterSymbol, bool> lastParameter, Func<IParameterSymbol, bool> firstParameter)
+        {
+            return methodSymbols.SingleOrDefault(symbol =>
+            {
+                if (symbol.Parameters.Length < 2 || !firstParameter(symbol.Parameters.First()) || !lastParameter(symbol.Parameters.Last()))
+                {
+                    return false;
+                }
+
+                if (!genericParameters.SequenceEqual(symbol.TypeParameters, ParameterEquivalenceComparer.Default))
+                {
+                    return false;
+                }
+
+                var allButLastAndFirst = symbol.Parameters.RemoveAt(symbol.Parameters.Length - 1).RemoveAt(0);
+
+                return allButLastAndFirst.SequenceEqual(parameters, ParameterEquivalenceComparer.Default);
+            });
+        }
+
         public abstract void AnalyzeCore(ISymbolAnalysisContext context);
     }
 }

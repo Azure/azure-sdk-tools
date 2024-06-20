@@ -7,16 +7,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.AspNetCore.Http;
-using Microsoft.VisualBasic;
-using Moq;
-using NuGet.ContentModel;
+using Microsoft.AspNetCore.Http.Features;
 using Xunit;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
@@ -173,6 +170,71 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var targetEntry = sessionFromDisk.Session.Entries[0];
             var content = Encoding.UTF8.GetString(targetEntry.Response.Body);
             Assert.Equal(sampleExpected, content);
+        }
+
+        [Fact]
+        public async Task CheckDigestNotNormalized()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/response_with_content_digest.json");
+
+            DefaultHttpContext ctx = new DefaultHttpContext();
+            DefaultHttpContext requestCtx = new DefaultHttpContext();
+
+            var handler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var guid = Guid.NewGuid().ToString();
+
+            handler.PlaybackSessions.AddOrUpdate(
+                guid,
+                session,
+                (key, oldValue) => session
+            );
+
+            // we know that on disk and when loaded from memory these bytes are totally untouached
+            // we need to make certain this is the case during matching as well
+            var untouchedBytes = session.Session.Entries[1].Request.Body;
+
+            // define all this stuff where it's easy to observe it
+            var testEntry = new RecordEntry()
+            {
+                RequestUri = "\"https://Sanitized.azurecr.io/v2/hello-world/manifests/test",
+                RequestMethod = RequestMethod.Put,
+                Request = new RequestOrResponse()
+                {
+                    Headers = new SortedDictionary<string, string[]>()
+                    {
+                        { "Accept", new string[]{ "application/json" } },
+                        { "Accept-Encoding", new string[]{ "gzip" } },
+                        { "Authorization", new string[]{ "Sanitized" } },
+                        { "Content-Length", new string[] { "11387" } },
+                        { "User-Agent", new string[]{ "azsdk-go-azcontainerregistry/v0.2.2 (go1.22.2; Windows_NT)" } },
+                        { "Content-Type", new string[] { "application/vnd.oci.image.index.v1+json" } },
+                        { "x-recording-upstream-base-uri", new string[] { "https://Sanitized.azurecr.io" } }
+                    },
+                    Body = untouchedBytes,
+                }
+            };
+
+            // now pull it into where it HAS to be, but is a fairly awkward preparation
+            var httpRequest = requestCtx.Request;
+            var httpResponse = requestCtx.Response;
+            httpRequest.Method = testEntry.RequestMethod.ToString();
+            httpRequest.Scheme = "https";
+            httpRequest.Host = new HostString("Sanitized.azurecr.io");
+            httpRequest.Path = "/v2/hello-world/manifests/test";
+            foreach (var header in testEntry.Request.Headers)
+            {
+                httpRequest.Headers[header.Key] = header.Value;
+            }
+            httpRequest.Body = new MemoryStream(testEntry.Request.Body);
+
+            var requestFeature = requestCtx.Features.Get<IHttpRequestFeature>();
+            if (requestFeature != null)
+            {
+                requestFeature.RawTarget = httpRequest.Path;
+            }
+
+            // if we successfully match, the test is working as expected
+            await handler.HandlePlaybackRequest(guid, httpRequest, httpResponse);
         }
 
         [Fact]

@@ -10,6 +10,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 {
     internal static class ContentTypeUtilities
     {
+
+        public static bool IsManifestContentType(string contentType)
+        {
+            const string dockerManifest = "application/vnd.docker.distribution.manifest.v";
+            const string dockerIndex = "application/vnd.oci.image.index.v";
+
+            return contentType.Contains(dockerManifest) || contentType.Contains(dockerIndex);
+        }
+
         public static bool TryGetTextEncoding(string contentType, out Encoding encoding)
         {
             const string charsetMarker = "; charset=";
@@ -22,7 +31,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             // Default is technically US-ASCII, but will default to UTF-8 which is a superset.
             const string appFormUrlEncoded = "application/x-www-form-urlencoded";
-            const string dockerManifest = "application/vnd.docker.distribution.manifest.v2";
 
             if (contentType == null)
             {
@@ -41,7 +49,6 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 }
             }
 
-
             if (
                     (
                         contentType.StartsWith(textContentTypePrefix, StringComparison.OrdinalIgnoreCase) ||
@@ -50,7 +57,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                         contentType.EndsWith(urlEncodedSuffix, StringComparison.OrdinalIgnoreCase) ||
                         contentType.StartsWith(appJsonPrefix, StringComparison.OrdinalIgnoreCase) ||
                         contentType.StartsWith(appFormUrlEncoded, StringComparison.OrdinalIgnoreCase)
-                    ) && !contentType.Contains(dockerManifest)
+                    ) && !ContentTypeUtilities.IsManifestContentType(contentType)
                 )
             {
                 encoding = Encoding.UTF8;

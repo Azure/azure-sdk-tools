@@ -81,7 +81,7 @@ Please note that all test-proxy asset commands should be invoked **in the contex
 
 #### Restore
 
-A restore operation is merely a test-proxy-encapsulated `clone or pull` operation. A given `asets.json` provides the target `Tag` and `AssetsRepo`.
+A restore operation is merely a test-proxy-encapsulated `clone or pull` operation. A given `assets.json` provides the target `Tag` and `AssetsRepo`.
 
 ```bash
 test-proxy restore --assets-json-path <assetsJsonPath>

@@ -11,7 +11,7 @@ namespace APIView.Model
     {
         Content = 0,
         LineBreak = 1,
-        NoneBreakingSpace = 2,
+        NonBreakingSpace = 2,
         TabSpace = 3,
         ParameterSeparator = 4,
         Url = 5
@@ -44,11 +44,11 @@ namespace APIView.Model
                 case StructuredTokenKind.LineBreak:
                     myObject.Value = "\u000A";
                     break;
-                case StructuredTokenKind.NoneBreakingSpace:
+                case StructuredTokenKind.NonBreakingSpace:
                     myObject.Value = "\u00A0";
                     break;
                 case StructuredTokenKind.TabSpace:
-                    myObject.Value = "\u0009";
+                    myObject.Value = "\u00A0\u00A0\u00A0\u00A0";
                     break;
                 case StructuredTokenKind.ParameterSeparator:
                     myObject.Value = _parameterSeparator;
@@ -139,7 +139,7 @@ namespace APIView.Model
         public static StructuredToken CreateSpaceToken()
         {
             var token = new StructuredToken();
-            token.Kind = StructuredTokenKind.NoneBreakingSpace;
+            token.Kind = StructuredTokenKind.NonBreakingSpace;
             return token;
         }
 

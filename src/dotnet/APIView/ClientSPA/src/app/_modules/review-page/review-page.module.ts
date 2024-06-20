@@ -6,6 +6,7 @@ import { ReviewNavComponent } from 'src/app/_components/review-nav/review-nav.co
 import { ReviewInfoComponent } from 'src/app/_components/shared/review-info/review-info.component';
 import { CodePanelComponent } from 'src/app/_components/code-panel/code-panel.component';
 import { CommentThreadComponent } from 'src/app/_components/shared/comment-thread/comment-thread.component';
+import { DialogModule } from 'primeng/dialog';
 import { EditorModule } from 'primeng/editor';
 import { PanelModule } from 'primeng/panel';
 import { TreeSelectModule } from 'primeng/treeselect';
@@ -53,6 +54,7 @@ const routes: Routes = [
     ChipModule,
     EditorModule,
     PanelModule,
+    DialogModule,
     TreeSelectModule,
     MenuModule,
     MenubarModule,

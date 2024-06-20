@@ -23,7 +23,6 @@ import { ContextMenuModule } from 'primeng/contextmenu';
 import { FileUploadModule } from 'primeng/fileupload';
 import { SplitterModule } from 'primeng/splitter';
 import { RevisionsListComponent } from './_components/revisions-list/revisions-list.component';
-import { ApprovalPipe } from './_pipes/approval.pipe';
 import { Observable } from 'rxjs';
 import { ConfigService } from './_services/config/config.service';
 import { CookieService } from 'ngx-cookie-service';
@@ -40,8 +39,7 @@ export function initializeApp(configService: ConfigService) {
     AppComponent,
     IndexPageComponent,
     ReviewsListComponent,
-    RevisionsListComponent,
-    ApprovalPipe
+    RevisionsListComponent
   ],
   imports: [
     SharedAppModule,

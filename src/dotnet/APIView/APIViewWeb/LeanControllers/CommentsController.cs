@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace APIViewWeb.LeanControllers
@@ -37,6 +39,54 @@ namespace APIViewWeb.LeanControllers
         {
             var comments = await _commentsManager.GetCommentsAsync(reviewId, isDeleted);
             return new LeanJsonResult(comments, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Retrieve conversation information
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <returns></returns>
+        [HttpGet("{reviewId}/{apiRevisionId}", Name = "GetConversationInfo")]
+        public async Task<ActionResult<IEnumerable<CommentItemModel>>> GetConversationInfoAsync(string reviewId, string apiRevisionId)
+        {
+            var comments = await _commentsManager.GetCommentsAsync(reviewId, false);
+            var commentsInAPIRevision = comments.Where(c => c.APIRevisionId == apiRevisionId).ToList();
+            var sampleComments = comments.Where(c => c.CommentType == CommentType.SampleRevision).ToList();
+
+            var totalActiveConversiations = 0;
+            var totalActiveConversationInApiRevision = 0;
+            var totalActiveConversationInSampleRevision = 0;
+
+            foreach (var group in comments.GroupBy(c => c.ElementId))
+            {
+                if (!group.Any(c => c.IsResolved))
+                {
+                    totalActiveConversiations++;
+                }
+            }
+
+            foreach (var group in sampleComments.GroupBy(c => c.ElementId))
+            {
+                if (!group.Any(c => c.IsResolved))
+                {
+                    totalActiveConversationInSampleRevision++;
+                }
+            }
+
+            foreach (var group in commentsInAPIRevision.GroupBy(c => c.ElementId))
+            {
+                if (!group.Any(c => c.IsResolved))
+                {
+                    totalActiveConversationInApiRevision++;
+                }
+            }
+
+            dynamic conversationInfobject = new ExpandoObject();
+            conversationInfobject.TotalActiveConversations = totalActiveConversiations;
+            conversationInfobject.ActiveConversationsInActiveAPIRevision = totalActiveConversationInApiRevision;
+            conversationInfobject.ActiveConversationsInSampleRevisions = totalActiveConversationInSampleRevision;
+            return new LeanJsonResult(conversationInfobject, StatusCodes.Status200OK);
         }
 
         /// <summary>

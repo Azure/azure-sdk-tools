@@ -95,6 +95,17 @@ export class ReviewsService {
     );
   }
 
+  toggleReviewApproval(reviewId: string, apiRevisionId: string) : Observable<Review> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    return this.http.post<Review>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, {},
+    { 
+      headers: headers,
+      withCredentials: true,
+    });
+  }
+
   getReviewContent(reviewId: string, activeApiRevisionId: string | null = null, diffApiRevisionId: string | null = null) : Observable<ArrayBuffer>{
     let params = new HttpParams();
     if (activeApiRevisionId) {

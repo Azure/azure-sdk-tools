@@ -108,6 +108,19 @@ namespace APIViewWeb.LeanControllers
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
 
+        /// <summary>
+        /// Endpoint used by Client SPA for Toggling Review Approval
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <returns></returns>
+        [HttpPost("{reviewId}/{apiRevisionId}", Name = "ToggleReviewApproval")]
+        public async Task<ActionResult> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId)
+        {
+            var updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
+            return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
+        }
+
         ///<summary>
         ///Retrieve the Content (codeLines and Navigation) of a review
         ///</summary>

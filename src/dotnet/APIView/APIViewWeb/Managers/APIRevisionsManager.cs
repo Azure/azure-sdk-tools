@@ -225,7 +225,7 @@ namespace APIViewWeb.Managers
         /// <param name="notes"></param>
         /// <param name="approver"></param>
         /// <returns>true if review approval needs to be updated otherwise false</returns>
-        public async Task<bool> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string apiRevisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "", string approver = "")
+        public async Task<(bool updateReview, APIRevisionListItemModel apiRevision)> ToggleAPIRevisionApprovalAsync(ClaimsPrincipal user, string id, string apiRevisionId = null, APIRevisionListItemModel apiRevision = null, string notes = "", string approver = "")
         {
             if (apiRevisionId == null && apiRevision == null)
             {
@@ -267,7 +267,7 @@ namespace APIViewWeb.Managers
             }
             
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, apiRevisionId, userId, apiRevision.IsApproved);
-            return updateReview;
+            return (updateReview, apiRevision);
         }
 
 

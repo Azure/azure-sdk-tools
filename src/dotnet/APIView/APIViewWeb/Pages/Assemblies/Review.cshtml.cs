@@ -328,7 +328,7 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         public async Task<IActionResult> OnPostToggleAPIRevisionApprovalAsync(string id, string revisionId)
         {
-            var updateReview = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, id, revisionId);
+            (var updateReview, var apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, id, revisionId);
             if (updateReview)
             {
                 await OnPostToggleReviewApprovalAsync(id, revisionId);

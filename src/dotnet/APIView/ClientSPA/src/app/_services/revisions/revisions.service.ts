@@ -99,7 +99,7 @@ export class RevisionsService {
     });
   }
 
-  toggleAPIRevisionViewedByForUser(apiRevisionId: string, state: boolean) : Observable<any> {
+  toggleAPIRevisionViewedByForUser(apiRevisionId: string, state: boolean) : Observable<APIRevision> {
     let params = new HttpParams();
     params = params.append('state', state.toString());
 
@@ -107,12 +107,22 @@ export class RevisionsService {
       'Content-Type': 'application/json',
     });
    
-    return this.http.post<any>(this.baseUrl + `/${apiRevisionId}/toggleViewedBy`, {},
+    return this.http.post<APIRevision>(this.baseUrl + `/${apiRevisionId}/toggleViewedBy`, {},
     { 
       headers: headers,
       params: params,
+      withCredentials: true
+    });
+  }
+
+  toggleAPIRevisionApproval(reviewId: string, apiRevisionId: string) : Observable<APIRevision> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    return this.http.post<APIRevision>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, {},
+    { 
+      headers: headers,
       withCredentials: true,
-      observe: 'response'
     });
   }
 

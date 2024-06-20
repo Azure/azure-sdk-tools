@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using APIViewWeb.Managers.Interfaces;
 using System;
+using APIViewWeb.Managers;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -14,12 +16,16 @@ namespace APIViewWeb.LeanControllers
     {
         private readonly ILogger<APIRevisionsController> _logger;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
-        
+        private readonly IReviewManager _reviewManager;
+
+
         public APIRevisionsController(ILogger<APIRevisionsController> logger,
+            IReviewManager reviewManager,
             IAPIRevisionsManager apiRevisionsManager)
         {
             _logger = logger;
             _apiRevisionsManager = apiRevisionsManager;
+            _reviewManager = reviewManager;
         }
 
         /// <summary>
@@ -71,7 +77,7 @@ namespace APIViewWeb.LeanControllers
         /// <param name="state"></param> true = viewed, false = not viewed
         /// <returns></returns>
         [HttpPost("{apiRevisionId}/toggleViewedBy", Name = "ToggleViewedBy")]
-        public async Task ToggleViewedByAsync(string apiRevisionId, [FromQuery] bool state)
+        public async Task<ActionResult<APIRevisionListItemModel>> ToggleViewedByAsync(string apiRevisionId, [FromQuery] bool state)
         {
             string userName = User.GetGitHubLogin();
             var apiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId);
@@ -86,6 +92,24 @@ namespace APIViewWeb.LeanControllers
             }
 
             await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
+            return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Endpoint used by Client SPA for Toggling APIRevision Approval
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="apiRevisionId"></param>
+        /// <returns></returns>
+        [HttpPost("{reviewId}/{apiRevisionId}", Name = "ToggleAPIRevisionApproval")]
+        public async Task<ActionResult<APIRevisionListItemModel>> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId)
+        {
+            (var updateReview, var apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, reviewId, apiRevisionId);
+            if (updateReview)
+            {
+                await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
+            }
+            return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }
     }
 }

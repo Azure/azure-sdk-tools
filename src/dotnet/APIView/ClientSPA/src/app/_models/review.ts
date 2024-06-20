@@ -18,6 +18,7 @@ export interface Review {
   lastUpdatedOn: string
   isDeleted: boolean
   isApproved: boolean
+  changeHistory: ChangeHistory[]
 }
 
 export class ChangeHistory {

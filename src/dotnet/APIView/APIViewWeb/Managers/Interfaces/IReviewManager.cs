@@ -22,7 +22,7 @@ namespace APIViewWeb.Managers
         public Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed = true);
         public Task SoftDeleteReviewAsync(ClaimsPrincipal user, string id);
         public Task ToggleReviewIsClosedAsync(ClaimsPrincipal user, string id);
-        public Task ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="");
+        public Task<ReviewListItemModel> ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="");
         public Task ApproveReviewAsync(ClaimsPrincipal user, string reviewId, string notes = "");
         public Task<int> GenerateAIReview(string reviewId, string revisionId);
         public Task UpdateReviewsInBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount);

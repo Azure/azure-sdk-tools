@@ -16,6 +16,10 @@ export class CommentsService {
     return this.http.get<CommentItemModel[]>(this.baseUrl + `/${reviewId}`, { withCredentials: true });
   }
 
+  getConversationInfo(reviewId: string, apiRevisionId: string) {
+    return this.http.get<any>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, { withCredentials: true });
+  }
+
   createComment(reviewId: string, apiRevisionId: string, elementId: string, commentText: string, commentType: CommentType, resolutionLocked : boolean = false) : Observable<CommentItemModel> {
     let params = new HttpParams();
     params = params.append('reviewId', reviewId);

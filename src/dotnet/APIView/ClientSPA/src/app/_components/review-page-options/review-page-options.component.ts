@@ -1,7 +1,10 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { InputSwitchOnChangeEvent } from 'primeng/inputswitch';
+import { mapLanguageAliases } from 'src/app/_helpers/service-helpers';
 import { UserProfile } from 'src/app/_models/auth_service_models';
+import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
+import { ConfigService } from 'src/app/_services/config/config.service';
 
 @Component({
   selector: 'app-review-page-options',
@@ -12,8 +15,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Input() userProfile: UserProfile | undefined;
   @Input() isDiffView: boolean = false;
   @Input() diffStyleInput: string | undefined;
+  @Input() review : Review | undefined = undefined;
   @Input() activeAPIRevision : APIRevision | undefined = undefined;
+  @Input() diffAPIRevision : APIRevision | undefined = undefined;
   @Input() preferedApprovers: string[] = [];
+  @Input() conversiationInfo : any | undefined = undefined;
+  @Input() hasFatalDiagnostics : boolean = false;
 
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -22,6 +29,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   @Output() showLeftNavigationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() markAsViewedEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+
+  webAppUrl : string = this.configService.webAppUrl
   
   showCommentsSwitch : boolean = true;
   showSystemCommentsSwitch : boolean = true;
@@ -30,11 +41,19 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   markedAsViewSwitch : boolean = false;
   showLineNumbersSwitch : boolean = true;
 
+  canToggleApproveAPIRevision: boolean = false;
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
-  activeAPIRevisionApprovalMessage: string = '';
-  activeAPIRevisionApprovalClass: string = '';
-
-  firstReleaseApprovalMessage: string = '';
+  apiRevisionApprovalMessage: string = '';
+  apiRevisionApprovalBtnClass: string = '';
+  apiRevisionApprovalBtnLabel: string = '';
+  hasActiveConversation : string = '';
+  showAPIRevisionApprovalModal: boolean = false;
+  overrideActiveConversationforApproval : boolean = false;
+  overrideFatalDiagnosticsforApproval : boolean = false;
+  
+  canApproveReview: boolean | undefined = undefined;
+  reviewIsApproved: boolean | undefined = undefined;
+  reviewApprover: string = 'azure-sdk';
 
   selectedApprovers: string[] = [];
 
@@ -53,6 +72,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     'unDeleted': 'bi bi-plus-circle-fill undeleted'
   };
 
+  constructor(private configService: ConfigService) { }
+
   ngOnInit() {
     this.setSelectedDiffStyle();
     this.showCommentsSwitch = this.userProfile?.preferences.showComments ?? true;
@@ -70,6 +91,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     } else {
       this.showLineNumbersSwitch = true;
     }
+
+    this.setHasActiveConversatons();
+    this.setAPIRevisionApprovalStates();
+    this.setReviewApprovalStatus();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -97,8 +122,16 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
     
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
       this.markedAsViewSwitch = this.activeAPIRevision!.viewedBy.includes(this.userProfile?.userName!);
-      this.activeAPIRevisionIsApprovedByCurrentUser = this.activeAPIRevision!.approvers.includes(this.userProfile?.userName!);
-      this.activeAPIRevisionApprovalMessage = !this.activeAPIRevision?.isApproved ? 'Approved By:' : 'APIRevision Approval Pending';
+      this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
+      this.setAPIRevisionApprovalStates();
+    }
+
+    if (changes['diffAPIRevision']) {
+      this.setAPIRevisionApprovalStates();
+    }
+
+    if (changes['review']) {
+      this.setReviewApprovalStatus();
     }
   }
 
@@ -161,5 +194,48 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges{
   setSelectedDiffStyle() {
     const inputDiffStyle = this.diffStyleOptions.find(option => option.value === this.diffStyleInput);
     this.selectedDiffStyle = (inputDiffStyle) ? inputDiffStyle : this.diffStyleOptions[0];
+  }
+
+  setAPIRevisionApprovalStates() {
+    this.activeAPIRevisionIsApprovedByCurrentUser = this.activeAPIRevision?.approvers.includes(this.userProfile?.userName!)!;
+    const isActiveAPIRevisionAhead = (!this.diffAPIRevision) ? true : ((new Date(this.activeAPIRevision?.createdOn!)) > (new Date(this.diffAPIRevision?.createdOn!)));
+    this.canToggleApproveAPIRevision = (!this.diffAPIRevision || this.diffAPIRevision.approvers.length > 0) && isActiveAPIRevisionAhead;
+
+    if (this.canToggleApproveAPIRevision) {
+      this.apiRevisionApprovalBtnClass = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "btn btn-outline-secondary" : "btn btn-success";
+      this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
+      this.apiRevisionApprovalMessage = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "" : "Approves the current revision of the API";
+    } else {
+      this.apiRevisionApprovalBtnClass = "btn btn-outline-secondary";
+      this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
+    }
+  }
+
+  setReviewApprovalStatus() {
+    this.canToggleApproveAPIRevision = (this.review && this.review!.packageName && !(mapLanguageAliases(["Swagger", "TypeSpec"]).includes(this.review?.language!))) ? true : false;
+    this.reviewIsApproved = this.review && this.review?.isApproved ? true : false;
+    if (this.reviewIsApproved) {
+      this.reviewApprover = this.review?.changeHistory.find(ch => ch.changeAction === 'approved')?.changedBy ?? 'azure-sdk';
+    }
+  }
+
+  setHasActiveConversatons() {
+    this.hasActiveConversation = this.conversiationInfo && this.conversiationInfo.totalActiveConversationInApiRevision > 0 && this.conversiationInfo.totalActiveConversationInSampleRevision > 0;
+  }
+
+  handleAPIRevisionApprovalAction() {
+    if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics)) {
+      this.showAPIRevisionApprovalModal = true;
+    } else {
+      this.toggleAPIRevisionApproval();
+    }
+  }
+
+  handleReviewApprovalAction() {
+    this.reviewApprovalEmitter.emit(true);
+  }
+
+  toggleAPIRevisionApproval() {
+    this.apiRevisionApprovalEmitter.emit(true);
   }
 }

@@ -12,8 +12,8 @@ import { RevisionsService } from 'src/app/_services/revisions/revisions.service'
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
-import { HandleRedirectDueToExpiredCredentials } from 'src/app/_helpers/service-helpers';
 import { ConfigService } from 'src/app/_services/config/config.service';
+import { CommentsService } from 'src/app/_services/comments/comments.service';
 
 @Component({
   selector: 'app-review-page',
@@ -32,7 +32,7 @@ export class ReviewPageComponent implements OnInit {
   review : Review | undefined = undefined;
   apiRevisions: APIRevision[] = [];
   activeAPIRevision : APIRevision | undefined = undefined;
-  reviewComments : CommentItemModel[] | undefined = [];
+  diffAPIRevision : APIRevision | undefined = undefined;
   revisionSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
@@ -40,6 +40,8 @@ export class ReviewPageComponent implements OnInit {
   navTreeNodeIdHashed : string | undefined;
   showLineNumbers : boolean = true;
   preferedApprovers : string[] = [];
+  conversiationInfo : any | undefined = undefined;
+  hasFatalDiagnostics : boolean = false;
 
   showLeftNavigation : boolean = true;
   showPageOptions : boolean = true;
@@ -59,7 +61,7 @@ export class ReviewPageComponent implements OnInit {
 
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: RevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
-    private userProfileService: UserProfileService, private configService: ConfigService) {}
+    private userProfileService: UserProfileService, private commentsService: CommentsService) {}
 
   ngOnInit() {
     this.userProfileService.getUserProfile().subscribe(
@@ -89,6 +91,7 @@ export class ReviewPageComponent implements OnInit {
     this.loadReview(this.reviewId!);
     this.loadPreferedApprovers(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
+    this.loadConversationInfo(this.reviewId!, this.activeApiRevisionId!);
 
     this.sideMenu = [
       {
@@ -105,7 +108,9 @@ export class ReviewPageComponent implements OnInit {
 
   updateStateBasedOnQueryParams(params: Params) {
     this.activeApiRevisionId = params['activeApiRevisionId'];
+    this.activeAPIRevision = this.apiRevisions.filter(x => x.id === this.activeApiRevisionId)[0];
     this.diffApiRevisionId = params['diffApiRevisionId'];
+    this.diffAPIRevision = (this.diffApiRevisionId) ? this.apiRevisions.filter(x => x.id === this.diffApiRevisionId)[0] : undefined;
     this.diffStyle = params['diffStyle'];
     this.reviewPageNavigation = [];
     this.codePanelRowData = [];
@@ -114,6 +119,7 @@ export class ReviewPageComponent implements OnInit {
     this.workerService.startWorker().then(() => {
       this.registerWorkerEventHandler();
       this.loadReviewContent(this.reviewId!, this.activeApiRevisionId, this.diffApiRevisionId);
+      this.loadConversationInfo(this.reviewId!, this.activeApiRevisionId!);
     });
   }
 
@@ -130,6 +136,7 @@ export class ReviewPageComponent implements OnInit {
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
         this.codePanelRowData = data.payload as CodePanelRowData[];
+        this.checkForFatalDiagnostics();
       }
 
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelData) {
@@ -173,6 +180,15 @@ export class ReviewPageComponent implements OnInit {
       });
   }
 
+  loadConversationInfo(reviewId: string, apiRevisionId: string) {
+    this.commentsService.getConversationInfo(reviewId, apiRevisionId)
+    .pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response: any) => {
+        this.conversiationInfo = response;
+      }
+    });
+  }
+
   loadAPIRevisions(noOfItemsRead : number, pageSize: number) {
     // Ensure existing subscription is destroyed
     this.destroyLoadAPIRevision$?.next();
@@ -188,10 +204,10 @@ export class ReviewPageComponent implements OnInit {
             this.language = this.apiRevisions[0].language;
             this.languageSafeName = getLanguageCssSafeName(this.language);
             this.activeAPIRevision = this.apiRevisions.filter(x => x.id === this.activeApiRevisionId)[0];
+            if (this.diffApiRevisionId) {
+              this.diffAPIRevision = this.apiRevisions.filter(x => x.id === this.diffApiRevisionId)[0];
+            }
           }
-        },
-        error: (error: any) => {
-          HandleRedirectDueToExpiredCredentials(error, this.configService);
         }
       });
   }
@@ -334,14 +350,46 @@ export class ReviewPageComponent implements OnInit {
     this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.showLineNumbers = !userPreferenceModel!.hideLineNumbers;
     });
-    }
+  }
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {
     this.navTreeNodeIdHashed = nodeIdHashed;
   }
 
   handleMarkAsViewedEmitter(state: boolean) {
-    this.apiRevisionsService.toggleAPIRevisionViewedByForUser(this.activeApiRevisionId!, state).pipe(take(1)).subscribe();
+    this.apiRevisionsService.toggleAPIRevisionViewedByForUser(this.activeApiRevisionId!, state).pipe(take(1)).subscribe({
+      next: (apiRevision: APIRevision) => {
+        this.activeAPIRevision = apiRevision;
+      } 
+    });
+  }
+
+  handleApiRevisionApprovalEmitter(value: boolean) {
+    if (value) {
+      this.apiRevisionsService.toggleAPIRevisionApproval(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
+        next: (apiRevision: APIRevision) => {
+          this.activeAPIRevision = apiRevision;
+        }
+      });
+    }
+  }
+
+  handleReviewApprovalEmitter(value: boolean) {
+    if (value) {
+      this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
+        next: (review: Review) => {
+          this.review = review;
+        }
+      });
+    }
+  }
+
+  checkForFatalDiagnostics() {
+    for (const rowData of this.codePanelRowData) {
+      if (rowData.diagnostics && rowData.diagnostics.level === 'fatal') {
+        this.hasFatalDiagnostics = true;
+      }
+    }
   }
 
   ngOnDestroy() {

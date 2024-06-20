@@ -300,13 +300,14 @@ namespace APIViewWeb.Managers
         /// <param name="revisionId"></param>
         /// <param name="notes"></param>
         /// <returns></returns>
-        public async Task ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="")
+        public async Task<ReviewListItemModel> ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="")
         {
             ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(id);
             var userId = user.GetGitHubLogin();
-            await ToggleReviewApproval(user, review, notes);
+            var updatedReview = await ToggleReviewApproval(user, review, notes);
             await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, revisionId, review.IsApproved);
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, revisionId, userId, review.IsApproved);
+            return updatedReview;
         }
 
         /// <summary>
@@ -451,7 +452,7 @@ namespace APIViewWeb.Managers
             }
         }
 
-        private async Task ToggleReviewApproval(ClaimsPrincipal user, ReviewListItemModel review, string notes)
+        private async Task<ReviewListItemModel> ToggleReviewApproval(ClaimsPrincipal user, ReviewListItemModel review, string notes)
         {
             await ManagerHelpers.AssertApprover<ReviewListItemModel>(user, review, _authorizationService);
             var userId = user.GetGitHubLogin();
@@ -460,6 +461,7 @@ namespace APIViewWeb.Managers
             review.ChangeHistory = changeUpdate.ChangeHistory;
             review.IsApproved = changeUpdate.ChangeStatus;
             await _reviewsRepository.UpsertReviewAsync(review);
+            return review;
         }
 
         /// <summary>

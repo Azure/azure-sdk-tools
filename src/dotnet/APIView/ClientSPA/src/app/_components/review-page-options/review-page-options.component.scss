@@ -1,4 +1,19 @@
 :host ::ng-deep {
+    .p-multiselect .p-multiselect-label {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .p-multiselect-panel .p-multiselect-header {
+        padding: 0.5rem 0.5rem;
+    }
+
+    .p-multiselect-panel .p-multiselect-items .p-multiselect-item {
+        padding: 0.5rem 0.5rem;
+    }
+
+    .p-multiselect-items-wrapper ul, .p-dropdown-items-wrapper ul {
+        margin-bottom: 0px;
+    }
 
     .p-timeline-event-opposite {
         flex: 0 0 auto !important;
@@ -24,10 +39,9 @@
         border: none;
     }
 
-    .p-dropdown {
-        border: none;
+    .p-dropdown, .p-multiselect {
         .p-inputtext {
-            padding: 0.0rem 0.5rem;
+            padding: 0.25rem 0.5rem;
         }
     }
 

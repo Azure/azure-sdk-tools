@@ -1,57 +1,51 @@
 <app-page-options-section sectionName="Approval">
     <ul class="list-group">
         <li class="list-group-item text-center">
-            <span *ngIf="!activeAPIRevisionIsApprovedByCurrentUser" class="small text-muted">Approve this API Revision</span>
-            <div *ngIf="!activeAPIRevisionIsApprovedByCurrentUser; else elseBlock" class="d-grid gap-2">
-                <button class="btn btn-success" type="button">Approve</button>
-            </div>
-            <ng-template #elseBlock>
-                <div class="d-grid gap-2">
-                    <button class="btn btn-outline-secondary" type="button">Revert API Approval</button>
-                </div>
+            <ng-container *ngIf="userProfile && preferedApprovers.includes(userProfile?.userName!)">
+                <ng-container *ngIf="canToggleApproveAPIRevision; else cantToggleApproveAPIRevision">
+                    <span *ngIf="apiRevisionApprovalMessage" class="small text-muted">{{apiRevisionApprovalMessage}}</span>
+                    <div class="d-grid gap-2">
+                        <button class="{{apiRevisionApprovalBtnClass}}" type="button" (click)="handleAPIRevisionApprovalAction()">{{apiRevisionApprovalBtnLabel}}</button>
+                    </div>
+                </ng-container>
+                <ng-template #cantToggleApproveAPIRevision>
+                    <div class="d-grid gap-2">
+                        <button class="{{apiRevisionApprovalBtnClass}}" type="button"
+                            pTooltip="API Revision cannot be approved when comparing against unapproved revision. Or when the diffApiRevision is older than the activeApiRevision." 
+                            tooltipPosition="bottom"
+                            disabled>
+                            {{apiRevisionApprovalBtnLabel}}
+                        </button>
+                    </div>
+                </ng-template>
+            </ng-container>
+            <span *ngIf="activeAPIRevision && activeAPIRevision!.approvers.length > 0; else noAPIRevisionApprovers" class="small text-muted mt-1">
+                Approved By: <a *ngFor="let approver of activeAPIRevision!.approvers" href="{{webAppUrl}}Assemblies/Profile/{{approver}}">{{approver}},&nbsp;</a>
+            </span>
+            <ng-template #noAPIRevisionApprovers>
+                <span class="small text-muted mt-1">Current Revision Approval Pending</span>
             </ng-template>
-            <span class="small text-muted mt-1">{{activeAPIRevisionApprovalMessage}}</span>
         </li>
-        <li class="list-group-item">
-            <span class="small text-muted">Approves the current revision of the API</span>
-            <div class="d-grid gap-2">
-                <button class="btn btn-success" type="button">Approved</button>
-            </div>
+        <li class="list-group-item text-center">
+            <ng-container *ngIf="reviewIsApproved; else reviewIsNotApprovedBlock">
+                <span class="small text-muted mt-1">
+                    Approved for First Release By: <a href="{{webAppUrl}}Assemblies/Profile/{{reviewApprover}}">{{reviewApprover}}</a>
+                </span>
+            </ng-container>
+            <ng-template #reviewIsNotApprovedBlock>
+                <span class="small text-muted">Approves First Release of the package</span>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" type="button"
+                        (click)="handleReviewApprovalAction()"
+                        pTooltip="Package name must be approved before first preview release of a new package." 
+                        tooltipPosition="bottom">
+                        Approve First Release
+                    </button>
+                </div>
+                <span class="small mt-2 text-muted">First Revision Approval Pending</span>
+            </ng-template>
         </li>
     </ul>
-</app-page-options-section>
-
-<app-page-options-section sectionName="Request Reviewers" [collapsedInput]="false">
-    <p-multiSelect 
-        [options]="preferedApprovers" 
-        [(ngModel)]="selectedApprovers" 
-        placeholder="Request Reviewers"
-        [style]="{'width':'100%'}">
-            <ng-template let-approver pTemplate="selectedItems">
-                <div *ngIf="approver && approver.length > 0" class="inline-flex align-items-center gap-2 px-1">
-                    <span>{{ approver }},</span>
-                </div>
-                <div *ngIf="!approver || approver.length === 0">Select Reviewers</div>
-            </ng-template>
-            <ng-template let-approver pTemplate="item">
-                <div class="flex align-items-center gap-2">
-                    <img 
-                        src="https://github.com/{{ approver }}.png?size=30"
-                        class="me-2 rounded"
-                        style="width: 30px" />
-                    <span>{{ approver }}</span>
-                </div>
-            </ng-template>
-            <ng-template let-approver pTemplate="footer">
-                <div class="py-2 px-3">
-                    <b>
-                    {{ selectedApprovers ? selectedApprovers.length : 0 }}
-                    </b> 
-                    item{{ (selectedApprovers ? selectedApprovers.length : 0) > 1 ? 's' : '' }} selected.
-                </div>
-            </ng-template>
-    </p-multiSelect>
-
 </app-page-options-section>
 
 <app-page-options-section sectionName="Page Settings">
@@ -88,7 +82,8 @@
                 [options]="diffStyleOptions" 
                 [(ngModel)]="selectedDiffStyle"
                 inputId="diff-style-select"
-                optionLabel="label" />
+                optionLabel="label"
+                [style]="{'width':'100%'}"/>
         </li>
     </ul>
 </app-page-options-section>
@@ -99,6 +94,31 @@
             <p-inputSwitch [(ngModel)]="markedAsViewSwitch"
             (onChange)="onMarkedAsViewedSwitchChange($event)" />
             <label class="ms-2">Mark As Viewed</label>
+        </li>
+        <li class="list-group-item">
+            <label class="small mx-1 fw-semibold" for="diff-style-select">Reviewers :</label>
+            <p-multiSelect 
+                [options]="preferedApprovers" 
+                [(ngModel)]="selectedApprovers" 
+                placeholder="Request Reviewers"
+                [showClear]="true"
+                [style]="{'width':'100%'}">
+                    <ng-template let-approver pTemplate="selectedItems">
+                        <div *ngIf="approver && approver.length > 0" class="inline-flex align-items-center gap-2 px-1 me-1">
+                            <span>{{ approver }},</span>
+                        </div>
+                        <div *ngIf="!approver || approver.length === 0">Select Reviewers</div>
+                    </ng-template>
+                    <ng-template let-approver pTemplate="item">
+                        <div class="flex align-items-center gap-2">
+                            <img 
+                                src="https://github.com/{{ approver }}.png?size=30"
+                                class="me-2 rounded"
+                                style="width: 30px" />
+                            <span>{{ approver }}</span>
+                        </div>
+                    </ng-template>
+            </p-multiSelect>
         </li>
     </ul>
 </app-page-options-section>
@@ -121,3 +141,33 @@
         </li>
     </ul>
 </app-page-options-section>
+
+<p-dialog header="Approve APIRevision" 
+    [modal]="true" [(visible)]="showAPIRevisionApprovalModal"
+    [style]="{ width: '40dvw' }">
+    <ul class="list-group">
+        <li class="list-group-item" *ngIf="this.conversiationInfo && this.conversiationInfo.totalActiveConversationInApiRevision > 0 && this.conversiationInfo.totalActiveConversationInSampleRevision > 0">
+            <div class="float-start">
+                <p class="mb-0">There are still active conversations. Would you like to review these first?</p>
+            </div>
+            <div class="float-end">
+                <p-inputSwitch [(ngModel)]="overrideActiveConversationforApproval"/>
+                <label class="ms-2">Override</label>
+            </div>
+        </li>
+        <li class="list-group-item" *ngIf="this.hasFatalDiagnostics">
+            <div class="float-start">
+                <p class="mb-0">This API has fatal diagnostics.</p>
+            </div>
+            <div class="float-end">
+                <p-inputSwitch [(ngModel)]="overrideFatalDiagnosticsforApproval"/>
+                <label class="ms-2">Override</label>
+            </div>
+        </li>
+      </ul>
+      <div class="d-grid gap-2 mt-2">
+        <button class="btn btn-success" type="button"
+            (click)="toggleAPIRevisionApproval()"
+            [disabled]="(!hasActiveConversation || (hasActiveConversation && overrideActiveConversationforApproval)) && (!hasFatalDiagnostics ||(hasFatalDiagnostics && overrideFatalDiagnosticsforApproval))">Confirm</button>
+      </div>
+</p-dialog>

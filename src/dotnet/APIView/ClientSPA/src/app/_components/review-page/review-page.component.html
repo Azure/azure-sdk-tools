@@ -18,17 +18,17 @@
                 [minSizes]="minSizes"
                 [gutterSize]="6" (onResizeEnd)="handleSplitterResizeEnd($event)">
                 <ng-template pTemplate>
-                    <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel">
+                    <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
                         <app-review-nav
                             [reviewPageNavigation]="reviewPageNavigation"
                             (navTreeNodeIdEmitter)="handleNavTreeNodeEmmitter($event)"></app-review-nav>
                     </div>
                 </ng-template>
                 <ng-template pTemplate>
-                    <div class="col flex align-items-center justify-content-center border review-panel">
+                    <div class="col flex align-items-center justify-content-center border review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
                         <app-code-panel [codePanelRowData]="codePanelRowData" [codePanelData]="codePanelData"
                             [language]="language" [languageSafeName]="languageSafeName"
-                            [reviewComments]="reviewComments" [isDiffView]="!!diffApiRevisionId"
+                            [isDiffView]="!!diffApiRevisionId"
                             [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
                             [navTreeNodIdHashed]="navTreeNodeIdHashed" [userProfile]="userProfile" [showLineNumbers]="showLineNumbers"></app-code-panel>
                     </div>
@@ -39,15 +39,21 @@
                             [isDiffView]="!!diffApiRevisionId"
                             [diffStyleInput]="diffStyle!"
                             [userProfile]="userProfile"
+                            [review]="review"
                             [activeAPIRevision]="activeAPIRevision"
+                            [diffAPIRevision]="diffAPIRevision"
                             [preferedApprovers]="preferedApprovers"
+                            [conversiationInfo]="conversiationInfo"
+                            [hasFatalDiagnostics]="hasFatalDiagnostics"
                             (showSystemCommentsEmitter)="handleShowSystemCommentsEmitter($event)"
                             (showDocumentationEmitter)="handleShowDocumentationEmitter($event)"
                             (showCommentsEmitter)="handleShowCommentsEmitter($event)"
                             (showLeftNavigationEmitter)="handleShowLeftNavigationEmitter($event)"
                             (diffStyleEmitter)="handleDiffStyleEmitter($event)"
                             (markAsViewedEmitter)="handleMarkAsViewedEmitter($event)"
-                            (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"></app-review-page-options>
+                            (showLineNumbersEmitter)="handleShowLineNumbersEmitter($event)"
+                            (apiRevisionApprovalEmitter)="handleApiRevisionApprovalEmitter($event)"
+                            (reviewApprovalEmitter)="handleReviewApprovalEmitter($event)"></app-review-page-options>
                     </div>
                 </ng-template>
             </p-splitter>

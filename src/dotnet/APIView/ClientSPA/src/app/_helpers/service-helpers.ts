@@ -1,6 +1,13 @@
-import { HttpErrorResponse } from "@angular/common/http";
-import { ConfigService } from "../_services/config/config.service";
+export function mapLanguageAliases(languages: Iterable<string>): string[] {
+  const result: Set<string> = new Set<string>();
 
-export function HandleRedirectDueToExpiredCredentials(error: HttpErrorResponse, configService: ConfigService) {
-
+  for (const language of languages) {
+    if (language === "TypeSpec" || language === "Cadl") {
+      result.add("Cadl");
+      result.add("TypeSpec");
+    }
+    result.add(language);
+  }
+  return Array.from(result);
 }
+

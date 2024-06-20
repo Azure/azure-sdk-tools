@@ -15,7 +15,6 @@ import { UserProfile } from 'src/app/_models/auth_service_models';
 export class CodePanelComponent implements OnChanges{
   @Input() codePanelRowData: CodePanelRowData[] = [];
   @Input() codePanelData: CodePanelData | null = null;
-  @Input() reviewComments : CommentItemModel[] | undefined = [];
   @Input() isDiffView: boolean = false;
   @Input() language: string | undefined;
   @Input() languageSafeName: string | undefined;

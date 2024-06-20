@@ -87,6 +87,19 @@ p-contextmenusub {
     background: var(--base-bg-color);
     color: var(--base-text-color);
 }
+
+.p-dialog .p-dialog-header {
+    border-bottom: 1px solid var(--border-color);
+    background: var(--base-bg-color);
+    color: var(--base-text-color);
+}
+
+.p-dialog .p-dialog-content {
+    background: var(--base-bg-color);
+    color: var(--base-text-color);
+    padding: 1rem;
+}
+
 .p-sidebar {
     background: var(--base-fg-color);
     color: var(--base-text-color);

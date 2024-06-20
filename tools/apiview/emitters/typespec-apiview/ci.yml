@@ -24,7 +24,7 @@ pr:
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-publish-js.yml
   parameters:
-    BuildStageName: InstallAndTest
+    BuildStageName: Build
     ArtifactName: apiview
     BuildStages:
       - stage: 'Build'

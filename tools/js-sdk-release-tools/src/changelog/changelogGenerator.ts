@@ -62,7 +62,7 @@ export class Changelog {
             this.typeAliasParamChangeRequired.length > 0 ||
             this.removedEnum.length > 0 ||
             this.removedEnumValue.length > 0;
-        this.removedFunction.length > 0;
+            this.removedFunction.length > 0;
     }
 
     public get hasFeature() {

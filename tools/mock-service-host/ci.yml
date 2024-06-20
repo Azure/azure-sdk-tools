@@ -49,7 +49,7 @@ extends:
           pool:
             image: $(LINUXNEXTVMIMAGE)
             os: linux
-            name: $(LINUXNEXTVMIMAGE)
+            name: $(LINUXNEXTPOOL)
           steps:
             - template: /tools/mock-service-host/build-steps.yml
               parameters:
@@ -58,9 +58,9 @@ extends:
 
         - job: Test_Windows
           pool:
+            name: $(WINDOWSPOOL)
             image: $(WINDOWSVMIMAGE)
             os: windows
-            name: $(WINDOWSPOOL)
           steps:
             - template: /tools/mock-service-host/build-steps.yml
               parameters:
@@ -69,7 +69,7 @@ extends:
 
         - job: Test_Mac
           pool:
-            vmImage: $(imageName)
+            vmImage: $(MACVMIMAGE)
             os: macOS
             name: $(MACPOOL)
           steps:

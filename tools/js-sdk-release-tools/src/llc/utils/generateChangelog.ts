@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import {NPMScope} from "../../../node_modules/@ts-common/azure-js-dev-tools/lib/npm";
+import {NPMScope} from "@ts-common/azure-js-dev-tools";
 import {logger} from "../../utils/logger";
 import {getLatestStableVersion} from "../../utils/version";
 import {extractExportAndGenerateChangelog} from "../../changelog/extractMetaData";

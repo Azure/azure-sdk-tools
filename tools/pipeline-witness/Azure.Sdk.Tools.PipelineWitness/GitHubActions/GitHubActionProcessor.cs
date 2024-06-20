@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
 
         public async Task ProcessAsync(string owner, string repository, long runId)
         {
-            WorkflowRun run = await this.client.Actions.Workflows.Runs.Get(owner, repository, runId);
+            WorkflowRun run = await GetWorkflowRunAsync(owner, repository, runId);
             await ProcessWorkflowRunAsync(run);
 
             for (long attempt = 1; attempt < run.RunAttempt; attempt++)
@@ -444,6 +444,12 @@ namespace Azure.Sdk.Tools.PipelineWitness.GitHubActions
         private string StripAnsiiEsacpeSequences(string input)
         {
             return Regex.Replace(input, @"\x1B\[[0-?]*[ -/]*[@-~]", "");
+        }
+
+        private async Task<WorkflowRun> GetWorkflowRunAsync(string owner, string repository, long runId)
+        {
+            WorkflowRun workflowRun = await this.client.Actions.Workflows.Runs.Get(owner, repository, runId);
+            return workflowRun;
         }
 
         private async Task<List<WorkflowJob>> GetJobsAsync(WorkflowRun run)

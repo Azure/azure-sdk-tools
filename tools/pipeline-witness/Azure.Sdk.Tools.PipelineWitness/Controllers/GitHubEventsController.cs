@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.PipelineWitness.Controllers
             }
         }
 
-        private static bool VerifySignature(string text, string key, string? signature)
+        private static bool VerifySignature(string text, string key, string signature)
         {
             Encoding encoding = Encoding.UTF8;
 

@@ -60,7 +60,7 @@ public static class Startup
         builder.Services.AddTransient<Func<BlobUploadProcessor>>(provider => provider.GetRequiredService<BlobUploadProcessor>);
         builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
 
-        builder.Services.AddSingleton<ICredentialStore>(p => new GitHubCliCredentialStore());
+        builder.Services.AddSingleton<ICredentialStore, GitHubCredentialStore>();
         builder.Services.AddTransient<GitHubActionProcessor>();
         builder.Services.AddHostedService<GitHubActionsRunQueueWorker>(settings.GitHubActionRunsWorkerCount);
 

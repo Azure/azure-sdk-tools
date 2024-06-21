@@ -22,7 +22,7 @@ import { execSync } from "child_process";
 import { getversionDate } from "../../utils/version";
 import { ApiVersionType } from "../../common/types"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor'
-import { getApiReviewPath, getNpmPackageName, getSDKType } from '../../common/utils';
+import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType } from '../../common/utils';
 
 export async function generateChangelogAndBumpVersion(packageFolderPath: string) {
     const jsSdkRepoPath = String(shell.pwd());
@@ -66,7 +66,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 const oldSDKType = getSDKType(npmPackageRoot);
                 const newSDKType = getSDKType(packageFolderPath);
                 const changelog: Changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
-                let originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+                let originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), { encoding: 'utf-8' });
                 if(nextVersion){
                     shell.cd(path.join(packageFolderPath, 'changelog-temp'));
                     shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
@@ -88,6 +88,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string)
                 if(originalChangeLogContent.includes("https://aka.ms/js-track2-quickstart")){
                     originalChangeLogContent=originalChangeLogContent.replace("https://aka.ms/js-track2-quickstart","https://aka.ms/azsdk/js/mgmt/quickstart");
                 }
+                originalChangeLogContent = fixChangelogFormat(originalChangeLogContent);
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
                     logger.logError('Cannot generate changelog because the codes of local and npm may be the same.');
                     logger.log('Try to bump a fix version');

@@ -26,6 +26,7 @@ extends:
   parameters:
     BuildStageName: Build
     ArtifactName: apiview
+    PackageJsonPath: $(Build.SourcesDirectory)/tools/apiview/emitters/typespec-apiview
     BuildStages:
       - stage: 'Build'
         variables:

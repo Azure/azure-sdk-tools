@@ -1,6 +1,12 @@
-# Read the package.json file
-$packageJsonPath = "$PSScriptRoot/../../package.json"
-$packageJson = Get-Content $packageJsonPath -Raw | ConvertFrom-Json
+params(
+    [string]$PackageJsonPath
+)
+
+if (-not $PackageJsonPath.Endswith("package.json")) {
+    $PackageJsonPath = Join-Path $PackageJsonPath "package.json"
+}
+
+$packageJson = Get-Content $PackageJsonPath -Raw | ConvertFrom-Json
 
 # Function to check if a version is non-GA
 function Is-NonGA($version) {

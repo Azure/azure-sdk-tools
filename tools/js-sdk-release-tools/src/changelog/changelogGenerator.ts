@@ -199,6 +199,9 @@ const findAddedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSExpo
     const addOperation: string[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(newOperationGroup => {
         const oldOperationGroup = oldSdkType === newSdkType ? newOperationGroup : newToOldMap[newOperationGroup];
+        if(!metaDataOld.operationInterface[oldOperationGroup]) {
+            return;
+        }
         const newInterfaceMethodNames = getAllMethodNameInInterface(metaDataNew.operationInterface[newOperationGroup]);
         const oldInterfaceMethodNames = getAllMethodNameInInterface(metaDataOld.operationInterface[oldOperationGroup]);
         newInterfaceMethodNames
@@ -476,6 +479,9 @@ const findRemovedOperation = (metaDataOld: TSExportedMetaData, metaDataNew: TSEx
 
     Object.keys(metaDataOld.operationInterface).forEach(oldOperationGroup => {
         const newOperationGroup = oldSdkType === newSdkType ? oldOperationGroup : oldToNew[oldOperationGroup];
+        if(!metaDataNew.operationInterface[newOperationGroup]) {
+            return;
+        }
         const newInterfaceMethodNames = getAllMethodNameInInterface(metaDataNew.operationInterface[newOperationGroup]);
         const oldInterfaceMethodNames = getAllMethodNameInInterface(metaDataOld.operationInterface[oldOperationGroup]);
         oldInterfaceMethodNames
@@ -492,6 +498,9 @@ const findOperationSignatureChange = (metaDataOld: TSExportedMetaData, metaDataN
     const operationSignatureChange: string[] = [];
     Object.keys(metaDataNew.operationInterface).forEach(newOperationGroup => {
         const oldOperationGroup = oldSdkType === newSdkType ? newOperationGroup : newToOld[newOperationGroup];
+        if (!metaDataOld.operationInterface[oldOperationGroup]) {
+            return;
+        }
         if (oldSdkType === SDKType.HighLevelClient && newSdkType === SDKType.ModularClient) {
             const operationGroupFromOld = metaDataOld.operationInterface[oldOperationGroup] as InterfaceDeclaration;
             const operationGroupFromNew = metaDataNew.operationInterface[newOperationGroup] as InterfaceDeclaration;

@@ -92,3 +92,38 @@ test("Modular -> Modular: Change Op", async () => {
         "Removed operation DataProductsCatalogsOperations.listByResourceGroup"
     );
 });
+
+test("HLC -> HLC: Operation Group Add/Remove/ChangeSig", async () => {
+    const oldViewPath = path.join(
+        __dirname,
+        "testCases/operationGroups.4.old.hlc.api.md"
+    );
+    const newViewPath = path.join(
+        __dirname,
+        "testCases/operationGroups.4.new.hlc.api.md"
+    );
+    const changelog = await extractExportAndGenerateChangelog(
+        oldViewPath,
+        newViewPath,
+        SDKType.HighLevelClient,
+        SDKType.HighLevelClient
+    );
+
+    expect(changelog.addedOperationGroup.length).toBe(1);
+    expect(changelog.removedOperationGroup.length).toBe(1);
+
+    expect(changelog.addedOperation.length).toBe(0);
+    expect(changelog.removedOperation.length).toBe(0);
+
+    expect(changelog.operationSignatureChange.length).toBe(1);
+
+    expect(changelog.addedOperationGroup[0]).toBe(
+        "Added operation group DataProductsCatalogs_add"
+    );
+    expect(changelog.removedOperationGroup[0]).toBe(
+        "Removed operation group DataProductsCatalogs_remove"
+    );
+    expect(changelog.operationSignatureChange[0]).toBe(
+        "Operation DataProductsCatalogs_sig_change.get has a new signature"
+    );
+});

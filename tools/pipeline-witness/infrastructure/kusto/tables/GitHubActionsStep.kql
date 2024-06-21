@@ -1,0 +1,31 @@
+.create-merge table GitHubActionsStep (
+    Repository: string,
+    Workflow: string,
+    Job: string,
+    WorkflowId: long,
+    RunId: long,
+    JobId: long,
+    StepNumber: int,
+    Name: string,
+    Status: string,
+    Conclusion: string,
+    StartedAt: datetime,
+    CompletedAt: datetime,
+    EtlIngestDate: datetime
+) with (folder='', docstring='')
+
+.create-or-alter table GitHubActionsStep ingestion json mapping 'GitHubActionsStep_mapping' ```[
+    { "column": "Repository", "path": "$['repository']" },
+    { "column": "Workflow", "path": "$['workflow']" },
+    { "column": "Job", "path": "$['job']" },
+    { "column": "WorkflowId", "path": "$['workflowId']" },
+    { "column": "RunId", "path": "$['runId']" },
+    { "column": "JobId", "path": "$['jobId']" },
+    { "column": "StepNumber", "path": "$['stepNumber']" },
+    { "column": "Name", "path": "$['name']" },
+    { "column": "Status", "path": "$['status']" },
+    { "column": "Conclusion", "path": "$['conclusion']" },
+    { "column": "StartedAt", "path": "$['startedAt']" },
+    { "column": "CompletedAt", "path": "$['completedAt']" },
+    { "column": "EtlIngestDate", "path": "$['etlIngestDate']" }
+]```

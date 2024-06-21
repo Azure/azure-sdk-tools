@@ -30,6 +30,37 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         public string BuildCompleteQueueName { get; set; }
 
         /// <summary>
+        /// Gets or sets the number of concurrent build complete queue workers to register
+        /// </summary>
+        public int BuildCompleteWorkerCount { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets whether the build definition worker is enabled
+        /// </summary>
+        public bool BuildDefinitionWorkerEnabled { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets the name of the GitHub actions queue
+        /// </summary>
+        public string GitHubActionRunsQueueName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the GitHub action queue workers to register
+        /// </summary>
+        public int GitHubActionRunsWorkerCount { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets secret used to verify GitHub webhook payloads
+        /// </summary>
+        public string GitHubWebhookSecret { get; set; }
+
+        /// <summary>
+        /// Gets or sets the access token to use for GitHub API requests. This
+        /// must be a personal access token with `repo` scope.
+        /// </summary>
+        public string GitHubAccessToken { get; set; }
+
+        /// <summary>
         /// Gets or sets the amount of time a message should be invisible in the queue while being processed
         /// </summary>
         public TimeSpan MessageLeasePeriod { get; set; } = TimeSpan.FromSeconds(30);
@@ -63,11 +94,6 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         /// Gets or sets the amount of time between iterations of the build definition upload loop
         /// </summary>
         public TimeSpan BuildDefinitionLoopPeriod { get; set; } = TimeSpan.FromMinutes(5);
-
-        /// <summary>
-        /// Gets or sets the number of concurrent build complete queue workers to register
-        /// </summary>
-        public int BuildCompleteWorkerCount { get; set; } = 1;
 
         /// <summary>
         /// Gets or sets the artifact name used by the pipeline owners extraction build

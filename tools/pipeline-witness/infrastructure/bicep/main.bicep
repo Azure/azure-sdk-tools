@@ -5,8 +5,11 @@ param location string
 param appResourceGroupName string
 param appServicePlanName string
 param webAppName string
+param keyVaultName string
 param cosmosAccountName string
 param appStorageAccountName string
+param devOpsEventHubNamespaceName string
+param gitHubEventHubNamespaceName string
 
 param logsResourceGroupName string
 param logsStorageAccountName string
@@ -26,6 +29,7 @@ module pipelineWitness 'appResourceGroup.bicep' = {
     location: location
     appServicePlanName: appServicePlanName
     webAppName: webAppName
+    keyVaultName: keyVaultName
     cosmosAccountName: cosmosAccountName
     appStorageAccountName: appStorageAccountName
   }
@@ -49,5 +53,7 @@ module pipelineLogs 'logsResourceGroup.bicep' = {
     kustoDatabaseName: kustoDatabaseName
     webAppName: webAppName
     appIdentityPrincipalId: pipelineWitness.outputs.appIdentityPrincipalId
+    devOpsEventHubNamespaceName: devOpsEventHubNamespaceName
+    gitHubEventHubNamespaceName: gitHubEventHubNamespaceName
   }
 }

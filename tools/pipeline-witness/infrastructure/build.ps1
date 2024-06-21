@@ -13,7 +13,7 @@ try {
         exit 1
     }
 
-    az bicep build --file "./bicep/resourceGroup.bicep" --outdir "./artifacts"
+    az bicep build --file "./bicep/main.bicep" --outdir "./artifacts"
     if($?) {
         Write-Host "Built Bicep files"
     } else {

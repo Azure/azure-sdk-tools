@@ -2,6 +2,7 @@ param webAppName string
 param appServicePlanName string
 param appStorageAccountName string
 param cosmosAccountName string
+param keyVaultName string
 param location string
 
 var cosmosContributorRoleId = '00000000-0000-0000-0000-000000000002' // Built-in Contributor role
@@ -102,6 +103,25 @@ resource appStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
     resource buildCompletedQueue 'queues' = {
       name: 'azurepipelines-build-completed'
     }
+
+    resource gitHubActionsQueue 'queues' = {
+      name: 'github-actionrun-completed'
+    }
+  }
+}
+
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
+  location: location
+  name: keyVaultName
+  properties: {
+    tenantId: subscription().tenantId
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    enableSoftDelete: true
+    softDeleteRetentionInDays: 90
+    enableRbacAuthorization: true
   }
 }
 
@@ -246,10 +266,29 @@ resource locksContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/cont
   }
 }
 
+// Assign Key Vault Secrets User role for the Web App on the Key Vault
+resource secretsUserRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+  scope: subscription()
+  // This is the Key Vault Reader role, which is the minimum role permission we can give.
+  // See https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#key-vault
+  name: '4633458b-17de-408a-b874-0445c86b69e6'
+}
+
+resource vaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =  {
+  name: guid(secretsUserRoleDefinition.id, webAppName, keyVault.id)
+  scope: keyVault
+  properties:{
+    principalId: webApp.identity.principalId
+    roleDefinitionId: secretsUserRoleDefinition.id
+    description: 'Key Vault Secrets User for PipelineWitness'
+  }
+}
+
+
 // Assign Storage Queue Data Contributor role for the Web App on the Queue Storage Account
 resource queueContributorRoleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
   scope: subscription()
-  // This is the Storage Blob Data Contributor role, which is the minimum role permission we can give.
+  // This is the Storage Queue Data Contributor role, which is the minimum role permission we can give.
   // See https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage
   name: '974c5e8b-45b9-4653-ba55-5f855dd0fb88'
 }

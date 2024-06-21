@@ -1,4 +1,5 @@
 import {Changelog} from "../../changelog/changelogGenerator";
+import { fixChangelogFormat } from "../../common/utils";
 
 const fs = require('fs');
 const path = require('path');
@@ -63,7 +64,7 @@ function changeClientFile(packageFolderPath: string, packageVersion: string) {
 }
 
 export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog, originalChangeLogContent: string, comparedVersion:string) {
-    let pacakgeVersionDetail=`## ${packageVersion} (${date})`;
+    let pacakgeVersionDetail = `## ${packageVersion} (${date})`;
     if(packageVersion.includes("beta")){
         pacakgeVersionDetail +=`\nCompared with version ${comparedVersion}`
     }

@@ -5,6 +5,7 @@ import fs from 'fs';
 import { SDKType } from './types'
 import { logger } from "../utils/logger";
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
+import { replaceAll } from '@ts-common/azure-js-dev-tools';
 
 export function getClassicClientParametersPath(packageRoot: string): string {
     return path.join(packageRoot, 'src', 'models', 'parameters.ts');
@@ -48,4 +49,13 @@ export function getTsSourceFile(filePath: string): SourceFile | undefined {
     const project = new Project({ compilerOptions });
     project.addSourceFileAtPath(filePath);
     return project.getSourceFile(filePath);
+}
+
+// changelog policy: https://aka.ms/azsdk/guideline/changelogs
+export function fixChangelogFormat(content: string) {
+    content = replaceAll(content, '**Features**', '### Features Added')!;
+    content  = replaceAll(content, '**Breaking Changes**', '### Breaking Changes')!;
+    content  = replaceAll(content, '**Bugs Fixed**', '### Bugs Fixed')!;
+    content  = replaceAll(content, '**Other Changes**', '### Other Changes')!;
+    return content;
 }

@@ -8,7 +8,7 @@ import { addSpecFiles, checkoutCommit, cloneRepo, getRepoRoot, sparseCheckout } 
 import { doesFileExist } from "./network.js";
 import { parse as parseYaml } from "yaml";
 import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
-import { formatAdditionalDirectories, getAdditionalDirectoryName, makeSparseSpecDir } from "./utils.js";
+import { formatAdditionalDirectories, getAdditionalDirectoryName, getServiceDir, makeSparseSpecDir } from "./utils.js";
 import { resolve } from "node:path";
 import { config as dotenvConfig } from "dotenv";
 
@@ -51,16 +51,7 @@ async function sdkInit(
       throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
     }
     const configYaml = parseYaml(data);
-    // Check if service-dir is defined in the emitter specific configurations in tspconfig.yaml
-    let serviceDir = configYaml?.options?.[emitter]?.["service-dir"];
-    if (!serviceDir) {
-      // Default to the top level service-dir parameter in tspconfig.yaml
-      serviceDir = configYaml?.parameters?.["service-dir"]?.default;
-    }
-    if (!serviceDir) {
-      throw new Error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
-    }
-    Logger.debug(`Service directory: ${serviceDir}`)
+    const serviceDir = getServiceDir(configYaml, emitter);
     const packageDir: string | undefined = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {
       throw new Error(`Missing package-dir in ${emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`);
@@ -89,16 +80,7 @@ async function sdkInit(
       throw new Error(`tspconfig.yaml is empty at ${config}`);
     }
     const configYaml = parseYaml(data);
-    // Check if service-dir is defined in the emitter specific configurations in tspconfig.yaml
-    let serviceDir = configYaml?.options?.[emitter]?.["service-dir"];
-    if (!serviceDir) {
-      // Default to the top level service-dir parameter in tspconfig.yaml
-      serviceDir = configYaml?.parameters?.["service-dir"]?.default;
-    }
-    if (!serviceDir) {
-      throw new Error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
-    }
-    Logger.debug(`Service directory: ${serviceDir}`)
+    const serviceDir = getServiceDir(configYaml, emitter);
     const additionalDirOutput = formatAdditionalDirectories(configYaml?.parameters?.dependencies?.additionalDirectories);
     const packageDir = configYaml?.options?.[emitter]?.["package-dir"];
     if (!packageDir) {

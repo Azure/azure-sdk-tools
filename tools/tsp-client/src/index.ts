@@ -51,7 +51,12 @@ async function sdkInit(
       throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
     }
     const configYaml = parseYaml(data);
-    const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
+    // Check if service-dir is defined in the emitter specific configurations in tspconfig.yaml
+    let serviceDir = configYaml?.options?.[emitter]?.["service-dir"];
+    if (!serviceDir) {
+      // Default to the top level service-dir parameter in tspconfig.yaml
+      serviceDir = configYaml?.parameters?.["service-dir"]?.default;
+    }
     if (!serviceDir) {
       throw new Error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
     }
@@ -84,7 +89,12 @@ async function sdkInit(
       throw new Error(`tspconfig.yaml is empty at ${config}`);
     }
     const configYaml = parseYaml(data);
-    const serviceDir = configYaml?.parameters?.["service-dir"]?.default;
+    // Check if service-dir is defined in the emitter specific configurations in tspconfig.yaml
+    let serviceDir = configYaml?.options?.[emitter]?.["service-dir"];
+    if (!serviceDir) {
+      // Default to the top level service-dir parameter in tspconfig.yaml
+      serviceDir = configYaml?.parameters?.["service-dir"]?.default;
+    }
     if (!serviceDir) {
       throw new Error(`Parameter service-dir is not defined correctly in tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`)
     }

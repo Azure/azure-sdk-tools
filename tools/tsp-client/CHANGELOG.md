@@ -1,5 +1,9 @@
 # Release
 
+## 2024-06-21 - 0.9.0
+
+- Prefer the `service-dir` parameter in the emitter configurations in tspconfig.yaml if specified.
+
 ## 2024-06-07 - 0.8.1
 
 - Normalize and clean up the directory property in tsp-location.yaml.

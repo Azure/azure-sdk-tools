@@ -1,10 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
-import {NPMScope} from "@ts-common/azure-js-dev-tools";
-import {logger} from "../../utils/logger";
-import {getLatestStableVersion} from "../../utils/version";
-import {extractExportAndGenerateChangelog} from "../../changelog/extractMetaData";
-import { getApiReviewPath } from "../../common/utils";
+import { NPMScope } from "@ts-common/azure-js-dev-tools";
+import { logger } from "../../utils/logger";
+import { getLatestStableVersion } from "../../utils/version";
+import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
+import { getApiReviewPath, getSDKType } from "../../common/utils";
 
 const shell = require('shelljs');
 const todayDate = new Date();
@@ -65,7 +65,9 @@ export async function generateChangelog(packagePath) {
                 // TODO: error out if it's comparing between RLC and HLC or Modular api layer and HLC
                 const apiMdFileNPM = getApiReviewPath(npmPackageRoot);
                 const apiMdFileLocal = getApiReviewPath(packagePath);
-                const changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal);
+                const oldSDKType = getSDKType(npmPackageRoot);
+                const newSDKType = getSDKType(packagePath);
+                const changelog = await extractExportAndGenerateChangelog(apiMdFileNPM, apiMdFileLocal, oldSDKType, newSDKType);
                 if (!changelog.hasBreakingChange && !changelog.hasFeature) {
                     logger.logError('Cannot generate changelog because the codes of local and npm may be the same.');
                 } else {

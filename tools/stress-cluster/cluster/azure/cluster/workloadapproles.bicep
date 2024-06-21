@@ -5,6 +5,7 @@ param workloadApps array
 
 var serviceBusDataOwnerRoleId = '090c5cfd-751d-490a-894a-3ce6f1109419'
 var eventHubsDataOwnerRoleId = 'f526a384-b230-433a-b45c-95f59c4a2dec'
+var storageBlobDataOwnerRoleId = 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b'
 var contributorRoleId = 'b24988ac-6180-42a0-ab88-20f7382dd24c'
 var userAccessAdministratorRoleId = '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9'
 
@@ -35,6 +36,15 @@ resource workloadAppContrib 'Microsoft.Authorization/roleAssignments@2020-04-01-
   }
 }]
  
+resource workloadAppBlobDataOwner 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for i in range(0, length(workloadApps)): {
+  name: guid('workloadAppBlobDataOwner', subscription().id, workloadApps[i].objectId)
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataOwnerRoleId)
+    principalId: workloadApps[i].objectId
+    principalType: 'ServicePrincipal'
+  }
+}]
+
 resource workloadAppEHDataOwner 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = [for i in range(0, length(workloadApps)): {
   name: guid('workloadAppEHDataOwner', subscription().id, workloadApps[i].objectId)
   properties: {

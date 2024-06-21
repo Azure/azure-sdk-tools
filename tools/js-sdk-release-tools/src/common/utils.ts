@@ -55,5 +55,6 @@ export function fixChangelogFormat(content: string) {
     content = replaceAll(content, '**Features**', '### Features Added')!;
     content  = replaceAll(content, '**Breaking Changes**', '### Breaking Changes')!;
     content  = replaceAll(content, '**Bugs Fixed**', '### Bugs Fixed')!;
+    content  = replaceAll(content, '**Other Changes**', '### Other Changes')!;
     return content;
 }

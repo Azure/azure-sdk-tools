@@ -51,6 +51,7 @@ export function getTsSourceFile(filePath: string): SourceFile | undefined {
     return project.getSourceFile(filePath);
 }
 
+// changelog policy: https://aka.ms/azsdk/guideline/changelogs
 export function fixChangelogFormat(content: string) {
     content = replaceAll(content, '**Features**', '### Features Added')!;
     content  = replaceAll(content, '**Breaking Changes**', '### Breaking Changes')!;

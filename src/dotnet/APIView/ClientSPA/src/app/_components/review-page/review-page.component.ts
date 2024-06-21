@@ -5,15 +5,15 @@ import { Subject, take, takeUntil, tap } from 'rxjs';
 import { getLanguageCssSafeName } from 'src/app/_helpers/component-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { UserProfile } from 'src/app/_models/auth_service_models';
-import { CommentItemModel, Review } from 'src/app/_models/review';
+import { Review } from 'src/app/_models/review';
 import { APIRevision, ApiTreeBuilderData, CodePanelData, CodePanelRowData, CodePanelRowDatatype, CodePanelToggleableData, ReviewPageWorkerMessageDirective } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { RevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
-import { ConfigService } from 'src/app/_services/config/config.service';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
+import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/literal-helpers';
 
 @Component({
   selector: 'app-review-page',
@@ -37,7 +37,8 @@ export class ReviewPageComponent implements OnInit {
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
   languageSafeName: string | undefined;
-  navTreeNodeIdHashed : string | undefined;
+  scrollToNodeIdHashed : string | undefined;
+  scrollToNodeId : string | undefined = undefined;
   showLineNumbers : boolean = true;
   preferedApprovers : string[] = [];
   conversiationInfo : any | undefined = undefined;
@@ -83,15 +84,17 @@ export class ReviewPageComponent implements OnInit {
       });
 
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      this.updateStateBasedOnQueryParams(params);
+      const navigationState = this.router.getCurrentNavigation()?.extras.state;
+      if (!navigationState || !navigationState['skipStateUpdate']) {
+        this.updateStateBasedOnQueryParams(params);
+      }
     });
 
-    this.reviewId = this.route.snapshot.paramMap.get('reviewId');
+    this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
 
     this.loadReview(this.reviewId!);
     this.loadPreferedApprovers(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
-    this.loadConversationInfo(this.reviewId!, this.activeApiRevisionId!);
 
     this.sideMenu = [
       {
@@ -107,11 +110,12 @@ export class ReviewPageComponent implements OnInit {
   }
 
   updateStateBasedOnQueryParams(params: Params) {
-    this.activeApiRevisionId = params['activeApiRevisionId'];
+    this.activeApiRevisionId = params[ACTIVE_API_REVISION_ID_QUERY_PARAM];
     this.activeAPIRevision = this.apiRevisions.filter(x => x.id === this.activeApiRevisionId)[0];
-    this.diffApiRevisionId = params['diffApiRevisionId'];
+    this.diffApiRevisionId = params[DIFF_API_REVISION_ID_QUERY_PARAM];
     this.diffAPIRevision = (this.diffApiRevisionId) ? this.apiRevisions.filter(x => x.id === this.diffApiRevisionId)[0] : undefined;
-    this.diffStyle = params['diffStyle'];
+    this.diffStyle = params[DIFF_STYLE_QUERY_PARAM];
+    this.scrollToNodeId = params[SCROLL_TO_NODE_QUERY_PARAM];
     this.reviewPageNavigation = [];
     this.codePanelRowData = [];
     this.codePanelData = null;
@@ -227,7 +231,7 @@ export class ReviewPageComponent implements OnInit {
 
   handleDiffStyleEmitter(state: string) {
     let newQueryParams = getQueryParams(this.route);
-    newQueryParams['diffStyle'] = state;
+    newQueryParams[DIFF_STYLE_QUERY_PARAM] = state;
     this.router.navigate([], { queryParams: newQueryParams });
   }
 
@@ -353,7 +357,7 @@ export class ReviewPageComponent implements OnInit {
   }
 
   handleNavTreeNodeEmmitter(nodeIdHashed: string) {
-    this.navTreeNodeIdHashed = nodeIdHashed;
+    this.scrollToNodeIdHashed = nodeIdHashed;
   }
 
   handleMarkAsViewedEmitter(state: boolean) {

@@ -156,3 +156,19 @@
         background-color: var(--base-fg-color)
     }
 }
+
+@mixin glow {
+    @keyframes glow {
+        0% {
+            background-color: rgba(0,0,0,0)
+        }
+
+        25% {
+            background-color: #fff6b3
+        }
+
+        100% {
+            background-color: rgba(0,0,0,0)
+        }
+    }
+}

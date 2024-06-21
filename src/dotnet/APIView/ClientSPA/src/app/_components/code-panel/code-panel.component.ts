@@ -6,6 +6,9 @@ import { CodePanelRowData } from 'src/app/_models/revision';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { UserProfile } from 'src/app/_models/auth_service_models';
+import { getQueryParams } from 'src/app/_helpers/router-helpers';
+import { ActivatedRoute, Router } from '@angular/router';
+import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/literal-helpers';
 
 @Component({
   selector: 'app-code-panel',
@@ -18,21 +21,22 @@ export class CodePanelComponent implements OnChanges{
   @Input() isDiffView: boolean = false;
   @Input() language: string | undefined;
   @Input() languageSafeName: string | undefined;
-  @Input() navTreeNodIdHashed: string | undefined;
+  @Input() scrollToNodeIdHashed: string | undefined;
+  @Input() scrollToNodeId : string | undefined;
   @Input() reviewId: string | undefined;
   @Input() activeApiRevisionId: string | undefined;
   @Input() userProfile : UserProfile | undefined;
   @Input() showLineNumbers: boolean = true;
 
-  lineNumberCount : number = 0;
   isLoading: boolean = true;
-  lastHuskNodeId :  string | undefined = undefined;
   codeWindowHeight: string | undefined = undefined;
+  codePanelRowDataIndicesMap = new Map<string, number>();
 
   codePanelRowSource: IDatasource<CodePanelRowData> | undefined;
   CodePanelRowDatatype = CodePanelRowDatatype;
 
-  constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService) { }
+  constructor(private changeDetectorRef: ChangeDetectorRef, private commentsService: CommentsService, 
+    private route: ActivatedRoute, private router: Router) { }
 
   ngOnInit() {
     this.codeWindowHeight = `${window.innerHeight - 80}`;
@@ -48,8 +52,8 @@ export class CodePanelComponent implements OnChanges{
       }
     }
 
-    if (changes['navTreeNodIdHashed']) {
-      this.scrollToNode(this.navTreeNodIdHashed!);
+    if (changes['scrollToNodeIdHashed'] && changes['scrollToNodeIdHashed'].currentValue) {
+      this.scrollToNode(this.scrollToNodeIdHashed!);
     }
   }
 
@@ -297,10 +301,36 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
-  scrollToNode(nodeIdHashed: string) {
-    const nodeIndex = this.codePanelRowData.findIndex((row) => row.nodeIdHashed === nodeIdHashed);
-    if (nodeIndex > -1) {
-      this.codePanelRowSource?.adapter?.reload(nodeIndex);
+  scrollToNode(nodeIdHashed: string | undefined = undefined, nodeId: string | undefined = undefined) {
+    let index = 0;
+    let scrollIndex : number | undefined = undefined;
+    let indexesHighlighted : number[] = [];
+    while (index < this.codePanelRowData.length) {
+      if (scrollIndex && this.codePanelRowData[index].nodeIdHashed !== nodeIdHashed) {
+        break;
+      }
+      if (this.codePanelRowData[index].nodeIdHashed === nodeIdHashed || this.codePanelRowData[index].nodeId === nodeId) {
+        nodeIdHashed = this.codePanelRowData[index].nodeIdHashed;
+        this.codePanelRowData[index].rowClasses = this.codePanelRowData[index].rowClasses || new Set<string>();
+        this.codePanelRowData[index].rowClasses.add('active');
+        indexesHighlighted.push(index);
+        if (!scrollIndex) {
+          scrollIndex = index;
+        }
+      }
+
+      index++;
+    }
+    if (scrollIndex) {
+      this.codePanelRowSource?.adapter?.reload(scrollIndex);
+      let newQueryParams = getQueryParams(this.route);
+      newQueryParams[SCROLL_TO_NODE_QUERY_PARAM] = this.codePanelRowData[scrollIndex].nodeId;
+      this.router.navigate([], { queryParams: newQueryParams, state: { skipStateUpdate: true } });
+      setTimeout(() => {
+        indexesHighlighted.forEach((index) => {
+          this.codePanelRowData[index].rowClasses?.delete('active');
+        });
+      }, 2500);
     }
   }
 
@@ -409,6 +439,10 @@ export class CodePanelComponent implements OnChanges{
     this.initializeDataSource().then(() => {
       this.codePanelRowSource?.adapter?.init$.pipe(take(1)).subscribe(() => {
         this.isLoading = false;
+        setTimeout(() => {
+          this.scrollToNode(undefined, this.scrollToNodeId);
+        }, 500);
+        
       });
     }).catch((error) => {
       console.error(error);

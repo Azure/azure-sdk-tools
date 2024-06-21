@@ -12,19 +12,7 @@
     font-style: italic;
 }
 
-@keyframes glow {
-    0% {
-        background-color: rgba(0,0,0,0)
-    }
-
-    25% {
-        background-color: #fff6b3
-    }
-
-    100% {
-        background-color: rgba(0,0,0,0)
-    }
-}
+@include glow;
 
 body {
     background-color: var(--base-bg-color);
@@ -124,25 +112,7 @@ input[type="search"]::-webkit-search-cancel-button {
 }
 
 .main-nav-cst-theme {
-    background-color: var(--navbar-bg);
-    color: var(--navbar-text);
-    padding-top: 0px;
-    padding-bottom: 0px;
-    border-bottom: 1px solid var(--border-color);
-    z-index: 2;
     @include main-nav-cst-theme;
-}
-
-a:hover {
-    text-decoration: none;
-}
-
-a:link, a:visited {
-    color: var(--navbar-text);
-}
-
-a:hover, a:active {
-    color: var(--navbar-link-active);
 }
 
 /* PopOver

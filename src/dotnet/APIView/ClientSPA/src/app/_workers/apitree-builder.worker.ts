@@ -90,6 +90,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   if (node.documentation) {
     node.documentation.forEach((doc, index) => {
+      doc.rowClasses = new Set<string>(doc.rowClasses); // Ensure that the rowClasses is a Set
       appendToggleDocumentationClass(node, doc, index);
       setLineNumber(doc);
       if (buildNode && apiTreeBuilderData?.showDocumentation) {
@@ -100,6 +101,7 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   if (node.codeLines) {
     node.codeLines.forEach((codeLine, index) => {
+      codeLine.rowClasses = new Set<string>(codeLine.rowClasses); // Ensure that the rowClasses is a Set
       appendToggleDocumentationClass(node, codeLine, index);
       setLineNumber(codeLine);
       if (buildNode) {
@@ -113,12 +115,18 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
   }
 
   if (buildNode && node.diagnostics && apiTreeBuilderData?.showSystemComments) {
-    codePanelRowData.push(...node.diagnostics);
+    node.diagnostics.forEach((diag, index) => {
+      diag.rowClasses = new Set<string>(diag.rowClasses); // Ensure that the rowClasses is a Set
+      codePanelRowData.push(diag);
+    });
   }
 
   if (buildNode && node.commentThread && apiTreeBuilderData?.showComments) {
-    codePanelRowData.push(...node.commentThread);
-  }
+    node.commentThread.forEach((comment, index) => {
+      comment.rowClasses = new Set<string>(comment.rowClasses); // Ensure that the rowClasses is a Set
+      codePanelRowData.push(comment);
+    });
+;  }
   
   if (buildChildren) {
     let orderIndex = 0;

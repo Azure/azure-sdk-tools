@@ -42,7 +42,7 @@ extends:
 
                     - task: PowerShell@2
                       inputs:
-                        filePath: '$(Build.SourcesDirectory)/eng/scripts/determine-release-tag.ps1'
+                        filePath: '$(Build.SourcesDirectory)/eng/scripts/determine-js-release-tag.ps1'
                         failOnStderr: true
                         pwsh: true
 

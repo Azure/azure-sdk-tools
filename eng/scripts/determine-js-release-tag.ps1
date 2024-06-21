@@ -1,4 +1,4 @@
-params(
+param(
     [string]$PackageJsonPath
 )
 

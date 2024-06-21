@@ -111,7 +111,7 @@ export class Changelog {
     public displayChangeLog(): string {
         const display: string[] = [];
         if (this.hasFeature) {
-            display.push('**Features**');
+            display.push('### Features Added');
             display.push('');
             this.addedOperationGroup
                 .concat(this.addedOperation)
@@ -132,7 +132,7 @@ export class Changelog {
 
         if (this.hasBreakingChange) {
             if (this.hasFeature) display.push('');
-            display.push('**Breaking Changes**');
+            display.push('### Breaking Changes');
             display.push('');
             this.removedOperationGroup
                 .concat(this.removedOperation)

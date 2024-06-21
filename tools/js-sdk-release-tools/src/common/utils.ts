@@ -54,5 +54,6 @@ export function getTsSourceFile(filePath: string): SourceFile | undefined {
 export function fixChangelogFormat(content: string) {
     content = replaceAll(content, '**Features**', '### Features Added')!;
     content  = replaceAll(content, '**Breaking Changes**', '### Breaking Changes')!;
+    content  = replaceAll(content, '**Bugs Fixed**', '### Bugs Fixed')!;
     return content;
 }

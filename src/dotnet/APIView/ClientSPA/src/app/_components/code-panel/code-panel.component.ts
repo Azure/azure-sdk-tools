@@ -113,7 +113,7 @@ export class CodePanelComponent implements OnChanges{
     }
     return classObject;
   }
-
+  
   getNavigationId(token: StructuredToken) {
     if (token.properties && 'NavigateToId' in token.properties) {
       return token.properties['NavigateToId'];

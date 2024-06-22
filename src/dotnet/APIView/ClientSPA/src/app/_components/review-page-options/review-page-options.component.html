@@ -71,6 +71,11 @@
             <label class="ms-2">Hidden APIs</label>
         </li>
         <li class="list-group-item">
+            <p-inputSwitch [(ngModel)]="showHiddenAPISwitch"
+            (onChange)="onShowHiddenAPISwitchChange($event)" />
+            <label class="ms-2">Hidden APIs</label>
+        </li>
+        <li class="list-group-item">
             <p-inputSwitch [(ngModel)]="showLineNumbersSwitch" 
             (onChange)="onShowLineNumbersSwitchChange($event)" />
             <label class="ms-2">Line Numbers</label>

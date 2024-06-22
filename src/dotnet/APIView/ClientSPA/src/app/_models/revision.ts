@@ -5,6 +5,7 @@ export enum ReviewPageWorkerMessageDirective {
   CreatePageNavigation,
   UpdateCodePanelData,
   UpdateCodePanelRowData,
+  SetHasHiddenAPIFlag
 }
 
 export enum CodePanelRowDatatype {
@@ -48,6 +49,7 @@ export class StructuredToken {
   value: string = '';
   id: string = '';
   kind: string = '';
+  tags: Set<string> = new Set();
   properties: { [key: string]: string; } = {};
   renderClasses: Set<string> = new Set();
 }
@@ -82,7 +84,6 @@ export class CodePanelRowData {
   @Type(() => String) rowClasses: Set<string> = new Set<string>();
   indent: number = 0;
   diffKind: string = '';
-  rowSize: number = 21;
   toggleDocumentationClasses: string = '';
   toggleCommentsClasses: string = '';
   @Type(() => CodeDiagnostic) diagnostics: CodeDiagnostic = new CodeDiagnostic();
@@ -90,6 +91,7 @@ export class CodePanelRowData {
   showReplyTextBox: boolean = false;
   isResolvedCommentThread: boolean = false;
   commentThreadIsResolvedBy: string = '';
+  isHiddenAPI: boolean = false;
 }
 
 export class NavigationTreeNodeData {
@@ -131,7 +133,8 @@ export interface ApiTreeBuilderData {
   diffStyle: string,
   showDocumentation: boolean,
   showComments: boolean,
-  showSystemComments: boolean
+  showSystemComments: boolean,
+  showHiddenApis: boolean
 }
 
 export interface CodePanelToggleableData {

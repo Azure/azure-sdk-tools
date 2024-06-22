@@ -66,6 +66,7 @@ namespace APIViewWeb.LeanModels
         public IEnumerable<CommentItemModel> Comments { get; set; }
         public List<APITreeNode> APIForest { get; set; } = new List<APITreeNode>();
         public CodeDiagnostic[] Diagnostics { get; set; }
+        public string Language { get; set; }
     }
 
     public class CodePanelRowData
@@ -83,7 +84,6 @@ namespace APIViewWeb.LeanModels
         public HashSet<string> RowClasses => RowClassesObj.Count > 0 ? RowClassesObj : null;
         public int? Indent { get; set; }
         public DiffKind DiffKind { get; set; }
-        public int RowSize { get; set; }
         public string ToggleDocumentationClasses { get; set; }
         public string ToggleCommentsClasses { get; set; }
         public CodeDiagnostic Diagnostics { get; set; }
@@ -91,6 +91,7 @@ namespace APIViewWeb.LeanModels
         public List<CommentItemModel> CommentsObj { get; set; } = new List<CommentItemModel>();
         public List<CommentItemModel> Comments => CommentsObj.Count > 0 ? CommentsObj : null;
         public bool IsResolvedCommentThread { get; set; }
+        public bool IsHiddenAPI { get; set; }
 
     }
 

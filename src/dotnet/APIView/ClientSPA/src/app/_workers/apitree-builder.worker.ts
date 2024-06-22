@@ -12,6 +12,7 @@ let diffBuffer: CodePanelRowData[] = [];
 let lineNumber: number = 0;
 let diffLineNumber: number = 0;
 let toggleDocumentationClassPart = "bi-arrow-up-square";
+let hasHiddenAPI: boolean = false;
 
 addEventListener('message', ({ data }) => {
   if (data instanceof ArrayBuffer) {
@@ -31,8 +32,13 @@ addEventListener('message', ({ data }) => {
       directive: ReviewPageWorkerMessageDirective.CreatePageNavigation,
       payload: navigationTree
     };
-
     postMessage(navigationTreeMessage);
+
+    const hasHiddenAPIMessage : InsertCodePanelRowDataMessage = {
+      directive: ReviewPageWorkerMessageDirective.SetHasHiddenAPIFlag,
+      payload: hasHiddenAPI
+    };
+    postMessage(hasHiddenAPIMessage);
 
     const codePanelDataMessage : InsertCodePanelRowDataMessage = {
       directive: ReviewPageWorkerMessageDirective.UpdateCodePanelData,
@@ -90,41 +96,49 @@ function buildCodePanelRows(nodeIdHashed: string, navigationTree: NavigationTree
 
   if (node.documentation) {
     node.documentation.forEach((doc, index) => {
-      doc.rowClasses = new Set<string>(doc.rowClasses); // Ensure that the rowClasses is a Set
-      appendToggleDocumentationClass(node, doc, index);
-      setLineNumber(doc);
-      if (buildNode && apiTreeBuilderData?.showDocumentation) {
-        codePanelRowData.push(doc);
+      if (shouldAppendIfRowIsHiddenAPI(doc)) {
+        doc.rowClasses = new Set<string>(doc.rowClasses); // Ensure that the rowClasses is a Set
+        appendToggleDocumentationClass(node, doc, index);
+        setLineNumber(doc);
+        if (buildNode && apiTreeBuilderData?.showDocumentation) {
+          codePanelRowData.push(doc);
+        }
       }
     });
   }
 
   if (node.codeLines) {
     node.codeLines.forEach((codeLine, index) => {
-      codeLine.rowClasses = new Set<string>(codeLine.rowClasses); // Ensure that the rowClasses is a Set
-      appendToggleDocumentationClass(node, codeLine, index);
-      setLineNumber(codeLine);
-      if (buildNode) {
-        codePanelRowData.push(codeLine);
-      }
-      if (addNodeToBuffer) {
-        diffBuffer.push(codeLine);
-        addJustDiffBuffer();
+      if (shouldAppendIfRowIsHiddenAPI(codeLine)) {
+        codeLine.rowClasses = new Set<string>(codeLine.rowClasses); // Ensure that the rowClasses is a Set
+        appendToggleDocumentationClass(node, codeLine, index);
+        setLineNumber(codeLine);
+        if (buildNode) {
+          codePanelRowData.push(codeLine);
+        }
+        if (addNodeToBuffer) {
+          diffBuffer.push(codeLine);
+          addJustDiffBuffer();
+        }
       }
     });
   }
 
   if (buildNode && node.diagnostics && apiTreeBuilderData?.showSystemComments) {
     node.diagnostics.forEach((diag, index) => {
-      diag.rowClasses = new Set<string>(diag.rowClasses); // Ensure that the rowClasses is a Set
-      codePanelRowData.push(diag);
+      if (shouldAppendIfRowIsHiddenAPI(diag)) {
+        diag.rowClasses = new Set<string>(diag.rowClasses); // Ensure that the rowClasses is a Set
+        codePanelRowData.push(diag);
+      }
     });
   }
 
   if (buildNode && node.commentThread && apiTreeBuilderData?.showComments) {
     node.commentThread.forEach((comment, index) => {
-      comment.rowClasses = new Set<string>(comment.rowClasses); // Ensure that the rowClasses is a Set
-      codePanelRowData.push(comment);
+      if (shouldAppendIfRowIsHiddenAPI(comment)) {
+        comment.rowClasses = new Set<string>(comment.rowClasses); // Ensure that the rowClasses is a Set
+        codePanelRowData.push(comment);
+      }
     });
 ;  }
   
@@ -186,5 +200,14 @@ function setLineNumber(row: CodePanelRowData) {
 function addJustDiffBuffer() {
   if (diffBuffer.length > 3) {
     diffBuffer.shift();
+  }
+}
+
+function shouldAppendIfRowIsHiddenAPI(row: CodePanelRowData) {
+  if (row.isHiddenAPI) {
+    hasHiddenAPI = true;
+    return apiTreeBuilderData?.showHiddenApis;
+  } else {
+    return true;
   }
 }

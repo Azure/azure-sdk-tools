@@ -106,7 +106,11 @@
         }
 
         &.active, &.active .line-actions {
-            animation: glow normal 2s ease-in-out;
+            animation: glow normal 1.5s ease-in-out;
+        }
+
+        &.hidden-api .code-line-content {
+            filter: brightness(60%) saturate(60%);
         }
 
         .diff-change {
@@ -196,6 +200,19 @@
 
     .literal .sliteral {
         color: var(--literal-color);
+    }
+
+    .url-token {
+        color: var(--link-color);
+    }
+
+    .nav-token:hover , .url-token:hover {
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .deprecated-token {
+        text-decoration: line-through;
     }
 
 

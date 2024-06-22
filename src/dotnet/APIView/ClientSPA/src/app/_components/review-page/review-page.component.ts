@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MenuItem, TreeNode } from 'primeng/api';
-import { Subject, take, takeUntil, tap } from 'rxjs';
+import { Subject, Subscription, take, takeUntil, tap } from 'rxjs';
 import { getLanguageCssSafeName } from 'src/app/_helpers/component-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { UserProfile } from 'src/app/_models/auth_service_models';
@@ -43,6 +43,7 @@ export class ReviewPageComponent implements OnInit {
   preferedApprovers : string[] = [];
   conversiationInfo : any | undefined = undefined;
   hasFatalDiagnostics : boolean = false;
+  hasHiddenAPIs : boolean = false;
 
   showLeftNavigation : boolean = true;
   showPageOptions : boolean = true;
@@ -143,6 +144,10 @@ export class ReviewPageComponent implements OnInit {
         this.checkForFatalDiagnostics();
       }
 
+      if (data.directive === ReviewPageWorkerMessageDirective.SetHasHiddenAPIFlag) {
+        this.hasHiddenAPIs = data.payload as boolean;
+      }
+
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelData) {
         this.codePanelData = data.payload as CodePanelData;
         this.workerService.terminateWorker();
@@ -158,7 +163,8 @@ export class ReviewPageComponent implements OnInit {
             diffStyle: this.diffStyle!,
             showDocumentation: this.userProfile?.preferences.showDocumentation ?? false,
             showComments: this.userProfile?.preferences.showComments ?? true,
-            showSystemComments: this.userProfile?.preferences.showSystemComments ??true
+            showSystemComments: this.userProfile?.preferences.showSystemComments ?? true,
+            showHiddenApis: this.userProfile?.preferences.showHiddenApis ?? false
           };
           // Passing ArrayBufer to worker is way faster than passing object
           this.workerService.postToApiTreeBuilder(response, apiTreeBuilderData);
@@ -388,10 +394,22 @@ export class ReviewPageComponent implements OnInit {
     }
   }
 
+  handleShowHiddenAPIEmitter(state: boolean) {
+    let userPreferenceModel = this.userProfile?.preferences;
+    userPreferenceModel!.showHiddenApis = state;
+    this.userProfileService.updateUserPrefernece(userPreferenceModel!).pipe(takeUntil(this.destroy$)).subscribe({
+      next: () => {
+        const currentParams = this.route.snapshot.queryParams;
+        this.updateStateBasedOnQueryParams(currentParams);
+      }
+    });
+  }
+
   checkForFatalDiagnostics() {
     for (const rowData of this.codePanelRowData) {
       if (rowData.diagnostics && rowData.diagnostics.level === 'fatal') {
         this.hasFatalDiagnostics = true;
+        break;
       }
     }
   }

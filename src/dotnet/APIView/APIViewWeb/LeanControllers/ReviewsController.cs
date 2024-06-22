@@ -148,6 +148,7 @@ namespace APIViewWeb.LeanControllers
                     APIForest = activeRevisionReviewCodeFile.APIForest,
                     Diagnostics = activeRevisionReviewCodeFile.Diagnostics,
                     Comments = comments,
+                    Language = activeRevisionReviewCodeFile.Language
                 };
 
                 if (!string.IsNullOrEmpty(diffApiRevisionId))

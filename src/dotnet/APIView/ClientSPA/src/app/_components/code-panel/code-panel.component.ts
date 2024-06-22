@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
 import { take } from 'rxjs/operators';
 import { CommentItemModel, CommentType } from 'src/app/_models/review';
-import { CodePanelData, CodePanelRowDatatype } from 'src/app/_models/revision';
+import { CodePanelData, CodePanelRowDatatype, StructuredToken } from 'src/app/_models/revision';
 import { CodePanelRowData } from 'src/app/_models/revision';
 import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
@@ -59,6 +59,16 @@ export class CodePanelComponent implements OnChanges{
 
   onCodePanelItemClick(event: Event) {
     const target = event.target as Element;
+    if (target.classList.contains('nav-token')) {
+      const navigationId = target.getAttribute('data-navigate-to-id');
+      this.scrollToNode(undefined, navigationId!);
+    }
+
+    if (target.classList.contains('url-token')) {
+      const url = target.getAttribute('data-navigate-to-url');
+      window.open(url!, '_blank');
+    }
+
     if (target.classList.contains('toggle-documentation-btn') && !target.classList.contains('hide')) {
       this.toggleNodeDocumentation(target);
     }
@@ -68,14 +78,54 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
-  getClassObject(renderClasses: Set<string>) {
+  getRowClassObject(row: CodePanelRowData) {
     let classObject: { [key: string]: boolean } = {};
-    if (renderClasses) {
-      for (let className of Array.from(renderClasses)) {
+    if (row.rowClasses) {
+      for (let className of Array.from(row.rowClasses)) {
         classObject[className] = true;
       }
     }
+
+    if (row.isHiddenAPI) {
+      classObject['hidden-api'] = true;
+    }
     return classObject;
+  }
+
+  getTokenClassObject(token: StructuredToken) {
+    let classObject: { [key: string]: boolean } = {};
+    if (token.renderClasses) {
+      for (let className of Array.from(token.renderClasses)) {
+        classObject[className] = true;
+      }
+    }
+
+    if (token.properties && 'NavigateToUrl' in token.properties) {
+      classObject['url-token'] = true;
+    }
+
+    if (token.properties && 'NavigateToId' in token.properties) {
+      classObject['nav-token'] = true;
+    }
+
+    if (token.tags && new Set(token.tags).has('Deprecated')) {
+      classObject['deprecated-token'] = true;
+    }
+    return classObject;
+  }
+
+  getNavigationId(token: StructuredToken) {
+    if (token.properties && 'NavigateToId' in token.properties) {
+      return token.properties['NavigateToId'];
+    }
+    return "";
+  }
+
+  getNavigationUrl(token: StructuredToken) {
+    if (token.properties && 'NavigateToUrl' in token.properties) {
+      return token.properties['NavigateToUrl'];
+    }
+    return "";
   }
 
   toggleNodeComments(target: Element) {
@@ -330,7 +380,7 @@ export class CodePanelComponent implements OnChanges{
         indexesHighlighted.forEach((index) => {
           this.codePanelRowData[index].rowClasses?.delete('active');
         });
-      }, 2500);
+      }, 1550);
     }
   }
 

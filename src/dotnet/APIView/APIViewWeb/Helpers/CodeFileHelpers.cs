@@ -2,6 +2,7 @@
 using APIView.Model;
 using APIViewWeb.Extensions;
 using APIViewWeb.LeanModels;
+using NuGet.Common;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -89,7 +90,64 @@ namespace APIViewWeb.Helpers
                 diffResultNode.ChildrenObj.AddRange(childrenResult);
             };
         }
+        public static (List<StructuredToken> Before, List<StructuredToken> After, bool HasDiff) ComputeTokenDiff(List<StructuredToken> beforeTokens, List<StructuredToken> afterTokens)
+        {
+            var diffResultA = new List<StructuredToken>();
+            var diffResultB = new List<StructuredToken>();
+            bool hasDiff = false;
 
+            var beforeTokensMap = beforeTokens.Select((token, index) => new { Key = $"{token.Id}{token.Value}{index}", Value = token })
+                                              .ToDictionary(x => x.Key, x => x.Value);
+
+            var afterTokensMap = afterTokens.Select((token, index) => new { Key = $"{token.Id}{token.Value}{index}", Value = token })
+                                            .ToDictionary(x => x.Key, x => x.Value);
+
+            foreach (var pair in beforeTokensMap)
+            {
+                if (afterTokensMap.ContainsKey(pair.Key))
+                {
+                    diffResultA.Add(new StructuredToken(pair.Value));
+                }
+                else
+                {
+                    if (afterTokens.Count > 0)
+                    {
+                        var token = new StructuredToken(pair.Value);
+                        token.RenderClassesObj.Add("diff-change");
+                        diffResultA.Add(token);
+                    }
+                    else
+                    {
+                        diffResultA.Add(new StructuredToken(pair.Value));
+                    }
+                    hasDiff = true;
+                }
+            }
+
+            foreach (var pair in afterTokensMap)
+            {
+                if (beforeTokensMap.ContainsKey(pair.Key))
+                {
+                    diffResultB.Add(new StructuredToken(pair.Value));
+                }
+                else
+                {
+                    if (beforeTokens.Count > 0)
+                    {
+                        var token = new StructuredToken(pair.Value);
+                        token.RenderClassesObj.Add("diff-change");
+                        diffResultB.Add(token);
+                    }
+                    else
+                    {
+                        diffResultB.Add(new StructuredToken(pair.Value));
+                    }
+                    hasDiff = true;
+                }
+            }
+
+            return (diffResultA, diffResultB, hasDiff);
+        }
         private static APITreeNode CreateAPITreeDiffNode(APITreeNode node, DiffKind diffKind)
         {
             var result = new APITreeNode
@@ -234,6 +292,7 @@ namespace APIViewWeb.Helpers
         private static void BuildTokensForNonDiffNodes(CodePanelData codePanelData, CodePanelRawData codePanelRawData, APITreeNode apiTreeNode, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, int indent)
         {
             var tokensInNode = (linesOfTokensPosition == RowOfTokensPosition.Top) ? apiTreeNode.TopTokensObj : apiTreeNode.BottomTokensObj;
+            var addDeprecatedTagToTokens = apiTreeNode.TagsObj.Contains("Deprecated");
 
             var tokensInRow = new List<StructuredToken>();
             var rowClasses = new HashSet<string>();
@@ -246,14 +305,30 @@ namespace APIViewWeb.Helpers
                     rowClasses.Add(token.PropertiesObj["GroupId"]);
                 }
 
-                if (token.Kind == StructuredTokenKind.LineBreak)
+                if (addDeprecatedTagToTokens)
+                {
+                    token.TagsObj.Add("Deprecated");
+                }
+
+                if (ShouldBreakLineOnToken(token, codePanelRawData.Language))
                 {
                     InsertNonDiffCodePanelRowData(codePanelData: codePanelData, codePanelRawData: codePanelRawData, tokensInRow: new List<StructuredToken>(tokensInRow),
-                        rowClasses: new HashSet<string>(rowClasses), tokenIdsInRow: new HashSet<string>(tokenIdsInRow), nodeIdHashed: nodeIdHashed, nodeId: apiTreeNode.Id, indent: indent, linesOfTokensPosition: linesOfTokensPosition);
+                        rowClasses: new HashSet<string>(rowClasses), tokenIdsInRow: new HashSet<string>(tokenIdsInRow), nodeIdHashed: nodeIdHashed, nodeId: apiTreeNode.Id,
+                        indent: indent, linesOfTokensPosition: linesOfTokensPosition, apiTreeNode: apiTreeNode);
 
                     tokensInRow.Clear();
                     rowClasses.Clear();
                     tokenIdsInRow.Clear();
+
+                    if (token.Kind == StructuredTokenKind.ParameterSeparator)
+                    {
+                        tokensInRow.Add(
+                            new StructuredToken()
+                            {
+                                Kind = StructuredTokenKind.Content,
+                                Value = "\u00A0\u00A0\u00A0\u00A0"
+                            });
+                    }
                 }
                 else 
                 {
@@ -268,7 +343,8 @@ namespace APIViewWeb.Helpers
             if (tokensInRow.Any())
             {
                 InsertNonDiffCodePanelRowData(codePanelData: codePanelData, codePanelRawData: codePanelRawData, tokensInRow: new List<StructuredToken>(tokensInRow),
-                    rowClasses: new HashSet<string>(rowClasses), tokenIdsInRow: new HashSet<string>(tokenIdsInRow), nodeIdHashed: nodeIdHashed, nodeId: apiTreeNode.Id, indent: indent, linesOfTokensPosition: linesOfTokensPosition);
+                    rowClasses: new HashSet<string>(rowClasses), tokenIdsInRow: new HashSet<string>(tokenIdsInRow), nodeIdHashed: nodeIdHashed, nodeId: apiTreeNode.Id,
+                    indent: indent, linesOfTokensPosition: linesOfTokensPosition, apiTreeNode: apiTreeNode);
 
                 tokensInRow.Clear();
                 rowClasses.Clear();
@@ -586,7 +662,7 @@ namespace APIViewWeb.Helpers
         }
 
         private static void InsertNonDiffCodePanelRowData(CodePanelData codePanelData, CodePanelRawData codePanelRawData, List<StructuredToken> tokensInRow,
-            HashSet<string> rowClasses, HashSet<string> tokenIdsInRow, string nodeIdHashed, string nodeId, int indent, RowOfTokensPosition linesOfTokensPosition)
+            HashSet<string> rowClasses, HashSet<string> tokenIdsInRow, string nodeIdHashed, string nodeId, int indent, RowOfTokensPosition linesOfTokensPosition, APITreeNode apiTreeNode)
         {
             var rowData = new CodePanelRowData()
             {
@@ -598,6 +674,7 @@ namespace APIViewWeb.Helpers
                 RowOfTokensPosition = linesOfTokensPosition,
                 Indent = indent,
                 DiffKind = DiffKind.NoneDiff,
+                IsHiddenAPI = apiTreeNode.TagsObj.Contains("Hidden")
             };
 
             // Need to collect comments before adding the row to the codePanelData
@@ -670,63 +747,14 @@ namespace APIViewWeb.Helpers
             }
         }
 
-        public static (List<StructuredToken> Before, List<StructuredToken> After, bool HasDiff) ComputeTokenDiff(List<StructuredToken> beforeTokens, List<StructuredToken> afterTokens)
+        private static bool ShouldBreakLineOnToken(StructuredToken token, string language)
         {
-            var diffResultA = new List<StructuredToken>();
-            var diffResultB = new List<StructuredToken>();
-            bool hasDiff = false;
-
-            var beforeTokensMap = beforeTokens.Select((token, index) => new { Key = $"{token.Id}{token.Value}{index}", Value = token })
-                                              .ToDictionary(x => x.Key, x => x.Value);
-
-            var afterTokensMap = afterTokens.Select((token, index) => new { Key = $"{token.Id}{token.Value}{index}", Value = token })
-                                            .ToDictionary(x => x.Key, x => x.Value);
-
-            foreach (var pair in beforeTokensMap)
+            if (token.Kind == StructuredTokenKind.LineBreak ||
+                (token.Kind == StructuredTokenKind.ParameterSeparator && LanguageServiceHelpers.UseLineBreakForParameterSeparator(language)))
             {
-                if (afterTokensMap.ContainsKey(pair.Key))
-                {
-                    diffResultA.Add(new StructuredToken(pair.Value));
-                }
-                else
-                {
-                    if (afterTokens.Count > 0)
-                    {
-                        var token = new StructuredToken(pair.Value);
-                        token.RenderClassesObj.Add("diff-change");
-                        diffResultA.Add(token);
-                    }
-                    else
-                    {
-                        diffResultA.Add(new StructuredToken(pair.Value));
-                    }
-                    hasDiff = true;
-                }
+                return true;
             }
-
-            foreach (var pair in afterTokensMap)
-            {
-                if (beforeTokensMap.ContainsKey(pair.Key))
-                {
-                    diffResultB.Add(new StructuredToken(pair.Value));
-                }
-                else
-                {
-                    if (beforeTokens.Count > 0)
-                    {
-                        var token = new StructuredToken(pair.Value);
-                        token.RenderClassesObj.Add("diff-change");
-                        diffResultB.Add(token);
-                    }
-                    else
-                    {
-                        diffResultB.Add(new StructuredToken(pair.Value));
-                    }
-                    hasDiff = true;
-                }
-            }
-
-            return (diffResultA, diffResultB, hasDiff);
+            return false;
         }
     }
 }

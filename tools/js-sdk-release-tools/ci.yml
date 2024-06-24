@@ -30,6 +30,7 @@ extends:
   parameters:
     BuildStageName: InstallAndBuild
     ArtifactName: drop
+    PackageJsonPath: $(Build.SourcesDirectory)/tools/js-sdk-release-tools
     BuildStages:
       - stage: InstallAndBuild
         variables:

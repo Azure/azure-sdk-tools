@@ -25,6 +25,7 @@ extends:
   parameters:
     BuildStageName: InstallAndBuild
     ArtifactName: drop
+    PackageJsonPath: $(Build.SourcesDirectory)/tools/tsp-client
     BuildStages:
       - stage: InstallAndBuild
         variables:

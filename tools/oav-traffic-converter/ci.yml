@@ -30,6 +30,7 @@ extends:
   parameters:
     BuildStageName: Test
     ArtifactName: drop
+    PackageJsonPath: $(Build.SourcesDirectory)/tools/oav-traffic-converter
     BuildStages:
     - stage: InstallAndTest
 

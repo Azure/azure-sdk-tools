@@ -8,6 +8,9 @@ parameters:
 - name: ArtifactName
   type: string
   default: ''
+- name: PackageJsonPath
+  type: string
+  default: ''
 
 
 extends:
@@ -45,6 +48,7 @@ extends:
                         filePath: '$(Build.SourcesDirectory)/eng/scripts/determine-js-release-tag.ps1'
                         failOnStderr: true
                         pwsh: true
+                        arguments: '-PackageJsonPath ${{ parameters.PackageJsonPath }}'
 
                     - pwsh: |
                         Write-Host "Will deploy with tag of $(Tag)"

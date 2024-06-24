@@ -13,7 +13,9 @@ namespace ApiView
     {
         private static HashSet<string> AllowedAssemblies = new HashSet<string>(new[]
         {
-            "Microsoft.Bcl.AsyncInterfaces"
+            "Microsoft.Bcl.AsyncInterfaces",
+            "System.ClientModel"
+
         }, StringComparer.InvariantCultureIgnoreCase);
 
         public static IAssemblySymbol GetCompilation(string file)
@@ -24,7 +26,7 @@ namespace ApiView
             }
         }
 
-        public static IAssemblySymbol GetCompilation(Stream stream, Stream documentationStream)
+        public static IAssemblySymbol GetCompilation(Stream stream, Stream documentationStream, IEnumerable<string> dependencyPaths = null)
         {
             PortableExecutableReference reference;
 
@@ -57,6 +59,17 @@ namespace ApiView
                 if (tpl.StartsWith(runtimeFolder) || AllowedAssemblies.Contains(Path.GetFileNameWithoutExtension(tpl)))
                 {
                     compilation = compilation.AddReferences(MetadataReference.CreateFromFile(tpl));
+                }
+            }
+            if (dependencyPaths != null)
+            {
+                foreach (var dependencyFile in dependencyPaths)
+                {
+                    if (!File.Exists(dependencyFile) || !AllowedAssemblies.Contains(Path.GetFileNameWithoutExtension(dependencyFile)))
+                    {
+                        continue;
+                    }
+                    compilation = compilation.AddReferences(MetadataReference.CreateFromFile(dependencyFile));
                 }
             }
 

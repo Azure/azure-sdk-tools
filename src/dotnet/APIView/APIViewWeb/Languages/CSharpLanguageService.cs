@@ -7,9 +7,15 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using ApiView;
+using NuGet.Common;
+using NuGet.Packaging;
+using NuGet.Protocol;
+using NuGet.Protocol.Core.Types;
+using NuGet.Versioning;
 
 namespace APIViewWeb
 {
@@ -44,9 +50,10 @@ namespace APIViewWeb
             return versionString != CodeFileBuilder.CurrentVersion;
         }
 
-        public override Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
             ZipArchive archive = null;
+            string dependencyFilesTempDir = null;
             try
             {
                 Stream dllStream = stream;
@@ -62,7 +69,7 @@ namespace APIViewWeb
                     var dllEntries = archive.Entries.Where(entry => IsDll(entry.Name)).ToArray();
                     if (dllEntries.Length == 0)
                     {
-                        return Task.FromResult(GetDummyReviewCodeFile(originalName, dependencies));
+                        return GetDummyReviewCodeFile(originalName, dependencies);
                     }
 
                     var dllEntry = dllEntries.First();
@@ -99,17 +106,24 @@ namespace APIViewWeb
                     }
                 }
 
-                var assemblySymbol = CompilationFactory.GetCompilation(dllStream, docStream);
+                dependencyFilesTempDir = await ExtractNugetDependencies(dependencies).ConfigureAwait(false);
+                var dependencyFilePaths = Directory.EnumerateFiles(dependencyFilesTempDir, "*.dll", SearchOption.AllDirectories);
+
+                var assemblySymbol = CompilationFactory.GetCompilation(dllStream, docStream, dependencyFilePaths);
                 if (assemblySymbol == null)
                 {
-                    return Task.FromResult(GetDummyReviewCodeFile(originalName, dependencies));
+                    return GetDummyReviewCodeFile(originalName, dependencies);
                 }
 
-                return Task.FromResult(new CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies));
+                return new CodeFileBuilder().Build(assemblySymbol, runAnalysis, dependencies);
             }
             finally
             {
                 archive?.Dispose();
+                if (dependencyFilesTempDir != null && Directory.Exists(dependencyFilesTempDir))
+                {
+                    Directory.Delete(dependencyFilesTempDir, true);
+                }
             }
         }
 
@@ -132,13 +146,58 @@ namespace APIViewWeb
             CodeFileBuilder.BuildDependencies(builder, dependencies);
 
             return new CodeFile()
-            {                
+            {
                 Name = reviewName,
                 Language = "C#",
                 VersionString = CodeFileBuilder.CurrentVersion,
                 PackageName = packageName,
                 Tokens = builder.Tokens.ToArray()
             };
+        }
+
+        /// <summary>
+        /// Resolves the NuGet package dependencies and extracts them to a temporary folder. It is the responsibility of teh caller to clean up the folder.
+        /// </summary>
+        /// <param name="dependencyInfos">The dependency infos</param>
+        /// <returns>A temporary path where the dependency files were extracted.</returns>
+        private async Task<string> ExtractNugetDependencies(List<DependencyInfo> dependencyInfos)
+        {
+            string tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            SourceCacheContext cache = new SourceCacheContext();
+            SourceRepository repository = NuGet.Protocol.Core.Types.Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
+            try
+            {
+                FindPackageByIdResource resource = await repository.GetResourceAsync<FindPackageByIdResource>().ConfigureAwait(false);
+                foreach (var dep in dependencyInfos)
+                {
+                    using (MemoryStream packageStream = new MemoryStream())
+                    {
+                        if (await resource.CopyNupkgToStreamAsync(
+                        dep.Name,
+                        new NuGetVersion(dep.Version),
+                        packageStream,
+                        cache,
+                        NullLogger.Instance,
+                        CancellationToken.None))
+                        {
+                            using PackageArchiveReader reader = new PackageArchiveReader(packageStream);
+                            NuspecReader nuspec = reader.NuspecReader;
+                            var file = reader.GetFiles().FirstOrDefault(f => f.EndsWith(dep.Name + ".dll"));
+                            if (file != null)
+                            {
+                                var fileInfo = new FileInfo(file);
+                                var path = Path.Combine(tempFolder, dep.Name, fileInfo.Name);
+                                var tmp = reader.ExtractFile(file, path, NullLogger.Instance);
+                            }
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                cache.Dispose();
+            }
+            return tempFolder;
         }
     }
 }

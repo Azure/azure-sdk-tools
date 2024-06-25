@@ -18,6 +18,8 @@ export function makeChangesForFirstRelease(packageFolderPath: string, isStableRe
     
 ## ${newVersion} (${date})
 
+### Features Added
+
 The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');

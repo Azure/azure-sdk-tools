@@ -33,6 +33,8 @@ export function makeChangesForMigrateTrack1ToTrack2(packageFolderPath: string, n
     
 ## ${nextPackageVersion} (${date})
 
+### Features Added
+
 The package of ${packageJsonData.name} is using our next generation design principles since version ${nextPackageVersion}, which contains breaking changes.
 
 To understand the detail of the change, please refer to [Changelog](https://aka.ms/js-track2-changelog).

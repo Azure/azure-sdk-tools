@@ -100,7 +100,7 @@ public class Main {
                 // shaded jars can contain a pom.xml file each for every shaded dependencies
                 if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith("/pom.xml")) {
                     Pom pom = new Pom(jarFile.getInputStream(entry));
-                    if (filename.startsWith(artifactId)) {
+                    if (filename.startsWith(pom.getArtifactId())) {
                         artifactId = pom.getArtifactId();
                         packageVersion = pom.getVersion();
                         reviewProperties.setMavenPom(pom);

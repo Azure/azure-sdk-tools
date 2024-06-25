@@ -601,6 +601,7 @@ namespace CSharpAPIParser.TreeToken
             }
             if (symbol is IPropertySymbol propSymbol && propSymbol.DeclaredAccessibility != Accessibility.Internal)
             {
+                SymbolDisplayPart previous = default(SymbolDisplayPart);
                 var parts = propSymbol.ToDisplayParts(_defaultDisplayFormat);
                 for (int i = 0; i < parts.Length; i++)
                 {
@@ -612,14 +613,19 @@ namespace CSharpAPIParser.TreeToken
                             i++;
                         }
                     }
-                    tokenList.Add(MapToken(definedSymbol!, parts[i]));
+                    tokenList.Add(MapToken(definedSymbol: definedSymbol!, symbolDisplayPart: parts[i],
+                        previousSymbolDisplayPart: previous));
+                    previous = parts[i];
                 }
             }
             else
             {
+                SymbolDisplayPart previous = default(SymbolDisplayPart);
                 foreach (var symbolDisplayPart in symbol.ToDisplayParts(_defaultDisplayFormat))
                 {
-                    tokenList.Add(MapToken(definedSymbol!, symbolDisplayPart));
+                    tokenList.Add(MapToken(definedSymbol: definedSymbol!, symbolDisplayPart: symbolDisplayPart,
+                        previousSymbolDisplayPart: previous));
+                    previous = symbolDisplayPart;
                 }
             }
         }
@@ -639,7 +645,7 @@ namespace CSharpAPIParser.TreeToken
             };
         }
 
-        private StructuredToken MapToken(ISymbol definedSymbol, SymbolDisplayPart symbolDisplayPart)
+        private StructuredToken MapToken(ISymbol definedSymbol, SymbolDisplayPart symbolDisplayPart, SymbolDisplayPart previousSymbolDisplayPart)
         {
             string? navigateToId = null;
             var symbol = symbolDisplayPart.Symbol;
@@ -682,7 +688,14 @@ namespace CSharpAPIParser.TreeToken
                     token = StructuredToken.CreatePunctuationToken(tokenValue);
                     break;
                 case SymbolDisplayPartKind.Space:
-                    token = StructuredToken.CreateSpaceToken();
+                    if (previousSymbolDisplayPart.Kind == SymbolDisplayPartKind.Punctuation && previousSymbolDisplayPart.ToString().Equals(","))
+                    {
+                        token = StructuredToken.CreateParameterSeparatorToken();
+                    }
+                    else 
+                    {
+                        token = StructuredToken.CreateSpaceToken();
+                    }
                     break;
                 case SymbolDisplayPartKind.PropertyName:
                 case SymbolDisplayPartKind.EventName:

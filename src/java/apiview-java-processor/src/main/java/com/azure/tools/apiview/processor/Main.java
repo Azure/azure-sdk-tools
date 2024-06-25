@@ -79,6 +79,9 @@ public class Main {
         final ReviewProperties reviewProperties = new ReviewProperties();
         final String filename = inputFile.getName();
         int i = 0;
+
+        // This will not work for artifact names that contain digits like msal4j. So, we will use this as backup in case
+        // we don't find a pom.xml file in the jar. If pom.xml is found, we'll use the artifact name defined in pom.xml.
         while (i < filename.length() && !Character.isDigit(filename.charAt(i))) {
             i++;
         }
@@ -95,8 +98,13 @@ public class Main {
 
                 // use the pom.xml of this artifact only
                 // shaded jars can contain a pom.xml file each for every shaded dependencies
-                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith(artifactId + "/pom.xml")) {
-                    reviewProperties.setMavenPom(new Pom(jarFile.getInputStream(entry)));
+                if (fullPath.startsWith("META-INF/maven") && fullPath.endsWith("/pom.xml")) {
+                    Pom pom = new Pom(jarFile.getInputStream(entry));
+                    if (filename.startsWith(artifactId)) {
+                        artifactId = pom.getArtifactId();
+                        packageVersion = pom.getVersion();
+                        reviewProperties.setMavenPom(pom);
+                    }
                 }
             }
         } catch (IOException e) {

@@ -173,8 +173,8 @@ describe("apiview: tests", () => {
         namespace Azure.Test {
           model Foo {
             name: string = "foo";
-            array: string[] = #[];
-            obj: Record<unknown> = #{}
+            array: string[] = #["a", "b"];
+            obj: Record<unknown> = #{val: 1, name: "foo"};
           }
         }
         `;
@@ -182,8 +182,8 @@ describe("apiview: tests", () => {
         namespace Azure.Test {
           model Foo {
             name: string = "foo";
-            array: string[] = #[];
-            obj: Record<unknown> = #{}
+            array: string[] = #["a", "b"];
+            obj: Record< unknown > = #{val: 1, name: "foo"};
           }
         }
         `;
@@ -292,7 +292,7 @@ describe("apiview: tests", () => {
             species: string;
           }
 
-          alias Template<T extends valueof string> = "Foo \${T} bar";
+          alias Template<T extends string> = "Foo \${T} bar";
         }
         `;
       const expect = `
@@ -301,7 +301,7 @@ describe("apiview: tests", () => {
             species: string;
           }
     
-          alias Template<T extends valueof string> = "Foo \${T} bar";
+          alias Template<T extends string> = "Foo \${T} bar";
         }
         `;
       const apiview = await apiViewFor(input, {});
@@ -822,7 +822,7 @@ describe("apiview: tests", () => {
           ref: "Ref this alias \${myconst} end";
           template: Template<"custom">;          
         }
-        alias Template<T extends valueof string> = "Foo \${T} bar";
+        alias Template<T extends string> = "Foo \${T} bar";
       }`;
 
       const expect = `
@@ -841,7 +841,7 @@ describe("apiview: tests", () => {
 
         alias myconst = "foobar";
 
-        alias Template<T extends valueof string> = "Foo \${T} bar";
+        alias Template<T extends string> = "Foo \${T} bar";
       }
       `;
       const apiview = await apiViewFor(input, {});

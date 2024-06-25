@@ -172,16 +172,18 @@ describe("apiview: tests", () => {
         @TypeSpec.service( { title: "Test", version: "1" } )
         namespace Azure.Test {
           model Foo {
-            name: string = #"Foo";
+            name: string = "foo";
             array: string[] = #[];
+            obj: Record<unknown> = #{}
           }
         }
         `;
       const expect = `
         namespace Azure.Test {
           model Foo {
-            name: string = #"Foo";
+            name: string = "foo";
             array: string[] = #[];
+            obj: Record<unknown> = #{}
           }
         }
         `;

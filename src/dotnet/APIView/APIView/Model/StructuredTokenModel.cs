@@ -32,11 +32,7 @@ namespace APIView.TreeToken
         /// <summary>
         /// Use this between method parameters. Depending on user setting this would result in a single space or new line.
         /// </summary>
-        ParameterSeparator = 4,
-        /// <summary>
-        /// A url token should have `LinkText` property i.e `token.Properties["LinkText"]` and the url/link should be the token value.
-        /// </summary>
-        Url = 5
+        ParameterSeparator = 4
     }
 
     /// <summary>

@@ -17,7 +17,7 @@ Specifically how to create or update a language parser to produce a hierarchy of
 
 Previously APIview tokens were created as a flat list assigned to the `CodeFileToken[] Tokens`  property of the [CodeFile](../../../src/dotnet/APIView/APIView/Model/CodeFile.cs). Then the page navigation is created and assigned to `NavigationItem[] Navigation`. For tree style tokens these two properties are no longer required, instead a `List<APITreeNode> APIForest` property will be used to capture the generated tree of tokens.
 
-![APITree](APITree.svg)
+![APITree](images/APITree.svg)
 
 - Each module of the API (namespace, class, methods) should be its own node. Members of a module (methods in a class), (classes in a namespace) should be added as child nodes of its parent module.
 - Each tree node has top tokens which should be used to capture the main tokens on the node, these can span multiple lines.
@@ -30,9 +30,9 @@ Previously APIview tokens were created as a flat list assigned to the `CodeFileT
 
   ```
   object APITreeNode
-    string Name
-    string Id
-    string Kind
+    string Name (Required)
+    string Id (Required)
+    string Kind (Required)
     Set<string> Tags
     Dictionary<string, string> Properties
     List<StructuredToken> TopTokens
@@ -42,7 +42,7 @@ Previously APIview tokens were created as a flat list assigned to the `CodeFileT
   object StructuredToken
     string Value
     string Id
-    StructuredTokenKind Kind
+    StructuredTokenKind Kind (Required)
     Set<string> Tags
     Dictionary<string, string> Properties 
     Set<string> RenderClasses 
@@ -50,18 +50,16 @@ Previously APIview tokens were created as a flat list assigned to the `CodeFileT
   enum StructuredTokenKind
     Content
     LineBreak
-    NoneBreakingSpace
+    NonBreakingSpace
     TabSpace
     ParameterSeparator
-    Url
   ```
 
-### APITreeNode
-
+### [APITreeNode](../../../src/dotnet/APIView/APIView/Model/TokenTreeModel.cs)
 - Ensure each node has an Id and Kind. The combination of `Id`, `Kind`, and `SubKind` should make the node unique across all nodes in the tree. For example a class and a method can potentially have the same Id, but the kind should differentiate them from each other.
 - Sort each node at each level of the tree by your desired property, this is to ensure that difference in node order does not result in diff.
 
-### StructuredToken
+### [StructuredToken](../../../src/dotnet/APIView/APIView/Model/StructuredTokenModel.cs)
 
 - Assign the final parsed value to a `List<APITreeNode> APIForest` property of the `CodeFile`
 
@@ -71,6 +69,442 @@ Serialize the generated code file to JSON and then compress the file using Gzip 
 Don't worry about indentation that will be handled by the tree structure. In the case you want to have indentation between the tokens then use `TabSpace` token kind.
 
 ## How to handle commons Scenarios
+
+### Navigation
+![Navigation](images/navigation.png)
+
+Ensure you set approppriate `Name` for the token node. And also set a value for the `Kind`. You can use one of the following values `assembly`, `class`, `delegate`, `enum`, `interface`, `method` , `namespace`, `package`, `struct`, `type` to get the default navigation icon. You can aslo use values more appriopriate for your language then reach out to APIView to provide support for those. Use tag `HideFromNav` to exclude a node from showing up in the page navigation.
+<details>
+<summary>click to expand json</summary>
+
+  ```json
+    {
+      "Id": "Azure.Storage.Blobs.Models",
+      "Kind": "Namespace",
+      "Name": "Azure.Storage.Blobs.Models",
+      "Children": [
+          {
+              "Id": "Azure.Storage.Blobs.Models.AccessTier",
+              "Kind": "Type",
+              "Name": "AccessTier",
+              "TopTokens": [],
+              "BottomTokens": [],
+              "Children": [
+                  {
+                      "Id": "Azure.Storage.Blobs.Models.AccessTier.AccessTier(System.String)",
+                      "Kind": "Member",
+                      "Name": "Azure.Storage.Blobs.Models.AccessTier.AccessTier(string)",
+                      "TopTokens": [],
+                      "BottomTokens": [],
+                      "Properties": {
+                          "SubKind": "Method"
+                      },
+                      "Tags": [
+                          "HideFromNav"
+                      ]
+                  }
+              ],
+              "Properties": {
+                  "SubKind": "struct"
+              }
+          },
+          {
+              "Id": "Azure.Storage.Blobs.Models.AccountInfo",
+              "Kind": "Type",
+              "Name": "AccountInfo"
+          }
+      ]
+    }
+  ```
+</details>
+
+### Deprecated Node
+![Navigation](images/deprecated-node.png)
+
+Add `Deprecated` tag to a node to mark all the token of the node as deprecated.
+<details>
+<summary>click to expand json</summary>
+
+  ```json
+  {
+    "Name": "Azure.Template.Models.SecretBundle.ContentType",
+    "Id": "Azure.Template.Models.SecretBundle.ContentType",
+    "Kind": "Member",
+    "Tags": [
+        "HideFromNav",
+        "Deprecated"
+    ],
+    "Properties": {
+        "SubKind": "Property"
+    },
+    "TopTokens": [
+        {
+            "Properties": {
+                "GroupId": "doc"
+            },
+            "RenderClasses": [
+                "comment"
+            ],
+            "Value": "// \u003Csummary\u003E The content type of the secret. \u003C/summary\u003E",
+            "Kind": 0
+        },
+        {
+            "Value": "",
+            "Kind": 1
+        },
+        {
+            "Value": "",
+            "Id": "Azure.Template.Models.SecretBundle.ContentType",
+            "Kind": 0
+        },
+        {
+            "RenderClasses": [
+                "keyword"
+            ],
+            "Value": "public",
+            "Kind": 0
+        },
+        {
+            "Value": "",
+            "Kind": 2
+        },
+        {
+            "RenderClasses": [
+                "keyword"
+            ],
+            "Value": "string",
+            "Kind": 0
+        },
+        {
+            "Value": "",
+            "Kind": 2
+        },
+        {
+            "RenderClasses": [
+                "mname"
+            ],
+            "Value": "ContentType",
+            "Kind": 0
+        },
+        {
+            "Value": "",
+            "Kind": 2
+        },
+        {
+            "RenderClasses": [
+                "punc"
+            ],
+            "Value": "{",
+            "Kind": 0
+        },
+        {
+            "Value": "",
+            "Kind": 2
+        },
+        {
+            "RenderClasses": [
+                "keyword"
+            ],
+            "Value": "get",
+            "Kind": 0
+        },
+        {
+            "RenderClasses": [
+                "punc"
+            ],
+            "Value": ";",
+            "Kind": 0
+        },
+        {
+            "Value": "",
+            "Kind": 2
+        },
+        {
+            "RenderClasses": [
+                "punc"
+            ],
+            "Value": "}",
+            "Kind": 0
+        },
+        {
+            "Value": "",
+            "Kind": 1
+        }
+    ]
+},
+  ```
+</details>
+
+### Deprecated Token
+![Navigation](images/deprecated-token.png)
+
+Add `Deprecated` tag to a token to mark the token as deprecated.
+<details>
+<summary>click to expand json</summary>
+
+  ```json
+  {
+    "Tags": [
+        "Deprecated"
+    ],
+    "RenderClasses": [
+        "text"
+    ],
+    "Value": "cancellationToken",
+    "Kind": 0
+  }
+  ```
+</details>
+
+### Hidden API
+![Navigation](images/hidden-api.png)
+
+Add `Hidden` tag to a node to mark the node as hidden. Hidden nodes show up with low contrast in APIView. Hidden node visibility can also be toggled on or off in page settings.
+<details>
+<summary>click to expand json</summary>
+
+  ```json
+ {
+    "Id": "Azure.Storage.Blobs.BlobServiceClient.UndeleteBlobContainer(System.String, System.String, System.String, System.Threading.CancellationToken)",
+    "Kind": "Member",
+    "Name": "Azure.Storage.Blobs.BlobServiceClient.UndeleteBlobContainer(string, string, string, System.Threading.CancellationToken)",
+    "Properties": {
+        "SubKind": "Method"
+    },
+    "Tags": [
+        "HideFromNav",
+        "Hidden"
+    ],
+    "TopTokens": [
+        {
+            "Id": "Azure.Storage.Blobs.BlobServiceClient.UndeleteBlobContainer(System.String, System.String, System.String, System.Threading.CancellationToken)",
+            "Kind": 0,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "public",
+            "RenderClasses": [
+                "keyword"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "virtual",
+            "RenderClasses": [
+                "keyword"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "Response",
+            "RenderClasses": [
+                "tname"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": "\u003C",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": "BlobContainerClient",
+            "Properties": {
+                "NavigateToId": "Azure.Storage.Blobs.BlobContainerClient"
+            },
+            "RenderClasses": [
+                "tname"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": "\u003E",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "UndeleteBlobContainer",
+            "RenderClasses": [
+                "mname"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": "(",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": "string",
+            "RenderClasses": [
+                "keyword"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "deletedContainerName",
+            "RenderClasses": [
+                "text"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": ",",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 4,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "string",
+            "RenderClasses": [
+                "keyword"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "deletedContainerVersion",
+            "RenderClasses": [
+                "text"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": ",",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 4,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "string",
+            "RenderClasses": [
+                "keyword"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "destinationContainerName",
+            "RenderClasses": [
+                "text"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": ",",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 4,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "CancellationToken",
+            "RenderClasses": [
+                "tname"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "cancellationToken",
+            "RenderClasses": [
+                "text"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "=",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "default",
+            "RenderClasses": [
+                "keyword"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": ")",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": ";",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 1,
+            "Value": ""
+        }
+    ]
+}
+  ```
+</details>
+
+
+
+
 
 - TEXT, KEYWORD, COMMENT : Use `text`, `keyword`, `comment` to property `RenderClasses` of `StructuredToken`.
 - NEW_LINE : Create a token with `Kind = LineBreak`.
@@ -82,6 +516,7 @@ Don't worry about indentation that will be handled by the tree structure. In the
 - EXTERNAL_LINK : Create a single token set `Kind = Url`, `Value = link` then add the link text as a properties `LinkText`;
 - Common Tags: `Deprecated`, `Hidden`, `HideFromNav`, `SkipDiff`
 - Cross Language Id: Use `CrossLangId` as key with value in the node properties.
+
 
 ## Get help
 

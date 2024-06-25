@@ -104,6 +104,7 @@ public class Main {
                         artifactId = pom.getArtifactId();
                         packageVersion = pom.getVersion();
                         reviewProperties.setMavenPom(pom);
+                        break;
                     }
                 }
             }

@@ -15,7 +15,6 @@ import { buildVersionProjections, getVersion } from "@typespec/versioning";
 import path from "path";
 import { ApiView } from "./apiview.js";
 import { ApiViewEmitterOptions, reportDiagnostic } from "./lib.js";
-import { ApiViewDocument } from "./apiview-document.js";
 
 export interface ResolvedApiViewEmitterOptions {
   emitterOutputDir: string;
@@ -185,7 +184,9 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
       }
       const resolvedProgram = resolveProgramForVersion(program, service.type, versionString);
 
-      const apiview = new ApiView(serviceTitle, namespaceString, versionString, options.includeGlobalNamespace);
+      const apiview = new ApiView(serviceTitle, namespaceString, versionString, {
+        includeGlobalNamespace: options.includeGlobalNamespace,
+      });
       apiview.emit(resolvedProgram);
       resolveMissingTypeReferences(apiview);
 
@@ -194,9 +195,21 @@ function createApiViewEmitter(program: Program, options: ResolvedApiViewEmitterO
         await program.host.mkdirp(outputFolder);
         const outputFile = options.outputFile ?? `${namespaceString}-apiview.json`;
         const outputPath = resolvePath(outputFolder, outputFile);
+
+        let apiViewJson;
+        let apiViewString;
+        // FIXME: Remove this...
+        const minify = false;
+        if (minify) {
+          apiViewJson = apiview.toJSON(true);
+          apiViewString = JSON.stringify(JSON.parse(JSON.stringify(apiViewJson)), null, 0);
+        } else {
+          apiViewJson = apiview.toJSON(false);
+          apiViewString = JSON.stringify(JSON.parse(JSON.stringify(apiViewJson)), null, 2);
+        }
         await emitFile(program, {
           path: outputPath,
-          content: `${new ApiViewDocument(apiview).asString()}\n`,
+          content: `${apiViewString}\n`,
         });
       }
     }

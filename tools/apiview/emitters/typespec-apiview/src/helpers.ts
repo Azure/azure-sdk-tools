@@ -75,19 +75,6 @@ export function caseInsensitiveSort(a: [string, any], b: [string, any]): number 
   return aLower > bLower ? 1 : aLower < bLower ? -1 : 0;
 }
 
-export function definitionIdFor(value: string, prefix: string): string | undefined {
-  if (value.includes(".")) {
-    const fullName = `${prefix}.${value}`;
-    return this.typeDeclarations.has(fullName) ? fullName : undefined;
-  }
-  for (const item of this.typeDeclarations) {
-    if (item.split(".").splice(-1)[0] === value) {
-      return item;
-    }
-  }
-  return undefined;
-}
-
 export function findNodes<T extends SyntaxKind>(
   kind: T,
   program: Program,

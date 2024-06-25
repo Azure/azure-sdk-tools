@@ -76,9 +76,9 @@ export class NamespaceModel {
           }
         }
         if (isResource) {
-          this.resources.set(modelName, model.node);
+          this.resources.set(modelName, model.node!);
         } else {
-          this.models.set(modelName, model.node);
+          this.models.set(modelName, model.node!);
         }
       } else {
         throw new Error("Unexpectedly found undefined model node.");
@@ -126,42 +126,39 @@ export class NamespaceModel {
 
   tokenize(apiview: ApiView) {
     const treeNode = apiview.node(apiview, this.name, this.name, NodeKind.namespace);
-
     if (this.node.kind === SyntaxKind.NamespaceStatement) {
       treeNode.tokenizeDecoratorsAndDirectives(this.node.decorators, this.node.directives, false);
     }
     treeNode.keyword("namespace", { postfixSpace: true });
     treeNode.typeDeclaration(this.name, this.name, true);
+    treeNode.space();
+    treeNode.punctuation("{");
+    treeNode.newline();
     for (const node of this.augmentDecorators) {
       const nodeId = generateId(node)!;
       const subNode = apiview.node(treeNode, nodeId, nodeId, "augmentDecorator", { tags: [NodeTag.hideFromNav] });
       subNode.tokenize(node);
-      subNode.blankLines(1);
     }
     for (const node of this.operations.values()) {
       const nodeId = generateId(node)!;
       const subNode = apiview.node(treeNode, nodeId, nodeId, NodeKind.method);
       subNode.tokenize(node);
-      subNode.blankLines(1);
     }
     for (const node of this.resources.values()) {
       const nodeId = generateId(node)!;
       const subNode = apiview.node(treeNode, nodeId, nodeId, NodeKind.class);
       subNode.tokenize(node);
-      subNode.blankLines(1);
     }
     for (const node of this.models.values()) {
       const nodeId = generateId(node)!;
       const subNode = apiview.node(treeNode, nodeId, nodeId, NodeKind.class);
       subNode.tokenize(node);
-      subNode.blankLines(1);
     }
     for (const node of this.aliases.values()) {
       const nodeId = generateId(node)!;
       const subNode = apiview.node(treeNode, nodeId, nodeId, NodeKind.type);
       subNode.tokenize(node);
       subNode.punctuation(";");
-      subNode.blankLines(1);
     }
     treeNode.punctuation("}", { location: TokenLocation.bottom });
   }

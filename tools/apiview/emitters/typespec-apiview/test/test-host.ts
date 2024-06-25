@@ -6,9 +6,9 @@ import { AzureCoreTestLibrary } from "@azure-tools/typespec-azure-core/testing";
 import { ApiViewTestLibrary } from "../src/testing/index.js";
 import "@azure-tools/typespec-apiview";
 import { ApiViewEmitterOptions } from "../src/lib.js";
-import { ApiViewDocument, ApiViewTokenKind } from "../src/apiview.js";
 import { Diagnostic, resolvePath } from "@typespec/compiler";
 import { strictEqual } from "assert";
+import { ApiView } from "../src/apiview.js";
 
 export async function createApiViewTestHost() {
   return createTestHost({
@@ -16,14 +16,9 @@ export async function createApiViewTestHost() {
   });
 }
 
-export async function createApiViewTestRunner({
-  withVersioning,
-}: { withVersioning?: boolean } = {}) {
+export async function createApiViewTestRunner({ withVersioning }: { withVersioning?: boolean } = {}) {
   const host = await createApiViewTestHost();
-  const autoUsings = [
-    "TypeSpec.Rest",
-    "TypeSpec.Http",
-  ]
+  const autoUsings = ["TypeSpec.Rest", "TypeSpec.Http"];
   if (withVersioning) {
     autoUsings.push("TypeSpec.Versioning");
   }
@@ -31,12 +26,12 @@ export async function createApiViewTestRunner({
     autoUsings: autoUsings,
     compilerOptions: {
       emit: ["@azure-tools/typespec-apiview"],
-    }
+    },
   });
 }
 
 export async function diagnosticsFor(code: string, options: ApiViewEmitterOptions): Promise<readonly Diagnostic[]> {
-  const runner = await createApiViewTestRunner({withVersioning: true});
+  const runner = await createApiViewTestRunner({ withVersioning: true });
   const outPath = resolvePath("/apiview.json");
   const diagnostics = await runner.diagnose(code, {
     noEmit: false,
@@ -46,8 +41,8 @@ export async function diagnosticsFor(code: string, options: ApiViewEmitterOption
   return diagnostics;
 }
 
-export async function apiViewFor(code: string, options: ApiViewEmitterOptions): Promise<ApiViewDocument> {
-  const runner = await createApiViewTestRunner({withVersioning: true});
+export async function apiViewFor(code: string, options: ApiViewEmitterOptions): Promise<ApiView> {
+  const runner = await createApiViewTestRunner({ withVersioning: true });
   const outPath = resolvePath("/apiview.json");
   await runner.compile(code, {
     noEmit: false,
@@ -56,25 +51,14 @@ export async function apiViewFor(code: string, options: ApiViewEmitterOptions): 
   });
 
   const jsonText = runner.fs.get(outPath)!;
-  const apiview = JSON.parse(jsonText) as ApiViewDocument;
+  const raw = JSON.parse(jsonText) as ApiView;
+  const apiview = ApiView.fromJSON(raw);
   return apiview;
 }
 
-export function apiViewText(apiview: ApiViewDocument): string[] {
-  const vals = new Array<string>;
-  for (const token of apiview.Tokens) {
-    switch (token.Kind) {
-      case ApiViewTokenKind.Newline:
-        vals.push("\n");
-        break;
-      default:
-        if (token.Value !== undefined) {
-          vals.push(token.Value);
-        }
-        break;
-    }
-  }
-  return vals.join("").split("\n");
+export function apiViewText(apiview: ApiView): string[] {
+  const result = apiview.toText().split("\n");
+  return result;
 }
 
 function getIndex(lines: string[]): number {
@@ -91,7 +75,7 @@ function trimLines(lines: string[]): string[] {
   const trimmed: string[] = [];
   const indent = getIndex(lines);
   for (const line of lines) {
-    if (line.trim() === '') {
+    if (line.trim() === "") {
       // skip blank lines
       continue;
     } else {
@@ -109,6 +93,10 @@ export function compare(expect: string, lines: string[], offset: number) {
   const checkLines = trimLines(lines.slice(offset));
   strictEqual(expectedLines.length, checkLines.length);
   for (let x = 0; x < checkLines.length; x++) {
-    strictEqual(expectedLines[x], checkLines[x], `Actual differed from expected at line #${x + 1}\nACTUAL: '${checkLines[x]}'\nEXPECTED: '${expectedLines[x]}'`);
+    strictEqual(
+      expectedLines[x],
+      checkLines[x],
+      `Actual differed from expected at line #${x + 1}\nACTUAL: '${checkLines[x]}'\nEXPECTED: '${expectedLines[x]}'`,
+    );
   }
 }

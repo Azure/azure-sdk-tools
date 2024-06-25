@@ -18,6 +18,8 @@ export function makeChangesForFirstRelease(packageFolderPath: string, isStableRe
     
 ## ${newVersion} (${date})
 
+### Features Added
+
 The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
@@ -30,6 +32,8 @@ export function makeChangesForMigrateTrack1ToTrack2(packageFolderPath: string, n
     const content = `# Release History
     
 ## ${nextPackageVersion} (${date})
+
+### Features Added
 
 The package of ${packageJsonData.name} is using our next generation design principles since version ${nextPackageVersion}, which contains breaking changes.
 

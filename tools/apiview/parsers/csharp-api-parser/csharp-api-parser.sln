@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "APIView", "..\..\..\..\src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Azure.ClientSdk.Analyzers", "..\..\..\..\src\dotnet\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers.csproj", "{4ECD9A58-ABEB-4285-A5D7-7CDA8A558AE0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSharpAPIParser", "CSharpAPIParser.csproj", "{EB159E3D-9732-4EB3-A3C2-817475B9D749}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CSharpAPIParser", "CSharpAPIParser\CSharpAPIParser.csproj", "{EB159E3D-9732-4EB3-A3C2-817475B9D749}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

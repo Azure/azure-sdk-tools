@@ -747,7 +747,7 @@ namespace CSharpAPIParser.TreeToken
                 case Accessibility.Public:
                     return true;
                 case Accessibility.Internal:
-                    return s.GetAttributes().Any(a => a.AttributeClass.Name == "FriendAttribute");
+                    return s.GetAttributes().Any(a => a.AttributeClass?.Name == "FriendAttribute");
                 default:
                     return IsAccessibleExplicitInterfaceImplementation(s);
             }

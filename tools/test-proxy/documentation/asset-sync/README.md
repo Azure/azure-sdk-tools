@@ -1,5 +1,32 @@
 # Asset Sync (Retrieve External Test Recordings)
 
+- [Asset Sync (Retrieve External Test Recordings)](#asset-sync-retrieve-external-test-recordings)
+  - [The `assets.json` and how it enables external recordings](#the-assetsjson-and-how-it-enables-external-recordings)
+    - [How does the test-proxy relate to the `assets.json`?](#how-does-the-test-proxy-relate-to-the-assetsjson)
+  - [Restore, push, reset when proxy is waiting for requests](#restore-push-reset-when-proxy-is-waiting-for-requests)
+    - [A note about using on Windows + WSL](#a-note-about-using-on-windows--wsl)
+  - [test-proxy CLI (asset) commands](#test-proxy-cli-asset-commands)
+    - [The following CLI commands are available for manipulation of assets](#the-following-cli-commands-are-available-for-manipulation-of-assets)
+      - [Restore](#restore)
+      - [Reset](#reset)
+      - [Push](#push)
+      - [Config Commands](#config-commands)
+  - [Using `asset-sync` for azure sdk development](#using-asset-sync-for-azure-sdk-development)
+    - [Where are my files?](#where-are-my-files)
+    - [I'm starting entirely fresh with no recordings, what should I do first?](#im-starting-entirely-fresh-with-no-recordings-what-should-i-do-first)
+    - [My tests don't use the test-proxy at all currently, how do I externalize my recordings?](#my-tests-dont-use-the-test-proxy-at-all-currently-how-do-i-externalize-my-recordings)
+    - [I'm a dev who uses the test-proxy currently, how do I externalize my recordings?](#im-a-dev-who-uses-the-test-proxy-currently-how-do-i-externalize-my-recordings)
+    - [What does this look like in practice?](#what-does-this-look-like-in-practice)
+      - [Layout within a language repo](#layout-within-a-language-repo)
+      - [A few details about context directory](#a-few-details-about-context-directory)
+      - [Pushing new recordings](#pushing-new-recordings)
+      - [An additional note about using `test-proxy push` in codespaces](#an-additional-note-about-using-test-proxy-push-in-codespaces)
+      - [Recordings Growth](#recordings-growth)
+    - [I am getting weird errors out of my test-proxy operations](#i-am-getting-weird-errors-out-of-my-test-proxy-operations)
+      - [Reset it](#reset-it)
+      - [Attempt to manually resolve](#attempt-to-manually-resolve)
+
+
 The `test-proxy` optionally offers integration with other git repositories for **storing** and **retrieving** recordings. This enables the proxy to work against repositories that do not emplace their test recordings directly alongside their test implementations.
 
 Colloquially, any file that is stored externally using the `asset-sync` feature of the `test-proxy` is called an `asset`.
@@ -272,6 +299,21 @@ The `azure-sdk` team has chosen to address this difficulty by [applying the foll
 > **Note** Codespaces created on **forks** do not magically gain write permissions to `azure-sdk-assets`.
 
 To push from a codespace on a fork, devs will need to set `GIT_TOKEN` themselves to a PAT that has write access to `azure-sdk-assets`.
+
+#### Recordings Growth
+
+The `test-proxy` has no context or knowledge of which files are present in each tag. It only knows how to `restore` an `assets.json` and attempt to start playback given a relative path. With this being the case, `azure-sdk` devs should pay attention to the _contents_ of these assets directories, as there is no mechanism to clean up unused recordings.
+
+Use `test-proxy config locate -a path/to/assets.json` from the base of your language repo to discover the folder under `.assets` where recordings will be stored:
+
+```powershell
+C:/repo/azure-sdk-for-python [hotfix/resolve-failing-nightly-datalake]|>test-proxy config locate -a ./sdk/storage/azure-storage-blob
+Running proxy version is Azure.Sdk.Tools.TestProxy 20240610.1
+git --version
+C:/repo/azure-sdk-for-python/./.assets/yoPImn7QKL/python # <-- cd here to find all test recordings
+```
+
+Most devs will only update one or two recordings as they adjust features, meaning that it can be difficult to tell which recordings are actually utilized by current test code. The easiest way to find un-utilized files is to `cd` into the assets directory and delete every recording prior to a clean re-run all tests in `record` mode.
 
 ### I am getting weird errors out of my test-proxy operations
 

@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
+// Copyright (c) Microsoft.  All Rights Reserved.  Licensed under the Apache License, Version 2.0.  See License.txt in the project root for license information.
 
 using Microsoft.CodeAnalysis.PooledObjects;
 using Roslyn.Utilities;
@@ -7,9 +7,9 @@ using System.Linq;
 
 namespace Microsoft.CodeAnalysis.SymbolDisplay
 {
-    internal abstract partial class AbstractSymbolDisplayVisitor : SymbolVisitor
+    public abstract partial class AbstractSymbolDisplayVisitor : SymbolVisitor
     {
-        protected readonly ArrayBuilder<SymbolDisplayPart> builder;
+        public readonly ArrayBuilder<SymbolDisplayPart> builder;
         protected readonly SymbolDisplayFormat format;
         protected readonly bool isFirstSymbolVisited;
         protected readonly bool inNamespaceOrType;
@@ -20,7 +20,7 @@ namespace Microsoft.CodeAnalysis.SymbolDisplay
         private AbstractSymbolDisplayVisitor _lazyNotFirstVisitor;
         private AbstractSymbolDisplayVisitor _lazyNotFirstVisitorNamespaceOrType;
 
-        protected AbstractSymbolDisplayVisitor(
+        public AbstractSymbolDisplayVisitor(
             ArrayBuilder<SymbolDisplayPart> builder,
             SymbolDisplayFormat format,
             bool isFirstSymbolVisited,

@@ -68,12 +68,410 @@ Previously APIview tokens were created as a flat list assigned to the `CodeFileT
 Serialize the generated code file to JSON and then compress the file using Gzip compression. Try to make the json as small as possible by ignoring null values and empty collections.
 Don't worry about indentation that will be handled by the tree structure. In the case you want to have indentation between the tokens then use `TabSpace` token kind.
 
-## How to handle commons Scenarios
+## Examples
+
+### APITreeNode and StructuredToken
+
+Example showing a full node with all its children and tokens.
+
+![Navigation](images/apitree-node-and-tokens.png)
+
+
+
+<details>
+<summary>click to expand json</summary>
+
+  ```json
+  {
+    "Id": "Azure.Storage.Blobs.Models.BlobContainerInfo",
+    "Kind": "Type",
+    "Name": "BlobContainerInfo",
+    "BottomTokens": [
+        {
+            "Kind": 0,
+            "Value": "}",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 1,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": ""
+        }
+    ],
+    "Children": [
+        {
+            "Id": "Azure.Storage.Blobs.Models.BlobContainerInfo.ETag",
+            "Kind": "Member",
+            "Name": "Azure.Storage.Blobs.Models.BlobContainerInfo.ETag",
+            "Properties": {
+                "SubKind": "Property"
+            },
+            "Tags": [
+                "HideFromNav"
+            ],
+            "TopTokens": [
+                {
+                    "Kind": 0,
+                    "Value": "// \u003Csummary\u003E",
+                    "Properties": {
+                        "GroupId": "doc"
+                    },
+                    "RenderClasses": [
+                        "comment"
+                    ]
+                },
+                {
+                    "Kind": 1,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "// The ETag contains a value that you can use to perform operations conditionally. If the request version is 2011-08-18 or newer, the ETag value will be in quotes.",
+                    "Properties": {
+                        "GroupId": "doc"
+                    },
+                    "RenderClasses": [
+                        "comment"
+                    ]
+                },
+                {
+                    "Kind": 1,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "// \u003C/summary\u003E",
+                    "Properties": {
+                        "GroupId": "doc"
+                    },
+                    "RenderClasses": [
+                        "comment"
+                    ]
+                },
+                {
+                    "Kind": 1,
+                    "Value": ""
+                },
+                {
+                    "Id": "Azure.Storage.Blobs.Models.BlobContainerInfo.ETag",
+                    "Kind": 0,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "public",
+                    "RenderClasses": [
+                        "keyword"
+                    ]
+                },
+                {
+                    "Kind": 2,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "ETag",
+                    "RenderClasses": [
+                        "tname"
+                    ]
+                },
+                {
+                    "Kind": 2,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "ETag",
+                    "RenderClasses": [
+                        "mname"
+                    ]
+                },
+                {
+                    "Kind": 2,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "{",
+                    "RenderClasses": [
+                        "punc"
+                    ]
+                },
+                {
+                    "Kind": 2,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "get",
+                    "RenderClasses": [
+                        "keyword"
+                    ]
+                },
+                {
+                    "Kind": 0,
+                    "Value": ";",
+                    "RenderClasses": [
+                        "punc"
+                    ]
+                },
+                {
+                    "Kind": 2,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "}",
+                    "RenderClasses": [
+                        "punc"
+                    ]
+                },
+                {
+                    "Kind": 1,
+                    "Value": ""
+                }
+            ]
+        },
+        {
+            "Id": "Azure.Storage.Blobs.Models.BlobContainerInfo.LastModified",
+            "Kind": "Member",
+            "Name": "Azure.Storage.Blobs.Models.BlobContainerInfo.LastModified",
+            "Properties": {
+                "SubKind": "Property"
+            },
+            "Tags": [
+                "HideFromNav"
+            ],
+            "TopTokens": [
+                {
+                    "Kind": 0,
+                    "Value": "// \u003Csummary\u003E",
+                    "Properties": {
+                        "GroupId": "doc"
+                    },
+                    "RenderClasses": [
+                        "comment"
+                    ]
+                },
+                {
+                    "Kind": 1,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "// Returns the date and time the container was last modified. Any operation that modifies the blob, including an update of the blob\u0027s metadata or properties, changes the last-modified time of the blob.",
+                    "Properties": {
+                        "GroupId": "doc"
+                    },
+                    "RenderClasses": [
+                        "comment"
+                    ]
+                },
+                {
+                    "Kind": 1,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "// \u003C/summary\u003E",
+                    "Properties": {
+                        "GroupId": "doc"
+                    },
+                    "RenderClasses": [
+                        "comment"
+                    ]
+                },
+                {
+                    "Kind": 1,
+                    "Value": ""
+                },
+                {
+                    "Id": "Azure.Storage.Blobs.Models.BlobContainerInfo.LastModified",
+                    "Kind": 0,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "public",
+                    "RenderClasses": [
+                        "keyword"
+                    ]
+                },
+                {
+                    "Kind": 2,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "DateTimeOffset",
+                    "RenderClasses": [
+                        "tname"
+                    ]
+                },
+                {
+                    "Kind": 2,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "LastModified",
+                    "RenderClasses": [
+                        "mname"
+                    ]
+                },
+                {
+                    "Kind": 2,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "{",
+                    "RenderClasses": [
+                        "punc"
+                    ]
+                },
+                {
+                    "Kind": 2,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "get",
+                    "RenderClasses": [
+                        "keyword"
+                    ]
+                },
+                {
+                    "Kind": 0,
+                    "Value": ";",
+                    "RenderClasses": [
+                        "punc"
+                    ]
+                },
+                {
+                    "Kind": 2,
+                    "Value": ""
+                },
+                {
+                    "Kind": 0,
+                    "Value": "}",
+                    "RenderClasses": [
+                        "punc"
+                    ]
+                },
+                {
+                    "Kind": 1,
+                    "Value": ""
+                }
+            ]
+        }
+    ],
+    "Properties": {
+        "SubKind": "class"
+    },
+    "TopTokens": [
+        {
+            "Kind": 0,
+            "Value": "// \u003Csummary\u003E",
+            "Properties": {
+                "GroupId": "doc"
+            },
+            "RenderClasses": [
+                "comment"
+            ]
+        },
+        {
+            "Kind": 1,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "// BlobContainerInfo",
+            "Properties": {
+                "GroupId": "doc"
+            },
+            "RenderClasses": [
+                "comment"
+            ]
+        },
+        {
+            "Kind": 1,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "// \u003C/summary\u003E",
+            "Properties": {
+                "GroupId": "doc"
+            },
+            "RenderClasses": [
+                "comment"
+            ]
+        },
+        {
+            "Kind": 1,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "public",
+            "RenderClasses": [
+                "keyword"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "class",
+            "RenderClasses": [
+                "keyword"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Id": "Azure.Storage.Blobs.Models.BlobContainerInfo",
+            "Kind": 0,
+            "Value": ""
+        },
+        {
+            "Id": "Azure.Storage.Blobs.Models.BlobContainerInfo",
+            "Kind": 0,
+            "Value": "BlobContainerInfo",
+            "RenderClasses": [
+                "tname"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "{",
+            "RenderClasses": [
+                "punc"
+            ]
+        }
+    ]
+}                        
+  ```
+</details>
 
 ### Navigation
 ![Navigation](images/navigation.png)
 
-Ensure you set approppriate `Name` for the token node. And also set a value for the `Kind`. You can use one of the following values `assembly`, `class`, `delegate`, `enum`, `interface`, `method` , `namespace`, `package`, `struct`, `type` to get the default navigation icon. You can aslo use values more appriopriate for your language then reach out to APIView to provide support for those. Use tag `HideFromNav` to exclude a node from showing up in the page navigation.
+Ensure you set appropriate `Name` for the token node. And also set a value for the `Kind`. You can use one of the following values `assembly`, `class`, `delegate`, `enum`, `interface`, `method` , `namespace`, `package`, `struct`, `type` to get the default navigation icon. You can also use values more appropriate for your language then reach out to APIView to provide support for those. Use tag `HideFromNav` to exclude a node from showing up in the page navigation.
 <details>
 <summary>click to expand json</summary>
 
@@ -114,6 +512,82 @@ Ensure you set approppriate `Name` for the token node. And also set a value for 
               "Name": "AccountInfo"
           }
       ]
+    }
+  ```
+</details>
+
+### Documentation
+![Navigation](images/documentation.png)
+
+You can group a sequence of similar type tokens using GroupId. Set `GroupId` property to `doc` to mark a sequence of comment tokens as documentation.
+<details>
+<summary>click to expand json</summary>
+
+  ```json                            
+    {
+        "Id": "Azure.Storage.Blobs.BlobClient.BlobClient()",
+        "Kind": "Member",
+        "Name": "Azure.Storage.Blobs.BlobClient.BlobClient()",
+        "Properties": {
+            "SubKind": "Method"
+        },
+        "Tags": [
+            "HideFromNav"
+        ],
+        "TopTokens": [
+            {
+                "Kind": 0,
+                "Value": "// \u003Csummary\u003E",
+                "Properties": {
+                    "GroupId": "doc"
+                },
+                "RenderClasses": [
+                    "comment"
+                ]
+            },
+            {
+                "Kind": 1,
+                "Value": ""
+            },
+            {
+                "Kind": 0,
+                "Value": "// Initializes a new instance of the \u003Csee cref=\u0022T:Azure.Storage.Blobs.BlobClient\u0022 /\u003E",
+                "Properties": {
+                    "GroupId": "doc"
+                },
+                "RenderClasses": [
+                    "comment"
+                ]
+            },
+            {
+                "Kind": 1,
+                "Value": ""
+            },
+            {
+                "Kind": 0,
+                "Value": "// class for mocking.",
+                "Properties": {
+                    "GroupId": "doc"
+                },
+                "RenderClasses": [
+                    "comment"
+                ]
+            },
+            {
+                "Kind": 1,
+                "Value": ""
+            },
+            {
+                "Kind": 0,
+                "Value": "// \u003C/summary\u003E",
+                "Properties": {
+                    "GroupId": "doc"
+                },
+                "RenderClasses": [
+                    "comment"
+                ]
+            }
+        ]
     }
   ```
 </details>
@@ -504,19 +978,188 @@ Add `Hidden` tag to a node to mark the node as hidden. Hidden nodes show up with
 
 
 
+### Parameter Separator
+Use token with kind Kind `ParameterSeparator` between method parameters to allow APIView to either render the methods parameters on the same line or on separate lines based on language or user preference.
+
+![Navigation](images/parameter-separator-with-single-space.png)
+
+![Navigation](images/parameter-separator-with-line-break.png)
 
 
-- TEXT, KEYWORD, COMMENT : Use `text`, `keyword`, `comment` to property `RenderClasses` of `StructuredToken`.
-- NEW_LINE : Create a token with `Kind = LineBreak`.
-- WHITE_SPACE :  Create token with `Kind = NoneBreakingSpace`.
-- PUNCTUATION : Create a token with `Kind = Content` and the `Value = <the punctuation>`.
-- DOCUMENTATION : Add `GroupId = doc` in the properties of the token. This identifies a range of consecutive tokens as belonging to a group.
-- SKIP_DIFF :  Add `SkipDiff` to the Tag to indicate that the node or token should not be included in diff computation.
-- LINE_ID_MARKER : You can add a empty token. `Kind = Content` and `Value = ""` then give it an `Id` to make it commentable.
-- EXTERNAL_LINK : Create a single token set `Kind = Url`, `Value = link` then add the link text as a properties `LinkText`;
-- Common Tags: `Deprecated`, `Hidden`, `HideFromNav`, `SkipDiff`
-- Cross Language Id: Use `CrossLangId` as key with value in the node properties.
+<details>
+<summary>click to expand json</summary>
 
+  ```json
+    [
+        {
+            "Kind": 0,
+            "Value": "string",
+            "RenderClasses": [
+                "keyword"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "connectionString",
+            "RenderClasses": [
+                "text"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": ",",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 4,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "string",
+            "RenderClasses": [
+                "keyword"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "blobContainerName",
+            "RenderClasses": [
+                "text"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": ",",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 4,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "string",
+            "RenderClasses": [
+                "keyword"
+            ]
+        },
+        {
+            "Kind": 2,
+            "Value": ""
+        },
+        {
+            "Kind": 0,
+            "Value": "blobName",
+            "RenderClasses": [
+                "text"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": ")",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 0,
+            "Value": ";",
+            "RenderClasses": [
+                "punc"
+            ]
+        },
+        {
+            "Kind": 1,
+            "Value": ""
+        }
+    ]                          
+  ```
+</details>
+
+### Navigation Token
+
+Make a token a navigation token by adding key `NavigateToId` to the token property with a value corresponding the the Id of the APINode to navigate to on click.
+<details>
+<summary>click to expand json</summary>
+
+  ```json
+    {
+        "Kind": 0,
+        "Value": "BlobClientOptions",
+        "Properties": {
+            "NavigateToId": "Azure.Storage.Blobs.BlobClientOptions"
+        },
+        "RenderClasses": [
+            "tname"
+        ]
+    }                         
+  ```
+</details>
+
+### URL Token
+![Navigation](images/url-token.png)
+
+Make a token a Url by adding key `NavigateToUrl` to the token property and setting the value to the target Url.
+<details>
+<summary>click to expand json</summary>
+
+  ```json
+    [
+        {
+            "Properties": {
+                "GroupId": "doc"
+            },
+            "RenderClasses": [
+                "comment"
+            ],
+            "Value": "// This",
+            "Kind": 0
+        },
+        {
+            "Value": "",
+            "Kind": 2
+        },
+        {
+            "Properties": {
+                "GroupId": "doc",
+                "NavigateToUrl": "https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/core/Azure.Core/samples/ProtocolMethods.md"
+            },
+            "RenderClasses": [
+                "comment"
+            ],
+            "Value": "protocol method",
+            "Kind": 0
+        },
+        {
+            "Value": "",
+            "Kind": 2
+        },
+        {
+            "Properties": {
+                "GroupId": "doc"
+            },
+            "RenderClasses": [
+                "comment"
+            ],
+            "Value": "allows explicit creation of the request and processing of the response for advanced scenarios.",
+            "Kind": 0
+        }
+    ]                          
+  ```
+</details>
 
 ## Get help
 

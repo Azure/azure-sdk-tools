@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj" />
-    <ProjectReference Include="..\..\..\..\src\dotnet\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\dotnet\APIView\APIView\APIView.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\dotnet\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers\Azure.ClientSdk.Analyzers.csproj" />
   </ItemGroup>
 
 </Project>

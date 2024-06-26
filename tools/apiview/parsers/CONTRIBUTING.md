@@ -65,7 +65,7 @@ Previously APIview tokens were created as a flat list assigned to the `CodeFileT
 
 ## Serialization
 
-Serialize the generated code file to JSON and then compress the file using Gzip compression. Try to make the json as small as possible by ignoring null values and empty collections.
+Serialize the generated code file to JSON with Gzip compression. The output file should have `.json.tgz` extension. Try to make the json as small as possible by ignoring null values and empty collections.
 Don't worry about indentation that will be handled by the tree structure. In the case you want to have indentation between the tokens then use `TabSpace` token kind.
 
 ## Examples

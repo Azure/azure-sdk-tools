@@ -3,6 +3,7 @@ param logsStorageAccountName string
 param kustoClusterName string
 param kustoDatabaseName string
 param webAppName string
+param subnetId string
 param appIdentityPrincipalId string
 
 var tables = [
@@ -54,13 +55,12 @@ resource logsStorageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
     defaultToOAuthAuthentication: false
     allowCrossTenantReplication: true
     minimumTlsVersion: 'TLS1_2'
-    allowBlobPublicAccess: true
-    allowSharedKeyAccess: true
+    allowBlobPublicAccess: false
+    allowSharedKeyAccess: false
     networkAcls: {
       bypass: 'AzureServices'
-      virtualNetworkRules: []
-      ipRules: []
-      defaultAction: 'Allow'
+      virtualNetworkRules: [{ id: subnetId }]
+      defaultAction: 'Deny'
     }
     supportsHttpsTrafficOnly: true
     encryption: {
@@ -180,12 +180,21 @@ resource kustoCluster 'Microsoft.Kusto/Clusters@2022-02-01' = {
     enableAutoStop: false
     publicIPType: 'IPv4'
   }
+
   resource database 'Databases' = {
     name: kustoDatabaseName
     location: location
     kind: 'ReadWrite'
     properties: {
       hotCachePeriod: 'P31D'
+    }
+  }
+
+  resource managedEndpoint 'managedPrivateEndpoints' = {
+    name: logsStorageAccountName
+    properties: {
+      groupId: 'blob'
+      privateLinkResourceId: logsStorageAccount.id
     }
   }
 }

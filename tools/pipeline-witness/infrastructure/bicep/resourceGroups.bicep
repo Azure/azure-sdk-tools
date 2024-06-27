@@ -5,6 +5,8 @@ param location string
 param appResourceGroupName string
 param appServicePlanName string
 param webAppName string
+param networkSecurityGroupName string
+param vnetName string
 param cosmosAccountName string
 param appStorageAccountName string
 
@@ -28,6 +30,8 @@ module pipelineWitness 'appResourceGroup.bicep' = {
     webAppName: webAppName
     cosmosAccountName: cosmosAccountName
     appStorageAccountName: appStorageAccountName
+    networkSecurityGroupName: networkSecurityGroupName
+    vnetName: vnetName
   }
 }
 
@@ -49,5 +53,6 @@ module pipelineLogs 'logsResourceGroup.bicep' = {
     kustoDatabaseName: kustoDatabaseName
     webAppName: webAppName
     appIdentityPrincipalId: pipelineWitness.outputs.appIdentityPrincipalId
+    subnetId: pipelineWitness.outputs.subnetId
   }
 }

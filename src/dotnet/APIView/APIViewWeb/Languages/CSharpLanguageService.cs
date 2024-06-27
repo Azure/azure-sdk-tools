@@ -39,6 +39,12 @@ namespace APIViewWeb
             return $"--packageFilePath \"{originalName}\" --outputDirectoryPath \"{tempDirectory}\" --outputFileName \"{outputFileName}\"";
         }
 
+        public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
+        {
+            var outputFileName = Path.GetFileName(jsonPath).Replace(".json.tgz", "");
+            return $"--packageFilePath \"{originalName}\" --outputDirectoryPath \"{tempDirectory}\" --outputFileName \"{outputFileName}\"";
+        }
+
         public override bool IsSupportedFile(string name)
         {
             return IsDll(name) || IsNuget(name);

@@ -1,0 +1,27 @@
+# This must run on Windows because the aka.ms SDK runs on .NET Framework and
+# has calls that are coupled to Windows.
+pool:
+  name: azsdk-pool-mms-win-2022-general
+  vmImage: windows-2022
+
+resources:
+  repositories:
+    - repository: azure-sdk-build-tools
+      type: git
+      name: internal/azure-sdk-build-tools
+      ref: users/pahallis/pdb2pdb
+
+jobs:
+  - job: BuildAndPublish
+    displayName: 'Build and Publish'
+    steps:
+      - checkout: self
+      - checkout: azure-sdk-build-tools
+      - pwsh: dotnet pack --configuration Release
+        displayName: Pack PipelineGenerator
+        workingDirectory: $(System.DefaultWorkingDirectory)/azure-sdk-tools/tools/pipeline-generator/Azure.Sdk.Tools.PipelineGenerator
+      - template: /pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
+        parameters:
+          BuildToolsRepositoryPath: $(System.DefaultWorkingDirectory)/azure-sdk-build-tools
+          PackagesPath: $(System.DefaultWorkingDirectory)/azure-sdk-tools/artifacts/packages/Release
+          StagingDirectory: $(Build.ArtifactStagingDirectory)/symbols

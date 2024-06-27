@@ -32,7 +32,7 @@
     {
       "actor_id": 2978638,
       "actor_type": "Team",
-      "bypass_mode": "always"
+      "bypass_mode": "pull_request"
     }
   ]
 }

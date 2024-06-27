@@ -7,13 +7,7 @@ namespace Azure.ClientSdk.Analyzers
 {
     internal class Descriptors
     {
-        private static readonly string AZC0001Title = "Use one of the following pre-approved namespace groups (https://azure.github.io/azure-sdk/registered_namespaces.html): " + string.Join(", ", ClientAssemblyNamespaceAnalyzer.AllowedNamespacePrefix);
-
         #region Guidelines
-        public static DiagnosticDescriptor AZC0001 = new DiagnosticDescriptor(
-            nameof(AZC0001), AZC0001Title,
-            "Namespace '{0}' shouldn't contain public types. " + AZC0001Title, DiagnosticCategory.Usage, DiagnosticSeverity.Warning, true);
-
         public static DiagnosticDescriptor AZC0002 = new DiagnosticDescriptor(
             nameof(AZC0002),
             "DO ensure all service methods, both asynchronous and synchronous, take an optional CancellationToken parameter called 'cancellationToken' or a RequestContext parameter called 'context'.",
@@ -258,6 +252,13 @@ namespace Azure.ClientSdk.Analyzers
             "Asynchronous method with `async` parameter can be called from both synchronous and asynchronous scopes. 'EnsureCompleted' extension method can be safely used on in guaranteed synchronous scope (i.e. `if (!async) {...}`).",
             DiagnosticCategory.Usage,
             DiagnosticSeverity.Warning, true);
-        #endregion
+
+        public static DiagnosticDescriptor AZC0112 = new DiagnosticDescriptor(
+            "AZC0112",
+            "Misuse of internal type via [InternalsVisibleTo].",
+            "{0} is defined in assembly {1} and is marked internal without a [Friend] attribute.",
+            "Naming",
+            DiagnosticSeverity.Warning, true);
+      #endregion
     }
 }

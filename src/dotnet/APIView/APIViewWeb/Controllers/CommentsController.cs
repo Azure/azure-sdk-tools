@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using APIViewWeb.Hubs;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -26,7 +27,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string groupNo, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false, string crossLangId = null)
         {
             if (string.IsNullOrEmpty(commentText))
             {
@@ -35,17 +36,17 @@ namespace APIViewWeb.Controllers
                 return new BadRequestResult();
             }
 
-            var comment = new CommentModel();
-            comment.TimeStamp = DateTime.UtcNow;
+            var comment = new CommentItemModel();
+            comment.CreatedOn = DateTime.UtcNow;
             comment.ReviewId = reviewId;
-            comment.RevisionId = revisionId;
+            comment.APIRevisionId = revisionId;
             comment.ElementId = elementId;
             comment.SectionClass = sectionClass;
-            comment.Comment = commentText;
-            comment.GroupNo = groupNo;
-            comment.IsUsageSampleComment = usageSampleComment;
+            comment.CommentText = commentText;
+            comment.CommentType = (usageSampleComment) ? CommentType.SampleRevision : CommentType.APIRevision;
             comment.ResolutionLocked = !resolutionLock.Equals("on");
-            comment.Username = User.GetGitHubLogin();
+            comment.CreatedBy = User.GetGitHubLogin();
+            comment.CrossLanguageId = crossLangId;
 
             foreach(string user in taggedUsers)
             {
@@ -90,7 +91,7 @@ namespace APIViewWeb.Controllers
         [HttpPost]
         public async Task<ActionResult> Delete(string reviewId, string commentId, string elementId)
         {
-            await _commentsManager.DeleteCommentAsync(User, reviewId, commentId);
+            await _commentsManager.SoftDeleteCommentAsync(User, reviewId, commentId);
 
             return await CommentPartialAsync(reviewId, elementId);
         }

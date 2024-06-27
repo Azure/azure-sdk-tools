@@ -3,12 +3,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using APIView.Identity;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Authorization;
-using Octokit;
 
 namespace APIViewWeb.Managers
 {
@@ -61,6 +62,21 @@ namespace APIViewWeb.Managers
             UserProfile.Email = email;
 
             await _UserProfileRepository.UpsertUserProfileAsync(User, UserProfile);
+        }
+
+        public async Task SetUserEmailIfNullOrEmpty(ClaimsPrincipal User)
+        {
+            var UserProfile = await TryGetUserProfileAsync(User);
+
+            if (string.IsNullOrWhiteSpace(UserProfile.Email))
+            {
+                var microsoftEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimConstants.Email)?.Value;
+
+                if (!string.IsNullOrWhiteSpace(microsoftEmail))
+                {
+                    await UpdateUserProfile(User, microsoftEmail, null, null);
+                }
+            }
         }
     }
 }

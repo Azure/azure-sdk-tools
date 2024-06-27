@@ -1,5 +1,21 @@
 # Release History
 
+## 0.4.1 (2024-04-17)
+
+- Bug fix for typing under TYPE_CHECKING block.
+
+## 0.4.0 (2024-04-15)
+
+- Checker to enforce no importing typing under TYPE_CHECKING block.
+
+## 0.3.1 (2023-1-16)
+
+- Docstring bug fix where paramtype was being considered for params
+
+## 0.3.0 (2023-12-15)
+
+- Breaking changes involved in bump to pylint 3.0 support and bug fix to `incorrect-naming-convention` checker
+
 ## 0.2.0 (2023-10-17)
 
 - Checker to enforce docstring keywords being keyword-only in method signature.

@@ -4,7 +4,7 @@ resources:
     - repository: azure-sdk-build-tools
       type: git
       name: internal/azure-sdk-build-tools
-      ref: refs/tags/azure-sdk-build-tools_20230829.1
+      ref: refs/tags/azure-sdk-build-tools_20240507.1
 
 parameters:
   - name: BuildToolsRepoPath
@@ -45,14 +45,20 @@ jobs:
       - checkout: self
       - checkout: azure-sdk-build-tools
 
-      - pwsh: |
-          azcopy cp '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true
-        displayName: 'Copy from AzureSdkPartnerDrops'
-        env:
-          AZCOPY_AUTO_LOGIN_TYPE: SPN
-          AZCOPY_SPA_APPLICATION_ID: $(azuresdkpartnerdrops-application-id)
-          AZCOPY_SPA_CLIENT_SECRET: $(azuresdkpartnerdrops-service-principal-key)
+      - task: AzurePowerShell@5
+        displayName: 'Copy from azuresdkpartnerdrops'
         condition: and(succeeded(), ne(variables['SkipCopyFromPartnerDrops'], 'true'))
+        inputs:
+          azureSubscription: 'azuresdkpartnerdrops - Storage Partner Drops'
+          ScriptType: 'InlineScript'
+          azurePowerShellVersion: LatestVersion 
+          pwsh: true
+          Inline: |
+            azcopy copy '${{ parameters.PartnerDropsBlobBase }}/${{ parameters.PartnerDropsBlobSourceSuffix }}/*' '${{ parameters.ArtifactsPath }}' --recursive=true
+            echo "Copied files:"
+            dir '${{ parameters.ArtifactsPath }}' -r | % { $_.FullName }
+        env: 
+          AZCOPY_AUTO_LOGIN_TYPE: 'PSCRED'     
 
       - ${{ if eq(parameters.ShouldSign, true) }}:
         - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools

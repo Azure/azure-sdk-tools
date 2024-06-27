@@ -29,15 +29,14 @@ setup(
     author_email="azuresdkengsysadmins@microsoft.com",
     license="MIT License",
     packages=find_packages(),
-    package_data={'': ['pylintrc']},
+    package_data={'': ['.pylintrc']},
     include_package_data=True,
     install_requires=[
-        "astroid>=2.11",
         "charset-normalizer",
         "pylint",
-        "pylint-guidelines-checker"
+        "azure-pylint-guidelines-checker"
     ],
-    python_requires=">=3.7.0",
+    python_requires=">=3.8.0",
     entry_points={"console_scripts": ["apistubgen=apistub:console_entry_point",]},
     classifiers=[
         "Development Status :: 3 - Alpha",

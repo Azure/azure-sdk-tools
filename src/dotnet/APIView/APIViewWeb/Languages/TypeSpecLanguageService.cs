@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Models;
+using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
@@ -14,20 +15,19 @@ namespace APIViewWeb
 {
     public class TypeSpecLanguageService : LanguageProcessor
     {
-        public override string Name { get; } = "TypeSpec";
-
-        public override string [] Extensions { get; } = { ".tsp", ".cadl" };
-
-        public override string VersionString { get; } = "0";
-
-        public override string ProcessName => throw new NotImplementedException();
-
+        private readonly TelemetryClient _telemetryClient;
         private string _typeSpecSpecificPathPrefix;
 
-        public TypeSpecLanguageService(IConfiguration configuration)
+        public override string Name { get; } = "TypeSpec";
+        public override string [] Extensions { get; } = { ".tsp", ".cadl" };
+        public override string VersionString { get; } = "0";
+        public override string ProcessName => throw new NotImplementedException();
+
+        public TypeSpecLanguageService(IConfiguration configuration, TelemetryClient telemetryClient)
         {
             IsReviewGenByPipeline = true;
             _typeSpecSpecificPathPrefix = "/specification";
+            _telemetryClient = telemetryClient;
         }
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
         {
@@ -43,7 +43,7 @@ namespace APIViewWeb
             return false;
         }
 
-        public override bool GeneratePipelineRunParams(ReviewGenPipelineParamModel param)
+        public override bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param)
         {
             var filePath = param.FileName;
             // Verify TypeSpec source file path is a GitHub URL to TypeSpec package root 

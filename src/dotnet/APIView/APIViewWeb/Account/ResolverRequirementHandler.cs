@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
@@ -20,7 +20,7 @@ namespace APIViewWeb
                 if (requirement is ResolverRequirement)
                 {
                     Models.CommentThreadModel comments = (Models.CommentThreadModel)context.Resource;
-                    if (approvers != null && approvers.Contains(context.User.GetGitHubLogin()) || context.User.GetGitHubLogin().Equals(comments.Comments.First().Username))
+                    if (approvers != null && approvers.Contains(context.User.GetGitHubLogin()) || context.User.GetGitHubLogin().Equals(comments.Comments.First().CreatedBy))
                     {
                         context.Succeed(requirement);
                     }

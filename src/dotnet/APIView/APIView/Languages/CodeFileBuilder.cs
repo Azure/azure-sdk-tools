@@ -48,7 +48,7 @@ namespace ApiView
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "25";
+        public const string CurrentVersion = "26";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -460,11 +460,19 @@ namespace ApiView
             const string attributeSuffix = "Attribute";
             foreach (var attribute in attributes)
             {
-                if ((!IsAccessible(attribute.AttributeClass) && attribute.AttributeClass.Name != "FriendAttribute" )|| IsSkippedAttribute(attribute.AttributeClass))
+                if ((!IsAccessible(attribute.AttributeClass) &&
+                    attribute.AttributeClass.Name != "FriendAttribute" && 
+                    attribute.AttributeClass.ContainingNamespace.ToString() != "System.Diagnostics.CodeAnalysis")
+                    || IsSkippedAttribute(attribute.AttributeClass))
                 {
                     continue;
                 }
                 builder.WriteIndent();
+                if(attribute.AttributeClass.DeclaredAccessibility == Accessibility.Internal || attribute.AttributeClass.DeclaredAccessibility == Accessibility.Friend)
+                {
+                    builder.Keyword("internal");
+                    builder.Space();
+                }
                 builder.Punctuation(SyntaxKind.OpenBracketToken);
                 var name = attribute.AttributeClass.Name;
                 if (name.EndsWith(attributeSuffix))
@@ -526,6 +534,8 @@ namespace ApiView
                 case "DefaultMemberAttribute":
                 case "AsyncIteratorStateMachineAttribute":
                 case "EditorBrowsableAttribute":
+                case "NullableAttribute":
+                case "NullableContextAttribute":
                     return true;
                 default:
                     return false;

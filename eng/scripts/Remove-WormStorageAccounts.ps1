@@ -24,7 +24,14 @@ foreach ($group in $groups) {
             } else {
                 Write-Host "Removing $($account.StorageAccountName) in $($account.ResourceGroupName)"
             }
+
+            $hasContainers = ($account.Kind -ne "FileStorage")
+
+            # If it doesn't have containers then we can skip the explicit clean-up of this storage account
+            if (!$hasContainers) { continue }
+            
             $ctx = New-AzStorageContext -StorageAccountName $account.StorageAccountName
+
             $immutableBlobs = $ctx `
                                 | Get-AzStorageContainer `
                                 | Where-Object { $_.BlobContainerProperties.HasImmutableStorageWithVersioning } `
@@ -47,8 +54,14 @@ foreach ($group in $groups) {
                 $null = $ctx | Get-AzStorageContainer | Get-AzStorageBlob | Remove-AzStorageBlobImmutabilityPolicy
                 $ctx | Get-AzStorageContainer | Get-AzStorageBlob | Remove-AzStorageBlob -Force
             } catch {}
-            # Use AzRm cmdlet as deletion will only work through ARM with the immutability policies defined on the blobs
-            $ctx | Get-AzStorageContainer | % { Remove-AzRmStorageContainer -Name $_.Name -StorageAccountName $ctx.StorageAccountName -ResourceGroupName $group.ResourceGroupName -Force }
+
+            try {
+                # Use AzRm cmdlet as deletion will only work through ARM with the immutability policies defined on the blobs
+                $ctx | Get-AzStorageContainer | % { Remove-AzRmStorageContainer -Name $_.Name -StorageAccountName $ctx.StorageAccountName -ResourceGroupName $group.ResourceGroupName -Force }
+            } catch {
+                Write-Warning "Container removal failed. Ignoring the error and trying to delete the storage account."
+                Write-Warning $_
+            }
             Remove-AzStorageAccount -StorageAccountName $account.StorageAccountName -ResourceGroupName $account.ResourceGroupName -Force
         }
     }

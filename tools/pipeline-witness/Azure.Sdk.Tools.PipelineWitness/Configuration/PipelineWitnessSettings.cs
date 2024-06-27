@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
+using System;
 
 namespace Azure.Sdk.Tools.PipelineWitness.Configuration
 {
@@ -72,22 +70,22 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         public int BuildCompleteWorkerCount { get; set; } = 1;
 
         /// <summary>
-        /// Gets or sets the artifact name used by the pipeline owners extraction build 
+        /// Gets or sets the artifact name used by the pipeline owners extraction build
         /// </summary>
         public string PipelineOwnersArtifactName { get; set; }
 
         /// <summary>
-        /// Gets or sets the file name used by the pipeline owners extraction build 
+        /// Gets or sets the file name used by the pipeline owners extraction build
         /// </summary>
         public string PipelineOwnersFilePath { get; set; }
 
         /// <summary>
-        /// Gets or sets the definition id of the pipeline owners extraction build 
+        /// Gets or sets the definition id of the pipeline owners extraction build
         /// </summary>
         public int PipelineOwnersDefinitionId { get; set; }
 
         /// <summary>
-        /// Gets or sets the database to use 
+        /// Gets or sets the database to use
         /// </summary>
         public string CosmosDatabase { get; set; }
 
@@ -95,15 +93,5 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         /// Gets or sets the container to use for async locks
         /// </summary>
         public string CosmosAsyncLockContainer { get; set; }
-
-        /// <summary>
-        /// Gets or sets the authorization key for the Cosmos account
-        /// </summary>
-        public string CosmosAuthorizationKey { get; set; }
-
-        /// <summary>
-        /// Gets or sets the access token to use for Azure DevOps clients
-        /// </summary>
-        public string DevopsAccessToken { get; set; }
     }
 }

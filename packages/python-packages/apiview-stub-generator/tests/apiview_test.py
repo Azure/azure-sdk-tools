@@ -73,7 +73,7 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
         unclaimed = PylintParser.get_unclaimed()
-        assert len(apiview.diagnostics) == 5
+        assert len(apiview.diagnostics) == 14
         # The "needs copyright header" error corresponds to a file, which isn't directly
         # represented in APIView
         assert len(unclaimed) == 1
@@ -93,3 +93,16 @@ class TestApiView:
         stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
         self._validate_definition_ids(apiview)
+
+    def test_mapping_file(self):
+        pkg_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest"))
+        mapping_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "apistubgentest", "apiview_mapping_python.json"))
+        temp_path = tempfile.gettempdir()
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, mapping_path=mapping_path)
+        apiview = stub_gen.generate_tokens()
+        self._validate_definition_ids(apiview)
+        cross_language_tokens = [token for token in apiview.tokens if token.cross_language_definition_id]
+        assert cross_language_tokens[0].cross_language_definition_id == "Formal_Model_Id"
+        assert cross_language_tokens[1].cross_language_definition_id == "Docstring_DocstringWithFormalDefault"
+        assert len(cross_language_tokens) == 2
+        assert apiview.cross_language_package_id == "ApiStubGenTest"

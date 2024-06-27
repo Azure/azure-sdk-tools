@@ -234,11 +234,11 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Verification
                 blockErrorStrings.Add($"{MonikerConstants.PRLabel}{ErrorMessageConstants.NeedsToEndWithSourceOwnerPartial}");
             }
 
-            // ServiceLabel needs to be part of a block that has one of, ServiceOwners or #/<NotInRepo>/ (MonikerConstants.MissingFolder),
-            // or ends in a source path/owner line both not both.
+            // ServiceLabel needs to be part of a block that has AzureSdkOwners or one of; ServiceOwners or #/<NotInRepo>/
+            // (MonikerConstants.MissingFolder), or ends in a source path/owner line both not both.
             if (blockHasServiceLabel)
             {
-                if (!endsWithSourceOwnerLine && !blockHasServiceOwners && !blockHasMissingFolder)
+                if (!endsWithSourceOwnerLine && !blockHasServiceOwners && !blockHasMissingFolder && !blockHasAzureSdkOwners)
                 {
                     blockErrorStrings.Add(ErrorMessageConstants.ServiceLabelNeedsOwners);
                 }
@@ -288,7 +288,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Verification
             {
                 // Verify the source path and owners
                 directoryUtils.VerifySourcePathEntry(line, errorStrings);
-                Owners.VerifyOwners(ownerData, line, true, errorStrings);
+                Owners.VerifyOwners(ownerData, line, isSourcePathOwnerLine, true, errorStrings);
             }
             else
             {
@@ -307,7 +307,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Verification
                         case MonikerConstants.MissingFolder:
                         case MonikerConstants.ServiceOwners:
                         case MonikerConstants.AzureSdkOwners:
-                            Owners.VerifyOwners(ownerData, line, expectOwnersIfMoniker, errorStrings);
+                            Owners.VerifyOwners(ownerData, line, isSourcePathOwnerLine, expectOwnersIfMoniker, errorStrings);
                             break;
                         default:
                             // This shouldn't get here unless someone adds a new moniker and forgets to add it to the switch statement

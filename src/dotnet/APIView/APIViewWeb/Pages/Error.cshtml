@@ -10,14 +10,14 @@
         <div class="col-sm-6 text-center">
             <h1 class="text-danger">Error.</h1>
             <h2 class="text-danger">An unexpected error occurred while processing your request.</h2>
-            @if (Model.ShowRequestId)
+            @if (Model.ShowTraceId)
             {
                 <p>
-                    <strong>Request ID:</strong> <code>@Model.RequestId</code>
+                    <strong>Trace ID:</strong> <code>@Model.TraceId</code>
                 </p>
             }
             <p>
-                Please <a href="mailto:azuresdkengsysteam@microsoft.com">email</a> site adminstrator for support.
+                Please reach out to <a href="https://teams.microsoft.com/l/channel/19%3A3adeba4aa1164f1c889e148b1b3e3ddd%40thread.skype/APIView?groupId=3e17dcb0-4257-4a30-b843-77f47f1d4121&tenantId=72f988bf-86f1-41af-91ab-2d7cd011db47">site adminstrator</a> for support.
             </p>
         </div>
         <div class="col-sm-3">

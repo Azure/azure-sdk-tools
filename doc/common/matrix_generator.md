@@ -17,6 +17,7 @@
   * [all](#all)
   * [sparse](#sparse)
   * [include/exclude](#includeexclude)
+  * [Environment Variable References](#environment-variable-references)
   * [Generated display name](#generated-display-name)
   * [Filters](#filters)
   * [Replace/Modify/Append](#replacemodifyappend-values)
@@ -174,7 +175,7 @@ Example:
   "operatingSystem": [
     "windows-2022",
     "ubuntu-22.04",
-    "macos-11"
+    "macos-latest"
   ],
   "framework": [
     "net461",
@@ -512,15 +513,38 @@ will be generated, but the full matrix of both include and exclude will be proce
 Excludes are processed first, so includes can be used to forcefully add specific combinations to the matrix,
 regardless of exclusions.
 
+### Environment Variable References
+
+The matrix config supports values that reference environment variables and resolves them at
+matrix generation time. This is useful especially in pipeline scenarios where we want to reference
+common values that are defined elsewhere in the environment and/or pipeline config.
+
+Prefix a matrix value with `env:` to trigger an environment variable
+lookup. If the variable does not exist, then the value will resolve to empty string.
+
+For example:
+
+``` yaml
+{
+  "net461_macOSlatest": {
+    "framework": "net461",
+    "operatingSystem": "env:OperatingSystem"
+  }
+}
+```
+
+Matrix filters and replace parameters evaluate before environment variables are resolved. Matrix
+display name renames and display name filters evaluate after variables are resolved.
+
 ### Generated display name
 
 In the matrix job output that azure pipelines consumes, the format is a map of maps. For example:
 
 ``` yaml
 {
-  "net461_macOS1015": {
+  "net461_macOSlatest": {
     "framework": "net461",
-    "operatingSystem": "macos-11"
+    "operatingSystem": "macos-latest"
   },
   "net60_ubuntu2204": {
     "framework": "net6.0",
@@ -673,7 +697,7 @@ Given a matrix like below with `JavaTestVersion` marked as a non-sparse paramete
     "Agent": {
       "windows-2022": { "OSVmImage": "windows-2022", "Pool": "azsdk-pool-mms-win-2022-general" },
       "ubuntu-2204": { "OSVmImage": "ubuntu-22.04", "Pool": "azsdk-pool-mms-ubuntu-2204-general" },
-      "macos-11": { "OSVmImage": "macos-11", "Pool": "Azure Pipelines" }
+      "macos-latest": { "OSVmImage": "macos-latest", "Pool": "Azure Pipelines" }
     },
     "JavaTestVersion": [ "1.8", "1.11" ],
     "AZURE_TEST_HTTP_CLIENTS": "netty",

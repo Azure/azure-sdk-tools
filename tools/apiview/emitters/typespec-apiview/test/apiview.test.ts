@@ -36,6 +36,7 @@ describe("apiview: tests", () => {
   describe("models", () => {
     it("composition", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         model Animal {
@@ -90,6 +91,7 @@ describe("apiview: tests", () => {
 
     it("templated", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         model Thing<T> {
@@ -98,6 +100,8 @@ describe("apiview: tests", () => {
   
         model StringThing is Thing<string>;
   
+        model NamedStringThing is Thing<T = string>;
+
         model Page<T = string> {
           size: int16;
           item: T[];
@@ -138,6 +142,8 @@ describe("apiview: tests", () => {
           prop: X;
         }
   
+        model NamedStringThing is Thing<T = string> {}
+
         model Page<T = string> {
           size: int16;
           item: T[];
@@ -148,7 +154,7 @@ describe("apiview: tests", () => {
         }
   
         model StringThing is Thing<string> {}
-  
+
         model Thing<T> {
           property: T;
         }
@@ -165,6 +171,7 @@ describe("apiview: tests", () => {
   describe("scalars", () => {
     it("extends string", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         scalar Password extends string;
@@ -183,6 +190,7 @@ describe("apiview: tests", () => {
 
     it("new scalar type", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         scalar ternary;
@@ -201,6 +209,7 @@ describe("apiview: tests", () => {
 
     it("templated", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         @doc(T)
@@ -224,6 +233,7 @@ describe("apiview: tests", () => {
   describe("aliases", () => {
     it("simple alias", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         model Animal {
@@ -239,7 +249,7 @@ describe("apiview: tests", () => {
           species: string;
         }
   
-        alias Creature = Animal
+        alias Creature = Animal;
       }
       `;
       const apiview = await apiViewFor(input, {});
@@ -247,18 +257,46 @@ describe("apiview: tests", () => {
       compare(expect, actual, 9);
       validateDefinitionIds(apiview);
     });  
-  });
+
+    it("templated alias", async () => {
+        const input = `
+        #suppress "deprecated"
+        @TypeSpec.service( { title: "Test", version: "1" } )
+        namespace Azure.Test {
+          model Animal {
+            species: string;
+          }
+
+          alias Template<T extends valueof string> = "Foo \${T} bar";
+        }
+        `;
+        const expect = `
+        namespace Azure.Test {
+          model Animal {
+            species: string;
+          }
+    
+          alias Template<T extends valueof string> = "Foo \${T} bar";
+        }
+        `;
+        const apiview = await apiViewFor(input, {});
+        const actual = apiViewText(apiview);
+        compare(expect, actual, 9);
+        validateDefinitionIds(apiview);
+      });  
+    });
 
   describe("augment decorators", () => {
     it("simple augment", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         model Animal {
           species: string;
         }
   
-        @@doc(Animal, "My doc")
+        @@doc(Animal, "My doc");
       }
       `;
       const expect = `
@@ -280,6 +318,7 @@ describe("apiview: tests", () => {
   describe("enums", () => {
     it("literal labels", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {  
         enum SomeEnum {
@@ -302,6 +341,7 @@ describe("apiview: tests", () => {
 
     it("string-backed values", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         enum SomeStringEnum {
@@ -324,6 +364,7 @@ describe("apiview: tests", () => {
 
     it("int-backed values", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         enum SomeIntEnum {
@@ -346,6 +387,7 @@ describe("apiview: tests", () => {
 
     it("spread labels", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
   
@@ -373,6 +415,7 @@ describe("apiview: tests", () => {
   describe("unions", () => {
     it("discriminated union", async () =>{
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         union MyUnion {
@@ -424,6 +467,7 @@ describe("apiview: tests", () => {
 
     it("unnamed union", async () =>{
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         union Animals { Cat, Dog, Snake };
@@ -473,6 +517,7 @@ describe("apiview: tests", () => {
   describe("operations", () => {
     it("templated", async () =>{
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         model FooParams {
@@ -490,6 +535,23 @@ describe("apiview: tests", () => {
             ...FooParams
           },
           {
+            parameters: {
+              @query
+              @doc("The collection id.")
+              fooId: string
+            };
+          }
+        >;
+
+        @route("/named")
+        op NamedGetFoo is ResourceRead<
+          TResource = {
+            @query
+            @doc("The name")
+            name: string,
+            ...FooParams
+          },
+          TParams = {
             parameters: {
               @query
               @doc("The collection id.")
@@ -516,7 +578,25 @@ describe("apiview: tests", () => {
               };
           }
         >;
-  
+
+        @route("/named")
+        op NamedGetFoo is ResourceRead<
+          TResource = {
+            @query
+            @doc("The name")
+            name: string;
+            ...FooParams;
+          },
+          TParams = {
+            parameters:
+              {
+                @query
+                @doc("The collection id.")
+                fooId: string;
+              };
+          }
+        >;
+
         op ResourceRead<TResource, TParams>(
           resource: TResource,
           params: TParams
@@ -533,8 +613,49 @@ describe("apiview: tests", () => {
       validateDefinitionIds(apiview);
     });
   
+    it("templated with empty models", async () =>{
+        const input = `
+        #suppress "deprecated"
+        @TypeSpec.service( { title: "Test", version: "1" } )
+        namespace Azure.Test {
+    
+          op ResourceRead<TResource, TParams>(resource: TResource, params: TParams): TResource;
+    
+          op GetFoo is ResourceRead<{}, {}>;
+  
+          @route("/named")
+          op NamedGetFoo is ResourceRead<
+            TResource = {},
+            TParams = {}
+          >;
+        }`;
+        const expect = `
+        namespace Azure.Test {
+          op GetFoo is ResourceRead<
+            {},
+            {}
+          >;
+  
+          @route("/named")
+          op NamedGetFoo is ResourceRead<
+            TResource = {},
+            TParams = {}
+          >;
+  
+          op ResourceRead<TResource, TParams>(
+            resource: TResource,
+            params: TParams
+          ): TResource;
+        }`;
+        const apiview = await apiViewFor(input, {});
+        const lines = apiViewText(apiview);
+        compare(expect, lines, 9);
+        validateDefinitionIds(apiview);
+    });
+  
     it("with anonymous models", async () =>{
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         op SomeOp(
@@ -569,6 +690,7 @@ describe("apiview: tests", () => {
   describe("interfaces", () => {
     it("simple interface", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         interface Foo {
@@ -608,6 +730,7 @@ describe("apiview: tests", () => {
   describe("string literals", () => {
     it("long strings", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {  
         @doc("""
@@ -636,6 +759,7 @@ describe("apiview: tests", () => {
 
     it("short strings", async () => {
       const input = `
+      #suppress "deprecated"
       @TypeSpec.service( { title: "Test", version: "1" } )
       namespace Azure.Test {
         @doc("Short string")
@@ -654,4 +778,133 @@ describe("apiview: tests", () => {
       validateDefinitionIds(apiview);
     });  
   });
+
+  describe("string templates", () => {
+    it("templates", async () => {
+      const input = `
+      #suppress "deprecated"
+      @TypeSpec.service( { title: "Test", version: "1" } )
+      namespace Azure.Test {  
+        alias myconst = "foobar";
+        model Person {
+          simple: "Simple \${123} end";
+          multiline: """
+            Multi
+              \${123}
+              \${true}
+            line
+          """;
+          ref: "Ref this alias \${myconst} end";
+          template: Template<"custom">;          
+        }
+        alias Template<T extends valueof string> = "Foo \${T} bar";
+      }`;
+
+      const expect = `
+      namespace Azure.Test {
+        model Person {
+          simple: "Simple \${123} end";
+          multiline: """
+              Multi
+                \${123}
+                \${true}
+              line
+          """;
+          ref: "Ref this alias \${myconst} end";
+          template: Template<"custom">;
+        }
+
+        alias myconst = "foobar";
+
+        alias Template<T extends valueof string> = "Foo \${T} bar";
+      }
+      `;
+      const apiview = await apiViewFor(input, {});
+      const lines = apiViewText(apiview);
+      compare(expect, lines, 9);
+      validateDefinitionIds(apiview);
+    });
+  });
+
+  describe("suppressions", () => {
+    it("suppression on model", async () => {
+      const input = `
+      #suppress "deprecated"
+      @TypeSpec.service( { title: "Test", version: "1" } )
+      namespace Azure.Test {  
+        #suppress "foo" "bar"
+        @doc("Foo Model")
+        model Foo {
+          name: string;
+        }
+      }
+      `;
+      const expect = `
+      namespace Azure.Test {
+        #suppress "foo" "bar"
+        @doc("Foo Model")
+        model Foo {
+          name: string;
+        }
+      }
+      `;
+      const apiview = await apiViewFor(input, {});
+      const lines = apiViewText(apiview);
+      compare(expect, lines, 9);
+      validateDefinitionIds(apiview);
+    });
+
+    it("suppression on namespace", async () => {
+      const input = `
+      #suppress "deprecated"
+      @TypeSpec.service( { title: "Test", version: "1" } )
+      namespace Azure.Test {  
+        #suppress "foo" "bar"
+        @doc("SubNamespace")
+        namespace SubNamespace {
+          model Blah {
+            name: string;
+          }      
+        }
+      }
+      `;
+      const expect = `
+      namespace Azure.Test {
+      }
+
+      #suppress "foo" "bar"
+      @doc("SubNamespace")
+      namespace Azure.Test.SubNamespace {
+        model Blah {
+          name: string;
+        }
+      }
+      `;
+      const apiview = await apiViewFor(input, {});
+      const lines = apiViewText(apiview);
+      compare(expect, lines, 9);
+      validateDefinitionIds(apiview);
+    });
+
+    it("suppression on operation", async () => {
+        const input = `
+        #suppress "deprecated"
+        @TypeSpec.service( { title: "Test", version: "1" } )
+        namespace Azure.Test {
+            #suppress "foo" "bar"
+            op someOp(): void;
+        }
+        `;
+        const expect = `
+        namespace Azure.Test {
+          #suppress "foo" "bar"
+          op someOp(): void;
+        }
+        `;
+        const apiview = await apiViewFor(input, {});
+        const lines = apiViewText(apiview);
+        compare(expect, lines, 9);
+        validateDefinitionIds(apiview);
+      });
+    });
 });

@@ -28,12 +28,30 @@ extends:
     ServiceProject: Azure.Sdk.Tools.PipelineWitness
     TestProject: Azure.Sdk.Tools.PipelineWitness.Tests
     Production:
-      EnvironmentName: pipelinewitnessprod
+      EnvironmentName: package-publish
       ResourceGroupName: pipelinewitnessprod
       AzureSubscription: Azure SDK Engineering System
       ResourceName: pipelinewitnessprod-app
+    ProductionArmSteps:
+      - checkout: self
+      - task: AzureCLI@2
+        displayName: 'Deploy ARM Template'
+        inputs:
+          azureSubscription: Azure SDK Engineering System
+          scriptType: pscore
+          scriptPath: tools/pipeline-witness/infrastructure/deploy.ps1
+          arguments: '-target production'
     Staging:
-      EnvironmentName: pipelinewitnessstaging
+      EnvironmentName: package-publish
       ResourceGroupName: pipelinewitnessstaging
       AzureSubscription: Azure SDK Engineering System
       ResourceName: pipelinewitnessstaging-app
+    StagingArmSteps:
+      - checkout: self
+      - task: AzureCLI@2
+        displayName: 'Deploy ARM Template'
+        inputs:
+          azureSubscription: Azure SDK Engineering System
+          scriptType: pscore
+          scriptPath: tools/pipeline-witness/infrastructure/deploy.ps1
+          arguments: '-target staging'

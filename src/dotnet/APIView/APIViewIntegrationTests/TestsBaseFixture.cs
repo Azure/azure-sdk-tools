@@ -18,6 +18,8 @@ using APIView.Identity;
 using APIViewWeb.Managers;
 using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Options;
+using Microsoft.ApplicationInsights;
 
 namespace APIViewIntegrationTests
 {
@@ -26,24 +28,32 @@ namespace APIViewIntegrationTests
         private readonly CosmosClient _cosmosClient;
         private readonly BlobContainerClient _blobCodeFileContainerClient;
         private readonly BlobContainerClient _blobOriginalContainerClient;
+        private IConfigurationRoot _config;
+        private readonly string _cosmosDBname = "ManagerTestsDB";
         
         public PackageNameManager PackageNameManager { get; private set; }
         public ReviewManager ReviewManager { get; private set; }
+        public CommentsManager CommentsManager { get; private set; }
+        public CodeFileManager CodeFileManager { get; private set; }
+        public APIRevisionsManager APIRevisionManager { get; private set; }
         public BlobCodeFileRepository BlobCodeFileRepository { get; private set; }
         public CosmosReviewRepository ReviewRepository { get; private set; }
+        public CosmosAPIRevisionsRepository APIRevisionRepository { get; private set; }
         public CosmosCommentsRepository CommentRepository { get; private set; }
         public ClaimsPrincipal User { get; private set; }
         public  string TestDataPath { get; private set; }
 
         public TestsBaseFixture()
         {
-            var config = new ConfigurationBuilder()
+            _config = new ConfigurationBuilder()
                .AddEnvironmentVariables(prefix: "APIVIEW_")
                .AddUserSecrets(typeof(TestsBaseFixture).Assembly)
                .Build();
 
+            _config["CosmosDBName"] = _cosmosDBname;
+
             var services = new ServiceCollection();
-            services.AddSingleton<IConfiguration>(config);
+            services.AddSingleton<IConfiguration>(_config);
             services.AddMemoryCache();
             services.AddSingleton<PackageNameManager>();
             services.AddSingleton<LanguageService, JsonLanguageService>();
@@ -64,28 +74,33 @@ namespace APIViewIntegrationTests
             PackageNameManager = serviceProvider.GetService<PackageNameManager>();
             User = TestUser.GetTestuser();
 
-            _cosmosClient = new CosmosClient(config["Cosmos:ConnectionString"]);
-            var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync("APIView").Result;
+            _cosmosClient = new CosmosClient(_config["Cosmos:ConnectionString"]);
+            var dataBaseResponse = _cosmosClient.CreateDatabaseIfNotExistsAsync(_config["CosmosDBName"]).Result;
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Reviews", "/id").Wait();
+            dataBaseResponse.Database.CreateContainerIfNotExistsAsync("APIRevisions", "/ReviewId").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Comments", "/ReviewId").Wait();
             dataBaseResponse.Database.CreateContainerIfNotExistsAsync("Profiles", "/id").Wait();
-            ReviewRepository = new CosmosReviewRepository(config, _cosmosClient);
-            CommentRepository = new CosmosCommentsRepository(config, _cosmosClient);
-            var cosmosUserProfileRepository = new CosmosUserProfileRepository(config, _cosmosClient);
+            dataBaseResponse.Database.CreateContainerIfNotExistsAsync("PullRe", "/id").Wait();
+            ReviewRepository = new CosmosReviewRepository(_config, _cosmosClient);
+            APIRevisionRepository = new CosmosAPIRevisionsRepository(_config, _cosmosClient);
+            CommentRepository = new CosmosCommentsRepository(_config, _cosmosClient);
+            var cosmosUserProfileRepository = new CosmosUserProfileRepository(_config, _cosmosClient);
 
-            _blobCodeFileContainerClient = new BlobContainerClient(config["Blob:ConnectionString"], "codefiles");
-            _blobOriginalContainerClient = new BlobContainerClient(config["Blob:ConnectionString"], "originals");
+            _blobCodeFileContainerClient = new BlobContainerClient(_config["Blob:ConnectionString"], "codefiles");
+            _blobOriginalContainerClient = new BlobContainerClient(_config["Blob:ConnectionString"], "originals");
             _ = _blobCodeFileContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
             _ = _blobOriginalContainerClient.CreateIfNotExistsAsync(PublicAccessType.BlobContainer);
 
-            BlobCodeFileRepository = new BlobCodeFileRepository(config, memoryCache);
-            var blobOriginalsRepository = new BlobOriginalsRepository(config);
+            BlobCodeFileRepository = new BlobCodeFileRepository(_config, memoryCache);
+            var blobOriginalsRepository = new BlobOriginalsRepository(_config);
 
             var authorizationServiceMoq = new Mock<IAuthorizationService>();
             authorizationServiceMoq.Setup(_ => _.AuthorizeAsync(It.IsAny<ClaimsPrincipal>(), It.IsAny<Object>(), It.IsAny<IEnumerable<IAuthorizationRequirement>>()))
                 .ReturnsAsync(AuthorizationResult.Success);
 
-            var notificationManager = new NotificationManager(config, ReviewRepository, cosmosUserProfileRepository);
+            var telemetryClient = new Mock<TelemetryClient>();
+
+            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, telemetryClient.Object);
 
             var devopsArtifactRepositoryMoq = new Mock<IDevopsArtifactRepository>();
             devopsArtifactRepositoryMoq.Setup(_ => _.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -95,17 +110,36 @@ namespace APIViewIntegrationTests
                 .Returns(Task.CompletedTask);
 
             var signalRHubContextMoq = new Mock<IHubContext<SignalRHub>>();
+            var options = new Mock<IOptions<OrganizationOptions>>();
+
+            CommentsManager = new CommentsManager(
+                 authorizationService: authorizationServiceMoq.Object, commentsRepository: CommentRepository,
+                 notificationManager: notificationManager, options: options.Object);
+
+            CodeFileManager = new CodeFileManager(
+            languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
+            originalsRepository: blobOriginalsRepository, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object);
+
+            APIRevisionManager = new APIRevisionsManager(
+                authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
+                languageServices: languageService, devopsArtifactRepository: devopsArtifactRepositoryMoq.Object,
+                codeFileManager: CodeFileManager, codeFileRepository: BlobCodeFileRepository, apiRevisionsRepository: APIRevisionRepository,
+                originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object,
+                telemetryClient: telemetryClient.Object);
+
 
             ReviewManager = new ReviewManager(
-                authorizationServiceMoq.Object, ReviewRepository, BlobCodeFileRepository, blobOriginalsRepository, CommentRepository,
-                languageService, notificationManager, devopsArtifactRepositoryMoq.Object, PackageNameManager, signalRHubContextMoq.Object);
+                authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
+                apiRevisionsManager: APIRevisionManager, commentManager: CommentsManager, codeFileRepository: BlobCodeFileRepository,
+                commentsRepository: CommentRepository, languageServices: languageService, signalRHubContext: signalRHubContextMoq.Object,
+                telemetryClient: telemetryClient.Object);
 
-            TestDataPath = config["TestPkgPath"];
+            TestDataPath = _config["TestPkgPath"];
         }
 
         public void Dispose()
         {
-            _cosmosClient.GetDatabase("APIView").DeleteAsync().Wait();
+            _cosmosClient.GetDatabase(_cosmosDBname).DeleteAsync().Wait();
             _cosmosClient.Dispose();
 
             _blobCodeFileContainerClient.DeleteIfExists();

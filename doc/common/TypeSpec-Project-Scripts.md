@@ -110,7 +110,6 @@ additionalDirectories:
   - specification/cognitiveservices/OpenAI.Authoring
 commit: 14f11cab735354c3e253045f7fbd2f1b9f90f7ca
 repo: Azure/azure-rest-api-specs
-cleanup: false
 ```
 
 ## TypeSpec-Project-Process.ps1
@@ -165,7 +164,7 @@ It can be found at `./eng/common/scripts/TypeSpec-Project-Generate.ps1`.  It tak
 - input: 
     - ProjectDirectory (required)
     - TypespecAdditionalOptions (optional)
-      addtional typespec emitter options, separated by semicolon if more than one, e.g. option1=value1;option2=value2
+      additional typespec emitter options, separated by semicolon if more than one, e.g. option1=value1;option2=value2
     - SaveInputs (optional)
       saves the temporary files during execution, default value is false
 

@@ -6,5 +6,6 @@ import "./pages/index.ts";
 import "./pages/review.ts";
 import "./pages/revisions.ts";
 import "./pages/user-profile.ts";
+import "./pages/samples.ts";
 
 

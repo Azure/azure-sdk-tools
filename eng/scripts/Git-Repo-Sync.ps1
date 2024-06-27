@@ -77,7 +77,7 @@ if (!$SourceBranch) {
   $SourceBranch = $defaultBranch
 }
 
-git fetch --no-tags Source $SourceBranch
+git fetch --filter=tree:0 --no-tags Source $SourceBranch
 FailOnError "Failed to fetch $($SourceRepo):$($SourceBranch)"
 
 git checkout ${SourceBranch}
@@ -99,7 +99,7 @@ try {
     FailOnError "Failed to push to $($TargetRepo):$($TargetBranch)"
 
   } else {
-    git fetch --no-tags Target $TargetBranch
+    git fetch --filter=tree:0 --no-tags Target $TargetBranch
     FailOnError "Failed to fetch TargetBranch $($TargetBranch)."
 
     git checkout -B target_branch "refs/remotes/Target/$($TargetBranch)"

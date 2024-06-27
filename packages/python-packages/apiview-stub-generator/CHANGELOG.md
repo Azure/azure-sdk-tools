@@ -1,5 +1,11 @@
 # Release History
 
+## Version 0.3.12 (2024-02-27)
+Add support for Cross Language Package ID.
+
+## Version 0.3.11 (2024-1-11)
+Remove ePylint dependency.
+
 ## Version 0.3.10 (2023-11-17)
 Update package version in API review codefile
 

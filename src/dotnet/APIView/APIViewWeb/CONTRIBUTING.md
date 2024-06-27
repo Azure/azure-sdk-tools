@@ -47,7 +47,7 @@ Following are tools required to develop and run test instance of APIView to veri
 - Xcode 10.2 or higher (Optional: Only to generate and test Go reviews)
  - Azure subscription with permission to create storage account and Cosmos DB instance.
 
-In addition to local machine setup, you will also require an Azure storage account to store source and stub file and Azure Cosmos database instance to store review metadata. We have added a section below with more details on Azure resources required for testing.
+In addition to local machine setup, you will also require an Azure storage account to store source and stub file, an Azure App Configuration instance, and Azure Cosmos database instance to store review metadata. We have added a section below with more details on Azure resources required for testing.
 
 
 ### Azure resources required to run APIView instance locally
@@ -62,18 +62,20 @@ Create following Azure resources in your Azure subscription.
  - Create three blob storage containers with names as follows within the storage account created in previous step: `originals`, `codefiles`, and `usagesamples`
 
 #### Azure Cosmos DB
- - Create a Cosmos DB account in Azure and then create a database with name `APIView` in this account. Once database is created successfully then create three containers in `APIView` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
+ - Create a Cosmos DB account in Azure and then create a database with name `APIViewV2` in this account. Once database is created successfully then create three containers in `APIViewV2` database. Following are the list of containers and partition key for each of them. Partition key is case sensitive.
 
    | Container Name      | Partition Key      |
    |---------------------|--------------------|
    | Reviews             | /id                |
+   | APIRevisions        | /ReviewId          |
    | Comments            | /ReviewId          |
-   | PullRequests        | /PullRequestNumber |
-   | UsageSamples        | /ReviewId          |
-   | UserPreference      | /UserName          |
+   | PullRequests        | /ReviewId          |
+   | SamplesRevisions    | /ReviewId          |
    | Profiles            | /id                |
-   
 
+#### Azure App Configuration
+
+- Create an Azure App Configuration instance in Azure. [Azure App Configuration](https://learn.microsoft.com/en-us/azure/azure-app-configuration/quickstart-azure-app-configuration-create?tabs=azure-portal), it can be empty for basic local debugging.
 
 ## Getting Started
 
@@ -114,10 +116,12 @@ Following configuration is required to connect local debug instance to Azure res
     "Cosmos": {
         "ConnectionString": "<connection string to cosmos db>"
     },
+    "CosmosDBName": "APIViewV2",
     "github-access-token": "",
     "ApiKey": "",
     "PYTHONEXECUTABLEPATH": "<Full path to python executable>",
-    "BackgroundTaskDisabled": true
+    "BackgroundTaskDisabled": true,
+    "APPCONFIG": "<connection string to app configuration>"
   }
 
 ### Compile TypeScript code
@@ -143,7 +147,7 @@ Okay. I have followed all the steps and now I need to verify if it's running fin
 
 - Home page should be displayed with an empty list of reviews. 
 
-- Click `Create review` button and upload previously downloaded `Azure.Template` package. It should show API review for Azure.Template if everything is setup correctly.
+- Click `Create Review` button and upload previously downloaded `Azure.Template` package. It should show API review for Azure.Template if everything is setup correctly.
 
 
 If any of the above steps is showing errors, following are the items to check:

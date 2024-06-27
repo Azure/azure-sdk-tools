@@ -3,9 +3,8 @@ targetScope = 'subscription'
 param subscriptionId string = ''
 param groupSuffix string
 param clusterName string
+param infraNamespace string = 'stress-infra'
 param clusterLocation string = 'westus3'
-param staticTestKeyvaultName string
-param staticTestKeyvaultGroup string
 param monitoringLocation string = 'centralus'
 param defaultAgentPoolMinNodes int = 6
 param defaultAgentPoolMaxNodes int = 20
@@ -13,6 +12,8 @@ param maintenanceWindowDay string = 'Monday'
 param tags object
 // AKS does not allow agentPool updates via existing managed cluster resources
 param updateNodes bool = false
+
+var workloadAppPoolCount = 5
 
 // Azure Developer Platform Team Group
 // https://ms.portal.azure.com/#blade/Microsoft_AAD_IAM/GroupDetailsMenuBlade/Overview/groupId/56709ad9-8962-418a-ad0d-4b25fa962bae
@@ -154,17 +155,28 @@ module keyvault 'cluster/keyvault.bicep' = {
     }
 }
 
-module accessPolicy 'cluster/static-vault-access-policy.bicep' = {
-    name: 'accessPolicy'
-    scope: resourceGroup(staticTestKeyvaultGroup)
-    params: {
-        vaultName: staticTestKeyvaultName
-        tenantId: subscription().tenantId
-        objectId: cluster.outputs.secretProviderObjectId
-    }
+module workloadAppIdentities 'cluster/workloadappidentities.bicep' = if (!updateNodes) {
+  name: 'workloadAppIdentities'
+  scope: group
+  params: {
+    groupSuffix: groupSuffix
+    location: clusterLocation
+    infraNamespace: infraNamespace
+    infraWorkloadServiceAccountName: 'workload-svc'
+    workloadAppIssuer: cluster.outputs.workloadAppIssuer
+    workloadAppPoolCount: workloadAppPoolCount
+  }
 }
 
-output STATIC_TEST_SECRETS_KEYVAULT string = staticTestKeyvaultName
+module workloadAppRoles 'cluster/workloadapproles.bicep' = if (!updateNodes) {
+  name: 'workloadAppRoles'
+  scope: subscription()
+  params: {
+    infraWorkloadAppObjectId: workloadAppIdentities.outputs.infraWorkloadAppObjectId
+    workloadApps: workloadAppIdentities.outputs.workloadAppInfo
+  }
+}
+
 output CLUSTER_TEST_SECRETS_KEYVAULT string = keyvault.outputs.keyvaultName
 output SECRET_PROVIDER_CLIENT_ID string = cluster.outputs.secretProviderClientId
 output CLUSTER_NAME string = cluster.outputs.clusterName
@@ -181,3 +193,8 @@ output STATUS_DASHBOARD_LINK string = 'https://ms.portal.azure.com/#@microsoft.o
 output RESOURCE_GROUP string = group.name
 output SUBSCRIPTION_ID string = subscriptionId
 output TENANT_ID string = subscription().tenantId
+output INFRA_WORKLOAD_APP_SERVICE_ACCOUNT_NAME string = 'workload-svc'
+output INFRA_WORKLOAD_APP_CLIENT_ID string = workloadAppIdentities.outputs.infraWorkloadAppClientId
+output INFRA_WORKLOAD_APP_OBJECT_ID string = workloadAppIdentities.outputs.infraWorkloadAppObjectId
+output WORKLOAD_APP_ISSUER string = cluster.outputs.workloadAppIssuer
+output WORKLOAD_APPS string = string(workloadAppIdentities.outputs.workloadAppInfo)

@@ -1,9 +1,9 @@
 import { parseArgs } from "node:util";
 import { Logger, printUsage, printVersion } from "./log.js";
-import * as path from "node:path";
 import process from  "node:process";
 import { doesFileExist } from "./network.js";
 import PromptSync from "prompt-sync";
+import { normalizePath, resolvePath } from "@typespec/compiler";
 
 export interface Options {
   debug: boolean;
@@ -17,6 +17,9 @@ export interface Options {
   isUrl: boolean;
   localSpecRepo?: string;
   emitterOptions?: string;
+  generateLockFile: boolean;
+  swaggerReadme?: string;
+  arm: boolean;
 }
 
 export async function getOptions(): Promise<Options> {
@@ -52,15 +55,27 @@ export async function getOptions(): Promise<Options> {
       ["emitter-options"]: {
         type: "string",
       },
+      ["generate-lock-file"]: {
+        "type": "boolean",
+      },
       ["local-spec-repo"]: {
         type: "string",
+      },
+      ["no-prompt"]: {
+        type: "boolean",
       },
       ["save-inputs"]: {
         type: "boolean",
       },
       ["skip-sync-and-generate"]: {
         type: "boolean",
-      }
+      },
+      ["swagger-readme"]: {
+        type: "string",
+      },
+      arm: {
+        type: "boolean",
+      },
     },
   });
   if (values.help) {
@@ -73,45 +88,69 @@ export async function getOptions(): Promise<Options> {
     process.exit(0);
   }
 
-  if (positionals.length === 0) {
-    Logger.error("Command is required");
-    printUsage();
-    process.exit(1);
-  }
+  let isUrl = true;
+  const supportedCommands = ["sync", "generate", "update", "init", "convert"];
+  const command = positionals[0];
 
-  if (positionals[0] !== "sync" && positionals[0] !== "generate" && positionals[0] !== "update" && positionals[0] !== "init") {
-    Logger.error(`Unknown command ${positionals[0]}`);
-    printUsage();
-    process.exit(1);
-  }
-
-  let isUrl = false;
-  if (positionals[0] === "init") {
-    if (!values["tsp-config"]) {
-      Logger.error("tspConfig is required");
+  if (!values["generate-lock-file"]) {
+    if (positionals.length === 0) {
+      Logger.error("Command is required");
       printUsage();
       process.exit(1);
     }
-    if (await doesFileExist(values["tsp-config"])) {
-      isUrl = true;
+
+    if (!command) {
+      Logger.error("Command is required");
+      printUsage();
+      process.exit(1);
     }
-    if (!isUrl) {
-      if (!values.commit || !values.repo) {
-        Logger.error("The commit and repo options are required when tspConfig is a local directory");
+
+    if (!supportedCommands.includes(command)) {
+      Logger.error(`Unknown command ${command}`);
+      printUsage();
+      process.exit(1);
+    }
+
+    if (command === "init") {
+      if (!values["tsp-config"]) {
+        Logger.error("A tspconfig.yaml is required to initialize a client library");
+        printUsage();
+        process.exit(1);
+      }
+      if (await doesFileExist(values["tsp-config"])) {
+        isUrl = false;
+      }
+      if (!isUrl) {
+        if (!values.commit || !values.repo) {
+          Logger.error("The commit and repo options are required when tspConfig is a local directory");
+          printUsage();
+          process.exit(1);
+        }
+      }
+    }
+
+    if (command === "convert") {
+      if (!values["swagger-readme"]) {
+        Logger.error("Must specify a swagger readme with the `--swagger-readme` flag");
         printUsage();
         process.exit(1);
       }
     }
   }
+
   // By default, assume that the command is run from the output directory
   let outputDir = ".";
   if (values["output-dir"]) {
     outputDir = values["output-dir"];
   }
-  outputDir = path.resolve(path.normalize(outputDir));
+  outputDir = resolvePath(process.cwd(), outputDir);
 
+  let noPrompt = false;
+  if (values["no-prompt"]) {
+    noPrompt = true;
+  }
   let useOutputDir;
-  if (process.stdin.isTTY) {
+  if (process.stdin.isTTY && !noPrompt) {
     // Ask user is this is the correct output directory
     const prompt = PromptSync();
     useOutputDir = prompt("Use output directory '" + outputDir + "'? (y/n) ", "y");
@@ -127,13 +166,13 @@ export async function getOptions(): Promise<Options> {
       printUsage();
       process.exit(1);
     }
-    outputDir = path.resolve(path.normalize(newOutputDir));
+    outputDir = resolvePath(normalizePath(newOutputDir));
   }
   Logger.info("Using output directory '" + outputDir + "'");
 
   return {
     debug: values.debug ?? false,
-    command: positionals[0],
+    command: command ?? "",
     tspConfig: values["tsp-config"],
     noCleanup: values["save-inputs"] ?? false,
     skipSyncAndGenerate: values["skip-sync-and-generate"] ?? false,
@@ -143,5 +182,8 @@ export async function getOptions(): Promise<Options> {
     isUrl: isUrl,
     localSpecRepo: values["local-spec-repo"],
     emitterOptions: values["emitter-options"],
+    generateLockFile: values["generate-lock-file"] ?? false,
+    swaggerReadme: values["swagger-readme"],
+    arm: values.arm ?? false,
   };
 }

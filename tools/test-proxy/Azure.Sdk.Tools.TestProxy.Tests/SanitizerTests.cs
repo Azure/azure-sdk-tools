@@ -1,4 +1,4 @@
-﻿using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
 using Azure.Sdk.Tools.TestProxy.Sanitizers;
 using Microsoft.AspNetCore.Http;
@@ -34,6 +34,33 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             session.Session.Sanitize(OAuthResponseSanitizer);
 
             Assert.Empty(session.Session.Entries);
+        }
+
+        [Fact]
+        public void SanitizerDecodesUnicodeAmpersandSanitizesClientIdAndSecret()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/request_with_encoding.json");
+
+            var clientSan = new BodyRegexSanitizer(regex: "(client_id=)(?<cid>[^&\\\"]+)", groupForReplace: "cid");
+            var secretSan = new BodyRegexSanitizer(regex: "client_secret=(?<secret>[^&\\\"]+)", groupForReplace: "secret");
+
+            session.Session.Sanitize(clientSan);
+            session.Session.Sanitize(secretSan);
+
+            Assert.Equal("client_id=Sanitized&grant_type=client_credentials&client_info=1&client_secret=Sanitized&claims=%7B%22access_token=blahblah", Encoding.UTF8.GetString(session.Session.Entries[0].Request.Body));
+        }
+
+        [Fact]
+        public void EnsureSASCleanupDoesntOverrunInXML()
+        {
+            var sanitizerDictionary = new SanitizerDictionary();
+            var sessionwithXmlBody = TestHelpers.LoadRecordSession("Test.RecordEntries/xml_body_with_sas_present.json");
+
+            Assert.True(sanitizerDictionary.Sanitizers.TryGetValue("AZSDK1007", out RegisteredSanitizer SASURISanitizer));
+
+            sessionwithXmlBody.Session.Sanitize(SASURISanitizer.Sanitizer);
+
+            Assert.Contains("<CopyProgress>1024/1024</CopyProgress>", Encoding.UTF8.GetString(sessionwithXmlBody.Session.Entries[0].Response.Body));
         }
 
         [Fact]
@@ -125,7 +152,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         {
 
             RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
-            testRecordingHandler.Sanitizers.Clear();
+            testRecordingHandler.SanitizerRegistry.Clear();
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["x-abstraction-identifier"] = "RegexEntrySanitizer";
             httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
@@ -142,7 +169,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             };
 
             await controller.AddSanitizer();
-            var sanitizer = testRecordingHandler.Sanitizers[0];
+            var sanitizer = testRecordingHandler.SanitizerRegistry.GetSanitizers()[0];
             Assert.True(sanitizer is RegexEntrySanitizer);
 
 
@@ -275,6 +302,35 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.NotEqual(originalHeaderValue, testValue);
             Assert.StartsWith("https://fakeaccount.table.core.windows.net", testValue);
+        }
+
+
+        [Fact]
+        public void HeaderRegexSanitizerMultipartReplace()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_header.json");
+            var targetEntry = session.Session.Entries[0];
+            var targetKey = "Cookie";
+
+            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, value: "REDACTED", regex: "SuperDifferent");
+            session.Session.Sanitize(headerRegexSanitizer);
+
+            Assert.Equal("REDACTEDCookie", targetEntry.Request.Headers[targetKey][0]);
+            Assert.Equal("KindaDifferentCookie", targetEntry.Request.Headers[targetKey][1]);
+        }
+
+        [Fact]
+        public void HeaderRegexSanitizerMultipartReplaceLatterOnly()
+        {
+            var session = TestHelpers.LoadRecordSession("Test.RecordEntries/multipart_header.json");
+            var targetEntry = session.Session.Entries[0];
+            var targetKey = "Cookie";
+
+            var headerRegexSanitizer = new HeaderRegexSanitizer(targetKey, value: "REDACTED", regex: "KindaDifferent");
+            session.Session.Sanitize(headerRegexSanitizer);
+
+            Assert.Equal("SuperDifferentCookie", targetEntry.Request.Headers[targetKey][0]);
+            Assert.Equal("REDACTEDCookie", targetEntry.Request.Headers[targetKey][1]);
         }
 
         [Fact]

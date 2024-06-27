@@ -4,18 +4,12 @@ using APIViewWeb.Models;
 using System;
 using System.Collections.Generic;
 using AutoMapper;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Azure.Cosmos;
 using System.Threading.Tasks;
-using System.Text.Json;
-using System.Collections;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow;
-using System.Linq;
-using Octokit;
 using System.Threading;
 using Microsoft.Extensions.Primitives;
 using System.Security.Claims;
 using APIViewWeb.Managers;
+using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.Repositories
 {
@@ -54,13 +48,13 @@ namespace APIViewWeb.Repositories
             }
         }
 
-        public IEnumerable<ReviewType> GetFilterType(string userName, ReviewType defaultType = ReviewType.Automatic)
+        public IEnumerable<APIRevisionType> GetFilterType(string userName, APIRevisionType defaultType = APIRevisionType.Automatic)
         {
             if (_cache.TryGetValue(userName, out UserPreferenceModel _preference))
             {
-                return _preference.FilterType;
+                return _preference.APIRevisionType;
             }
-            return new List<ReviewType> { defaultType };
+            return new List<APIRevisionType> { defaultType };
         }
 
         private void UpdateCache(UserPreferenceModel preference, ClaimsPrincipal User) 

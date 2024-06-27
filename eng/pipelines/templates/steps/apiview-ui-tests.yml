@@ -53,6 +53,8 @@ steps:
     AZURE_TENANT_ID: "$(apiview-appconfig-tenant-id)"
     AZURE_CLIENT_SECRET: "$(apiview-appconfig-client-secret)"
     APIVIEW_APPROVERS: "azure-sdk"
+    BackgroundTaskDisabled: "false"
+    PullRequestBackgroundTaskDisabled: "true"
 
 - pwsh: |
     azcopy cp '${{ parameters.TestingDataContainer }}/*' '$(Build.BinariesDirectory)' --recursive=true

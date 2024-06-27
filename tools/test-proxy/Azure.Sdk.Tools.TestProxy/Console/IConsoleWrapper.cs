@@ -1,4 +1,4 @@
-﻿namespace Azure.Sdk.Tools.TestProxy.Console
+namespace Azure.Sdk.Tools.TestProxy.Console
 {
     /// <summary>
     /// IConsoleWrapper is just an interface around Console functions. This is necessary for testing

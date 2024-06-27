@@ -25,9 +25,11 @@ use it to look for relevant configuration files. To specify a different output d
 the `-o` or `--output-dir` option.
 
 ### init
-Initialize the SDK project folder from a tspconfig.yaml. When using this command pass in a path to a local or remote tspconfig.yaml, using the `-c` or `--tsp-config` flag.
+Initialize the client library directory using a tspconfig.yaml. When running this command pass in a path to a local or remote tspconfig.yaml with the `-c` or `--tsp-config` flag.
 
-The command generates the appropriate SDK folder in the repository, creates a [tsp-location.yaml](#tsp-locationyaml) file to control generation, and performs an initial generation of the client library. If you want to skip client library generation, then pass the `--skip-sync-and-generate` flag.
+The `init` command generates a directory structure following the standard pattern used across Azure SDK language repositories, creates a [tsp-location.yaml](#tsp-locationyaml) file to control generation, and performs an initial generation of the client library. If you want to skip client library generation, then pass the `--skip-sync-and-generate` flag.
+
+> IMPORTANT: This command should be run from the root of the repository.
 
 ### update
 Sync and generate client libraries from a TypeSpec project. The `update` command will look for a [tsp-location.yaml](#tsp-locationyaml) file in your current directory to sync a TypeSpec project and generate a client library.
@@ -40,18 +42,26 @@ By default the `sync` command will look for a tsp-location.yaml to get the proje
 ### generate
 Generate a client library from a TypeSpec project. The `generate` command should be run after the `sync` command. `generate` relies on the existence of the `TempTypeSpecFiles` directory created by the `sync` command and on an `emitter-package.json` file checked into your repository at the following path: `<repo root>/eng/emitter-package.json`. The `emitter-package.json` file is used to install project dependencies and get the appropriate emitter package.
 
+### convert
+Convert an existing swagger specification to a TypeSpec project. This command should only be run once to get started working on a TypeSpec project. TypeSpec projects will need to be optimized manually and fully reviewed after conversion. When using this command a path or url to a swagger README file is required through the `--swagger-readme` flag.
+
 ## Options
 ```
+  --arm                     Convert ARM swagger specification to TypeSpec       [boolean]
   -c, --tsp-config          The tspconfig.yaml file to use                      [string]
   --commit                  Commit to be used for project init or update        [string]
   -d, --debug               Enable debug logging                                [boolean]
   --emitter-options         The options to pass to the emitter                  [string]
+  --generate-lock-file      Generate a lock file under the eng/ directory from 
+                            an existing emitter-package.json                    [boolean]
   -h, --help                Show help                                           [boolean]
   --local-spec-repo         Path to local repository with the TypeSpec project  [string]
+  --no-prompt               Skip prompting for output directory confirmation    [boolean]
   --save-inputs             Don't clean up the temp directory after generation  [boolean]
   --skip-sync-and-generate  Skip sync and generate during project init          [boolean]
+  --swagger-readme          Path or url to swagger readme file                  [string]
   -o, --output-dir          Specify an alternate output directory for the 
-                            generated files. Default is your local directory.   [string]
+                            generated files. Default is your current directory  [string]
   --repo                    Repository where the project is defined for init 
                             or update                                           [string]
   -v, --version             Show version number                                 [boolean]
@@ -112,9 +122,18 @@ This tool creates a `TempTypeSpecFiles` directory when syncing a TypeSpec projec
 TempTypeSpecFiles/
 ```
 
-### emitter-package.json
+## Per repository set up
 
-This will be the package.json that gets used when `npm install` is called by this tool. This replaces the package.json checked into the spec repo and allows each language to fix the version of their emitter to be the same for all packages in their repo.
+Each repository that intends to support `tsp-client` for generating and updating client libraries will need to set up an `emitter-package.json` file under the `eng/` directory at the root of the repository. Client libraries generated with this tool will be outputted based on the information in the tspconfig.yaml file of the TypeSpec specification. The service directory is specified through the `parameters.service-dir.default` parameter in the tspconfig.yaml, additionally the `package-dir` option for the specific emitter is appended to the end of the path.
+
+See the following example of a valid tspconfig.yaml file: https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml
+
+Using the tspconfig.yaml linked above, by default, the client libraries will be generated in the following directory for C#: `<repo>/sdk/contosowidgetmanager/Azure.Template.Contoso/`.
+
+
+### emitter-package.json (Required)
+
+`emitter-package.json` will be used the same as a `package.json` file. If the is no `emitter-package-lock.json` file, the tool will run `npm install` on the contents of `emitter-package.json`. This file allows each repository to pin the version of their emitter and other dependencies to be used when generating client libraries.
 The file should be checked into this location `<root of repo>/eng/emitter-package.json`
 
 Example:
@@ -128,4 +147,13 @@ Example:
 }
 ```
 
-Note that tsp compile currently requires the "main" line to be there.
+> NOTE: tsp compile currently requires the "main" line to be there.
+
+> NOTE: This file replaces the package.json checked into the `azure-rest-api-spec` repository. 
+
+### emitter-package-lock.json (Optional)
+
+`emitter-package-lock.json` will be used the same as a `package-lock.json`. The tool will run a clean npm installation before generating client libraries. This file allows consistent dependency trees and allows each repository to control their dependency installation.
+The file should be checked into this location: `<root of repo>/eng/emitter-package-lock.json`
+
+> NOTE: The tool will run `npm ci` to install dependencies, so ensure that the `emitter-package-lock.json` and `emitter-package.json` files both exist and are in sync with each other.

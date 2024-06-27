@@ -22,3 +22,9 @@
 /files/filePath8/           @FakeUser8
 # ServiceLabel: %FakeLabel9 %Service Attention
 /files/filePath9/           @FakeUser9
+
+# ServiceLabel: %FakeLabel4 %FakeLabel9 %Service Attention
+# ServiceOwners: @FakeUser4 @FakeUser9
+
+# ServiceLabel: %FakeLabel10 %FakeLabel4 %Service Attention
+# ServiceOwners: @FakeUser4 @FakeUser10

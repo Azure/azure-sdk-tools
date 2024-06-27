@@ -14,28 +14,28 @@ namespace Azure.Sdk.Tools.CodeownersLinter
 {
     internal class Program
     {
+        const string linterErrorsHelpLink = "https://aka.ms/azsdk/codeownersLinterErrors";
         static void Main(string[] args)
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
             // The storage URIs are in the azure-sdk-write-teams-container-blobs pipeline variable group.
-            // The URIs do not contain the SAS.
             var teamUserBlobStorageUriOption = new Option<string>
                 (name: "--teamUserBlobStorageURI",
-                description: "The team/user blob storage URI without the SAS.");
+                description: "The team/user blob storage URI.");
             teamUserBlobStorageUriOption.AddAlias("-tUri");
             teamUserBlobStorageUriOption.IsRequired = true;
 
             var userOrgVisibilityBlobStorageUriOption = new Option<string>
                 (name: "--userOrgVisibilityBlobStorageURI",
-                description: "The user/org blob storage URI without the SAS.");
+                description: "The user/org blob storage URI.");
             userOrgVisibilityBlobStorageUriOption.AddAlias("-uUri");
             userOrgVisibilityBlobStorageUriOption.IsRequired = true;
 
             var repoLabelBlobStorageUriOption = new Option<string>
                 (name: "--repoLabelBlobStorageURI",
-                description: "The repo/label blob storage URI without the SAS.");
+                description: "The repo/label blob storage URI.");
             repoLabelBlobStorageUriOption.AddAlias("-rUri");
             repoLabelBlobStorageUriOption.IsRequired = true;
 
@@ -67,6 +67,13 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 description: "Generate the baseline error file.");
             generateBaselineOption.AddAlias("-gbl");
 
+            var baseBranchBaselineFileOption = new Option<string>
+                (name: "--baseBranchBaselineFile",
+                description: "The full path to base branch baseline file to be generated or used. The file will be generated if -gbl is set and used to further filter errors if -fbl is set.");
+            baseBranchBaselineFileOption.AddAlias("-bbf");
+            baseBranchBaselineFileOption.IsRequired = false;
+            baseBranchBaselineFileOption.SetDefaultValue(null);
+
             var rootCommand = new RootCommand
             {
                 teamUserBlobStorageUriOption,
@@ -75,7 +82,8 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 repoRootOption,
                 repoNameOption,
                 filterBaselineErrorsOption,
-                generateBaselineOption
+                generateBaselineOption,
+                baseBranchBaselineFileOption
             };
 
             int returnCode = 1;
@@ -97,13 +105,15 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                     string repoName = context.ParseResult.GetValueForOption(repoNameOption);
                     bool filterBaselineErrors = context.ParseResult.GetValueForOption(filterBaselineErrorsOption);
                     bool generateBaseline = context.ParseResult.GetValueForOption(generateBaselineOption);
+                    string baseBranchBaselineFile = context.ParseResult.GetValueForOption(baseBranchBaselineFileOption);
                     returnCode = LintCodeownersFile(teamUserBlobStorageUri,
                                                     userOrgVisibilityBlobStorageUri,
                                                     repoLabelBlobStorageUri,
                                                     repoRoot,
                                                     repoName,
                                                     filterBaselineErrors,
-                                                    generateBaseline);
+                                                    generateBaseline,
+                                                    baseBranchBaselineFile);
                 });
 
             rootCommand.Invoke(args);
@@ -123,6 +133,18 @@ namespace Azure.Sdk.Tools.CodeownersLinter
         /// Verify the arguments and call to process the CODEOWNERS file. If errors are being filtered with a 
         /// baseline, or used to regenerate the baseline, that's done in here. Note that filtering errors and
         /// regenerating the baseline cannot both be done in the same run.
+        /// 
+        /// The baseBranchBaselineFile
+        /// This file will be primarily used in PR validation where two calls will be made. be made. The first
+        /// call will use the -gbl option and generate the secondary file to a different location. It can't use
+        /// the standard CODEOWNERS_baseline_error.txt file because it'll be being used in combination with this
+        /// file. The second call, to verify CODEOWNERS changes in the PR, will verify against the default
+        /// CODEOWNERS_baseline_error.txt and, if there are any remaining errors, check to see if those exist in the
+        /// secondary baseline file. The reason for doing this is prevent PRs from being blocked if there are issues
+        /// in the baseline branch. The typical scenario here will be people leaving the company, the base branch's
+        /// CODEOWNERS hasn't yet been updated to reflect this and because of that any PRs with CODEOWNERS changes
+        /// would get blocked. If the remaining errors in the PR validation exist in the base branch's errors then
+        /// the linter will return a pass instead of a failure.
         /// </summary>
         /// <param name="teamUserBlobStorageUri">URI of the team/user data in blob storate</param>
         /// <param name="userOrgVisibilityBlobStorageUri">URI of the org visibility in blob storage</param>
@@ -131,6 +153,7 @@ namespace Azure.Sdk.Tools.CodeownersLinter
         /// <param name="repoName">The repository name, including org. Eg. Azure/azure-sdk</param>
         /// <param name="filterBaselineErrors">Boolean, if true then errors should be filtered using the repository's baseline.</param>
         /// <param name="generateBaseline">Boolean, if true then regenerate the baseline file from the error encountered during parsing.</param>
+        /// <param name="baseBranchBaselineFile">The name of the base branch baseline file to generate or use.</param>
         /// <returns>integer, used to set the return code</returns>
         /// <exception cref="ArgumentException">Thrown if any arguments, or argument combinations, are invalid.</exception>
         static int LintCodeownersFile(string teamUserBlobStorageUri, 
@@ -139,7 +162,8 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                                       string repoRoot, 
                                       string repoName,
                                       bool   filterBaselineErrors,
-                                      bool   generateBaseline)
+                                      bool   generateBaseline,
+                                      string baseBranchBaselineFile)
         {
             // Don't allow someone to create and use a baseline in the same run
             if (filterBaselineErrors && generateBaseline)
@@ -164,7 +188,20 @@ namespace Azure.Sdk.Tools.CodeownersLinter
             {
                 throw new ArgumentException($"The repository label data for {repoName} does not exist. Should this be running in this repository?");
             }
-            
+
+            bool useBaseBranchBaselineFile = false;
+            if (!string.IsNullOrEmpty(baseBranchBaselineFile))
+            {
+                if ((filterBaselineErrors && File.Exists(baseBranchBaselineFile)) || generateBaseline)
+                {
+                    useBaseBranchBaselineFile = true;
+                }
+                else
+                {
+                    throw new ArgumentException($"The base branch baseline file {baseBranchBaselineFile} does not exist.");
+                }
+            }
+
             string codeownersBaselineFile = Path.Combine(repoRoot, ".github", BaselineConstants.BaselineErrorFile);
             bool codeownersBaselineFileExists = false;
             // If the baseline is to be used, verify that it exists.
@@ -191,7 +228,15 @@ namespace Azure.Sdk.Tools.CodeownersLinter
             // Regenerate the baseline file if that option was selected
             if (generateBaseline)
             {
-                BaselineUtils baselineUtils = new BaselineUtils(codeownersBaselineFile);
+                BaselineUtils baselineUtils = null;
+                if (useBaseBranchBaselineFile)
+                {
+                    baselineUtils = new BaselineUtils(baseBranchBaselineFile);
+                }
+                else
+                {
+                    baselineUtils = new BaselineUtils(codeownersBaselineFile);
+                }
                 baselineUtils.GenerateBaseline(errors);
             }
 
@@ -204,14 +249,30 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 // above and doesn't need to be reported here.
                 if (codeownersBaselineFileExists)
                 {
-                    BaselineUtils baselineUtils = new BaselineUtils(codeownersBaselineFile);
+                    if (errors.Count == 0)
+                    {
+                        Console.WriteLine($"##vso[task.LogIssue type=warning;]There were no CODEOWNERS parsing errors but there is a baseline file {codeownersBaselineFile} for filtering. If the file is empty, or all errors have been fixed, then it should be deleted.");
+                    }
+                    else
+                    {
+                        BaselineUtils baselineUtils = new BaselineUtils(codeownersBaselineFile);
+                        errors = baselineUtils.FilterErrorsUsingBaseline(errors);
+                    }
+                }
+
+                // After the file has been filered with the standard CODEOWNERS baseline file, if there are
+                // still remaining errors and there is a base branch baseline file, further filter with that
+                // file.
+                if (useBaseBranchBaselineFile && errors.Count > 0)
+                {
+                    BaselineUtils baselineUtils = new BaselineUtils(baseBranchBaselineFile);
                     errors = baselineUtils.FilterErrorsUsingBaseline(errors);
                 }
             }
 
             int returnCode = 0;
-            // If there are errors, ensure the returnCode is non-zero and output the errors.
-            if (errors.Count > 0)
+            // If there are errors, and this isn't a baseline generation, ensure the returnCode is non-zero and output the errors.
+            if ((errors.Count > 0) && !generateBaseline)
             {
                 returnCode = 1;
 
@@ -224,6 +285,8 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 {
                     Console.WriteLine(error + Environment.NewLine);
                 }
+
+                Console.WriteLine($"There were linter errors. Please visit {linterErrorsHelpLink} for guidance on how to handle them.");
             }
             return returnCode;
         }

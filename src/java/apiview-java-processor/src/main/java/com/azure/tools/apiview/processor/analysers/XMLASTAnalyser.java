@@ -8,11 +8,11 @@ import com.azure.tools.apiview.processor.model.TypeKind;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static com.azure.tools.apiview.processor.model.TokenKind.COMMENT;
 import static com.azure.tools.apiview.processor.model.TokenKind.KEYWORD;
@@ -51,7 +51,7 @@ public class XMLASTAnalyser implements Analyser {
 
         XMLStreamReader reader = null;
         try {
-            reader = factory.createXMLStreamReader(new FileInputStream(file.toFile()));
+            reader = factory.createXMLStreamReader(Files.newBufferedReader(file));
 
             while (reader.hasNext()) {
                 final int eventType = reader.next();
@@ -126,7 +126,7 @@ public class XMLASTAnalyser implements Analyser {
                     }
                 }
             }
-        } catch (XMLStreamException | FileNotFoundException e) {
+        } catch (XMLStreamException | IOException e) {
             e.printStackTrace();
         } finally {
             if (reader != null) {
@@ -174,7 +174,7 @@ public class XMLASTAnalyser implements Analyser {
         if (attributeCount > 0) {
             for (int i = 0; i < attributeCount; i++) {
                 final String prefix = reader.getAttributePrefix(i);
-                final String key = (prefix == "" ? "" : prefix + ":")  + reader.getAttributeLocalName(i);
+                final String key = (Objects.equals(prefix, "") ? "" : prefix + ":")  + reader.getAttributeLocalName(i);
                 final String value = reader.getAttributeValue(i);
 
                 addAttribute(key, value);

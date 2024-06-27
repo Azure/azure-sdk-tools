@@ -1,0 +1,64 @@
+pool:
+  name: 'azsdk-pool-mms-ubuntu-2204-general'
+  vmImage: 'ubuntu-22.04'
+
+parameters:
+- name: Language
+  type: string
+  default: '.NET'
+  values:
+  - .NET
+  - Java
+  - Python
+  - JavaScript
+  - Go
+  - C++
+  - C
+- name: ServiceName
+  displayName: Service Name (Value should be same as service name in Service Tree)
+  type: string
+  default: ''
+- name: PackageDisplayName
+  displayName: Package Display Name ( for e.g. Azure Core)
+  type: string
+  default: ''
+- name: PackageName
+  displayName: Package Name (e.g. Azure.Core)
+  type: string
+  default: ''
+- name: PackageVersion
+  displayName: Package Version (e.g. 1.0.0)
+  type: string
+  default: ''
+- name: ReleaseDate
+  displayName: Release Date (Format:MM/DD/YYYY)
+  type: string
+  default: ''
+- name: RelatedWorkItemId
+  displayName: Related Work Item ID (Applicable to add release plan work Item as related)
+  type: string
+  default: ''
+- name: Tag
+  type: string
+  default: ''
+
+steps:
+- checkout: self
+
+- task: AzureCLI@2
+  displayName: Create Package Work Item
+  inputs:
+    azureSubscription: opensource-api-connection
+    scriptType: pscore
+    scriptLocation: inlineScript
+    inlineScript: |
+      $(Build.SourcesDirectory)/eng/scripts/Create-Package-WorkItem.ps1 `
+        -PackageLanguage "$(Language)" `
+        -ServiceName "$(ServiceName)" `
+        -PackageDisplayName "$(PackageDisplayName)" `
+        -PackageName "$(PackageName)" `
+        -PackageVersion "$(PackageVersion)" `
+        -ReleaseDate "$(ReleaseDate)" `
+        -RelatedWorkItemId "$(RelatedWorkItemId)" `
+        -Tag "$(Tag)" `
+        -WorkingDir "$(Pipeline.Workspace)"

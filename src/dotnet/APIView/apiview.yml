@@ -30,230 +30,363 @@ pr:
       - src/swift
       - tools/apiview/parsers/js-api-parser
 
-variables:
-  PythonVersion: '3.10'
-  WebClientProjectDirectory: 'src/dotnet/APIView/APIViewWeb/Client'
-  WebProjectPath: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
-  NodeVersion: '18.x'
-  BuildConfiguration: 'Release'
-  TypeScriptGeneratorDirectory: 'tools/apiview/parsers/js-api-parser'
-  GoParserPackagePath: 'src/go'
-  GoVersion: '1.18'
-  NugetSecurityAnalysisWarningLevel: 'none'
-  AzuriteConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1"
-  CosmosEmulatorConnectionString: "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
-  TestingDataContainer: "https://apiviewuitest.blob.core.windows.net/testingdata"
-  ${{ if ne(variables['System.TeamProject'], 'internal') }}:
-    CollectCoverage: false
-  ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-    CollectCoverage: true
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+      - stage: 'Build'
+        displayName: 'Build and Test'
 
-stages:
-  - stage: 'Main'
-    jobs:
-      - job: 'Build'
+        variables:
+          - name: 'PythonVersion'
+            value: '3.10'
+          - name: 'WebClientProjectDirectory'
+            value: 'src/dotnet/APIView/APIViewWeb/Client'
+          - name: WebProjectPath
+            value: 'src/dotnet/APIView/APIViewWeb/APIViewWeb.csproj'
+          - name: NodeVersion
+            value: '18.x'
+          - name: BuildConfiguration
+            value: 'Release'
+          - name: TypeScriptGeneratorDirectory
+            value: 'tools/apiview/parsers/js-api-parser'
+          - name: GoParserPackagePath
+            value: 'src/go'
+          - name: GoVersion
+            value: '1.22.1'
+          - name: NugetSecurityAnalysisWarningLevel
+            value: 'none'
+          - name: AzuriteConnectionString
+            value: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1"
+          - name: CosmosEmulatorConnectionString
+            value: "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=="
+          - name: TestingDataContainer
+            value: "https://apiviewuitest.blob.core.windows.net/testingdata"
+          - ${{ if ne(variables['System.TeamProject'], 'internal') }}:
+            - name: CollectCoverage
+              value: false
+          - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+            - name: CollectCoverage
+              value: true
+          - template: /eng/pipelines/templates/variables/image.yml
 
-        pool:
-          name: azsdk-pool-mms-win-2022-general
-          vmImage: windows-2022
+        jobs:
+          - job: 'Build'
 
-        steps:
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '$(NodeVersion)'
-            displayName: 'Use NodeJS $(NodeVersion)'
+            pool:
+              name: $(WINDOWSPOOL)
+              image: $(WINDOWSVMIMAGE)
+              os: windows
 
-          - task: GoTool@0
-            inputs:
-              version: '$(GoVersion)'
-            displayName: "Use Go $(GoVersion)"
+            steps:
+              - task: NodeTool@0
+                inputs:
+                  versionSpec: '$(NodeVersion)'
+                displayName: 'Use NodeJS $(NodeVersion)'
 
-          - script: |
-              npm install
-            workingDirectory: $(WebClientProjectDirectory)
-            displayName: "Install npm packages"
+              - task: GoTool@0
+                inputs:
+                  version: '$(GoVersion)'
+                displayName: "Use Go $(GoVersion)"
 
-          - script: |
-              npm run-script build
-            workingDirectory: $(WebClientProjectDirectory)
-            displayName: "Build client assets"
+              - script: |
+                  npm install
+                workingDirectory: $(WebClientProjectDirectory)
+                displayName: "Install npm packages"
 
-          - script: |
-              npm install
-            workingDirectory: $(TypeScriptGeneratorDirectory)
-            displayName: "Install npm packages typescript generator"
+              - script: |
+                  npm run-script build
+                workingDirectory: $(WebClientProjectDirectory)
+                displayName: "Build client assets"
 
-          - script: |
-              npm run-script build
-            workingDirectory: $(TypeScriptGeneratorDirectory)
-            displayName: "Build typescript generator"
+              - script: |
+                  npm install
+                workingDirectory: $(TypeScriptGeneratorDirectory)
+                displayName: "Install npm packages typescript generator"
 
-          - task: Maven@3
-            inputs:
-              mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
-              goals: 'clean package'
+              - script: |
+                  npm run-script build
+                workingDirectory: $(TypeScriptGeneratorDirectory)
+                displayName: "Build typescript generator"
 
-            # Below 3 steps to package Python 3.10 is temporary work around until we have sandboxing ready
-          - template: /eng/pipelines/templates/steps/use-python-version.yml
-            parameters:
-              versionSpec: '$(PythonVersion)'
+              - task: Maven@3
+                inputs:
+                  mavenPomFile: 'src/java/apiview-java-processor/pom.xml'
+                  goals: 'clean package'
 
-          - script: |
-              python --version
-              python -m pip install virtualenv aiohttp chardet trio
-            displayName: 'Setup Python Environment'
+                # Below 3 steps to package Python 3.10 is temporary work around until we have sandboxing ready
+              - template: /eng/pipelines/templates/steps/use-python-version.yml
+                parameters:
+                  versionSpec: '$(PythonVersion)'
 
-          - pwsh: |
-              $pythonPath = split-path (get-command python).Path -Parent
-              Write-Host "Python home path $($pythonPath)"
-              copy-item -Path "$pythonPath" -Destination "$(Build.ArtifactStagingDirectory)/APIViewWeb/Python" -Recurse -Force
-              Write-Host "Packaged Python"
-            displayName: 'Package Python'
+              - script: |
+                  python --version
+                  python -m pip install virtualenv aiohttp chardet trio
+                displayName: 'Setup Python Environment'
 
-          - script: |
-              go build
-            workingDirectory: $(GoParserPackagePath)
-            displayName: 'Build go parser'
+              - pwsh: |
+                  $pythonPath = split-path (get-command python).Path -Parent
+                  Write-Host "Python home path $($pythonPath)"
+                  copy-item -Path "$pythonPath" -Destination "$(Build.ArtifactStagingDirectory)/APIViewWeb/Python" -Recurse -Force
+                  Write-Host "Packaged Python"
+                displayName: 'Package Python'
 
-          - script: 'dotnet build $(WebProjectPath) -warnaserror'
-            displayName: 'Build and Package'
-            env:
-              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-              DOTNET_CLI_TELEMETRY_OPTOUT: 1
-              DOTNET_MULTILEVEL_LOOKUP: 0
+              - script: |
+                  go build
+                workingDirectory: $(GoParserPackagePath)
+                displayName: 'Build go parser'
 
-          - task: DotNetCoreCLI@2
-            displayName: 'Publish site'
-            env:
-              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-              DOTNET_CLI_TELEMETRY_OPTOUT: 1
-              DOTNET_MULTILEVEL_LOOKUP: 0
-            inputs:
-              command: 'publish'
-              projects: '$(WebProjectPath)'
-              publishWebProjects: false
-              arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-              zipAfterPublish: true
+              - script: 'dotnet build $(WebProjectPath) -warnaserror'
+                displayName: 'Build and Package'
+                env:
+                  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+                  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+                  DOTNET_MULTILEVEL_LOOKUP: 0
 
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-              artifactName: 'APIView'
+              - task: DotNetCoreCLI@2
+                displayName: 'Publish site'
+                env:
+                  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+                  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+                  DOTNET_MULTILEVEL_LOOKUP: 0
+                inputs:
+                  command: 'publish'
+                  projects: '$(WebProjectPath)'
+                  publishWebProjects: false
+                  arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+                  zipAfterPublish: true
+
+              - template: /eng/common/pipelines/templates/steps/publish-1es-artifact.yml
+                parameters:
+                  ArtifactName: 'APIView'
+                  ArtifactPath: '$(Build.ArtifactStagingDirectory)'
+
+          # - job: 'Test'
+    
+          #   pool:
+          #     name: azsdk-pool-mms-win-2022-general
+          #     vmImage: windows-2022
+    
+          #   steps:
+          #     - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
+          #       parameters:
+          #         StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
               
-
-      - job: 'Test'
-
-        pool:
-          name: azsdk-pool-mms-win-2022-general
-          vmImage: windows-2022
-
-        steps:
-          - template: /eng/common/pipelines/templates/steps/cosmos-emulator.yml
-            parameters:
-              StartParameters: '/noexplorer /noui /enablepreview /disableratelimiting /enableaadauthentication /partitioncount=50 /consistency=Strong'
-          
-          - script: |
-              npm install -g azurite
-            displayName: 'Install Azurite'
-
-          - task: Powershell@2
-            inputs:
-              workingDirectory: $(Agent.TempDirectory)
-              filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
-              arguments: >
-                -Process "azurite.cmd"
-                -ArgumentList "--silent"
-                -Port "10000"
-              pwsh: true
-            displayName: 'Start Azurite'
-
-          - template: /eng/pipelines/templates/steps/install-dotnet.yml
-
-          - pwsh: |
-              dotnet --list-runtimes
-              dotnet --version
-            displayName: 'List .NET run times'
-
-          - task: GoTool@0
-            inputs:
-              version: '$(GoVersion)'
-            displayName: "Use Go $(GoVersion)"
+          #     - script: |
+          #         npm install -g azurite
+          #       displayName: 'Install Azurite'
+      
+          #     - task: Powershell@2
+          #       inputs:
+          #         workingDirectory: $(Agent.TempDirectory)
+          #         filePath: $(Build.SourcesDirectory)/eng/scripts/Start-LocalHostApp.ps1
+          #         arguments: >
+          #           -Process "azurite.cmd"
+          #           -ArgumentList "--silent"
+          #           -Port "10000"
+          #         pwsh: true
+          #       displayName: 'Start Azurite'
+      
+          #     - template: /eng/pipelines/templates/steps/install-dotnet.yml
+      
+          #     - pwsh: |
+          #         dotnet --list-runtimes
+          #         dotnet --version
+          #       displayName: 'List .NET run times'
+      
+          #     - task: GoTool@0
+          #       inputs:
+          #         version: '$(GoVersion)'
+          #       displayName: "Use Go $(GoVersion)"
+                  
+          #     - script: |
+          #         go test ./... -v
+          #       workingDirectory: $(GoParserPackagePath)
+          #       displayName: 'Test Go parser'
+                
+          #     - script: >-
+          #         dotnet test src/dotnet/APIView/APIViewUnitTests/APIViewUnitTests.csproj
+          #         --logger trx --collect:"XPlat Code Coverage"
+          #       displayName: "Build & Test (Unit)"
+          #       env:
+          #         DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          #         DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          #         DOTNET_MULTILEVEL_LOOKUP: 0
+      
+          #     - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
+          #       condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
+          #       displayName: Generate Code Coverage Reports
+          #       inputs:
+          #         reports: $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewUnitTests\**\coverage.cobertura.xml
+          #         targetdir: $(Build.ArtifactStagingDirectory)\coverage
+          #         reporttypes: Cobertura
+          #         filefilters: +$(Build.SourcesDirectory)\src\dotnet\APIView\**
+          #         verbosity: Verbose
+      
+          #     - task: PublishCodeCoverageResults@1
+          #       condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
+          #       displayName: Publish Code Coverage Reports
+          #       inputs:
+          #         codeCoverageTool: Cobertura
+          #         summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml
+      
+          #     - script: >-
+          #         dotnet test src/dotnet/APIView/APIViewIntegrationTests/APIViewIntegrationTests.csproj
+          #         --logger trx
+          #       displayName: "Build & Test (Integration)"
+          #       env:
+          #         DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          #         DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          #         DOTNET_MULTILEVEL_LOOKUP: 0
+          #         APIVIEW_ENDPOINT: "http://localhost:5000"
+          #         APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
+          #         APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
               
-          - script: |
-              go test ./... -v
-            workingDirectory: $(GoParserPackagePath)
-            displayName: 'Test Go parser'
-            
-          - script: >-
-              dotnet test src/dotnet/APIView/APIViewUnitTests/APIViewUnitTests.csproj
-              --logger trx --collect:"XPlat Code Coverage"
-            displayName: "Build & Test (Unit)"
-            env:
-              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-              DOTNET_CLI_TELEMETRY_OPTOUT: 1
-              DOTNET_MULTILEVEL_LOOKUP: 0
+          #     - script: |
+          #         npm install
+          #       workingDirectory: $(WebClientProjectDirectory)
+          #       displayName: "Install Client Dependencies"
+      
+          #     - script: |
+          #         npx playwright install --with-deps
+          #       workingDirectory: $(WebClientProjectDirectory)
+          #       displayName: "Install Playwright Browsers"
+      
+          #     - script: |
+          #         npx playwright test --project=unit-tests
+          #       workingDirectory: $(WebClientProjectDirectory)
+          #       displayName: "Run Client-Side Unit Tests"
+      
+          #     - task: PublishBuildArtifacts@1
+          #       inputs:
+          #         pathtoPublish: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
+          #         artifactName: 'Client-Side Unit Test Reports'
+        
+          #     - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
+          #       - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml
+          #         parameters:
+          #           NodeVersion: $(NodeVersion)
+          #           WebClientProjectDirectory: $(WebClientProjectDirectory)
+          #           AzuriteConnectionString: $(AzuriteConnectionString)
+          #           CosmosEmulatorConnectionString: $(CosmosEmulatorConnectionString)
+      
+          #     - task: PublishTestResults@2
+          #       condition: succeededOrFailed()
+          #       inputs:
+          #         testResultsFiles: '**/*.trx'
+          #         testRunTitle: 'Tests against Windows .NET'
+          #         testResultsFormat: 'VSTest'
+          #         mergeTestResults: true
 
-          - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
-            condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
-            displayName: Generate Code Coverage Reports
-            inputs:
-              reports: $(Build.SourcesDirectory)\src\dotnet\APIView\APIViewUnitTests\**\coverage.cobertura.xml
-              targetdir: $(Build.ArtifactStagingDirectory)\coverage
-              reporttypes: Cobertura
-              filefilters: +$(Build.SourcesDirectory)\src\dotnet\APIView\**
-              verbosity: Verbose
+      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+        - stage: Staging_Publish
+          displayName: Pre-Prod
+          dependsOn: Build
 
-          - task: PublishCodeCoverageResults@1
-            condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'))
-            displayName: Publish Code Coverage Reports
-            inputs:
-              codeCoverageTool: Cobertura
-              summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml
+          jobs:
+            - job: Publish_to_Staging
+              displayName: Publish to Staging
+              pool:
+                name: azsdk-pool-mms-ubuntu-2004-general
+                image: azsdk-pool-mms-ubuntu-2004-1espt
+                os: linux
 
-          - script: >-
-              dotnet test src/dotnet/APIView/APIViewIntegrationTests/APIViewIntegrationTests.csproj
-              --logger trx
-            displayName: "Build & Test (Integration)"
-            env:
-              DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-              DOTNET_CLI_TELEMETRY_OPTOUT: 1
-              DOTNET_MULTILEVEL_LOOKUP: 0
-              APIVIEW_ENDPOINT: "http://localhost:5000"
-              APIVIEW_BLOB__CONNECTIONSTRING: $(AzuriteConnectionString)
-              APIVIEW_COSMOS__CONNECTIONSTRING: $(CosmosEmulatorConnectionString)
-          
-          - script: |
-              npm install
-            workingDirectory: $(WebClientProjectDirectory)
-            displayName: "Install Client Dependencies"
+              steps:
+              - checkout: self
 
-          - script: |
-              npx playwright install --with-deps
-            workingDirectory: $(WebClientProjectDirectory)
-            displayName: "Install Playwright Browsers"
+              - download: current
+                artifact: APIView
+                timeoutInMinutes: 5
 
-          - script: |
-              npx playwright test --project=unit-tests
-            workingDirectory: $(WebClientProjectDirectory)
-            displayName: "Run Client-Side Unit Tests"
+              - task: AzureRmWebAppDeployment@4
+                displayName: 'Deploy Azure App Service'
+                inputs:
+                  azureSubscription: 'APIview staging resource group'
+                  appType: 'webApp'
+                  WebAppName: 'apiviewstaging'
+                  packageForLinux: '$(Pipeline.Workspace)/APIView/**/APIViewWeb.zip'
+                  ScriptType: 'Inline Script'
+                  InlineScript: |
+                    @echo off
+                    echo Installing npm packages
+                    call npm install --prefix D:\home\site\wwwroot --force
+                    call npm run-script build --prefix D:\home\site\wwwroot --force
+                    call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
+                    call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.2 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+                  enableCustomDeployment: true
+                  DeploymentType: zipDeploy
+      
+      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
+        - stage: Test_UI_Publish
+          displayName: Publish Test UI
+          dependsOn: Build
 
-          - task: PublishBuildArtifacts@1
-            inputs:
-              pathtoPublish: '$(Build.SourcesDirectory)\src\dotnet\APIView\APIViewWeb\Client\playwright-report'
-              artifactName: 'Client-Side Unit Test Reports'
-  
-          - ${{ if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
-            - template: /eng/pipelines/templates/steps/apiview-ui-tests.yml
-              parameters:
-                NodeVersion: $(NodeVersion)
-                WebClientProjectDirectory: $(WebClientProjectDirectory)
-                AzuriteConnectionString: $(AzuriteConnectionString)
-                CosmosEmulatorConnectionString: $(CosmosEmulatorConnectionString)
+          jobs:
+            - deployment: Publish_Test_UI
+              displayName: Publish Test UI
+              environment: 'package-publish'
+              pool:
+                name: azsdk-pool-mms-ubuntu-2004-general
+                image: azsdk-pool-mms-ubuntu-2004-1espt
+                os: linux
 
-          - task: PublishTestResults@2
-            condition: succeededOrFailed()
-            inputs:
-              testResultsFiles: '**/*.trx'
-              testRunTitle: 'Tests against Windows .NET'
-              testResultsFormat: 'VSTest'
-              mergeTestResults: true
+              strategy:
+                runOnce:
+                  deploy:
+                    steps:
+                    - checkout: self
+
+                    - download: current
+                      artifact: APIView
+                      timeoutInMinutes: 5
+
+                    - task: AzureRmWebAppDeployment@4
+                      displayName: 'Azure App Service Deploy: apiviewuat'
+                      inputs:
+                        azureSubscription: 'APIViewUI-Instance-deployment-connection'
+                        WebAppName: apiviewuat
+                        packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
+
+        - stage: Production_Publish
+          displayName: Prod
+          dependsOn: Staging_Publish
+
+          jobs:
+            - deployment: Publish_to_Prod
+              displayName: Publish to Prod
+              environment: 'package-publish'
+              pool:
+                name: azsdk-pool-mms-ubuntu-2004-general
+                image: azsdk-pool-mms-ubuntu-2004-1espt
+                os: linux
+
+              strategy:
+                runOnce:
+                  deploy:
+                    steps:
+                    - checkout: self
+
+                    - download: current
+                      artifact: APIView
+                      timeoutInMinutes: 5
+
+                    - task: AzureRmWebAppDeployment@4
+                      displayName: 'Deploy Azure App Service'
+                      inputs:
+                        azureSubscription: 'APIView prod deployment'
+                        appType: 'webApp'
+                        WebAppName: 'APIView'
+                        deployToSlotOrASE: true
+                        ResourceGroupName: apiview
+                        SlotName: staging
+                        ScriptType: 'Inline Script'
+                        packageForLinux: $(Pipeline.Workspace)/APIView/**/*.zip
+                        InlineScript: |
+                          @echo off
+                          echo Installing npm packages
+                          call npm install --prefix D:\home\site\wwwroot --force
+                          call npm run-script build --prefix D:\home\site\wwwroot --force
+                          call D:\home\site\wwwroot\Python\python -m pip uninstall api-stub-generator
+                          call D:\home\site\wwwroot\Python\python -m pip install pylint==2.13.9 pylint-guidelines-checker==0.0.6 api-stub-generator==0.3.3 --index-url "https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+                        enableCustomDeployment: true
+                        DeploymentType: zipDeploy

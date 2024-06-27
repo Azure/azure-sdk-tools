@@ -1,4 +1,5 @@
 import {Changelog} from "../../changelog/changelogGenerator";
+import { fixChangelogFormat } from "../../common/utils";
 
 const fs = require('fs');
 const path = require('path');
@@ -17,7 +18,9 @@ export function makeChangesForFirstRelease(packageFolderPath: string, isStableRe
     
 ## ${newVersion} (${date})
 
-The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/js-track2-quickstart).
+### Features Added
+
+The package of ${packageJsonData.name} is using our next generation design principles. To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, newVersion);
@@ -30,13 +33,15 @@ export function makeChangesForMigrateTrack1ToTrack2(packageFolderPath: string, n
     
 ## ${nextPackageVersion} (${date})
 
+### Features Added
+
 The package of ${packageJsonData.name} is using our next generation design principles since version ${nextPackageVersion}, which contains breaking changes.
 
 To understand the detail of the change, please refer to [Changelog](https://aka.ms/js-track2-changelog).
 
 To migrate the existing applications to the latest version, please refer to [Migration Guide](https://aka.ms/js-track2-migration-guide).
 
-To learn more, please refer to our documentation [Quick Start](https://aka.ms/js-track2-quickstart).
+To learn more, please refer to our documentation [Quick Start](https://aka.ms/azsdk/js/mgmt/quickstart).
 `;
     fs.writeFileSync(path.join(packageFolderPath, 'CHANGELOG.md'), content, 'utf8');
     changePackageJSON(packageFolderPath, nextPackageVersion);
@@ -62,11 +67,14 @@ function changeClientFile(packageFolderPath: string, packageVersion: string) {
     })
 }
 
-export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog) {
-    const originalChangeLogContent = fs.readFileSync(path.join(packageFolderPath, 'changelog-temp', 'package', 'CHANGELOG.md'), {encoding: 'utf-8'});
+export function makeChangesForReleasingTrack2(packageFolderPath: string, packageVersion: string, changeLog: Changelog, originalChangeLogContent: string, comparedVersion:string) {
+    let pacakgeVersionDetail = `## ${packageVersion} (${date})`;
+    if(packageVersion.includes("beta")){
+        pacakgeVersionDetail +=`\nCompared with version ${comparedVersion}`
+    }
     const modifiedChangelogContent = `# Release History
     
-## ${packageVersion} (${date})
+${pacakgeVersionDetail}
     
 ${changeLog.displayChangeLog()}
     

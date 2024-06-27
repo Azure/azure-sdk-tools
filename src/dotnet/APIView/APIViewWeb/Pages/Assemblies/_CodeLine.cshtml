@@ -80,6 +80,7 @@
         lineClass += " code-delta";
         isHeadingWithDelta = true;
     }
+
     var rowClass = RemoveMultipleSpaces($"code-line {headingClass} {codeLineClass} {lineClass} {codeLineDisplay} {documentationRow} {hiddenApiRow}");
     var cellContent = String.Empty;
     for (int i = 0; i < Model.CodeLine.Indent; i++)
@@ -100,7 +101,7 @@
     cellContent += Model.CodeLine.DisplayString;
 }
 
-<tr class="@rowClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)">
+<tr class="@rowClass" data-line-id="@(isRemoved ? string.Empty : Model.CodeLine.ElementId)" data-cross-lang-id="@(isRemoved ? string.Empty : Model.CodeLine.CrossLanguageDefinitionId)">
     <td class="line-details @lineClass">
         <table>
             <tr>
@@ -111,7 +112,11 @@
                 }
                 else
                 {
-                    var lineNumberClass = RemoveMultipleSpaces($"line-number");
+                    var lineNumberClass = $"line-number";
+                    @if (!String.IsNullOrEmpty(Model.CodeLine.CrossLanguageDefinitionId) && PageModelHelpers.IsAPIStubHeader(Model.CodeLine.DisplayString))
+                    {
+                        lineNumberClass = $"{lineNumberClass} cl-line-no";                     }
+
                     if (Model.CodeLine.IsDocumentation)
                     {
                         <td class="@lineNumberClass"><span class="invisible"></span></td>
@@ -155,7 +160,7 @@
                     @{
                         var iconCommentClass = "icon-comments invisible";
                         var comments = TempData["Comments"] as ReviewCommentsModel;
-                        if (sectionKey != null && comments.Threads.Count() > 0)
+                        if (sectionKey != null && comments != null && comments.Threads.Count() > 0)
                         {
                             if (comments.Threads.Any(c => c.LineClass != null && c.LineClass.Contains($"code-line-section-content-{sectionKey}")))
                             {
@@ -235,6 +240,7 @@
     var errorDiags = Model.Diagnostics.Where(d => d.Level == APIView.CodeDiagnosticLevel.Default || d.Level == APIView.CodeDiagnosticLevel.Error);
     var warningDiags = Model.Diagnostics.Where(d => d.Level == APIView.CodeDiagnosticLevel.Warning);
     var infoDiags = Model.Diagnostics.Where(d => d.Level == APIView.CodeDiagnosticLevel.Info);
+    var fatalDiags = Model.Diagnostics.Where(d => d.Level == APIView.CodeDiagnosticLevel.Fatal);
     var diagnosticsClass = "code-diagnostics";
     if (userPreference.ShowSystemComments != true)
         diagnosticsClass += " d-none";
@@ -251,6 +257,9 @@
     </tr>
     <tr class="@diagnosticsClass" data-line-id="@Model.CodeLine.ElementId">
         <partial name="_DiagnosticsPartial" model="@infoDiags" />
+    </tr>
+    <tr class="@diagnosticsClass" data-line-id="@Model.CodeLine.ElementId">
+        <partial name="_DiagnosticsPartial" model="@fatalDiags" />
     </tr>
 }
 

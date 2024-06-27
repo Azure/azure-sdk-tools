@@ -26,11 +26,10 @@ parameters:
 steps:
 
 - ${{ each repo in parameters.Repos }}:
-
   - ${{ each target in repo.value.TargetRepos }}:
-
     - task: PowerShell@2
       displayName: Sync Repo from ${{ repo.key }} to ${{ target.key }}
+      continueOnError: true
       inputs:
         pwsh: true
         workingDirectory: ${{ parameters.WorkingDirectory }}

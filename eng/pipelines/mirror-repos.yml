@@ -22,6 +22,9 @@ jobs:
               Azure/azure-rest-api-specs-pr:
               azure-sdk/azure-rest-api-specs:
 
+          Azure/typespec-azure:
+            TargetRepos:
+              Azure/typespec-azure-pr:
 
     - template: ./templates/steps/sync-repo-merge-branch.yml
       parameters:
@@ -33,22 +36,22 @@ jobs:
             TargetBranches:
               RPSaaSMaster:
                 Theirs: '@("**")'
-                Ours: '@("specification", "custom-words.txt")'
+                Ours: '@("specification", "custom-words.txt", "cSpell.json")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
               RPSaaSDev:
                 Theirs: '@("**")'
-                Ours: '@("specification", "custom-words.txt")'
+                Ours: '@("specification", "custom-words.txt", "cSpell.json")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
               ARMCoreRPDev:
                 Theirs: '@("**")'
-                Ours: '@("specification", "custom-words.txt")'
+                Ours: '@("specification", "custom-words.txt", "cSpell.json")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
               InternalARMContracts:
                 Theirs: '@("**")'
-                Ours: '@("specification", "custom-words.txt")'
+                Ours: '@("specification", "custom-words.txt", "cSpell.json")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
 
@@ -105,6 +108,12 @@ jobs:
             TargetRepos:
               Azure/azure-sdk-for-c-pr:
               azure-sdk/azure-sdk-for-c:
+
+          Azure/azure-sdk-for-rust:
+            TargetRepos:
+              Azure/azure-sdk-for-rust-pr:
+              azure-sdk/azure-sdk-for-rust:
+              azure-sdk/azure-sdk-for-rust-pr:
 
           Microsoft/vcpkg:
             TargetRepos:

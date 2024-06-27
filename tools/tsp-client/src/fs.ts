@@ -1,8 +1,8 @@
 import { mkdir, rm, stat, readFile, access } from "node:fs/promises";
-import * as path from "node:path";
 import { Logger } from "./log.js";
 import { parse as parseYaml } from "yaml";
 import { TspLocation } from "./typespec.js";
+import { joinPaths, normalizePath, resolvePath } from "@typespec/compiler";
 
 export async function ensureDirectory(path: string) {
   await mkdir(path, { recursive: true });
@@ -13,7 +13,7 @@ export async function removeDirectory(path: string) {
 }
 
 export async function createTempDirectory(outputDir: string): Promise<string> {
-  const tempRoot = path.join(outputDir, "TempTypeSpecFiles");
+  const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   await mkdir(tempRoot, { recursive: true });
   Logger.debug(`Created temporary working directory ${tempRoot}`);
   return tempRoot;
@@ -21,7 +21,7 @@ export async function createTempDirectory(outputDir: string): Promise<string> {
 
 export async function readTspLocation(rootDir: string): Promise<TspLocation> {
   try {
-    const yamlPath = path.resolve(rootDir, "tsp-location.yaml");
+    const yamlPath = resolvePath(rootDir, "tsp-location.yaml");
     const fileStat = await stat(yamlPath);
     if (fileStat.isFile()) {
       const fileContents = await readFile(yamlPath, "utf8");
@@ -32,6 +32,11 @@ export async function readTspLocation(rootDir: string): Promise<TspLocation> {
       if (!tspLocation.additionalDirectories) {
         tspLocation.additionalDirectories = [];
       }
+
+      // Normalize the directory path and remove trailing slash
+      tspLocation.directory = normalizeDirectory(tspLocation.directory);
+      tspLocation.additionalDirectories = tspLocation.additionalDirectories.map(normalizeDirectory);
+
       return tspLocation;
     }
     throw new Error("Could not find tsp-location.yaml");
@@ -58,4 +63,9 @@ export async function getEmitterFromRepoConfig(emitterPath: string): Promise<str
     }
   }
   throw new Error("Could not find emitter package");
+}
+
+export function normalizeDirectory(directory: string): string {
+    const normalizedDir = normalizePath(directory);
+    return normalizedDir.endsWith("/") ? normalizedDir.slice(0, -1) : normalizedDir;
 }

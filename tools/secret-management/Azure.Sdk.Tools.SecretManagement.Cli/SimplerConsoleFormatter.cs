@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 
@@ -83,7 +83,7 @@ internal sealed class SimplerConsoleFormatter : ConsoleFormatter
         return logLevel switch
         {
             LogLevel.Trace => "trce: ",
-            LogLevel.Debug => "dbug: ",
+            LogLevel.Debug => null,
             LogLevel.Information => null,
             LogLevel.Warning => "warn: ",
             LogLevel.Error => "fail: ",

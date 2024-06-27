@@ -13,7 +13,7 @@ spec:
       args:
         - |
             source $ENV_FILE &&
-            az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID &&
+            az login --federated-token "$(cat $AZURE_FEDERATED_TOKEN_FILE)" --service-principal -u "$AZURE_CLIENT_ID" -t "$AZURE_TENANT_ID" &&
             az account set -s $AZURE_SUBSCRIPTION_ID &&
             az appconfig show -n $APP_CONFIG_NAME -g $RESOURCE_GROUP -o json
       {{- include "stress-test-addons.container-env" . | nindent 6 }}

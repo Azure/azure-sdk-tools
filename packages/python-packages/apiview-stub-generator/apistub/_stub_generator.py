@@ -269,7 +269,7 @@ class StubGenerator:
         # Parse top_level.txt file in dist-info to find root module name
         files = glob.glob(os.path.join(wheel_extract_path, "*", TOP_LEVEL_WHEEL_FILE))
         if not files:
-            logging.warning("File {0} is not found in {1} to identify root module name. All mdoules in package will be parsed".format(TOP_LEVEL_WHEEL_FILE, wheel_extract_path))
+            logging.warning("File {0} is not found in {1} to identify root module name. All modules in package will be parsed".format(TOP_LEVEL_WHEEL_FILE, wheel_extract_path))
             return ""
         with io.open(files[0], "r") as top_lvl_file:
             root_module_name = top_lvl_file.readline().strip()
@@ -279,8 +279,8 @@ class StubGenerator:
 
     def _parse_pkg_name(self):
         file_name = os.path.basename(self.pkg_path)
-        whl_name, extn = os.path.splitext(file_name)
-        if extn[1:] not in ["whl", "zip"]:
+        whl_name, extension = os.path.splitext(file_name)
+        if extension[1:] not in ["whl", "zip"]:
             raise ValueError(
                 "Invalid type of package. API view parser expects wheel or sdist package"
             )

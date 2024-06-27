@@ -13,6 +13,7 @@ namespace SwaggerApiParser.SwaggerApiView
         public String PackageName;
         public Dictionary<String, SwaggerApiViewSpec> SwaggerApiViewSpecs;
         public SchemaCache schemaCache;
+        public String APIVersion;
 
         public SwaggerApiViewRoot(string resourceProvider, string packageName)
         {
@@ -29,6 +30,7 @@ namespace SwaggerApiParser.SwaggerApiView
             if (swaggerApiViewSpec != null)
             {
                 this.SwaggerApiViewSpecs.Add(swaggerFilePath, swaggerApiViewSpec);
+                APIVersion = swaggerApiViewSpec.APIVersion;
             }
         }
 
@@ -47,6 +49,7 @@ namespace SwaggerApiParser.SwaggerApiView
                 VersionString = "0",
                 Name = this.ResourceProvider,
                 PackageName = this.PackageName,
+                PackageVersion = this.APIVersion,
                 Navigation = this.BuildNavigationItems()
             };
 

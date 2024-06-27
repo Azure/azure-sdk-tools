@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
 
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
@@ -83,7 +84,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             using var stream = System.IO.File.OpenRead(path);
             using var doc = JsonDocument.Parse(stream);
 
-            return new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+            return new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement), new SanitizerDictionary(), Guid.NewGuid().ToString());
         }
 
         public static RecordingHandler LoadRecordSessionIntoInMemoryStore(string path)
@@ -91,7 +92,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             using var stream = System.IO.File.OpenRead(path);
             using var doc = JsonDocument.Parse(stream);
             var guid = Guid.NewGuid().ToString();
-            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement));
+            var session = new ModifiableRecordSession(RecordSession.Deserialize(doc.RootElement), new SanitizerDictionary(), Guid.NewGuid().ToString());
 
             RecordingHandler handler = new RecordingHandler(Directory.GetCurrentDirectory());
             handler.InMemorySessions.TryAdd(guid, session);
@@ -147,6 +148,27 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             File.WriteAllText(path, content);
         }
 
+        public static string GetTmpPath(string[] pathsBeyondFolder = null)
+        {
+            var pathSuffix = string.Empty;
+
+            if (pathsBeyondFolder != null && pathsBeyondFolder.Length > 0) {
+                pathSuffix += Path.Combine(pathsBeyondFolder);
+            }
+            else
+            {
+                pathSuffix = Guid.NewGuid().ToString();
+            }
+
+            var tmpPath = Path.Join(Path.GetTempPath(), pathSuffix);
+
+            if (!Directory.Exists(tmpPath)) {
+                Directory.CreateDirectory(tmpPath);
+            }
+
+            return tmpPath;
+        }
+
         /// <summary>
         /// Used to define any set of file constructs we want. This enables us to roll a target environment to point various GitStore functionalities at.
         ///
@@ -168,9 +190,8 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             }
             // the guid will be used to create a unique test folder root and, if this is a push test,
             // it'll be used as part of the generated branch name
-            string testGuid = Guid.NewGuid().ToString();
-            // generate a test folder root
-            var tmpPath = Path.Join(Path.GetTempPath(), testGuid);
+            var testGuid = Guid.NewGuid().ToString();
+            var tmpPath = GetTmpPath(new string[] { testGuid });
 
             // Push tests need some special setup for automation
             // 1. The AssetsReproBranch
@@ -348,6 +369,18 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
         }
 
         /// <summary>
+        /// Create a new file with custom text
+        /// </summary>
+        /// <param name="testFolder">The temporary test folder created by TestHelpers.DescribeTestFolder</param>
+        /// <param name="fileName">The file to be created</param>
+        public static void CreateOrUpdateFileWithContent(string testFolder, string fileName, string textContent)
+        {
+            string fullFileName = Path.Combine(testFolder, fileName);
+
+            File.WriteAllText(fullFileName, textContent);
+        }
+
+        /// <summary>
         /// This function is used to confirm that the .breadcrumb file under the assets store contains the appropriate
         /// information.
         /// </summary>
@@ -515,6 +548,42 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             var cloneUrl = GitStore.GetCloneUrl(assets.AssetsRepo, Directory.GetCurrentDirectory());
             CommandResult result = GitHandler.Run($"ls-remote {cloneUrl} --tags {assets.Tag}", workingDirectory);
             return result.StdOut.Trim().Length > 0;
+        }
+
+        public static string GenerateString(int count)
+        {
+            char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".ToArray();
+
+            StringBuilder builder = new StringBuilder();
+
+            for (int i = 0; i < count; i++)
+            {
+                var bytes = RandomNumberGenerator.GetBytes(1);
+                int index = bytes[0] % alphabet.Length;
+                char ch = alphabet[index];
+                _ = builder.Append(ch);
+            }
+
+            return builder.ToString();
+        }
+
+        public static List<T> EnumerateArray<T>(JsonElement element)
+        {
+            List<T> values = new List<T>();
+
+            if (element.ValueKind.ToString() != "Array")
+            {
+                throw new Exception("This test helper is intended for array members only");
+            }
+            else
+            {
+                foreach(var item in element.EnumerateArray())
+                {
+                    values.Add(item.Deserialize<T>());
+                }
+            }
+
+            return values;
         }
     }
 }

@@ -21,6 +21,9 @@ namespace Azure.ClientSdk.Analyzers
         private bool IsClientOptionsParameter(IParameterSymbol symbol) 
             => symbol != null && IsClientOptionsType(symbol.Type);
 
+        private bool IsEndpointParameter(IParameterSymbol symbol)
+            => symbol != null && symbol.Name == "endpoint" && symbol.Type.Name == "Uri";
+
         public override void AnalyzeCore(ISymbolAnalysisContext context)
         {
             var type = (INamedTypeSymbol)context.Symbol;
@@ -42,7 +45,7 @@ namespace Azure.ClientSdk.Analyzers
 
                         // When there are static properties in client, there would be static constructor implicitly added
                         var nonOptionsMethod = FindMethod(
-                            type.Constructors, constructor.TypeParameters, constructor.Parameters.RemoveAt(constructor.Parameters.Length - 1), true);
+                            type.Constructors, constructor.TypeParameters, constructor.Parameters.RemoveAt(constructor.Parameters.Length - 1).Where(p => !IsEndpointParameter(p)).ToImmutableArray(), true);
 
                         if (nonOptionsMethod == null || nonOptionsMethod.DeclaredAccessibility != Accessibility.Public)
                         {
@@ -56,7 +59,12 @@ namespace Azure.ClientSdk.Analyzers
 
                         if (optionsMethod == null || optionsMethod.DeclaredAccessibility != Accessibility.Public)
                         {
-                            context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0007, constructor.Locations.First()), constructor);
+                            optionsMethod = FindMethod(
+                                type.Constructors, constructor.TypeParameters, constructor.Parameters, IsClientOptionsParameter, IsEndpointParameter);
+                            if (optionsMethod == null || optionsMethod.DeclaredAccessibility != Accessibility.Public)
+                            {
+                                context.ReportDiagnostic(Diagnostic.Create(Descriptors.AZC0007, constructor.Locations.First()), constructor);
+                            }
                         }
                     }
                 }

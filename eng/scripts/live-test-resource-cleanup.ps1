@@ -440,23 +440,22 @@ function DeleteAndPurgeGroups([array]$toDelete) {
           Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
         }
       }
-
-      if (!$purgeableResources.Count) {
-        return
-      }
-      if ($Force -or $PSCmdlet.ShouldProcess("Purgable Resources", "Delete Purgeable Resources")) {
-        # Purge all the purgeable resources and get a list of resources (as a collection) we need to follow-up on.
-        Write-Host "Attempting to purge $($purgeableResources.Count) resources."
-        $failedResources = @(Remove-PurgeableResources $purgeableResources -PassThru)
-        if ($failedResources) {
-          Write-Warning "Timed out deleting the following $($failedResources.Count) resources. Please file an IcM ticket per resource type."
-          $failedResources | Sort-Object AzsdkResourceType, AzsdkName | Format-Table -Property @{l='Type'; e={$_.AzsdkResourceType}}, @{l='Name'; e={$_.AzsdkName}}
-        }
-      }
-
     } catch {
       Write-Error $_
       $hasError = $true
+    }
+  }
+
+  if (!$purgeableResources.Count) {
+    return
+  }
+  if ($Force -or $PSCmdlet.ShouldProcess("Purgable Resources", "Delete Purgeable Resources")) {
+    # Purge all the purgeable resources and get a list of resources (as a collection) we need to follow-up on.
+    Write-Host "Attempting to purge $($purgeableResources.Count) resources."
+    $failedResources = @(Remove-PurgeableResources $purgeableResources -PassThru)
+    if ($failedResources) {
+      Write-Warning "Timed out deleting the following $($failedResources.Count) resources. Please file an IcM ticket per resource type."
+      $failedResources | Sort-Object AzsdkResourceType, AzsdkName | Format-Table -Property @{l='Type'; e={$_.AzsdkResourceType}}, @{l='Name'; e={$_.AzsdkName}}
     }
   }
 

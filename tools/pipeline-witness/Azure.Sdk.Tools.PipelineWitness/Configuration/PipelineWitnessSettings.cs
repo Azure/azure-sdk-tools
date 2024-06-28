@@ -62,7 +62,32 @@ namespace Azure.Sdk.Tools.PipelineWitness.Configuration
         /// <summary>
         /// Gets or sets the amount of time between iterations of the build definition upload loop
         /// </summary>
-        public TimeSpan BuildDefinitionLoopPeriod { get; set; } = TimeSpan.FromMinutes(5);
+        public TimeSpan LockLeasePeriod { get; set; } = TimeSpan.FromMinutes(5);
+
+        /// <summary>
+        /// Gets or sets the amount of time between iterations of the build definition upload loop
+        /// </summary>
+        public TimeSpan BuildDefinitionLoopPeriod { get; set; } = TimeSpan.FromMinutes(1);
+
+        /// <summary>
+        /// Gets or sets the amount of time between successful iterations of build definition upload
+        /// </summary>
+        public TimeSpan BuildDefinitionCooldownPeriod { get; set; } = TimeSpan.FromMinutes(60);
+
+        /// <summary>
+        /// Gets or sets the amount of time between iterations of the build definition upload loop
+        /// </summary>
+        public TimeSpan MissingBuildLoopPeriod { get; set; } = TimeSpan.FromMinutes(1);
+
+        /// <summary>
+        /// Gets or sets the amount of time between successful iterations of build definition upload
+        /// </summary>
+        public TimeSpan MissingBuildCooldownPeriod { get; set; } = TimeSpan.FromDays(7);
+
+        /// <summary>
+        /// Gets or sets the amount of time between successful iterations of build definition upload
+        /// </summary>
+        public TimeSpan MissingBuildLookbackPeriod { get; set; } = TimeSpan.FromDays(14);
 
         /// <summary>
         /// Gets or sets the number of concurrent build complete queue workers to register

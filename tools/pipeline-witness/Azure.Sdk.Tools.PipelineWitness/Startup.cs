@@ -4,8 +4,8 @@ using Azure.Core;
 using Azure.Core.Extensions;
 using Azure.Identity;
 using Azure.Sdk.Tools.PipelineWitness.ApplicationInsights;
+using Azure.Sdk.Tools.PipelineWitness.AzurePipelines;
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
-using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Sdk.Tools.PipelineWitness.Services.WorkTokens;
 
 using Microsoft.ApplicationInsights.Extensibility;
@@ -49,12 +49,14 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
             builder.Services.AddLogging();
             builder.Services.AddTransient<BlobUploadProcessor>();
+            builder.Services.AddTransient<BuildCompleteQueue>();
             builder.Services.AddTransient<Func<BlobUploadProcessor>>(provider => provider.GetRequiredService<BlobUploadProcessor>);
 
             builder.Services.Configure<PipelineWitnessSettings>(settingsSection);
 
             builder.Services.AddHostedService<BuildCompleteQueueWorker>(settings.BuildCompleteWorkerCount);
             builder.Services.AddHostedService<AzurePipelinesBuildDefinitionWorker>();
+            builder.Services.AddHostedService<MissingBuildWorker>();
         }
 
         private static void AddHostedService<T>(this IServiceCollection services, int instanceCount) where T : class, IHostedService

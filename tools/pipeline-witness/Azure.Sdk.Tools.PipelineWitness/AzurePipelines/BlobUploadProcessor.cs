@@ -7,10 +7,9 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
-
 using Azure.Sdk.Tools.PipelineWitness.Configuration;
-using Azure.Sdk.Tools.PipelineWitness.Services;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -24,7 +23,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
-namespace Azure.Sdk.Tools.PipelineWitness
+namespace Azure.Sdk.Tools.PipelineWitness.AzurePipelines
 {
     [SuppressMessage("Style", "IDE0037:Use inferred member name", Justification = "Explicit member names are added to json export objects for clarity")]
     public class BlobUploadProcessor
@@ -295,9 +294,9 @@ namespace Azure.Sdk.Tools.PipelineWitness
             return null;
         }
 
-        public async Task UploadBuildDefinitionBlobsAsync(string account, string projectName)
+        public async Task UploadBuildDefinitionBlobsAsync(string account, string projectName, CancellationToken cancellationToken)
         {
-            IPagedList<BuildDefinition> definitions = await this.buildClient.GetFullDefinitionsAsync2(project: projectName);
+            IPagedList<BuildDefinition> definitions = await this.buildClient.GetFullDefinitionsAsync2(project: projectName, cancellationToken: cancellationToken);
 
             foreach (BuildDefinition definition in definitions)
             {
@@ -305,14 +304,14 @@ namespace Azure.Sdk.Tools.PipelineWitness
 
                 if (!this.cachedDefinitionRevisions.TryGetValue(cacheKey, out int? cachedRevision) || cachedRevision != definition.Revision)
                 {
-                    await UploadBuildDefinitionBlobAsync(account, definition);
+                    await UploadBuildDefinitionBlobAsync(account, definition, cancellationToken);
                 }
 
                 this.cachedDefinitionRevisions[cacheKey] = definition.Revision;
             }
         }
 
-        private async Task UploadBuildDefinitionBlobAsync(string account, BuildDefinition definition)
+        private async Task UploadBuildDefinitionBlobAsync(string account, BuildDefinition definition, CancellationToken cancellationToken)
         {
             string blobPath = $"{definition.Project.Name}/{definition.Id}-{definition.Revision}.jsonl";
 
@@ -320,7 +319,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
             {
                 BlobClient blobClient = this.buildDefinitionsContainerClient.GetBlobClient(blobPath);
 
-                if (await blobClient.ExistsAsync())
+                if (await blobClient.ExistsAsync(cancellationToken))
                 {
                     this.logger.LogInformation("Skipping existing build definition blob for build {DefinitionId} project {Project}", definition.Id, definition.Project.Name);
                     return;
@@ -373,7 +372,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
                     EtlIngestDate = DateTimeOffset.UtcNow
                 }, jsonSettings);
 
-                await blobClient.UploadAsync(new BinaryData(content));
+                await blobClient.UploadAsync(new BinaryData(content), cancellationToken);
             }
             catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Conflict)
             {
@@ -441,9 +440,7 @@ namespace Azure.Sdk.Tools.PipelineWitness
         {
             try
             {
-                long changeTime = ((DateTimeOffset)build.LastChangedDate).ToUnixTimeSeconds();
-                string blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{changeTime}.jsonl";
-                BlobClient blobClient = this.buildsContainerClient.GetBlobClient(blobPath);
+                BlobClient blobClient = GetBuildBlobClient(build);
 
                 if (await blobClient.ExistsAsync())
                 {
@@ -810,6 +807,12 @@ namespace Azure.Sdk.Tools.PipelineWitness
             }
         }
 
+        public async Task<bool> BuildBlobExistsAsync(Build build)
+        {
+            var blobClient = GetBuildBlobClient(build);
+            return await blobClient.ExistsAsync();
+        }
+
         private async Task UploadTestRunResultBlobAsync(string account, Build build, TestRun testRun)
         {
             try
@@ -867,6 +870,14 @@ namespace Azure.Sdk.Tools.PipelineWitness
                 this.logger.LogError(ex, "Error processing test results for build {BuildId}", build.Id);
                 throw;
             }
+        }
+
+        private BlobClient GetBuildBlobClient(Build build)
+        {
+            long changeTime = ((DateTimeOffset)build.LastChangedDate).ToUnixTimeSeconds();
+            string blobPath = $"{build.Project.Name}/{build.FinishTime:yyyy/MM/dd}/{build.Id}-{changeTime}.jsonl";
+            BlobClient blobClient = this.buildsContainerClient.GetBlobClient(blobPath);
+            return blobClient;
         }
 
         private async Task<Build> GetBuildAsync(Guid projectId, int buildId)

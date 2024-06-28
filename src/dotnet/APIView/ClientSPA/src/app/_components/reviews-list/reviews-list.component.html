@@ -130,7 +130,6 @@
         </div>
         <div class="mt-2">
             <p-fileUpload
-                formControlName="selectedFile"
                 #reviewCreationFileUpload name="selectedFile"
                 *ngIf="createReviewForm.get('selectedCRLanguage')!.value != undefined && createReviewForm.get('selectedCRLanguage')!.value!.label != 'TypeSpec'"
                 chooseLabel="Select {{ acceptedFilesForReviewUpload }} File to Upload" [customUpload]="true"

@@ -351,7 +351,7 @@ function DeleteOrUpdateResourceGroups() {
   }
 
   Write-Verbose "Fetching groups"
-  [Array]$allGroups = Retry { Get-AzResourceGroup }
+  [Array]$allGroups = Retry { Get-AzResourceGroup | ? { $_.ResourceGroupName -like 'rg-storage*' } }
   $toDelete = @()
   $toClean = @()
   $toDeleteSoon = @()

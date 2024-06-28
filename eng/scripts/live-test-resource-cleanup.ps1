@@ -398,57 +398,69 @@ function DeleteOrUpdateResourceGroups() {
     }
   }
 
-  DeleteAndPurgeGroups $toDelete
+  $hasError = DeleteAndPurgeGroups $toDelete
 
   foreach ($rg in $toClean) {
     DeleteArmDeployments $rg
   }
+
+  if ($hasError) {
+    throw "Encountered errors removing some resource groups"
+  }
 }
 
 function DeleteAndPurgeGroups([array]$toDelete) {
+  $hasError = $false
   # Get purgeable resources already in a deleted state.
   $purgeableResources = @(Get-PurgeableResources)
 
   if ($toDelete) {
     Write-Host "Total Resource Groups To Delete: $($toDelete.Count)"
   }
-  foreach ($rg in $toDelete)
-  {
-    $deleteAfter = GetTag $rg "DeleteAfter"
-    if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Delete Group")) {
-      # Add purgeable resources that will be deleted with the resource group to the collection.
-      $purgeableResourcesFromRG = @(Get-PurgeableGroupResources $rg.ResourceGroupName)
+  foreach ($rg in $toDelete) {
+    try {
+      $deleteAfter = GetTag $rg "DeleteAfter"
+      if ($Force -or $PSCmdlet.ShouldProcess("$($rg.ResourceGroupName) [DeleteAfter (UTC): $deleteAfter]", "Delete Group")) {
+        # Add purgeable resources that will be deleted with the resource group to the collection.
+        $purgeableResourcesFromRG = @(Get-PurgeableGroupResources $rg.ResourceGroupName)
 
-      if ($purgeableResourcesFromRG) {
-        $purgeableResources += $purgeableResourcesFromRG
-        Write-Verbose "Found $($purgeableResourcesFromRG.Count) potentially purgeable resources in resource group $($rg.ResourceGroupName)"
+        if ($purgeableResourcesFromRG) {
+          $purgeableResources += $purgeableResourcesFromRG
+          Write-Verbose "Found $($purgeableResourcesFromRG.Count) potentially purgeable resources in resource group $($rg.ResourceGroupName)"
+        }
+
+        Write-Verbose "Deleting group: $($rg.ResourceGroupName)"
+        Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
+
+        # For storage tests specifically, if they are aborted then blobs with immutability policies
+        # can be left around which prevent deletion.
+        if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
+          & $PSScriptRoot/Remove-WormStorageAccounts.ps1 -GroupPrefix $rg.ResourceGroupName
+        } else {
+          Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
+        }
       }
 
-      Write-Verbose "Deleting group: $($rg.ResourceGroupName)"
-      Write-Verbose "  tags $($rg.Tags | ConvertTo-Json -Compress)"
-
-      # For storage tests specifically, if they are aborted then blobs with immutability policies
-      # can be left around which prevent deletion.
-      if ($rg.Tags?.ContainsKey('ServiceDirectory') -and $rg.Tags.ServiceDirectory -like '*storage*') {
-        & $PSScriptRoot/Remove-WormStorageAccounts.ps1 -GroupPrefix $rg.ResourceGroupName
-      } else {
-        Write-Host ($rg | Remove-AzResourceGroup -Force -AsJob).Name
+      if (!$purgeableResources.Count) {
+        return
       }
+      if ($Force -or $PSCmdlet.ShouldProcess("Purgable Resources", "Delete Purgeable Resources")) {
+        # Purge all the purgeable resources and get a list of resources (as a collection) we need to follow-up on.
+        Write-Host "Attempting to purge $($purgeableResources.Count) resources."
+        $failedResources = @(Remove-PurgeableResources $purgeableResources -PassThru)
+        if ($failedResources) {
+          Write-Warning "Timed out deleting the following $($failedResources.Count) resources. Please file an IcM ticket per resource type."
+          $failedResources | Sort-Object AzsdkResourceType, AzsdkName | Format-Table -Property @{l='Type'; e={$_.AzsdkResourceType}}, @{l='Name'; e={$_.AzsdkName}}
+        }
+      }
+
+    } catch {
+      Write-Error $_
+      $hasError = $true
     }
   }
 
-  if (!$purgeableResources.Count) {
-    return
-  }
-  if ($Force -or $PSCmdlet.ShouldProcess("Purgable Resources", "Delete Purgeable Resources")) {
-    # Purge all the purgeable resources and get a list of resources (as a collection) we need to follow-up on.
-    Write-Host "Attempting to purge $($purgeableResources.Count) resources."
-    $failedResources = @(Remove-PurgeableResources $purgeableResources -PassThru)
-    if ($failedResources) {
-      Write-Warning "Timed out deleting the following $($failedResources.Count) resources. Please file an IcM ticket per resource type."
-      $failedResources | Sort-Object AzsdkResourceType, AzsdkName | Format-Table -Property @{l='Type'; e={$_.AzsdkResourceType}}, @{l='Name'; e={$_.AzsdkName}}
-    }
-  }
+  return $hasError
 }
 
 function Login() {
@@ -488,8 +500,10 @@ if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
   Select-AzSubscription -Subscription $SubscriptionId -Confirm:$false -WhatIf:$false
 }
 
-DeleteOrUpdateResourceGroups
-
-if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
-  Select-AzSubscription -Subscription $originalSubscription -Confirm:$false -WhatIf:$false
+try {
+  DeleteOrUpdateResourceGroups
+} finally {
+  if ($SubscriptionId -and ($originalSubscription -ne $SubscriptionId)) {
+    Select-AzSubscription -Subscription $originalSubscription -Confirm:$false -WhatIf:$false
+  }
 }

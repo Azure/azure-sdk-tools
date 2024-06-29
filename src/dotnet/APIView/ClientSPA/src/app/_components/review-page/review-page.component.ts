@@ -44,6 +44,7 @@ export class ReviewPageComponent implements OnInit {
   conversiationInfo : any | undefined = undefined;
   hasFatalDiagnostics : boolean = false;
   hasHiddenAPIs : boolean = false;
+  loadFailed : boolean = false;
 
   showLeftNavigation : boolean = true;
   showPageOptions : boolean = true;
@@ -120,6 +121,7 @@ export class ReviewPageComponent implements OnInit {
     this.reviewPageNavigation = [];
     this.codePanelRowData = [];
     this.codePanelData = null;
+    this.loadFailed = false;
     this.changeDetectorRef.detectChanges();
     this.workerService.startWorker().then(() => {
       this.registerWorkerEventHandler();
@@ -168,6 +170,9 @@ export class ReviewPageComponent implements OnInit {
           };
           // Passing ArrayBufer to worker is way faster than passing object
           this.workerService.postToApiTreeBuilder(response, apiTreeBuilderData);
+        },
+        error: (error: any) => {
+          this.loadFailed = true;
         }
       });
   }

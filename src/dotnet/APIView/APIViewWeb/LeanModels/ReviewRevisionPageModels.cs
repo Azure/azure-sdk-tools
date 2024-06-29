@@ -78,6 +78,8 @@ namespace APIViewWeb.LeanModels
         public List<StructuredToken> RowOfTokens => RowOfTokensObj.Count > 0 ? RowOfTokensObj : null;
         public string NodeId { get; set; }
         public string NodeIdHashed { get; set; }
+        public int RowPositionInGroup { get; set; } // The position / index of the row within the group of similar rows
+        public int AssociatedRowPositionInGroup { get; set; } // For comment threads, this is the position of the associated code line within the group of similar rows
         public RowOfTokensPosition RowOfTokensPosition { get; set; }
         [JsonIgnore]
         public HashSet<string> RowClassesObj { get; set; } = new HashSet<string>();
@@ -107,8 +109,8 @@ namespace APIViewWeb.LeanModels
         public List<CodePanelRowData> CodeLinesObj { get; set; } = new List<CodePanelRowData>();
         public List<CodePanelRowData> CodeLines => CodeLinesObj.Count > 0 ? CodeLinesObj : null;
         [JsonIgnore]
-        public List<CodePanelRowData> CommentThreadObj { get; set; } = new List<CodePanelRowData>();
-        public List<CodePanelRowData> CommentThread => CommentThreadObj.Count > 0 ? CommentThreadObj : null;
+        public Dictionary<int, CodePanelRowData> CommentThreadObj { get; set; } = new Dictionary<int, CodePanelRowData>(); //Dictionary key map to the index of the code line within this node which the comment thread is mapped to
+        public Dictionary<int, CodePanelRowData> CommentThread => CommentThreadObj.Count > 0 ? CommentThreadObj : null;
         public NavigationTreeNode NavigationTreeNode { get; set; }
         public string ParentNodeIdHashed { get; set; }
         [JsonIgnore]

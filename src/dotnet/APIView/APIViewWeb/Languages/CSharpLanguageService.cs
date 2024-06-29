@@ -6,16 +6,24 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using ApiView;
+using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb
 {
     public class CSharpLanguageService : LanguageProcessor
     {
+        private readonly string _csharpParserToolPath;
         private static Regex _packageNameParser = new Regex("([A-Za-z.]*[a-z]).([\\S]*)", RegexOptions.Compiled);
         public override string Name { get; } = "C#";
         public override string[] Extensions { get; } = { ".dll" };
-        public override string ProcessName { get; } = $"{Environment.GetEnvironmentVariable("USERPROFILE")}\\.dotnet\\tools\\CSharpAPIParserForAPIView";
+        public override string ProcessName => _csharpParserToolPath;
         public override string VersionString { get; } = "27";
+
+        public CSharpLanguageService(IConfiguration configuration, TelemetryClient telemetryClient)
+        {
+            _csharpParserToolPath = configuration["CSHARPPARSEREXECUTABLEPATH"];
+        }
 
         public override string GetProcessorArguments(string originalName, string tempDirectory, string jsonPath)
         {

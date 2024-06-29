@@ -1,4 +1,5 @@
 
+using Amazon.Runtime.Internal.Transform;
 using APIView.TreeToken;
 using APIViewWeb.Extensions;
 using APIViewWeb.LeanModels;
@@ -632,12 +633,11 @@ namespace APIViewWeb.Helpers
         private static CodePanelRowData CollectUserCommentsForRow(CodePanelRawData codePanelRawData, HashSet<string> tokenIdsInRow, string nodeId, string nodeIdHashed, RowOfTokensPosition linesOfTokensPosition, CodePanelRowData codePanelRowData)
         {
             var commentRowData = new CodePanelRowData();
-            var toggleCommentClass = (codePanelRawData.Diagnostics.Any(d => d.TargetId == nodeId) && codePanelRowData.Type == CodePanelRowDatatype.CodeLine) ? "bi bi-chat-right-text show" : "";
+            //var toggleCommentClass = (codePanelRawData.Diagnostics.Any(d => d.TargetId == nodeId) && codePanelRowData.Type == CodePanelRowDatatype.CodeLine) ? "bi bi-chat-right-text show" : "";
 
             if (tokenIdsInRow.Any())
             {
-                toggleCommentClass = (String.IsNullOrWhiteSpace(toggleCommentClass)) ? "bi bi-chat-right-text can-show" : toggleCommentClass;
-                codePanelRowData.ToggleCommentsClasses = toggleCommentClass;
+                codePanelRowData.ToggleCommentsClasses = "bi bi-chat-right-text can-show";
 
                 var commentsForRow = codePanelRawData.Comments.Where(c => tokenIdsInRow.Contains(c.ElementId));
                 if (commentsForRow.Any())
@@ -648,15 +648,13 @@ namespace APIViewWeb.Helpers
                     commentRowData.RowOfTokensPosition = linesOfTokensPosition;
                     commentRowData.RowClassesObj.Add("user-comment-thread");
                     commentRowData.CommentsObj = commentsForRow.ToList();
-                    toggleCommentClass = toggleCommentClass.Replace("can-show", "show");
-                    codePanelRowData.ToggleCommentsClasses = toggleCommentClass;
+                    codePanelRowData.ToggleCommentsClasses = codePanelRowData.ToggleCommentsClasses.Replace("can-show", "show");
                     commentRowData.IsResolvedCommentThread = commentsForRow.Any(c => c.IsResolved);
                 }
             }
             else
             {
-                toggleCommentClass = (!String.IsNullOrWhiteSpace(toggleCommentClass)) ? toggleCommentClass.Replace("can-show", "show") : "bi bi-chat-right-text hide";
-                codePanelRowData.ToggleCommentsClasses = toggleCommentClass;
+                codePanelRowData.ToggleCommentsClasses = "bi bi-chat-right-text hide";
             }
             return commentRowData;
         }
@@ -689,11 +687,13 @@ namespace APIViewWeb.Helpers
             {
                 if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
                 {
+                    rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Count();
                     codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Add(rowData);
                 }
                 else
                 {
                     codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                    rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Count();
                     codePanelData.NodeMetaDataObj[nodeIdHashed].DocumentationObj.Add(rowData);
                 }
             }
@@ -702,25 +702,28 @@ namespace APIViewWeb.Helpers
             {
                 if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
                 {
+                    rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count();
                     codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Add(rowData);
                 }
                 else
                 {
                     codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
+                    rowData.RowPositionInGroup = codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count();
                     codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Add(rowData);
                 }
             }
 
             if (commentsForRow != null && commentsForRow.Type == CodePanelRowDatatype.CommentThread && commentsForRow.CommentsObj.Any())
             {
+                commentsForRow.AssociatedRowPositionInGroup = rowData.RowPositionInGroup;
                 if (codePanelData.NodeMetaDataObj.ContainsKey(nodeIdHashed))
                 {
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.Add(commentsForRow);
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.Add(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
                 }
                 else
                 {
                     codePanelData.NodeMetaDataObj.TryAdd(nodeIdHashed, new CodePanelNodeMetaData());
-                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.Add(commentsForRow);
+                    codePanelData.NodeMetaDataObj[nodeIdHashed].CommentThreadObj.Add(codePanelData.NodeMetaDataObj[nodeIdHashed].CodeLinesObj.Count() - 1, commentsForRow); //Map comment to the index of associated codeLine
                 }
             }
         }

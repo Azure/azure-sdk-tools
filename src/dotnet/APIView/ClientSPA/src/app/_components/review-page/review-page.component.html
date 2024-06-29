@@ -21,6 +21,7 @@
                     <div *ngIf="showLeftNavigation" class="col flex align-items-center justify-content-center border rounded-start overflow-auto review-panel {{ activeAPIRevision?.isApproved | approval | lowercase }}">
                         <app-review-nav
                             [reviewPageNavigation]="reviewPageNavigation"
+                            [loadFailed]="loadFailed"
                             (navTreeNodeIdEmitter)="handleNavTreeNodeEmmitter($event)"></app-review-nav>
                     </div>
                 </ng-template>
@@ -31,6 +32,7 @@
                             [isDiffView]="!!diffApiRevisionId"
                             [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
                             [userProfile]="userProfile"
+                            [loadFailed]="loadFailed"
                             [showLineNumbers]="showLineNumbers" [scrollToNodeIdHashed]="scrollToNodeIdHashed"
                             [scrollToNodeId]="scrollToNodeId"></app-code-panel>
                     </div>

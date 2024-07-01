@@ -1,4 +1,4 @@
-[CmdletBinding(DefaultParameterSetName = 'Repositories', SupportsShouldProcess = $true)]
+[CmdletBinding(DefaultParameterSetName = 'RepositoryFile', SupportsShouldProcess = $true)]
 param (
     [Parameter(Mandatory = $true, Position = 0)]
     [int] $ProjectNumber,
@@ -6,23 +6,11 @@ param (
     [Parameter(Mandatory = $true, Position = 1)]
     [string[]] $Labels,
 
-    [Parameter(ParameterSetName = 'Repositories')]
-    [Alias("repos")]
-    [ValidateNotNullOrEmpty()]
-    [string[]] $Repositories = @(
-        'Azure/azure-sdk-for-cpp'
-        'Azure/azure-sdk-for-go'
-        'Azure/azure-sdk-for-java'
-        'Azure/azure-sdk-for-js'
-        'Azure/azure-sdk-for-net'
-        'Azure/azure-sdk-for-python'
-        'Azure/azure-sdk-for-rust'
-        'Azure/azure-sdk-tools'
-    ),
+    [Parameter(ParameterSetName = 'Repositories', Mandatory = $true)]
+    [string[]] $Repositories,
 
-    [Parameter(ParameterSetName = 'Languages')]
-    [ValidateNotNullOrEmpty()]
-    [string[]] $Languages = @('cpp', 'go', 'java', 'js', 'net', 'python', 'rust', 'c', 'ios', 'android'),
+    [Parameter(ParameterSetName = 'Languages', Mandatory = $true)]
+    [string[]] $Languages,
 
     [Parameter(ParameterSetName = 'RepositoryFile')]
     [ValidateScript({Test-Path $_ -PathType 'Leaf'})]

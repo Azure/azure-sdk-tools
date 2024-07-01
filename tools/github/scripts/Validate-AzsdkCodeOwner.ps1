@@ -14,13 +14,7 @@ $hasPermissions = $false
 # Verify that the user exists and has the correct public
 # organization memberships.
 $orgResponse = (gh api "https://api.github.com/users/$UserName/orgs")
-$orgs = $orgResponse | ConvertFrom-Json
-
-if ($orgs -ne $null) {
-    $orgs = $orgs | select -Expand login
-} else {
-    $orgs = @()
-}
+$orgs = $orgResponse | ConvertFrom-Json | Select-Object -Expand login -ErrorAction Ignore
 
 # Validate that the user has the required public organization memberships.
 $requiredOrgs = [System.Collections.Generic.HashSet[String]]::new([StringComparer]::InvariantCultureIgnoreCase)
@@ -28,7 +22,7 @@ $requiredOrgs.Add("Microsoft") | Out-Null
 $requiredOrgs.Add("Azure") | Out-Null
 
 # Capture non-required organizations for verbose output.
-$otherOrgs = $orgs | where { -not $requiredOrgs.Contains($_) }
+$otherOrgs = $orgs | Where-Object { -not $requiredOrgs.Contains($_) }
 
 Write-Host ""
 Write-Host "Required Orginizations:" -ForegroundColor DarkGray

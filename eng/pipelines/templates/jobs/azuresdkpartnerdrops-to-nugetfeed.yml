@@ -67,7 +67,7 @@ jobs:
             BuildToolsPath: ${{ parameters.BuildToolsRepoPath }}
 
       - ${{ if eq(parameters.ShouldPublish, true) }}:
-        - template: ../steps/publish-symbols.yml
+        - template: pipelines/steps/publish-symbols.yml@azure-sdk-build-tools
           parameters:
             BuildToolsRepositoryPath: ${{ parameters.BuildToolsRepoPath }}
             PackagesPath: $(Artifacts)

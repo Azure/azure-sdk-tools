@@ -11,15 +11,19 @@ This area is focused on the management of the Azure SDK GitHub repositories, con
 ## Structure
 
 - **root**
+
   _The root contains the scripts used for repository management and their associated data._
 
 - **scripts**
+
   _The core scripts for repository management, such as managing milestones and labels._
 
 - **data**
+
   _The data associated with the scripts.  This includes items such as the set of centrally managed Azure SDK repositories and the labels common to all repositories._
 
 - **data/repository-snapshots**
+
   _The container for a snapshot of the labels that exist in each managed repository; primarily used to help detect and report on new labels that have been added outside the common set._
 
 ## Scripts

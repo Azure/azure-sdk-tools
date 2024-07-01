@@ -17,7 +17,7 @@ $orgResponse = (gh api "https://api.github.com/users/$UserName/orgs")
 $orgs = $orgResponse | ConvertFrom-Json
 
 if (!$org) {
-    $orgs = $orgs | Select-Object -Expand login
+    $orgs = $orgs | Select-Object -Expand login -ErrorAction Ignore
 } else {
     $orgs = @()
 }

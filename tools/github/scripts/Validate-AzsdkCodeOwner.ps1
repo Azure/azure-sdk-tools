@@ -14,13 +14,7 @@ $hasPermissions = $false
 # Verify that the user exists and has the correct public
 # organization memberships.
 $orgResponse = (gh api "https://api.github.com/users/$UserName/orgs")
-$orgs = $orgResponse | ConvertFrom-Json
-
-if (!$org) {
-    $orgs = $orgs | Select-Object -Expand login -ErrorAction Ignore
-} else {
-    $orgs = @()
-}
+$orgs = $orgResponse | ConvertFrom-Json | Select-Object -Expand login -ErrorAction Ignore
 
 # Validate that the user has the required public organization memberships.
 $requiredOrgs = [System.Collections.Generic.HashSet[String]]::new([StringComparer]::InvariantCultureIgnoreCase)

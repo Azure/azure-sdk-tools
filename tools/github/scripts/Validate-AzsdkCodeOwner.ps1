@@ -74,7 +74,7 @@ if ($permission -eq "admin" -or $permission -eq "write") {
     Write-Host "`tx write" -ForegroundColor Red
 }
 
-# Write the other permissions organizations for the user, if
+# Write the other permissions for the user, if
 # verbose output is enabled.
 Write-Verbose ""
 Write-Verbose "Other Permissions:"

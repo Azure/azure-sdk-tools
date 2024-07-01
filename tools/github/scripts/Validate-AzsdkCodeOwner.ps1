@@ -71,8 +71,14 @@ if ($permission -eq "admin" -or $permission -eq "write") {
     Write-Host "`t$([char]0x2713) $($permission) " -ForegroundColor Green
     $hasPermissions = $true
 } else {
-    Write-Host "`tx $($permission)" -ForegroundColor Red
+    Write-Host "`tx write" -ForegroundColor Red
 }
+
+# Write the other permissions for the user, if
+# verbose output is enabled.
+Write-Verbose ""
+Write-Verbose "Other Permissions:"
+Write-Verbose "`t$($permission) (not required)"
 
 # Validate the user and write the results.
 $isValid = ($hasOrgs -and $hasPermissions)

@@ -16,8 +16,8 @@ $hasPermissions = $false
 $orgResponse = (gh api "https://api.github.com/users/$UserName/orgs")
 $orgs = $orgResponse | ConvertFrom-Json
 
-if ($orgs -ne $null) {
-    $orgs = $orgs | select -Expand login
+if (!$org) {
+    $orgs = $orgs | Select-Object -Expand login
 } else {
     $orgs = @()
 }
@@ -28,7 +28,7 @@ $requiredOrgs.Add("Microsoft") | Out-Null
 $requiredOrgs.Add("Azure") | Out-Null
 
 # Capture non-required organizations for verbose output.
-$otherOrgs = $orgs | where { -not $requiredOrgs.Contains($_) }
+$otherOrgs = $orgs | Where-Object { -not $requiredOrgs.Contains($_) }
 
 Write-Host ""
 Write-Host "Required Orginizations:" -ForegroundColor DarkGray
